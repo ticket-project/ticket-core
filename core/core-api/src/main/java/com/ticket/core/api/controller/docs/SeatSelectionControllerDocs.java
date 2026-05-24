@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Tag(name = "좌석 선택", description = "좌석 선택/해제 API (실시간 알림은 WebSocket 구독)")
 public interface SeatSelectionControllerDocs {
@@ -27,7 +28,8 @@ public interface SeatSelectionControllerDocs {
     ApiResponse<Void> selectSeat(
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
             @Parameter(description = "좌석 ID", example = "42", required = true) Long seatId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 
     @Operation(
@@ -44,7 +46,8 @@ public interface SeatSelectionControllerDocs {
     ApiResponse<Void> deselectSeat(
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
             @Parameter(description = "좌석 ID", example = "42", required = true) Long seatId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 
     @Operation(
@@ -60,6 +63,7 @@ public interface SeatSelectionControllerDocs {
     })
     ApiResponse<Void> deselectAllSeats(
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 }

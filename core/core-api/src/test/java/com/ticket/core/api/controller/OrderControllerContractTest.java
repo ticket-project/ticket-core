@@ -1,6 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.LoginMemberArgumentResolver;
+import com.ticket.core.config.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
@@ -36,6 +37,7 @@ class OrderControllerContractTest {
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
     private final GetOrderDetailUseCase getOrderDetailUseCase = Mockito.mock(GetOrderDetailUseCase.class);
     private final CancelOrderUseCase cancelOrderUseCase = Mockito.mock(CancelOrderUseCase.class);
+    private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
 
@@ -44,7 +46,8 @@ class OrderControllerContractTest {
         OrderController controller = new OrderController(
                 createOrderUseCase,
                 getOrderDetailUseCase,
-                cancelOrderUseCase
+                cancelOrderUseCase,
+                admissionTokenValidator
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new LoginMemberArgumentResolver())

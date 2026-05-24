@@ -1,6 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.LoginMemberArgumentResolver;
+import com.ticket.core.config.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.model.OrderState;
@@ -32,12 +33,13 @@ class HoldControllerContractTest {
     private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, Role.MEMBER);
 
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
+    private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        HoldController controller = new HoldController(createOrderUseCase);
+        HoldController controller = new HoldController(createOrderUseCase, admissionTokenValidator);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new LoginMemberArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())

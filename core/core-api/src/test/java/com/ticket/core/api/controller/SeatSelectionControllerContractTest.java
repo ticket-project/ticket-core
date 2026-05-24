@@ -1,6 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.LoginMemberArgumentResolver;
+import com.ticket.core.config.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.domain.performanceseat.command.DeselectSeatUseCase;
@@ -34,7 +35,8 @@ class SeatSelectionControllerContractTest {
         SeatSelectionController controller = new SeatSelectionController(
                 Mockito.mock(SelectSeatUseCase.class),
                 Mockito.mock(DeselectSeatUseCase.class),
-                Mockito.mock(DeselectAllSeatsUseCase.class)
+                Mockito.mock(DeselectAllSeatsUseCase.class),
+                Mockito.mock(AdmissionTokenValidator.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new LoginMemberArgumentResolver())

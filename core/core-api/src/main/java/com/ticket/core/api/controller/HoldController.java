@@ -2,9 +2,11 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.HoldControllerDocs;
 import com.ticket.core.api.controller.request.CreateHoldRequest;
+import com.ticket.core.config.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,14 +25,17 @@ import java.net.URI;
 public class HoldController implements HoldControllerDocs {
 
     private final CreateOrderUseCase createOrderUseCase;
+    private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
             @PathVariable final Long performanceId,
             @Valid @RequestBody final CreateHoldRequest request,
-            final MemberPrincipal memberPrincipal
+            final MemberPrincipal memberPrincipal,
+            final HttpServletRequest servletRequest
     ) {
+        admissionTokenValidator.verify(servletRequest, memberPrincipal.getMemberId(), performanceId);
         final CreateOrderUseCase.Input input =
                 new CreateOrderUseCase.Input(performanceId, request.getSeatIds(), memberPrincipal.getMemberId());
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);

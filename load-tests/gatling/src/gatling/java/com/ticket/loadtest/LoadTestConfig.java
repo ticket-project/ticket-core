@@ -3,12 +3,8 @@ package com.ticket.loadtest;
 import io.gatling.javaapi.core.ChainBuilder;
 import io.gatling.javaapi.core.OpenInjectionStep;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,7 +25,8 @@ import static io.gatling.javaapi.http.HttpDsl.status;
 public final class LoadTestConfig {
     private static final AtomicInteger LOGIN_COUNTER = new AtomicInteger(intProperty(ConfigKey.LOGIN_START_INDEX));
     private static final AtomicInteger TOKEN_COUNTER = new AtomicInteger();
-    private static final AtomicInteger QUEUE_TOKEN_COUNTER = new AtomicInteger();
+    private static final AtomicInteger ADMISSION_TOKEN_COUNTER = new AtomicInteger();
+    private static final AtomicInteger SEAT_ID_COUNTER = new AtomicInteger();
     private static final AtomicLong SYNTHETIC_MEMBER_COUNTER =
             new AtomicLong(longProperty(ConfigKey.SYNTHETIC_MEMBER_START_ID));
 
@@ -73,13 +70,30 @@ public final class LoadTestConfig {
                 .set("seatIdsJson", seatIdsJsonArray()));
     }
 
+    public static ChainBuilder initializeSessionWithNextSeatId() {
+        return exec(session -> {
+            final Long seatId = nextSeatId();
+            return session.set("performanceId", performanceId())
+                    .set("seatIdsJson", "[" + seatId + "]")
+                    .set("seatId", seatId);
+        });
+    }
+
     public static ChainBuilder authenticate() {
         final String mode = property(ConfigKey.ACCESS_TOKEN_MODE).toLowerCase(Locale.ROOT);
         if ("tokens".equals(mode)) {
-            return exec(session -> session.set("accessToken", nextFromCsv(ConfigKey.ACCESS_TOKENS, TOKEN_COUNTER)));
+            return exec(session -> {
+                final String accessToken = nextFromCsv(ConfigKey.ACCESS_TOKENS, TOKEN_COUNTER);
+                return session.set("accessToken", accessToken)
+                        .set("memberId", LoadTestTokens.readSubjectAsLong(accessToken));
+            });
         }
         if ("synthetic-jwt".equals(mode)) {
-            return exec(session -> session.set("accessToken", createSyntheticJwt(nextSyntheticMember())));
+            return exec(session -> {
+                final Long memberId = nextSyntheticMember().value();
+                return session.set("memberId", memberId)
+                        .set("accessToken", createSyntheticJwt(memberId));
+            });
         }
         return exec(session -> {
             final int loginIndex = LOGIN_COUNTER.getAndIncrement();
@@ -97,21 +111,39 @@ public final class LoadTestConfig {
                         """))
                 .check(status().is(200))
                 .check(io.gatling.javaapi.core.CoreDsl.jsonPath("$.result").is("SUCCESS"))
-                .check(io.gatling.javaapi.core.CoreDsl.jsonPath("$.data.accessToken").saveAs("accessToken")));
+                .check(io.gatling.javaapi.core.CoreDsl.jsonPath("$.data.accessToken").saveAs("accessToken")))
+                .exec(session -> session.set("memberId", LoadTestTokens.readSubjectAsLong(session.getString("accessToken"))));
     }
 
-    public static ChainBuilder withConfiguredQueueToken() {
-        return exec(session -> session.set("queueToken", nextFromCsv(ConfigKey.QUEUE_TOKENS, QUEUE_TOKEN_COUNTER)));
+    public static ChainBuilder withAdmissionToken() {
+        final String mode = property(ConfigKey.ADMISSION_TOKEN_MODE).toLowerCase(Locale.ROOT);
+        if ("tokens".equals(mode)) {
+            return exec(session -> session.set(
+                    "admissionToken",
+                    nextFromCsv(ConfigKey.ADMISSION_TOKENS, ADMISSION_TOKEN_COUNTER)
+            ));
+        }
+        if ("synthetic".equals(mode)) {
+            return exec(session -> session.set("admissionToken", createSyntheticAdmissionToken(
+                    session.getLong("memberId"),
+                    Long.parseLong(session.getString("performanceId"))
+            )));
+        }
+        throw new IllegalArgumentException("Unsupported admissionTokenMode: " + mode);
     }
 
     public static Map<CharSequence, String> authHeaders() {
         return Map.of("Authorization", "Bearer #{accessToken}");
     }
 
-    public static Map<CharSequence, String> authAndQueueHeaders() {
+    public static Map<CharSequence, String> queueSessionHeaders() {
+        return Map.of("X-Queue-Session", "#{queueSessionId}");
+    }
+
+    public static Map<CharSequence, String> authAndAdmissionHeaders() {
         return Map.of(
                 "Authorization", "Bearer #{accessToken}",
-                "X-Queue-Token", "#{queueToken}"
+                "X-Admission-Token", "#{admissionToken}"
         );
     }
 
@@ -162,38 +194,42 @@ public final class LoadTestConfig {
                 .collect(Collectors.joining(",", "[", "]"));
     }
 
+    private static Long nextSeatId() {
+        final List<String> seatIds = Stream.of(property(ConfigKey.SEAT_IDS).split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .toList();
+        if (seatIds.isEmpty()) {
+            throw new IllegalStateException("System property must contain at least one value: -DseatIds");
+        }
+        return Long.parseLong(seatIds.get(Math.floorMod(SEAT_ID_COUNTER.getAndIncrement(), seatIds.size())));
+    }
+
     private static SyntheticMemberId nextSyntheticMember() {
         return new SyntheticMemberId(SYNTHETIC_MEMBER_COUNTER.getAndIncrement());
     }
 
-    private static String createSyntheticJwt(final SyntheticMemberId memberId) {
-        try {
-            final Instant now = Instant.now();
-            final long issuedAt = now.getEpochSecond();
-            final long expiresAt = issuedAt + intProperty(ConfigKey.SYNTHETIC_TOKEN_TTL_SECONDS);
-            final String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
-            final String payload = "{\"iss\":\"" + escapeJson(property(ConfigKey.JWT_ISSUER))
-                    + "\",\"sub\":\"" + memberId.value()
-                    + "\",\"role\":\"" + escapeJson(property(ConfigKey.SYNTHETIC_JWT_ROLE))
-                    + "\",\"iat\":" + issuedAt
-                    + ",\"exp\":" + expiresAt + "}";
-            final String unsignedToken = base64Url(header.getBytes(StandardCharsets.UTF_8))
-                    + "." + base64Url(payload.getBytes(StandardCharsets.UTF_8));
-            final Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(property(ConfigKey.JWT_SECRET)
-                    .getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            return unsignedToken + "." + base64Url(mac.doFinal(unsignedToken.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception exception) {
-            throw new IllegalStateException("Failed to create synthetic JWT", exception);
-        }
+    private static String createSyntheticJwt(final Long memberId) {
+        return LoadTestTokens.createAccessToken(
+                property(ConfigKey.JWT_ISSUER),
+                property(ConfigKey.JWT_SECRET),
+                memberId,
+                property(ConfigKey.SYNTHETIC_JWT_ROLE),
+                Instant.now(),
+                intProperty(ConfigKey.SYNTHETIC_TOKEN_TTL_SECONDS)
+        );
     }
 
-    private static String base64Url(final byte[] bytes) {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private static String escapeJson(final CharSequence value) {
-        return value.toString().replace("\\", "\\\\").replace("\"", "\\\"");
+    private static String createSyntheticAdmissionToken(final Long memberId, final Long performanceId) {
+        return LoadTestTokens.createAdmissionToken(
+                property(ConfigKey.ADMISSION_TOKEN_ISSUER),
+                property(ConfigKey.ADMISSION_TOKEN_AUDIENCE),
+                property(ConfigKey.ADMISSION_TOKEN_SECRET),
+                memberId,
+                performanceId,
+                Instant.now(),
+                intProperty(ConfigKey.ADMISSION_TOKEN_TTL_SECONDS)
+        );
     }
 
     private record CsvValues(List<String> values) {
@@ -214,7 +250,12 @@ public final class LoadTestConfig {
         TARGET_USERS_PER_SECOND,
         ACCESS_TOKEN_MODE,
         ACCESS_TOKENS,
-        QUEUE_TOKENS,
+        ADMISSION_TOKEN_MODE,
+        ADMISSION_TOKENS,
+        ADMISSION_TOKEN_ISSUER,
+        ADMISSION_TOKEN_AUDIENCE,
+        ADMISSION_TOKEN_SECRET,
+        ADMISSION_TOKEN_TTL_SECONDS,
         LOGIN_EMAIL_PREFIX,
         LOGIN_EMAIL_DOMAIN,
         LOGIN_PASSWORD,
@@ -239,7 +280,12 @@ public final class LoadTestConfig {
                 case TARGET_USERS_PER_SECOND -> "targetUsersPerSecond";
                 case ACCESS_TOKEN_MODE -> "accessTokenMode";
                 case ACCESS_TOKENS -> "accessTokens";
-                case QUEUE_TOKENS -> "queueTokens";
+                case ADMISSION_TOKEN_MODE -> "admissionTokenMode";
+                case ADMISSION_TOKENS -> "admissionTokens";
+                case ADMISSION_TOKEN_ISSUER -> "admissionTokenIssuer";
+                case ADMISSION_TOKEN_AUDIENCE -> "admissionTokenAudience";
+                case ADMISSION_TOKEN_SECRET -> "admissionTokenSecret";
+                case ADMISSION_TOKEN_TTL_SECONDS -> "admissionTokenTtlSeconds";
                 case LOGIN_EMAIL_PREFIX -> "loginEmailPrefix";
                 case LOGIN_EMAIL_DOMAIN -> "loginEmailDomain";
                 case LOGIN_PASSWORD -> "loginPassword";
@@ -265,6 +311,11 @@ public final class LoadTestConfig {
                 case USERS_PER_SECOND -> "1.0";
                 case TARGET_USERS_PER_SECOND -> "10.0";
                 case ACCESS_TOKEN_MODE -> "login";
+                case ADMISSION_TOKEN_MODE -> "synthetic";
+                case ADMISSION_TOKEN_ISSUER -> "ticket-queue";
+                case ADMISSION_TOKEN_AUDIENCE -> "ticket-api";
+                case ADMISSION_TOKEN_SECRET -> "0123456789abcdef0123456789abcdef";
+                case ADMISSION_TOKEN_TTL_SECONDS -> "300";
                 case LOGIN_EMAIL_PREFIX -> "loadtest";
                 case LOGIN_EMAIL_DOMAIN -> "test.com";
                 case LOGIN_PASSWORD -> "password1234";
@@ -274,7 +325,7 @@ public final class LoadTestConfig {
                 case SYNTHETIC_TOKEN_TTL_SECONDS -> "3600";
                 case JWT_ISSUER -> "ticket";
                 case SYNTHETIC_JWT_ROLE -> "MEMBER";
-                case ACCESS_TOKENS, QUEUE_TOKENS, JWT_SECRET -> null;
+                case ACCESS_TOKENS, ADMISSION_TOKENS, JWT_SECRET -> null;
             };
         }
     }
