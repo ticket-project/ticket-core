@@ -1,73 +1,71 @@
 package com.ticket.core.api.controller.docs;
 
+import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.domain.performance.query.GetBookingEntryUseCase;
 import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.domain.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatStatusUseCase;
-import io.swagger.v3.oas.annotations.Parameter;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 
-@Tag(name = "공연 회차(Performance)", description = "공연 회차 관련 API")
+@Tag(name = "Performance", description = "Performance APIs")
 public interface PerformanceControllerDocs {
 
-    @Operation(
-            summary = "회차 요약 정보 조회",
-            description = """
-                    선택된 회차의 요약 정보를 조회합니다.
-                    제목, 지역, 회차 시작 일시를 반환합니다.
-                    """
-    )
+    @Operation(summary = "Get performance summary")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetPerformanceSummaryUseCase.Output> getPerformanceSummary(
-            @Parameter(description = "공연 회차 ID", example = "1", required = true) Long performanceId
+            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId
     );
 
-    @Operation(
-            summary = "일정 변경용 회차 목록 조회",
-            description = """
-                    선택된 회차와 같은 공연에 속한 회차 목록을 조회합니다.
-                    일정변경 버튼 클릭 시 사용할 수 있습니다.
-                    """
-    )
+    @Operation(summary = "Get performance schedules")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetPerformanceScheduleListUseCase.Output> getPerformanceSchedules(
-            @Parameter(description = "공연 회차 ID", example = "1", required = true) Long performanceId
+            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId
     );
 
     @Operation(
-            summary = "회차별 등급별 잔여석 조회",
-            description = """
-                    특정 공연 회차의 등급별 잔여 좌석 수를 조회합니다.
-                    등급 코드, 등급명, 가격, 총 좌석 수, 잔여 좌석 수를 반환합니다.
-                    """
+            summary = "Decide booking entry route",
+            description = "Ticket Server checks the performance queue policy and returns DIRECT or QUEUE."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
+    })
+    ApiResponse<GetBookingEntryUseCase.Output> getBookingEntry(
+            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId
+    );
+
+    @Operation(
+            summary = "Get seat availability by grade",
+            description = "Admission token is required only when the performance queue policy requires queue admission."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetSeatAvailabilityUseCase.Output> getSeatAvailability(
-            @Parameter(description = "공연 회차 ID", example = "1", required = true) Long performanceId
+            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId,
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 
     @Operation(
-            summary = "회차별 좌석 상태 조회",
-            description = """
-                    특정 회차의 모든 좌석 상태(AVAILABLE, HELD, RESERVED 등)를 조회합니다.
-                    실시간으로 변동될 수 있는 데이터입니다.
-                    대기열이 활성화된 회차에서는 입장 토큰이 필요합니다.
-                    """
+            summary = "Get seat status",
+            description = "Admission token is required only when the performance queue policy requires queue admission."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
-            @Parameter(description = "공연 회차 ID", example = "1", required = true) Long performanceId
+            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId,
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 }

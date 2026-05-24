@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
 @Deprecated
@@ -51,6 +52,7 @@ public interface HoldControllerDocs {
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
             CreateHoldRequest request,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 }

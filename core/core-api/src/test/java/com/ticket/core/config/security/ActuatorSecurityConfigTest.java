@@ -1,7 +1,4 @@
 package com.ticket.core.config.security;
-
-import com.ticket.core.domain.queue.runtime.QueueTicketStore;
-import com.ticket.core.domain.queue.support.QueuePolicyResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -70,12 +67,6 @@ class ActuatorSecurityConfigTest {
 
     @MockitoBean
     private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
-
-    @MockitoBean
-    private QueuePolicyResolver queuePolicyResolver;
-
-    @MockitoBean
-    private QueueTicketStore queueTicketStore;
 
     @BeforeEach
     void setUp() throws Exception {

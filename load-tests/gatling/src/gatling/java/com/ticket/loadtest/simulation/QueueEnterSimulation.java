@@ -26,10 +26,9 @@ public class QueueEnterSimulation extends Simulation {
                         .post("/api/v1/queue/performances/#{performanceId}/enter")
                         .headers(LoadTestConfig.authHeaders())
                         .check(status().is(200))
-                        .check(jsonPath("$.result").is("SUCCESS"))
-                        .check(jsonPath("$.data.status").saveAs("queueStatus"))
-                        .check(jsonPath("$.data.queueEntryId").optional().saveAs("queueEntryId"))
-                        .check(jsonPath("$.data.queueToken").optional().saveAs("queueToken")));
+                        .check(jsonPath("$.status").saveAs("queueStatus"))
+                        .check(jsonPath("$.queueSessionId").saveAs("queueSessionId"))
+                        .check(jsonPath("$.admissionToken").optional().saveAs("admissionToken")));
 
         setUp(scenario.injectOpen(LoadTestConfig.injection()))
                 .protocols(httpProtocol)

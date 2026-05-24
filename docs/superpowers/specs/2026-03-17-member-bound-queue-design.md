@@ -1,5 +1,8 @@
 # Member-Bound Queue Design
 
+> 기준 변경: 이 문서는 과거 ticket-be 내장 queue/queueToken 설계 기록이다. 현재 실행 기준은 2026-05-24-separated-queue-server-design.md와 2026-05-24-separated-queue-server.md이다. 새 구조에서는 queueToken/X-Queue-Token 대신 queueSessionId/X-Queue-Session과 admissionToken/X-Admission-Token을 사용한다.
+
+
 **목표**
 
 - `QueueController` API를 인증 사용자 전용으로 전환한다.
