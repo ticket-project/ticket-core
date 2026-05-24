@@ -26,7 +26,7 @@ Spring Boot 실행 모듈이다.
 - 요청/응답 DTO
 - Spring Security, JWT, OAuth2 설정
 - WebSocket 진입 설정
-- Queue admission interceptor 같은 HTTP 진입 제어
+- Admission token 검증 같은 예매 API 진입 제어
 - 공통 응답 포맷
 
 의존:
@@ -93,7 +93,7 @@ Redis 관련 공통 의존성을 제공한다.
 - `com.ticket.core.api.controller.request`
   - 요청 DTO
 - `com.ticket.core.config`
-  - 웹, JPA Auditing, HTTP service, WebSocket, queue admission 설정
+  - 웹, JPA Auditing, HTTP service, WebSocket, admission 설정
 - `com.ticket.core.config.security`
   - JWT, OAuth2, 인증/인가 구성
 - `com.ticket.core.support.response`
@@ -107,7 +107,7 @@ Redis 관련 공통 의존성을 제공한다.
 - `member`
 - `order`
 - `hold`
-- `queue`
+- `queue` (mode/level 값)
 - `show`
 - `showlike`
 - `performance`
@@ -139,7 +139,6 @@ Redis 관련 공통 의존성을 제공한다.
 - `com.ticket.core.infra.auth.oauth2`
 - `com.ticket.core.infra.auth.token`
 - `com.ticket.core.infra.hold`
-- `com.ticket.core.infra.queue`
 - `com.ticket.core.infra.performanceseat`
 
 ## 기능별 구조 원칙
@@ -187,13 +186,12 @@ JPA entity와 Spring Data repository는 대부분 `core-domain`에 존재한다.
 
 ### Redis
 
-Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌석/대기열 처리에 사용한다.
+Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌석 처리에 사용한다. 대기열 Redis는 `ticket-queue`에서 별도 Redis Cluster로 운영한다.
 
 주요 대상:
 
 - seat selection
 - seat hold
-- queue ticket/token
 - refresh token
 - OAuth2 one-time auth code
 
@@ -225,7 +223,6 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 - 동일 회원/공연 조합의 중복 주문 시작 방지
 - 동일 좌석 동시 점유 방지
-- 대기열 입장/퇴장 경쟁 상태 제어
 
 ## 아키텍처 규칙
 

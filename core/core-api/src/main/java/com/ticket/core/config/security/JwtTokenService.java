@@ -1,62 +1,37 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.member.model.Role;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.ticket.support.security.jwt.JwtAccessTokenIssuer;
+import com.ticket.support.security.jwt.JwtMemberClaims;
+import com.ticket.support.security.jwt.JwtTokenVerifier;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Date;
 
 @Component
 public class JwtTokenService {
 
     private final JwtProperties jwtProperties;
-    private final SecretKey secretKey;
+    private final JwtAccessTokenIssuer jwtAccessTokenIssuer;
+    private final JwtTokenVerifier jwtTokenVerifier;
 
     public JwtTokenService(final JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        if (!StringUtils.hasText(jwtProperties.getSecretKey())) {
-            throw new IllegalArgumentException("security.jwt.secret-key must not be blank");
-        }
-
-        final byte[] keyBytes = jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length < 32) {
-            throw new IllegalArgumentException("security.jwt.secret-key must be at least 32 bytes for HS256");
-        }
-        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        final com.ticket.support.security.jwt.JwtProperties sharedProperties =
+                new com.ticket.support.security.jwt.JwtProperties(
+                        jwtProperties.getIssuer(),
+                        jwtProperties.getSecretKey(),
+                        jwtProperties.getAccessTokenExpirationSeconds()
+                );
+        this.jwtAccessTokenIssuer = new JwtAccessTokenIssuer(sharedProperties);
+        this.jwtTokenVerifier = new JwtTokenVerifier(sharedProperties);
     }
 
     public String createAccessToken(final MemberPrincipal memberPrincipal) {
-        final Instant now = Instant.now();
-        final Instant expiresAt = now.plusSeconds(jwtProperties.getAccessTokenExpirationSeconds());
-
-        return Jwts.builder()
-                .issuer(jwtProperties.getIssuer())
-                .subject(String.valueOf(memberPrincipal.getMemberId()))
-                .claim("role", memberPrincipal.getRole().name())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiresAt))
-                .signWith(secretKey)
-                .compact();
+        return jwtAccessTokenIssuer.issue(memberPrincipal.getMemberId(), memberPrincipal.getRole().name());
     }
 
     public MemberPrincipal parse(final String token) {
-        final Claims claims = Jwts.parser()
-                .requireIssuer(jwtProperties.getIssuer())
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        final Long memberId = Long.parseLong(claims.getSubject());
-        final Role role = Role.valueOf(claims.get("role", String.class));
-        return new MemberPrincipal(memberId, role);
+        final JwtMemberClaims claims = jwtTokenVerifier.verify(token);
+        return new MemberPrincipal(claims.memberId(), Role.valueOf(claims.role()));
     }
 
     public long getAccessTokenExpirationSeconds() {

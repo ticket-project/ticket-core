@@ -31,9 +31,9 @@ public class TicketOpenFlowSimulation extends Simulation {
                 .exec(LoadTestConfig.authenticate())
                 .exec(enterQueue())
                 .exec(pollUntilAdmitted())
-                .exec(doIf(session -> session.contains("queueToken")).then(
+                .exec(doIf(session -> session.contains("admissionToken")).then(
                         fetchSeatStatus(),
-                        createHold()
+                        createOrder()
                 ));
 
         setUp(scenario.injectOpen(LoadTestConfig.injection()))
@@ -41,7 +41,7 @@ public class TicketOpenFlowSimulation extends Simulation {
                 .assertions(
                         global().failedRequests().percent().lt(10.0),
                         details("seat status").successfulRequests().count().gt(0L),
-                        details("create hold").successfulRequests().count().gt(0L)
+                        details("create order").successfulRequests().count().gt(0L)
                 );
     }
 
@@ -50,27 +50,25 @@ public class TicketOpenFlowSimulation extends Simulation {
                 .post("/api/v1/queue/performances/#{performanceId}/enter")
                 .headers(LoadTestConfig.authHeaders())
                 .check(status().is(200))
-                .check(jsonPath("$.result").is("SUCCESS"))
-                .check(jsonPath("$.data.status").saveAs("queueStatus"))
-                .check(jsonPath("$.data.queueEntryId").optional().saveAs("queueEntryId"))
-                .check(jsonPath("$.data.queueToken").optional().saveAs("queueToken")));
+                .check(jsonPath("$.status").saveAs("queueStatus"))
+                .check(jsonPath("$.queueSessionId").saveAs("queueSessionId"))
+                .check(jsonPath("$.admissionToken").optional().saveAs("admissionToken")));
     }
 
     private ChainBuilder pollUntilAdmitted() {
         return exec(session -> session.set("pollAttempts", 0))
-                .asLongAs(session -> !session.contains("queueToken")
-                        && session.contains("queueEntryId")
+                .asLongAs(session -> !session.contains("admissionToken")
+                        && session.contains("queueSessionId")
                         && session.getInt("pollAttempts") < LoadTestConfig.statusPolls()
                         && !"EXPIRED".equals(session.getString("queueStatus"))
                         && !"LEFT".equals(session.getString("queueStatus"))
                 ).on(
                         exec(http("queue status")
                                 .get("/api/v1/queue/performances/#{performanceId}/status")
-                                .queryParam("queueEntryId", "#{queueEntryId}")
-                                .headers(LoadTestConfig.authHeaders())
+                                .headers(LoadTestConfig.queueSessionHeaders())
                                 .check(status().is(200))
-                                .check(jsonPath("$.data.status").saveAs("queueStatus"))
-                                .check(jsonPath("$.data.queueToken").optional().saveAs("queueToken")))
+                                .check(jsonPath("$.status").saveAs("queueStatus"))
+                                .check(jsonPath("$.admissionToken").optional().saveAs("admissionToken")))
                                 .exec(session -> session.set("pollAttempts", session.getInt("pollAttempts") + 1))
                                 .pause(Duration.ofSeconds(LoadTestConfig.statusPollPauseSeconds()))
                 );
@@ -79,16 +77,17 @@ public class TicketOpenFlowSimulation extends Simulation {
     private ChainBuilder fetchSeatStatus() {
         return exec(http("seat status")
                 .get("/api/v1/performances/#{performanceId}/seats/status")
-                .headers(LoadTestConfig.authAndQueueHeaders())
+                .headers(LoadTestConfig.authAndAdmissionHeaders())
                 .check(status().is(200)));
     }
 
-    private ChainBuilder createHold() {
-        return exec(http("create hold")
-                .post("/api/v1/performances/#{performanceId}/holds")
-                .headers(LoadTestConfig.authAndQueueHeaders())
+    private ChainBuilder createOrder() {
+        return exec(http("create order")
+                .post("/api/v1/orders")
+                .headers(LoadTestConfig.authAndAdmissionHeaders())
                 .body(StringBody("""
                         {
+                          "performanceId": #{performanceId},
                           "seatIds": #{seatIdsJson}
                         }
                         """))

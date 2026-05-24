@@ -95,6 +95,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login",
                                 "/api/v1/auth/refresh", "/api/v1/auth/oauth2/token",
                                 "/api/v1/auth/social/urls").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/performances/*/seats/status").authenticated()
                         // 읽기 전용 공개 API (GET만)
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/shows/**",

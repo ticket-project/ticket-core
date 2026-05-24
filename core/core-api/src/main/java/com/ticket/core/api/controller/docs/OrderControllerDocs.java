@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "주문", description = "PENDING 주문 시작, 조회, 취소 API")
@@ -51,7 +52,8 @@ public interface OrderControllerDocs {
     })
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             CreateOrderRequest request,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) HttpServletRequest servletRequest
     );
 
     @Operation(summary = "주문 조회", description = "주문/결제 화면 진입 시 호출합니다. 만료된 주문은 EXPIRED 상태로 표시됩니다.")

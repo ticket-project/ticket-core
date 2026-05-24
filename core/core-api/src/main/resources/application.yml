@@ -82,6 +82,11 @@ security:
     secret-key: ${JWT_SECRET}
     access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS}
     refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS}
+  admission:
+    issuer: ${ADMISSION_TOKEN_ISSUER:ticket-queue}
+    audience: ${ADMISSION_TOKEN_AUDIENCE:ticket-api}
+    secret-key: ${ADMISSION_TOKEN_SECRET_KEY:0123456789abcdef0123456789abcdef}
+    expiration-seconds: ${ADMISSION_TOKEN_EXPIRATION_SECONDS:300}
 
 app:
   cors:
@@ -100,9 +105,3 @@ app:
     oauth2-failure-redirect-path: ${APP_AUTH_OAUTH2_FAILURE_REDIRECT_PATH:/auth/callback}
     kakao:
       admin-key: ${KAKAO_ADMIN_KEY}
-  queue:
-    enabled-by-default: true
-    default-level: LEVEL_1
-    default-max-active-users: 300
-    default-entry-token-ttl: 10m
-    entry-retention: 1h

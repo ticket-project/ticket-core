@@ -1,5 +1,8 @@
 # Ticket Open Load Test Implementation Plan
 
+> 기준 변경: 이 문서는 과거 ticket-be 내장 queue/queueToken 설계 기록이다. 현재 실행 기준은 2026-05-24-separated-queue-server-design.md와 2026-05-24-separated-queue-server.md이다. 새 구조에서는 queueToken/X-Queue-Token 대신 queueSessionId/X-Queue-Session과 admissionToken/X-Admission-Token을 사용한다.
+
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 로컬에서 대기열 처리량, 대기열 토큰 강제, 좌석 홀드 정합성을 검증할 수 있는 Gatling Java DSL 테스트와 실행 자산을 추가한다.

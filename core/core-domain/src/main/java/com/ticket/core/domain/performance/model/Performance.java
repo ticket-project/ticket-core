@@ -110,6 +110,18 @@ public class Performance extends BaseEntity {
         return !now.isAfter(orderCloseTime);
     }
 
+    public boolean requiresQueueAt(final LocalDateTime now) {
+        if (queueMode == null || queueMode == QueueMode.FORCE_OFF) {
+            return false;
+        }
+        if (queueMode == QueueMode.FORCE_ON) {
+            return true;
+        }
+        if (preopenQueueStartAt == null || now == null || now.isBefore(preopenQueueStartAt)) {
+            return false;
+        }
+        return orderCloseTime == null || !now.isAfter(orderCloseTime);
+    }
     public void updateQueuePolicy(
             final QueueMode queueMode,
             final QueueLevel queueLevel,

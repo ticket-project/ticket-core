@@ -2,11 +2,13 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.OrderControllerDocs;
 import com.ticket.core.api.controller.request.CreateOrderRequest;
+import com.ticket.core.config.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
 import com.ticket.core.support.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +30,16 @@ public class OrderController implements OrderControllerDocs {
     private final CreateOrderUseCase createOrderUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
+    private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @Valid @RequestBody final CreateOrderRequest request,
-            final MemberPrincipal memberPrincipal
+            final MemberPrincipal memberPrincipal,
+            final HttpServletRequest servletRequest
     ) {
+        admissionTokenValidator.verify(servletRequest, memberPrincipal.getMemberId(), request.getPerformanceId());
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
                 request.getPerformanceId(),
                 request.getSeatIds(),
