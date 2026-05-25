@@ -70,6 +70,7 @@ Windows PowerShell:
 - H2 file DB
 - Redis
 - JPA DDL: `create`
+- Flyway: disabled
 - seed data: enabled
 
 관련 설정:
@@ -81,11 +82,39 @@ Windows PowerShell:
 
 - Oracle driver 사용
 - `ddl-auto: none`
-- 스키마 변경 시 DDL 또는 마이그레이션 계획이 별도로 필요
+- Flyway: enabled
+- 기존 운영 스키마는 최초 도입 시 Flyway baseline으로 등록
 
 관련 설정:
 
 - `core/core-api/src/main/resources/application-prod.yml`
+
+## DB 마이그레이션
+
+Flyway는 `core:core-api` 실행 모듈에서만 사용한다. 마이그레이션 파일 위치는 아래 경로다.
+
+```text
+core/core-api/src/main/resources/db/migration
+```
+
+운영 DB는 이미 테이블이 존재한다는 전제로 도입한다. 최초 반영 전에는 다음 순서를 지킨다.
+
+1. 운영 DB 백업 또는 복구 지점을 확보한다.
+2. 애플리케이션 DB 계정이 `flyway_schema_history` 테이블을 생성하고 이후 DDL을 실행할 권한이 있는지 확인한다.
+3. 최초 도입 배포에서만 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 설정한다.
+4. 애플리케이션 기동 후 `flyway_schema_history`에 version `1` baseline 기록이 생성됐는지 확인한다.
+5. baseline 확인 후에는 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=false`로 되돌리거나 환경 변수를 제거한다.
+
+기존 운영 스키마를 다시 만드는 `V1__...sql`은 추가하지 않는다. 이후 테이블 구조 변경은 새 파일로만 추가한다.
+
+```text
+V2__add_payment_tables.sql
+V3__add_order_confirmed_at.sql
+```
+
+이미 운영에 적용된 migration 파일은 수정하지 않는다. 변경이 더 필요하면 다음 버전 파일을 새로 만든다.
+
+local 프로파일은 H2 file DB와 Hibernate `ddl-auto:create`, seed loader를 유지한다. 따라서 local에서는 Flyway가 비활성화되어 있고, 운영 마이그레이션 검증은 Oracle 호환 DB나 별도 검증 환경에서 수행한다.
 
 ## 배포 workflow
 

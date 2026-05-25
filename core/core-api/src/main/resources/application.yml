@@ -40,6 +40,12 @@ spring:
   sql:
     init:
       mode: never
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    encoding: UTF-8
+    clean-disabled: true
+    validate-on-migrate: true
 
 server:
   forward-headers-strategy: framework
