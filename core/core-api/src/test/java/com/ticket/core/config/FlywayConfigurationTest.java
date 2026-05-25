@@ -36,16 +36,14 @@ class FlywayConfigurationTest {
     }
 
     @Test
-    void local_profile_uses_existing_h2_schema_with_flyway_and_no_seed() throws Exception {
+    void local_profile_bootstraps_h2_database_with_hibernate_and_seed_data() throws Exception {
         final PropertySource<?> local = loadYaml("application-local.yml");
 
         assertThat(local.getProperty("spring.datasource.url")).isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
-        assertThat(local.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("none");
-        assertThat(local.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertThat(local.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
-        assertThat(local.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
-        assertThat(local.getProperty("spring.flyway.baseline-description")).isEqualTo("existing local schema before Flyway");
-        assertThat(local.getProperty("app.seed.enabled")).isEqualTo(false);
+        assertThat(local.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("create");
+        assertThat(local.getProperty("spring.jpa.defer-datasource-initialization")).isEqualTo(true);
+        assertThat(local.getProperty("spring.flyway.enabled")).isEqualTo(false);
+        assertThat(local.getProperty("app.seed.enabled")).isEqualTo(true);
     }
 
     @Test
