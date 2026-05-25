@@ -42,7 +42,7 @@ class FlywayConfigurationTest {
         assertThat(local.getProperty("spring.datasource.url")).isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
         assertThat(local.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("none");
         assertThat(local.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertThat(local.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:true}");
+        assertThat(local.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
         assertThat(local.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
         assertThat(local.getProperty("spring.flyway.baseline-description")).isEqualTo("existing local schema before Flyway");
         assertThat(local.getProperty("app.seed.enabled")).isEqualTo(false);
@@ -55,7 +55,7 @@ class FlywayConfigurationTest {
         assertThat(dev.getProperty("spring.datasource.url")).isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
         assertThat(dev.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("none");
         assertThat(dev.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertThat(dev.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:true}");
+        assertThat(dev.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
         assertThat(dev.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
         assertThat(dev.getProperty("spring.flyway.baseline-description")).isEqualTo("existing local schema before Flyway");
         assertThat(dev.getProperty("app.seed.enabled")).isEqualTo(false);
