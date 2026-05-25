@@ -69,9 +69,9 @@ Windows PowerShell:
 
 - H2 file DB
 - Redis
-- `ddl-auto: none`
-- Flyway: enabled
-- seed data: disabled
+- `ddl-auto: create`
+- Flyway: disabled
+- seed data: enabled
 
 관련 설정:
 
@@ -85,6 +85,7 @@ Windows PowerShell:
 - `ddl-auto: none`
 - Flyway: enabled
 - seed data: disabled
+- local 프로파일이 생성한 H2 DB를 대상으로 Flyway baseline/migration을 검증
 
 관련 설정:
 
@@ -126,9 +127,9 @@ V3__add_order_confirmed_at.sql
 
 이미 운영에 적용된 migration 파일은 수정하지 않는다. 변경이 더 필요하면 다음 버전 파일을 새로 만든다.
 
-local/dev 프로파일은 같은 H2 file DB(`~/ticket-local`)를 사용하고 Hibernate 자동 DDL과 seed loader를 끈다. 기존 local DB를 처음 Flyway에 편입할 때만 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 지정해 version `1` baseline을 만들고, 평소에는 기본값(`false`)을 유지한다. 이후 변경은 `V2__...sql`부터 검증한다.
+local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create`와 seed loader로 초기화한다. dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동 DDL과 seed loader를 끄고 Flyway만 활성화한다. 기존 local DB를 dev에서 처음 Flyway에 편입할 때만 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 지정해 version `1` baseline을 만들고, 평소에는 기본값(`false`)을 유지한다. 이후 변경은 `V2__...sql`부터 검증한다.
 
-주의: 현재 운영 baseline 방식은 기존 스키마를 다시 만드는 `V1__...sql`을 두지 않는다. 따라서 완전히 빈 local/dev DB에서 애플리케이션을 새로 띄우려면 기존 DB 파일을 준비하거나, 별도 스키마 생성 migration 전략을 먼저 정해야 한다.
+주의: 현재 운영 baseline 방식은 기존 스키마를 다시 만드는 `V1__...sql`을 두지 않는다. 따라서 완전히 빈 dev DB에서 Flyway만으로 애플리케이션을 띄우려면 먼저 local 프로파일로 H2 DB를 생성하거나, 별도 스키마 생성 migration 전략을 정해야 한다.
 
 ## 배포 workflow
 
