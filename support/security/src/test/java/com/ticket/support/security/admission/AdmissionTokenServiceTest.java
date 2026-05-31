@@ -3,6 +3,7 @@ package com.ticket.support.security.admission;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
@@ -27,6 +28,21 @@ class AdmissionTokenServiceTest {
         assertThat(claims.performanceId()).isEqualTo(10L);
         assertThat(claims.issuedAt()).isEqualTo(NOW);
         assertThat(claims.expiresAt()).isEqualTo(NOW.plusSeconds(300L));
+        assertThat(claims.scope()).isEqualTo("ticket-admission");
+    }
+
+    @Test
+    void issueAndVerifyPerformanceBoundAdmissionToken() {
+        AdmissionTokenService service = admissionTokenService(NOW, 300L);
+
+        String token = service.issue("session-1", 10L, Duration.ofSeconds(120L));
+
+        AdmissionClaims claims = service.verifyForPerformance(token, 10L);
+        assertThat(claims.subject()).isEqualTo("session-1");
+        assertThat(claims.memberId()).isNull();
+        assertThat(claims.performanceId()).isEqualTo(10L);
+        assertThat(claims.issuedAt()).isEqualTo(NOW);
+        assertThat(claims.expiresAt()).isEqualTo(NOW.plusSeconds(120L));
         assertThat(claims.scope()).isEqualTo("ticket-admission");
     }
 

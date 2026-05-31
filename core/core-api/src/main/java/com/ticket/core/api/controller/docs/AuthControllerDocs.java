@@ -3,7 +3,7 @@ package com.ticket.core.api.controller.docs;
 import com.ticket.core.api.controller.request.ExchangeOAuth2TokenRequest;
 import com.ticket.core.api.controller.request.LoginRequest;
 import com.ticket.core.api.controller.request.RegisterMemberRequest;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.domain.auth.command.LoginUseCase;
 import com.ticket.core.domain.auth.command.LogoutUseCase;
@@ -84,7 +84,7 @@ public interface AuthControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ApiResponse<LogoutUseCase.Output> logout(
-            @Parameter(hidden = true) MemberPrincipal principal,
+            @Parameter(hidden = true) Passport principal,
             @Parameter(hidden = true) String refreshToken,
             @Parameter(hidden = true) HttpServletResponse response
     );

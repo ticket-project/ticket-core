@@ -20,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, InternalAuthProperties.class})
 public class SecurityConfig {
 
     /**
@@ -64,13 +64,13 @@ public class SecurityConfig {
     }
 
     /**
-     * API 전용 필터체인: 완전 Stateless (JWT 인증)
+     * API 전용 필터체인: 완전 Stateless (gateway 내부 토큰 인증)
      */
     @Bean
     @Order(2)
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
-            final JwtTokenService jwtTokenService,
+            final InternalAuthProperties internalAuthProperties,
             final RestAuthenticationEntryPoint restAuthenticationEntryPoint,
             final RestAccessDeniedHandler restAccessDeniedHandler
     ) throws Exception {
@@ -107,7 +107,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(
+                new InternalAuthAuthenticationFilter(internalAuthProperties),
+                UsernamePasswordAuthenticationFilter.class
+        );
         return http.build();
     }
 

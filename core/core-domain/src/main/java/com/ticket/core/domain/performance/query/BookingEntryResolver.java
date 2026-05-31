@@ -1,40 +1,31 @@
 package com.ticket.core.domain.performance.query;
 
 import com.ticket.core.domain.performance.model.Performance;
-import java.time.Clock;
 import java.time.LocalDateTime;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-@Service
-@RequiredArgsConstructor
-public class GetBookingEntryUseCase {
+public final class BookingEntryResolver {
 
     private static final String TICKETING_URL_TEMPLATE = "/booking/seat?performanceId=%d";
     private static final String QUEUE_ENTER_URL_TEMPLATE = "/api/v1/queue/performances/%d/enter";
 
-    private final PerformanceFinder performanceFinder;
-    private final Clock clock;
+    private BookingEntryResolver() {
+    }
 
-    public Output execute(final Input input) {
-        Performance performance = performanceFinder.findById(input.performanceId());
-        if (performance.requiresQueueAt(LocalDateTime.now(clock))) {
+    public static Output resolve(final Long performanceId, final Performance performance, final LocalDateTime now) {
+        if (performance.requiresQueueAt(now)) {
             return new Output(
                     EntryType.QUEUE,
                     true,
                     null,
-                    QUEUE_ENTER_URL_TEMPLATE.formatted(input.performanceId())
+                    QUEUE_ENTER_URL_TEMPLATE.formatted(performanceId)
             );
         }
         return new Output(
                 EntryType.DIRECT,
                 false,
-                TICKETING_URL_TEMPLATE.formatted(input.performanceId()),
+                TICKETING_URL_TEMPLATE.formatted(performanceId),
                 null
         );
-    }
-
-    public record Input(Long performanceId) {
     }
 
     public record Output(

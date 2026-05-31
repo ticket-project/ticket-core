@@ -12,7 +12,7 @@
 - 로컬 DB: `local` 프로파일에서 H2 file DB 사용
 - 운영 DB: `prod` 프로파일에서 Oracle 사용
 - 대기열 상태 관리: 이 저장소가 아니라 `ticket-queue`
-- 대기열 적용 여부 판단: 이 저장소의 `Performance.queueMode`와 `booking-entry` API
+- 대기열 적용 여부 판단: 이 저장소의 `Performance.queueMode`와 공연 상세 응답의 회차별 `entryType`
 - 단기 상태 관리: 좌석 선택, hold, refresh token, OAuth2 1회용 code는 이 저장소의 Redis 사용
 - 미구현/후속 범위: 결제 도메인, PG callback, 결제 성공 후 주문 확정/최종 판매 확정
 
@@ -77,7 +77,7 @@ HTTP/WebSocket
 | 인증 | `POST /api/v1/auth/signup`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` |
 | OAuth2 | `GET /api/v1/auth/social/urls`, `POST /api/v1/auth/oauth2/token` |
 | 공연 | `GET /api/v1/shows`, `GET /api/v1/shows/{id}`, `GET /api/v1/shows/latest`, `GET /api/v1/shows/search` |
-| 회차/좌석 | `GET /api/v1/performances/{performanceId}/summary`, `GET /api/v1/performances/{performanceId}/booking-entry`, `GET /api/v1/performances/{performanceId}/seats/status` |
+| 회차/좌석 | `GET /api/v1/performances/{performanceId}/summary`, `GET /api/v1/performances/{performanceId}/seats/status` |
 | 좌석 선택 | `POST /api/v1/performances/{performanceId}/seats/{seatId}/select`, `DELETE /api/v1/performances/{performanceId}/seats/select` |
 | 주문 시작 | `POST /api/v1/orders` |
 | 주문 조회/취소 | `GET /api/v1/orders/{orderKey}`, `DELETE /api/v1/orders/{orderKey}` |

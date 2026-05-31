@@ -5,7 +5,7 @@ import com.ticket.core.api.controller.request.LoginRequest;
 import com.ticket.core.api.controller.request.RegisterMemberRequest;
 import com.ticket.core.api.controller.docs.AuthControllerDocs;
 import com.ticket.core.config.security.JwtProperties;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.domain.auth.command.LoginUseCase;
 import com.ticket.core.domain.auth.command.LogoutUseCase;
@@ -88,13 +88,13 @@ public class AuthController implements AuthControllerDocs {
     @Override
     @PostMapping("/logout")
     public ApiResponse<LogoutUseCase.Output> logout(
-            @AuthenticationPrincipal final MemberPrincipal principal,
+            @AuthenticationPrincipal final Passport principal,
             @CookieValue(name = CookieUtils.REFRESH_TOKEN_COOKIE_NAME, required = false) final String refreshToken,
             final HttpServletResponse response
     ) {
         try {
             final LogoutUseCase.Input input = new LogoutUseCase.Input(
-                    principal.getMemberId(),
+                    principal.memberId(),
                     AuthRefreshToken.from(refreshToken)
             );
             final LogoutUseCase.Output output = logoutUseCase.execute(input);

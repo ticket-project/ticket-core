@@ -41,7 +41,7 @@ class PerformanceFinderTest {
                 LocalDateTime.of(2026, 3, 15, 18, 50),
                 LocalDateTime.of(2026, 3, 15, 19, 10)
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         Performance result = performanceFinder.findOpenPerformance(1L, FIXED_NOW);
@@ -57,7 +57,7 @@ class PerformanceFinderTest {
                 LocalDateTime.of(2026, 3, 15, 19, 10),
                 LocalDateTime.of(2026, 3, 15, 19, 20)
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -69,7 +69,7 @@ class PerformanceFinderTest {
     @Test
     void 공연이_없으면_findById가_찾을수없음_예외를_던진다() {
         //given
-        when(performanceRepository.findById(1L)).thenReturn(Optional.empty());
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.empty());
 
         //when
         //then
@@ -85,7 +85,7 @@ class PerformanceFinderTest {
                 LocalDateTime.of(2026, 3, 15, 19, 10),
                 LocalDateTime.of(2026, 3, 15, 19, 20)
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -101,7 +101,7 @@ class PerformanceFinderTest {
                 null,
                 LocalDateTime.of(2026, 3, 15, 19, 20)
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -117,7 +117,7 @@ class PerformanceFinderTest {
                 LocalDateTime.of(2026, 3, 15, 18, 40),
                 LocalDateTime.of(2026, 3, 15, 18, 50)
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -133,7 +133,7 @@ class PerformanceFinderTest {
                 LocalDateTime.of(2026, 3, 15, 18, 40),
                 null
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -149,7 +149,7 @@ class PerformanceFinderTest {
                 LocalDateTime.of(2026, 3, 15, 18, 50),
                 LocalDateTime.of(2026, 3, 15, 19, 10)
         );
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findWithQueuePolicyById(1L)).thenReturn(Optional.of(performance));
 
         //when
         Performance result = performanceFinder.findValidPerformanceById(1L, FIXED_NOW);

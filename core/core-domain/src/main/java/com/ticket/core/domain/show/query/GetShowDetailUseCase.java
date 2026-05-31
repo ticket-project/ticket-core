@@ -1,8 +1,8 @@
 package com.ticket.core.domain.show.query;
 
+import com.ticket.core.domain.performance.query.BookingEntryResolver;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.query.ShowFinder;
 import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
@@ -42,7 +42,11 @@ public class GetShowDetailUseCase {
             LocalDateTime startTime,
             LocalDateTime endTime,
             LocalDateTime orderOpenTime,
-            LocalDateTime orderCloseTime
+            LocalDateTime orderCloseTime,
+            BookingEntryResolver.EntryType entryType,
+            boolean queueRequired,
+            String redirectUrl,
+            String queueEnterUrl
     ) {
     }
 
