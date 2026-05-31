@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.stream.Collectors;
 
@@ -38,6 +39,13 @@ public class ApiControllerAdvice {
         return ResponseEntity
                 .status(e.getErrorType().getStatus())
                 .body(ApiResponse.error(e.getErrorType(), e.getData()));
+    }
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(NoHandlerFoundException e) {
+        return ResponseEntity
+                .status(ErrorType.NOT_FOUND_DATA.getStatus())
+                .body(ApiResponse.error(ErrorType.NOT_FOUND_DATA));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

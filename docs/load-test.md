@@ -45,7 +45,7 @@
 3. 안정 구간의 `admitted users/sec` 또는 요청 TPS에 0.6~0.7 안전계수를 적용한다.
 4. Queue Scheduler는 이 값보다 낮은 `admit per tick`으로 방출하도록 설정한다.
 
-현재 Queue Scheduler는 `active < maxActiveUsers`인 동안 한 tick에서 계속 승격한다. 따라서 스케줄러를 운영 기준으로 쓰려면 `maxActiveUsers`만이 아니라 tick당 승격 수 제한을 별도 정책으로 두는 것이 안전하다.
+현재 Queue Scheduler는 tick마다 `QUEUE_ADMIT_LIMIT_PER_TICK`명씩 waiting 앞쪽 사용자를 active로 승격한다. `QUEUE_ACTIVE_TTL`은 active member TTL이자 admission token 만료 시간으로, Ticket Server 예매 API 사용 가능 시간을 의미한다.
 
 ## 주의점
 

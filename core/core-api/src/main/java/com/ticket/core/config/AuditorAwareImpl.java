@@ -1,6 +1,6 @@
 package com.ticket.core.config;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.Passport;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,9 +16,9 @@ public class AuditorAwareImpl implements AuditorAware<String> {
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of(DEFAULT_AUDITOR);
         }
-        if (!(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
+        if (!(authentication.getPrincipal() instanceof Passport principal)) {
             return Optional.of(DEFAULT_AUDITOR);
         }
-        return Optional.of(String.valueOf(principal.getMemberId()));
+        return Optional.of(String.valueOf(principal.memberId()));
     }
 }

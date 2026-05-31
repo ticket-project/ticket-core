@@ -1,4 +1,4 @@
-package com.ticket.core.config.security;
+package com.ticket.core.config.admission;
 
 import com.ticket.support.security.admission.AdmissionTokenProperties;
 import com.ticket.support.security.admission.AdmissionTokenService;

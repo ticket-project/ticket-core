@@ -1,7 +1,6 @@
 package com.ticket.core.config;
 
-import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.domain.member.model.Role;
+import com.ticket.support.passport.Passport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,10 +17,10 @@ class AuditorAwareImplTest {
     }
 
     @Test
-    void 인증된_MemberPrincipal이_있으면_memberId를_감사자로_반환한다() {
-        MemberPrincipal principal = new MemberPrincipal(7L, Role.MEMBER);
+    void 인증된_Passport가_있으면_memberId를_감사자로_반환한다() {
+        Passport principal = new Passport(7L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
+                new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );
 
         AuditorAwareImpl auditorAware = new AuditorAwareImpl();
@@ -37,7 +36,7 @@ class AuditorAwareImplTest {
     }
 
     @Test
-    void MemberPrincipal이_아니면_system_감사자를_반환한다() {
+    void Passport가_아니면_system_감사자를_반환한다() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("anonymousUser", null)
         );

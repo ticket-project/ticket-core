@@ -2,6 +2,7 @@ package com.ticket.core.domain.show.query;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.model.Performance;
+import com.ticket.core.domain.performance.query.BookingEntryResolver;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.core.domain.show.mapping.ShowGrade;
@@ -106,19 +107,27 @@ public class ShowDetailQueryRepository {
     private List<Performance> fetchPerformances(final Long showId) {
         return queryFactory
                 .selectFrom(performance)
+                .leftJoin(performance.queuePolicy).fetchJoin()
                 .where(performance.show.id.eq(showId))
                 .orderBy(performance.startTime.asc(), performance.performanceNo.asc())
                 .fetch();
     }
 
     private GetShowDetailUseCase.PerformanceInfo toPerformanceInfo(final Performance performanceEntity) {
+        final BookingEntryResolver.Output bookingEntry =
+                BookingEntryResolver.resolve(performanceEntity.getId(), performanceEntity, LocalDateTime.now(clock));
+
         return new GetShowDetailUseCase.PerformanceInfo(
                 performanceEntity.getId(),
                 performanceEntity.getPerformanceNo(),
                 performanceEntity.getStartTime(),
                 performanceEntity.getEndTime(),
                 performanceEntity.getOrderOpenTime(),
-                performanceEntity.getOrderCloseTime()
+                performanceEntity.getOrderCloseTime(),
+                bookingEntry.entryType(),
+                bookingEntry.queueRequired(),
+                bookingEntry.redirectUrl(),
+                bookingEntry.queueEnterUrl()
         );
     }
 

@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.showlike.command.AddShowLikeUseCase;
 import com.ticket.core.domain.showlike.query.GetShowLikeStatusUseCase;
 import com.ticket.core.domain.showlike.command.RemoveShowLikeUseCase;
@@ -23,7 +23,7 @@ public interface ShowLikeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "공연 없음")
     })
     ApiResponse<AddShowLikeUseCase.Output> likeShow(
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) Passport memberPrincipal,
             @Parameter(description = "공연 ID", example = "1", required = true) Long showId
     );
 
@@ -37,7 +37,7 @@ public interface ShowLikeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "공연 없음")
     })
     ApiResponse<RemoveShowLikeUseCase.Output> unlikeShow(
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) Passport memberPrincipal,
             @Parameter(description = "공연 ID", example = "1", required = true) Long showId
     );
 
@@ -51,7 +51,7 @@ public interface ShowLikeControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "공연 없음")
     })
     ApiResponse<GetShowLikeStatusUseCase.Output> getLikeStatus(
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) Passport memberPrincipal,
             @Parameter(description = "공연 ID", example = "1", required = true) Long showId
     );
 

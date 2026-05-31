@@ -15,6 +15,15 @@ allprojects {
     version = "${property('applicationVersion')}"
 
     repositories {
+        mavenLocal()
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/ticket-project/ticket-common')
+            credentials {
+                username = findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+                password = findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+            }
+        }
         mavenCentral()
     }
 }

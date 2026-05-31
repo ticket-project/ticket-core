@@ -1,11 +1,17 @@
 package com.ticket.core.config.security;
+
+import com.ticket.support.passport.Passport;
+import com.ticket.support.security.internalauth.InternalAuthTokenProperties;
+import com.ticket.support.security.internalauth.InternalAuthTokenService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.TestPropertySource;
@@ -13,8 +19,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.servlet.http.HttpServletResponse;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -28,6 +32,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "security.jwt.secret-key=12345678901234567890123456789012",
         "security.jwt.access-token-expiration-seconds=1800",
         "security.jwt.refresh-token-expiration-seconds=1209600",
+        "security.internal-auth.issuer=ticket-gateway",
+        "security.internal-auth.audience=ticket-core",
+        "security.internal-auth.secret-key=abcdefabcdefabcdefabcdefabcdef12",
+        "security.internal-auth.expiration-seconds=60",
         "spring.security.oauth2.client.registration.google.client-id=test-google-client-id",
         "spring.security.oauth2.client.registration.google.client-secret=test-google-client-secret",
         "spring.security.oauth2.client.registration.kakao.client-id=test-kakao-client-id",
@@ -111,6 +119,24 @@ class ActuatorSecurityConfigTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void 일반_api는_유효한_internal_auth_token으로_접근할_수_있다() throws Exception {
+        mockMvc.perform(get("/api/v1/private-test")
+                        .header("X-Internal-Auth", "Bearer " + internalAuthToken()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("7:MEMBER"));
+    }
+
+    private String internalAuthToken() {
+        InternalAuthTokenProperties properties = new InternalAuthTokenProperties(
+                "ticket-gateway",
+                "ticket-core",
+                "abcdefabcdefabcdefabcdefabcdef12",
+                60L
+        );
+        return new InternalAuthTokenService(properties).issue(7L, "MEMBER");
+    }
+
     @RestController
     public static class TestController {
 
@@ -130,8 +156,8 @@ class ActuatorSecurityConfigTest {
         }
 
         @GetMapping("/api/v1/private-test")
-        public String privateApi() {
-            return "private";
+        public String privateApi(@AuthenticationPrincipal final Passport passport) {
+            return passport.memberId() + ":" + passport.role();
         }
     }
 }

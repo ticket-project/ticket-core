@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
@@ -37,17 +38,23 @@ public class AdmissionTokenService {
 
     public String issue(final Long memberId, final Long performanceId) {
         validateId(memberId, "memberId");
+        return issue(String.valueOf(memberId), performanceId, Duration.ofSeconds(properties.expirationSeconds()));
+    }
+
+    public String issue(final String subject, final Long performanceId, final Duration ttl) {
+        validateSubject(subject);
         validateId(performanceId, "performanceId");
+        validateTtl(ttl);
 
         Instant issuedAt = clock.instant();
-        Instant expiresAt = issuedAt.plusSeconds(properties.expirationSeconds());
+        Instant expiresAt = issuedAt.plus(ttl);
 
         return Jwts.builder()
                 .issuer(properties.issuer())
                 .audience()
                 .add(properties.audience())
                 .and()
-                .subject(String.valueOf(memberId))
+                .subject(subject)
                 .claim(PERFORMANCE_ID_CLAIM, performanceId)
                 .claim(SCOPE_CLAIM, SCOPE)
                 .issuedAt(Date.from(issuedAt))
@@ -63,7 +70,8 @@ public class AdmissionTokenService {
         validateScope(claims);
 
         return new AdmissionClaims(
-                parseSubject(claims),
+                claims.getSubject(),
+                parseMemberId(claims),
                 readLongClaim(claims, PERFORMANCE_ID_CLAIM),
                 claims.getIssuedAt().toInstant(),
                 claims.getExpiration().toInstant(),
@@ -74,9 +82,17 @@ public class AdmissionTokenService {
 
     public AdmissionClaims verifyFor(final String token, final Long memberId, final Long performanceId) {
         AdmissionClaims claims = verify(token);
-        if (!claims.memberId().equals(memberId)) {
+        if (!Objects.equals(claims.memberId(), memberId)) {
             throw new AdmissionTokenException("admission token member mismatch");
         }
+        if (!claims.performanceId().equals(performanceId)) {
+            throw new AdmissionTokenException("admission token performance mismatch");
+        }
+        return claims;
+    }
+
+    public AdmissionClaims verifyForPerformance(final String token, final Long performanceId) {
+        AdmissionClaims claims = verify(token);
         if (!claims.performanceId().equals(performanceId)) {
             throw new AdmissionTokenException("admission token performance mismatch");
         }
@@ -115,11 +131,11 @@ public class AdmissionTokenService {
         }
     }
 
-    private Long parseSubject(final Claims claims) {
+    private Long parseMemberId(final Claims claims) {
         try {
             return Long.parseLong(claims.getSubject());
         } catch (NumberFormatException exception) {
-            throw new AdmissionTokenException("admission token invalid subject", exception);
+            return null;
         }
     }
 
@@ -141,6 +157,18 @@ public class AdmissionTokenService {
     private void validateId(final Long value, final String name) {
         if (value == null || value <= 0) {
             throw new IllegalArgumentException(name + " must be positive");
+        }
+    }
+
+    private void validateSubject(final String subject) {
+        if (subject == null || subject.isBlank()) {
+            throw new IllegalArgumentException("subject must not be blank");
+        }
+    }
+
+    private void validateTtl(final Duration ttl) {
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalArgumentException("ttl must be positive");
         }
     }
 }

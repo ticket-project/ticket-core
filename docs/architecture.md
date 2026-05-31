@@ -6,13 +6,14 @@
 
 현재 프로젝트는 멀티 모듈 Gradle 구조이며, 실행/API, 도메인/application, 기술 구현을 점진적으로 분리하는 모듈러 모놀리스에 가깝다.
 
-실제 포함 모듈은 다음 5개다.
+실제 포함 모듈은 다음 6개다.
 
 - `core:core-api`
 - `core:core-domain`
 - `core:core-infra`
 - `storage:redis-core`
 - `support:logging`
+- `support:security`
 
 ## 모듈 책임
 
@@ -82,6 +83,16 @@ Redis 관련 공통 의존성을 제공한다.
 
 로깅 관련 공통 설정 리소스를 제공한다.
 
+### `support:security`
+
+JWT, Internal Auth, Admission Token 등 공통 보안 유틸을 제공하는 라이브러리 모듈이다. `maven-publish`로 발행되며, `core-api`가 이 모듈의 토큰 발급/검증 컴포넌트를 사용한다.
+
+주요 책임:
+
+- 사용자 Access Token 발급/검증 (`JwtAccessTokenIssuer`, `JwtTokenVerifier`)
+- Internal Auth Token 검증과 Passport 복원 (`InternalAuthTokenService`, `InternalAuthPassportService`)
+- Admission Token 발급/검증 (`AdmissionTokenService`)
+
 ## 패키지 구조
 
 ### `core-api`
@@ -93,9 +104,11 @@ Redis 관련 공통 의존성을 제공한다.
 - `com.ticket.core.api.controller.request`
   - 요청 DTO
 - `com.ticket.core.config`
-  - 웹, JPA Auditing, HTTP service, WebSocket, admission 설정
+  - 웹, JPA Auditing, HTTP service, WebSocket 설정
 - `com.ticket.core.config.security`
   - JWT, OAuth2, 인증/인가 구성
+- `com.ticket.core.config.admission`
+  - Admission token 검증 설정
 - `com.ticket.core.support.response`
   - 공통 응답 래퍼
 

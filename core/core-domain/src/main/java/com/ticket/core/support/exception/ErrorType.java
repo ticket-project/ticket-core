@@ -47,11 +47,11 @@ public enum ErrorType {
     NOT_SUPPORT_SHOW_SORT(HttpStatus.BAD_REQUEST, ErrorCode.E7000, "지원하지 않는 정렬 조건입니다."),
     SHOW_LIKE_ALREADY_EXISTS(HttpStatus.CONFLICT, ErrorCode.E7001, "이미 찜한 공연입니다."),
 
-    //대기열
-    ADMISSION_TOKEN_REQUIRED(HttpStatus.FORBIDDEN, ErrorCode.E8000, "좌석 페이지 입장을 위한 입장 토큰이 필요합니다."),
-    ADMISSION_TOKEN_INVALID(HttpStatus.FORBIDDEN, ErrorCode.E8001, "유효하지 않은 입장 토큰입니다."),
-    ADMISSION_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, ErrorCode.E8002, "만료된 입장 토큰입니다."),
-    ADMISSION_TOKEN_MISMATCH(HttpStatus.FORBIDDEN, ErrorCode.E8003, "입장 토큰 정보가 요청 정보와 일치하지 않습니다."),;
+    //대기열 입장
+    ADMISSION_TOKEN_REQUIRED(HttpStatus.FORBIDDEN, ErrorCode.E8000, "대기열 입장 토큰이 필요합니다."),
+    ADMISSION_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, ErrorCode.E8001, "대기열 입장 토큰이 만료되었습니다."),
+    ADMISSION_TOKEN_INVALID(HttpStatus.FORBIDDEN, ErrorCode.E8002, "대기열 입장 토큰이 올바르지 않습니다."),
+    ;
 
     private final HttpStatus status;
     private final ErrorCode errorCode;
