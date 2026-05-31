@@ -1,19 +1,18 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceControllerDocs;
-import com.ticket.core.config.AdmissionTokenValidator;
-import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.domain.performance.query.GetBookingEntryUseCase;
+import com.ticket.core.config.admission.AdmissionTokenValidator;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.domain.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,7 +24,6 @@ public class PerformanceController implements PerformanceControllerDocs {
     private final GetSeatStatusUseCase getSeatStatusUseCase;
     private final GetPerformanceSummaryUseCase getPerformanceSummaryUseCase;
     private final GetPerformanceScheduleListUseCase getPerformanceScheduleListUseCase;
-    private final GetBookingEntryUseCase getBookingEntryUseCase;
     private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
@@ -47,22 +45,11 @@ public class PerformanceController implements PerformanceControllerDocs {
     }
 
     @Override
-    @GetMapping("/{performanceId}/booking-entry")
-    public ApiResponse<GetBookingEntryUseCase.Output> getBookingEntry(
-            @PathVariable final Long performanceId
-    ) {
-        final GetBookingEntryUseCase.Input input = new GetBookingEntryUseCase.Input(performanceId);
-        return ApiResponse.success(getBookingEntryUseCase.execute(input));
-    }
-
-    @Override
     @GetMapping("/{performanceId}/seats/availability")
     public ApiResponse<GetSeatAvailabilityUseCase.Output> getSeatAvailability(
             @PathVariable final Long performanceId,
-            final MemberPrincipal memberPrincipal,
-            final HttpServletRequest servletRequest
+            final Passport memberPrincipal
     ) {
-        admissionTokenValidator.verify(servletRequest, memberPrincipal.getMemberId(), performanceId);
         final GetSeatAvailabilityUseCase.Input input = new GetSeatAvailabilityUseCase.Input(performanceId);
         return ApiResponse.success(getSeatAvailabilityUseCase.execute(input));
     }
@@ -71,10 +58,10 @@ public class PerformanceController implements PerformanceControllerDocs {
     @GetMapping("/{performanceId}/seats/status")
     public ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
             @PathVariable final Long performanceId,
-            final MemberPrincipal memberPrincipal,
-            final HttpServletRequest servletRequest
+            @RequestHeader(value = AdmissionTokenValidator.HEADER, required = false) final String admissionToken,
+            final Passport memberPrincipal
     ) {
-        admissionTokenValidator.verify(servletRequest, memberPrincipal.getMemberId(), performanceId);
+        admissionTokenValidator.validate(performanceId, admissionToken);
         final GetSeatStatusUseCase.Input input = new GetSeatStatusUseCase.Input(performanceId);
         return ApiResponse.success(getSeatStatusUseCase.execute(input));
     }

@@ -2,6 +2,8 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.domain.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.core.domain.performanceseat.query.GetVenueLayoutUseCase;
+import com.ticket.core.domain.performance.query.BookingEntryResolver;
+import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.query.CountSearchShowsUseCase;
@@ -113,5 +115,67 @@ class ShowControllerContractTest {
                 .andExpect(jsonPath("$.data.items[0].id").value(1))
                 .andExpect(jsonPath("$.data.nextCursor").value("cursor-1"))
                 .andExpect(jsonPath("$.error").isEmpty());
+    }
+    @Test
+    void show_detail_response_includes_booking_entry_for_each_performance() throws Exception {
+        GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
+        ShowController controller = new ShowController(
+                mock(GetShowsUseCase.class),
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleStartApproachingShowsUseCase.class),
+                mock(GetSaleStartApproachingShowsPageUseCase.class),
+                mock(SearchShowsUseCase.class),
+                mock(CountSearchShowsUseCase.class),
+                getShowDetailUseCase,
+                mock(GetShowSeatsUseCase.class),
+                mock(GetVenueLayoutUseCase.class)
+        );
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+
+        GetShowDetailUseCase.PerformanceInfo performance = new GetShowDetailUseCase.PerformanceInfo(
+                10L,
+                1L,
+                LocalDateTime.of(2026, 3, 20, 19, 0),
+                LocalDateTime.of(2026, 3, 20, 21, 0),
+                LocalDateTime.of(2026, 3, 10, 10, 0),
+                LocalDateTime.of(2026, 3, 20, 20, 0),
+                BookingEntryResolver.EntryType.QUEUE,
+                true,
+                null,
+                "/api/v1/queue/performances/10/enter"
+        );
+        GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
+                1L,
+                "공연",
+                "부제",
+                "소개",
+                LocalDate.of(2026, 3, 20),
+                LocalDate.of(2026, 3, 21),
+                120,
+                10L,
+                2L,
+                BookingStatus.ON_SALE,
+                SaleType.GENERAL,
+                LocalDateTime.of(2026, 3, 10, 10, 0),
+                LocalDateTime.of(2026, 3, 20, 20, 0),
+                "image",
+                null,
+                null,
+                List.of("콘서트"),
+                List.of(),
+                List.of(new GetShowDetailUseCase.PerformanceDateInfo(
+                        LocalDate.of(2026, 3, 20),
+                        List.of(performance)
+                ))
+        );
+
+        when(getShowDetailUseCase.execute(new GetShowDetailUseCase.Input(1L))).thenReturn(detail);
+
+        mockMvc.perform(get("/api/v1/shows/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].entryType").value("QUEUE"))
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueRequired").value(true))
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueEnterUrl")
+                        .value("/api/v1/queue/performances/10/enter"));
     }
 }

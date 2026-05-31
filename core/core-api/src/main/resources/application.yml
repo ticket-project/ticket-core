@@ -82,6 +82,11 @@ security:
     secret-key: ${JWT_SECRET}
     access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS}
     refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS}
+  internal-auth:
+    issuer: ${INTERNAL_AUTH_ISSUER:ticket-gateway}
+    audience: ${INTERNAL_AUTH_CORE_AUDIENCE:ticket-core}
+    secret-key: ${INTERNAL_AUTH_SECRET_KEY:abcdefabcdefabcdefabcdefabcdef12}
+    expiration-seconds: ${INTERNAL_AUTH_EXPIRATION_SECONDS:60}
   admission:
     issuer: ${ADMISSION_TOKEN_ISSUER:ticket-queue}
     audience: ${ADMISSION_TOKEN_AUDIENCE:ticket-api}

@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.MemberControllerDocs;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.domain.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.domain.showlike.query.GetMyShowLikesUseCase;
@@ -24,15 +24,15 @@ public class MemberController implements MemberControllerDocs {
 
     @Override
     @GetMapping
-    public ApiResponse<GetCurrentMemberUseCase.Output> getCurrentMember(final MemberPrincipal memberPrincipal) {
-        final GetCurrentMemberUseCase.Input input = new GetCurrentMemberUseCase.Input(memberPrincipal.getMemberId());
+    public ApiResponse<GetCurrentMemberUseCase.Output> getCurrentMember(final Passport memberPrincipal) {
+        final GetCurrentMemberUseCase.Input input = new GetCurrentMemberUseCase.Input(memberPrincipal.memberId());
         return ApiResponse.success(getCurrentMemberUseCase.execute(input));
     }
 
     @Override
     @DeleteMapping
-    public ApiResponse<WithdrawCurrentMemberUseCase.Output> withdrawCurrentMember(final MemberPrincipal memberPrincipal) {
-        final WithdrawCurrentMemberUseCase.Input input = new WithdrawCurrentMemberUseCase.Input(memberPrincipal.getMemberId());
+    public ApiResponse<WithdrawCurrentMemberUseCase.Output> withdrawCurrentMember(final Passport memberPrincipal) {
+        final WithdrawCurrentMemberUseCase.Input input = new WithdrawCurrentMemberUseCase.Input(memberPrincipal.memberId());
         final WithdrawCurrentMemberUseCase.Output output = withdrawCurrentMemberUseCase.execute(input);
         SecurityContextHolder.clearContext();
         return ApiResponse.success(output);
@@ -41,11 +41,11 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/me/likes")
     public ApiResponse<SliceResponse<GetMyShowLikesUseCase.ShowLikeSummary>> getMyLikes(
-            final MemberPrincipal memberPrincipal,
+            final Passport memberPrincipal,
             @RequestParam(required = false) final String cursor,
             @RequestParam(defaultValue = "20") final int size
     ) {
-        final GetMyShowLikesUseCase.Input input = new GetMyShowLikesUseCase.Input(memberPrincipal.getMemberId(), cursor, size);
+        final GetMyShowLikesUseCase.Input input = new GetMyShowLikesUseCase.Input(memberPrincipal.memberId(), cursor, size);
         final GetMyShowLikesUseCase.Output output = getMyShowLikesUseCase.execute(input);
         return ApiResponse.success(SliceResponse.from(output.shows(), output.nextCursor()));
     }

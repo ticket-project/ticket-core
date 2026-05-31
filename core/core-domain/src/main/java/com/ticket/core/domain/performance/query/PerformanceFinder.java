@@ -25,7 +25,7 @@ public class PerformanceFinder {
     }
 
     public Performance findById(final Long performanceId) {
-        return performanceRepository.findById(performanceId)
+        return performanceRepository.findWithQueuePolicyById(performanceId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA, "공연을 찾을 수 없습니다. id=" + performanceId));
     }
 

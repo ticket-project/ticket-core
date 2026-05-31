@@ -7,14 +7,14 @@ import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import jakarta.persistence.Column;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -50,28 +50,8 @@ public class Performance extends BaseEntity {
     @Column
     private Integer holdTime = 600;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private QueueMode queueMode;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private QueueLevel queueLevel;
-
-    @Column
-    private Integer maxActiveUsers;
-
-    @Column
-    private Integer entryTokenTtlSeconds;
-
-    @Column
-    private LocalDateTime preopenQueueStartAt;
-
-    @Column(length = 255)
-    private String waitingRoomMessage;
-
-    @Column(length = 255)
-    private String reason;
+    @OneToOne(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PerformanceQueuePolicy queuePolicy;
 
     public Performance(
             final Show show,
@@ -111,17 +91,12 @@ public class Performance extends BaseEntity {
     }
 
     public boolean requiresQueueAt(final LocalDateTime now) {
-        if (queueMode == null || queueMode == QueueMode.FORCE_OFF) {
+        if (queuePolicy == null) {
             return false;
         }
-        if (queueMode == QueueMode.FORCE_ON) {
-            return true;
-        }
-        if (preopenQueueStartAt == null || now == null || now.isBefore(preopenQueueStartAt)) {
-            return false;
-        }
-        return orderCloseTime == null || !now.isAfter(orderCloseTime);
+        return queuePolicy.requiresQueueAt(now, orderCloseTime);
     }
+
     public void updateQueuePolicy(
             final QueueMode queueMode,
             final QueueLevel queueLevel,
@@ -131,13 +106,84 @@ public class Performance extends BaseEntity {
             final String waitingRoomMessage,
             final String reason
     ) {
-        this.queueMode = queueMode;
-        this.queueLevel = queueLevel;
-        this.maxActiveUsers = maxActiveUsers;
-        this.entryTokenTtlSeconds = entryTokenTtlSeconds;
-        this.preopenQueueStartAt = preopenQueueStartAt;
-        this.waitingRoomMessage = waitingRoomMessage;
-        this.reason = reason;
+        updateQueuePolicy(
+                queueMode,
+                queueLevel,
+                maxActiveUsers,
+                null,
+                entryTokenTtlSeconds,
+                null,
+                preopenQueueStartAt,
+                waitingRoomMessage,
+                reason
+        );
+    }
+
+    public void updateQueuePolicy(
+            final QueueMode queueMode,
+            final QueueLevel queueLevel,
+            final Integer maxActiveUsers,
+            final Integer admitLimitPerTick,
+            final Integer entryTokenTtlSeconds,
+            final Integer sessionTtlSeconds,
+            final LocalDateTime preopenQueueStartAt,
+            final String waitingRoomMessage,
+            final String reason
+    ) {
+        if (queuePolicy == null) {
+            queuePolicy = PerformanceQueuePolicy.create(
+                    this,
+                    queueMode,
+                    queueLevel,
+                    maxActiveUsers,
+                    admitLimitPerTick,
+                    entryTokenTtlSeconds,
+                    sessionTtlSeconds,
+                    preopenQueueStartAt,
+                    waitingRoomMessage,
+                    reason
+            );
+            return;
+        }
+        queuePolicy.update(
+                queueMode,
+                queueLevel,
+                maxActiveUsers,
+                admitLimitPerTick,
+                entryTokenTtlSeconds,
+                sessionTtlSeconds,
+                preopenQueueStartAt,
+                waitingRoomMessage,
+                reason
+        );
+    }
+
+    public QueueMode getQueueMode() {
+        return queuePolicy == null ? null : queuePolicy.getQueueMode();
+    }
+
+    public QueueLevel getQueueLevel() {
+        return queuePolicy == null ? null : queuePolicy.getQueueLevel();
+    }
+
+    public Integer getMaxActiveUsers() {
+        return queuePolicy == null ? null : queuePolicy.getMaxActiveUsers();
+    }
+
+    public Integer getEntryTokenTtlSeconds() {
+        return queuePolicy == null ? null : queuePolicy.getEntryTokenTtlSeconds();
+    }
+
+    public LocalDateTime getPreopenQueueStartAt() {
+        return queuePolicy == null ? null : queuePolicy.getPreopenQueueStartAt();
+    }
+
+    public String getWaitingRoomMessage() {
+        return queuePolicy == null ? null : queuePolicy.getWaitingRoomMessage();
+    }
+
+    public String getReason() {
+        return queuePolicy == null ? null : queuePolicy.getReason();
     }
 
     private Integer validateMaxCanHoldCount(final Integer maxCanHoldCount) {

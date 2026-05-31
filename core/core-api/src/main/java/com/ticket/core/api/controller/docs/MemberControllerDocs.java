@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.domain.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.domain.showlike.query.GetMyShowLikesUseCase;
@@ -20,7 +20,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     ApiResponse<GetCurrentMemberUseCase.Output> getCurrentMember(
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) Passport memberPrincipal
     );
 
     @Operation(summary = "현재 회원 탈퇴", description = "로그인한 회원을 탈퇴 처리합니다.")
@@ -29,7 +29,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     ApiResponse<WithdrawCurrentMemberUseCase.Output> withdrawCurrentMember(
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) Passport memberPrincipal
     );
 
     @Operation(
@@ -41,7 +41,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패")
     })
     ApiResponse<SliceResponse<GetMyShowLikesUseCase.ShowLikeSummary>> getMyLikes(
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+            @Parameter(hidden = true) Passport memberPrincipal,
             @Parameter(description = "커서(마지막 찜 ID)", example = "123") String cursor,
             @Parameter(description = "페이지 크기", example = "20") int size
     );

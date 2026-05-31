@@ -1,14 +1,13 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.LoginMemberArgumentResolver;
-import com.ticket.core.config.AdmissionTokenValidator;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.support.passport.web.PassportArgumentResolver;
+import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.support.ApiControllerAdvice;
+import com.ticket.support.passport.Passport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SuppressWarnings("NonAsciiCharacters")
 class OrderControllerContractTest {
 
-    private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, Role.MEMBER);
+    private static final Passport MEMBER = new Passport(100L, "MEMBER");
 
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
     private final GetOrderDetailUseCase getOrderDetailUseCase = Mockito.mock(GetOrderDetailUseCase.class);
@@ -50,11 +50,11 @@ class OrderControllerContractTest {
                 admissionTokenValidator
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new LoginMemberArgumentResolver())
+                .setCustomArgumentResolvers(new PassportArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(MEMBER, null, MEMBER.getAuthorities())
+                new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())
         );
     }
 
@@ -74,6 +74,7 @@ class OrderControllerContractTest {
 
         mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header(AdmissionTokenValidator.HEADER, "admission-token")
                         .content("""
                                 {
                                   "performanceId": 10,
@@ -88,6 +89,8 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
                 .andExpect(jsonPath("$.data.expiresAt").value("2026-03-24T14:10:00"))
                 .andExpect(jsonPath("$.error").isEmpty());
+
+        verify(admissionTokenValidator).validate(10L, "admission-token");
     }
 
     @Test
@@ -106,6 +109,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
         verifyNoInteractions(createOrderUseCase);
+        verifyNoInteractions(admissionTokenValidator);
     }
 
     @Test
@@ -123,5 +127,6 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
         verifyNoInteractions(createOrderUseCase);
+        verifyNoInteractions(admissionTokenValidator);
     }
 }

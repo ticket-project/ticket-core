@@ -1,7 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.domain.performance.query.GetBookingEntryUseCase;
+import com.ticket.support.passport.Passport;
 import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.domain.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatAvailabilityUseCase;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 
 @Tag(name = "Performance", description = "Performance APIs")
 public interface PerformanceControllerDocs {
@@ -33,39 +31,27 @@ public interface PerformanceControllerDocs {
     );
 
     @Operation(
-            summary = "Decide booking entry route",
-            description = "Ticket Server checks the performance queue policy and returns DIRECT or QUEUE."
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
-    })
-    ApiResponse<GetBookingEntryUseCase.Output> getBookingEntry(
-            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId
-    );
-
-    @Operation(
             summary = "Get seat availability by grade",
-            description = "Admission token is required only when the performance queue policy requires queue admission."
+            description = "Returns available seat counts by grade."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetSeatAvailabilityUseCase.Output> getSeatAvailability(
             @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
-            @Parameter(hidden = true) HttpServletRequest servletRequest
+            @Parameter(hidden = true) Passport memberPrincipal
     );
 
     @Operation(
             summary = "Get seat status",
-            description = "Admission token is required only when the performance queue policy requires queue admission."
+            description = "Returns current seat status for a performance."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
             @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
-            @Parameter(hidden = true) HttpServletRequest servletRequest
+            @Parameter(description = "Admission token issued by Queue Server") String admissionToken,
+            @Parameter(hidden = true) Passport memberPrincipal
     );
 }

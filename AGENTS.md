@@ -37,7 +37,7 @@
 - `auth`: JWT, refresh token, OAuth2, filter chain, 공개 API 노출을 확인한다.
 - `hold`, `order`: 주문 시작/취소/만료, hold release, outbox, 부분 상태 전이를 확인한다.
 - `performanceseat`: selection/hold 충돌, 좌석 상태 계산, WebSocket 전파를 확인한다.
-- `queue`/admission: `Authorization`의 memberId와 `X-Admission-Token`의 memberId/performanceId 일치를 확인한다.
+- `queue`/admission: 대기열 필요 회차에서만 `X-Admission-Token`의 서명, 만료, performanceId 일치를 확인한다.
 - Redis/Redisson: key naming, TTL, expiration listener, scheduler, 분산락 범위를 확인한다.
 
 ## 검증
