@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "security.internal-auth")
-public class InternalAuthProperties {
+public class PassportProperties {
 
     private String issuer = "ticket-gateway";
     private String audience = "ticket-core";
