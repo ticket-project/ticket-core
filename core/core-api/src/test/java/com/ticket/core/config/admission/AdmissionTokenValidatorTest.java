@@ -5,8 +5,8 @@ import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.support.security.admission.AdmissionTokenException;
-import com.ticket.support.security.admission.AdmissionTokenService;
+import com.ticket.support.token.admission.AdmissionTokenException;
+import com.ticket.support.token.admission.AdmissionTokenService;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;

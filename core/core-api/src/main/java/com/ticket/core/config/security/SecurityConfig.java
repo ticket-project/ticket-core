@@ -1,5 +1,8 @@
 package com.ticket.core.config.security;
 
+import com.ticket.support.passport.web.PassportAuthenticationFilter;
+import com.ticket.support.token.passport.PassportService;
+import com.ticket.support.token.passport.PassportTokenProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, InternalAuthProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, PassportProperties.class})
 public class SecurityConfig {
 
     /**
@@ -70,7 +73,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
-            final InternalAuthProperties internalAuthProperties,
+            final PassportProperties passportProperties,
             final RestAuthenticationEntryPoint restAuthenticationEntryPoint,
             final RestAccessDeniedHandler restAccessDeniedHandler
     ) throws Exception {
@@ -108,10 +111,24 @@ public class SecurityConfig {
                 );
 
         http.addFilterBefore(
-                new InternalAuthAuthenticationFilter(internalAuthProperties),
+                passportAuthenticationFilter(passportProperties),
                 UsernamePasswordAuthenticationFilter.class
         );
         return http.build();
+    }
+
+    private PassportAuthenticationFilter passportAuthenticationFilter(final PassportProperties passportProperties) {
+        passportProperties.validate();
+        PassportService passportService = new PassportService(new PassportTokenProperties(
+                passportProperties.getIssuer(),
+                passportProperties.getAudience(),
+                passportProperties.getSecretKey(),
+                passportProperties.getExpirationSeconds()
+        ));
+        return new PassportAuthenticationFilter(
+                new CorePassportVerifier(passportService),
+                new DeferredPassportFailureHandler()
+        );
     }
 
     @Bean
