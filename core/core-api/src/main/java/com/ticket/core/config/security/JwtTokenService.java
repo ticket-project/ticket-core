@@ -1,9 +1,9 @@
 package com.ticket.core.config.security;
 
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.support.security.jwt.JwtAccessTokenIssuer;
-import com.ticket.support.security.jwt.JwtMemberClaims;
-import com.ticket.support.security.jwt.JwtTokenVerifier;
+import com.ticket.support.token.jwt.JwtAccessTokenIssuer;
+import com.ticket.support.token.jwt.JwtMemberClaims;
+import com.ticket.support.token.jwt.JwtTokenVerifier;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,8 +15,8 @@ public class JwtTokenService {
 
     public JwtTokenService(final JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        final com.ticket.support.security.jwt.JwtProperties sharedProperties =
-                new com.ticket.support.security.jwt.JwtProperties(
+        final com.ticket.support.token.jwt.JwtProperties sharedProperties =
+                new com.ticket.support.token.jwt.JwtProperties(
                         jwtProperties.getIssuer(),
                         jwtProperties.getSecretKey(),
                         jwtProperties.getAccessTokenExpirationSeconds()

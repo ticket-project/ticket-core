@@ -1,8 +1,8 @@
 package com.ticket.core.config.security;
 
 import com.ticket.support.passport.Passport;
-import com.ticket.support.security.internalauth.InternalAuthTokenProperties;
-import com.ticket.support.security.internalauth.InternalAuthTokenService;
+import com.ticket.support.token.passport.PassportTokenProperties;
+import com.ticket.support.token.passport.PassportTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -127,14 +127,21 @@ class ActuatorSecurityConfigTest {
                 .andExpect(content().string("7:MEMBER"));
     }
 
+    @Test
+    void 일반_api는_유효하지_않은_internal_auth_token이면_401을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/v1/private-test")
+                        .header("X-Internal-Auth", "Bearer not-a-valid-token"))
+                .andExpect(status().isUnauthorized());
+    }
+
     private String internalAuthToken() {
-        InternalAuthTokenProperties properties = new InternalAuthTokenProperties(
+        PassportTokenProperties properties = new PassportTokenProperties(
                 "ticket-gateway",
                 "ticket-core",
                 "abcdefabcdefabcdefabcdefabcdef12",
                 60L
         );
-        return new InternalAuthTokenService(properties).issue(7L, "MEMBER");
+        return new PassportTokenService(properties).issue(7L, "MEMBER");
     }
 
     @RestController
