@@ -1,8 +1,5 @@
 package com.ticket.core.config.security;
 
-import com.ticket.support.passport.web.PassportAuthenticationFilter;
-import com.ticket.support.token.passport.PassportService;
-import com.ticket.support.token.passport.PassportTokenProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, PassportProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
 public class SecurityConfig {
 
     /**
@@ -67,13 +64,13 @@ public class SecurityConfig {
     }
 
     /**
-     * API 전용 필터체인: 완전 Stateless (gateway 내부 토큰 인증)
+     * API 전용 필터체인: 완전 Stateless (외부 access token 직접 인증)
      */
     @Bean
     @Order(2)
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
-            final PassportProperties passportProperties,
+            final JwtTokenService jwtTokenService,
             final RestAuthenticationEntryPoint restAuthenticationEntryPoint,
             final RestAccessDeniedHandler restAccessDeniedHandler
     ) throws Exception {
@@ -91,7 +88,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 정적 리소스 & 인프라
                         .requestMatchers("/", "/api/swagger-ui.html", "/api/swagger-ui/**",
-                                "/api/api-docs/**", "/ws/**","/api/images/**").permitAll()
+                                "/api/api-docs/**", "/ws/**", "/api/images/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**",
                                 "/actuator/info", "/actuator/prometheus").permitAll()
                         // 인증 관련 (로그아웃 제외 — 로그아웃은 인증 필요)
@@ -111,24 +108,10 @@ public class SecurityConfig {
                 );
 
         http.addFilterBefore(
-                passportAuthenticationFilter(passportProperties),
+                new AccessTokenAuthenticationFilter(jwtTokenService),
                 UsernamePasswordAuthenticationFilter.class
         );
         return http.build();
-    }
-
-    private PassportAuthenticationFilter passportAuthenticationFilter(final PassportProperties passportProperties) {
-        passportProperties.validate();
-        PassportService passportService = new PassportService(new PassportTokenProperties(
-                passportProperties.getIssuer(),
-                passportProperties.getAudience(),
-                passportProperties.getSecretKey(),
-                passportProperties.getExpirationSeconds()
-        ));
-        return new PassportAuthenticationFilter(
-                new CorePassportVerifier(passportService),
-                new DeferredPassportFailureHandler()
-        );
     }
 
     @Bean

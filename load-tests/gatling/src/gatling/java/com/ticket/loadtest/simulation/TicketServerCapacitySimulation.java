@@ -18,6 +18,7 @@ public class TicketServerCapacitySimulation extends Simulation {
 
     private final HttpProtocolBuilder httpProtocol = http
             .baseUrl(LoadTestConfig.baseUrl())
+            .shareConnections()
             .acceptHeader("application/json")
             .contentTypeHeader("application/json");
 

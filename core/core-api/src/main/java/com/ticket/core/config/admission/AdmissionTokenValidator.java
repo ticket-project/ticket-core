@@ -4,8 +4,6 @@ import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.support.token.admission.AdmissionTokenException;
-import com.ticket.support.token.admission.AdmissionTokenService;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -38,7 +36,7 @@ public class AdmissionTokenValidator {
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
-    public void validate(final Long performanceId, final String admissionToken) {
+    public void validate(final Long performanceId, final Long memberId, final String admissionToken) {
         Performance performance = performanceFinder.findById(performanceId);
         if (!performance.requiresQueueAt(LocalDateTime.now(clock))) {
             return;
@@ -49,7 +47,7 @@ public class AdmissionTokenValidator {
         }
 
         try {
-            admissionTokenService.verifyForPerformance(admissionToken, performanceId);
+            admissionTokenService.verifyFor(admissionToken, memberId, performanceId);
         } catch (AdmissionTokenException exception) {
             if (exception.getMessage() != null && exception.getMessage().contains("expired")) {
                 throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
