@@ -1,7 +1,5 @@
 package com.ticket.core.config.admission;
 
-import com.ticket.support.token.admission.AdmissionTokenProperties;
-import com.ticket.support.token.admission.AdmissionTokenService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

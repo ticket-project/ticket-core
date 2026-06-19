@@ -1,12 +1,12 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.support.passport.web.PassportArgumentResolver;
+import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.domain.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.domain.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.core.domain.performanceseat.command.SelectSeatUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionControllerContractTest {
 
-    private static final Passport MEMBER = new Passport(100L, "MEMBER");
+    private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
 
     private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
@@ -42,7 +42,7 @@ class SeatSelectionControllerContractTest {
                 admissionTokenValidator
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new PassportArgumentResolver())
+                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
@@ -65,7 +65,7 @@ class SeatSelectionControllerContractTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error").isEmpty());
 
-        verify(admissionTokenValidator).validate(10L, "admission-token");
+        verify(admissionTokenValidator).validate(10L, 100L, "admission-token");
     }
 
     @Test

@@ -3,7 +3,7 @@ package com.ticket.core.api.controller;
 import com.ticket.core.api.controller.docs.HoldControllerDocs;
 import com.ticket.core.api.controller.request.CreateHoldRequest;
 import com.ticket.core.config.admission.AdmissionTokenValidator;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -33,11 +33,11 @@ public class HoldController implements HoldControllerDocs {
             @PathVariable final Long performanceId,
             @Valid @RequestBody final CreateHoldRequest request,
             @RequestHeader(value = AdmissionTokenValidator.HEADER, required = false) final String admissionToken,
-            final Passport memberPrincipal
+            final MemberPrincipal memberPrincipal
     ) {
-        admissionTokenValidator.validate(performanceId, admissionToken);
+        admissionTokenValidator.validate(performanceId, memberPrincipal.getMemberId(), admissionToken);
         final CreateOrderUseCase.Input input =
-                new CreateOrderUseCase.Input(performanceId, request.getSeatIds(), memberPrincipal.memberId());
+                new CreateOrderUseCase.Input(performanceId, request.getSeatIds(), memberPrincipal.getMemberId());
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
                 .header("X-Order-Key", output.orderKey())

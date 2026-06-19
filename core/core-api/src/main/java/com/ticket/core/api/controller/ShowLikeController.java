@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.ShowLikeControllerDocs;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.showlike.command.AddShowLikeUseCase;
 import com.ticket.core.domain.showlike.query.GetShowLikeStatusUseCase;
 import com.ticket.core.domain.showlike.command.RemoveShowLikeUseCase;
@@ -23,7 +23,7 @@ public class ShowLikeController implements ShowLikeControllerDocs {
     @Override
     @PostMapping("/shows/{showId}")
     public ApiResponse<AddShowLikeUseCase.Output> likeShow(
-            final Passport memberPrincipal,
+            final MemberPrincipal memberPrincipal,
             @PathVariable final Long showId
     ) {
         final Long memberId = requireMemberId(memberPrincipal);
@@ -34,7 +34,7 @@ public class ShowLikeController implements ShowLikeControllerDocs {
     @Override
     @DeleteMapping("/shows/{showId}")
     public ApiResponse<RemoveShowLikeUseCase.Output> unlikeShow(
-            final Passport memberPrincipal,
+            final MemberPrincipal memberPrincipal,
             @PathVariable final Long showId
     ) {
         final Long memberId = requireMemberId(memberPrincipal);
@@ -45,7 +45,7 @@ public class ShowLikeController implements ShowLikeControllerDocs {
     @Override
     @GetMapping("/shows/{showId}")
     public ApiResponse<GetShowLikeStatusUseCase.Output> getLikeStatus(
-            final Passport memberPrincipal,
+            final MemberPrincipal memberPrincipal,
             @PathVariable final Long showId
     ) {
         final Long memberId = requireMemberId(memberPrincipal);
@@ -53,10 +53,10 @@ public class ShowLikeController implements ShowLikeControllerDocs {
         return ApiResponse.success(getShowLikeStatusUseCase.execute(input));
     }
 
-    private Long requireMemberId(final Passport memberPrincipal) {
-        if (memberPrincipal == null || memberPrincipal.memberId() == null) {
+    private Long requireMemberId(final MemberPrincipal memberPrincipal) {
+        if (memberPrincipal == null || memberPrincipal.getMemberId() == null) {
             throw new AuthException(ErrorType.AUTHENTICATION_ERROR);
         }
-        return memberPrincipal.memberId();
+        return memberPrincipal.getMemberId();
     }
 }

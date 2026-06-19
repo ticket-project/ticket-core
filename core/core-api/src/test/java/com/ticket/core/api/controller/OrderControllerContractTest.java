@@ -1,13 +1,13 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.support.passport.web.PassportArgumentResolver;
+import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SuppressWarnings("NonAsciiCharacters")
 class OrderControllerContractTest {
 
-    private static final Passport MEMBER = new Passport(100L, "MEMBER");
+    private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
 
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
     private final GetOrderDetailUseCase getOrderDetailUseCase = Mockito.mock(GetOrderDetailUseCase.class);
@@ -50,7 +50,7 @@ class OrderControllerContractTest {
                 admissionTokenValidator
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new PassportArgumentResolver())
+                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
@@ -90,7 +90,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data.expiresAt").value("2026-03-24T14:10:00"))
                 .andExpect(jsonPath("$.error").isEmpty());
 
-        verify(admissionTokenValidator).validate(10L, "admission-token");
+        verify(admissionTokenValidator).validate(10L, 100L, "admission-token");
     }
 
     @Test

@@ -1,11 +1,11 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.support.passport.web.PassportArgumentResolver;
+import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.domain.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.domain.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.domain.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,10 +35,10 @@ class MemberControllerContractTest {
                 Mockito.mock(GetMyShowLikesUseCase.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new PassportArgumentResolver())
+                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
-        Passport principal = new Passport(1L, "MEMBER");
+        MemberPrincipal principal = new MemberPrincipal(1L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );

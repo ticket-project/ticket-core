@@ -1,37 +1,63 @@
 package com.ticket.core.config.security;
 
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.support.token.jwt.JwtAccessTokenIssuer;
-import com.ticket.support.token.jwt.JwtMemberClaims;
-import com.ticket.support.token.jwt.JwtTokenVerifier;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Objects;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenService {
 
+    private static final String ROLE_CLAIM = "role";
+
     private final JwtProperties jwtProperties;
-    private final JwtAccessTokenIssuer jwtAccessTokenIssuer;
-    private final JwtTokenVerifier jwtTokenVerifier;
+    private final Clock clock;
+    private final SecretKey secretKey;
 
     public JwtTokenService(final JwtProperties jwtProperties) {
-        this.jwtProperties = jwtProperties;
-        final com.ticket.support.token.jwt.JwtProperties sharedProperties =
-                new com.ticket.support.token.jwt.JwtProperties(
-                        jwtProperties.getIssuer(),
-                        jwtProperties.getSecretKey(),
-                        jwtProperties.getAccessTokenExpirationSeconds()
-                );
-        this.jwtAccessTokenIssuer = new JwtAccessTokenIssuer(sharedProperties);
-        this.jwtTokenVerifier = new JwtTokenVerifier(sharedProperties);
+        this(jwtProperties, Clock.systemUTC());
+    }
+
+    JwtTokenService(final JwtProperties jwtProperties, final Clock clock) {
+        this.jwtProperties = Objects.requireNonNull(jwtProperties, "jwtProperties must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     public String createAccessToken(final MemberPrincipal memberPrincipal) {
-        return jwtAccessTokenIssuer.issue(memberPrincipal.getMemberId(), memberPrincipal.getRole().name());
+        Instant issuedAt = clock.instant();
+        Instant expiresAt = issuedAt.plusSeconds(jwtProperties.getAccessTokenExpirationSeconds());
+
+        return Jwts.builder()
+                .issuer(jwtProperties.getIssuer())
+                .subject(String.valueOf(memberPrincipal.getMemberId()))
+                .claim(ROLE_CLAIM, memberPrincipal.getRole().name())
+                .issuedAt(Date.from(issuedAt))
+                .expiration(Date.from(expiresAt))
+                .signWith(secretKey)
+                .compact();
     }
 
     public MemberPrincipal parse(final String token) {
-        final JwtMemberClaims claims = jwtTokenVerifier.verify(token);
-        return new MemberPrincipal(claims.memberId(), Role.valueOf(claims.role()));
+        Claims claims = Jwts.parser()
+                .requireIssuer(jwtProperties.getIssuer())
+                .clock(() -> Date.from(clock.instant()))
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return new MemberPrincipal(
+                Long.parseLong(claims.getSubject()),
+                Role.valueOf(claims.get(ROLE_CLAIM, String.class))
+        );
     }
 
     public long getAccessTokenExpirationSeconds() {
