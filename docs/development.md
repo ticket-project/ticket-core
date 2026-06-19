@@ -144,7 +144,6 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 주요 위치:
 
 - `C:\Users\mn040\IdeaProjects\ticket-queue`
-- `C:\Users\mn040\IdeaProjects\ticket-gateway`
 - `core/core-api/src/main/java/com/ticket/core/config/admission/AdmissionTokenValidator.java`
 - `support/security/src/main/java/com/ticket/support/security/admission`
 

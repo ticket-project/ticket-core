@@ -37,6 +37,14 @@ public final class LoadTestConfig {
         return property(ConfigKey.BASE_URL);
     }
 
+    public static String coreBaseUrl() {
+        return optionalProperty(ConfigKey.CORE_BASE_URL, baseUrl());
+    }
+
+    public static String queueBaseUrl() {
+        return optionalProperty(ConfigKey.QUEUE_BASE_URL, baseUrl());
+    }
+
     public static String performanceId() {
         return property(ConfigKey.PERFORMANCE_ID);
     }
@@ -136,8 +144,8 @@ public final class LoadTestConfig {
         return Map.of("Authorization", "Bearer #{accessToken}");
     }
 
-    public static Map<CharSequence, String> queueSessionHeaders() {
-        return Map.of("X-Queue-Session", "#{queueSessionId}");
+    public static Map<CharSequence, String> queueTokenHeaders() {
+        return Map.of("X-Queue-Token", "#{queueToken}");
     }
 
     public static Map<CharSequence, String> authAndAdmissionHeaders() {
@@ -154,6 +162,14 @@ public final class LoadTestConfig {
             if (defaultValue == null) {
                 throw new IllegalStateException("Missing required system property: -D" + key.propertyName());
             }
+            return defaultValue;
+        }
+        return value.trim();
+    }
+
+    private static String optionalProperty(final ConfigKey key, final String defaultValue) {
+        final String value = System.getProperty(key.propertyName());
+        if (value == null || value.isBlank()) {
             return defaultValue;
         }
         return value.trim();
@@ -240,6 +256,8 @@ public final class LoadTestConfig {
 
     private enum ConfigKey {
         BASE_URL,
+        CORE_BASE_URL,
+        QUEUE_BASE_URL,
         PERFORMANCE_ID,
         STATUS_POLLS,
         STATUS_POLL_PAUSE_SECONDS,
@@ -270,6 +288,8 @@ public final class LoadTestConfig {
         private String propertyName() {
             return switch (this) {
                 case BASE_URL -> "baseUrl";
+                case CORE_BASE_URL -> "coreBaseUrl";
+                case QUEUE_BASE_URL -> "queueBaseUrl";
                 case PERFORMANCE_ID -> "performanceId";
                 case STATUS_POLLS -> "statusPolls";
                 case STATUS_POLL_PAUSE_SECONDS -> "statusPollPauseSeconds";
@@ -302,6 +322,7 @@ public final class LoadTestConfig {
         private String defaultValue() {
             return switch (this) {
                 case BASE_URL -> "http://localhost:8080";
+                case CORE_BASE_URL, QUEUE_BASE_URL -> null;
                 case PERFORMANCE_ID -> "1";
                 case STATUS_POLLS -> "3";
                 case STATUS_POLL_PAUSE_SECONDS -> "1";

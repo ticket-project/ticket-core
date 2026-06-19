@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller.docs;
 
 import com.ticket.core.api.controller.request.CreateOrderRequest;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
 import com.ticket.core.support.response.ApiResponse;
@@ -52,7 +52,7 @@ public interface OrderControllerDocs {
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             CreateOrderRequest request,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
-            @Parameter(hidden = true) Passport memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
     @Operation(summary = "주문 조회", description = "주문/결제 화면 진입 시 호출합니다. 만료된 주문은 EXPIRED 상태로 표시됩니다.")
@@ -63,7 +63,7 @@ public interface OrderControllerDocs {
     ApiResponse<GetOrderDetailUseCase.Output> getOrder(
             @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
             String orderKey,
-            @Parameter(hidden = true) Passport memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
     @Operation(summary = "주문 취소", description = "PENDING 주문과 연결된 HOLD를 취소합니다.")
@@ -74,6 +74,6 @@ public interface OrderControllerDocs {
     ApiResponse<Void> cancelOrder(
             @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
             String orderKey,
-            @Parameter(hidden = true) Passport memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 }
