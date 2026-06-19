@@ -5,8 +5,6 @@ import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.support.token.admission.AdmissionTokenException;
-import com.ticket.support.token.admission.AdmissionTokenService;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -37,7 +35,7 @@ class AdmissionTokenValidatorTest {
     void direct_회차는_admission_token_없이_통과한다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_OFF));
 
-        validator.validate(10L, null);
+        validator.validate(10L, 10L, null);
 
         verifyNoInteractions(admissionTokenService);
     }
@@ -46,7 +44,7 @@ class AdmissionTokenValidatorTest {
     void queue_회차는_admission_token이_필수다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
 
-        assertThatThrownBy(() -> validator.validate(10L, null))
+        assertThatThrownBy(() -> validator.validate(10L, 10L, null))
                 .isInstanceOf(CoreException.class)
                 .extracting("errorType")
                 .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED);
@@ -56,18 +54,18 @@ class AdmissionTokenValidatorTest {
     void queue_회차는_admission_token의_회차와_만료를_검증한다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
 
-        validator.validate(10L, "admission-token");
+        validator.validate(10L, 10L, "admission-token");
 
-        verify(admissionTokenService).verifyForPerformance("admission-token", 10L);
+        verify(admissionTokenService).verifyFor("admission-token", 10L, 10L);
     }
 
     @Test
     void 만료된_admission_token은_거부한다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
-        when(admissionTokenService.verifyForPerformance("expired-token", 10L))
+        when(admissionTokenService.verifyFor("expired-token", 10L, 10L))
                 .thenThrow(new AdmissionTokenException("admission token expired"));
 
-        assertThatThrownBy(() -> validator.validate(10L, "expired-token"))
+        assertThatThrownBy(() -> validator.validate(10L, 10L, "expired-token"))
                 .isInstanceOf(CoreException.class)
                 .extracting("errorType")
                 .isEqualTo(ErrorType.ADMISSION_TOKEN_EXPIRED);
@@ -76,10 +74,10 @@ class AdmissionTokenValidatorTest {
     @Test
     void 잘못된_admission_token은_거부한다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
-        when(admissionTokenService.verifyForPerformance("invalid-token", 10L))
+        when(admissionTokenService.verifyFor("invalid-token", 10L, 10L))
                 .thenThrow(new AdmissionTokenException("admission token invalid"));
 
-        assertThatThrownBy(() -> validator.validate(10L, "invalid-token"))
+        assertThatThrownBy(() -> validator.validate(10L, 10L, "invalid-token"))
                 .isInstanceOf(CoreException.class)
                 .extracting("errorType")
                 .isEqualTo(ErrorType.ADMISSION_TOKEN_INVALID);

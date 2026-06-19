@@ -2,6 +2,8 @@
 
 기준일: 2026-06-17
 
+> 2026-06-17 후속 결정: `Passport`와 `ticket-common`도 제거한다. core는 `MemberPrincipal`, queue는 `AuthenticatedMember`를 서비스 로컬 principal로 사용하며, access/admission token 발급·검증 코드는 각 서비스가 직접 소유한다. 아래 본문 중 `Passport`/`ticket-common` 유지 내용은 이 후속 결정으로 대체된다.
+
 ## 목표
 
 `ticket-gateway` 애플리케이션을 제거하고, `ticket-core`와 `ticket-queue`가 각각 외부 요청을 직접 받을 수 있는 구조로 전환한다. 티켓 오픈 시 `/api/v1/queue/**` 트래픽이 gateway를 먼저 통과하지 않게 하여 queue 라인의 병목과 core 라인의 병목을 분리한다.

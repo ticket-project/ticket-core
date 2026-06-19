@@ -90,7 +90,7 @@ JWT, Internal Auth, Admission Token 등 공통 보안 유틸을 제공하는 라
 주요 책임:
 
 - 사용자 Access Token 발급/검증 (`JwtAccessTokenIssuer`, `JwtTokenVerifier`)
-- Internal Auth Token 검증과 Passport 복원 (`InternalAuthTokenService`, `InternalAuthPassportService`)
+- 서비스 로컬 principal 기반 Access Token 검증
 - Admission Token 발급/검증 (`AdmissionTokenService`)
 
 ## 패키지 구조

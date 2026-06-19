@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller.docs;
 
 import com.ticket.core.api.controller.request.CreateHoldRequest;
-import com.ticket.support.passport.Passport;
+import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,6 +52,6 @@ public interface HoldControllerDocs {
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
             CreateHoldRequest request,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
-            @Parameter(hidden = true) Passport memberPrincipal
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 }

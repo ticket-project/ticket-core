@@ -22,6 +22,7 @@ public class TicketOpenFlowSimulation extends Simulation {
 
     private final HttpProtocolBuilder httpProtocol = http
             .baseUrl(LoadTestConfig.baseUrl())
+            .shareConnections()
             .acceptHeader("application/json")
             .contentTypeHeader("application/json");
 
@@ -29,8 +30,9 @@ public class TicketOpenFlowSimulation extends Simulation {
         final ScenarioBuilder scenario = scenario("ticket-open-flow")
                 .exec(LoadTestConfig.initializeSession())
                 .exec(LoadTestConfig.authenticate())
-                .exec(enterQueue())
+                .exec(joinQueue())
                 .exec(pollUntilAdmitted())
+                .exec(enterQueue())
                 .exec(doIf(session -> session.contains("admissionToken")).then(
                         fetchSeatStatus(),
                         createOrder()
@@ -45,45 +47,56 @@ public class TicketOpenFlowSimulation extends Simulation {
                 );
     }
 
-    private ChainBuilder enterQueue() {
-        return exec(http("queue enter")
-                .post("/api/v1/queue/performances/#{performanceId}/enter")
+    private ChainBuilder joinQueue() {
+        return exec(http("queue join")
+                .post(LoadTestConfig.queueBaseUrl() + "/api/v1/queue/performances/#{performanceId}/join")
                 .headers(LoadTestConfig.authHeaders())
                 .check(status().is(200))
-                .check(jsonPath("$.status").saveAs("queueStatus"))
-                .check(jsonPath("$.queueSessionId").saveAs("queueSessionId"))
-                .check(jsonPath("$.admissionToken").optional().saveAs("admissionToken")));
+                .check(jsonPath("$.seq").ofLong().saveAs("queueSeq"))
+                .check(jsonPath("$.queueToken").saveAs("queueToken")));
     }
 
     private ChainBuilder pollUntilAdmitted() {
         return exec(session -> session.set("pollAttempts", 0))
-                .asLongAs(session -> !session.contains("admissionToken")
-                        && session.contains("queueSessionId")
+                .asLongAs(session -> !session.contains("admissionReady")
                         && session.getInt("pollAttempts") < LoadTestConfig.statusPolls()
-                        && !"EXPIRED".equals(session.getString("queueStatus"))
-                        && !"LEFT".equals(session.getString("queueStatus"))
                 ).on(
-                        exec(http("queue status")
-                                .get("/api/v1/queue/performances/#{performanceId}/status")
-                                .headers(LoadTestConfig.queueSessionHeaders())
+                        exec(http("queue state")
+                                .get(LoadTestConfig.queueBaseUrl() + "/api/v1/queue/performances/#{performanceId}/state")
                                 .check(status().is(200))
-                                .check(jsonPath("$.status").saveAs("queueStatus"))
-                                .check(jsonPath("$.admissionToken").optional().saveAs("admissionToken")))
-                                .exec(session -> session.set("pollAttempts", session.getInt("pollAttempts") + 1))
+                                .check(jsonPath("$.admittedUntilSeq").ofLong().saveAs("admittedUntilSeq")))
+                                .exec(session -> {
+                                    final long admittedUntilSeq = session.getLong("admittedUntilSeq");
+                                    final long queueSeq = session.getLong("queueSeq");
+                                    if (admittedUntilSeq >= queueSeq) {
+                                        return session.set("admissionReady", true);
+                                    }
+                                    return session.set("pollAttempts", session.getInt("pollAttempts") + 1);
+                                })
                                 .pause(Duration.ofSeconds(LoadTestConfig.statusPollPauseSeconds()))
                 );
     }
 
+    private ChainBuilder enterQueue() {
+        return doIf(session -> session.contains("admissionReady")).then(
+                exec(http("queue enter")
+                        .post(LoadTestConfig.queueBaseUrl() + "/api/v1/queue/performances/#{performanceId}/enter")
+                        .headers(LoadTestConfig.queueTokenHeaders())
+                        .check(status().is(200))
+                        .check(jsonPath("$.admissionToken").saveAs("admissionToken")))
+        );
+    }
+
     private ChainBuilder fetchSeatStatus() {
         return exec(http("seat status")
-                .get("/api/v1/performances/#{performanceId}/seats/status")
+                .get(LoadTestConfig.coreBaseUrl() + "/api/v1/performances/#{performanceId}/seats/status")
                 .headers(LoadTestConfig.authAndAdmissionHeaders())
                 .check(status().is(200)));
     }
 
     private ChainBuilder createOrder() {
         return exec(http("create order")
-                .post("/api/v1/orders")
+                .post(LoadTestConfig.coreBaseUrl() + "/api/v1/orders")
                 .headers(LoadTestConfig.authAndAdmissionHeaders())
                 .body(StringBody("""
                         {

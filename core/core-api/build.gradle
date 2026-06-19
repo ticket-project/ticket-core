@@ -11,10 +11,6 @@ dependencies {
     implementation project(':core:core-infra')
     implementation project(':support:logging')
 
-    implementation 'com.ticket:ticket-common-passport:0.0.1-SNAPSHOT'
-    implementation 'com.ticket:ticket-common-passport-web:0.0.1-SNAPSHOT'
-    implementation 'com.ticket:ticket-common-token:0.0.1-SNAPSHOT'
-
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'

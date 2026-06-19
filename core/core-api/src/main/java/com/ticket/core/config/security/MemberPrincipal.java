@@ -20,6 +20,10 @@ public class MemberPrincipal implements OAuth2User {
         this(memberId, role, Map.of());
     }
 
+    public MemberPrincipal(final Long memberId, final String role) {
+        this(memberId, Role.valueOf(Objects.requireNonNull(role, "role must not be null")));
+    }
+
     public MemberPrincipal(final Long memberId, final Role role, final Map<String, Object> attributes) {
         this.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
         this.role = Objects.requireNonNull(role, "role must not be null");
