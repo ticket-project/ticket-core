@@ -54,9 +54,15 @@ public class JwtTokenService {
                 .parseSignedClaims(token)
                 .getPayload();
 
+        String subject = claims.getSubject();
+        String role = claims.get(ROLE_CLAIM, String.class);
+        if (subject == null || subject.isBlank() || role == null || role.isBlank() || claims.getExpiration() == null) {
+            throw new IllegalArgumentException("JWT required claim is missing");
+        }
+
         return new MemberPrincipal(
-                Long.parseLong(claims.getSubject()),
-                Role.valueOf(claims.get(ROLE_CLAIM, String.class))
+                Long.parseLong(subject),
+                Role.valueOf(role)
         );
     }
 

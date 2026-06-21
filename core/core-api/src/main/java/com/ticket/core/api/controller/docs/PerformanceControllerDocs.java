@@ -38,8 +38,7 @@ public interface PerformanceControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
     })
     ApiResponse<GetSeatAvailabilityUseCase.Output> getSeatAvailability(
-            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId
     );
 
     @Operation(
