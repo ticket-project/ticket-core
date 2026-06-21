@@ -97,6 +97,7 @@ API 실행:
 Gatling 프로젝트 컴파일/단위 테스트:
 
 ```powershell
+cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-gatling-load-tests
 .\gradlew.bat -p load-tests/gatling test
 .\gradlew.bat -p load-tests/gatling gatlingClasses
 ```
@@ -149,7 +150,7 @@ app:
 
 ## Gatling 실행
 
-Gatling은 별도 설치하지 않는다. 루트 Gradle wrapper로 `load-tests/gatling` 독립 프로젝트를 실행한다.
+Gatling은 별도 설치하지 않는다. sibling 저장소 `ticket-gatling-load-tests`의 Gradle wrapper로 `load-tests/gatling` 독립 프로젝트를 실행한다.
 
 공통 옵션:
 

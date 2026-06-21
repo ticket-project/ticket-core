@@ -22,7 +22,7 @@
 4. `docs/operations.md`
 5. 관련 모듈의 `build.gradle`, `settings.gradle`, 테스트 코드
 
-부하 테스트나 예매 오픈 검증은 `docs/load-test.md`와 `docs/load-test/` 하위 문서를 함께 본다.
+부하 테스트나 예매 오픈 검증은 `docs/load-test.md`, `docs/load-test/` 하위 문서, sibling 저장소의 `../ticket-gatling-load-tests/load-tests/gatling`을 함께 본다.
 
 ## 저장소를 읽는 순서
 

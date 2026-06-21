@@ -51,6 +51,8 @@ Swagger:
 - `docs`: 개발, 구조, 운영, 부하 테스트 문서
 - `.codex`, `.github`, `.agents`: AI 도구와 자동화 설정
 
+Gatling 부하 테스트 코드는 sibling 저장소 `../ticket-gatling-load-tests/load-tests/gatling`에서 관리한다.
+
 ## AI 작업 기준
 
 공통 규칙은 [AGENTS.md](AGENTS.md)를 기준으로 한다. 도구별 설정 파일은 해당 도구가 자동으로 읽기 위한 얇은 어댑터이며, 상세 기준은 `docs/` 문서로 연결한다.
