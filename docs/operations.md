@@ -151,9 +151,10 @@ GitHub Actions 배포 workflow는 아래 명령과 맞물린다.
 
 - `docs/load-test/ticket-open-local.md`
 
-Gatling 프로젝트는 루트 Gradle wrapper로 실행한다.
+Gatling 프로젝트는 sibling 저장소 `ticket-gatling-load-tests`에서 실행한다.
 
 ```powershell
+cd ..\ticket-gatling-load-tests
 .\gradlew.bat -p load-tests/gatling test
 .\gradlew.bat -p load-tests/gatling gatlingClasses
 ```

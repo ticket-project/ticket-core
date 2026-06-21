@@ -19,7 +19,7 @@
 5. `settings.gradle`, 루트 `build.gradle`, 관련 모듈 `build.gradle`
 6. 관련 소스와 테스트
 
-부하 테스트 작업은 `docs/load-test.md`, `docs/load-test/`, `load-tests/gatling`을 추가로 읽는다.
+부하 테스트 작업은 `docs/load-test.md`, `docs/load-test/`, sibling 저장소의 `../ticket-gatling-load-tests/load-tests/gatling`을 추가로 읽는다.
 
 ## 모듈 경계
 

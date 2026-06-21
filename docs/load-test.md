@@ -19,6 +19,8 @@
 
 - [load-test/ticket-open-local.md](load-test/ticket-open-local.md)
 
+실제 Gatling 프로젝트는 sibling 저장소 `../ticket-gatling-load-tests/load-tests/gatling`에 있다.
+
 ## 기본 실행 흐름
 
 1. Redis와 필요한 로컬 관측성 도구를 실행한다.
@@ -32,6 +34,7 @@
 ```powershell
 .\gradlew.bat :core:core-api:bootRun
 .\gradlew.bat :core:core-api:test --tests "com.ticket.core.config.seed.SeedDataLoaderTest"
+cd ..\ticket-gatling-load-tests
 .\gradlew.bat -p load-tests/gatling test
 .\gradlew.bat -p load-tests/gatling gatlingClasses
 ```
