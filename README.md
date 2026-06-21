@@ -40,10 +40,10 @@ ticket
 ├── support
 │   ├── logging        # 공통 로깅 리소스
 │   └── security       # JWT/admission token 공통 보안 유틸
-├── load-tests
-│   └── gatling        # Gatling 부하 테스트 프로젝트
 └── docs               # 개발/아키텍처/운영/부하 테스트 문서
 ```
+
+Gatling 부하 테스트 코드는 sibling 저장소 `../ticket-gatling-load-tests/load-tests/gatling`에서 관리한다.
 
 ## 의존 방향
 
@@ -155,4 +155,4 @@ OAuth2 로그인을 실제로 확인하려면 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT
 - README는 전체 맥락만 담고, 세부 규칙은 `AGENTS.md`와 `docs/`를 우선한다.
 - `auth`, `hold`, `order`, `performanceseat`, `queue` 관련 변경은 동시성, 트랜잭션, Redis TTL, 만료 listener/scheduler, admission token 검증을 함께 확인한다.
 - 기존 미커밋 변경은 사용자 작업으로 보고 되돌리지 않는다.
-- `load-tests/gatling` 실행은 실제 부하를 만들 수 있으므로 사용자가 명시적으로 요청한 경우에만 다룬다.
+- `../ticket-gatling-load-tests/load-tests/gatling`의 Gatling 실행은 실제 부하를 만들 수 있으므로 사용자가 명시적으로 요청한 경우에만 다룬다.

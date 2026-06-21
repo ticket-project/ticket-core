@@ -93,7 +93,11 @@ $env:QUEUE_TOKEN_SECRET="same-queue-token-secret-32bytes-minimum"
 
 ## Gatling 실행
 
-Gatling은 루트 Gradle wrapper로 `load-tests/gatling` 독립 프로젝트를 실행한다.
+Gatling은 sibling 저장소 `ticket-gatling-load-tests`의 `load-tests/gatling` 독립 프로젝트를 실행한다.
+
+```powershell
+cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-gatling-load-tests
+```
 
 공통 옵션:
 
