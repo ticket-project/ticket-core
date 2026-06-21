@@ -47,8 +47,7 @@ public class PerformanceController implements PerformanceControllerDocs {
     @Override
     @GetMapping("/{performanceId}/seats/availability")
     public ApiResponse<GetSeatAvailabilityUseCase.Output> getSeatAvailability(
-            @PathVariable final Long performanceId,
-            final MemberPrincipal memberPrincipal
+            @PathVariable final Long performanceId
     ) {
         final GetSeatAvailabilityUseCase.Input input = new GetSeatAvailabilityUseCase.Input(performanceId);
         return ApiResponse.success(getSeatAvailabilityUseCase.execute(input));
