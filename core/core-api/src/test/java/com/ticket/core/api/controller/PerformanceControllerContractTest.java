@@ -68,6 +68,7 @@ class PerformanceControllerContractTest {
     void seat_availability는_admission_token_없이_조회한다() throws Exception {
         when(getSeatAvailabilityUseCase.execute(new GetSeatAvailabilityUseCase.Input(10L)))
                 .thenReturn(new GetSeatAvailabilityUseCase.Output(List.of()));
+        SecurityContextHolder.clearContext();
 
         mockMvc.perform(get("/api/v1/performances/10/seats/availability"))
                 .andExpect(status().isOk())

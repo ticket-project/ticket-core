@@ -68,6 +68,7 @@ class SimulationConnectionPolicyTest {
 
         assertTrue(source.contains("coreBaseUrl"));
         assertTrue(source.contains("queueBaseUrl"));
+        assertTrue(source.contains(".post(coreBaseUrl() + \"/api/v1/auth/login\")"));
         assertTrue(source.contains("queueTokenHeaders"));
         assertTrue(source.contains("X-Queue-Token"));
         assertFalse(source.contains("queueSessionHeaders"));

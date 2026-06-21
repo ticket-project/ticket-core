@@ -48,10 +48,9 @@ public class AdmissionTokenValidator {
 
         try {
             admissionTokenService.verifyFor(admissionToken, memberId, performanceId);
+        } catch (AdmissionTokenExpiredException exception) {
+            throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
         } catch (AdmissionTokenException exception) {
-            if (exception.getMessage() != null && exception.getMessage().contains("expired")) {
-                throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
-            }
             throw new CoreException(ErrorType.ADMISSION_TOKEN_INVALID);
         }
     }

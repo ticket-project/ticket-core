@@ -36,6 +36,7 @@ public class AdmissionTokenService {
         Claims claims = parse(token);
         validateAudience(claims);
         validateScope(claims);
+        validateTimestamps(claims);
 
         return new AdmissionClaims(
                 claims.getSubject(),
@@ -73,14 +74,14 @@ public class AdmissionTokenService {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException exception) {
-            throw new AdmissionTokenException("admission token expired", exception);
+            throw new AdmissionTokenExpiredException("admission token expired", exception);
         } catch (JwtException | IllegalArgumentException exception) {
             throw new AdmissionTokenException("admission token invalid", exception);
         }
     }
 
     private void validateAudience(final Claims claims) {
-        if (!claims.getAudience().contains(properties.audience())) {
+        if (claims.getAudience() == null || !claims.getAudience().contains(properties.audience())) {
             throw new AdmissionTokenException("admission token invalid audience");
         }
     }
@@ -91,11 +92,17 @@ public class AdmissionTokenService {
         }
     }
 
+    private void validateTimestamps(final Claims claims) {
+        if (claims.getIssuedAt() == null || claims.getExpiration() == null) {
+            throw new AdmissionTokenException("admission token invalid timestamps");
+        }
+    }
+
     private Long parseMemberId(final Claims claims) {
         try {
             return Long.parseLong(claims.getSubject());
         } catch (NumberFormatException exception) {
-            return null;
+            throw new AdmissionTokenException("admission token invalid subject", exception);
         }
     }
 
