@@ -110,7 +110,7 @@ public final class LoadTestConfig {
             return session.set("loginEmail", email)
                     .set("loginPassword", property(ConfigKey.LOGIN_PASSWORD));
         }).exec(http("login")
-                .post("/api/v1/auth/login")
+                .post(coreBaseUrl() + "/api/v1/auth/login")
                 .body(StringBody("""
                         {
                           "email": "#{loginEmail}",

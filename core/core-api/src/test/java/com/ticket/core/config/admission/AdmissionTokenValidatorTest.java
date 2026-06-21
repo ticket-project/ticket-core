@@ -63,7 +63,7 @@ class AdmissionTokenValidatorTest {
     void 만료된_admission_token은_거부한다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
         when(admissionTokenService.verifyFor("expired-token", 10L, 10L))
-                .thenThrow(new AdmissionTokenException("admission token expired"));
+                .thenThrow(new AdmissionTokenExpiredException("admission token expired", null));
 
         assertThatThrownBy(() -> validator.validate(10L, 10L, "expired-token"))
                 .isInstanceOf(CoreException.class)
