@@ -1,1 +1,7 @@
-logging.config: classpath:logback/logback-${spring.profiles.active}.xml
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    org.springframework: INFO
+    com.ticket: INFO
