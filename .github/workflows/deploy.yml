@@ -59,7 +59,7 @@ jobs:
           script: |
             set -e
             IMAGE="${{ secrets.DOCKER_USERNAME }}/ticket-be:latest"
-            DEPLOY_DIR="/home/ubuntu/ticket-core"
+            DEPLOY_DIR="/home/ubuntu"
             CURRENT_FE_IMAGE="$(sudo docker inspect ticket-fe --format '{{.Config.Image}}' 2>/dev/null || true)"
 
             if [ -z "$CURRENT_FE_IMAGE" ]; then
