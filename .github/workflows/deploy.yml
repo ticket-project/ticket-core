@@ -54,12 +54,12 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST_IP }}
-          username: root
+          username: ubuntu
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
             IMAGE="${{ secrets.DOCKER_USERNAME }}/ticket-be:latest"
-            DEPLOY_DIR="/root"
+            DEPLOY_DIR="/home/ubuntu/ticket-core"
             CURRENT_FE_IMAGE="$(sudo docker inspect ticket-fe --format '{{.Config.Image}}' 2>/dev/null || true)"
 
             if [ -z "$CURRENT_FE_IMAGE" ]; then
