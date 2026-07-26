@@ -15,7 +15,6 @@ public class HoldRaceSimulation extends Simulation {
 
     private final HttpProtocolBuilder httpProtocol = http
             .baseUrl(LoadTestConfig.baseUrl())
-            .shareConnections()
             .acceptHeader("application/json")
             .contentTypeHeader("application/json");
 
@@ -23,13 +22,12 @@ public class HoldRaceSimulation extends Simulation {
         final ScenarioBuilder scenario = scenario("hold-race")
                 .exec(LoadTestConfig.initializeSession())
                 .exec(LoadTestConfig.authenticate())
-                .exec(LoadTestConfig.withAdmissionToken())
-                .exec(http("create order")
-                        .post("/api/v1/orders")
-                        .headers(LoadTestConfig.authAndAdmissionHeaders())
+                .exec(LoadTestConfig.withConfiguredQueueToken())
+                .exec(http("create hold")
+                        .post("/api/v1/performances/#{performanceId}/holds")
+                        .headers(LoadTestConfig.authAndQueueHeaders())
                         .body(StringBody("""
                                 {
-                                  "performanceId": #{performanceId},
                                   "seatIds": #{seatIdsJson}
                                 }
                                 """))

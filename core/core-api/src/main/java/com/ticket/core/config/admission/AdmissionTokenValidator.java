@@ -17,12 +17,19 @@ public class AdmissionTokenValidator {
     private final PerformanceFinder performanceFinder;
     private final AdmissionTokenService admissionTokenService;
     private final Clock clock;
+    private final boolean enforcementEnabled;
 
     public AdmissionTokenValidator(
             final PerformanceFinder performanceFinder,
-            final AdmissionTokenService admissionTokenService
+            final AdmissionTokenService admissionTokenService,
+            final TicketAdmissionTokenProperties properties
     ) {
-        this(performanceFinder, admissionTokenService, Clock.systemDefaultZone());
+        this(
+                performanceFinder,
+                admissionTokenService,
+                Clock.systemDefaultZone(),
+                properties.isEnforcementEnabled()
+        );
     }
 
     AdmissionTokenValidator(
@@ -30,13 +37,27 @@ public class AdmissionTokenValidator {
             final AdmissionTokenService admissionTokenService,
             final Clock clock
     ) {
+        this(performanceFinder, admissionTokenService, clock, true);
+    }
+
+    AdmissionTokenValidator(
+            final PerformanceFinder performanceFinder,
+            final AdmissionTokenService admissionTokenService,
+            final Clock clock,
+            final boolean enforcementEnabled
+    ) {
         this.performanceFinder = Objects.requireNonNull(performanceFinder, "performanceFinder must not be null");
         this.admissionTokenService =
                 Objects.requireNonNull(admissionTokenService, "admissionTokenService must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.enforcementEnabled = enforcementEnabled;
     }
 
     public void validate(final Long performanceId, final Long memberId, final String admissionToken) {
+        if (!enforcementEnabled) {
+            return;
+        }
+
         Performance performance = performanceFinder.findById(performanceId);
         if (!performance.requiresQueueAt(LocalDateTime.now(clock))) {
             return;

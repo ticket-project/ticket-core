@@ -83,6 +83,7 @@ security:
     access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS}
     refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS}
   admission:
+    enforcement-enabled: ${ADMISSION_TOKEN_ENFORCEMENT_ENABLED:false}
     issuer: ${ADMISSION_TOKEN_ISSUER:ticket-queue}
     audience: ${ADMISSION_TOKEN_AUDIENCE:ticket-api}
     secret-key: ${ADMISSION_TOKEN_SECRET_KEY:0123456789abcdef0123456789abcdef}
