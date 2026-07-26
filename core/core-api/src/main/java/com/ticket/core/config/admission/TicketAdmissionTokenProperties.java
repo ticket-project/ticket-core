@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "security.admission")
 public class TicketAdmissionTokenProperties {
 
+    private boolean enforcementEnabled = false;
     private String issuer = "ticket-queue";
     private String audience = "ticket-api";
     private String secretKey = "0123456789abcdef0123456789abcdef";

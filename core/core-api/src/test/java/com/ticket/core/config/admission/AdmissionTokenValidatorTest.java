@@ -32,6 +32,20 @@ class AdmissionTokenValidatorTest {
     );
 
     @Test
+    void admission_token_검증이_비활성화되면_회차와_토큰을_조회하지_않는다() {
+        AdmissionTokenValidator disabledValidator = new AdmissionTokenValidator(
+                performanceFinder,
+                admissionTokenService,
+                Clock.fixed(NOW.toInstant(), ZoneId.of("Asia/Seoul")),
+                false
+        );
+
+        disabledValidator.validate(10L, 10L, null);
+
+        verifyNoInteractions(performanceFinder, admissionTokenService);
+    }
+
+    @Test
     void direct_회차는_admission_token_없이_통과한다() {
         when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_OFF));
 

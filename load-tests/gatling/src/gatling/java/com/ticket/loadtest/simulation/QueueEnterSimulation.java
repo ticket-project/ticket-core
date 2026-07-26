@@ -15,7 +15,6 @@ public class QueueEnterSimulation extends Simulation {
 
     private final HttpProtocolBuilder httpProtocol = http
             .baseUrl(LoadTestConfig.baseUrl())
-            .shareConnections()
             .acceptHeader("application/json")
             .contentTypeHeader("application/json");
 
@@ -23,16 +22,14 @@ public class QueueEnterSimulation extends Simulation {
         final ScenarioBuilder scenario = scenario("queue-enter")
                 .exec(LoadTestConfig.initializeSession())
                 .exec(LoadTestConfig.authenticate())
-                .exec(http("queue join")
-                        .post(LoadTestConfig.queueBaseUrl() + "/api/v1/queue/performances/#{performanceId}/join")
+                .exec(http("queue enter")
+                        .post("/api/v1/queue/performances/#{performanceId}/enter")
                         .headers(LoadTestConfig.authHeaders())
                         .check(status().is(200))
-                        .check(jsonPath("$.queueToken").saveAs("queueToken")))
-                .exec(http("queue enter")
-                        .post(LoadTestConfig.queueBaseUrl() + "/api/v1/queue/performances/#{performanceId}/enter")
-                        .headers(LoadTestConfig.queueTokenHeaders())
-                        .check(status().in(200, 403, 410, 429))
-                        .check(jsonPath("$.admissionToken").optional().saveAs("admissionToken")));
+                        .check(jsonPath("$.result").is("SUCCESS"))
+                        .check(jsonPath("$.data.status").saveAs("queueStatus"))
+                        .check(jsonPath("$.data.queueEntryId").optional().saveAs("queueEntryId"))
+                        .check(jsonPath("$.data.queueToken").optional().saveAs("queueToken")));
 
         setUp(scenario.injectOpen(LoadTestConfig.injection()))
                 .protocols(httpProtocol)

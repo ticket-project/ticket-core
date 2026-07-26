@@ -102,6 +102,16 @@ Windows PowerShell:
 
 - `core/core-api/src/main/resources/application-prod.yml`
 
+### Admission token 검증
+
+기존 클라이언트와 호환되는 초기 배포에서는 아래 환경 변수로 admission token 검증을 비활성화한다.
+
+```text
+ADMISSION_TOKEN_ENFORCEMENT_ENABLED=false
+```
+
+Queue Server와 클라이언트의 admission token 전달이 모두 준비된 뒤에만 `true`로 전환한다. 비활성 상태에서는 회차의 Queue 정책과 admission token을 조회하거나 검증하지 않는다.
+
 ## DB 마이그레이션
 
 Flyway는 `core:core-api` 실행 모듈에서만 사용한다. 마이그레이션 파일 위치는 아래 경로다.

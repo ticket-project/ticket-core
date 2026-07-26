@@ -112,6 +112,7 @@ $env:JWT_SECRET="replace-with-local-32-byte-secret"
 $env:JWT_ACCESS_TOKEN_EXPIRATION_SECONDS="1800"
 $env:JWT_REFRESH_TOKEN_EXPIRATION_SECONDS="1209600"
 $env:ADMISSION_TOKEN_SECRET_KEY="replace-with-shared-admission-secret"
+$env:ADMISSION_TOKEN_ENFORCEMENT_ENABLED="false"
 
 .\gradlew.bat :core:core-api:bootRun
 ```
