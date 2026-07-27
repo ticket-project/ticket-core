@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
 import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,6 +23,7 @@ public class JwtTokenService {
     private final Clock clock;
     private final SecretKey secretKey;
 
+    @Autowired
     public JwtTokenService(final JwtProperties jwtProperties) {
         this(jwtProperties, Clock.systemUTC());
     }
