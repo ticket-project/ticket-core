@@ -7,6 +7,8 @@ import com.ticket.core.support.exception.ErrorType;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,6 +21,7 @@ public class AdmissionTokenValidator {
     private final Clock clock;
     private final boolean enforcementEnabled;
 
+    @Autowired
     public AdmissionTokenValidator(
             final PerformanceFinder performanceFinder,
             final AdmissionTokenService admissionTokenService,
