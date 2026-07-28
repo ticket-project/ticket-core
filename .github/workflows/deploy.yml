@@ -29,7 +29,7 @@ jobs:
       - name: Build bootJar
         run: |
           chmod +x ./gradlew
-          ./gradlew clean :core:core-api:bootJar -x test
+          ./gradlew clean test :core:core-infra:integrationTest :core:core-api:bootJar
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
