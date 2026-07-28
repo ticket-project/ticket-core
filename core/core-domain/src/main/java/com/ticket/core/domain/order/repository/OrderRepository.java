@@ -55,5 +55,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("status") OrderState status
     );
 
-    Slice<Order> findAllByStatusAndExpiresAtBefore(OrderState status, LocalDateTime expiresAt, Pageable pageable);
+    Slice<Order> findAllByStatusAndExpiresAtLessThanEqual(OrderState status, LocalDateTime expiresAt, Pageable pageable);
 }

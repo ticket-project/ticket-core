@@ -40,7 +40,7 @@ class OrderExpirationSchedulerTest {
     void no_expired_orders_returns_immediately() {
         OrderExpirationScheduler scheduler = new OrderExpirationScheduler(expireOrderUseCase, orderRepository, fixedClock);
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findAllByStatusAndExpiresAtBefore(eq(OrderState.PENDING), eq(expectedNow), any()))
+        when(orderRepository.findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any()))
                 .thenReturn(new SliceImpl<>(List.of()));
 
         scheduler.expirePendingOrders();
@@ -55,14 +55,14 @@ class OrderExpirationSchedulerTest {
         Order first = createOrder(1L, null);
         Order second = createOrder(2L, null);
         Slice<Order> slice = new SliceImpl<>(List.of(first, second));
-        when(orderRepository.findAllByStatusAndExpiresAtBefore(eq(OrderState.PENDING), eq(expectedNow), any()))
+        when(orderRepository.findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any()))
                 .thenReturn(slice);
 
         scheduler.expirePendingOrders();
 
         verify(expireOrderUseCase).expireByOrderId(1L, expectedNow);
         verify(expireOrderUseCase).expireByOrderId(2L, expectedNow);
-        verify(orderRepository, times(1)).findAllByStatusAndExpiresAtBefore(eq(OrderState.PENDING), eq(expectedNow), any());
+        verify(orderRepository, times(1)).findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any());
     }
 
     @Test
@@ -71,14 +71,14 @@ class OrderExpirationSchedulerTest {
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
         Order order = createOrder(1L, "order-1");
         Slice<Order> slice = new SliceImpl<>(List.of(order));
-        when(orderRepository.findAllByStatusAndExpiresAtBefore(eq(OrderState.PENDING), eq(expectedNow), any()))
+        when(orderRepository.findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any()))
                 .thenReturn(slice);
         doThrow(new RuntimeException("boom")).when(expireOrderUseCase).expireByOrderId(1L, expectedNow);
 
         scheduler.expirePendingOrders();
 
         verify(expireOrderUseCase).expireByOrderId(1L, expectedNow);
-        verify(orderRepository, times(1)).findAllByStatusAndExpiresAtBefore(eq(OrderState.PENDING), eq(expectedNow), any());
+        verify(orderRepository, times(1)).findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any());
     }
 
     private Order createOrder(final Long id, final String orderKey) {

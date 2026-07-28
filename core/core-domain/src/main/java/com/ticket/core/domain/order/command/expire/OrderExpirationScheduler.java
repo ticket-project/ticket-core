@@ -42,7 +42,7 @@ public class OrderExpirationScheduler {
     }
 
     private Slice<Order> loadBatch(final LocalDateTime now) {
-        return orderRepository.findAllByStatusAndExpiresAtBefore(
+        return orderRepository.findAllByStatusAndExpiresAtLessThanEqual(
                 OrderState.PENDING,
                 now,
                 PageRequest.of(0, BATCH_SIZE, Sort.by(Sort.Direction.ASC, "id"))
