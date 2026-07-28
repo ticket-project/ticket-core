@@ -35,6 +35,33 @@ class AdmissionTokenServiceTest {
     }
 
     @Test
+    void verifyFor_accepts_the_queue_issuer_contract_for_the_same_member_and_performance() {
+        AdmissionClaims claims = admissionTokenService()
+                .verifyFor(admissionToken(true, true, true, "10"), 10L, 20L);
+
+        assertThat(claims.memberId()).isEqualTo(10L);
+        assertThat(claims.performanceId()).isEqualTo(20L);
+    }
+
+    @Test
+    void verifyFor_rejects_a_token_bound_to_another_member() {
+        assertThatThrownBy(() ->
+                admissionTokenService().verifyFor(admissionToken(true, true, true, "10"), 11L, 20L)
+        )
+                .isInstanceOf(AdmissionTokenException.class)
+                .hasMessage("admission token member mismatch");
+    }
+
+    @Test
+    void verifyFor_rejects_a_token_bound_to_another_performance() {
+        assertThatThrownBy(() ->
+                admissionTokenService().verifyFor(admissionToken(true, true, true, "10"), 10L, 21L)
+        )
+                .isInstanceOf(AdmissionTokenException.class)
+                .hasMessage("admission token performance mismatch");
+    }
+
+    @Test
     void verify는_audience_없는_admission_token을_거부한다() {
         assertThatThrownBy(() -> admissionTokenService().verify(admissionToken(false, true, true, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
