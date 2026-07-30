@@ -1,5 +1,7 @@
 # Gateway Removal Implementation Plan
 
+> 결정 기록: Gateway 제거 작업 당시의 구현 계획입니다. 현재 실행 방법과 서비스 계약은 루트 `README.md`, `docs/development.md`, 형제 저장소 `../ticket-queue/README.md`를 기준으로 확인하세요.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the runtime dependency on `ticket-gateway` by letting core and queue validate external access tokens directly and by binding queue/admission tokens to the authenticated member.

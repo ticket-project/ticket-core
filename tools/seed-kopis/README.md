@@ -3,7 +3,6 @@
 KOPIS OpenAPI에서 신규 공연을 가져와 `core/core-api/src/main/resources/seed/kopis-curated.sql`에 **누적 추가**한다.
 기존 시드(SHOWS 1~292 등)는 건드리지 않고, 다음 id부터 이어 붙인다.
 
-설계 문서: `docs/superpowers/specs/2026-06-06-kopis-data-refresh-design.md`
 
 ## 사전 준비
 
@@ -48,10 +47,14 @@ $env:KOPIS_SERVICE_KEY="xxxx"; node tools/seed-kopis/fetch-kopis.mjs --target 10
 
 ## 병합 후 검증
 
+ticket 저장소 루트에서 적재 무결성 테스트를 실행한다.
+
+```powershell
+.\gradlew.bat :core:core-api:test
+```
+
 ```bash
-# 적재 무결성 (시드 켜고 기동하거나 테스트)
-cd ..  # ticket 루트
-./gradlew.bat :core:core-api:test
+./gradlew :core:core-api:test
 ```
 
 문제가 있으면 `kopis-curated.sql.bak`으로 복원한다.

@@ -6,14 +6,13 @@
 
 현재 프로젝트는 멀티 모듈 Gradle 구조이며, 실행/API, 도메인/application, 기술 구현을 점진적으로 분리하는 모듈러 모놀리스에 가깝다.
 
-실제 포함 모듈은 다음 6개다.
+실제 포함 모듈은 다음 5개다.
 
 - `core:core-api`
 - `core:core-domain`
 - `core:core-infra`
 - `storage:redis-core`
 - `support:logging`
-- `support:security`
 
 ## 모듈 책임
 
@@ -83,16 +82,6 @@ Redis 관련 공통 의존성을 제공한다.
 
 로깅 관련 공통 설정 리소스를 제공한다.
 
-### `support:security`
-
-JWT, Internal Auth, Admission Token 등 공통 보안 유틸을 제공하는 라이브러리 모듈이다. `maven-publish`로 발행되며, `core-api`가 이 모듈의 토큰 발급/검증 컴포넌트를 사용한다.
-
-주요 책임:
-
-- 사용자 Access Token 발급/검증 (`JwtAccessTokenIssuer`, `JwtTokenVerifier`)
-- 서비스 로컬 principal 기반 Access Token 검증
-- Admission Token 발급/검증 (`AdmissionTokenService`)
-
 ## 패키지 구조
 
 ### `core-api`
@@ -108,7 +97,7 @@ JWT, Internal Auth, Admission Token 등 공통 보안 유틸을 제공하는 라
 - `com.ticket.core.config.security`
   - JWT, OAuth2, 인증/인가 구성
 - `com.ticket.core.config.admission`
-  - Admission token 검증 설정
+  - Admission token 설정·발급·검증과 Queue active session 완료 비동기 알림
 - `com.ticket.core.support.response`
   - 공통 응답 래퍼
 
@@ -199,7 +188,7 @@ JPA entity와 Spring Data repository는 대부분 `core-domain`에 존재한다.
 
 ### Redis
 
-Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌석 처리에 사용한다. 대기열 Redis는 `ticket-queue`에서 별도 Redis Cluster로 운영한다.
+Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌석 처리에 사용한다. 대기열 상태는 `ticket-queue`가 별도 Redis에서 관리하며, 현재 애플리케이션과 배포 설정은 단일 Redis 서버를 사용한다.
 
 주요 대상:
 

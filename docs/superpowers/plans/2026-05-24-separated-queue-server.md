@@ -2,7 +2,7 @@
 
 기준일: 2026-05-24
 
-이 문서는 현재 구현 기준의 확인용 계획이다. 과거 내장 queue token 계획은 더 이상 실행 기준이 아니다.
+> 보관 문서: 분리형 Queue Server 도입 당시의 계획입니다. 이후 Gateway가 제거되고 queueSession/status/waiting-active 모델은 shard/local sequence/public state 모델로 바뀌었습니다. 현재 기준은 루트 `README.md`, `docs/development.md`, 형제 저장소 `../ticket-queue/README.md`입니다.
 
 ## 목표
 
@@ -88,7 +88,7 @@ ticket-queue
 Ticket Server:
 
 ```powershell
-cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket
+cd ticket  # workspace 루트에서 실행
 .\gradlew.bat :core:core-domain:test
 .\gradlew.bat :core:core-api:test
 .\gradlew.bat :core:core-api:bootJar -x test
@@ -97,23 +97,21 @@ cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket
 Queue Server:
 
 ```powershell
-cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-queue
+cd ticket-queue  # workspace 루트에서 실행
 .\gradlew.bat test
 .\gradlew.bat bootJar
 ```
 
-Gateway:
+Gateway(당시 저장소, 현재 제거됨):
 
 ```powershell
-cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-gateway
-.\gradlew.bat test
-.\gradlew.bat bootJar -x test
+# 현재 검증 대상이 아님
 ```
 
 Frontend:
 
 ```powershell
-cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-fe
+cd ticket-fe  # workspace 루트에서 실행
 pnpm build
 ```
 

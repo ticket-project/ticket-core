@@ -1,5 +1,7 @@
 # Separated Queue Server Design
 
+> 보관 문서: 분리형 Queue Server 도입 당시의 설계입니다. 이후 Gateway가 제거되고 queueSession/status/waiting-active 모델은 shard/local sequence/public state 모델로 바뀌었습니다. 현재 기준은 루트 `README.md`, `docs/development.md`, 형제 저장소 `../ticket-queue/README.md`입니다.
+
 **목표**
 
 - 대기열 서버와 티켓 서버를 분리한다.
@@ -131,7 +133,7 @@ Gateway는 `Authorization`, `X-Queue-Session`, `X-Admission-Token` 헤더를 보
 확정 구현은 기존 `ticket` 저장소 내부 모듈이 아니라 별도 폴더의 독립 Queue Server 프로젝트를 기준으로 한다. Queue Server는 현재 멀티모듈이 아니라 단일 Spring Boot/Gradle 프로젝트로 유지한다.
 
 ```text
-C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-queue
+ticket-queue/
 ├── src/main/java/com/ticket/queue
 │   ├── api             # enter/status HTTP API와 응답 DTO
 │   ├── application     # use case, status 조회, scheduler, admission 응답 조립
@@ -165,7 +167,7 @@ Queue 관련 런타임 코드는 `ticket-queue`로 분리한다. Queue Server는
 
 ```text
 1단계: Ticket Server support:security admission token 검증 유지
-2단계: C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-queue 독립 프로젝트 생성
+2단계: workspace의 `ticket-queue/` 독립 프로젝트 생성
 3단계: Queue Server를 단일 Spring Boot 프로젝트로 구성
 4단계: core-api에서 queue controller 제거 또는 Gateway route에서 제외
 5단계: core-api에는 회차 정책 기반 admission gate만 유지
@@ -471,7 +473,7 @@ X-Admission-Token: {admissionToken}
 
 ### 2단계: Queue Server 분리
 
-- `C:\Users\mn040\IdeaProjects\ticket-queue` 독립 프로젝트 추가
+- workspace에 `ticket-queue/` 독립 프로젝트 추가
 - 단일 Spring Boot/Gradle 프로젝트로 api/application/domain/infra/config 패키지 구성
 - queue enter/status controller 구성 후 기존 core-api queue endpoint 비활성화
 - Queue Server 인증 filter 제거

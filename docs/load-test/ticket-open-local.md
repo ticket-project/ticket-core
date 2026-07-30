@@ -1,8 +1,10 @@
 # 예매 오픈 로컬 부하 테스트
 
-기준일: 2026-06-19
+기준일: 2026-07-30
 
 이 문서는 Gateway 제거 후 구조 기준이다. 부하 테스트는 목적에 따라 Ticket Server와 Queue Server를 직접 호출한다. Queue 흐름은 `join -> public state polling -> enter -> admission token -> Ticket Server 보호 API` 순서다.
+
+현재 Gatling 소스와 상세 옵션의 기준은 형제 저장소 `../../gatling-test`의 `README.md`와 `console/README.md`다. 이 저장소의 `load-tests/gatling`은 이전 API 계약을 사용하는 보관본이다.
 
 ## 목적
 
@@ -10,7 +12,7 @@
 
 - Ticket Server의 admission token 기반 좌석/주문 처리량
 - Queue Server의 join/enter 처리량
-- Queue public state polling과 admitted sequence 기준 입장
+- Queue public state polling과 shard별 serving sequence 기준 입장
 - 같은 좌석 hold/order 경합
 
 운영 환경에 직접 부하를 주지 않는다. 운영과 가까운 처리량은 별도 스테이징 환경에서 같은 시나리오로 확인한다.
@@ -42,19 +44,24 @@ docker run --name ticket-queue-redis -p 6380:6379 -d redis:7
 Ticket Server:
 
 ```powershell
-cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket
+# ticket 저장소 루트에서 실행
 $env:SPRING_PROFILES_ACTIVE="local"
 $env:JWT_SECRET="same-access-token-secret-32bytes-minimum"
 $env:JWT_ACCESS_TOKEN_EXPIRATION_SECONDS="1800"
 $env:JWT_REFRESH_TOKEN_EXPIRATION_SECONDS="1209600"
 $env:ADMISSION_TOKEN_SECRET_KEY="same-admission-secret-32bytes-minimum"
+$env:GOOGLE_CLIENT_ID="local-google-client-id"
+$env:GOOGLE_CLIENT_SECRET="local-google-client-secret"
+$env:KAKAO_CLIENT_ID="local-kakao-client-id"
+$env:KAKAO_CLIENT_SECRET="local-kakao-client-secret"
+$env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 .\gradlew.bat :core:core-api:bootRun
 ```
 
 Queue Server:
 
 ```powershell
-cd C:\Users\mn040\IdeaProjects\ticket-workspace\ticket-queue
+# ticket-queue 저장소 루트에서 실행
 $env:SPRING_DATA_REDIS_PORT="6380"
 $env:JWT_SECRET="same-access-token-secret-32bytes-minimum"
 $env:JWT_ISSUER="ticket"
@@ -73,11 +80,11 @@ $env:QUEUE_TOKEN_SECRET="same-queue-token-secret-32bytes-minimum"
 2. Queue 회차
    POST http://localhost:8090/api/v1/queue/performances/{performanceId}/join
    Authorization: Bearer {accessToken}
-   -> seq, queueToken 저장
+   -> shardId, localSeq, queueToken 저장
 
 3. Queue public state polling
    GET http://localhost:8090/api/v1/queue/performances/{performanceId}/state
-   -> admittedUntilSeq >= seq 이면 enter 가능
+   -> serving[shardId] >= localSeq 이면 enter 가능
 
 4. Queue enter
    POST http://localhost:8090/api/v1/queue/performances/{performanceId}/enter
@@ -93,7 +100,9 @@ $env:QUEUE_TOKEN_SECRET="same-queue-token-secret-32bytes-minimum"
 
 ## Gatling 실행
 
-Gatling은 루트 Gradle wrapper로 `load-tests/gatling` 독립 프로젝트를 실행한다.
+Gatling은 형제 `gatling-test` 저장소의 Gradle wrapper와 `load-tests/gatling` 프로젝트를 사용한다.
+
+아래 명령은 `gatling-test` 저장소 루트에서 실행한다. 실행 전 대상 URL, 사용자 수, 전용 `performanceId`, feeder를 확인한다.
 
 공통 옵션:
 
@@ -142,20 +151,19 @@ Gatling은 루트 Gradle wrapper로 `load-tests/gatling` 독립 프로젝트를 
 
 ### 2. Ticket Server 단독 용량
 
-Queue Server를 거치지 않고 Ticket Server에 `Authorization`과 `X-Admission-Token`을 직접 붙여 보호 API 처리량을 측정한다.
+Queue Server를 거치지 않고 Ticket Server에 `Authorization`과 `X-Admission-Token`을 직접 붙여 보호 API 처리량을 측정한다. 회원·좌석·토큰 조합은 현재 표준인 booking feeder CSV로 공급한다.
 
 ```powershell
 .\gradlew.bat -p load-tests/gatling gatlingRun `
-  --simulation com.ticket.loadtest.simulation.TicketServerCapacitySimulation `
-  -DbaseUrl=http://localhost:8080 `
+  --simulation com.ticket.loadtest.simulation.CoreAdmissionCapacitySimulation `
+  -DcoreBaseUrl=http://localhost:8080 `
   -DperformanceId=1 `
-  -DseatIds=1,2,3,4,5 `
-  -Dusers=5 `
-  -DdurationSeconds=10 `
-  -DaccessTokenMode=synthetic-jwt `
-  -DjwtSecret=same-access-token-secret-32bytes-minimum `
-  -DadmissionTokenMode=synthetic `
-  -DadmissionTokenSecret=same-admission-secret-32bytes-minimum
+  -DbookingFeederFile=C:\path\booking-feeder.csv `
+  -DbookingScenario=CORE_ADMISSION_CAPACITY `
+  -DinjectionMode=constant-users-per-sec `
+  -DusersPerSecond=10 `
+  -DdurationSeconds=60 `
+  -DresultFile=build\reports\core-capacity-local.csv
 ```
 
 확인할 것:
@@ -168,41 +176,41 @@ Queue Server를 거치지 않고 Ticket Server에 `Authorization`과 `X-Admissio
 
 ### 3. 예매 오픈 전체 흐름
 
-`TicketOpenFlowSimulation`은 Queue Server에서 `join` 후 public state를 polling하고, admitted sequence에 도달하면 `X-Queue-Token`으로 `enter`를 호출한다. `admissionToken`을 받은 사용자만 Ticket Server 좌석 상태 조회와 주문 생성을 시도한다.
+`TicketOpenEndToEndSimulation`은 Queue Server에서 `join` 후 public state를 polling하고, 자신의 shard에서 serving sequence에 도달하면 `X-Queue-Token`으로 `enter`를 호출한다. `admissionToken`을 받은 사용자만 Ticket Server 좌석 상태 조회와 주문 생성을 시도한다.
 
 ```powershell
 .\gradlew.bat -p load-tests/gatling gatlingRun `
-  --simulation com.ticket.loadtest.simulation.TicketOpenFlowSimulation `
+  --simulation com.ticket.loadtest.simulation.TicketOpenEndToEndSimulation `
   -DcoreBaseUrl=http://localhost:8080 `
   -DqueueBaseUrl=http://localhost:8090 `
   -DperformanceId=1 `
-  -DseatIds=1 `
-  -Dusers=10 `
-  -DdurationSeconds=10 `
+  -DbookingFeederFile=C:\path\booking-feeder.csv `
+  -DbookingScenario=TICKET_OPEN_END_TO_END `
+  -DinjectionMode=constant-users-per-sec `
+  -DusersPerSecond=10 `
+  -DdurationSeconds=60 `
   -DstatusPolls=3 `
   -DstatusPollPauseSeconds=1 `
-  -DaccessTokenMode=synthetic-jwt `
-  -DjwtSecret=same-access-token-secret-32bytes-minimum
+  -DresultFile=build\reports\ticket-open-local.csv
 ```
 
 주의: 이 시나리오는 `coreBaseUrl`과 `queueBaseUrl`을 분리해 사용한다. 둘 중 하나를 생략하면 해당 값은 `baseUrl`로 대체된다.
 
-### 4. Admission Token 직접 입력
+### 4. 좌석 경합
 
-Ticket Server 단독 테스트에 Queue Server가 발급한 admission token을 직접 넣으려면 `admissionTokenMode=tokens`를 사용한다. admission token은 요청 대상과 같은 `performanceId`여야 하며, subject는 access token의 회원과 일치해야 한다.
+같은 좌석에 여러 회원을 집중시켜 hold/order 정합성을 확인한다. feeder의 여러 행에 같은 `seatId`를 넣고, 각 행에는 서로 다른 회원의 access token과 그 회원·공연에 바인딩된 admission token을 넣는다.
 
 ```powershell
 .\gradlew.bat -p load-tests/gatling gatlingRun `
-  --simulation com.ticket.loadtest.simulation.HoldRaceSimulation `
-  -DbaseUrl=http://localhost:8080 `
+  --simulation com.ticket.loadtest.simulation.SeatContentionSimulation `
+  -DcoreBaseUrl=http://localhost:8080 `
   -DperformanceId=1 `
-  -DseatIds=1 `
-  -DaccessTokenMode=tokens `
-  -DaccessTokens=$accessTokenList `
-  -DadmissionTokenMode=tokens `
-  -DadmissionTokens=$admissionTokenList `
+  -DbookingFeederFile=C:\path\seat-contention-feeder.csv `
+  -DbookingScenario=SEAT_CONTENTION `
+  -DinjectionMode=at-once-users `
   -Dusers=10 `
-  -DdurationSeconds=10
+  -DdurationSeconds=10 `
+  -DresultFile=build\reports\seat-contention-local.csv
 ```
 
 ## 완료 기준

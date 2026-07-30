@@ -11,7 +11,7 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 - 좌석 선택: Redis TTL 기반 임시 선택 상태와 WebSocket 전파
 - 좌석 선점: Redis 기반 hold와 주문 시작 흐름
 - 주문: `PENDING` 주문 생성, 조회, 취소, 만료 처리
-- 대기열: Ticket Server가 회차별 DIRECT/QUEUE를 결정하고, `ticket-queue` 별도 서비스가 Redis Cluster 기반 waiting/active/session 상태와 admission token 발급을 담당
+- 대기열: Ticket Server가 회차별 DIRECT/QUEUE를 결정하고, `ticket-queue` 별도 서비스가 shard/local sequence와 public state 기반 대기 상태 및 admission token 발급을 담당
 
 결제 승인/실패/콜백과 최종 판매 확정 흐름은 아직 별도 구현 대상이다.
 
@@ -130,22 +130,29 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 
 ### 대기열
 
-대기열 런타임은 `ticket-queue` 독립 서비스가 담당한다. `ticket-be`는 Queue Controller, queue token 저장소, queue token 만료 핸들러를 갖지 않는다. 대신 `PerformanceQueuePolicy`로 공연 상세 응답의 회차별 `entryType`을 계산하고, 클라이언트가 예매 버튼 클릭 시 DIRECT/QUEUE를 분기한다. Queue Server hot path는 Core DB를 조회하지 않으며, 내부 API로 받은 회차별 정책 snapshot을 Queue Redis에서 읽는다.
+대기열 런타임은 `ticket-queue` 독립 서비스가 담당한다. `ticket-be`는 Queue Controller, queue token 저장소, queue token 만료 핸들러를 갖지 않는다. 대신 `PerformanceQueuePolicy`로 공연 상세 응답의 회차별 `entryType`을 계산하고, 클라이언트가 예매 버튼 클릭 시 DIRECT/QUEUE를 분기한다.
+
+Queue Server hot path는 Core DB와 회차별 정책 snapshot을 조회하지 않는다. Queue Server는 모든 요청 회차에 애플리케이션 기본 입장 속도와 TTL을 적용하며, `join`에서 받은 `shardId`와 `localSeq`를 public `/state` 응답의 `serving[shardId]`와 비교해 입장 가능 여부를 판단한다.
+Core의 admission 검증은 `memberId`, `performanceId`뿐 아니라 Queue가 넣은 `queueId` claim도 읽는다. QUEUE 흐름에서 주문 생성(호환용 hold endpoint 포함)이 성공하면 Queue Server의 내부 완료 API를 비동기로 호출해 active session을 조기 반환한다. 이 알림은 선택 기능이며 실패해도 주문을 되돌리지 않고 Queue의 shopping session TTL에 정리를 맡긴다.
+
 
 주요 개념:
 
-- queue session
-- waiting/active 상태
-- adaptive polling
+- 서명된 queue token (`X-Queue-Token`)
+- shard/local sequence와 public state
+- public state 기반 adaptive polling
 - admission token
-- redirectUrl
+- admission token으로 보호 API 진입
 - show detail entryType
 
 주요 위치:
 
-- `C:\Users\mn040\IdeaProjects\ticket-queue`
+- 형제 저장소 `../ticket-queue`
 - `core/core-api/src/main/java/com/ticket/core/config/admission/AdmissionTokenValidator.java`
-- `support/security/src/main/java/com/ticket/support/security/admission`
+- `core/core-api/src/main/java/com/ticket/core/config/admission/QueueSessionCompletionNotifier.java`
+- `core/core-api/src/main/java/com/ticket/core/config/admission/TicketQueueCompletionProperties.java`
+- 형제 저장소 `../ticket-queue`의 내부 session 완료 API
+- `core/core-api/src/main/java/com/ticket/core/config/admission/AdmissionTokenService.java`
 
 ## 핵심 도메인 모델
 
@@ -171,7 +178,7 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 ### Queue
 
 - 대기열 상태는 `ticket-queue`가 관리한다.
-- `ticket-be`는 예매 API 진입 시 회차 정책을 먼저 확인하고, 대기열이 필요한 회차에서만 `X-Admission-Token`의 서명, 만료, performanceId 일치 여부를 검증한다.
+- `ticket-be`는 예매 API 진입 시 회차 정책을 먼저 확인하고, 대기열이 필요한 회차에서만 `X-Admission-Token`의 서명, 만료, memberId와 performanceId 일치 여부를 검증한다.
 - `ticket-be`의 Redis는 좌석 선택, hold, refresh token, OAuth2 one-time auth code 용도로만 사용한다.
 
 ## 미구현 또는 후속 범위

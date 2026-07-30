@@ -2,6 +2,8 @@
 
 기준일: 2026-06-17
 
+> 결정 기록: Gateway 제거 당시의 설계입니다. 현재 실행 방법과 서비스 계약은 루트 `README.md`, `docs/development.md`, 형제 저장소 `../ticket-queue/README.md`를 기준으로 확인하세요.
+
 > 2026-06-17 후속 결정: `Passport`와 `ticket-common`도 제거한다. core는 `MemberPrincipal`, queue는 `AuthenticatedMember`를 서비스 로컬 principal로 사용하며, access/admission token 발급·검증 코드는 각 서비스가 직접 소유한다. 아래 본문 중 `Passport`/`ticket-common` 유지 내용은 이 후속 결정으로 대체된다.
 
 ## 목표

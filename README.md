@@ -1,6 +1,6 @@
 # Ticket Backend
 
-기준일: 2026-05-24
+기준일: 2026-07-30
 
 공연/전시 티켓 예매 백엔드다. 인증, 공연 조회, 좌석 선택, 좌석 선점, 주문 시작/취소/만료를 Spring Boot 멀티 모듈 구조로 다룬다. 대기열 처리는 현재 `ticket-queue` 별도 서버로 분리되어 있으며, 이 서버는 Queue Server가 발급한 admission token을 검증해 예매 API 진입을 제어한다.
 
@@ -24,7 +24,7 @@
 | 현재 기능과 API 흐름 | `docs/development.md` |
 | 모듈 책임과 패키지 경계 | `docs/architecture.md` |
 | 실행, 프로파일, 검증 | `docs/operations.md` |
-| 부하 테스트 진입점 | `docs/load-test.md`, `docs/load-test/` |
+| 부하 테스트 진입점 | `docs/load-test.md`, 형제 저장소 `../gatling-test` |
 | Gradle 모듈 경계 | `settings.gradle` |
 
 ## 모듈 구조
@@ -38,10 +38,9 @@ ticket
 ├── storage
 │   └── redis-core     # Redis/Redisson 공통 의존성
 ├── support
-│   ├── logging        # 공통 로깅 리소스
-│   └── security       # JWT/admission token 공통 보안 유틸
+│   └── logging        # 공통 로깅 리소스
 ├── load-tests
-│   └── gatling        # Gatling 부하 테스트 프로젝트
+│   └── gatling        # 이전 시나리오 보관본; 현재 실행 기준은 ../gatling-test
 └── docs               # 개발/아키텍처/운영/부하 테스트 문서
 ```
 
@@ -113,11 +112,30 @@ $env:JWT_ACCESS_TOKEN_EXPIRATION_SECONDS="1800"
 $env:JWT_REFRESH_TOKEN_EXPIRATION_SECONDS="1209600"
 $env:ADMISSION_TOKEN_SECRET_KEY="replace-with-shared-admission-secret"
 $env:ADMISSION_TOKEN_ENFORCEMENT_ENABLED="false"
+$env:GOOGLE_CLIENT_ID="local-google-client-id"
+$env:GOOGLE_CLIENT_SECRET="local-google-client-secret"
+$env:KAKAO_CLIENT_ID="local-kakao-client-id"
+$env:KAKAO_CLIENT_SECRET="local-kakao-client-secret"
+$env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 
 .\gradlew.bat :core:core-api:bootRun
 ```
 
-OAuth2 로그인을 실제로 확인하려면 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`, `KAKAO_ADMIN_KEY`도 설정한다.
+위 OAuth2 값은 로컬 기동용 예시다. 실제 OAuth2 로그인을 확인하려면 각 공급자에서 발급받은 로컬 callback용 값으로 교체한다.
+### Queue active session 조기 반환(선택)
+
+현재 구현의 예매 종료점인 `PENDING` 주문 생성이 성공하면 admission token의 `queueId`를 이용해 Queue Server의 active session 완료 API를 비동기로 호출할 수 있다. 기본값은 비활성화이며, 콜백 실패가 주문 성공을 되돌리지는 않는다. 이 경우 Queue Server의 shopping session TTL이 안전망으로 session을 정리한다. 결제 API가 추가되면 반환 시점을 주문 생성이 아니라 결제 성공·실패·취소 같은 최종 상태로 옮겨야 한다.
+
+```powershell
+$env:QUEUE_COMPLETION_ENABLED="true"
+$env:QUEUE_SERVER_BASE_URL="http://localhost:8090"
+$env:QUEUE_COMPLETION_SECRET="same-queue-completion-secret-32bytes-minimum"
+$env:QUEUE_COMPLETION_CONNECT_TIMEOUT="500ms"
+$env:QUEUE_COMPLETION_READ_TIMEOUT="1s"
+```
+
+활성화할 때 `QUEUE_COMPLETION_SECRET`은 32자 이상이어야 하며 `ticket-queue`와 같은 값을 사용해야 한다.
+
 
 ## 주요 설정
 
@@ -156,4 +174,5 @@ OAuth2 로그인을 실제로 확인하려면 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT
 - README는 전체 맥락만 담고, 세부 규칙은 `AGENTS.md`와 `docs/`를 우선한다.
 - `auth`, `hold`, `order`, `performanceseat`, `queue` 관련 변경은 동시성, 트랜잭션, Redis TTL, 만료 listener/scheduler, admission token 검증을 함께 확인한다.
 - 기존 미커밋 변경은 사용자 작업으로 보고 되돌리지 않는다.
-- `load-tests/gatling` 실행은 실제 부하를 만들 수 있으므로 사용자가 명시적으로 요청한 경우에만 다룬다.
+- 현재 부하 테스트 실행 기준은 형제 저장소 `../gatling-test`다. 이 저장소의 `load-tests/gatling`은 이전 시나리오 보관본이므로 새 실행 기준으로 사용하지 않는다.
+- Gatling 실행은 실제 부하를 만들 수 있으므로 사용자가 명시적으로 요청한 경우에만 다룬다.
