@@ -1,4 +1,9 @@
 spring:
+  application:
+    name: ticket-core
+  datasource:
+    hikari:
+      pool-name: ticket-core
   config:
     import:
       - logging.yml
@@ -49,6 +54,9 @@ spring:
 
 server:
   forward-headers-strategy: framework
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 management:
   endpoints:
@@ -59,6 +67,20 @@ management:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      service: ${DD_SERVICE:ticket-core}
+      environment: ${DD_ENV:local}
+      version: ${DD_VERSION:unknown}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 100ms,300ms,500ms,1s,2s,3s,5s
+      minimum-expected-value:
+        http.server.requests: 1ms
+      maximum-expected-value:
+        http.server.requests: 10s
 
 springdoc:
   use-fqn: true
