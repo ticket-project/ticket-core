@@ -111,6 +111,26 @@ ADMISSION_TOKEN_ENFORCEMENT_ENABLED=false
 ```
 
 Queue Server와 클라이언트의 admission token 전달이 모두 준비된 뒤에만 `true`로 전환한다. 비활성 상태에서는 회차의 Queue 정책과 admission token을 조회하거나 검증하지 않는다.
+### Queue active session 조기 반환
+
+Core가 주문 생성 성공 후 Queue active session을 즉시 반환하게 하려면 Queue Server의 내부 완료 API와 공유 secret을 먼저 배포한 뒤 아래 값을 설정한다.
+
+```text
+QUEUE_COMPLETION_ENABLED=true
+QUEUE_SERVER_BASE_URL=http://ticket-queue:8090
+QUEUE_COMPLETION_SECRET=<ticket-queue와 같은 32자 이상 secret>
+QUEUE_COMPLETION_CONNECT_TIMEOUT=500ms
+QUEUE_COMPLETION_READ_TIMEOUT=1s
+```
+
+전환 순서는 다음과 같다.
+
+1. Queue Server에 내부 완료 endpoint와 `QUEUE_COMPLETION_SECRET`을 배포한다.
+2. Core에 같은 secret과 Queue 내부 base URL을 설정한다.
+3. Core의 `QUEUE_COMPLETION_ENABLED`를 `true`로 바꾼다.
+
+완료 알림은 주문 응답과 분리된 비동기 best-effort 호출이다. 현재 결제 API가 없으므로 `PENDING` 주문 생성 성공을 예매 흐름의 종료점으로 사용한다. 결제가 추가되면 완료 알림을 결제 성공·실패·취소 같은 최종 상태로 옮긴다. 실패 로그가 발생해도 주문 자체는 성공 상태를 유지하며, Queue의 shopping session TTL이 최종 정리 안전망이다. 이 때문에 콜백 성공률과 TTL 만료 정리량을 함께 관측해야 한다.
+
 
 ## DB 마이그레이션
 
@@ -143,28 +163,71 @@ local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create
 
 ## 배포 workflow
 
-GitHub Actions 배포 workflow는 아래 명령과 맞물린다.
+GitHub Actions 배포 workflow는 전체 테스트와 infra 통합 테스트를 통과한 뒤 bootJar를 만든다.
 
 ```bash
-./gradlew clean :core:core-api:bootJar -x test
+./gradlew clean test :core:core-infra:integrationTest :core:core-api:bootJar
 ```
 
 관련 파일:
 
 - `.github/workflows/deploy.yml`
 
+## Core 용량 관측
+
+Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이션 메트릭을 노출한다. 부하 테스트 중에는 다음을 같은 시간축으로 본다.
+
+- `http_server_requests_seconds_bucket/count`: URI·method·status별 처리량과 p95/p99
+- `hikaricp_connections_active/pending/max/min`: DB connection pool 사용량과 대기
+- `tomcat_threads_busy_threads/current_threads/config_max_threads`: 요청 스레드 사용량과 상한
+- `jvm_gc_pause_seconds`, `jvm_memory_used_bytes`, `process_cpu_usage`: JVM·CPU 포화 여부
+
+모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
+
+```promql
+histogram_quantile(0.99, sum by (le, uri, method) (rate(http_server_requests_seconds_bucket{service="ticket-core"}[1m])))
+```
+
+```promql
+sum(rate(http_server_requests_seconds_count{service="ticket-core",status=~"5.."}[1m]))
+max(hikaricp_connections_pending{service="ticket-core"})
+(
+  max(tomcat_threads_busy_threads{service="ticket-core"})
+  /
+  max(tomcat_threads_config_max_threads{service="ticket-core"})
+)
+```
+
+Hikari pending이 0보다 커지면 애플리케이션 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. 다만 pending이 0이어도 이미 빌린 연결이 DB lock에서 멈출 수 있으므로 DB wait를 별도로 확인해야 한다.
+
+Oracle lock wait는 Actuator만으로 볼 수 없다. Oracle exporter·Datadog DBM 또는 DBA 권한이 있는 별도 관측 계정에서 다음 정보를 수집한다.
+
+```sql
+SELECT COUNT(*) AS blocked_sessions FROM v$session WHERE blocking_session IS NOT NULL;
+
+SELECT event, COUNT(*) AS waiting_sessions, MAX(seconds_in_wait) AS max_seconds_in_wait
+FROM v$session
+WHERE state = 'WAITING' AND wait_class <> 'Idle'
+GROUP BY event
+ORDER BY waiting_sessions DESC;
+```
+
+`v$session` 조회 권한은 애플리케이션 계정에 추가하지 말고 관측 전용 계정에만 부여한다.
+
 ## 부하 테스트
 
 예매 오픈 부하 테스트는 [load-test.md](load-test.md)에서 시작한다.
 
-상세 실행 문서:
+상세 실행 문서와 실제 실행 프로젝트:
 
 - `docs/load-test/ticket-open-local.md`
+- 형제 저장소 `../gatling-test/README.md`
+- 로컬 콘솔 `../gatling-test/console/README.md`
 
-Gatling 프로젝트는 루트 Gradle wrapper로 실행한다.
+현재 Gatling 시나리오는 이 저장소가 아니라 형제 `gatling-test` 저장소에서 관리한다. 이 저장소의 `load-tests/gatling`은 이전 시나리오 보관본이므로 새 부하 테스트에 사용하지 않는다.
 
 ```powershell
-.\gradlew.bat -p load-tests/gatling test
+cd ..\gatling-test
 .\gradlew.bat -p load-tests/gatling gatlingClasses
 ```
 

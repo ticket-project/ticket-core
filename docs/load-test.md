@@ -2,6 +2,8 @@
 
 이 문서는 부하 테스트 문서의 진입점이다.
 
+현재 Gatling 소스와 실행 기준은 형제 저장소 `../gatling-test`에 있다. 이 저장소의 `load-tests/gatling`은 이전 API 계약을 사용하는 보관본이므로 새 부하 테스트에 사용하지 않는다.
+
 ## 목적
 
 로컬 환경에서 예매 오픈 순간의 핵심 위험을 재현한다.
@@ -32,7 +34,7 @@
 ```powershell
 .\gradlew.bat :core:core-api:bootRun
 .\gradlew.bat :core:core-api:test --tests "com.ticket.core.config.seed.SeedDataLoaderTest"
-.\gradlew.bat -p load-tests/gatling test
+cd ..\gatling-test
 .\gradlew.bat -p load-tests/gatling gatlingClasses
 ```
 
@@ -40,12 +42,12 @@
 
 대기열 스케줄러 방출량은 Queue Server 처리량이 아니라 Ticket Server가 안정적으로 처리하는 입장 사용자 수를 기준으로 잡는다.
 
-1. `TicketServerCapacitySimulation`으로 Ticket Server 단독 처리량을 측정한다.
+1. `CoreAdmissionCapacitySimulation`을 단계별로 실행해 Ticket Server 단독 처리량을 측정한다.
 2. 실패율, p95/p99, DB connection pool, Redis latency, JVM CPU/GC를 함께 본다.
 3. 안정 구간의 `admitted users/sec` 또는 요청 TPS에 0.6~0.7 안전계수를 적용한다.
-4. Queue Scheduler는 이 값보다 낮은 `admit per tick`으로 방출하도록 설정한다.
+4. Queue Scheduler의 `app.queue.default-max-admit-per-second`를 이 값보다 낮게 설정한다.
 
-현재 Queue Scheduler는 tick마다 `QUEUE_ADMIT_LIMIT_PER_TICK`명씩 waiting 앞쪽 사용자를 active로 승격한다. `QUEUE_ACTIVE_TTL`은 active member TTL이자 admission token 만료 시간으로, Ticket Server 예매 API 사용 가능 시간을 의미한다.
+현재 Queue Scheduler는 shard별 closed slot의 `servingSeq`를 전진시키며, 초당 최대 입장 수는 `app.queue.default-max-admit-per-second`로 제한한다. `app.queue.shopping-session-ttl`은 active session과 admission token의 유효 시간이다.
 
 ## 주의점
 

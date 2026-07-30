@@ -1,6 +1,6 @@
 # Member-Bound Queue Implementation Plan
 
-> 기준 변경: 이 문서는 과거 ticket-be 내장 queue/queueToken 설계 기록이다. 현재 실행 기준은 2026-05-24-separated-queue-server-design.md와 2026-05-24-separated-queue-server.md이다. 새 구조에서는 queueToken/X-Queue-Token 대신 queueSessionId/X-Queue-Session과 admissionToken/X-Admission-Token을 사용한다.
+> 보관 문서: 당시의 구현 계획입니다. 현재 동작과 명령은 저장소 루트 `README.md`, `docs/development.md`, 형제 저장소 `../ticket-queue/README.md`, `../gatling-test/README.md`를 기준으로 확인하세요. 이 문서의 queue token/session/status 모델은 현재의 shard/local sequence/public state 구조와 다를 수 있습니다.
 
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.

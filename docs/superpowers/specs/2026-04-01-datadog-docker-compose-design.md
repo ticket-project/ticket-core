@@ -1,5 +1,7 @@
 # Datadog Docker Compose Design
 
+> 보관 문서: Datadog 도입 당시의 설계 기록입니다. 파일 링크는 현재 저장소 위치로 정리했지만, 본문의 배포 구성과 의존성 상태는 당시 기준이므로 현재 운영 절차는 `docs/operations.md`를 우선하세요.
+
 ## 목표
 
 `oneticket.site` 운영 서버의 Docker Compose 환경에 Datadog을 도입해 아래 항목을 한 번에 관측 가능하게 만든다.
@@ -12,10 +14,10 @@
 ## 현재 구조
 
 - 애플리케이션은 Ubuntu 서버에서 `docker compose`로 배포된다.
-- 저장소의 [docker-compose.yml](C:\Users\mn040\IdeaProjects\ticket\docker-compose.yml)은 로컬 Redis만 포함하고, 실제 운영 배포는 GitHub Actions가 서버의 `/home/ubuntu/docker-compose.yml`을 사용한다.
-- [Dockerfile](C:\Users\mn040\IdeaProjects\ticket\Dockerfile)은 Spring Boot fat jar만 복사해 실행한다.
-- [logback-prod.xml](C:\Users\mn040\IdeaProjects\ticket\support\logging\src\main\resources\logback\logback-prod.xml)은 stdout 로그를 사용하고 `traceId`, `spanId` MDC 자리를 이미 포함한다.
-- [core-api/build.gradle](C:\Users\mn040\IdeaProjects\ticket\core\core-api\build.gradle)에는 아직 Actuator/Prometheus 의존성이 없다.
+- 당시 저장소의 `docker-compose.yml`은 로컬 Redis만 포함했고, 실제 운영 배포는 GitHub Actions가 서버의 `/home/ubuntu/docker-compose.yml`을 사용했다. 해당 로컬 Compose 파일은 현재 저장소에는 없다.
+- [Dockerfile](../../../Dockerfile)은 Spring Boot fat jar만 복사해 실행한다.
+- [logback-prod.xml](../../../support/logging/src/main/resources/logback/logback-prod.xml)은 stdout 로그를 사용하고 `traceId`, `spanId` MDC 자리를 이미 포함한다.
+- [core-api/build.gradle](../../../core/core-api/build.gradle)에는 당시 Actuator/Prometheus 의존성이 없었다.
 
 ## 설계
 
@@ -39,13 +41,13 @@
 
 ## 코드 변경 범위
 
-- [core/core-api/build.gradle](C:\Users\mn040\IdeaProjects\ticket\core\core-api\build.gradle)
+- [core/core-api/build.gradle](../../../core/core-api/build.gradle)
   - Actuator/Prometheus 의존성 추가
-- [core/core-api/src/main/resources/application.yml](C:\Users\mn040\IdeaProjects\ticket\core\core-api\src\main\resources\application.yml)
+- [core/core-api/src/main/resources/application.yml](../../../core/core-api/src/main/resources/application.yml)
   - `health`, `info`, `prometheus` endpoint 노출
-- [core/core-api/src/main/java/com/ticket/core/config/security/SecurityConfig.java](C:\Users\mn040\IdeaProjects\ticket\core\core-api\src\main\java\com\ticket\core\config\security\SecurityConfig.java)
+- [core/core-api/src/main/java/com/ticket/core/config/security/SecurityConfig.java](../../../core/core-api/src/main/java/com/ticket/core/config/security/SecurityConfig.java)
   - actuator endpoint 허용
-- [Dockerfile](C:\Users\mn040\IdeaProjects\ticket\Dockerfile)
+- [Dockerfile](../../../Dockerfile)
   - `dd-java-agent.jar` 포함
 
 ## 운영 변경 범위
