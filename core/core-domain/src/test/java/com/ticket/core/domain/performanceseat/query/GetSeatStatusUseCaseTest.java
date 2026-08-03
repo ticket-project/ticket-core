@@ -6,23 +6,37 @@ import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetSeatStatusUseCaseTest {
+
+    private static final Clock CLOCK = Clock.fixed(
+            Instant.parse("2026-08-04T01:00:00Z"),
+            ZoneId.of("Asia/Seoul")
+    );
+    private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
     private PerformanceFinder performanceFinder;
@@ -33,13 +47,23 @@ class GetSeatStatusUseCaseTest {
     @Mock
     private HoldManager holdManager;
 
-    @InjectMocks
     private GetSeatStatusUseCase useCase;
+
+    @BeforeEach
+    void setUp() {
+        useCase = new GetSeatStatusUseCase(
+                performanceFinder,
+                seatMapQueryRepository,
+                seatSelectionService,
+                holdManager,
+                CLOCK
+        );
+    }
 
     @Test
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
         Performance performance = mock(Performance.class);
-        when(performanceFinder.findById(10L)).thenReturn(performance);
+        when(performanceFinder.findValidPerformanceById(10L, NOW)).thenReturn(performance);
         when(performance.getId()).thenReturn(10L);
         when(seatMapQueryRepository.findSeatStatuses(10L)).thenReturn(List.of(
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
@@ -63,7 +87,7 @@ class GetSeatStatusUseCaseTest {
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         );
-        when(performanceFinder.findById(10L)).thenReturn(performance);
+        when(performanceFinder.findValidPerformanceById(10L, NOW)).thenReturn(performance);
         when(performance.getId()).thenReturn(10L);
         when(seatMapQueryRepository.findSeatStatuses(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
@@ -73,5 +97,16 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats()).containsExactlyElementsOf(dbStates);
         verify(seatMapQueryRepository).findSeatStatuses(10L);
+    }
+
+    @Test
+    void 예매가_마감된_회차는_좌석_상태를_조회하지_않는다() {
+        when(performanceFinder.findValidPerformanceById(10L, NOW))
+                .thenThrow(new CoreException(ErrorType.PERFORMANCE_IS_PAST));
+
+        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L)))
+                .isInstanceOf(CoreException.class);
+
+        verifyNoInteractions(seatMapQueryRepository, seatSelectionService, holdManager);
     }
 }
