@@ -60,9 +60,9 @@ class ShowDetailQueryRepositoryTest extends QueryRepositoryTestSupport {
         persistShowGrade(show, "VIP", "VIP석", BigDecimal.valueOf(150000), 1);
         persistShowGrade(show, "R", "R석", BigDecimal.valueOf(100000), 2);
         Performance queuedPerformance = persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
-        queuedPerformance.updateQueuePolicy(QueueMode.FORCE_ON, QueueLevel.LEVEL_1, null, null, null, null, null);
+        queuedPerformance.updateQueuePolicy(QueueMode.FORCE_ON, QueueLevel.LEVEL_1, null, null, null);
         Performance directPerformance = persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
-        directPerformance.updateQueuePolicy(QueueMode.FORCE_OFF, QueueLevel.LEVEL_1, null, null, null, null, null);
+        directPerformance.updateQueuePolicy(QueueMode.FORCE_OFF, QueueLevel.LEVEL_1, null, null, null);
         persistShowLike(persistMember("a@example.com", "A"), show);
         persistShowLike(persistMember("b@example.com", "B"), show);
         flushAndClear();

@@ -100,32 +100,6 @@ public class Performance extends BaseEntity {
     public void updateQueuePolicy(
             final QueueMode queueMode,
             final QueueLevel queueLevel,
-            final Integer maxActiveUsers,
-            final Integer entryTokenTtlSeconds,
-            final LocalDateTime preopenQueueStartAt,
-            final String waitingRoomMessage,
-            final String reason
-    ) {
-        updateQueuePolicy(
-                queueMode,
-                queueLevel,
-                maxActiveUsers,
-                null,
-                entryTokenTtlSeconds,
-                null,
-                preopenQueueStartAt,
-                waitingRoomMessage,
-                reason
-        );
-    }
-
-    public void updateQueuePolicy(
-            final QueueMode queueMode,
-            final QueueLevel queueLevel,
-            final Integer maxActiveUsers,
-            final Integer admitLimitPerTick,
-            final Integer entryTokenTtlSeconds,
-            final Integer sessionTtlSeconds,
             final LocalDateTime preopenQueueStartAt,
             final String waitingRoomMessage,
             final String reason
@@ -135,10 +109,6 @@ public class Performance extends BaseEntity {
                     this,
                     queueMode,
                     queueLevel,
-                    maxActiveUsers,
-                    admitLimitPerTick,
-                    entryTokenTtlSeconds,
-                    sessionTtlSeconds,
                     preopenQueueStartAt,
                     waitingRoomMessage,
                     reason
@@ -148,10 +118,6 @@ public class Performance extends BaseEntity {
         queuePolicy.update(
                 queueMode,
                 queueLevel,
-                maxActiveUsers,
-                admitLimitPerTick,
-                entryTokenTtlSeconds,
-                sessionTtlSeconds,
                 preopenQueueStartAt,
                 waitingRoomMessage,
                 reason
@@ -164,14 +130,6 @@ public class Performance extends BaseEntity {
 
     public QueueLevel getQueueLevel() {
         return queuePolicy == null ? null : queuePolicy.getQueueLevel();
-    }
-
-    public Integer getMaxActiveUsers() {
-        return queuePolicy == null ? null : queuePolicy.getMaxActiveUsers();
-    }
-
-    public Integer getEntryTokenTtlSeconds() {
-        return queuePolicy == null ? null : queuePolicy.getEntryTokenTtlSeconds();
     }
 
     public LocalDateTime getPreopenQueueStartAt() {

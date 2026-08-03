@@ -42,18 +42,6 @@ public class PerformanceQueuePolicy extends BaseEntity {
     private QueueLevel queueLevel;
 
     @Column
-    private Integer maxActiveUsers;
-
-    @Column
-    private Integer admitLimitPerTick;
-
-    @Column
-    private Integer entryTokenTtlSeconds;
-
-    @Column
-    private Integer sessionTtlSeconds;
-
-    @Column
     private LocalDateTime preopenQueueStartAt;
 
     @Column(length = 255)
@@ -66,10 +54,6 @@ public class PerformanceQueuePolicy extends BaseEntity {
             final Performance performance,
             final QueueMode queueMode,
             final QueueLevel queueLevel,
-            final Integer maxActiveUsers,
-            final Integer admitLimitPerTick,
-            final Integer entryTokenTtlSeconds,
-            final Integer sessionTtlSeconds,
             final LocalDateTime preopenQueueStartAt,
             final String waitingRoomMessage,
             final String reason
@@ -81,10 +65,6 @@ public class PerformanceQueuePolicy extends BaseEntity {
         update(
                 queueMode,
                 queueLevel,
-                maxActiveUsers,
-                admitLimitPerTick,
-                entryTokenTtlSeconds,
-                sessionTtlSeconds,
                 preopenQueueStartAt,
                 waitingRoomMessage,
                 reason
@@ -95,10 +75,6 @@ public class PerformanceQueuePolicy extends BaseEntity {
             final Performance performance,
             final QueueMode queueMode,
             final QueueLevel queueLevel,
-            final Integer maxActiveUsers,
-            final Integer admitLimitPerTick,
-            final Integer entryTokenTtlSeconds,
-            final Integer sessionTtlSeconds,
             final LocalDateTime preopenQueueStartAt,
             final String waitingRoomMessage,
             final String reason
@@ -107,10 +83,6 @@ public class PerformanceQueuePolicy extends BaseEntity {
                 performance,
                 queueMode,
                 queueLevel,
-                maxActiveUsers,
-                admitLimitPerTick,
-                entryTokenTtlSeconds,
-                sessionTtlSeconds,
                 preopenQueueStartAt,
                 waitingRoomMessage,
                 reason
@@ -120,20 +92,12 @@ public class PerformanceQueuePolicy extends BaseEntity {
     public void update(
             final QueueMode queueMode,
             final QueueLevel queueLevel,
-            final Integer maxActiveUsers,
-            final Integer admitLimitPerTick,
-            final Integer entryTokenTtlSeconds,
-            final Integer sessionTtlSeconds,
             final LocalDateTime preopenQueueStartAt,
             final String waitingRoomMessage,
             final String reason
     ) {
         this.queueMode = queueMode;
         this.queueLevel = queueLevel;
-        this.maxActiveUsers = maxActiveUsers;
-        this.admitLimitPerTick = admitLimitPerTick;
-        this.entryTokenTtlSeconds = entryTokenTtlSeconds;
-        this.sessionTtlSeconds = sessionTtlSeconds;
         this.preopenQueueStartAt = preopenQueueStartAt;
         this.waitingRoomMessage = waitingRoomMessage;
         this.reason = reason;

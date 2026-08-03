@@ -143,8 +143,6 @@ class PerformanceTest {
         performance.updateQueuePolicy(
                 QueueMode.FORCE_ON,
                 QueueLevel.LEVEL_2,
-                500,
-                900,
                 preopen,
                 "대기열 운영",
                 "초기 정책"
@@ -153,8 +151,6 @@ class PerformanceTest {
         // then
         assertThat(performance.getQueueMode()).isEqualTo(QueueMode.FORCE_ON);
         assertThat(performance.getQueueLevel()).isEqualTo(QueueLevel.LEVEL_2);
-        assertThat(performance.getMaxActiveUsers()).isEqualTo(500);
-        assertThat(performance.getEntryTokenTtlSeconds()).isEqualTo(900);
         assertThat(performance.getPreopenQueueStartAt()).isEqualTo(preopen);
         assertThat(performance.getWaitingRoomMessage()).isEqualTo("대기열 운영");
         assertThat(performance.getReason()).isEqualTo("초기 정책");
