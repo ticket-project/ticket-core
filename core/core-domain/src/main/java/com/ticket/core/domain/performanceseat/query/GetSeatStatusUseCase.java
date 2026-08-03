@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +25,7 @@ public class GetSeatStatusUseCase {
     private final SeatMapQueryRepository seatMapQueryRepository;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
+    private final Clock clock;
 
     public record Input(Long performanceId) {}
 
@@ -31,7 +34,10 @@ public class GetSeatStatusUseCase {
     ) {}
 
     public Output execute(Input input) {
-        final Performance performance = performanceFinder.findById(input.performanceId());
+        final Performance performance = performanceFinder.findValidPerformanceById(
+                input.performanceId(),
+                LocalDateTime.now(clock)
+        );
         final Long perfId = performance.getId();
 
         final List<SeatStateView> dbStates = seatMapQueryRepository.findSeatStatuses(perfId);

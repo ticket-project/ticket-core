@@ -1,20 +1,40 @@
 package com.ticket.core.domain.performanceseat.command;
 
+import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SelectSeatUseCaseTest {
+
+    private static final Clock CLOCK = Clock.fixed(
+            Instant.parse("2026-08-04T01:00:00Z"),
+            ZoneId.of("Asia/Seoul")
+    );
+    private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
+
+    @Mock
+    private PerformanceFinder performanceFinder;
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -25,8 +45,18 @@ class SelectSeatUseCaseTest {
     @Mock
     private SeatStatusEventPublisher seatEventPublisher;
 
-    @InjectMocks
     private SelectSeatUseCase useCase;
+
+    @BeforeEach
+    void setUp() {
+        useCase = new SelectSeatUseCase(
+                performanceFinder,
+                seatSelectionService,
+                seatSelectionAvailabilityValidator,
+                seatEventPublisher,
+                CLOCK
+        );
+    }
 
     @Test
     void select_then_publish_selected_event() {
@@ -34,9 +64,27 @@ class SelectSeatUseCaseTest {
 
         useCase.execute(input);
 
-        InOrder inOrder = inOrder(seatSelectionAvailabilityValidator, seatSelectionService, seatEventPublisher);
+        InOrder inOrder = inOrder(
+                performanceFinder,
+                seatSelectionAvailabilityValidator,
+                seatSelectionService,
+                seatEventPublisher
+        );
+        inOrder.verify(performanceFinder).findValidPerformanceById(10L, NOW);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionService).select(10L, 20L, 1L);
         inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
+    }
+
+    @Test
+    void 예매가_마감된_회차는_좌석을_선택하지_않는다() {
+        SelectSeatUseCase.Input input = new SelectSeatUseCase.Input(10L, 20L, 1L);
+        when(performanceFinder.findValidPerformanceById(10L, NOW))
+                .thenThrow(new CoreException(ErrorType.PERFORMANCE_IS_PAST));
+
+        assertThatThrownBy(() -> useCase.execute(input))
+                .isInstanceOf(CoreException.class);
+
+        verifyNoInteractions(seatSelectionAvailabilityValidator, seatSelectionService, seatEventPublisher);
     }
 }
