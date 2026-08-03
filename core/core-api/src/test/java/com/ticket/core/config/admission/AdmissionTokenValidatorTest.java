@@ -109,7 +109,7 @@ class AdmissionTokenValidatorTest {
                 2,
                 600
         );
-        performance.updateQueuePolicy(queueMode, null, null, null, now.minusMinutes(5), null, null);
+        performance.updateQueuePolicy(queueMode, null, now.minusMinutes(5), null, null);
         return performance;
     }
 }

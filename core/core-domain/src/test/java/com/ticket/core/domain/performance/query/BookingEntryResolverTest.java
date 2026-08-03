@@ -49,7 +49,7 @@ class BookingEntryResolverTest {
                 4,
                 300
         );
-        performance.updateQueuePolicy(queueMode, QueueLevel.LEVEL_1, 300, 300, null, null, null);
+        performance.updateQueuePolicy(queueMode, QueueLevel.LEVEL_1, null, null, null);
         return performance;
     }
 }

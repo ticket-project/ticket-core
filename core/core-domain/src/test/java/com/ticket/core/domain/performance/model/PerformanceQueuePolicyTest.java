@@ -12,7 +12,7 @@ class PerformanceQueuePolicyTest {
     @Test
     void force_on_requires_queue() {
         Performance performance = performance();
-        performance.updateQueuePolicy(QueueMode.FORCE_ON, QueueLevel.LEVEL_1, 300, 300, null, null, null);
+        performance.updateQueuePolicy(QueueMode.FORCE_ON, QueueLevel.LEVEL_1, null, null, null);
 
         assertThat(performance.requiresQueueAt(LocalDateTime.of(2026, 5, 24, 19, 0))).isTrue();
     }
@@ -23,7 +23,7 @@ class PerformanceQueuePolicyTest {
         assertThat(emptyPolicy.requiresQueueAt(LocalDateTime.of(2026, 5, 24, 19, 0))).isFalse();
 
         Performance forceOff = performance();
-        forceOff.updateQueuePolicy(QueueMode.FORCE_OFF, QueueLevel.LEVEL_1, 300, 300, null, null, null);
+        forceOff.updateQueuePolicy(QueueMode.FORCE_OFF, QueueLevel.LEVEL_1, null, null, null);
         assertThat(forceOff.requiresQueueAt(LocalDateTime.of(2026, 5, 24, 19, 0))).isFalse();
     }
 
@@ -35,8 +35,6 @@ class PerformanceQueuePolicyTest {
         performance.updateQueuePolicy(
                 QueueMode.AUTO,
                 QueueLevel.LEVEL_1,
-                300,
-                300,
                 LocalDateTime.of(2026, 5, 24, 19, 50),
                 null,
                 null
