@@ -1,17 +1,12 @@
 package com.ticket.core.domain.order.command.create;
 
 import com.ticket.core.support.lock.DistributedLock;
-import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
-import com.ticket.core.domain.hold.event.HoldCreatedEvent;
-
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.order.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -25,16 +20,13 @@ public class CreateOrderUseCase {
 
     private final CreateOrderValidator validator;
     private final HoldAllocator holdAllocator;
-    private final OrderCreator orderCreator;
-    private final HoldHistoryRecorder holdHistoryRecorder;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final CreatePendingOrderTxService createPendingOrderTxService;
     private final Clock clock;
 
     public record Input(Long performanceId, List<Long> seatIds, Long memberId) {}
 
     public record Output(String orderKey, OrderState status, LocalDateTime expiresAt) {}
 
-    @Transactional
     @DistributedLock(
             prefix = "start-order",
             dynamicKey = "#input.memberId() + ':' + #input.performanceId()",
@@ -61,22 +53,12 @@ public class CreateOrderUseCase {
     }
 
     private Output createOrder(final Input input, final Duration holdDuration, final HoldAllocation allocation) {
-        final Order order = orderCreator.createPendingOrder(
+        final Order order = createPendingOrderTxService.create(
                 input.memberId(),
                 input.performanceId(),
-                allocation.holdKey(),
-                allocation.expiresAt(),
-                allocation.performanceSeats()
+                holdDuration,
+                allocation
         );
-        holdHistoryRecorder.recordCreated(
-                input.memberId(),
-                input.performanceId(),
-                allocation.holdKey(),
-                allocation.startedAt(holdDuration),
-                allocation.expiresAt(),
-                allocation.performanceSeats()
-        );
-        applicationEventPublisher.publishEvent(new HoldCreatedEvent(allocation.snapshot()));
         return new Output(order.getOrderKey(), OrderState.PENDING, allocation.expiresAt());
     }
 
