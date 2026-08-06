@@ -1,13 +1,14 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenValidator;
+import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
-import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
 import com.ticket.core.domain.order.model.OrderState;
+import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
+import com.ticket.core.domain.order.query.GetOrderStatusUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.config.security.MemberPrincipal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.util.List;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -37,6 +39,7 @@ class OrderControllerContractTest {
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
     private final GetOrderDetailUseCase getOrderDetailUseCase = Mockito.mock(GetOrderDetailUseCase.class);
     private final CancelOrderUseCase cancelOrderUseCase = Mockito.mock(CancelOrderUseCase.class);
+    private final GetOrderStatusUseCase getOrderStatusUseCase = Mockito.mock(GetOrderStatusUseCase.class);
     private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
@@ -47,6 +50,7 @@ class OrderControllerContractTest {
                 createOrderUseCase,
                 getOrderDetailUseCase,
                 cancelOrderUseCase,
+                getOrderStatusUseCase,
                 admissionTokenValidator
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
@@ -128,5 +132,26 @@ class OrderControllerContractTest {
 
         verifyNoInteractions(createOrderUseCase);
         verifyNoInteractions(admissionTokenValidator);
+    }
+
+    @Test
+    void 주문상태_조회는_경량응답_계약을_지킨다() throws Exception {
+        when(getOrderStatusUseCase.execute(new GetOrderStatusUseCase.Input("order-key", 100L)))
+                .thenReturn(new GetOrderStatusUseCase.Output(
+                        "order-key",
+                        OrderState.PENDING,
+                        LocalDateTime.of(2026, 3, 24, 14, 10),
+                        300L
+                ));
+
+        mockMvc.perform(get("/api/v1/orders/order-key/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.orderKey").value("order-key"))
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.expiresAt").value("2026-03-24T14:10:00"))
+                .andExpect(jsonPath("$.data.remainingSeconds").value(300L));
+
+        verify(getOrderStatusUseCase).execute(new GetOrderStatusUseCase.Input("order-key", 100L));
     }
 }

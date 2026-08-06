@@ -4,6 +4,7 @@ import com.ticket.core.api.controller.request.CreateOrderRequest;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
+import com.ticket.core.domain.order.query.GetOrderStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,6 +62,17 @@ public interface OrderControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 주문이 아님")
     })
     ApiResponse<GetOrderDetailUseCase.Output> getOrder(
+            @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
+            String orderKey,
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+    );
+
+    @Operation(summary = "주문 상태 조회", description = "폴링용 경량 조회입니다. 주문 상태와 만료 정보만 반환합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "주문 상태 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 주문이 아님")
+    })
+    ApiResponse<GetOrderStatusUseCase.Output> getOrderStatus(
             @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
             String orderKey,
             @Parameter(hidden = true) MemberPrincipal memberPrincipal
