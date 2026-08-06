@@ -29,7 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("memberId") Long memberId
     );
 
-    Optional<Order> findByMemberIdAndPerformanceIdAndStatus(Long memberId, Long performanceId, OrderState status);
+    boolean existsByMemberIdAndPerformanceIdAndStatus(Long memberId, Long performanceId, OrderState status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

@@ -26,7 +26,7 @@ public class CreateOrderValidator {
             final RequestedSeatIds requestedSeatIds,
             final LocalDateTime now
     ) {
-        memberFinder.findActiveMemberById(memberId);
+        memberFinder.ensureActiveMemberExists(memberId);
         final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findValidById(performanceId, now);
         validateSeatCount(policy, requestedSeatIds);
         ensureNoPendingOrder(memberId, performanceId);
@@ -41,7 +41,7 @@ public class CreateOrderValidator {
     }
 
     private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {
-        if (!orderRepository.findByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING).isPresent()) {
+        if (!orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
             return;
         }
         throw new CoreException(ErrorType.PENDING_ORDER_ALREADY_EXISTS);
