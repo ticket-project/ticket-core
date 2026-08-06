@@ -29,7 +29,7 @@ public class SeatEventPublisher implements SeatStatusEventPublisher {
     public void publish(final SeatStatusMessage message) {
         final String destination = String.format(SEAT_TOPIC_FORMAT, message.performanceId());
         messagingTemplate.convertAndSend(destination, message);
-        log.info("seat event published: action={}, perfId={}, seatId={}",
+        log.debug("seat event published: action={}, perfId={}, seatId={}",
                 message.action(), message.performanceId(), message.seatId());
     }
 }
