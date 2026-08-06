@@ -26,14 +26,14 @@ public class SeatSelectionService {
             log.warn("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
             throw new CoreException(ErrorType.SEAT_ALREADY_SELECTED);
         }
-        log.info("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
+        log.debug("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
     }
 
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final String memberKey = memberKeyOf(memberId);
         final String holder = seatSelectionStore.getHolder(performanceId, seatId);
         if (holder == null) {
-            log.info("좌석 선택 해제를 건너뜁니다. 이미 선택 정보가 없습니다. performanceId={}, seatId={}", performanceId, seatId);
+            log.debug("좌석 선택 해제를 건너뜁니다. 이미 선택 정보가 없습니다. performanceId={}, seatId={}", performanceId, seatId);
             return;
         }
         validateOwner(performanceId, seatId, memberId, memberKey, holder);
@@ -81,7 +81,7 @@ public class SeatSelectionService {
     ) {
         final boolean released = seatSelectionStore.releaseIfOwned(performanceId, seatId, memberKey);
         if (released) {
-            log.info("좌석 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
+            log.debug("좌석 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
             return;
         }
         handleReleaseFailure(performanceId, seatId, memberId);
@@ -90,7 +90,7 @@ public class SeatSelectionService {
     private void handleReleaseFailure(final Long performanceId, final Long seatId, final Long memberId) {
         final String currentHolder = seatSelectionStore.getHolder(performanceId, seatId);
         if (currentHolder == null) {
-            log.info("좌석 선택 해제 시점에 이미 만료되었거나 해제되었습니다. performanceId={}, seatId={}, memberId={}",
+            log.debug("좌석 선택 해제 시점에 이미 만료되었거나 해제되었습니다. performanceId={}, seatId={}, memberId={}",
                     performanceId, seatId, memberId);
             return;
         }
@@ -105,7 +105,7 @@ public class SeatSelectionService {
 
     private void logDeselectedSeats(final Long performanceId, final Long memberId, final List<Long> seatIds) {
         for (final Long seatId : seatIds) {
-            log.info("좌석 일괄 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
+            log.debug("좌석 일괄 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
         }
     }
 }
