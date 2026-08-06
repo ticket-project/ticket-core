@@ -7,6 +7,7 @@ import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
+import com.ticket.core.domain.order.query.GetOrderStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class OrderController implements OrderControllerDocs {
     private final CreateOrderUseCase createOrderUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
+    private final GetOrderStatusUseCase getOrderStatusUseCase;
     private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
@@ -59,6 +61,17 @@ public class OrderController implements OrderControllerDocs {
     ) {
         final GetOrderDetailUseCase.Input input = new GetOrderDetailUseCase.Input(orderKey, memberPrincipal.getMemberId());
         final GetOrderDetailUseCase.Output output = getOrderDetailUseCase.execute(input);
+        return ApiResponse.success(output);
+    }
+
+    @Override
+    @GetMapping("/{orderKey}/status")
+    public ApiResponse<GetOrderStatusUseCase.Output> getOrderStatus(
+            @PathVariable final String orderKey,
+            final MemberPrincipal memberPrincipal
+    ) {
+        final GetOrderStatusUseCase.Input input = new GetOrderStatusUseCase.Input(orderKey, memberPrincipal.getMemberId());
+        final GetOrderStatusUseCase.Output output = getOrderStatusUseCase.execute(input);
         return ApiResponse.success(output);
     }
 

@@ -1,18 +1,17 @@
 package com.ticket.core.domain.order.query;
 
-import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
-import com.ticket.core.domain.order.model.Order;
-import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.domain.performanceseat.query.PerformanceSeatFinder;
+import com.ticket.core.domain.order.query.model.OrderDetailRow;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,10 +20,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
 
-    private final OrderFinder orderFinder;
-    private final OrderSeatFinder orderSeatFinder;
-    private final PerformanceSeatFinder performanceSeatFinder;
-    private final MemberFinder memberFinder;
+    private final OrderQueryRepository orderQueryRepository;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {}
@@ -68,12 +64,66 @@ public class GetOrderDetailUseCase {
     ) {}
 
     public Output execute(final Input input) {
-        final Order order = orderFinder.findOwnedByOrderKey(input.orderKey(), input.memberId());
-        final List<OrderSeat> orderSeats = orderSeatFinder.getOrderSeatsByOrderId(order.getId());
-        final List<PerformanceSeat> performanceSeats = performanceSeatFinder.findAllByOrderSeats(orderSeats);
-        final Member member = memberFinder.findActiveMemberById(input.memberId());
-        final LocalDateTime now = LocalDateTime.now(clock);
+        final List<OrderDetailRow> rows = orderQueryRepository.findDetailRows(input.orderKey(), input.memberId());
+        if (rows.isEmpty()) {
+            throw new CoreException(ErrorType.ORDER_NOT_OWNED);
+        }
 
-        return OrderDetailResponseMapper.toResponse(order, orderSeats, performanceSeats, member, now);
+        final OrderDetailRow first = rows.getFirst();
+        if (first.memberDeletedAt() != null) {
+            throw new NotFoundException(ErrorType.NOT_FOUND_DATA);
+        }
+
+        final LocalDateTime now = LocalDateTime.now(clock);
+        final List<TicketSeat> seats = rows.stream()
+                .map(this::toTicketSeat)
+                .toList();
+        final BigDecimal ticketAmount = rows.stream()
+                .map(OrderDetailRow::price)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        final long remainingSeconds = first.status() == OrderState.PENDING
+                ? Math.max(0L, Duration.between(now, first.expiresAt()).getSeconds())
+                : 0L;
+
+        return new Output(
+                first.orderKey(),
+                first.status(),
+                first.expiresAt(),
+                remainingSeconds,
+                new ShowInfo(first.showId(), first.showTitle(), first.showImageUrl()),
+                new PerformanceInfo(
+                        first.performanceId(),
+                        first.performanceNo(),
+                        first.startTime(),
+                        first.venueName()
+                ),
+                new BookerInfo(first.memberId(), first.memberName(), first.memberEmail()),
+                new PriceInfo(
+                        ticketAmount,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        ticketAmount
+                ),
+                new TicketInfo(seats.size(), seats)
+        );
+    }
+
+    private TicketSeat toTicketSeat(final OrderDetailRow row) {
+        final String label = row.floor() + "F "
+                + row.section() + "구역 "
+                + row.rowNo() + "열 "
+                + row.seatNo() + "번";
+
+        return new TicketSeat(
+                row.performanceSeatId(),
+                row.seatId(),
+                row.floor(),
+                row.section(),
+                row.rowNo(),
+                row.seatNo(),
+                label,
+                row.price()
+        );
     }
 }
