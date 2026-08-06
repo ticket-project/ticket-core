@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -50,6 +51,24 @@ class MemberFinderTest {
         //when
         //then
         assertThatThrownBy(() -> memberFinder.findActiveMemberById(1L))
+                .isInstanceOf(NotFoundException.class)
+                .satisfies(thrown -> assertThat(((NotFoundException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+    }
+
+    @Test
+    void 활성_회원이_존재하면_존재_검증을_통과한다() {
+        when(memberRepository.existsByIdAndDeletedAtIsNull(1L)).thenReturn(true);
+
+        memberFinder.ensureActiveMemberExists(1L);
+
+        verify(memberRepository).existsByIdAndDeletedAtIsNull(1L);
+    }
+
+    @Test
+    void 활성_회원이_존재하지_않으면_존재_검증에서_예외를_던진다() {
+        when(memberRepository.existsByIdAndDeletedAtIsNull(1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> memberFinder.ensureActiveMemberExists(1L))
                 .isInstanceOf(NotFoundException.class)
                 .satisfies(thrown -> assertThat(((NotFoundException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
     }

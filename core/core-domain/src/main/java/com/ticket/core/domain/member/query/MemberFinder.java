@@ -18,4 +18,10 @@ public class MemberFinder {
                 .orElseThrow(() -> new NotFoundException(ErrorType.NOT_FOUND_DATA));
     }
 
+    public void ensureActiveMemberExists(final Long id) {
+        if (memberRepository.existsByIdAndDeletedAtIsNull(id)) {
+            return;
+        }
+        throw new NotFoundException(ErrorType.NOT_FOUND_DATA);
+    }
 }

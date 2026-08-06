@@ -51,7 +51,7 @@ class CreateOrderValidatorTest {
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.EXCEED_HOLD_LIMIT));
 
-        verify(memberFinder).findActiveMemberById(20L);
+        verify(memberFinder).ensureActiveMemberExists(20L);
         verify(performanceBookingPolicyFinder).findValidById(10L, FIXED_NOW);
         verifyNoInteractions(orderRepository);
     }
@@ -62,7 +62,7 @@ class CreateOrderValidatorTest {
         PerformanceBookingPolicyView performance = createPerformance(3, 300);
 
         when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
-        when(orderRepository.findByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(java.util.Optional.of(org.mockito.Mockito.mock(com.ticket.core.domain.order.model.Order.class)));
+        when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(true);
 
         assertThatThrownBy(() -> checker.validate(20L, 10L, seatIds, FIXED_NOW))
                 .isInstanceOf(CoreException.class)
@@ -75,7 +75,7 @@ class CreateOrderValidatorTest {
         PerformanceBookingPolicyView performance = createPerformance(3, 300);
 
         when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
-        when(orderRepository.findByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(java.util.Optional.empty());
+        when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
 
         PerformanceBookingPolicyView result = checker.validate(20L, 10L, seatIds, FIXED_NOW);
 
@@ -88,7 +88,7 @@ class CreateOrderValidatorTest {
         PerformanceBookingPolicyView performance = createPerformance(null, 300);
 
         when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
-        when(orderRepository.findByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(java.util.Optional.empty());
+        when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
 
         PerformanceBookingPolicyView result = checker.validate(20L, 10L, seatIds, FIXED_NOW);
 

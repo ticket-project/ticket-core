@@ -92,6 +92,28 @@ class OrderRepositoryIntegrationTest {
     }
 
     @Test
+    void pending_order_existence_query_checks_member_performance_and_status() {
+        Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
+        inTransaction(() -> orderRepository.save(pending));
+
+        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                MEMBER_ID,
+                PERFORMANCE_ID,
+                OrderState.PENDING
+        )).isTrue();
+        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                MEMBER_ID + 1,
+                PERFORMANCE_ID,
+                OrderState.PENDING
+        )).isFalse();
+        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                MEMBER_ID,
+                PERFORMANCE_ID,
+                OrderState.CONFIRMED
+        )).isFalse();
+    }
+
+    @Test
     void pessimistic_write_lock_blocks_a_second_transaction_for_the_same_order() throws Exception {
         Order saved = inTransactionWithResult(() -> orderRepository.save(order("lock", LocalDateTime.now().plusMinutes(5))));
         ExecutorService executor = Executors.newFixedThreadPool(2);
