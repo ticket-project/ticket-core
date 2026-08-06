@@ -1,5 +1,6 @@
 package com.ticket.core.domain.performanceseat.command;
 
+import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -56,6 +58,13 @@ class SelectSeatUseCaseTest {
     @Test
     void select_then_publish_selected_event() {
         SelectSeatUseCase.Input input = new SelectSeatUseCase.Input(10L, 20L, 1L);
+        SeatSelectionAvailabilityView availability = new SeatSelectionAvailabilityView(
+                NOW.minusMinutes(1),
+                NOW.plusMinutes(1),
+                30L,
+                null
+        );
+        when(seatSelectionAvailabilityValidator.validate(10L, 20L, NOW)).thenReturn(availability);
 
         useCase.execute(input);
 
@@ -65,7 +74,7 @@ class SelectSeatUseCaseTest {
                 seatEventPublisher
         );
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L, NOW);
-        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L);
+        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, availability.orderCloseTime());
         inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
     }
 

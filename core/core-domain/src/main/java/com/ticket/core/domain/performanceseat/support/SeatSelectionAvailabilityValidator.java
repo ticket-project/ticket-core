@@ -18,7 +18,7 @@ public class SeatSelectionAvailabilityValidator {
     private final HoldManager holdManager;
     private final SeatSelectionAvailabilityQueryRepository queryRepository;
 
-    public void validate(final Long performanceId, final Long seatId, final LocalDateTime now) {
+    public SeatSelectionAvailabilityView validate(final Long performanceId, final Long seatId, final LocalDateTime now) {
         final SeatSelectionAvailabilityView availability = queryRepository
                 .findForSelection(performanceId, seatId)
                 .orElseThrow(() -> new CoreException(
@@ -41,5 +41,6 @@ public class SeatSelectionAvailabilityValidator {
         if (holdManager.isHeld(performanceId, seatId)) {
             throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
         }
+        return availability;
     }
 }
