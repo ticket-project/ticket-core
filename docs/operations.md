@@ -132,13 +132,36 @@ QUEUE_COMPLETION_READ_TIMEOUT=1s
 완료 알림은 주문 응답과 분리된 비동기 best-effort 호출이다. 현재 결제 API가 없으므로 `PENDING` 주문 생성 성공을 예매 흐름의 종료점으로 사용한다. 결제가 추가되면 완료 알림을 결제 성공·실패·취소 같은 최종 상태로 옮긴다. 실패 로그가 발생해도 주문 자체는 성공 상태를 유지하며, Queue의 shopping session TTL이 최종 정리 안전망이다. 이 때문에 콜백 성공률과 TTL 만료 정리량을 함께 관측해야 한다.
 
 
+## 좌석 선택 Redis 인덱스 전환
+
+좌석 선택 조회는 기존 key scan 대신 공연별 Sorted Set 인덱스를 사용한다.
+이전 버전이 만든 선택 키는 새 인덱스에 없으므로, Redis를 유지한 채 처음 배포할 때는
+아래 순서로 전환한다.
+
+1. 신규 좌석 선택 요청을 잠시 차단한다.
+2. 좌석 선택 TTL인 5분 이상 기다린다.
+3. Redis `SCAN`으로 `seat:select:{perf:*}:*` 형식의 기존 선택 키가 0개인지 확인한다.
+4. 새 버전을 배포하고 좌석 상태 조회와 전체 선택 해제를 확인한다.
+5. 신규 좌석 선택 요청을 다시 허용한다.
+
+운영 Redis에서 전체 키를 한 번에 반환하는 `KEYS`는 사용하지 않는다.
+좌석 선택을 중단할 수 없는 무중단 배포라면 배포 전에 기존 선택 키를 Sorted Set으로
+백필하거나, 전환 기간에만 기존 scan 조회를 함께 사용하는 호환 코드가 필요하다.
+
 ## DB 마이그레이션
 
 Flyway는 `core:core-api` 실행 모듈에서만 사용한다. 마이그레이션 파일 위치는 아래 경로다.
 
 ```text
 core/core-api/src/main/resources/db/migration
+core/core-api/src/main/resources/db/migration-vendor/h2
+core/core-api/src/main/resources/db/migration-vendor/oracle
 ```
+
+공통 migration은 `db/migration`에 두고, Oracle과 H2의 문법이 다른 migration은
+`db/migration-vendor/oracle`, `db/migration-vendor/h2`에 같은 버전으로 각각 둔다.
+`application-dev.yml`은 H2 경로를, `application-prod.yml`은 Oracle 경로를 명시해
+현재 DB에 맞는 migration만 선택한다.
 
 운영 DB는 이미 테이블이 존재한다는 전제로 도입한다. 최초 반영 전에는 다음 순서를 지킨다.
 
@@ -151,11 +174,25 @@ core/core-api/src/main/resources/db/migration
 기존 운영 스키마를 다시 만드는 `V1__...sql`은 추가하지 않는다. 이후 테이블 구조 변경은 새 파일로만 추가한다.
 
 ```text
-V2__add_payment_tables.sql
-V3__add_order_confirmed_at.sql
+V5__add_payment_tables.sql
+V6__add_order_confirmed_at.sql
 ```
 
 이미 운영에 적용된 migration 파일은 수정하지 않는다. 변경이 더 필요하면 다음 버전 파일을 새로 만든다.
+
+### 조회 인덱스 적용
+
+`V3__add_performance_seat_unique_index.sql`과 `V4__add_order_seat_order_index.sql`은
+좌석 선택 검증과 주문 상세 조회에 필요한 인덱스를 적용한다.
+
+배포 전에는 `docs/database/core-api-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
+중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
+대표 행을 결정한 뒤 정리한다. migration에서 중복 행을 임의 삭제하지 않는다.
+
+Oracle DDL은 실행 시 암묵적으로 커밋된다. 그래서 두 인덱스를 V3과 V4로 분리했고,
+각 migration은 같은 목적의 기존 인덱스가 있으면 건너뛴다. 실패 후 재시도하기 전에는
+`USER_IND_COLUMNS`와 `flyway_schema_history`를 함께 확인한다. 적용 후에도 같은 점검 SQL로
+두 인덱스의 컬럼 순서를 확인한다.
 
 local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create`와 seed loader로 초기화한다. dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동 DDL과 seed loader를 끄고 Flyway만 활성화한다. 기존 local DB를 dev에서 처음 Flyway에 편입할 때만 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 지정해 version `1` baseline을 만들고, 평소에는 기본값(`false`)을 유지한다. 이후 변경은 `V2__...sql`부터 검증한다.
 
