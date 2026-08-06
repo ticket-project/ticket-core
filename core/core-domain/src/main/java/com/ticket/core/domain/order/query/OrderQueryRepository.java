@@ -74,9 +74,11 @@ public class OrderQueryRepository {
                         order.expiresAt
                 ))
                 .from(order)
+                .join(member).on(member.id.eq(order.memberId))
                 .where(
                         order.orderKey.eq(orderKey),
-                        order.memberId.eq(memberId)
+                        order.memberId.eq(memberId),
+                        member.deletedAt.isNull()
                 )
                 .fetchOne());
     }
