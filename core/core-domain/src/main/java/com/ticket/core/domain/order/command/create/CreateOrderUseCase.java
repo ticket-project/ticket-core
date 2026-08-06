@@ -38,7 +38,6 @@ public class CreateOrderUseCase {
     @DistributedLock(
             prefix = "start-order",
             dynamicKey = "#input.memberId() + ':' + #input.performanceId()",
-            leaseTime = 15000L,
             message = "주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요."
     )
     public Output execute(final Input input) {
