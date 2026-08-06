@@ -5,7 +5,7 @@ import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.hold.event.HoldCreatedEvent;
 
 import com.ticket.core.domain.order.model.Order;
-import com.ticket.core.domain.performance.model.Performance;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.order.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +44,8 @@ public class CreateOrderUseCase {
     public Output execute(final Input input) {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
-        final Performance performance = validator.validate(input.memberId(), input.performanceId(), requestedSeatIds, now);
-        final Duration holdDuration = Duration.ofSeconds(performance.getHoldTime());
+        final PerformanceBookingPolicyView policy = validator.validate(input.memberId(), input.performanceId(), requestedSeatIds, now);
+        final Duration holdDuration = Duration.ofSeconds(policy.holdTime());
         final HoldAllocation allocation = holdAllocator.allocate(
                 input.memberId(),
                 input.performanceId(),

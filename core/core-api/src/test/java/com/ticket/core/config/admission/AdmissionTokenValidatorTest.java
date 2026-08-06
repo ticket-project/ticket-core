@@ -1,7 +1,7 @@
 package com.ticket.core.config.admission;
 
-import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
@@ -23,10 +23,10 @@ class AdmissionTokenValidatorTest {
 
     private static final ZonedDateTime NOW = ZonedDateTime.parse("2026-05-24T12:00:00+09:00");
 
-    private final PerformanceFinder performanceFinder = mock(PerformanceFinder.class);
+    private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder = mock(PerformanceBookingPolicyFinder.class);
     private final AdmissionTokenService admissionTokenService = mock(AdmissionTokenService.class);
     private final AdmissionTokenValidator validator = new AdmissionTokenValidator(
-            performanceFinder,
+            performanceBookingPolicyFinder,
             admissionTokenService,
             Clock.fixed(NOW.toInstant(), ZoneId.of("Asia/Seoul"))
     );
@@ -34,7 +34,7 @@ class AdmissionTokenValidatorTest {
     @Test
     void admission_token_검증이_비활성화되면_회차와_토큰을_조회하지_않는다() {
         AdmissionTokenValidator disabledValidator = new AdmissionTokenValidator(
-                performanceFinder,
+                performanceBookingPolicyFinder,
                 admissionTokenService,
                 Clock.fixed(NOW.toInstant(), ZoneId.of("Asia/Seoul")),
                 false
@@ -42,12 +42,12 @@ class AdmissionTokenValidatorTest {
 
         disabledValidator.validate(10L, 10L, null);
 
-        verifyNoInteractions(performanceFinder, admissionTokenService);
+        verifyNoInteractions(performanceBookingPolicyFinder, admissionTokenService);
     }
 
     @Test
     void direct_회차는_admission_token_없이_통과한다() {
-        when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_OFF));
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_OFF));
 
         validator.validate(10L, 10L, null);
 
@@ -56,7 +56,7 @@ class AdmissionTokenValidatorTest {
 
     @Test
     void queue_회차는_admission_token이_필수다() {
-        when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
 
         assertThatThrownBy(() -> validator.validate(10L, 10L, null))
                 .isInstanceOf(CoreException.class)
@@ -66,7 +66,7 @@ class AdmissionTokenValidatorTest {
 
     @Test
     void queue_회차는_admission_token의_회차와_만료를_검증한다() {
-        when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
 
         validator.validate(10L, 10L, "admission-token");
 
@@ -75,7 +75,7 @@ class AdmissionTokenValidatorTest {
 
     @Test
     void 만료된_admission_token은_거부한다() {
-        when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
         when(admissionTokenService.verifyFor("expired-token", 10L, 10L))
                 .thenThrow(new AdmissionTokenExpiredException("admission token expired", null));
 
@@ -87,7 +87,7 @@ class AdmissionTokenValidatorTest {
 
     @Test
     void 잘못된_admission_token은_거부한다() {
-        when(performanceFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
         when(admissionTokenService.verifyFor("invalid-token", 10L, 10L))
                 .thenThrow(new AdmissionTokenException("admission token invalid"));
 
@@ -97,19 +97,19 @@ class AdmissionTokenValidatorTest {
                 .isEqualTo(ErrorType.ADMISSION_TOKEN_INVALID);
     }
 
-    private Performance performance(final QueueMode queueMode) {
+    private PerformanceBookingPolicyView performance(final QueueMode queueMode) {
         LocalDateTime now = NOW.toLocalDateTime();
-        Performance performance = new Performance(
-                null,
-                1L,
-                now.plusHours(1),
-                now.plusHours(3),
+        return new PerformanceBookingPolicyView(
+                10L,
                 now.minusMinutes(10),
                 now.plusHours(2),
                 2,
-                600
+                600,
+                queueMode,
+                null,
+                now.minusMinutes(5),
+                null,
+                null
         );
-        performance.updateQueuePolicy(queueMode, null, now.minusMinutes(5), null, null);
-        return performance;
     }
 }
