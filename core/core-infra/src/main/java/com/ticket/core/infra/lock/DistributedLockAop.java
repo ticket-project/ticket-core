@@ -42,11 +42,7 @@ public class DistributedLockAop {
         final RLock lock = generateLock(keys);
 
         try {
-            final boolean available = lock.tryLock(
-                    distributedLock.waitTime(),
-                    distributedLock.leaseTime(),
-                    distributedLock.timeUnit()
-            );
+            final boolean available = tryLock(lock, distributedLock);
             if (!available) {
                 log.warn("분산 락 획득에 실패했습니다. keys={}", keys);
                 throw new CoreException(distributedLock.errorType(), resolveMessage(distributedLock));
@@ -58,6 +54,17 @@ public class DistributedLockAop {
         } finally {
             unlockQuietly(lock, keys);
         }
+    }
+
+    private boolean tryLock(final RLock lock, final DistributedLock distributedLock) throws InterruptedException {
+        if (distributedLock.leaseTime() < 0L) {
+            return lock.tryLock(distributedLock.waitTime(), distributedLock.timeUnit());
+        }
+        return lock.tryLock(
+                distributedLock.waitTime(),
+                distributedLock.leaseTime(),
+                distributedLock.timeUnit()
+        );
     }
 
     private String lockPrefix(final String prefix) {

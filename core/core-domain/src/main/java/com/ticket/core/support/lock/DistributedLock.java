@@ -40,10 +40,10 @@ public @interface DistributedLock {
     long waitTime() default 5000L;
 
     /**
-     * 락 임대 시간 (default - 3000ms)
-     * 락을 획득한 이후 leaseTime이 지나면 락을 해제한다.
+     * 락 임대 시간. 기본값 -1은 Redisson watchdog으로 실행 중인 락을 자동 연장한다.
+     * 양수로 지정하면 해당 시간이 지난 뒤 락을 자동 해제한다.
      */
-    long leaseTime() default 3000L;
+    long leaseTime() default -1L;
 
     /**
      * 락 획득 실패 시 반환할 도메인 에러

@@ -33,7 +33,7 @@ class SelectSeatUseCaseTest {
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
-    private SeatSelectionService seatSelectionService;
+    private SeatSelectionCoordinator seatSelectionCoordinator;
 
     @Mock
     private SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
@@ -46,7 +46,7 @@ class SelectSeatUseCaseTest {
     @BeforeEach
     void setUp() {
         useCase = new SelectSeatUseCase(
-                seatSelectionService,
+                seatSelectionCoordinator,
                 seatSelectionAvailabilityValidator,
                 seatEventPublisher,
                 CLOCK
@@ -60,12 +60,12 @@ class SelectSeatUseCaseTest {
         useCase.execute(input);
 
         InOrder inOrder = inOrder(
+                seatSelectionCoordinator,
                 seatSelectionAvailabilityValidator,
-                seatSelectionService,
                 seatEventPublisher
         );
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L, NOW);
-        inOrder.verify(seatSelectionService).select(10L, 20L, 1L);
+        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L);
         inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
     }
 
@@ -78,6 +78,6 @@ class SelectSeatUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(input))
                 .isInstanceOf(CoreException.class);
 
-        verifyNoInteractions(seatSelectionService, seatEventPublisher);
+        verifyNoInteractions(seatSelectionCoordinator, seatEventPublisher);
     }
 }
