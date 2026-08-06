@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import com.ticket.core.infra.auth.token.RedisRefreshTokenStore;
 import com.ticket.core.infra.lock.DistributedLockAop;
 import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
@@ -95,6 +96,20 @@ class CoreRedisIntegrationTest {
         assertThat(store.selectIfAbsent(1L, 12L, "other-owner", Duration.ofSeconds(1))).isTrue();
         assertThat(store.releaseAllByMember(1L, "next-owner")).containsExactlyInAnyOrder(10L, 11L);
         assertThat(store.getSelectingSeatIds(1L)).containsExactly(12L);
+    }
+
+    @Test
+    void seat_selection_index_expires_without_read_cleanup() throws Exception {
+        RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
+        String indexKey = SeatRedisKey.selectSeatIndex(1L);
+
+        assertThat(store.selectIfAbsent(1L, 10L, "owner", Duration.ofMillis(150))).isTrue();
+        assertThat(redissonClient.getKeys().countExists(indexKey)).isEqualTo(1L);
+
+        awaitCondition(
+                () -> redissonClient.getKeys().countExists(indexKey) == 0L,
+                "seat selection index did not expire"
+        );
     }
 
     @Test
