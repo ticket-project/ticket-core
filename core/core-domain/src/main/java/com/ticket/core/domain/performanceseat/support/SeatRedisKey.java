@@ -11,6 +11,7 @@ public final class SeatRedisKey {
 
     private static final String SELECT_KEY = "seat:select:{perf:%d}:%d";
     private static final String SELECT_PATTERN = "seat:select:{perf:%d}:*";
+    private static final String SELECT_SEAT_INDEX_KEY = "seat:select:index:{perf:%d}";
 
     private static final String HOLD_KEY = "seat:hold:{perf:%d}:%d";
     private static final String HOLD_PATTERN = "seat:hold:{perf:%d}:*";
@@ -28,6 +29,10 @@ public final class SeatRedisKey {
 
     public static String selectPattern(final Long perfId) {
         return String.format(SELECT_PATTERN, perfId);
+    }
+
+    public static String selectSeatIndex(final Long perfId) {
+        return String.format(SELECT_SEAT_INDEX_KEY, perfId);
     }
 
     public static String hold(final Long perfId, final Long seatId) {

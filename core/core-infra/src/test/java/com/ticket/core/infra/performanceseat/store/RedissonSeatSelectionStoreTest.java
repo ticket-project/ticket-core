@@ -7,18 +7,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
-import org.redisson.api.RKeys;
+import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 
 import java.time.Duration;
 import java.util.List;
 
+import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -31,60 +33,70 @@ class RedissonSeatSelectionStoreTest {
     private RBucket<String> bucket;
 
     @Mock
-    private RKeys rKeys;
+    private RScript script;
 
     @InjectMocks
     private RedissonSeatSelectionStore redissonSeatSelectionStore;
 
     @Test
     void 비어있는_좌석이면_selectIfAbsent가_true다() {
-        //given
-        doReturn(bucket).when(redissonClient).getBucket(SeatRedisKey.select(10L, 20L), StringCodec.INSTANCE);
-        when(bucket.setIfAbsent("3", Duration.ofMinutes(5))).thenReturn(true);
+        doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
+        doReturn(1L).when(script).eval(
+                eq(RScript.Mode.READ_WRITE),
+                anyString(),
+                eq(RScript.ReturnType.LONG),
+                eq(List.<Object>of(
+                        SeatRedisKey.select(10L, 20L),
+                        SeatRedisKey.selectSeatIndex(10L)
+                )),
+                eq(Duration.ofMinutes(5).toMillis()),
+                eq("3"),
+                eq("20")
+        );
 
-        //when
         boolean result = redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5));
 
-        //then
         assertThat(result).isTrue();
-        verify(bucket).setIfAbsent("3", Duration.ofMinutes(5));
     }
 
     @Test
     void holder를_조회하고_소유자가_맞으면_해제한다() {
-        //given
         doReturn(bucket).when(redissonClient).getBucket(SeatRedisKey.select(10L, 20L), StringCodec.INSTANCE);
-        when(bucket.get()).thenReturn("3");
-        when(bucket.compareAndSet("3", null)).thenReturn(true);
+        doReturn("3").when(bucket).get();
+        doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
+        doReturn(1L).when(script).eval(
+                eq(RScript.Mode.READ_WRITE),
+                anyString(),
+                eq(RScript.ReturnType.LONG),
+                eq(List.<Object>of(
+                        SeatRedisKey.select(10L, 20L),
+                        SeatRedisKey.selectSeatIndex(10L)
+                )),
+                eq("3"),
+                eq("20")
+        );
 
-        //when
         String holder = redissonSeatSelectionStore.getHolder(10L, 20L);
         boolean released = redissonSeatSelectionStore.releaseIfOwned(10L, 20L, "3");
 
-        //then
         assertThat(holder).isEqualTo("3");
         assertThat(released).isTrue();
     }
 
     @Test
-    void 소유한_좌석만_일괄_해제한다() {
+    void 공연별_인덱스로_선택좌석을_조회하고_전체키를_SCAN하지_않는다() {
         //given
-        when(redissonClient.getKeys()).thenReturn(rKeys);
-        when(rKeys.getKeysByPattern(SeatRedisKey.selectPattern(10L))).thenReturn(List.of(
-                SeatRedisKey.select(10L, 20L),
-                SeatRedisKey.select(10L, 21L)
-        ));
-        doReturn(bucket).when(redissonClient).getBucket(SeatRedisKey.select(10L, 20L), StringCodec.INSTANCE);
-        RBucket<String> otherBucket = mock(RBucket.class);
-        doReturn(otherBucket).when(redissonClient).getBucket(SeatRedisKey.select(10L, 21L), StringCodec.INSTANCE);
-        when(bucket.get()).thenReturn("3");
-        when(bucket.compareAndSet("3", null)).thenReturn(true);
-        when(otherBucket.get()).thenReturn("4");
+        doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
+        doReturn(List.of("20", "21")).when(script).eval(
+                eq(RScript.Mode.READ_WRITE),
+                anyString(),
+                eq(RScript.ReturnType.LIST),
+                eq(List.<Object>of(SeatRedisKey.selectSeatIndex(10L)))
+        );
 
-        //when
-        List<Long> result = redissonSeatSelectionStore.releaseAllByMember(10L, "3");
+        Set<Long> result = redissonSeatSelectionStore.getSelectingSeatIds(10L);
 
-        //then
-        assertThat(result).containsExactly(20L);
+        assertThat(result).containsExactlyInAnyOrder(20L, 21L);
+        verify(redissonClient, never()).getKeys();
     }
 }

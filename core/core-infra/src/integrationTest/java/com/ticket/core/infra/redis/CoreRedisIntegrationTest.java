@@ -79,14 +79,22 @@ class CoreRedisIntegrationTest {
         assertThat(acquired.stream().filter(Boolean::booleanValue)).hasSize(1);
         String owner = store.getHolder(1L, 10L);
         assertThat(owner).isNotBlank();
+        assertThat(store.getSelectingSeatIds(1L)).containsExactly(10L);
         assertThat(store.releaseIfOwned(1L, 10L, "not-owner")).isFalse();
         assertThat(store.getHolder(1L, 10L)).isEqualTo(owner);
         assertThat(store.releaseIfOwned(1L, 10L, owner)).isTrue();
         assertThat(store.getHolder(1L, 10L)).isNull();
+        assertThat(store.getSelectingSeatIds(1L)).isEmpty();
 
         assertThat(store.selectIfAbsent(1L, 10L, "expiring-owner", Duration.ofMillis(150))).isTrue();
         awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
+        assertThat(store.getSelectingSeatIds(1L)).isEmpty();
         assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1))).isTrue();
+        assertThat(store.getSelectingSeatIds(1L)).containsExactly(10L);
+        assertThat(store.selectIfAbsent(1L, 11L, "next-owner", Duration.ofSeconds(1))).isTrue();
+        assertThat(store.selectIfAbsent(1L, 12L, "other-owner", Duration.ofSeconds(1))).isTrue();
+        assertThat(store.releaseAllByMember(1L, "next-owner")).containsExactlyInAnyOrder(10L, 11L);
+        assertThat(store.getSelectingSeatIds(1L)).containsExactly(12L);
     }
 
     @Test
