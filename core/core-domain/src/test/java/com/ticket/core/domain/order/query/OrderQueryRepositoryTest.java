@@ -88,10 +88,19 @@ class OrderQueryRepositoryTest extends QueryRepositoryTestSupport {
     }
 
     @Test
-    void 주문상태는_주문_컬럼만_조회한다() {
+    void 활성_회원의_주문상태를_조회한다() {
         OrderStatusView status = repository.findStatus(orderKey, memberId).orElseThrow();
 
         assertThat(status.orderKey()).isEqualTo(orderKey);
         assertThat(status.status()).isEqualTo(OrderState.PENDING);
+    }
+
+    @Test
+    void 탈퇴_회원의_주문상태는_조회하지_않는다() {
+        Member member = entityManager.find(Member.class, memberId);
+        member.withdraw(LocalDateTime.now(clock));
+        flushAndClear();
+
+        assertThat(repository.findStatus(orderKey, memberId)).isEmpty();
     }
 }
