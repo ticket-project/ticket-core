@@ -20,13 +20,17 @@ import java.util.Set;
 public class RedissonSeatSelectionStore implements SeatSelectionStore {
 
     private static final String SELECT_IF_ABSENT_SCRIPT = """
+            local redisTime = redis.call('TIME')
+            local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
+            redis.call('zremrangebyscore', KEYS[2], '-inf', nowMillis)
             local acquired = redis.call('set', KEYS[1], ARGV[2], 'PX', ARGV[1], 'NX')
             if not acquired then
                 return 0
             end
-            local redisTime = redis.call('TIME')
-            local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
-            redis.call('zadd', KEYS[2], nowMillis + ARGV[1], ARGV[3])
+            local expiresAt = nowMillis + ARGV[1]
+            redis.call('zadd', KEYS[2], expiresAt, ARGV[3])
+            local latest = redis.call('zrevrange', KEYS[2], 0, 0, 'WITHSCORES')
+            redis.call('pexpireat', KEYS[2], latest[2])
             return 1
             """;
     private static final String RELEASE_IF_OWNED_SCRIPT = """
