@@ -1,7 +1,7 @@
 package com.ticket.core.config.admission;
 
-import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import java.time.Clock;
@@ -16,19 +16,19 @@ public class AdmissionTokenValidator {
 
     public static final String HEADER = "X-Admission-Token";
 
-    private final PerformanceFinder performanceFinder;
+    private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
     private final AdmissionTokenService admissionTokenService;
     private final Clock clock;
     private final boolean enforcementEnabled;
 
     @Autowired
     public AdmissionTokenValidator(
-            final PerformanceFinder performanceFinder,
+            final PerformanceBookingPolicyFinder performanceBookingPolicyFinder,
             final AdmissionTokenService admissionTokenService,
             final TicketAdmissionTokenProperties properties
     ) {
         this(
-                performanceFinder,
+                performanceBookingPolicyFinder,
                 admissionTokenService,
                 Clock.systemDefaultZone(),
                 properties.isEnforcementEnabled()
@@ -36,20 +36,21 @@ public class AdmissionTokenValidator {
     }
 
     AdmissionTokenValidator(
-            final PerformanceFinder performanceFinder,
+            final PerformanceBookingPolicyFinder performanceBookingPolicyFinder,
             final AdmissionTokenService admissionTokenService,
             final Clock clock
     ) {
-        this(performanceFinder, admissionTokenService, clock, true);
+        this(performanceBookingPolicyFinder, admissionTokenService, clock, true);
     }
 
     AdmissionTokenValidator(
-            final PerformanceFinder performanceFinder,
+            final PerformanceBookingPolicyFinder performanceBookingPolicyFinder,
             final AdmissionTokenService admissionTokenService,
             final Clock clock,
             final boolean enforcementEnabled
     ) {
-        this.performanceFinder = Objects.requireNonNull(performanceFinder, "performanceFinder must not be null");
+        this.performanceBookingPolicyFinder = Objects.requireNonNull(
+                performanceBookingPolicyFinder, "performanceBookingPolicyFinder must not be null");
         this.admissionTokenService =
                 Objects.requireNonNull(admissionTokenService, "admissionTokenService must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
@@ -61,7 +62,7 @@ public class AdmissionTokenValidator {
             return;
         }
 
-        Performance performance = performanceFinder.findById(performanceId);
+        PerformanceBookingPolicyView performance = performanceBookingPolicyFinder.findById(performanceId);
         if (!performance.requiresQueueAt(LocalDateTime.now(clock))) {
             return;
         }

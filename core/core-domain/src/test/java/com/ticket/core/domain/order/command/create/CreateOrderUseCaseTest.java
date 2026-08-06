@@ -4,7 +4,7 @@ import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.hold.event.HoldCreatedEvent;
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import com.ticket.core.domain.order.model.Order;
-import com.ticket.core.domain.performance.model.Performance;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.exception.CoreException;
@@ -96,7 +96,7 @@ class CreateOrderUseCaseTest {
     void 유효한_요청이면_hold와_주문을_생성한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final Performance performance = createPerformance(5, 600);
+        final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final HoldSnapshot snapshot = holdSnapshot(seatIds.toList());
         final HoldAllocation allocation = new HoldAllocation(snapshot, seats);
@@ -142,7 +142,7 @@ class CreateOrderUseCaseTest {
     void 주문_생성에_실패하면_hold를_해제한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final Performance performance = createPerformance(5, 600);
+        final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(holdSnapshot(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
 
         when(preconditionChecker.validate(20L, 10L, seatIds, FIXED_NOW)).thenReturn(performance);
@@ -167,7 +167,7 @@ class CreateOrderUseCaseTest {
     void hold_해제에_실패해도_원래_예외를_유지한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final Performance performance = createPerformance(5, 600);
+        final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(holdSnapshot(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
         final RuntimeException originalException = new RuntimeException("order failed");
 
@@ -197,7 +197,7 @@ class CreateOrderUseCaseTest {
     void 이벤트_발행에_실패하면_hold를_해제한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final Performance performance = createPerformance(5, 600);
+        final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
         final HoldSnapshot snapshot = holdSnapshot(seatIds.toList());
         final HoldAllocation allocation = new HoldAllocation(snapshot, seats);
@@ -225,17 +225,19 @@ class CreateOrderUseCaseTest {
         return new Order(20L, 10L, "order-key", "hold-key", BigDecimal.valueOf(120000), snapshot.expiresAt());
     }
 
-    private Performance createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {
+    private PerformanceBookingPolicyView createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        return new Performance(
-                null,
-                1L,
-                now.plusDays(1),
-                now.plusDays(1).plusHours(2),
+        return new PerformanceBookingPolicyView(
+                10L,
                 now.minusHours(1),
                 now.plusHours(3),
                 maxCanHoldCount,
-                holdTimeSeconds
+                holdTimeSeconds,
+                null,
+                null,
+                null,
+                null,
+                null
         );
     }
 }

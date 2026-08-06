@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performanceseat.query;
 
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
@@ -39,9 +39,9 @@ class GetSeatStatusUseCaseTest {
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
-    private PerformanceFinder performanceFinder;
+    private PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
     @Mock
-    private SeatMapQueryRepository seatMapQueryRepository;
+    private SeatStatusDbReader seatStatusDbReader;
     @Mock
     private SeatSelectionService seatSelectionService;
     @Mock
@@ -52,8 +52,8 @@ class GetSeatStatusUseCaseTest {
     @BeforeEach
     void setUp() {
         useCase = new GetSeatStatusUseCase(
-                performanceFinder,
-                seatMapQueryRepository,
+                performanceBookingPolicyFinder,
+                seatStatusDbReader,
                 seatSelectionService,
                 holdManager,
                 CLOCK
@@ -62,10 +62,10 @@ class GetSeatStatusUseCaseTest {
 
     @Test
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
-        Performance performance = mock(Performance.class);
-        when(performanceFinder.findValidPerformanceById(10L, NOW)).thenReturn(performance);
-        when(performance.getId()).thenReturn(10L);
-        when(seatMapQueryRepository.findSeatStatuses(10L)).thenReturn(List.of(
+        PerformanceBookingPolicyView policy = mock(PerformanceBookingPolicyView.class);
+        when(performanceBookingPolicyFinder.findValidById(10L, NOW)).thenReturn(policy);
+        when(policy.performanceId()).thenReturn(10L);
+        when(seatStatusDbReader.read(10L)).thenReturn(List.of(
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         ));
@@ -82,31 +82,31 @@ class GetSeatStatusUseCaseTest {
 
     @Test
     void redis_점유좌석이_없으면_db_상태를_그대로_반환한다() {
-        Performance performance = mock(Performance.class);
+        PerformanceBookingPolicyView policy = mock(PerformanceBookingPolicyView.class);
         List<SeatStateView> dbStates = List.of(
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         );
-        when(performanceFinder.findValidPerformanceById(10L, NOW)).thenReturn(performance);
-        when(performance.getId()).thenReturn(10L);
-        when(seatMapQueryRepository.findSeatStatuses(10L)).thenReturn(dbStates);
+        when(performanceBookingPolicyFinder.findValidById(10L, NOW)).thenReturn(policy);
+        when(policy.performanceId()).thenReturn(10L);
+        when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L));
 
         assertThat(output.seats()).containsExactlyElementsOf(dbStates);
-        verify(seatMapQueryRepository).findSeatStatuses(10L);
+        verify(seatStatusDbReader).read(10L);
     }
 
     @Test
     void 예매가_마감된_회차는_좌석_상태를_조회하지_않는다() {
-        when(performanceFinder.findValidPerformanceById(10L, NOW))
+        when(performanceBookingPolicyFinder.findValidById(10L, NOW))
                 .thenThrow(new CoreException(ErrorType.PERFORMANCE_IS_PAST));
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L)))
                 .isInstanceOf(CoreException.class);
 
-        verifyNoInteractions(seatMapQueryRepository, seatSelectionService, holdManager);
+        verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
 }

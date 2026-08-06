@@ -3,8 +3,8 @@ package com.ticket.core.domain.order.command.create;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -17,23 +17,23 @@ import java.time.LocalDateTime;
 public class CreateOrderValidator {
 
     private final MemberFinder memberFinder;
-    private final PerformanceFinder performanceFinder;
+    private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
     private final OrderRepository orderRepository;
 
-    public Performance validate(
+    public PerformanceBookingPolicyView validate(
             final Long memberId,
             final Long performanceId,
             final RequestedSeatIds requestedSeatIds,
             final LocalDateTime now
     ) {
         memberFinder.findActiveMemberById(memberId);
-        final Performance performance = performanceFinder.findValidPerformanceById(performanceId, now);
-        validateSeatCount(performance, requestedSeatIds);
+        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findValidById(performanceId, now);
+        validateSeatCount(policy, requestedSeatIds);
         ensureNoPendingOrder(memberId, performanceId);
-        return performance;
+        return policy;
     }
 
-    private void validateSeatCount(final Performance performance, final RequestedSeatIds requestedSeatIds) {
+    private void validateSeatCount(final PerformanceBookingPolicyView performance, final RequestedSeatIds requestedSeatIds) {
         if (!performance.isOverCount(requestedSeatIds.size())) {
             return;
         }
