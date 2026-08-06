@@ -13,7 +13,13 @@ import java.math.BigDecimal;
 
 @Getter
 @Entity
-@Table(name = "PERFORMANCE_SEATS")
+@Table(
+        name = "PERFORMANCE_SEATS",
+        uniqueConstraints = @UniqueConstraint(
+                name = "UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT",
+                columnNames = {"performance_id", "seat_id"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PerformanceSeat extends BaseEntity {
 

@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -18,7 +19,10 @@ import java.math.BigDecimal;
 
 @Getter
 @Entity
-@Table(name = "ORDER_SEATS")
+@Table(
+        name = "ORDER_SEATS",
+        indexes = @Index(name = "IDX_ORDER_SEATS_ORDER_ID", columnList = "order_id")
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderSeat extends BaseEntity {
 
