@@ -18,6 +18,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,6 +60,23 @@ class HoldReleaseOutboxSchedulerTest {
         final Slice<HoldReleaseOutbox> slice = new SliceImpl<>(List.of(first, second));
         when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
                 .thenReturn(slice);
+
+        scheduler().processPendingHoldReleases();
+
+        verify(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
+        verify(holdReleaseOutboxExecutor).process(eq(2L), any(LocalDateTime.class));
+    }
+
+    @Test
+    void 한_outbox가_실행중이어도_다음_outbox를_계속_처리한다() {
+        final HoldReleaseOutbox first = HoldReleaseOutbox.create(1L, "hold-1", List.of(10L), LocalDateTime.of(2026, 3, 25, 12, 0));
+        final HoldReleaseOutbox second = HoldReleaseOutbox.create(1L, "hold-2", List.of(20L), LocalDateTime.of(2026, 3, 25, 12, 0));
+        ReflectionTestUtils.setField(first, "id", 1L);
+        ReflectionTestUtils.setField(second, "id", 2L);
+        when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
+                .thenReturn(new SliceImpl<>(List.of(first, second)));
+        doThrow(new RuntimeException("already processing"))
+                .when(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
 
         scheduler().processPendingHoldReleases();
 

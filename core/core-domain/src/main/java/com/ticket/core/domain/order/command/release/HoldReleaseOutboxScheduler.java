@@ -2,6 +2,7 @@ package com.ticket.core.domain.order.command.release;
 
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -12,6 +13,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class HoldReleaseOutboxScheduler {
@@ -45,7 +47,11 @@ public class HoldReleaseOutboxScheduler {
             }
 
             for (final HoldReleaseOutbox outbox : dueOutboxes.getContent()) {
-                holdReleaseOutboxExecutor.process(outbox.getId(), LocalDateTime.now(clock));
+                try {
+                    holdReleaseOutboxExecutor.process(outbox.getId(), LocalDateTime.now(clock));
+                } catch (final RuntimeException e) {
+                    log.warn("hold release outbox 실행을 시작하지 못했습니다. outboxId={}", outbox.getId(), e);
+                }
             }
 
             if (dueOutboxes.getNumberOfElements() < BATCH_SIZE) {
