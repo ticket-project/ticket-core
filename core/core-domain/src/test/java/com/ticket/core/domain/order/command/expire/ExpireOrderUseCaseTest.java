@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -91,6 +92,27 @@ class ExpireOrderUseCaseTest {
         useCase.expireByHoldKey("hold-key", now);
 
         verify(orderSeatRepository).findAllByOrder_IdOrderByIdAsc(10L);
+        verify(orderExpirer).expire(order, List.of(orderSeat), now);
+        verify(holdReleaseOutboxWriter).append(result);
+        verify(applicationEventPublisher).publishEvent(new HoldReleaseRequestedEvent(99L));
+    }
+
+    @Test
+    void duplicate_hold_expiration_creates_one_outbox() {
+        final Order order = createOrder(10L, 100L, "hold-key");
+        final OrderSeat orderSeat = mock(OrderSeat.class);
+        final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
+        final OrderTerminationResult result = new OrderTerminationResult(100L, "hold-key", List.of(42L));
+        when(orderRepository.findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING))
+                .thenReturn(java.util.Optional.of(order), java.util.Optional.empty());
+        when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
+        when(orderExpirer.expire(order, List.of(orderSeat), now)).thenReturn(result);
+        when(holdReleaseOutboxWriter.append(result)).thenReturn(99L);
+
+        useCase.expireByHoldKey("hold-key", now);
+        useCase.expireByHoldKey("hold-key", now);
+
+        verify(orderRepository, times(2)).findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING);
         verify(orderExpirer).expire(order, List.of(orderSeat), now);
         verify(holdReleaseOutboxWriter).append(result);
         verify(applicationEventPublisher).publishEvent(new HoldReleaseRequestedEvent(99L));
