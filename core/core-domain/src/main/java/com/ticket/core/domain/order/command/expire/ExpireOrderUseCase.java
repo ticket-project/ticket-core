@@ -1,30 +1,21 @@
 package com.ticket.core.domain.order.command.expire;
 
+import com.ticket.core.domain.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
-import com.ticket.core.domain.order.model.OrderSeat;
-import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxWriter;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.core.domain.order.repository.OrderSeatRepository;
-import com.ticket.core.domain.order.OrderTerminationResult;
 import com.ticket.core.domain.order.model.OrderState;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ExpireOrderUseCase {
 
     private final OrderRepository orderRepository;
-    private final OrderSeatRepository orderSeatRepository;
-    private final OrderExpirer orderExpirer;
-    private final HoldReleaseOutboxWriter holdReleaseOutboxWriter;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final OrderTerminationService orderTerminationService;
 
     @Transactional
     public void expireByOrderId(final Long orderId, final LocalDateTime now) {
@@ -40,10 +31,7 @@ public class ExpireOrderUseCase {
         if (order == null) {
             return;
         }
-        final List<OrderSeat> orderSeats = orderSeatRepository.findAllByOrder_IdOrderByIdAsc(order.getId());
-        final OrderTerminationResult result = orderExpirer.expire(order, orderSeats, now);
-        final Long outboxId = holdReleaseOutboxWriter.append(result);
-        applicationEventPublisher.publishEvent(new HoldReleaseRequestedEvent(outboxId));
+        orderTerminationService.expire(order, now);
     }
 
     private Order findPendingOrder(final Long orderId) {
