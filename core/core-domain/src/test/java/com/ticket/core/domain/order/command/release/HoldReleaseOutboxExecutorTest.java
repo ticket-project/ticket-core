@@ -65,6 +65,29 @@ class HoldReleaseOutboxExecutorTest {
         assertThat(outbox.getLastError()).contains("release failed");
     }
 
+    @Test
+    void completed_outbox_does_not_repeat_external_side_effects() {
+        final HoldReleaseOutbox outbox = HoldReleaseOutbox.create(1L, "hold-key", List.of(10L, 20L), FIXED_NOW);
+        outbox.markCompleted(FIXED_NOW);
+        when(holdReleaseOutboxRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(outbox));
+
+        processor().process(1L, FIXED_NOW.plusSeconds(1));
+
+        verify(holdReleaseOutboxRepository).findByIdForUpdate(1L);
+        verifyNoInteractions(holdManager, seatStatusPublisher);
+        assertThat(outbox.getCompletedAt()).isEqualTo(FIXED_NOW);
+    }
+
+    @Test
+    void missing_outbox_does_nothing() {
+        when(holdReleaseOutboxRepository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
+
+        processor().process(1L, FIXED_NOW);
+
+        verify(holdReleaseOutboxRepository).findByIdForUpdate(1L);
+        verifyNoInteractions(holdManager, seatStatusPublisher);
+    }
+
     private HoldReleaseOutboxExecutor processor() {
         return new HoldReleaseOutboxExecutor(holdReleaseOutboxRepository, holdManager, seatStatusPublisher);
     }
