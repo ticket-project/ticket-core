@@ -1,5 +1,7 @@
-package com.ticket.core.domain.order.command.release;
+package com.ticket.core.infra.order;
 
+import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
+import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.core.task.SyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -100,9 +104,15 @@ class HoldReleaseAfterCommitListenerIntegrationTest {
         @Bean
         HoldReleaseAfterCommitListener listener(
                 final HoldReleaseOutboxExecutor outboxExecutor,
-                final Clock clock
+                final Clock clock,
+                final TaskExecutor taskExecutor
         ) {
-            return new HoldReleaseAfterCommitListener(outboxExecutor, clock);
+            return new HoldReleaseAfterCommitListener(outboxExecutor, clock, taskExecutor);
+        }
+
+        @Bean
+        TaskExecutor taskExecutor() {
+            return new SyncTaskExecutor();
         }
     }
 }
