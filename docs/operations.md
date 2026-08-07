@@ -218,6 +218,8 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이�
 - `hikaricp_connections_active/pending/max/min`: DB connection pool 사용량과 대기
 - `tomcat_threads_busy_threads/current_threads/config_max_threads`: 요청 스레드 사용량과 상한
 - `jvm_gc_pause_seconds`, `jvm_memory_used_bytes`, `process_cpu_usage`: JVM·CPU 포화 여부
+- executor_active_threads, executor_queued_tasks: background worker 사용량과 적체
+- executor 메트릭의 name 태그: redisExpirationTaskExecutor, bookingBackgroundTaskExecutor
 
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
 
@@ -236,6 +238,12 @@ max(hikaricp_connections_pending{service="ticket-core"})
 ```
 
 Hikari pending이 0보다 커지면 애플리케이션 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. 다만 pending이 0이어도 이미 빌린 연결이 DB lock에서 멈출 수 있으므로 DB wait를 별도로 확인해야 한다.
+
+redisExpirationTaskExecutor는 TTL 만료 DB 진입을 최대 2개로 제한한다.
+bookingBackgroundTaskExecutor는 주문 커밋 후 작업을 최대 2개로 제한한다.
+queued 값이 256에 오래 머물거나 queue 포화 경고가 반복되면 이전 회차 작업이
+현재 부하와 겹친 것이다. hold release 즉시 작업은 누락되어도 2분 주기의
+outbox scheduler가 보정하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
 
 Oracle lock wait는 Actuator만으로 볼 수 없다. Oracle exporter·Datadog DBM 또는 DBA 권한이 있는 별도 관측 계정에서 다음 정보를 수집한다.
 
@@ -262,6 +270,10 @@ ORDER BY waiting_sessions DESC;
 - 로컬 콘솔 `../gatling-test/console/README.md`
 
 현재 Gatling 시나리오는 이 저장소가 아니라 형제 `gatling-test` 저장소에서 관리한다. 이 저장소의 `load-tests/gatling`은 이전 시나리오 보관본이므로 새 부하 테스트에 사용하지 않는다.
+
+연속 부하 테스트는 회차 ID만 바꾸는 것으로 격리되지 않는다. 다음 실행 전에는
+이전 실행의 PENDING 주문이 만료됐는지, Redis hold TTL이 끝났는지,
+ORDER_HOLD_RELEASE_OUTBOX의 PENDING/FAILED 건이 정리됐는지 같은 시간축으로 확인한다.
 
 ```powershell
 cd ..\gatling-test

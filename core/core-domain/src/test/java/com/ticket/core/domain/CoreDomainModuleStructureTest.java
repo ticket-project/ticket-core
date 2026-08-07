@@ -89,6 +89,14 @@ class CoreDomainModuleStructureTest {
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/support/util/CookieUtils.java"))).isTrue();
     }
 
+    @Test
+    void 주문_백그라운드_트리거는_core_infra에_있어야_한다() {
+        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/order/command/expire/OrderExpirationScheduler.java"))).isFalse();
+        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/order/command/release/HoldReleaseOutboxScheduler.java"))).isFalse();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/OrderExpirationScheduler.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/HoldReleaseOutboxScheduler.java"))).isTrue();
+    }
+
     private List<Path> findSwaggerImports(final Path root) throws IOException {
         try (Stream<Path> paths = Files.walk(root)) {
             return paths

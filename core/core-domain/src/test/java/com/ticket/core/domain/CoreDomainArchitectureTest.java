@@ -4,8 +4,11 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 @AnalyzeClasses(
         packages = "com.ticket.core",
@@ -48,5 +51,18 @@ class CoreDomainArchitectureTest {
             noClasses()
                     .that().resideInAnyPackage("..domain.auth.command..", "..domain.auth.oauth2..")
                     .should().dependOnClassesThat().resideInAnyPackage("com.ticket.core.infra.auth..");
+
+    @ArchTest
+    static final ArchRule core_domain은_scheduler를_소유하지_않는다 =
+            noMethods()
+                    .that().areDeclaredInClassesThat().resideInAPackage("..domain..")
+                    .should().beAnnotatedWith(Scheduled.class);
+
+    @ArchTest
+    static final ArchRule core_domain은_transaction_event_listener를_소유하지_않는다 =
+            noMethods()
+                    .that().areDeclaredInClassesThat().resideInAPackage("..domain..")
+                    .should().beAnnotatedWith(TransactionalEventListener.class);
+
 
 }

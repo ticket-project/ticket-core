@@ -92,13 +92,17 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 3. Redis에 좌석 hold 생성
 4. DB에 `PENDING` 주문 생성
 5. hold history 기록
-6. `201 Created`와 `X-Order-Key` 헤더로 주문 식별자 반환
+6. DB 커밋과 connection 반환
+7. 제한된 background worker에서 selection 해제와 HELD 상태 전파
+8. 201 Created와 X-Order-Key 헤더로 주문 식별자 반환
 
 정책:
 
 - 회차당 같은 회원은 `PENDING` 주문 1건만 허용한다.
 - hold는 다중 좌석 all-or-nothing으로 생성한다.
 - hold는 Redis TTL 만료와 주문 만료 흐름에 연결된다.
+- 주문 저장 트랜잭션 안에서는 Redis 또는 WebSocket을 호출하지 않는다.
+- 생성 후처리 실패는 이미 커밋된 주문과 hold를 되돌리지 않는다.
 - 대기열이 필요한 회차는 `X-Admission-Token` 검증을 먼저 통과해야 한다.
 
 주요 위치:
@@ -122,11 +126,18 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 - Redis expired listener 기반 즉시 만료
 - hold release outbox 기반 후처리 보강
 
+- 취소와 만료는 OrderTerminationService의 공통 종료 절차를 사용한다.
+- 주문 상태, hold history, hold release outbox는 같은 DB 트랜잭션에서 기록한다.
+- outbox의 Redis/WebSocket 처리는 DB 트랜잭션 밖에서 실행한다.
+- Redis 만료 listener와 주문 background worker는 각각 동시 실행 수를 제한한다.
+
 주요 위치:
 
 - `core/core-api/src/main/java/com/ticket/core/api/controller/OrderController.java`
 - `core/core-domain/src/main/java/com/ticket/core/domain/order`
 - `core/core-domain/src/main/java/com/ticket/core/domain/order/command/release`
+- core/core-infra/src/main/java/com/ticket/core/infra/order
+- docs/core-booking-lifecycle.md
 
 ### 대기열
 
