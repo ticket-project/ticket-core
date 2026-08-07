@@ -23,6 +23,7 @@
 | 전체 작업 규칙 | `AGENTS.md` |
 | 현재 기능과 API 흐름 | `docs/development.md` |
 | 모듈 책임과 패키지 경계 | `docs/architecture.md` |
+| 주문·hold 트랜잭션과 후처리 흐름 | [docs/core-booking-lifecycle.md](docs/core-booking-lifecycle.md) |
 | 실행, 프로파일, 검증 | `docs/operations.md` |
 | 부하 테스트 진입점 | `docs/load-test.md`, 형제 저장소 `../gatling-test` |
 | Gradle 모듈 경계 | `settings.gradle` |
