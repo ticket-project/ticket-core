@@ -1,5 +1,6 @@
 package com.ticket.core.domain.order.command.create;
 
+import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -45,6 +47,9 @@ class CreateOrderUseCaseTest {
     @Mock
     private CreatePendingOrderTxService createPendingOrderTxService;
 
+    @Mock
+    private HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
+
     private CreateOrderUseCase createOrderUseCase;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
@@ -55,6 +60,7 @@ class CreateOrderUseCaseTest {
                 validator,
                 holdAllocator,
                 createPendingOrderTxService,
+                holdCreationPostCommitNotifier,
                 fixedClock
         );
     }
@@ -103,10 +109,32 @@ class CreateOrderUseCaseTest {
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
         assertThat(output.expiresAt()).isEqualTo(snapshot.expiresAt());
 
-        final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTxService);
+        final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTxService, holdCreationPostCommitNotifier);
         inOrder.verify(validator).validate(20L, 10L, seatIds, FIXED_NOW);
         inOrder.verify(holdAllocator).allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW);
         inOrder.verify(createPendingOrderTxService).create(20L, 10L, Duration.ofSeconds(600), allocation);
+        inOrder.verify(holdCreationPostCommitNotifier).notify(snapshot);
+    }
+
+    @Test
+    void 후처리_제출이_실패해도_커밋된_주문과_hold를_유지한다() {
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
+        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
+        final PerformanceBookingPolicyView performance = createPerformance(5, 600);
+        final HoldSnapshot snapshot = holdSnapshot(seatIds.toList());
+        final HoldAllocation allocation = new HoldAllocation(snapshot, List.of(mock(PerformanceSeat.class)));
+        final Order order = order(snapshot);
+        when(validator.validate(20L, 10L, seatIds, FIXED_NOW)).thenReturn(performance);
+        when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
+                .thenReturn(allocation);
+        when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
+                .thenReturn(order);
+        doThrow(new RuntimeException("queue failed")).when(holdCreationPostCommitNotifier).notify(snapshot);
+
+        final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
+
+        assertThat(output.orderKey()).isEqualTo("order-key");
+        verify(holdAllocator, never()).release(allocation);
     }
 
     @Test
