@@ -1,5 +1,7 @@
 package com.ticket.core.infra.redis;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,24 +9,46 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Configuration
 public class RedisExpirationListenerConfig {
 
+    public static final String REDIS_EXPIRATION_TASK_EXECUTOR = "redisExpirationTaskExecutor";
+
     private static final String EXPIRED_EVENT_PATTERN = "__keyevent@*__:expired";
     private static final String NOTIFY_KEYSPACE_EVENTS = "notify-keyspace-events";
     private static final String REQUIRED_NOTIFY_OPTIONS = "Ex";
+    private static final int EXPIRATION_WORKER_COUNT = 2;
+    private static final int EXPIRATION_QUEUE_CAPACITY = 256;
+
+    @Bean(name = REDIS_EXPIRATION_TASK_EXECUTOR)
+    public ThreadPoolTaskExecutor redisExpirationTaskExecutor() {
+        final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(EXPIRATION_WORKER_COUNT);
+        executor.setMaxPoolSize(EXPIRATION_WORKER_COUNT);
+        executor.setQueueCapacity(EXPIRATION_QUEUE_CAPACITY);
+        executor.setThreadNamePrefix("redis-expiration-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
+        return executor;
+    }
 
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
             final RedisConnectionFactory redisConnectionFactory,
-            final RedisKeyExpirationListener redisKeyExpirationListener
+            final RedisKeyExpirationListener redisKeyExpirationListener,
+            @Qualifier(REDIS_EXPIRATION_TASK_EXECUTOR) final Executor redisExpirationTaskExecutor
     ) {
         final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
+        container.setTaskExecutor(redisExpirationTaskExecutor);
         container.addMessageListener(redisKeyExpirationListener, new PatternTopic(EXPIRED_EVENT_PATTERN));
         return container;
     }
