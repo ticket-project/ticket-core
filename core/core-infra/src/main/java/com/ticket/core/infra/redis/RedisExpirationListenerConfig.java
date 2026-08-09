@@ -13,6 +13,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
@@ -20,6 +21,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class RedisExpirationListenerConfig {
 
     public static final String REDIS_EXPIRATION_TASK_EXECUTOR = "redisExpirationTaskExecutor";
+    public static final String REDIS_EXPIRATION_SUBSCRIPTION_EXECUTOR = "redisExpirationSubscriptionExecutor";
 
     private static final String EXPIRED_EVENT_PATTERN = "__keyevent@*__:expired";
     private static final String NOTIFY_KEYSPACE_EVENTS = "notify-keyspace-events";
@@ -29,12 +31,33 @@ public class RedisExpirationListenerConfig {
 
     @Bean(name = REDIS_EXPIRATION_TASK_EXECUTOR)
     public ThreadPoolTaskExecutor redisExpirationTaskExecutor() {
+        final Semaphore permits = new Semaphore(EXPIRATION_WORKER_COUNT, true);
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(EXPIRATION_WORKER_COUNT);
         executor.setMaxPoolSize(EXPIRATION_WORKER_COUNT);
         executor.setQueueCapacity(EXPIRATION_QUEUE_CAPACITY);
         executor.setThreadNamePrefix("redis-expiration-");
+        executor.setTaskDecorator(task -> () -> {
+            permits.acquireUninterruptibly();
+            try {
+                task.run();
+            } finally {
+                permits.release();
+            }
+        });
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
+        return executor;
+    }
+
+    @Bean(name = REDIS_EXPIRATION_SUBSCRIPTION_EXECUTOR)
+    public ThreadPoolTaskExecutor redisExpirationSubscriptionExecutor() {
+        final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("redis-expiration-subscription-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
         return executor;
@@ -44,11 +67,13 @@ public class RedisExpirationListenerConfig {
     public RedisMessageListenerContainer redisMessageListenerContainer(
             final RedisConnectionFactory redisConnectionFactory,
             final RedisKeyExpirationListener redisKeyExpirationListener,
-            @Qualifier(REDIS_EXPIRATION_TASK_EXECUTOR) final Executor redisExpirationTaskExecutor
+            @Qualifier(REDIS_EXPIRATION_TASK_EXECUTOR) final Executor redisExpirationTaskExecutor,
+            @Qualifier(REDIS_EXPIRATION_SUBSCRIPTION_EXECUTOR) final Executor redisExpirationSubscriptionExecutor
     ) {
         final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
         container.setTaskExecutor(redisExpirationTaskExecutor);
+        container.setSubscriptionExecutor(redisExpirationSubscriptionExecutor);
         container.addMessageListener(redisKeyExpirationListener, new PatternTopic(EXPIRED_EVENT_PATTERN));
         return container;
     }
