@@ -4,6 +4,8 @@ import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.LongStream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -87,6 +90,37 @@ class HoldReleaseOutboxSchedulerTest {
 
         verify(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
         verify(holdReleaseOutboxExecutor).process(eq(2L), any(LocalDateTime.class));
+    }
+
+    @Test
+    void 가득_찬_페이지에서_실행_시작이_실패하면_같은_페이지를_다시_조회하지_않는다() {
+        final List<HoldReleaseOutbox> outboxes = LongStream.rangeClosed(1L, 100L)
+                .mapToObj(this::outbox)
+                .toList();
+        final Slice<HoldReleaseOutbox> fullSlice = new SliceImpl<>(outboxes);
+        when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
+                .thenReturn(fullSlice)
+                .thenThrow(new AssertionError("같은 due 페이지를 즉시 다시 조회하면 안 됩니다."));
+        doThrow(new CoreException(ErrorType.HOLD_BUSY))
+                .when(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
+
+        scheduler().processPendingHoldReleases();
+
+        verify(holdReleaseOutboxRepository, times(1))
+                .findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any());
+        verify(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
+        verify(holdReleaseOutboxExecutor).process(eq(100L), any(LocalDateTime.class));
+    }
+
+    private HoldReleaseOutbox outbox(final long id) {
+        final HoldReleaseOutbox outbox = HoldReleaseOutbox.create(
+                1L,
+                "hold-" + id,
+                List.of(id),
+                LocalDateTime.of(2026, 3, 25, 12, 0)
+        );
+        ReflectionTestUtils.setField(outbox, "id", id);
+        return outbox;
     }
 
     private HoldReleaseOutboxScheduler scheduler() {

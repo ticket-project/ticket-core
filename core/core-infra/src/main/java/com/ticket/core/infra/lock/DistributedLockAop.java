@@ -44,7 +44,7 @@ public class DistributedLockAop {
         try {
             final boolean available = tryLock(lock, distributedLock);
             if (!available) {
-                log.warn("분산 락 획득에 실패했습니다. keys={}", keys);
+                logLockFailure(distributedLock, keys);
                 throw new CoreException(distributedLock.errorType(), resolveMessage(distributedLock));
             }
             return joinPoint.proceed();
@@ -78,6 +78,14 @@ public class DistributedLockAop {
         return distributedLock.message().isBlank()
                 ? distributedLock.errorType().getDescription()
                 : distributedLock.message();
+    }
+
+    private void logLockFailure(final DistributedLock distributedLock, final List<String> keys) {
+        if (distributedLock.warnOnFailure()) {
+            log.warn("분산 락 획득에 실패했습니다. keys={}", keys);
+            return;
+        }
+        log.debug("분산 락 경합으로 실행을 건너뜁니다. keys={}", keys);
     }
 
     private RLock generateLock(final List<String> keys) {
