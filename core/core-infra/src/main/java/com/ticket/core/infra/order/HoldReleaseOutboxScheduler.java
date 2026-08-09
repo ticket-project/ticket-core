@@ -4,6 +4,8 @@ import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
@@ -51,17 +53,32 @@ public class HoldReleaseOutboxScheduler {
                 return;
             }
 
+            boolean processStartFailed = false;
             for (final HoldReleaseOutbox outbox : dueOutboxes.getContent()) {
                 try {
                     holdReleaseOutboxExecutor.process(outbox.getId(), LocalDateTime.now(clock));
                 } catch (final RuntimeException e) {
-                    log.warn("hold release outbox 실행을 시작하지 못했습니다. outboxId={}", outbox.getId(), e);
+                    processStartFailed = true;
+                    logProcessStartFailure(outbox.getId(), e);
                 }
             }
 
-            if (dueOutboxes.getNumberOfElements() < BATCH_SIZE) {
+            if (processStartFailed || dueOutboxes.getNumberOfElements() < BATCH_SIZE) {
                 return;
             }
         }
+    }
+
+    private void logProcessStartFailure(final Long outboxId, final RuntimeException exception) {
+        if (isExpectedLockContention(exception)) {
+            log.debug("hold release outbox가 이미 처리 중입니다. outboxId={}", outboxId);
+            return;
+        }
+        log.warn("hold release outbox 실행을 시작하지 못했습니다. outboxId={}", outboxId, exception);
+    }
+
+    private boolean isExpectedLockContention(final RuntimeException exception) {
+        return exception instanceof CoreException coreException
+                && coreException.getErrorType() == ErrorType.HOLD_BUSY;
     }
 }

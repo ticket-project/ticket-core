@@ -51,6 +51,11 @@ public @interface DistributedLock {
     ErrorType errorType() default ErrorType.HOLD_BUSY;
 
     /**
+     * 락 획득 실패를 경고로 기록할지 여부. 정상적인 경합이면 false로 지정한다.
+     */
+    boolean warnOnFailure() default true;
+
+    /**
      * 락 획득 실패 시 사용할 추가 메시지
      */
     String message() default "";

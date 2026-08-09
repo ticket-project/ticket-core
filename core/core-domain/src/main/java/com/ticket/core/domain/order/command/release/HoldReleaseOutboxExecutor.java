@@ -25,6 +25,7 @@ public class HoldReleaseOutboxExecutor {
             prefix = "hold-release-outbox-entry",
             dynamicKey = "#outboxId",
             waitTime = 100L,
+            warnOnFailure = false,
             message = "hold release outbox가 이미 처리 중입니다."
     )
     public void process(final Long outboxId, final LocalDateTime now) {

@@ -2,6 +2,7 @@ package com.ticket.core.domain.order.command.release;
 
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.support.lock.DistributedLock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -10,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -64,6 +66,15 @@ class HoldReleaseOutboxExecutorTest {
 
         verify(transactionService).load(1L);
         verifyNoInteractions(holdManager, seatStatusPublisher);
+    }
+
+    @Test
+    void entry_lock_contention_is_not_logged_as_a_warning() throws NoSuchMethodException {
+        final DistributedLock lock = HoldReleaseOutboxExecutor.class
+                .getMethod("process", Long.class, LocalDateTime.class)
+                .getAnnotation(DistributedLock.class);
+
+        assertThat(lock.warnOnFailure()).isFalse();
     }
 
     private HoldReleaseOutboxExecutor processor() {
