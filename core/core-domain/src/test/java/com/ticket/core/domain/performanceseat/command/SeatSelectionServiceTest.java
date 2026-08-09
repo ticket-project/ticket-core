@@ -89,6 +89,16 @@ class SeatSelectionServiceTest {
     }
 
     @Test
+    void 비동기_정리는_현재_소유자가_같을_때만_원자적으로_해제한다() {
+        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(true);
+
+        boolean released = seatSelectionService.deselectIfOwned(10L, 20L, 3L);
+
+        assertThat(released).isTrue();
+        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3");
+    }
+
+    @Test
     void 해제_시점에_다른_회원이_점유중이면_예외를_던진다() {
         //given
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("3", "4");

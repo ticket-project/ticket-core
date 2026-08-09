@@ -15,4 +15,6 @@ public interface HoldStore {
     Set<Long> getHoldingSeatIds(Long performanceId);
 
     boolean isHeld(Long performanceId, Long seatId);
+
+    boolean isHeldBy(Long performanceId, Long seatId, String holdKey);
 }

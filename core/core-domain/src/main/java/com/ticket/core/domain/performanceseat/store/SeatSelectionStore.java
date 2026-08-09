@@ -14,7 +14,5 @@ public interface SeatSelectionStore {
 
     List<Long> releaseAllByMember(Long performanceId, String memberId);
 
-    void forceRelease(Long performanceId, Long seatId);
-
     Set<Long> getSelectingSeatIds(Long performanceId);
 }

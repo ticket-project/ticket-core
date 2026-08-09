@@ -1,10 +1,7 @@
 package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.hold.model.HoldSnapshot;
-import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
 import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,44 +13,36 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class AsyncHoldCreationPostCommitNotifierTest {
 
     @Mock
-    private SeatSelectionService seatSelectionService;
-
-    @Mock
-    private SeatStatusPublisher seatStatusPublisher;
+    private HoldCreationPostCommitProcessor processor;
 
     @Test
     void notification_only_queues_external_side_effects() {
         final AtomicReference<Runnable> queuedTask = new AtomicReference<>();
         final HoldSnapshot snapshot = snapshot();
         final AsyncHoldCreationPostCommitNotifier notifier = new AsyncHoldCreationPostCommitNotifier(
-                seatSelectionService,
-                seatStatusPublisher,
+                processor,
                 queuedTask::set
         );
 
         notifier.notify(snapshot);
 
-        verifyNoInteractions(seatSelectionService, seatStatusPublisher);
+        verifyNoInteractions(processor);
 
         queuedTask.get().run();
-        final InOrder inOrder = inOrder(seatSelectionService, seatStatusPublisher);
-        inOrder.verify(seatSelectionService).forceDeselect(10L, 100L);
-        inOrder.verify(seatSelectionService).forceDeselect(10L, 200L);
-        inOrder.verify(seatStatusPublisher).publishHeld(10L, List.of(100L, 200L));
+        verify(processor).process(snapshot);
     }
 
     @Test
     void a_full_queue_does_not_fail_the_committed_order() {
         final AsyncHoldCreationPostCommitNotifier notifier = new AsyncHoldCreationPostCommitNotifier(
-                seatSelectionService,
-                seatStatusPublisher,
+                processor,
                 task -> {
                     throw new TaskRejectedException("queue full");
                 }
@@ -61,7 +50,7 @@ class AsyncHoldCreationPostCommitNotifierTest {
 
         assertThatCode(() -> notifier.notify(snapshot())).doesNotThrowAnyException();
 
-        verifyNoInteractions(seatSelectionService, seatStatusPublisher);
+        verifyNoInteractions(processor);
     }
 
     @Test
@@ -69,17 +58,16 @@ class AsyncHoldCreationPostCommitNotifierTest {
         final AtomicReference<Runnable> queuedTask = new AtomicReference<>();
         final HoldSnapshot snapshot = snapshot();
         final AsyncHoldCreationPostCommitNotifier notifier = new AsyncHoldCreationPostCommitNotifier(
-                seatSelectionService,
-                seatStatusPublisher,
+                processor,
                 queuedTask::set
         );
         doThrow(new RuntimeException("redis failed"))
-                .when(seatSelectionService).forceDeselect(10L, 100L);
+                .when(processor).process(snapshot);
         notifier.notify(snapshot);
 
         assertThatCode(() -> queuedTask.get().run()).doesNotThrowAnyException();
 
-        verifyNoInteractions(seatStatusPublisher);
+        verify(processor).process(snapshot);
     }
 
     private HoldSnapshot snapshot() {

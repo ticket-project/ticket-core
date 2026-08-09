@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -77,6 +78,12 @@ public class RedissonHoldStore implements HoldStore {
     public boolean isHeld(final Long performanceId, final Long seatId) {
         final RBucket<String> bucket = redissonClient.getBucket(SeatRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
         return bucket.get() != null;
+    }
+
+    @Override
+    public boolean isHeldBy(final Long performanceId, final Long seatId, final String holdKey) {
+        final RBucket<String> bucket = redissonClient.getBucket(SeatRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
+        return Objects.equals(bucket.get(), holdKey);
     }
 
     private void rollback(final List<String> createdKeys, final String holdKey) {

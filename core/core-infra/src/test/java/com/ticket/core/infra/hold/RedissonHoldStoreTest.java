@@ -177,6 +177,15 @@ class RedissonHoldStoreTest {
         assertThat(result).isTrue();
     }
 
+    @Test
+    void isHeldBy는_현재_holdKey가_같을_때만_true를_반환한다() {
+        RBucket<Object> seatBucket = bucketReturning("current-hold");
+        when(redissonClient.getBucket(SeatRedisKey.hold(1L, 10L), StringCodec.INSTANCE)).thenReturn(seatBucket);
+
+        assertThat(redissonHoldStore.isHeldBy(1L, 10L, "current-hold")).isTrue();
+        assertThat(redissonHoldStore.isHeldBy(1L, 10L, "stale-hold")).isFalse();
+    }
+
     @SuppressWarnings("unchecked")
     private RBucket<Object> bucketReturning(final String value) {
         RBucket<Object> bucket = mock(RBucket.class);
