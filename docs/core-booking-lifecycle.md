@@ -23,13 +23,18 @@ CreateOrderUseCase
   -> DB 커밋 및 connection 반환
   -> HoldCreationPostCommitNotifier
        -> 제한된 background queue에 제출
-       -> selection 강제 해제        (Redis)
+       -> 같은 좌석의 hold 분산락 획득
+       -> snapshot holdKey가 현재 hold인지 확인
+       -> 주문 회원 소유 selection만 해제 (Redis)
        -> HELD 상태 발행             (WebSocket)
 ~~~
 
 DB 저장이 실패하면 CreateOrderUseCase가 이미 만든 Redis hold를 보상 해제한다.
 DB 커밋 뒤 후처리 제출이나 실행이 실패해도 커밋된 주문과 hold는 되돌리지 않는다.
 hold가 실제 점유의 기준이며 selection은 UX 보조 상태이기 때문이다.
+주문 생성 후처리와 hold 해제는 같은 좌석 잠금을 사용한다. 해제가 먼저 끝났다면
+이전 snapshot의 후처리는 아무 작업도 하지 않고, 생성 후처리가 먼저라면 HELD 뒤에
+RELEASED가 발행된다. WebSocket은 세션별 발행 순서를 보존한다.
 
 ## 주문 취소와 만료
 
@@ -57,14 +62,17 @@ CancelOrderUseCase / ExpireOrderUseCase
 같은 outbox를 즉시 작업자와 스케줄러가 동시에 집어도 outbox ID 분산락으로
 외부 부수효과를 한 번에 하나만 실행한다. Redis 해제는 재시도 가능해야 하며,
 실패한 outbox는 30초 뒤 다시 시도한다.
+스케줄러가 한 페이지에서 처리 시작 실패를 만나면 그 실행은 다음 페이지 재조회 없이
+끝낸다. 따라서 첫 100건이 그대로 남은 상황에서 같은 페이지를 무한 반복하지 않는다.
 
 ## TTL 폭주와 보정
 
 Redis hold meta key가 만료되면 RedisKeyExpirationListener가
 ExpireOrderUseCase.expireByHoldKey를 호출한다.
 
-- redisExpirationTaskExecutor: worker 2개, queue 256개
-- queue가 가득 차면 Redis 수신 스레드가 직접 처리해 유입 속도를 늦춘다.
+- redisExpirationSubscriptionExecutor: Redis 구독 전용 worker 1~2개
+- redisExpirationTaskExecutor: 만료 handler worker 2개, queue 256개, 공유 permit 2개
+- queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
 - OrderExpirationScheduler: 5분마다 만료 주문을 100개씩 보정한다.
 - HoldReleaseOutboxScheduler: 2분마다 미완료 outbox를 100개씩 보정한다.
 
@@ -96,7 +104,8 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 ## 운영 확인
 
 - hikaricp_connections_pending이 지속적으로 0인지 확인한다.
-- redisExpirationTaskExecutor, bookingBackgroundTaskExecutor의 active/queued 값을 본다.
+- redisExpirationSubscriptionExecutor, redisExpirationTaskExecutor,
+  bookingBackgroundTaskExecutor의 active/queued 값을 본다.
 - background queue 포화 경고와 outbox 재시도 로그를 확인한다.
 - 같은 조건의 연속 부하 테스트 전에는 이전 회차의 PENDING 주문, hold TTL,
   outbox backlog가 모두 정리됐는지 확인한다.
