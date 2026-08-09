@@ -219,7 +219,8 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이�
 - `tomcat_threads_busy_threads/current_threads/config_max_threads`: 요청 스레드 사용량과 상한
 - `jvm_gc_pause_seconds`, `jvm_memory_used_bytes`, `process_cpu_usage`: JVM·CPU 포화 여부
 - executor_active_threads, executor_queued_tasks: background worker 사용량과 적체
-- executor 메트릭의 name 태그: redisExpirationTaskExecutor, bookingBackgroundTaskExecutor
+- executor 메트릭의 name 태그: redisExpirationSubscriptionExecutor,
+  redisExpirationTaskExecutor, bookingBackgroundTaskExecutor
 
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
 
