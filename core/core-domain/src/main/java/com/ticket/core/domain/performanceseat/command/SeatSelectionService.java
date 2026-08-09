@@ -47,8 +47,8 @@ public class SeatSelectionService {
         return DeselectedSeatIds.from(deselectedSeatIds);
     }
 
-    public void forceDeselect(final Long performanceId, final Long seatId) {
-        seatSelectionStore.forceRelease(performanceId, seatId);
+    public boolean deselectIfOwned(final Long performanceId, final Long seatId, final Long memberId) {
+        return seatSelectionStore.releaseIfOwned(performanceId, seatId, memberKeyOf(memberId));
     }
 
     public java.util.Set<Long> getSelectingSeatIds(final Long performanceId) {

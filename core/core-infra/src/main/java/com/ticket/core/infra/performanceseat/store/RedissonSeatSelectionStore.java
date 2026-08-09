@@ -41,11 +41,6 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
             redis.call('zrem', KEYS[2], ARGV[2])
             return 1
             """;
-    private static final String FORCE_RELEASE_SCRIPT = """
-            redis.call('del', KEYS[1])
-            redis.call('zrem', KEYS[2], ARGV[1])
-            return 1
-            """;
     private static final String READ_ACTIVE_SEAT_IDS_SCRIPT = """
             local redisTime = redis.call('TIME')
             local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
@@ -96,17 +91,6 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
             }
         }
         return deselectedSeatIds;
-    }
-
-    @Override
-    public void forceRelease(final Long performanceId, final Long seatId) {
-        script().eval(
-                RScript.Mode.READ_WRITE,
-                FORCE_RELEASE_SCRIPT,
-                RScript.ReturnType.LONG,
-                selectionKeys(performanceId, seatId),
-                seatId.toString()
-        );
     }
 
     @Override

@@ -1,5 +1,10 @@
 package com.ticket.core.infra.lock;
 
+import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.store.HoldStore;
+import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.infra.order.HoldCreationPostCommitProcessor;
 import com.ticket.core.support.lock.DistributedLock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,8 +14,11 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +43,36 @@ class DistributedLockAopTest {
         proxy.execute("key");
 
         verify(lock).tryLock(100L, TimeUnit.MILLISECONDS);
+        verify(lock).unlock();
+    }
+
+    @Test
+    void hold_creation_post_commit_uses_the_same_performance_seat_lock_key() throws InterruptedException {
+        final HoldStore holdStore = mock(HoldStore.class);
+        final SeatSelectionService seatSelectionService = mock(SeatSelectionService.class);
+        final SeatStatusPublisher seatStatusPublisher = mock(SeatStatusPublisher.class);
+        final HoldSnapshot snapshot = new HoldSnapshot(
+                "hold-key",
+                20L,
+                10L,
+                List.of(100L),
+                LocalDateTime.of(2026, 3, 15, 12, 0)
+        );
+        when(redissonClient.getLock("LOCK:hold:10:100")).thenReturn(lock);
+        when(lock.tryLock(5_000L, TimeUnit.MILLISECONDS)).thenReturn(true);
+        when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(true);
+
+        final AspectJProxyFactory proxyFactory = new AspectJProxyFactory(
+                new HoldCreationPostCommitProcessor(holdStore, seatSelectionService, seatStatusPublisher)
+        );
+        proxyFactory.setProxyTargetClass(true);
+        proxyFactory.addAspect(new DistributedLockAop(redissonClient));
+        final HoldCreationPostCommitProcessor proxy = proxyFactory.getProxy();
+
+        proxy.process(snapshot);
+
+        verify(redissonClient).getLock("LOCK:hold:10:100");
+        verify(lock).tryLock(5_000L, TimeUnit.MILLISECONDS);
         verify(lock).unlock();
     }
 

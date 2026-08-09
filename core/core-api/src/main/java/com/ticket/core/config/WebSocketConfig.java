@@ -22,6 +22,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(final MessageBrokerRegistry registry) {
         // 서버 → 클라이언트 브로드캐스트 prefix (좌석 상태 변경 알림용)
         registry.enableSimpleBroker("/topic");
+        registry.setPreservePublishOrder(true);
     }
 
     @Override
