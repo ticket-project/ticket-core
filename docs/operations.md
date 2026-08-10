@@ -174,8 +174,8 @@ core/core-api/src/main/resources/db/migration-vendor/oracle
 기존 운영 스키마를 다시 만드는 `V1__...sql`은 추가하지 않는다. 이후 테이블 구조 변경은 새 파일로만 추가한다.
 
 ```text
-V5__add_payment_tables.sql
-V6__add_order_confirmed_at.sql
+V7__add_payment_tables.sql
+V8__add_order_confirmed_at.sql
 ```
 
 이미 운영에 적용된 migration 파일은 수정하지 않는다. 변경이 더 필요하면 다음 버전 파일을 새로 만든다.
@@ -184,6 +184,8 @@ V6__add_order_confirmed_at.sql
 
 `V3__add_performance_seat_unique_index.sql`과 `V4__add_order_seat_order_index.sql`은
 좌석 선택 검증과 주문 상세 조회에 필요한 인덱스를 적용한다.
+`V5__create_order_hold_release_outbox.sql`과 `V6__create_order_hold_creation_outbox.sql`은
+주문 커밋 후 작업을 유실 없이 재시도하기 위한 outbox 테이블과 due 조회 인덱스를 만든다.
 
 배포 전에는 `docs/database/core-api-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
 중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
@@ -243,8 +245,8 @@ Hikari pending이 0보다 커지면 애플리케이션 요청이 DB 연결을 �
 redisExpirationTaskExecutor는 TTL 만료 DB 진입을 최대 2개로 제한한다.
 bookingBackgroundTaskExecutor는 주문 커밋 후 작업을 최대 2개로 제한한다.
 queued 값이 256에 오래 머물거나 queue 포화 경고가 반복되면 이전 회차 작업이
-현재 부하와 겹친 것이다. hold release 즉시 작업은 누락되어도 2분 주기의
-outbox scheduler가 보정하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
+현재 부하와 겹친 것이다. hold creation/release 즉시 작업은 누락되어도 2분 주기의
+각 outbox scheduler가 보정하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
 
 Oracle lock wait는 Actuator만으로 볼 수 없다. Oracle exporter·Datadog DBM 또는 DBA 권한이 있는 별도 관측 계정에서 다음 정보를 수집한다.
 
@@ -274,7 +276,8 @@ ORDER BY waiting_sessions DESC;
 
 연속 부하 테스트는 회차 ID만 바꾸는 것으로 격리되지 않는다. 다음 실행 전에는
 이전 실행의 PENDING 주문이 만료됐는지, Redis hold TTL이 끝났는지,
-ORDER_HOLD_RELEASE_OUTBOX의 PENDING/FAILED 건이 정리됐는지 같은 시간축으로 확인한다.
+ORDER_HOLD_CREATION_OUTBOX와 ORDER_HOLD_RELEASE_OUTBOX의 PENDING/FAILED 건이
+정리됐는지 같은 시간축으로 확인한다.
 
 ```powershell
 cd ..\gatling-test
