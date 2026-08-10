@@ -16,7 +16,7 @@
 - 애플리케이션은 Ubuntu 서버에서 `docker compose`로 배포된다.
 - 당시 저장소의 `docker-compose.yml`은 로컬 Redis만 포함했고, 실제 운영 배포는 GitHub Actions가 서버의 `/home/ubuntu/docker-compose.yml`을 사용했다. 해당 로컬 Compose 파일은 현재 저장소에는 없다.
 - [Dockerfile](../../../Dockerfile)은 Spring Boot fat jar만 복사해 실행한다.
-- [logback-prod.xml](../../../support/logging/src/main/resources/logback/logback-prod.xml)은 stdout 로그를 사용하고 `traceId`, `spanId` MDC 자리를 이미 포함한다.
+- [logback.xml](../../../support/logging/src/main/resources/logback/logback.xml)은 stdout 로그를 사용하고 `traceId`, `spanId` MDC 자리를 이미 포함한다.
 - [core-api/build.gradle](../../../core/core-api/build.gradle)에는 당시 Actuator/Prometheus 의존성이 없었다.
 
 ## 설계
