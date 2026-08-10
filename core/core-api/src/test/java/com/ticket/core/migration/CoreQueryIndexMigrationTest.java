@@ -29,6 +29,8 @@ class CoreQueryIndexMigrationTest {
                     .contains("UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT");
             assertThat(indexNames(connection, "ORDER_SEATS"))
                     .contains("IDX_ORDER_SEATS_ORDER_ID");
+            assertThat(tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX")).isTrue();
+            assertThat(tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX")).isTrue();
         }
     }
 
@@ -76,6 +78,12 @@ class CoreQueryIndexMigrationTest {
             }
         }
         return names;
+    }
+
+    private boolean tableExists(final Connection connection, final String tableName) throws SQLException {
+        try (ResultSet tables = connection.getMetaData().getTables(null, null, tableName, new String[]{"TABLE"})) {
+            return tables.next();
+        }
     }
 
     private String databaseUrl(final String name) {

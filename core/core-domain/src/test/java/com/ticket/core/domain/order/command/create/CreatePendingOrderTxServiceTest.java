@@ -32,11 +32,14 @@ class CreatePendingOrderTxServiceTest {
     @Mock
     private HoldHistoryRecorder holdHistoryRecorder;
 
+    @Mock
+    private HoldCreationOutboxWriter holdCreationOutboxWriter;
+
     private CreatePendingOrderTxService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreatePendingOrderTxService(orderCreator, holdHistoryRecorder);
+        service = new CreatePendingOrderTxService(orderCreator, holdHistoryRecorder, holdCreationOutboxWriter);
     }
 
     @Test
@@ -62,11 +65,14 @@ class CreatePendingOrderTxServiceTest {
 
         when(orderCreator.createPendingOrder(20L, 10L, "hold-key", snapshot.expiresAt(), seats))
                 .thenReturn(order);
+        when(holdCreationOutboxWriter.append(snapshot, snapshot.expiresAt().minusSeconds(600)))
+                .thenReturn(99L);
 
-        final Order result = service.create(20L, 10L, holdDuration, allocation);
+        final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation);
 
-        assertThat(result).isSameAs(order);
-        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder);
+        assertThat(result.order()).isSameAs(order);
+        assertThat(result.postCommitOutboxId()).isEqualTo(99L);
+        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, holdCreationOutboxWriter);
         inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", snapshot.expiresAt(), seats);
         inOrder.verify(holdHistoryRecorder).recordCreated(
                 20L,
@@ -76,6 +82,7 @@ class CreatePendingOrderTxServiceTest {
                 snapshot.expiresAt(),
                 seats
         );
+        inOrder.verify(holdCreationOutboxWriter).append(snapshot, snapshot.expiresAt().minusSeconds(600));
     }
 
     @Test
