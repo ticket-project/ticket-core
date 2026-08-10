@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -125,16 +126,15 @@ class RedissonHoldStoreTest {
     }
 
     @Test
-    void release는_메타_snapshot_전체가_해제될때만_메타를_삭제한다() {
+    void release는_잠근_입력_좌석만_해제하고_snapshot_전체가_아니면_메타를_유지한다() {
         RBucket<Object> seat10 = bucketReturning("hold-key");
-        RBucket<Object> seat20 = bucketReturning("hold-key");
+        RBucket<Object> seat20 = mock(RBucket.class);
         RBucket<Object> meta = mock(RBucket.class);
         @SuppressWarnings("unchecked")
         RSetCache<Object> holdSeatIndex = mock(RSetCache.class);
         String payload = "{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}";
 
         when(redissonClient.getBucket(SeatRedisKey.hold(1L, 10L), StringCodec.INSTANCE)).thenReturn(seat10);
-        when(redissonClient.getBucket(SeatRedisKey.hold(1L, 20L), StringCodec.INSTANCE)).thenReturn(seat20);
         when(redissonClient.getBucket(SeatRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE)).thenReturn(meta);
         when(redissonClient.getSetCache(SeatRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE)).thenReturn(holdSeatIndex);
         when(meta.get()).thenReturn(payload);
@@ -144,11 +144,11 @@ class RedissonHoldStoreTest {
         List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(10L));
 
         verify(seat10).delete();
-        verify(seat20).delete();
         verify(holdSeatIndex).remove(10L);
-        verify(holdSeatIndex).remove(20L);
-        verify(meta).delete();
-        assertThat(releasedSeatIds).containsExactly(10L, 20L);
+        verify(seat20, never()).delete();
+        verify(holdSeatIndex, never()).remove(20L);
+        verify(meta, never()).delete();
+        assertThat(releasedSeatIds).containsExactly(10L);
     }
 
     @Test
