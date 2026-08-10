@@ -10,7 +10,7 @@ public interface HoldStore {
 
     void save(HoldSnapshot snapshot, Duration ttl);
 
-    void release(Long performanceId, String holdKey, List<Long> seatIds);
+    List<Long> release(Long performanceId, String holdKey, List<Long> seatIds);
 
     Set<Long> getHoldingSeatIds(Long performanceId);
 

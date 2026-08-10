@@ -1,7 +1,5 @@
 package com.ticket.core.domain.order.command.release;
 
-import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +16,7 @@ public class HoldReleaseOutboxExecutor {
     private static final Duration RETRY_DELAY = Duration.ofSeconds(30);
 
     private final HoldReleaseOutboxTransactionService transactionService;
-    private final HoldManager holdManager;
-    private final SeatStatusPublisher seatStatusPublisher;
+    private final HoldReleaseTaskProcessor taskProcessor;
 
     @DistributedLock(
             prefix = "hold-release-outbox-entry",
@@ -35,8 +32,7 @@ public class HoldReleaseOutboxExecutor {
         }
 
         try {
-            holdManager.release(task.performanceId(), task.holdKey(), task.seatIds());
-            seatStatusPublisher.publishReleased(task.performanceId(), task.seatIds());
+            taskProcessor.process(task);
             transactionService.markCompleted(outboxId, now);
         } catch (final RuntimeException e) {
             transactionService.scheduleRetry(outboxId, now.plus(RETRY_DELAY), e.getMessage());
