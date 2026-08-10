@@ -58,17 +58,25 @@ $env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 .\gradlew.bat :core:core-api:bootRun
 ```
 
-Queue Server:
+Queue API:
 
 ```powershell
-# ticket-queue 저장소 루트에서 실행
-$env:SPRING_DATA_REDIS_PORT="6380"
+# ticket-queue 저장소 루트의 별도 터미널에서 실행
+$env:REDIS_PORT="6380"
 $env:JWT_SECRET="same-access-token-secret-32bytes-minimum"
 $env:JWT_ISSUER="ticket"
 $env:JWT_ACCESS_TOKEN_EXPIRATION_SECONDS="1800"
 $env:ADMISSION_TOKEN_SECRET_KEY="same-admission-secret-32bytes-minimum"
 $env:QUEUE_TOKEN_SECRET="same-queue-token-secret-32bytes-minimum"
-.\gradlew.bat bootRun
+.\gradlew.bat :queue-api:bootRun
+```
+
+Queue Scheduler:
+
+```powershell
+# ticket-queue 저장소 루트의 또 다른 터미널에서 실행
+$env:REDIS_PORT="6380"
+.\gradlew.bat :queue-scheduler:bootRun
 ```
 
 ## API 흐름

@@ -12,7 +12,7 @@
 - 로컬 DB: `local` 프로파일에서 H2 file DB 사용
 - 운영 DB: `prod` 프로파일에서 Oracle 사용
 - 대기열 상태 관리: 이 저장소가 아니라 `ticket-queue`
-- 대기열 적용 여부 판단: 이 저장소의 `Performance.queueMode`와 공연 상세 응답의 회차별 `entryType`
+- 대기열 적용 여부 판단: 이 저장소의 `PerformanceQueuePolicy.queueMode`와 공연 상세 응답의 회차별 `entryType`
 - 단기 상태 관리: 좌석 선택, hold, refresh token, OAuth2 1회용 code는 이 저장소의 Redis 사용
 - 미구현/후속 범위: 결제 도메인, PG callback, 결제 성공 후 주문 확정/최종 판매 확정
 
@@ -123,20 +123,10 @@ $env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 ```
 
 위 OAuth2 값은 로컬 기동용 예시다. 실제 OAuth2 로그인을 확인하려면 각 공급자에서 발급받은 로컬 callback용 값으로 교체한다.
-### Queue active session 조기 반환(선택)
 
-현재 구현의 예매 종료점인 `PENDING` 주문 생성이 성공하면 admission token의 `queueId`를 이용해 Queue Server의 active session 완료 API를 비동기로 호출할 수 있다. 기본값은 비활성화이며, 콜백 실패가 주문 성공을 되돌리지는 않는다. 이 경우 Queue Server의 shopping session TTL이 안전망으로 session을 정리한다. 결제 API가 추가되면 반환 시점을 주문 생성이 아니라 결제 성공·실패·취소 같은 최종 상태로 옮겨야 한다.
+### Queue shopping session 정리
 
-```powershell
-$env:QUEUE_COMPLETION_ENABLED="true"
-$env:QUEUE_SERVER_BASE_URL="http://localhost:8090"
-$env:QUEUE_COMPLETION_SECRET="same-queue-completion-secret-32bytes-minimum"
-$env:QUEUE_COMPLETION_CONNECT_TIMEOUT="500ms"
-$env:QUEUE_COMPLETION_READ_TIMEOUT="1s"
-```
-
-활성화할 때 `QUEUE_COMPLETION_SECRET`은 32자 이상이어야 하며 `ticket-queue`와 같은 값을 사용해야 한다.
-
+현재 Core는 주문 생성 후 Queue Server에 session 완료 요청을 보내지 않는다. Queue가 발급한 admission token을 검증해 예매 API 진입만 제어하며, 입장 후 shopping session은 Queue Server의 TTL로 정리된다. 조기 반환이나 동시 active session 상한은 `ticket-queue`의 별도 설계 과제다.
 
 ## 주요 설정
 
