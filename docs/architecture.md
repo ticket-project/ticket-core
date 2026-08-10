@@ -97,7 +97,7 @@ Redis 관련 공통 의존성을 제공한다.
 - `com.ticket.core.config.security`
   - JWT, OAuth2, 인증/인가 구성
 - `com.ticket.core.config.admission`
-  - Admission token 설정·발급·검증과 Queue active session 완료 비동기 알림
+  - Queue Server가 발급한 admission token의 설정·검증
 - `com.ticket.core.support.response`
   - 공통 응답 래퍼
 

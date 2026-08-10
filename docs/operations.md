@@ -111,26 +111,10 @@ ADMISSION_TOKEN_ENFORCEMENT_ENABLED=false
 ```
 
 Queue Server와 클라이언트의 admission token 전달이 모두 준비된 뒤에만 `true`로 전환한다. 비활성 상태에서는 회차의 Queue 정책과 admission token을 조회하거나 검증하지 않는다.
-### Queue active session 조기 반환
 
-Core가 주문 생성 성공 후 Queue active session을 즉시 반환하게 하려면 Queue Server의 내부 완료 API와 공유 secret을 먼저 배포한 뒤 아래 값을 설정한다.
+### Queue shopping session 만료
 
-```text
-QUEUE_COMPLETION_ENABLED=true
-QUEUE_SERVER_BASE_URL=http://ticket-queue:8090
-QUEUE_COMPLETION_SECRET=<ticket-queue와 같은 32자 이상 secret>
-QUEUE_COMPLETION_CONNECT_TIMEOUT=500ms
-QUEUE_COMPLETION_READ_TIMEOUT=1s
-```
-
-전환 순서는 다음과 같다.
-
-1. Queue Server에 내부 완료 endpoint와 `QUEUE_COMPLETION_SECRET`을 배포한다.
-2. Core에 같은 secret과 Queue 내부 base URL을 설정한다.
-3. Core의 `QUEUE_COMPLETION_ENABLED`를 `true`로 바꾼다.
-
-완료 알림은 주문 응답과 분리된 비동기 best-effort 호출이다. 현재 결제 API가 없으므로 `PENDING` 주문 생성 성공을 예매 흐름의 종료점으로 사용한다. 결제가 추가되면 완료 알림을 결제 성공·실패·취소 같은 최종 상태로 옮긴다. 실패 로그가 발생해도 주문 자체는 성공 상태를 유지하며, Queue의 shopping session TTL이 최종 정리 안전망이다. 이 때문에 콜백 성공률과 TTL 만료 정리량을 함께 관측해야 한다.
-
+현재 Core는 주문 생성·취소·만료 시 Queue Server에 session 완료 요청을 보내지 않는다. Queue 입장 후 shopping session은 Queue Server의 TTL로 만료된다. 따라서 운영 시에는 Queue의 entered marker 수와 TTL 만료 추이를 관측해야 하며, 조기 반환이나 동시 active session 상한은 별도 프로토콜 설계 후 도입한다.
 
 ## 좌석 선택 Redis 인덱스 전환
 

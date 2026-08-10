@@ -45,9 +45,9 @@ cd ..\gatling-test
 1. `CoreAdmissionCapacitySimulation`을 단계별로 실행해 Ticket Server 단독 처리량을 측정한다.
 2. 실패율, p95/p99, DB connection pool, Redis latency, JVM CPU/GC를 함께 본다.
 3. 안정 구간의 `admitted users/sec` 또는 요청 TPS에 0.6~0.7 안전계수를 적용한다.
-4. Queue Scheduler의 `app.queue.default-max-admit-per-second`를 이 값보다 낮게 설정한다.
+4. Queue Scheduler의 `app.queue.advance-batch-size`와 `app.queue.advance-interval-ms`를 조정해 단위 시간당 입장량을 이 값보다 낮게 설정한다.
 
-현재 Queue Scheduler는 shard별 closed slot의 `servingSeq`를 전진시키며, 초당 최대 입장 수는 `app.queue.default-max-admit-per-second`로 제한한다. `app.queue.shopping-session-ttl`은 active session과 admission token의 유효 시간이다.
+현재 Queue Scheduler는 `app.queue.advance-interval-ms` 주기로 대기 중인 공연을 순회하고, 공연마다 최대 `app.queue.advance-batch-size`만큼 shard별 closed slot의 `servingSeq`를 전진시킨다. Queue API의 `app.queue.shopping-session-ttl`은 입장 후 entered marker와 admission token의 유효 시간이다.
 
 ## 주의점
 
