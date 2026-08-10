@@ -40,8 +40,6 @@ ticket
 │   └── redis-core     # Redis/Redisson 공통 의존성
 ├── support
 │   └── logging        # 공통 로깅 리소스
-├── load-tests
-│   └── gatling        # 이전 시나리오 보관본; 현재 실행 기준은 ../gatling-test
 └── docs               # 개발/아키텍처/운영/부하 테스트 문서
 ```
 
@@ -165,5 +163,5 @@ $env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 - README는 전체 맥락만 담고, 세부 규칙은 `AGENTS.md`와 `docs/`를 우선한다.
 - `auth`, `hold`, `order`, `performanceseat`, `queue` 관련 변경은 동시성, 트랜잭션, Redis TTL, 만료 listener/scheduler, admission token 검증을 함께 확인한다.
 - 기존 미커밋 변경은 사용자 작업으로 보고 되돌리지 않는다.
-- 현재 부하 테스트 실행 기준은 형제 저장소 `../gatling-test`다. 이 저장소의 `load-tests/gatling`은 이전 시나리오 보관본이므로 새 실행 기준으로 사용하지 않는다.
+- 현재 부하 테스트 실행 기준은 형제 저장소 `../gatling-test`다.
 - Gatling 실행은 실제 부하를 만들 수 있으므로 사용자가 명시적으로 요청한 경우에만 다룬다.

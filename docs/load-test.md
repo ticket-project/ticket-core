@@ -2,7 +2,7 @@
 
 이 문서는 부하 테스트 문서의 진입점이다.
 
-현재 Gatling 소스와 실행 기준은 형제 저장소 `../gatling-test`에 있다. 이 저장소의 `load-tests/gatling`은 이전 API 계약을 사용하는 보관본이므로 새 부하 테스트에 사용하지 않는다.
+현재 Gatling 소스와 실행 기준은 형제 저장소 `../gatling-test`에 있다.
 
 ## 목적
 

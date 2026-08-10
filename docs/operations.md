@@ -258,7 +258,7 @@ ORDER BY waiting_sessions DESC;
 - 형제 저장소 `../gatling-test/README.md`
 - 로컬 콘솔 `../gatling-test/console/README.md`
 
-현재 Gatling 시나리오는 이 저장소가 아니라 형제 `gatling-test` 저장소에서 관리한다. 이 저장소의 `load-tests/gatling`은 이전 시나리오 보관본이므로 새 부하 테스트에 사용하지 않는다.
+현재 Gatling 시나리오는 이 저장소가 아니라 형제 `gatling-test` 저장소에서 관리한다.
 
 연속 부하 테스트는 회차 ID만 바꾸는 것으로 격리되지 않는다. 다음 실행 전에는
 이전 실행의 PENDING 주문이 만료됐는지, Redis hold TTL이 끝났는지,
