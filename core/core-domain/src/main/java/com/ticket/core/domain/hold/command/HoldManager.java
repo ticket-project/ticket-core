@@ -46,9 +46,9 @@ public class HoldManager {
             prefix = "hold",
             dynamicKey = "#seatIds.![#performanceId + ':' + #this]"
     )
-    public void release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
+    public List<Long> release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
         final List<Long> normalizedSeatIds = seatIds.stream().distinct().sorted().toList();
-        holdStore.release(performanceId, holdKey, normalizedSeatIds);
+        return holdStore.release(performanceId, holdKey, normalizedSeatIds);
     }
 
     public Set<Long> getHoldingSeatIds(final Long performanceId) {

@@ -83,9 +83,12 @@ class HoldManagerTest {
 
     @Test
     void release는_중복좌석을_정렬해_전달한다() {
-        holdManager.release(1L, "hold-key", List.of(20L, 10L, 10L));
+        when(holdStore.release(1L, "hold-key", List.of(10L, 20L))).thenReturn(List.of(10L));
+
+        List<Long> releasedSeatIds = holdManager.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
         verify(holdStore).release(1L, "hold-key", List.of(10L, 20L));
+        assertThat(releasedSeatIds).containsExactly(10L);
     }
 
     @Test
