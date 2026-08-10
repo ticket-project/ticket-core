@@ -207,17 +207,18 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 - 만료 시 listener 및 보정용 scheduler로 후속 정리를 수행한다.
 - 좌석 상태 변경은 WebSocket 메시지로 전파한다.
 - Redis 만료 listener는 worker 2개와 유한 queue를 사용해 TTL 폭주가 DB 동시성 폭주로 번지는 것을 막는다.
-- 주문 생성 후 selection 정리와 HELD 발행은 DB 커밋과 connection 반환 뒤에 실행한다.
+- 주문 생성 후 selection 정리와 HELD 발행은 DB 커밋과 connection 반환 뒤에 실행하고, 실패 입력은 creation outbox로 보존한다.
 - background 실행 설정과 scheduler는 core-infra가 소유한다.
 
-### 주문 종료 보정
+### 주문 후처리 보정
 
 - 즉시 이벤트 처리만으로 끝내지 않고, 보정용 scheduler를 함께 둔다.
 - listener 누락이나 운영 중 일시 장애가 있어도 정합성을 다시 맞추는 것이 목적이다.
-- 주문 상태 전이, hold history, hold release outbox 적재는 하나의 짧은 DB 트랜잭션이다.
-- 커밋 후 listener는 outbox ID를 제한된 queue에 제출만 한다.
+- 주문 생성 시에는 PENDING 주문, hold history, hold creation outbox를 하나의 짧은 DB 트랜잭션에 저장한다.
+- 주문 종료 시에는 상태 전이, hold history, hold release outbox를 하나의 짧은 DB 트랜잭션에 저장한다.
+- 커밋 후 트리거는 outbox ID를 제한된 queue에 제출만 한다.
 - outbox 조회와 완료/실패 기록은 각각 짧은 트랜잭션으로 실행한다.
-- Redis hold 해제와 WebSocket 발행 중에는 DB connection을 점유하지 않는다.
+- Redis selection/hold 변경과 WebSocket 발행 중에는 DB connection을 점유하지 않는다.
 - 상세 흐름은 docs/core-booking-lifecycle.md를 기준으로 한다.
 
 ## 동시성 제어
