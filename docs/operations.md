@@ -174,8 +174,8 @@ core/core-api/src/main/resources/db/migration-vendor/oracle
 기존 운영 스키마를 다시 만드는 `V1__...sql`은 추가하지 않는다. 이후 테이블 구조 변경은 새 파일로만 추가한다.
 
 ```text
-V7__add_payment_tables.sql
-V8__add_order_confirmed_at.sql
+V8__add_payment_tables.sql
+V9__add_order_confirmed_at.sql
 ```
 
 이미 운영에 적용된 migration 파일은 수정하지 않는다. 변경이 더 필요하면 다음 버전 파일을 새로 만든다.
@@ -186,6 +186,8 @@ V8__add_order_confirmed_at.sql
 좌석 선택 검증과 주문 상세 조회에 필요한 인덱스를 적용한다.
 `V5__create_order_hold_release_outbox.sql`과 `V6__create_order_hold_creation_outbox.sql`은
 주문 커밋 후 작업을 유실 없이 재시도하기 위한 outbox 테이블과 due 조회 인덱스를 만든다.
+`V7__add_hold_released_at_to_outbox.sql`은 Redis 해제 완료 단계를 저장해 WebSocket 발행만
+안전하게 재시도할 수 있게 한다.
 
 배포 전에는 `docs/database/core-api-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
 중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
