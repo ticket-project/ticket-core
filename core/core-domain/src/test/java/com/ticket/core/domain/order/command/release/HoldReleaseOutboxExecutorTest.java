@@ -28,20 +28,20 @@ class HoldReleaseOutboxExecutorTest {
 
     @Test
     void completesOutboxAfterReleaseTaskSucceeds() {
-        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L));
+        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L), false);
         when(transactionService.load(1L)).thenReturn(task);
 
         executor().process(1L, FIXED_NOW);
 
-        verify(taskProcessor).process(task);
+        verify(taskProcessor).process(1L, task, FIXED_NOW);
         verify(transactionService).markCompleted(1L, FIXED_NOW);
     }
 
     @Test
     void schedulesRetryAfterReleaseTaskFails() {
-        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L));
+        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L), false);
         when(transactionService.load(1L)).thenReturn(task);
-        doThrow(new RuntimeException("release failed")).when(taskProcessor).process(task);
+        doThrow(new RuntimeException("release failed")).when(taskProcessor).process(1L, task, FIXED_NOW);
 
         executor().process(1L, FIXED_NOW);
 

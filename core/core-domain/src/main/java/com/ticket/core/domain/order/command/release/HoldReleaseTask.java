@@ -5,6 +5,7 @@ import java.util.List;
 public record HoldReleaseTask(
         Long performanceId,
         String holdKey,
-        List<Long> seatIds
+        List<Long> seatIds,
+        boolean holdReleased
 ) {
 }
