@@ -218,6 +218,7 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 - 주문 종료 시에는 상태 전이, hold history, hold release outbox를 하나의 짧은 DB 트랜잭션에 저장한다.
 - 커밋 후 트리거는 outbox ID를 제한된 queue에 제출만 한다.
 - outbox 조회와 완료/실패 기록은 각각 짧은 트랜잭션으로 실행한다.
+- hold 해제 완료 단계는 WebSocket 발행 전에 기록해 발행 실패 재시도에서 Redis 해제를 반복하지 않는다.
 - Redis selection/hold 변경과 WebSocket 발행 중에는 DB connection을 점유하지 않는다.
 - 상세 흐름은 docs/core-booking-lifecycle.md를 기준으로 한다.
 

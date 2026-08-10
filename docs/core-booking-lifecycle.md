@@ -62,15 +62,22 @@ CancelOrderUseCase / ExpireOrderUseCase
        -> outbox 조회                (짧은 read transaction)
        -> 좌석별 현재 holdKey 확인
        -> 일치하는 hold만 해제        (Redis, DB transaction 없음)
-       -> 실제 해제된 좌석만 RELEASED 발행 (WebSocket, DB transaction 없음)
+       -> hold 해제 완료 단계 기록    (짧은 write transaction)
+       -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket, DB transaction 없음)
        -> 완료 또는 재시도 기록      (짧은 write transaction)
 ~~~
 
 같은 outbox를 즉시 작업자와 스케줄러가 동시에 집어도 outbox ID 분산락으로
 외부 부수효과를 한 번에 하나만 실행한다. 다만 이 락은 **동시 실행**을 직렬화할 뿐,
 첫 실행의 부수효과 뒤 완료 기록이 실패해서 나중에 순차 재실행되는 것까지 막지는 않는다.
-그래서 생성 후처리는 현재 holdKey를 다시 확인하고, 해제 후처리는 이전 holdKey와 일치해
-실제로 제거된 좌석만 RELEASED로 발행한다. 새 hold가 생긴 좌석에는 오래된 해제 알림을 보내지 않는다.
+그래서 생성 후처리는 현재 holdKey를 다시 확인한다. 해제 후처리는 Redis 해제 성공 단계를
+WebSocket 발행 전에 outbox에 기록한다. 발행이 실패한 재시도에서는 Redis 해제를 반복하지 않고,
+현재 hold와 selection이 모두 없는 좌석만 RELEASED로 다시 발행한다. 새 hold나 selection이 생긴
+좌석에는 오래된 해제 알림을 보내지 않는다.
+
+완료 기록이 실패하면 같은 RELEASED가 다시 발행될 수 있다. 이 이벤트는 좌석을 특정 상태로 맞추는
+멱등 상태 알림으로 취급하며 전달 보장은 at-least-once이다. 중복보다 누락을 피하되, 매 발행 직전
+현재 상태 검증으로 더 최신 상태를 덮어쓰지 않는 것이 기준이다.
 
 실패 시 `nextAttemptAt`은 현재 시각의 30초 뒤로 기록된다. 이는 정확히 30초 뒤 실행된다는 뜻이
 아니라 **그 시각부터 재시도 대상이 된다**는 뜻이다. 정상 경로는 커밋 직후 작업자가 즉시 실행하고,
