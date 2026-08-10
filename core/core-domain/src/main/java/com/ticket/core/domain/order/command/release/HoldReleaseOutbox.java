@@ -58,6 +58,8 @@ public class HoldReleaseOutbox extends BaseEntity {
 
     private LocalDateTime completedAt;
 
+    private LocalDateTime holdReleasedAt;
+
     @Column(length = MAX_ERROR_LENGTH)
     private String lastError;
 
@@ -95,6 +97,16 @@ public class HoldReleaseOutbox extends BaseEntity {
 
     public boolean isCompleted() {
         return status == HoldReleaseOutboxStatus.COMPLETED;
+    }
+
+    public boolean isHoldReleased() {
+        return holdReleasedAt != null;
+    }
+
+    public void markHoldReleased(final LocalDateTime releasedAt) {
+        if (holdReleasedAt == null) {
+            this.holdReleasedAt = releasedAt;
+        }
     }
 
     public void markCompleted(final LocalDateTime completedAt) {
