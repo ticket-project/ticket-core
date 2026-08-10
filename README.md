@@ -67,7 +67,7 @@ HTTP/WebSocket
 | `show` / `performance` | 공연/전시 목록, 검색, 상세, 회차 조회 |
 | `performanceseat` | 좌석 상태 조회, Redis 기반 임시 선택, WebSocket 전파 |
 | `hold` | Redis 기반 좌석 선점, hold history |
-| `order` | `PENDING` 주문 생성, 조회, 취소, 만료, hold release outbox |
+| `order` | `PENDING` 주문 생성, 조회, 취소, 만료, hold creation/release outbox |
 | `queue` | queue mode/level 값과 회차별 admission 진입 검증 연동 |
 
 ## 주요 API

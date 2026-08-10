@@ -124,10 +124,11 @@ Ticket은 공연/전시 티켓팅 백엔드다. 현재 구현의 중심은 아�
 - 사용자 취소
 - 스케줄러 기반 만료
 - Redis expired listener 기반 즉시 만료
-- hold release outbox 기반 후처리 보강
+- hold creation/release outbox 기반 후처리 보강
 
 - 취소와 만료는 OrderTerminationService의 공통 종료 절차를 사용한다.
-- 주문 상태, hold history, hold release outbox는 같은 DB 트랜잭션에서 기록한다.
+- 주문 생성 시 PENDING 주문, hold history, hold creation outbox를 같은 DB 트랜잭션에서 기록한다.
+- 주문 종료 시 상태 전이, hold history, hold release outbox를 같은 DB 트랜잭션에서 기록한다.
 - outbox의 Redis/WebSocket 처리는 DB 트랜잭션 밖에서 실행한다.
 - Redis 만료 listener와 주문 background worker는 각각 동시 실행 수를 제한한다.
 

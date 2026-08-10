@@ -7,8 +7,8 @@
 
 - Redis 또는 WebSocket 호출 중에는 DB connection을 점유하지 않는다.
 - Redis TTL 이벤트가 한꺼번에 들어와도 DB로 진입하는 작업 수는 제한한다.
-- 주문 상태 변경과 hold release outbox 적재는 같은 DB 트랜잭션에서 처리한다.
-- 커밋 후 리스너는 후처리를 직접 실행하지 않고 제한된 작업 큐에 제출만 한다.
+- 주문 저장 또는 상태 변경과 그에 대응하는 hold outbox 적재는 같은 DB 트랜잭션에서 처리한다.
+- 커밋 후 트리거는 후처리를 직접 실행하지 않고 제한된 작업 큐에 제출만 한다.
 - 즉시 후처리가 누락되거나 실패해도 보정 스케줄러가 outbox를 다시 처리한다.
 
 ## 주문 생성
@@ -20,18 +20,24 @@ CreateOrderUseCase
   -> CreatePendingOrderTxService
        -> PENDING 주문 저장          (짧은 DB 트랜잭션)
        -> hold history 저장
+       -> hold creation outbox 저장
   -> DB 커밋 및 connection 반환
   -> HoldCreationPostCommitNotifier
-       -> 제한된 background queue에 제출
+       -> 제한된 background queue에 outbox ID 제출
+  -> HoldCreationOutboxExecutor
+       -> outbox 조회                (짧은 read transaction)
        -> 같은 좌석의 hold 분산락 획득
        -> snapshot holdKey가 현재 hold인지 확인
        -> 주문 회원 소유 selection만 해제 (Redis)
        -> HELD 상태 발행             (WebSocket)
+       -> 완료 또는 재시도 기록      (짧은 write transaction)
 ~~~
 
 DB 저장이 실패하면 CreateOrderUseCase가 이미 만든 Redis hold를 보상 해제한다.
 DB 커밋 뒤 후처리 제출이나 실행이 실패해도 커밋된 주문과 hold는 되돌리지 않는다.
-hold가 실제 점유의 기준이며 selection은 UX 보조 상태이기 때문이다.
+대신 주문과 같은 트랜잭션에 저장된 creation outbox를 스케줄러가 다시 처리한다.
+따라서 메모리 queue가 가득 차거나 프로세스가 재시작되어도 작업 입력은 DB에 남는다.
+hold가 실제 점유의 기준이며 selection은 UX 보조 상태이다.
 주문 생성 후처리와 hold 해제는 같은 좌석 잠금을 사용한다. 해제가 먼저 끝났다면
 이전 snapshot의 후처리는 아무 작업도 하지 않고, 생성 후처리가 먼저라면 HELD 뒤에
 RELEASED가 발행된다. WebSocket은 세션별 발행 순서를 보존한다.
@@ -54,14 +60,21 @@ CancelOrderUseCase / ExpireOrderUseCase
        -> 제한된 background queue에 outbox ID 제출
   -> HoldReleaseOutboxExecutor
        -> outbox 조회                (짧은 read transaction)
-       -> hold 해제                  (Redis, DB transaction 없음)
-       -> RELEASED 상태 발행         (WebSocket, DB transaction 없음)
+       -> 좌석별 현재 holdKey 확인
+       -> 일치하는 hold만 해제        (Redis, DB transaction 없음)
+       -> 실제 해제된 좌석만 RELEASED 발행 (WebSocket, DB transaction 없음)
        -> 완료 또는 재시도 기록      (짧은 write transaction)
 ~~~
 
 같은 outbox를 즉시 작업자와 스케줄러가 동시에 집어도 outbox ID 분산락으로
-외부 부수효과를 한 번에 하나만 실행한다. Redis 해제는 재시도 가능해야 하며,
-실패한 outbox는 30초 뒤 다시 시도한다.
+외부 부수효과를 한 번에 하나만 실행한다. 다만 이 락은 **동시 실행**을 직렬화할 뿐,
+첫 실행의 부수효과 뒤 완료 기록이 실패해서 나중에 순차 재실행되는 것까지 막지는 않는다.
+그래서 생성 후처리는 현재 holdKey를 다시 확인하고, 해제 후처리는 이전 holdKey와 일치해
+실제로 제거된 좌석만 RELEASED로 발행한다. 새 hold가 생긴 좌석에는 오래된 해제 알림을 보내지 않는다.
+
+실패 시 `nextAttemptAt`은 현재 시각의 30초 뒤로 기록된다. 이는 정확히 30초 뒤 실행된다는 뜻이
+아니라 **그 시각부터 재시도 대상이 된다**는 뜻이다. 정상 경로는 커밋 직후 작업자가 즉시 실행하고,
+그 실행을 놓친 작업은 2분 주기의 scheduler가 다음 조회에서 처리한다.
 스케줄러가 한 페이지에서 처리 시작 실패를 만나면 그 실행은 다음 페이지 재조회 없이
 끝낸다. 따라서 첫 100건이 그대로 남은 상황에서 같은 페이지를 무한 반복하지 않는다.
 
@@ -74,9 +87,10 @@ ExpireOrderUseCase.expireByHoldKey를 호출한다.
 - redisExpirationTaskExecutor: 만료 handler worker 2개, queue 256개, 공유 permit 2개
 - queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
 - OrderExpirationScheduler: 5분마다 만료 주문을 100개씩 보정한다.
+- HoldCreationOutboxScheduler: 2분마다 미완료 생성 후처리 outbox를 100개씩 보정한다.
 - HoldReleaseOutboxScheduler: 2분마다 미완료 outbox를 100개씩 보정한다.
 
-두 스케줄러와 트랜잭션 이벤트 리스너는 core-infra에 위치한다.
+보정 스케줄러와 커밋 후 트리거는 core-infra에 위치한다.
 core-domain은 상태 전이와 트랜잭션 단위만 소유한다.
 
 ## DB connection 관점
@@ -96,8 +110,10 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 - 주문 생성: domain.order.command.create.CreateOrderUseCase
 - 주문 DB 저장: domain.order.command.create.CreatePendingOrderTxService
 - 주문 종료: domain.order.command.OrderTerminationService
-- outbox 트랜잭션: domain.order.command.release.HoldReleaseOutboxTransactionService
-- outbox 외부 처리: domain.order.command.release.HoldReleaseOutboxExecutor
+- 생성 outbox 트랜잭션: domain.order.command.create.HoldCreationOutboxTransactionService
+- 생성 outbox 외부 처리: infra.order.HoldCreationOutboxExecutor
+- 해제 outbox 트랜잭션: domain.order.command.release.HoldReleaseOutboxTransactionService
+- 해제 outbox 외부 처리: domain.order.command.release.HoldReleaseOutboxExecutor
 - Redis TTL 진입 제한: infra.redis.RedisExpirationListenerConfig
 - background queue와 트리거: infra.order
 
