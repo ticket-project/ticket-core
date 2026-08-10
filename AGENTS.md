@@ -22,7 +22,7 @@
 4. `docs/operations.md`
 5. 관련 모듈의 `build.gradle`, `settings.gradle`, 테스트 코드
 
-부하 테스트나 예매 오픈 검증은 `docs/load-test.md`에서 시작하고, 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`의 `README.md`와 `console/README.md`를 기준으로 본다. 이 저장소의 `load-tests/gatling`은 이전 시나리오 보관본이다.
+부하 테스트나 예매 오픈 검증은 `docs/load-test.md`에서 시작하고, 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`의 `README.md`와 `console/README.md`를 기준으로 본다.
 
 ## 저장소를 읽는 순서
 
