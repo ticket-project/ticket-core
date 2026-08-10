@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: core-ci-${{ github.event.pull_request.number || github.ref }}
@@ -30,3 +31,11 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar --no-daemon
+
+      - name: Upload verified application jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-api-jar
+          path: core/core-api/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 7
