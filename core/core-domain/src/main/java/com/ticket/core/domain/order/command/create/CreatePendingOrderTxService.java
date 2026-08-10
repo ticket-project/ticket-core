@@ -14,9 +14,10 @@ public class CreatePendingOrderTxService {
 
     private final OrderCreator orderCreator;
     private final HoldHistoryRecorder holdHistoryRecorder;
+    private final HoldCreationOutboxWriter holdCreationOutboxWriter;
 
     @Transactional
-    public Order create(
+    public PendingOrderCreationResult create(
             final Long memberId,
             final Long performanceId,
             final Duration holdDuration,
@@ -37,6 +38,10 @@ public class CreatePendingOrderTxService {
                 allocation.expiresAt(),
                 allocation.performanceSeats()
         );
-        return order;
+        final Long postCommitOutboxId = holdCreationOutboxWriter.append(
+                allocation.snapshot(),
+                allocation.startedAt(holdDuration)
+        );
+        return new PendingOrderCreationResult(order, postCommitOutboxId);
     }
 }

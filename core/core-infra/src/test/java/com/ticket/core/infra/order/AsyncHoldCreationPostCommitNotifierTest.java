@@ -1,14 +1,15 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.TaskRejectedException;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -19,64 +20,52 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @ExtendWith(MockitoExtension.class)
 class AsyncHoldCreationPostCommitNotifierTest {
 
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            Instant.parse("2026-03-15T03:00:00Z"),
+            ZoneId.of("Asia/Seoul")
+    );
+    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 12, 0);
+
     @Mock
-    private HoldCreationPostCommitProcessor processor;
+    private HoldCreationOutboxExecutor outboxExecutor;
 
     @Test
-    void notification_only_queues_external_side_effects() {
+    void notificationOnlyQueuesTheDurableOutboxId() {
         final AtomicReference<Runnable> queuedTask = new AtomicReference<>();
-        final HoldSnapshot snapshot = snapshot();
-        final AsyncHoldCreationPostCommitNotifier notifier = new AsyncHoldCreationPostCommitNotifier(
-                processor,
-                queuedTask::set
-        );
+        final AsyncHoldCreationPostCommitNotifier notifier = notifier(queuedTask::set);
 
-        notifier.notify(snapshot);
+        notifier.notify(99L);
 
-        verifyNoInteractions(processor);
-
+        verifyNoInteractions(outboxExecutor);
         queuedTask.get().run();
-        verify(processor).process(snapshot);
+        verify(outboxExecutor).process(99L, FIXED_NOW);
     }
 
     @Test
-    void a_full_queue_does_not_fail_the_committed_order() {
-        final AsyncHoldCreationPostCommitNotifier notifier = new AsyncHoldCreationPostCommitNotifier(
-                processor,
-                task -> {
-                    throw new TaskRejectedException("queue full");
-                }
-        );
+    void aFullQueueDoesNotFailTheCommittedOrder() {
+        final AsyncHoldCreationPostCommitNotifier notifier = notifier(task -> {
+            throw new TaskRejectedException("queue full");
+        });
 
-        assertThatCode(() -> notifier.notify(snapshot())).doesNotThrowAnyException();
+        assertThatCode(() -> notifier.notify(99L)).doesNotThrowAnyException();
 
-        verifyNoInteractions(processor);
+        verifyNoInteractions(outboxExecutor);
     }
 
     @Test
-    void external_failure_is_contained_inside_the_background_task() {
+    void executorStartupFailureIsContainedInsideTheBackgroundTask() {
         final AtomicReference<Runnable> queuedTask = new AtomicReference<>();
-        final HoldSnapshot snapshot = snapshot();
-        final AsyncHoldCreationPostCommitNotifier notifier = new AsyncHoldCreationPostCommitNotifier(
-                processor,
-                queuedTask::set
-        );
-        doThrow(new RuntimeException("redis failed"))
-                .when(processor).process(snapshot);
-        notifier.notify(snapshot);
+        final AsyncHoldCreationPostCommitNotifier notifier = notifier(queuedTask::set);
+        doThrow(new RuntimeException("database failed"))
+                .when(outboxExecutor).process(99L, FIXED_NOW);
+        notifier.notify(99L);
 
         assertThatCode(() -> queuedTask.get().run()).doesNotThrowAnyException();
 
-        verify(processor).process(snapshot);
+        verify(outboxExecutor).process(99L, FIXED_NOW);
     }
 
-    private HoldSnapshot snapshot() {
-        return new HoldSnapshot(
-                "hold-key",
-                20L,
-                10L,
-                List.of(100L, 200L),
-                LocalDateTime.of(2026, 3, 15, 12, 0)
-        );
+    private AsyncHoldCreationPostCommitNotifier notifier(final org.springframework.core.task.TaskExecutor executor) {
+        return new AsyncHoldCreationPostCommitNotifier(outboxExecutor, executor, FIXED_CLOCK);
     }
 }

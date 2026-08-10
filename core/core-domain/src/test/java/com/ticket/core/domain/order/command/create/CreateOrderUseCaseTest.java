@@ -101,7 +101,7 @@ class CreateOrderUseCaseTest {
         when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
-                .thenReturn(order);
+                .thenReturn(new PendingOrderCreationResult(order, 99L));
 
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
 
@@ -113,7 +113,7 @@ class CreateOrderUseCaseTest {
         inOrder.verify(validator).validate(20L, 10L, seatIds, FIXED_NOW);
         inOrder.verify(holdAllocator).allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW);
         inOrder.verify(createPendingOrderTxService).create(20L, 10L, Duration.ofSeconds(600), allocation);
-        inOrder.verify(holdCreationPostCommitNotifier).notify(snapshot);
+        inOrder.verify(holdCreationPostCommitNotifier).notify(99L);
     }
 
     @Test
@@ -128,8 +128,8 @@ class CreateOrderUseCaseTest {
         when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
-                .thenReturn(order);
-        doThrow(new RuntimeException("queue failed")).when(holdCreationPostCommitNotifier).notify(snapshot);
+                .thenReturn(new PendingOrderCreationResult(order, 99L));
+        doThrow(new RuntimeException("queue failed")).when(holdCreationPostCommitNotifier).notify(99L);
 
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
 
