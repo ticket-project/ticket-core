@@ -19,9 +19,19 @@ public class HoldReleaseOutboxTransactionService {
                 .map(outbox -> new HoldReleaseTask(
                         outbox.getPerformanceId(),
                         outbox.getHoldKey(),
-                        outbox.seatIds()
+                        outbox.seatIds(),
+                        outbox.isHoldReleased()
                 ))
                 .orElse(null);
+    }
+
+    @Transactional
+    public void markHoldReleased(final Long outboxId, final LocalDateTime releasedAt) {
+        final HoldReleaseOutbox outbox = findForUpdate(outboxId);
+        if (outbox == null || outbox.isCompleted()) {
+            return;
+        }
+        outbox.markHoldReleased(releasedAt);
     }
 
     @Transactional

@@ -30,7 +30,7 @@ class HoldReleaseOutboxTransactionServiceTest {
 
         final HoldReleaseTask task = service().load(1L);
 
-        assertThat(task).isEqualTo(new HoldReleaseTask(10L, "hold-key", List.of(100L, 200L)));
+        assertThat(task).isEqualTo(new HoldReleaseTask(10L, "hold-key", List.of(100L, 200L), false));
     }
 
     @Test
@@ -51,6 +51,17 @@ class HoldReleaseOutboxTransactionServiceTest {
 
         assertThat(outbox.isCompleted()).isTrue();
         assertThat(outbox.getCompletedAt()).isEqualTo(FIXED_NOW);
+    }
+
+    @Test
+    void mark_hold_released_persists_the_external_step_before_publication() {
+        final HoldReleaseOutbox outbox = outbox();
+        when(holdReleaseOutboxRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(outbox));
+
+        service().markHoldReleased(1L, FIXED_NOW);
+
+        assertThat(outbox.isHoldReleased()).isTrue();
+        assertThat(outbox.getHoldReleasedAt()).isEqualTo(FIXED_NOW);
     }
 
     @Test
@@ -78,6 +89,10 @@ class HoldReleaseOutboxTransactionServiceTest {
                 .isTrue();
         assertThat(HoldReleaseOutboxTransactionService.class
                 .getDeclaredMethod("markCompleted", Long.class, LocalDateTime.class)
+                .isAnnotationPresent(Transactional.class))
+                .isTrue();
+        assertThat(HoldReleaseOutboxTransactionService.class
+                .getDeclaredMethod("markHoldReleased", Long.class, LocalDateTime.class)
                 .isAnnotationPresent(Transactional.class))
                 .isTrue();
     }

@@ -32,7 +32,7 @@ public class HoldReleaseOutboxExecutor {
         }
 
         try {
-            taskProcessor.process(task);
+            taskProcessor.process(outboxId, task, now);
             transactionService.markCompleted(outboxId, now);
         } catch (final RuntimeException e) {
             transactionService.scheduleRetry(outboxId, now.plus(RETRY_DELAY), e.getMessage());
