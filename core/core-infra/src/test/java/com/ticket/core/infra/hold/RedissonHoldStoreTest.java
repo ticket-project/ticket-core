@@ -115,12 +115,13 @@ class RedissonHoldStoreTest {
                 .thenReturn(new HoldSnapshot("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
 
         //when
-        redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
+        List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
         //then
         verify(seat10).delete();
         verify(holdSeatIndex).remove(10L);
         verify(meta, org.mockito.Mockito.never()).delete();
+        assertThat(releasedSeatIds).containsExactly(10L);
     }
 
     @Test
@@ -140,13 +141,14 @@ class RedissonHoldStoreTest {
         when(holdSnapshotCodec.decode(payload))
                 .thenReturn(new HoldSnapshot("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
 
-        redissonHoldStore.release(1L, "hold-key", List.of(10L));
+        List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(10L));
 
         verify(seat10).delete();
         verify(seat20).delete();
         verify(holdSeatIndex).remove(10L);
         verify(holdSeatIndex).remove(20L);
         verify(meta).delete();
+        assertThat(releasedSeatIds).containsExactly(10L, 20L);
     }
 
     @Test
