@@ -2,7 +2,6 @@ package com.ticket.core.domain.order.command.create;
 
 import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
 import com.ticket.core.support.lock.DistributedLock;
-import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.order.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +45,9 @@ public class CreateOrderUseCase {
                 holdDuration,
                 now
         );
-        final Order order;
+        final PendingOrderCreationResult creationResult;
         try {
-            order = createPendingOrderTxService.create(
+            creationResult = createPendingOrderTxService.create(
                     input.memberId(),
                     input.performanceId(),
                     holdDuration,
@@ -58,15 +57,15 @@ public class CreateOrderUseCase {
             releaseHold(allocation, e);
             throw e;
         }
-        notifyHoldCreated(allocation);
-        return new Output(order.getOrderKey(), OrderState.PENDING, allocation.expiresAt());
+        notifyHoldCreated(creationResult.postCommitOutboxId(), allocation.holdKey());
+        return new Output(creationResult.order().getOrderKey(), OrderState.PENDING, allocation.expiresAt());
     }
 
-    private void notifyHoldCreated(final HoldAllocation allocation) {
+    private void notifyHoldCreated(final Long outboxId, final String holdKey) {
         try {
-            holdCreationPostCommitNotifier.notify(allocation.snapshot());
+            holdCreationPostCommitNotifier.notify(outboxId);
         } catch (final RuntimeException e) {
-            log.warn("주문 생성 후처리를 제출하지 못했습니다. holdKey={}", allocation.holdKey(), e);
+            log.warn("주문 생성 후처리를 제출하지 못했습니다. holdKey={}", holdKey, e);
         }
     }
 
