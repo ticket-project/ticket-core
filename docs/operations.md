@@ -225,6 +225,8 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이�
 | `booking.outbox.observation.failure` | `booking_outbox_observation_failure_total` | 고정 `type`, `reason=outbox_metric_query_failure` | outbox 상태 조회 실패 |
 | `booking.distributed.lock.acquire.failure` | `booking_distributed_lock_acquire_failure_total` | 선언된 `operation`, `reason=lock_not_acquired\|lock_wait_interrupted` | operation별 분산 락 획득 실패 |
 | `booking.api.deprecated.hold.request` | `booking_api_deprecated_hold_request_total` | `status=2xx\|4xx\|5xx\|other` | 구형 `POST /performances/{id}/holds` 사용량 |
+| `security.admission.enforcement.enabled` | `security_admission_enforcement_enabled` | 없음 | admission token 강제 여부(1/0) |
+| `security.admission.custom.secret.configured` | `security_admission_custom_secret_configured` | 없음 | 개발 기본값이 아닌 secret 설정 여부(1/0) |
 
 `memberId`, `performanceId`, `orderKey`, `holdKey`, Redis lock key는 metric 태그로
 사용하지 않는다. 이 값들은 요청에 따라 계속 늘어나 시계열 저장소 비용과 조회 지연을
@@ -245,6 +247,12 @@ outbox gauge는 각 Core 인스턴스가 같은 DB 값을 60초마다 관측한�
 정하지 않는다. 모든 Core 인스턴스에서 `booking_api_deprecated_hold_request_total`의 증가율이
 합의한 관측 기간 동안 0이고, 외부 소비자에게 `/orders` 전환 공지가 끝난 뒤에만 제거한다.
 status 태그에는 결과군만 기록하며 URL의 performanceId는 기록하지 않는다.
+
+`admissionEnforcement` health component는 secret 원문 없이 `enforcementEnabled`와
+`customSecretConfigured`만 제공한다. 운영에서 enforcement를 켜기 전에는 Queue와 Core에
+같은 새 secret을 먼저 준비하고 두 gauge가 각각 0→1로 바뀌는지 확인한다. 현재 기본값을
+즉시 제거하거나 enforcement를 강제하지 않는 이유는 기존 배포 환경의 secret 전달과
+Core rollback 경로가 아직 저장소에서 검증되지 않았기 때문이다.
 
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
 
