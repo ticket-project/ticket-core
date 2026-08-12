@@ -73,7 +73,8 @@ class OrderControllerContractTest {
                 .thenReturn(new CreateOrderUseCase.Output(
                         "ORD-20260324",
                         OrderState.PENDING,
-                        LocalDateTime.of(2026, 3, 24, 14, 10)
+                        LocalDateTime.of(2026, 3, 24, 14, 10),
+                        600L
                 ));
 
         mockMvc.perform(post("/api/v1/orders")
@@ -92,6 +93,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data.orderKey").value("ORD-20260324"))
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
                 .andExpect(jsonPath("$.data.expiresAt").value("2026-03-24T14:10:00"))
+                .andExpect(jsonPath("$.data.remainingSeconds").value(600L))
                 .andExpect(jsonPath("$.error").isEmpty());
 
         verify(admissionTokenValidator).validate(10L, 100L, "admission-token");

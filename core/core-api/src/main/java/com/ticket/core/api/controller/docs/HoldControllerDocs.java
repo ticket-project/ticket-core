@@ -24,6 +24,7 @@ public interface HoldControllerDocs {
             description = """
                     구형 호환 API입니다. 신규 연동은 POST /api/v1/orders를 사용하세요.
                     요청한 좌석을 Redis에 HOLD 하고 DB에 PENDING 주문을 생성합니다.
+                    expiresAt과 서버 기준 remainingSeconds를 함께 반환합니다.
                     """
     )
     @ApiResponses(value = {

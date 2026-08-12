@@ -42,6 +42,12 @@ hold가 실제 점유의 기준이며 selection은 UX 보조 상태이다.
 이전 snapshot의 후처리는 아무 작업도 하지 않고, 생성 후처리가 먼저라면 HELD 뒤에
 RELEASED가 발행된다. WebSocket은 세션별 발행 순서를 보존한다.
 
+주문 시작, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
+만료 시각이고, `remainingSeconds`는 응답을 만드는 서버 시각부터 `expiresAt`까지 남은
+완전한 초다. PENDING이 아니거나 이미 만료 경계를 지났으면 0이다. 클라이언트는 로컬
+시계로 `expiresAt - now`를 다시 계산하지 않고 `remainingSeconds`로 카운트다운을 시작한 뒤,
+상태 조회 응답으로 주기적으로 보정한다.
+
 ## 주문 취소와 만료
 
 취소는 소유권과 현재 상태를 검증하고, 만료는 orderId 또는 holdKey로

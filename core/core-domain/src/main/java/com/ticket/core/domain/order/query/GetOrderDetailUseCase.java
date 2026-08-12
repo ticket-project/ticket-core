@@ -1,5 +1,6 @@
 package com.ticket.core.domain.order.query;
 
+import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.query.model.OrderDetailRow;
 import com.ticket.core.support.exception.CoreException;
@@ -11,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -81,9 +81,7 @@ public class GetOrderDetailUseCase {
         final BigDecimal ticketAmount = rows.stream()
                 .map(OrderDetailRow::price)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        final long remainingSeconds = first.status() == OrderState.PENDING
-                ? Math.max(0L, Duration.between(now, first.expiresAt()).getSeconds())
-                : 0L;
+        final long remainingSeconds = OrderRemainingTime.seconds(first.status(), first.expiresAt(), now);
 
         return new Output(
                 first.orderKey(),

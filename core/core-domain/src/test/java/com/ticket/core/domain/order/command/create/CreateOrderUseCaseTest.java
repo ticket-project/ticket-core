@@ -108,6 +108,7 @@ class CreateOrderUseCaseTest {
         assertThat(output.orderKey()).isEqualTo("order-key");
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
         assertThat(output.expiresAt()).isEqualTo(snapshot.expiresAt());
+        assertThat(output.remainingSeconds()).isEqualTo(600L);
 
         final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTxService, holdCreationPostCommitNotifier);
         inOrder.verify(validator).validate(20L, 10L, seatIds, FIXED_NOW);
@@ -191,7 +192,7 @@ class CreateOrderUseCaseTest {
     }
 
     private HoldSnapshot holdSnapshot(final List<Long> seatIds) {
-        return new HoldSnapshot("hold-key", 20L, 10L, seatIds, LocalDateTime.of(2026, 3, 15, 12, 0));
+        return new HoldSnapshot("hold-key", 20L, 10L, seatIds, FIXED_NOW.plusMinutes(10));
     }
 
     private Order order(final HoldSnapshot snapshot) {
