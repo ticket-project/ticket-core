@@ -224,6 +224,7 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이�
 | `booking.outbox.oldest.age` | `booking_outbox_oldest_age_seconds` | `type=hold_creation\|hold_release` | 가장 오래된 PENDING/FAILED outbox 나이 |
 | `booking.outbox.observation.failure` | `booking_outbox_observation_failure_total` | 고정 `type`, `reason=outbox_metric_query_failure` | outbox 상태 조회 실패 |
 | `booking.distributed.lock.acquire.failure` | `booking_distributed_lock_acquire_failure_total` | 선언된 `operation`, `reason=lock_not_acquired\|lock_wait_interrupted` | operation별 분산 락 획득 실패 |
+| `booking.api.deprecated.hold.request` | `booking_api_deprecated_hold_request_total` | `status=2xx\|4xx\|5xx\|other` | 구형 `POST /performances/{id}/holds` 사용량 |
 
 `memberId`, `performanceId`, `orderKey`, `holdKey`, Redis lock key는 metric 태그로
 사용하지 않는다. 이 값들은 요청에 따라 계속 늘어나 시계열 저장소 비용과 조회 지연을
@@ -239,6 +240,11 @@ outbox gauge는 각 Core 인스턴스가 같은 DB 값을 60초마다 관측한�
 2. `booking_outbox_oldest_age_seconds`가 scheduler 보정 주기인 120초를 계속 넘으면 적체로 판단한다.
 3. outbox gauge가 갱신되지 않거나 observation failure가 증가하면 업무 적체와 관측 쿼리 실패를 구분한다.
 4. lock failure가 증가하면 같은 `operation`과 `reason`의 로그를 조회하고, 동적 key는 로그에서만 제한적으로 확인한다.
+
+구형 `/holds` endpoint는 OpenAPI에서 deprecated로 표시하지만 cutoff와 Sunset 날짜는 아직
+정하지 않는다. 모든 Core 인스턴스에서 `booking_api_deprecated_hold_request_total`의 증가율이
+합의한 관측 기간 동안 0이고, 외부 소비자에게 `/orders` 전환 공지가 끝난 뒤에만 제거한다.
+status 태그에는 결과군만 기록하며 URL의 performanceId는 기록하지 않는다.
 
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
 
