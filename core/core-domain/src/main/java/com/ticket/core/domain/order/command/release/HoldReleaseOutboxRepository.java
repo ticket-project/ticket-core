@@ -22,6 +22,12 @@ public interface HoldReleaseOutboxRepository extends JpaRepository<HoldReleaseOu
             """)
     Optional<HoldReleaseOutbox> findByIdForUpdate(@Param("outboxId") Long outboxId);
 
+    long countByStatus(HoldReleaseOutboxStatus status);
+
+    Optional<HoldReleaseOutbox> findFirstByStatusInOrderByCreatedAtAsc(
+            Collection<HoldReleaseOutboxStatus> statuses
+    );
+
     Slice<HoldReleaseOutbox> findAllByStatusInAndNextAttemptAtLessThanEqual(
             Collection<HoldReleaseOutboxStatus> statuses,
             LocalDateTime nextAttemptAt,
