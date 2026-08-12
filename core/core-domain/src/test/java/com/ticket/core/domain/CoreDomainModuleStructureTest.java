@@ -52,8 +52,8 @@ class CoreDomainModuleStructureTest {
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtTokenService.java"))).isTrue();
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtProperties.java"))).isTrue();
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/OAuth2EndpointConstants.java"))).isTrue();
-        assertThat(apiBuild).contains("io.jsonwebtoken:jjwt-api:0.12.6");
-        assertThat(domainBuild).doesNotContain("io.jsonwebtoken:jjwt-api:0.12.6");
+        assertThat(apiBuild).contains("io.jsonwebtoken:jjwt-api:0.13.0");
+        assertThat(domainBuild).doesNotContain("io.jsonwebtoken:jjwt-api:0.13.0");
     }
 
     @Test
