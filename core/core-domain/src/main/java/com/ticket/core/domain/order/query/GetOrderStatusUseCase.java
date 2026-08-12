@@ -1,5 +1,6 @@
 package com.ticket.core.domain.order.query;
 
+import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.query.model.OrderStatusView;
 import com.ticket.core.support.exception.CoreException;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
@@ -34,9 +34,11 @@ public class GetOrderStatusUseCase {
     public Output execute(final Input input) {
         final OrderStatusView status = orderQueryRepository.findStatus(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
-        final long remainingSeconds = status.status() == OrderState.PENDING
-                ? Math.max(0L, Duration.between(LocalDateTime.now(clock), status.expiresAt()).getSeconds())
-                : 0L;
+        final long remainingSeconds = OrderRemainingTime.seconds(
+                status.status(),
+                status.expiresAt(),
+                LocalDateTime.now(clock)
+        );
 
         return new Output(status.orderKey(), status.status(), status.expiresAt(), remainingSeconds);
     }

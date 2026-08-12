@@ -23,6 +23,7 @@ public interface OrderControllerDocs {
             description = """
                     요청한 좌석을 선점하고 결제 진입용 PENDING 주문을 생성합니다.
                     동일 회원과 같은 공연에는 PENDING 주문을 1건만 가질 수 있습니다.
+                    expiresAt과 서버 기준 remainingSeconds를 함께 반환합니다.
                     응답 헤더로 생성된 주문 조회 URI(Location)와 주문 키(X-Order-Key)를 반환합니다.
                     생성된 주문은 GET /api/v1/orders/{orderKey}로 조회할 수 있습니다.
                     """

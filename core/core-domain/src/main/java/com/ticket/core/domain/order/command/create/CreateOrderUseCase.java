@@ -1,6 +1,7 @@
 package com.ticket.core.domain.order.command.create;
 
 import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
+import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.support.lock.DistributedLock;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.order.model.OrderState;
@@ -26,7 +27,12 @@ public class CreateOrderUseCase {
 
     public record Input(Long performanceId, List<Long> seatIds, Long memberId) {}
 
-    public record Output(String orderKey, OrderState status, LocalDateTime expiresAt) {}
+    public record Output(
+            String orderKey,
+            OrderState status,
+            LocalDateTime expiresAt,
+            long remainingSeconds
+    ) {}
 
     @DistributedLock(
             prefix = "start-order",
@@ -58,7 +64,12 @@ public class CreateOrderUseCase {
             throw e;
         }
         notifyHoldCreated(creationResult.postCommitOutboxId(), allocation.holdKey());
-        return new Output(creationResult.order().getOrderKey(), OrderState.PENDING, allocation.expiresAt());
+        return new Output(
+                creationResult.order().getOrderKey(),
+                OrderState.PENDING,
+                allocation.expiresAt(),
+                OrderRemainingTime.seconds(OrderState.PENDING, allocation.expiresAt(), LocalDateTime.now(clock))
+        );
     }
 
     private void notifyHoldCreated(final Long outboxId, final String holdKey) {

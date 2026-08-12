@@ -28,7 +28,8 @@ class BookingMetricsAspectTest {
         CreateOrderUseCase.Output output = new CreateOrderUseCase.Output(
                 "order-key",
                 OrderState.PENDING,
-                LocalDateTime.of(2026, 8, 12, 12, 10)
+                LocalDateTime.of(2026, 8, 12, 12, 10),
+                600L
         );
         when(target.execute(successfulInput)).thenReturn(output);
         when(target.execute(failingInput)).thenThrow(new IllegalStateException("db unavailable"));
