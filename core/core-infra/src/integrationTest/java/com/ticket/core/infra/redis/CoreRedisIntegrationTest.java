@@ -7,6 +7,7 @@ import com.ticket.core.domain.auth.token.AuthRefreshToken;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import com.ticket.core.infra.auth.token.RedisRefreshTokenStore;
 import com.ticket.core.infra.lock.DistributedLockAop;
+import com.ticket.core.infra.metrics.CoreBookingMetrics;
 import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.lock.DistributedLock;
@@ -22,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -163,7 +165,10 @@ class CoreRedisIntegrationTest {
     private LockedService lockedServiceProxy() {
         AspectJProxyFactory proxyFactory = new AspectJProxyFactory(new LockedService());
         proxyFactory.setProxyTargetClass(true);
-        proxyFactory.addAspect(new DistributedLockAop(redissonClient));
+        proxyFactory.addAspect(new DistributedLockAop(
+                redissonClient,
+                new CoreBookingMetrics(new SimpleMeterRegistry())
+        ));
         return proxyFactory.getProxy();
     }
 

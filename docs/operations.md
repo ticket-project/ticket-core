@@ -210,6 +210,36 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이�
 - executor 메트릭의 name 태그: redisExpirationSubscriptionExecutor,
   redisExpirationTaskExecutor, bookingBackgroundTaskExecutor
 
+업무 흐름은 다음 메트릭으로 확인한다.
+
+| Micrometer 이름 | Prometheus 이름 | 제한 태그 | 의미 |
+| --- | --- | --- | --- |
+| `booking.order.create.success` | `booking_order_create_success_total` | 없음 | 분산 락 획득 후 주문 생성 성공 |
+| `booking.order.create.failure` | `booking_order_create_failure_total` | 없음 | 분산 락 획득 후 주문 생성 실패 |
+| `booking.hold.create` | `booking_hold_create_total` | `result=success\|failure` | Redis hold 생성 결과 |
+| `booking.hold.release` | `booking_hold_release_total` | `result=success\|failure` | Redis hold 해제 결과 |
+| `booking.hold.expire` | `booking_hold_expire_total` | `result=success\|failure` | TTL 만료 이력 기록 결과 |
+| `booking.outbox.pending` | `booking_outbox_pending` | `type=hold_creation\|hold_release` | 현재 PENDING outbox 수 |
+| `booking.outbox.failed` | `booking_outbox_failed` | `type=hold_creation\|hold_release` | 현재 FAILED outbox 수 |
+| `booking.outbox.oldest.age` | `booking_outbox_oldest_age_seconds` | `type=hold_creation\|hold_release` | 가장 오래된 PENDING/FAILED outbox 나이 |
+| `booking.outbox.observation.failure` | `booking_outbox_observation_failure_total` | 고정 `type`, `reason=outbox_metric_query_failure` | outbox 상태 조회 실패 |
+| `booking.distributed.lock.acquire.failure` | `booking_distributed_lock_acquire_failure_total` | 선언된 `operation`, `reason=lock_not_acquired\|lock_wait_interrupted` | operation별 분산 락 획득 실패 |
+
+`memberId`, `performanceId`, `orderKey`, `holdKey`, Redis lock key는 metric 태그로
+사용하지 않는다. 이 값들은 요청에 따라 계속 늘어나 시계열 저장소 비용과 조회 지연을
+증가시키기 때문이다. 분산 락의 `operation`에는 `@DistributedLock`에 코드로 선언된
+정적 prefix만 들어간다. 주문 생성 success/failure는 락 획득 이후의 use case 결과이며,
+락 획득 전 실패는 분산 락 메트릭으로 따로 본다.
+
+outbox gauge는 각 Core 인스턴스가 같은 DB 값을 60초마다 관측한다. 여러 인스턴스의
+값을 합산하면 실제 건수가 배수로 부풀기 때문에 대시보드와 알림은 인스턴스 간 `max`를
+사용한다. 다음 순서로 장애를 판독한다.
+
+1. `booking_outbox_failed`가 0보다 크면 같은 type의 outbox 처리 오류 로그를 확인한다.
+2. `booking_outbox_oldest_age_seconds`가 scheduler 보정 주기인 120초를 계속 넘으면 적체로 판단한다.
+3. outbox gauge가 갱신되지 않거나 observation failure가 증가하면 업무 적체와 관측 쿼리 실패를 구분한다.
+4. lock failure가 증가하면 같은 `operation`과 `reason`의 로그를 조회하고, 동적 key는 로그에서만 제한적으로 확인한다.
+
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
 
 ```promql
