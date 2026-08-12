@@ -20,6 +20,7 @@ public interface HoldControllerDocs {
     @Deprecated
     @Operation(
             summary = "좌석 HOLD 생성",
+            deprecated = true,
             description = """
                     구형 호환 API입니다. 신규 연동은 POST /api/v1/orders를 사용하세요.
                     요청한 좌석을 Redis에 HOLD 하고 DB에 PENDING 주문을 생성합니다.
