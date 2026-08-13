@@ -22,12 +22,6 @@ public interface HoldCreationOutboxRepository extends JpaRepository<HoldCreation
             """)
     Optional<HoldCreationOutbox> findByIdForUpdate(@Param("outboxId") Long outboxId);
 
-    long countByStatus(HoldCreationOutboxStatus status);
-
-    Optional<HoldCreationOutbox> findFirstByStatusInOrderByCreatedAtAsc(
-            Collection<HoldCreationOutboxStatus> statuses
-    );
-
     Slice<HoldCreationOutbox> findAllByStatusInAndNextAttemptAtLessThanEqual(
             Collection<HoldCreationOutboxStatus> statuses,
             LocalDateTime nextAttemptAt,

@@ -1,7 +1,5 @@
 package com.ticket.core.infra.lock;
 
-import com.ticket.core.infra.metrics.CoreBookingMetrics;
-import com.ticket.core.infra.metrics.CoreBookingMetrics.LockFailureReason;
 import com.ticket.core.support.CustomSpringELParser;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.lock.DistributedLock;
@@ -30,7 +28,6 @@ public class DistributedLockAop {
     private static final Logger log = LoggerFactory.getLogger(DistributedLockAop.class);
 
     private final RedissonClient redissonClient;
-    private final CoreBookingMetrics metrics;
 
     @Around("@annotation(com.ticket.core.support.lock.DistributedLock)")
     public Object around(final ProceedingJoinPoint joinPoint) throws Throwable {
@@ -47,14 +44,12 @@ public class DistributedLockAop {
         try {
             final boolean available = tryLock(lock, distributedLock);
             if (!available) {
-                metrics.recordLockAcquireFailure(distributedLock.prefix(), LockFailureReason.CONTENDED);
                 logLockFailure(distributedLock, keys);
                 throw new CoreException(distributedLock.errorType(), resolveMessage(distributedLock));
             }
             return joinPoint.proceed();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            metrics.recordLockAcquireFailure(distributedLock.prefix(), LockFailureReason.INTERRUPTED);
             logLockInterrupted(distributedLock, keys, e);
             throw new CoreException(distributedLock.errorType(), resolveMessage(distributedLock));
         } finally {
