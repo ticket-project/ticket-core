@@ -9,17 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "security.admission")
 public class TicketAdmissionTokenProperties {
 
-    public static final String DEVELOPMENT_DEFAULT_SECRET = "0123456789abcdef0123456789abcdef";
-
     private boolean enforcementEnabled = false;
     private String issuer = "ticket-queue";
     private String audience = "ticket-api";
-    private String secretKey = DEVELOPMENT_DEFAULT_SECRET;
+    private String secretKey = "0123456789abcdef0123456789abcdef";
     private long expirationSeconds = 300L;
-
-    public boolean hasCustomSecret() {
-        return secretKey != null
-                && !secretKey.isBlank()
-                && !DEVELOPMENT_DEFAULT_SECRET.equals(secretKey);
-    }
 }
