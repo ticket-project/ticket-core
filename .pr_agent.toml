@@ -2,7 +2,7 @@
 response_language = "ko-KR"
 ignore_pr_title = ["^WIP", "^\\[WIP\\]", "^\\[skip qodo\\]"]
 ignore_pr_labels = ["skip-qodo", "skip-ai-review"]
-allow_only_specific_folders = ["core", "storage", "support", ".github"]
+allow_only_specific_folders = ["core", "storage", "support", "docs", ".github"]
 patch_extra_lines_before = 8
 patch_extra_lines_after = 5
 
@@ -27,10 +27,12 @@ require_score_review = true
 require_tests_review = true
 require_estimate_effort_to_review = true
 extra_instructions = """\
+- 이 저장소의 규칙은 루트 AGENTS.md와 docs/가 단일 원본입니다. 규칙 판단은 그 문서를 따르세요.
 - 모든 요약, 리뷰, 제안은 한국어로 작성하세요.
 - 항상 심층 리뷰를 수행하세요. 패치만 보지 말고 관련 클래스, 설정, 테스트, 호출 흐름까지 읽으세요.
 - 스타일 취향보다 실제 결함 가능성을 우선 검토하세요.
 - 버그, 동시성 문제, 트랜잭션 경계, 보안, Redis TTL/만료 처리, 분산 락 누락, 회귀 위험, 테스트 공백을 우선 지적하세요.
+- DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드는 항상 지적하세요.
 - controller가 repository를 직접 다루는지, core-api에 비즈니스 규칙이 들어갔는지, core-domain 경계를 깨는지 확인하세요.
 - auth, hold, order, performanceseat, queue 변경은 경쟁 상태와 만료 처리 누락을 집중적으로 보세요.
 - 점수, 테스트 공백, 보안 우려, 아키텍처 위반 가능성을 빠짐없이 평가하세요.
@@ -48,12 +50,13 @@ issues_user_guidelines = """\
 """
 compliance_user_guidelines = """\
 리뷰는 한국어로 작성하세요.
-이 저장소의 규칙:
+이 저장소의 규칙(단일 원본: 루트 AGENTS.md와 docs/):
 - 문서와 기본 응답은 한국어
 - 변경은 수술적으로, 요청 범위만 수정
 - 단순함 우선, 불필요한 추상화 금지
-- core-api는 진입점/설정, core-domain은 비즈니스 규칙
-- Redis, 락, 만료 이벤트는 core-domain의 store/infra 중심으로 유지
+- core-api는 진입점/설정, core-domain은 업무 규칙, core-infra는 기술 구현
+- Redis와 WebSocket은 core-domain의 store/publisher port로만 접근하고 구현은 core-infra에 둔다
+- core-domain에는 infra 패키지, @Scheduled, @TransactionalEventListener를 두지 않는다
 """
 
 [pr_code_suggestions]
