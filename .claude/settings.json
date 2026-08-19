@@ -1,0 +1,19 @@
+{
+  "outputStyle": "fluent-korean",
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "PowerShell(.\\gradlew.bat:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge-tree:*)",
+      "Bash(gh auth status)",
+      "Bash(gh pr view:*)",
+      "Bash(rg:*)"
+    ]
+  }
+}
