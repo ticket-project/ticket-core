@@ -51,6 +51,13 @@ reviews:
         - hold, order, performanceseat, auth, queue 도메인의 상태 전이, 동시성, 분산 락, Redis TTL/expiration, scheduler/listener 정합성을 우선 확인하세요.
         - 트랜잭션 경계 오류, 부분 저장, 이벤트 누락, 만료 처리 불일치를 집중적으로 찾으세요.
         - 관련 테스트가 충분한지도 함께 보세요.
+    - path: "core/core-infra/**"
+      instructions: |
+        - 항상 한국어로 리뷰하세요.
+        - 이 경로는 core-domain의 port 구현만 담당합니다. 업무 판단이나 상태 전이 결정이 섞였는지 확인하세요.
+        - Redis 명령과 key 조립, TTL 설정, expiration listener, WebSocket 발행, scheduler, 분산락 AOP를 우선 확인하세요.
+        - DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드, background executor 한도를 늘리는 변경은 특히 엄격하게 보세요.
+        - Redis key 형식이나 인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차가 함께 있는지 확인하세요.
     - path: "storage/redis-core/**"
       instructions: |
         - 항상 한국어로 리뷰하세요.
@@ -62,6 +69,7 @@ reviews:
     - path: "**/*"
       instructions: |
         - 항상 한국어로 리뷰하세요.
+        - 이 저장소의 규칙은 루트 AGENTS.md와 docs/가 기준입니다. 규칙 판단이 필요하면 그 문서를 따르세요.
         - 패치만 보지 말고 주변 코드와 관련 테스트까지 확인하세요.
         - 버그, 보안, 동시성, 트랜잭션, 회귀 위험, 테스트 공백을 우선 지적하세요.
   tools:
