@@ -21,7 +21,7 @@ web_search = "live"
 
 # Persistent instructions are appended to every prompt (additive, unlike
 # model_instructions_file which replaces AGENTS.md).
-persistent_instructions = "Follow project AGENTS.md guidelines. Use available MCP servers when they can help. For every pull request review, write in Korean and perform deep investigation by default: inspect surrounding code, related tests, module boundaries, transaction flows, Redis expiration behavior, concurrency, and regression risk before commenting."
+persistent_instructions = "Follow the root AGENTS.md and docs/ as the single source of truth for this repository; do not rely on tool-specific instruction files. Write in Korean. Use available MCP servers when they can help. For pull request reviews follow the '코드 리뷰' section of AGENTS.md."
 
 # model_instructions_file replaces built-in instructions instead of AGENTS.md,
 # so leave it unset unless you intentionally want a single override file.
