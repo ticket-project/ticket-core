@@ -1,6 +1,8 @@
 # Ticket 저장소 작업 가이드
 
-이 문서는 사람과 AI 에이전트가 공통으로 따르는 루트 작업 기준이다.
+이 문서는 사람과 AI 에이전트가 공통으로 따르는 루트 작업 기준이며, **모든 도구의 단일 진입점**이다.
+Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.md`의 `@AGENTS.md` 임포트로 읽는다.
+도구별로 다른 지침을 따로 두지 않는다. 규칙을 바꿀 때는 이 파일과 `docs/`만 고친다.
 
 ## 기본 원칙
 
@@ -12,17 +14,25 @@
 - 기존 미커밋 변경은 사용자 작업으로 보고 되돌리지 않는다.
 - 파괴적 작업은 명시적으로 요청받은 경우에만 수행한다.
 
-## 문서 우선순위
+## 작업별로 먼저 읽을 문서
 
-저장소 의도는 아래 순서로 파악한다.
+이 파일에는 공통 규칙만 둔다. 상세한 판단 기준은 아래 문서가 원본이며, **작업을 시작하기 전에 해당 문서를 연다.**
 
-1. `README.md`
-2. `docs/development.md`
-3. `docs/architecture.md`
-4. `docs/operations.md`
-5. 관련 모듈의 `build.gradle`, `settings.gradle`, 테스트 코드
+| 작업 성격 | 먼저 읽을 문서 |
+| --- | --- |
+| 새 코드의 모듈·패키지 위치, 의존 방향, 경계 변경 | `docs/architecture.md` |
+| 기능·API·도메인 규칙 구현, 계층 책임, Redis·분산락 | `docs/development.md` |
+| 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
+| 무엇을 검증할지 고르기, 새 테스트 추가 | `docs/testing.md` |
+| 로컬 실행, 프로파일, Flyway, 배포, 관측 지표 | `docs/operations.md` |
+| 부하 테스트 실행과 용량 판정 | `docs/load-test.md` |
+| 커밋·브랜치·PR | `docs/development.md` 의 커밋과 PR 절차·컨벤션 |
 
-부하 테스트나 예매 오픈 검증은 `docs/load-test.md`에서 시작하고, 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`의 `README.md`와 `console/README.md`를 기준으로 본다.
+전체 맥락은 `README.md`, 실제 경계는 `settings.gradle`과 각 모듈 `build.gradle`, 강제되는 규칙은
+관련 테스트 코드가 최종 기준이다.
+
+부하 테스트의 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`의 `README.md`와
+`console/README.md`를 기준으로 본다.
 
 ## 저장소를 읽는 순서
 
@@ -93,6 +103,12 @@ HTTP/WebSocket 요청
 ./gradlew clean :core:core-api:bootJar -x test
 ```
 
+Redis adapter, key, TTL, expiration listener를 바꿨으면 통합 테스트까지 실행한다(Docker 필요).
+
+```bash
+./gradlew :core:core-infra:integrationTest
+```
+
 구조나 모듈 경계를 건드리면 아래 테스트를 우선 고려한다.
 
 ```bash
@@ -106,6 +122,24 @@ HTTP/WebSocket 요청
 rg -n "찾을_문구"
 git diff --check
 ```
+
+무엇을 언제 돌릴지에 대한 선택 기준, 테스트 이름 규칙, 결과 보고 방식은 `docs/testing.md`를 따른다.
+CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar`다.
+
+## 코드 리뷰
+
+리뷰 요청을 받았을 때는 아래 기준을 적용한다. 사람과 리뷰 봇 모두 같은 기준을 따른다.
+
+- 리뷰, 요약, 코멘트, 제안은 항상 한국어로 작성한다.
+- 패치만 보지 말고 주변 코드, 호출 흐름, 관련 설정, 관련 테스트까지 함께 읽는다.
+- 취향성 스타일 지적보다 실제 결함 가능성, 회귀 위험, 테스트 공백을 우선한다.
+- `core-api`, `core-domain`, `core-infra` 경계 위반 여부를 먼저 확인한다(`docs/architecture.md`).
+- 보안, 동시성, 트랜잭션 경계, Redis TTL과 만료 처리, 테스트 공백을 점검한다.
+- `@Transactional` 경계, 읽기 전용 조회, 예외 처리, null 반환, JPA fetch 전략은 Java 변경에서 항상 본다.
+- findings first 원칙을 따르고 심각도 높은 순서로 적는다. 각 이슈는 왜 문제인지, 어떤 조건에서
+  깨지는지, 어디를 봐야 하는지를 짧게 적는다.
+- 근거가 약한 코멘트는 남기지 않는다. 치명적 문제가 없으면 그 사실을 명시하고 남은 검증 공백만 덧붙인다.
+- 요청 범위를 벗어난 기능 추가, 리팩터링, 추상화 제안은 최소화한다.
 
 ## 작업 보고
 
@@ -123,6 +157,10 @@ git diff --check
 - 허용 `type`은 `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`, `ci`, `security`, `revert`다.
 - 설명은 한국어로 작성하고 마침표를 붙이지 않는다. 기술 고유명사는 원문 표기를 허용한다.
 - 하나의 커밋에는 하나의 목적만 포함하며, 기존 사용자 변경과 섞어서 커밋하지 않는다.
-- 커밋 또는 PR을 만들기 전에 [커밋과 PR 컨벤션](docs/development.md#커밋과-pr-컨벤션)을 확인한다.
-- 이미 원격에 올라간 커밋 이력을 변경하려면 먼저 사용자 승인을 받는다.
+- 작업은 작업 브랜치에서 하고 `master`에 직접 커밋하거나 push하지 않는다. `master` push는 곧 운영 배포다.
+- PR 반영은 `gh pr merge --squash` 또는 `--rebase`를 쓴다. 선형 이력을 유지하므로 merge commit을 만들지 않는다.
+- 커밋은 사용자가 명시적으로 요청할 때만 만든다.
 - 커밋 전 변경 범위에 맞는 검증을 실행하고 결과를 확인한다.
+- 이미 원격에 올라간 커밋 이력을 변경하려면 먼저 사용자 승인을 받는다.
+- 절차 전체는 [커밋과 PR 절차](docs/development.md#커밋과-pr-절차), 메시지 규칙 상세는
+  [커밋과 PR 컨벤션](docs/development.md#커밋과-pr-컨벤션)을 따른다.

@@ -143,6 +143,26 @@ Redis 관련 공통 의존성을 제공한다.
 - `com.ticket.core.infra.hold`
 - `com.ticket.core.infra.performanceseat`
 
+## 코드 위치 결정표
+
+새 코드는 아래 기준으로 위치를 정한다. 판단이 갈리면 "이 코드가 사라졌을 때 무엇이 먼저 깨지는가"를 본다.
+
+| 책임 | 위치 |
+| --- | --- |
+| HTTP endpoint, 요청 검증, 인증 principal 추출, 응답 포맷 | `core-api` |
+| Swagger 문서 인터페이스 | `core-api` 의 `controller.docs` |
+| JWT, OAuth2, security filter chain, admission token 설정과 검증 | `core-api` 의 `config.security`, `config.admission` |
+| 상태를 바꾸는 use case | `core-domain` 의 `<domain>.command` |
+| 조회 use case와 조회 저장소 | `core-domain` 의 `<domain>.query` |
+| 엔티티, 도메인 모델, 조회 model view | `core-domain` 의 `<domain>.model`, `<domain>.query.model` |
+| JPA / RDB 접근 | `core-domain` 의 `<domain>.repository` |
+| Redis 같은 임시 상태 저장 port | `core-domain` 의 `<domain>.store` |
+| 도메인 이벤트, 도메인 보조 컴포넌트 | `core-domain` 의 `<domain>.event`, `<domain>.support` |
+| Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `core-infra` |
+| scheduler, `@TransactionalEventListener`, background executor 설정 | `core-infra` |
+| 분산락 AOP 실행부 | `core-infra` 의 `lock` |
+| Querydsl, P6Spy 같은 기술 설정 | `core-infra` 의 `config` |
+
 ## 기능별 구조 원칙
 
 ### Controller
@@ -238,18 +258,54 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 ## 아키텍처 규칙
 
-`core-domain`과 `core-api`에는 ArchUnit 기반 구조 테스트가 있다.
+아래는 권고가 아니라 테스트가 실패시키는 규칙이다. 위반하면 다른 테스트의 통과 여부와 관계없이
+완료가 아니다. 실행 명령은 [testing.md의 구조 테스트](testing.md#구조-테스트)를 따른다.
 
-현재 강제하는 핵심 규칙:
+### `CoreDomainArchitectureTest` (ArchUnit)
 
+- `com.ticket.core.infra..`와 `..domain.*.infra..` 패키지는 존재할 수 없다.
 - `infra` 바깥에서는 `org.redisson..`에 직접 의존하지 않는다.
+- `infra` 바깥에서는 `org.springframework.data.redis..`에 직접 의존하지 않는다.
 - `infra` 바깥에서는 `org.springframework.messaging..`에 직접 의존하지 않는다.
-- `infra` 바깥과 `core.config` 바깥에서는 HTTP interface client annotation에 직접 의존하지 않는다.
-- `core-domain` 모듈은 `com.ticket.core.infra..`와 `domain.*.infra..` 구현 패키지를 포함하지 않는다.
-- `domain.auth.command`와 `domain.auth.oauth2`는 auth infra 구현체에 직접 의존하지 않는다.
-- `core-api`의 `config.security`는 auth infra 구현체에 직접 의존하지 않는다.
-- core-domain에는 Scheduled 메서드를 두지 않는다.
-- core-domain에는 TransactionalEventListener 메서드를 두지 않는다.
+- `infra` 바깥과 `com.ticket.core.config..` 바깥에서는 HTTP interface client annotation에 직접 의존하지 않는다.
+- `..domain.auth.command..`와 `..domain.auth.oauth2..`는 `com.ticket.core.infra.auth..`에 의존하지 않는다.
+- `..domain..`의 메서드에는 `@Scheduled`를 붙일 수 없다.
+- `..domain..`의 메서드에는 `@TransactionalEventListener`를 붙일 수 없다.
+
+### `CoreDomainModuleStructureTest` (파일 배치 검증)
+
+- `order`와 `queue` 비즈니스는 `core-domain`이 소유하고 `core-api`에 같은 패키지를 두지 않는다.
+- JWT 보안 구현(`JwtTokenService`, `JwtProperties`, `OAuth2EndpointConstants`)은 `core-api`에만 둔다.
+- `core-domain`의 `build.gradle`에 `springdoc-openapi`와 `jjwt`를 넣지 않고, 소스에 Swagger import를 두지 않는다.
+- `CookieUtils` 같은 HTTP 유틸리티는 `core-api`에 둔다.
+- `OrderExpirationScheduler`, `HoldReleaseOutboxScheduler`는 `core-infra`에 둔다.
+- `core:core-enum` 모듈은 부활시키지 않는다. enum은 `core-domain`에 둔다.
+
+`core-api`의 `CoreApiArchitectureTest`도 같은 성격의 경계를 검사한다. `core-api`의 `config.security`는
+auth infra 구현체에 직접 의존하지 않는다.
+
+## 경계 판단에서 자주 틀리는 지점
+
+- **주기 실행이 필요한 도메인 규칙.** 규칙은 `core-domain`의 use case에 두고 `@Scheduled` 트리거만
+  `core-infra`에 둔다. 도메인에 애노테이션을 붙이는 순간 ArchUnit이 막는다.
+- **Redis 상태를 읽는 조회 로직.** 좌석 상태는 DB와 Redis 점유 상태를 합쳐 계산한다. 합치는 규칙은
+  `core-domain`의 query use case가 소유하고 Redis 조회 자체는 `store` port를 통한다.
+- **query model과 응답 DTO.** query repository는 use case 내부 DTO를 반환하지 않고 기능별 query model
+  view를 반환한다. 응답 DTO는 `core-api`가 만든다.
+- **다른 도메인이 필요한 경우.** 상대 도메인의 `repository`나 `store`를 직접 부르지 않고 공개 use case를 호출한다.
+- **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별 `entryType` 계산과
+  admission token 검증만 담당하며 queue token 저장소나 만료 핸들러를 두지 않는다.
+- **Core Redis의 용도.** seat selection, seat hold, refresh token, OAuth2 one-time auth code뿐이다.
+  대기열 상태를 Core Redis에 넣지 않는다.
+
+## 아키텍처 리뷰 질문
+
+- 이 코드의 책임이 실행(api), 업무(domain), 기술(infra) 중 어디에 속하는가
+- 의존이 `core-api`/`core-infra` → `core-domain` 방향을 지키는가
+- `core-domain`이 Redis, WebSocket, HTTP client, scheduler를 직접 알게 되지 않았는가
+- 새 패키지가 기능 중심 축(`command`/`query`/`model`/`repository`/`store`)을 따르는가
+- DB 상태와 Redis 상태를 합치는 규칙의 소유자가 한 곳인가
+- 새 추상화가 실제 경계를 보호하는가, 사용하지 않는 계층을 늘리기만 하는가
 
 ## 다음 구조 정리 방향
 
