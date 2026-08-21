@@ -46,6 +46,24 @@ class AdmissionTokenValidatorTest {
     }
 
     @Test
+    void auto_회차는_주입된_clock_기준으로_대기열을_요구한다() {
+        TicketAdmissionTokenProperties properties = new TicketAdmissionTokenProperties();
+        properties.setEnforcementEnabled(true);
+        AdmissionTokenValidator injectedClockValidator = new AdmissionTokenValidator(
+                performanceBookingPolicyFinder,
+                admissionTokenService,
+                Clock.fixed(NOW.toInstant(), ZoneId.of("Asia/Seoul")),
+                properties
+        );
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.AUTO));
+
+        assertThatThrownBy(() -> injectedClockValidator.validate(10L, 10L, null))
+                .isInstanceOf(CoreException.class)
+                .extracting("errorType")
+                .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED);
+    }
+
+    @Test
     void direct_회차는_admission_token_없이_통과한다() {
         when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_OFF));
 

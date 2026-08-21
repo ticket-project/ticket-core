@@ -25,12 +25,13 @@ public class AdmissionTokenValidator {
     public AdmissionTokenValidator(
             final PerformanceBookingPolicyFinder performanceBookingPolicyFinder,
             final AdmissionTokenService admissionTokenService,
+            final Clock clock,
             final TicketAdmissionTokenProperties properties
     ) {
         this(
                 performanceBookingPolicyFinder,
                 admissionTokenService,
-                Clock.systemDefaultZone(),
+                clock,
                 properties.isEnforcementEnabled()
         );
     }
