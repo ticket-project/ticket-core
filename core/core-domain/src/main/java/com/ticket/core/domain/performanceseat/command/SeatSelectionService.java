@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -51,7 +52,7 @@ public class SeatSelectionService {
         return seatSelectionStore.releaseIfOwned(performanceId, seatId, memberKeyOf(memberId));
     }
 
-    public java.util.Set<Long> getSelectingSeatIds(final Long performanceId) {
+    public Set<Long> getSelectingSeatIds(final Long performanceId) {
         return seatSelectionStore.getSelectingSeatIds(performanceId);
     }
 
