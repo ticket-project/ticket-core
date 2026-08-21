@@ -41,10 +41,14 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
             redis.call('zrem', KEYS[2], ARGV[2])
             return 1
             """;
+    /**
+     * 만료분은 score 범위 필터로 제외되므로 조회 경로에서 인덱스를 정리하지 않는다.
+     * 정리는 selectIfAbsent, releaseIfOwned와 인덱스 키 자체의 TTL이 담당하고,
+     * 멤버 수 상한은 회차 좌석 수다.
+     */
     private static final String READ_ACTIVE_SEAT_IDS_SCRIPT = """
             local redisTime = redis.call('TIME')
             local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
-            redis.call('zremrangebyscore', KEYS[1], '-inf', nowMillis)
             return redis.call('zrangebyscore', KEYS[1], '(' .. nowMillis, '+inf')
             """;
 
@@ -96,7 +100,7 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
     @Override
     public Set<Long> getSelectingSeatIds(final Long performanceId) {
         final List<String> seatIds = script().eval(
-                RScript.Mode.READ_WRITE,
+                RScript.Mode.READ_ONLY,
                 READ_ACTIVE_SEAT_IDS_SCRIPT,
                 RScript.ReturnType.LIST,
                 List.<Object>of(SeatRedisKey.selectSeatIndex(performanceId))
