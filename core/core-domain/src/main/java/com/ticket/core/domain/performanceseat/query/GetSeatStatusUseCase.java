@@ -2,7 +2,6 @@ package com.ticket.core.domain.performanceseat.query;
 
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
@@ -31,16 +30,13 @@ public class GetSeatStatusUseCase {
             List<SeatStateView> seats
     ) {}
 
-    public Output execute(Input input) {
-        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findValidById(
-                input.performanceId(),
-                LocalDateTime.now(clock)
-        );
-        final Long perfId = policy.performanceId();
+    public Output execute(final Input input) {
+        final Long performanceId = input.performanceId();
+        performanceBookingPolicyFinder.findValidById(performanceId, LocalDateTime.now(clock));
 
-        final List<SeatStateView> dbStates = seatStatusDbReader.read(perfId);
+        final List<SeatStateView> dbStates = seatStatusDbReader.read(performanceId);
 
-        final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(perfId);
+        final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
         if (redisOccupiedIds.isEmpty()) {
             return new Output(dbStates);
         }
@@ -55,8 +51,12 @@ public class GetSeatStatusUseCase {
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {
-        final Set<Long> ids = new HashSet<>(seatSelectionService.getSelectingSeatIds(performanceId));
-        ids.addAll(holdManager.getHoldingSeatIds(performanceId));
-        return ids;
+        final Set<Long> selectingSeatIds = seatSelectionService.getSelectingSeatIds(performanceId);
+        final Set<Long> holdingSeatIds = holdManager.getHoldingSeatIds(performanceId);
+
+        final Set<Long> occupiedSeatIds = HashSet.newHashSet(selectingSeatIds.size() + holdingSeatIds.size());
+        occupiedSeatIds.addAll(selectingSeatIds);
+        occupiedSeatIds.addAll(holdingSeatIds);
+        return occupiedSeatIds;
     }
 }

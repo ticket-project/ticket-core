@@ -105,7 +105,7 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                 RScript.ReturnType.LIST,
                 List.<Object>of(SeatRedisKey.selectSeatIndex(performanceId))
         );
-        final Set<Long> result = new HashSet<>(seatIds.size());
+        final Set<Long> result = HashSet.newHashSet(seatIds.size());
         seatIds.forEach(seatId -> result.add(Long.valueOf(seatId)));
         return result;
     }

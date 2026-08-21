@@ -2,7 +2,6 @@ package com.ticket.core.domain.performanceseat.query;
 
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
@@ -23,7 +22,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -62,9 +60,6 @@ class GetSeatStatusUseCaseTest {
 
     @Test
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
-        PerformanceBookingPolicyView policy = mock(PerformanceBookingPolicyView.class);
-        when(performanceBookingPolicyFinder.findValidById(10L, NOW)).thenReturn(policy);
-        when(policy.performanceId()).thenReturn(10L);
         when(seatStatusDbReader.read(10L)).thenReturn(List.of(
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
@@ -78,17 +73,15 @@ class GetSeatStatusUseCaseTest {
                 new SeatStateView(1L, SeatStatus.OCCUPIED),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         );
+        verify(performanceBookingPolicyFinder).findValidById(10L, NOW);
     }
 
     @Test
     void redis_점유좌석이_없으면_db_상태를_그대로_반환한다() {
-        PerformanceBookingPolicyView policy = mock(PerformanceBookingPolicyView.class);
         List<SeatStateView> dbStates = List.of(
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         );
-        when(performanceBookingPolicyFinder.findValidById(10L, NOW)).thenReturn(policy);
-        when(policy.performanceId()).thenReturn(10L);
         when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
