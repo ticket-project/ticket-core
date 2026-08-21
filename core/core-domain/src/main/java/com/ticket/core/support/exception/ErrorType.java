@@ -27,6 +27,7 @@ public enum ErrorType {
     SEAT_MISMATCH_IN_PERFORMANCE(HttpStatus.BAD_REQUEST, ErrorCode.E4000, "요청한 좌석 정보와 일치하지 않습니다."),
     SEAT_ALREADY_SELECTED(HttpStatus.CONFLICT, ErrorCode.E4001, "이미 선택된 좌석입니다."),
     SEAT_NOT_OWNED(HttpStatus.FORBIDDEN, ErrorCode.E4002, "본인이 선택한 좌석만 해제할 수 있습니다."),
+    SEAT_ALREADY_RESERVED(HttpStatus.CONFLICT, ErrorCode.E4003, "이미 예매 완료된 좌석입니다."),
 
     //주문
     EXCEED_AVAILABLE_SEATS(HttpStatus.CONFLICT, ErrorCode.E5000, "총 예매 가능 좌석을 초과하였습니다."),
@@ -51,6 +52,12 @@ public enum ErrorType {
     ADMISSION_TOKEN_REQUIRED(HttpStatus.FORBIDDEN, ErrorCode.E8000, "대기열 입장 토큰이 필요합니다."),
     ADMISSION_TOKEN_EXPIRED(HttpStatus.FORBIDDEN, ErrorCode.E8001, "대기열 입장 토큰이 만료되었습니다."),
     ADMISSION_TOKEN_INVALID(HttpStatus.FORBIDDEN, ErrorCode.E8002, "대기열 입장 토큰이 올바르지 않습니다."),
+
+    //결제
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, ErrorCode.E9000, "결제 금액이 주문 금액과 일치하지 않습니다."),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorCode.E9001, "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_NOT_READY(HttpStatus.CONFLICT, ErrorCode.E9002, "준비 상태의 결제만 승인할 수 있습니다."),
+    PAYMENT_DECLINED(HttpStatus.CONFLICT, ErrorCode.E9003, "결제가 거절되었습니다."),
     ;
 
     private final HttpStatus status;
