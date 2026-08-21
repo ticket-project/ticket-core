@@ -91,6 +91,62 @@ WebSocket 발행 전에 outbox에 기록한다. 발행이 실패한 재시도에
 스케줄러가 한 페이지에서 처리 시작 실패를 만나면 그 실행은 다음 페이지 재조회 없이
 끝낸다. 따라서 첫 100건이 그대로 남은 상황에서 같은 페이지를 무한 반복하지 않는다.
 
+## 결제 확정
+
+결제는 준비와 승인 2단계다. 준비는 PENDING 주문에 READY 결제를 만들고 paymentKey를 발급한다.
+승인은 게이트웨이 응답을 받은 뒤 상태 전이를 한 트랜잭션에서 처리한다.
+
+~~~text
+ConfirmPaymentUseCase
+  -> 결제/주문 검증                 (짧은 read transaction)
+  -> 게이트웨이 승인 요청            (DB 트랜잭션 밖)
+  -> PaymentConfirmationTxService   (짧은 DB 트랜잭션)
+       -> 결제 row lock, APPROVED 전이
+       -> PENDING 주문 row lock, 만료 재확인
+       -> OrderConfirmationService
+            -> 주문 좌석 검증, 회차 좌석이 모두 AVAILABLE인지 확인
+            -> CONFIRMED 전이
+            -> 회차 좌석 RESERVED 전이
+            -> hold history 저장 (CONFIRMED, PAYMENT_CONFIRMED)
+            -> hold release outbox 저장 (reason=PAYMENT_CONFIRMED)
+  -> DB 커밋 및 connection 반환
+  -> 이후는 취소·만료와 같은 경로
+       -> Redis hold 해제
+       -> reason이 PAYMENT_CONFIRMED이면 좌석 이벤트를 발행하지 않는다
+~~~
+
+확정 시점부터 `PERFORMANCE_SEATS.state`가 영구 점유의 기준이 된다. 좌석맵 조회는 이 값을 읽어
+`AVAILABLE`이 아닌 좌석을 OCCUPIED로 내려주므로, 확정 뒤 화면을 새로 여는 사용자에게 팔린 좌석이
+점유로 보인다.
+
+**확정 시 새로 발행할 좌석 이벤트는 없다.** 클라이언트는 HELD와 RESERVED를 같은 점유 상태로
+취급하고 hold TTL 타이머를 갖지 않는다. 선점 중 좌석은 이미 점유로 보이고 있고 확정 후에도 점유여야
+하므로 화면상 변화가 없다. 확정 경로가 지켜야 할 것은 RELEASED를 발행하지 않는 것이며,
+outbox의 `reason` 컬럼이 그 구분을 담는다. `reason`은 NULL을 허용하고, `PAYMENT_CONFIRMED`가
+아닌 값과 NULL은 모두 기존 동작(RELEASED 발행)을 유지한다.
+
+승인이 거절되면 결제만 FAILED가 되고 주문과 hold는 그대로 남는다. 사용자는 만료 전까지 준비부터
+다시 시도할 수 있고, 시한을 넘기면 기존 만료 경로가 정리한다. 이미 FAILED인 결제에 승인을 다시
+요청하면 `PAYMENT_NOT_READY`로 막고, 재시도는 새 결제를 준비하는 것으로 시작한다.
+
+`loadConfirmable`과 `approve`는 검증을 중복 수행한다. 두 트랜잭션 사이에 게이트웨이 왕복이
+들어가므로 그동안 주문이 만료되거나 취소될 수 있고, 승인 트랜잭션 안에서 다시 확인해야 한다.
+
+### 알아 둘 전제
+
+- 확정 시 좌석 정합성은 **Redis hold 계층의 배타성 보장에 의존한다.** 같은 좌석에 두 주문이
+  동시에 hold를 갖지 않는다는 전제 위에서 회차 좌석을 락 없이 읽고 전이시킨다. 확정 트랜잭션의
+  `SEAT_ALREADY_RESERVED` 검사는 그 전제가 깨졌을 때를 위한 방어이며 정상 경로에서는 걸리지 않는다.
+- 승인 요청이 동시에 두 번 들어오면 게이트웨이가 같은 결제에 두 번 호출될 수 있다. DB는
+  `findByIdForUpdate` 잠금과 승인 상태 재확인으로 안전하고 두 번째 요청은 같은 결과를 받지만,
+  외부 승인 요청 자체는 막히지 않는다. **실제 PG를 연동할 때는 `paymentKey`를 멱등키로 넘겨
+  PG 쪽에서 중복 승인을 거부하게 해야 한다.**
+- `HOLD_HISTORY.release_reason`은 해제만이 아니라 hold 종료 이유 전반을 담는다. 그래서 확정
+  이력도 이 컬럼에 `PAYMENT_CONFIRMED`를 기록한다.
+- 만료 경로는 같은 사건에 대해 hold history에 `TTL_EXPIRED`, outbox에 `ORDER_EXPIRED`를 남긴다.
+  hold 관점 이유와 주문 관점 이유가 다른 레이어에서 기록되기 때문이며 의도된 차이다. 확정 경로는
+  양쪽 모두 `PAYMENT_CONFIRMED`로 일치한다.
+
 ## TTL 폭주와 보정
 
 Redis hold meta key가 만료되면 RedisKeyExpirationListener가
@@ -123,6 +179,11 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 - 주문 생성: domain.order.command.create.CreateOrderUseCase
 - 주문 DB 저장: domain.order.command.create.CreatePendingOrderTxService
 - 주문 종료: domain.order.command.OrderTerminationService
+- 주문 확정: domain.order.command.OrderConfirmationService
+- 결제 준비: domain.payment.command.PreparePaymentUseCase
+- 결제 승인: domain.payment.command.ConfirmPaymentUseCase
+- 결제 승인 트랜잭션: domain.payment.command.PaymentConfirmationTxService
+- 결제 게이트웨이 port: domain.payment.gateway.PaymentGatewayClient (구현체 infra.payment.FakePaymentGatewayClient)
 - 생성 outbox 트랜잭션: domain.order.command.create.HoldCreationOutboxTransactionService
 - 생성 outbox 외부 처리: infra.order.HoldCreationOutboxExecutor
 - 해제 outbox 트랜잭션: domain.order.command.release.HoldReleaseOutboxTransactionService
