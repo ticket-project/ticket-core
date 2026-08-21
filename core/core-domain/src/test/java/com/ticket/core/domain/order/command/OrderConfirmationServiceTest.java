@@ -55,12 +55,16 @@ class OrderConfirmationServiceTest {
     @Test
     void 확정하면_주문과_좌석을_전이하고_결제확정_이유로_해제를_요청한다() {
         final Order order = order();
-        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
-        final PerformanceSeat performanceSeat = performanceSeat(501L, PerformanceSeatState.AVAILABLE);
-        when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
-        when(performanceSeatRepository.findAllById(List.of(501L))).thenReturn(List.of(performanceSeat));
+        final OrderSeat firstOrderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
+        final OrderSeat secondOrderSeat = new OrderSeat(order, 502L, 43L, BigDecimal.TEN);
+        final PerformanceSeat firstPerformanceSeat = performanceSeat(501L, PerformanceSeatState.AVAILABLE);
+        final PerformanceSeat secondPerformanceSeat = performanceSeat(502L, PerformanceSeatState.AVAILABLE);
+        when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L))
+                .thenReturn(List.of(firstOrderSeat, secondOrderSeat));
+        when(performanceSeatRepository.findAllById(List.of(501L, 502L)))
+                .thenReturn(List.of(firstPerformanceSeat, secondPerformanceSeat));
         when(holdReleaseOutboxWriter.append(
-                new OrderTerminationResult(100L, "hold-key", List.of(42L)),
+                new OrderTerminationResult(100L, "hold-key", List.of(42L, 43L)),
                 HoldReleaseReason.PAYMENT_CONFIRMED
         )).thenReturn(99L);
 
@@ -68,8 +72,10 @@ class OrderConfirmationServiceTest {
 
         assertThat(order.getStatus()).isEqualTo(OrderState.CONFIRMED);
         assertThat(order.getConfirmedAt()).isEqualTo(FIXED_NOW);
-        assertThat(performanceSeat.getState()).isEqualTo(PerformanceSeatState.RESERVED);
-        verify(holdHistoryRecorder).recordConfirmed(1L, 100L, "hold-key", FIXED_NOW, List.of(orderSeat));
+        assertThat(firstPerformanceSeat.getState()).isEqualTo(PerformanceSeatState.RESERVED);
+        assertThat(secondPerformanceSeat.getState()).isEqualTo(PerformanceSeatState.RESERVED);
+        verify(holdHistoryRecorder).recordConfirmed(
+                1L, 100L, "hold-key", FIXED_NOW, List.of(firstOrderSeat, secondOrderSeat));
         verify(applicationEventPublisher).publishEvent(new HoldReleaseRequestedEvent(99L));
     }
 
