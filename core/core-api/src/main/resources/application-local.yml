@@ -20,6 +20,13 @@ spring:
 app:
   seed:
     enabled: true
+    load-test-members:
+      count: 2000
+    # 로컬 부하 테스트 전용 회차·좌석. 운영과 같은 고정 ID 대역(910000001~)을 쓴다.
+    # 회차 수를 올리면 회차당 좌석 2,000행이 늘어 기동이 느려진다.
+    load-test-fixture:
+      enabled: true
+      performance-count: 8
   auth:
     oauth2-success-redirect-uri: ${OAUTH2_SUCCESS_REDIRECT_URI:http://localhost:3000/auth/callback}
     oauth2-failure-redirect-uri: ${OAUTH2_FAILURE_REDIRECT_URI:http://localhost:3000/auth/callback}

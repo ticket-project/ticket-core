@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,8 +36,17 @@ import java.util.regex.Pattern;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Order(SeedDataLoader.ORDER)
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 public class SeedDataLoader implements ApplicationRunner {
+
+    /**
+     * 이 시드는 집합 기반이다. {@code seed/kopis-curated.sql}의 SHOW_GRADES·SHOW_SEATS·PERFORMANCE_SEATS는
+     * {@code FROM SHOWS s CROSS JOIN SEATS st} 형태라 실행 시점에 존재하는 모든 행을 대상으로 삼는다.
+     * 따라서 다른 시드가 먼저 SHOWS·SEATS에 행을 넣으면 그 행까지 휩쓸어 중복 등급을 만들고 실패한다.
+     * 순서를 명시해 이 시드가 항상 가장 먼저 끝나도록 한다.
+     */
+    static final int ORDER = 0;
 
     private static final int DEFAULT_BATCH_SIZE = 500;
     private static final int DEFAULT_LOAD_TEST_MEMBER_COUNT = 100;
