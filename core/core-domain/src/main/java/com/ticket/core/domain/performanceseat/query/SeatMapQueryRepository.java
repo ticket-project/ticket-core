@@ -46,18 +46,23 @@ public class SeatMapQueryRepository {
 
     public List<SeatStateView> findSeatStatuses(final Long performanceId) {
         return queryFactory
-                .select(performanceSeat.seat.id, performanceSeat.state)
+                .select(Projections.constructor(SeatStateRow.class,
+                        performanceSeat.seat.id,
+                        performanceSeat.state
+                ))
                 .from(performanceSeat)
                 .where(performanceSeat.performance.id.eq(performanceId))
                 .orderBy(performanceSeat.seat.id.asc())
                 .fetch()
                 .stream()
-                .map(tuple -> new SeatStateView(
-                        tuple.get(performanceSeat.seat.id),
-                        tuple.get(performanceSeat.state) == PerformanceSeatState.AVAILABLE
-                                ? SeatStatus.AVAILABLE
-                                : SeatStatus.OCCUPIED
-                ))
+                .map(SeatStateRow::toView)
                 .toList();
+    }
+
+    public record SeatStateRow(Long seatId, PerformanceSeatState state) {
+
+        private SeatStateView toView() {
+            return new SeatStateView(seatId, SeatStatus.from(state));
+        }
     }
 }
