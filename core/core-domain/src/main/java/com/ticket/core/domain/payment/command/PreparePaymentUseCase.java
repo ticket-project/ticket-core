@@ -60,7 +60,7 @@ public class PreparePaymentUseCase {
     }
 
     private Order getPayableOrder(final Input input) {
-        final Order order = orderRepository.findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
+        final Order order = orderRepository.findByOrderKeyAndMemberIdForUpdate(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
         if (!order.isPending()) {
             throw new CoreException(ErrorType.ORDER_NOT_PENDING);

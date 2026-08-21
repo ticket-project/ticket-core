@@ -54,7 +54,7 @@ class PreparePaymentUseCaseTest {
     @Test
     void 준비_요청이면_READY_결제를_생성한다() {
         final Order order = order(FIXED_NOW.plusMinutes(5));
-        when(orderRepository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByOrderIdAndStatusOrderByIdDesc(10L, PaymentStatus.READY))
                 .thenReturn(Optional.empty());
         when(paymentKeyGenerator.generate()).thenReturn("PAY-1");
@@ -74,19 +74,40 @@ class PreparePaymentUseCaseTest {
     void 이미_READY_결제가_있으면_그것을_반환한다() {
         final Order order = order(FIXED_NOW.plusMinutes(5));
         final Payment existing = new Payment("PAY-EXISTING", 10L, PaymentMethod.CARD, TOTAL_AMOUNT);
-        when(orderRepository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByOrderIdAndStatusOrderByIdDesc(10L, PaymentStatus.READY))
                 .thenReturn(Optional.of(existing));
 
         final PreparePaymentUseCase.Output output = useCase().execute(input());
 
         assertThat(output.paymentKey()).isEqualTo("PAY-EXISTING");
+        assertThat(output.amount()).isEqualByComparingTo(existing.getAmount());
+        assertThat(output.status()).isEqualTo(existing.getStatus());
         verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     @Test
+    void 실패한_결제만_있으면_새_READY_결제를_생성한다() {
+        final Order order = order(FIXED_NOW.plusMinutes(5));
+        // 주문에 이미 FAILED 결제가 있지만, READY 결제 조회는 이를 걸러내고 empty를 반환해야 한다.
+        final Payment failedPayment = new Payment("PAY-FAILED", 10L, PaymentMethod.CARD, TOTAL_AMOUNT);
+        failedPayment.fail(FIXED_NOW, "DECLINED", "카드사 승인 거절");
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findFirstByOrderIdAndStatusOrderByIdDesc(10L, PaymentStatus.READY))
+                .thenReturn(Optional.empty());
+        when(paymentKeyGenerator.generate()).thenReturn("PAY-RETRY");
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        final PreparePaymentUseCase.Output output = useCase().execute(input());
+
+        assertThat(output.paymentKey()).isEqualTo("PAY-RETRY");
+        assertThat(output.status()).isEqualTo(PaymentStatus.READY);
+        verify(paymentRepository).save(any(Payment.class));
+    }
+
+    @Test
     void 본인_주문이_아니면_예외를_던진다() {
-        when(orderRepository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.empty());
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase().execute(input()))
                 .isInstanceOf(CoreException.class)
@@ -98,7 +119,7 @@ class PreparePaymentUseCaseTest {
     void PENDING_주문이_아니면_예외를_던진다() {
         final Order order = order(FIXED_NOW.plusMinutes(5));
         order.cancel(FIXED_NOW);
-        when(orderRepository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> useCase().execute(input()))
                 .isInstanceOf(CoreException.class)
@@ -109,7 +130,7 @@ class PreparePaymentUseCaseTest {
     @Test
     void 만료_시각을_지난_주문이면_예외를_던진다() {
         final Order order = order(FIXED_NOW.minusSeconds(1));
-        when(orderRepository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> useCase().execute(input()))
                 .isInstanceOf(CoreException.class)
@@ -120,7 +141,7 @@ class PreparePaymentUseCaseTest {
     @Test
     void 요청_금액이_주문_금액과_다르면_예외를_던진다() {
         final Order order = order(FIXED_NOW.plusMinutes(5));
-        when(orderRepository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
 
         final PreparePaymentUseCase.Input wrongAmount = new PreparePaymentUseCase.Input(
                 "order-key", 1L, PaymentMethod.CARD, BigDecimal.valueOf(1000)
