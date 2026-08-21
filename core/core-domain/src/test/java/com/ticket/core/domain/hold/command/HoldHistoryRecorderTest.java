@@ -112,6 +112,7 @@ class HoldHistoryRecorderTest {
         //given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 40);
         OrderSeat first = createOrderSeat(100L, 10L);
+        OrderSeat second = createOrderSeat(101L, 20L);
 
         //when
         holdHistoryRecorder.recordConfirmed(
@@ -119,15 +120,24 @@ class HoldHistoryRecorderTest {
                 2L,
                 "hold-key",
                 occurredAt,
-                List.of(first)
+                List.of(first, second)
         );
 
         //then
         List<HoldHistory> histories = captureHistories();
-        assertThat(histories).hasSize(1);
+        assertThat(histories).hasSize(2);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.CONFIRMED);
         assertThat(histories.get(0).getOccurredAt()).isEqualTo(occurredAt);
         assertThat(histories.get(0).getReleaseReason()).isEqualTo(HoldReleaseReason.PAYMENT_CONFIRMED);
+        assertThat(histories.get(0).getHoldKey()).isEqualTo("hold-key");
+        assertThat(histories.get(0).getPerformanceSeatId()).isEqualTo(100L);
+        assertThat(histories.get(0).getSeatId()).isEqualTo(10L);
+        assertThat(histories.get(1).getEventType()).isEqualTo(HoldHistoryEventType.CONFIRMED);
+        assertThat(histories.get(1).getOccurredAt()).isEqualTo(occurredAt);
+        assertThat(histories.get(1).getReleaseReason()).isEqualTo(HoldReleaseReason.PAYMENT_CONFIRMED);
+        assertThat(histories.get(1).getHoldKey()).isEqualTo("hold-key");
+        assertThat(histories.get(1).getPerformanceSeatId()).isEqualTo(101L);
+        assertThat(histories.get(1).getSeatId()).isEqualTo(20L);
     }
 
     @SuppressWarnings("unchecked")
