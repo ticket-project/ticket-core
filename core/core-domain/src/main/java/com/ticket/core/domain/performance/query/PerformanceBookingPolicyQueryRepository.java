@@ -4,7 +4,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ public class PerformanceBookingPolicyQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    @Cacheable(cacheNames = "performanceBookingPolicy", key = "#performanceId", sync = true)
     @Transactional(readOnly = true)
     public Optional<PerformanceBookingPolicyView> findByPerformanceId(final Long performanceId) {
         return Optional.ofNullable(queryFactory

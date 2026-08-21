@@ -5,7 +5,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.query.model.PerformanceSummaryView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import org.springframework.cache.annotation.Cacheable;
 
 import java.util.Optional;
 
@@ -19,7 +18,6 @@ public class PerformanceSummaryQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    @Cacheable(cacheNames = "performanceSummary", key = "#performanceId", sync = true)
     public Optional<PerformanceSummaryView> findByPerformanceId(final Long performanceId) {
         return Optional.ofNullable(queryFactory
                 .select(Projections.constructor(PerformanceSummaryView.class,
