@@ -18,11 +18,15 @@ class FakePaymentGatewayClientTest {
 
     @Test
     void 기본_설정이면_승인하고_승인번호를_발급한다() {
-        final PaymentApprovalResult result = new FakePaymentGatewayClient(true).approve(COMMAND);
+        final FakePaymentGatewayClient client = new FakePaymentGatewayClient(true);
+
+        final PaymentApprovalResult result = client.approve(COMMAND);
+        final PaymentApprovalResult anotherResult = client.approve(COMMAND);
 
         assertThat(result.approved()).isTrue();
         assertThat(result.pgTransactionId()).startsWith("FAKEPG-");
         assertThat(result.failureCode()).isNull();
+        assertThat(result.pgTransactionId()).isNotEqualTo(anotherResult.pgTransactionId());
     }
 
     @Test

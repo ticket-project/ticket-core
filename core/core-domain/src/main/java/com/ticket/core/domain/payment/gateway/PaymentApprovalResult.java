@@ -7,6 +7,15 @@ public record PaymentApprovalResult(
         String failureMessage
 ) {
 
+    public PaymentApprovalResult {
+        if (approved && (pgTransactionId == null || failureCode != null)) {
+            throw new IllegalArgumentException("승인 결과는 pgTransactionId만 가져야 합니다.");
+        }
+        if (!approved && (failureCode == null || pgTransactionId != null)) {
+            throw new IllegalArgumentException("거절 결과는 failureCode만 가져야 합니다.");
+        }
+    }
+
     public static PaymentApprovalResult approved(final String pgTransactionId) {
         return new PaymentApprovalResult(true, pgTransactionId, null, null);
     }
