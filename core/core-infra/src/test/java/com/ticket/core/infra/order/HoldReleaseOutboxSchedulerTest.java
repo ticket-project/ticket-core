@@ -1,5 +1,6 @@
 package com.ticket.core.infra.order;
 
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
@@ -61,8 +62,8 @@ class HoldReleaseOutboxSchedulerTest {
 
     @Test
     void 처리할_outbox가_있으면_순서대로_처리한다() {
-        final HoldReleaseOutbox first = HoldReleaseOutbox.create(1L, "hold-1", List.of(10L), LocalDateTime.of(2026, 3, 25, 12, 0));
-        final HoldReleaseOutbox second = HoldReleaseOutbox.create(1L, "hold-2", List.of(20L), LocalDateTime.of(2026, 3, 25, 12, 0));
+        final HoldReleaseOutbox first = HoldReleaseOutbox.create(1L, "hold-1", List.of(10L), LocalDateTime.of(2026, 3, 25, 12, 0), HoldReleaseReason.ORDER_EXPIRED);
+        final HoldReleaseOutbox second = HoldReleaseOutbox.create(1L, "hold-2", List.of(20L), LocalDateTime.of(2026, 3, 25, 12, 0), HoldReleaseReason.ORDER_EXPIRED);
         ReflectionTestUtils.setField(first, "id", 1L);
         ReflectionTestUtils.setField(second, "id", 2L);
         final Slice<HoldReleaseOutbox> slice = new SliceImpl<>(List.of(first, second));
@@ -77,8 +78,8 @@ class HoldReleaseOutboxSchedulerTest {
 
     @Test
     void 한_outbox가_실행중이어도_다음_outbox를_계속_처리한다() {
-        final HoldReleaseOutbox first = HoldReleaseOutbox.create(1L, "hold-1", List.of(10L), LocalDateTime.of(2026, 3, 25, 12, 0));
-        final HoldReleaseOutbox second = HoldReleaseOutbox.create(1L, "hold-2", List.of(20L), LocalDateTime.of(2026, 3, 25, 12, 0));
+        final HoldReleaseOutbox first = HoldReleaseOutbox.create(1L, "hold-1", List.of(10L), LocalDateTime.of(2026, 3, 25, 12, 0), HoldReleaseReason.ORDER_EXPIRED);
+        final HoldReleaseOutbox second = HoldReleaseOutbox.create(1L, "hold-2", List.of(20L), LocalDateTime.of(2026, 3, 25, 12, 0), HoldReleaseReason.ORDER_EXPIRED);
         ReflectionTestUtils.setField(first, "id", 1L);
         ReflectionTestUtils.setField(second, "id", 2L);
         when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
@@ -117,7 +118,8 @@ class HoldReleaseOutboxSchedulerTest {
                 1L,
                 "hold-" + id,
                 List.of(id),
-                LocalDateTime.of(2026, 3, 25, 12, 0)
+                LocalDateTime.of(2026, 3, 25, 12, 0),
+                HoldReleaseReason.ORDER_EXPIRED
         );
         ReflectionTestUtils.setField(outbox, "id", id);
         return outbox;

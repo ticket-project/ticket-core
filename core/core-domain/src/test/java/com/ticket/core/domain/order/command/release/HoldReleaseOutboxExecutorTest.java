@@ -1,5 +1,6 @@
 package com.ticket.core.domain.order.command.release;
 
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.support.lock.DistributedLock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +29,7 @@ class HoldReleaseOutboxExecutorTest {
 
     @Test
     void completesOutboxAfterReleaseTaskSucceeds() {
-        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L), false);
+        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L), false, HoldReleaseReason.ORDER_EXPIRED);
         when(transactionService.load(1L)).thenReturn(task);
 
         executor().process(1L, FIXED_NOW);
@@ -39,7 +40,7 @@ class HoldReleaseOutboxExecutorTest {
 
     @Test
     void schedulesRetryAfterReleaseTaskFails() {
-        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L), false);
+        final HoldReleaseTask task = new HoldReleaseTask(1L, "hold-key", List.of(10L, 20L), false, HoldReleaseReason.ORDER_EXPIRED);
         when(transactionService.load(1L)).thenReturn(task);
         doThrow(new RuntimeException("release failed")).when(taskProcessor).process(1L, task, FIXED_NOW);
 

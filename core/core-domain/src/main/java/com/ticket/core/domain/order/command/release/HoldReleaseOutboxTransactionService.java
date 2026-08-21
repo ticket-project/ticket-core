@@ -20,7 +20,8 @@ public class HoldReleaseOutboxTransactionService {
                         outbox.getPerformanceId(),
                         outbox.getHoldKey(),
                         outbox.seatIds(),
-                        outbox.isHoldReleased()
+                        outbox.isHoldReleased(),
+                        outbox.getReason()
                 ))
                 .orElse(null);
     }

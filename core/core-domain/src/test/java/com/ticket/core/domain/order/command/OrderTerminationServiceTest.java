@@ -1,6 +1,7 @@
 package com.ticket.core.domain.order.command;
 
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.domain.order.OrderTerminationResult;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxWriter;
 import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
@@ -50,7 +51,8 @@ class OrderTerminationServiceTest {
         final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
         when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
         when(holdReleaseOutboxWriter.append(
-                new OrderTerminationResult(100L, "hold-key", List.of(42L))
+                new OrderTerminationResult(100L, "hold-key", List.of(42L)),
+                HoldReleaseReason.USER_CANCELED
         )).thenReturn(99L);
 
         service().cancel(order, FIXED_NOW);
@@ -66,7 +68,8 @@ class OrderTerminationServiceTest {
         final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
         when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
         when(holdReleaseOutboxWriter.append(
-                new OrderTerminationResult(100L, "hold-key", List.of(42L))
+                new OrderTerminationResult(100L, "hold-key", List.of(42L)),
+                HoldReleaseReason.ORDER_EXPIRED
         )).thenReturn(99L);
 
         service().expire(order, FIXED_NOW);

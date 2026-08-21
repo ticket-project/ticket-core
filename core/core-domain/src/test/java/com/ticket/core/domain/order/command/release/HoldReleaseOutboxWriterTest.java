@@ -1,5 +1,6 @@
 package com.ticket.core.domain.order.command.release;
 
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.domain.order.OrderTerminationResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,18 +31,38 @@ class HoldReleaseOutboxWriterTest {
     void append_uses_clock_now_as_next_attempt_at() {
         OrderTerminationResult result = new OrderTerminationResult(1L, "hold-key", List.of(10L, 20L));
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
-        HoldReleaseOutbox saved = HoldReleaseOutbox.create(1L, "hold-key", List.of(10L, 20L), expectedNow);
+        HoldReleaseOutbox saved = HoldReleaseOutbox.create(
+                1L, "hold-key", List.of(10L, 20L), expectedNow, HoldReleaseReason.USER_CANCELED
+        );
         ReflectionTestUtils.setField(saved, "id", 99L);
         when(holdReleaseOutboxRepository.save(argThat(outbox ->
                 outbox.getPerformanceId().equals(1L)
                         && outbox.getHoldKey().equals("hold-key")
                         && outbox.seatIds().equals(List.of(10L, 20L))
                         && outbox.getNextAttemptAt().equals(expectedNow)
+                        && outbox.getReason() == HoldReleaseReason.USER_CANCELED
         ))).thenReturn(saved);
 
-        Long outboxId = writer().append(result);
+        Long outboxId = writer().append(result, HoldReleaseReason.USER_CANCELED);
 
         assertThat(outboxId).isEqualTo(99L);
+    }
+
+    @Test
+    void append_records_payment_confirmed_reason() {
+        OrderTerminationResult result = new OrderTerminationResult(1L, "hold-key", List.of(10L));
+        LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
+        HoldReleaseOutbox saved = HoldReleaseOutbox.create(
+                1L, "hold-key", List.of(10L), expectedNow, HoldReleaseReason.PAYMENT_CONFIRMED
+        );
+        ReflectionTestUtils.setField(saved, "id", 77L);
+        when(holdReleaseOutboxRepository.save(argThat(outbox ->
+                outbox.getReason() == HoldReleaseReason.PAYMENT_CONFIRMED
+        ))).thenReturn(saved);
+
+        Long outboxId = writer().append(result, HoldReleaseReason.PAYMENT_CONFIRMED);
+
+        assertThat(outboxId).isEqualTo(77L);
     }
 
     private HoldReleaseOutboxWriter writer() {

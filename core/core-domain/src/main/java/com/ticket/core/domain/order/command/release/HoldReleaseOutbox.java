@@ -1,6 +1,7 @@
 package com.ticket.core.domain.order.command.release;
 
 import com.ticket.core.domain.BaseEntity;
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -63,11 +64,16 @@ public class HoldReleaseOutbox extends BaseEntity {
     @Column(length = MAX_ERROR_LENGTH)
     private String lastError;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private HoldReleaseReason reason;
+
     private HoldReleaseOutbox(
             final Long performanceId,
             final String holdKey,
             final String seatIdsPayload,
-            final LocalDateTime nextAttemptAt
+            final LocalDateTime nextAttemptAt,
+            final HoldReleaseReason reason
     ) {
         this.performanceId = performanceId;
         this.holdKey = holdKey;
@@ -75,15 +81,17 @@ public class HoldReleaseOutbox extends BaseEntity {
         this.nextAttemptAt = nextAttemptAt;
         this.retryCount = 0;
         this.status = HoldReleaseOutboxStatus.PENDING;
+        this.reason = reason;
     }
 
     public static HoldReleaseOutbox create(
             final Long performanceId,
             final String holdKey,
             final List<Long> seatIds,
-            final LocalDateTime nextAttemptAt
+            final LocalDateTime nextAttemptAt,
+            final HoldReleaseReason reason
     ) {
-        return new HoldReleaseOutbox(performanceId, holdKey, serializeSeatIds(seatIds), nextAttemptAt);
+        return new HoldReleaseOutbox(performanceId, holdKey, serializeSeatIds(seatIds), nextAttemptAt, reason);
     }
 
     public List<Long> seatIds() {

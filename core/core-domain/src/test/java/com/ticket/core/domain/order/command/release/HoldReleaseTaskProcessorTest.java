@@ -1,6 +1,7 @@
 package com.ticket.core.domain.order.command.release;
 
 import com.ticket.core.domain.hold.command.HoldManager;
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
 import com.ticket.core.support.lock.DistributedLock;
@@ -117,6 +118,6 @@ class HoldReleaseTaskProcessorTest {
     }
 
     private HoldReleaseTask task(final boolean holdReleased) {
-        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L), holdReleased);
+        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L), holdReleased, HoldReleaseReason.ORDER_EXPIRED);
     }
 }

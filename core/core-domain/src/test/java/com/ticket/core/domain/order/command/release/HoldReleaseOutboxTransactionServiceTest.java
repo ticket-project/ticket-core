@@ -1,5 +1,6 @@
 package com.ticket.core.domain.order.command.release;
 
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,7 +31,7 @@ class HoldReleaseOutboxTransactionServiceTest {
 
         final HoldReleaseTask task = service().load(1L);
 
-        assertThat(task).isEqualTo(new HoldReleaseTask(10L, "hold-key", List.of(100L, 200L), false));
+        assertThat(task).isEqualTo(new HoldReleaseTask(10L, "hold-key", List.of(100L, 200L), false, HoldReleaseReason.ORDER_EXPIRED));
     }
 
     @Test
@@ -121,7 +122,8 @@ class HoldReleaseOutboxTransactionServiceTest {
                 10L,
                 "hold-key",
                 List.of(100L, 200L),
-                FIXED_NOW
+                FIXED_NOW,
+                HoldReleaseReason.ORDER_EXPIRED
         );
         ReflectionTestUtils.setField(outbox, "id", 1L);
         return outbox;
