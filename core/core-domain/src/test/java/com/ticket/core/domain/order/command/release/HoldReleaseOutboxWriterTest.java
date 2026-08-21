@@ -4,6 +4,7 @@ import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.domain.order.OrderTerminationResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -56,13 +57,13 @@ class HoldReleaseOutboxWriterTest {
                 1L, "hold-key", List.of(10L), expectedNow, HoldReleaseReason.PAYMENT_CONFIRMED
         );
         ReflectionTestUtils.setField(saved, "id", 77L);
-        when(holdReleaseOutboxRepository.save(argThat(outbox ->
-                outbox.getReason() == HoldReleaseReason.PAYMENT_CONFIRMED
-        ))).thenReturn(saved);
+        ArgumentCaptor<HoldReleaseOutbox> captor = ArgumentCaptor.forClass(HoldReleaseOutbox.class);
+        when(holdReleaseOutboxRepository.save(captor.capture())).thenReturn(saved);
 
         Long outboxId = writer().append(result, HoldReleaseReason.PAYMENT_CONFIRMED);
 
         assertThat(outboxId).isEqualTo(77L);
+        assertThat(captor.getValue().getReason()).isEqualTo(HoldReleaseReason.PAYMENT_CONFIRMED);
     }
 
     private HoldReleaseOutboxWriter writer() {
