@@ -52,7 +52,7 @@ class PreparePaymentUseCaseTest {
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-21T01:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Test
-    void 준비_요청이면_READY_결제를_생성한다() {
+    void READY_결제가_없으면_새로_생성한다() {
         final Order order = order(FIXED_NOW.plusMinutes(5));
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByOrderIdAndStatusOrderByIdDesc(10L, PaymentStatus.READY))
@@ -84,25 +84,6 @@ class PreparePaymentUseCaseTest {
         assertThat(output.amount()).isEqualByComparingTo(existing.getAmount());
         assertThat(output.status()).isEqualTo(existing.getStatus());
         verify(paymentRepository, never()).save(any(Payment.class));
-    }
-
-    @Test
-    void 실패한_결제만_있으면_새_READY_결제를_생성한다() {
-        final Order order = order(FIXED_NOW.plusMinutes(5));
-        // 주문에 이미 FAILED 결제가 있지만, READY 결제 조회는 이를 걸러내고 empty를 반환해야 한다.
-        final Payment failedPayment = new Payment("PAY-FAILED", 10L, PaymentMethod.CARD, TOTAL_AMOUNT);
-        failedPayment.fail(FIXED_NOW, "DECLINED", "카드사 승인 거절");
-        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
-        when(paymentRepository.findFirstByOrderIdAndStatusOrderByIdDesc(10L, PaymentStatus.READY))
-                .thenReturn(Optional.empty());
-        when(paymentKeyGenerator.generate()).thenReturn("PAY-RETRY");
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        final PreparePaymentUseCase.Output output = useCase().execute(input());
-
-        assertThat(output.paymentKey()).isEqualTo("PAY-RETRY");
-        assertThat(output.status()).isEqualTo(PaymentStatus.READY);
-        verify(paymentRepository).save(any(Payment.class));
     }
 
     @Test
