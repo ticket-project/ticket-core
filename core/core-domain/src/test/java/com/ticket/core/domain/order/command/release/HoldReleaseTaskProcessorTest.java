@@ -117,6 +117,32 @@ class HoldReleaseTaskProcessorTest {
         assertThat(lock.dynamicKey()).singleElement().asString().contains("task.seatIds");
     }
 
+    @Test
+    void 결제_확정_해제는_hold만_지우고_좌석_이벤트를_발행하지_않는다() {
+        final HoldReleaseTask task = new HoldReleaseTask(
+                1L, "old-hold", List.of(10L, 20L), false, HoldReleaseReason.PAYMENT_CONFIRMED
+        );
+
+        taskProcessor.process(99L, task, FIXED_NOW);
+
+        verify(holdManager).release(1L, "old-hold", List.of(10L, 20L));
+        verify(transactionService).markHoldReleased(99L, FIXED_NOW);
+        verifyNoInteractions(seatStatusPublisher, seatSelectionService);
+    }
+
+    @Test
+    void 해제_이유가_없으면_기존처럼_RELEASED를_발행한다() {
+        final HoldReleaseTask task = new HoldReleaseTask(
+                1L, "old-hold", List.of(10L), false, null
+        );
+        when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of());
+        when(holdManager.isHeld(1L, 10L)).thenReturn(false);
+
+        taskProcessor.process(99L, task, FIXED_NOW);
+
+        verify(seatStatusPublisher).publishReleased(1L, List.of(10L));
+    }
+
     private HoldReleaseTask task(final boolean holdReleased) {
         return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L), holdReleased, HoldReleaseReason.ORDER_EXPIRED);
     }

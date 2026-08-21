@@ -1,6 +1,7 @@
 package com.ticket.core.domain.order.command.release;
 
 import com.ticket.core.domain.hold.command.HoldManager;
+import com.ticket.core.domain.hold.model.HoldReleaseReason;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
 import com.ticket.core.support.lock.DistributedLock;
@@ -26,6 +27,9 @@ public class HoldReleaseTaskProcessor {
     )
     public void process(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
         releaseHoldOnce(outboxId, task, now);
+        if (task.reason() == HoldReleaseReason.PAYMENT_CONFIRMED) {
+            return;
+        }
         final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(task);
         if (publishableSeatIds.isEmpty()) {
             return;
