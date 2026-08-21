@@ -88,7 +88,7 @@ class RedissonSeatSelectionStoreTest {
         //given
         doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
         doReturn(List.of("20", "21")).when(script).eval(
-                eq(RScript.Mode.READ_WRITE),
+                eq(RScript.Mode.READ_ONLY),
                 anyString(),
                 eq(RScript.ReturnType.LIST),
                 eq(List.<Object>of(SeatRedisKey.selectSeatIndex(10L)))
