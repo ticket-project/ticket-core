@@ -77,4 +77,23 @@ public class HoldHistoryRecorder {
                 ))
                 .toList());
     }
+
+    public void recordConfirmed(
+            final Long memberId,
+            final Long performanceId,
+            final String holdKey,
+            final LocalDateTime occurredAt,
+            final List<OrderSeat> orderSeats
+    ) {
+        holdHistoryRepository.saveAll(orderSeats.stream()
+                .map(seat -> HoldHistory.confirmed(
+                        holdKey,
+                        memberId,
+                        performanceId,
+                        seat.getPerformanceSeatId(),
+                        seat.getSeatId(),
+                        occurredAt
+                ))
+                .toList());
+    }
 }

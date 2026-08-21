@@ -107,6 +107,29 @@ class HoldHistoryRecorderTest {
         assertThat(histories.get(0).getReleaseReason()).isEqualTo(HoldReleaseReason.TTL_EXPIRED);
     }
 
+    @Test
+    void 주문확정시_좌석마다_confirmed_hold_history를_기록한다() {
+        //given
+        LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 40);
+        OrderSeat first = createOrderSeat(100L, 10L);
+
+        //when
+        holdHistoryRecorder.recordConfirmed(
+                1L,
+                2L,
+                "hold-key",
+                occurredAt,
+                List.of(first)
+        );
+
+        //then
+        List<HoldHistory> histories = captureHistories();
+        assertThat(histories).hasSize(1);
+        assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.CONFIRMED);
+        assertThat(histories.get(0).getOccurredAt()).isEqualTo(occurredAt);
+        assertThat(histories.get(0).getReleaseReason()).isEqualTo(HoldReleaseReason.PAYMENT_CONFIRMED);
+    }
+
     @SuppressWarnings("unchecked")
     private List<HoldHistory> captureHistories() {
         ArgumentCaptor<List<HoldHistory>> captor = ArgumentCaptor.forClass(List.class);

@@ -121,4 +121,16 @@ public class HoldHistory extends BaseEntity {
         return new HoldHistory(holdKey, memberId, performanceId, performanceSeatId, seatId,
                 HoldHistoryEventType.CANCELED, occurredAt, null, releaseReason);
     }
+
+    public static HoldHistory confirmed(
+            final String holdKey,
+            final Long memberId,
+            final Long performanceId,
+            final Long performanceSeatId,
+            final Long seatId,
+            final LocalDateTime occurredAt
+    ) {
+        return new HoldHistory(holdKey, memberId, performanceId, performanceSeatId, seatId,
+                HoldHistoryEventType.CONFIRMED, occurredAt, null, HoldReleaseReason.PAYMENT_CONFIRMED);
+    }
 }
