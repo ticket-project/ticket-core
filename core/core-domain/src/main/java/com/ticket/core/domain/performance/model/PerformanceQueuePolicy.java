@@ -1,6 +1,7 @@
 package com.ticket.core.domain.performance.model;
 
 import com.ticket.core.domain.BaseEntity;
+import com.ticket.core.domain.performance.QueueActivation;
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
 import jakarta.persistence.Column;
@@ -104,15 +105,6 @@ public class PerformanceQueuePolicy extends BaseEntity {
     }
 
     public boolean requiresQueueAt(final LocalDateTime now, final LocalDateTime orderCloseTime) {
-        if (queueMode == null || queueMode == QueueMode.FORCE_OFF) {
-            return false;
-        }
-        if (queueMode == QueueMode.FORCE_ON) {
-            return true;
-        }
-        if (preopenQueueStartAt == null || now == null || now.isBefore(preopenQueueStartAt)) {
-            return false;
-        }
-        return orderCloseTime == null || !now.isAfter(orderCloseTime);
+        return QueueActivation.isRequiredAt(queueMode, preopenQueueStartAt, now, orderCloseTime);
     }
 }

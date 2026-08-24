@@ -4,6 +4,7 @@ import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
+import com.ticket.core.domain.performance.query.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
@@ -44,8 +45,8 @@ public class CreateOrderValidator {
         final Long memberId = input.memberId();
 
         final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
-        policy.ensureBookingOpenAt(now);
-        validateSeatCount(policy, requestedSeatIds);
+        BookingPolicyValidator.ensureBookingOpen(policy, now);
+        BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
         ensureAdmitted(policy, memberId, input.admissionToken(), now);
 
         memberFinder.ensureActiveMemberExists(memberId);
@@ -56,20 +57,13 @@ public class CreateOrderValidator {
         return new ValidatedOrderRequest(policy, performanceSeats);
     }
 
-    private void validateSeatCount(final PerformanceBookingPolicyView performance, final RequestedSeatIds requestedSeatIds) {
-        if (!performance.isOverCount(requestedSeatIds.size())) {
-            return;
-        }
-        throw new CoreException(ErrorType.EXCEED_HOLD_LIMIT);
-    }
-
     private void ensureAdmitted(
             final PerformanceBookingPolicyView policy,
             final Long memberId,
             final String admissionToken,
             final LocalDateTime now
     ) {
-        if (!policy.requiresQueueAt(now)) {
+        if (!BookingPolicyValidator.requiresQueue(policy, now)) {
             return;
         }
         admissionGuard.ensureAdmitted(policy.performanceId(), memberId, admissionToken);
