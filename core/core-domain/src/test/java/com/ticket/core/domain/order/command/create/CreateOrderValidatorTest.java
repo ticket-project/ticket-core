@@ -45,14 +45,14 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L));
         PerformanceBookingPolicyView performance = createPerformance(2, 300);
 
-        when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance);
 
         assertThatThrownBy(() -> checker.validate(20L, 10L, seatIds, FIXED_NOW))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.EXCEED_HOLD_LIMIT));
 
         verify(memberFinder).ensureActiveMemberExists(20L);
-        verify(performanceBookingPolicyFinder).findValidById(10L, FIXED_NOW);
+        verify(performanceBookingPolicyFinder).findById(10L);
         verifyNoInteractions(orderRepository);
     }
 
@@ -61,7 +61,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
         PerformanceBookingPolicyView performance = createPerformance(3, 300);
 
-        when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance);
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(true);
 
         assertThatThrownBy(() -> checker.validate(20L, 10L, seatIds, FIXED_NOW))
@@ -74,7 +74,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
         PerformanceBookingPolicyView performance = createPerformance(3, 300);
 
-        when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance);
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
 
         PerformanceBookingPolicyView result = checker.validate(20L, 10L, seatIds, FIXED_NOW);
@@ -87,7 +87,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L, 4L, 5L));
         PerformanceBookingPolicyView performance = createPerformance(null, 300);
 
-        when(performanceBookingPolicyFinder.findValidById(10L, FIXED_NOW)).thenReturn(performance);
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance);
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
 
         PerformanceBookingPolicyView result = checker.validate(20L, 10L, seatIds, FIXED_NOW);
@@ -96,11 +96,10 @@ class CreateOrderValidatorTest {
     }
 
     private PerformanceBookingPolicyView createPerformance(final Integer maxCanHoldCount, final int holdTimeSeconds) {
-        LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
         return new PerformanceBookingPolicyView(
                 10L,
-                now.minusHours(1),
-                now.plusHours(3),
+                FIXED_NOW.minusHours(1),
+                FIXED_NOW.plusHours(3),
                 maxCanHoldCount,
                 holdTimeSeconds,
                 null,

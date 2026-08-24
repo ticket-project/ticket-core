@@ -2,6 +2,7 @@ package com.ticket.core.domain.performanceseat.query;
 
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
@@ -60,6 +61,7 @@ class GetSeatStatusUseCaseTest {
 
     @Test
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy());
         when(seatStatusDbReader.read(10L)).thenReturn(List.of(
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
@@ -73,7 +75,7 @@ class GetSeatStatusUseCaseTest {
                 new SeatStateView(1L, SeatStatus.OCCUPIED),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         );
-        verify(performanceBookingPolicyFinder).findValidById(10L, NOW);
+        verify(performanceBookingPolicyFinder).findById(10L);
     }
 
     @Test
@@ -82,6 +84,7 @@ class GetSeatStatusUseCaseTest {
                 new SeatStateView(1L, SeatStatus.AVAILABLE),
                 new SeatStateView(2L, SeatStatus.OCCUPIED)
         );
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy());
         when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
@@ -94,12 +97,49 @@ class GetSeatStatusUseCaseTest {
 
     @Test
     void 예매가_마감된_회차는_좌석_상태를_조회하지_않는다() {
-        when(performanceBookingPolicyFinder.findValidById(10L, NOW))
-                .thenThrow(new CoreException(ErrorType.PERFORMANCE_IS_PAST));
+        when(performanceBookingPolicyFinder.findById(10L))
+                .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1)));
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L)))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
+    }
+
+    @Test
+    void 예매가_시작되지_않은_회차는_좌석_상태를_조회하지_않는다() {
+        when(performanceBookingPolicyFinder.findById(10L))
+                .thenReturn(policy(NOW.plusHours(1), NOW.plusHours(2)));
+
+        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L)))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.NOT_YET_RESERVE_TIME));
+
+        verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
+    }
+
+    private PerformanceBookingPolicyView openPolicy() {
+        return policy(NOW.minusHours(1), NOW.plusHours(1));
+    }
+
+    private PerformanceBookingPolicyView policy(
+            final LocalDateTime orderOpenTime,
+            final LocalDateTime orderCloseTime
+    ) {
+        return new PerformanceBookingPolicyView(
+                10L,
+                orderOpenTime,
+                orderCloseTime,
+                4,
+                300,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
     }
 }

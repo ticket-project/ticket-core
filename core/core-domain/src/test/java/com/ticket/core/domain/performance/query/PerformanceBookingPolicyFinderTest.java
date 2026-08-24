@@ -29,33 +29,29 @@ class PerformanceBookingPolicyFinderTest {
     private PerformanceBookingPolicyFinder finder;
 
     @Test
-    void 예매가능시간이면_불변_정책을_반환한다() {
+    void 회차가_있으면_불변_정책을_반환한다() {
         PerformanceBookingPolicyView policy = policy(NOW.minusMinutes(1), NOW.plusMinutes(1));
         when(queryRepository.findByPerformanceId(10L)).thenReturn(Optional.of(policy));
 
-        assertThat(finder.findValidById(10L, NOW)).isSameAs(policy);
+        assertThat(finder.findById(10L)).isSameAs(policy);
     }
 
     @Test
-    void 예매시작_전이면_실패한다() {
-        when(queryRepository.findByPerformanceId(10L))
-                .thenReturn(Optional.of(policy(NOW.plusMinutes(1), NOW.plusHours(1))));
+    void 회차가_없으면_실패한다() {
+        when(queryRepository.findByPerformanceId(10L)).thenReturn(Optional.empty());
 
-        assertError(ErrorType.NOT_YET_RESERVE_TIME);
-    }
-
-    @Test
-    void 예매마감_후면_실패한다() {
-        when(queryRepository.findByPerformanceId(10L))
-                .thenReturn(Optional.of(policy(NOW.minusHours(1), NOW.minusMinutes(1))));
-
-        assertError(ErrorType.PERFORMANCE_IS_PAST);
-    }
-
-    private void assertError(final ErrorType errorType) {
-        assertThatThrownBy(() -> finder.findValidById(10L, NOW))
+        assertThatThrownBy(() -> finder.findById(10L))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
+    }
+
+    @Test
+    void 조회는_예매_가능_시각을_판정하지_않는다() {
+        PerformanceBookingPolicyView closed = policy(NOW.minusHours(2), NOW.minusHours(1));
+        when(queryRepository.findByPerformanceId(10L)).thenReturn(Optional.of(closed));
+
+        assertThat(finder.findById(10L)).isSameAs(closed);
     }
 
     private PerformanceBookingPolicyView policy(
