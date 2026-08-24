@@ -73,23 +73,6 @@ public class Performance extends BaseEntity {
         this.holdTime = holdTime;
     }
 
-    public boolean isOverCount(final long requestReserveCount) {
-        if (maxCanHoldCount == null) {
-            return false;
-        }
-        return requestReserveCount > maxCanHoldCount;
-    }
-
-    public boolean isBookingOpen(final LocalDateTime now) {
-        if (orderOpenTime == null || orderCloseTime == null) {
-            return false;
-        }
-        if (now.isBefore(orderOpenTime)) {
-            return false;
-        }
-        return !now.isAfter(orderCloseTime);
-    }
-
     public boolean requiresQueueAt(final LocalDateTime now) {
         if (queuePolicy == null) {
             return false;
@@ -122,26 +105,6 @@ public class Performance extends BaseEntity {
                 waitingRoomMessage,
                 reason
         );
-    }
-
-    public QueueMode getQueueMode() {
-        return queuePolicy == null ? null : queuePolicy.getQueueMode();
-    }
-
-    public QueueLevel getQueueLevel() {
-        return queuePolicy == null ? null : queuePolicy.getQueueLevel();
-    }
-
-    public LocalDateTime getPreopenQueueStartAt() {
-        return queuePolicy == null ? null : queuePolicy.getPreopenQueueStartAt();
-    }
-
-    public String getWaitingRoomMessage() {
-        return queuePolicy == null ? null : queuePolicy.getWaitingRoomMessage();
-    }
-
-    public String getReason() {
-        return queuePolicy == null ? null : queuePolicy.getReason();
     }
 
     private Integer validateMaxCanHoldCount(final Integer maxCanHoldCount) {
