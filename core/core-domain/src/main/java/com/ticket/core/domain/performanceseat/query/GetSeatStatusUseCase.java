@@ -2,6 +2,7 @@ package com.ticket.core.domain.performanceseat.query;
 
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.queue.AdmissionGuard;
@@ -38,7 +39,7 @@ public class GetSeatStatusUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
-        policy.ensureBookingOpenAt(now);
+        BookingPolicyValidator.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input, now);
 
         final List<SeatStateView> dbStates = seatStatusDbReader.read(performanceId);
@@ -62,7 +63,7 @@ public class GetSeatStatusUseCase {
             final Input input,
             final LocalDateTime now
     ) {
-        if (!policy.requiresQueueAt(now)) {
+        if (!BookingPolicyValidator.requiresQueue(policy, now)) {
             return;
         }
         admissionGuard.ensureAdmitted(policy.performanceId(), input.memberId(), input.admissionToken());
