@@ -27,7 +27,8 @@ public class CreateOrderValidator {
             final LocalDateTime now
     ) {
         memberFinder.ensureActiveMemberExists(memberId);
-        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findValidById(performanceId, now);
+        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
+        policy.ensureBookingOpenAt(now);
         validateSeatCount(policy, requestedSeatIds);
         ensureNoPendingOrder(memberId, performanceId);
         return policy;

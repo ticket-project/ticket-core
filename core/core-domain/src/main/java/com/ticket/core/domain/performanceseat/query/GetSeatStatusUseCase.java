@@ -32,7 +32,8 @@ public class GetSeatStatusUseCase {
 
     public Output execute(final Input input) {
         final Long performanceId = input.performanceId();
-        performanceBookingPolicyFinder.findValidById(performanceId, LocalDateTime.now(clock));
+        performanceBookingPolicyFinder.findById(performanceId)
+                .ensureBookingOpenAt(LocalDateTime.now(clock));
 
         final List<SeatStateView> dbStates = seatStatusDbReader.read(performanceId);
 
