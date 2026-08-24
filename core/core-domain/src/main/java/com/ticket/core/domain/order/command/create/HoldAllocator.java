@@ -2,7 +2,6 @@ package com.ticket.core.domain.order.command.create;
 
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,19 +14,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HoldAllocator {
 
-    private final HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
     private final HoldManager holdManager;
 
+    /**
+     * Redis hold만 담당한다. 좌석 가용성은 DB 검증 단계에서 이미 확인했으므로 그 결과를 받는다.
+     * DB 조회와 Redis 호출을 한 메서드에 섞지 않는 것이 요점이다.
+     */
     public HoldAllocation allocate(
             final Long memberId,
             final Long performanceId,
             final RequestedSeatIds requestedSeatIds,
+            final List<PerformanceSeat> performanceSeats,
             final Duration holdDuration,
             final LocalDateTime now
     ) {
-        final List<PerformanceSeat> seats = holdSeatAvailabilityValidator.validate(performanceId, requestedSeatIds);
         final HoldSnapshot snapshot = holdManager.createHold(memberId, performanceId, requestedSeatIds, holdDuration, now);
-        return new HoldAllocation(snapshot, seats);
+        return new HoldAllocation(snapshot, performanceSeats);
     }
 
     public void release(final HoldAllocation allocation) {

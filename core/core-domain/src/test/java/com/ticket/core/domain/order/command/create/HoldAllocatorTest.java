@@ -2,7 +2,6 @@ package com.ticket.core.domain.order.command.create;
 
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,16 +25,13 @@ class HoldAllocatorTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 11, 50);
 
     @Mock
-    private HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
-
-    @Mock
     private HoldManager holdManager;
 
     @InjectMocks
     private HoldAllocator holdAllocator;
 
     @Test
-    void 좌석을_검증하고_hold를_생성한다() {
+    void hold를_생성하고_검증된_좌석과_함께_반환한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(3L, 7L));
         Duration holdDuration = Duration.ofMinutes(10);
         List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
@@ -47,10 +43,10 @@ class HoldAllocatorTest {
                 LocalDateTime.of(2026, 3, 15, 12, 0)
         );
 
-        when(holdSeatAvailabilityValidator.validate(10L, seatIds)).thenReturn(seats);
         when(holdManager.createHold(20L, 10L, seatIds, holdDuration, FIXED_NOW)).thenReturn(snapshot);
 
-        HoldAllocation allocation = holdAllocator.allocate(20L, 10L, seatIds, holdDuration, FIXED_NOW);
+        HoldAllocation allocation =
+                holdAllocator.allocate(20L, 10L, seatIds, seats, holdDuration, FIXED_NOW);
 
         assertThat(allocation.snapshot()).isEqualTo(snapshot);
         assertThat(allocation.performanceSeats()).isEqualTo(seats);

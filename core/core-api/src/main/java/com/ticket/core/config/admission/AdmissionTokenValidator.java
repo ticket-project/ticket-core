@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AdmissionTokenValidator {
 
-    public static final String HEADER = "X-Admission-Token";
-
     private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
     private final AdmissionTokenService admissionTokenService;
     private final Clock clock;

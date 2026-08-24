@@ -2,7 +2,7 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.OrderControllerDocs;
 import com.ticket.core.api.controller.request.CreateOrderRequest;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
+import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
@@ -32,20 +32,19 @@ public class OrderController implements OrderControllerDocs {
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
     private final GetOrderStatusUseCase getOrderStatusUseCase;
-    private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @Valid @RequestBody final CreateOrderRequest request,
-            @RequestHeader(value = AdmissionTokenValidator.HEADER, required = false) final String admissionToken,
+            @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
             final MemberPrincipal memberPrincipal
     ) {
-        admissionTokenValidator.validate(request.getPerformanceId(), memberPrincipal.getMemberId(), admissionToken);
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
                 request.getPerformanceId(),
                 request.getSeatIds(),
-                memberPrincipal.getMemberId()
+                memberPrincipal.getMemberId(),
+                admissionToken
         );
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
