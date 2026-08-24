@@ -3,8 +3,6 @@ package com.ticket.core.config.admission;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -12,13 +10,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+/**
+ * 이 검증기의 남은 책임은 "언제 입장 검사를 하는가"다.
+ * "토큰이 유효한가"는 {@link AdmissionTokenServiceTest}가 검증한다.
+ */
+@SuppressWarnings("NonAsciiCharacters")
 class AdmissionTokenValidatorTest {
 
     private static final ZonedDateTime NOW = ZonedDateTime.parse("2026-05-24T12:00:00+09:00");
@@ -46,73 +48,30 @@ class AdmissionTokenValidatorTest {
     }
 
     @Test
-    void auto_회차는_주입된_clock_기준으로_대기열을_요구한다() {
-        TicketAdmissionTokenProperties properties = new TicketAdmissionTokenProperties();
-        properties.setEnforcementEnabled(true);
-        AdmissionTokenValidator injectedClockValidator = new AdmissionTokenValidator(
-                performanceBookingPolicyFinder,
-                admissionTokenService,
-                Clock.fixed(NOW.toInstant(), ZoneId.of("Asia/Seoul")),
-                properties
-        );
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.AUTO));
-
-        assertThatThrownBy(() -> injectedClockValidator.validate(10L, 10L, null))
-                .isInstanceOf(CoreException.class)
-                .extracting("errorType")
-                .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED);
-    }
-
-    @Test
-    void direct_회차는_admission_token_없이_통과한다() {
+    void direct_회차는_입장_검사를_위임하지_않는다() {
         when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_OFF));
 
         validator.validate(10L, 10L, null);
 
-        verifyNoInteractions(admissionTokenService);
+        verify(admissionTokenService, never()).ensureAdmitted(10L, 10L, null);
     }
 
     @Test
-    void queue_회차는_admission_token이_필수다() {
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
-
-        assertThatThrownBy(() -> validator.validate(10L, 10L, null))
-                .isInstanceOf(CoreException.class)
-                .extracting("errorType")
-                .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED);
-    }
-
-    @Test
-    void queue_회차는_admission_token의_회차와_만료를_검증한다() {
+    void queue_회차는_입장_검사를_위임한다() {
         when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
 
         validator.validate(10L, 10L, "admission-token");
 
-        verify(admissionTokenService).verifyFor("admission-token", 10L, 10L);
+        verify(admissionTokenService).ensureAdmitted(10L, 10L, "admission-token");
     }
 
     @Test
-    void 만료된_admission_token은_거부한다() {
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
-        when(admissionTokenService.verifyFor("expired-token", 10L, 10L))
-                .thenThrow(new AdmissionTokenExpiredException("admission token expired", null));
+    void auto_회차는_주입된_clock_기준으로_입장_검사를_위임한다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.AUTO));
 
-        assertThatThrownBy(() -> validator.validate(10L, 10L, "expired-token"))
-                .isInstanceOf(CoreException.class)
-                .extracting("errorType")
-                .isEqualTo(ErrorType.ADMISSION_TOKEN_EXPIRED);
-    }
+        validator.validate(10L, 10L, "admission-token");
 
-    @Test
-    void 잘못된_admission_token은_거부한다() {
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(performance(QueueMode.FORCE_ON));
-        when(admissionTokenService.verifyFor("invalid-token", 10L, 10L))
-                .thenThrow(new AdmissionTokenException("admission token invalid"));
-
-        assertThatThrownBy(() -> validator.validate(10L, 10L, "invalid-token"))
-                .isInstanceOf(CoreException.class)
-                .extracting("errorType")
-                .isEqualTo(ErrorType.ADMISSION_TOKEN_INVALID);
+        verify(admissionTokenService).ensureAdmitted(10L, 10L, "admission-token");
     }
 
     private PerformanceBookingPolicyView performance(final QueueMode queueMode) {

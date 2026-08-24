@@ -10,11 +10,14 @@ public class AdmissionTokenConfig {
 
     @Bean
     public AdmissionTokenService admissionTokenService(final TicketAdmissionTokenProperties properties) {
-        return new AdmissionTokenService(new AdmissionTokenProperties(
-                properties.getIssuer(),
-                properties.getAudience(),
-                properties.getSecretKey(),
-                properties.getExpirationSeconds()
-        ));
+        return new AdmissionTokenService(
+                new AdmissionTokenProperties(
+                        properties.getIssuer(),
+                        properties.getAudience(),
+                        properties.getSecretKey(),
+                        properties.getExpirationSeconds()
+                ),
+                properties.isEnforcementEnabled()
+        );
     }
 }

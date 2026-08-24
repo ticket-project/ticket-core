@@ -1,8 +1,11 @@
 package com.ticket.core.config.admission;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -105,6 +108,68 @@ class AdmissionTokenServiceTest {
         assertThatThrownBy(() -> admissionTokenService().verify(token))
                 .isInstanceOf(AdmissionTokenExpiredException.class)
                 .hasMessage("admission token expired");
+    }
+
+    @Test
+    void ensureAdmitted는_유효한_token을_통과시킨다() {
+        assertThatCode(() -> admissionTokenService()
+                .ensureAdmitted(20L, 10L, admissionToken(true, true, true, "10")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void ensureAdmitted는_token이_없으면_required로_거부한다() {
+        assertAdmissionError(null, ErrorType.ADMISSION_TOKEN_REQUIRED);
+        assertAdmissionError("   ", ErrorType.ADMISSION_TOKEN_REQUIRED);
+    }
+
+    @Test
+    void ensureAdmitted는_만료된_token을_expired로_거부한다() {
+        String expired = Jwts.builder()
+                .issuer(ISSUER)
+                .subject("10")
+                .claim("aud", List.of(AUDIENCE))
+                .claim("performanceId", 20L)
+                .claim("scope", AdmissionTokenService.SCOPE)
+                .issuedAt(Date.from(NOW.minusSeconds(600)))
+                .expiration(Date.from(NOW.minusSeconds(300)))
+                .signWith(secretKey())
+                .compact();
+
+        assertAdmissionError(expired, ErrorType.ADMISSION_TOKEN_EXPIRED);
+    }
+
+    @Test
+    void ensureAdmitted는_계약을_어긴_token을_invalid로_거부한다() {
+        assertAdmissionError(admissionToken(false, true, true, "10"), ErrorType.ADMISSION_TOKEN_INVALID);
+        assertAdmissionError("not-a-jwt", ErrorType.ADMISSION_TOKEN_INVALID);
+    }
+
+    @Test
+    void ensureAdmitted는_다른_회원의_token을_invalid로_거부한다() {
+        assertThatThrownBy(() -> admissionTokenService()
+                .ensureAdmitted(20L, 11L, admissionToken(true, true, true, "10")))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.ADMISSION_TOKEN_INVALID));
+    }
+
+    @Test
+    void enforcement가_꺼져있으면_token_없이도_통과시킨다() {
+        AdmissionTokenService disabled = new AdmissionTokenService(
+                new AdmissionTokenProperties(ISSUER, AUDIENCE, SECRET_KEY, 300),
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                false
+        );
+
+        assertThatCode(() -> disabled.ensureAdmitted(20L, 10L, null)).doesNotThrowAnyException();
+    }
+
+    private void assertAdmissionError(final String token, final ErrorType errorType) {
+        assertThatThrownBy(() -> admissionTokenService().ensureAdmitted(20L, 10L, token))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(errorType));
     }
 
     private AdmissionTokenService admissionTokenService() {
