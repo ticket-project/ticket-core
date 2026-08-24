@@ -164,3 +164,22 @@ CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :
 - 이미 원격에 올라간 커밋 이력을 변경하려면 먼저 사용자 승인을 받는다.
 - 절차 전체는 [커밋과 PR 절차](docs/development.md#커밋과-pr-절차), 메시지 규칙 상세는
   [커밋과 PR 컨벤션](docs/development.md#커밋과-pr-컨벤션)을 따른다.
+
+## Agent skills
+
+엔지니어링 스킬(`/triage`, `/to-tickets`, `/to-spec`, `/wayfinder`, `/domain-modeling` 등)이
+이 저장소에서 쓸 설정이다.
+
+### 이슈 트래커
+
+이슈는 `ticket-project/ticket-core`의 GitHub Issues에 두고 `gh` CLI로 다룬다.
+`docs/agents/issue-tracker.md`를 본다.
+
+### 트리아지 라벨
+
+표준 다섯 개(`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`)를
+기본 이름 그대로 쓴다. `docs/agents/triage-labels.md`를 본다.
+
+### 도메인 문서
+
+단일 컨텍스트다. 루트 `CONTEXT.md`와 `docs/adr/`를 쓴다. `docs/agents/domain.md`를 본다.
