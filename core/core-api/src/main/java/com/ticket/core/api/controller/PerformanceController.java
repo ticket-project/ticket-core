@@ -2,7 +2,6 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceControllerDocs;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.domain.performance.query.GetPerformanceSummaryUseCase;
@@ -25,7 +24,6 @@ public class PerformanceController implements PerformanceControllerDocs {
     private final GetSeatStatusUseCase getSeatStatusUseCase;
     private final GetPerformanceSummaryUseCase getPerformanceSummaryUseCase;
     private final GetPerformanceScheduleListUseCase getPerformanceScheduleListUseCase;
-    private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
     @GetMapping("/{performanceId}/summary")
@@ -61,8 +59,11 @@ public class PerformanceController implements PerformanceControllerDocs {
             @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
             final MemberPrincipal memberPrincipal
     ) {
-        admissionTokenValidator.validate(performanceId, memberPrincipal.getMemberId(), admissionToken);
-        final GetSeatStatusUseCase.Input input = new GetSeatStatusUseCase.Input(performanceId);
+        final GetSeatStatusUseCase.Input input = new GetSeatStatusUseCase.Input(
+                performanceId,
+                memberPrincipal.getMemberId(),
+                admissionToken
+        );
         return ApiResponse.success(getSeatStatusUseCase.execute(input));
     }
 }

@@ -4,6 +4,7 @@ import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
 import com.ticket.core.support.exception.CoreException;
@@ -45,6 +46,8 @@ class GetSeatStatusUseCaseTest {
     private SeatSelectionService seatSelectionService;
     @Mock
     private HoldManager holdManager;
+    @Mock
+    private AdmissionGuard admissionGuard;
 
     private GetSeatStatusUseCase useCase;
 
@@ -55,6 +58,7 @@ class GetSeatStatusUseCaseTest {
                 seatStatusDbReader,
                 seatSelectionService,
                 holdManager,
+                admissionGuard,
                 CLOCK
         );
     }
@@ -69,7 +73,7 @@ class GetSeatStatusUseCaseTest {
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
-        GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L));
+        GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
         assertThat(output.seats()).containsExactly(
                 new SeatStateView(1L, SeatStatus.OCCUPIED),
@@ -89,7 +93,7 @@ class GetSeatStatusUseCaseTest {
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
-        GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L));
+        GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
         assertThat(output.seats()).containsExactlyElementsOf(dbStates);
         verify(seatStatusDbReader).read(10L);
@@ -100,7 +104,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceBookingPolicyFinder.findById(10L))
                 .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1)));
 
-        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L)))
+        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
@@ -113,7 +117,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceBookingPolicyFinder.findById(10L))
                 .thenReturn(policy(NOW.plusHours(1), NOW.plusHours(2)));
 
-        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L)))
+        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ErrorType.NOT_YET_RESERVE_TIME));

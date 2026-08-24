@@ -2,7 +2,9 @@ package com.ticket.core.domain.performanceseat.query;
 
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +24,10 @@ public class GetSeatStatusUseCase {
     private final SeatStatusDbReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
+    private final AdmissionGuard admissionGuard;
     private final Clock clock;
 
-    public record Input(Long performanceId) {}
+    public record Input(Long performanceId, Long memberId, String admissionToken) {}
 
     public record Output(
             List<SeatStateView> seats
@@ -32,8 +35,11 @@ public class GetSeatStatusUseCase {
 
     public Output execute(final Input input) {
         final Long performanceId = input.performanceId();
-        performanceBookingPolicyFinder.findById(performanceId)
-                .ensureBookingOpenAt(LocalDateTime.now(clock));
+        final LocalDateTime now = LocalDateTime.now(clock);
+
+        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
+        policy.ensureBookingOpenAt(now);
+        ensureAdmitted(policy, input, now);
 
         final List<SeatStateView> dbStates = seatStatusDbReader.read(performanceId);
 
@@ -49,6 +55,17 @@ public class GetSeatStatusUseCase {
                 .toList();
 
         return new Output(merged);
+    }
+
+    private void ensureAdmitted(
+            final PerformanceBookingPolicyView policy,
+            final Input input,
+            final LocalDateTime now
+    ) {
+        if (!policy.requiresQueueAt(now)) {
+            return;
+        }
+        admissionGuard.ensureAdmitted(policy.performanceId(), input.memberId(), input.admissionToken());
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {

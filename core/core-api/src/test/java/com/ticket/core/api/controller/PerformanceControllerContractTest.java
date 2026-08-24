@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.domain.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatAvailabilityUseCase;
@@ -32,7 +31,6 @@ class PerformanceControllerContractTest {
 
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase = Mockito.mock(GetSeatAvailabilityUseCase.class);
     private final GetSeatStatusUseCase getSeatStatusUseCase = Mockito.mock(GetSeatStatusUseCase.class);
-    private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
 
@@ -42,8 +40,7 @@ class PerformanceControllerContractTest {
                 getSeatAvailabilityUseCase,
                 getSeatStatusUseCase,
                 Mockito.mock(GetPerformanceSummaryUseCase.class),
-                Mockito.mock(GetPerformanceScheduleListUseCase.class),
-                admissionTokenValidator
+                Mockito.mock(GetPerformanceScheduleListUseCase.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
@@ -75,12 +72,11 @@ class PerformanceControllerContractTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"));
 
-        verifyNoInteractions(admissionTokenValidator);
     }
 
     @Test
     void seat_status는_admission_token_validator를_거친다() throws Exception {
-        when(getSeatStatusUseCase.execute(new GetSeatStatusUseCase.Input(10L)))
+        when(getSeatStatusUseCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .thenReturn(new GetSeatStatusUseCase.Output(List.of()));
 
         mockMvc.perform(get("/api/v1/performances/10/seats/status")
@@ -88,6 +84,5 @@ class PerformanceControllerContractTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"));
 
-        verify(admissionTokenValidator).validate(10L, 100L, "admission-token");
     }
 }
