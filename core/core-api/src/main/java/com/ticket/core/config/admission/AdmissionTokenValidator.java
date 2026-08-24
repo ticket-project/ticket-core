@@ -2,8 +2,6 @@ package com.ticket.core.config.admission;
 
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -68,16 +66,6 @@ public class AdmissionTokenValidator {
             return;
         }
 
-        if (admissionToken == null || admissionToken.isBlank()) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED);
-        }
-
-        try {
-            admissionTokenService.verifyFor(admissionToken, memberId, performanceId);
-        } catch (AdmissionTokenExpiredException exception) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
-        } catch (AdmissionTokenException exception) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_INVALID);
-        }
+        admissionTokenService.ensureAdmitted(performanceId, memberId, admissionToken);
     }
 }

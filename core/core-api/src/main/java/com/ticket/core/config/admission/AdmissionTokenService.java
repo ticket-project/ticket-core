@@ -1,5 +1,8 @@
 package com.ticket.core.config.admission;
 
+import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -11,7 +14,7 @@ import java.util.Date;
 import java.util.Objects;
 import javax.crypto.SecretKey;
 
-public class AdmissionTokenService {
+public class AdmissionTokenService implements AdmissionGuard {
 
     public static final String SCOPE = "ticket-admission";
 
@@ -21,18 +24,49 @@ public class AdmissionTokenService {
     private final AdmissionTokenProperties properties;
     private final Clock clock;
     private final SecretKey secretKey;
+    private final boolean enforcementEnabled;
 
-    public AdmissionTokenService(final AdmissionTokenProperties properties) {
-        this(properties, Clock.systemUTC());
+    public AdmissionTokenService(final AdmissionTokenProperties properties, final boolean enforcementEnabled) {
+        this(properties, Clock.systemUTC(), enforcementEnabled);
     }
 
     AdmissionTokenService(final AdmissionTokenProperties properties, final Clock clock) {
+        this(properties, clock, true);
+    }
+
+    AdmissionTokenService(
+            final AdmissionTokenProperties properties,
+            final Clock clock,
+            final boolean enforcementEnabled
+    ) {
         this.properties = Objects.requireNonNull(properties, "properties must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.secretKey = Keys.hmacShaKeyFor(properties.secretKey().getBytes(StandardCharsets.UTF_8));
+        this.enforcementEnabled = enforcementEnabled;
     }
 
-    public AdmissionClaims verify(final String token) {
+    /**
+     * 도메인이 호출하는 진입점. 토큰 검증 실패를 도메인 오류로 번역한다.
+     * 대기열이 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
+     */
+    @Override
+    public void ensureAdmitted(final Long performanceId, final Long memberId, final String admissionToken) {
+        if (!enforcementEnabled) {
+            return;
+        }
+        if (admissionToken == null || admissionToken.isBlank()) {
+            throw new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED);
+        }
+        try {
+            verifyFor(admissionToken, memberId, performanceId);
+        } catch (final AdmissionTokenExpiredException exception) {
+            throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
+        } catch (final AdmissionTokenException exception) {
+            throw new CoreException(ErrorType.ADMISSION_TOKEN_INVALID);
+        }
+    }
+
+    AdmissionClaims verify(final String token) {
         Claims claims = parse(token);
         validateAudience(claims);
         validateScope(claims);
@@ -49,7 +83,7 @@ public class AdmissionTokenService {
         );
     }
 
-    public AdmissionClaims verifyFor(final String token, final Long memberId, final Long performanceId) {
+    AdmissionClaims verifyFor(final String token, final Long memberId, final Long performanceId) {
         AdmissionClaims claims = verify(token);
         if (!Objects.equals(claims.memberId(), memberId)) {
             throw new AdmissionTokenException("admission token member mismatch");
