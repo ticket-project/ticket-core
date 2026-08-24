@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-import static com.ticket.core.domain.performance.model.QPerformance.performance;
 import static com.ticket.core.domain.performanceseat.model.QPerformanceSeat.performanceSeat;
 
 @Repository
@@ -17,23 +16,24 @@ public class SeatSelectionAvailabilityQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public Optional<SeatSelectionAvailabilityView> findForSelection(
+    /**
+     * 좌석 한 건만 조회한다. 회차 존재와 예매 가능 시각은 회차 정책이 판정하므로 조인이 필요 없고,
+     * UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스를 그대로 탄다.
+     */
+    public Optional<SeatSelectionAvailabilityView> findSelectableSeat(
             final Long performanceId,
             final Long seatId
     ) {
         return Optional.ofNullable(queryFactory
                 .select(Projections.constructor(SeatSelectionAvailabilityView.class,
-                        performance.orderOpenTime,
-                        performance.orderCloseTime,
                         performanceSeat.id,
                         performanceSeat.state
                 ))
-                .from(performance)
-                .leftJoin(performanceSeat).on(
-                        performanceSeat.performance.id.eq(performance.id),
+                .from(performanceSeat)
+                .where(
+                        performanceSeat.performance.id.eq(performanceId),
                         performanceSeat.seat.id.eq(seatId)
                 )
-                .where(performance.id.eq(performanceId))
                 .fetchOne());
     }
 }

@@ -1,9 +1,12 @@
 package com.ticket.core.domain.performanceseat.command;
 
-import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
+import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
+import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +24,8 @@ import java.time.ZoneId;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -33,12 +38,20 @@ class SelectSeatUseCaseTest {
             ZoneId.of("Asia/Seoul")
     );
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
+    private static final SelectSeatUseCase.Input INPUT =
+            new SelectSeatUseCase.Input(10L, 20L, 1L, "admission-token");
+
+    @Mock
+    private PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
 
     @Mock
     private SeatSelectionCoordinator seatSelectionCoordinator;
 
     @Mock
     private SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
+
+    @Mock
+    private AdmissionGuard admissionGuard;
 
     @Mock
     private SeatStatusEventPublisher seatEventPublisher;
@@ -48,45 +61,103 @@ class SelectSeatUseCaseTest {
     @BeforeEach
     void setUp() {
         useCase = new SelectSeatUseCase(
+                performanceBookingPolicyFinder,
                 seatSelectionCoordinator,
                 seatSelectionAvailabilityValidator,
+                admissionGuard,
                 seatEventPublisher,
                 CLOCK
         );
     }
 
     @Test
-    void select_then_publish_selected_event() {
-        SelectSeatUseCase.Input input = new SelectSeatUseCase.Input(10L, 20L, 1L);
-        SeatSelectionAvailabilityView availability = new SeatSelectionAvailabilityView(
-                NOW.minusMinutes(1),
-                NOW.plusMinutes(1),
-                30L,
-                null
-        );
-        when(seatSelectionAvailabilityValidator.validate(10L, 20L, NOW)).thenReturn(availability);
+    void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
+        PerformanceBookingPolicyView policy = openPolicy(null);
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(policy);
 
-        useCase.execute(input);
+        useCase.execute(INPUT);
 
         InOrder inOrder = inOrder(
-                seatSelectionCoordinator,
+                performanceBookingPolicyFinder,
                 seatSelectionAvailabilityValidator,
+                seatSelectionCoordinator,
                 seatEventPublisher
         );
-        inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L, NOW);
-        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, availability.orderCloseTime());
+        inOrder.verify(performanceBookingPolicyFinder).findById(10L);
+        inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
+        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
         inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
     }
 
     @Test
-    void 예매가_마감된_회차는_좌석을_선택하지_않는다() {
-        SelectSeatUseCase.Input input = new SelectSeatUseCase.Input(10L, 20L, 1L);
-        doThrow(new CoreException(ErrorType.PERFORMANCE_IS_PAST))
-                .when(seatSelectionAvailabilityValidator).validate(10L, 20L, NOW);
+    void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(QueueMode.FORCE_OFF));
 
-        assertThatThrownBy(() -> useCase.execute(input))
+        useCase.execute(INPUT);
+
+        verify(admissionGuard, never()).ensureAdmitted(10L, 1L, "admission-token");
+    }
+
+    @Test
+    void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(QueueMode.FORCE_ON));
+        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+                .when(admissionGuard).ensureAdmitted(10L, 1L, "admission-token");
+
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(CoreException.class);
+
+        verifyNoInteractions(seatSelectionAvailabilityValidator, seatSelectionCoordinator, seatEventPublisher);
+    }
+
+    @Test
+    void 예매가_마감된_회차는_좌석을_조회하지_않는다() {
+        when(performanceBookingPolicyFinder.findById(10L))
+                .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), null));
+
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(CoreException.class);
+
+        verifyNoInteractions(
+                seatSelectionAvailabilityValidator,
+                seatSelectionCoordinator,
+                seatEventPublisher,
+                admissionGuard
+        );
+    }
+
+    @Test
+    void 좌석_검증이_실패하면_선택하지_않는다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(null));
+        doThrow(new CoreException(ErrorType.SEAT_ALREADY_HOLD))
+                .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
+
+        assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(CoreException.class);
 
         verifyNoInteractions(seatSelectionCoordinator, seatEventPublisher);
+    }
+
+    private PerformanceBookingPolicyView openPolicy(final QueueMode queueMode) {
+        return policy(NOW.minusHours(1), NOW.plusHours(1), queueMode);
+    }
+
+    private PerformanceBookingPolicyView policy(
+            final LocalDateTime orderOpenTime,
+            final LocalDateTime orderCloseTime,
+            final QueueMode queueMode
+    ) {
+        return new PerformanceBookingPolicyView(
+                10L,
+                orderOpenTime,
+                orderCloseTime,
+                4,
+                300,
+                queueMode,
+                null,
+                null,
+                null,
+                null
+        );
     }
 }
