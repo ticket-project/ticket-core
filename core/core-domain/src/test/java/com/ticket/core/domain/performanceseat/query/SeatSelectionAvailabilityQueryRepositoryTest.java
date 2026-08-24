@@ -54,24 +54,17 @@ class SeatSelectionAvailabilityQueryRepositoryTest extends QueryRepositoryTestSu
     }
 
     @Test
-    void 예매시간과_좌석상태를_한번에_조회한다() {
+    void 회차의_좌석_상태를_단건으로_조회한다() {
         SeatSelectionAvailabilityView result = repository
-                .findForSelection(performanceId, seatId)
+                .findSelectableSeat(performanceId, seatId)
                 .orElseThrow();
 
         assertThat(result.performanceSeatId()).isNotNull();
         assertThat(result.state()).isEqualTo(PerformanceSeatState.AVAILABLE);
-        assertThat(result.orderOpenTime()).isBefore(LocalDateTime.now(clock));
-        assertThat(result.orderCloseTime()).isAfter(LocalDateTime.now(clock));
     }
 
     @Test
-    void 회차에_없는_좌석이어도_예매시간은_조회하고_좌석은_null이다() {
-        SeatSelectionAvailabilityView result = repository
-                .findForSelection(performanceId, 999999L)
-                .orElseThrow();
-
-        assertThat(result.performanceSeatId()).isNull();
-        assertThat(result.state()).isNull();
+    void 회차에_없는_좌석이면_비어있다() {
+        assertThat(repository.findSelectableSeat(performanceId, 999999L)).isEmpty();
     }
 }

@@ -2,7 +2,6 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.domain.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.domain.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.core.domain.performanceseat.command.SelectSeatUseCase;
@@ -30,7 +29,6 @@ class SeatSelectionControllerContractTest {
 
     private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
 
-    private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
 
@@ -39,8 +37,7 @@ class SeatSelectionControllerContractTest {
         SeatSelectionController controller = new SeatSelectionController(
                 Mockito.mock(SelectSeatUseCase.class),
                 Mockito.mock(DeselectSeatUseCase.class),
-                Mockito.mock(DeselectAllSeatsUseCase.class),
-                admissionTokenValidator
+                Mockito.mock(DeselectAllSeatsUseCase.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
@@ -65,8 +62,6 @@ class SeatSelectionControllerContractTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error").isEmpty());
-
-        verify(admissionTokenValidator).validate(10L, 100L, "admission-token");
     }
 
     @Test
@@ -77,8 +72,6 @@ class SeatSelectionControllerContractTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error").isEmpty());
-
-        verifyNoInteractions(admissionTokenValidator);
     }
 
     @Test
@@ -89,7 +82,5 @@ class SeatSelectionControllerContractTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error").isEmpty());
-
-        verifyNoInteractions(admissionTokenValidator);
     }
 }

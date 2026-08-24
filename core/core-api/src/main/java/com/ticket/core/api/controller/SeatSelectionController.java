@@ -2,7 +2,6 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.SeatSelectionControllerDocs;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.domain.performanceseat.command.DeselectSeatUseCase;
@@ -19,7 +18,6 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
     private final SelectSeatUseCase selectSeatUseCase;
     private final DeselectSeatUseCase deselectSeatUseCase;
     private final DeselectAllSeatsUseCase deselectAllSeatsUseCase;
-    private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
     @PostMapping("/{seatId}/select")
@@ -29,8 +27,12 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
             @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
             final MemberPrincipal memberPrincipal
     ) {
-        admissionTokenValidator.validate(performanceId, memberPrincipal.getMemberId(), admissionToken);
-        selectSeatUseCase.execute(new SelectSeatUseCase.Input(performanceId, seatId, memberPrincipal.getMemberId()));
+        selectSeatUseCase.execute(new SelectSeatUseCase.Input(
+                performanceId,
+                seatId,
+                memberPrincipal.getMemberId(),
+                admissionToken
+        ));
         return ApiResponse.success();
     }
 

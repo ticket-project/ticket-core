@@ -9,8 +9,6 @@ import com.ticket.core.support.exception.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 @Component
 @RequiredArgsConstructor
 public class SeatSelectionAvailabilityValidator {
@@ -18,29 +16,20 @@ public class SeatSelectionAvailabilityValidator {
     private final HoldManager holdManager;
     private final SeatSelectionAvailabilityQueryRepository queryRepository;
 
-    public SeatSelectionAvailabilityView validate(final Long performanceId, final Long seatId, final LocalDateTime now) {
-        final SeatSelectionAvailabilityView availability = queryRepository
-                .findForSelection(performanceId, seatId)
-                .orElseThrow(() -> new CoreException(
-                        ErrorType.NOT_FOUND_DATA,
-                        "공연을 찾을 수 없습니다. id=" + performanceId
-                ));
+    /**
+     * 좌석 자체가 선택 가능한지 확인한다. 예매 가능 시각과 대기열 입장은 호출자가 회차 정책으로
+     * 이미 판정했으므로 여기서 다시 보지 않는다.
+     */
+    public void validate(final Long performanceId, final Long seatId) {
+        final SeatSelectionAvailabilityView seat = queryRepository
+                .findSelectableSeat(performanceId, seatId)
+                .orElseThrow(() -> new CoreException(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
 
-        if (availability.orderOpenTime() == null || now.isBefore(availability.orderOpenTime())) {
-            throw new CoreException(ErrorType.NOT_YET_RESERVE_TIME);
-        }
-        if (availability.orderCloseTime() == null || now.isAfter(availability.orderCloseTime())) {
-            throw new CoreException(ErrorType.PERFORMANCE_IS_PAST);
-        }
-        if (availability.performanceSeatId() == null) {
-            throw new CoreException(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
-        }
-        if (availability.state() != PerformanceSeatState.AVAILABLE) {
+        if (seat.state() != PerformanceSeatState.AVAILABLE) {
             throw new CoreException(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
         }
         if (holdManager.isHeld(performanceId, seatId)) {
             throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
         }
-        return availability;
     }
 }
