@@ -5,6 +5,7 @@ import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.domain.performanceseat.query.model.SeatStateView;
 import com.ticket.core.domain.performanceseat.query.model.SeatStatus;
 import com.ticket.core.support.exception.CoreException;
@@ -24,6 +25,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -125,8 +128,49 @@ class GetSeatStatusUseCaseTest {
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
 
+    @Test
+    void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy());
+        when(seatStatusDbReader.read(10L)).thenReturn(List.of());
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
+        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+
+        useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
+
+        verify(admissionGuard, never()).ensureAdmitted(10L, 100L, "admission-token");
+    }
+
+    @Test
+    void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
+        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(queuePolicy());
+        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+                .when(admissionGuard).ensureAdmitted(10L, 100L, "admission-token");
+
+        assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED));
+
+        verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
+    }
+
     private PerformanceBookingPolicyView openPolicy() {
         return policy(NOW.minusHours(1), NOW.plusHours(1));
+    }
+
+    private PerformanceBookingPolicyView queuePolicy() {
+        return new PerformanceBookingPolicyView(
+                10L,
+                NOW.minusHours(1),
+                NOW.plusHours(1),
+                4,
+                300,
+                QueueMode.FORCE_ON,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     private PerformanceBookingPolicyView policy(

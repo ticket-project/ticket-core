@@ -1,5 +1,6 @@
 package com.ticket.core.domain.performance.query.model;
 
+import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,66 @@ class PerformanceBookingPolicyViewTest {
         assertThatCode(() -> policy.ensureBookingOpenAt(NOW)).doesNotThrowAnyException();
         assertThatThrownBy(() -> policy.ensureBookingOpenAt(NOW.plusHours(1)))
                 .isInstanceOf(CoreException.class);
+    }
+
+    @Test
+    void queue_mode가_없거나_force_off면_대기열을_요구하지_않는다() {
+        assertThat(queuePolicy(null, NOW.minusMinutes(5)).requiresQueueAt(NOW)).isFalse();
+        assertThat(queuePolicy(QueueMode.FORCE_OFF, NOW.minusMinutes(5)).requiresQueueAt(NOW)).isFalse();
+    }
+
+    @Test
+    void force_on이면_시각과_무관하게_대기열을_요구한다() {
+        assertThat(queuePolicy(QueueMode.FORCE_ON, null).requiresQueueAt(NOW)).isTrue();
+    }
+
+    @Test
+    void auto는_preopen_시각_이후부터_대기열을_요구한다() {
+        PerformanceBookingPolicyView policy = queuePolicy(QueueMode.AUTO, NOW.minusMinutes(5));
+
+        assertThat(policy.requiresQueueAt(NOW.minusMinutes(10))).isFalse();
+        assertThat(policy.requiresQueueAt(NOW)).isTrue();
+    }
+
+    @Test
+    void auto는_preopen_시각이_없으면_대기열을_요구하지_않는다() {
+        assertThat(queuePolicy(QueueMode.AUTO, null).requiresQueueAt(NOW)).isFalse();
+    }
+
+    @Test
+    void auto는_마감_이후에는_대기열을_요구하지_않는다() {
+        PerformanceBookingPolicyView policy = new PerformanceBookingPolicyView(
+                10L,
+                NOW.minusHours(2),
+                NOW.minusHours(1),
+                4,
+                300,
+                QueueMode.AUTO,
+                null,
+                NOW.minusHours(3),
+                null,
+                null
+        );
+
+        assertThat(policy.requiresQueueAt(NOW)).isFalse();
+    }
+
+    private PerformanceBookingPolicyView queuePolicy(
+            final QueueMode queueMode,
+            final LocalDateTime preopenQueueStartAt
+    ) {
+        return new PerformanceBookingPolicyView(
+                10L,
+                NOW.minusHours(1),
+                NOW.plusHours(1),
+                4,
+                300,
+                queueMode,
+                null,
+                preopenQueueStartAt,
+                null,
+                null
+        );
     }
 
     private void assertError(final PerformanceBookingPolicyView policy, final ErrorType errorType) {
