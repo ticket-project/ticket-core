@@ -130,8 +130,8 @@ public ValidatedOrderRequest validate(
     // T1 — 정책 1회 조회로 셋을 판정
     final PerformanceBookingPolicyView policy =
             performanceBookingPolicyFinder.findById(input.performanceId());
-    ensureBookingOpen(policy, now);
-    validateSeatCount(policy, requestedSeatIds);
+    BookingPolicyValidator.ensureBookingOpen(policy, now);
+    BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
     ensureAdmitted(policy, input.memberId(), input.admissionToken(), now);
 
     // T2 — 같은 트랜잭션, 커넥션 1개
@@ -148,7 +148,7 @@ private void ensureAdmitted(
         final String admissionToken,
         final LocalDateTime now
 ) {
-    if (!policy.requiresQueueAt(now)) {
+    if (!BookingPolicyValidator.requiresQueue(policy, now)) {
         return;
     }
     admissionGuard.ensureAdmitted(policy.performanceId(), memberId, admissionToken);
@@ -183,7 +183,7 @@ public interface AdmissionGuard {
 
 설계 선택 셋을 명시한다.
 
-- **정책을 인자로 받지 않는다.** "대기열이 필요한가"는 도메인이 `policy.requiresQueueAt(now)`로 이미 판단한다
+- **정책을 인자로 받지 않는다.** "대기열이 필요한가"는 호출 전에 `BookingPolicyValidator.requiresQueue(policy, now)`가 이미 판단한다
 - **`Clock`을 받지 않는다.** 시각 판정이 도메인에 남는다
 - **반환값이 없다.** 실패는 예외다
 
@@ -275,20 +275,16 @@ public PerformanceBookingPolicyView findValidById(final Long performanceId, fina
 }
 ```
 
-판정을 뷰가 소유한다. 호출자가 셋(주문 생성·좌석 상태 조회·좌석 선택)이므로 술어만 내리고
-예외를 호출자가 던지면 같은 6줄이 세 번 복제된다.
+판정은 `BookingPolicyValidator`가 소유한다. 호출자가 셋(주문 생성·좌석 상태 조회·좌석 선택)이므로
+술어만 내리고 예외를 호출자가 던지면 같은 6줄이 세 번 복제된다.
 
 ```java
-// PerformanceBookingPolicyView
-/**
- * 예매 가능 시각 안인지 확인한다. 조회 시점이 아니라 판정 시점의 시각으로 비교하므로
- * 정책 값을 캐시해도 오픈·마감 판정은 항상 현재 시각을 따른다.
- */
-public void ensureBookingOpenAt(final LocalDateTime now) {
-    if (orderOpenTime == null || now.isBefore(orderOpenTime)) {
+// performance/query/BookingPolicyValidator
+public static void ensureBookingOpen(final PerformanceBookingPolicyView policy, final LocalDateTime now) {
+    if (policy.orderOpenTime() == null || now.isBefore(policy.orderOpenTime())) {
         throw new CoreException(ErrorType.NOT_YET_RESERVE_TIME);
     }
-    if (orderCloseTime == null || now.isAfter(orderCloseTime)) {
+    if (policy.orderCloseTime() == null || now.isAfter(policy.orderCloseTime())) {
         throw new CoreException(ErrorType.PERFORMANCE_IS_PAST);
     }
 }
@@ -297,13 +293,13 @@ public void ensureBookingOpenAt(final LocalDateTime now) {
 ```java
 // 호출부
 final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
-policy.ensureBookingOpenAt(now);
+BookingPolicyValidator.ensureBookingOpen(policy, now);
 ```
 
-도메인 타입이 `CoreException`을 던지는 것은 이 저장소의 기존 방식이다
-(`RequestedSeatIds.from`, `Order.validatePendingTransition`).
-
 `findValidById`는 호출처가 없어지므로 삭제한다.
+
+초안은 이 판정을 `PerformanceBookingPolicyView`의 메서드로 두었다. 구현 후 되돌렸다 —
+아래 "후속 결정"을 보라.
 
 ### `HoldAllocator`
 
@@ -447,7 +443,12 @@ final CreateOrderUseCase.Output output = createOrderUseCase.execute(new CreateOr
 | 5 | `refactor(performanceseat): 좌석 선택 검증을 정책과 좌석 상태로 분리` | `findForSelection` 분해, `SelectSeatUseCase`, `SeatSelectionController` |
 | 6 | `refactor(admission): AdmissionTokenValidator 제거` | 호출처가 없어진 클래스와 테스트 삭제 |
 
+| 7 | `refactor(performance): 예매 정책 판정을 검증기로 분리` | `BookingPolicyValidator`·`QueueActivation` 신설. 호출부 무변경 |
+| 8 | `refactor(performance): 정책 뷰에서 판정을 걷어내고 검증기로 호출을 옮긴다` | 뷰가 순수 데이터가 된다. 호출부 셋 + `PerformanceQueuePolicy` 위임 |
+| 9 | `refactor(performance): 예매 판정이 떠나간 뒤 남은 죽은 코드를 제거한다` | 호출자를 잃은 엔티티·조회기 메서드 삭제 |
+
 1~2는 기존 동작을 바꾸지 않는 준비 작업이고, 3~5가 실제 통합이며, 6은 정리다.
+7~9는 구현 중 나온 후속 결정이다 (아래).
 
 ## 테스트
 
@@ -494,6 +495,59 @@ Redis key·TTL·Lua를 바꾸지 않으므로 `integrationTest`는 필수가 아
 | hold 저장 Lua 통합 | 별 설계. `RedissonHoldStoreTest` 재작성과 meta key hash tag 변경을 포함한다 |
 | `IDENTITY` → `SEQUENCE`, CLOB 제거 | 스키마 변경. 결제 도메인의 `PAYMENTS` id 전략과 합의가 필요하다 |
 | 후면 worker 수 조정 | Hikari pool 설정이 선행이다 |
+
+## 후속 결정 — 판정을 검증기로 분리
+
+초안은 오픈·마감 판정을 `PerformanceBookingPolicyView`의 메서드로 두었다. 구현을 마친 뒤 되돌렸다.
+
+**이유.** `query/model` 아래 `...View` 17개 중 메서드를 가진 것이 이 하나뿐이었다. 나머지 16개는
+전부 메서드가 없다. 조회 전용 타입에 비즈니스 로직을 두지 않는다는 규약을 세우고 그에 맞췄다.
+
+`isOverCount`와 `requiresQueueAt`은 초안 이전부터 이 뷰에 있었다. 초안이 예외를 만든 것이 아니라
+넓혔다.
+
+**옮긴 자리.**
+
+| 규칙 | 어디로 | 왜 |
+| --- | --- | --- |
+| 오픈·마감, 좌석 수 한도 | `performance/query/BookingPolicyValidator` | 정책 뷰만 쓰는 판정. 뷰를 인자로 받아 호출부를 짧게 유지한다 |
+| 대기열 필요 여부 | `performance/QueueActivation` | 프로젝션 경로와 엔티티 경로가 같이 부른다. 어느 타입에도 매이지 않게 값만 받는다 |
+
+`BookingPolicyValidator.requiresQueue`가 `QueueActivation`을 감싸므로 호출부는 검증기 하나만 안다.
+
+**대기열 규칙의 중복.** `PerformanceQueuePolicy.requiresQueueAt`과 뷰의 `requiresQueueAt`이 문자
+단위로 같았다. 전자는 `ShowDetailQueryRepository` → `BookingEntryResolver`(`GET /shows/{id}`)가,
+후자는 예매 3경로가 쓴다. 둘 다 살아 있었으므로 대기열 정책이 바뀔 때 한쪽만 고칠 위험이 있었다.
+이제 양쪽이 `QueueActivation`에 위임한다.
+
+**정적 유틸을 쓴 근거.** `order/OrderRemainingTime`이 같은 문제를 같은 형태로 이미 풀었다 —
+`HoldAllocation`(커맨드)과 `OrderDetailRow`·`OrderStatusView`(프로젝션) 셋이 한 규칙을 공유한다.
+`performanceseat/support/SeatRedisKey`, `performance/query/BookingEntryResolver`도 같은 형태다.
+
+### 딸려 나온 죽은 코드
+
+커밋 3에서 주문 생성 검증을 엔티티 경로에서 프로젝션 경로로 옮기면서 떠나온 쪽이 호출자를 잃었다.
+남겨두면 같은 규칙의 두 번째 사본이 된다. 프로덕션 호출자가 0인 것들을 제거했다.
+
+- `Performance.isBookingOpen`, `Performance.isOverCount`
+- `PerformanceFinder.findOpenPerformance`, `findValidPerformanceById`, `validatePerformance`
+- `Performance`의 대기열 위임 게터 5개
+- `PerformanceQueuePolicyRepository` — 주입받는 곳이 없었다
+
+`Performance.updateQueuePolicy`는 남겼다. `PerformanceQueuePolicy.create`가 역방향 링크를 세팅하지
+않아 이것 말고는 대기열 정책을 붙일 방법이 없고, 살아있는 경로인 `GET /shows/{id}`의 테스트 픽스처가
+여기에 의존한다.
+
+### 커버리지 이동
+
+지운 메서드들이 지키던 규칙을 먼저 옮긴 뒤 지웠다. 옮기면서 초안에 없던 경계를 채웠다.
+
+- `now`가 `orderOpenTime`·`orderCloseTime`과 정확히 같은 경우
+- 요청 좌석 수가 한도와 같은 경우, 한도가 `null`인 경우
+- 대기열 `preopenQueueStartAt`·`orderCloseTime`과 `now`가 정확히 같은 경우
+
+`PerformanceBookingPolicyViewTest`(146줄)를 `BookingPolicyValidatorTest`(13케이스)와
+`QueueActivationTest`(10케이스)로 대체했다.
 
 ## 남은 리스크
 
