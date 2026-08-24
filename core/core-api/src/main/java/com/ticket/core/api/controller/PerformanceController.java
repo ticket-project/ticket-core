@@ -1,6 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceControllerDocs;
+import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
@@ -57,7 +58,7 @@ public class PerformanceController implements PerformanceControllerDocs {
     @GetMapping("/{performanceId}/seats/status")
     public ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
             @PathVariable final Long performanceId,
-            @RequestHeader(value = AdmissionTokenValidator.HEADER, required = false) final String admissionToken,
+            @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
             final MemberPrincipal memberPrincipal
     ) {
         admissionTokenValidator.validate(performanceId, memberPrincipal.getMemberId(), admissionToken);

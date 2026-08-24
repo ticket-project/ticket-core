@@ -2,7 +2,7 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.HoldControllerDocs;
 import com.ticket.core.api.controller.request.CreateHoldRequest;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
+import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
@@ -25,19 +25,21 @@ import java.net.URI;
 public class HoldController implements HoldControllerDocs {
 
     private final CreateOrderUseCase createOrderUseCase;
-    private final AdmissionTokenValidator admissionTokenValidator;
 
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
             @PathVariable final Long performanceId,
             @Valid @RequestBody final CreateHoldRequest request,
-            @RequestHeader(value = AdmissionTokenValidator.HEADER, required = false) final String admissionToken,
+            @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
             final MemberPrincipal memberPrincipal
     ) {
-        admissionTokenValidator.validate(performanceId, memberPrincipal.getMemberId(), admissionToken);
-        final CreateOrderUseCase.Input input =
-                new CreateOrderUseCase.Input(performanceId, request.getSeatIds(), memberPrincipal.getMemberId());
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
+                performanceId,
+                request.getSeatIds(),
+                memberPrincipal.getMemberId(),
+                admissionToken
+        );
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
                 .header("X-Order-Key", output.orderKey())

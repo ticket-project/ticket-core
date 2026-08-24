@@ -67,7 +67,7 @@ class CreateOrderUseCaseTest {
 
     @Test
     void 중복된_좌석_ID가_있으면_예외를_던진다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(3L, 1L, 3L), 20L);
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(3L, 1L, 3L), 20L, "admission-token");
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(CoreException.class)
@@ -78,7 +78,7 @@ class CreateOrderUseCaseTest {
 
     @Test
     void 좌석_ID가_비어있으면_예외를_던진다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(), 20L);
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(), 20L, "admission-token");
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(CoreException.class)
@@ -89,7 +89,7 @@ class CreateOrderUseCaseTest {
 
     @Test
     void 유효한_요청이면_hold와_주문을_생성한다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
@@ -97,8 +97,9 @@ class CreateOrderUseCaseTest {
         final HoldAllocation allocation = new HoldAllocation(snapshot, seats);
         final Order order = order(snapshot);
 
-        when(validator.validate(20L, 10L, seatIds, FIXED_NOW)).thenReturn(performance);
-        when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
+        when(validator.validate(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
+        when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenReturn(new PendingOrderCreationResult(order, 99L));
@@ -111,22 +112,23 @@ class CreateOrderUseCaseTest {
         assertThat(output.remainingSeconds()).isEqualTo(600L);
 
         final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTxService, holdCreationPostCommitNotifier);
-        inOrder.verify(validator).validate(20L, 10L, seatIds, FIXED_NOW);
-        inOrder.verify(holdAllocator).allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW);
+        inOrder.verify(validator).validate(input, seatIds, FIXED_NOW);
+        inOrder.verify(holdAllocator).allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW);
         inOrder.verify(createPendingOrderTxService).create(20L, 10L, Duration.ofSeconds(600), allocation);
         inOrder.verify(holdCreationPostCommitNotifier).notify(99L);
     }
 
     @Test
     void 후처리_제출이_실패해도_커밋된_주문과_hold를_유지한다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final HoldSnapshot snapshot = holdSnapshot(seatIds.toList());
         final HoldAllocation allocation = new HoldAllocation(snapshot, List.of(mock(PerformanceSeat.class)));
         final Order order = order(snapshot);
-        when(validator.validate(20L, 10L, seatIds, FIXED_NOW)).thenReturn(performance);
-        when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
+        when(validator.validate(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
+        when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenReturn(new PendingOrderCreationResult(order, 99L));
@@ -140,13 +142,14 @@ class CreateOrderUseCaseTest {
 
     @Test
     void 주문_저장_트랜잭션이_실패하면_hold를_해제한다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(holdSnapshot(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
 
-        when(validator.validate(20L, 10L, seatIds, FIXED_NOW)).thenReturn(performance);
-        when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
+        when(validator.validate(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
+        when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenThrow(new RuntimeException("order failed"));
@@ -160,14 +163,15 @@ class CreateOrderUseCaseTest {
 
     @Test
     void hold_해제에_실패해도_원래_예외를_유지한다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L);
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(holdSnapshot(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
         final RuntimeException originalException = new RuntimeException("order failed");
 
-        when(validator.validate(20L, 10L, seatIds, FIXED_NOW)).thenReturn(performance);
-        when(holdAllocator.allocate(20L, 10L, seatIds, Duration.ofSeconds(600), FIXED_NOW))
+        when(validator.validate(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
+        when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenThrow(originalException);

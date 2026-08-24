@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.admission.AdmissionTokenValidator;
+import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.config.security.MemberPrincipal;
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.domain.order.command.cancel.CancelOrderUseCase;
@@ -40,7 +40,6 @@ class OrderControllerContractTest {
     private final GetOrderDetailUseCase getOrderDetailUseCase = Mockito.mock(GetOrderDetailUseCase.class);
     private final CancelOrderUseCase cancelOrderUseCase = Mockito.mock(CancelOrderUseCase.class);
     private final GetOrderStatusUseCase getOrderStatusUseCase = Mockito.mock(GetOrderStatusUseCase.class);
-    private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
 
@@ -50,8 +49,7 @@ class OrderControllerContractTest {
                 createOrderUseCase,
                 getOrderDetailUseCase,
                 cancelOrderUseCase,
-                getOrderStatusUseCase,
-                admissionTokenValidator
+                getOrderStatusUseCase
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
@@ -69,7 +67,7 @@ class OrderControllerContractTest {
 
     @Test
     void 주문시작_성공시_201_헤더와_응답바디_계약을_지킨다() throws Exception {
-        when(createOrderUseCase.execute(new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 100L)))
+        when(createOrderUseCase.execute(new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 100L, "admission-token")))
                 .thenReturn(new CreateOrderUseCase.Output(
                         "ORD-20260324",
                         OrderState.PENDING,
@@ -79,7 +77,7 @@ class OrderControllerContractTest {
 
         mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(AdmissionTokenValidator.HEADER, "admission-token")
+                        .header(AdmissionTokenService.HEADER, "admission-token")
                         .content("""
                                 {
                                   "performanceId": 10,
@@ -96,7 +94,6 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data.remainingSeconds").value(600L))
                 .andExpect(jsonPath("$.error").isEmpty());
 
-        verify(admissionTokenValidator).validate(10L, 100L, "admission-token");
     }
 
     @Test
@@ -115,7 +112,6 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
         verifyNoInteractions(createOrderUseCase);
-        verifyNoInteractions(admissionTokenValidator);
     }
 
     @Test
@@ -133,7 +129,6 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
         verifyNoInteractions(createOrderUseCase);
-        verifyNoInteractions(admissionTokenValidator);
     }
 
     @Test

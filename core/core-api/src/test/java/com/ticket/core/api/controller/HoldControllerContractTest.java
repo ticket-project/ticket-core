@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
-import com.ticket.core.config.admission.AdmissionTokenValidator;
+import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.ApiControllerAdvice;
@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,13 +32,12 @@ class HoldControllerContractTest {
     private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
 
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
-    private final AdmissionTokenValidator admissionTokenValidator = Mockito.mock(AdmissionTokenValidator.class);
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        HoldController controller = new HoldController(createOrderUseCase, admissionTokenValidator);
+        HoldController controller = new HoldController(createOrderUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
@@ -56,7 +54,7 @@ class HoldControllerContractTest {
 
     @Test
     void hold_생성_성공시_기존_계약을_유지한다() throws Exception {
-        when(createOrderUseCase.execute(new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 100L)))
+        when(createOrderUseCase.execute(new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 100L, "admission-token")))
                 .thenReturn(new CreateOrderUseCase.Output(
                         "ORD-20260324",
                         OrderState.PENDING,
@@ -66,7 +64,7 @@ class HoldControllerContractTest {
 
         mockMvc.perform(post("/api/v1/performances/10/holds")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(AdmissionTokenValidator.HEADER, "admission-token")
+                        .header(AdmissionTokenService.HEADER, "admission-token")
                         .content("""
                                 {
                                   "seatIds": [7, 3]
@@ -82,7 +80,6 @@ class HoldControllerContractTest {
                 .andExpect(jsonPath("$.data.remainingSeconds").value(600L))
                 .andExpect(jsonPath("$.error").isEmpty());
 
-        verify(admissionTokenValidator).validate(10L, 100L, "admission-token");
     }
 
     @Test
@@ -100,6 +97,5 @@ class HoldControllerContractTest {
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
         verifyNoInteractions(createOrderUseCase);
-        verifyNoInteractions(admissionTokenValidator);
     }
 }

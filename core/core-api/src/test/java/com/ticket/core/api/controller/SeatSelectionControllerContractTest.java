@@ -1,6 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
+import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.config.admission.AdmissionTokenValidator;
 import com.ticket.core.domain.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.domain.performanceseat.command.DeselectSeatUseCase;
@@ -59,7 +60,7 @@ class SeatSelectionControllerContractTest {
     void 좌석_선택_API는_200과_성공_응답_계약을_유지한다() throws Exception {
         mockMvc.perform(post("/api/v1/performances/10/seats/20/select")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(AdmissionTokenValidator.HEADER, "admission-token"))
+                        .header(AdmissionTokenService.HEADER, "admission-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())

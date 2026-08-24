@@ -3,7 +3,6 @@ package com.ticket.core.domain.order.command.create;
 import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.support.lock.DistributedLock;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.order.model.OrderState;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class CreateOrderUseCase {
     private final HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
     private final Clock clock;
 
-    public record Input(Long performanceId, List<Long> seatIds, Long memberId) {}
+    public record Input(Long performanceId, List<Long> seatIds, Long memberId, String admissionToken) {}
 
     public record Output(
             String orderKey,
@@ -42,12 +41,13 @@ public class CreateOrderUseCase {
     public Output execute(final Input input) {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
-        final PerformanceBookingPolicyView policy = validator.validate(input.memberId(), input.performanceId(), requestedSeatIds, now);
-        final Duration holdDuration = Duration.ofSeconds(policy.holdTime());
+        final ValidatedOrderRequest validated = validator.validate(input, requestedSeatIds, now);
+        final Duration holdDuration = Duration.ofSeconds(validated.policy().holdTime());
         final HoldAllocation allocation = holdAllocator.allocate(
                 input.memberId(),
                 input.performanceId(),
                 requestedSeatIds,
+                validated.performanceSeats(),
                 holdDuration,
                 now
         );
