@@ -25,6 +25,10 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
     runtimeOnly 'org.flywaydb:flyway-database-oracle'
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
+    runtimeOnly 'com.oracle.database.security:osdt_cert:21.3.0.0'
+    runtimeOnly 'com.oracle.database.security:oraclepki:21.3.0.0'
+    runtimeOnly 'com.oracle.database.security:osdt_core:21.3.0.0'
 
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.15")
     testImplementation 'org.springframework.boot:spring-boot-security-test'
