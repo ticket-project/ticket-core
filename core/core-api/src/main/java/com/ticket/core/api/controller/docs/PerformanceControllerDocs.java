@@ -1,8 +1,8 @@
 package com.ticket.core.api.controller.docs;
 
 import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.domain.performance.query.GetPerformanceScheduleListUseCase;
-import com.ticket.core.domain.performance.query.GetPerformanceSummaryUseCase;
+import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
+import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.core.domain.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;

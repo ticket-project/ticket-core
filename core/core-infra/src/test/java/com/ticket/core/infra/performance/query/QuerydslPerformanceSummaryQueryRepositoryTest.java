@@ -1,7 +1,8 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.infra.performance.query;
 
+import com.ticket.core.app.performance.query.PerformanceSummaryQueryRepository;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.model.PerformanceSummaryView;
+import com.ticket.core.app.performance.query.model.PerformanceSummaryView;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
@@ -14,9 +15,9 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(PerformanceSummaryQueryRepository.class)
+@Import(QuerydslPerformanceSummaryQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceSummaryQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslPerformanceSummaryQueryRepositoryTest extends QueryRepositoryTestSupport {
 
     @Autowired
     private PerformanceSummaryQueryRepository repository;

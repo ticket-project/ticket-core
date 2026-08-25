@@ -1,8 +1,9 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.infra.performance.query;
 
+import com.ticket.core.app.performance.query.PerformanceSummaryQueryRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.core.domain.performance.query.model.PerformanceSummaryView;
+import com.ticket.core.app.performance.query.model.PerformanceSummaryView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -14,10 +15,11 @@ import static com.ticket.core.domain.show.venue.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
-public class PerformanceSummaryQueryRepository {
+public class QuerydslPerformanceSummaryQueryRepository implements PerformanceSummaryQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    @Override
     public Optional<PerformanceSummaryView> findByPerformanceId(final Long performanceId) {
         return Optional.ofNullable(queryFactory
                 .select(Projections.constructor(PerformanceSummaryView.class,

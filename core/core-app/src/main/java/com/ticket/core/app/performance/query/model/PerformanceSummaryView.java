@@ -1,4 +1,4 @@
-package com.ticket.core.domain.performance.query.model;
+package com.ticket.core.app.performance.query.model;
 
 import com.ticket.core.domain.show.meta.Region;
 

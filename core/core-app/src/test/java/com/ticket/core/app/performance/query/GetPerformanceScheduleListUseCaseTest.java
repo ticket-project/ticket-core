@@ -1,5 +1,6 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.app.performance.query;
 
+import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.show.model.Show;
