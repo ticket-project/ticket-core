@@ -61,7 +61,8 @@ Spring Boot 실행 모듈이다.
 주요 책임:
 
 - 기능별 use case (`*UseCase`)
-- 트랜잭션 경계와 오케스트레이션 (`*TxService`, `*Coordinator`)
+- 트랜잭션 경계와 오케스트레이션 (`*TxService`, `*TransactionService`, `*Coordinator`,
+  `*Executor`, `*Processor`)
 - 조회 포트와 조회 결과 view/param
 - 커서 페이징 유틸 (`support.cursor`)
 - 인증 주체 값과 액세스 토큰 읽기 포트 (`auth.token`의 `AuthenticatedMember`, `AccessTokenReader`)
@@ -83,7 +84,10 @@ Spring Boot 실행 모듈이다.
 - repository 인터페이스와 Redis/WebSocket/외부 HTTP port
 - 인증 포트와 값 (`auth`의 `AuthTokenManager`, `RefreshTokenStore`,
   `PasswordService`, `AuthRefreshToken`, `IssuedAuthTokens`, `OAuth2UserInfo`)
-- outbox 엔티티와 기록기
+
+허용된 Spring은 `data`(JPA repository, auditing)와 `stereotype`(빈 선언)뿐이다.
+트랜잭션 경계, 이벤트 발행, 표현식 해석은 흐름을 엮는 방법이므로 여기에 두지 않는다.
+- outbox 엔티티, 기록기, 상태 enum
 - 분산락 어노테이션
 
 엔티티는 JPA 애노테이션을 갖는다. 이것이 유일하게 허용된 기술 의존이며, 그 밖의 Spring 타입은
@@ -242,7 +246,8 @@ Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
 | 도메인 정책과 검증기, `*Finder` | `core-domain` |
 | JPA repository 인터페이스 | `core-domain` 의 `<기능>.repository` |
 | Redis 같은 임시 상태 저장 port | `core-domain` 의 `<기능>.store` |
-| outbox 엔티티와 기록기 | `core-domain` 의 `<기능>.command` |
+| outbox 엔티티·기록기·상태 enum | `core-domain` 의 `<기능>.command` |
+| outbox 트랜잭션 경계와 실행 조립 | `core-app` 의 `<기능>.command` |
 | Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `core-infra` 의 `<기능>.query` |
 | Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `core-infra` |
 | 암호화, 대기열 입장 토큰 검증 같은 포트 구현 | `core-infra` |
@@ -361,7 +366,9 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 - `core-api`는 `core-domain`을 참조하지 않는다. use case를 거친다.
 - `core-infra`는 api를 참조하지 않는다.
 - `core-domain`과 `core-app`은 Querydsl을 직접 쓰지 않는다. 생성된 Q 타입은 제외한다.
-- `core-domain`과 `core-app`은 HTTP·보안·메시징을 참조하지 않는다.
+- `core-domain`은 `data`와 `stereotype` 외의 Spring을 참조하지 않는다.
+  HTTP·보안·메시징뿐 아니라 `transaction`, `context`, `expression`, `scheduling`, `dao`도 막는다.
+- `core-app`은 HTTP·보안·메시징·스케줄링을 참조하지 않는다. 트랜잭션은 소유하므로 허용한다.
 
 ### `CoreDomainArchitectureTest` (ArchUnit)
 
@@ -403,6 +410,10 @@ auth infra 구현체에 직접 의존하지 않는다.
   security 핸들러가 직접 호출하지 않고 use case가 감싼다.
 - **설정값을 두 곳에서 읽는 경우.** 토큰 만료처럼 한 값이 저장소 TTL과 응답에 함께 쓰이면
   발급한 쪽이 결과에 담아 알려준다. 각자 설정을 읽으면 어긋날 수 있다.
+- **도메인이 이벤트를 발행하거나 트랜잭션을 여는 경우.** `ApplicationEventPublisher`와
+  `@Transactional`은 흐름을 엮는 방법이다. 규칙은 `core-domain`에, 경계와 발행은 `core-app`에 둔다.
+- **한 기능의 짝이 다른 층에 있는 경우.** outbox 생성과 해제처럼 같은 일을 하는 코드가 갈려 있으면
+  둘 중 하나가 잘못 놓인 것이다. 이름이 달라도 하는 일로 판단한다.
 - **다른 도메인이 필요한 경우.** 상대 도메인의 `repository`나 `store`를 직접 부르지 않고 공개 use case를 호출한다.
 - **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별 `entryType` 계산과
   admission token 검증만 담당하며 queue token 저장소나 만료 핸들러를 두지 않는다.
@@ -424,7 +435,8 @@ auth infra 구현체에 직접 의존하지 않는다.
   HTTP 표현을 분리할지 판단한다.
 - JPA repository 인터페이스를 `core-domain` 포트와 `core-infra`의 Spring Data 인터페이스로 나눌지
   도메인별로 판단한다.
-- `core-domain`에 남은 `@Transactional` 조립(`OrderCreator`, outbox transaction service)을
-  `core-app`으로 올릴지 판단한다.
 - `support:lock` 분리를 판단한다. 지금 `@DistributedLock` 애노테이션은 `core-domain`,
   AOP 실행부와 SpEL 파서는 `core-infra`에 갈라져 있다.
+- `core-domain`의 `@Service` 세 곳(`PerformanceSeatService`, `SeatStatusPublisher` 등)을
+  `@Component`로 맞출지 판단한다. 나머지 도메인 서비스는 `@Component`를 쓴다.
+- `OrderFinder`는 프로덕션에서 쓰이지 않는다. 비관적 락 조회가 필요해질 때까지 둘지 판단한다.
