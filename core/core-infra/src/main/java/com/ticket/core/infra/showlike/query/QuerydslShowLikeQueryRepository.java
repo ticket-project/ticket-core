@@ -1,8 +1,10 @@
-package com.ticket.core.domain.showlike.query;
+package com.ticket.core.infra.showlike.query;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
+import com.ticket.core.app.showlike.query.ShowLikeQueryRepository;
 import com.ticket.core.support.cursor.CursorSlice;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +20,11 @@ import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
 
 @Repository
 @RequiredArgsConstructor
-public class ShowLikeQueryRepository {
+public class QuerydslShowLikeQueryRepository implements ShowLikeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    @Override
     public CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> findMyLikedShows(
             final Long memberId,
             final Long cursorLikeId,

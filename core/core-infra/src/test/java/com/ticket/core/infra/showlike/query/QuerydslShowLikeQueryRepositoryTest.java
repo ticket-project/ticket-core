@@ -1,5 +1,7 @@
-package com.ticket.core.domain.showlike.query;
+package com.ticket.core.infra.showlike.query;
 
+import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
+import com.ticket.core.app.showlike.query.ShowLikeQueryRepository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.meta.Region;
@@ -15,9 +17,9 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(ShowLikeQueryRepository.class)
+@Import(QuerydslShowLikeQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class ShowLikeQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslShowLikeQueryRepositoryTest extends QueryRepositoryTestSupport {
 
     @Autowired
     private ShowLikeQueryRepository showLikeQueryRepository;

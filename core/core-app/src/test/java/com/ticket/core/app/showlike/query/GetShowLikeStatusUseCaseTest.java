@@ -1,4 +1,4 @@
-package com.ticket.core.domain.showlike.query;
+package com.ticket.core.app.showlike.query;
 
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
