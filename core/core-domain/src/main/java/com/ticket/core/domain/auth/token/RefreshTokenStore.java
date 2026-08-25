@@ -1,4 +1,4 @@
-package com.ticket.core.app.auth.token;
+package com.ticket.core.domain.auth.token;
 
 import java.util.Optional;
 

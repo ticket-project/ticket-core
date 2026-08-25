@@ -1,6 +1,6 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.oauth2.IssueOAuth2AuthCodeUseCase;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,14 +17,14 @@ import java.io.IOException;
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final OAuth2AuthCodeStore oAuth2AuthCodeStore;
+    private final IssueOAuth2AuthCodeUseCase issueOAuth2AuthCodeUseCase;
     private final OAuth2FrontendRedirectResolver frontendRedirectResolver;
 
     public OAuth2AuthenticationSuccessHandler(
-            final OAuth2AuthCodeStore oAuth2AuthCodeStore,
+            final IssueOAuth2AuthCodeUseCase issueOAuth2AuthCodeUseCase,
             final OAuth2FrontendRedirectResolver frontendRedirectResolver
     ) {
-        this.oAuth2AuthCodeStore = oAuth2AuthCodeStore;
+        this.issueOAuth2AuthCodeUseCase = issueOAuth2AuthCodeUseCase;
         this.frontendRedirectResolver = frontendRedirectResolver;
     }
 
@@ -38,7 +38,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         final Long memberId = parseMemberId(authentication);
 
         // 1회용 auth code 생성 (Redis, TTL 30초)
-        final String authCode = oAuth2AuthCodeStore.createCode(memberId);
+        final String authCode = issueOAuth2AuthCodeUseCase.execute(memberId);
 
         final String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectResolver.resolveSuccessRedirectUri(request))
                 .queryParam("code", authCode)

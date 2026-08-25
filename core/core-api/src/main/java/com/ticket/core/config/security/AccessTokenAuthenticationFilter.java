@@ -1,5 +1,7 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -22,10 +24,10 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTH_ERROR_ATTRIBUTE = "jwt.error";
 
-    private final JwtTokenService jwtTokenService;
+    private final AccessTokenReader accessTokenReader;
 
-    public AccessTokenAuthenticationFilter(final JwtTokenService jwtTokenService) {
-        this.jwtTokenService = Objects.requireNonNull(jwtTokenService, "jwtTokenService must not be null");
+    public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
+        this.accessTokenReader = Objects.requireNonNull(accessTokenReader, "accessTokenReader must not be null");
     }
 
     @Override
@@ -41,7 +43,7 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            AuthenticatedMember member = jwtTokenService.parse(extractBearerToken(authorizationHeader));
+            AuthenticatedMember member = accessTokenReader.read(extractBearerToken(authorizationHeader));
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     member,
                     null,

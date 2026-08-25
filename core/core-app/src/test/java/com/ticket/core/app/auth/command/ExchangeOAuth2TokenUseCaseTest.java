@@ -1,9 +1,9 @@
 package com.ticket.core.app.auth.command;
 
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
-import com.ticket.core.app.auth.token.AuthTokenManager;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.domain.auth.token.AuthTokenManager;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.support.error.AuthException;
@@ -43,7 +43,7 @@ class ExchangeOAuth2TokenUseCaseTest {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
         when(member.getRole()).thenReturn(Role.MEMBER);
-        IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 7L);
+        IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 7L);
 
         when(oAuth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
         when(memberFinder.findActiveMemberById(7L)).thenReturn(member);

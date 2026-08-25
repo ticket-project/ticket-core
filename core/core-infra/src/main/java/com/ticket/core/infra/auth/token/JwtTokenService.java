@@ -1,5 +1,7 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth.token;
 
+import com.ticket.core.app.auth.token.AccessTokenReader;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -14,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JwtTokenService {
+public class JwtTokenService implements AccessTokenReader {
 
     private static final String ROLE_CLAIM = "role";
 
@@ -47,13 +49,14 @@ public class JwtTokenService {
                 .compact();
     }
 
-    public AuthenticatedMember parse(final String token) {
+    @Override
+    public AuthenticatedMember read(final String accessToken) {
         Claims claims = Jwts.parser()
                 .requireIssuer(jwtProperties.getIssuer())
                 .clock(() -> Date.from(clock.instant()))
                 .verifyWith(secretKey)
                 .build()
-                .parseSignedClaims(token)
+                .parseSignedClaims(accessToken)
                 .getPayload();
 
         String subject = claims.getSubject();

@@ -5,7 +5,7 @@ import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

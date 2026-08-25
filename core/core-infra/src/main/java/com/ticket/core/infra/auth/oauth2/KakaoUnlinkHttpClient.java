@@ -1,6 +1,6 @@
 package com.ticket.core.infra.auth.oauth2;
 
-import com.ticket.core.app.auth.oauth2.KakaoUnlinkClient;
+import com.ticket.core.domain.auth.oauth2.KakaoUnlinkClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;

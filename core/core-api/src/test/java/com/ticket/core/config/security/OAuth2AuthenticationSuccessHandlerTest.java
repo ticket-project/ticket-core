@@ -6,7 +6,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.GrantedAuthority;
 import java.util.Map;
 import java.util.List;
-import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.oauth2.IssueOAuth2AuthCodeUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock
-    private OAuth2AuthCodeStore oAuth2AuthCodeStore;
+    private IssueOAuth2AuthCodeUseCase issueAuthCodeUseCase;
 
     @Test
     void 로컬_프론트에서_시작한_로그인은_로컬_프론트로_리다이렉트한다() throws Exception {
@@ -36,7 +36,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 "https://oneticket.site/auth/callback"
         );
         OAuth2AuthenticationSuccessHandler handler =
-                new OAuth2AuthenticationSuccessHandler(oAuth2AuthCodeStore, resolver);
+                new OAuth2AuthenticationSuccessHandler(issueAuthCodeUseCase, resolver);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.getSession(true).setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
@@ -44,7 +44,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         OAuth2User principal = new DefaultOAuth2User(authorities, Map.of("memberId", 7L), "memberId");
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
-        when(oAuth2AuthCodeStore.createCode(7L)).thenReturn("oauth-code");
+        when(issueAuthCodeUseCase.execute(7L)).thenReturn("oauth-code");
 
         handler.onAuthenticationSuccess(request, response, authentication);
 

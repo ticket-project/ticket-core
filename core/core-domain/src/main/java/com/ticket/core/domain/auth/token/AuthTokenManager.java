@@ -1,4 +1,4 @@
-package com.ticket.core.app.auth.token;
+package com.ticket.core.domain.auth.token;
 
 /**
  * 액세스·리프레시 토큰을 발급하고 회전한다. 토큰 발급에 필요한 것은 회원 식별자와 권한뿐이므로

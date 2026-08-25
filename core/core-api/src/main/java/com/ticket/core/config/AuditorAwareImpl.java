@@ -1,6 +1,6 @@
 package com.ticket.core.config;
 
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

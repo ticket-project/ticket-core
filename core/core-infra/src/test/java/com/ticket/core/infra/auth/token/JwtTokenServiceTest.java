@@ -1,5 +1,6 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth.token;
 
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +26,7 @@ class JwtTokenServiceTest {
 
         String token = jwtTokenService.createAccessToken(7L, "MEMBER");
 
-        AuthenticatedMember authenticated = jwtTokenService.parse(token);
+        AuthenticatedMember authenticated = jwtTokenService.read(token);
         assertThat(authenticated.memberId()).isEqualTo(7L);
         assertThat(authenticated.role()).isEqualTo("MEMBER");
         assertThat(jwtTokenService.getAccessTokenExpirationSeconds()).isEqualTo(1800L);
@@ -41,7 +42,7 @@ class JwtTokenServiceTest {
                 .signWith(secretKey())
                 .compact();
 
-        assertThatThrownBy(() -> jwtTokenService().parse(token))
+        assertThatThrownBy(() -> jwtTokenService().read(token))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("JWT required claim is missing");
     }
@@ -56,7 +57,7 @@ class JwtTokenServiceTest {
                 .signWith(secretKey())
                 .compact();
 
-        assertThatThrownBy(() -> jwtTokenService().parse(token))
+        assertThatThrownBy(() -> jwtTokenService().read(token))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("JWT required claim is missing");
     }
@@ -71,7 +72,7 @@ class JwtTokenServiceTest {
                 .signWith(secretKey())
                 .compact();
 
-        assertThatThrownBy(() -> jwtTokenService().parse(token))
+        assertThatThrownBy(() -> jwtTokenService().read(token))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("JWT required claim is missing");
     }

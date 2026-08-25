@@ -1,5 +1,6 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

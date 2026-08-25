@@ -1,6 +1,6 @@
 package com.ticket.core.app.auth;
 
-import com.ticket.core.app.auth.PasswordService;
+import com.ticket.core.domain.auth.PasswordService;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.Email;

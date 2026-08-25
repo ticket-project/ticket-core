@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.AdmissionHeaders;
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderUseCase;

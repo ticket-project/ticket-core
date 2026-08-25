@@ -45,17 +45,25 @@ class CoreDomainModuleStructureTest {
     }
 
     @Test
-    void jwt_보안_구현은_core_api에_있고_core_domain에는_남지_않아야_한다() throws Exception {
-        final String apiBuild = Files.readString(resolve("../core-api/build.gradle"));
+    void jwt_구현은_core_infra에_있고_core_domain에는_남지_않아야_한다() throws Exception {
+        final String infraBuild = Files.readString(resolve("../core-infra/build.gradle"));
         final String domainBuild = Files.readString(resolve("build.gradle"));
 
+        // 토큰 발급·검증은 어댑터다. 실행 모듈과 도메인 어디에도 두지 않는다.
         assertThat(Files.exists(resolve("src/main/java/com/ticket/core/config/security/JwtTokenService.java"))).isFalse();
-        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/config/security/JwtProperties.java"))).isFalse();
-        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/config/security/OAuth2EndpointConstants.java"))).isFalse();
-        assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtTokenService.java"))).isTrue();
-        assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtProperties.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtTokenService.java"))).isFalse();
+        assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtProperties.java"))).isFalse();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtTokenService.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtProperties.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtAuthTokenManager.java"))).isTrue();
+
+        // 인증 필터는 구현이 아니라 포트를 본다.
+        assertThat(Files.exists(resolve("../core-app/src/main/java/com/ticket/core/app/auth/token/AccessTokenReader.java"))).isTrue();
+
+        // OAuth2 엔드포인트 상수는 security filter chain 설정의 일부라 core-api에 남는다.
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/OAuth2EndpointConstants.java"))).isTrue();
-        assertThat(apiBuild).contains("io.jsonwebtoken:jjwt-api:0.13.0");
+
+        assertThat(infraBuild).contains("io.jsonwebtoken:jjwt-api:0.13.0");
         assertThat(domainBuild).doesNotContain("io.jsonwebtoken:jjwt-api:0.13.0");
     }
 

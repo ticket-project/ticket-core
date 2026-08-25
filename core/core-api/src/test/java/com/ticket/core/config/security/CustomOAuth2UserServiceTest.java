@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,11 +39,8 @@ class CustomOAuth2UserServiceTest {
         OAuth2UserRequest userRequest = createUserRequest();
         OAuth2User oauth2User = new DefaultOAuth2User(java.util.List.of(), attributes, "sub");
         when(delegate.loadUser(userRequest)).thenReturn(oauth2User);
-        when(provisionUseCase.execute(argThat(userInfo ->
-                userInfo.providerId().equals("google-user-1")
-                        && "user@example.com".equals(userInfo.email())
-                        && "사용자".equals(userInfo.name())
-        ))).thenReturn(new ProvisionedMember(7L, "MEMBER"));
+        // 제공자 응답 해석은 use case가 맡으므로 registrationId와 원본 attributes를 그대로 넘긴다.
+        when(provisionUseCase.execute("google", attributes)).thenReturn(new ProvisionedMember(7L, "MEMBER"));
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
 
@@ -57,6 +53,7 @@ class CustomOAuth2UserServiceTest {
         // 제공자가 준 정보는 버리지 않는다.
         assertThat(result.getAttributes()).containsEntry("email", "user@example.com");
         verify(delegate).loadUser(userRequest);
+        verify(provisionUseCase).execute("google", attributes);
     }
 
     private OAuth2UserRequest createUserRequest() {

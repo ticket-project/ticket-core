@@ -1,6 +1,6 @@
 package com.ticket.core.config;
 
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

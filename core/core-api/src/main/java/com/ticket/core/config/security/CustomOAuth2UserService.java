@@ -1,7 +1,5 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.app.auth.oauth2.OAuth2UserInfo;
-import com.ticket.core.app.auth.oauth2.OAuth2UserInfoFactory;
 import com.ticket.core.app.auth.oauth2.ProvisionOAuth2MemberUseCase;
 import com.ticket.core.app.auth.oauth2.ProvisionedMember;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +33,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     public OAuth2User loadUser(final OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         final OAuth2User oauth2User = delegate.loadUser(userRequest);
         final String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        final OAuth2UserInfo userInfo = OAuth2UserInfoFactory.create(registrationId, oauth2User.getAttributes());
 
-        final ProvisionedMember member = provisionOAuth2MemberUseCase.execute(userInfo);
+        final ProvisionedMember member =
+                provisionOAuth2MemberUseCase.execute(registrationId, oauth2User.getAttributes());
 
         final Map<String, Object> attributes = new HashMap<>(oauth2User.getAttributes());
         attributes.put(MEMBER_ID_ATTRIBUTE, member.memberId());

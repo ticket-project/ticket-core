@@ -4,15 +4,13 @@ import com.ticket.core.api.controller.request.ExchangeOAuth2TokenRequest;
 import com.ticket.core.api.controller.request.LoginRequest;
 import com.ticket.core.api.controller.request.RegisterMemberRequest;
 import com.ticket.core.api.controller.docs.AuthControllerDocs;
-import com.ticket.core.config.security.JwtProperties;
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.app.auth.command.LoginUseCase;
 import com.ticket.core.app.auth.command.LogoutUseCase;
 import com.ticket.core.app.auth.command.RefreshAuthTokenUseCase;
 import com.ticket.core.app.auth.command.RegisterMemberUseCase;
 import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
-import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.support.response.ApiResponse;
 import com.ticket.core.support.util.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +32,6 @@ public class AuthController implements AuthControllerDocs {
     private final ExchangeOAuth2TokenUseCase exchangeOAuth2TokenUseCase;
     private final GetSocialLoginUrlsUseCase getSocialLoginUrlsUseCase;
     private final LogoutUseCase logoutUseCase;
-    private final JwtProperties jwtProperties;
 
     @Override
     @PostMapping("/signup")
@@ -49,7 +46,7 @@ public class AuthController implements AuthControllerDocs {
             final HttpServletResponse response
     ) {
         final LoginUseCase.Result result = loginUseCase.execute(request.toInput());
-        addRefreshTokenCookie(response, result.refreshToken());
+        addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
@@ -59,9 +56,9 @@ public class AuthController implements AuthControllerDocs {
             @CookieValue(name = CookieUtils.REFRESH_TOKEN_COOKIE_NAME, required = false) final String refreshToken,
             final HttpServletResponse response
     ) {
-        final RefreshAuthTokenUseCase.Input input = new RefreshAuthTokenUseCase.Input(AuthRefreshToken.from(refreshToken));
+        final RefreshAuthTokenUseCase.Input input = RefreshAuthTokenUseCase.Input.of(refreshToken);
         final RefreshAuthTokenUseCase.Result result = refreshAuthTokenUseCase.execute(input);
-        addRefreshTokenCookie(response, result.refreshToken());
+        addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
@@ -72,7 +69,7 @@ public class AuthController implements AuthControllerDocs {
             final HttpServletResponse response
     ) {
         final ExchangeOAuth2TokenUseCase.Result result = exchangeOAuth2TokenUseCase.execute(request.toInput());
-        addRefreshTokenCookie(response, result.refreshToken());
+        addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
@@ -92,10 +89,7 @@ public class AuthController implements AuthControllerDocs {
             final HttpServletResponse response
     ) {
         try {
-            final LogoutUseCase.Input input = new LogoutUseCase.Input(
-                    member.memberId(),
-                    AuthRefreshToken.from(refreshToken)
-            );
+            final LogoutUseCase.Input input = LogoutUseCase.Input.of(member.memberId(), refreshToken);
             final LogoutUseCase.Output output = logoutUseCase.execute(input);
             return ApiResponse.success(output);
         } finally {
@@ -103,11 +97,15 @@ public class AuthController implements AuthControllerDocs {
         }
     }
 
-    private void addRefreshTokenCookie(final HttpServletResponse response, final String refreshToken) {
-        CookieUtils.addRefreshTokenCookie(
-                response,
-                refreshToken,
-                jwtProperties.getRefreshTokenExpirationSeconds()
-        );
+    /**
+     * 쿠키 만료는 토큰을 발급한 쪽이 정한 값을 그대로 쓴다. 설정을 다시 읽으면 저장소 TTL과
+     * 어긋날 수 있다.
+     */
+    private void addRefreshTokenCookie(
+            final HttpServletResponse response,
+            final String refreshToken,
+            final long maxAgeSeconds
+    ) {
+        CookieUtils.addRefreshTokenCookie(response, refreshToken, maxAgeSeconds);
     }
 }

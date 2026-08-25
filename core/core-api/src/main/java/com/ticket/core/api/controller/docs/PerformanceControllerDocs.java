@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatAvailabilityUseCase;

@@ -1,5 +1,6 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.app.auth.token.AccessTokenReader;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
+@EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfig {
 
     /**
@@ -72,7 +73,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
-            final JwtTokenService jwtTokenService,
+            final AccessTokenReader accessTokenReader,
             final RestAuthenticationEntryPoint restAuthenticationEntryPoint,
             final RestAccessDeniedHandler restAccessDeniedHandler
     ) throws Exception {
@@ -110,7 +111,7 @@ public class SecurityConfig {
                 );
 
         http.addFilterBefore(
-                new AccessTokenAuthenticationFilter(jwtTokenService),
+                new AccessTokenAuthenticationFilter(accessTokenReader),
                 UsernamePasswordAuthenticationFilter.class
         );
         return http.build();

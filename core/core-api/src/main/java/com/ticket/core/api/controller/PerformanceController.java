@@ -2,7 +2,7 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceControllerDocs;
 import com.ticket.core.api.AdmissionHeaders;
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatAvailabilityUseCase;
