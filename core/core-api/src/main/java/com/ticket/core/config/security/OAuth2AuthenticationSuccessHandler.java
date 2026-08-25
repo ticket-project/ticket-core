@@ -34,12 +34,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             final HttpServletResponse response,
             final Authentication authentication
     ) throws IOException, ServletException {
-        if (!(authentication.getPrincipal() instanceof AuthenticatedMember member)) {
-            throw new IllegalStateException("Unsupported principal type: " + authentication.getPrincipal().getClass().getName());
-        }
+        // CustomOAuth2UserService가 nameAttributeKey를 memberId로 지정하므로 getName()이 회원 식별자다.
+        final Long memberId = parseMemberId(authentication);
 
         // 1회용 auth code 생성 (Redis, TTL 30초)
-        final String authCode = oAuth2AuthCodeStore.createCode(member.memberId());
+        final String authCode = oAuth2AuthCodeStore.createCode(memberId);
 
         final String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectResolver.resolveSuccessRedirectUri(request))
                 .queryParam("code", authCode)
@@ -49,5 +48,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         frontendRedirectResolver.clear(request);
         clearAuthenticationAttributes(request);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
+
+    private Long parseMemberId(final Authentication authentication) {
+        try {
+            return Long.parseLong(authentication.getName());
+        } catch (final NumberFormatException exception) {
+            throw new IllegalStateException(
+                    "인증 주체에서 회원 식별자를 읽을 수 없습니다. name=" + authentication.getName(), exception);
+        }
     }
 }

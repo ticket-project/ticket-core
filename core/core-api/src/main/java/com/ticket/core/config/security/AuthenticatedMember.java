@@ -1,21 +1,14 @@
 package com.ticket.core.config.security;
 
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 /**
- * 인증된 회원을 나타내는 유일한 주체 타입이다. 컨트롤러는 이 타입을 파라미터로 받고,
+ * 인증된 회원을 나타내는 값이다. 컨트롤러는 이 타입을 파라미터로 받고,
  * AuthenticatedMemberArgumentResolver가 SecurityContext에서 꺼내 준다.
  *
- * <p>OAuth2UserService가 OAuth2User 반환을 요구하므로 그 계약을 여기에서 함께 만족시킨다.
- * OAuth2 제공자가 준 attributes는 로그인 성공 처리에서 쓰이지 않으므로 담지 않는다.
+ * <p>프레임워크 계약을 담지 않는다. OAuth2 로그인은 리다이렉트로 끝나 컨트롤러에 닿지 않으므로
+ * 그 경로의 주체는 Spring이 제공하는 DefaultOAuth2User가 맡는다. 형제 저장소 ticket-queue의
+ * 같은 이름 타입과 형태를 맞춘다.
  */
-public record AuthenticatedMember(Long memberId, String role) implements OAuth2User {
+public record AuthenticatedMember(Long memberId, String role) {
 
     public AuthenticatedMember {
         if (memberId == null || memberId <= 0) {
@@ -24,20 +17,5 @@ public record AuthenticatedMember(Long memberId, String role) implements OAuth2U
         if (role == null || role.isBlank()) {
             throw new IllegalArgumentException("role must not be blank");
         }
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return Map.of();
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
-    }
-
-    @Override
-    public String getName() {
-        return String.valueOf(memberId);
     }
 }
