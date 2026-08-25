@@ -22,7 +22,7 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 | 작업 성격 | 먼저 읽을 문서 |
 | --- | --- |
 | 새 코드의 모듈·패키지 위치, 의존 방향, 경계 변경 | `docs/architecture.md` |
-| 기능·API·도메인 규칙 구현, 계층 책임, Redis·분산락 | `docs/development.md` |
+| 기능·API·도메인 규칙 구현, Redis·분산락 작업 규칙 | `docs/development.md` |
 | 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지 고르기, 새 테스트 추가 | `docs/testing.md` |
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 지표 | `docs/operations.md` |
@@ -53,6 +53,37 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
    - Querydsl 조회 구현, Redis, WebSocket, 외부 HTTP, AOP 구현체를 본다.
 8. 관련 테스트
    - ArchUnit과 도메인 테스트로 실제 강제 규칙을 확인한다.
+
+## 새 코드를 어디에 둘까
+
+코드를 쓰기 전에 이 표로 판단한다. 기준은 **"이 코드가 무엇을 쓰는가"**다.
+
+| 쓰는 것 | 두는 곳 |
+| --- | --- |
+| HTTP 요청·응답, 쿠키, security 설정, WebSocket 진입 | `core-api` |
+| use case, 트랜잭션 경계, 여러 서비스 조립, 조회 포트와 결과 view | `core-app` |
+| 엔티티, 값 객체, 도메인 정책, `*Finder`, port 선언 | `core-domain` |
+| Querydsl, Redis, JWT, 암호화, 외부 HTTP, scheduler, AOP | `core-infra` |
+
+판단이 갈리면 두 가지를 본다.
+
+- **port는 그것을 쓰는 쪽에 둔다.** use case가 쓰면 `core-app`, `*Finder`가 쓰면 `core-domain`.
+  구현은 어느 쪽이든 `core-infra`다.
+- **엔티티를 다루면 도메인, 순서를 정하면 애플리케이션이다.** 규칙 판단은 `core-domain`,
+  그 규칙들을 순서대로 부르는 조립은 `core-app`이다.
+
+## 절대 금지 (ArchUnit이 실패시킨다)
+
+- `core-domain`이 `data`·`stereotype` 외의 Spring을 참조하는 것.
+  `@Transactional`, `ApplicationEventPublisher`, Querydsl, SpEL, HTTP, 보안 전부 막는다.
+- `core-app`이 Querydsl·web·http·security·messaging·scheduling을 참조하는 것.
+- `core-api`가 `core-domain`이나 `core-infra`를 프로덕션 코드에서 참조하는 것.
+  계약 테스트만 `testImplementation`으로 도메인 픽스처를 쓴다.
+- 실행 모듈이 도메인 port를 직접 부르는 것. use case를 거친다.
+- 도메인 타입이 API 경계로 새는 것. 요청 DTO는 문자열로 받고 변환은 `core-app`이 한다.
+
+위반하면 `./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"`가
+실패한다. 상세 근거와 예외는 `docs/architecture.md`를 본다.
 
 ## 모듈 경계
 
