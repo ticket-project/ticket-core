@@ -21,6 +21,8 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 
 | 작업 성격 | 먼저 읽을 문서 |
 | --- | --- |
+| 도메인 개념을 이름으로 부를 때(이슈 제목, 테스트 이름, 제안) | `CONTEXT.md` |
+| Selection·Hold, 주문 생명주기처럼 "왜 이렇게 했는지"가 걸리는 변경 | `docs/adr/` |
 | 새 코드의 모듈·패키지 위치, 의존 방향, 경계 변경 | `docs/architecture.md` |
 | 기능·API·도메인 규칙 구현, Redis·분산락 작업 규칙 | `docs/development.md` |
 | 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
@@ -31,6 +33,10 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 
 전체 맥락은 `README.md`, 실제 경계는 `settings.gradle`과 각 모듈 `build.gradle`, 강제되는 규칙은
 관련 테스트 코드가 최종 기준이다.
+
+`CONTEXT.md`는 도메인 용어집이다. 출력에서 도메인 개념을 부를 때 여기 정의된 말을 쓰고,
+`_Avoid_`에 적힌 동의어로 흘러가지 않는다. 필요한 개념이 용어집에 없으면 그 자체가 신호다.
+`docs/adr/`의 결정과 어긋나는 제안을 할 때는 조용히 덮지 않고 어긋난다는 사실을 먼저 밝힌다.
 
 부하 테스트의 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`의 `README.md`와
 `console/README.md`를 기준으로 본다.
