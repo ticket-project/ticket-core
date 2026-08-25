@@ -12,7 +12,7 @@ import com.ticket.core.app.auth.command.LogoutUseCase;
 import com.ticket.core.app.auth.command.RefreshAuthTokenUseCase;
 import com.ticket.core.app.auth.command.RegisterMemberUseCase;
 import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.support.response.ApiResponse;
 import com.ticket.core.support.util.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;

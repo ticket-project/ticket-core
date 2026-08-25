@@ -1,6 +1,6 @@
 package com.ticket.core.app.auth.oauth2;
 
-import com.ticket.core.domain.auth.oauth2.OAuth2UserInfo;
+import com.ticket.core.app.auth.oauth2.OAuth2UserInfo;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.MemberSocialAccount;

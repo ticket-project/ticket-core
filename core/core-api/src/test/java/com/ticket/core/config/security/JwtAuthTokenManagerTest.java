@@ -1,8 +1,8 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
-import com.ticket.core.domain.auth.token.RefreshTokenStore;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.EncodedPassword;

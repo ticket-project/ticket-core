@@ -1,6 +1,6 @@
-package com.ticket.core.domain.auth.usecase;
+package com.ticket.core.app.auth.usecase;
 
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;

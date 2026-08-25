@@ -1,6 +1,6 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
