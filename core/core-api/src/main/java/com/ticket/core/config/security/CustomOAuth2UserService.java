@@ -26,6 +26,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         final OAuth2UserInfo userInfo = OAuth2UserInfoFactory.create(registrationId, oauth2User.getAttributes());
 
         final Member member = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
-        return new MemberPrincipal(member.getId(), member.getRole().name(), oauth2User.getAttributes());
+        return new AuthenticatedMember(member.getId(), member.getRole().name());
     }
 }
