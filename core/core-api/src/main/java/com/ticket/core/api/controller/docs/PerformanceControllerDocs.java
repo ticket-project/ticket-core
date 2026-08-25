@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatAvailabilityUseCase;
@@ -51,6 +51,6 @@ public interface PerformanceControllerDocs {
     ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
             @Parameter(description = "Performance ID", example = "1", required = true) Long performanceId,
             @Parameter(description = "Admission token issued by Queue Server") String admissionToken,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) AuthenticatedMember member
     );
 }

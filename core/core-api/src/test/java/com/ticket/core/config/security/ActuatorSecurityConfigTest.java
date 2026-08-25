@@ -1,6 +1,6 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -153,8 +153,8 @@ class ActuatorSecurityConfigTest {
         }
 
         @GetMapping("/api/v1/private-test")
-        public String privateApi(@AuthenticationPrincipal final MemberPrincipal memberPrincipal) {
-            return memberPrincipal.getMemberId() + ":" + memberPrincipal.getRole();
+        public String privateApi(@AuthenticationPrincipal final AuthenticatedMember memberPrincipal) {
+            return memberPrincipal.memberId() + ":" + memberPrincipal.role();
         }
     }
 }

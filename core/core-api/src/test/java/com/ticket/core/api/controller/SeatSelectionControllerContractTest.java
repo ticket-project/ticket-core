@@ -1,12 +1,12 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
+import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.app.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.app.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.core.app.performanceseat.command.SelectSeatUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionControllerContractTest {
 
-    private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
+    private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
 
 
     private MockMvc mockMvc;
@@ -40,7 +40,7 @@ class SeatSelectionControllerContractTest {
                 Mockito.mock(DeselectAllSeatsUseCase.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(

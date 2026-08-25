@@ -5,7 +5,7 @@ import com.ticket.core.api.controller.request.LoginRequest;
 import com.ticket.core.api.controller.request.RegisterMemberRequest;
 import com.ticket.core.api.controller.docs.AuthControllerDocs;
 import com.ticket.core.config.security.JwtProperties;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.app.auth.command.LoginUseCase;
 import com.ticket.core.app.auth.command.LogoutUseCase;
@@ -18,7 +18,6 @@ import com.ticket.core.support.util.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -88,13 +87,13 @@ public class AuthController implements AuthControllerDocs {
     @Override
     @PostMapping("/logout")
     public ApiResponse<LogoutUseCase.Output> logout(
-            @AuthenticationPrincipal final MemberPrincipal principal,
+            final AuthenticatedMember member,
             @CookieValue(name = CookieUtils.REFRESH_TOKEN_COOKIE_NAME, required = false) final String refreshToken,
             final HttpServletResponse response
     ) {
         try {
             final LogoutUseCase.Input input = new LogoutUseCase.Input(
-                    principal.getMemberId(),
+                    member.memberId(),
                     AuthRefreshToken.from(refreshToken)
             );
             final LogoutUseCase.Output output = logoutUseCase.execute(input);

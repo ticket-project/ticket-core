@@ -3,7 +3,7 @@ package com.ticket.core.api.controller;
 import com.ticket.core.api.controller.docs.HoldControllerDocs;
 import com.ticket.core.api.controller.request.CreateHoldRequest;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -32,12 +32,12 @@ public class HoldController implements HoldControllerDocs {
             @PathVariable final Long performanceId,
             @Valid @RequestBody final CreateHoldRequest request,
             @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
                 performanceId,
                 request.getSeatIds(),
-                memberPrincipal.getMemberId(),
+                member.memberId(),
                 admissionToken
         );
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);

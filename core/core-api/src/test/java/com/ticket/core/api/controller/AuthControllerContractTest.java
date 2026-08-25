@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
+import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.config.security.JwtProperties;
 import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.app.auth.command.LoginUseCase;
@@ -11,7 +11,7 @@ import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +54,7 @@ class AuthControllerContractTest {
         );
         when(jwtProperties.getRefreshTokenExpirationSeconds()).thenReturn(1209600L);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
     }
@@ -142,7 +142,7 @@ class AuthControllerContractTest {
 
     @Test
     void 로그아웃_API는_성공_응답과_쿠키_삭제를_내린다() throws Exception {
-        MemberPrincipal principal = new MemberPrincipal(1L, "MEMBER");
+        AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );
@@ -159,7 +159,7 @@ class AuthControllerContractTest {
     }
     @Test
     void 로그아웃_API는_실패해도_refresh_cookie를_삭제한다() throws Exception {
-        MemberPrincipal principal = new MemberPrincipal(1L, "MEMBER");
+        AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );

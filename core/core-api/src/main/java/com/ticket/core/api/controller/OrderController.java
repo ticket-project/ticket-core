@@ -3,7 +3,7 @@ package com.ticket.core.api.controller;
 import com.ticket.core.api.controller.docs.OrderControllerDocs;
 import com.ticket.core.api.controller.request.CreateOrderRequest;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.query.GetOrderDetailUseCase;
@@ -38,12 +38,12 @@ public class OrderController implements OrderControllerDocs {
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @Valid @RequestBody final CreateOrderRequest request,
             @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
                 request.getPerformanceId(),
                 request.getSeatIds(),
-                memberPrincipal.getMemberId(),
+                member.memberId(),
                 admissionToken
         );
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
@@ -56,9 +56,9 @@ public class OrderController implements OrderControllerDocs {
     @GetMapping("/{orderKey}")
     public ApiResponse<GetOrderDetailUseCase.Output> getOrder(
             @PathVariable final String orderKey,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
-        final GetOrderDetailUseCase.Input input = new GetOrderDetailUseCase.Input(orderKey, memberPrincipal.getMemberId());
+        final GetOrderDetailUseCase.Input input = new GetOrderDetailUseCase.Input(orderKey, member.memberId());
         final GetOrderDetailUseCase.Output output = getOrderDetailUseCase.execute(input);
         return ApiResponse.success(output);
     }
@@ -67,9 +67,9 @@ public class OrderController implements OrderControllerDocs {
     @GetMapping("/{orderKey}/status")
     public ApiResponse<GetOrderStatusUseCase.Output> getOrderStatus(
             @PathVariable final String orderKey,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
-        final GetOrderStatusUseCase.Input input = new GetOrderStatusUseCase.Input(orderKey, memberPrincipal.getMemberId());
+        final GetOrderStatusUseCase.Input input = new GetOrderStatusUseCase.Input(orderKey, member.memberId());
         final GetOrderStatusUseCase.Output output = getOrderStatusUseCase.execute(input);
         return ApiResponse.success(output);
     }
@@ -78,9 +78,9 @@ public class OrderController implements OrderControllerDocs {
     @DeleteMapping("/{orderKey}")
     public ApiResponse<Void> cancelOrder(
             @PathVariable final String orderKey,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
-        cancelOrderUseCase.execute(new CancelOrderUseCase.Input(orderKey, memberPrincipal.getMemberId()));
+        cancelOrderUseCase.execute(new CancelOrderUseCase.Input(orderKey, member.memberId()));
         return ApiResponse.success();
     }
 }

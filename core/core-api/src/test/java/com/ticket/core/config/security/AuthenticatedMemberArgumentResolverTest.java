@@ -11,9 +11,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
-class MemberPrincipalArgumentResolverTest {
+class AuthenticatedMemberArgumentResolverTest {
 
-    private final MemberPrincipalArgumentResolver resolver = new MemberPrincipalArgumentResolver();
+    private final AuthenticatedMemberArgumentResolver resolver = new AuthenticatedMemberArgumentResolver();
 
     @AfterEach
     void tearDown() {
@@ -28,8 +28,8 @@ class MemberPrincipalArgumentResolverTest {
     }
 
     @Test
-    void 인증된_MemberPrincipal을_반환한다() {
-        MemberPrincipal principal = new MemberPrincipal(10L, "MEMBER");
+    void 인증된_AuthenticatedMember를_반환한다() {
+        AuthenticatedMember principal = new AuthenticatedMember(10L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, List.of())
         );
@@ -40,7 +40,7 @@ class MemberPrincipalArgumentResolverTest {
     }
 
     @Test
-    void principal이_MemberPrincipal이_아니면_401을_던진다() {
+    void principal이_AuthenticatedMember가_아니면_401을_던진다() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("member", null, List.of())
         );

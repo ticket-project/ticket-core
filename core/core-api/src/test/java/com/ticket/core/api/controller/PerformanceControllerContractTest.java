@@ -7,14 +7,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
+import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class PerformanceControllerContractTest {
 
-    private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
+    private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
 
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase = Mockito.mock(GetSeatAvailabilityUseCase.class);
     private final GetSeatStatusUseCase getSeatStatusUseCase = Mockito.mock(GetSeatStatusUseCase.class);
@@ -43,7 +43,7 @@ class PerformanceControllerContractTest {
                 Mockito.mock(GetPerformanceScheduleListUseCase.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
