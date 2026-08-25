@@ -1,4 +1,4 @@
-package com.ticket.core.domain.order.query.model;
+package com.ticket.core.app.order.query.model;
 
 import com.ticket.core.domain.order.model.OrderState;
 

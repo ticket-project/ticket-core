@@ -1,11 +1,12 @@
-package com.ticket.core.domain.order.query;
+package com.ticket.core.infra.order.query;
 
+import com.ticket.core.app.order.query.OrderQueryRepository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.core.domain.order.query.model.OrderDetailRow;
-import com.ticket.core.domain.order.query.model.OrderStatusView;
+import com.ticket.core.app.order.query.model.OrderDetailRow;
+import com.ticket.core.app.order.query.model.OrderStatusView;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
@@ -25,9 +26,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(OrderQueryRepository.class)
+@Import(QuerydslOrderQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class OrderQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslOrderQueryRepositoryTest extends QueryRepositoryTestSupport {
 
     @Autowired
     private OrderQueryRepository repository;

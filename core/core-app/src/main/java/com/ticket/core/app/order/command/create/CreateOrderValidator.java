@@ -1,5 +1,7 @@
-package com.ticket.core.domain.order.command.create;
+package com.ticket.core.app.order.command.create;
 
+import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
+import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.order.model.OrderState;

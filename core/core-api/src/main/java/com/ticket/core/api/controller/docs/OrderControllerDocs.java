@@ -2,9 +2,9 @@ package com.ticket.core.api.controller.docs;
 
 import com.ticket.core.api.controller.request.CreateOrderRequest;
 import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.domain.order.command.create.CreateOrderUseCase;
-import com.ticket.core.domain.order.query.GetOrderDetailUseCase;
-import com.ticket.core.domain.order.query.GetOrderStatusUseCase;
+import com.ticket.core.app.order.command.create.CreateOrderUseCase;
+import com.ticket.core.app.order.query.GetOrderDetailUseCase;
+import com.ticket.core.app.order.query.GetOrderStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

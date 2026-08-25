@@ -1,6 +1,6 @@
 package com.ticket.core.infra.redis;
 
-import com.ticket.core.domain.order.command.expire.ExpireOrderUseCase;
+import com.ticket.core.app.order.command.expire.ExpireOrderUseCase;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
