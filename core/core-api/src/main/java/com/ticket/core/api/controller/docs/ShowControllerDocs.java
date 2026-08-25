@@ -1,8 +1,8 @@
 package com.ticket.core.api.controller.docs;
 
 import com.ticket.core.api.controller.request.ShowSearchRequest;
-import com.ticket.core.domain.performanceseat.query.GetShowSeatsUseCase;
-import com.ticket.core.domain.performanceseat.query.GetVenueLayoutUseCase;
+import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
+import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
 import com.ticket.core.domain.show.query.model.SaleOpeningSoonSearchParam;
 import com.ticket.core.domain.show.query.model.ShowListItemView;
 import com.ticket.core.domain.show.query.model.ShowOpeningSoonDetailView;
