@@ -1,9 +1,10 @@
-package com.ticket.core.domain.order.query;
+package com.ticket.core.infra.order.query;
 
+import com.ticket.core.app.order.query.OrderQueryRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.core.domain.order.query.model.OrderDetailRow;
-import com.ticket.core.domain.order.query.model.OrderStatusView;
+import com.ticket.core.app.order.query.model.OrderDetailRow;
+import com.ticket.core.app.order.query.model.OrderStatusView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -21,10 +22,11 @@ import static com.ticket.core.domain.show.venue.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
-public class OrderQueryRepository {
+public class QuerydslOrderQueryRepository implements OrderQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    @Override
     public List<OrderDetailRow> findDetailRows(final String orderKey, final Long memberId) {
         return queryFactory
                 .select(Projections.constructor(OrderDetailRow.class,
@@ -66,6 +68,7 @@ public class OrderQueryRepository {
                 .fetch();
     }
 
+    @Override
     public Optional<OrderStatusView> findStatus(final String orderKey, final Long memberId) {
         return Optional.ofNullable(queryFactory
                 .select(Projections.constructor(OrderStatusView.class,

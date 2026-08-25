@@ -1,8 +1,8 @@
-package com.ticket.core.domain.order.query;
+package com.ticket.core.app.order.query;
 
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.core.domain.order.query.model.OrderStatusView;
+import com.ticket.core.app.order.query.model.OrderStatusView;
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
