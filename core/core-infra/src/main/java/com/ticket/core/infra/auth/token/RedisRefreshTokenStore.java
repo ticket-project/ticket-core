@@ -2,7 +2,7 @@ package com.ticket.core.infra.auth.token;
 
 import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.app.auth.token.RefreshTokenStore;
-import com.ticket.core.support.random.UuidSupplier;
+import com.ticket.core.infra.support.UuidSupplier;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;

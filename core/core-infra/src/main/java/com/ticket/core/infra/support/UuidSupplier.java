@@ -1,4 +1,4 @@
-package com.ticket.core.support.random;
+package com.ticket.core.infra.support;
 
 import java.util.UUID;
 

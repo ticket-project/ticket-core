@@ -1,10 +1,6 @@
 package com.ticket.core.config.seed;
 
-import com.ticket.core.domain.member.model.Email;
-import com.ticket.core.domain.member.model.EncodedPassword;
-import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.core.app.member.command.SeedLoadTestMembersUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +10,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -67,8 +62,7 @@ public class SeedDataLoader implements ApplicationRunner {
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
-    private final MemberRepository memberRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final SeedLoadTestMembersUseCase seedLoadTestMembersUseCase;
 
     @Value("${app.seed.batch-size:" + DEFAULT_BATCH_SIZE + "}")
     private int batchSize;
@@ -116,25 +110,16 @@ public class SeedDataLoader implements ApplicationRunner {
             return;
         }
 
-        final String encodedPassword = passwordEncoder.encode(loadTestMemberPassword);
-        int created = 0;
+        final SeedLoadTestMembersUseCase.Output output = seedLoadTestMembersUseCase.execute(
+                new SeedLoadTestMembersUseCase.Input(
+                        LOAD_TEST_MEMBER_EMAIL_PREFIX,
+                        LOAD_TEST_MEMBER_EMAIL_SUFFIX,
+                        count,
+                        loadTestMemberPassword
+                )
+        );
 
-        for (int memberNo = 1; memberNo <= count; memberNo++) {
-            final String email = LOAD_TEST_MEMBER_EMAIL_PREFIX + memberNo + LOAD_TEST_MEMBER_EMAIL_SUFFIX;
-            if (memberRepository.findByEmail_EmailAndDeletedAtIsNull(email).isPresent()) {
-                continue;
-            }
-
-            memberRepository.save(new Member(
-                    Email.create(email),
-                    EncodedPassword.create(encodedPassword),
-                    LOAD_TEST_MEMBER_EMAIL_PREFIX + memberNo,
-                    Role.MEMBER
-            ));
-            created++;
-        }
-
-        log.info("부하 테스트 회원 시드를 완료했습니다. requested={}, created={}", count, created);
+        log.info("부하 테스트 회원 시드를 완료했습니다. requested={}, created={}", output.requested(), output.created());
     }
 
     private boolean shouldSeed() {
