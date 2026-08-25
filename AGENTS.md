@@ -44,27 +44,40 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
    - 현재 구현 상태와 모듈 경계를 확인한다.
 4. `core/core-api`
    - HTTP/WebSocket 진입점, 보안, 설정을 본다.
-5. `core/core-domain`
-   - 비즈니스 흐름, 저장소, Redis port, 락, 만료 처리를 본다.
-6. `core/core-infra`
-   - Redis, WebSocket, 외부 HTTP, AOP 구현체를 본다.
-7. 관련 테스트
+5. `core/core-app`
+   - use case, 트랜잭션 경계, 조회 포트를 본다.
+6. `core/core-domain`
+   - 엔티티, 도메인 정책, repository/Redis port를 본다.
+7. `core/core-infra`
+   - Querydsl 조회 구현, Redis, WebSocket, 외부 HTTP, AOP 구현체를 본다.
+8. 관련 테스트
    - ArchUnit과 도메인 테스트로 실제 강제 규칙을 확인한다.
 
 ## 모듈 경계
+
+의존 방향은 `core-api` -> `core-app` -> `core-domain`이고, `core-infra`는 어댑터로서
+`core-app`과 `core-domain`을 향한다. 반대 방향은 `CoreLayerArchitectureTest`가 막는다.
 
 - `core/core-api`
   - Spring Boot 실행 모듈이다.
   - Controller, request/response DTO, security, WebSocket, HTTP 설정을 둔다.
   - 비즈니스 규칙이나 직접 저장소 접근 로직을 넣지 않는다.
+  - `core-domain`을 프로덕션 코드에서 참조하지 않는다. 계약 테스트만 픽스처로 쓴다.
+- `core/core-app`
+  - use case, 트랜잭션 경계, 오케스트레이션, 조회 포트와 조회 결과 view를 둔다.
+  - 도메인 규칙과 어댑터를 엮어 실제 서비스 흐름을 만든다.
 - `core/core-domain`
-  - use case, 도메인 모델, repository, query model, port를 둔다.
-  - 기능 중심 패키지를 우선한다.
+  - 엔티티, 값 객체, 도메인 정책, `*Finder`, repository/Redis port를 둔다.
+  - JPA 애노테이션 외의 Spring 타입과 Querydsl을 쓰지 않는다.
+  - use case를 두지 않는다.
 - `core/core-infra`
-  - Redis, Redisson, WebSocket publisher, 외부 HTTP, AOP 같은 기술 구현을 둔다.
-  - `core-domain`의 port를 구현한다.
+  - Querydsl 조회 구현, Redis, Redisson, WebSocket publisher, 외부 HTTP, 암호화, 입장 토큰,
+    scheduler, AOP 같은 기술 구현을 둔다.
+  - `core-app`과 `core-domain`의 port를 구현한다.
 - `storage/redis-core`
   - Redis 관련 공통 의존성을 제공한다.
+- `support/error`
+  - 모든 모듈이 쓰는 공통 예외를 제공한다.
 - `support/logging`
   - 공통 로깅 설정을 제공한다.
 
@@ -73,9 +86,9 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 ```text
 HTTP/WebSocket 요청
   -> core/core-api controller/config/security
-  -> core/core-domain command/query/usecase
-  -> repository(RDB) + port(store/publisher/client)
-  -> core/core-infra adapter
+  -> core/core-app command/query use case
+  -> core/core-domain 정책·엔티티 + port(repository/store/publisher/client)
+  -> core/core-infra adapter(Querydsl/Redis/WebSocket/HTTP)
   -> core/core-api response 또는 WebSocket message
 ```
 
@@ -99,6 +112,7 @@ HTTP/WebSocket 요청
 ```bash
 ./gradlew :core:core-api:compileJava
 ./gradlew :core:core-domain:test
+./gradlew :core:core-app:test
 ./gradlew :core:core-api:test
 ./gradlew clean :core:core-api:bootJar -x test
 ```
@@ -112,6 +126,7 @@ Redis adapter, key, TTL, expiration listener를 바꿨으면 통합 테스트까
 구조나 모듈 경계를 건드리면 아래 테스트를 우선 고려한다.
 
 ```bash
+./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"
 ./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainArchitectureTest"
 ./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainModuleStructureTest"
 ```
@@ -133,7 +148,7 @@ CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :
 - 리뷰, 요약, 코멘트, 제안은 항상 한국어로 작성한다.
 - 패치만 보지 말고 주변 코드, 호출 흐름, 관련 설정, 관련 테스트까지 함께 읽는다.
 - 취향성 스타일 지적보다 실제 결함 가능성, 회귀 위험, 테스트 공백을 우선한다.
-- `core-api`, `core-domain`, `core-infra` 경계 위반 여부를 먼저 확인한다(`docs/architecture.md`).
+- `core-api`, `core-app`, `core-domain`, `core-infra` 경계 위반 여부를 먼저 확인한다(`docs/architecture.md`).
 - 보안, 동시성, 트랜잭션 경계, Redis TTL과 만료 처리, 테스트 공백을 점검한다.
 - `@Transactional` 경계, 읽기 전용 조회, 예외 처리, null 반환, JPA fetch 전략은 Java 변경에서 항상 본다.
 - findings first 원칙을 따르고 심각도 높은 순서로 적는다. 각 이슈는 왜 문제인지, 어떤 조건에서
