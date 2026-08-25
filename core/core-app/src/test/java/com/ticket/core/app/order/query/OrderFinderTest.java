@@ -1,7 +1,7 @@
-package com.ticket.core.domain.order.query;
+package com.ticket.core.app.order.query;
 
 import com.ticket.core.domain.order.model.Order;
-import com.ticket.core.domain.order.query.OrderFinder;
+import com.ticket.core.app.order.query.OrderFinder;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorType;

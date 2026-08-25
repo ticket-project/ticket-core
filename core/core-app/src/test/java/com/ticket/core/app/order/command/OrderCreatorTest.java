@@ -1,5 +1,6 @@
-package com.ticket.core.domain.order.command.create;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.order.command.create.OrderKeyGenerator;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.repository.OrderRepository;

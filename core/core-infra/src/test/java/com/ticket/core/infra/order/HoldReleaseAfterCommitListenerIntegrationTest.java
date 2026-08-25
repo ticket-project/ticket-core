@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
+import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

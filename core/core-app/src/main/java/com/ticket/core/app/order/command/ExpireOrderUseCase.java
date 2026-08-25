@@ -1,6 +1,6 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.domain.order.command.OrderTerminationService;
+import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.order.model.OrderState;

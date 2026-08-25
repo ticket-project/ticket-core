@@ -1,5 +1,8 @@
-package com.ticket.core.domain.order.command.create;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.order.command.create.HoldCreationOutboxStatus;
+import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
+import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
