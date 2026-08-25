@@ -67,13 +67,14 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 - `core/core-app`
   - use case, 트랜잭션 경계, 오케스트레이션, 조회 포트와 조회 결과 view를 둔다.
   - 도메인 규칙과 어댑터를 엮어 실제 서비스 흐름을 만든다.
+  - 포트와 값 객체는 여기가 아니라 `core-domain`에 둔다. 여기에는 흐름만 남긴다.
 - `core/core-domain`
   - 엔티티, 값 객체, 도메인 정책, `*Finder`, repository/Redis port를 둔다.
   - JPA 애노테이션 외의 Spring 타입과 Querydsl을 쓰지 않는다.
   - use case를 두지 않는다.
 - `core/core-infra`
-  - Querydsl 조회 구현, Redis, Redisson, WebSocket publisher, 외부 HTTP, 암호화, 입장 토큰,
-    scheduler, AOP 같은 기술 구현을 둔다.
+  - Querydsl 조회 구현, Redis, Redisson, WebSocket publisher, 외부 HTTP, JWT, 암호화,
+    입장 토큰, scheduler, AOP 같은 기술 구현을 둔다.
   - `core-app`과 `core-domain`의 port를 구현한다.
 - `storage/redis-core`
   - Redis 관련 공통 의존성을 제공한다.
