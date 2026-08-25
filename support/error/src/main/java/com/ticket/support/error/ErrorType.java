@@ -1,4 +1,4 @@
-package com.ticket.core.support.exception;
+package com.ticket.support.error;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

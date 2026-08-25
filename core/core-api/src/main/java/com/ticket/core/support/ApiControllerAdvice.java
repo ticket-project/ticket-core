@@ -1,8 +1,8 @@
 package com.ticket.core.support;
 
-import com.ticket.core.support.exception.AuthException;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.AuthException;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import com.ticket.core.support.response.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

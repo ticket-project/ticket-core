@@ -6,8 +6,8 @@ import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
-import com.ticket.core.support.exception.AuthException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.AuthException;
+import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

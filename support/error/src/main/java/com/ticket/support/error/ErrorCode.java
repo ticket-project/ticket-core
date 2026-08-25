@@ -1,4 +1,4 @@
-package com.ticket.core.support.exception;
+package com.ticket.support.error;
 
 public enum ErrorCode {
     E400("잘못된 요청"),

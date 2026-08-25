@@ -1,7 +1,7 @@
 package com.ticket.core.domain.auth.token;
 
-import com.ticket.core.support.exception.AuthException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.AuthException;
+import com.ticket.support.error.ErrorType;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode

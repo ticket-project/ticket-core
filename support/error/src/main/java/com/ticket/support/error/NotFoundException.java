@@ -1,18 +1,18 @@
-package com.ticket.core.support.exception;
+package com.ticket.support.error;
 
 import lombok.Getter;
 
 @Getter
-public class CoreException extends RuntimeException {
+public class NotFoundException extends RuntimeException {
 
     private final ErrorType errorType;
     private final Object data;
 
-    public CoreException(final ErrorType errorType) {
+    public NotFoundException(final ErrorType errorType) {
         this(errorType, null);
     }
 
-    public CoreException(final ErrorType errorType, Object data) {
+    public NotFoundException(final ErrorType errorType, Object data) {
         super(errorType.getMessage());
         this.errorType = errorType;
         this.data = data;

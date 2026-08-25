@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performanceseat.command;
 
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

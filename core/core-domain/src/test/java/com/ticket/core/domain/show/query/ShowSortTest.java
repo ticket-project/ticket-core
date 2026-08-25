@@ -1,8 +1,8 @@
 package com.ticket.core.domain.show.query;
 
 import com.ticket.core.domain.show.meta.ShowSortKey;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
