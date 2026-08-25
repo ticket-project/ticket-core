@@ -1,4 +1,4 @@
-package com.ticket.core.config.admission;
+package com.ticket.core.infra.queue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;

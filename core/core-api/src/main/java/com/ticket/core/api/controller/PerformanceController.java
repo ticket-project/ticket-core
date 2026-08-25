@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceControllerDocs;
-import com.ticket.core.config.admission.AdmissionTokenService;
+import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
@@ -56,7 +56,7 @@ public class PerformanceController implements PerformanceControllerDocs {
     @GetMapping("/{performanceId}/seats/status")
     public ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
             @PathVariable final Long performanceId,
-            @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
+            @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {
         final GetSeatStatusUseCase.Input input = new GetSeatStatusUseCase.Input(

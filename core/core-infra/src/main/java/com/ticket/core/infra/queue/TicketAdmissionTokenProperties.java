@@ -1,4 +1,4 @@
-package com.ticket.core.config.admission;
+package com.ticket.core.infra.queue;
 
 import lombok.Getter;
 import lombok.Setter;

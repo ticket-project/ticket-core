@@ -1,4 +1,4 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth;
 
 import com.ticket.core.app.auth.PasswordService;
 import com.ticket.core.domain.member.model.EncodedPassword;

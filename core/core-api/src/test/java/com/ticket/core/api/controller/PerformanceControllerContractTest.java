@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.core.config.admission.AdmissionTokenService;
+import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatAvailabilityUseCase;
@@ -80,7 +80,7 @@ class PerformanceControllerContractTest {
                 .thenReturn(new GetSeatStatusUseCase.Output(List.of()));
 
         mockMvc.perform(get("/api/v1/performances/10/seats/status")
-                        .header(AdmissionTokenService.HEADER, "admission-token"))
+                        .header(AdmissionHeaders.ADMISSION_TOKEN, "admission-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"));
 

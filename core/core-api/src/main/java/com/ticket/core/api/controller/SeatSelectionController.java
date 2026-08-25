@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.SeatSelectionControllerDocs;
-import com.ticket.core.config.admission.AdmissionTokenService;
+import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.app.performanceseat.command.DeselectSeatUseCase;
@@ -24,7 +24,7 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
     public ApiResponse<Void> selectSeat(
             @PathVariable final Long performanceId,
             @PathVariable final Long seatId,
-            @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
+            @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {
         selectSeatUseCase.execute(new SelectSeatUseCase.Input(
