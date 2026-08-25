@@ -8,6 +8,7 @@ tasks.named('jar') {
 
 dependencies {
     implementation project(':core:core-domain')
+    implementation project(':core:core-app')
     implementation project(':core:core-infra')
     implementation project(':support:error')
     implementation project(':support:logging')
