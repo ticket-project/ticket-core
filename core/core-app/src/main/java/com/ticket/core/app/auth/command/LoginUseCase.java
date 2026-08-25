@@ -44,7 +44,7 @@ public class LoginUseCase {
 
     public Result execute(final Input input) {
         final Member member = authService.login(input.email(), input.password());
-        final IssuedAuthTokens result = authTokenManager.issueTokens(member);
+        final IssuedAuthTokens result = authTokenManager.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
                 result.refreshToken()
