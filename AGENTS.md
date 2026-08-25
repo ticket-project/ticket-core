@@ -70,7 +70,8 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
   - 포트와 값 객체는 여기가 아니라 `core-domain`에 둔다. 여기에는 흐름만 남긴다.
 - `core/core-domain`
   - 엔티티, 값 객체, 도메인 정책, `*Finder`, repository/Redis port를 둔다.
-  - JPA 애노테이션 외의 Spring 타입과 Querydsl을 쓰지 않는다.
+  - Spring은 `data`(JPA)와 `stereotype`(빈 선언)만 쓴다. 트랜잭션 경계와 이벤트 발행,
+    Querydsl은 여기에 두지 않는다.
   - use case를 두지 않는다.
 - `core/core-infra`
   - Querydsl 조회 구현, Redis, Redisson, WebSocket publisher, 외부 HTTP, JWT, 암호화,
