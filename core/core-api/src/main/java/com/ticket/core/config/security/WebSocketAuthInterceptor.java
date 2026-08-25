@@ -1,5 +1,7 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import io.jsonwebtoken.JwtException;
@@ -31,7 +33,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final JwtTokenService jwtTokenService;
+    private final AccessTokenReader accessTokenReader;
 
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) {
@@ -43,7 +45,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
                 final String token = authorization.substring(BEARER_PREFIX.length());
                 try {
-                    final AuthenticatedMember member = jwtTokenService.parse(token);
+                    final AuthenticatedMember member = accessTokenReader.read(token);
                     final UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     member,

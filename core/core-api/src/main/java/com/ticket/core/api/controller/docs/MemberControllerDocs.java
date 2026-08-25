@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;

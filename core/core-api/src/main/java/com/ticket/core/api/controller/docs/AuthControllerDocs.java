@@ -3,7 +3,7 @@ package com.ticket.core.api.controller.docs;
 import com.ticket.core.api.controller.request.ExchangeOAuth2TokenRequest;
 import com.ticket.core.api.controller.request.LoginRequest;
 import com.ticket.core.api.controller.request.RegisterMemberRequest;
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.app.auth.command.LoginUseCase;
 import com.ticket.core.app.auth.command.LogoutUseCase;

@@ -1,9 +1,9 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth.token;
 
-import com.ticket.core.app.auth.token.AuthRefreshToken;
-import com.ticket.core.app.auth.token.AuthTokenManager;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
-import com.ticket.core.app.auth.token.RefreshTokenStore;
+import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.domain.auth.token.AuthTokenManager;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +19,16 @@ public class JwtAuthTokenManager implements AuthTokenManager {
 
     @Override
     public IssuedAuthTokens issueTokens(final Long memberId, final String role) {
+        final long refreshTokenExpiresIn = jwtProperties.getRefreshTokenExpirationSeconds();
         final String accessToken = jwtTokenService.createAccessToken(memberId, role);
-        final String refreshToken = refreshTokenStore.createRefreshToken(
-                memberId,
-                jwtProperties.getRefreshTokenExpirationSeconds()
-        );
+        final String refreshToken = refreshTokenStore.createRefreshToken(memberId, refreshTokenExpiresIn);
 
         return new IssuedAuthTokens(
                 accessToken,
                 refreshToken,
                 TOKEN_TYPE_BEARER,
                 jwtTokenService.getAccessTokenExpirationSeconds(),
+                refreshTokenExpiresIn,
                 memberId
         );
     }
@@ -40,11 +39,8 @@ public class JwtAuthTokenManager implements AuthTokenManager {
             final String role,
             final AuthRefreshToken refreshToken
     ) {
-        final String newRefreshToken = refreshTokenStore.rotate(
-                refreshToken,
-                memberId,
-                jwtProperties.getRefreshTokenExpirationSeconds()
-        );
+        final long refreshTokenExpiresIn = jwtProperties.getRefreshTokenExpirationSeconds();
+        final String newRefreshToken = refreshTokenStore.rotate(refreshToken, memberId, refreshTokenExpiresIn);
         final String newAccessToken = jwtTokenService.createAccessToken(memberId, role);
 
         return new IssuedAuthTokens(
@@ -52,6 +48,7 @@ public class JwtAuthTokenManager implements AuthTokenManager {
                 newRefreshToken,
                 TOKEN_TYPE_BEARER,
                 jwtTokenService.getAccessTokenExpirationSeconds(),
+                refreshTokenExpiresIn,
                 memberId
         );
     }

@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth.command;
 
 import com.ticket.core.app.auth.AuthService;
-import com.ticket.core.app.auth.token.AuthTokenManager;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.token.AuthTokenManager;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,12 +32,13 @@ public class LoginUseCase {
                     ']';
         }
     }
-    public record Result(Output output, String refreshToken) {
+    public record Result(Output output, String refreshToken, long refreshTokenExpiresIn) {
         @Override
         public String toString() {
             return "Result[" +
                     "output=" + output +
                     ", refreshToken=" + redact(refreshToken) +
+                    ", refreshTokenExpiresIn=" + refreshTokenExpiresIn +
                     ']';
         }
     }
@@ -47,7 +48,8 @@ public class LoginUseCase {
         final IssuedAuthTokens result = authTokenManager.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
-                result.refreshToken()
+                result.refreshToken(),
+                result.refreshTokenExpiresIn()
         );
     }
 

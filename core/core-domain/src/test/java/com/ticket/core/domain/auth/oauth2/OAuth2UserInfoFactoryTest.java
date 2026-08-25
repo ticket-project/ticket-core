@@ -1,4 +1,4 @@
-package com.ticket.core.app.auth.oauth2;
+package com.ticket.core.domain.auth.oauth2;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorType;

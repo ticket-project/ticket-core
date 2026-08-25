@@ -1,7 +1,7 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.app.auth.token.AuthRefreshToken;
-import com.ticket.core.app.auth.token.RefreshTokenStore;
+import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,15 @@ public class LogoutUseCase {
 
     private final RefreshTokenStore refreshTokenStore;
 
-    public record Input(Long memberId, AuthRefreshToken refreshToken) {}
+    public record Input(Long memberId, AuthRefreshToken refreshToken) {
+
+        /**
+         * API 경계에서 받은 원문을 값 객체로 바꾼다.
+         */
+        public static Input of(final Long memberId, final String rawRefreshToken) {
+            return new Input(memberId, AuthRefreshToken.from(rawRefreshToken));
+        }
+    }
 
     public record Output() {}
 

@@ -1,4 +1,4 @@
-package com.ticket.core.app.auth.token;
+package com.ticket.core.domain.auth.token;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ class IssuedAuthTokensTest {
                 "refresh-token",
                 "Bearer",
                 1800L,
+                1209600L,
                 7L
         );
 

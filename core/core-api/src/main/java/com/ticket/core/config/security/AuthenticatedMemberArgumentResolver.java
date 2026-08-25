@@ -1,5 +1,6 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;

@@ -1,4 +1,4 @@
-package com.ticket.core.config.security;
+package com.ticket.core.app.auth.token;
 
 /**
  * 인증된 회원을 나타내는 값이다. 컨트롤러는 이 타입을 파라미터로 받고,

@@ -1,8 +1,8 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth.token;
 
-import com.ticket.core.app.auth.token.AuthRefreshToken;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
-import com.ticket.core.app.auth.token.RefreshTokenStore;
+import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

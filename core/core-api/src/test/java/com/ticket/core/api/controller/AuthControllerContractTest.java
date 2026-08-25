@@ -1,7 +1,6 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.core.config.security.JwtProperties;
 import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.core.app.auth.command.LoginUseCase;
 import com.ticket.core.app.auth.command.LogoutUseCase;
@@ -11,7 +10,7 @@ import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,6 @@ class AuthControllerContractTest {
     private final RefreshAuthTokenUseCase refreshAuthTokenUseCase = Mockito.mock(RefreshAuthTokenUseCase.class);
     private final ExchangeOAuth2TokenUseCase exchangeOAuth2TokenUseCase = Mockito.mock(ExchangeOAuth2TokenUseCase.class);
     private final LogoutUseCase logoutUseCase = Mockito.mock(LogoutUseCase.class);
-    private final JwtProperties jwtProperties = Mockito.mock(JwtProperties.class);
 
     @BeforeEach
     void setUp() {
@@ -49,10 +47,8 @@ class AuthControllerContractTest {
                 refreshAuthTokenUseCase,
                 exchangeOAuth2TokenUseCase,
                 Mockito.mock(GetSocialLoginUrlsUseCase.class),
-                logoutUseCase,
-                jwtProperties
+                logoutUseCase
         );
-        when(jwtProperties.getRefreshTokenExpirationSeconds()).thenReturn(1209600L);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
@@ -69,7 +65,8 @@ class AuthControllerContractTest {
         when(loginUseCase.execute(any(LoginUseCase.Input.class)))
                 .thenReturn(new LoginUseCase.Result(
                         new LoginUseCase.Output("access-token", "Bearer", 1800L, 1L),
-                        "refresh-token"
+                        "refresh-token",
+                        1209600L
                 ));
 
         mockMvc.perform(post("/api/v1/auth/login")
@@ -86,6 +83,8 @@ class AuthControllerContractTest {
                 .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.data.memberId").value(1))
                 .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("refresh_token=refresh-token")))
+                // 쿠키 만료는 발급 결과가 알려 준 값을 그대로 쓴다
+                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=1209600")))
                 .andExpect(jsonPath("$.error").isEmpty());
     }
 
@@ -102,7 +101,8 @@ class AuthControllerContractTest {
         when(refreshAuthTokenUseCase.execute(any(RefreshAuthTokenUseCase.Input.class)))
                 .thenReturn(new RefreshAuthTokenUseCase.Result(
                         new RefreshAuthTokenUseCase.Output("new-access-token", "Bearer", 1800L, 1L),
-                        "new-refresh-token"
+                        "new-refresh-token",
+                        1209600L
                 ));
 
         mockMvc.perform(post("/api/v1/auth/refresh")
@@ -121,7 +121,8 @@ class AuthControllerContractTest {
         when(exchangeOAuth2TokenUseCase.execute(any(ExchangeOAuth2TokenUseCase.Input.class)))
                 .thenReturn(new ExchangeOAuth2TokenUseCase.Result(
                         new ExchangeOAuth2TokenUseCase.Output("oauth-access-token", "Bearer", 1800L, 7L),
-                        "oauth-refresh-token"
+                        "oauth-refresh-token",
+                        1209600L
                 ));
 
         mockMvc.perform(post("/api/v1/auth/oauth2/token")

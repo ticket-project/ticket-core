@@ -1,9 +1,9 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.app.auth.token.AuthRefreshToken;
-import com.ticket.core.app.auth.token.AuthTokenManager;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
-import com.ticket.core.app.auth.token.RefreshTokenStore;
+import com.ticket.core.domain.auth.token.AuthRefreshToken;
+import com.ticket.core.domain.auth.token.AuthTokenManager;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.support.error.AuthException;
@@ -19,7 +19,16 @@ public class RefreshAuthTokenUseCase {
     private final MemberFinder memberFinder;
     private final AuthTokenManager authTokenManager;
 
-    public record Input(AuthRefreshToken refreshToken) {}
+    public record Input(AuthRefreshToken refreshToken) {
+
+        /**
+         * API 경계에서 받은 원문을 값 객체로 바꾼다. 컨트롤러가 도메인 타입을 알지 않아도 되고,
+         * 형식이 올바르지 않으면 이 지점에서 인증 오류로 걸린다.
+         */
+        public static Input of(final String rawRefreshToken) {
+            return new Input(AuthRefreshToken.from(rawRefreshToken));
+        }
+    }
 
     public record Output(
             String accessToken,
@@ -38,12 +47,13 @@ public class RefreshAuthTokenUseCase {
         }
     }
 
-    public record Result(Output output, String refreshToken) {
+    public record Result(Output output, String refreshToken, long refreshTokenExpiresIn) {
         @Override
         public String toString() {
             return "Result[" +
                     "output=" + output +
                     ", refreshToken=" + redact(refreshToken) +
+                    ", refreshTokenExpiresIn=" + refreshTokenExpiresIn +
                     ']';
         }
     }
@@ -55,7 +65,8 @@ public class RefreshAuthTokenUseCase {
         final IssuedAuthTokens result = authTokenManager.rotateTokens(member.getId(), member.getRole().name(), input.refreshToken());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
-                result.refreshToken()
+                result.refreshToken(),
+                result.refreshTokenExpiresIn()
         );
     }
 

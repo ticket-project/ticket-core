@@ -1,4 +1,4 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth.token;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,6 +1,7 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.config.security.AuthenticatedMember;
+import com.ticket.core.app.auth.token.AccessTokenReader;
+import com.ticket.core.app.auth.token.AuthenticatedMember;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ class ActuatorSecurityConfigTest {
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @MockitoBean
-    private JwtTokenService jwtTokenService;
+    private AccessTokenReader accessTokenReader;
 
     @MockitoBean
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
@@ -115,7 +116,7 @@ class ActuatorSecurityConfigTest {
 
     @Test
     void 일반_api는_유효한_internal_auth_token으로_접근할_수_있다() throws Exception {
-        Mockito.when(jwtTokenService.parse("access-token"))
+        Mockito.when(accessTokenReader.read("access-token"))
                 .thenReturn(new AuthenticatedMember(7L, "MEMBER"));
 
         mockMvc.perform(get("/api/v1/private-test")
@@ -126,7 +127,7 @@ class ActuatorSecurityConfigTest {
 
     @Test
     void 일반_api는_유효하지_않은_internal_auth_token이면_401을_반환한다() throws Exception {
-        Mockito.when(jwtTokenService.parse("not-a-valid-token"))
+        Mockito.when(accessTokenReader.read("not-a-valid-token"))
                 .thenThrow(new IllegalArgumentException("invalid"));
 
         mockMvc.perform(get("/api/v1/private-test")

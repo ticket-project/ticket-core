@@ -2,8 +2,8 @@ package com.ticket.core.app.auth.command;
 
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.app.auth.AuthService;
-import com.ticket.core.app.auth.token.AuthTokenManager;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.token.AuthTokenManager;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class LoginUseCaseTest {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
         when(member.getRole()).thenReturn(Role.MEMBER);
-        IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1L);
+        IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 1L);
 
         when(authService.login("user@example.com", "password")).thenReturn(member);
         when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);

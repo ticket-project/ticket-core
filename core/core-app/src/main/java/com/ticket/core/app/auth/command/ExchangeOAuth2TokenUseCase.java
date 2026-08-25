@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
-import com.ticket.core.app.auth.token.AuthTokenManager;
-import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.domain.auth.token.AuthTokenManager;
+import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.support.error.AuthException;
@@ -37,12 +37,13 @@ public class ExchangeOAuth2TokenUseCase {
         }
     }
 
-    public record Result(Output output, String refreshToken) {
+    public record Result(Output output, String refreshToken, long refreshTokenExpiresIn) {
         @Override
         public String toString() {
             return "Result[" +
                     "output=" + output +
                     ", refreshToken=" + redact(refreshToken) +
+                    ", refreshTokenExpiresIn=" + refreshTokenExpiresIn +
                     ']';
         }
     }
@@ -54,7 +55,8 @@ public class ExchangeOAuth2TokenUseCase {
         final IssuedAuthTokens result = authTokenManager.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
-                result.refreshToken()
+                result.refreshToken(),
+                result.refreshTokenExpiresIn()
         );
     }
 

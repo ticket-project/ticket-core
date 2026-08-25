@@ -1,4 +1,4 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth.token;
 
 import org.junit.jupiter.api.Test;
 
