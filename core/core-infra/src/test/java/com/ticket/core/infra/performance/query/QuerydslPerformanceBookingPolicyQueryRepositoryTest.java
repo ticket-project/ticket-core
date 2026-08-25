@@ -1,5 +1,6 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.infra.performance.query;
 
+import com.ticket.core.domain.performance.query.PerformanceBookingPolicyQueryRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.queue.model.QueueLevel;
@@ -13,9 +14,9 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(PerformanceBookingPolicyQueryRepository.class)
+@Import(QuerydslPerformanceBookingPolicyQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceBookingPolicyQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslPerformanceBookingPolicyQueryRepositoryTest extends QueryRepositoryTestSupport {
 
     @Autowired
     private PerformanceBookingPolicyQueryRepository queryRepository;

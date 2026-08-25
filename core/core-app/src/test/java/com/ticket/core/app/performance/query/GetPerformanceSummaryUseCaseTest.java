@@ -1,6 +1,6 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.app.performance.query;
 
-import com.ticket.core.domain.performance.query.model.PerformanceSummaryView;
+import com.ticket.core.app.performance.query.model.PerformanceSummaryView;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorType;
