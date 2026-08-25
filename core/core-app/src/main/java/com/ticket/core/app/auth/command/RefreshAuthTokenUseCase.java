@@ -52,7 +52,7 @@ public class RefreshAuthTokenUseCase {
         final Long memberId = refreshTokenStore.validate(input.refreshToken())
                 .orElseThrow(() -> new AuthException(ErrorType.AUTHENTICATION_ERROR, "유효하지 않거나 만료된 리프레시 토큰입니다."));
         final Member member = memberFinder.findActiveMemberById(memberId);
-        final IssuedAuthTokens result = authTokenManager.rotateTokens(member, input.refreshToken());
+        final IssuedAuthTokens result = authTokenManager.rotateTokens(member.getId(), member.getRole().name(), input.refreshToken());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
                 result.refreshToken()

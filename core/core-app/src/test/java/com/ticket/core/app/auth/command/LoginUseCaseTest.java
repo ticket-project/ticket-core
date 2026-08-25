@@ -1,5 +1,6 @@
 package com.ticket.core.app.auth.command;
 
+import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.app.auth.AuthService;
 import com.ticket.core.app.auth.token.AuthTokenManager;
 import com.ticket.core.app.auth.token.IssuedAuthTokens;
@@ -31,10 +32,12 @@ class LoginUseCaseTest {
     @Test
     void successful_login_issues_tokens() {
         Member member = mock(Member.class);
+        when(member.getId()).thenReturn(1L);
+        when(member.getRole()).thenReturn(Role.MEMBER);
         IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1L);
 
         when(authService.login("user@example.com", "password")).thenReturn(member);
-        when(authTokenManager.issueTokens(member)).thenReturn(response);
+        when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         LoginUseCase.Result result = useCase.execute(new LoginUseCase.Input("user@example.com", "password"));
         LoginUseCase.Output output = result.output();
@@ -48,6 +51,6 @@ class LoginUseCaseTest {
                 .doesNotContain("access-token-value")
                 .doesNotContain("refresh-token-value");
         verify(authService).login("user@example.com", "password");
-        verify(authTokenManager).issueTokens(member);
+        verify(authTokenManager).issueTokens(1L, "MEMBER");
     }
 }

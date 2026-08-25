@@ -1,9 +1,8 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.app.auth.oauth2.OAuth2MemberProvisioningService;
-import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.model.Email;
-import com.ticket.core.domain.member.model.Role;
+import org.springframework.test.util.ReflectionTestUtils;
+import com.ticket.core.app.auth.oauth2.ProvisionOAuth2MemberUseCase;
+import com.ticket.core.app.auth.oauth2.ProvisionedMember;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -13,7 +12,6 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Map;
@@ -28,9 +26,9 @@ class CustomOAuth2UserServiceTest {
 
     @Test
     void OAuth2_사용자정보를_회원에_연결하고_AuthenticatedMember를_반환한다() {
-        OAuth2MemberProvisioningService provisioningService = Mockito.mock(OAuth2MemberProvisioningService.class);
+        ProvisionOAuth2MemberUseCase provisionUseCase = Mockito.mock(ProvisionOAuth2MemberUseCase.class);
         DefaultOAuth2UserService delegate = Mockito.mock(DefaultOAuth2UserService.class);
-        CustomOAuth2UserService customOAuth2UserService = new CustomOAuth2UserService(provisioningService);
+        CustomOAuth2UserService customOAuth2UserService = new CustomOAuth2UserService(provisionUseCase);
         ReflectionTestUtils.setField(customOAuth2UserService, "delegate", delegate);
 
         Map<String, Object> attributes = Map.of(
@@ -40,15 +38,12 @@ class CustomOAuth2UserServiceTest {
         );
         OAuth2UserRequest userRequest = createUserRequest();
         OAuth2User oauth2User = new DefaultOAuth2User(java.util.List.of(), attributes, "sub");
-        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
-        ReflectionTestUtils.setField(member, "id", 7L);
-
         when(delegate.loadUser(userRequest)).thenReturn(oauth2User);
-        when(provisioningService.getOrCreateMember(argThat(userInfo ->
+        when(provisionUseCase.execute(argThat(userInfo ->
                 userInfo.providerId().equals("google-user-1")
                         && "user@example.com".equals(userInfo.email())
                         && "사용자".equals(userInfo.name())
-        ))).thenReturn(member);
+        ))).thenReturn(new ProvisionedMember(7L, "MEMBER"));
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
 

@@ -1,5 +1,6 @@
 package com.ticket.core.app.auth.command;
 
+import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
 import com.ticket.core.app.auth.token.AuthTokenManager;
 import com.ticket.core.app.auth.token.IssuedAuthTokens;
@@ -40,11 +41,13 @@ class ExchangeOAuth2TokenUseCaseTest {
     @Test
     void valid_code_issues_tokens() {
         Member member = mock(Member.class);
+        when(member.getId()).thenReturn(1L);
+        when(member.getRole()).thenReturn(Role.MEMBER);
         IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 7L);
 
         when(oAuth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
         when(memberFinder.findActiveMemberById(7L)).thenReturn(member);
-        when(authTokenManager.issueTokens(member)).thenReturn(response);
+        when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         ExchangeOAuth2TokenUseCase.Result result =
                 useCase.execute(new ExchangeOAuth2TokenUseCase.Input("oauth-code"));
@@ -60,7 +63,7 @@ class ExchangeOAuth2TokenUseCaseTest {
                 .doesNotContain("refresh-token-value");
         verify(oAuth2AuthCodeStore).consumeCode("oauth-code");
         verify(memberFinder).findActiveMemberById(7L);
-        verify(authTokenManager).issueTokens(member);
+        verify(authTokenManager).issueTokens(1L, "MEMBER");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.ticket.core.app.auth.command;
 
+import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.app.auth.token.AuthTokenManager;
 import com.ticket.core.app.auth.token.IssuedAuthTokens;
@@ -41,12 +42,14 @@ class RefreshAuthTokenUseCaseTest {
     @Test
     void valid_refresh_token_rotates_tokens() {
         Member member = mock(Member.class);
+        when(member.getId()).thenReturn(1L);
+        when(member.getRole()).thenReturn(Role.MEMBER);
         IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "new-refresh-token-value", "Bearer", 1800L, 3L);
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
         when(memberFinder.findActiveMemberById(3L)).thenReturn(member);
-        when(authTokenManager.rotateTokens(member, refreshToken)).thenReturn(response);
+        when(authTokenManager.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result =
                 useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken));
@@ -62,7 +65,7 @@ class RefreshAuthTokenUseCaseTest {
                 .doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
         verify(memberFinder).findActiveMemberById(3L);
-        verify(authTokenManager).rotateTokens(member, refreshToken);
+        verify(authTokenManager).rotateTokens(1L, "MEMBER", refreshToken);
     }
 
     @Test

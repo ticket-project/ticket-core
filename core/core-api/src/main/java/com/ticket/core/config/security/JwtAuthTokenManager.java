@@ -4,7 +4,6 @@ import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.app.auth.token.AuthTokenManager;
 import com.ticket.core.app.auth.token.IssuedAuthTokens;
 import com.ticket.core.app.auth.token.RefreshTokenStore;
-import com.ticket.core.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +18,10 @@ public class JwtAuthTokenManager implements AuthTokenManager {
     private final RefreshTokenStore refreshTokenStore;
 
     @Override
-    public IssuedAuthTokens issueTokens(final Member member) {
-        final String accessToken = jwtTokenService.createAccessToken(member.getId(), member.getRole().name());
+    public IssuedAuthTokens issueTokens(final Long memberId, final String role) {
+        final String accessToken = jwtTokenService.createAccessToken(memberId, role);
         final String refreshToken = refreshTokenStore.createRefreshToken(
-                member.getId(),
+                memberId,
                 jwtProperties.getRefreshTokenExpirationSeconds()
         );
 
@@ -31,28 +30,29 @@ public class JwtAuthTokenManager implements AuthTokenManager {
                 refreshToken,
                 TOKEN_TYPE_BEARER,
                 jwtTokenService.getAccessTokenExpirationSeconds(),
-                member.getId()
+                memberId
         );
     }
 
     @Override
     public IssuedAuthTokens rotateTokens(
-            final Member member,
+            final Long memberId,
+            final String role,
             final AuthRefreshToken refreshToken
     ) {
         final String newRefreshToken = refreshTokenStore.rotate(
                 refreshToken,
-                member.getId(),
+                memberId,
                 jwtProperties.getRefreshTokenExpirationSeconds()
         );
-        final String newAccessToken = jwtTokenService.createAccessToken(member.getId(), member.getRole().name());
+        final String newAccessToken = jwtTokenService.createAccessToken(memberId, role);
 
         return new IssuedAuthTokens(
                 newAccessToken,
                 newRefreshToken,
                 TOKEN_TYPE_BEARER,
                 jwtTokenService.getAccessTokenExpirationSeconds(),
-                member.getId()
+                memberId
         );
     }
 }
