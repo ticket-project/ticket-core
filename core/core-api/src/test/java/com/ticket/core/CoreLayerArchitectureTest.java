@@ -56,6 +56,17 @@ class CoreLayerArchitectureTest {
                     .should().dependOnClassesThat()
                     .resideInAnyPackage(INFRA, API_CONTROLLER, API_CONFIG);
 
+    /**
+     * core-api는 core-app을 거쳐서만 도메인에 닿는다. 엔티티와 리포지토리를 실행 모듈이 직접
+     * 만지면 use case를 우회하게 되므로 막는다. build.gradle에서도 프로덕션 의존을 뺐고,
+     * 도메인 픽스처가 필요한 계약 테스트만 testImplementation으로 허용한다.
+     */
+    @ArchTest
+    static final ArchRule core_api는_core_domain을_참조하지_않는다 =
+            noClasses()
+                    .that().resideInAnyPackage(API_CONTROLLER, API_CONFIG)
+                    .should().dependOnClassesThat().resideInAPackage(DOMAIN);
+
     @ArchTest
     static final ArchRule core_infra는_api를_참조하지_않는다 =
             noClasses()

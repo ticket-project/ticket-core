@@ -10,7 +10,7 @@ import com.ticket.core.infra.lock.DistributedLockAop;
 import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.support.lock.DistributedLock;
-import com.ticket.core.support.random.UuidSupplier;
+import com.ticket.core.infra.support.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;

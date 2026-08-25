@@ -22,9 +22,12 @@ class CoreDomainModuleStructureTest {
     }
 
     @Test
-    void core_api는_core_domain을_의존해야_한다() throws Exception {
+    void core_api는_core_app을_거쳐_도메인에_닿아야_한다() throws Exception {
         final String apiBuild = Files.readString(resolve("../core-api/build.gradle"));
-        assertThat(apiBuild).contains("implementation project(':core:core-domain')");
+
+        assertThat(apiBuild).contains("implementation project(':core:core-app')");
+        assertThat(apiBuild).doesNotContain("    implementation project(':core:core-domain')");
+        assertThat(apiBuild).contains("testImplementation project(':core:core-domain')");
     }
 
     @Test

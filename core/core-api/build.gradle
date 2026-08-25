@@ -7,7 +7,6 @@ tasks.named('jar') {
 }
 
 dependencies {
-    implementation project(':core:core-domain')
     implementation project(':core:core-app')
     implementation project(':core:core-infra')
     implementation project(':support:error')
@@ -31,6 +30,8 @@ dependencies {
     runtimeOnly 'com.oracle.database.security:oraclepki:21.3.0.0'
     runtimeOnly 'com.oracle.database.security:osdt_core:21.3.0.0'
 
+    // 프로덕션 코드는 core-domain을 보지 않는다. 계약 테스트가 도메인 픽스처를 쓸 때만 허용한다.
+    testImplementation project(':core:core-domain')
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.15")
     testImplementation 'org.springframework.boot:spring-boot-security-test'
     testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
