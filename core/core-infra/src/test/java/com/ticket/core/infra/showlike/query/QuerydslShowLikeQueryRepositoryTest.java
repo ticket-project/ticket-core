@@ -6,8 +6,8 @@ import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.support.QueryRepositoryTestSupport;
-import com.ticket.core.support.cursor.CursorSlice;
+import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.app.support.cursor.CursorSlice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(QuerydslShowLikeQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslShowLikeQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslShowLikeQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
 
     @Autowired
     private ShowLikeQueryRepository showLikeQueryRepository;

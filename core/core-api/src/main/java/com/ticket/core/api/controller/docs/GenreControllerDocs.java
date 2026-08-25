@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.domain.show.query.GetGenresByCategoryUseCase;
+import com.ticket.core.app.show.query.GetGenresByCategoryUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

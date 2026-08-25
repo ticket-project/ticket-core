@@ -8,7 +8,7 @@ import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.mapping.ShowGrade;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.support.QueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(QuerydslSeatAvailabilityQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatAvailabilityQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslSeatAvailabilityQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
 
     @Autowired
     private SeatAvailabilityQueryRepository seatAvailabilityQueryRepository;

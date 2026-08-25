@@ -27,9 +27,6 @@ class ShowFinderTest {
     @Mock
     private ShowJpaRepository showJpaRepository;
 
-    @Mock
-    private ShowDetailQueryRepository showDetailQueryRepository;
-
     @InjectMocks
     private ShowFinder showFinder;
 
@@ -68,24 +65,7 @@ class ShowFinderTest {
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
     }
 
-    @Test
-    void 공연_상세가_있으면_findShowDetail을_반환한다() {
-        GetShowDetailUseCase.Output detail = createShowDetailOutput();
-        when(showDetailQueryRepository.findShowDetail(1L)).thenReturn(Optional.of(detail));
 
-        GetShowDetailUseCase.Output result = showFinder.findShowDetail(1L);
-
-        assertThat(result).isSameAs(detail);
-    }
-
-    @Test
-    void 공연_상세가_없으면_findShowDetail이_not_found_data_예외를_던진다() {
-        when(showDetailQueryRepository.findShowDetail(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> showFinder.findShowDetail(1L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
-    }
 
     private Show createShow() {
         return new Show(
@@ -102,30 +82,6 @@ class ShowFinderTest {
                 null,
                 null,
                 120
-        );
-    }
-
-    private GetShowDetailUseCase.Output createShowDetailOutput() {
-        return new GetShowDetailUseCase.Output(
-                1L,
-                "공연",
-                "부제",
-                "소개",
-                LocalDate.of(2026, 3, 1),
-                LocalDate.of(2026, 3, 31),
-                120,
-                10L,
-                2L,
-                null,
-                SaleType.GENERAL,
-                LocalDateTime.of(2026, 3, 15, 10, 0),
-                LocalDateTime.of(2026, 3, 20, 10, 0),
-                "image",
-                null,
-                null,
-                List.of("뮤지컬"),
-                List.of(),
-                List.of()
         );
     }
 }
