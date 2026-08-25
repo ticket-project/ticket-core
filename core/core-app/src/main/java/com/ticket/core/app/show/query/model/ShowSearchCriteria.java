@@ -37,6 +37,45 @@ public class ShowSearchCriteria {
         this.cursor = cursor;
     }
 
+    /**
+     * API 경계에서 넘어온 문자열을 도메인 enum으로 바꾼다. 값이 올바르지 않으면
+     * 조회로 넘어가기 전에 INVALID_REQUEST로 끊는다.
+     */
+    public static ShowSearchCriteria of(
+            final String keyword,
+            final String category,
+            final String bookingStatus,
+            final LocalDate startDateFrom,
+            final LocalDate startDateTo,
+            final String region,
+            final String cursor
+    ) {
+        return new ShowSearchCriteria(
+                keyword,
+                category,
+                parseEnum(BookingStatus.class, bookingStatus, "bookingStatus"),
+                startDateFrom,
+                startDateTo,
+                parseEnum(Region.class, region, "region"),
+                cursor
+        );
+    }
+
+    private static <E extends Enum<E>> E parseEnum(
+            final Class<E> type,
+            final String value,
+            final String field
+    ) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(type, value);
+        } catch (final IllegalArgumentException exception) {
+            throw new CoreException(ErrorType.INVALID_REQUEST, field + " 값이 올바르지 않습니다: " + value);
+        }
+    }
+
     private void validateStartDateRange(final LocalDate startDateFrom, final LocalDate startDateTo) {
         if (startDateFrom == null || startDateTo == null) {
             return;
