@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
-import com.ticket.core.domain.order.command.create.OrderCreator;
+import com.ticket.core.app.order.command.OrderCreator;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxWriter;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;

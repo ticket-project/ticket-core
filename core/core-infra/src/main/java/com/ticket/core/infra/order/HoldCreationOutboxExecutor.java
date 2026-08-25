@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.hold.model.HoldSnapshot;
-import com.ticket.core.domain.order.command.create.HoldCreationOutboxTransactionService;
+import com.ticket.core.app.order.command.HoldCreationOutboxTransactionService;
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

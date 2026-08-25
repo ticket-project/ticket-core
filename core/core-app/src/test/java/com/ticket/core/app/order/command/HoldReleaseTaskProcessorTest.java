@@ -1,5 +1,6 @@
-package com.ticket.core.domain.order.command.release;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.order.command.release.HoldReleaseTask;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;

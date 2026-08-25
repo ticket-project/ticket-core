@@ -91,28 +91,41 @@ class CoreLayerArchitectureTest {
                     .should().dependOnClassesThat().resideInAnyPackage("com.querydsl..");
 
     /**
-     * core-domain은 엔티티 매핑을 위해 jakarta.persistence와 Spring Data auditing만 허용한다.
-     * HTTP, 보안, 메시징 같은 표현·전송 관심사는 들어오지 않는다.
+     * core-domain에 허용된 Spring은 엔티티 매핑과 저장소 선언에 필요한 것뿐이다.
+     * 즉 {@code data}(JPA repository, auditing)와 {@code stereotype}(빈 선언)만 쓴다.
+     *
+     * <p>표현·전송뿐 아니라 트랜잭션 경계와 이벤트 발행, 표현식 해석도 막는다. 이것들은
+     * 업무 규칙이 아니라 흐름을 엮는 방법이므로 core-app이나 core-infra가 맡는다.
      */
     @ArchTest
-    static final ArchRule core_domain은_http_보안_메시징을_참조하지_않는다 =
+    static final ArchRule core_domain은_매핑과_빈선언_외의_spring을_참조하지_않는다 =
             noClasses()
                     .that().resideInAPackage(DOMAIN)
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "org.springframework.web..",
                             "org.springframework.http..",
                             "org.springframework.security..",
-                            "org.springframework.messaging.."
+                            "org.springframework.messaging..",
+                            "org.springframework.transaction..",
+                            "org.springframework.context..",
+                            "org.springframework.expression..",
+                            "org.springframework.scheduling..",
+                            "org.springframework.dao.."
                     );
 
+    /**
+     * core-app은 트랜잭션 경계를 소유하므로 {@code transaction}은 허용한다.
+     * 표현·전송과 스케줄링은 core-api와 core-infra의 몫이다.
+     */
     @ArchTest
-    static final ArchRule core_app은_http_보안을_참조하지_않는다 =
+    static final ArchRule core_app은_http_보안_스케줄링을_참조하지_않는다 =
             noClasses()
                     .that().resideInAPackage(APP)
                     .should().dependOnClassesThat().resideInAnyPackage(
                             "org.springframework.web..",
                             "org.springframework.http..",
                             "org.springframework.security..",
-                            "org.springframework.messaging.."
+                            "org.springframework.messaging..",
+                            "org.springframework.scheduling.."
                     );
 }

@@ -1,5 +1,7 @@
-package com.ticket.core.domain.order.command.create;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
+import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

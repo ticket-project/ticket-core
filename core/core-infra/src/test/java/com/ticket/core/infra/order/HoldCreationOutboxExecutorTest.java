@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.hold.model.HoldSnapshot;
-import com.ticket.core.domain.order.command.create.HoldCreationOutboxTransactionService;
+import com.ticket.core.app.order.command.HoldCreationOutboxTransactionService;
 import com.ticket.core.support.lock.DistributedLock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

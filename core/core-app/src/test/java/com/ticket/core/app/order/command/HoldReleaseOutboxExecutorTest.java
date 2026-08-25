@@ -1,5 +1,6 @@
-package com.ticket.core.domain.order.command.release;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.order.command.release.HoldReleaseTask;
 import com.ticket.core.support.lock.DistributedLock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

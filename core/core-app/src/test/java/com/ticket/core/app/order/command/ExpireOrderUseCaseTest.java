@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
 import com.ticket.core.app.order.command.ExpireOrderUseCase;
-import com.ticket.core.domain.order.command.OrderTerminationService;
+import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;

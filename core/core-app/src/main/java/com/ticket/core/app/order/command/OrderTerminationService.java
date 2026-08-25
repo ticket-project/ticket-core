@@ -1,4 +1,4 @@
-package com.ticket.core.domain.order.command;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.order.OrderTerminationResult;

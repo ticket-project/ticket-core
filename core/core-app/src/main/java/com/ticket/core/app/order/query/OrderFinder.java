@@ -1,4 +1,4 @@
-package com.ticket.core.domain.order.query;
+package com.ticket.core.app.order.query;
 
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;

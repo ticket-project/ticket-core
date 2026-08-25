@@ -1,5 +1,9 @@
-package com.ticket.core.domain.order.command.release;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.order.command.release.HoldReleaseTask;
+import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
+import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
+import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
+import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
 import com.ticket.support.error.CoreException;

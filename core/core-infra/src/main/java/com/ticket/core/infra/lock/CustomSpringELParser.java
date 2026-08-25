@@ -1,4 +1,4 @@
-package com.ticket.core.support;
+package com.ticket.core.infra.lock;
 
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;

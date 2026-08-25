@@ -1,6 +1,6 @@
 package com.ticket.core.infra.lock;
 
-import com.ticket.core.support.CustomSpringELParser;
+import com.ticket.core.infra.lock.CustomSpringELParser;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
