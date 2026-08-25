@@ -1,6 +1,6 @@
 package com.ticket.core.config;
 
-import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
+import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +13,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addArgumentResolvers(final List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(new MemberPrincipalArgumentResolver());
+        resolvers.add(new AuthenticatedMemberArgumentResolver());
     }
 }

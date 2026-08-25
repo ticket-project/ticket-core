@@ -1,6 +1,7 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import java.util.List;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,17 +43,15 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
                 final String token = authorization.substring(BEARER_PREFIX.length());
                 try {
-                    final AuthenticatedMember authenticated = jwtTokenService.parse(token);
-                    final MemberPrincipal memberPrincipal =
-                            new MemberPrincipal(authenticated.memberId(), authenticated.role());
+                    final AuthenticatedMember member = jwtTokenService.parse(token);
                     final UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
-                                    memberPrincipal,
+                                    member,
                                     null,
-                                    memberPrincipal.getAuthorities()
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))
                             );
                     accessor.setUser(authentication);
-                    log.info("웹소켓 인증에 성공했습니다. memberId={}", memberPrincipal.getMemberId());
+                    log.info("웹소켓 인증에 성공했습니다. memberId={}", member.memberId());
                 } catch (JwtException | IllegalArgumentException e) {
                     log.warn("웹소켓 JWT 인증에 실패했습니다. message={}", e.getMessage());
                     throw new MessageDeliveryException("JWT 인증 실패");

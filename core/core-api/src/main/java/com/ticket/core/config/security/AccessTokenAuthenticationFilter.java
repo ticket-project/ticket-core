@@ -1,5 +1,7 @@
 package com.ticket.core.config.security;
 
+import java.util.List;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -39,12 +41,11 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            AuthenticatedMember authenticated = jwtTokenService.parse(extractBearerToken(authorizationHeader));
-            MemberPrincipal principal = new MemberPrincipal(authenticated.memberId(), authenticated.role());
+            AuthenticatedMember member = jwtTokenService.parse(extractBearerToken(authorizationHeader));
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    principal,
+                    member,
                     null,
-                    principal.getAuthorities()
+                    List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);

@@ -2,7 +2,7 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.SeatSelectionControllerDocs;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.app.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.core.app.performanceseat.command.SelectSeatUseCase;
@@ -25,12 +25,12 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
             @PathVariable final Long performanceId,
             @PathVariable final Long seatId,
             @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
         selectSeatUseCase.execute(new SelectSeatUseCase.Input(
                 performanceId,
                 seatId,
-                memberPrincipal.getMemberId(),
+                member.memberId(),
                 admissionToken
         ));
         return ApiResponse.success();
@@ -41,9 +41,9 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
     public ApiResponse<Void> deselectSeat(
             @PathVariable final Long performanceId,
             @PathVariable final Long seatId,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
-        deselectSeatUseCase.execute(new DeselectSeatUseCase.Input(performanceId, seatId, memberPrincipal.getMemberId()));
+        deselectSeatUseCase.execute(new DeselectSeatUseCase.Input(performanceId, seatId, member.memberId()));
         return ApiResponse.success();
     }
 
@@ -51,9 +51,9 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
     @DeleteMapping("/select")
     public ApiResponse<Void> deselectAllSeats(
             @PathVariable final Long performanceId,
-            final MemberPrincipal memberPrincipal
+            final AuthenticatedMember member
     ) {
-        deselectAllSeatsUseCase.execute(new DeselectAllSeatsUseCase.Input(performanceId, memberPrincipal.getMemberId()));
+        deselectAllSeatsUseCase.execute(new DeselectAllSeatsUseCase.Input(performanceId, member.memberId()));
         return ApiResponse.success();
     }
 }

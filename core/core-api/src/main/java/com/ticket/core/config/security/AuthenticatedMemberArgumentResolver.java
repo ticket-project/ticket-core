@@ -10,11 +10,11 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.server.ResponseStatusException;
 
-public class MemberPrincipalArgumentResolver implements HandlerMethodArgumentResolver {
+public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(final MethodParameter parameter) {
-        return MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
+        return AuthenticatedMember.class.isAssignableFrom(parameter.getParameterType());
     }
 
     @Override
@@ -28,9 +28,8 @@ public class MemberPrincipalArgumentResolver implements HandlerMethodArgumentRes
         if (authentication == null || !authentication.isAuthenticated()) {
             throw unauthorized();
         }
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof MemberPrincipal memberPrincipal) {
-            return memberPrincipal;
+        if (authentication.getPrincipal() instanceof AuthenticatedMember authenticatedMember) {
+            return authenticatedMember;
         }
         throw unauthorized();
     }

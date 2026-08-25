@@ -1,11 +1,11 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
+import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SuppressWarnings("NonAsciiCharacters")
 class HoldControllerContractTest {
 
-    private static final MemberPrincipal MEMBER = new MemberPrincipal(100L, "MEMBER");
+    private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
 
     private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
 
@@ -39,7 +39,7 @@ class HoldControllerContractTest {
     void setUp() {
         HoldController controller = new HoldController(createOrderUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new MemberPrincipalArgumentResolver())
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(

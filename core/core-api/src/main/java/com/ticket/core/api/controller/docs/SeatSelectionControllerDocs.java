@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller.docs;
 
-import com.ticket.core.config.security.MemberPrincipal;
+import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,7 @@ public interface SeatSelectionControllerDocs {
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
             @Parameter(description = "좌석 ID", example = "42", required = true) Long seatId,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) AuthenticatedMember member
     );
 
     @Operation(
@@ -45,7 +45,7 @@ public interface SeatSelectionControllerDocs {
     ApiResponse<Void> deselectSeat(
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
             @Parameter(description = "좌석 ID", example = "42", required = true) Long seatId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) AuthenticatedMember member
     );
 
     @Operation(
@@ -61,6 +61,6 @@ public interface SeatSelectionControllerDocs {
     })
     ApiResponse<Void> deselectAllSeats(
             @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
-            @Parameter(hidden = true) MemberPrincipal memberPrincipal
+            @Parameter(hidden = true) AuthenticatedMember member
     );
 }
