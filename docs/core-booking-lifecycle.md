@@ -104,7 +104,7 @@ ExpireOrderUseCase.expireByHoldKey를 호출한다.
 - HoldReleaseOutboxScheduler: 2분마다 미완료 outbox를 100개씩 보정한다.
 
 보정 스케줄러와 커밋 후 트리거는 core-infra에 위치한다.
-core-domain은 상태 전이와 트랜잭션 단위만 소유한다.
+core-domain은 엔티티의 상태 전이 규칙만 소유하고, 트랜잭션 단위와 outbox 조립은 core-app이 소유한다.
 
 ## DB connection 관점
 
@@ -120,13 +120,15 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 
 ## 주요 코드
 
-- 주문 생성: domain.order.command.create.CreateOrderUseCase
-- 주문 DB 저장: domain.order.command.create.CreatePendingOrderTxService
-- 주문 종료: domain.order.command.OrderTerminationService
-- 생성 outbox 트랜잭션: domain.order.command.create.HoldCreationOutboxTransactionService
+- 주문 생성: app.order.command.CreateOrderUseCase
+- 주문 DB 저장: app.order.command.CreatePendingOrderTxService
+- 주문 종료: app.order.command.OrderTerminationService
+- 상태 전이 규칙: domain.order.model.Order (confirm, expire, cancel)
+- 생성 outbox 트랜잭션: app.order.command.HoldCreationOutboxTransactionService
 - 생성 outbox 외부 처리: infra.order.HoldCreationOutboxExecutor
-- 해제 outbox 트랜잭션: domain.order.command.release.HoldReleaseOutboxTransactionService
-- 해제 outbox 외부 처리: domain.order.command.release.HoldReleaseOutboxExecutor
+- 해제 outbox 트랜잭션: app.order.command.HoldReleaseOutboxTransactionService
+- 해제 outbox 실행 조립: app.order.command.HoldReleaseOutboxExecutor, HoldReleaseTaskProcessor
+- outbox 엔티티와 기록기: domain.order.command.create/release (HoldCreationOutbox, HoldReleaseOutbox, *Writer)
 - Redis TTL 진입 제한: infra.redis.RedisExpirationListenerConfig
 - background queue와 트리거: infra.order
 

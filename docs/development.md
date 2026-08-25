@@ -210,7 +210,8 @@ Core는 Queue가 발급한 admission token의 서명, issuer, audience, scope, �
 ## 기능 개발 순서
 
 1. **계약 확정** — endpoint, 인증 요구, request/response, 상태 코드, 오류를 먼저 정한다.
-2. **domain / application** — use case와 도메인 규칙을 만들고 필요한 port(`store`, publisher, client)를 정의한다.
+2. **domain** — 엔티티와 도메인 규칙, 필요한 port(`store`, publisher, client)를 `core-domain`에 정의한다.
+2-1. **application** — use case와 트랜잭션 경계를 `core-app`에 만든다. 도메인 규칙을 순서대로 엮는다.
 3. **infrastructure** — `core-infra`에서 port를 구현한다. Redis 명령, WebSocket 발행, 외부 HTTP를 여기에 둔다.
 4. **presentation** — `core-api`에서 요청 검증, principal 추출, use case 호출, 응답 매핑만 한다.
 5. **migration** — DB 구조 변경이 있으면 Flyway 새 버전 파일을 추가한다([operations.md](operations.md#db-마이그레이션)).
@@ -222,30 +223,11 @@ Controller가 repository를 직접 부르는 형태로 합치지 않는다.
 
 ## 계층 책임
 
-### core-api
+모듈 경계와 계층별 책임은 [architecture.md](architecture.md)가 단일 출처다. 새 코드를 어디에
+둘지는 `AGENTS.md`의 판단표를, 상세 근거는 [architecture.md의 코드 위치 결정표](architecture.md#코드-위치-결정표)를
+본다. 이 문서에는 기능 맥락과 작업 규칙만 둔다.
 
-- 요청 DTO에 Bean Validation 제약을 명시하고 회원 principal은 argument resolver로 받는다.
-- 응답은 공통 응답 래퍼(`com.ticket.core.support.response`)를 사용하고 엔티티를 그대로 반환하지 않는다.
-- 실제 동작과 상태 코드, Swagger 문서 인터페이스를 일치시킨다.
-- 리소스 존재 여부 판단과 업무 분기를 Controller에 넣지 않는다.
-- 대기열이 필요한 회차의 진입 제어는 `config.admission`의 admission token 검증을 통과시킨다.
-
-### core-domain
-
-- 하나의 use case가 하나의 사용자 목적을 드러내게 한다.
-- 상태 변경은 `command`, 조회는 `query`로 나눈다.
-- query repository는 use case 내부 DTO 대신 기능별 query model view를 반환한다.
-- Redis와 WebSocket은 port(`store`, publisher)로만 접근한다.
-- `@Scheduled`와 `@TransactionalEventListener`를 두지 않는다. 트리거는 `core-infra`가 소유한다.
-
-### core-infra
-
-- Redis 명령, key 조립, TTL 설정, expiration listener, WebSocket 발행, 외부 HTTP를 구현한다.
-- port 계약만 구현하고 업무 판단을 넣지 않는다.
-- scheduler와 background executor 설정을 소유한다.
-- 분산락 실행부(`infra.lock.DistributedLockAop`)를 소유한다. 애노테이션은 `support.lock.DistributedLock`이다.
-
-## Redis 규칙
+## Redis 작업 규칙
 
 - key 조립과 TTL은 `core-infra`의 adapter가 소유하고 도메인은 port만 본다.
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
@@ -254,7 +236,7 @@ Controller가 repository를 직접 부르는 형태로 합치지 않는다.
 - TTL, expiration listener, scheduler 보정 중 하나만 바꾸지 않는다. 세 경로는 같은 정합성을 함께 지킨다.
 - Core Redis의 용도는 seat selection, seat hold, refresh token, OAuth2 one-time auth code뿐이다.
 
-## 분산락
+## 분산락 작업 규칙
 
 - 같은 회원·회차의 중복 주문 시작과 같은 좌석 동시 점유를 막는 데 사용한다.
 - 락 범위 안에서 외부 I/O를 늘리지 않는다. 임계 구역은 짧게 유지한다.

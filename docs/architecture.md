@@ -344,8 +344,9 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 현재 구현 위치:
 
-- 어노테이션: `com.ticket.core.support.lock.DistributedLock`
-- 실행부: `com.ticket.core.infra.lock.DistributedLockAop`
+- 어노테이션: `com.ticket.core.support.lock.DistributedLock` (core-domain)
+- 실행부: `com.ticket.core.infra.lock.DistributedLockAop` (core-infra)
+- SpEL 파서: `com.ticket.core.infra.lock.CustomSpringELParser` (core-infra)
 
 적용 예:
 

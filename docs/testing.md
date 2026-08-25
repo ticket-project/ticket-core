@@ -12,11 +12,13 @@
 | 상황 | 실행 |
 | --- | --- |
 | 컴파일 여부만 빠르게 보고 싶다 | `./gradlew :core:core-api:compileJava` |
-| 도메인 규칙, use case, 매퍼를 고쳤다 | `./gradlew :core:core-domain:test` |
+| 엔티티, 값 객체, 도메인 정책, `*Finder`를 고쳤다 | `./gradlew :core:core-domain:test` |
+| use case, 트랜잭션 경계, 조립, 조회 view를 고쳤다 | `./gradlew :core:core-app:test` |
 | Controller, DTO, security, 설정을 고쳤다 | `./gradlew :core:core-api:test` |
+| Querydsl 조회, JWT, 암호화, scheduler를 고쳤다 | `./gradlew :core:core-infra:test` |
 | 모듈 경계, 패키지 위치, `build.gradle`을 건드렸다 | 구조 테스트 (아래 참조) |
 | Redis adapter, key, TTL, expiration listener를 고쳤다 | `./gradlew :core:core-infra:integrationTest` (Docker 필요) |
-| 특정 테스트만 보고 싶다 | `./gradlew :core:core-domain:test --tests "com.ticket.core.domain.order.*"` |
+| 특정 테스트만 보고 싶다 | `./gradlew :core:core-app:test --tests "com.ticket.core.app.order.*"` |
 | 배포 산출물까지 확인한다 | `./gradlew clean :core:core-api:bootJar -x test` |
 | push·PR 직전 | `./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar` (CI와 같은 명령) |
 | 문서만 바꿨다 | Java 빌드 대신 `rg -n "찾을_문구"` 와 `git diff --check` |
@@ -28,10 +30,14 @@ Windows PowerShell에서는 `.\gradlew.bat`을 사용한다.
 모듈 경계와 의존 방향을 실제로 강제하는 테스트다. 구조를 건드렸다면 이것부터 돌린다.
 
 ```bash
+./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"
 ./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainArchitectureTest"
 ./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainModuleStructureTest"
 ./gradlew :core:core-api:test --tests "com.ticket.core.CoreApiArchitectureTest"
 ```
+
+`CoreLayerArchitectureTest`가 계층 의존 방향을 검사하는 본체다. `core-api`만 네 모듈을 모두
+클래스패스에 두기 때문에 전체 방향을 한곳에서 본다. 새 코드의 위치가 의심스러우면 이것부터 돌린다.
 
 무엇을 막는지는 [architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙)에 정리돼 있다.
 

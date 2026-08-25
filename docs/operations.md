@@ -43,10 +43,17 @@ Swagger:
 ./gradlew :core:core-api:compileJava
 ```
 
-도메인/구조 검증:
+도메인/애플리케이션 검증:
 
 ```bash
 ./gradlew :core:core-domain:test
+./gradlew :core:core-app:test
+```
+
+계층 경계 검증:
+
+```bash
+./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"
 ```
 
 배포 산출물 기준 검증:
@@ -60,6 +67,7 @@ Windows PowerShell:
 ```powershell
 .\gradlew.bat :core:core-api:compileJava
 .\gradlew.bat :core:core-domain:test
+.\gradlew.bat :core:core-app:test
 .\gradlew.bat clean :core:core-api:bootJar -x test
 ```
 
