@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command.create;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;

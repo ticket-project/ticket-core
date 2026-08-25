@@ -2,7 +2,7 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.app.order.command.create.CreateOrderUseCase;
+import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.config.security.MemberPrincipal;
