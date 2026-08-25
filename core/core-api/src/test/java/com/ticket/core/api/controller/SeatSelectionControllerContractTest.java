@@ -2,9 +2,9 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.admission.AdmissionTokenService;
-import com.ticket.core.domain.performanceseat.command.DeselectAllSeatsUseCase;
-import com.ticket.core.domain.performanceseat.command.DeselectSeatUseCase;
-import com.ticket.core.domain.performanceseat.command.SelectSeatUseCase;
+import com.ticket.core.app.performanceseat.command.DeselectAllSeatsUseCase;
+import com.ticket.core.app.performanceseat.command.DeselectSeatUseCase;
+import com.ticket.core.app.performanceseat.command.SelectSeatUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.config.security.MemberPrincipal;
 import org.junit.jupiter.api.AfterEach;

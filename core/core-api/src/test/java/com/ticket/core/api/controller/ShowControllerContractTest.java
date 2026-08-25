@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.domain.performanceseat.query.GetShowSeatsUseCase;
-import com.ticket.core.domain.performanceseat.query.GetVenueLayoutUseCase;
+import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
+import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
 import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.meta.Region;
