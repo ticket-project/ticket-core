@@ -1,7 +1,7 @@
 package com.ticket.core.domain.order.command.create;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 
 import java.util.HashSet;
 import java.util.List;

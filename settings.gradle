@@ -21,5 +21,6 @@ include(
         'core:core-infra',
         'core:core-api',
         'storage:redis-core',
+        'support:error',
         'support:logging'
 )

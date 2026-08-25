@@ -2,8 +2,8 @@ package com.ticket.core.domain.member.query;
 
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.NotFoundException;
+import com.ticket.support.error.ErrorType;
+import com.ticket.support.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

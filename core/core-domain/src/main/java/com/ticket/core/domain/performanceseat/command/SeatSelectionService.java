@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performanceseat.command;
 
 import com.ticket.core.domain.performanceseat.store.SeatSelectionStore;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

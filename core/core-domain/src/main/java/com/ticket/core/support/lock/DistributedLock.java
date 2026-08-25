@@ -1,6 +1,6 @@
 package com.ticket.core.support.lock;
 
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.ErrorType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

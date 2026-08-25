@@ -1,8 +1,8 @@
 package com.ticket.core.config.admission;
 
 import com.ticket.core.domain.queue.AdmissionGuard;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

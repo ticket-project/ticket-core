@@ -1,7 +1,7 @@
 package com.ticket.core.support.response;
 
-import com.ticket.core.support.exception.ErrorMessage;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.ErrorMessage;
+import com.ticket.support.error.ErrorType;
 
 public class ApiResponse<T> {
 

@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performance.query;
 
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

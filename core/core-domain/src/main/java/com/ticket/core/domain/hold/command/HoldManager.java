@@ -4,8 +4,8 @@ import com.ticket.core.support.lock.DistributedLock;
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

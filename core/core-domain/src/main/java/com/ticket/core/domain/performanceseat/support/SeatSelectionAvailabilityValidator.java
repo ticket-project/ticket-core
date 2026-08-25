@@ -4,8 +4,8 @@ import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.domain.performanceseat.query.SeatSelectionAvailabilityQueryRepository;
 import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

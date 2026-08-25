@@ -2,8 +2,8 @@ package com.ticket.core.domain.performance.model;
 
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;

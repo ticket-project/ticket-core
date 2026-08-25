@@ -8,7 +8,7 @@ import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import com.ticket.core.infra.auth.token.RedisRefreshTokenStore;
 import com.ticket.core.infra.lock.DistributedLockAop;
 import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.support.error.CoreException;
 import com.ticket.core.support.lock.DistributedLock;
 import com.ticket.core.support.random.UuidSupplier;
 import java.time.Duration;

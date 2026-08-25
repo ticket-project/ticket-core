@@ -4,8 +4,8 @@ import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

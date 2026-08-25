@@ -2,8 +2,8 @@ package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;

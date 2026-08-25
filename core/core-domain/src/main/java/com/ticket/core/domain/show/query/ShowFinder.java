@@ -2,8 +2,8 @@ package com.ticket.core.domain.show.query;
 
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.repository.ShowJpaRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

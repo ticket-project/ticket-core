@@ -1,7 +1,7 @@
 package com.ticket.core.config.security;
 
 import tools.jackson.databind.json.JsonMapper;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.ErrorType;
 import com.ticket.core.support.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;

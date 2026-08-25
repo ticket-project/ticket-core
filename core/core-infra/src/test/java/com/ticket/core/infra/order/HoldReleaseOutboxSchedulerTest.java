@@ -4,8 +4,8 @@ import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

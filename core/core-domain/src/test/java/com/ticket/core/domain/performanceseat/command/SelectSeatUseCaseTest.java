@@ -7,8 +7,8 @@ import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityV
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
 import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

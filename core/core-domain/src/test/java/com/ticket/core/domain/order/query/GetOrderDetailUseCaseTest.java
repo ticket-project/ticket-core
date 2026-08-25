@@ -2,9 +2,9 @@ package com.ticket.core.domain.order.query;
 
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.query.model.OrderDetailRow;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.NotFoundException;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
+import com.ticket.support.error.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

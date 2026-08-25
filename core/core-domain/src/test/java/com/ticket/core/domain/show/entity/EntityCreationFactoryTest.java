@@ -9,8 +9,8 @@ import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.performer.Performer;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
