@@ -1,4 +1,4 @@
-package com.ticket.core.config.security;
+package com.ticket.core.infra.auth;
 
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.RawPassword;

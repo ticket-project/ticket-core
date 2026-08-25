@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.core.config.admission.AdmissionTokenService;
+import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.support.ApiControllerAdvice;
@@ -64,7 +64,7 @@ class HoldControllerContractTest {
 
         mockMvc.perform(post("/api/v1/performances/10/holds")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(AdmissionTokenService.HEADER, "admission-token")
+                        .header(AdmissionHeaders.ADMISSION_TOKEN, "admission-token")
                         .content("""
                                 {
                                   "seatIds": [7, 3]

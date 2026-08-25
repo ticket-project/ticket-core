@@ -2,7 +2,7 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.OrderControllerDocs;
 import com.ticket.core.api.controller.request.CreateOrderRequest;
-import com.ticket.core.config.admission.AdmissionTokenService;
+import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.config.security.AuthenticatedMember;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
@@ -37,7 +37,7 @@ public class OrderController implements OrderControllerDocs {
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @Valid @RequestBody final CreateOrderRequest request,
-            @RequestHeader(value = AdmissionTokenService.HEADER, required = false) final String admissionToken,
+            @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(

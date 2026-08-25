@@ -1,4 +1,4 @@
-package com.ticket.core.config.admission;
+package com.ticket.core.infra.queue;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package com.ticket.core.config.admission;
+package com.ticket.core.infra.queue;
 
 import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.support.error.CoreException;
@@ -16,7 +16,6 @@ import javax.crypto.SecretKey;
 
 public class AdmissionTokenService implements AdmissionGuard {
 
-    public static final String HEADER = "X-Admission-Token";
     public static final String SCOPE = "ticket-admission";
 
     private static final String PERFORMANCE_ID_CLAIM = "performanceId";

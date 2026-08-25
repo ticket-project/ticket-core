@@ -1,4 +1,4 @@
-package com.ticket.core.config.admission;
+package com.ticket.core.infra.queue;
 
 public class AdmissionTokenException extends RuntimeException {
 
