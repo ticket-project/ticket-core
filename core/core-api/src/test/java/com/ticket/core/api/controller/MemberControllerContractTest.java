@@ -3,7 +3,7 @@ package com.ticket.core.api.controller;
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
-import com.ticket.core.domain.showlike.query.GetMyShowLikesUseCase;
+import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.config.security.MemberPrincipal;
 import org.junit.jupiter.api.AfterEach;
