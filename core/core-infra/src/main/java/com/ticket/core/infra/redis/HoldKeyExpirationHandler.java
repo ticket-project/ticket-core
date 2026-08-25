@@ -1,6 +1,6 @@
 package com.ticket.core.infra.redis;
 
-import com.ticket.core.app.order.command.expire.ExpireOrderUseCase;
+import com.ticket.core.app.order.command.ExpireOrderUseCase;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

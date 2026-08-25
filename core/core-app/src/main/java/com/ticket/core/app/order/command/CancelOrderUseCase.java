@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command.cancel;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.order.command.OrderTerminationService;

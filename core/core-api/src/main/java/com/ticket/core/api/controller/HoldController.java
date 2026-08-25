@@ -4,7 +4,7 @@ import com.ticket.core.api.controller.docs.HoldControllerDocs;
 import com.ticket.core.api.controller.request.CreateHoldRequest;
 import com.ticket.core.config.admission.AdmissionTokenService;
 import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.app.order.command.create.CreateOrderUseCase;
+import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

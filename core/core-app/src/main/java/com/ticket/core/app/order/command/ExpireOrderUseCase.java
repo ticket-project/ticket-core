@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command.expire;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;

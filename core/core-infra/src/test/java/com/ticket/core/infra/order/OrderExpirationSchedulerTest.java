@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.app.order.command.expire.ExpireOrderUseCase;
+import com.ticket.core.app.order.command.ExpireOrderUseCase;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;

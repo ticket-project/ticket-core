@@ -1,5 +1,6 @@
-package com.ticket.core.app.order.command.create;
+package com.ticket.core.app.order.command;
 
+import com.ticket.core.app.order.command.CreatePendingOrderTxService;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.domain.order.command.create.OrderCreator;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxWriter;
