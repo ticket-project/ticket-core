@@ -55,7 +55,7 @@ class CustomOAuth2UserServiceTest {
         assertThat(result).isInstanceOf(MemberPrincipal.class);
         MemberPrincipal principal = (MemberPrincipal) result;
         assertThat(principal.getMemberId()).isEqualTo(7L);
-        assertThat(principal.getRole()).isEqualTo(Role.MEMBER);
+        assertThat(principal.getRole()).isEqualTo("MEMBER");
         assertThat(principal.getAttributes()).containsEntry("email", "user@example.com");
         verify(delegate).loadUser(userRequest);
     }

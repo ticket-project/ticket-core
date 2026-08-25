@@ -5,7 +5,6 @@ import com.ticket.core.domain.auth.token.AuthTokenManager;
 import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.config.security.MemberPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +20,7 @@ public class JwtAuthTokenManager implements AuthTokenManager {
 
     @Override
     public IssuedAuthTokens issueTokens(final Member member) {
-        final MemberPrincipal principal = new MemberPrincipal(member.getId(), member.getRole());
-        final String accessToken = jwtTokenService.createAccessToken(principal);
+        final String accessToken = jwtTokenService.createAccessToken(member.getId(), member.getRole().name());
         final String refreshToken = refreshTokenStore.createRefreshToken(
                 member.getId(),
                 jwtProperties.getRefreshTokenExpirationSeconds()
@@ -47,8 +45,7 @@ public class JwtAuthTokenManager implements AuthTokenManager {
                 member.getId(),
                 jwtProperties.getRefreshTokenExpirationSeconds()
         );
-        final MemberPrincipal principal = new MemberPrincipal(member.getId(), member.getRole());
-        final String newAccessToken = jwtTokenService.createAccessToken(principal);
+        final String newAccessToken = jwtTokenService.createAccessToken(member.getId(), member.getRole().name());
 
         return new IssuedAuthTokens(
                 newAccessToken,

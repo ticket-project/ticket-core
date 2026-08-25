@@ -39,7 +39,8 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            MemberPrincipal principal = jwtTokenService.parse(extractBearerToken(authorizationHeader));
+            AuthenticatedMember authenticated = jwtTokenService.parse(extractBearerToken(authorizationHeader));
+            MemberPrincipal principal = new MemberPrincipal(authenticated.memberId(), authenticated.role());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     principal,
                     null,

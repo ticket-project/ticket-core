@@ -42,7 +42,9 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
                 final String token = authorization.substring(BEARER_PREFIX.length());
                 try {
-                    final MemberPrincipal memberPrincipal = jwtTokenService.parse(token);
+                    final AuthenticatedMember authenticated = jwtTokenService.parse(token);
+                    final MemberPrincipal memberPrincipal =
+                            new MemberPrincipal(authenticated.memberId(), authenticated.role());
                     final UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     memberPrincipal,
