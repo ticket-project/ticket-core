@@ -11,7 +11,7 @@ import com.ticket.core.domain.show.mapping.ShowGrade;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.support.QueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(QuerydslSeatMapQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatMapQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslSeatMapQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
 
     @Autowired
     private SeatMapQueryRepository seatMapQueryRepository;

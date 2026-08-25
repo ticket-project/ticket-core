@@ -15,16 +15,10 @@ import com.ticket.core.domain.show.mapping.ShowSeat;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.performer.Performer;
-import com.ticket.core.domain.show.query.BookingStatusWindowPolicy;
-import com.ticket.core.domain.show.query.ShowConditionFactory;
-import com.ticket.core.domain.show.query.ShowCursorPolicy;
-import com.ticket.core.domain.show.query.ShowQueryHelper;
-import com.ticket.core.domain.show.query.ShowSortSupport;
 import com.ticket.core.domain.show.venue.Venue;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.support.cursor.CursorCodec;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -37,7 +31,6 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -65,12 +58,7 @@ import java.time.ZoneId;
 @Import({
         QueryRepositoryTestSupport.QuerydslTestConfig.class,
         QueryRepositoryTestSupport.TestConfig.class,
-        QueryRepositoryTestSupport.AuditingTestConfig.class,
-        ShowQueryHelper.class,
-        BookingStatusWindowPolicy.class,
-        ShowConditionFactory.class,
-        ShowSortSupport.class,
-        ShowCursorPolicy.class
+        QueryRepositoryTestSupport.AuditingTestConfig.class
 })
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class QueryRepositoryTestSupport {
@@ -215,10 +203,6 @@ public abstract class QueryRepositoryTestSupport {
         entityManager.clear();
     }
     static class TestConfig {
-        @Bean
-        CursorCodec cursorCodec() {
-            return new CursorCodec(JsonMapper.builder().build());
-        }
 
         @Bean
         Clock clock() {

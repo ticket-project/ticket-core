@@ -5,7 +5,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.app.showlike.query.ShowLikeQueryRepository;
-import com.ticket.core.support.cursor.CursorSlice;
+import com.ticket.core.app.support.cursor.CursorSlice;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;

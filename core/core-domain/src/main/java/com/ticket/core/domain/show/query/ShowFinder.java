@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 public class ShowFinder {
 
     private final ShowJpaRepository showJpaRepository;
-    private final ShowDetailQueryRepository showDetailQueryRepository;
 
     public Show findById(final Long showId) {
         return showJpaRepository.findById(showId)
@@ -27,9 +26,4 @@ public class ShowFinder {
         }
     }
 
-    public GetShowDetailUseCase.Output findShowDetail(final Long showId) {
-        return showDetailQueryRepository.findShowDetail(showId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
-                        "공연을 찾을 수 없습니다. id=" + showId));
-    }
 }

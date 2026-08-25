@@ -2,7 +2,7 @@ package com.ticket.core.api.controller.request;
 
 import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.query.model.ShowSearchCriteria;
+import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
