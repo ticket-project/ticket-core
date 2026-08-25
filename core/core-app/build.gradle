@@ -2,7 +2,6 @@ dependencies {
     implementation project(':core:core-domain')
     implementation project(':support:error')
 
-    implementation 'org.springframework:spring-web'
     implementation 'org.springframework.boot:spring-boot-starter-jackson'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
