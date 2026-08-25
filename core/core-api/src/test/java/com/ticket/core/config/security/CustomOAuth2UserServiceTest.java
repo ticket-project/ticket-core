@@ -1,6 +1,6 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.auth.oauth2.OAuth2MemberProvisioningService;
+import com.ticket.core.app.auth.oauth2.OAuth2MemberProvisioningService;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.Role;

@@ -2,12 +2,12 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.config.security.MemberPrincipalArgumentResolver;
 import com.ticket.core.config.security.JwtProperties;
-import com.ticket.core.domain.auth.command.ExchangeOAuth2TokenUseCase;
-import com.ticket.core.domain.auth.command.LoginUseCase;
-import com.ticket.core.domain.auth.command.LogoutUseCase;
-import com.ticket.core.domain.auth.command.RefreshAuthTokenUseCase;
-import com.ticket.core.domain.auth.command.RegisterMemberUseCase;
-import com.ticket.core.domain.auth.query.GetSocialLoginUrlsUseCase;
+import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
+import com.ticket.core.app.auth.command.LoginUseCase;
+import com.ticket.core.app.auth.command.LogoutUseCase;
+import com.ticket.core.app.auth.command.RefreshAuthTokenUseCase;
+import com.ticket.core.app.auth.command.RegisterMemberUseCase;
+import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;

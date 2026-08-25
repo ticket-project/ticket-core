@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.ticket.core.domain.auth.command.LoginUseCase;
+import com.ticket.core.app.auth.command.LoginUseCase;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

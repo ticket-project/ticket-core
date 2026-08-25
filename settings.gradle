@@ -18,6 +18,7 @@ rootProject.name = 'ticket'
 
 include(
         'core:core-domain',
+        'core:core-app',
         'core:core-infra',
         'core:core-api',
         'storage:redis-core',

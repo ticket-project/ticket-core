@@ -2,8 +2,8 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.MemberControllerDocs;
 import com.ticket.core.config.security.MemberPrincipal;
-import com.ticket.core.domain.member.query.GetCurrentMemberUseCase;
-import com.ticket.core.domain.member.command.WithdrawCurrentMemberUseCase;
+import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
+import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.domain.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import com.ticket.core.support.response.SliceResponse;
