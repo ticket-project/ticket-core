@@ -1,6 +1,5 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.member.model.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -34,21 +33,21 @@ public class JwtTokenService {
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(final MemberPrincipal memberPrincipal) {
+    public String createAccessToken(final Long memberId, final String role) {
         Instant issuedAt = clock.instant();
         Instant expiresAt = issuedAt.plusSeconds(jwtProperties.getAccessTokenExpirationSeconds());
 
         return Jwts.builder()
                 .issuer(jwtProperties.getIssuer())
-                .subject(String.valueOf(memberPrincipal.getMemberId()))
-                .claim(ROLE_CLAIM, memberPrincipal.getRole().name())
+                .subject(String.valueOf(memberId))
+                .claim(ROLE_CLAIM, role)
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))
                 .signWith(secretKey)
                 .compact();
     }
 
-    public MemberPrincipal parse(final String token) {
+    public AuthenticatedMember parse(final String token) {
         Claims claims = Jwts.parser()
                 .requireIssuer(jwtProperties.getIssuer())
                 .clock(() -> Date.from(clock.instant()))
@@ -63,10 +62,7 @@ public class JwtTokenService {
             throw new IllegalArgumentException("JWT required claim is missing");
         }
 
-        return new MemberPrincipal(
-                Long.parseLong(subject),
-                Role.valueOf(role)
-        );
+        return new AuthenticatedMember(Long.parseLong(subject), role);
     }
 
     public long getAccessTokenExpirationSeconds() {

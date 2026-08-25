@@ -38,7 +38,7 @@ class JwtAuthTokenManagerTest {
     @Test
     void issue_tokens_returns_access_and_refresh_tokens() {
         Member member = createMember(7L);
-        when(jwtTokenService.createAccessToken(any())).thenReturn("access-token");
+        when(jwtTokenService.createAccessToken(any(), any())).thenReturn("access-token");
         when(jwtTokenService.getAccessTokenExpirationSeconds()).thenReturn(1800L);
         when(jwtProperties.getRefreshTokenExpirationSeconds()).thenReturn(1209600L);
         when(refreshTokenStore.createRefreshToken(7L, 1209600L)).thenReturn("refresh-token");
@@ -58,7 +58,7 @@ class JwtAuthTokenManagerTest {
         AuthRefreshToken refreshToken = AuthRefreshToken.from("old-refresh");
         when(refreshTokenStore.rotate(refreshToken, 7L, 1209600L)).thenReturn("new-refresh");
         when(jwtProperties.getRefreshTokenExpirationSeconds()).thenReturn(1209600L);
-        when(jwtTokenService.createAccessToken(any())).thenReturn("new-access");
+        when(jwtTokenService.createAccessToken(any(), any())).thenReturn("new-access");
         when(jwtTokenService.getAccessTokenExpirationSeconds()).thenReturn(1800L);
 
         IssuedAuthTokens result = jwtAuthTokenManager.rotateTokens(member, refreshToken);

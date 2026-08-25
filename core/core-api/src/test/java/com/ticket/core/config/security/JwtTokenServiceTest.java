@@ -1,6 +1,5 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.member.model.Role;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -24,11 +23,11 @@ class JwtTokenServiceTest {
     void createAndParseAccessToken() {
         JwtTokenService jwtTokenService = jwtTokenService();
 
-        String token = jwtTokenService.createAccessToken(new MemberPrincipal(7L, Role.MEMBER));
+        String token = jwtTokenService.createAccessToken(7L, "MEMBER");
 
-        MemberPrincipal principal = jwtTokenService.parse(token);
-        assertThat(principal.getMemberId()).isEqualTo(7L);
-        assertThat(principal.getRole()).isEqualTo(Role.MEMBER);
+        AuthenticatedMember authenticated = jwtTokenService.parse(token);
+        assertThat(authenticated.memberId()).isEqualTo(7L);
+        assertThat(authenticated.role()).isEqualTo("MEMBER");
         assertThat(jwtTokenService.getAccessTokenExpirationSeconds()).isEqualTo(1800L);
     }
 
@@ -37,7 +36,7 @@ class JwtTokenServiceTest {
         String token = Jwts.builder()
                 .issuer(ISSUER)
                 .subject("7")
-                .claim("role", Role.MEMBER.name())
+                .claim("role", "MEMBER")
                 .issuedAt(Date.from(NOW))
                 .signWith(secretKey())
                 .compact();
@@ -66,7 +65,7 @@ class JwtTokenServiceTest {
     void parse는_subject_없는_access_token을_거부한다() {
         String token = Jwts.builder()
                 .issuer(ISSUER)
-                .claim("role", Role.MEMBER.name())
+                .claim("role", "MEMBER")
                 .issuedAt(Date.from(NOW))
                 .expiration(Date.from(NOW.plusSeconds(1800)))
                 .signWith(secretKey())

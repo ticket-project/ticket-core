@@ -1,6 +1,5 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.config.security.MemberPrincipal;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -117,7 +116,7 @@ class ActuatorSecurityConfigTest {
     @Test
     void 일반_api는_유효한_internal_auth_token으로_접근할_수_있다() throws Exception {
         Mockito.when(jwtTokenService.parse("access-token"))
-                .thenReturn(new MemberPrincipal(7L, Role.MEMBER));
+                .thenReturn(new AuthenticatedMember(7L, "MEMBER"));
 
         mockMvc.perform(get("/api/v1/private-test")
                         .header("Authorization", "Bearer access-token"))
@@ -155,7 +154,7 @@ class ActuatorSecurityConfigTest {
 
         @GetMapping("/api/v1/private-test")
         public String privateApi(@AuthenticationPrincipal final MemberPrincipal memberPrincipal) {
-            return memberPrincipal.getMemberId() + ":" + memberPrincipal.getRole().name();
+            return memberPrincipal.getMemberId() + ":" + memberPrincipal.getRole();
         }
     }
 }
