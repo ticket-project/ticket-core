@@ -34,7 +34,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.getSession(true).setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
-        MemberPrincipal principal = new MemberPrincipal(7L, "MEMBER");
+        AuthenticatedMember principal = new AuthenticatedMember(7L, "MEMBER");
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
         when(oAuth2AuthCodeStore.createCode(7L)).thenReturn("oauth-code");

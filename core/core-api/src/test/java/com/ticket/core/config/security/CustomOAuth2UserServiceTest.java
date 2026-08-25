@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 class CustomOAuth2UserServiceTest {
 
     @Test
-    void OAuth2_사용자정보를_회원에_연결하고_MemberPrincipal을_반환한다() {
+    void OAuth2_사용자정보를_회원에_연결하고_AuthenticatedMember를_반환한다() {
         OAuth2MemberProvisioningService provisioningService = Mockito.mock(OAuth2MemberProvisioningService.class);
         DefaultOAuth2UserService delegate = Mockito.mock(DefaultOAuth2UserService.class);
         CustomOAuth2UserService customOAuth2UserService = new CustomOAuth2UserService(provisioningService);
@@ -52,11 +52,11 @@ class CustomOAuth2UserServiceTest {
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
 
-        assertThat(result).isInstanceOf(MemberPrincipal.class);
-        MemberPrincipal principal = (MemberPrincipal) result;
-        assertThat(principal.getMemberId()).isEqualTo(7L);
-        assertThat(principal.getRole()).isEqualTo("MEMBER");
-        assertThat(principal.getAttributes()).containsEntry("email", "user@example.com");
+        assertThat(result).isInstanceOf(AuthenticatedMember.class);
+        AuthenticatedMember authenticated = (AuthenticatedMember) result;
+        assertThat(authenticated.memberId()).isEqualTo(7L);
+        assertThat(authenticated.role()).isEqualTo("MEMBER");
+        assertThat(authenticated.getAttributes()).isEmpty();
         verify(delegate).loadUser(userRequest);
     }
 

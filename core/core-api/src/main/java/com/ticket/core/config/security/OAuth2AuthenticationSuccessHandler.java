@@ -34,12 +34,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             final HttpServletResponse response,
             final Authentication authentication
     ) throws IOException, ServletException {
-        if (!(authentication.getPrincipal() instanceof MemberPrincipal memberPrincipal)) {
+        if (!(authentication.getPrincipal() instanceof AuthenticatedMember member)) {
             throw new IllegalStateException("Unsupported principal type: " + authentication.getPrincipal().getClass().getName());
         }
 
         // 1회용 auth code 생성 (Redis, TTL 30초)
-        final String authCode = oAuth2AuthCodeStore.createCode(memberPrincipal.getMemberId());
+        final String authCode = oAuth2AuthCodeStore.createCode(member.memberId());
 
         final String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectResolver.resolveSuccessRedirectUri(request))
                 .queryParam("code", authCode)
