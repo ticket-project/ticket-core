@@ -1,4 +1,4 @@
-package com.ticket.core.domain.commoncode.query;
+package com.ticket.core.app.commoncode.query;
 
 import com.ticket.core.domain.show.model.Category;
 import com.ticket.core.domain.show.repository.CategoryRepository;
