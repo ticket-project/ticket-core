@@ -20,10 +20,10 @@ class ShowSearchRequestTest {
         ShowSearchRequest request = new ShowSearchRequest(
                 "뮤지컬",
                 "MUSICAL",
-                BookingStatus.ON_SALE,
+                "ON_SALE",
                 LocalDate.of(2026, 4, 1),
                 LocalDate.of(2026, 4, 30),
-                Region.SEOUL,
+                "SEOUL",
                 "cursor-1"
         );
 
@@ -39,14 +39,32 @@ class ShowSearchRequestTest {
     }
 
     @Test
+    void 알_수_없는_region_문자열이면_invalid_request_예외를_던진다() {
+        ShowSearchRequest request = new ShowSearchRequest(
+                "뮤지컬",
+                "MUSICAL",
+                "ON_SALE",
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2026, 4, 30),
+                "NOWHERE",
+                "cursor-1"
+        );
+
+        assertThatThrownBy(request::toCriteria)
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
+    }
+
+    @Test
     void 시작일_From이_To보다_늦으면_예외를_던진다() {
         ShowSearchRequest request = new ShowSearchRequest(
                 "뮤지컬",
                 "MUSICAL",
-                BookingStatus.ON_SALE,
+                "ON_SALE",
                 LocalDate.of(2026, 4, 30),
                 LocalDate.of(2026, 4, 1),
-                Region.SEOUL,
+                "SEOUL",
                 null
         );
 

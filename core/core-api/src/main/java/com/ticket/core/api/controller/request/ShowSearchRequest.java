@@ -1,8 +1,7 @@
 package com.ticket.core.api.controller.request;
 
-import com.ticket.core.domain.show.BookingStatus;
-import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,14 +16,17 @@ import java.time.LocalDate;
 public class ShowSearchRequest {
     private String keyword;
     private String category;
-    private BookingStatus bookingStatus;
+    @Schema(allowableValues = {"BEFORE_OPEN", "ON_SALE", "CLOSED"})
+    private String bookingStatus;
     private LocalDate startDateFrom;
     private LocalDate startDateTo;
-    private Region region;
+    @Schema(allowableValues = {"SEOUL", "GYEONGGI", "INCHEON", "GANGWON", "CHUNGCHEONG",
+            "JEOLLA", "GYEONGSANG", "JEJU"})
+    private String region;
     private String cursor;
 
     public ShowSearchCriteria toCriteria() {
-        return new ShowSearchCriteria(
+        return ShowSearchCriteria.of(
                 keyword,
                 category,
                 bookingStatus,
