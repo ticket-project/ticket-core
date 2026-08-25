@@ -64,7 +64,7 @@ Spring Boot 실행 모듈이다.
 - 트랜잭션 경계와 오케스트레이션 (`*TxService`, `*Coordinator`)
 - 조회 포트와 조회 결과 view/param
 - 커서 페이징 유틸 (`support.cursor`)
-- 인증 포트와 값 (`auth.token`, `auth.oauth2`)
+- 인증 주체 값과 액세스 토큰 읽기 포트 (`auth.token`의 `AuthenticatedMember`, `AccessTokenReader`)
 
 의존:
 
@@ -81,6 +81,8 @@ Spring Boot 실행 모듈이다.
 - 도메인 정책과 검증기 (`BookingPolicyValidator`, `ShowCursorPolicy` 등)
 - 도메인 조회 서비스 (`*Finder`)
 - repository 인터페이스와 Redis/WebSocket/외부 HTTP port
+- 인증 포트와 값 (`auth`의 `AuthTokenManager`, `RefreshTokenStore`,
+  `PasswordService`, `AuthRefreshToken`, `IssuedAuthTokens`, `OAuth2UserInfo`)
 - outbox 엔티티와 기록기
 - 분산락 어노테이션
 
@@ -94,6 +96,7 @@ Spring Boot 실행 모듈이다.
 주요 책임:
 
 - Querydsl 조회 구현과 조건·정렬·커서 헬퍼
+- JWT 발급·검증 (`auth.token`)
 - Redis 기반 store adapter
 - Redis key expiration listener와 handler
 - WebSocket seat event publisher
@@ -192,7 +195,7 @@ use case는 `core-app`에 둔다.
 - `com.ticket.core.app.<기능>.query.model`
   - 조회 결과 view와 검색 param
 - `com.ticket.core.app.auth`
-  - 인증 포트와 값, OAuth2 사용자 정보
+  - 인증 흐름 use case, 인증 주체 값(`AuthenticatedMember`)과 `AccessTokenReader` 포트
 - `com.ticket.core.app.support.cursor`
   - 커서 인코딩과 슬라이스
 
@@ -226,7 +229,9 @@ Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
 | --- | --- |
 | HTTP endpoint, 요청 검증, 인증 주체 추출, 응답 포맷 | `core-api` |
 | Swagger 문서 인터페이스 | `core-api` 의 `controller.docs` |
-| JWT 발급·검증, OAuth2, security filter chain | `core-api` 의 `config.security` |
+| OAuth2 설정, security filter chain, 인증 필터 | `core-api` 의 `config.security` |
+| JWT 발급·검증 구현 | `core-infra` 의 `auth.token` |
+| 인증 포트와 값 객체 | `core-domain` 의 `auth` |
 | HTTP 헤더 이름 같은 API 계약 상수 | `core-api` 의 `api` |
 | 상태를 바꾸는 use case | `core-app` 의 `<기능>.command` |
 | 조회 use case | `core-app` 의 `<기능>.query` |
@@ -391,8 +396,13 @@ auth infra 구현체에 직접 의존하지 않는다.
   쓰이면 `core-domain`이다. 구현은 어느 쪽이든 `core-infra`다.
 - **Querydsl 조건 생성기.** `ShowConditionFactory`처럼 Querydsl 타입을 다루면 DB 연동 코드이므로
   `core-infra`에 둔다. use case가 조건을 조립하지 않는다.
-- **도메인 타입이 API에 새는 경우.** 요청 DTO는 문자열로 받고 enum 변환은 `core-app` 경계에서 한다.
+- **도메인 타입이 API에 새는 경우.** 요청 DTO는 문자열로 받고 변환은 `core-app` 경계에서 한다.
+  enum은 `ShowSearchCriteria.of(...)`, 값 객체는 use case `Input.of(...)`가 맡는다.
   포트 시그니처도 엔티티가 아니라 식별 값을 받는다.
+- **포트를 실행 모듈이 직접 부르는 경우.** `OAuth2AuthCodeStore` 같은 도메인 포트는 컨트롤러나
+  security 핸들러가 직접 호출하지 않고 use case가 감싼다.
+- **설정값을 두 곳에서 읽는 경우.** 토큰 만료처럼 한 값이 저장소 TTL과 응답에 함께 쓰이면
+  발급한 쪽이 결과에 담아 알려준다. 각자 설정을 읽으면 어긋날 수 있다.
 - **다른 도메인이 필요한 경우.** 상대 도메인의 `repository`나 `store`를 직접 부르지 않고 공개 use case를 호출한다.
 - **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별 `entryType` 계산과
   admission token 검증만 담당하며 queue token 저장소나 만료 핸들러를 두지 않는다.
@@ -416,4 +426,5 @@ auth infra 구현체에 직접 의존하지 않는다.
   도메인별로 판단한다.
 - `core-domain`에 남은 `@Transactional` 조립(`OrderCreator`, outbox transaction service)을
   `core-app`으로 올릴지 판단한다.
-- `AuthenticatedMember`가 `OAuth2User`를 구현해 JWT 구현이 `core-api`에 묶여 있다. 이를 풀지 판단한다.
+- `support:lock` 분리를 판단한다. 지금 `@DistributedLock` 애노테이션은 `core-domain`,
+  AOP 실행부와 SpEL 파서는 `core-infra`에 갈라져 있다.
