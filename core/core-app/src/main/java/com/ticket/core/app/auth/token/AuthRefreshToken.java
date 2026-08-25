@@ -1,4 +1,4 @@
-package com.ticket.core.domain.auth.token;
+package com.ticket.core.app.auth.token;
 
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;

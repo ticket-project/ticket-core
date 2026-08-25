@@ -1,9 +1,9 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
-import com.ticket.core.domain.auth.token.RefreshTokenStore;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
+import com.ticket.core.app.auth.token.AuthTokenManager;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.support.error.AuthException;

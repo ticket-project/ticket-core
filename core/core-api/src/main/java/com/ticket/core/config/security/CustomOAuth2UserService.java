@@ -1,8 +1,8 @@
 package com.ticket.core.config.security;
 
 import com.ticket.core.app.auth.oauth2.OAuth2MemberProvisioningService;
-import com.ticket.core.domain.auth.oauth2.OAuth2UserInfo;
-import com.ticket.core.domain.auth.oauth2.OAuth2UserInfoFactory;
+import com.ticket.core.app.auth.oauth2.OAuth2UserInfo;
+import com.ticket.core.app.auth.oauth2.OAuth2UserInfoFactory;
 import com.ticket.core.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;

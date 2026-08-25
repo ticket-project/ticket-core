@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.token.AuthTokenManager;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.support.error.AuthException;

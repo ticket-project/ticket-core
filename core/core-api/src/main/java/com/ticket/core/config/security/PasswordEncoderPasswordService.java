@@ -1,6 +1,6 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.domain.auth.PasswordService;
+import com.ticket.core.app.auth.PasswordService;
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.RawPassword;
 import lombok.RequiredArgsConstructor;

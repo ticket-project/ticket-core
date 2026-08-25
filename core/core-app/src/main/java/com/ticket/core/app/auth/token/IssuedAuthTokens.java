@@ -1,4 +1,4 @@
-package com.ticket.core.domain.auth.token;
+package com.ticket.core.app.auth.token;
 
 public record IssuedAuthTokens(
         String accessToken,
