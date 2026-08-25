@@ -1,5 +1,6 @@
 package com.ticket.core.config.security;
 
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 import com.ticket.core.app.auth.oauth2.ProvisionOAuth2MemberUseCase;
 import com.ticket.core.app.auth.oauth2.ProvisionedMember;
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.when;
 class CustomOAuth2UserServiceTest {
 
     @Test
-    void OAuth2_사용자정보를_회원에_연결하고_AuthenticatedMember를_반환한다() {
+    void OAuth2_사용자정보를_회원에_연결하고_회원_식별자를_담은_주체를_반환한다() {
         ProvisionOAuth2MemberUseCase provisionUseCase = Mockito.mock(ProvisionOAuth2MemberUseCase.class);
         DefaultOAuth2UserService delegate = Mockito.mock(DefaultOAuth2UserService.class);
         CustomOAuth2UserService customOAuth2UserService = new CustomOAuth2UserService(provisionUseCase);
@@ -47,11 +48,14 @@ class CustomOAuth2UserServiceTest {
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
 
-        assertThat(result).isInstanceOf(AuthenticatedMember.class);
-        AuthenticatedMember authenticated = (AuthenticatedMember) result;
-        assertThat(authenticated.memberId()).isEqualTo(7L);
-        assertThat(authenticated.role()).isEqualTo("MEMBER");
-        assertThat(authenticated.getAttributes()).isEmpty();
+        // getName()이 회원 식별자를 돌려주어야 로그인 성공 처리에서 auth code를 만들 수 있다.
+        assertThat(result.getName()).isEqualTo("7");
+        assertThat(result.<Long>getAttribute("memberId")).isEqualTo(7L);
+        assertThat(result.getAuthorities())
+                .extracting(GrantedAuthority::getAuthority)
+                .containsExactly("ROLE_MEMBER");
+        // 제공자가 준 정보는 버리지 않는다.
+        assertThat(result.getAttributes()).containsEntry("email", "user@example.com");
         verify(delegate).loadUser(userRequest);
     }
 

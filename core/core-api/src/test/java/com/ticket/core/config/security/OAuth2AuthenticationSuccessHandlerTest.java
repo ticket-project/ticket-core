@@ -1,5 +1,11 @@
 package com.ticket.core.config.security;
 
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.GrantedAuthority;
+import java.util.Map;
+import java.util.List;
 import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,9 +40,10 @@ class OAuth2AuthenticationSuccessHandlerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.getSession(true).setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
-        AuthenticatedMember principal = new AuthenticatedMember(7L, "MEMBER");
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_MEMBER"));
+        OAuth2User principal = new DefaultOAuth2User(authorities, Map.of("memberId", 7L), "memberId");
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+                new UsernamePasswordAuthenticationToken(principal, null, authorities);
         when(oAuth2AuthCodeStore.createCode(7L)).thenReturn("oauth-code");
 
         handler.onAuthenticationSuccess(request, response, authentication);

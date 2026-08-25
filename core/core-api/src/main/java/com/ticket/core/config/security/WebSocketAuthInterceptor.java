@@ -48,7 +48,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                             new UsernamePasswordAuthenticationToken(
                                     member,
                                     null,
-                                    member.getAuthorities()
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))
                             );
                     accessor.setUser(authentication);
                     log.info("웹소켓 인증에 성공했습니다. memberId={}", member.memberId());
