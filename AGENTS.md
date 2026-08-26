@@ -147,39 +147,16 @@ HTTP/WebSocket 요청
 
 ## 검증 명령
 
-작업 성격에 맞게 가장 좁은 검증부터 실행한다.
+작업 성격에 맞게 **가장 좁은 검증부터** 실행한다. 무엇을 돌릴지 고르는 표, 구조 테스트 명령,
+통합 테스트 조건, 결과 보고 규칙은 **`/verify` 스킬**이 원본이다.
 
-```bash
-./gradlew :core:core-api:compileJava
-./gradlew :core:core-domain:test
-./gradlew :core:core-app:test
-./gradlew :core:core-api:test
-./gradlew clean :core:core-api:bootJar -x test
-```
+- Redis adapter, key, TTL, expiration listener를 바꿨으면 `:core:core-infra:integrationTest`까지
+  실행한다(Docker 필요).
+- 구조나 모듈 경계를 건드렸으면 ArchUnit 구조 테스트를 먼저 돌린다.
+- 문서만 바꿨으면 Java 빌드 대신 `rg`와 `git diff --check`를 쓴다.
+- CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar`다.
 
-Redis adapter, key, TTL, expiration listener를 바꿨으면 통합 테스트까지 실행한다(Docker 필요).
-
-```bash
-./gradlew :core:core-infra:integrationTest
-```
-
-구조나 모듈 경계를 건드리면 아래 테스트를 우선 고려한다.
-
-```bash
-./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"
-./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainArchitectureTest"
-./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainModuleStructureTest"
-```
-
-문서만 바꾼 경우에는 Java 빌드 대신 아래를 확인한다.
-
-```bash
-rg -n "찾을_문구"
-git diff --check
-```
-
-무엇을 언제 돌릴지에 대한 선택 기준, 테스트 이름 규칙, 결과 보고 방식은 `docs/testing.md`를 따른다.
-CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar`다.
+각 테스트가 무엇을 고정하는지와 새 테스트를 쓰는 관례는 `docs/testing.md`를 본다.
 
 ## 코드 리뷰
 
@@ -207,18 +184,16 @@ CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :
 
 ## 커밋 및 PR
 
-- 커밋 메시지와 PR 제목은 Conventional Commits 기반 `<type>(<scope>): <한국어 설명>` 형식을 따른다.
-- `scope`는 선택 사항이며, 기존 도메인 또는 모듈 이름을 우선 사용한다.
-- 허용 `type`은 `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`, `ci`, `security`, `revert`다.
-- 설명은 한국어로 작성하고 마침표를 붙이지 않는다. 기술 고유명사는 원문 표기를 허용한다.
-- 하나의 커밋에는 하나의 목적만 포함하며, 기존 사용자 변경과 섞어서 커밋하지 않는다.
-- 작업은 작업 브랜치에서 하고 `master`에 직접 커밋하거나 push하지 않는다. `master` push는 곧 운영 배포다.
-- PR 반영은 `gh pr merge --squash` 또는 `--rebase`를 쓴다. 선형 이력을 유지하므로 merge commit을 만들지 않는다.
-- 커밋은 사용자가 명시적으로 요청할 때만 만든다.
+- **커밋은 사용자가 명시적으로 요청할 때만 만든다.**
+- **작업 브랜치에서 작업하고 `master`에 직접 커밋하거나 push하지 않는다.** `master` push는 곧 운영 배포다.
 - 커밋 전 변경 범위에 맞는 검증을 실행하고 결과를 확인한다.
+- 하나의 커밋에는 하나의 목적만 담고, 기존 사용자 변경과 섞지 않는다.
+- 반영은 `gh pr merge --squash` 또는 `--rebase`를 쓴다. 선형 이력을 유지하므로 merge commit을 만들지 않는다.
 - 이미 원격에 올라간 커밋 이력을 변경하려면 먼저 사용자 승인을 받는다.
-- 절차 전체는 [커밋과 PR 절차](docs/development.md#커밋과-pr-절차), 메시지 규칙 상세는
-  [커밋과 PR 컨벤션](docs/development.md#커밋과-pr-컨벤션)을 따른다.
+
+형식은 Conventional Commits 기반 `<type>(<scope>): <한국어 설명>`이다. 허용 type 목록, scope 선택
+기준, 9단계 절차와 충돌 검증은 **`/commit-pr` 스킬**이 원본이다. 요약은
+[커밋과 PR](docs/development.md#커밋과-pr)에 있다.
 
 ## Agent skills
 
