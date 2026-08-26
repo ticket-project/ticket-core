@@ -396,30 +396,12 @@ auth infra 구현체에 직접 의존하지 않는다.
 
 ## 경계 판단에서 자주 틀리는 지점
 
-- **주기 실행이 필요한 규칙.** 규칙은 `core-app`의 use case에 두고 `@Scheduled` 트리거만
-  `core-infra`에 둔다. 도메인에 애노테이션을 붙이는 순간 ArchUnit이 막는다.
-- **Redis 상태를 읽는 조회 로직.** 좌석 상태는 DB와 Redis 점유 상태를 합쳐 계산한다. 합치는 규칙은
-  `core-app`의 query use case가 소유하고 Redis 조회 자체는 `store` port를 통한다.
-- **조회 포트를 어디 둘지.** 그것을 쓰는 쪽에 둔다. use case가 쓰면 `core-app`, 도메인 정책 판정에
-  쓰이면 `core-domain`이다. 구현은 어느 쪽이든 `core-infra`다.
-- **Querydsl 조건 생성기.** `ShowConditionFactory`처럼 Querydsl 타입을 다루면 DB 연동 코드이므로
-  `core-infra`에 둔다. use case가 조건을 조립하지 않는다.
-- **도메인 타입이 API에 새는 경우.** 요청 DTO는 문자열로 받고 변환은 `core-app` 경계에서 한다.
-  enum은 `ShowSearchCriteria.of(...)`, 값 객체는 use case `Input.of(...)`가 맡는다.
-  포트 시그니처도 엔티티가 아니라 식별 값을 받는다.
-- **포트를 실행 모듈이 직접 부르는 경우.** `OAuth2AuthCodeStore` 같은 도메인 포트는 컨트롤러나
-  security 핸들러가 직접 호출하지 않고 use case가 감싼다.
-- **설정값을 두 곳에서 읽는 경우.** 토큰 만료처럼 한 값이 저장소 TTL과 응답에 함께 쓰이면
-  발급한 쪽이 결과에 담아 알려준다. 각자 설정을 읽으면 어긋날 수 있다.
-- **도메인이 이벤트를 발행하거나 트랜잭션을 여는 경우.** `ApplicationEventPublisher`와
-  `@Transactional`은 흐름을 엮는 방법이다. 규칙은 `core-domain`에, 경계와 발행은 `core-app`에 둔다.
-- **한 기능의 짝이 다른 층에 있는 경우.** outbox 생성과 해제처럼 같은 일을 하는 코드가 갈려 있으면
-  둘 중 하나가 잘못 놓인 것이다. 이름이 달라도 하는 일로 판단한다.
-- **다른 도메인이 필요한 경우.** 상대 도메인의 `repository`나 `store`를 직접 부르지 않고 공개 use case를 호출한다.
-- **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별 `entryType` 계산과
-  admission token 검증만 담당하며 queue token 저장소나 만료 핸들러를 두지 않는다.
-- **Core Redis의 용도.** seat selection, seat hold, refresh token, OAuth2 one-time auth code뿐이다.
-  대기열 상태를 Core Redis에 넣지 않는다.
+판단 절차와 자주 틀리는 지점 11가지는 **`/place-code` 스킬**이 원본이다
+(`.claude/skills/place-code/SKILL.md`). 코드를 새로 두거나 옮길 때, 구조 테스트가 실패했을 때
+그 스킬이 로드된다.
+
+이 문서는 각 모듈이 무엇을 담는지와 위의 [코드 위치 결정표](#코드-위치-결정표)를 원본으로 유지한다.
+
 
 ## 아키텍처 리뷰 질문
 

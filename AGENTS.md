@@ -23,7 +23,8 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 | --- | --- |
 | 도메인 개념을 이름으로 부를 때(이슈 제목, 테스트 이름, 제안) | `CONTEXT.md` |
 | Selection·Hold, 주문 생명주기처럼 "왜 이렇게 했는지"가 걸리는 변경 | `docs/adr/` |
-| 새 코드의 모듈·패키지 위치, 의존 방향, 경계 변경 | `docs/architecture.md` |
+| 새 코드의 모듈·패키지 위치, 경계 위반 진단 | `/place-code` 스킬 |
+| 모듈 책임, 패키지 구조, 저장소·동시성 구조 | `docs/architecture.md` |
 | 기능·API·도메인 규칙 구현, Redis·분산락 작업 규칙 | `docs/development.md` |
 | 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지 고르기, 새 테스트 추가 | `docs/testing.md` |
@@ -64,25 +65,15 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 8. 관련 테스트
    - ArchUnit과 도메인 테스트로 실제 강제 규칙을 확인한다.
 
-## 새 코드를 어디에 둘까
+## 계층 경계
 
-코드를 쓰기 전에 이 표로 판단한다. 기준은 **"이 코드가 무엇을 쓰는가"**다.
+의존 방향은 `core-api` → `core-app` → `core-domain`이고, `core-infra`는 어댑터로서 `core-app`과
+`core-domain`을 향한다. 반대 방향은 `CoreLayerArchitectureTest`가 막는다.
 
-| 쓰는 것 | 두는 곳 |
-| --- | --- |
-| HTTP 요청·응답, 쿠키, security 설정, WebSocket 진입 | `core-api` |
-| use case, 트랜잭션 경계, 여러 서비스 조립, 조회 포트와 결과 view | `core-app` |
-| 엔티티, 값 객체, 도메인 정책, `*Finder`, port 선언 | `core-domain` |
-| Querydsl, Redis, JWT, 암호화, 외부 HTTP, scheduler, AOP | `core-infra` |
+새 코드를 어디에 둘지 판단하는 절차와 자주 틀리는 지점은 **`/place-code` 스킬**이 원본이다.
+각 모듈이 무엇을 담는지와 27개 책임별 위치는 `docs/architecture.md`를 본다.
 
-판단이 갈리면 두 가지를 본다.
-
-- **port는 그것을 쓰는 쪽에 둔다.** use case가 쓰면 `core-app`, `*Finder`가 쓰면 `core-domain`.
-  구현은 어느 쪽이든 `core-infra`다.
-- **엔티티를 다루면 도메인, 순서를 정하면 애플리케이션이다.** 규칙 판단은 `core-domain`,
-  그 규칙들을 순서대로 부르는 조립은 `core-app`이다.
-
-## 절대 금지 (ArchUnit이 실패시킨다)
+### 절대 금지 (ArchUnit이 실패시킨다)
 
 - `core-domain`이 `data`·`stereotype` 외의 Spring을 참조하는 것.
   `@Transactional`, `ApplicationEventPublisher`, Querydsl, SpEL, HTTP, 보안 전부 막는다.
@@ -92,38 +83,6 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 - 실행 모듈이 도메인 port를 직접 부르는 것. use case를 거친다.
 - 도메인 타입이 API 경계로 새는 것. 요청 DTO는 문자열로 받고 변환은 `core-app`이 한다.
 
-위반하면 `./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"`가
-실패한다. 상세 근거와 예외는 `docs/architecture.md`를 본다.
-
-## 모듈 경계
-
-의존 방향은 `core-api` -> `core-app` -> `core-domain`이고, `core-infra`는 어댑터로서
-`core-app`과 `core-domain`을 향한다. 반대 방향은 `CoreLayerArchitectureTest`가 막는다.
-
-- `core/core-api`
-  - Spring Boot 실행 모듈이다.
-  - Controller, request/response DTO, security, WebSocket, HTTP 설정을 둔다.
-  - 비즈니스 규칙이나 직접 저장소 접근 로직을 넣지 않는다.
-  - `core-domain`을 프로덕션 코드에서 참조하지 않는다. 계약 테스트만 픽스처로 쓴다.
-- `core/core-app`
-  - use case, 트랜잭션 경계, 오케스트레이션, 조회 포트와 조회 결과 view를 둔다.
-  - 도메인 규칙과 어댑터를 엮어 실제 서비스 흐름을 만든다.
-  - 포트와 값 객체는 여기가 아니라 `core-domain`에 둔다. 여기에는 흐름만 남긴다.
-- `core/core-domain`
-  - 엔티티, 값 객체, 도메인 정책, `*Finder`, repository/Redis port를 둔다.
-  - Spring은 `data`(JPA)와 `stereotype`(빈 선언)만 쓴다. 트랜잭션 경계와 이벤트 발행,
-    Querydsl은 여기에 두지 않는다.
-  - use case를 두지 않는다.
-- `core/core-infra`
-  - Querydsl 조회 구현, Redis, Redisson, WebSocket publisher, 외부 HTTP, JWT, 암호화,
-    입장 토큰, scheduler, AOP 같은 기술 구현을 둔다.
-  - `core-app`과 `core-domain`의 port를 구현한다.
-- `storage/redis-core`
-  - Redis 관련 공통 의존성을 제공한다.
-- `support/error`
-  - 모든 모듈이 쓰는 공통 예외를 제공한다.
-- `support/logging`
-  - 공통 로깅 설정을 제공한다.
 
 ## 핵심 흐름
 
