@@ -29,7 +29,7 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 | 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지 고르기, 새 테스트 추가 | `docs/testing.md` |
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 지표 | `docs/operations.md` |
-| 부하 테스트 실행과 용량 판정 | `docs/load-test.md` |
+| 부하 테스트 실행과 용량 판정 | `/loadtest` 스킬, 진입점은 `docs/load-test.md` |
 | 커밋·브랜치·PR | `docs/development.md` 의 커밋과 PR 절차·컨벤션 |
 
 전체 맥락은 `README.md`, 실제 경계는 `settings.gradle`과 각 모듈 `build.gradle`, 강제되는 규칙은
