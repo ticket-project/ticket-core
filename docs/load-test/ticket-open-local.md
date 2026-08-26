@@ -4,7 +4,8 @@
 
 이 문서는 Gateway 제거 후 구조 기준이다. 부하 테스트는 목적에 따라 Ticket Server와 Queue Server를 직접 호출한다. Queue 흐름은 `join -> public state polling -> enter -> admission token -> Ticket Server 보호 API` 순서다.
 
-현재 Gatling 소스와 상세 옵션의 기준은 형제 저장소 `../../gatling-test`의 `README.md`와 `console/README.md`다.
+현재 Gatling 소스와 상세 옵션의 기준은 형제 저장소의 `../../../gatling-test/README.md`와
+`../../../gatling-test/console/README.md`다.
 
 ## 목적
 
