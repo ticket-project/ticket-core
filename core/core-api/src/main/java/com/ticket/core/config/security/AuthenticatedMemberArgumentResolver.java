@@ -1,15 +1,15 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.api.error.ApiErrorType;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.support.error.CoreException;
 import org.springframework.core.MethodParameter;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.springframework.web.server.ResponseStatusException;
 
 public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -35,7 +35,7 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
         throw unauthorized();
     }
 
-    private ResponseStatusException unauthorized() {
-        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "authenticated member is required");
+    private CoreException unauthorized() {
+        return new CoreException(ApiErrorType.AUTHENTICATION_REQUIRED);
     }
 }

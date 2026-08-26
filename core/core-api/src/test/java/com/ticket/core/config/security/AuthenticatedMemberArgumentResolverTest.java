@@ -7,10 +7,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
+import com.ticket.core.api.error.ApiErrorType;
+import com.ticket.support.error.CoreException;
 
 class AuthenticatedMemberArgumentResolverTest {
 
@@ -24,8 +24,8 @@ class AuthenticatedMemberArgumentResolverTest {
     @Test
     void 인증이_없으면_401을_던진다() {
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
-                .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
-                        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED));
+                .isInstanceOfSatisfying(CoreException.class, exception ->
+                        assertThat(exception.getErrorType()).isEqualTo(ApiErrorType.AUTHENTICATION_REQUIRED));
     }
 
     @Test
@@ -47,7 +47,7 @@ class AuthenticatedMemberArgumentResolverTest {
         );
 
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
-                .isInstanceOfSatisfying(ResponseStatusException.class, exception ->
-                        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED));
+                .isInstanceOfSatisfying(CoreException.class, exception ->
+                        assertThat(exception.getErrorType()).isEqualTo(ApiErrorType.AUTHENTICATION_REQUIRED));
     }
 }

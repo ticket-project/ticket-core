@@ -5,8 +5,6 @@ import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.showlike.command.AddShowLikeUseCase;
 import com.ticket.core.app.showlike.query.GetShowLikeStatusUseCase;
 import com.ticket.core.app.showlike.command.RemoveShowLikeUseCase;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.ErrorType;
 import com.ticket.core.support.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +24,7 @@ public class ShowLikeController implements ShowLikeControllerDocs {
             final AuthenticatedMember member,
             @PathVariable final Long showId
     ) {
-        final Long memberId = requireMemberId(member);
-        final AddShowLikeUseCase.Input input = new AddShowLikeUseCase.Input(memberId, showId);
+        final AddShowLikeUseCase.Input input = new AddShowLikeUseCase.Input(member.memberId(), showId);
         return ApiResponse.success(addShowLikeUseCase.execute(input));
     }
 
@@ -37,8 +34,7 @@ public class ShowLikeController implements ShowLikeControllerDocs {
             final AuthenticatedMember member,
             @PathVariable final Long showId
     ) {
-        final Long memberId = requireMemberId(member);
-        final RemoveShowLikeUseCase.Input input = new RemoveShowLikeUseCase.Input(memberId, showId);
+        final RemoveShowLikeUseCase.Input input = new RemoveShowLikeUseCase.Input(member.memberId(), showId);
         return ApiResponse.success(removeShowLikeUseCase.execute(input));
     }
 
@@ -48,15 +44,7 @@ public class ShowLikeController implements ShowLikeControllerDocs {
             final AuthenticatedMember member,
             @PathVariable final Long showId
     ) {
-        final Long memberId = requireMemberId(member);
-        final GetShowLikeStatusUseCase.Input input = new GetShowLikeStatusUseCase.Input(memberId, showId);
+        final GetShowLikeStatusUseCase.Input input = new GetShowLikeStatusUseCase.Input(member.memberId(), showId);
         return ApiResponse.success(getShowLikeStatusUseCase.execute(input));
-    }
-
-    private Long requireMemberId(final AuthenticatedMember member) {
-        if (member == null || member.memberId() == null) {
-            throw new AuthException(ErrorType.AUTHENTICATION_ERROR);
-        }
-        return member.memberId();
     }
 }
