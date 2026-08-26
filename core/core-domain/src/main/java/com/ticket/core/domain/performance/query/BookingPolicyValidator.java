@@ -1,9 +1,9 @@
 package com.ticket.core.domain.performance.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.performance.QueueActivation;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 
 import java.time.LocalDateTime;
 
@@ -21,10 +21,10 @@ public final class BookingPolicyValidator {
      */
     public static void ensureBookingOpen(final PerformanceBookingPolicyView policy, final LocalDateTime now) {
         if (policy.orderOpenTime() == null || now.isBefore(policy.orderOpenTime())) {
-            throw new CoreException(ErrorType.NOT_YET_RESERVE_TIME);
+            throw new CoreException(DomainErrorType.NOT_YET_RESERVE_TIME);
         }
         if (policy.orderCloseTime() == null || now.isAfter(policy.orderCloseTime())) {
-            throw new CoreException(ErrorType.PERFORMANCE_IS_PAST);
+            throw new CoreException(DomainErrorType.PERFORMANCE_IS_PAST);
         }
     }
 
@@ -39,7 +39,7 @@ public final class BookingPolicyValidator {
             return;
         }
         if (requestedSeatCount > policy.maxCanHoldCount()) {
-            throw new CoreException(ErrorType.EXCEED_HOLD_LIMIT);
+            throw new CoreException(DomainErrorType.EXCEED_HOLD_LIMIT);
         }
     }
 

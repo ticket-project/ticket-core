@@ -1,12 +1,12 @@
 package com.ticket.core.domain.member.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.support.error.ErrorType;
-import com.ticket.support.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,8 +51,8 @@ class MemberFinderTest {
         //when
         //then
         assertThatThrownBy(() -> memberFinder.findActiveMemberById(1L))
-                .isInstanceOf(NotFoundException.class)
-                .satisfies(thrown -> assertThat(((NotFoundException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(CoreException.class)
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.DATA_NOT_FOUND));
     }
 
     @Test
@@ -69,7 +69,7 @@ class MemberFinderTest {
         when(memberRepository.existsByIdAndDeletedAtIsNull(1L)).thenReturn(false);
 
         assertThatThrownBy(() -> memberFinder.ensureActiveMemberExists(1L))
-                .isInstanceOf(NotFoundException.class)
-                .satisfies(thrown -> assertThat(((NotFoundException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(CoreException.class)
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.DATA_NOT_FOUND));
     }
 }

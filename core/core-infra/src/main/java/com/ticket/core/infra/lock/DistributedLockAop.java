@@ -77,7 +77,7 @@ public class DistributedLockAop {
 
     private String resolveMessage(final DistributedLock distributedLock) {
         return distributedLock.message().isBlank()
-                ? distributedLock.errorType().getDescription()
+                ? distributedLock.errorType().getMessage()
                 : distributedLock.message();
     }
 

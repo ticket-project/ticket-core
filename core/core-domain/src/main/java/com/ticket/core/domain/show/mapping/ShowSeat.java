@@ -1,10 +1,10 @@
 package com.ticket.core.domain.show.mapping;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.BaseEntity;
 import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,7 +40,7 @@ public class ShowSeat extends BaseEntity {
 
     public static ShowSeat link(final Show show, final Seat seat, final ShowGrade showGrade) {
         if (show != null && showGrade != null && showGrade.getShow() != show) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "show와 showGrade의 show가 일치하지 않습니다.");
+            throw new CoreException(DomainErrorType.INVALID_ARGUMENT, "show와 showGrade의 show가 일치하지 않습니다.");
         }
         return new ShowSeat(show, seat, showGrade);
     }

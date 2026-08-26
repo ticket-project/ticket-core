@@ -1,11 +1,11 @@
 package com.ticket.core.domain.hold.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -50,7 +50,7 @@ class HoldSeatAvailabilityValidatorTest {
 
         assertThatThrownBy(() -> validator.validate(1L, seatIds))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
     }
 
     @Test
@@ -63,7 +63,7 @@ class HoldSeatAvailabilityValidatorTest {
 
         assertThatThrownBy(() -> validator.validate(1L, seatIds))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_EXIST_AVAILABLE_SEAT));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT));
     }
 
     @Test

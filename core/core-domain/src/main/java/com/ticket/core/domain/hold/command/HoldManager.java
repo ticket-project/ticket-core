@@ -1,11 +1,11 @@
 package com.ticket.core.domain.hold.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.support.lock.DistributedLock;
 import com.ticket.core.domain.hold.model.HoldSnapshot;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -62,7 +62,7 @@ public class HoldManager {
     private void ensureSeatsNotHeld(final Long performanceId, final List<Long> seatIds) {
         for (final Long seatId : seatIds) {
             if (isHeld(performanceId, seatId)) {
-                throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
+                throw new CoreException(DomainErrorType.SEAT_ALREADY_HOLD);
             }
         }
     }

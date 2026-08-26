@@ -1,7 +1,7 @@
 package com.ticket.core.domain.auth.token;
 
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
@@ -30,7 +30,7 @@ public final class AuthRefreshToken {
         if (!value.isBlank()) {
             return;
         }
-        throw new AuthException(ErrorType.AUTHENTICATION_ERROR);
+        throw new CoreException(DomainErrorType.AUTHENTICATION_FAILED);
     }
 
     public String value() {

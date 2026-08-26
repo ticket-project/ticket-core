@@ -1,8 +1,8 @@
 package com.ticket.core.domain.auth.token;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.auth.token.AuthRefreshToken;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +21,7 @@ class AuthRefreshTokenTest {
     @Test
     void 빈값이면_인증_예외를_던진다() {
         assertThatThrownBy(() -> AuthRefreshToken.from("   "))
-                .isInstanceOf(AuthException.class)
-                .satisfies(error -> assertThat(((AuthException) error).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(CoreException.class)
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.AUTHENTICATION_FAILED));
     }
 }

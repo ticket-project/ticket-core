@@ -1,7 +1,7 @@
 package com.ticket.core.domain.show.meta;
 
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +41,7 @@ class ShowSortKeyTest {
         //then
         assertThatThrownBy(() -> ShowSortKey.fromApiValue("unknown"))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_SUPPORT_SHOW_SORT));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.NOT_SUPPORT_SHOW_SORT));
     }
 }
 

@@ -1,5 +1,7 @@
 package com.ticket.core.domain.show.entity;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.model.Category;
@@ -9,8 +11,6 @@ import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.performer.Performer;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -159,6 +159,6 @@ class EntityCreationFactoryTest {
 
         assertThatThrownBy(() -> ShowSeat.link(show, seat, otherShowGrade))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 }

@@ -1,11 +1,11 @@
 package com.ticket.core.domain.performance.model;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.BaseEntity;
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import jakarta.persistence.Column;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -114,6 +114,6 @@ public class Performance extends BaseEntity {
         if (maxCanHoldCount >= 2) {
             return maxCanHoldCount;
         }
-        throw new CoreException(ErrorType.INVALID_REQUEST, "maxCanHoldCount는 2 이상 또는 null 이어야 합니다.");
+        throw new CoreException(DomainErrorType.INVALID_ARGUMENT, "maxCanHoldCount는 2 이상 또는 null 이어야 합니다.");
     }
 }

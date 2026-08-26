@@ -1,10 +1,10 @@
 package com.ticket.core.domain.show.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.repository.ShowJpaRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -46,7 +46,7 @@ class ShowFinderTest {
 
         assertThatThrownBy(() -> showFinder.findById(1L))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.DATA_NOT_FOUND));
     }
 
     @Test
@@ -62,7 +62,7 @@ class ShowFinderTest {
 
         assertThatThrownBy(() -> showFinder.validateShowExists(1L))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.DATA_NOT_FOUND));
     }
 
 
