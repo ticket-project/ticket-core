@@ -1,5 +1,7 @@
 package com.ticket.core.infra.show.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -7,8 +9,6 @@ import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.core.infra.show.query.ShowSortSupport.SortOrder;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.support.cursor.CursorCodec;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -34,7 +34,7 @@ public class ShowCursorPolicy {
                 validateCursorMatchesRequest(showCursor, sortOrder);
                 where.and(cursorCondition(showCursor, sortOrder));
             } catch (IllegalArgumentException | DateTimeParseException ex) {
-                throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+                throw new CoreException(ApplicationErrorType.INVALID_INPUT, "cursor 형식이 올바르지 않습니다.");
             }
         }
     }

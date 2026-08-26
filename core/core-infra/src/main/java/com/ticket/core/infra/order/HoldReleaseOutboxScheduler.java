@@ -1,11 +1,11 @@
 package com.ticket.core.infra.order;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +79,6 @@ public class HoldReleaseOutboxScheduler {
 
     private boolean isExpectedLockContention(final RuntimeException exception) {
         return exception instanceof CoreException coreException
-                && coreException.getErrorType() == ErrorType.HOLD_BUSY;
+                && coreException.getErrorType() == DomainErrorType.HOLD_BUSY;
     }
 }

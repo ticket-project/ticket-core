@@ -1,11 +1,11 @@
 package com.ticket.core.infra.show.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.querydsl.core.BooleanBuilder;
 import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.support.cursor.CursorCodec;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,7 +44,7 @@ class ShowCursorPolicyTest {
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), "broken", popularDesc()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -53,7 +53,7 @@ class ShowCursorPolicyTest {
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), "cursor", popularDesc()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -62,7 +62,7 @@ class ShowCursorPolicyTest {
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), "cursor", popularDesc()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -71,7 +71,7 @@ class ShowCursorPolicyTest {
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), "cursor", popularDesc()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -80,7 +80,7 @@ class ShowCursorPolicyTest {
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), "cursor", popularDesc()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -89,7 +89,7 @@ class ShowCursorPolicyTest {
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), "cursor", latestDesc()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
