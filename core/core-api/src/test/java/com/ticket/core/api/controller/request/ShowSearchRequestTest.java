@@ -4,7 +4,7 @@ import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -53,7 +53,7 @@ class ShowSearchRequestTest {
         assertThatThrownBy(request::toCriteria)
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -70,6 +70,6 @@ class ShowSearchRequestTest {
 
         assertThatThrownBy(request::toCriteria)
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 }

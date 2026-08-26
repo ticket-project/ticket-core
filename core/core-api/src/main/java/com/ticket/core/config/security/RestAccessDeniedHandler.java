@@ -1,7 +1,7 @@
 package com.ticket.core.config.security;
 
 import tools.jackson.databind.json.JsonMapper;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.api.error.ApiErrorType;
 import com.ticket.core.support.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -27,9 +27,9 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
             final HttpServletResponse response,
             final AccessDeniedException accessDeniedException
     ) throws IOException, ServletException {
-        response.setStatus(ErrorType.AUTHORIZATION_ERROR.getStatus().value());
+        response.setStatus(ApiErrorType.ACCESS_DENIED.getStatus().value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        jsonMapper.writeValue(response.getWriter(), ApiResponse.error(ErrorType.AUTHORIZATION_ERROR));
+        jsonMapper.writeValue(response.getWriter(), ApiResponse.error(ApiErrorType.ACCESS_DENIED));
     }
 }
