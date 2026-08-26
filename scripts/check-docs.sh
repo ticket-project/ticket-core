@@ -10,6 +10,7 @@
 #   4. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   5. UTF-8 BOM이 섞이지 않았는지
 #   6. 형제 저장소와 커밋 type 표가 어긋나지 않았는지 (나란히 있을 때만)
+#   7. 오래 손대지 않은 문서 보고 (실패시키지 않음)
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -107,6 +108,27 @@ if [ -f "$CONV" ]; then
 fi
 
 echo
+# 7 ─ 신선도 보고 (실패시키지 않는다)
+# 손으로 적는 "기준일" 프론트매터는 반드시 실제와 어긋난다. git 이력을 신선도 신호로 쓴다.
+STALE_DAYS=${STALE_DAYS:-120}
+now=$(date +%s)
+stale_list=""
+for f in $(git ls-files '*.md'); do
+  case "$f" in docs/archive/*|*/ISSUE_TEMPLATE/*) continue ;; esac
+  ts=$(git log -1 --format=%ct -- "$f" 2>/dev/null)
+  [ -n "$ts" ] || continue
+  days=$(( (now - ts) / 86400 ))
+  [ "$days" -gt "$STALE_DAYS" ] && stale_list="$stale_list  $days일  $f
+"
+done
+if [ -n "$stale_list" ]; then
+  printf 'note  %s일 넘게 손대지 않은 문서 (실패 아님, 사실 확인 대상)
+' "$STALE_DAYS"
+  printf "$stale_list" | sort -rn
+else
+  ok "모든 문서가 ${STALE_DAYS}일 안에 갱신됨"
+fi
+
 if [ "$fail" -ne 0 ]; then
   echo "문서 검사 실패"
   exit 1
