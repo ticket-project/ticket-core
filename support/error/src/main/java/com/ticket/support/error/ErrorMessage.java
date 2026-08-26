@@ -15,8 +15,8 @@ public class ErrorMessage {
         this.data = data;
     }
 
-    public ErrorMessage(final ErrorType errorType, final Object data) {
-        this(errorType.getErrorCode().name(), errorType.getMessage(), data);
+    public ErrorMessage(final ErrorDefinition errorType, final Object data) {
+        this(errorType.getErrorCode().getCode(), errorType.getMessage(), data);
     }
 
 }

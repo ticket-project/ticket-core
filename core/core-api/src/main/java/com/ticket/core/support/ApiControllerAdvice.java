@@ -23,28 +23,28 @@ public class ApiControllerAdvice {
     public ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
         log.error("예외가 발생했습니다. message={} ", e.getMessage(), e);
         return ResponseEntity
-                .status(ErrorType.DEFAULT_ERROR.getStatus())
+                .status(ErrorType.DEFAULT_ERROR.getStatus().value())
                 .body(ApiResponse.error(ErrorType.DEFAULT_ERROR));
     }
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ApiResponse<Object>> handleAuthException(AuthException e) {
         return ResponseEntity
-                .status(e.getErrorType().getStatus())
+                .status(e.getErrorType().getStatus().value())
                 .body(ApiResponse.error(e.getErrorType(), e.getData()));
     }
 
     @ExceptionHandler(CoreException.class)
     public ResponseEntity<ApiResponse<Object>> handleCoreException(CoreException e) {
         return ResponseEntity
-                .status(e.getErrorType().getStatus())
+                .status(e.getErrorType().getStatus().value())
                 .body(ApiResponse.error(e.getErrorType(), e.getData()));
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(NoHandlerFoundException e) {
         return ResponseEntity
-                .status(ErrorType.NOT_FOUND_DATA.getStatus())
+                .status(ErrorType.NOT_FOUND_DATA.getStatus().value())
                 .body(ApiResponse.error(ErrorType.NOT_FOUND_DATA));
     }
 

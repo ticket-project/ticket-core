@@ -1,0 +1,73 @@
+package com.ticket.support.error;
+
+/**
+ * 모듈별 오류 카탈로그로 옮기는 동안만 남겨 두는 기존 전역 코드다.
+ * 새 코드는 DomainErrorCode, ApplicationErrorCode, ApiErrorCode를 쓴다.
+ *
+ * @deprecated 마이그레이션이 끝나면 삭제한다.
+ */
+@Deprecated
+public enum LegacyErrorCode implements ErrorCode {
+    E400("잘못된 요청"),
+    E404("데이터 없음"),
+    E500("내부 서버 오류"),
+
+    //AUTH
+    E1000("인증 오류"),
+    E1001("인가 오류"),
+
+    //회원
+    E2000("중복 이메일"),
+    E2001("비밀번호 불일치"),
+
+    //회차
+    E3000("유효하지 않은 회차"),
+    E3001("지난 회차"),
+    E3002("예매 시작 전"),
+    E3003("예매 가능한 좌석 없음"),
+
+    //좌석
+    E4000("회차 좌석 불일치"),
+    E4001("이미 선택된 좌석"),
+    E4002("좌석 선택 해제 권한 없음"),
+
+    //주문
+    E5000("가용 좌석 초과"),
+    E5001("좌석 수량 불일치"),
+    E5002("결제 대기 주문만 처리 가능"),
+    E5003("주문 접근 권한 없음"),
+    E5004("이미 진행 중인 결제 대기 주문 존재"),
+    E5005("홀드가 만료된 주문"),
+
+    //선점
+    E6000("이미 선점된 좌석"),
+    E6001("선점 가능한 좌석 수 초과"),
+    E6002("유효한 선점 정보 없음"),
+    E6003("선점 처리 중"),
+    E6004("선점 처리 실패"),
+
+    //공연
+    E7000("미지원 공연 정렬"),
+    E7001("이미 찜한 공연"),
+
+    //대기열 입장
+    E8000("대기열 입장 토큰 필요"),
+    E8001("대기열 입장 토큰 만료"),
+    E8002("대기열 입장 토큰 오류");
+
+    private final String description;
+
+    LegacyErrorCode(final String description) {
+        this.description = description;
+    }
+
+    @Override
+    public String getCode() {
+        return name();
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+}
