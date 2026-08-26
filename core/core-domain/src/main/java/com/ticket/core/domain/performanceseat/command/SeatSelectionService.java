@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performanceseat.command;
 
-import com.ticket.core.domain.performanceseat.store.SeatSelectionStore;
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.domain.performanceseat.store.SeatSelectionStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ public class SeatSelectionService {
         final boolean locked = seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL);
         if (!locked) {
             log.warn("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
-            throw new CoreException(ErrorType.SEAT_ALREADY_SELECTED);
+            throw new CoreException(DomainErrorType.SEAT_ALREADY_SELECTED);
         }
         log.debug("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
     }
@@ -71,7 +71,7 @@ public class SeatSelectionService {
             return;
         }
         logNotOwned(performanceId, seatId, memberId, holder);
-        throw new CoreException(ErrorType.SEAT_NOT_OWNED);
+        throw new CoreException(DomainErrorType.SEAT_NOT_OWNED);
     }
 
     private void releaseSeat(
@@ -96,7 +96,7 @@ public class SeatSelectionService {
             return;
         }
         logNotOwned(performanceId, seatId, memberId, currentHolder);
-        throw new CoreException(ErrorType.SEAT_NOT_OWNED);
+        throw new CoreException(DomainErrorType.SEAT_NOT_OWNED);
     }
 
     private void logNotOwned(final Long performanceId, final Long seatId, final Long memberId, final String holder) {

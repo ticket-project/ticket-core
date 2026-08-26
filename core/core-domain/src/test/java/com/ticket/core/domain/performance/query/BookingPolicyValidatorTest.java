@@ -1,9 +1,9 @@
 package com.ticket.core.domain.performance.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -40,22 +40,22 @@ class BookingPolicyValidatorTest {
 
     @Test
     void 예매시작_전이면_실패한다() {
-        assertBookingError(policy(NOW.plusMinutes(1), NOW.plusHours(1), 4), ErrorType.NOT_YET_RESERVE_TIME);
+        assertBookingError(policy(NOW.plusMinutes(1), NOW.plusHours(1), 4), DomainErrorType.NOT_YET_RESERVE_TIME);
     }
 
     @Test
     void 예매마감_후면_실패한다() {
-        assertBookingError(policy(NOW.minusHours(1), NOW.minusMinutes(1), 4), ErrorType.PERFORMANCE_IS_PAST);
+        assertBookingError(policy(NOW.minusHours(1), NOW.minusMinutes(1), 4), DomainErrorType.PERFORMANCE_IS_PAST);
     }
 
     @Test
     void 예매시작시각이_없으면_실패한다() {
-        assertBookingError(policy(null, NOW.plusHours(1), 4), ErrorType.NOT_YET_RESERVE_TIME);
+        assertBookingError(policy(null, NOW.plusHours(1), 4), DomainErrorType.NOT_YET_RESERVE_TIME);
     }
 
     @Test
     void 예매마감시각이_없으면_실패한다() {
-        assertBookingError(policy(NOW.minusHours(1), null, 4), ErrorType.PERFORMANCE_IS_PAST);
+        assertBookingError(policy(NOW.minusHours(1), null, 4), DomainErrorType.PERFORMANCE_IS_PAST);
     }
 
     @Test
@@ -88,7 +88,7 @@ class BookingPolicyValidatorTest {
         assertThatThrownBy(() -> BookingPolicyValidator.ensureWithinHoldLimit(policy, 4))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.EXCEED_HOLD_LIMIT));
+                        .isEqualTo(DomainErrorType.EXCEED_HOLD_LIMIT));
     }
 
     @Test
@@ -105,7 +105,7 @@ class BookingPolicyValidatorTest {
         assertThat(BookingPolicyValidator.requiresQueue(queuePolicy(null), NOW)).isFalse();
     }
 
-    private void assertBookingError(final PerformanceBookingPolicyView policy, final ErrorType errorType) {
+    private void assertBookingError(final PerformanceBookingPolicyView policy, final DomainErrorType errorType) {
         assertThatThrownBy(() -> BookingPolicyValidator.ensureBookingOpen(policy, NOW))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));

@@ -1,7 +1,7 @@
 package com.ticket.core.domain.auth.oauth2;
 
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -51,7 +51,7 @@ class OAuth2UserInfoFactoryTest {
         //then
         assertThatThrownBy(() -> OAuth2UserInfoFactory.create("naver", Map.of()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 }
 

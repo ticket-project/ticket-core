@@ -1,7 +1,7 @@
 package com.ticket.core.domain.show.meta;
 
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
 import lombok.Getter;
 
 @Getter
@@ -24,6 +24,6 @@ public enum ShowSortKey {
         for (var k : values()) {
             if (k.apiValue.equalsIgnoreCase(v)) return k;
         }
-        throw new CoreException(ErrorType.NOT_SUPPORT_SHOW_SORT, "지원하지 않는 sort: " + v);
+        throw new CoreException(DomainErrorType.NOT_SUPPORT_SHOW_SORT, "지원하지 않는 sort: " + v);
     }
 }

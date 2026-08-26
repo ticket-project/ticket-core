@@ -1,9 +1,9 @@
 package com.ticket.core.domain.member.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.support.error.ErrorType;
-import com.ticket.support.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,13 +15,13 @@ public class MemberFinder {
 
     public Member findActiveMemberById(final Long id) {
         return memberRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new NotFoundException(ErrorType.NOT_FOUND_DATA));
+                .orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND));
     }
 
     public void ensureActiveMemberExists(final Long id) {
         if (memberRepository.existsByIdAndDeletedAtIsNull(id)) {
             return;
         }
-        throw new NotFoundException(ErrorType.NOT_FOUND_DATA);
+        throw new CoreException(DomainErrorType.DATA_NOT_FOUND);
     }
 }

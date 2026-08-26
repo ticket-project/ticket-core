@@ -1,7 +1,7 @@
 package com.ticket.core.domain.order.command.create;
 
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -18,21 +18,21 @@ class RequestedSeatIdsTest {
     void 빈_좌석_id_목록이면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(List.of()))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 
     @Test
     void null_좌석_id_목록이면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(null))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 
     @Test
     void 중복된_좌석_id가_있으면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(List.of(3L, 1L, 3L)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 
     @Test
@@ -41,7 +41,7 @@ class RequestedSeatIdsTest {
 
         assertThatThrownBy(() -> RequestedSeatIds.from(seatIds))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 
     @Test

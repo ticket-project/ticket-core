@@ -1,9 +1,9 @@
 package com.ticket.core.domain.performance.model;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
@@ -30,11 +30,11 @@ class PerformanceTest {
     void rejects_hold_limit_less_than_two() {
         assertThatThrownBy(() -> createPerformance(1, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
 
         assertThatThrownBy(() -> createPerformance(0, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
     }
 
     @Test

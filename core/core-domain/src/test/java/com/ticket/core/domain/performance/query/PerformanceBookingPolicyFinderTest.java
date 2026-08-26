@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performance.query;
 
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,7 +43,7 @@ class PerformanceBookingPolicyFinderTest {
         assertThatThrownBy(() -> finder.findById(10L))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
+                        .isEqualTo(DomainErrorType.DATA_NOT_FOUND));
     }
 
     @Test

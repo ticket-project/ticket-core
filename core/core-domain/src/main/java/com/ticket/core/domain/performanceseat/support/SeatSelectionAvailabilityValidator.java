@@ -1,11 +1,11 @@
 package com.ticket.core.domain.performanceseat.support;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.domain.performanceseat.query.SeatSelectionAvailabilityQueryRepository;
 import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,13 +23,13 @@ public class SeatSelectionAvailabilityValidator {
     public void validate(final Long performanceId, final Long seatId) {
         final SeatSelectionAvailabilityView seat = queryRepository
                 .findSelectableSeat(performanceId, seatId)
-                .orElseThrow(() -> new CoreException(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
+                .orElseThrow(() -> new CoreException(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
 
         if (seat.state() != PerformanceSeatState.AVAILABLE) {
-            throw new CoreException(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
+            throw new CoreException(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT);
         }
         if (holdManager.isHeld(performanceId, seatId)) {
-            throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
+            throw new CoreException(DomainErrorType.SEAT_ALREADY_HOLD);
         }
     }
 }

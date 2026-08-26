@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performance.query;
 
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ public class PerformanceBookingPolicyFinder {
     public PerformanceBookingPolicyView findById(final Long performanceId) {
         return queryRepository.findByPerformanceId(performanceId)
                 .orElseThrow(() -> new CoreException(
-                        ErrorType.NOT_FOUND_DATA,
+                        DomainErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + performanceId
                 ));
     }

@@ -1,11 +1,11 @@
 package com.ticket.core.domain.performanceseat.support;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.domain.performanceseat.query.SeatSelectionAvailabilityQueryRepository;
 import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,7 +45,7 @@ class SeatSelectionAvailabilityValidatorTest {
     void 회차에_없는_좌석이면_실패한다() {
         when(queryRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.empty());
 
-        assertError(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
+        assertError(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
 
         verifyNoInteractions(holdManager);
     }
@@ -55,7 +55,7 @@ class SeatSelectionAvailabilityValidatorTest {
         when(queryRepository.findSelectableSeat(10L, 20L))
                 .thenReturn(Optional.of(new SeatSelectionAvailabilityView(30L, PerformanceSeatState.RESERVED)));
 
-        assertError(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
+        assertError(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT);
 
         verifyNoInteractions(holdManager);
     }
@@ -65,10 +65,10 @@ class SeatSelectionAvailabilityValidatorTest {
         when(queryRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
-        assertError(ErrorType.SEAT_ALREADY_HOLD);
+        assertError(DomainErrorType.SEAT_ALREADY_HOLD);
     }
 
-    private void assertError(final ErrorType errorType) {
+    private void assertError(final DomainErrorType errorType) {
         assertThatThrownBy(() -> validator.validate(10L, 20L))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));

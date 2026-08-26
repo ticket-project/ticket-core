@@ -1,7 +1,6 @@
 package com.ticket.core.support.lock;
 
-import com.ticket.support.error.ErrorType;
-
+import com.ticket.core.domain.error.DomainErrorType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -48,7 +47,7 @@ public @interface DistributedLock {
     /**
      * 락 획득 실패 시 반환할 도메인 에러
      */
-    ErrorType errorType() default ErrorType.HOLD_BUSY;
+    DomainErrorType errorType() default DomainErrorType.HOLD_BUSY;
 
     /**
      * 락 획득 실패를 경고로 기록할지 여부. 정상적인 경합이면 false로 지정한다.

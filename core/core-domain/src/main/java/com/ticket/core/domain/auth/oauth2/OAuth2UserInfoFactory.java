@@ -1,8 +1,8 @@
 package com.ticket.core.domain.auth.oauth2;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import java.util.Locale;
 import java.util.Map;
 
@@ -17,7 +17,7 @@ public class OAuth2UserInfoFactory {
         return switch (normalizedRegistrationId) {
             case "google" -> new GoogleOAuth2UserInfo(attributes);
             case "kakao" -> new KakaoOAuth2UserInfo(attributes);
-            default -> throw new CoreException(ErrorType.INVALID_REQUEST, "Unsupported social provider: " + registrationId);
+            default -> throw new CoreException(DomainErrorType.INVALID_ARGUMENT, "Unsupported social provider: " + registrationId);
         };
     }
 }
