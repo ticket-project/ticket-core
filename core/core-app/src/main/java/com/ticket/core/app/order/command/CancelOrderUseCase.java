@@ -1,12 +1,12 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +34,9 @@ public class CancelOrderUseCase {
 
     private Order getPendingOwnedOrder(final String orderKey, final Long memberId) {
         final Order order = orderRepository.findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
+                .orElseThrow(() -> new CoreException(DomainErrorType.ORDER_NOT_OWNED));
         if (order.getStatus() != OrderState.PENDING) {
-            throw new CoreException(ErrorType.ORDER_NOT_PENDING);
+            throw new CoreException(DomainErrorType.ORDER_NOT_PENDING);
         }
         return order;
     }

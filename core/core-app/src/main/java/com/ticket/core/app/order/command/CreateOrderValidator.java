@@ -1,5 +1,7 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
@@ -11,8 +13,6 @@ import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.queue.AdmissionGuard;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +75,6 @@ public class CreateOrderValidator {
         if (!orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
             return;
         }
-        throw new CoreException(ErrorType.PENDING_ORDER_ALREADY_EXISTS);
+        throw new CoreException(ApplicationErrorType.PENDING_ORDER_ALREADY_EXISTS);
     }
 }

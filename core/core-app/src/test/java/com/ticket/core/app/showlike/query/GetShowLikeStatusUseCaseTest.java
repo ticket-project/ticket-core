@@ -1,11 +1,11 @@
 package com.ticket.core.app.showlike.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.show.query.ShowFinder;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -63,7 +63,7 @@ class GetShowLikeStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(input))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     private static Stream<Arguments> invalidInputs() {

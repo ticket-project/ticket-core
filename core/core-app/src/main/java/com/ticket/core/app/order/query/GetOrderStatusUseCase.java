@@ -1,10 +1,10 @@
 package com.ticket.core.app.order.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.order.query.model.OrderStatusView;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,7 @@ public class GetOrderStatusUseCase {
 
     public Output execute(final Input input) {
         final OrderStatusView status = orderQueryRepository.findStatus(input.orderKey(), input.memberId())
-                .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
+                .orElseThrow(() -> new CoreException(DomainErrorType.ORDER_NOT_OWNED));
         final long remainingSeconds = OrderRemainingTime.seconds(
                 status.status(),
                 status.expiresAt(),

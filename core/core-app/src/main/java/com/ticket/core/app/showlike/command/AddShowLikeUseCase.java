@@ -1,13 +1,13 @@
 package com.ticket.core.app.showlike.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.query.ShowFinder;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ public class AddShowLikeUseCase {
         try {
             showLikeRepository.save(new ShowLike(member, show));
         } catch (DataIntegrityViolationException e) {
-            throw new CoreException(ErrorType.SHOW_LIKE_ALREADY_EXISTS,
+            throw new CoreException(ApplicationErrorType.SHOW_LIKE_ALREADY_EXISTS,
                     "이미 찜한 공연입니다. memberId=" + input.memberId() + ", showId=" + input.showId());
         }
 
@@ -54,7 +54,7 @@ public class AddShowLikeUseCase {
 
     private void validateInput(final Input input) {
         if (input == null || input.memberId() == null || input.showId() == null) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "memberId와 showId는 필수입니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "memberId와 showId는 필수입니다.");
         }
     }
 

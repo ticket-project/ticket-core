@@ -1,5 +1,7 @@
 package com.ticket.core.app.auth;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.auth.PasswordService;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -7,9 +9,6 @@ import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.RawPassword;
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -76,7 +75,7 @@ class AuthServiceTest {
         //then
         assertThatThrownBy(() -> authService.register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동"))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.MEMBER_DUPLICATE_EMAIL));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.MEMBER_DUPLICATE_EMAIL));
     }
 
     @Test
@@ -87,7 +86,7 @@ class AuthServiceTest {
         //when
         //then
         assertThatThrownBy(() -> authService.login("missing@example.com", "password123!"))
-                .isInstanceOf(AuthException.class);
+                .isInstanceOf(CoreException.class);
 
         verify(passwordService).encode("timing-guard-dummy-password");
     }
@@ -101,7 +100,7 @@ class AuthServiceTest {
         //when
         //then
         assertThatThrownBy(() -> authService.login("social@example.com", "password123!"))
-                .isInstanceOf(AuthException.class);
+                .isInstanceOf(CoreException.class);
     }
 
     @Test
@@ -114,7 +113,7 @@ class AuthServiceTest {
         //when
         //then
         assertThatThrownBy(() -> authService.login("user@example.com", "wrong-password"))
-                .isInstanceOf(AuthException.class);
+                .isInstanceOf(CoreException.class);
     }
 
     @Test

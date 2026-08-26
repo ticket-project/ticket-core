@@ -1,10 +1,10 @@
 package com.ticket.core.app.order.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.app.order.query.OrderFinder;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,7 +51,7 @@ class OrderFinderTest {
         //then
         assertThatThrownBy(() -> orderFinder.findOwnedByOrderKey("missing", 1L))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.ORDER_NOT_OWNED));
     }
 
     @Test
@@ -76,7 +76,7 @@ class OrderFinderTest {
         //then
         assertThatThrownBy(() -> orderFinder.findPendingOwnedByOrderKeyForUpdate("missing", 1L))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.ORDER_NOT_OWNED));
     }
 
     @Test
@@ -90,7 +90,7 @@ class OrderFinderTest {
         //then
         assertThatThrownBy(() -> orderFinder.findPendingOwnedByOrderKeyForUpdate("order-key", 1L))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.ORDER_NOT_PENDING));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.ORDER_NOT_PENDING));
     }
 
     private Order createOrder() {

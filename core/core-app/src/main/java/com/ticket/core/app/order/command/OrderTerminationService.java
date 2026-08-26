@@ -1,5 +1,7 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.order.OrderTerminationResult;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxWriter;
@@ -7,8 +9,6 @@ import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.repository.OrderSeatRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -50,7 +50,7 @@ public class OrderTerminationService {
         final boolean hasForeignOrderSeat = orderSeats.stream()
                 .anyMatch(orderSeat -> !Objects.equals(orderSeat.getOrder().getId(), order.getId()));
         if (hasForeignOrderSeat) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "orderSeats는 같은 order에 속해야 합니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "orderSeats는 같은 order에 속해야 합니다.");
         }
         return orderSeats;
     }

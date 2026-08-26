@@ -1,13 +1,13 @@
 package com.ticket.core.app.auth.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.auth.token.AuthRefreshToken;
 import com.ticket.core.domain.auth.token.AuthTokenManager;
 import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +60,7 @@ public class RefreshAuthTokenUseCase {
 
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore.validate(input.refreshToken())
-                .orElseThrow(() -> new AuthException(ErrorType.AUTHENTICATION_ERROR, "유효하지 않거나 만료된 리프레시 토큰입니다."));
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED, "유효하지 않거나 만료된 리프레시 토큰입니다."));
         final Member member = memberFinder.findActiveMemberById(memberId);
         final IssuedAuthTokens result = authTokenManager.rotateTokens(member.getId(), member.getRole().name(), input.refreshToken());
         return new Result(

@@ -1,11 +1,11 @@
 package com.ticket.core.app.performanceseat.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.PerformanceFinder;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +41,7 @@ public class GetSeatAvailabilityUseCase {
         final Performance performance = performanceFinder.findById(input.performanceId());
 
         if (performance.getShow() == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA,
+            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                     "회차와 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId());
         }
 

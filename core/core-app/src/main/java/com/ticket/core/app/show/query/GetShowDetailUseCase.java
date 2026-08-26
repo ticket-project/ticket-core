@@ -1,11 +1,11 @@
 package com.ticket.core.app.show.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.BookingStatus;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ public class GetShowDetailUseCase {
     public record Input(Long showId) {
         public Input {
             if (showId == null) {
-                throw new CoreException(ErrorType.INVALID_REQUEST, "showId는 필수입니다.");
+                throw new CoreException(ApplicationErrorType.INVALID_INPUT, "showId는 필수입니다.");
             }
         }
     }
@@ -91,13 +91,13 @@ public class GetShowDetailUseCase {
     public Output execute(final Input input) {
         validateInput(input);
         return showDetailQueryRepository.findShowDetail(input.showId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
     }
 
     private void validateInput(final Input input) {
         if (input == null) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "showId는 필수입니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "showId는 필수입니다.");
         }
     }
 }

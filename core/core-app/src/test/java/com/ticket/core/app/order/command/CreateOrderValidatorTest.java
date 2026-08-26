@@ -1,5 +1,9 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.support.error.ErrorDefinition;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderValidator;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
@@ -13,8 +17,6 @@ import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -78,7 +80,7 @@ class CreateOrderValidatorTest {
         when(performanceBookingPolicyFinder.findById(10L))
                 .thenReturn(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), null));
 
-        assertError(seatIds, ErrorType.PERFORMANCE_IS_PAST);
+        assertError(seatIds, DomainErrorType.PERFORMANCE_IS_PAST);
 
         verifyNoInteractions(memberFinder, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
     }
@@ -88,7 +90,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L));
         when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(2));
 
-        assertError(seatIds, ErrorType.EXCEED_HOLD_LIMIT);
+        assertError(seatIds, DomainErrorType.EXCEED_HOLD_LIMIT);
 
         verifyNoInteractions(memberFinder, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
     }
@@ -112,7 +114,7 @@ class CreateOrderValidatorTest {
                 .thenReturn(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), QueueMode.FORCE_ON));
         doThrowAdmissionRequired();
 
-        assertError(seatIds, ErrorType.ADMISSION_TOKEN_REQUIRED);
+        assertError(seatIds, ApplicationErrorType.ADMISSION_TOKEN_REQUIRED);
 
         verifyNoInteractions(memberFinder, orderRepository, holdSeatAvailabilityValidator);
     }
@@ -123,7 +125,7 @@ class CreateOrderValidatorTest {
         when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(3));
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(true);
 
-        assertError(seatIds, ErrorType.PENDING_ORDER_ALREADY_EXISTS);
+        assertError(seatIds, ApplicationErrorType.PENDING_ORDER_ALREADY_EXISTS);
 
         verifyNoInteractions(holdSeatAvailabilityValidator);
     }
@@ -160,11 +162,11 @@ class CreateOrderValidatorTest {
     }
 
     private void doThrowAdmissionRequired() {
-        org.mockito.Mockito.doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+        org.mockito.Mockito.doThrow(new CoreException(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED))
                 .when(admissionGuard).ensureAdmitted(10L, 20L, "admission-token");
     }
 
-    private void assertError(final RequestedSeatIds seatIds, final ErrorType errorType) {
+    private void assertError(final RequestedSeatIds seatIds, final ErrorDefinition errorType) {
         assertThatThrownBy(() -> validator.validate(input(seatIds), seatIds, FIXED_NOW))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));

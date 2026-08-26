@@ -1,11 +1,11 @@
 package com.ticket.core.app.showlike.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.app.showlike.query.ShowLikeQueryRepository;
 import com.ticket.core.app.support.cursor.CursorSlice;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -59,17 +59,17 @@ public class GetMyShowLikesUseCase {
         try {
             return Long.parseLong(cursor);
         } catch (final NumberFormatException exception) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "cursor 형식이 올바르지 않습니다.");
         }
     }
 
     private void validateInput(final Input input) {
         if (input == null || input.memberId() == null) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "memberId는 필수입니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "memberId는 필수입니다.");
         }
 
         if (input.size() <= 0 || input.size() > MAX_SIZE) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.ticket.core.app.auth.oauth2;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.auth.oauth2.OAuth2UserInfo;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -8,8 +10,6 @@ import com.ticket.core.domain.member.repository.MemberSocialAccountRepository;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.domain.member.model.SocialProvider;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -121,7 +121,7 @@ class OAuth2MemberProvisioningServiceTest {
         //then
         assertThatThrownBy(() -> oauth2MemberProvisioningService.getOrCreateMember(userInfo))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.MEMBER_DUPLICATE_EMAIL));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.MEMBER_DUPLICATE_EMAIL));
     }
 
     @Test
