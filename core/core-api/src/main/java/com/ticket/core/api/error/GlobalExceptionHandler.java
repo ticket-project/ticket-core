@@ -1,7 +1,6 @@
 package com.ticket.core.api.error;
 
 import com.ticket.core.support.response.ApiResponse;
-import com.ticket.support.error.AuthException;
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorDefinition;
 import org.slf4j.Logger;
@@ -28,12 +27,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CoreException.class)
     public ResponseEntity<ApiResponse<Object>> handleCoreException(final CoreException exception) {
-        return toResponse(exception.getErrorType(), exception.getData());
-    }
-
-    @Deprecated
-    @ExceptionHandler(AuthException.class)
-    public ResponseEntity<ApiResponse<Object>> handleAuthException(final AuthException exception) {
         return toResponse(exception.getErrorType(), exception.getData());
     }
 

@@ -8,8 +8,8 @@ import com.ticket.core.app.auth.command.RefreshAuthTokenUseCase;
 import com.ticket.core.app.auth.command.RegisterMemberUseCase;
 import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.core.api.error.GlobalExceptionHandler;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.support.error.CoreException;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,7 +165,7 @@ class AuthControllerContractTest {
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );
         when(logoutUseCase.execute(any(LogoutUseCase.Input.class)))
-                .thenThrow(new AuthException(ErrorType.AUTHENTICATION_ERROR));
+                .thenThrow(new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED));
 
         mockMvc.perform(post("/api/v1/auth/logout")
                         .cookie(new MockCookie("refresh_token", "refresh-token")))
