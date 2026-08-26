@@ -1,8 +1,8 @@
 package com.ticket.core.infra.queue;
 
-import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.domain.queue.AdmissionGuard;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -55,14 +55,14 @@ public class AdmissionTokenService implements AdmissionGuard {
             return;
         }
         if (admissionToken == null || admissionToken.isBlank()) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED);
+            throw new CoreException(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED);
         }
         try {
             verifyFor(admissionToken, memberId, performanceId);
         } catch (final AdmissionTokenExpiredException exception) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
+            throw new CoreException(ApplicationErrorType.ADMISSION_TOKEN_EXPIRED);
         } catch (final AdmissionTokenException exception) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_INVALID);
+            throw new CoreException(ApplicationErrorType.ADMISSION_TOKEN_INVALID);
         }
     }
 

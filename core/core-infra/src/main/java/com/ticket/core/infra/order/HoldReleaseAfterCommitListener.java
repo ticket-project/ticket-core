@@ -1,9 +1,9 @@
 package com.ticket.core.infra.order;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
@@ -48,7 +48,7 @@ public class HoldReleaseAfterCommitListener {
         try {
             holdReleaseOutboxExecutor.process(outboxId, LocalDateTime.now(clock));
         } catch (final CoreException e) {
-            if (e.getErrorType() == ErrorType.HOLD_BUSY) {
+            if (e.getErrorType() == DomainErrorType.HOLD_BUSY) {
                 log.debug("hold release outbox가 이미 처리 중입니다. outboxId={}", outboxId);
                 return;
             }
