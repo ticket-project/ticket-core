@@ -1,7 +1,7 @@
 package com.ticket.core.support.response;
 
 import com.ticket.support.error.ErrorMessage;
-import com.ticket.support.error.ErrorType;
+import com.ticket.support.error.ErrorDefinition;
 
 public class ApiResponse<T> {
 
@@ -23,11 +23,11 @@ public class ApiResponse<T> {
         return new ApiResponse<>(ResultType.SUCCESS, data, null);
     }
 
-    public static <S> ApiResponse<S> error(final ErrorType errorType) {
+    public static <S> ApiResponse<S> error(final ErrorDefinition errorType) {
         return error(errorType, null);
     }
 
-    public static <S> ApiResponse<S> error(final ErrorType errorType, final Object data) {
+    public static <S> ApiResponse<S> error(final ErrorDefinition errorType, final Object data) {
         return new ApiResponse<>(ResultType.ERROR, null, new ErrorMessage(errorType, data));
     }
 

@@ -5,14 +5,14 @@ import lombok.Getter;
 @Getter
 public class CoreException extends RuntimeException {
 
-    private final ErrorType errorType;
+    private final ErrorDefinition errorType;
     private final Object data;
 
-    public CoreException(final ErrorType errorType) {
+    public CoreException(final ErrorDefinition errorType) {
         this(errorType, null);
     }
 
-    public CoreException(final ErrorType errorType, Object data) {
+    public CoreException(final ErrorDefinition errorType, final Object data) {
         super(errorType.getMessage());
         this.errorType = errorType;
         this.data = data;
