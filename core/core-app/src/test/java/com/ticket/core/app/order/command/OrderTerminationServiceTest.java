@@ -1,5 +1,7 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.order.OrderTerminationResult;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxWriter;
@@ -8,8 +10,6 @@ import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderSeatRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -86,7 +86,7 @@ class OrderTerminationServiceTest {
         assertThatThrownBy(() -> service().expire(order, FIXED_NOW))
                 .isInstanceOf(CoreException.class)
                 .satisfies(error -> assertThat(((CoreException) error).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
 
         assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
         verifyNoInteractions(holdHistoryRecorder, holdReleaseOutboxWriter, applicationEventPublisher);

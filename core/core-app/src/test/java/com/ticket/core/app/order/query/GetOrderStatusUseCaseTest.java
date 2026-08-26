@@ -1,9 +1,9 @@
 package com.ticket.core.app.order.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.order.query.model.OrderStatusView;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +62,6 @@ class GetOrderStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("missing", 1L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                        .isEqualTo(DomainErrorType.ORDER_NOT_OWNED));
     }
 }

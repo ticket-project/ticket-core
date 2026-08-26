@@ -1,8 +1,8 @@
 package com.ticket.core.app.show.query;
 
-import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.domain.show.meta.ShowSortKey;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,6 +23,6 @@ class ShowSortTest {
     void 지원하지_않는_sort면_예외를_던진다() {
         assertThatThrownBy(() -> ShowSort.from("unknown"))
                 .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.NOT_SUPPORT_SHOW_SORT));
+                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(DomainErrorType.NOT_SUPPORT_SHOW_SORT));
     }
 }

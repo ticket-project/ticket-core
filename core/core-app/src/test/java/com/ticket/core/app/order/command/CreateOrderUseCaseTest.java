@@ -1,5 +1,7 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderValidator;
 import com.ticket.core.app.order.command.CreatePendingOrderTxService;
@@ -14,8 +16,6 @@ import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,7 +79,7 @@ class CreateOrderUseCaseTest {
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
 
         verifyNoInteractions(validator, holdAllocator, createPendingOrderTxService);
     }
@@ -90,7 +90,7 @@ class CreateOrderUseCaseTest {
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
 
         verifyNoInteractions(validator, holdAllocator, createPendingOrderTxService);
     }

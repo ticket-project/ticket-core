@@ -1,5 +1,7 @@
 package com.ticket.core.app.auth;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.auth.PasswordService;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -7,9 +9,6 @@ import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.RawPassword;
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ public class AuthService {
             return memberRepository.save(member).getId();
         } catch (DataIntegrityViolationException e) {
             log.warn("이메일 중복 회원가입 시도: {}", email);
-            throw new CoreException(ErrorType.MEMBER_DUPLICATE_EMAIL);
+            throw new CoreException(ApplicationErrorType.MEMBER_DUPLICATE_EMAIL);
         }
     }
 
@@ -51,12 +50,12 @@ public class AuthService {
         if (optMember.isEmpty()) {
             // 타이밍 공격 방어: 회원이 없어도 해싱을 수행하여 응답 시간을 동일하게 유지
             passwordService.encode("timing-guard-dummy-password");
-            throw new AuthException(ErrorType.AUTHENTICATION_ERROR);
+            throw new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED);
         }
 
         final Member foundMember = optMember.get();
         if (foundMember.getEncodedPassword() == null || !passwordService.matches(RawPassword.create(password), foundMember.getEncodedPassword())) {
-            throw new AuthException(ErrorType.AUTHENTICATION_ERROR);
+            throw new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED);
         }
         return foundMember;
     }

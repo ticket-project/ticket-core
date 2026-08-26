@@ -1,9 +1,9 @@
 package com.ticket.core.app.show.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.show.meta.SaleType;
 import com.ticket.core.domain.show.BookingStatus;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -68,7 +68,7 @@ class GetShowDetailUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetShowDetailUseCase.Input(1L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
+                        .isEqualTo(ApplicationErrorType.DATA_NOT_FOUND));
     }
 
     @Test
@@ -76,7 +76,7 @@ class GetShowDetailUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(null))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @Test
@@ -84,6 +84,6 @@ class GetShowDetailUseCaseTest {
         assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 }

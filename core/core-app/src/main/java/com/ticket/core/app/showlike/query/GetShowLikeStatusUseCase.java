@@ -1,11 +1,11 @@
 package com.ticket.core.app.showlike.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
 import com.ticket.core.domain.show.query.ShowFinder;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +39,7 @@ public class GetShowLikeStatusUseCase {
 
     private void validateInput(final Input input) {
         if (input == null || input.memberId() == null || input.showId() == null) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "memberId와 showId는 필수입니다.");
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "memberId와 showId는 필수입니다.");
         }
     }
 }

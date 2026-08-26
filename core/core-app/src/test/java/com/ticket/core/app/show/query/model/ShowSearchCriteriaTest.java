@@ -1,7 +1,7 @@
 package com.ticket.core.app.show.query.model;
 
 import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -24,6 +24,6 @@ class ShowSearchCriteriaTest {
                 null
         ))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 }

@@ -1,11 +1,11 @@
 package com.ticket.core.app.order.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.order.query.model.OrderDetailRow;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
-import com.ticket.support.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,12 +66,12 @@ public class GetOrderDetailUseCase {
     public Output execute(final Input input) {
         final List<OrderDetailRow> rows = orderQueryRepository.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
-            throw new CoreException(ErrorType.ORDER_NOT_OWNED);
+            throw new CoreException(DomainErrorType.ORDER_NOT_OWNED);
         }
 
         final OrderDetailRow first = rows.getFirst();
         if (first.memberDeletedAt() != null) {
-            throw new NotFoundException(ErrorType.NOT_FOUND_DATA);
+            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND);
         }
 
         final LocalDateTime now = LocalDateTime.now(clock);

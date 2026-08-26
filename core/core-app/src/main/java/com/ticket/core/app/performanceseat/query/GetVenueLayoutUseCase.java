@@ -1,10 +1,10 @@
 package com.ticket.core.app.performanceseat.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.query.ShowFinder;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class GetVenueLayoutUseCase {
 
         Venue venue = show.getVenue();
         if (venue == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA,
+            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                     "공연에 연결된 공연장을 찾을 수 없습니다.");
         }
 

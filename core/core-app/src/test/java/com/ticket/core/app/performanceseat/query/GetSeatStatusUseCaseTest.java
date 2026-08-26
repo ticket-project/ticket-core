@@ -1,5 +1,8 @@
 package com.ticket.core.app.performanceseat.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
@@ -8,8 +11,6 @@ import com.ticket.core.domain.queue.AdmissionGuard;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.app.performanceseat.query.model.SeatStateView;
 import com.ticket.core.app.performanceseat.query.model.SeatStatus;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -110,7 +111,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
+                        .isEqualTo(DomainErrorType.PERFORMANCE_IS_PAST));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
@@ -123,7 +124,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_YET_RESERVE_TIME));
+                        .isEqualTo(DomainErrorType.NOT_YET_RESERVE_TIME));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
@@ -143,13 +144,13 @@ class GetSeatStatusUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceBookingPolicyFinder.findById(10L)).thenReturn(queuePolicy());
-        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+        doThrow(new CoreException(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED))
                 .when(admissionGuard).ensureAdmitted(10L, 100L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED));
+                        .isEqualTo(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }

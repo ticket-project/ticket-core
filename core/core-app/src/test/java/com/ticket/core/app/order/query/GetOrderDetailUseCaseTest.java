@@ -1,10 +1,9 @@
 package com.ticket.core.app.order.query;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.order.query.model.OrderDetailRow;
-import com.ticket.support.error.CoreException;
-import com.ticket.support.error.ErrorType;
-import com.ticket.support.error.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,7 +66,7 @@ class GetOrderDetailUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("missing", 1L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                        .isEqualTo(DomainErrorType.ORDER_NOT_OWNED));
     }
 
     @Test
@@ -76,7 +75,7 @@ class GetOrderDetailUseCaseTest {
                 .thenReturn(List.of(row(LocalDateTime.of(2026, 3, 1, 0, 0))));
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L)))
-                .isInstanceOf(NotFoundException.class);
+                .isInstanceOf(CoreException.class);
     }
 
     private OrderDetailRow row(final LocalDateTime memberDeletedAt) {

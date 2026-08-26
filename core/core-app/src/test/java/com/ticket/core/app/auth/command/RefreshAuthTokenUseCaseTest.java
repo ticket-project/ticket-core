@@ -1,5 +1,7 @@
 package com.ticket.core.app.auth.command;
 
+import com.ticket.support.error.CoreException;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.domain.auth.token.AuthRefreshToken;
 import com.ticket.core.domain.auth.token.AuthTokenManager;
@@ -7,8 +9,6 @@ import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.query.MemberFinder;
-import com.ticket.support.error.AuthException;
-import com.ticket.support.error.ErrorType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -74,7 +74,7 @@ class RefreshAuthTokenUseCaseTest {
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
-                .isInstanceOf(AuthException.class)
-                .satisfies(exception -> assertThat(((AuthException) exception).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.AUTHENTICATION_FAILED));
     }
 }
