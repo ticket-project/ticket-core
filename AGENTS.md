@@ -38,6 +38,10 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 `_Avoid_`에 적힌 동의어로 흘러가지 않는다. 필요한 개념이 용어집에 없으면 그 자체가 신호다.
 `docs/adr/`의 결정과 어긋나는 제안을 할 때는 조용히 덮지 않고 어긋난다는 사실을 먼저 밝힌다.
 
+`docs/archive/`는 완료·폐기된 설계 기록이다. **명시적으로 요청받지 않는 한 읽지 않고**, 검색
+결과에 걸리더라도 현재 구조의 근거로 인용하지 않는다. 아직 반영되지 않은 설계는
+`docs/superpowers/`에 있다.
+
 부하 테스트의 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test/README.md`와
 `../gatling-test/console/README.md`를 기준으로 본다.
 
