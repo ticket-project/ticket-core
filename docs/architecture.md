@@ -131,11 +131,14 @@ Redis 관련 공통 의존성을 제공한다.
 
 ### `support:error`
 
-모든 모듈이 쓰는 공통 예외를 제공한다. `com.ticket.support.error` 패키지에
-`CoreException`, `ErrorType`, `ErrorCode`, `ErrorMessage`, `AuthException`, `NotFoundException`을 둔다.
+오류의 **공통 형식과 예외 전달 타입만** 제공한다. `com.ticket.support.error` 패키지에
+`ErrorCode`, `ErrorDefinition`, `ErrorStatus`, `CommonErrorCode`, `CoreException`을 둔다.
+업무 오류 상수는 여기에 두지 않는다.
 
-`ErrorType`이 `HttpStatus`를 갖고 있어 `spring-web`에 의존한다. 도메인 예외와 HTTP 표현의 분리는
-후속 과제로 남아 있다.
+실제 오류 카탈로그는 발생 원인을 판단하는 모듈이 소유한다. `core-domain`은 `DomainErrorType`,
+`core-app`은 `ApplicationErrorType`, `core-api`는 `ApiErrorType`을 가진다. `ErrorStatus`가
+`HttpStatus`를 대신하므로 이 모듈은 `spring-web`에 의존하지 않는다. 근거는
+`docs/adr/0002-module-owned-error-contracts.md`에 있다.
 
 ### `support:logging`
 
@@ -254,7 +257,10 @@ Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
 | scheduler, `@TransactionalEventListener`, background executor 설정 | `core-infra` |
 | 분산락 AOP 실행부 | `core-infra` 의 `lock` |
 | Querydsl, P6Spy 같은 기술 설정 | `core-infra` 의 `config` |
-| 공통 예외 | `support:error` |
+| 공통 예외와 오류 형식 계약 | `support:error` |
+| 도메인 규칙이 판단하는 오류 | `core-domain` 의 `error` |
+| 유스케이스가 판단하는 오류 | `core-app` 의 `error` |
+| 오류 응답 형식과 Spring 예외 변환 | `core-api` 의 `api.error` |
 
 ## 기능별 구조 원칙
 
@@ -414,8 +420,6 @@ auth infra 구현체에 직접 의존하지 않는다.
 
 ## 다음 구조 정리 방향
 
-- `ErrorType`이 `HttpStatus`를 갖고 있어 `support:error`가 `spring-web`에 의존한다. 도메인 예외와
-  HTTP 표현을 분리할지 판단한다.
 - JPA repository 인터페이스를 `core-domain` 포트와 `core-infra`의 Spring Data 인터페이스로 나눌지
   도메인별로 판단한다.
 - `support:lock` 분리를 판단한다. 지금 `@DistributedLock` 애노테이션은 `core-domain`,
