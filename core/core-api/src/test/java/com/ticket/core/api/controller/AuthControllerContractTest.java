@@ -7,7 +7,7 @@ import com.ticket.core.app.auth.command.LogoutUseCase;
 import com.ticket.core.app.auth.command.RefreshAuthTokenUseCase;
 import com.ticket.core.app.auth.command.RegisterMemberUseCase;
 import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
-import com.ticket.core.support.ApiControllerAdvice;
+import com.ticket.core.api.error.GlobalExceptionHandler;
 import com.ticket.support.error.AuthException;
 import com.ticket.support.error.ErrorType;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
@@ -51,7 +51,7 @@ class AuthControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new ApiControllerAdvice())
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 

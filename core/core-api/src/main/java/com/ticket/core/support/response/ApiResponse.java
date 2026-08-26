@@ -1,15 +1,15 @@
 package com.ticket.core.support.response;
 
-import com.ticket.support.error.ErrorMessage;
+import com.ticket.core.api.error.ApiErrorResponse;
 import com.ticket.support.error.ErrorDefinition;
 
 public class ApiResponse<T> {
 
     private final ResultType result;
     private final T data;
-    private final ErrorMessage error;
+    private final ApiErrorResponse error;
 
-    private ApiResponse(final ResultType result, final T data, final ErrorMessage error) {
+    private ApiResponse(final ResultType result, final T data, final ApiErrorResponse error) {
         this.result = result;
         this.data = data;
         this.error = error;
@@ -28,7 +28,7 @@ public class ApiResponse<T> {
     }
 
     public static <S> ApiResponse<S> error(final ErrorDefinition errorType, final Object data) {
-        return new ApiResponse<>(ResultType.ERROR, null, new ErrorMessage(errorType, data));
+        return new ApiResponse<>(ResultType.ERROR, null, new ApiErrorResponse(errorType.getErrorCode().getCode(), errorType.getMessage(), data));
     }
 
     public ResultType getResult() {
@@ -39,7 +39,7 @@ public class ApiResponse<T> {
         return data;
     }
 
-    public ErrorMessage getError() {
+    public ApiErrorResponse getError() {
         return error;
     }
 }
