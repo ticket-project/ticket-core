@@ -4,12 +4,6 @@ plugins {
     id 'io.spring.dependency-management'
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
-}
-
 allprojects {
     group = "${property('projectGroup')}"
     version = "${property('applicationVersion')}"
@@ -21,10 +15,17 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
+
+    // toolchain은 프로젝트별 설정이라 루트에 두면 서브프로젝트가 상속하지 않는다.
+    // 여기 두어야 실제 소스가 있는 모듈이 25로 컴파일된다.
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
 
     dependencies {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
