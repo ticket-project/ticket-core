@@ -8,6 +8,8 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEndingWith;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
@@ -41,6 +43,23 @@ class CoreLayerArchitectureTest {
                     return javaClass.getSimpleName().matches("Q[A-Z].*");
                 }
             };
+
+    private static final String ERROR_SUPPORT = "com.ticket.support.error..";
+
+    @ArchTest
+    static final ArchRule 오류_계약과_도메인_애플리케이션은_spring_web을_참조하지_않는다 =
+            noClasses()
+                    .that().resideInAnyPackage(ERROR_SUPPORT, DOMAIN, APP)
+                    .should().dependOnClassesThat()
+                    .resideInAnyPackage("org.springframework.web..", "org.springframework.http..");
+
+    @ArchTest
+    static final ArchRule api는_구체_오류_카탈로그를_참조하지_않는다 =
+            noClasses()
+                    .that().resideInAnyPackage(API_CONTROLLER, API_CONFIG)
+                    .should().dependOnClassesThat(
+                            resideInAnyPackage(DOMAIN, APP)
+                                    .and(simpleNameEndingWith("ErrorType")));
 
     @ArchTest
     static final ArchRule core_domain은_바깥_계층을_참조하지_않는다 =
