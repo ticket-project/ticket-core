@@ -3,6 +3,7 @@ package com.ticket.core.api.controller;
 import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
+import com.ticket.core.api.support.cursor.ShowLikeCursorCodec;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.api.error.GlobalExceptionHandler;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
@@ -32,7 +33,8 @@ class MemberControllerContractTest {
         MemberController controller = new MemberController(
                 getCurrentMemberUseCase,
                 Mockito.mock(WithdrawCurrentMemberUseCase.class),
-                Mockito.mock(GetMyShowLikesUseCase.class)
+                Mockito.mock(GetMyShowLikesUseCase.class),
+                new ShowLikeCursorCodec()
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())

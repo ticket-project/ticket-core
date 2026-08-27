@@ -2,7 +2,6 @@ package com.ticket.core.support.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
@@ -28,17 +27,21 @@ public record SliceResponse<T>(
                         - 다음 요청 시 `cursor` 파라미터에 이 값을 전달
                         - `hasNext`가 false이면 null
                         """,
-                example = "eyJpZCI6MTksInN0YXJ0RGF0ZSI6IjIwMjYtMDItMjgifQ=="
+                example = "eyJzb3J0IjoiUE9QVUxBUiIsImRpciI6IkRFU0MifQ"
         )
         String nextCursor
 ) {
-    public static <T> SliceResponse<T> from(final Slice<T> slice, final String nextCursor) {
-        return new SliceResponse<>(
-                slice.getContent(),
-                slice.hasNext(),
-                slice.getSize(),
-                slice.getNumberOfElements(),
-                nextCursor
-        );
+
+    /**
+     * app 조회 결과를 응답으로 옮긴다. {@code size}는 요청한 페이지 크기이고
+     * {@code numberOfElements}는 실제 반환된 개수다.
+     */
+    public static <T> SliceResponse<T> of(
+            final List<T> items,
+            final boolean hasNext,
+            final int size,
+            final String nextCursor
+    ) {
+        return new SliceResponse<>(items, hasNext, size, items.size(), nextCursor);
     }
 }

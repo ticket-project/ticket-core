@@ -16,7 +16,7 @@ public class ShowSearchCriteria {
     private LocalDate startDateFrom;
     private LocalDate startDateTo;
     private Region region;
-    private String cursor;
+    private ShowCursor cursor;
 
     public ShowSearchCriteria(
             final String keyword,
@@ -25,7 +25,7 @@ public class ShowSearchCriteria {
             final LocalDate startDateFrom,
             final LocalDate startDateTo,
             final Region region,
-            final String cursor
+            final ShowCursor cursor
     ) {
         validateStartDateRange(startDateFrom, startDateTo);
         this.keyword = keyword;
@@ -48,7 +48,7 @@ public class ShowSearchCriteria {
             final LocalDate startDateFrom,
             final LocalDate startDateTo,
             final String region,
-            final String cursor
+            final ShowCursor cursor
     ) {
         return new ShowSearchCriteria(
                 keyword,

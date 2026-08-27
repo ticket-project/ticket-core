@@ -2,46 +2,40 @@ package com.ticket.core.app.show.query.model;
 
 import com.ticket.core.domain.show.meta.Region;
 import lombok.Getter;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
-
 /**
- * 판매 오픈 예정 공연 목록 조회 요청 파라미터
+ * 판매 오픈 예정 공연 목록 조회 조건이다. 커서는 HTTP 문자열이 아니라 타입 값으로 받는다.
  */
 @Getter
 public class SaleOpeningSoonSearchParam {
 
-        private String category;
+    private final String category;
 
-        private String title;
+    private final String title;
 
-        private Region region;
+    private final Region region;
 
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleStartDateFrom;
+    private final LocalDateTime saleStartDateFrom;
 
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleStartDateTo;
+    private final LocalDateTime saleStartDateTo;
 
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleEndDateFrom;
+    private final LocalDateTime saleEndDateFrom;
 
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleEndDateTo;
+    private final LocalDateTime saleEndDateTo;
 
-        private String cursor;
+    private final ShowCursor cursor;
 
     public SaleOpeningSoonSearchParam(
-            String category,
-            String title,
-            Region region,
-            LocalDateTime saleStartDateFrom,
-            LocalDateTime saleStartDateTo,
-            LocalDateTime saleEndDateFrom,
-            LocalDateTime saleEndDateTo,
-            String cursor
+            final String category,
+            final String title,
+            final Region region,
+            final LocalDateTime saleStartDateFrom,
+            final LocalDateTime saleStartDateTo,
+            final LocalDateTime saleEndDateFrom,
+            final LocalDateTime saleEndDateTo,
+            final ShowCursor cursor
     ) {
         this.category = category;
         this.title = title;
@@ -53,4 +47,25 @@ public class SaleOpeningSoonSearchParam {
         this.cursor = cursor;
     }
 
+    public static SaleOpeningSoonSearchParam of(
+            final String category,
+            final String title,
+            final String region,
+            final LocalDateTime saleStartDateFrom,
+            final LocalDateTime saleStartDateTo,
+            final LocalDateTime saleEndDateFrom,
+            final LocalDateTime saleEndDateTo,
+            final ShowCursor cursor
+    ) {
+        return new SaleOpeningSoonSearchParam(
+                category,
+                title,
+                ShowParam.parseRegion(region),
+                saleStartDateFrom,
+                saleStartDateTo,
+                saleEndDateFrom,
+                saleEndDateTo,
+                cursor
+        );
+    }
 }

@@ -12,8 +12,8 @@ import com.ticket.core.app.show.query.model.ShowParam;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.app.support.cursor.CursorCodec;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.show.query.model.ShowCursor;
+import com.ticket.core.app.support.cursor.CursorPage;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +35,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -97,28 +97,28 @@ class QuerydslShowListReadRepositoryTest {
     void 지역으로_필터링하고_인기순으로_공연을_조회한다() {
         ShowParam param = new ShowParam(null, null, Region.SEOUL, null);
 
-        CursorSlice<ShowListItemView> result = showListReadRepository.findAllBySearch(param, 10, "popular");
-        Slice<ShowListItemView> slice = result.slice();
+        CursorPage<ShowListItemView, ShowCursor> result = showListReadRepository.findAllBySearch(param, 10, "popular");
+        List<ShowListItemView> slice = result.items();
 
-        assertThat(slice.getContent()).extracting(ShowListItemView::title)
+        assertThat(slice).extracting(ShowListItemView::title)
                 .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
-        assertThat(slice.getContent()).extracting(ShowListItemView::viewCount)
+        assertThat(slice).extracting(ShowListItemView::viewCount)
                 .containsExactly(300L, 120L, 50L);
-        assertThat(result.nextCursor()).isNull();
+        assertThat(result.nextPosition()).isNull();
     }
 
     @Test
     void 커서를_전달하면_다음_페이지를_조회한다() {
         ShowParam firstPageParam = new ShowParam(null, null, Region.SEOUL, null);
-        CursorSlice<ShowListItemView> firstPage = showListReadRepository.findAllBySearch(firstPageParam, 1, "popular");
+        CursorPage<ShowListItemView, ShowCursor> firstPage = showListReadRepository.findAllBySearch(firstPageParam, 1, "popular");
 
-        ShowParam secondPageParam = new ShowParam(null, null, Region.SEOUL, firstPage.nextCursor());
-        CursorSlice<ShowListItemView> secondPage = showListReadRepository.findAllBySearch(secondPageParam, 1, "popular");
+        ShowParam secondPageParam = new ShowParam(null, null, Region.SEOUL, firstPage.nextPosition());
+        CursorPage<ShowListItemView, ShowCursor> secondPage = showListReadRepository.findAllBySearch(secondPageParam, 1, "popular");
 
-        assertThat(firstPage.slice().getContent()).extracting(ShowListItemView::title)
+        assertThat(firstPage.items()).extracting(ShowListItemView::title)
                 .containsExactly("Seoul Popular");
-        assertThat(firstPage.nextCursor()).isNotBlank();
-        assertThat(secondPage.slice().getContent()).extracting(ShowListItemView::title)
+        assertThat(firstPage.nextPosition()).isNotNull();
+        assertThat(secondPage.items()).extracting(ShowListItemView::title)
                 .containsExactly("Seoul Normal");
     }
 
@@ -151,9 +151,9 @@ class QuerydslShowListReadRepositoryTest {
                 null
         );
 
-        CursorSlice<ShowSearchItemView> result = showListReadRepository.searchShows(request, 10, "popular");
+        CursorPage<ShowSearchItemView, ShowCursor> result = showListReadRepository.searchShows(request, 10, "popular");
 
-        assertThat(result.slice().getContent()).extracting(ShowSearchItemView::title)
+        assertThat(result.items()).extracting(ShowSearchItemView::title)
                 .containsExactly("Seoul Popular", "Seoul Normal");
     }
 
@@ -161,11 +161,11 @@ class QuerydslShowListReadRepositoryTest {
     void 조건에_맞는_공연이_없으면_빈_슬라이스를_반환한다() {
         ShowParam param = new ShowParam(null, null, Region.JEOLLA, null);
 
-        CursorSlice<ShowListItemView> result = showListReadRepository.findAllBySearch(param, 10, "popular");
+        CursorPage<ShowListItemView, ShowCursor> result = showListReadRepository.findAllBySearch(param, 10, "popular");
 
-        assertThat(result.slice().getContent()).isEmpty();
-        assertThat(result.slice().hasNext()).isFalse();
-        assertThat(result.nextCursor()).isNull();
+        assertThat(result.items()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextPosition()).isNull();
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {
@@ -217,11 +217,6 @@ class QuerydslShowListReadRepositoryTest {
     }
 
     static class TestConfig {
-
-        @Bean
-        CursorCodec cursorCodec() {
-            return new CursorCodec(JsonMapper.builder().build());
-        }
 
         @Bean
         Clock clock() {
