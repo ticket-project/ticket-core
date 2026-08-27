@@ -1,4 +1,4 @@
-package com.ticket.core.config.seed;
+package com.ticket.core.infra.seed;
 
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Role;
@@ -296,9 +296,11 @@ class SeedDataLoaderTest {
     }
 
     private Path resolveStaticRoot() {
+        // 정적 이미지는 HTTP로 서빙하므로 core-api가 소유한다. 시드 SQL은 그 경로를 참조한다.
         final List<Path> candidates = List.of(
-            Path.of("src", "main", "resources", "static"),
-            Path.of("core", "core-api", "src", "main", "resources", "static")
+            Path.of("..", "core-api", "src", "main", "resources", "static"),
+            Path.of("core", "core-api", "src", "main", "resources", "static"),
+            Path.of("src", "main", "resources", "static")
         );
 
         return candidates.stream()

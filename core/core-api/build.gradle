@@ -20,8 +20,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-security-test'
     testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
-    // seed loader 테스트가 h2를 쓴다. seed를 core-infra로 옮기면 함께 이동한다.
-    testRuntimeOnly 'com.h2database:h2'
     testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 

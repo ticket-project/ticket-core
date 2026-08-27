@@ -1,4 +1,4 @@
-package com.ticket.core.config.seed;
+package com.ticket.core.infra.seed;
 
 import com.ticket.core.app.member.command.SeedLoadTestMembersUseCase;
 import lombok.RequiredArgsConstructor;
