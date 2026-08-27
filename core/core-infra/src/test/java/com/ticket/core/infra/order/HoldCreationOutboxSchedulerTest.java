@@ -1,5 +1,6 @@
 package com.ticket.core.infra.order;
 
+import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
@@ -54,7 +55,7 @@ class HoldCreationOutboxSchedulerTest {
 
     private HoldCreationOutboxScheduler scheduler() {
         final Clock clock = Clock.fixed(Instant.parse("2026-03-15T03:00:00Z"), ZoneId.of("Asia/Seoul"));
-        return new HoldCreationOutboxScheduler(repository, executor, clock);
+        return new HoldCreationOutboxScheduler(repository, executor, new RecordingLockManager(), clock);
     }
 
     private HoldCreationOutbox outbox() {

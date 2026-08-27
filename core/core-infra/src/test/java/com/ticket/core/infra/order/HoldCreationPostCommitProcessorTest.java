@@ -1,5 +1,6 @@
 package com.ticket.core.infra.order;
 
+import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
@@ -60,7 +61,7 @@ class HoldCreationPostCommitProcessorTest {
     }
 
     private HoldCreationPostCommitProcessor processor() {
-        return new HoldCreationPostCommitProcessor(holdStore, seatSelectionService, seatStatusPublisher);
+        return new HoldCreationPostCommitProcessor(new RecordingLockManager(), holdStore, seatSelectionService, seatStatusPublisher);
     }
 
     private Hold hold() {

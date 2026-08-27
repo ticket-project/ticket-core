@@ -7,7 +7,9 @@ import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
 
-import com.ticket.core.support.lock.DistributedLock;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.LockManager;
+import com.ticket.core.app.lock.LockOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,16 +36,24 @@ public class HoldReleaseOutboxScheduler {
 
     private final HoldReleaseOutboxRepository holdReleaseOutboxRepository;
     private final HoldReleaseOutboxExecutor holdReleaseOutboxExecutor;
+    /** 인스턴스가 여럿이어도 보정 배치는 한 번만 돈다. */
+    private static final LockOptions BATCH_LOCK = LockOptions.defaults()
+            .withLeaseTime(Duration.ofSeconds(60))
+            .withFailureMessage("hold release outbox batch is already being processed.");
+
+    private final LockManager lockManager;
     private final Clock clock;
 
     @Scheduled(fixedDelayString = "120000")
-    @DistributedLock(
-            prefix = "hold-release-outbox",
-            dynamicKey = "'batch'",
-            leaseTime = 60000L,
-            message = "hold release outbox 처리 중입니다. 잠시 후 다시 시도해 주세요."
-    )
     public void processPendingHoldReleases() {
+        lockManager.withLock(
+                java.util.List.of(LockKey.holdReleaseOutboxBatch()),
+                BATCH_LOCK,
+                this::processPendingHoldReleasesLocked
+        );
+    }
+
+    private void processPendingHoldReleasesLocked() {
         while (true) {
             final Slice<HoldReleaseOutbox> dueOutboxes = holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(
                     RETRYABLE_STATUSES,

@@ -1,6 +1,8 @@
 package com.ticket.core.app.performanceseat.command;
 
 import com.ticket.support.error.CoreException;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.hold.command.HoldManager;
@@ -37,11 +39,12 @@ class SeatSelectionCoordinatorTest {
     @Mock
     private SeatSelectionService seatSelectionService;
 
+    private final RecordingLockManager lockManager = new RecordingLockManager();
     private SeatSelectionCoordinator coordinator;
 
     @BeforeEach
     void setUp() {
-        coordinator = new SeatSelectionCoordinator(holdManager, seatSelectionService, CLOCK);
+        coordinator = new SeatSelectionCoordinator(lockManager, holdManager, seatSelectionService, CLOCK);
     }
 
     @Test

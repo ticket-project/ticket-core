@@ -1,7 +1,8 @@
 package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.order.command.release.HoldReleaseTask;
-import com.ticket.core.support.lock.DistributedLock;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.RecordingLockManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -60,15 +61,17 @@ class HoldReleaseOutboxExecutorTest {
     }
 
     @Test
-    void entryLockContentionIsNotLoggedAsWarning() throws NoSuchMethodException {
-        final DistributedLock lock = HoldReleaseOutboxExecutor.class
-                .getMethod("process", Long.class, LocalDateTime.class)
-                .getAnnotation(DistributedLock.class);
+    void entryLockContentionIsNotLoggedAsWarning() {
+        executor().process(1L, LocalDateTime.of(2026, 3, 15, 12, 0));
 
-        assertThat(lock.warnOnFailure()).isFalse();
+        assertThat(lockManager.lastAcquisition().keys())
+                .containsExactly(LockKey.holdReleaseOutboxEntry(1L));
+        assertThat(lockManager.lastAcquisition().options().warnOnFailure()).isFalse();
     }
 
+    private final RecordingLockManager lockManager = new RecordingLockManager();
+
     private HoldReleaseOutboxExecutor executor() {
-        return new HoldReleaseOutboxExecutor(transactionService, taskProcessor);
+        return new HoldReleaseOutboxExecutor(lockManager, transactionService, taskProcessor);
     }
 }

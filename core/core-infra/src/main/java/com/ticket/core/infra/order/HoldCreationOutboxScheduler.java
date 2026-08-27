@@ -5,7 +5,9 @@ import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxStatus;
-import com.ticket.core.support.lock.DistributedLock;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.LockManager;
+import com.ticket.core.app.lock.LockOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,16 +34,24 @@ public class HoldCreationOutboxScheduler {
 
     private final HoldCreationOutboxRepository holdCreationOutboxRepository;
     private final HoldCreationOutboxExecutor holdCreationOutboxExecutor;
+    /** 인스턴스가 여럿이어도 보정 배치는 한 번만 돈다. */
+    private static final LockOptions BATCH_LOCK = LockOptions.defaults()
+            .withLeaseTime(Duration.ofSeconds(60))
+            .withFailureMessage("hold creation outbox batch is already being processed.");
+
+    private final LockManager lockManager;
     private final Clock clock;
 
     @Scheduled(fixedDelayString = "120000")
-    @DistributedLock(
-            prefix = "hold-creation-outbox",
-            dynamicKey = "'batch'",
-            leaseTime = 60000L,
-            message = "hold creation outbox batch is already being processed."
-    )
     public void processPendingHoldCreations() {
+        lockManager.withLock(
+                java.util.List.of(LockKey.holdCreationOutboxBatch()),
+                BATCH_LOCK,
+                this::processPendingHoldCreationsLocked
+        );
+    }
+
+    private void processPendingHoldCreationsLocked() {
         while (true) {
             final Slice<HoldCreationOutbox> dueOutboxes = holdCreationOutboxRepository
                     .findAllByStatusInAndNextAttemptAtLessThanEqual(

@@ -2,7 +2,6 @@ package com.ticket.core.domain.hold.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.support.lock.DistributedLock;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
@@ -21,10 +20,9 @@ public class HoldManager {
     private final HoldStore holdStore;
     private final HoldKeyGenerator holdKeyGenerator;
 
-    @DistributedLock(
-            prefix = "hold",
-            dynamicKey = "#requestedSeatIds.toList().![#performanceId + ':' + #this]"
-    )
+    /**
+     * 좌석을 선점한다. 좌석 단위 상호 배제는 호출하는 유스케이스가 락으로 보장한다.
+     */
     public Hold createHold(
             final Long memberId,
             final Long performanceId,
@@ -40,10 +38,9 @@ public class HoldManager {
         return hold;
     }
 
-    @DistributedLock(
-            prefix = "hold",
-            dynamicKey = "#seatIds.![#performanceId + ':' + #this]"
-    )
+    /**
+     * 선점을 해제한다. 좌석 단위 상호 배제는 호출하는 유스케이스가 락으로 보장한다.
+     */
     public List<Long> release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
         final List<Long> normalizedSeatIds = seatIds.stream().distinct().sorted().toList();
         return holdStore.release(performanceId, holdKey, normalizedSeatIds);
