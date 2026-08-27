@@ -2,6 +2,7 @@ package com.ticket.core.app.order.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
@@ -9,7 +10,6 @@ import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.performance.query.BookingPolicyValidator;
-import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.queue.AdmissionGuard;
@@ -25,7 +25,7 @@ import java.util.List;
 public class CreateOrderValidator {
 
     private final MemberRepository memberRepository;
-    private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
+    private final PerformanceRepository performanceRepository;
     private final OrderRepository orderRepository;
     private final HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
     private final AdmissionGuard admissionGuard;
@@ -46,7 +46,7 @@ public class CreateOrderValidator {
         final Long performanceId = input.performanceId();
         final Long memberId = input.memberId();
 
-        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
+        final PerformanceBookingPolicyView policy = performanceRepository.getBookingPolicyById(performanceId);
         BookingPolicyValidator.ensureBookingOpen(policy, now);
         BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
         ensureAdmitted(policy, memberId, input.admissionToken(), now);

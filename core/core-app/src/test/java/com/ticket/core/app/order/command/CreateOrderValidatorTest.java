@@ -2,6 +2,7 @@ package com.ticket.core.app.order.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.support.error.ErrorDefinition;
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
@@ -11,7 +12,6 @@ import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.order.model.OrderState;
@@ -45,7 +45,7 @@ class CreateOrderValidatorTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
+    private PerformanceRepository performanceRepository;
 
     @Mock
     private OrderRepository orderRepository;
@@ -77,7 +77,7 @@ class CreateOrderValidatorTest {
     @Test
     void 예매가_마감된_회차는_DB_검증으로_넘어가지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(performanceBookingPolicyFinder.findById(10L))
+        when(performanceRepository.getBookingPolicyById(10L))
                 .thenReturn(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), null));
 
         assertError(seatIds, DomainErrorType.PERFORMANCE_IS_PAST);
@@ -88,7 +88,7 @@ class CreateOrderValidatorTest {
     @Test
     void 최대_선점_가능_수량을_초과하면_DB_검증으로_넘어가지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L));
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(2));
+        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(openPolicy(2));
 
         assertError(seatIds, DomainErrorType.EXCEED_HOLD_LIMIT);
 
@@ -98,7 +98,7 @@ class CreateOrderValidatorTest {
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(3));
+        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(openPolicy(3));
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
         when(holdSeatAvailabilityValidator.validate(10L, seatIds)).thenReturn(List.of());
 
@@ -110,7 +110,7 @@ class CreateOrderValidatorTest {
     @Test
     void 대기열이_필요한_회차는_입장_검사를_DB_검증보다_먼저_한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(performanceBookingPolicyFinder.findById(10L))
+        when(performanceRepository.getBookingPolicyById(10L))
                 .thenReturn(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), QueueMode.FORCE_ON));
         doThrowAdmissionRequired();
 
@@ -122,7 +122,7 @@ class CreateOrderValidatorTest {
     @Test
     void 진행중인_pending_주문이_있으면_좌석을_조회하지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(openPolicy(3));
+        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(openPolicy(3));
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(true);
 
         assertError(seatIds, ApplicationErrorType.PENDING_ORDER_ALREADY_EXISTS);
@@ -136,7 +136,7 @@ class CreateOrderValidatorTest {
         PerformanceBookingPolicyView policy = openPolicy(3);
         List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
 
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(policy);
+        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(policy);
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
         when(holdSeatAvailabilityValidator.validate(10L, seatIds)).thenReturn(seats);
 
@@ -152,7 +152,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L, 4L, 5L));
         PerformanceBookingPolicyView policy = openPolicy(null);
 
-        when(performanceBookingPolicyFinder.findById(10L)).thenReturn(policy);
+        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(policy);
         when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 10L, OrderState.PENDING)).thenReturn(false);
         when(holdSeatAvailabilityValidator.validate(10L, seatIds)).thenReturn(List.of());
 

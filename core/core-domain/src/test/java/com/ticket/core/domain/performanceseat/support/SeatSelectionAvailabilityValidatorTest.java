@@ -1,10 +1,10 @@
 package com.ticket.core.domain.performanceseat.support;
 
 import com.ticket.support.error.CoreException;
+import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.domain.performanceseat.query.SeatSelectionAvailabilityQueryRepository;
 import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,14 +28,14 @@ class SeatSelectionAvailabilityValidatorTest {
     private HoldManager holdManager;
 
     @Mock
-    private SeatSelectionAvailabilityQueryRepository queryRepository;
+    private PerformanceSeatRepository performanceSeatRepository;
 
     @InjectMocks
     private SeatSelectionAvailabilityValidator validator;
 
     @Test
     void 선택_가능한_좌석이면_통과한다() {
-        when(queryRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
+        when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(false);
 
         assertThatCode(() -> validator.validate(10L, 20L)).doesNotThrowAnyException();
@@ -43,7 +43,7 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 회차에_없는_좌석이면_실패한다() {
-        when(queryRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.empty());
+        when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.empty());
 
         assertError(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
 
@@ -52,7 +52,7 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 이미_예약된_좌석이면_실패한다() {
-        when(queryRepository.findSelectableSeat(10L, 20L))
+        when(performanceSeatRepository.findSelectableSeat(10L, 20L))
                 .thenReturn(Optional.of(new SeatSelectionAvailabilityView(30L, PerformanceSeatState.RESERVED)));
 
         assertError(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT);
@@ -62,7 +62,7 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 이미_hold된_좌석이면_실패한다() {
-        when(queryRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
+        when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
         assertError(DomainErrorType.SEAT_ALREADY_HOLD);

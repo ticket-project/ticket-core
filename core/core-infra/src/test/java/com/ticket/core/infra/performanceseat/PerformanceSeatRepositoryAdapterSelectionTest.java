@@ -1,6 +1,6 @@
-package com.ticket.core.infra.performanceseat.query;
+package com.ticket.core.infra.performanceseat;
 
-import com.ticket.core.domain.performanceseat.query.SeatSelectionAvailabilityQueryRepository;
+import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
@@ -20,12 +20,12 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(QuerydslSeatSelectionAvailabilityQueryRepository.class)
+@Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatSelectionAvailabilityQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
+class PerformanceSeatRepositoryAdapterSelectionTest extends InfraQueryRepositoryTestSupport {
 
     @Autowired
-    private SeatSelectionAvailabilityQueryRepository repository;
+    private PerformanceSeatRepository performanceSeatRepository;
 
     private Long performanceId;
     private Long seatId;
@@ -56,7 +56,7 @@ class QuerydslSeatSelectionAvailabilityQueryRepositoryTest extends InfraQueryRep
 
     @Test
     void 회차의_좌석_상태를_단건으로_조회한다() {
-        SeatSelectionAvailabilityView result = repository
+        SeatSelectionAvailabilityView result = performanceSeatRepository
                 .findSelectableSeat(performanceId, seatId)
                 .orElseThrow();
 
@@ -66,6 +66,6 @@ class QuerydslSeatSelectionAvailabilityQueryRepositoryTest extends InfraQueryRep
 
     @Test
     void 회차에_없는_좌석이면_비어있다() {
-        assertThat(repository.findSelectableSeat(performanceId, 999999L)).isEmpty();
+        assertThat(performanceSeatRepository.findSelectableSeat(performanceId, 999999L)).isEmpty();
     }
 }
