@@ -1,12 +1,8 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.infra.order.outbox.release;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutbox;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxExecutor;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRepository;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxStatus;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class HoldReleaseOutboxSchedulerTest {
+class HoldReleaseOutboxRelayTest {
 
     @Mock
     private HoldReleaseOutboxRepository holdReleaseOutboxRepository;
@@ -47,7 +43,7 @@ class HoldReleaseOutboxSchedulerTest {
         when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
                 .thenReturn(new SliceImpl<>(List.of()));
 
-        scheduler().processPendingHoldReleases();
+        scheduler().relayPending();
 
         verify(holdReleaseOutboxExecutor, times(0)).process(any(), any(LocalDateTime.class));
         verify(holdReleaseOutboxRepository).findAllByStatusInAndNextAttemptAtLessThanEqual(
@@ -70,7 +66,7 @@ class HoldReleaseOutboxSchedulerTest {
         when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
                 .thenReturn(slice);
 
-        scheduler().processPendingHoldReleases();
+        scheduler().relayPending();
 
         verify(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
         verify(holdReleaseOutboxExecutor).process(eq(2L), any(LocalDateTime.class));
@@ -87,7 +83,7 @@ class HoldReleaseOutboxSchedulerTest {
         doThrow(new RuntimeException("already processing"))
                 .when(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
 
-        scheduler().processPendingHoldReleases();
+        scheduler().relayPending();
 
         verify(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
         verify(holdReleaseOutboxExecutor).process(eq(2L), any(LocalDateTime.class));
@@ -105,7 +101,7 @@ class HoldReleaseOutboxSchedulerTest {
         doThrow(new CoreException(DomainErrorType.HOLD_BUSY))
                 .when(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
 
-        scheduler().processPendingHoldReleases();
+        scheduler().relayPending();
 
         verify(holdReleaseOutboxRepository, times(1))
                 .findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any());
@@ -124,8 +120,8 @@ class HoldReleaseOutboxSchedulerTest {
         return outbox;
     }
 
-    private HoldReleaseOutboxScheduler scheduler() {
+    private HoldReleaseOutboxRelay scheduler() {
         final Clock clock = Clock.fixed(Instant.parse("2026-03-25T03:00:00Z"), ZoneId.of("Asia/Seoul"));
-        return new HoldReleaseOutboxScheduler(holdReleaseOutboxRepository, holdReleaseOutboxExecutor, new RecordingLockManager(), clock);
+        return new HoldReleaseOutboxRelay(holdReleaseOutboxRepository, holdReleaseOutboxExecutor, new RecordingLockManager(), clock);
     }
 }
