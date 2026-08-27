@@ -11,6 +11,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPac
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEndingWith;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 /**
  * 계층 사이의 의존 방향을 고정한다. core-api는 네 모듈을 모두 클래스패스에 두는 유일한 모듈이라
@@ -31,6 +32,7 @@ class CoreLayerArchitectureTest {
     private static final String INFRA = "com.ticket.core.infra..";
     private static final String API_CONTROLLER = "com.ticket.core.api..";
     private static final String API_CONFIG = "com.ticket.core.config..";
+    private static final String BOOTSTRAP = "com.ticket.bootstrap..";
 
     /**
      * Querydsl이 엔티티에서 생성한 Q 타입. core-domain에서 컴파일되므로 Querydsl 금지 규칙에서 뺀다.
@@ -41,6 +43,17 @@ class CoreLayerArchitectureTest {
                 @Override
                 public boolean test(final JavaClass javaClass) {
                     return javaClass.getSimpleName().matches("Q[A-Z].*");
+                }
+            };
+
+    /**
+     * 생성·수정 감사 컬럼만 Spring Data auditing을 쓰는 엔티티 기반 클래스.
+     */
+    private static final DescribedPredicate<JavaClass> 감사_기반_엔티티 =
+            new DescribedPredicate<>("감사 컬럼을 가진 엔티티 기반 클래스") {
+                @Override
+                public boolean test(final JavaClass javaClass) {
+                    return javaClass.getName().equals("com.ticket.core.domain.BaseEntity");
                 }
             };
 
@@ -147,4 +160,63 @@ class CoreLayerArchitectureTest {
                             "org.springframework.messaging..",
                             "org.springframework.scheduling.."
                     );
+
+    /**
+     * Spring Data는 저장 기술이다. 도메인 계약과 유스케이스가 Pageable, Slice, JpaRepository를
+     * 다루기 시작하면 조회 방식이 계약으로 굳는다. 저장소 접근은 core-infra의 어댑터가 맡는다.
+     *
+     * <p>core-domain의 BaseEntity만 생성·수정 감사 애노테이션을 쓰므로 그 패키지는 예외로 둔다.
+     */
+    @ArchTest
+    static final ArchRule core_domain은_감사_외의_spring_data를_참조하지_않는다 =
+            noClasses()
+                    .that(resideInAPackage(DOMAIN)
+                            .and(DescribedPredicate.not(감사_기반_엔티티)))
+                    .should().dependOnClassesThat().resideInAnyPackage("org.springframework.data..");
+
+    @ArchTest
+    static final ArchRule core_app은_spring_data를_참조하지_않는다 =
+            noClasses()
+                    .that().resideInAPackage(APP)
+                    .should().dependOnClassesThat().resideInAnyPackage("org.springframework.data..");
+
+    /**
+     * 저장 기술과 락 구현은 core-infra에만 둔다. 포트만 보고 쓰게 한다.
+     */
+    @ArchTest
+    static final ArchRule core_domain과_app은_jpa_구현과_redisson을_참조하지_않는다 =
+            noClasses()
+                    .that().resideInAnyPackage(DOMAIN, APP)
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "org.hibernate..",
+                            "org.redisson..",
+                            "jakarta.persistence.criteria..",
+                            "jakarta.persistence.EntityManager"
+                    );
+
+    /**
+     * 토큰 라이브러리 예외는 어댑터 밖으로 나가지 않는다. HTTP 상태 결정은 core-api가 하되,
+     * 무엇으로 만든 토큰인지는 알지 못한다.
+     */
+    @ArchTest
+    static final ArchRule 토큰_라이브러리는_core_infra_밖으로_새지_않는다 =
+            noClasses()
+                    .that().resideInAnyPackage(DOMAIN, APP, API_CONTROLLER, API_CONFIG, BOOTSTRAP)
+                    .should().dependOnClassesThat().resideInAnyPackage("io.jsonwebtoken..");
+
+    /**
+     * 실행 진입점은 bootstrap에만 둔다. 다른 모듈이 실행 방식을 결정하지 않게 한다.
+     */
+    @ArchTest
+    static final ArchRule 스케줄링_시작점은_bootstrap에만_둔다 =
+            noClasses()
+                    .that().resideInAnyPackage(DOMAIN, APP, INFRA, API_CONTROLLER, API_CONFIG)
+                    .should().beAnnotatedWith("org.springframework.scheduling.annotation.EnableScheduling");
+
+    @ArchTest
+    static final ArchRule 스케줄러_메서드는_bootstrap에만_둔다 =
+            noMethods()
+                    .that().areDeclaredInClassesThat()
+                    .resideInAnyPackage(DOMAIN, APP, INFRA, API_CONTROLLER, API_CONFIG)
+                    .should().beAnnotatedWith("org.springframework.scheduling.annotation.Scheduled");
 }
