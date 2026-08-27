@@ -2,8 +2,8 @@ package com.ticket.core.infra.order;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
-import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxExecutor;
+import com.ticket.core.app.event.HoldReleaseRequestedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
@@ -38,9 +38,9 @@ public class HoldReleaseAfterCommitListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAfterCommit(final HoldReleaseRequestedEvent event) {
         try {
-            taskExecutor.execute(() -> process(event.outboxId()));
+            taskExecutor.execute(() -> process(event.eventId()));
         } catch (final TaskRejectedException e) {
-            log.warn("hold release 즉시 처리 큐가 가득 찼습니다. 스케줄러가 재처리합니다. outboxId={}", event.outboxId());
+            log.warn("hold release 즉시 처리 큐가 가득 찼습니다. 스케줄러가 재처리합니다. outboxId={}", event.eventId());
         }
     }
 

@@ -12,7 +12,7 @@ import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.domain.order.command.create.HoldAllocator;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
-import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
+import com.ticket.core.app.event.HoldCreationPostCommitNotifier;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;

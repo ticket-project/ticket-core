@@ -2,10 +2,10 @@ package com.ticket.core.app.order.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.app.event.HoldReleaseRequestedEvent;
+import com.ticket.core.app.event.IntegrationEventPublisher;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.order.OrderTerminationResult;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxWriter;
-import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.repository.OrderSeatRepository;
@@ -23,7 +23,7 @@ public class OrderTerminationService {
 
     private final OrderSeatRepository orderSeatRepository;
     private final HoldHistoryRecorder holdHistoryRecorder;
-    private final HoldReleaseOutboxWriter holdReleaseOutboxWriter;
+    private final IntegrationEventPublisher integrationEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void cancel(final Order order, final LocalDateTime now) {
@@ -32,7 +32,7 @@ public class OrderTerminationService {
         holdHistoryRecorder.recordCanceled(
                 order.getMemberId(), order.getPerformanceId(), order.getHoldKey(), now, orderSeats
         );
-        requestHoldRelease(toResult(order, orderSeats));
+        requestHoldRelease(toResult(order, orderSeats), now);
     }
 
     public void expire(final Order order, final LocalDateTime now) {
@@ -41,7 +41,7 @@ public class OrderTerminationService {
         holdHistoryRecorder.recordExpired(
                 order.getMemberId(), order.getPerformanceId(), order.getHoldKey(), now, orderSeats
         );
-        requestHoldRelease(toResult(order, orderSeats));
+        requestHoldRelease(toResult(order, orderSeats), now);
     }
 
     private List<OrderSeat> loadAndValidateOrderSeats(final Order order) {
@@ -63,8 +63,8 @@ public class OrderTerminationService {
         );
     }
 
-    private void requestHoldRelease(final OrderTerminationResult result) {
-        final Long outboxId = holdReleaseOutboxWriter.append(result);
-        applicationEventPublisher.publishEvent(new HoldReleaseRequestedEvent(outboxId));
+    private void requestHoldRelease(final OrderTerminationResult result, final LocalDateTime now) {
+        final Long eventId = integrationEventPublisher.publishHoldReleased(result, now);
+        applicationEventPublisher.publishEvent(new HoldReleaseRequestedEvent(eventId));
     }
 }

@@ -1,15 +1,16 @@
-package com.ticket.core.domain.order.command.release;
+package com.ticket.core.infra.order.outbox.create;
 
 import com.ticket.core.domain.BaseEntity;
+import com.ticket.core.domain.hold.model.Hold;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,19 +23,22 @@ import java.util.List;
 @Getter
 @Entity
 @Table(
-        name = "ORDER_HOLD_RELEASE_OUTBOX",
+        name = "ORDER_HOLD_CREATION_OUTBOX",
         indexes = {
-                @Index(name = "IDX_ORDER_HOLD_RELEASE_OUTBOX_DUE", columnList = "status,next_attempt_at")
+                @Index(name = "IDX_ORDER_HOLD_CREATION_OUTBOX_DUE", columnList = "status,next_attempt_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HoldReleaseOutbox extends BaseEntity {
+public class HoldCreationOutbox extends BaseEntity {
 
     private static final int MAX_ERROR_LENGTH = 1000;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private Long memberId;
 
     @Column(nullable = false)
     private Long performanceId;
@@ -47,6 +51,9 @@ public class HoldReleaseOutbox extends BaseEntity {
     private String seatIdsPayload;
 
     @Column(nullable = false)
+    private LocalDateTime expiresAt;
+
+    @Column(nullable = false)
     private LocalDateTime nextAttemptAt;
 
     @Column(nullable = false)
@@ -54,72 +61,56 @@ public class HoldReleaseOutbox extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private HoldReleaseOutboxStatus status;
+    private HoldCreationOutboxStatus status;
 
     private LocalDateTime completedAt;
-
-    private LocalDateTime holdReleasedAt;
 
     @Column(length = MAX_ERROR_LENGTH)
     private String lastError;
 
-    private HoldReleaseOutbox(
-            final Long performanceId,
-            final String holdKey,
-            final String seatIdsPayload,
-            final LocalDateTime nextAttemptAt
-    ) {
-        this.performanceId = performanceId;
-        this.holdKey = holdKey;
-        this.seatIdsPayload = seatIdsPayload;
+    private HoldCreationOutbox(final Hold hold, final LocalDateTime nextAttemptAt) {
+        this.memberId = hold.memberId();
+        this.performanceId = hold.performanceId();
+        this.holdKey = hold.holdKey();
+        this.seatIdsPayload = serializeSeatIds(hold.seatIds());
+        this.expiresAt = hold.expiresAt();
         this.nextAttemptAt = nextAttemptAt;
         this.retryCount = 0;
-        this.status = HoldReleaseOutboxStatus.PENDING;
+        this.status = HoldCreationOutboxStatus.PENDING;
     }
 
-    public static HoldReleaseOutbox create(
-            final Long performanceId,
-            final String holdKey,
-            final List<Long> seatIds,
-            final LocalDateTime nextAttemptAt
-    ) {
-        return new HoldReleaseOutbox(performanceId, holdKey, serializeSeatIds(seatIds), nextAttemptAt);
+    public static HoldCreationOutbox create(final Hold hold, final LocalDateTime nextAttemptAt) {
+        return new HoldCreationOutbox(hold, nextAttemptAt);
     }
 
-    public List<Long> seatIds() {
+    public Hold toHold() {
+        return new Hold(holdKey, memberId, performanceId, seatIds(), expiresAt);
+    }
+
+    public boolean isCompleted() {
+        return status == HoldCreationOutboxStatus.COMPLETED;
+    }
+
+    public void markCompleted(final LocalDateTime completedAt) {
+        this.status = HoldCreationOutboxStatus.COMPLETED;
+        this.completedAt = completedAt;
+        this.lastError = null;
+    }
+
+    public void scheduleRetry(final LocalDateTime nextAttemptAt, final String errorMessage) {
+        this.status = HoldCreationOutboxStatus.FAILED;
+        this.nextAttemptAt = nextAttemptAt;
+        this.retryCount++;
+        this.lastError = summarize(errorMessage);
+    }
+
+    private List<Long> seatIds() {
         if (seatIdsPayload.isBlank()) {
             return List.of();
         }
         return Arrays.stream(seatIdsPayload.split(","))
                 .map(Long::valueOf)
                 .toList();
-    }
-
-    public boolean isCompleted() {
-        return status == HoldReleaseOutboxStatus.COMPLETED;
-    }
-
-    public boolean isHoldReleased() {
-        return holdReleasedAt != null;
-    }
-
-    public void markHoldReleased(final LocalDateTime releasedAt) {
-        if (holdReleasedAt == null) {
-            this.holdReleasedAt = releasedAt;
-        }
-    }
-
-    public void markCompleted(final LocalDateTime completedAt) {
-        this.status = HoldReleaseOutboxStatus.COMPLETED;
-        this.completedAt = completedAt;
-        this.lastError = null;
-    }
-
-    public void scheduleRetry(final LocalDateTime nextAttemptAt, final String errorMessage) {
-        this.status = HoldReleaseOutboxStatus.FAILED;
-        this.nextAttemptAt = nextAttemptAt;
-        this.retryCount++;
-        this.lastError = summarize(errorMessage);
     }
 
     private static String serializeSeatIds(final List<Long> seatIds) {
@@ -131,7 +122,7 @@ public class HoldReleaseOutbox extends BaseEntity {
 
     private static String summarize(final String errorMessage) {
         final String source = errorMessage == null || errorMessage.isBlank()
-                ? "hold release failed"
+                ? "hold creation post-commit failed"
                 : errorMessage;
         if (source.length() <= MAX_ERROR_LENGTH) {
             return source;

@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
-import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxExecutor;
+import com.ticket.core.app.event.HoldReleaseRequestedEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

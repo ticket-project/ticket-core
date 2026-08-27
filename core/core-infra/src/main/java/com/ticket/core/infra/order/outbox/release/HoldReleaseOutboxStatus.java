@@ -1,4 +1,4 @@
-package com.ticket.core.domain.order.command.release;
+package com.ticket.core.infra.order.outbox.release;
 
 public enum HoldReleaseOutboxStatus {
     PENDING,

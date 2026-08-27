@@ -2,9 +2,10 @@ package com.ticket.core.infra.order;
 
 import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
-import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
-import com.ticket.core.domain.order.command.create.HoldCreationOutboxStatus;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutbox;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxExecutor;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRepository;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

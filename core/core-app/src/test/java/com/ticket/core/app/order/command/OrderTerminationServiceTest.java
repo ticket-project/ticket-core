@@ -4,8 +4,8 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.order.OrderTerminationResult;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxWriter;
-import com.ticket.core.domain.order.command.release.HoldReleaseRequestedEvent;
+import com.ticket.core.app.event.IntegrationEventPublisher;
+import com.ticket.core.app.event.HoldReleaseRequestedEvent;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.model.OrderState;
@@ -39,7 +39,7 @@ class OrderTerminationServiceTest {
     private HoldHistoryRecorder holdHistoryRecorder;
 
     @Mock
-    private HoldReleaseOutboxWriter holdReleaseOutboxWriter;
+    private IntegrationEventPublisher integrationEventPublisher;
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
@@ -49,8 +49,9 @@ class OrderTerminationServiceTest {
         final Order order = order(10L, "hold-key");
         final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
         when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
-        when(holdReleaseOutboxWriter.append(
-                new OrderTerminationResult(100L, "hold-key", List.of(42L))
+        when(integrationEventPublisher.publishHoldReleased(
+                new OrderTerminationResult(100L, "hold-key", List.of(42L)),
+                FIXED_NOW
         )).thenReturn(99L);
 
         service().cancel(order, FIXED_NOW);
@@ -65,8 +66,9 @@ class OrderTerminationServiceTest {
         final Order order = order(10L, "hold-key");
         final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
         when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
-        when(holdReleaseOutboxWriter.append(
-                new OrderTerminationResult(100L, "hold-key", List.of(42L))
+        when(integrationEventPublisher.publishHoldReleased(
+                new OrderTerminationResult(100L, "hold-key", List.of(42L)),
+                FIXED_NOW
         )).thenReturn(99L);
 
         service().expire(order, FIXED_NOW);
@@ -89,14 +91,14 @@ class OrderTerminationServiceTest {
                         .isEqualTo(ApplicationErrorType.INVALID_INPUT));
 
         assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
-        verifyNoInteractions(holdHistoryRecorder, holdReleaseOutboxWriter, applicationEventPublisher);
+        verifyNoInteractions(holdHistoryRecorder, integrationEventPublisher, applicationEventPublisher);
     }
 
     private OrderTerminationService service() {
         return new OrderTerminationService(
                 orderSeatRepository,
                 holdHistoryRecorder,
-                holdReleaseOutboxWriter,
+                integrationEventPublisher,
                 applicationEventPublisher
         );
     }

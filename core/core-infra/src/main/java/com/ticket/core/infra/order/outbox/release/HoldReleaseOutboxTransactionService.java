@@ -1,8 +1,8 @@
-package com.ticket.core.app.order.command;
+package com.ticket.core.infra.order.outbox.release;
 
-import com.ticket.core.domain.order.command.release.HoldReleaseTask;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
+import com.ticket.core.app.order.command.HoldReleaseTask;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRepository;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutbox;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,6 +1,11 @@
-package com.ticket.core.domain.order.command.create;
+package com.ticket.core.infra.order.outbox;
 
 import com.ticket.core.domain.hold.model.Hold;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutbox;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRepository;
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxStatus;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRepository;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxTransactionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,10 +20,16 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class HoldCreationOutboxWriterTest {
+class OutboxIntegrationEventPublisherCreateTest {
 
     @Mock
     private HoldCreationOutboxRepository repository;
+
+    @Mock
+    private HoldReleaseOutboxRepository releaseRepository;
+
+    @Mock
+    private HoldReleaseOutboxTransactionService releaseTransactionService;
 
     @Test
     void appendsEverythingNeededToRetryPostCommitProcessing() {
@@ -32,7 +43,11 @@ class HoldCreationOutboxWriterTest {
                         && outbox.getStatus() == HoldCreationOutboxStatus.PENDING
         ))).thenReturn(saved);
 
-        final Long outboxId = new HoldCreationOutboxWriter(repository).append(hold, nextAttemptAt);
+        final Long outboxId = new OutboxIntegrationEventPublisher(
+                repository,
+                releaseRepository,
+                releaseTransactionService
+        ).publishHoldCreated(hold, nextAttemptAt);
 
         assertThat(outboxId).isEqualTo(99L);
     }

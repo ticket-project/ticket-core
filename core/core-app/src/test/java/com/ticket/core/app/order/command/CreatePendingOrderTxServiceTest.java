@@ -3,7 +3,7 @@ package com.ticket.core.app.order.command;
 import com.ticket.core.app.order.command.CreatePendingOrderTxService;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.app.order.command.OrderCreator;
-import com.ticket.core.domain.order.command.create.HoldCreationOutboxWriter;
+import com.ticket.core.app.event.IntegrationEventPublisher;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.hold.model.Hold;
@@ -38,13 +38,13 @@ class CreatePendingOrderTxServiceTest {
     private HoldHistoryRecorder holdHistoryRecorder;
 
     @Mock
-    private HoldCreationOutboxWriter holdCreationOutboxWriter;
+    private IntegrationEventPublisher integrationEventPublisher;
 
     private CreatePendingOrderTxService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreatePendingOrderTxService(orderCreator, holdHistoryRecorder, holdCreationOutboxWriter);
+        service = new CreatePendingOrderTxService(orderCreator, holdHistoryRecorder, integrationEventPublisher);
     }
 
     @Test
@@ -70,14 +70,14 @@ class CreatePendingOrderTxServiceTest {
 
         when(orderCreator.createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats))
                 .thenReturn(order);
-        when(holdCreationOutboxWriter.append(hold, hold.expiresAt().minusSeconds(600)))
+        when(integrationEventPublisher.publishHoldCreated(hold, hold.expiresAt().minusSeconds(600)))
                 .thenReturn(99L);
 
         final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation);
 
         assertThat(result.order()).isSameAs(order);
         assertThat(result.postCommitOutboxId()).isEqualTo(99L);
-        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, holdCreationOutboxWriter);
+        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, integrationEventPublisher);
         inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats);
         inOrder.verify(holdHistoryRecorder).recordCreated(
                 20L,
@@ -87,7 +87,7 @@ class CreatePendingOrderTxServiceTest {
                 hold.expiresAt(),
                 seats
         );
-        inOrder.verify(holdCreationOutboxWriter).append(hold, hold.expiresAt().minusSeconds(600));
+        inOrder.verify(integrationEventPublisher).publishHoldCreated(hold, hold.expiresAt().minusSeconds(600));
     }
 
     @Test
