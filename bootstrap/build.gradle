@@ -1,0 +1,35 @@
+tasks.named('bootJar') {
+    enabled = true
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+dependencies {
+    // composition root: API/App/Infra를 한 프로세스로 조립한다.
+    implementation project(':core:core-api')
+    implementation project(':core:core-app')
+    implementation project(':core:core-infra')
+    implementation project(':support:error')
+    implementation project(':support:logging')
+
+    // 실행 환경 의존성은 실행 모듈이 소유한다.
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+    runtimeOnly 'org.flywaydb:flyway-database-oracle'
+    // prod/dev는 Oracle, local/test는 h2 파일 DB를 쓴다. DB 드라이버는 실행 모듈이 소유한다.
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'com.oracle.database.security:osdt_cert:21.3.0.0'
+    runtimeOnly 'com.oracle.database.security:oraclepki:21.3.0.0'
+    runtimeOnly 'com.oracle.database.security:osdt_core:21.3.0.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}

@@ -41,8 +41,8 @@ jobs:
       - name: Download verified application jar
         uses: actions/download-artifact@v4
         with:
-          name: core-api-jar
-          path: core/core-api/build/libs
+          name: ticket-core-jar
+          path: bootstrap/build/libs
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

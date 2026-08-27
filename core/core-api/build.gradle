@@ -1,50 +1,32 @@
-tasks.named('bootJar') {
-    enabled = true
-}
-
-tasks.named('jar') {
-    enabled = false
-}
-
 dependencies {
     implementation project(':core:core-app')
-    implementation project(':core:core-infra')
     implementation project(':support:error')
     implementation project(':support:logging')
 
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // HTTP adapter 구현에 필요한 의존성만 둔다. 실행 환경 의존성은 bootstrap이 소유한다.
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
-    runtimeOnly 'org.flywaydb:flyway-database-oracle'
-    // prod/dev는 Oracle, local/dev는 h2 파일 DB를 쓴다. DB 드라이버는 실행 모듈이 소유한다.
-    runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
-    runtimeOnly 'com.h2database:h2'
-    runtimeOnly 'com.oracle.database.security:osdt_cert:21.3.0.0'
-    runtimeOnly 'com.oracle.database.security:oraclepki:21.3.0.0'
-    runtimeOnly 'com.oracle.database.security:osdt_core:21.3.0.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
 
     // 프로덕션 코드는 core-domain을 보지 않는다. 계약 테스트가 도메인 픽스처를 쓸 때만 허용한다.
     testImplementation project(':core:core-domain')
+    testImplementation project(':core:core-infra')
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.15")
     testImplementation 'org.springframework.boot:spring-boot-security-test'
     testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+    // seed loader 테스트가 h2를 쓴다. seed를 core-infra로 옮기면 함께 이동한다.
+    testRuntimeOnly 'com.h2database:h2'
+    testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
-
-    //swagger
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1"
-
 }

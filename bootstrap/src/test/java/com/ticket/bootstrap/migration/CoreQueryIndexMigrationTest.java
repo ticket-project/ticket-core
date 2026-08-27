@@ -1,4 +1,4 @@
-package com.ticket.core.migration;
+package com.ticket.bootstrap.migration;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;

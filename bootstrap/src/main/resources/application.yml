@@ -111,6 +111,11 @@ security:
     secret-key: ${ADMISSION_TOKEN_SECRET_KEY:0123456789abcdef0123456789abcdef}
     expiration-seconds: ${ADMISSION_TOKEN_EXPIRATION_SECONDS:300}
 
+# background worker(스케줄러, outbox relay) 실행 여부.
+# false면 같은 실행 모듈이 API만 제공한다.
+worker:
+  enabled: ${WORKER_ENABLED:true}
+
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000}
