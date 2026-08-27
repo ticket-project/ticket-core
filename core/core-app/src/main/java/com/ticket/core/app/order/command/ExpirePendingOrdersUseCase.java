@@ -1,47 +1,54 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.order.command.ExpireOrderUseCase;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 만료 시각이 지난 PENDING 주문을 보정 처리한다.
+ *
+ * <p>정상 경로는 Redis TTL 만료 리스너가 즉시 처리한다. 이 유스케이스는 그 실행을 놓친 주문을
+ * 다시 만료시키는 보정 경로이며, 배치 반복과 실패 격리를 이 계층이 소유한다.
+ */
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-public class OrderExpirationScheduler {
+public class ExpirePendingOrdersUseCase {
 
     private static final int BATCH_SIZE = 100;
 
-    private final ExpireOrderUseCase expireOrderUseCase;
     private final OrderRepository orderRepository;
+    private final ExpireOrderUseCase expireOrderUseCase;
     private final Clock clock;
 
-    @Scheduled(fixedDelayString = "300000")
-    public void expirePendingOrders() {
+    public record Output(int processedCount) {
+    }
+
+    public Output execute() {
         final LocalDateTime now = LocalDateTime.now(clock);
+        int totalProcessed = 0;
         while (true) {
-            final List<Order> expiredOrders =
-                    orderRepository.findExpirable(OrderState.PENDING, now, BATCH_SIZE);
+            final List<Order> expiredOrders = orderRepository.findExpirable(OrderState.PENDING, now, BATCH_SIZE);
             if (expiredOrders.isEmpty()) {
-                return;
+                return new Output(totalProcessed);
             }
 
-            final int processedCount = processBatch(expiredOrders, now);
+            final int processedCount = expireEach(expiredOrders, now);
+            totalProcessed += processedCount;
             if (shouldStop(expiredOrders, processedCount)) {
-                return;
+                return new Output(totalProcessed);
             }
         }
     }
 
-    private int processBatch(final List<Order> expiredOrders, final LocalDateTime now) {
+    private int expireEach(final List<Order> expiredOrders, final LocalDateTime now) {
         int processedCount = 0;
         for (final Order order : expiredOrders) {
             try {
@@ -54,10 +61,12 @@ public class OrderExpirationScheduler {
         return processedCount;
     }
 
+    /**
+     * 한 건도 처리하지 못했으면 같은 페이지를 무한 반복하지 않도록 멈춘다.
+     */
     private boolean shouldStop(final List<Order> expiredOrders, final int processedCount) {
         if (processedCount == 0) {
-            log.warn("주문 만료 배치에서 처리 성공 건이 없어 반복을 중단합니다. pendingCount={}",
-                    expiredOrders.size());
+            log.warn("주문 만료 배치에서 처리 성공 건이 없어 반복을 중단합니다. pendingCount={}", expiredOrders.size());
             return true;
         }
         return expiredOrders.size() < BATCH_SIZE;

@@ -1,6 +1,5 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.order.command.ExpireOrderUseCase;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class OrderExpirationSchedulerTest {
+class ExpirePendingOrdersUseCaseTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -38,19 +37,19 @@ class OrderExpirationSchedulerTest {
 
     @Test
     void no_expired_orders_returns_immediately() {
-        OrderExpirationScheduler scheduler = new OrderExpirationScheduler(expireOrderUseCase, orderRepository, fixedClock);
+        ExpirePendingOrdersUseCase useCase = new ExpirePendingOrdersUseCase(orderRepository, expireOrderUseCase, fixedClock);
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
         when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt()))
                 .thenReturn(List.<Order>of());
 
-        scheduler.expirePendingOrders();
+        useCase.execute();
 
         verify(expireOrderUseCase, times(0)).expireByOrderId(any(), any());
     }
 
     @Test
     void due_orders_are_expired_with_clock_now() {
-        OrderExpirationScheduler scheduler = new OrderExpirationScheduler(expireOrderUseCase, orderRepository, fixedClock);
+        ExpirePendingOrdersUseCase useCase = new ExpirePendingOrdersUseCase(orderRepository, expireOrderUseCase, fixedClock);
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
         Order first = createOrder(1L, null);
         Order second = createOrder(2L, null);
@@ -58,7 +57,7 @@ class OrderExpirationSchedulerTest {
         when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt()))
                 .thenReturn(slice);
 
-        scheduler.expirePendingOrders();
+        useCase.execute();
 
         verify(expireOrderUseCase).expireByOrderId(1L, expectedNow);
         verify(expireOrderUseCase).expireByOrderId(2L, expectedNow);
@@ -67,7 +66,7 @@ class OrderExpirationSchedulerTest {
 
     @Test
     void batch_stops_when_all_expirations_fail() {
-        OrderExpirationScheduler scheduler = new OrderExpirationScheduler(expireOrderUseCase, orderRepository, fixedClock);
+        ExpirePendingOrdersUseCase useCase = new ExpirePendingOrdersUseCase(orderRepository, expireOrderUseCase, fixedClock);
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
         Order order = createOrder(1L, "order-1");
         List<Order> slice = List.of(order);
@@ -75,7 +74,7 @@ class OrderExpirationSchedulerTest {
                 .thenReturn(slice);
         doThrow(new RuntimeException("boom")).when(expireOrderUseCase).expireByOrderId(1L, expectedNow);
 
-        scheduler.expirePendingOrders();
+        useCase.execute();
 
         verify(expireOrderUseCase).expireByOrderId(1L, expectedNow);
         verify(orderRepository, times(1)).findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt());

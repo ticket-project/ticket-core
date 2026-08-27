@@ -1,11 +1,7 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.infra.order.outbox.create;
 
 import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutbox;
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxExecutor;
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRepository;
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -26,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class HoldCreationOutboxSchedulerTest {
+class HoldCreationOutboxRelayTest {
 
     @Mock
     private HoldCreationOutboxRepository repository;
@@ -41,7 +37,7 @@ class HoldCreationOutboxSchedulerTest {
         when(repository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
                 .thenReturn(new SliceImpl<>(List.of(outbox)));
 
-        scheduler().processPendingHoldCreations();
+        scheduler().relayPending();
 
         verify(repository).findAllByStatusInAndNextAttemptAtLessThanEqual(
                 argThat(statuses -> statuses.containsAll(Arrays.asList(
@@ -54,9 +50,9 @@ class HoldCreationOutboxSchedulerTest {
         verify(executor).process(org.mockito.ArgumentMatchers.eq(99L), any(LocalDateTime.class));
     }
 
-    private HoldCreationOutboxScheduler scheduler() {
+    private HoldCreationOutboxRelay scheduler() {
         final Clock clock = Clock.fixed(Instant.parse("2026-03-15T03:00:00Z"), ZoneId.of("Asia/Seoul"));
-        return new HoldCreationOutboxScheduler(repository, executor, new RecordingLockManager(), clock);
+        return new HoldCreationOutboxRelay(repository, executor, new RecordingLockManager(), clock);
     }
 
     private HoldCreationOutbox outbox() {
