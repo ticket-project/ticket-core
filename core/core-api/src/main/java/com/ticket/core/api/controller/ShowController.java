@@ -142,7 +142,7 @@ public class ShowController implements ShowControllerDocs {
     public ApiResponse<CountSearchShowsUseCase.Output> countSearchShows(
             @ParameterObject final ShowSearchRequest request
     ) {
-        final CountSearchShowsUseCase.Input input = new CountSearchShowsUseCase.Input(request.toCriteria(showCursorCodec));
+        final CountSearchShowsUseCase.Input input = new CountSearchShowsUseCase.Input(request.toCountCriteria());
         return ApiResponse.success(countSearchShowsUseCase.execute(input));
     }
 }

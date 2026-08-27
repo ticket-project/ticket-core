@@ -72,6 +72,21 @@ class ShowSearchRequestTest {
                         .isEqualTo(ApiErrorType.INVALID_REQUEST));
     }
 
+    /**
+     * 건수 조회는 커서를 쓰지 않는다. 잘못된 커서가 붙어도 집계는 실패하지 않아야 한다.
+     */
+    @Test
+    void 건수_조회는_커서를_해석하지_않는다() {
+        ShowSearchRequest request = new ShowSearchRequest(
+                "뮤지컬", "MUSICAL", "ON_SALE", null, null, "SEOUL", "garbage"
+        );
+
+        ShowSearchCriteria criteria = request.toCountCriteria();
+
+        assertThat(criteria.getCursor()).isNull();
+        assertThat(criteria.getKeyword()).isEqualTo("뮤지컬");
+    }
+
     @Test
     void 알_수_없는_region_문자열이면_invalid_request_예외를_던진다() {
         ShowSearchRequest request = new ShowSearchRequest(
