@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.query;
 
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
@@ -21,7 +21,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
 
-    private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
+    private final PerformanceRepository performanceRepository;
     private final SeatStatusDbReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
@@ -38,7 +38,7 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceBookingPolicyView policy = performanceBookingPolicyFinder.findById(performanceId);
+        final PerformanceBookingPolicyView policy = performanceRepository.getBookingPolicyById(performanceId);
         BookingPolicyValidator.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input, now);
 

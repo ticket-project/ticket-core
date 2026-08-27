@@ -1,6 +1,6 @@
-package com.ticket.core.infra.performance.query;
+package com.ticket.core.infra.performance;
 
-import com.ticket.core.domain.performance.query.PerformanceBookingPolicyQueryRepository;
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.queue.model.QueueLevel;
@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(QuerydslPerformanceBookingPolicyQueryRepository.class)
+@Import(PerformanceRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslPerformanceBookingPolicyQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
+class PerformanceRepositoryAdapterBookingPolicyTest extends InfraQueryRepositoryTestSupport {
 
     @Autowired
-    private PerformanceBookingPolicyQueryRepository queryRepository;
+    private PerformanceRepository performanceRepository;
 
     @Test
     void 엔티티_대신_불변_예매정책을_조회한다() {
@@ -47,8 +47,8 @@ class QuerydslPerformanceBookingPolicyQueryRepositoryTest extends InfraQueryRepo
         entityManager.persist(performance);
         flushAndClear();
 
-        PerformanceBookingPolicyView policy = queryRepository
-                .findByPerformanceId(performance.getId())
+        PerformanceBookingPolicyView policy = performanceRepository
+                .findBookingPolicyById(performance.getId())
                 .orElseThrow();
 
         assertThat(policy.performanceId()).isEqualTo(performance.getId());

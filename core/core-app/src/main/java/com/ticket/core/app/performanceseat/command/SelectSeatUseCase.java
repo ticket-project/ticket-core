@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.command;
 
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
-import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class SelectSeatUseCase {
 
-    private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
+    private final PerformanceRepository performanceRepository;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
     private final AdmissionGuard admissionGuard;
@@ -31,7 +31,7 @@ public class SelectSeatUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         final PerformanceBookingPolicyView policy =
-                performanceBookingPolicyFinder.findById(input.performanceId());
+                performanceRepository.getBookingPolicyById(input.performanceId());
         BookingPolicyValidator.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input, now);
 
