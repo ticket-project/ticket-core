@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetLatestShowsUseCase {
     public static final int LATEST_SHOWS_MAX_COUNT = 10;
-    private final ShowListQueryRepository showListQueryRepository;
+    private final ShowListReadRepository showListReadRepository;
 
     public record Input(String category) {
     }
@@ -21,6 +21,6 @@ public class GetLatestShowsUseCase {
     }
 
     public Output execute(final Input input) {
-        return new Output(showListQueryRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT));
+        return new Output(showListReadRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT));
     }
 }

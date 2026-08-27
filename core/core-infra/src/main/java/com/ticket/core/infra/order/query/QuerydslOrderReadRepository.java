@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order.query;
 
-import com.ticket.core.app.order.query.OrderQueryRepository;
+import com.ticket.core.app.order.query.OrderReadRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.app.order.query.model.OrderDetailRow;
@@ -22,7 +22,7 @@ import static com.ticket.core.domain.show.venue.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslOrderQueryRepository implements OrderQueryRepository {
+public class QuerydslOrderReadRepository implements OrderReadRepository {
 
     private final JPAQueryFactory queryFactory;
 

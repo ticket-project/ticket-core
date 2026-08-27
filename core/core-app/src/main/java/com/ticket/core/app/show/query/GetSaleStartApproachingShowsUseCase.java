@@ -11,7 +11,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetSaleStartApproachingShowsUseCase {
-    private final ShowListQueryRepository showListQueryRepository;
+    private final ShowListReadRepository showListReadRepository;
 
     public record Input(String category, int size) {
     }
@@ -20,6 +20,6 @@ public class GetSaleStartApproachingShowsUseCase {
     }
 
     public Output execute(final Input input) {
-        return new Output(showListQueryRepository.findShowsSaleOpeningSoon(input.category(), input.size()));
+        return new Output(showListReadRepository.findShowsSaleOpeningSoon(input.category(), input.size()));
     }
 }

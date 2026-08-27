@@ -1,7 +1,7 @@
 package com.ticket.core.infra.show.query;
 
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
-import com.ticket.core.app.show.query.ShowDetailQueryRepository;
+import com.ticket.core.app.show.query.ShowDetailReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
@@ -31,7 +31,7 @@ import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowDetailQueryRepository implements ShowDetailQueryRepository {
+public class QuerydslShowDetailReadRepository implements ShowDetailReadRepository {
 
     private final JPAQueryFactory queryFactory;
     private final ShowCardImagePathConverter showCardImagePathConverter;

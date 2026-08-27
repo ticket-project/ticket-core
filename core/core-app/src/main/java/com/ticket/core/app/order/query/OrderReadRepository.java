@@ -6,7 +6,7 @@ import com.ticket.core.app.order.query.model.OrderStatusView;
 import java.util.List;
 import java.util.Optional;
 
-public interface OrderQueryRepository {
+public interface OrderReadRepository {
 
     List<OrderDetailRow> findDetailRows(String orderKey, Long memberId);
 

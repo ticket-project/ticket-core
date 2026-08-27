@@ -5,7 +5,7 @@ import com.ticket.core.app.performanceseat.query.model.SeatStateView;
 
 import java.util.List;
 
-public interface SeatMapQueryRepository {
+public interface SeatMapReadRepository {
 
     List<SeatInfoView> findShowSeats(Long showId);
 

@@ -11,10 +11,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SeatStatusDbReader {
 
-    private final SeatMapQueryRepository seatMapQueryRepository;
+    private final SeatMapReadRepository seatMapReadRepository;
 
     @Transactional(readOnly = true)
     public List<SeatStateView> read(final Long performanceId) {
-        return seatMapQueryRepository.findSeatStatuses(performanceId);
+        return seatMapReadRepository.findSeatStatuses(performanceId);
     }
 }

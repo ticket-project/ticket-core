@@ -1,7 +1,7 @@
 package com.ticket.core.infra.performanceseat.query;
 
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
-import com.ticket.core.app.performanceseat.query.SeatAvailabilityQueryRepository;
+import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import static com.ticket.core.domain.show.mapping.QShowSeat.showSeat;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslSeatAvailabilityQueryRepository implements SeatAvailabilityQueryRepository {
+public class QuerydslSeatAvailabilityReadRepository implements SeatAvailabilityReadRepository {
 
     private final JPAQueryFactory queryFactory;
 

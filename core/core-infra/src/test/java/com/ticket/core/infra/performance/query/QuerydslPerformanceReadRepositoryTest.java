@@ -1,12 +1,12 @@
 package com.ticket.core.infra.performance.query;
 
-import com.ticket.core.app.performance.query.PerformanceSummaryQueryRepository;
+import com.ticket.core.app.performance.query.PerformanceReadRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.app.performance.query.model.PerformanceSummaryView;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(QuerydslPerformanceSummaryQueryRepository.class)
+@Import(QuerydslPerformanceReadRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslPerformanceSummaryQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
+class QuerydslPerformanceReadRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
-    private PerformanceSummaryQueryRepository repository;
+    private PerformanceReadRepository repository;
 
     @Test
     void 회차와_공연장_요약을_한번에_조회한다() throws Exception {

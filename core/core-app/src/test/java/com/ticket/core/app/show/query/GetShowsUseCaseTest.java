@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class GetShowsUseCaseTest {
 
     @Mock
-    private ShowListQueryRepository showListQueryRepository;
+    private ShowListReadRepository showListReadRepository;
 
     @InjectMocks
     private GetShowsUseCase useCase;
@@ -55,25 +55,25 @@ class GetShowsUseCaseTest {
                 "venue"
         );
         CursorSlice<ShowListItemView> result = new CursorSlice<>(new SliceImpl<>(List.of(show)), "next");
-        when(showListQueryRepository.findAllBySearch(param, 10, "popular")).thenReturn(result);
+        when(showListReadRepository.findAllBySearch(param, 10, "popular")).thenReturn(result);
 
         GetShowsUseCase.Output output = useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));
 
         assertThat(output.shows().getContent()).containsExactly(show);
         assertThat(output.nextCursor()).isEqualTo("next");
-        verify(showListQueryRepository).findAllBySearch(param, 10, "popular");
+        verify(showListReadRepository).findAllBySearch(param, 10, "popular");
     }
 
     @Test
     void 공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowParam param = new ShowParam(null, null, null, null);
         CursorSlice<ShowListItemView> result = new CursorSlice<>(new SliceImpl<>(List.of()), null);
-        when(showListQueryRepository.findAllBySearch(param, 10, "popular")).thenReturn(result);
+        when(showListReadRepository.findAllBySearch(param, 10, "popular")).thenReturn(result);
 
         GetShowsUseCase.Output output = useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));
 
         assertThat(output.shows().getContent()).isEmpty();
         assertThat(output.nextCursor()).isNull();
-        verify(showListQueryRepository).findAllBySearch(param, 10, "popular");
+        verify(showListReadRepository).findAllBySearch(param, 10, "popular");
     }
 }

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 class GetShowDetailUseCaseTest {
 
     @Mock
-    private ShowDetailQueryRepository showDetailQueryRepository;
+    private ShowDetailReadRepository showDetailReadRepository;
 
     @InjectMocks
     private GetShowDetailUseCase useCase;
@@ -53,17 +53,17 @@ class GetShowDetailUseCaseTest {
                 List.of(),
                 List.of()
         );
-        when(showDetailQueryRepository.findShowDetail(1L)).thenReturn(Optional.of(detail));
+        when(showDetailReadRepository.findShowDetail(1L)).thenReturn(Optional.of(detail));
 
         GetShowDetailUseCase.Output output = useCase.execute(new GetShowDetailUseCase.Input(1L));
 
         assertThat(output).isEqualTo(detail);
-        verify(showDetailQueryRepository).findShowDetail(1L);
+        verify(showDetailReadRepository).findShowDetail(1L);
     }
 
     @Test
     void 공연_상세가_없으면_not_found_data_예외를_던진다() {
-        when(showDetailQueryRepository.findShowDetail(1L)).thenReturn(Optional.empty());
+        when(showDetailReadRepository.findShowDetail(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetShowDetailUseCase.Input(1L)))
                 .isInstanceOf(CoreException.class)

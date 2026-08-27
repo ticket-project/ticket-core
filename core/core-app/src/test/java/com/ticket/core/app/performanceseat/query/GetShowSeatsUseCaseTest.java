@@ -25,7 +25,7 @@ class GetShowSeatsUseCaseTest {
     private ShowRepository showRepository;
 
     @Mock
-    private SeatMapQueryRepository seatMapQueryRepository;
+    private SeatMapReadRepository seatMapReadRepository;
 
     @InjectMocks
     private GetShowSeatsUseCase useCase;
@@ -38,12 +38,12 @@ class GetShowSeatsUseCaseTest {
         );
         when(showRepository.getById(100L)).thenReturn(show);
         when(show.getId()).thenReturn(100L);
-        when(seatMapQueryRepository.findShowSeats(100L)).thenReturn(seats);
+        when(seatMapReadRepository.findShowSeats(100L)).thenReturn(seats);
 
         GetShowSeatsUseCase.Output output = useCase.execute(new GetShowSeatsUseCase.Input(100L));
 
         assertThat(output.seats()).containsExactlyElementsOf(seats);
-        verify(seatMapQueryRepository).findShowSeats(100L);
+        verify(seatMapReadRepository).findShowSeats(100L);
     }
 
     @Test
@@ -51,11 +51,11 @@ class GetShowSeatsUseCaseTest {
         Show show = mock(Show.class);
         when(showRepository.getById(100L)).thenReturn(show);
         when(show.getId()).thenReturn(100L);
-        when(seatMapQueryRepository.findShowSeats(100L)).thenReturn(List.of());
+        when(seatMapReadRepository.findShowSeats(100L)).thenReturn(List.of());
 
         GetShowSeatsUseCase.Output output = useCase.execute(new GetShowSeatsUseCase.Input(100L));
 
         assertThat(output.seats()).isEmpty();
-        verify(seatMapQueryRepository).findShowSeats(100L);
+        verify(seatMapReadRepository).findShowSeats(100L);
     }
 }

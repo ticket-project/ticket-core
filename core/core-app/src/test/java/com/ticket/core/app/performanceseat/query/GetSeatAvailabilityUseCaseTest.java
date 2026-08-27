@@ -30,7 +30,7 @@ class GetSeatAvailabilityUseCaseTest {
     @Mock
     private PerformanceRepository performanceRepository;
     @Mock
-    private SeatAvailabilityQueryRepository seatAvailabilityQueryRepository;
+    private SeatAvailabilityReadRepository seatAvailabilityReadRepository;
     @Mock
     private HoldManager holdManager;
     @Mock
@@ -55,7 +55,7 @@ class GetSeatAvailabilityUseCaseTest {
         when(performance.getId()).thenReturn(10L);
         when(performance.getShow()).thenReturn(show);
         when(show.getId()).thenReturn(100L);
-        when(seatAvailabilityQueryRepository.findAvailableSeatRows(10L, 100L)).thenReturn(rows);
+        when(seatAvailabilityReadRepository.findAvailableSeatRows(10L, 100L)).thenReturn(rows);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
         when(seatAvailabilityCalculator.calculate(rows, Set.of(1L, 2L))).thenReturn(response);

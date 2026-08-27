@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class GetSaleStartApproachingShowsPageUseCase {
 
-    private final ShowListQueryRepository showListQueryRepository;
+    private final ShowListReadRepository showListReadRepository;
 
     public record Input(SaleOpeningSoonSearchParam param, int size, String sort) {
     }
@@ -22,7 +22,7 @@ public class GetSaleStartApproachingShowsPageUseCase {
     }
 
     public Output execute(final Input input) {
-        final CursorSlice<ShowOpeningSoonDetailView> result = showListQueryRepository.findSaleOpeningSoonPage(
+        final CursorSlice<ShowOpeningSoonDetailView> result = showListReadRepository.findSaleOpeningSoonPage(
                 input.param(),
                 input.size(),
                 input.sort()

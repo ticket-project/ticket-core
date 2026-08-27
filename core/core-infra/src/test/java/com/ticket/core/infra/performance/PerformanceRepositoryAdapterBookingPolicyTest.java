@@ -5,7 +5,7 @@ import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
-import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(PerformanceRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceRepositoryAdapterBookingPolicyTest extends InfraQueryRepositoryTestSupport {
+class PerformanceRepositoryAdapterBookingPolicyTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
     private PerformanceRepository performanceRepository;

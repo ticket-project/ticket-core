@@ -1,6 +1,6 @@
 package com.ticket.core.infra.performance.query;
 
-import com.ticket.core.app.performance.query.PerformanceSummaryQueryRepository;
+import com.ticket.core.app.performance.query.PerformanceReadRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.app.performance.query.model.PerformanceSummaryView;
@@ -15,7 +15,7 @@ import static com.ticket.core.domain.show.venue.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceSummaryQueryRepository implements PerformanceSummaryQueryRepository {
+public class QuerydslPerformanceReadRepository implements PerformanceReadRepository {
 
     private final JPAQueryFactory queryFactory;
 

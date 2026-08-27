@@ -30,7 +30,7 @@ class GetOrderStatusUseCaseTest {
     );
 
     @Mock
-    private OrderQueryRepository repository;
+    private OrderReadRepository repository;
 
     private GetOrderStatusUseCase useCase;
 

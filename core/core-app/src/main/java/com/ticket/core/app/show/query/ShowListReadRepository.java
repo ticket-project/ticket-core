@@ -12,7 +12,7 @@ import com.ticket.core.app.support.cursor.CursorSlice;
 
 import java.util.List;
 
-public interface ShowListQueryRepository {
+public interface ShowListReadRepository {
 
     CursorSlice<ShowListItemView> findAllBySearch(ShowParam param, int size, String sort);
 

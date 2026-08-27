@@ -1,6 +1,6 @@
 package com.ticket.core.infra.show.query;
 
-import com.ticket.core.app.show.query.ShowListQueryRepository;
+import com.ticket.core.app.show.query.ShowListReadRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
@@ -38,7 +38,7 @@ import static com.ticket.core.domain.show.venue.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowListQueryRepository implements ShowListQueryRepository {
+public class QuerydslShowListReadRepository implements ShowListReadRepository {
 
     private final JPAQueryFactory queryFactory;
     private final ShowQueryHelper queryHelper;
