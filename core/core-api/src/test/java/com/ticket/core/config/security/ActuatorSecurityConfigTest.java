@@ -1,6 +1,7 @@
 package com.ticket.core.config.security;
 
 import com.ticket.core.app.auth.token.AccessTokenReader;
+import com.ticket.core.app.auth.token.AccessTokenReadResult;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -117,7 +118,7 @@ class ActuatorSecurityConfigTest {
     @Test
     void 일반_api는_유효한_internal_auth_token으로_접근할_수_있다() throws Exception {
         Mockito.when(accessTokenReader.read("access-token"))
-                .thenReturn(new AuthenticatedMember(7L, "MEMBER"));
+                .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
 
         mockMvc.perform(get("/api/v1/private-test")
                         .header("Authorization", "Bearer access-token"))

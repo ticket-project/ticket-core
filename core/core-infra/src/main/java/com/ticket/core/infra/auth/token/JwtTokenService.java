@@ -1,8 +1,11 @@
 package com.ticket.core.infra.auth.token;
 
+import com.ticket.core.app.auth.token.AccessTokenReadResult;
 import com.ticket.core.app.auth.token.AccessTokenReader;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -49,8 +52,21 @@ public class JwtTokenService implements AccessTokenReader {
                 .compact();
     }
 
+    /**
+     * JJWT 예외를 중립 결과로 바꾼다. 라이브러리 예외 타입이 이 모듈 밖으로 나가지 않게 한다.
+     */
     @Override
-    public AuthenticatedMember read(final String accessToken) {
+    public AccessTokenReadResult read(final String accessToken) {
+        try {
+            return AccessTokenReadResult.authenticated(parse(accessToken));
+        } catch (final ExpiredJwtException exception) {
+            return AccessTokenReadResult.expired();
+        } catch (final JwtException | IllegalArgumentException exception) {
+            return AccessTokenReadResult.invalid();
+        }
+    }
+
+    private AuthenticatedMember parse(final String accessToken) {
         Claims claims = Jwts.parser()
                 .requireIssuer(jwtProperties.getIssuer())
                 .clock(() -> Date.from(clock.instant()))
