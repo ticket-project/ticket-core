@@ -1,10 +1,10 @@
 package com.ticket.core.config.security;
 
+import com.ticket.core.app.auth.token.AccessTokenReadResult;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.auth.token.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
@@ -44,20 +44,17 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
             if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
                 final String token = authorization.substring(BEARER_PREFIX.length());
-                try {
-                    final AuthenticatedMember member = accessTokenReader.read(token);
-                    final UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    member,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))
-                            );
-                    accessor.setUser(authentication);
-                    log.info("웹소켓 인증에 성공했습니다. memberId={}", member.memberId());
-                } catch (JwtException | IllegalArgumentException e) {
-                    log.warn("웹소켓 JWT 인증에 실패했습니다. message={}", e.getMessage());
+                if (!(accessTokenReader.read(token) instanceof AccessTokenReadResult.Authenticated authenticated)) {
+                    log.warn("웹소켓 JWT 인증에 실패해 연결을 차단합니다.");
                     throw new MessageDeliveryException("JWT 인증 실패");
                 }
+                final AuthenticatedMember member = authenticated.member();
+                accessor.setUser(new UsernamePasswordAuthenticationToken(
+                        member,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))
+                ));
+                log.info("웹소켓 인증에 성공했습니다. memberId={}", member.memberId());
             } else {
                 log.warn("웹소켓 CONNECT 요청에 Authorization 헤더가 없어 연결을 차단합니다.");
                 throw new MessageDeliveryException("인증 정보가 없습니다");
