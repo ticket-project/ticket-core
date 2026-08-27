@@ -39,7 +39,7 @@ jobs:
       - name: Test and build
         run: |
           chmod +x ./gradlew
-          ./gradlew test :core:core-infra:integrationTest :bootstrap:bootJar --no-daemon
+          ./gradlew test :core:core-infra:integrationTest :bootstrap:integrationTest :bootstrap:bootJar --no-daemon
 
       - name: Upload verified application jar
         uses: actions/upload-artifact@v4
