@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,12 @@ public class GetSeatStatusUseCase {
     private final AdmissionGuard admissionGuard;
     private final Clock clock;
 
-    public record Input(Long performanceId, Long memberId, String admissionToken) {}
+    public record Input(Long performanceId, Long memberId, String admissionToken) {
+        public Input {
+            RequiredInput.positiveId(performanceId, "performanceId");
+            RequiredInput.positiveId(memberId, "memberId");
+        }
+    }
 
     public record Output(
             List<SeatStateView> seats

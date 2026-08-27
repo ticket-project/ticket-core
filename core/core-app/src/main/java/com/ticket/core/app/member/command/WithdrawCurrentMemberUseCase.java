@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +16,11 @@ public class WithdrawCurrentMemberUseCase {
     private final MemberWithdrawalTxService memberWithdrawalTxService;
     private final KakaoUnlinkService kakaoUnlinkService;
 
-    public record Input(Long memberId) {}
+    public record Input(Long memberId) {
+        public Input {
+            RequiredInput.positiveId(memberId, "memberId");
+        }
+    }
     public record Output() {}
 
     public Output execute(final Input input) {

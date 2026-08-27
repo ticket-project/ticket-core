@@ -9,7 +9,6 @@ import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.query.GetOrderDetailUseCase;
 import com.ticket.core.app.order.query.GetOrderStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,7 +35,7 @@ public class OrderController implements OrderControllerDocs {
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
-            @Valid @RequestBody final CreateOrderRequest request,
+            @RequestBody final CreateOrderRequest request,
             @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {

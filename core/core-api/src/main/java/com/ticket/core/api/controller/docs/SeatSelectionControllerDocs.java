@@ -6,7 +6,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
+ */
 @Tag(name = "좌석 선택", description = "좌석 선택/해제 API (실시간 알림은 WebSocket 구독)")
 public interface SeatSelectionControllerDocs {
 
@@ -25,8 +33,8 @@ public interface SeatSelectionControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 선택된 좌석")
     })
     ApiResponse<Void> selectSeat(
-            @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
-            @Parameter(description = "좌석 ID", example = "42", required = true) Long seatId,
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
+            @Parameter(description = "좌석 ID", example = "42", required = true) @Positive Long seatId,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
             @Parameter(hidden = true) AuthenticatedMember member
     );
@@ -43,8 +51,8 @@ public interface SeatSelectionControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인이 선택한 좌석이 아님")
     })
     ApiResponse<Void> deselectSeat(
-            @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
-            @Parameter(description = "좌석 ID", example = "42", required = true) Long seatId,
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
+            @Parameter(description = "좌석 ID", example = "42", required = true) @Positive Long seatId,
             @Parameter(hidden = true) AuthenticatedMember member
     );
 
@@ -60,7 +68,7 @@ public interface SeatSelectionControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 선택 좌석 전체 해제 성공")
     })
     ApiResponse<Void> deselectAllSeats(
-            @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
             @Parameter(hidden = true) AuthenticatedMember member
     );
 }

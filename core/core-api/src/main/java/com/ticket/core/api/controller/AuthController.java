@@ -14,7 +14,6 @@ import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import com.ticket.core.support.util.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -35,14 +34,14 @@ public class AuthController implements AuthControllerDocs {
 
     @Override
     @PostMapping("/signup")
-    public ApiResponse<RegisterMemberUseCase.Output> signUp(@Valid @RequestBody final RegisterMemberRequest request) {
+    public ApiResponse<RegisterMemberUseCase.Output> signUp(@RequestBody final RegisterMemberRequest request) {
         return ApiResponse.success(registerMemberUseCase.execute(request.toInput()));
     }
 
     @Override
     @PostMapping("/login")
     public ApiResponse<LoginUseCase.Output> login(
-            @Valid @RequestBody final LoginRequest request,
+            @RequestBody final LoginRequest request,
             final HttpServletResponse response
     ) {
         final LoginUseCase.Result result = loginUseCase.execute(request.toInput());
@@ -65,7 +64,7 @@ public class AuthController implements AuthControllerDocs {
     @Override
     @PostMapping("/oauth2/token")
     public ApiResponse<ExchangeOAuth2TokenUseCase.Output> exchangeOAuth2Token(
-            @Valid @RequestBody final ExchangeOAuth2TokenRequest request,
+            @RequestBody final ExchangeOAuth2TokenRequest request,
             final HttpServletResponse response
     ) {
         final ExchangeOAuth2TokenUseCase.Result result = exchangeOAuth2TokenUseCase.execute(request.toInput());

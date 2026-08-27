@@ -151,4 +151,14 @@ class OrderControllerContractTest {
 
         verify(getOrderStatusUseCase).execute(new GetOrderStatusUseCase.Input("order-key", 100L));
     }
+
+    @Test
+    void orderKey가_공백이면_400_계약을_지킨다() throws Exception {
+        mockMvc.perform(get("/api/v1/orders/ "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(getOrderDetailUseCase);
+    }
 }

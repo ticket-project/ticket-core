@@ -31,6 +31,8 @@ class PerformanceControllerContractTest {
 
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase = Mockito.mock(GetSeatAvailabilityUseCase.class);
     private final GetSeatStatusUseCase getSeatStatusUseCase = Mockito.mock(GetSeatStatusUseCase.class);
+    private final GetPerformanceSummaryUseCase getPerformanceSummaryUseCase =
+            Mockito.mock(GetPerformanceSummaryUseCase.class);
 
     private MockMvc mockMvc;
 
@@ -39,7 +41,7 @@ class PerformanceControllerContractTest {
         PerformanceController controller = new PerformanceController(
                 getSeatAvailabilityUseCase,
                 getSeatStatusUseCase,
-                Mockito.mock(GetPerformanceSummaryUseCase.class),
+                getPerformanceSummaryUseCase,
                 Mockito.mock(GetPerformanceScheduleListUseCase.class)
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
@@ -84,5 +86,15 @@ class PerformanceControllerContractTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"));
 
+    }
+
+    @Test
+    void performanceId가_양수가_아니면_400_계약을_지킨다() throws Exception {
+        mockMvc.perform(get("/api/v1/performances/-1/summary"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(getPerformanceSummaryUseCase);
     }
 }

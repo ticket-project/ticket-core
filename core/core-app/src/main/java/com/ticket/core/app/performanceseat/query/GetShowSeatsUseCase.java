@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -18,6 +19,9 @@ public class GetShowSeatsUseCase {
     private final SeatMapReadRepository seatMapReadRepository;
 
     public record Input(Long showId) {
+        public Input {
+            RequiredInput.positiveId(showId, "showId");
+        }
     }
 
     public record Output(List<SeatInfoView> seats) {

@@ -18,7 +18,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
+import jakarta.validation.Valid;
 
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
+ */
 @Tag(name = "인증(Auth)", description = "회원가입, 로그인, 토큰 재발급, 로그아웃, 소셜 로그인 관련 API")
 public interface AuthControllerDocs {
 
@@ -28,7 +36,7 @@ public interface AuthControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청값이 올바르지 않음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 가입된 이메일")
     })
-    ApiResponse<RegisterMemberUseCase.Output> signUp(RegisterMemberRequest request);
+    ApiResponse<RegisterMemberUseCase.Output> signUp(@Valid RegisterMemberRequest request);
 
     @Operation(
             summary = "로그인",
@@ -39,7 +47,7 @@ public interface AuthControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "이메일 또는 비밀번호 불일치")
     })
     ApiResponse<LoginUseCase.Output> login(
-            LoginRequest request,
+            @Valid LoginRequest request,
             @Parameter(hidden = true) HttpServletResponse response
     );
 
@@ -65,7 +73,7 @@ public interface AuthControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 인증 코드")
     })
     ApiResponse<ExchangeOAuth2TokenUseCase.Output> exchangeOAuth2Token(
-            ExchangeOAuth2TokenRequest request,
+            @Valid ExchangeOAuth2TokenRequest request,
             @Parameter(hidden = true) HttpServletResponse response
     );
 

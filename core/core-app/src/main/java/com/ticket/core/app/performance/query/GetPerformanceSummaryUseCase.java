@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -16,7 +17,11 @@ public class GetPerformanceSummaryUseCase {
 
     private final PerformanceReadRepository performanceReadRepository;
 
-    public record Input(Long performanceId) {}
+    public record Input(Long performanceId) {
+        public Input {
+            RequiredInput.positiveId(performanceId, "performanceId");
+        }
+    }
 
     public record Output(
             String title,

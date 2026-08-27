@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -17,6 +18,11 @@ public class SearchShowsUseCase {
     private final ShowListReadRepository showListReadRepository;
 
     public record Input(ShowSearchCriteria request, int size, ShowSort sort) {
+        public Input {
+            RequiredInput.notNull(request, "request");
+            RequiredInput.notNull(sort, "sort");
+            RequiredInput.positiveSize(size, "size");
+        }
     }
 
     public record Output(List<ShowSearchItemView> items, boolean hasNext, ShowCursor nextPosition) {

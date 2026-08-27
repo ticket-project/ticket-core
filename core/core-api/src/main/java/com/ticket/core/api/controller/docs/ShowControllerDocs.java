@@ -24,10 +24,18 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
+import jakarta.validation.constraints.Positive;
 
 /**
  * ShowController Swagger 문서 인터페이스
  * - Swagger 어노테이션을 Controller에서 분리하여 가독성 향상
+ */
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
  */
 @Tag(name = "공연(Show)", description = "공연 정보 조회 API")
 public interface ShowControllerDocs {
@@ -45,7 +53,7 @@ public interface ShowControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<GetVenueLayoutUseCase.Output> getVenueLayout(
-            @Parameter(description = "공연 ID", example = "1", required = true) Long showId
+            @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long showId
     );
 
     // ========== 좌석 정보 API ==========
@@ -62,7 +70,7 @@ public interface ShowControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<GetShowSeatsUseCase.Output> getShowSeats(
-            @Parameter(description = "공연 ID", example = "1", required = true) Long showId
+            @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long showId
     );
 
     // ========== 상세 조회 API ==========
@@ -81,7 +89,7 @@ public interface ShowControllerDocs {
             )
     })
     ApiResponse<GetShowDetailUseCase.Output> getShowDetail(
-            @Parameter(description = "공연 ID", example = "1", required = true) Long id
+            @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long id
     );
 
     // ========== 메인 페이지 API ==========
@@ -148,7 +156,7 @@ public interface ShowControllerDocs {
     })
     ApiResponse<SliceResponse<ShowListItemView>> getShowsPage(
             @ParameterObject ShowListRequest request,
-            @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") int size,
+            @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") @Positive int size,
             @Parameter(description = "정렬 기준 [popular(인기순), latest(최신순), showStartApproaching(공연임박순)]", example = "popular") String sort
     );
 
@@ -225,7 +233,7 @@ public interface ShowControllerDocs {
     })
     ApiResponse<GetSaleStartApproachingShowsUseCase.Output> getShowsSaleOpeningSoon(
             @Parameter(description = "카테고리", example = "CONCERT", required = true) String category,
-            @Parameter(description = "조회 개수", example = "5") int size
+            @Parameter(description = "조회 개수", example = "5") @Positive int size
     );
 
     @Operation(
@@ -282,7 +290,7 @@ public interface ShowControllerDocs {
     })
     ApiResponse<SliceResponse<ShowOpeningSoonDetailView>> getShowsSaleOpeningSoonPage(
             @ParameterObject SaleOpeningSoonRequest request,
-            @Parameter(description = "한 번에 조회할 개수 (기본값: 16)", example = "16") int size,
+            @Parameter(description = "한 번에 조회할 개수 (기본값: 16)", example = "16") @Positive int size,
             @Parameter(description = "정렬 기준 [saleStartApproaching(판매시작일순), popular(인기순), latest(최신순)]", example = "saleStartApproaching") String sort
     );
 
@@ -343,7 +351,7 @@ public interface ShowControllerDocs {
     })
     ApiResponse<SliceResponse<ShowSearchItemView>> searchShows(
             @ParameterObject ShowSearchRequest request,
-            @Parameter(description = "한 번에 조회할 개수 (기본값: 20)", example = "20") int size,
+            @Parameter(description = "한 번에 조회할 개수 (기본값: 20)", example = "20") @Positive int size,
             @Parameter(description = "정렬 기준 [popular(조회순), showStartApproaching(공연임박순)]", example = "popular") String sort
     );
 

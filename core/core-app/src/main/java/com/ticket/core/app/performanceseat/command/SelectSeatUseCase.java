@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,13 @@ public class SelectSeatUseCase {
     private final SeatStatusEventPublisher seatEventPublisher;
     private final Clock clock;
 
-    public record Input(Long performanceId, Long seatId, Long memberId, String admissionToken) {}
+    public record Input(Long performanceId, Long seatId, Long memberId, String admissionToken) {
+        public Input {
+            RequiredInput.positiveId(performanceId, "performanceId");
+            RequiredInput.positiveId(seatId, "seatId");
+            RequiredInput.positiveId(memberId, "memberId");
+        }
+    }
 
     public void execute(final Input input) {
         final LocalDateTime now = LocalDateTime.now(clock);

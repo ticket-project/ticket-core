@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -14,6 +15,9 @@ public class GetSaleStartApproachingShowsUseCase {
     private final ShowListReadRepository showListReadRepository;
 
     public record Input(String category, int size) {
+        public Input {
+            RequiredInput.positiveSize(size, "size");
+        }
     }
 
     public record Output(List<ShowOpeningSoonSummaryView> shows) {

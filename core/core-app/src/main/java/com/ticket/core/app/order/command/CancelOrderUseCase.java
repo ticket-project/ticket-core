@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +24,12 @@ public class CancelOrderUseCase {
     private final OrderTerminationService orderTerminationService;
     private final Clock clock;
 
-    public record Input(String orderKey, Long memberId) {}
+    public record Input(String orderKey, Long memberId) {
+        public Input {
+            RequiredInput.notBlank(orderKey, "orderKey");
+            RequiredInput.positiveId(memberId, "memberId");
+        }
+    }
 
     @Transactional
     public void execute(final Input input) {

@@ -8,6 +8,7 @@ import com.ticket.core.domain.show.venue.Venue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -16,7 +17,11 @@ public class GetVenueLayoutUseCase {
 
     private final ShowRepository showRepository;
 
-    public record Input(Long showId) {}
+    public record Input(Long showId) {
+        public Input {
+            RequiredInput.positiveId(showId, "showId");
+        }
+    }
     public record Output(String name,
                          int viewBoxWidth,
                          int viewBoxHeight,

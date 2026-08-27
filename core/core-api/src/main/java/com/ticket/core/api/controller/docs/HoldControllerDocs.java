@@ -12,7 +12,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
+ */
 @Deprecated
 @Tag(name = "좌석 선점", description = "구형 좌석 HOLD 및 PENDING 주문 생성 API")
 public interface HoldControllerDocs {
@@ -51,8 +60,8 @@ public interface HoldControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
-            @Parameter(description = "회차 ID", example = "1", required = true) Long performanceId,
-            CreateHoldRequest request,
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
+            @Valid CreateHoldRequest request,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
             @Parameter(hidden = true) AuthenticatedMember member
     );

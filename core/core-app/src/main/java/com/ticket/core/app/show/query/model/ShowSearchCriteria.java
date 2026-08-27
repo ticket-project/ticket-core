@@ -56,11 +56,14 @@ public class ShowSearchCriteria {
                 parseEnum(BookingStatus.class, bookingStatus, "bookingStatus"),
                 startDateFrom,
                 startDateTo,
-                parseEnum(Region.class, region, "region"),
+                ShowParam.parseRegion(region),
                 cursor
         );
     }
 
+    /**
+     * region 변환은 목록 조회와 같은 규칙을 써야 하므로 {@link ShowParam#parseRegion}이 소유한다.
+     */
     private static <E extends Enum<E>> E parseEnum(
             final Class<E> type,
             final String value,

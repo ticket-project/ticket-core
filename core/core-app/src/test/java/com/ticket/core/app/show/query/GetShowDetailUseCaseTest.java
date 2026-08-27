@@ -71,19 +71,27 @@ class GetShowDetailUseCaseTest {
                         .isEqualTo(ApplicationErrorType.DATA_NOT_FOUND));
     }
 
+    /**
+     * showId 계약은 Input 생성자 한곳에서만 판정한다. execute가 같은 검사를 반복하지 않는다.
+     */
     @Test
-    void null_input_throws_invalid_request() {
-        assertThatThrownBy(() -> useCase.execute(null))
+    void showId가_유효하지_않으면_Input_생성에서_예외를_던진다() {
+        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(0L))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
+    /**
+     * Input을 아예 넘기지 않은 것은 사용자 입력 오류가 아니라 호출부의 프로그래머 오류다.
+     */
     @Test
-    void null_show_id_throws_invalid_request() {
-        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+    void execute에_Input을_넘기지_않으면_NPE가_난다() {
+        assertThatThrownBy(() -> useCase.execute(null))
+                .isInstanceOf(NullPointerException.class);
     }
 }

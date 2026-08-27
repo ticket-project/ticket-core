@@ -23,12 +23,10 @@ import com.ticket.core.support.response.ApiResponse;
 import com.ticket.core.support.response.SliceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/shows")
-@Validated
 @RequiredArgsConstructor
 public class ShowController implements ShowControllerDocs {
 

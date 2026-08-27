@@ -19,6 +19,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Slf4j
 @Service
@@ -35,7 +36,16 @@ public class CreateOrderUseCase {
     private final HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
     private final Clock clock;
 
-    public record Input(Long performanceId, List<Long> seatIds, Long memberId, String admissionToken) {}
+    /**
+     * seatIds의 null·빈 목록·중복은 도메인 불변식이라 {@link RequestedSeatIds}가 판정한다.
+     * 여기서 다시 검사하지 않는다.
+     */
+    public record Input(Long performanceId, List<Long> seatIds, Long memberId, String admissionToken) {
+        public Input {
+            RequiredInput.positiveId(performanceId, "performanceId");
+            RequiredInput.positiveId(memberId, "memberId");
+        }
+    }
 
     public record Output(
             String orderKey,
