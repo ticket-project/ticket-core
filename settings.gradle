@@ -17,6 +17,7 @@ pluginManagement {
 rootProject.name = 'ticket'
 
 include(
+        'bootstrap',
         'core:core-domain',
         'core:core-app',
         'core:core-infra',

@@ -5,7 +5,7 @@ ARG DD_JAVA_AGENT_VERSION=1.60.1
 WORKDIR /app
 
 ADD https://repo1.maven.org/maven2/com/datadoghq/dd-java-agent/${DD_JAVA_AGENT_VERSION}/dd-java-agent-${DD_JAVA_AGENT_VERSION}.jar /opt/datadog/dd-java-agent.jar
-COPY core/core-api/build/libs/*.jar app.jar
+COPY bootstrap/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
