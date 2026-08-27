@@ -11,7 +11,7 @@ import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.domain.order.command.create.HoldAllocator;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
 import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
@@ -101,9 +101,9 @@ class CreateOrderUseCaseTest {
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
-        final HoldSnapshot snapshot = holdSnapshot(seatIds.toList());
-        final HoldAllocation allocation = new HoldAllocation(snapshot, seats);
-        final Order order = order(snapshot);
+        final Hold hold = hold(seatIds.toList());
+        final HoldAllocation allocation = new HoldAllocation(hold, seats);
+        final Order order = order(hold);
 
         when(validator.validate(input, seatIds, FIXED_NOW))
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
@@ -116,7 +116,7 @@ class CreateOrderUseCaseTest {
 
         assertThat(output.orderKey()).isEqualTo("order-key");
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
-        assertThat(output.expiresAt()).isEqualTo(snapshot.expiresAt());
+        assertThat(output.expiresAt()).isEqualTo(hold.expiresAt());
         assertThat(output.remainingSeconds()).isEqualTo(600L);
 
         final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTxService, holdCreationPostCommitNotifier);
@@ -131,9 +131,9 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
-        final HoldSnapshot snapshot = holdSnapshot(seatIds.toList());
-        final HoldAllocation allocation = new HoldAllocation(snapshot, List.of(mock(PerformanceSeat.class)));
-        final Order order = order(snapshot);
+        final Hold hold = hold(seatIds.toList());
+        final HoldAllocation allocation = new HoldAllocation(hold, List.of(mock(PerformanceSeat.class)));
+        final Order order = order(hold);
         when(validator.validate(input, seatIds, FIXED_NOW))
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
         when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
@@ -153,7 +153,7 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
-        final HoldAllocation allocation = new HoldAllocation(holdSnapshot(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
+        final HoldAllocation allocation = new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
 
         when(validator.validate(input, seatIds, FIXED_NOW))
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
@@ -174,7 +174,7 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final PerformanceBookingPolicyView performance = createPerformance(5, 600);
-        final HoldAllocation allocation = new HoldAllocation(holdSnapshot(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
+        final HoldAllocation allocation = new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
         final RuntimeException originalException = new RuntimeException("order failed");
 
         when(validator.validate(input, seatIds, FIXED_NOW))
@@ -203,12 +203,12 @@ class CreateOrderUseCaseTest {
                 .isFalse();
     }
 
-    private HoldSnapshot holdSnapshot(final List<Long> seatIds) {
-        return new HoldSnapshot("hold-key", 20L, 10L, seatIds, FIXED_NOW.plusMinutes(10));
+    private Hold hold(final List<Long> seatIds) {
+        return new Hold("hold-key", 20L, 10L, seatIds, FIXED_NOW.plusMinutes(10));
     }
 
-    private Order order(final HoldSnapshot snapshot) {
-        return new Order(20L, 10L, "order-key", "hold-key", BigDecimal.valueOf(120000), snapshot.expiresAt());
+    private Order order(final Hold hold) {
+        return new Order(20L, 10L, "order-key", "hold-key", BigDecimal.valueOf(120000), hold.expiresAt());
     }
 
     private PerformanceBookingPolicyView createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {

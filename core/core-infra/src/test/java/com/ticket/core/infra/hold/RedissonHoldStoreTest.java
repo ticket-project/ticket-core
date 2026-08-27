@@ -1,7 +1,6 @@
 package com.ticket.core.infra.hold;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
-import com.ticket.core.domain.hold.store.HoldSnapshotCodec;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +37,7 @@ class RedissonHoldStoreTest {
     private RedissonClient redissonClient;
 
     @Mock
-    private HoldSnapshotCodec holdSnapshotCodec;
+    private HoldMetaCodec holdMetaCodec;
 
     @InjectMocks
     private RedissonHoldStore redissonHoldStore;
@@ -47,7 +46,7 @@ class RedissonHoldStoreTest {
     void 홀드를_저장하면_좌석키와_메타키를_저장한다() {
         //given
         Duration ttl = Duration.ofMinutes(5);
-        HoldSnapshot snapshot = new HoldSnapshot("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
+        Hold hold = new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
         RBucket<Object> seat10 = mock(RBucket.class);
         RBucket<Object> seat20 = mock(RBucket.class);
         RBucket<Object> meta = mock(RBucket.class);
@@ -58,10 +57,10 @@ class RedissonHoldStoreTest {
         when(redissonClient.getBucket(SeatRedisKey.hold(1L, 20L), StringCodec.INSTANCE)).thenReturn(seat20);
         when(redissonClient.getBucket(SeatRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE)).thenReturn(meta);
         when(redissonClient.getSetCache(SeatRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE)).thenReturn(holdSeatIndex);
-        when(holdSnapshotCodec.encode(any(HoldSnapshot.class))).thenReturn("payload");
+        when(holdMetaCodec.encode(any(Hold.class))).thenReturn("payload");
 
         //when
-        redissonHoldStore.save(snapshot, ttl);
+        redissonHoldStore.save(hold, ttl);
 
         //then
         verify(seat10).set("hold-key", ttl);
@@ -75,7 +74,7 @@ class RedissonHoldStoreTest {
     void 홀드저장_중_예외가_나면_생성한_좌석키를_롤백한다() {
         //given
         Duration ttl = Duration.ofMinutes(5);
-        HoldSnapshot snapshot = new HoldSnapshot("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
+        Hold hold = new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
         RBucket<Object> seat10 = mock(RBucket.class);
         RBucket<Object> seat20 = mock(RBucket.class);
         RBucket<Object> meta = mock(RBucket.class);
@@ -90,7 +89,7 @@ class RedissonHoldStoreTest {
 
         //when
         //then
-        assertThatThrownBy(() -> redissonHoldStore.save(snapshot, ttl))
+        assertThatThrownBy(() -> redissonHoldStore.save(hold, ttl))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hold Redis");
 
@@ -112,8 +111,8 @@ class RedissonHoldStoreTest {
         when(redissonClient.getBucket(SeatRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE)).thenReturn(meta);
         when(redissonClient.getSetCache(SeatRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE)).thenReturn(holdSeatIndex);
         when(meta.get()).thenReturn("{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}");
-        when(holdSnapshotCodec.decode("{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}"))
-                .thenReturn(new HoldSnapshot("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
+        when(holdMetaCodec.decode("{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}"))
+                .thenReturn(new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
 
         //when
         List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
@@ -138,8 +137,8 @@ class RedissonHoldStoreTest {
         when(redissonClient.getBucket(SeatRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE)).thenReturn(meta);
         when(redissonClient.getSetCache(SeatRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE)).thenReturn(holdSeatIndex);
         when(meta.get()).thenReturn(payload);
-        when(holdSnapshotCodec.decode(payload))
-                .thenReturn(new HoldSnapshot("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
+        when(holdMetaCodec.decode(payload))
+                .thenReturn(new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
 
         List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(10L));
 

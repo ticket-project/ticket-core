@@ -43,7 +43,7 @@ public class CreatePendingOrderTxService {
                 allocation.performanceSeats()
         );
         final Long postCommitOutboxId = holdCreationOutboxWriter.append(
-                allocation.snapshot(),
+                allocation.hold(),
                 allocation.startedAt(holdDuration)
         );
         return new PendingOrderCreationResult(order, postCommitOutboxId);

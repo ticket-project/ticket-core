@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.app.order.command.HoldCreationOutboxTransactionService;
 import com.ticket.core.support.lock.DistributedLock;
 import org.junit.jupiter.api.Test;
@@ -34,20 +34,20 @@ class HoldCreationOutboxExecutorTest {
 
     @Test
     void completesOutboxAfterPostCommitProcessingSucceeds() {
-        final HoldSnapshot snapshot = snapshot();
-        when(transactionService.load(99L)).thenReturn(snapshot);
+        final Hold hold = hold();
+        when(transactionService.load(99L)).thenReturn(hold);
 
         executor.process(99L, FIXED_NOW);
 
-        verify(processor).process(snapshot);
+        verify(processor).process(hold);
         verify(transactionService).markCompleted(99L, FIXED_NOW);
     }
 
     @Test
     void schedulesDurableRetryAfterPostCommitProcessingFails() {
-        final HoldSnapshot snapshot = snapshot();
-        when(transactionService.load(99L)).thenReturn(snapshot);
-        doThrow(new RuntimeException("publish failed")).when(processor).process(snapshot);
+        final Hold hold = hold();
+        when(transactionService.load(99L)).thenReturn(hold);
+        doThrow(new RuntimeException("publish failed")).when(processor).process(hold);
 
         executor.process(99L, FIXED_NOW);
 
@@ -72,7 +72,7 @@ class HoldCreationOutboxExecutorTest {
         assertThat(lock.warnOnFailure()).isFalse();
     }
 
-    private HoldSnapshot snapshot() {
-        return new HoldSnapshot("hold-key", 20L, 10L, List.of(100L, 200L), FIXED_NOW);
+    private Hold hold() {
+        return new Hold("hold-key", 20L, 10L, List.of(100L, 200L), FIXED_NOW);
     }
 }

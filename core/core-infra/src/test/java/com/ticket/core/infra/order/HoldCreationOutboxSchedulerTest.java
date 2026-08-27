@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxStatus;
@@ -59,7 +59,7 @@ class HoldCreationOutboxSchedulerTest {
 
     private HoldCreationOutbox outbox() {
         return HoldCreationOutbox.create(
-                new HoldSnapshot(
+                new Hold(
                         "hold-key",
                         20L,
                         10L,

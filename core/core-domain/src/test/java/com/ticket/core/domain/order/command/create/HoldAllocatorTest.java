@@ -1,6 +1,6 @@
 package com.ticket.core.domain.order.command.create;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class HoldAllocatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(3L, 7L));
         Duration holdDuration = Duration.ofMinutes(10);
         List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
-        HoldSnapshot snapshot = new HoldSnapshot(
+        Hold hold = new Hold(
                 "hold-key",
                 20L,
                 10L,
@@ -43,26 +43,26 @@ class HoldAllocatorTest {
                 LocalDateTime.of(2026, 3, 15, 12, 0)
         );
 
-        when(holdManager.createHold(20L, 10L, seatIds, holdDuration, FIXED_NOW)).thenReturn(snapshot);
+        when(holdManager.createHold(20L, 10L, seatIds, holdDuration, FIXED_NOW)).thenReturn(hold);
 
         HoldAllocation allocation =
                 holdAllocator.allocate(20L, 10L, seatIds, seats, holdDuration, FIXED_NOW);
 
-        assertThat(allocation.snapshot()).isEqualTo(snapshot);
+        assertThat(allocation.hold()).isEqualTo(hold);
         assertThat(allocation.performanceSeats()).isEqualTo(seats);
     }
 
     @Test
     void hold를_해제한다() {
         List<Long> seatIds = List.of(3L, 7L);
-        HoldSnapshot snapshot = new HoldSnapshot(
+        Hold hold = new Hold(
                 "hold-key",
                 20L,
                 10L,
                 seatIds,
                 LocalDateTime.of(2026, 3, 15, 12, 0)
         );
-        HoldAllocation allocation = new HoldAllocation(snapshot, List.of(mock(PerformanceSeat.class)));
+        HoldAllocation allocation = new HoldAllocation(hold, List.of(mock(PerformanceSeat.class)));
 
         holdAllocator.release(allocation);
 

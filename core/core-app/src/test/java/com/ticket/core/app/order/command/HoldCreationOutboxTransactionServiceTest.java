@@ -3,7 +3,7 @@ package com.ticket.core.app.order.command;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxStatus;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
 import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,7 +30,7 @@ class HoldCreationOutboxTransactionServiceTest {
         final HoldCreationOutbox outbox = outbox();
         when(repository.findById(1L)).thenReturn(Optional.of(outbox));
 
-        assertThat(service().load(1L)).isEqualTo(snapshot());
+        assertThat(service().load(1L)).isEqualTo(hold());
     }
 
     @Test
@@ -73,10 +73,10 @@ class HoldCreationOutboxTransactionServiceTest {
     }
 
     private HoldCreationOutbox outbox() {
-        return HoldCreationOutbox.create(snapshot(), FIXED_NOW.minusMinutes(10));
+        return HoldCreationOutbox.create(hold(), FIXED_NOW.minusMinutes(10));
     }
 
-    private HoldSnapshot snapshot() {
-        return new HoldSnapshot("hold-key", 20L, 10L, List.of(100L, 200L), FIXED_NOW);
+    private Hold hold() {
+        return new Hold("hold-key", 20L, 10L, List.of(100L, 200L), FIXED_NOW);
     }
 }

@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.app.order.command.HoldCreationOutboxTransactionService;
 import com.ticket.core.support.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
@@ -28,17 +28,17 @@ public class HoldCreationOutboxExecutor {
             message = "hold creation outbox is already being processed."
     )
     public void process(final Long outboxId, final LocalDateTime now) {
-        final HoldSnapshot snapshot = transactionService.load(outboxId);
-        if (snapshot == null) {
+        final Hold hold = transactionService.load(outboxId);
+        if (hold == null) {
             return;
         }
 
         try {
-            processor.process(snapshot);
+            processor.process(hold);
             transactionService.markCompleted(outboxId, now);
         } catch (final RuntimeException e) {
             transactionService.scheduleRetry(outboxId, now.plus(RETRY_DELAY), e.getMessage());
-            log.error("hold creation outbox processing failed: outboxId={}, holdKey={}", outboxId, snapshot.holdKey(), e);
+            log.error("hold creation outbox processing failed: outboxId={}, holdKey={}", outboxId, hold.holdKey(), e);
         }
     }
 }

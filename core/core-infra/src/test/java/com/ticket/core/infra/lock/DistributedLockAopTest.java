@@ -4,7 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
@@ -51,7 +51,7 @@ class DistributedLockAopTest {
         final HoldStore holdStore = mock(HoldStore.class);
         final SeatSelectionService seatSelectionService = mock(SeatSelectionService.class);
         final SeatStatusPublisher seatStatusPublisher = mock(SeatStatusPublisher.class);
-        final HoldSnapshot snapshot = new HoldSnapshot(
+        final Hold hold = new Hold(
                 "hold-key",
                 20L,
                 10L,
@@ -68,7 +68,7 @@ class DistributedLockAopTest {
         proxyFactory.addAspect(new DistributedLockAop(redissonClient));
         final HoldCreationPostCommitProcessor proxy = proxyFactory.getProxy();
 
-        proxy.process(snapshot);
+        proxy.process(hold);
 
         verify(redissonClient).getLock("LOCK:hold:10:100");
         verify(lock).tryLock(5_000L, TimeUnit.MILLISECONDS);

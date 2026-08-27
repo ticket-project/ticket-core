@@ -3,7 +3,7 @@ package com.ticket.core.domain.hold.command;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.support.lock.DistributedLock;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class HoldManager {
             prefix = "hold",
             dynamicKey = "#requestedSeatIds.toList().![#performanceId + ':' + #this]"
     )
-    public HoldSnapshot createHold(
+    public Hold createHold(
             final Long memberId,
             final Long performanceId,
             final RequestedSeatIds requestedSeatIds,
@@ -33,13 +33,11 @@ public class HoldManager {
             final LocalDateTime now
     ) {
         final List<Long> seatIds = requestedSeatIds.toList();
-        final String holdKey = holdKeyGenerator.generate();
-        final LocalDateTime expiresAt = now.plus(ttl);
-        final HoldSnapshot snapshot = new HoldSnapshot(holdKey, memberId, performanceId, seatIds, expiresAt);
+        final Hold hold = Hold.create(holdKeyGenerator.generate(), memberId, performanceId, seatIds, now, ttl);
 
         ensureSeatsNotHeld(performanceId, seatIds);
-        saveHold(snapshot, ttl);
-        return snapshot;
+        holdStore.save(hold, ttl);
+        return hold;
     }
 
     @DistributedLock(
@@ -65,9 +63,5 @@ public class HoldManager {
                 throw new CoreException(DomainErrorType.SEAT_ALREADY_HOLD);
             }
         }
-    }
-
-    private void saveHold(final HoldSnapshot snapshot, final Duration ttl) {
-        holdStore.save(snapshot, ttl);
     }
 }

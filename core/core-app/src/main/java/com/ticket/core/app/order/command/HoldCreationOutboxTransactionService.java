@@ -2,7 +2,7 @@ package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxRepository;
 import com.ticket.core.domain.order.command.create.HoldCreationOutbox;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +16,10 @@ public class HoldCreationOutboxTransactionService {
     private final HoldCreationOutboxRepository holdCreationOutboxRepository;
 
     @Transactional(readOnly = true)
-    public HoldSnapshot load(final Long outboxId) {
+    public Hold load(final Long outboxId) {
         return holdCreationOutboxRepository.findById(outboxId)
                 .filter(outbox -> !outbox.isCompleted())
-                .map(HoldCreationOutbox::snapshot)
+                .map(HoldCreationOutbox::toHold)
                 .orElse(null);
     }
 
