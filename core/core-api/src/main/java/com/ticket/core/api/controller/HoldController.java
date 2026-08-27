@@ -6,7 +6,6 @@ import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +29,7 @@ public class HoldController implements HoldControllerDocs {
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
             @PathVariable final Long performanceId,
-            @Valid @RequestBody final CreateHoldRequest request,
+            @RequestBody final CreateHoldRequest request,
             @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {

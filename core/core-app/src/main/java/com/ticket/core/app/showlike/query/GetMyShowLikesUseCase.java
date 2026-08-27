@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -27,6 +28,10 @@ public class GetMyShowLikesUseCase {
      * @param cursorLikeId 이전 페이지 마지막 찜 id. 첫 페이지면 null이다.
      */
     public record Input(Long memberId, Long cursorLikeId, int size) {
+        public Input {
+            RequiredInput.positiveId(memberId, "memberId");
+            RequiredInput.sizeWithin(size, MAX_SIZE, "size");
+        }
     }
 
     public record ShowLikeSummary(
@@ -44,20 +49,10 @@ public class GetMyShowLikesUseCase {
     }
 
     public Output execute(final Input input) {
-        validateInput(input);
         final Member member = memberRepository.getActiveById(input.memberId());
         final CursorPage<ShowLikeSummary, Long> page =
                 showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
         return new Output(page.items(), page.hasNext(), page.nextPosition());
     }
 
-    private void validateInput(final Input input) {
-        if (input == null || input.memberId() == null) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "memberId는 필수입니다.");
-        }
-
-        if (input.size() <= 0 || input.size() > MAX_SIZE) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
-        }
-    }
 }

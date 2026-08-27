@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional
@@ -23,6 +24,10 @@ public class AddShowLikeUseCase {
     private final ShowRepository showRepository;
 
     public record Input(Long memberId, Long showId) {
+        public Input {
+            RequiredInput.positiveId(memberId, "memberId");
+            RequiredInput.positiveId(showId, "showId");
+        }
     }
 
     public record Output(
@@ -32,7 +37,6 @@ public class AddShowLikeUseCase {
     }
 
     public Output execute(final Input input) {
-        validateInput(input);
 
         final Member member = memberRepository.getActiveById(input.memberId());
 
@@ -52,11 +56,6 @@ public class AddShowLikeUseCase {
         return new Output(input.showId(), true, countLikes(input.showId()));
     }
 
-    private void validateInput(final Input input) {
-        if (input == null || input.memberId() == null || input.showId() == null) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "memberId와 showId는 필수입니다.");
-        }
-    }
 
     private long countLikes(final Long showId) {
         return showLikeRepository.countByShowId(showId);

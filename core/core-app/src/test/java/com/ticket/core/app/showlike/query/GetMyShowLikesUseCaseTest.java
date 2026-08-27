@@ -64,12 +64,24 @@ class GetMyShowLikesUseCaseTest {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidInputs")
-    void memberId_또는_size가_유효하지_않으면_예외를_던진다(final GetMyShowLikesUseCase.Input input) {
-        assertThatThrownBy(() -> useCase.execute(input))
+    @MethodSource("invalidComponents")
+    void memberId나_size가_유효하지_않으면_Input_생성에서_예외를_던진다(
+            final Long memberId,
+            final int size
+    ) {
+        assertThatThrownBy(() -> new GetMyShowLikesUseCase.Input(memberId, null, size))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+    }
+
+    /**
+     * Input을 아예 넘기지 않은 것은 사용자 입력 오류가 아니라 호출부의 프로그래머 오류다.
+     */
+    @Test
+    void execute에_Input을_넘기지_않으면_NPE가_난다() {
+        assertThatThrownBy(() -> useCase.execute(null))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -88,12 +100,12 @@ class GetMyShowLikesUseCaseTest {
         verify(showLikeReadRepository).findMyLikedShows(1L, null, 20);
     }
 
-    private static Stream<Arguments> invalidInputs() {
+    private static Stream<Arguments> invalidComponents() {
         return Stream.of(
-                Arguments.of((Object) null),
-                Arguments.of(new GetMyShowLikesUseCase.Input(null, null, 20)),
-                Arguments.of(new GetMyShowLikesUseCase.Input(1L, null, 0)),
-                Arguments.of(new GetMyShowLikesUseCase.Input(1L, null, 101))
+                Arguments.of(null, 20),
+                Arguments.of(0L, 20),
+                Arguments.of(1L, 0),
+                Arguments.of(1L, 101)
         );
     }
 }

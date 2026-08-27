@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,7 +26,11 @@ public class GetSeatAvailabilityUseCase {
     private final SeatSelectionService seatSelectionService;
     private final SeatAvailabilityCalculator seatAvailabilityCalculator;
 
-    public record Input(Long performanceId) {}
+    public record Input(Long performanceId) {
+        public Input {
+            RequiredInput.positiveId(performanceId, "performanceId");
+        }
+    }
 
     public record Output(
             List<GradeAvailability> grades

@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,13 +28,14 @@ class MemberControllerContractTest {
     private MockMvc mockMvc;
 
     private final GetCurrentMemberUseCase getCurrentMemberUseCase = Mockito.mock(GetCurrentMemberUseCase.class);
+    private final GetMyShowLikesUseCase getMyShowLikesUseCase = Mockito.mock(GetMyShowLikesUseCase.class);
 
     @BeforeEach
     void setUp() {
         MemberController controller = new MemberController(
                 getCurrentMemberUseCase,
                 Mockito.mock(WithdrawCurrentMemberUseCase.class),
-                Mockito.mock(GetMyShowLikesUseCase.class),
+                getMyShowLikesUseCase,
                 new ShowLikeCursorCodec()
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
@@ -64,5 +66,15 @@ class MemberControllerContractTest {
                 .andExpect(jsonPath("$.data.name").value("홍길동"))
                 .andExpect(jsonPath("$.data.role").value("MEMBER"))
                 .andExpect(jsonPath("$.error").isEmpty());
+    }
+
+    @Test
+    void size가_양수가_아니면_400_계약을_지킨다() throws Exception {
+        mockMvc.perform(get("/api/v1/members/me/likes").param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(getMyShowLikesUseCase);
     }
 }

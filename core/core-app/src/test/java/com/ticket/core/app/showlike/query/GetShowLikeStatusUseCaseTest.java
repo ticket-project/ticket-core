@@ -55,22 +55,38 @@ class GetShowLikeStatusUseCaseTest {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidInputs")
-    void memberId_또는_showId가_없으면_예외를_던진다(final GetShowLikeStatusUseCase.Input input) {
+    @MethodSource("invalidComponents")
+    void memberId나_showId가_유효하지_않으면_Input_생성에서_예외를_던진다(
+            final Long memberId,
+            final Long showId
+    ) {
         //given
         //when
         //then
-        assertThatThrownBy(() -> useCase.execute(input))
+        assertThatThrownBy(() -> new GetShowLikeStatusUseCase.Input(memberId, showId))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
-    private static Stream<Arguments> invalidInputs() {
+    /**
+     * Input을 아예 넘기지 않은 것은 사용자 입력 오류가 아니라 호출부의 프로그래머 오류다.
+     */
+    @Test
+    void execute에_Input을_넘기지_않으면_NPE가_난다() {
+        //given
+        //when
+        //then
+        assertThatThrownBy(() -> useCase.execute(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    private static Stream<Arguments> invalidComponents() {
         return Stream.of(
-                Arguments.of((Object) null),
-                Arguments.of(new GetShowLikeStatusUseCase.Input(null, 2L)),
-                Arguments.of(new GetShowLikeStatusUseCase.Input(1L, null))
+                Arguments.of(null, 2L),
+                Arguments.of(1L, null),
+                Arguments.of(0L, 2L),
+                Arguments.of(1L, -1L)
         );
     }
 }

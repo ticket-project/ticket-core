@@ -6,6 +6,7 @@ import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -17,7 +18,12 @@ public class LoginUseCase {
     public record Input(
             String email,
             String password
-    ) {}
+    ) {
+        public Input {
+            RequiredInput.notBlank(email, "email");
+            RequiredInput.notBlank(password, "password");
+        }
+    }
     public record Output(String accessToken,
                          String tokenType,
                          long expiresIn,

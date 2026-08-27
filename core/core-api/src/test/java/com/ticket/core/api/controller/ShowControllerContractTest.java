@@ -1,5 +1,6 @@
 package com.ticket.core.api.controller;
 
+import com.ticket.core.api.error.GlobalExceptionHandler;
 import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowControllerContractTest {
@@ -196,5 +198,65 @@ class ShowControllerContractTest {
                 .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueRequired").value(true))
                 .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueEnterUrl")
                         .value("/api/v1/queue/performances/10/enter"));
+    }
+
+    @Test
+    void showId가_양수가_아니면_400_계약을_지킨다() throws Exception {
+        GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(newController(getShowDetailUseCase))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
+        mockMvc.perform(get("/api/v1/shows/-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(getShowDetailUseCase);
+    }
+
+    @Test
+    void size가_양수가_아니면_400_계약을_지킨다() throws Exception {
+        GetShowsUseCase getShowsUseCase = mock(GetShowsUseCase.class);
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(newControllerWithShows(getShowsUseCase))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
+        mockMvc.perform(get("/api/v1/shows").param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(getShowsUseCase);
+    }
+
+    private ShowController newController(final GetShowDetailUseCase getShowDetailUseCase) {
+        return new ShowController(
+                mock(GetShowsUseCase.class),
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleStartApproachingShowsUseCase.class),
+                mock(GetSaleStartApproachingShowsPageUseCase.class),
+                mock(SearchShowsUseCase.class),
+                mock(CountSearchShowsUseCase.class),
+                getShowDetailUseCase,
+                mock(GetShowSeatsUseCase.class),
+                mock(GetVenueLayoutUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build())
+        );
+    }
+
+    private ShowController newControllerWithShows(final GetShowsUseCase getShowsUseCase) {
+        return new ShowController(
+                getShowsUseCase,
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleStartApproachingShowsUseCase.class),
+                mock(GetSaleStartApproachingShowsPageUseCase.class),
+                mock(SearchShowsUseCase.class),
+                mock(CountSearchShowsUseCase.class),
+                mock(GetShowDetailUseCase.class),
+                mock(GetShowSeatsUseCase.class),
+                mock(GetVenueLayoutUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build())
+        );
     }
 }

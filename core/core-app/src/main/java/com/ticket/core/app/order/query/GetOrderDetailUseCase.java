@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +24,12 @@ public class GetOrderDetailUseCase {
     private final OrderReadRepository orderReadRepository;
     private final Clock clock;
 
-    public record Input(String orderKey, Long memberId) {}
+    public record Input(String orderKey, Long memberId) {
+        public Input {
+            RequiredInput.notBlank(orderKey, "orderKey");
+            RequiredInput.positiveId(memberId, "memberId");
+        }
+    }
     public record Output(
             String orderKey,
             OrderState status,

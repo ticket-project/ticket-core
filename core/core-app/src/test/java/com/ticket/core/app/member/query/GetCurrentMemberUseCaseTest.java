@@ -1,9 +1,11 @@
 package com.ticket.core.app.member.query;
 
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.Role;
+import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,11 +65,17 @@ class GetCurrentMemberUseCaseTest {
     }
 
     @Test
-    void memberId가_null이면_예외를_던진다() {
+    void memberId가_유효하지_않으면_Input_생성에서_예외를_던진다() {
         //given
         //when
         //then
         assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(null))
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+        assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(0L))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 }

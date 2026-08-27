@@ -1,6 +1,8 @@
 package com.ticket.core.app.show.query.model;
 
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.show.meta.Region;
+import com.ticket.support.error.CoreException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -37,6 +39,8 @@ public class SaleOpeningSoonSearchParam {
             final LocalDateTime saleEndDateTo,
             final ShowCursor cursor
     ) {
+        validateRange(saleStartDateFrom, saleStartDateTo, "saleStartDate");
+        validateRange(saleEndDateFrom, saleEndDateTo, "saleEndDate");
         this.category = category;
         this.title = title;
         this.region = region;
@@ -67,5 +71,25 @@ public class SaleOpeningSoonSearchParam {
                 saleEndDateTo,
                 cursor
         );
+    }
+
+    /**
+     * 한쪽만 주면 열린 구간이다. 둘 다 주면 from이 to보다 늦을 수 없다.
+     * ShowSearchCriteria의 startDate 범위 판정과 같은 규칙이다.
+     */
+    private static void validateRange(
+            final LocalDateTime from,
+            final LocalDateTime to,
+            final String field
+    ) {
+        if (from == null || to == null) {
+            return;
+        }
+        if (from.isAfter(to)) {
+            throw new CoreException(
+                    ApplicationErrorType.INVALID_INPUT,
+                    field + "From은 " + field + "To보다 늦을 수 없습니다."
+            );
+        }
     }
 }

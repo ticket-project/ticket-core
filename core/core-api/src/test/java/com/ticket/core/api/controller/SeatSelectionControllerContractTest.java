@@ -30,12 +30,14 @@ class SeatSelectionControllerContractTest {
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
 
 
+    private final SelectSeatUseCase selectSeatUseCase = Mockito.mock(SelectSeatUseCase.class);
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         SeatSelectionController controller = new SeatSelectionController(
-                Mockito.mock(SelectSeatUseCase.class),
+                selectSeatUseCase,
                 Mockito.mock(DeselectSeatUseCase.class),
                 Mockito.mock(DeselectAllSeatsUseCase.class)
         );
@@ -82,5 +84,15 @@ class SeatSelectionControllerContractTest {
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error").isEmpty());
+    }
+
+    @Test
+    void seatId가_양수가_아니면_400_계약을_지킨다() throws Exception {
+        mockMvc.perform(post("/api/v1/performances/1/seats/0/select"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(selectSeatUseCase);
     }
 }

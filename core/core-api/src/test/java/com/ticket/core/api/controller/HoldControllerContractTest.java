@@ -98,4 +98,20 @@ class HoldControllerContractTest {
 
         verifyNoInteractions(createOrderUseCase);
     }
+
+    @Test
+    void performanceId가_양수가_아니면_400_계약을_지킨다() throws Exception {
+        mockMvc.perform(post("/api/v1/performances/-1/holds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "seatIds": [7]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+
+        verifyNoInteractions(createOrderUseCase);
+    }
 }

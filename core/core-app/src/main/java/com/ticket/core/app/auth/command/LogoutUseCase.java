@@ -6,6 +6,7 @@ import com.ticket.core.domain.auth.token.AuthRefreshToken;
 import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +15,9 @@ public class LogoutUseCase {
     private final RefreshTokenStore refreshTokenStore;
 
     public record Input(Long memberId, AuthRefreshToken refreshToken) {
+        public Input {
+            RequiredInput.positiveId(memberId, "memberId");
+        }
 
         /**
          * API 경계에서 받은 원문을 값 객체로 바꾼다.

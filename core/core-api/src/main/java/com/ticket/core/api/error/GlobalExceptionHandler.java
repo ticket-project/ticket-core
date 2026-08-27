@@ -6,10 +6,12 @@ import com.ticket.support.error.ErrorDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.stream.Collectors;
@@ -41,6 +43,21 @@ public class GlobalExceptionHandler {
         return toResponse(ApiErrorType.INVALID_REQUEST, fieldErrors);
     }
 
+    /**
+     * path·query·header 파라미터의 Bean Validation 실패다. 요청 body 실패와 같은 400 계약으로 맞춘다.
+     */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleHandlerMethodValidationException(
+            final HandlerMethodValidationException exception
+    ) {
+        final String parameterErrors = exception.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> parameterName(result) + ": " + error.getDefaultMessage()))
+                .collect(Collectors.joining("; "));
+
+        return toResponse(ApiErrorType.INVALID_REQUEST, parameterErrors);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(
             final HttpMessageNotReadableException exception
@@ -59,6 +76,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleException(final Exception exception) {
         log.error("예외가 발생했습니다. message={} ", exception.getMessage(), exception);
         return toResponse(ApiErrorType.INTERNAL_SERVER_ERROR, null);
+    }
+
+    private String parameterName(final ParameterValidationResult result) {
+        final String name = result.getMethodParameter().getParameterName();
+        return name != null ? name : "parameter" + result.getMethodParameter().getParameterIndex();
     }
 
     private ResponseEntity<ApiResponse<Object>> toResponse(final ErrorDefinition error, final Object data) {

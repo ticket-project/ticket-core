@@ -5,8 +5,8 @@ import com.ticket.core.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Optional;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class GetCurrentMemberUseCase {
 
     public record Input(Long memberId) {
         public Input {
-            Objects.requireNonNull(memberId, "memberId는 null일 수 없습니다.");
+            RequiredInput.positiveId(memberId, "memberId");
         }
     }
 

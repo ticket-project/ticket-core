@@ -9,6 +9,7 @@ import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +19,11 @@ public class ExchangeOAuth2TokenUseCase {
     private final MemberRepository memberRepository;
     private final AuthTokenManager authTokenManager;
 
-    public record Input(String code) {}
+    public record Input(String code) {
+        public Input {
+            RequiredInput.notBlank(code, "code");
+        }
+    }
 
     public record Output(
             String accessToken,

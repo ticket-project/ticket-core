@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -24,9 +25,7 @@ public class GetShowDetailUseCase {
 
     public record Input(Long showId) {
         public Input {
-            if (showId == null) {
-                throw new CoreException(ApplicationErrorType.INVALID_INPUT, "showId는 필수입니다.");
-            }
+            RequiredInput.positiveId(showId, "showId");
         }
     }
 
@@ -89,15 +88,9 @@ public class GetShowDetailUseCase {
     }
 
     public Output execute(final Input input) {
-        validateInput(input);
         return showDetailReadRepository.findShowDetail(input.showId())
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
     }
 
-    private void validateInput(final Input input) {
-        if (input == null) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "showId는 필수입니다.");
-        }
-    }
 }

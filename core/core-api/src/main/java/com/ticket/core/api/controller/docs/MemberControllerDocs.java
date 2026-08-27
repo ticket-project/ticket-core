@@ -10,7 +10,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
+ */
 @Tag(name = "회원(Member)", description = "회원 정보 및 내 활동 조회 API")
 public interface MemberControllerDocs {
 
@@ -43,6 +51,6 @@ public interface MemberControllerDocs {
     ApiResponse<SliceResponse<GetMyShowLikesUseCase.ShowLikeSummary>> getMyLikes(
             @Parameter(hidden = true) AuthenticatedMember member,
             @Parameter(description = "커서(마지막 찜 ID)", example = "123") String cursor,
-            @Parameter(description = "페이지 크기", example = "20") int size
+            @Parameter(description = "페이지 크기", example = "20") @Positive int size
     );
 }

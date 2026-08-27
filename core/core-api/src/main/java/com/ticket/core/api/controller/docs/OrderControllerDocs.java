@@ -14,7 +14,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
+ */
 @Tag(name = "주문", description = "PENDING 주문 시작, 조회, 취소 API")
 public interface OrderControllerDocs {
 
@@ -52,7 +61,7 @@ public interface OrderControllerDocs {
             )
     })
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
-            CreateOrderRequest request,
+            @Valid CreateOrderRequest request,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
             @Parameter(hidden = true) AuthenticatedMember member
     );
@@ -64,7 +73,7 @@ public interface OrderControllerDocs {
     })
     ApiResponse<GetOrderDetailUseCase.Output> getOrder(
             @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
-            String orderKey,
+            @NotBlank String orderKey,
             @Parameter(hidden = true) AuthenticatedMember member
     );
 
@@ -75,7 +84,7 @@ public interface OrderControllerDocs {
     })
     ApiResponse<GetOrderStatusUseCase.Output> getOrderStatus(
             @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
-            String orderKey,
+            @NotBlank String orderKey,
             @Parameter(hidden = true) AuthenticatedMember member
     );
 
@@ -86,7 +95,7 @@ public interface OrderControllerDocs {
     })
     ApiResponse<Void> cancelOrder(
             @Parameter(description = "주문 키", example = "ORD-3f24c6bc355148f6bf941f0b2f2a6c2b", required = true)
-            String orderKey,
+            @NotBlank String orderKey,
             @Parameter(hidden = true) AuthenticatedMember member
     );
 }
