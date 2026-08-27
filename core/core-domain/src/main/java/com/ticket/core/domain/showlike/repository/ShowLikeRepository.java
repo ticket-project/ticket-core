@@ -1,14 +1,21 @@
 package com.ticket.core.domain.showlike.repository;
 
 import com.ticket.core.domain.showlike.model.ShowLike;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface ShowLikeRepository extends JpaRepository<ShowLike, Long> {
-    boolean existsByMember_IdAndShow_Id(Long memberId, Long showId);
+/**
+ * 찜 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
+ */
+public interface ShowLikeRepository {
 
-    Optional<ShowLike> findByMember_IdAndShow_Id(Long memberId, Long showId);
+    ShowLike save(ShowLike showLike);
 
-    long countByShow_Id(Long showId);
+    void delete(ShowLike showLike);
+
+    boolean existsByMemberIdAndShowId(Long memberId, Long showId);
+
+    Optional<ShowLike> findByMemberIdAndShowId(Long memberId, Long showId);
+
+    long countByShowId(Long showId);
 }

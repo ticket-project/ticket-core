@@ -25,7 +25,7 @@ public class MemberWithdrawalTxService {
     public List<String> withdraw(final Long memberId) {
         final LocalDateTime now = LocalDateTime.now(clock);
         final Member member = memberFinder.findActiveMemberById(memberId);
-        final List<MemberSocialAccount> socialAccounts = memberSocialAccountRepository.findAllByMemberAndDeletedAtIsNull(member);
+        final List<MemberSocialAccount> socialAccounts = memberSocialAccountRepository.findAllActiveByMember(member);
 
         final List<String> kakaoSocialIds = socialAccounts.stream()
                 .filter(account -> account.getSocialProvider() == SocialProvider.KAKAO)

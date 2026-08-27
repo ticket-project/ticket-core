@@ -1,15 +1,13 @@
-package com.ticket.core.domain.performanceseat.repository;
+package com.ticket.core.infra.performanceseat;
 
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
 import java.util.List;
 
-/**
- * 회차 좌석 aggregate의 복원을 담당하는 도메인 Repository다.
- */
-public interface PerformanceSeatRepository {
+interface SpringDataPerformanceSeatJpaRepository extends JpaRepository<PerformanceSeat, Long> {
 
     List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(Long performanceId, Collection<Long> seatIds);
 

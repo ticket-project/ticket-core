@@ -36,7 +36,7 @@ public class AddShowLikeUseCase {
 
         final Member member = memberFinder.findActiveMemberById(input.memberId());
 
-        if (showLikeRepository.existsByMember_IdAndShow_Id(input.memberId(), input.showId())) {
+        if (showLikeRepository.existsByMemberIdAndShowId(input.memberId(), input.showId())) {
             return new Output(input.showId(), true, countLikes(input.showId()));
         }
 
@@ -59,6 +59,6 @@ public class AddShowLikeUseCase {
     }
 
     private long countLikes(final Long showId) {
-        return showLikeRepository.countByShow_Id(showId);
+        return showLikeRepository.countByShowId(showId);
     }
 }

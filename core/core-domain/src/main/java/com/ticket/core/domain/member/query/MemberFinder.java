@@ -14,12 +14,12 @@ public class MemberFinder {
     private final MemberRepository memberRepository;
 
     public Member findActiveMemberById(final Long id) {
-        return memberRepository.findByIdAndDeletedAtIsNull(id)
+        return memberRepository.findActiveById(id)
                 .orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND));
     }
 
     public void ensureActiveMemberExists(final Long id) {
-        if (memberRepository.existsByIdAndDeletedAtIsNull(id)) {
+        if (memberRepository.existsActiveById(id)) {
             return;
         }
         throw new CoreException(DomainErrorType.DATA_NOT_FOUND);

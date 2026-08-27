@@ -59,11 +59,11 @@ public class GetMetaCodesUseCase {
     }
 
     public Output execute() {
-        final List<CategoryCodeItem> categories = categoryRepository.findAllByOrderByIdAsc().stream()
+        final List<CategoryCodeItem> categories = categoryRepository.findAllOrderById().stream()
                 .map(this::toCategoryCodeItem)
                 .toList();
 
-        final List<GenreCodeItem> genres = genreRepository.findAllByOrderByCategory_IdAscNameAsc().stream()
+        final List<GenreCodeItem> genres = genreRepository.findAllOrderByCategoryAndName().stream()
                 .map(this::toGenreCodeItem)
                 .toList();
 

@@ -3,33 +3,23 @@ package com.ticket.core.domain.member.repository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.MemberSocialAccount;
 import com.ticket.core.domain.member.model.SocialProvider;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberSocialAccountRepository extends JpaRepository<MemberSocialAccount, Long> {
+/**
+ * 소셜 계정 연결 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
+ */
+public interface MemberSocialAccountRepository {
 
-    @Query("""
-            SELECT msa
-            FROM MemberSocialAccount msa
-            JOIN FETCH msa.member m
-            WHERE msa.socialProvider = :socialProvider
-              AND msa.socialId = :socialId
-              AND msa.deletedAt IS NULL
-              AND m.deletedAt IS NULL
-            """)
+    MemberSocialAccount save(MemberSocialAccount socialAccount);
+
     Optional<MemberSocialAccount> findActiveBySocialProviderAndSocialId(
-            @Param("socialProvider") SocialProvider socialProvider,
-            @Param("socialId") String socialId
+            SocialProvider socialProvider,
+            String socialId
     );
 
-    Optional<MemberSocialAccount> findByMemberAndSocialProviderAndDeletedAtIsNull(
-            Member member,
-            SocialProvider socialProvider
-    );
+    Optional<MemberSocialAccount> findActiveByMemberAndProvider(Member member, SocialProvider socialProvider);
 
-    List<MemberSocialAccount> findAllByMemberAndDeletedAtIsNull(Member member);
+    List<MemberSocialAccount> findAllActiveByMember(Member member);
 }

@@ -34,13 +34,13 @@ public class OAuth2MemberProvisioningService {
     private Member createOrLinkMember(final OAuth2UserInfo userInfo) {
         final String email = resolveEmail(userInfo);
 
-        return memberRepository.findByEmail_EmailAndDeletedAtIsNull(email)
+        return memberRepository.findActiveByEmail(email)
                 .map(existingMember -> linkSocialAccount(existingMember, userInfo))
                 .orElseGet(() -> createSocialMember(userInfo, email));
     }
 
     private Member linkSocialAccount(final Member existingMember, final OAuth2UserInfo userInfo) {
-        return memberSocialAccountRepository.findByMemberAndSocialProviderAndDeletedAtIsNull(existingMember, userInfo.provider())
+        return memberSocialAccountRepository.findActiveByMemberAndProvider(existingMember, userInfo.provider())
                 .map(linkedAccount -> validateSameSocialAccount(linkedAccount, userInfo))
                 .orElseGet(() -> addSocialAccount(existingMember, userInfo));
     }

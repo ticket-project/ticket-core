@@ -56,7 +56,7 @@ class OAuth2MemberProvisioningServiceTest {
 
         //then
         assertThat(result).isSameAs(member);
-        verify(memberRepository, never()).findByEmail_EmailAndDeletedAtIsNull(any());
+        verify(memberRepository, never()).findActiveByEmail(any());
     }
 
     @Test
@@ -66,9 +66,9 @@ class OAuth2MemberProvisioningServiceTest {
         socialUserWithEmail("social-1", " user@example.com ");
         when(memberSocialAccountRepository.findActiveBySocialProviderAndSocialId(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("user@example.com"))
+        when(memberRepository.findActiveByEmail("user@example.com"))
                 .thenReturn(Optional.of(existingMember));
-        when(memberSocialAccountRepository.findByMemberAndSocialProviderAndDeletedAtIsNull(existingMember, SocialProvider.KAKAO))
+        when(memberSocialAccountRepository.findActiveByMemberAndProvider(existingMember, SocialProvider.KAKAO))
                 .thenReturn(Optional.empty());
 
         Member result = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
@@ -91,9 +91,9 @@ class OAuth2MemberProvisioningServiceTest {
         socialUserWithEmail("social-1", "user@example.com");
         when(memberSocialAccountRepository.findActiveBySocialProviderAndSocialId(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("user@example.com"))
+        when(memberRepository.findActiveByEmail("user@example.com"))
                 .thenReturn(Optional.of(existingMember));
-        when(memberSocialAccountRepository.findByMemberAndSocialProviderAndDeletedAtIsNull(existingMember, SocialProvider.KAKAO))
+        when(memberSocialAccountRepository.findActiveByMemberAndProvider(existingMember, SocialProvider.KAKAO))
                 .thenReturn(Optional.of(linkedAccount));
 
         //when
@@ -112,9 +112,9 @@ class OAuth2MemberProvisioningServiceTest {
         socialUserWithEmail("social-1", "user@example.com");
         when(memberSocialAccountRepository.findActiveBySocialProviderAndSocialId(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("user@example.com"))
+        when(memberRepository.findActiveByEmail("user@example.com"))
                 .thenReturn(Optional.of(existingMember));
-        when(memberSocialAccountRepository.findByMemberAndSocialProviderAndDeletedAtIsNull(existingMember, SocialProvider.KAKAO))
+        when(memberSocialAccountRepository.findActiveByMemberAndProvider(existingMember, SocialProvider.KAKAO))
                 .thenReturn(Optional.of(linkedAccount));
 
         //when
@@ -130,7 +130,7 @@ class OAuth2MemberProvisioningServiceTest {
         socialUserWithEmailAndName("social-1", " User@Example.com ", " 사용자 ");
         when(memberSocialAccountRepository.findActiveBySocialProviderAndSocialId(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("user@example.com"))
+        when(memberRepository.findActiveByEmail("user@example.com"))
                 .thenReturn(Optional.empty());
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -152,7 +152,7 @@ class OAuth2MemberProvisioningServiceTest {
         socialUserWithEmailAndName("social-1", " ", null);
         when(memberSocialAccountRepository.findActiveBySocialProviderAndSocialId(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("kakao_social-1@social.ticket"))
+        when(memberRepository.findActiveByEmail("kakao_social-1@social.ticket"))
                 .thenReturn(Optional.empty());
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

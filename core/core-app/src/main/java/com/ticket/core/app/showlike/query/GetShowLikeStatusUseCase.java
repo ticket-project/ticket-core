@@ -32,8 +32,8 @@ public class GetShowLikeStatusUseCase {
         final Member member = memberFinder.findActiveMemberById(input.memberId());
         showFinder.validateShowExists(input.showId());
 
-        final boolean liked = showLikeRepository.existsByMember_IdAndShow_Id(member.getId(), input.showId());
-        final long likeCount = showLikeRepository.countByShow_Id(input.showId());
+        final boolean liked = showLikeRepository.existsByMemberIdAndShowId(member.getId(), input.showId());
+        final long likeCount = showLikeRepository.countByShowId(input.showId());
         return new Output(input.showId(), liked, likeCount);
     }
 
