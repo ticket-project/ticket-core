@@ -7,8 +7,9 @@
 현재 프로젝트는 멀티 모듈 Gradle 구조이며, 실행/API, 애플리케이션, 도메인, 기술 구현을 계층으로 나눈
 모듈러 모놀리스다.
 
-실제 포함 모듈은 다음 7개다.
+실제 포함 모듈은 다음 8개다.
 
+- `bootstrap`
 - `core:core-domain`
 - `core:core-app`
 - `core:core-infra`
@@ -20,39 +21,58 @@
 의존 방향은 아래와 같고 `CoreLayerArchitectureTest`가 강제한다.
 
 ```text
-core-api ──→ core-app ──→ core-domain
-   │             ↑             ↑
-   └→ core-infra ┴─────────────┴──→ storage:redis-core
+bootstrap ──→ core-api ──→ core-app ──→ core-domain
+    │                          ↑            ↑
+    └──────→ core-infra ───────┴────────────┴──→ storage:redis-core
 전 모듈 ──→ support:error
 ```
 
-`core-infra`가 `core-app`을 향하는 것은 스케줄러와 커밋 후 리스너가 use case를 호출하기 때문이며,
+`bootstrap`이 composition root다. API와 어댑터, background worker를 한 프로세스로 조립한다.
+`core-api`는 더 이상 `core-infra`를 프로덕션 의존으로 두지 않는다.
+
+`core-infra`가 `core-app`을 향하는 것은 커밋 후 리스너와 outbox relay가 use case를 호출하기 때문이며,
 어댑터가 애플리케이션을 구동하는 정상 방향이다.
 
 ## 모듈 책임
 
+### `bootstrap`
+
+실행 모듈이자 composition root다. Spring Boot main과 실행 환경 설정만 둔다.
+
+주요 책임:
+
+- `TicketApplication` (유일한 Spring Boot main)
+- 모듈 조립과 bootJar 생성
+- 프로파일별 설정과 Flyway 마이그레이션 리소스
+- background worker 트리거(`@Scheduled`)와 `worker.enabled` 스위치
+
+의존: `core:core-api`, `core:core-app`, `core:core-infra`, `support:error`, `support:logging`,
+actuator, Flyway, DB 드라이버, micrometer, JWT 런타임 구현
+
+트리거는 주기만 정하고 조회나 상태 판단을 하지 않는다. 업무 배치는 use case를,
+순수 relay는 core-infra의 relay를 한 번 호출한다.
+
 ### `core:core-api`
 
-Spring Boot 실행 모듈이다.
+HTTP adapter 모듈이다. 실행 진입점은 여기에 없다.
 
 주요 책임:
 
 - REST Controller
-- 요청/응답 DTO
-- Spring Security, JWT, OAuth2 설정
+- 요청/응답 DTO와 HTTP 커서 문자열 인코딩·디코딩
+- Spring Security filter chain, OAuth2 HTTP 처리
 - WebSocket 진입 설정
 - Admission token 검증 같은 예매 API 진입 제어
-- 공통 응답 포맷
+- 공통 응답 포맷과 HTTP 오류 변환
 
 의존:
 
 - `core:core-app`
-- `core:core-infra`
 - `support:error`
 - `support:logging`
 
-`core-domain`은 프로덕션 의존에서 뺐다. 실행 모듈은 use case를 거쳐 도메인에 닿는다. 컨트롤러 계약
-테스트가 도메인 픽스처를 쓰므로 `testImplementation`으로만 남긴다.
+`core-domain`과 `core-infra`는 프로덕션 의존에서 뺐다. 실행 모듈은 use case를 거쳐 도메인에 닿는다.
+계약 테스트와 계층 테스트가 필요로 하는 만큼만 `testImplementation`으로 남긴다.
 
 ### `core:core-app`
 
@@ -61,16 +81,18 @@ Spring Boot 실행 모듈이다.
 주요 책임:
 
 - 기능별 use case (`*UseCase`)
-- 트랜잭션 경계와 오케스트레이션 (`*TxService`, `*TransactionService`, `*Coordinator`,
-  `*Executor`, `*Processor`)
-- 조회 포트와 조회 결과 view/param
-- 커서 페이징 유틸 (`support.cursor`)
+- 트랜잭션 경계와 오케스트레이션 (`*TxService`, `*Coordinator`, `*Processor`)
+- 읽기 전용 조회 포트(`*ReadRepository`)와 조회 결과 view/param
+- 커서 페이징 결과 타입 (`support.cursor.CursorPage`) — HTTP 커서 문자열은 다루지 않는다
+- 분산락 포트 (`lock`의 `LockManager`, `LockKey`, `LockOptions`)
+- 후속 처리 이벤트 포트 (`event`의 `IntegrationEventPublisher` 등)
 - 인증 주체 값과 액세스 토큰 읽기 포트 (`auth.token`의 `AuthenticatedMember`, `AccessTokenReader`)
 
 의존:
 
 - `core:core-domain`
 - `support:error`
+- Spring context/tx/core/beans와 slf4j만 쓴다. Spring Data와 Jackson은 두지 않는다.
 
 ### `core:core-domain`
 
@@ -78,20 +100,20 @@ Spring Boot 실행 모듈이다.
 
 주요 책임:
 
-- JPA entity와 값 객체
-- 도메인 정책과 검증기 (`BookingPolicyValidator`, `ShowCursorPolicy` 등)
-- 도메인 조회 서비스 (`*Finder`)
-- repository 인터페이스와 Redis/WebSocket/외부 HTTP port
+- JPA entity와 값 객체 (`Hold`, `Order`, `Show` 등)
+- 도메인 정책과 검증기 (`BookingPolicyValidator` 등)
+- Aggregate Repository 인터페이스(순수 계약)와 Redis/WebSocket/외부 HTTP port
 - 인증 포트와 값 (`auth`의 `AuthTokenManager`, `RefreshTokenStore`,
   `PasswordService`, `AuthRefreshToken`, `IssuedAuthTokens`, `OAuth2UserInfo`)
 
-허용된 Spring은 `data`(JPA repository, auditing)와 `stereotype`(빈 선언)뿐이다.
-트랜잭션 경계, 이벤트 발행, 표현식 해석은 흐름을 엮는 방법이므로 여기에 두지 않는다.
-- outbox 엔티티, 기록기, 상태 enum
-- 분산락 어노테이션
+허용된 Spring은 `stereotype`(빈 선언)뿐이다. 예외는 `BaseEntity`의 생성·수정 감사 애노테이션
+하나이며 `CoreLayerArchitectureTest`가 그 예외만 허용한다.
 
-엔티티는 JPA 애노테이션을 갖는다. 이것이 유일하게 허용된 기술 의존이며, 그 밖의 Spring 타입은
-`CoreLayerArchitectureTest`가 막는다. use case는 이 모듈에 두지 않는다.
+Repository 계약에는 도메인 타입과 Java 기본 타입만 노출한다. `JpaRepository`, `Pageable`,
+`Slice`, `@Query`, `@Lock`은 두지 않는다. 이 기술들은 core-infra의 어댑터가 결정한다.
+
+outbox 엔티티와 상태, 분산락 구현, 조회 최적화는 이 모듈에 두지 않는다.
+use case도 이 모듈에 두지 않는다.
 
 ### `core:core-infra`
 
@@ -99,16 +121,17 @@ Spring Boot 실행 모듈이다.
 
 주요 책임:
 
-- Querydsl 조회 구현과 조건·정렬·커서 헬퍼
-- JWT 발급·검증 (`auth.token`)
-- Redis 기반 store adapter
+- Aggregate Repository 어댑터와 Spring Data JPA 인터페이스
+- Querydsl 읽기 전용 조회 구현과 조건·정렬·커서 헬퍼
+- JWT 발급·검증과 라이브러리 예외 중립화 (`auth.token`)
+- Redis 기반 store adapter와 분산락 구현 (`lock`의 `RedissonLockManager`)
 - Redis key expiration listener와 handler
 - WebSocket seat event publisher
 - Kakao HTTP interface client
 - 암호화와 대기열 입장 토큰 어댑터
-- scheduler와 커밋 후 리스너
-- 분산락 AOP
-- Querydsl, P6Spy 설정
+- outbox 엔티티·상태·relay와 커밋 후 리스너 (`order.outbox`)
+- 시드 러너 (`seed`)
+- JPA auditing, Querydsl, P6Spy 설정
 
 의존:
 
@@ -182,10 +205,10 @@ Redis 관련 공통 의존성을 제공한다.
 기능 내부 하위 패키지 패턴:
 
 - `model`: 엔티티와 값 객체
-- `repository`: JPA repository 인터페이스
+- `repository`: Aggregate Repository 인터페이스(순수 계약)
 - `store`: Redis 등 임시 상태 저장 port
-- `query`: 도메인 조회 서비스(`*Finder`)와 조회 port
-- `command`: 도메인 서비스와 outbox
+- `query`: 정책 판정에 쓰는 도메인 read model
+- `command`: 도메인 서비스
 - `support`: 도메인 보조 컴포넌트
 
 `core-domain`은 구현체 패키지로서의 `infra`를 두지 않는다. 기술 구현은 `core-infra`에 둔다.
@@ -226,7 +249,11 @@ use case는 `core-app`에 둔다.
 - `com.ticket.core.infra.performanceseat`, `.performanceseat.query`
 
 Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
-예: `QuerydslShowListQueryRepository implements ShowListQueryRepository`
+예: `QuerydslShowListReadRepository implements ShowListReadRepository`
+
+Aggregate Repository 어댑터는 `*RepositoryAdapter`, 그 안에서 쓰는 Spring Data 인터페이스는
+`SpringData*JpaRepository`로 이름 짓는다.
+예: `OrderRepositoryAdapter implements OrderRepository` → `SpringDataOrderJpaRepository`
 
 ## 코드 위치 결정표
 
@@ -244,18 +271,25 @@ Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
 | 조회 use case | `core-app` 의 `<기능>.query` |
 | 트랜잭션 경계 조립, 여러 도메인 서비스 오케스트레이션 | `core-app` |
 | 조회 결과 view와 검색 param | `core-app` 의 `<기능>.query.model` |
-| 조회 port | 그것을 쓰는 쪽. use case가 쓰면 `core-app`, `*Finder`가 쓰면 `core-domain` |
+| 읽기 전용 조회 port (`*ReadRepository`) | `core-app` 의 `<기능>.query` |
 | 엔티티, 값 객체 | `core-domain` 의 `<기능>.model` |
-| 도메인 정책과 검증기, `*Finder` | `core-domain` |
-| JPA repository 인터페이스 | `core-domain` 의 `<기능>.repository` |
+| 도메인 정책과 검증기 | `core-domain` |
+| Aggregate Repository 인터페이스(순수 계약) | `core-domain` 의 `<기능>.repository` |
+| Repository 어댑터와 Spring Data 인터페이스 | `core-infra` |
 | Redis 같은 임시 상태 저장 port | `core-domain` 의 `<기능>.store` |
-| outbox 엔티티·기록기·상태 enum | `core-domain` 의 `<기능>.command` |
-| outbox 트랜잭션 경계와 실행 조립 | `core-app` 의 `<기능>.command` |
+| 분산락 port (`LockManager`, `LockKey`, `LockOptions`) | `core-app` 의 `lock` |
+| 분산락 구현과 Redis key 형식 | `core-infra` 의 `lock` |
+| 후속 처리 이벤트 port (`IntegrationEventPublisher`) | `core-app` 의 `event` |
+| outbox 엔티티·상태·relay | `core-infra` 의 `order.outbox` |
+| HTTP 커서 문자열 인코딩·디코딩 | `core-api` 의 `api.support.cursor` |
+| 커서 위치 타입과 조회 결과 | `core-app` 의 `<기능>.query.model`, `support.cursor` |
 | Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `core-infra` 의 `<기능>.query` |
 | Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `core-infra` |
 | 암호화, 대기열 입장 토큰 검증 같은 포트 구현 | `core-infra` |
-| scheduler, `@TransactionalEventListener`, background executor 설정 | `core-infra` |
-| 분산락 AOP 실행부 | `core-infra` 의 `lock` |
+| 시드 러너 | `core-infra` 의 `seed` |
+| `@TransactionalEventListener`, background executor 설정 | `core-infra` |
+| `@Scheduled` 트리거와 실행 주기 설정 | `bootstrap` 의 `worker` |
+| Spring Boot main과 프로파일 설정 | `bootstrap` |
 | Querydsl, P6Spy 같은 기술 설정 | `core-infra` 의 `config` |
 | 공통 예외와 오류 형식 계약 | `support:error` |
 | 도메인 규칙이 판단하는 오류 | `core-domain` 의 `error` |
@@ -280,17 +314,29 @@ Controller는 가능한 한 얇게 유지한다.
 - `command`: 상태를 변경하는 use case (`core-app`)
 - `query`: 조회 전용 use case와 조회 port (`core-app`)
 
-조회는 포트와 구현을 나눈다. 포트와 반환 view는 `core-app`에, Querydsl 구현은 `core-infra`에 둔다.
+Repository는 두 종류로 나뉜다.
 
-예시:
+**Aggregate Repository** (`core-domain`): aggregate의 저장과 복원, 업무 명령에 필요한 조회를 맡는다.
+도메인 타입만 반환하고, JPA 구현은 `core-infra`의 어댑터가 맡는다.
 
-- `app.show.query.ShowListQueryRepository` ← `infra.show.query.QuerydslShowListQueryRepository`
+- `domain.order.repository.OrderRepository` ← `infra.order.OrderRepositoryAdapter`
+
+**Read Repository** (`core-app`): 화면·검색·상세·집계·커서 페이징 같은 읽기 전용 조회를 맡는다.
+app이 소유한 immutable read model이나 원시 타입을 반환하며 domain entity 반환을 강제하지 않는다.
+
+- `app.show.query.ShowListReadRepository` ← `infra.show.query.QuerydslShowListReadRepository`
 - `app.show.query.model.ShowListItemView`
-- `app.performanceseat.query.SeatMapQueryRepository` ← `infra.performanceseat.query.QuerydslSeatMapQueryRepository`
-- `app.performanceseat.query.model.SeatInfoView`
+- `app.performanceseat.query.SeatMapReadRepository` ← `infra.performanceseat.query.QuerydslSeatMapReadRepository`
 
-`*Finder`가 쓰는 조회 port는 예외다. `PerformanceBookingPolicyQueryRepository`처럼 도메인 정책 판정에
-쓰이면 포트를 `core-domain`에 둔다.
+읽기 경로는 domain entity를 거치지 않아도 된다. 상태를 바꾸지 않기 때문이다. 반대로 상태를 바꾸는
+command는 반드시 domain aggregate와 Aggregate Repository를 거쳐 불변식을 다시 검증한다.
+
+Read Repository 계약에는 app read model, `List`, `Optional`, `long`, `boolean`, 순수 Java/domain value,
+타입 커서 위치, limit만 노출한다. API 응답 DTO, Spring `Slice`/`Page`/`Pageable`, Querydsl `Tuple`,
+`EntityManager`, `Object[]`, HTTP 커서 문자열은 두지 않는다.
+
+정책 판정에 쓰이는 조회는 Read Repository가 아니라 Aggregate Repository가 도메인 값으로 돌려준다.
+예: `PerformanceRepository.findBookingPolicyById`, `PerformanceSeatRepository.findSelectableSeat`
 
 ## 저장소 구조
 
@@ -346,18 +392,28 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 ## 동시성 제어
 
-분산락은 `@DistributedLock`과 AOP로 처리한다.
+분산락은 명시적인 포트 호출로 처리한다. 어노테이션과 SpEL로 감추지 않는다.
 
 현재 구현 위치:
 
-- 어노테이션: `com.ticket.core.support.lock.DistributedLock` (core-domain)
-- 실행부: `com.ticket.core.infra.lock.DistributedLockAop` (core-infra)
-- SpEL 파서: `com.ticket.core.infra.lock.CustomSpringELParser` (core-infra)
+- 포트: `com.ticket.core.app.lock.LockManager` (core-app)
+- 잠글 대상: `LockKey`, `LockScope` — 업무 의미만 담고 key 문자열은 담지 않는다
+- 획득 방식: `LockOptions` — 대기 시간, 임대 시간, 실패 로그 수준
+- 구현: `com.ticket.core.infra.lock.RedissonLockManager` (core-infra)
+- key 형식: `com.ticket.core.infra.lock.RedissonLockKeyFormatter` (core-infra)
 
 적용 예:
 
-- 동일 회원/공연 조합의 중복 주문 시작 방지
-- 동일 좌석 동시 점유 방지
+- 동일 회원/공연 조합의 중복 주문 시작 방지 (`LockScope.ORDER_START`)
+- 동일 좌석 동시 점유 방지 (`LockScope.SEAT`)
+- outbox 단건 중복 실행 방지와 보정 배치 단일 실행
+
+락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다.
+좌석 락은 Redis hold를 만드는 구간에만 건다. DB 트랜잭션 동안 좌석 락을 쥐고 있으면
+connection 경합이 좌석 경합으로 번진다.
+
+Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
+`CoreRedisIntegrationTest`가 고정한다.
 
 ## 아키텍처 규칙
 
@@ -366,16 +422,24 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 ### `CoreLayerArchitectureTest` (ArchUnit, core-api)
 
-계층 방향을 한곳에서 검사한다. `core-api`만 네 모듈을 모두 클래스패스에 두기 때문이다.
+계층 방향을 한곳에서 검사한다. `core-api`가 네 모듈을 모두 테스트 클래스패스에 두기 때문이다.
 
 - `core-domain`은 app·infra·api를 참조하지 않는다.
 - `core-app`은 infra·api를 참조하지 않는다.
 - `core-api`는 `core-domain`을 참조하지 않는다. use case를 거친다.
 - `core-infra`는 api를 참조하지 않는다.
 - `core-domain`과 `core-app`은 Querydsl을 직접 쓰지 않는다. 생성된 Q 타입은 제외한다.
-- `core-domain`은 `data`와 `stereotype` 외의 Spring을 참조하지 않는다.
-  HTTP·보안·메시징뿐 아니라 `transaction`, `context`, `expression`, `scheduling`, `dao`도 막는다.
+- `core-domain`은 `stereotype` 외의 Spring을 참조하지 않는다. `BaseEntity`의 감사 애노테이션만 예외다.
 - `core-app`은 HTTP·보안·메시징·스케줄링을 참조하지 않는다. 트랜잭션은 소유하므로 허용한다.
+- `core-app`은 Spring Data를 참조하지 않는다.
+- `core-domain`과 `core-app`은 Hibernate, Redisson, `EntityManager`를 참조하지 않는다.
+- 토큰 라이브러리(`io.jsonwebtoken`)는 `core-infra` 밖으로 새지 않는다.
+- `@EnableScheduling`과 `@Scheduled`는 `bootstrap`에만 둔다.
+
+### `BootstrapArchitectureTest` (ArchUnit, bootstrap)
+
+- `bootstrap`은 `core-domain`에 직접 닿지 않는다. use case와 어댑터를 거친다.
+- background 트리거는 `com.ticket.bootstrap.worker`에 모은다.
 
 ### `CoreDomainArchitectureTest` (ArchUnit)
 
@@ -391,10 +455,15 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 - `order`와 `queue` 비즈니스는 `core-domain`이 소유하고 `core-api`에 같은 패키지를 두지 않는다.
 - `core-api`는 `core-app`을 의존하고 `core-domain`은 `testImplementation`으로만 둔다.
-- JWT 보안 구현(`JwtTokenService`, `JwtProperties`, `OAuth2EndpointConstants`)은 `core-api`에만 둔다.
-- `core-domain`의 `build.gradle`에 `springdoc-openapi`와 `jjwt`를 넣지 않고, 소스에 Swagger import를 두지 않는다.
+- JWT 발급·검증 구현(`JwtTokenService`, `JwtProperties`)은 `core-infra`에 둔다.
+  `core-domain`과 `core-api`의 `build.gradle`에는 `jjwt`를 넣지 않는다.
+  OAuth2 엔드포인트 상수는 filter chain 설정의 일부라 `core-api`에 남는다.
+- `core-domain`의 `build.gradle`에 `springdoc-openapi`를 넣지 않고, 소스에 Swagger import를 두지 않는다.
 - `CookieUtils` 같은 HTTP 유틸리티는 `core-api`에 둔다.
-- `OrderExpirationScheduler`, `HoldReleaseOutboxScheduler`는 `core-infra`에 둔다.
+- 실행 모듈은 `bootstrap` 하나다. `bootJar`도 여기에서만 만든다.
+- `@Scheduled` 트리거는 `bootstrap`, 업무 배치는 `core-app` 유스케이스,
+  순수 relay는 `core-infra`에 둔다.
+- 시드 러너는 `core-infra`에 둔다.
 - `core:core-enum` 모듈은 부활시키지 않는다. enum은 `core-domain`에 둔다.
 
 `core-api`의 `CoreApiArchitectureTest`도 같은 성격의 경계를 검사한다. `core-api`의 `config.security`는
@@ -420,10 +489,11 @@ auth infra 구현체에 직접 의존하지 않는다.
 
 ## 다음 구조 정리 방향
 
-- JPA repository 인터페이스를 `core-domain` 포트와 `core-infra`의 Spring Data 인터페이스로 나눌지
-  도메인별로 판단한다.
-- `support:lock` 분리를 판단한다. 지금 `@DistributedLock` 애노테이션은 `core-domain`,
-  AOP 실행부와 SpEL 파서는 `core-infra`에 갈라져 있다.
+- `BaseEntity`의 생성·수정 감사만 Spring Data auditing에 남아 있다. JPA 생명주기 콜백으로 바꾸려면
+  감사 주체를 도메인에 포트로 노출해야 하므로, 감사 컬럼 요구가 바뀔 때 함께 판단한다.
+- Querydsl Q 타입은 엔티티가 있는 `core-domain`에서 생성된다. 애노테이션 프로세서 특성상
+  다른 모듈에서 생성할 수 없어 현재 배치를 유지한다.
 - `core-domain`의 `@Service` 세 곳(`PerformanceSeatService`, `SeatStatusPublisher` 등)을
   `@Component`로 맞출지 판단한다. 나머지 도메인 서비스는 `@Component`를 쓴다.
-- `OrderFinder`는 프로덕션에서 쓰이지 않는다. 비관적 락 조회가 필요해질 때까지 둘지 판단한다.
+- API와 worker를 다른 프로세스로 나눠야 하면 `bootstrap-api`/`bootstrap-worker`로 쪼갠다.
+  지금은 `worker.enabled`로 한 프로세스 안에서 켜고 끈다.

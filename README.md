@@ -64,7 +64,7 @@ Swagger UI: `/api/swagger-ui.html`, OpenAPI: `/api/api-docs`
 
 ## 배포
 
-루트 `Dockerfile`은 `core/core-api/build/libs/*.jar`를 `app.jar`로 복사해 Java 25 JRE 이미지에서
+루트 `Dockerfile`은 `bootstrap/build/libs/*.jar`를 `app.jar`로 복사해 Java 25 JRE 이미지에서
 실행한다. 배포 워크플로는 `.github/workflows/deploy.yml`에 있다.
 
 `master` push는 곧 운영 배포다. 절차는 [`docs/operations.md`](docs/operations.md)를 따른다.

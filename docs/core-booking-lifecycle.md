@@ -27,7 +27,7 @@ CreateOrderUseCase
   -> HoldCreationOutboxExecutor
        -> outbox 조회                (짧은 read transaction)
        -> 같은 좌석의 hold 분산락 획득
-       -> snapshot holdKey가 현재 hold인지 확인
+       -> 기록된 holdKey가 현재 hold인지 확인
        -> 주문 회원 소유 selection만 해제 (Redis)
        -> HELD 상태 발행             (WebSocket)
        -> 완료 또는 재시도 기록      (짧은 write transaction)
@@ -39,7 +39,7 @@ DB 커밋 뒤 후처리 제출이나 실행이 실패해도 커밋된 주문과 
 따라서 메모리 queue가 가득 차거나 프로세스가 재시작되어도 작업 입력은 DB에 남는다.
 hold가 실제 점유의 기준이며 selection은 UX 보조 상태이다.
 주문 생성 후처리와 hold 해제는 같은 좌석 잠금을 사용한다. 해제가 먼저 끝났다면
-이전 snapshot의 후처리는 아무 작업도 하지 않고, 생성 후처리가 먼저라면 HELD 뒤에
+이전 hold의 후처리는 아무 작업도 하지 않고, 생성 후처리가 먼저라면 HELD 뒤에
 RELEASED가 발행된다. WebSocket은 세션별 발행 순서를 보존한다.
 
 주문 시작, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
@@ -99,12 +99,16 @@ ExpireOrderUseCase.expireByHoldKey를 호출한다.
 - redisExpirationSubscriptionExecutor: Redis 구독 전용 worker 1~2개
 - redisExpirationTaskExecutor: 만료 handler worker 2개, queue 256개, 공유 permit 2개
 - queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
-- OrderExpirationScheduler: 5분마다 만료 주문을 100개씩 보정한다.
-- HoldCreationOutboxScheduler: 2분마다 미완료 생성 후처리 outbox를 100개씩 보정한다.
-- HoldReleaseOutboxScheduler: 2분마다 미완료 outbox를 100개씩 보정한다.
+- OrderExpirationTrigger(bootstrap) -> ExpirePendingOrdersUseCase: 5분마다 만료 주문을 100개씩 보정한다.
+- HoldOutboxRelayTrigger(bootstrap) -> HoldCreationOutboxRelay: 2분마다 미완료 생성 후처리 outbox를 100개씩 보정한다.
+- HoldOutboxRelayTrigger(bootstrap) -> HoldReleaseOutboxRelay: 2분마다 미완료 outbox를 100개씩 보정한다.
 
-보정 스케줄러와 커밋 후 트리거는 core-infra에 위치한다.
-core-domain은 엔티티의 상태 전이 규칙만 소유하고, 트랜잭션 단위와 outbox 조립은 core-app이 소유한다.
+보정 주기는 bootstrap의 `worker.*.fixed-delay` 설정이고, `worker.enabled=false`면 트리거 자체가
+등록되지 않는다.
+
+@Scheduled 트리거는 bootstrap에 있고, 커밋 후 리스너와 outbox relay는 core-infra에 있다.
+core-domain은 엔티티의 상태 전이 규칙만 소유한다. core-app은 트랜잭션 단위와 업무 후처리를 소유하고,
+후속 처리 이벤트는 IntegrationEventPublisher 포트로 발행한다. outbox는 그 포트의 구현 방식이다.
 
 ## DB connection 관점
 
@@ -124,11 +128,14 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 - 주문 DB 저장: app.order.command.CreatePendingOrderTxService
 - 주문 종료: app.order.command.OrderTerminationService
 - 상태 전이 규칙: domain.order.model.Order (confirm, expire, cancel)
-- 생성 outbox 트랜잭션: app.order.command.HoldCreationOutboxTransactionService
-- 생성 outbox 외부 처리: infra.order.HoldCreationOutboxExecutor
-- 해제 outbox 트랜잭션: app.order.command.HoldReleaseOutboxTransactionService
-- 해제 outbox 실행 조립: app.order.command.HoldReleaseOutboxExecutor, HoldReleaseTaskProcessor
-- outbox 엔티티와 기록기: domain.order.command.create/release (HoldCreationOutbox, HoldReleaseOutbox, *Writer)
+- 후속 처리 발행 포트: app.event.IntegrationEventPublisher
+- outbox 엔티티와 발행 구현: infra.order.outbox (HoldCreationOutbox, HoldReleaseOutbox,
+  OutboxIntegrationEventPublisher)
+- 생성 outbox 실행: infra.order.outbox.create (HoldCreationOutboxExecutor, HoldCreationOutboxRelay)
+- 해제 outbox 실행: infra.order.outbox.release (HoldReleaseOutboxExecutor, HoldReleaseOutboxRelay)
+- 해제 업무 처리: app.order.command.HoldReleaseTaskProcessor
+- 만료 보정: app.order.command.ExpirePendingOrdersUseCase
+- background 트리거: bootstrap.worker
 - Redis TTL 진입 제한: infra.redis.RedisExpirationListenerConfig
 - background queue와 트리거: infra.order
 
