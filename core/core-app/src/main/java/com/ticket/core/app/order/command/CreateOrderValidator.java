@@ -5,7 +5,7 @@ import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.performance.query.BookingPolicyValidator;
@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CreateOrderValidator {
 
-    private final MemberFinder memberFinder;
+    private final MemberRepository memberRepository;
     private final PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
     private final OrderRepository orderRepository;
     private final HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
@@ -51,7 +51,7 @@ public class CreateOrderValidator {
         BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
         ensureAdmitted(policy, memberId, input.admissionToken(), now);
 
-        memberFinder.ensureActiveMemberExists(memberId);
+        memberRepository.requireActiveExists(memberId);
         ensureNoPendingOrder(memberId, performanceId);
         final List<PerformanceSeat> performanceSeats =
                 holdSeatAvailabilityValidator.validate(performanceId, requestedSeatIds);

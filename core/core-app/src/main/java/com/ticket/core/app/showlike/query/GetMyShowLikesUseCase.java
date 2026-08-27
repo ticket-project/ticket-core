@@ -3,7 +3,7 @@ package com.ticket.core.app.showlike.query;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.app.showlike.query.ShowLikeQueryRepository;
 import com.ticket.core.app.support.cursor.CursorSlice;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class GetMyShowLikesUseCase {
 
     private static final int MAX_SIZE = 100;
 
-    private final MemberFinder memberFinder;
+    private final MemberRepository memberRepository;
     private final ShowLikeQueryRepository showLikeQueryRepository;
 
     public record Input(Long memberId, String cursor, int size) {
@@ -44,7 +44,7 @@ public class GetMyShowLikesUseCase {
 
     public Output execute(final Input input) {
         validateInput(input);
-        final Member member = memberFinder.findActiveMemberById(input.memberId());
+        final Member member = memberRepository.getActiveById(input.memberId());
         final Long cursorLikeId = parseCursor(input.cursor());
         final CursorSlice<ShowLikeSummary> result =
                 showLikeQueryRepository.findMyLikedShows(member.getId(), cursorLikeId, input.size());

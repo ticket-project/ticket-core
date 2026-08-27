@@ -9,7 +9,7 @@ import com.ticket.core.app.order.command.CreateOrderValidator;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.performance.query.PerformanceBookingPolicyFinder;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
@@ -42,7 +42,7 @@ class CreateOrderValidatorTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private PerformanceBookingPolicyFinder performanceBookingPolicyFinder;
@@ -82,7 +82,7 @@ class CreateOrderValidatorTest {
 
         assertError(seatIds, DomainErrorType.PERFORMANCE_IS_PAST);
 
-        verifyNoInteractions(memberFinder, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
+        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
     }
 
     @Test
@@ -92,7 +92,7 @@ class CreateOrderValidatorTest {
 
         assertError(seatIds, DomainErrorType.EXCEED_HOLD_LIMIT);
 
-        verifyNoInteractions(memberFinder, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
+        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
     }
 
     @Test
@@ -116,7 +116,7 @@ class CreateOrderValidatorTest {
 
         assertError(seatIds, ApplicationErrorType.ADMISSION_TOKEN_REQUIRED);
 
-        verifyNoInteractions(memberFinder, orderRepository, holdSeatAvailabilityValidator);
+        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator);
     }
 
     @Test
@@ -144,7 +144,7 @@ class CreateOrderValidatorTest {
 
         assertThat(result.policy()).isSameAs(policy);
         assertThat(result.performanceSeats()).isSameAs(seats);
-        verify(memberFinder).ensureActiveMemberExists(20L);
+        verify(memberRepository).requireActiveExists(20L);
     }
 
     @Test

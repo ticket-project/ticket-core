@@ -2,7 +2,7 @@ package com.ticket.core.app.performance.query;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.show.model.Show;
@@ -23,9 +23,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetPerformanceScheduleListUseCaseTest {
-
-    @Mock
-    private PerformanceFinder performanceFinder;
 
     @Mock
     private PerformanceRepository performanceRepository;
@@ -50,7 +47,7 @@ class GetPerformanceScheduleListUseCaseTest {
         when(another.getPerformanceNo()).thenReturn(2L);
         when(another.getStartTime()).thenReturn(now.plusDays(1));
 
-        when(performanceFinder.findById(10L)).thenReturn(selected);
+        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(selected);
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of(selected, another));
 
         //when
@@ -67,7 +64,7 @@ class GetPerformanceScheduleListUseCaseTest {
         //given
         Performance performance = mock(Performance.class);
         when(performance.getShow()).thenReturn(null);
-        when(performanceFinder.findById(10L)).thenReturn(performance);
+        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(performance);
 
         //when
         //then
@@ -84,7 +81,7 @@ class GetPerformanceScheduleListUseCaseTest {
         when(show.getId()).thenReturn(100L);
         when(selected.getId()).thenReturn(10L);
         when(selected.getShow()).thenReturn(show);
-        when(performanceFinder.findById(10L)).thenReturn(selected);
+        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(selected);
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of());
 
         //when

@@ -2,8 +2,8 @@ package com.ticket.core.app.showlike.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.member.query.MemberFinder;
-import com.ticket.core.domain.show.query.ShowFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import org.junit.jupiter.api.Test;
@@ -33,9 +33,9 @@ class RemoveShowLikeUseCaseTest {
     @Mock
     private ShowLikeRepository showLikeRepository;
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
     @Mock
-    private ShowFinder showFinder;
+    private ShowRepository showRepository;
     @InjectMocks
     private RemoveShowLikeUseCase useCase;
 

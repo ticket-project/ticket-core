@@ -8,7 +8,7 @@ import com.ticket.core.domain.auth.token.AuthTokenManager;
 import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +31,7 @@ class RefreshAuthTokenUseCaseTest {
     private RefreshTokenStore refreshTokenStore;
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private AuthTokenManager authTokenManager;
@@ -48,7 +48,7 @@ class RefreshAuthTokenUseCaseTest {
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
-        when(memberFinder.findActiveMemberById(3L)).thenReturn(member);
+        when(memberRepository.getActiveById(3L)).thenReturn(member);
         when(authTokenManager.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result =
@@ -64,7 +64,7 @@ class RefreshAuthTokenUseCaseTest {
                 .doesNotContain("access-token-value")
                 .doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
-        verify(memberFinder).findActiveMemberById(3L);
+        verify(memberRepository).getActiveById(3L);
         verify(authTokenManager).rotateTokens(1L, "MEMBER", refreshToken);
     }
 

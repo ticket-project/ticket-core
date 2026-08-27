@@ -3,9 +3,9 @@ package com.ticket.core.app.showlike.command;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.query.ShowFinder;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,9 +33,9 @@ class AddShowLikeUseCaseTest {
     @Mock
     private ShowLikeRepository showLikeRepository;
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
     @Mock
-    private ShowFinder showFinder;
+    private ShowRepository showRepository;
     @InjectMocks
     private AddShowLikeUseCase useCase;
 
@@ -44,7 +44,7 @@ class AddShowLikeUseCaseTest {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
         when(showLikeRepository.countByShowId(2L)).thenReturn(5L);
-        when(memberFinder.findActiveMemberById(1L)).thenReturn(mock(Member.class));
+        when(memberRepository.getActiveById(1L)).thenReturn(mock(Member.class));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
@@ -59,8 +59,8 @@ class AddShowLikeUseCaseTest {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
         when(showLikeRepository.countByShowId(2L)).thenReturn(3L);
-        when(memberFinder.findActiveMemberById(1L)).thenReturn(mock(Member.class));
-        when(showFinder.findById(2L)).thenReturn(mock(Show.class));
+        when(memberRepository.getActiveById(1L)).thenReturn(mock(Member.class));
+        when(showRepository.getById(2L)).thenReturn(mock(Show.class));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
@@ -74,8 +74,8 @@ class AddShowLikeUseCaseTest {
     void 저장중_중복제약이_발생하면_예외를_던진다() {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
-        when(memberFinder.findActiveMemberById(1L)).thenReturn(mock(Member.class));
-        when(showFinder.findById(2L)).thenReturn(mock(Show.class));
+        when(memberRepository.getActiveById(1L)).thenReturn(mock(Member.class));
+        when(showRepository.getById(2L)).thenReturn(mock(Show.class));
         when(showLikeRepository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));
 
         //when

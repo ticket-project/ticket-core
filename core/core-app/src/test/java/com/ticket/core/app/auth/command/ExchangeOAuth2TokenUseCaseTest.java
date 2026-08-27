@@ -7,7 +7,7 @@ import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
 import com.ticket.core.domain.auth.token.AuthTokenManager;
 import com.ticket.core.domain.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,7 +30,7 @@ class ExchangeOAuth2TokenUseCaseTest {
     private OAuth2AuthCodeStore oAuth2AuthCodeStore;
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private AuthTokenManager authTokenManager;
@@ -46,7 +46,7 @@ class ExchangeOAuth2TokenUseCaseTest {
         IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 7L);
 
         when(oAuth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
-        when(memberFinder.findActiveMemberById(7L)).thenReturn(member);
+        when(memberRepository.getActiveById(7L)).thenReturn(member);
         when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         ExchangeOAuth2TokenUseCase.Result result =
@@ -62,7 +62,7 @@ class ExchangeOAuth2TokenUseCaseTest {
                 .doesNotContain("access-token-value")
                 .doesNotContain("refresh-token-value");
         verify(oAuth2AuthCodeStore).consumeCode("oauth-code");
-        verify(memberFinder).findActiveMemberById(7L);
+        verify(memberRepository).getActiveById(7L);
         verify(authTokenManager).issueTokens(1L, "MEMBER");
     }
 
