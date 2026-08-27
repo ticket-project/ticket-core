@@ -1,4 +1,4 @@
-package com.ticket.core.config;
+package com.ticket.core.infra.persistence;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

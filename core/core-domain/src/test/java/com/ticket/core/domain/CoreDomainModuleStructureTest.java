@@ -64,7 +64,9 @@ class CoreDomainModuleStructureTest {
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/OAuth2EndpointConstants.java"))).isTrue();
 
         assertThat(infraBuild).contains("io.jsonwebtoken:jjwt-api:0.13.0");
-        assertThat(domainBuild).doesNotContain("io.jsonwebtoken:jjwt-api:0.13.0");
+        assertThat(domainBuild).doesNotContain("io.jsonwebtoken");
+        // API는 토큰 라이브러리를 보지 않는다. 예외 중립화는 어댑터가 한다.
+        assertThat(Files.readString(resolve("../core-api/build.gradle"))).doesNotContain("io.jsonwebtoken");
     }
 
     @Test
@@ -101,11 +103,41 @@ class CoreDomainModuleStructureTest {
     }
 
     @Test
-    void 주문_백그라운드_트리거는_core_infra에_있어야_한다() {
+    void 백그라운드_트리거는_bootstrap에_있고_처리는_각_계층이_소유해야_한다() {
+        // 트리거(@Scheduled)는 실행 모듈에만 둔다.
+        assertThat(Files.exists(resolve("../../bootstrap/src/main/java/com/ticket/bootstrap/worker/OrderExpirationTrigger.java"))).isTrue();
+        assertThat(Files.exists(resolve("../../bootstrap/src/main/java/com/ticket/bootstrap/worker/HoldOutboxRelayTrigger.java"))).isTrue();
+
+        // 업무 배치는 유스케이스가, 순수 relay는 infra가 소유한다.
+        assertThat(Files.exists(resolve("../core-app/src/main/java/com/ticket/core/app/order/command/ExpirePendingOrdersUseCase.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/outbox/create/HoldCreationOutboxRelay.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/outbox/release/HoldReleaseOutboxRelay.java"))).isTrue();
+
+        // 옛 위치에는 남지 않는다.
         assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/order/command/expire/OrderExpirationScheduler.java"))).isFalse();
-        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/order/command/release/HoldReleaseOutboxScheduler.java"))).isFalse();
-        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/OrderExpirationScheduler.java"))).isTrue();
-        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/HoldReleaseOutboxScheduler.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/OrderExpirationScheduler.java"))).isFalse();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/order/HoldReleaseOutboxScheduler.java"))).isFalse();
+    }
+
+    @Test
+    void 실행_모듈은_bootstrap_하나여야_한다() throws Exception {
+        final String settings = Files.readString(resolve("../../settings.gradle"));
+        final String bootstrapBuild = Files.readString(resolve("../../bootstrap/build.gradle"));
+        final String apiBuild = Files.readString(resolve("../core-api/build.gradle"));
+
+        assertThat(settings).contains("'bootstrap'");
+        assertThat(bootstrapBuild).contains("bootJar");
+        assertThat(bootstrapBuild).contains("enabled = true");
+        assertThat(apiBuild).doesNotContain("bootJar");
+        assertThat(Files.exists(resolve("../../bootstrap/src/main/java/com/ticket/TicketApplication.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/CoreApiApplication.java"))).isFalse();
+    }
+
+    @Test
+    void 시드_러너는_core_infra에_있어야_한다() {
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/seed/SeedDataLoader.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/seed/LoadTestFixtureSeeder.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/seed"))).isFalse();
     }
 
     private List<Path> findSwaggerImports(final Path root) throws IOException {
