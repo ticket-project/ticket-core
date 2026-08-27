@@ -14,7 +14,7 @@ import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.support.ReadRepositoryTestSupport;
+import com.ticket.core.infra.support.ReadRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

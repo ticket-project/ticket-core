@@ -1,4 +1,4 @@
-package com.ticket.core.domain.support;
+package com.ticket.core.infra.support;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.member.model.Member;
@@ -60,6 +60,12 @@ import java.time.ZoneId;
         ReadRepositoryTestSupport.TestConfig.class,
         ReadRepositoryTestSupport.AuditingTestConfig.class
 })
+/**
+ * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다.
+ *
+ * <p>Spring 컨텍스트와 EntityManager가 필요하므로 core-infra의 integrationTest에 둔다.
+ * 도메인 단위 테스트는 이 클래스를 쓰지 않는다.
+ */
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class ReadRepositoryTestSupport {
 

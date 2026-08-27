@@ -1,6 +1,5 @@
 package com.ticket.core.infra.support;
 
-import com.ticket.core.domain.support.ReadRepositoryTestSupport;
 import com.ticket.core.infra.show.query.BookingStatusWindowPolicy;
 import com.ticket.core.infra.show.query.ShowConditionFactory;
 import com.ticket.core.infra.show.query.ShowCursorPolicy;
@@ -11,8 +10,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
- * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼는 core-infra 소속이라
- * core-domain testFixtures가 등록할 수 없어 여기에서 빈으로 올린다.
+ * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼를 빈으로 올린다.
  */
 @Import({
         ShowQueryHelper.class,
