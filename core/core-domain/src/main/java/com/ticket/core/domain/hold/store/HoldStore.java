@@ -1,14 +1,17 @@
 package com.ticket.core.domain.hold.store;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * hold의 임시 상태 저장 포트다. key 형식과 TTL 적용 방식은 구현이 결정한다.
+ */
 public interface HoldStore {
 
-    void save(HoldSnapshot snapshot, Duration ttl);
+    void save(Hold hold, Duration ttl);
 
     List<Long> release(Long performanceId, String holdKey, List<Long> seatIds);
 

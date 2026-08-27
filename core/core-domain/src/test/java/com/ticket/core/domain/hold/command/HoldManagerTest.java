@@ -2,7 +2,7 @@ package com.ticket.core.domain.hold.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,14 +71,14 @@ class HoldManagerTest {
 
         when(holdKeyGenerator.generate()).thenReturn("hold-key");
 
-        HoldSnapshot snapshot = holdManager.createHold(7L, 1L, RequestedSeatIds.from(List.of(10L, 20L)), ttl, FIXED_NOW);
+        Hold hold = holdManager.createHold(7L, 1L, RequestedSeatIds.from(List.of(10L, 20L)), ttl, FIXED_NOW);
 
-        assertThat(snapshot.holdKey()).isEqualTo("hold-key");
-        assertThat(snapshot.memberId()).isEqualTo(7L);
-        assertThat(snapshot.performanceId()).isEqualTo(1L);
-        assertThat(snapshot.seatIds()).containsExactly(10L, 20L);
-        assertThat(snapshot.expiresAt()).isEqualTo(FIXED_NOW.plus(ttl));
-        verify(holdStore).save(snapshot, ttl);
+        assertThat(hold.holdKey()).isEqualTo("hold-key");
+        assertThat(hold.memberId()).isEqualTo(7L);
+        assertThat(hold.performanceId()).isEqualTo(1L);
+        assertThat(hold.seatIds()).containsExactly(10L, 20L);
+        assertThat(hold.expiresAt()).isEqualTo(FIXED_NOW.plus(ttl));
+        verify(holdStore).save(hold, ttl);
     }
 
     @Test

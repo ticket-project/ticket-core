@@ -1,6 +1,6 @@
 package com.ticket.core.domain.order.command.create;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import lombok.RequiredArgsConstructor;
@@ -28,15 +28,15 @@ public class HoldAllocator {
             final Duration holdDuration,
             final LocalDateTime now
     ) {
-        final HoldSnapshot snapshot = holdManager.createHold(memberId, performanceId, requestedSeatIds, holdDuration, now);
-        return new HoldAllocation(snapshot, performanceSeats);
+        final Hold hold = holdManager.createHold(memberId, performanceId, requestedSeatIds, holdDuration, now);
+        return new HoldAllocation(hold, performanceSeats);
     }
 
     public void release(final HoldAllocation allocation) {
         holdManager.release(
-                allocation.snapshot().performanceId(),
-                allocation.snapshot().holdKey(),
-                allocation.snapshot().seatIds()
+                allocation.hold().performanceId(),
+                allocation.hold().holdKey(),
+                allocation.hold().seatIds()
         );
     }
 }

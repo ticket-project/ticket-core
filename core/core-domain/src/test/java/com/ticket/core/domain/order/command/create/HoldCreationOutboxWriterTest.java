@@ -1,6 +1,6 @@
 package com.ticket.core.domain.order.command.create;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -22,23 +22,23 @@ class HoldCreationOutboxWriterTest {
 
     @Test
     void appendsEverythingNeededToRetryPostCommitProcessing() {
-        final HoldSnapshot snapshot = snapshot();
+        final Hold hold = hold();
         final LocalDateTime nextAttemptAt = LocalDateTime.of(2026, 3, 15, 11, 50);
-        final HoldCreationOutbox saved = HoldCreationOutbox.create(snapshot, nextAttemptAt);
+        final HoldCreationOutbox saved = HoldCreationOutbox.create(hold, nextAttemptAt);
         ReflectionTestUtils.setField(saved, "id", 99L);
         when(repository.save(argThat(outbox ->
-                outbox.snapshot().equals(snapshot)
+                outbox.toHold().equals(hold)
                         && outbox.getNextAttemptAt().equals(nextAttemptAt)
                         && outbox.getStatus() == HoldCreationOutboxStatus.PENDING
         ))).thenReturn(saved);
 
-        final Long outboxId = new HoldCreationOutboxWriter(repository).append(snapshot, nextAttemptAt);
+        final Long outboxId = new HoldCreationOutboxWriter(repository).append(hold, nextAttemptAt);
 
         assertThat(outboxId).isEqualTo(99L);
     }
 
-    private HoldSnapshot snapshot() {
-        return new HoldSnapshot(
+    private Hold hold() {
+        return new Hold(
                 "hold-key",
                 20L,
                 10L,

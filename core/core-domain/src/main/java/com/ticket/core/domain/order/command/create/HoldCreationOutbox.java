@@ -1,7 +1,7 @@
 package com.ticket.core.domain.order.command.create;
 
 import com.ticket.core.domain.BaseEntity;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -68,23 +68,23 @@ public class HoldCreationOutbox extends BaseEntity {
     @Column(length = MAX_ERROR_LENGTH)
     private String lastError;
 
-    private HoldCreationOutbox(final HoldSnapshot snapshot, final LocalDateTime nextAttemptAt) {
-        this.memberId = snapshot.memberId();
-        this.performanceId = snapshot.performanceId();
-        this.holdKey = snapshot.holdKey();
-        this.seatIdsPayload = serializeSeatIds(snapshot.seatIds());
-        this.expiresAt = snapshot.expiresAt();
+    private HoldCreationOutbox(final Hold hold, final LocalDateTime nextAttemptAt) {
+        this.memberId = hold.memberId();
+        this.performanceId = hold.performanceId();
+        this.holdKey = hold.holdKey();
+        this.seatIdsPayload = serializeSeatIds(hold.seatIds());
+        this.expiresAt = hold.expiresAt();
         this.nextAttemptAt = nextAttemptAt;
         this.retryCount = 0;
         this.status = HoldCreationOutboxStatus.PENDING;
     }
 
-    public static HoldCreationOutbox create(final HoldSnapshot snapshot, final LocalDateTime nextAttemptAt) {
-        return new HoldCreationOutbox(snapshot, nextAttemptAt);
+    public static HoldCreationOutbox create(final Hold hold, final LocalDateTime nextAttemptAt) {
+        return new HoldCreationOutbox(hold, nextAttemptAt);
     }
 
-    public HoldSnapshot snapshot() {
-        return new HoldSnapshot(holdKey, memberId, performanceId, seatIds(), expiresAt);
+    public Hold toHold() {
+        return new Hold(holdKey, memberId, performanceId, seatIds(), expiresAt);
     }
 
     public boolean isCompleted() {

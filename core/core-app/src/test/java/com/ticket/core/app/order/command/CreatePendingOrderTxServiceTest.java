@@ -6,7 +6,7 @@ import com.ticket.core.app.order.command.OrderCreator;
 import com.ticket.core.domain.order.command.create.HoldCreationOutboxWriter;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,26 +51,26 @@ class CreatePendingOrderTxServiceTest {
     void 주문과_hold_이력을_같은_트랜잭션에_저장한다() {
         final Duration holdDuration = Duration.ofSeconds(600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
-        final HoldSnapshot snapshot = new HoldSnapshot(
+        final Hold hold = new Hold(
                 "hold-key",
                 20L,
                 10L,
                 List.of(7L),
                 LocalDateTime.of(2026, 3, 15, 12, 0)
         );
-        final HoldAllocation allocation = new HoldAllocation(snapshot, seats);
+        final HoldAllocation allocation = new HoldAllocation(hold, seats);
         final Order order = new Order(
                 20L,
                 10L,
                 "order-key",
                 "hold-key",
                 BigDecimal.valueOf(120000),
-                snapshot.expiresAt()
+                hold.expiresAt()
         );
 
-        when(orderCreator.createPendingOrder(20L, 10L, "hold-key", snapshot.expiresAt(), seats))
+        when(orderCreator.createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats))
                 .thenReturn(order);
-        when(holdCreationOutboxWriter.append(snapshot, snapshot.expiresAt().minusSeconds(600)))
+        when(holdCreationOutboxWriter.append(hold, hold.expiresAt().minusSeconds(600)))
                 .thenReturn(99L);
 
         final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation);
@@ -78,16 +78,16 @@ class CreatePendingOrderTxServiceTest {
         assertThat(result.order()).isSameAs(order);
         assertThat(result.postCommitOutboxId()).isEqualTo(99L);
         final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, holdCreationOutboxWriter);
-        inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", snapshot.expiresAt(), seats);
+        inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats);
         inOrder.verify(holdHistoryRecorder).recordCreated(
                 20L,
                 10L,
                 "hold-key",
-                snapshot.expiresAt().minusSeconds(600),
-                snapshot.expiresAt(),
+                hold.expiresAt().minusSeconds(600),
+                hold.expiresAt(),
                 seats
         );
-        inOrder.verify(holdCreationOutboxWriter).append(snapshot, snapshot.expiresAt().minusSeconds(600));
+        inOrder.verify(holdCreationOutboxWriter).append(hold, hold.expiresAt().minusSeconds(600));
     }
 
     @Test

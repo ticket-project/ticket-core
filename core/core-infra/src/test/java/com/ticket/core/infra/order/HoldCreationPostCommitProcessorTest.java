@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
@@ -33,11 +33,11 @@ class HoldCreationPostCommitProcessorTest {
 
     @Test
     void current_hold_releases_only_the_owners_selection_before_publishing_held() {
-        final HoldSnapshot snapshot = snapshot();
+        final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(true);
         when(holdStore.isHeldBy(10L, 200L, "hold-key")).thenReturn(true);
 
-        processor().process(snapshot);
+        processor().process(hold);
 
         final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
@@ -49,10 +49,10 @@ class HoldCreationPostCommitProcessorTest {
 
     @Test
     void stale_hold_does_not_release_a_new_selection_or_publish_held() {
-        final HoldSnapshot snapshot = snapshot();
+        final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(false);
 
-        processor().process(snapshot);
+        processor().process(hold);
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
@@ -63,8 +63,8 @@ class HoldCreationPostCommitProcessorTest {
         return new HoldCreationPostCommitProcessor(holdStore, seatSelectionService, seatStatusPublisher);
     }
 
-    private HoldSnapshot snapshot() {
-        return new HoldSnapshot(
+    private Hold hold() {
+        return new Hold(
                 "hold-key",
                 20L,
                 10L,

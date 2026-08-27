@@ -1,7 +1,6 @@
 package com.ticket.core.infra.hold;
 
-import com.ticket.core.domain.hold.model.HoldSnapshot;
-import com.ticket.core.domain.hold.store.HoldSnapshotCodec;
+import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import lombok.RequiredArgsConstructor;
@@ -27,35 +26,35 @@ import java.util.concurrent.TimeUnit;
 public class RedissonHoldStore implements HoldStore {
 
     private final RedissonClient redissonClient;
-    private final HoldSnapshotCodec holdSnapshotCodec;
+    private final HoldMetaCodec holdMetaCodec;
 
     @Override
-    public void save(final HoldSnapshot snapshot, final Duration ttl) {
+    public void save(final Hold hold, final Duration ttl) {
         final List<String> createdKeys = new ArrayList<>();
         try {
-            final RSetCache<Long> holdSeatIndex = holdSeatIndex(snapshot.performanceId());
-            for (final Long seatId : snapshot.seatIds()) {
-                final String key = SeatRedisKey.hold(snapshot.performanceId(), seatId);
-                redissonClient.getBucket(key, StringCodec.INSTANCE).set(snapshot.holdKey(), ttl);
+            final RSetCache<Long> holdSeatIndex = holdSeatIndex(hold.performanceId());
+            for (final Long seatId : hold.seatIds()) {
+                final String key = SeatRedisKey.hold(hold.performanceId(), seatId);
+                redissonClient.getBucket(key, StringCodec.INSTANCE).set(hold.holdKey(), ttl);
                 holdSeatIndex.add(seatId, ttl.toMillis(), TimeUnit.MILLISECONDS);
                 createdKeys.add(key);
             }
-            final String json = holdSnapshotCodec.encode(snapshot);
-            redissonClient.getBucket(SeatRedisKey.holdMeta(snapshot.holdKey()), StringCodec.INSTANCE).set(json, ttl);
+            final String json = holdMetaCodec.encode(hold);
+            redissonClient.getBucket(SeatRedisKey.holdMeta(hold.holdKey()), StringCodec.INSTANCE).set(json, ttl);
         } catch (final Exception e) {
-            rollback(createdKeys, snapshot.holdKey());
+            rollback(createdKeys, hold.holdKey());
             throw new IllegalStateException("hold Redis 저장에 실패했습니다.", e);
         }
     }
 
     @Override
     public List<Long> release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
-        final HoldSnapshot snapshot = readSnapshot(holdKey);
+        final Hold storedHold = readHold(holdKey);
         final List<Long> normalizedSeatIds = seatIds.stream().distinct().sorted().toList();
         final RSetCache<Long> holdSeatIndex = holdSeatIndex(performanceId);
         final List<Long> releasedSeatIds = new ArrayList<>();
-        boolean fullyReleased = snapshot == null
-                || new HashSet<>(normalizedSeatIds).containsAll(snapshot.seatIds());
+        boolean fullyReleased = storedHold == null
+                || new HashSet<>(normalizedSeatIds).containsAll(storedHold.seatIds());
         for (final Long seatId : normalizedSeatIds) {
             final RBucket<String> bucket = redissonClient.getBucket(SeatRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
             final String storedHoldKey = bucket.get();
@@ -109,12 +108,12 @@ public class RedissonHoldStore implements HoldStore {
         return redissonClient.getSetCache(SeatRedisKey.holdSeatIndex(performanceId), LongCodec.INSTANCE);
     }
 
-    private HoldSnapshot readSnapshot(final String holdKey) {
+    private Hold readHold(final String holdKey) {
         final RBucket<String> metaBucket = redissonClient.getBucket(SeatRedisKey.holdMeta(holdKey), StringCodec.INSTANCE);
         final String payload = metaBucket.get();
         if (payload == null) {
             return null;
         }
-        return holdSnapshotCodec.decode(payload);
+        return holdMetaCodec.decode(payload);
     }
 }
