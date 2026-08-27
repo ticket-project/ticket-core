@@ -61,7 +61,7 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 6. `core/core-app`
    - use case, 트랜잭션 경계, 조회 포트(`*ReadRepository`), 락·이벤트 포트를 본다.
 7. `core/core-domain`
-   - 엔티티, 도메인 정책, Aggregate Repository 계약, Redis port를 본다.
+   - 엔티티, 도메인 정책, 불변식, Aggregate Repository와 저장 기술에 중립적인 업무 계약을 본다.
 8. `core/core-infra`
    - Repository 어댑터, Querydsl 조회 구현, Redis, 락 구현, outbox, 외부 HTTP를 본다.
 9. 관련 테스트
@@ -74,7 +74,7 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 반대 방향은 `CoreLayerArchitectureTest`가 막는다.
 
 새 코드를 어디에 둘지 판단하는 절차와 자주 틀리는 지점은 **`/place-code` 스킬**이 원본이다.
-각 모듈이 무엇을 담는지와 27개 책임별 위치는 `docs/architecture.md`를 본다.
+각 모듈이 무엇을 담는지와 책임별 위치는 `docs/architecture.md`를 본다.
 
 ### 절대 금지 (ArchUnit이 실패시킨다)
 
@@ -127,7 +127,7 @@ use case(업무) 또는 infra relay(순수 전달)를 한 번 호출한다.
   실행한다(Docker 필요).
 - 구조나 모듈 경계를 건드렸으면 ArchUnit 구조 테스트를 먼저 돌린다.
 - 문서만 바꿨으면 Java 빌드 대신 `rg`와 `git diff --check`를 쓴다.
-- CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :bootstrap:bootJar`다.
+- CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :bootstrap:integrationTest :bootstrap:bootJar`다.
 
 각 테스트가 무엇을 고정하는지와 새 테스트를 쓰는 관례는 `docs/testing.md`를 본다.
 

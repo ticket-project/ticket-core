@@ -24,7 +24,7 @@ allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git
 | Redis adapter, key, TTL, expiration listener를 고쳤다 | `./gradlew :core:core-infra:integrationTest` (Docker 필요) |
 | 특정 테스트만 보고 싶다 | `./gradlew :core:core-app:test --tests "com.ticket.core.app.order.*"` |
 | 배포 산출물까지 확인한다 | `./gradlew clean :bootstrap:bootJar -x test` |
-| push·PR 직전 | `./gradlew test :core:core-infra:integrationTest :bootstrap:bootJar` (CI와 같은 명령) |
+| push·PR 직전 | `./gradlew test :core:core-infra:integrationTest :bootstrap:integrationTest :bootstrap:bootJar` (CI와 같은 명령) |
 | 문서만 바꿨다 | `rg -n "찾을_문구"` 와 `git diff --check` |
 
 Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.

@@ -199,7 +199,7 @@ local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create
 GitHub Actions 배포 workflow는 전체 테스트와 infra 통합 테스트를 통과한 뒤 bootJar를 만든다.
 
 ```bash
-./gradlew clean test :core:core-infra:integrationTest :bootstrap:bootJar
+./gradlew clean test :core:core-infra:integrationTest :bootstrap:integrationTest :bootstrap:bootJar
 ```
 
 관련 파일:

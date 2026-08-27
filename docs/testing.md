@@ -18,6 +18,7 @@
 | `CoreDomainArchitectureTest` | `core-domain`의 Spring 사용 범위 |
 | `CoreDomainModuleStructureTest` | 도메인 파일 배치 |
 | `CoreApiArchitectureTest` | `core-api`의 의존 제약 |
+| `BootstrapArchitectureTest` | 실행 모듈이 도메인에 직접 닿지 않는지, 트리거 위치 |
 
 새 코드의 위치가 의심스러우면 `CoreLayerArchitectureTest`부터 돌린다. 무엇을 막는지는
 [architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙)에 정리돼 있다.
@@ -28,10 +29,16 @@
 
 ## 통합 테스트
 
-`core:core-infra`에만 별도 sourceSet(`src/integrationTest`)이 있다. Redis에 실제로 붙어야 하는
-검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를 본다.
+`core:core-infra`와 `bootstrap`에 별도 sourceSet(`src/integrationTest`)이 있다. 실제 인프라에
+붙어야 하는 검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를 본다.
+
+- `core-infra`: Redis key, TTL, expiration listener, 분산락 등 어댑터 동작
+- `bootstrap`: `ApplicationContextLoadTest` — 전체 컨텍스트가 실제로 조립되는지
 
 Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트만으로 확인했다고 보지 않는다.
+
+**모듈 사이로 빈을 옮기는 변경은 `:bootstrap:integrationTest`까지 돌린다.** 단위 테스트는 각 클래스를
+직접 생성하므로 빈 배선이 깨져도 통과한다. 기동 실패는 컨텍스트를 통째로 띄워야 드러난다.
 
 ## 새 테스트를 추가할 때
 
@@ -55,6 +62,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - 테스트 클래스 이름은 대상 클래스 이름 + `Test`로 맞춘다. Controller 계약 테스트는 `...ContractTest`를 쓴다.
 - 도메인 규칙과 use case는 Spring 컨텍스트 없이 검증한다. port는 fake나 mock으로 대체한다.
 - Redis에 실제로 붙어야 하는 검증은 `core-infra`의 `src/integrationTest`에 둔다. 단위 테스트에 섞지 않는다.
+- 빈 배선과 기동 여부는 `bootstrap`의 `src/integrationTest`에 둔다.
 - 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 후처리 실패, 순서 역전**을 함께 고정한다.
 - 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로
   `execute는_DB_트랜잭션을_직접_시작하지_않는다`, `주문_저장_메서드는_트랜잭션으로_실행된다`가 있다.
