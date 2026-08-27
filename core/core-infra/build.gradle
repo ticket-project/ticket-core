@@ -17,9 +17,9 @@ dependencies {
     implementation variantOf(libs.querydsl.jpa) { classifier('jakarta') }
 
     testImplementation libs.archunit.junit5
-    testImplementation testFixtures(project(':core:core-domain'))
     testImplementation testFixtures(project(':core:core-app'))
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    // integrationTest의 실제 JPA·Querydsl 검증이 H2로 붙는다. src/test는 DB를 쓰지 않는다.
     testRuntimeOnly 'com.h2database:h2'
 
     compileOnly 'org.projectlombok:lombok'
