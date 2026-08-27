@@ -1,6 +1,7 @@
 package com.ticket.core.infra.order;
 
 import com.ticket.support.error.CoreException;
+import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
 import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
@@ -125,6 +126,6 @@ class HoldReleaseOutboxSchedulerTest {
 
     private HoldReleaseOutboxScheduler scheduler() {
         final Clock clock = Clock.fixed(Instant.parse("2026-03-25T03:00:00Z"), ZoneId.of("Asia/Seoul"));
-        return new HoldReleaseOutboxScheduler(holdReleaseOutboxRepository, holdReleaseOutboxExecutor, clock);
+        return new HoldReleaseOutboxScheduler(holdReleaseOutboxRepository, holdReleaseOutboxExecutor, new RecordingLockManager(), clock);
     }
 }

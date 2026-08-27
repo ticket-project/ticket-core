@@ -4,12 +4,14 @@ import com.ticket.core.domain.order.command.release.HoldReleaseTask;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
-import com.ticket.core.support.lock.DistributedLock;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.RecordingLockManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -33,6 +35,9 @@ class HoldReleaseTaskProcessorTest {
 
     @Mock
     private HoldManager holdManager;
+
+    @Spy
+    private RecordingLockManager lockManager = new RecordingLockManager();
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -108,13 +113,11 @@ class HoldReleaseTaskProcessorTest {
     }
 
     @Test
-    void holdsSeatLocksAcrossReleaseAndPublication() throws NoSuchMethodException {
-        final DistributedLock lock = HoldReleaseTaskProcessor.class
-                .getMethod("process", Long.class, HoldReleaseTask.class, LocalDateTime.class)
-                .getAnnotation(DistributedLock.class);
+    void holdsSeatLocksAcrossReleaseAndPublication() {
+        taskProcessor.process(1L, task(false), LocalDateTime.of(2026, 3, 15, 12, 0));
 
-        assertThat(lock.prefix()).isEqualTo("hold");
-        assertThat(lock.dynamicKey()).singleElement().asString().contains("task.seatIds");
+        assertThat(lockManager.lastAcquisition().keys())
+                .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
     }
 
     private HoldReleaseTask task(final boolean holdReleased) {

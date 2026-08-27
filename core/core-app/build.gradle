@@ -1,3 +1,7 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
 dependencies {
     implementation project(':core:core-domain')
     implementation project(':support:error')
@@ -7,6 +11,7 @@ dependencies {
 
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.15")
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+    testImplementation(testFixtures(project(':core:core-app')))
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

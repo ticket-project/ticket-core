@@ -6,10 +6,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.ticket.core.domain.auth.token.AuthRefreshToken;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import com.ticket.core.infra.auth.token.RedisRefreshTokenStore;
-import com.ticket.core.infra.lock.DistributedLockAop;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.LockManager;
+import com.ticket.core.app.lock.LockOptions;
+import com.ticket.core.infra.lock.RedissonLockKeyFormatter;
+import com.ticket.core.infra.lock.RedissonLockManager;
 import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
 import com.ticket.support.error.CoreException;
-import com.ticket.core.support.lock.DistributedLock;
 import com.ticket.core.infra.support.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -30,7 +33,6 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
-import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -40,6 +42,9 @@ import org.testcontainers.utility.DockerImageName;
 class CoreRedisIntegrationTest {
 
     private static final int REDIS_PORT = 6379;
+    private static final LockKey SAME_KEY = LockKey.seat(9_000L, 1L);
+    private static final LockKey LEFT_KEY = LockKey.seat(9_000L, 2L);
+    private static final LockKey RIGHT_KEY = LockKey.seat(9_000L, 3L);
 
     @Container
     private static final GenericContainer<?> REDIS = new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
@@ -128,16 +133,16 @@ class CoreRedisIntegrationTest {
 
     @Test
     void distributed_lock_serializes_same_key_but_not_different_keys() throws Exception {
-        LockedService proxy = lockedServiceProxy();
+        LockedService proxy = lockedService();
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch firstEntered = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         try {
-            Future<?> first = executor.submit(() -> proxy.execute("same-key", firstEntered, releaseFirst));
+            Future<?> first = executor.submit(() -> proxy.execute(SAME_KEY, firstEntered, releaseFirst));
             assertThat(firstEntered.await(2, TimeUnit.SECONDS)).isTrue();
 
             assertThatThrownBy(() -> proxy.execute(
-                    "same-key",
+                    SAME_KEY,
                     new CountDownLatch(1),
                     new CountDownLatch(0)
             )).isInstanceOf(CoreException.class);
@@ -147,8 +152,8 @@ class CoreRedisIntegrationTest {
 
             CountDownLatch bothEntered = new CountDownLatch(2);
             CountDownLatch releaseBoth = new CountDownLatch(1);
-            Future<?> left = executor.submit(() -> proxy.execute("left-key", bothEntered, releaseBoth));
-            Future<?> right = executor.submit(() -> proxy.execute("right-key", bothEntered, releaseBoth));
+            Future<?> left = executor.submit(() -> proxy.execute(LEFT_KEY, bothEntered, releaseBoth));
+            Future<?> right = executor.submit(() -> proxy.execute(RIGHT_KEY, bothEntered, releaseBoth));
             assertThat(bothEntered.await(2, TimeUnit.SECONDS)).isTrue();
             releaseBoth.countDown();
             left.get(5, TimeUnit.SECONDS);
@@ -160,11 +165,8 @@ class CoreRedisIntegrationTest {
         }
     }
 
-    private LockedService lockedServiceProxy() {
-        AspectJProxyFactory proxyFactory = new AspectJProxyFactory(new LockedService());
-        proxyFactory.setProxyTargetClass(true);
-        proxyFactory.addAspect(new DistributedLockAop(redissonClient));
-        return proxyFactory.getProxy();
+    private LockedService lockedService() {
+        return new LockedService(new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
     }
 
     private void awaitCondition(
@@ -218,19 +220,23 @@ class CoreRedisIntegrationTest {
         boolean getAsBoolean() throws Exception;
     }
 
-    static class LockedService {
+    /**
+     * 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다.
+     */
+    record LockedService(LockManager lockManager) {
 
-        @DistributedLock(
-                prefix = "integration-test",
-                dynamicKey = "#key",
-                waitTime = 100L,
-                leaseTime = 5_000L
-        )
-        public void execute(
-                final String key,
+        private static final LockOptions OPTIONS = LockOptions.waiting(Duration.ofMillis(100))
+                .withLeaseTime(Duration.ofSeconds(5));
+
+        void execute(
+                final LockKey key,
                 final CountDownLatch entered,
                 final CountDownLatch release
         ) {
+            lockManager.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));
+        }
+
+        private void holdUntilReleased(final CountDownLatch entered, final CountDownLatch release) {
             entered.countDown();
             try {
                 if (!release.await(5, TimeUnit.SECONDS)) {

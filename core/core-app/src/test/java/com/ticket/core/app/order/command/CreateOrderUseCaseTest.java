@@ -1,6 +1,8 @@
 package com.ticket.core.app.order.command;
 
 import com.ticket.support.error.CoreException;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderValidator;
@@ -58,6 +60,7 @@ class CreateOrderUseCaseTest {
     @Mock
     private HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
 
+    private final RecordingLockManager lockManager = new RecordingLockManager();
     private CreateOrderUseCase createOrderUseCase;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
@@ -65,6 +68,7 @@ class CreateOrderUseCaseTest {
     @BeforeEach
     void setUp() {
         createOrderUseCase = new CreateOrderUseCase(
+                lockManager,
                 validator,
                 holdAllocator,
                 createPendingOrderTxService,

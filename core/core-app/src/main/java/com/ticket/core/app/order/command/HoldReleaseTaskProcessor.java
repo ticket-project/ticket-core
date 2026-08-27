@@ -4,7 +4,9 @@ import com.ticket.core.domain.order.command.release.HoldReleaseTask;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
-import com.ticket.core.support.lock.DistributedLock;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.LockManager;
+import com.ticket.core.app.lock.LockOptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,16 +18,21 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class HoldReleaseTaskProcessor {
 
+    private final LockManager lockManager;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
     private final SeatStatusPublisher seatStatusPublisher;
     private final HoldReleaseOutboxTransactionService transactionService;
 
-    @DistributedLock(
-            prefix = "hold",
-            dynamicKey = "#task.seatIds().![#task.performanceId() + ':' + #this]"
-    )
     public void process(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
+        lockManager.withLock(
+                LockKey.seats(task.performanceId(), task.seatIds()),
+                LockOptions.defaults(),
+                () -> releaseAndPublish(outboxId, task, now)
+        );
+    }
+
+    private void releaseAndPublish(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
         releaseHoldOnce(outboxId, task, now);
         final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(task);
         if (publishableSeatIds.isEmpty()) {

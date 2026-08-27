@@ -2,11 +2,13 @@ package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.app.order.command.HoldCreationOutboxTransactionService;
-import com.ticket.core.support.lock.DistributedLock;
+import com.ticket.core.app.lock.LockKey;
+import com.ticket.core.app.lock.RecordingLockManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -22,6 +24,9 @@ import static org.mockito.Mockito.when;
 class HoldCreationOutboxExecutorTest {
 
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 12, 0);
+
+    @Spy
+    private RecordingLockManager lockManager = new RecordingLockManager();
 
     @Mock
     private HoldCreationOutboxTransactionService transactionService;
@@ -64,12 +69,14 @@ class HoldCreationOutboxExecutorTest {
     }
 
     @Test
-    void entryLockContentionIsExpected() throws NoSuchMethodException {
-        final DistributedLock lock = HoldCreationOutboxExecutor.class
-                .getMethod("process", Long.class, LocalDateTime.class)
-                .getAnnotation(DistributedLock.class);
+    void entryLockContentionIsExpected() {
+        when(transactionService.load(99L)).thenReturn(null);
 
-        assertThat(lock.warnOnFailure()).isFalse();
+        executor.process(99L, FIXED_NOW);
+
+        assertThat(lockManager.lastAcquisition().keys())
+                .containsExactly(LockKey.holdCreationOutboxEntry(99L));
+        assertThat(lockManager.lastAcquisition().options().warnOnFailure()).isFalse();
     }
 
     private Hold hold() {
