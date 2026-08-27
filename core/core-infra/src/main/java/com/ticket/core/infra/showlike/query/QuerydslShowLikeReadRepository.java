@@ -5,11 +5,8 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.support.cursor.CursorPage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,7 +22,7 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> findMyLikedShows(
+    public CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> findMyLikedShows(
             final Long memberId,
             final Long cursorLikeId,
             final int size
@@ -57,7 +54,7 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
                 .fetch();
 
         if (rows.isEmpty()) {
-            return emptyCursorSlice(size);
+            return CursorPage.empty();
         }
 
         final boolean hasNext = rows.size() > size;
@@ -67,13 +64,8 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
                 .map(this::mapRow)
                 .toList();
 
-        final Slice<GetMyShowLikesUseCase.ShowLikeSummary> slice = new SliceImpl<>(items, PageRequest.of(0, size), hasNext);
-        final String nextCursor = hasNext ? String.valueOf(pageRows.get(pageRows.size() - 1).get(showLike.id)) : null;
-        return new CursorSlice<>(slice, nextCursor);
-    }
-
-    private <T> CursorSlice<T> emptyCursorSlice(final int size) {
-        return new CursorSlice<>(new SliceImpl<>(List.of(), PageRequest.of(0, size), false), null);
+        final Long nextPosition = hasNext ? pageRows.get(pageRows.size() - 1).get(showLike.id) : null;
+        return new CursorPage<>(items, hasNext, nextPosition);
     }
 
     private GetMyShowLikesUseCase.ShowLikeSummary mapRow(final Tuple tuple) {

@@ -1,16 +1,12 @@
 package com.ticket.core.infra.show.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.core.domain.show.meta.ShowSortKey;
-import com.ticket.core.infra.show.query.ShowSortSupport.SortOrder;
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.app.support.cursor.CursorCodec;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
+import com.ticket.core.infra.show.query.ShowSortSupport.SortOrder;
+import com.ticket.support.error.CoreException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -21,30 +17,31 @@ import java.util.List;
 
 import static com.ticket.core.domain.show.model.QShow.show;
 
+/**
+ * 커서 위치를 SQL 조건으로 바꾸고, 마지막 행에서 다음 커서 위치를 만든다.
+ *
+ * <p>커서의 wire 표현(Base64 문자열)은 core-api가 소유한다. 여기서는 타입 값만 다룬다.
+ */
 @Component
-@RequiredArgsConstructor
 public class ShowCursorPolicy {
 
-    private final CursorCodec cursorCodec;
-
-    public void applyCursor(final BooleanBuilder where, final String cursor, final SortOrder sortOrder) {
-        if (StringUtils.hasText(cursor)) {
-            try {
-                final ShowCursor showCursor = cursorCodec.decode(cursor);
-                validateCursorMatchesRequest(showCursor, sortOrder);
-                where.and(cursorCondition(showCursor, sortOrder));
-            } catch (IllegalArgumentException | DateTimeParseException ex) {
-                throw new CoreException(ApplicationErrorType.INVALID_INPUT, "cursor 형식이 올바르지 않습니다.");
-            }
+    public void applyCursor(final BooleanBuilder where, final ShowCursor cursor, final SortOrder sortOrder) {
+        if (cursor == null) {
+            return;
+        }
+        try {
+            validateCursorMatchesRequest(cursor, sortOrder);
+            where.and(cursorCondition(cursor, sortOrder));
+        } catch (IllegalArgumentException | DateTimeParseException ex) {
+            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "cursor 형식이 올바르지 않습니다.");
         }
     }
 
-    public String buildNextCursor(final List<Tuple> rows, final int size, final SortOrder sortOrder) {
+    public ShowCursor buildNextPosition(final List<Tuple> rows, final int size, final SortOrder sortOrder) {
         final Tuple lastRow = rows.get(size - 1);
         final Long lastId = lastRow.get(show.id);
         final String lastValue = resolveLastValue(lastRow, sortOrder);
-        final ShowCursor next = new ShowCursor(sortOrder.key(), sortOrder.direction().name(), lastValue, lastId);
-        return cursorCodec.encode(next);
+        return new ShowCursor(sortOrder.key(), sortOrder.direction().name(), lastValue, lastId);
     }
 
     private void validateCursorMatchesRequest(final ShowCursor cursor, final SortOrder sortOrder) {

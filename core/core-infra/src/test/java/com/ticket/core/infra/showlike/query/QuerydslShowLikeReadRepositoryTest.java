@@ -7,7 +7,7 @@ import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.venue.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.support.cursor.CursorPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,32 +44,32 @@ class QuerydslShowLikeReadRepositoryTest extends InfraReadRepositoryTestSupport 
 
     @Test
     void 찜한_공연을_최신순으로_조회한다() {
-        CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> result = showLikeReadRepository.findMyLikedShows(memberId, null, 2);
+        CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> result = showLikeReadRepository.findMyLikedShows(memberId, null, 2);
 
-        assertThat(result.slice().getContent()).extracting(GetMyShowLikesUseCase.ShowLikeSummary::title)
+        assertThat(result.items()).extracting(GetMyShowLikesUseCase.ShowLikeSummary::title)
                 .containsExactly("세번째 공연", "두번째 공연");
-        assertThat(result.nextCursor()).isNotBlank();
-        assertThat(result.slice().hasNext()).isTrue();
+        assertThat(result.nextPosition()).isNotNull();
+        assertThat(result.hasNext()).isTrue();
     }
 
     @Test
     void 커서_이후의_찜한_공연을_조회한다() {
-        CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> firstPage = showLikeReadRepository.findMyLikedShows(memberId, null, 1);
-        CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> secondPage =
-                showLikeReadRepository.findMyLikedShows(memberId, Long.parseLong(firstPage.nextCursor()), 1);
+        CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> firstPage = showLikeReadRepository.findMyLikedShows(memberId, null, 1);
+        CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> secondPage =
+                showLikeReadRepository.findMyLikedShows(memberId, firstPage.nextPosition(), 1);
 
-        assertThat(firstPage.slice().getContent()).extracting(GetMyShowLikesUseCase.ShowLikeSummary::title)
+        assertThat(firstPage.items()).extracting(GetMyShowLikesUseCase.ShowLikeSummary::title)
                 .containsExactly("세번째 공연");
-        assertThat(secondPage.slice().getContent()).extracting(GetMyShowLikesUseCase.ShowLikeSummary::title)
+        assertThat(secondPage.items()).extracting(GetMyShowLikesUseCase.ShowLikeSummary::title)
                 .containsExactly("두번째 공연");
     }
 
     @Test
     void 찜한_공연이_없으면_빈_슬라이스를_반환한다() {
-        CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> result = showLikeReadRepository.findMyLikedShows(-1L, null, 10);
+        CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> result = showLikeReadRepository.findMyLikedShows(-1L, null, 10);
 
-        assertThat(result.slice().getContent()).isEmpty();
-        assertThat(result.slice().hasNext()).isFalse();
-        assertThat(result.nextCursor()).isNull();
+        assertThat(result.items()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextPosition()).isNull();
     }
 }

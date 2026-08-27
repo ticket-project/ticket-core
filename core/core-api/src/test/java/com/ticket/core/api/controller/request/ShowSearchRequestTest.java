@@ -1,11 +1,16 @@
 package com.ticket.core.api.controller.request;
 
+import com.ticket.core.api.error.ApiErrorType;
+import com.ticket.core.api.support.cursor.ShowCursorCodec;
+import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.app.show.query.model.ShowCursor;
+import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.app.show.query.model.ShowSearchCriteria;
+import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
 
@@ -14,6 +19,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowSearchRequestTest {
+
+    private static final ShowCursorCodec CURSOR_CODEC =
+            new ShowCursorCodec(JsonMapper.builder().build());
+
+    private static final ShowCursor CURSOR_POSITION =
+            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+
+    private static final String ENCODED_CURSOR = CURSOR_CODEC.encode(CURSOR_POSITION);
 
     @Test
     void 요청값을_domain_검색조건으로_변환한다() {
@@ -24,10 +37,10 @@ class ShowSearchRequestTest {
                 LocalDate.of(2026, 4, 1),
                 LocalDate.of(2026, 4, 30),
                 "SEOUL",
-                "cursor-1"
+                ENCODED_CURSOR
         );
 
-        ShowSearchCriteria criteria = request.toCriteria();
+        ShowSearchCriteria criteria = request.toCriteria(CURSOR_CODEC);
 
         assertThat(criteria.getKeyword()).isEqualTo("뮤지컬");
         assertThat(criteria.getCategory()).isEqualTo("MUSICAL");
@@ -35,7 +48,28 @@ class ShowSearchRequestTest {
         assertThat(criteria.getStartDateFrom()).isEqualTo(LocalDate.of(2026, 4, 1));
         assertThat(criteria.getStartDateTo()).isEqualTo(LocalDate.of(2026, 4, 30));
         assertThat(criteria.getRegion()).isEqualTo(Region.SEOUL);
-        assertThat(criteria.getCursor()).isEqualTo("cursor-1");
+        assertThat(criteria.getCursor()).isEqualTo(CURSOR_POSITION);
+    }
+
+    @Test
+    void cursor가_없으면_첫_페이지로_조회한다() {
+        ShowSearchRequest request = new ShowSearchRequest(
+                "뮤지컬", "MUSICAL", "ON_SALE", null, null, "SEOUL", null
+        );
+
+        assertThat(request.toCriteria(CURSOR_CODEC).getCursor()).isNull();
+    }
+
+    @Test
+    void 해석할_수_없는_cursor_문자열이면_invalid_request_예외를_던진다() {
+        ShowSearchRequest request = new ShowSearchRequest(
+                "뮤지컬", "MUSICAL", "ON_SALE", null, null, "SEOUL", "cursor-1"
+        );
+
+        assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ApiErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -47,10 +81,10 @@ class ShowSearchRequestTest {
                 LocalDate.of(2026, 4, 1),
                 LocalDate.of(2026, 4, 30),
                 "NOWHERE",
-                "cursor-1"
+                ENCODED_CURSOR
         );
 
-        assertThatThrownBy(request::toCriteria)
+        assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ApplicationErrorType.INVALID_INPUT));
@@ -68,8 +102,9 @@ class ShowSearchRequestTest {
                 null
         );
 
-        assertThatThrownBy(request::toCriteria)
+        assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
+                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 }

@@ -1,12 +1,14 @@
 package com.ticket.core.app.show.query;
 
+import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.support.cursor.CursorPage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -17,12 +19,12 @@ public class SearchShowsUseCase {
     public record Input(ShowSearchCriteria request, int size, ShowSort sort) {
     }
 
-    public record Output(Slice<ShowSearchItemView> shows, String nextCursor) {
+    public record Output(List<ShowSearchItemView> items, boolean hasNext, ShowCursor nextPosition) {
     }
 
     public Output execute(final Input input) {
-        final CursorSlice<ShowSearchItemView> result = showListReadRepository.searchShows(
+        final CursorPage<ShowSearchItemView, ShowCursor> page = showListReadRepository.searchShows(
                 input.request(), input.size(), input.sort().apiValue());
-        return new Output(result.slice(), result.nextCursor());
+        return new Output(page.items(), page.hasNext(), page.nextPosition());
     }
 }

@@ -1,10 +1,15 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.support.cursor.CursorPage;
 
+/**
+ * 내 찜 목록 읽기 전용 조회 포트다.
+ *
+ * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 core-api가 한다.
+ */
 public interface ShowLikeReadRepository {
 
-    CursorSlice<GetMyShowLikesUseCase.ShowLikeSummary> findMyLikedShows(
+    CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> findMyLikedShows(
             Long memberId,
             Long cursorLikeId,
             int size

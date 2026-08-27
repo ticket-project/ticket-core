@@ -3,13 +3,14 @@ package com.ticket.core.app.show.query;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.show.query.model.ShowCursor;
+import com.ticket.core.domain.show.meta.ShowSortKey;
+import com.ticket.core.app.support.cursor.CursorPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.SliceImpl;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +22,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SearchShowsUseCaseTest {
+
+    private static final ShowCursor NEXT_POSITION =
+            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
 
     @Mock
     private ShowListReadRepository showListReadRepository;
@@ -41,26 +45,28 @@ class SearchShowsUseCaseTest {
                 Region.SEOUL,
                 10L
         );
-        CursorSlice<ShowSearchItemView> result = new CursorSlice<>(new SliceImpl<>(List.of(item)), "next");
+        CursorPage<ShowSearchItemView, ShowCursor> result = new CursorPage<>(List.of(item), true, NEXT_POSITION);
         when(showListReadRepository.searchShows(request, 20, "popular")).thenReturn(result);
 
         SearchShowsUseCase.Output output = useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
-        assertThat(output.shows().getContent()).containsExactly(item);
-        assertThat(output.nextCursor()).isEqualTo("next");
+        assertThat(output.items()).containsExactly(item);
+        assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
+        assertThat(output.hasNext()).isTrue();
         verify(showListReadRepository).searchShows(request, 20, "popular");
     }
 
     @Test
     void 검색_결과가_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowSearchCriteria request = new ShowSearchCriteria("missing", null, null, null, null, null, null);
-        CursorSlice<ShowSearchItemView> result = new CursorSlice<>(new SliceImpl<>(List.of()), null);
+        CursorPage<ShowSearchItemView, ShowCursor> result = new CursorPage<>(List.of(), false, null);
         when(showListReadRepository.searchShows(request, 20, "popular")).thenReturn(result);
 
         SearchShowsUseCase.Output output = useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
-        assertThat(output.shows().getContent()).isEmpty();
-        assertThat(output.nextCursor()).isNull();
+        assertThat(output.items()).isEmpty();
+        assertThat(output.nextPosition()).isNull();
+        assertThat(output.hasNext()).isFalse();
         verify(showListReadRepository).searchShows(request, 20, "popular");
     }
 }

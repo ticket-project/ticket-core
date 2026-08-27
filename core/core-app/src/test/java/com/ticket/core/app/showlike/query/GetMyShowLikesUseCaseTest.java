@@ -1,11 +1,10 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.app.support.cursor.CursorPage;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,7 +13,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.SliceImpl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,7 +39,7 @@ class GetMyShowLikesUseCaseTest {
     private GetMyShowLikesUseCase useCase;
 
     @Test
-    void 찜한_공연_목록을_커서와_함께_조회한다() {
+    void 찜한_공연_목록을_다음_커서_위치와_함께_조회한다() {
         Member member = mock(Member.class);
         GetMyShowLikesUseCase.ShowLikeSummary summary = new GetMyShowLikesUseCase.ShowLikeSummary(
                 2L,
@@ -55,21 +53,14 @@ class GetMyShowLikesUseCaseTest {
         when(member.getId()).thenReturn(1L);
         when(memberRepository.getActiveById(1L)).thenReturn(member);
         when(showLikeReadRepository.findMyLikedShows(1L, 10L, 20))
-                .thenReturn(new CursorSlice<>(new SliceImpl<>(List.of(summary)), "9"));
+                .thenReturn(new CursorPage<>(List.of(summary), true, 9L));
 
-        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, "10", 20));
+        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, 10L, 20));
 
-        assertThat(output.shows().getContent()).containsExactly(summary);
-        assertThat(output.nextCursor()).isEqualTo("9");
+        assertThat(output.items()).containsExactly(summary);
+        assertThat(output.hasNext()).isTrue();
+        assertThat(output.nextPosition()).isEqualTo(9L);
         verify(showLikeReadRepository).findMyLikedShows(1L, 10L, 20);
-    }
-
-    @Test
-    void cursor가_숫자가_아니면_예외를_던진다() {
-        assertThatThrownBy(() -> useCase.execute(new GetMyShowLikesUseCase.Input(1L, "abc", 20)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
     }
 
     @ParameterizedTest
@@ -82,17 +73,18 @@ class GetMyShowLikesUseCaseTest {
     }
 
     @Test
-    void cursor가_비어있으면_첫_페이지를_조회한다() {
+    void 커서_위치가_없으면_첫_페이지를_조회한다() {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
         when(memberRepository.getActiveById(1L)).thenReturn(member);
         when(showLikeReadRepository.findMyLikedShows(1L, null, 20))
-                .thenReturn(new CursorSlice<>(new SliceImpl<>(List.of()), null));
+                .thenReturn(CursorPage.empty());
 
-        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, " ", 20));
+        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
 
-        assertThat(output.shows().getContent()).isEmpty();
-        assertThat(output.nextCursor()).isNull();
+        assertThat(output.items()).isEmpty();
+        assertThat(output.hasNext()).isFalse();
+        assertThat(output.nextPosition()).isNull();
         verify(showLikeReadRepository).findMyLikedShows(1L, null, 20);
     }
 

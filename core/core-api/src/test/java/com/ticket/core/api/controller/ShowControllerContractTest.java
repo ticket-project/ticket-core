@@ -16,12 +16,18 @@ import com.ticket.core.app.show.query.SearchShowsUseCase;
 import com.ticket.core.app.show.query.model.ShowListItemView;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.ticket.core.api.support.cursor.ShowCursorCodec;
+import com.ticket.core.app.show.query.model.ShowCursor;
+import com.ticket.core.domain.show.meta.ShowSortKey;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +39,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowControllerContractTest {
+
+    private static final ShowCursor NEXT_POSITION =
+            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+
+    /** 기존 wire 포맷을 유지한다: URL-safe Base64(JSON(ShowCursor)). */
+    private static final String EXPECTED_NEXT_CURSOR = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(
+                    JsonMapper.builder().build().writeValueAsString(NEXT_POSITION)
+                            .getBytes(StandardCharsets.UTF_8));
+
 
     @Test
     void 공연_목록_api는_슬라이스_응답_계약을_유지한다() throws Exception {
@@ -46,7 +62,8 @@ class ShowControllerContractTest {
                 mock(CountSearchShowsUseCase.class),
                 mock(GetShowDetailUseCase.class),
                 mock(GetShowSeatsUseCase.class),
-                mock(GetVenueLayoutUseCase.class)
+                mock(GetVenueLayoutUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build())
         );
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
@@ -67,16 +84,16 @@ class ShowControllerContractTest {
                 "장소"
         );
         when(getShowsUseCase.execute(any(GetShowsUseCase.Input.class)))
-                .thenReturn(new GetShowsUseCase.Output(new SliceImpl<>(List.of(show)), "next"));
+                .thenReturn(new GetShowsUseCase.Output(List.of(show), true, NEXT_POSITION));
 
-        mockMvc.perform(get("/api/v1/shows"))
+        mockMvc.perform(get("/api/v1/shows").param("size", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.items[0].id").value(1))
-                .andExpect(jsonPath("$.data.hasNext").value(false))
-                .andExpect(jsonPath("$.data.size").value(1))
+                .andExpect(jsonPath("$.data.hasNext").value(true))
+                .andExpect(jsonPath("$.data.size").value(5))
                 .andExpect(jsonPath("$.data.numberOfElements").value(1))
-                .andExpect(jsonPath("$.data.nextCursor").value("next"))
+                .andExpect(jsonPath("$.data.nextCursor").value(EXPECTED_NEXT_CURSOR))
                 .andExpect(jsonPath("$.error").isEmpty());
     }
 
@@ -92,7 +109,8 @@ class ShowControllerContractTest {
                 mock(CountSearchShowsUseCase.class),
                 mock(GetShowDetailUseCase.class),
                 mock(GetShowSeatsUseCase.class),
-                mock(GetVenueLayoutUseCase.class)
+                mock(GetVenueLayoutUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build())
         );
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
@@ -107,13 +125,13 @@ class ShowControllerContractTest {
                 10L
         );
         when(searchShowsUseCase.execute(any(SearchShowsUseCase.Input.class)))
-                .thenReturn(new SearchShowsUseCase.Output(new SliceImpl<>(List.of(item)), "cursor-1"));
+                .thenReturn(new SearchShowsUseCase.Output(List.of(item), true, NEXT_POSITION));
 
         mockMvc.perform(get("/api/v1/shows/search").param("keyword", "공연"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.items[0].id").value(1))
-                .andExpect(jsonPath("$.data.nextCursor").value("cursor-1"))
+                .andExpect(jsonPath("$.data.nextCursor").value(EXPECTED_NEXT_CURSOR))
                 .andExpect(jsonPath("$.error").isEmpty());
     }
     @Test
@@ -128,7 +146,8 @@ class ShowControllerContractTest {
                 mock(CountSearchShowsUseCase.class),
                 getShowDetailUseCase,
                 mock(GetShowSeatsUseCase.class),
-                mock(GetVenueLayoutUseCase.class)
+                mock(GetVenueLayoutUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build())
         );
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 

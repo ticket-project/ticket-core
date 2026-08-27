@@ -1,19 +1,17 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.app.support.cursor.CursorPage;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.support.error.CoreException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,7 +23,10 @@ public class GetMyShowLikesUseCase {
     private final MemberRepository memberRepository;
     private final ShowLikeReadRepository showLikeReadRepository;
 
-    public record Input(Long memberId, String cursor, int size) {
+    /**
+     * @param cursorLikeId 이전 페이지 마지막 찜 id. 첫 페이지면 null이다.
+     */
+    public record Input(Long memberId, Long cursorLikeId, int size) {
     }
 
     public record ShowLikeSummary(
@@ -39,28 +40,15 @@ public class GetMyShowLikesUseCase {
     ) {
     }
 
-    public record Output(Slice<ShowLikeSummary> shows, String nextCursor) {
+    public record Output(List<ShowLikeSummary> items, boolean hasNext, Long nextPosition) {
     }
 
     public Output execute(final Input input) {
         validateInput(input);
         final Member member = memberRepository.getActiveById(input.memberId());
-        final Long cursorLikeId = parseCursor(input.cursor());
-        final CursorSlice<ShowLikeSummary> result =
-                showLikeReadRepository.findMyLikedShows(member.getId(), cursorLikeId, input.size());
-        return new Output(result.slice(), result.nextCursor());
-    }
-
-    private Long parseCursor(final String cursor) {
-        if (!StringUtils.hasText(cursor)) {
-            return null;
-        }
-
-        try {
-            return Long.parseLong(cursor);
-        } catch (final NumberFormatException exception) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "cursor 형식이 올바르지 않습니다.");
-        }
+        final CursorPage<ShowLikeSummary, Long> page =
+                showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
+        return new Output(page.items(), page.hasNext(), page.nextPosition());
     }
 
     private void validateInput(final Input input) {

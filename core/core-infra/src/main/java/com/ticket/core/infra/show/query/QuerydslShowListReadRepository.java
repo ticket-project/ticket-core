@@ -16,11 +16,9 @@ import com.ticket.core.app.show.query.model.ShowParam;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
 import com.ticket.core.app.show.query.model.ShowSummaryView;
-import com.ticket.core.app.support.cursor.CursorSlice;
+import com.ticket.core.app.show.query.model.ShowCursor;
+import com.ticket.core.app.support.cursor.CursorPage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -48,7 +46,7 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
     @Override
-    public CursorSlice<ShowListItemView> findAllBySearch(final ShowParam param, final int size, final String sort) {
+    public CursorPage<ShowListItemView, ShowCursor> findAllBySearch(final ShowParam param, final int size, final String sort) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
         final BooleanBuilder where = showConditionFactory.buildMainListCondition(param, sortOrder);
 
@@ -101,7 +99,7 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
     }
 
     @Override
-    public CursorSlice<ShowOpeningSoonDetailView> findSaleOpeningSoonPage(
+    public CursorPage<ShowOpeningSoonDetailView, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param,
             final int size,
             final String sort
@@ -120,7 +118,7 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
     }
 
     @Override
-    public CursorSlice<ShowSearchItemView> searchShows(
+    public CursorPage<ShowSearchItemView, ShowCursor> searchShows(
             final ShowSearchCriteria request,
             final int size,
             final String sort
@@ -152,9 +150,9 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
         return count != null ? count : 0L;
     }
 
-    private <T> CursorSlice<T> findCursorPage(
+    private <T> CursorPage<T, ShowCursor> findCursorPage(
             final int size,
-            final String cursor,
+            final ShowCursor cursor,
             final BooleanBuilder where,
             final SortOrder sortOrder,
             final Function<QueryPageContext, List<Tuple>> rowFetcher,
@@ -173,19 +171,18 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
         final List<Tuple> rows = rowFetcher.apply(context);
         final List<Long> ids = extractIds(rows);
         if (ids.isEmpty()) {
-            return emptyCursorSlice(size);
+            return CursorPage.empty();
         }
 
         final List<T> results = new ArrayList<>(resultFetcher.apply(context, ids));
         final boolean hasNext = results.size() > size;
         final List<T> pageResults = hasNext ? results.subList(0, size) : results;
 
-        final Slice<T> slice = new SliceImpl<>(pageResults, PageRequest.of(0, size), hasNext);
-        final String nextCursor = hasNext
-                ? showCursorPolicy.buildNextCursor(rows, size, sortOrder)
+        final ShowCursor nextPosition = hasNext
+                ? showCursorPolicy.buildNextPosition(rows, size, sortOrder)
                 : null;
 
-        return new CursorSlice<>(slice, nextCursor);
+        return new CursorPage<>(List.copyOf(pageResults), hasNext, nextPosition);
     }
 
     private List<Tuple> fetchShowPageRows(final QueryPageContext context) {
@@ -273,10 +270,6 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
 
     private List<Long> extractIds(final List<Tuple> rows) {
         return rows.stream().map(t -> t.get(show.id)).toList();
-    }
-
-    private <T> CursorSlice<T> emptyCursorSlice(final int size) {
-        return new CursorSlice<>(new SliceImpl<>(List.of(), PageRequest.of(0, size), false), null);
     }
 
     private ShowSummaryView toShowSummaryResponse(final Tuple tuple) {

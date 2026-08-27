@@ -3,10 +3,10 @@ package com.ticket.core.api.controller.docs;
 import com.ticket.core.api.controller.request.ShowSearchRequest;
 import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
-import com.ticket.core.app.show.query.model.SaleOpeningSoonSearchParam;
+import com.ticket.core.api.controller.request.SaleOpeningSoonRequest;
+import com.ticket.core.api.controller.request.ShowListRequest;
 import com.ticket.core.app.show.query.model.ShowListItemView;
 import com.ticket.core.app.show.query.model.ShowOpeningSoonDetailView;
-import com.ticket.core.app.show.query.model.ShowParam;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
 import com.ticket.core.app.show.query.CountSearchShowsUseCase;
 import com.ticket.core.app.show.query.GetLatestShowsUseCase;
@@ -147,7 +147,7 @@ public interface ShowControllerDocs {
             )
     })
     ApiResponse<SliceResponse<ShowListItemView>> getShowsPage(
-            @ParameterObject ShowParam param,
+            @ParameterObject ShowListRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") int size,
             @Parameter(description = "정렬 기준 [popular(인기순), latest(최신순), showStartApproaching(공연임박순)]", example = "popular") String sort
     );
@@ -281,7 +281,7 @@ public interface ShowControllerDocs {
             )
     })
     ApiResponse<SliceResponse<ShowOpeningSoonDetailView>> getShowsSaleOpeningSoonPage(
-            @ParameterObject SaleOpeningSoonSearchParam param,
+            @ParameterObject SaleOpeningSoonRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 16)", example = "16") int size,
             @Parameter(description = "정렬 기준 [saleStartApproaching(판매시작일순), popular(인기순), latest(최신순)]", example = "saleStartApproaching") String sort
     );

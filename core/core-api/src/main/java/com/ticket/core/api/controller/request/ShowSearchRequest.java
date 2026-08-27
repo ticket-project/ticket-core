@@ -1,5 +1,6 @@
 package com.ticket.core.api.controller.request;
 
+import com.ticket.core.api.support.cursor.ShowCursorCodec;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class ShowSearchRequest {
     private String region;
     private String cursor;
 
-    public ShowSearchCriteria toCriteria() {
+    public ShowSearchCriteria toCriteria(final ShowCursorCodec cursorCodec) {
         return ShowSearchCriteria.of(
                 keyword,
                 category,
@@ -33,7 +34,7 @@ public class ShowSearchRequest {
                 startDateFrom,
                 startDateTo,
                 region,
-                cursor
+                cursorCodec.decode(cursor)
         );
     }
 }
