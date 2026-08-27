@@ -1,6 +1,6 @@
 package com.ticket.core.infra.order.query;
 
-import com.ticket.core.app.order.query.OrderQueryRepository;
+import com.ticket.core.app.order.query.OrderReadRepository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
@@ -14,7 +14,7 @@ import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.support.QueryRepositoryTestSupport;
+import com.ticket.core.domain.support.ReadRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +26,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(QuerydslOrderQueryRepository.class)
+@Import(QuerydslOrderReadRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslOrderQueryRepositoryTest extends QueryRepositoryTestSupport {
+class QuerydslOrderReadRepositoryTest extends ReadRepositoryTestSupport {
 
     @Autowired
-    private OrderQueryRepository repository;
+    private OrderReadRepository repository;
 
     private Long memberId;
     private String orderKey;

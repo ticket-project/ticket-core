@@ -20,7 +20,7 @@ import java.util.Set;
 public class GetSeatAvailabilityUseCase {
 
     private final PerformanceRepository performanceRepository;
-    private final SeatAvailabilityQueryRepository seatAvailabilityQueryRepository;
+    private final SeatAvailabilityReadRepository seatAvailabilityReadRepository;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
     private final SeatAvailabilityCalculator seatAvailabilityCalculator;
@@ -46,7 +46,7 @@ public class GetSeatAvailabilityUseCase {
         }
 
         return new Output(seatAvailabilityCalculator.calculate(
-                seatAvailabilityQueryRepository.findAvailableSeatRows(performance.getId(), performance.getShow().getId()),
+                seatAvailabilityReadRepository.findAvailableSeatRows(performance.getId(), performance.getShow().getId()),
                 mergeRedisOccupiedIds(performance.getId())
         ));
     }

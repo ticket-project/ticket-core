@@ -1,6 +1,6 @@
 package com.ticket.core.app.show.query;
 
-import com.ticket.core.app.show.query.ShowListQueryRepository;
+import com.ticket.core.app.show.query.ShowListReadRepository;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CountSearchShowsUseCase {
-    private final ShowListQueryRepository showListQueryRepository;
+    private final ShowListReadRepository showListReadRepository;
 
     public record Input(ShowSearchCriteria request) {
     }
@@ -23,6 +23,6 @@ public class CountSearchShowsUseCase {
     }
 
     public Output execute(final Input input) {
-        return new Output(showListQueryRepository.countSearchShows(input.request));
+        return new Output(showListReadRepository.countSearchShows(input.request));
     }
 }

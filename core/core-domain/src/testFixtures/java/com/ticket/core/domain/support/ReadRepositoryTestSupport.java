@@ -39,7 +39,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = QueryRepositoryTestSupport.TestApplication.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = ReadRepositoryTestSupport.TestApplication.class)
 @TestPropertySource(properties = {
         "spring.profiles.active=test",
         "spring.datasource.url=jdbc:h2:mem:query-repository-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
@@ -56,12 +56,12 @@ import java.time.ZoneId;
 })
 @Transactional
 @Import({
-        QueryRepositoryTestSupport.QuerydslTestConfig.class,
-        QueryRepositoryTestSupport.TestConfig.class,
-        QueryRepositoryTestSupport.AuditingTestConfig.class
+        ReadRepositoryTestSupport.QuerydslTestConfig.class,
+        ReadRepositoryTestSupport.TestConfig.class,
+        ReadRepositoryTestSupport.AuditingTestConfig.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-public abstract class QueryRepositoryTestSupport {
+public abstract class ReadRepositoryTestSupport {
 
     @Autowired
     protected EntityManager entityManager;

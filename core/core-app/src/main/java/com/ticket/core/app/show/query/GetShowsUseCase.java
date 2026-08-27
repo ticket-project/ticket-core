@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowsUseCase {
-    private final ShowListQueryRepository showListQueryRepository;
+    private final ShowListReadRepository showListReadRepository;
 
     public record Input(ShowParam param, int size, ShowSort sort) {
     }
@@ -23,7 +23,7 @@ public class GetShowsUseCase {
     }
 
     public Output execute(final Input input) {
-        final CursorSlice<ShowListItemView> result = showListQueryRepository.findAllBySearch(
+        final CursorSlice<ShowListItemView> result = showListReadRepository.findAllBySearch(
                 input.param(), input.size(), input.sort().apiValue());
         return new Output(result.slice(), result.nextCursor());
     }

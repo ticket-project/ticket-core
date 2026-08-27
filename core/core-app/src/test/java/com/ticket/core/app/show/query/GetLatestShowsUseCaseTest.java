@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class GetLatestShowsUseCaseTest {
 
     @Mock
-    private ShowListQueryRepository showListQueryRepository;
+    private ShowListReadRepository showListReadRepository;
 
     @InjectMocks
     private GetLatestShowsUseCase useCase;
@@ -33,22 +33,22 @@ class GetLatestShowsUseCaseTest {
         List<ShowSummaryView> responses = List.of(
                 new ShowSummaryView(1L, "concert", "image", startDate, endDate, "venue", createdAt)
         );
-        when(showListQueryRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT)).thenReturn(responses);
+        when(showListReadRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT)).thenReturn(responses);
 
         GetLatestShowsUseCase.Output output = useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
 
         assertThat(output.shows()).containsExactlyElementsOf(responses);
-        verify(showListQueryRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
+        verify(showListReadRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 
     @Test
     void 최신_공연이_없으면_빈_목록을_반환한다() {
-        when(showListQueryRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
+        when(showListReadRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(List.of());
 
         GetLatestShowsUseCase.Output output = useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
 
         assertThat(output.shows()).isEmpty();
-        verify(showListQueryRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
+        verify(showListReadRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 }

@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetShowDetailUseCase {
 
-    private final ShowDetailQueryRepository showDetailQueryRepository;
+    private final ShowDetailReadRepository showDetailReadRepository;
 
     public record Input(Long showId) {
         public Input {
@@ -90,7 +90,7 @@ public class GetShowDetailUseCase {
 
     public Output execute(final Input input) {
         validateInput(input);
-        return showDetailQueryRepository.findShowDetail(input.showId())
+        return showDetailReadRepository.findShowDetail(input.showId())
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
     }

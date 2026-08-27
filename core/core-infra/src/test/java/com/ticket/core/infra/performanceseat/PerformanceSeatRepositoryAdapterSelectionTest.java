@@ -9,7 +9,7 @@ import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceSeatRepositoryAdapterSelectionTest extends InfraQueryRepositoryTestSupport {
+class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
     private PerformanceSeatRepository performanceSeatRepository;

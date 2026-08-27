@@ -4,7 +4,7 @@ import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
 
 import java.util.List;
 
-public interface SeatAvailabilityQueryRepository {
+public interface SeatAvailabilityReadRepository {
 
     List<SeatAvailabilityCalculator.AvailableSeatRow> findAvailableSeatRows(Long performanceId, Long showId);
 }

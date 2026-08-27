@@ -1,6 +1,6 @@
 package com.ticket.core.infra.performanceseat.query;
 
-import com.ticket.core.app.performanceseat.query.SeatMapQueryRepository;
+import com.ticket.core.app.performanceseat.query.SeatMapReadRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
@@ -19,7 +19,7 @@ import static com.ticket.core.domain.show.mapping.QShowSeat.showSeat;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslSeatMapQueryRepository implements SeatMapQueryRepository {
+public class QuerydslSeatMapReadRepository implements SeatMapReadRepository {
 
     private final JPAQueryFactory queryFactory;
 

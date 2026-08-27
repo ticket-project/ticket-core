@@ -1,6 +1,6 @@
 package com.ticket.core.infra.support;
 
-import com.ticket.core.domain.support.QueryRepositoryTestSupport;
+import com.ticket.core.domain.support.ReadRepositoryTestSupport;
 import com.ticket.core.infra.show.query.BookingStatusWindowPolicy;
 import com.ticket.core.infra.show.query.ShowConditionFactory;
 import com.ticket.core.infra.show.query.ShowCursorPolicy;
@@ -23,10 +23,10 @@ import tools.jackson.databind.json.JsonMapper;
         ShowConditionFactory.class,
         ShowSortSupport.class,
         ShowCursorPolicy.class,
-        InfraQueryRepositoryTestSupport.CursorCodecTestConfig.class,
-        InfraQueryRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
+        InfraReadRepositoryTestSupport.CursorCodecTestConfig.class,
+        InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
-public abstract class InfraQueryRepositoryTestSupport extends QueryRepositoryTestSupport {
+public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {
 
     /**
      * RepositoryAdapter가 쓰는 Spring Data 인터페이스를 테스트 컨텍스트에 올린다.

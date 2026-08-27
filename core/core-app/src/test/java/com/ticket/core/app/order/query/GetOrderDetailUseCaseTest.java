@@ -31,18 +31,18 @@ class GetOrderDetailUseCaseTest {
     );
 
     @Mock
-    private OrderQueryRepository orderQueryRepository;
+    private OrderReadRepository orderReadRepository;
 
     private GetOrderDetailUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderDetailUseCase(orderQueryRepository, FIXED_CLOCK);
+        useCase = new GetOrderDetailUseCase(orderReadRepository, FIXED_CLOCK);
     }
 
     @Test
     void 단일_조회결과를_주문상세로_조합한다() {
-        when(orderQueryRepository.findDetailRows("order-key", 1L))
+        when(orderReadRepository.findDetailRows("order-key", 1L))
                 .thenReturn(List.of(row(null)));
 
         GetOrderDetailUseCase.Output output = useCase.execute(
@@ -61,7 +61,7 @@ class GetOrderDetailUseCaseTest {
 
     @Test
     void 본인_주문이_없으면_권한예외를_던진다() {
-        when(orderQueryRepository.findDetailRows("missing", 1L)).thenReturn(List.of());
+        when(orderReadRepository.findDetailRows("missing", 1L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("missing", 1L)))
                 .isInstanceOf(CoreException.class)
@@ -71,7 +71,7 @@ class GetOrderDetailUseCaseTest {
 
     @Test
     void 탈퇴한_회원의_주문이면_조회하지_않는다() {
-        when(orderQueryRepository.findDetailRows("order-key", 1L))
+        when(orderReadRepository.findDetailRows("order-key", 1L))
                 .thenReturn(List.of(row(LocalDateTime.of(2026, 3, 1, 0, 0))));
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L)))

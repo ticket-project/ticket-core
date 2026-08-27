@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 class SeatStatusDbReaderTest {
 
     @Mock
-    private SeatMapQueryRepository seatMapQueryRepository;
+    private SeatMapReadRepository seatMapReadRepository;
 
     @InjectMocks
     private SeatStatusDbReader reader;
@@ -26,7 +26,7 @@ class SeatStatusDbReaderTest {
     @Test
     void DB_좌석_스냅샷만_트랜잭션_경계_안에서_읽는다() {
         List<SeatStateView> states = List.of(new SeatStateView(1L, SeatStatus.AVAILABLE));
-        when(seatMapQueryRepository.findSeatStatuses(10L)).thenReturn(states);
+        when(seatMapReadRepository.findSeatStatuses(10L)).thenReturn(states);
 
         assertThat(reader.read(10L)).isSameAs(states);
     }

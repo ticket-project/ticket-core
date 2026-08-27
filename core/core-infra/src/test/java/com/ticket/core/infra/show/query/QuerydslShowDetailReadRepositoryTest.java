@@ -1,7 +1,7 @@
 package com.ticket.core.infra.show.query;
 
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
-import com.ticket.core.app.show.query.ShowDetailQueryRepository;
+import com.ticket.core.app.show.query.ShowDetailReadRepository;
 import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.core.domain.show.meta.Region;
@@ -10,7 +10,7 @@ import com.ticket.core.domain.show.model.Genre;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.performer.Performer;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
 import com.ticket.core.domain.queue.model.QueueLevel;
@@ -28,14 +28,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Import({
-        QuerydslShowDetailQueryRepository.class,
+        QuerydslShowDetailReadRepository.class,
         ShowCardImagePathConverter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslShowDetailQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
+class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
-    private ShowDetailQueryRepository showDetailQueryRepository;
+    private ShowDetailReadRepository showDetailReadRepository;
 
     private Long showId;
 
@@ -72,7 +72,7 @@ class QuerydslShowDetailQueryRepositoryTest extends InfraQueryRepositoryTestSupp
 
     @Test
     void 공연_상세정보를_조합해_조회하고_예매상태는_Clock_기준으로_계산한다() {
-        Optional<GetShowDetailUseCase.Output> result = showDetailQueryRepository.findShowDetail(showId);
+        Optional<GetShowDetailUseCase.Output> result = showDetailReadRepository.findShowDetail(showId);
 
         assertThat(result).isPresent();
         GetShowDetailUseCase.Output detail = result.orElseThrow();
@@ -113,6 +113,6 @@ class QuerydslShowDetailQueryRepositoryTest extends InfraQueryRepositoryTestSupp
 
     @Test
     void 존재하지_않는_공연이면_empty를_반환한다() {
-        assertThat(showDetailQueryRepository.findShowDetail(999999L)).isEmpty();
+        assertThat(showDetailReadRepository.findShowDetail(999999L)).isEmpty();
     }
 }

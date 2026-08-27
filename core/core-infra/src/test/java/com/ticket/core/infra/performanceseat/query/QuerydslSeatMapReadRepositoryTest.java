@@ -1,6 +1,6 @@
 package com.ticket.core.infra.performanceseat.query;
 
-import com.ticket.core.app.performanceseat.query.SeatMapQueryRepository;
+import com.ticket.core.app.performanceseat.query.SeatMapReadRepository;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.app.performanceseat.query.model.SeatInfoView;
 import com.ticket.core.app.performanceseat.query.model.SeatStateView;
@@ -11,7 +11,7 @@ import com.ticket.core.domain.show.mapping.ShowGrade;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +23,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(QuerydslSeatMapQueryRepository.class)
+@Import(QuerydslSeatMapReadRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatMapQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
+class QuerydslSeatMapReadRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
-    private SeatMapQueryRepository seatMapQueryRepository;
+    private SeatMapReadRepository seatMapReadRepository;
 
     private Long showId;
     private Long performanceId;
@@ -54,7 +54,7 @@ class QuerydslSeatMapQueryRepositoryTest extends InfraQueryRepositoryTestSupport
 
     @Test
     void 공연_좌석_정보를_정렬해서_조회한다() {
-        List<SeatInfoView> result = seatMapQueryRepository.findShowSeats(showId);
+        List<SeatInfoView> result = seatMapReadRepository.findShowSeats(showId);
 
         assertThat(result).extracting(SeatInfoView::seatId).hasSize(2);
         assertThat(result).extracting(SeatInfoView::gradeCode).containsExactly("VIP", "R");
@@ -63,7 +63,7 @@ class QuerydslSeatMapQueryRepositoryTest extends InfraQueryRepositoryTestSupport
 
     @Test
     void 좌석별_상태를_api_상태로_변환한다() {
-        List<SeatStateView> result = seatMapQueryRepository.findSeatStatuses(performanceId);
+        List<SeatStateView> result = seatMapReadRepository.findSeatStatuses(performanceId);
 
         assertThat(result).containsExactly(
                 new SeatStateView(result.get(0).seatId(), SeatStatus.OCCUPIED),

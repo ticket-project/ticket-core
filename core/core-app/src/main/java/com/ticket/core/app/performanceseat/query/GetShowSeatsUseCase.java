@@ -15,7 +15,7 @@ import java.util.List;
 public class GetShowSeatsUseCase {
 
     private final ShowRepository showRepository;
-    private final SeatMapQueryRepository seatMapQueryRepository;
+    private final SeatMapReadRepository seatMapReadRepository;
 
     public record Input(Long showId) {
     }
@@ -25,6 +25,6 @@ public class GetShowSeatsUseCase {
 
     public Output execute(final Input input) {
         final Show show = showRepository.getById(input.showId());
-        return new Output(seatMapQueryRepository.findShowSeats(show.getId()));
+        return new Output(seatMapReadRepository.findShowSeats(show.getId()));
     }
 }

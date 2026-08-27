@@ -1,6 +1,6 @@
 package com.ticket.core.infra.show.query;
 
-import com.ticket.core.app.show.query.ShowListQueryRepository;
+import com.ticket.core.app.show.query.ShowListReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.show.BookingStatus;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
@@ -39,7 +39,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = QuerydslShowListQueryRepositoryTest.TestApplication.class)
+@SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = QuerydslShowListReadRepositoryTest.TestApplication.class)
 @TestPropertySource(properties = {
         "spring.profiles.active=test",
         "spring.datasource.url=jdbc:h2:mem:show-query-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
@@ -56,10 +56,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 @Transactional
 @Import({
-        QuerydslShowListQueryRepositoryTest.QuerydslTestConfig.class,
-        QuerydslShowListQueryRepositoryTest.TestConfig.class,
-        QuerydslShowListQueryRepositoryTest.AuditingTestConfig.class,
-        QuerydslShowListQueryRepository.class,
+        QuerydslShowListReadRepositoryTest.QuerydslTestConfig.class,
+        QuerydslShowListReadRepositoryTest.TestConfig.class,
+        QuerydslShowListReadRepositoryTest.AuditingTestConfig.class,
+        QuerydslShowListReadRepository.class,
         ShowQueryHelper.class,
         BookingStatusWindowPolicy.class,
         ShowConditionFactory.class,
@@ -68,13 +68,13 @@ import static org.assertj.core.api.Assertions.assertThat;
         ShowCardImagePathConverter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslShowListQueryRepositoryTest {
+class QuerydslShowListReadRepositoryTest {
 
     @Autowired
     private EntityManager entityManager;
 
     @Autowired
-    private ShowListQueryRepository showListQueryRepository;
+    private ShowListReadRepository showListReadRepository;
 
     private Venue seoulVenue;
     private Venue busanVenue;
@@ -97,7 +97,7 @@ class QuerydslShowListQueryRepositoryTest {
     void 지역으로_필터링하고_인기순으로_공연을_조회한다() {
         ShowParam param = new ShowParam(null, null, Region.SEOUL, null);
 
-        CursorSlice<ShowListItemView> result = showListQueryRepository.findAllBySearch(param, 10, "popular");
+        CursorSlice<ShowListItemView> result = showListReadRepository.findAllBySearch(param, 10, "popular");
         Slice<ShowListItemView> slice = result.slice();
 
         assertThat(slice.getContent()).extracting(ShowListItemView::title)
@@ -110,10 +110,10 @@ class QuerydslShowListQueryRepositoryTest {
     @Test
     void 커서를_전달하면_다음_페이지를_조회한다() {
         ShowParam firstPageParam = new ShowParam(null, null, Region.SEOUL, null);
-        CursorSlice<ShowListItemView> firstPage = showListQueryRepository.findAllBySearch(firstPageParam, 1, "popular");
+        CursorSlice<ShowListItemView> firstPage = showListReadRepository.findAllBySearch(firstPageParam, 1, "popular");
 
         ShowParam secondPageParam = new ShowParam(null, null, Region.SEOUL, firstPage.nextCursor());
-        CursorSlice<ShowListItemView> secondPage = showListQueryRepository.findAllBySearch(secondPageParam, 1, "popular");
+        CursorSlice<ShowListItemView> secondPage = showListReadRepository.findAllBySearch(secondPageParam, 1, "popular");
 
         assertThat(firstPage.slice().getContent()).extracting(ShowListItemView::title)
                 .containsExactly("Seoul Popular");
@@ -134,7 +134,7 @@ class QuerydslShowListQueryRepositoryTest {
                 null
         );
 
-        long count = showListQueryRepository.countSearchShows(request);
+        long count = showListReadRepository.countSearchShows(request);
 
         assertThat(count).isEqualTo(2L);
     }
@@ -151,7 +151,7 @@ class QuerydslShowListQueryRepositoryTest {
                 null
         );
 
-        CursorSlice<ShowSearchItemView> result = showListQueryRepository.searchShows(request, 10, "popular");
+        CursorSlice<ShowSearchItemView> result = showListReadRepository.searchShows(request, 10, "popular");
 
         assertThat(result.slice().getContent()).extracting(ShowSearchItemView::title)
                 .containsExactly("Seoul Popular", "Seoul Normal");
@@ -161,7 +161,7 @@ class QuerydslShowListQueryRepositoryTest {
     void 조건에_맞는_공연이_없으면_빈_슬라이스를_반환한다() {
         ShowParam param = new ShowParam(null, null, Region.JEOLLA, null);
 
-        CursorSlice<ShowListItemView> result = showListQueryRepository.findAllBySearch(param, 10, "popular");
+        CursorSlice<ShowListItemView> result = showListReadRepository.findAllBySearch(param, 10, "popular");
 
         assertThat(result.slice().getContent()).isEmpty();
         assertThat(result.slice().hasNext()).isFalse();

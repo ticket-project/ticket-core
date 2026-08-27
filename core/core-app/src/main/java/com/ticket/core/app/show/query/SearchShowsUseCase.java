@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class SearchShowsUseCase {
-    private final ShowListQueryRepository showListQueryRepository;
+    private final ShowListReadRepository showListReadRepository;
 
     public record Input(ShowSearchCriteria request, int size, ShowSort sort) {
     }
@@ -21,7 +21,7 @@ public class SearchShowsUseCase {
     }
 
     public Output execute(final Input input) {
-        final CursorSlice<ShowSearchItemView> result = showListQueryRepository.searchShows(
+        final CursorSlice<ShowSearchItemView> result = showListReadRepository.searchShows(
                 input.request(), input.size(), input.sort().apiValue());
         return new Output(result.slice(), result.nextCursor());
     }

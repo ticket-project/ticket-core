@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class GetSaleStartApproachingShowsPageUseCaseTest {
 
     @Mock
-    private ShowListQueryRepository showListQueryRepository;
+    private ShowListReadRepository showListReadRepository;
 
     @InjectMocks
     private GetSaleStartApproachingShowsPageUseCase useCase;
@@ -52,14 +52,14 @@ class GetSaleStartApproachingShowsPageUseCaseTest {
         );
         CursorSlice<ShowOpeningSoonDetailView> result =
                 new CursorSlice<>(new SliceImpl<>(List.of(show)), "next-cursor");
-        when(showListQueryRepository.findSaleOpeningSoonPage(param, 10, "popular")).thenReturn(result);
+        when(showListReadRepository.findSaleOpeningSoonPage(param, 10, "popular")).thenReturn(result);
 
         GetSaleStartApproachingShowsPageUseCase.Output output =
                 useCase.execute(new GetSaleStartApproachingShowsPageUseCase.Input(param, 10, "popular"));
 
         assertThat(output.shows().getContent()).containsExactly(show);
         assertThat(output.nextCursor()).isEqualTo("next-cursor");
-        verify(showListQueryRepository).findSaleOpeningSoonPage(param, 10, "popular");
+        verify(showListReadRepository).findSaleOpeningSoonPage(param, 10, "popular");
     }
 
     @Test
@@ -67,13 +67,13 @@ class GetSaleStartApproachingShowsPageUseCaseTest {
         SaleOpeningSoonSearchParam param = new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         CursorSlice<ShowOpeningSoonDetailView> result =
                 new CursorSlice<>(new SliceImpl<>(List.of()), null);
-        when(showListQueryRepository.findSaleOpeningSoonPage(param, 10, "popular")).thenReturn(result);
+        when(showListReadRepository.findSaleOpeningSoonPage(param, 10, "popular")).thenReturn(result);
 
         GetSaleStartApproachingShowsPageUseCase.Output output =
                 useCase.execute(new GetSaleStartApproachingShowsPageUseCase.Input(param, 10, "popular"));
 
         assertThat(output.shows().getContent()).isEmpty();
         assertThat(output.nextCursor()).isNull();
-        verify(showListQueryRepository).findSaleOpeningSoonPage(param, 10, "popular");
+        verify(showListReadRepository).findSaleOpeningSoonPage(param, 10, "popular");
     }
 }

@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Transactional(readOnly = true)
 public class GetOrderStatusUseCase {
 
-    private final OrderQueryRepository orderQueryRepository;
+    private final OrderReadRepository orderReadRepository;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {
@@ -32,7 +32,7 @@ public class GetOrderStatusUseCase {
     }
 
     public Output execute(final Input input) {
-        final OrderStatusView status = orderQueryRepository.findStatus(input.orderKey(), input.memberId())
+        final OrderStatusView status = orderReadRepository.findStatus(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new CoreException(DomainErrorType.ORDER_NOT_OWNED));
         final long remainingSeconds = OrderRemainingTime.seconds(
                 status.status(),

@@ -20,7 +20,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
 
-    private final OrderQueryRepository orderQueryRepository;
+    private final OrderReadRepository orderReadRepository;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {}
@@ -64,7 +64,7 @@ public class GetOrderDetailUseCase {
     ) {}
 
     public Output execute(final Input input) {
-        final List<OrderDetailRow> rows = orderQueryRepository.findDetailRows(input.orderKey(), input.memberId());
+        final List<OrderDetailRow> rows = orderReadRepository.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
             throw new CoreException(DomainErrorType.ORDER_NOT_OWNED);
         }

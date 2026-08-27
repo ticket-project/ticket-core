@@ -1,14 +1,14 @@
 package com.ticket.core.infra.performanceseat.query;
 
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
-import com.ticket.core.app.performanceseat.query.SeatAvailabilityQueryRepository;
+import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.mapping.ShowGrade;
 import com.ticket.core.domain.show.meta.Region;
 import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.infra.support.InfraQueryRepositoryTestSupport;
+import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,12 +21,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Import(QuerydslSeatAvailabilityQueryRepository.class)
+@Import(QuerydslSeatAvailabilityReadRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatAvailabilityQueryRepositoryTest extends InfraQueryRepositoryTestSupport {
+class QuerydslSeatAvailabilityReadRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
-    private SeatAvailabilityQueryRepository seatAvailabilityQueryRepository;
+    private SeatAvailabilityReadRepository seatAvailabilityReadRepository;
 
     private Long showId;
     private Long performanceId;
@@ -54,7 +54,7 @@ class QuerydslSeatAvailabilityQueryRepositoryTest extends InfraQueryRepositoryTe
     void 등급정렬과_좌석ID순으로_가용좌석_원본행을_조회한다() {
         //given
         //when
-        List<SeatAvailabilityCalculator.AvailableSeatRow> result = seatAvailabilityQueryRepository.findAvailableSeatRows(performanceId, showId);
+        List<SeatAvailabilityCalculator.AvailableSeatRow> result = seatAvailabilityReadRepository.findAvailableSeatRows(performanceId, showId);
 
         //then
         assertThat(result).extracting("gradeName").containsExactly("VIP석", "R석");

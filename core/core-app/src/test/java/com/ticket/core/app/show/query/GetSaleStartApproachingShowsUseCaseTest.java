@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 class GetSaleStartApproachingShowsUseCaseTest {
 
     @Mock
-    private ShowListQueryRepository showListQueryRepository;
+    private ShowListReadRepository showListReadRepository;
 
     @InjectMocks
     private GetSaleStartApproachingShowsUseCase useCase;
@@ -30,22 +30,22 @@ class GetSaleStartApproachingShowsUseCaseTest {
         List<ShowOpeningSoonSummaryView> shows = List.of(
                 new ShowOpeningSoonSummaryView(1L, "concert", "image", "venue", saleStartDate)
         );
-        when(showListQueryRepository.findShowsSaleOpeningSoon("CONCERT", 5)).thenReturn(shows);
+        when(showListReadRepository.findShowsSaleOpeningSoon("CONCERT", 5)).thenReturn(shows);
 
         GetSaleStartApproachingShowsUseCase.Output output = useCase.execute(new GetSaleStartApproachingShowsUseCase.Input("CONCERT", 5));
 
         assertThat(output.shows()).containsExactlyElementsOf(shows);
-        verify(showListQueryRepository).findShowsSaleOpeningSoon("CONCERT", 5);
+        verify(showListReadRepository).findShowsSaleOpeningSoon("CONCERT", 5);
     }
 
     @Test
     void 판매시작임박_공연이_없으면_빈_목록을_반환한다() {
-        when(showListQueryRepository.findShowsSaleOpeningSoon("CONCERT", 5)).thenReturn(List.of());
+        when(showListReadRepository.findShowsSaleOpeningSoon("CONCERT", 5)).thenReturn(List.of());
 
         GetSaleStartApproachingShowsUseCase.Output output =
                 useCase.execute(new GetSaleStartApproachingShowsUseCase.Input("CONCERT", 5));
 
         assertThat(output.shows()).isEmpty();
-        verify(showListQueryRepository).findShowsSaleOpeningSoon("CONCERT", 5);
+        verify(showListReadRepository).findShowsSaleOpeningSoon("CONCERT", 5);
     }
 }

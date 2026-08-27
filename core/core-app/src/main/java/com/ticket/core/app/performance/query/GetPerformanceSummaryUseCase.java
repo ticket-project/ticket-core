@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class GetPerformanceSummaryUseCase {
 
-    private final PerformanceSummaryQueryRepository performanceSummaryQueryRepository;
+    private final PerformanceReadRepository performanceReadRepository;
 
     public record Input(Long performanceId) {}
 
@@ -26,7 +26,7 @@ public class GetPerformanceSummaryUseCase {
     ) {}
 
     public Output execute(final Input input) {
-        final PerformanceSummaryView summary = performanceSummaryQueryRepository
+        final PerformanceSummaryView summary = performanceReadRepository
                 .findByPerformanceId(input.performanceId())
                 .orElseThrow(() -> new CoreException(
                         ApplicationErrorType.DATA_NOT_FOUND,
