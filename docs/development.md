@@ -228,7 +228,8 @@ Controller가 repository를 직접 부르는 형태로 합치지 않는다.
 
 ## Redis 작업 규칙
 
-- key 조립과 TTL은 `core-infra`의 adapter가 소유하고 도메인은 port만 본다.
+- key 조립과 물리 TTL은 `core-infra`의 adapter가 소유한다. domain/app은 Redis 타입이나 key가 아니라
+  자신이 소유한 저장 기술 중립 계약만 본다.
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식이나 인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차를 함께 설계한다.
   [operations.md의 좌석 선택 Redis 인덱스 전환](operations.md#좌석-선택-redis-인덱스-전환)이 선례다.
@@ -257,8 +258,8 @@ Controller가 repository를 직접 부르는 형태로 합치지 않는다.
 ## 개발 시 주의점
 
 - Controller에는 비즈니스 규칙이나 직접 저장소 접근을 넣지 않는다.
-- Redis, WebSocket, 외부 HTTP, AOP 구현은 `core-infra`에 둔다.
-- 도메인/application 코드는 port 인터페이스에 의존한다.
+- Redis, WebSocket, 외부 HTTP 구현은 `core-infra`에 둔다.
+- domain/app 코드는 자신이 의미를 정의한 port 인터페이스에 의존한다.
 - hold, order, performanceseat, queue 변경은 동시성, TTL, 만료 후처리, 테스트 공백을 먼저 확인한다.
 - API 요청/응답을 바꾸면 하위 호환성과 Swagger 문서 영향을 함께 본다.
 
