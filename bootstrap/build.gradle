@@ -28,6 +28,8 @@ dependencies {
     runtimeOnly 'com.oracle.database.security:oraclepki:21.3.0.0'
     runtimeOnly 'com.oracle.database.security:osdt_core:21.3.0.0'
 
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
