@@ -1,11 +1,15 @@
 package com.ticket.core.domain.order.repository;
 
 import com.ticket.core.domain.order.model.OrderSeat;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface OrderSeatRepository extends JpaRepository<OrderSeat, Long> {
+/**
+ * 주문 좌석 라인아이템의 저장과 복원을 담당하는 도메인 Repository다.
+ */
+public interface OrderSeatRepository {
 
-    List<OrderSeat> findAllByOrder_IdOrderByIdAsc(Long orderId);
+    List<OrderSeat> saveAll(List<OrderSeat> orderSeats);
+
+    List<OrderSeat> findAllByOrderIdOrderByIdAsc(Long orderId);
 }

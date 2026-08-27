@@ -48,7 +48,7 @@ class OrderTerminationServiceTest {
     void cancel_changes_state_records_history_and_requests_hold_release() {
         final Order order = order(10L, "hold-key");
         final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
-        when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
+        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
         when(holdReleaseOutboxWriter.append(
                 new OrderTerminationResult(100L, "hold-key", List.of(42L))
         )).thenReturn(99L);
@@ -64,7 +64,7 @@ class OrderTerminationServiceTest {
     void expire_changes_state_records_history_and_requests_hold_release() {
         final Order order = order(10L, "hold-key");
         final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
-        when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
+        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
         when(holdReleaseOutboxWriter.append(
                 new OrderTerminationResult(100L, "hold-key", List.of(42L))
         )).thenReturn(99L);
@@ -81,7 +81,7 @@ class OrderTerminationServiceTest {
         final Order order = order(10L, "hold-key");
         final Order otherOrder = order(11L, "other-hold-key");
         final OrderSeat foreignOrderSeat = new OrderSeat(otherOrder, 501L, 42L, BigDecimal.TEN);
-        when(orderSeatRepository.findAllByOrder_IdOrderByIdAsc(10L)).thenReturn(List.of(foreignOrderSeat));
+        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(foreignOrderSeat));
 
         assertThatThrownBy(() -> service().expire(order, FIXED_NOW))
                 .isInstanceOf(CoreException.class)
