@@ -1,4 +1,4 @@
-package com.ticket.core.domain.order.command.create;
+package com.ticket.core.infra.order.outbox.create;
 
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;

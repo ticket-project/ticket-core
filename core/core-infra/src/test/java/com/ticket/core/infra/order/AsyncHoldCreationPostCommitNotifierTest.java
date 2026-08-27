@@ -1,5 +1,6 @@
 package com.ticket.core.infra.order;
 
+import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxExecutor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

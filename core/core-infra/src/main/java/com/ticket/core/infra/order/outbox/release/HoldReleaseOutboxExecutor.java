@@ -1,6 +1,7 @@
-package com.ticket.core.app.order.command;
+package com.ticket.core.infra.order.outbox.release;
 
-import com.ticket.core.domain.order.command.release.HoldReleaseTask;
+import com.ticket.core.app.order.command.HoldReleaseTask;
+import com.ticket.core.app.order.command.HoldReleaseTaskProcessor;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;

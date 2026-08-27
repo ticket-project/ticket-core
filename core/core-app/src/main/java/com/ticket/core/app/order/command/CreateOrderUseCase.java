@@ -3,7 +3,7 @@ package com.ticket.core.app.order.command;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
-import com.ticket.core.domain.hold.command.HoldCreationPostCommitNotifier;
+import com.ticket.core.app.event.HoldCreationPostCommitNotifier;
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
 import com.ticket.core.domain.order.command.create.HoldAllocator;

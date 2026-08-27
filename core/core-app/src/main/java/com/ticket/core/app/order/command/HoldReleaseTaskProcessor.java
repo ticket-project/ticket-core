@@ -1,9 +1,10 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.domain.order.command.release.HoldReleaseTask;
+import com.ticket.core.app.order.command.HoldReleaseTask;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.app.event.HoldReleaseProgressRecorder;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
@@ -22,7 +23,7 @@ public class HoldReleaseTaskProcessor {
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
     private final SeatStatusPublisher seatStatusPublisher;
-    private final HoldReleaseOutboxTransactionService transactionService;
+    private final HoldReleaseProgressRecorder progressRecorder;
 
     public void process(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
         lockManager.withLock(
@@ -50,7 +51,7 @@ public class HoldReleaseTaskProcessor {
             return;
         }
         holdManager.release(task.performanceId(), task.holdKey(), task.seatIds());
-        transactionService.markHoldReleased(outboxId, now);
+        progressRecorder.recordHoldReleased(outboxId, now);
     }
 
     private List<Long> findCurrentlyAvailableSeats(final HoldReleaseTask task) {

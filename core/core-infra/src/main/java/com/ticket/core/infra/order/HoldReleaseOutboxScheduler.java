@@ -2,10 +2,10 @@ package com.ticket.core.infra.order;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutbox;
-import com.ticket.core.app.order.command.HoldReleaseOutboxExecutor;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxRepository;
-import com.ticket.core.domain.order.command.release.HoldReleaseOutboxStatus;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutbox;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxExecutor;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRepository;
+import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxStatus;
 
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;

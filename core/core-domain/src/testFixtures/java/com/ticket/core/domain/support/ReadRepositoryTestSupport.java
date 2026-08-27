@@ -229,7 +229,7 @@ public abstract class ReadRepositoryTestSupport {
 
     @SpringBootConfiguration
     @EnableAutoConfiguration
-    @EntityScan(basePackages = "com.ticket.core.domain")
+    @EntityScan(basePackages = {"com.ticket.core.domain", "com.ticket.core.infra"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

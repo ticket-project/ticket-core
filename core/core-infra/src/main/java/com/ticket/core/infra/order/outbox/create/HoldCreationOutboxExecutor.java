@@ -1,7 +1,7 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.infra.order.outbox.create;
 
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.app.order.command.HoldCreationOutboxTransactionService;
+import com.ticket.core.infra.order.HoldCreationPostCommitProcessor;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
