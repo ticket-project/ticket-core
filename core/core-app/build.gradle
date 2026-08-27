@@ -14,8 +14,8 @@ dependencies {
     // 로깅 파사드만 쓴다. 구현은 실행 모듈이 고른다.
     implementation 'org.slf4j:slf4j-api'
 
-    testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.15")
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+    testImplementation libs.fixture.monkey.starter
+    testImplementation libs.archunit.junit5
     // 제약 위반 원인 예외를 실제 타입으로 만들어 테스트한다. 프로덕션은 쓰지 않는다.
     testImplementation 'org.hibernate.orm:hibernate-core'
     testImplementation(testFixtures(project(':core:core-app')))

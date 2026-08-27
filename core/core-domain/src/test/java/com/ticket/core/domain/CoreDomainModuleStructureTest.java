@@ -63,7 +63,8 @@ class CoreDomainModuleStructureTest {
         // OAuth2 엔드포인트 상수는 security filter chain 설정의 일부라 core-api에 남는다.
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/OAuth2EndpointConstants.java"))).isTrue();
 
-        assertThat(infraBuild).contains("io.jsonwebtoken:jjwt-api:0.13.0");
+        // 버전은 gradle/libs.versions.toml이 소유한다. 여기서는 어느 모듈이 쓰는지만 고정한다.
+        assertThat(infraBuild).contains("libs.jjwt.api");
         assertThat(domainBuild).doesNotContain("io.jsonwebtoken");
         // API는 토큰 라이브러리를 보지 않는다. 예외 중립화는 어댑터가 한다.
         assertThat(Files.readString(resolve("../core-api/build.gradle"))).doesNotContain("io.jsonwebtoken");

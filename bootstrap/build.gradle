@@ -18,17 +18,17 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+    runtimeOnly libs.jjwt.impl
+    runtimeOnly libs.jjwt.jackson
     runtimeOnly 'org.flywaydb:flyway-database-oracle'
     // prod/dev는 Oracle, local/test는 h2 파일 DB를 쓴다. DB 드라이버는 실행 모듈이 소유한다.
     runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
     runtimeOnly 'com.h2database:h2'
-    runtimeOnly 'com.oracle.database.security:osdt_cert:21.3.0.0'
-    runtimeOnly 'com.oracle.database.security:oraclepki:21.3.0.0'
-    runtimeOnly 'com.oracle.database.security:osdt_core:21.3.0.0'
+    runtimeOnly libs.oracle.security.osdt.cert
+    runtimeOnly libs.oracle.security.oraclepki
+    runtimeOnly libs.oracle.security.osdt.core
 
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+    testImplementation libs.archunit.junit5
     // 실행 컨텍스트가 실제로 조립되는지 확인한다. Redis가 필요해 integrationTest로 분리한다.
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 
