@@ -26,6 +26,7 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 | 새 코드의 모듈·패키지 위치, 경계 위반 진단 | `/place-code` 스킬 |
 | 모듈 책임, 패키지 구조, 저장소·동시성 구조 | `docs/architecture.md` |
 | 기능·API·도메인 규칙 구현, Redis·분산락 작업 규칙 | `docs/development.md` |
+| 요청·입력 검증을 어느 계층에 둘지, 중복 검증 판단 | `docs/validation.md` |
 | 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지 고르기, 새 테스트 추가 | `docs/testing.md` |
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 지표 | `docs/operations.md` |
@@ -89,6 +90,9 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 - `@Scheduled`나 `@EnableScheduling`을 `bootstrap` 밖에 두는 것.
 - 토큰 라이브러리(`io.jsonwebtoken`) 타입이 `core-infra` 밖으로 새는 것.
 - 도메인 타입이 API 경계로 새는 것. 요청 DTO는 문자열로 받고 변환은 `core-app`이 한다.
+- 요청 파라미터 제약을 Controller 구현체에 선언하는 것. `controller.docs` 인터페이스에만 둔다
+  (`ControllerParameterConstraintTest`). 기준은 `docs/validation.md`다.
+- `core-app`·`core-domain`에 `jakarta.validation` 의존성을 두는 것.
 
 
 ## 핵심 흐름
