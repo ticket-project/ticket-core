@@ -37,12 +37,16 @@ public class ShowParam {
         return new ShowParam(category, genre, parseRegion(region), cursor);
     }
 
+    /**
+     * 이전에는 Spring의 enum 변환기가 이 값을 바꿨고 그 변환기는 앞뒤 공백을 지웠다.
+     * 변환 주체가 이 계층으로 옮겨왔으므로 같은 관용을 유지한다.
+     */
     static Region parseRegion(final String region) {
         if (region == null || region.isBlank()) {
             return null;
         }
         try {
-            return Region.valueOf(region);
+            return Region.valueOf(region.trim());
         } catch (final IllegalArgumentException exception) {
             throw new CoreException(ApplicationErrorType.INVALID_INPUT, "region 값이 올바르지 않습니다: " + region);
         }
