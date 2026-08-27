@@ -46,7 +46,7 @@ public class OrderTerminationService {
 
     private List<OrderSeat> loadAndValidateOrderSeats(final Order order) {
         final List<OrderSeat> orderSeats =
-                orderSeatRepository.findAllByOrder_IdOrderByIdAsc(order.getId());
+                orderSeatRepository.findAllByOrderIdOrderByIdAsc(order.getId());
         final boolean hasForeignOrderSeat = orderSeats.stream()
                 .anyMatch(orderSeat -> !Objects.equals(orderSeat.getOrder().getId(), order.getId()));
         if (hasForeignOrderSeat) {

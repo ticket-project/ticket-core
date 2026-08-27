@@ -1,7 +1,8 @@
-package com.ticket.core.domain.order.repository;
+package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
+import com.ticket.core.domain.order.repository.OrderRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +11,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
@@ -36,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        classes = OrderRepositoryIntegrationTest.TestApplication.class
+        classes = OrderRepositoryAdapterIntegrationTest.TestApplication.class
 )
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:order-repository-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
@@ -52,20 +51,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
                 + "org.redisson.spring.starter.RedissonAutoConfigurationV4"
 })
 @SuppressWarnings("NonAsciiCharacters")
-class OrderRepositoryIntegrationTest {
+class OrderRepositoryAdapterIntegrationTest {
 
     private static final long MEMBER_ID = 100L;
     private static final long PERFORMANCE_ID = 200L;
+    private static final int BATCH_SIZE = 100;
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private SpringDataOrderJpaRepository jpaRepository;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
 
     @AfterEach
     void cleanUp() {
-        inTransaction(() -> orderRepository.deleteAll());
+        inTransaction(() -> jpaRepository.deleteAll());
     }
 
     @Test
@@ -78,23 +81,35 @@ class OrderRepositoryIntegrationTest {
         Order alreadyConfirmed = order("confirmed", now.minusMinutes(1));
         alreadyConfirmed.confirm(now.minusSeconds(1));
 
-        inTransaction(() -> orderRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
+        inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
 
-        Slice<Order> result = orderRepository.findAllByStatusAndExpiresAtLessThanEqual(
-                OrderState.PENDING,
-                now,
-                PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "id"))
-        );
+        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, BATCH_SIZE);
 
-        assertThat(result.getContent())
+        assertThat(result)
                 .extracting(Order::getOrderKey)
                 .containsExactly("order-past", "order-boundary");
     }
 
     @Test
+    void expiration_query_respects_the_requested_limit() {
+        LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
+        inTransaction(() -> jpaRepository.saveAll(List.of(
+                order("first", now.minusMinutes(3)),
+                order("second", now.minusMinutes(2)),
+                order("third", now.minusMinutes(1))
+        )));
+
+        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, 2);
+
+        assertThat(result)
+                .extracting(Order::getOrderKey)
+                .containsExactly("order-first", "order-second");
+    }
+
+    @Test
     void pending_order_existence_query_checks_member_performance_and_status() {
         Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
-        inTransaction(() -> orderRepository.save(pending));
+        inTransaction(() -> jpaRepository.save(pending));
 
         assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
                 MEMBER_ID,
@@ -185,8 +200,9 @@ class OrderRepositoryIntegrationTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @EntityScan(basePackages = "com.ticket.core.domain")
-    @EnableJpaRepositories(basePackageClasses = OrderRepository.class)
+    @EnableJpaRepositories(basePackageClasses = SpringDataOrderJpaRepository.class)
     @EnableJpaAuditing
+    @Import(OrderRepositoryAdapter.class)
     static class TestApplication {
 
         @Bean

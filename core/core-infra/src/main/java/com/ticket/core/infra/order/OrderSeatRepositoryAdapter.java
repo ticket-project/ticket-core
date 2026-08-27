@@ -1,0 +1,28 @@
+package com.ticket.core.infra.order;
+
+import com.ticket.core.domain.order.model.OrderSeat;
+import com.ticket.core.domain.order.repository.OrderSeatRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+/**
+ * {@link OrderSeatRepository}의 JPA 구현이다.
+ */
+@Repository
+@RequiredArgsConstructor
+public class OrderSeatRepositoryAdapter implements OrderSeatRepository {
+
+    private final SpringDataOrderSeatJpaRepository jpaRepository;
+
+    @Override
+    public List<OrderSeat> saveAll(final List<OrderSeat> orderSeats) {
+        return jpaRepository.saveAll(orderSeats);
+    }
+
+    @Override
+    public List<OrderSeat> findAllByOrderIdOrderByIdAsc(final Long orderId) {
+        return jpaRepository.findAllByOrder_IdOrderByIdAsc(orderId);
+    }
+}

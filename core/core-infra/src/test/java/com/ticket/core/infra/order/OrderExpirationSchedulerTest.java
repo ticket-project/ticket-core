@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -18,6 +16,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -41,8 +40,8 @@ class OrderExpirationSchedulerTest {
     void no_expired_orders_returns_immediately() {
         OrderExpirationScheduler scheduler = new OrderExpirationScheduler(expireOrderUseCase, orderRepository, fixedClock);
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any()))
-                .thenReturn(new SliceImpl<>(List.of()));
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt()))
+                .thenReturn(List.<Order>of());
 
         scheduler.expirePendingOrders();
 
@@ -55,15 +54,15 @@ class OrderExpirationSchedulerTest {
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
         Order first = createOrder(1L, null);
         Order second = createOrder(2L, null);
-        Slice<Order> slice = new SliceImpl<>(List.of(first, second));
-        when(orderRepository.findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any()))
+        List<Order> slice = List.of(first, second);
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt()))
                 .thenReturn(slice);
 
         scheduler.expirePendingOrders();
 
         verify(expireOrderUseCase).expireByOrderId(1L, expectedNow);
         verify(expireOrderUseCase).expireByOrderId(2L, expectedNow);
-        verify(orderRepository, times(1)).findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any());
+        verify(orderRepository, times(1)).findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt());
     }
 
     @Test
@@ -71,15 +70,15 @@ class OrderExpirationSchedulerTest {
         OrderExpirationScheduler scheduler = new OrderExpirationScheduler(expireOrderUseCase, orderRepository, fixedClock);
         LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
         Order order = createOrder(1L, "order-1");
-        Slice<Order> slice = new SliceImpl<>(List.of(order));
-        when(orderRepository.findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any()))
+        List<Order> slice = List.of(order);
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt()))
                 .thenReturn(slice);
         doThrow(new RuntimeException("boom")).when(expireOrderUseCase).expireByOrderId(1L, expectedNow);
 
         scheduler.expirePendingOrders();
 
         verify(expireOrderUseCase).expireByOrderId(1L, expectedNow);
-        verify(orderRepository, times(1)).findAllByStatusAndExpiresAtLessThanEqual(eq(OrderState.PENDING), eq(expectedNow), any());
+        verify(orderRepository, times(1)).findExpirable(eq(OrderState.PENDING), eq(expectedNow), anyInt());
     }
 
     private Order createOrder(final Long id, final String orderKey) {

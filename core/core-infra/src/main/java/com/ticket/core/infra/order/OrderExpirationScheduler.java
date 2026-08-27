@@ -2,18 +2,16 @@ package com.ticket.core.infra.order;
 
 import com.ticket.core.app.order.command.ExpireOrderUseCase;
 import com.ticket.core.domain.order.model.Order;
-import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.order.model.OrderState;
+import com.ticket.core.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -30,8 +28,9 @@ public class OrderExpirationScheduler {
     public void expirePendingOrders() {
         final LocalDateTime now = LocalDateTime.now(clock);
         while (true) {
-            final Slice<Order> expiredOrders = loadBatch(now);
-            if (!expiredOrders.hasContent()) {
+            final List<Order> expiredOrders =
+                    orderRepository.findExpirable(OrderState.PENDING, now, BATCH_SIZE);
+            if (expiredOrders.isEmpty()) {
                 return;
             }
 
@@ -42,17 +41,9 @@ public class OrderExpirationScheduler {
         }
     }
 
-    private Slice<Order> loadBatch(final LocalDateTime now) {
-        return orderRepository.findAllByStatusAndExpiresAtLessThanEqual(
-                OrderState.PENDING,
-                now,
-                PageRequest.of(0, BATCH_SIZE, Sort.by(Sort.Direction.ASC, "id"))
-        );
-    }
-
-    private int processBatch(final Slice<Order> expiredOrders, final LocalDateTime now) {
+    private int processBatch(final List<Order> expiredOrders, final LocalDateTime now) {
         int processedCount = 0;
-        for (final Order order : expiredOrders.getContent()) {
+        for (final Order order : expiredOrders) {
             try {
                 expireOrderUseCase.expireByOrderId(order.getId(), now);
                 processedCount++;
@@ -63,12 +54,12 @@ public class OrderExpirationScheduler {
         return processedCount;
     }
 
-    private boolean shouldStop(final Slice<Order> expiredOrders, final int processedCount) {
+    private boolean shouldStop(final List<Order> expiredOrders, final int processedCount) {
         if (processedCount == 0) {
             log.warn("주문 만료 배치에서 처리 성공 건이 없어 반복을 중단합니다. pendingCount={}",
-                    expiredOrders.getNumberOfElements());
+                    expiredOrders.size());
             return true;
         }
-        return expiredOrders.getNumberOfElements() < BATCH_SIZE;
+        return expiredOrders.size() < BATCH_SIZE;
     }
 }
