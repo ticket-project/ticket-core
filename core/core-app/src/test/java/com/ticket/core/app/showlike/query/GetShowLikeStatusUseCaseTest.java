@@ -42,8 +42,8 @@ class GetShowLikeStatusUseCaseTest {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
         when(memberFinder.findActiveMemberById(1L)).thenReturn(member);
-        when(showLikeRepository.existsByMember_IdAndShow_Id(1L, 2L)).thenReturn(true);
-        when(showLikeRepository.countByShow_Id(2L)).thenReturn(7L);
+        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
+        when(showLikeRepository.countByShowId(2L)).thenReturn(7L);
 
         //when
         GetShowLikeStatusUseCase.Output output = useCase.execute(new GetShowLikeStatusUseCase.Input(1L, 2L));

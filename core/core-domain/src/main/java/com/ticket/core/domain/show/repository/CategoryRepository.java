@@ -1,11 +1,13 @@
 package com.ticket.core.domain.show.repository;
 
 import com.ticket.core.domain.show.model.Category;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface CategoryRepository extends JpaRepository<Category, Long> {
+/**
+ * 카테고리 메타 코드의 복원을 담당하는 도메인 Repository다.
+ */
+public interface CategoryRepository {
 
-    List<Category> findAllByOrderByIdAsc();
+    List<Category> findAllOrderById();
 }

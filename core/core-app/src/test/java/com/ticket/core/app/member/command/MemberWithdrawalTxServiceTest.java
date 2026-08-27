@@ -51,7 +51,7 @@ class MemberWithdrawalTxServiceTest {
         ReflectionTestUtils.setField(kakao, "id", 1L);
         ReflectionTestUtils.setField(google, "id", 2L);
         when(memberFinder.findActiveMemberById(3L)).thenReturn(member);
-        when(memberSocialAccountRepository.findAllByMemberAndDeletedAtIsNull(member)).thenReturn(List.of(kakao, google));
+        when(memberSocialAccountRepository.findAllActiveByMember(member)).thenReturn(List.of(kakao, google));
 
         List<String> kakaoIds = memberWithdrawalTxService.withdraw(3L);
 
@@ -60,6 +60,6 @@ class MemberWithdrawalTxServiceTest {
         assertThat(kakao.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(google.getDeletedAt()).isEqualTo(expectedNow);
         verify(memberFinder).findActiveMemberById(3L);
-        verify(memberSocialAccountRepository).findAllByMemberAndDeletedAtIsNull(member);
+        verify(memberSocialAccountRepository).findAllActiveByMember(member);
     }
 }

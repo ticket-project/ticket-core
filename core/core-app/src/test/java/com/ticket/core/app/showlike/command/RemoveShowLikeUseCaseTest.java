@@ -43,8 +43,8 @@ class RemoveShowLikeUseCaseTest {
     void 찜이_존재하면_삭제후_false를_반환한다() {
         //given
         ShowLike showLike = mock(ShowLike.class);
-        when(showLikeRepository.findByMember_IdAndShow_Id(1L, 2L)).thenReturn(Optional.of(showLike));
-        when(showLikeRepository.countByShow_Id(2L)).thenReturn(4L);
+        when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.of(showLike));
+        when(showLikeRepository.countByShowId(2L)).thenReturn(4L);
 
         //when
         RemoveShowLikeUseCase.Output output = useCase.execute(new RemoveShowLikeUseCase.Input(1L, 2L));
@@ -58,8 +58,8 @@ class RemoveShowLikeUseCaseTest {
     @Test
     void 찜이_없어도_삭제없이_false를_반환한다() {
         //given
-        when(showLikeRepository.findByMember_IdAndShow_Id(1L, 2L)).thenReturn(Optional.empty());
-        when(showLikeRepository.countByShow_Id(2L)).thenReturn(0L);
+        when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.empty());
+        when(showLikeRepository.countByShowId(2L)).thenReturn(0L);
 
         //when
         RemoveShowLikeUseCase.Output output = useCase.execute(new RemoveShowLikeUseCase.Input(1L, 2L));

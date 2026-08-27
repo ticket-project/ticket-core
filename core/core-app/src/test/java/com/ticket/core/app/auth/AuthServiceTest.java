@@ -81,7 +81,7 @@ class AuthServiceTest {
     @Test
     void 로그인시_회원이_없으면_타이밍가드용_인코딩_후_인증예외를_던진다() {
         //given
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("missing@example.com")).thenReturn(Optional.empty());
+        when(memberRepository.findActiveByEmail("missing@example.com")).thenReturn(Optional.empty());
 
         //when
         //then
@@ -95,7 +95,7 @@ class AuthServiceTest {
     void 로그인시_저장된_비밀번호가_없으면_인증예외를_던진다() {
         //given
         Member member = Member.createSocialMember(Email.create("social@example.com"), "홍길동", Role.MEMBER);
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("social@example.com")).thenReturn(Optional.of(member));
+        when(memberRepository.findActiveByEmail("social@example.com")).thenReturn(Optional.of(member));
 
         //when
         //then
@@ -107,7 +107,7 @@ class AuthServiceTest {
     void 로그인시_비밀번호가_일치하지_않으면_인증예외를_던진다() {
         //given
         Member member = new Member(Email.create("user@example.com"), EncodedPassword.create("encoded"), "홍길동", Role.MEMBER);
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("user@example.com")).thenReturn(Optional.of(member));
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(member));
         when(passwordService.matches(RawPassword.create("wrong-password"), EncodedPassword.create("encoded"))).thenReturn(false);
 
         //when
@@ -120,7 +120,7 @@ class AuthServiceTest {
     void 로그인시_비밀번호가_일치하면_회원을_반환한다() {
         //given
         Member member = new Member(Email.create("user@example.com"), EncodedPassword.create("encoded"), "홍길동", Role.MEMBER);
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull("user@example.com")).thenReturn(Optional.of(member));
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(member));
         when(passwordService.matches(RawPassword.create("password123!"), EncodedPassword.create("encoded"))).thenReturn(true);
 
         //when

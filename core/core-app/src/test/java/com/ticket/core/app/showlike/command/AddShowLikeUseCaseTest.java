@@ -42,8 +42,8 @@ class AddShowLikeUseCaseTest {
     @Test
     void 이미_찜한_공연이면_저장하지_않고_상태만_반환한다() {
         //given
-        when(showLikeRepository.existsByMember_IdAndShow_Id(1L, 2L)).thenReturn(true);
-        when(showLikeRepository.countByShow_Id(2L)).thenReturn(5L);
+        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
+        when(showLikeRepository.countByShowId(2L)).thenReturn(5L);
         when(memberFinder.findActiveMemberById(1L)).thenReturn(mock(Member.class));
 
         //when
@@ -57,8 +57,8 @@ class AddShowLikeUseCaseTest {
     @Test
     void 새로_찜하면_저장후_개수를_반환한다() {
         //given
-        when(showLikeRepository.existsByMember_IdAndShow_Id(1L, 2L)).thenReturn(false);
-        when(showLikeRepository.countByShow_Id(2L)).thenReturn(3L);
+        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
+        when(showLikeRepository.countByShowId(2L)).thenReturn(3L);
         when(memberFinder.findActiveMemberById(1L)).thenReturn(mock(Member.class));
         when(showFinder.findById(2L)).thenReturn(mock(Show.class));
 
@@ -73,7 +73,7 @@ class AddShowLikeUseCaseTest {
     @Test
     void 저장중_중복제약이_발생하면_예외를_던진다() {
         //given
-        when(showLikeRepository.existsByMember_IdAndShow_Id(1L, 2L)).thenReturn(false);
+        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
         when(memberFinder.findActiveMemberById(1L)).thenReturn(mock(Member.class));
         when(showFinder.findById(2L)).thenReturn(mock(Show.class));
         when(showLikeRepository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));

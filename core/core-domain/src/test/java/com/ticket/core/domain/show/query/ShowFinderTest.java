@@ -4,7 +4,7 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.repository.ShowJpaRepository;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 class ShowFinderTest {
 
     @Mock
-    private ShowJpaRepository showJpaRepository;
+    private ShowRepository showRepository;
 
     @InjectMocks
     private ShowFinder showFinder;
@@ -33,7 +33,7 @@ class ShowFinderTest {
     @Test
     void 공연이_있으면_findById가_그대로_반환한다() {
         Show show = createShow();
-        when(showJpaRepository.findById(1L)).thenReturn(Optional.of(show));
+        when(showRepository.findById(1L)).thenReturn(Optional.of(show));
 
         Show result = showFinder.findById(1L);
 
@@ -42,7 +42,7 @@ class ShowFinderTest {
 
     @Test
     void 공연이_없으면_findById가_not_found_data_예외를_던진다() {
-        when(showJpaRepository.findById(1L)).thenReturn(Optional.empty());
+        when(showRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> showFinder.findById(1L))
                 .isInstanceOf(CoreException.class)
@@ -51,14 +51,14 @@ class ShowFinderTest {
 
     @Test
     void 공연이_존재하면_validateShowExists는_예외없이_통과한다() {
-        when(showJpaRepository.existsById(1L)).thenReturn(true);
+        when(showRepository.existsById(1L)).thenReturn(true);
 
         showFinder.validateShowExists(1L);
     }
 
     @Test
     void 공연이_없으면_validateShowExists가_not_found_data_예외를_던진다() {
-        when(showJpaRepository.existsById(1L)).thenReturn(false);
+        when(showRepository.existsById(1L)).thenReturn(false);
 
         assertThatThrownBy(() -> showFinder.validateShowExists(1L))
                 .isInstanceOf(CoreException.class)

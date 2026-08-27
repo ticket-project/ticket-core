@@ -28,9 +28,9 @@ public class GetGenresByCategoryUseCase {
         final List<Genre> genres;
 
         if (input.categoryCode == null || input.categoryCode.isBlank()) {
-            genres = genreRepository.findAllByOrderByCategory_IdAscNameAsc();
+            genres = genreRepository.findAllOrderByCategoryAndName();
         } else {
-            genres = genreRepository.findAllByCategory_CodeOrderByName(input.categoryCode);
+            genres = genreRepository.findAllByCategoryCodeOrderByName(input.categoryCode);
         }
 
         final List<GenreItem> items = genres.stream()

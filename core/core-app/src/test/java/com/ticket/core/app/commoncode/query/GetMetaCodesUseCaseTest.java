@@ -39,8 +39,8 @@ class GetMetaCodesUseCaseTest {
         when(genre.getCode()).thenReturn("KPOP");
         when(genre.getName()).thenReturn("케이팝");
 
-        when(categoryRepository.findAllByOrderByIdAsc()).thenReturn(List.of(category));
-        when(genreRepository.findAllByOrderByCategory_IdAscNameAsc()).thenReturn(List.of(genre));
+        when(categoryRepository.findAllOrderById()).thenReturn(List.of(category));
+        when(genreRepository.findAllOrderByCategoryAndName()).thenReturn(List.of(genre));
 
         GetMetaCodesUseCase useCase = new GetMetaCodesUseCase(categoryRepository, genreRepository);
 

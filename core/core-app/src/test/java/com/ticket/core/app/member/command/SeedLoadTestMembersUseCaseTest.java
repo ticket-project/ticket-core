@@ -29,7 +29,7 @@ class SeedLoadTestMembersUseCaseTest {
     void 기본_계정을_인코딩된_비밀번호로_만든다() {
         final MemberRepository memberRepository = mock(MemberRepository.class);
         final PasswordService passwordService = mock(PasswordService.class);
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull(anyString())).thenReturn(Optional.empty());
+        when(memberRepository.findActiveByEmail(anyString())).thenReturn(Optional.empty());
         when(passwordService.encode("password1234")).thenReturn("{noop}encoded-password");
         final SeedLoadTestMembersUseCase useCase =
                 new SeedLoadTestMembersUseCase(memberRepository, passwordService);
@@ -58,7 +58,7 @@ class SeedLoadTestMembersUseCaseTest {
         final MemberRepository memberRepository = mock(MemberRepository.class);
         final PasswordService passwordService = mock(PasswordService.class);
         final Member existingMember = mock(Member.class);
-        when(memberRepository.findByEmail_EmailAndDeletedAtIsNull(anyString())).thenReturn(Optional.of(existingMember));
+        when(memberRepository.findActiveByEmail(anyString())).thenReturn(Optional.of(existingMember));
         when(passwordService.encode("password1234")).thenReturn("{noop}encoded-password");
         final SeedLoadTestMembersUseCase useCase =
                 new SeedLoadTestMembersUseCase(memberRepository, passwordService);

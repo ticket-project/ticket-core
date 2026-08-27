@@ -37,7 +37,7 @@ public class SeedLoadTestMembersUseCase {
 
         for (int memberNo = 1; memberNo <= count; memberNo++) {
             final String email = input.emailPrefix() + memberNo + input.emailSuffix();
-            if (memberRepository.findByEmail_EmailAndDeletedAtIsNull(email).isPresent()) {
+            if (memberRepository.findActiveByEmail(email).isPresent()) {
                 continue;
             }
 

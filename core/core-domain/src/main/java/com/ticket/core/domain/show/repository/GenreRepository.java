@@ -1,13 +1,15 @@
 package com.ticket.core.domain.show.repository;
 
 import com.ticket.core.domain.show.model.Genre;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface GenreRepository extends JpaRepository<Genre, Long> {
+/**
+ * 장르 메타 코드의 복원을 담당하는 도메인 Repository다.
+ */
+public interface GenreRepository {
 
-    List<Genre> findAllByOrderByCategory_IdAscNameAsc();
+    List<Genre> findAllOrderByCategoryAndName();
 
-    List<Genre> findAllByCategory_CodeOrderByName(String categoryCode);
+    List<Genre> findAllByCategoryCodeOrderByName(String categoryCode);
 }
