@@ -59,7 +59,7 @@ Swagger:
 배포 산출물 기준 검증:
 
 ```bash
-./gradlew clean :core:core-api:bootJar -x test
+./gradlew clean :bootstrap:bootJar -x test
 ```
 
 Windows PowerShell:
@@ -68,7 +68,7 @@ Windows PowerShell:
 .\gradlew.bat :core:core-api:compileJava
 .\gradlew.bat :core:core-domain:test
 .\gradlew.bat :core:core-app:test
-.\gradlew.bat clean :core:core-api:bootJar -x test
+.\gradlew.bat clean :bootstrap:bootJar -x test
 ```
 
 ## 프로파일
@@ -83,8 +83,8 @@ Windows PowerShell:
 
 관련 설정:
 
-- `core/core-api/src/main/resources/application.yml`
-- `core/core-api/src/main/resources/application-local.yml`
+- `bootstrap/src/main/resources/application.yml`
+- `bootstrap/src/main/resources/application-local.yml`
 
 ### dev
 
@@ -97,7 +97,7 @@ Windows PowerShell:
 
 관련 설정:
 
-- `core/core-api/src/main/resources/application-dev.yml`
+- `bootstrap/src/main/resources/application-dev.yml`
 
 ### prod
 
@@ -108,7 +108,7 @@ Windows PowerShell:
 
 관련 설정:
 
-- `core/core-api/src/main/resources/application-prod.yml`
+- `bootstrap/src/main/resources/application-prod.yml`
 
 ### Admission token 검증
 
@@ -142,12 +142,12 @@ Queue Server와 클라이언트의 admission token 전달이 모두 준비된 �
 
 ## DB 마이그레이션
 
-Flyway는 `core:core-api` 실행 모듈에서만 사용한다. 마이그레이션 파일 위치는 아래 경로다.
+Flyway는 `bootstrap` 실행 모듈에서만 사용한다. 마이그레이션 파일 위치는 아래 경로다.
 
 ```text
-core/core-api/src/main/resources/db/migration
-core/core-api/src/main/resources/db/migration-vendor/h2
-core/core-api/src/main/resources/db/migration-vendor/oracle
+bootstrap/src/main/resources/db/migration
+bootstrap/src/main/resources/db/migration-vendor/h2
+bootstrap/src/main/resources/db/migration-vendor/oracle
 ```
 
 공통 migration은 `db/migration`에 두고, Oracle과 H2의 문법이 다른 migration은
@@ -199,7 +199,7 @@ local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create
 GitHub Actions 배포 workflow는 전체 테스트와 infra 통합 테스트를 통과한 뒤 bootJar를 만든다.
 
 ```bash
-./gradlew clean test :core:core-infra:integrationTest :core:core-api:bootJar
+./gradlew clean test :core:core-infra:integrationTest :bootstrap:bootJar
 ```
 
 관련 파일:

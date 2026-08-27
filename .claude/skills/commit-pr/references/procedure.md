@@ -8,7 +8,7 @@
 
 `.github/workflows/deploy.yml`이 `master` push에 붙어 있다. 반영하면 다음이 자동으로 일어난다.
 
-1. `ci.yml`이 `./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar`를 실행하고 jar를 올린다.
+1. `ci.yml`이 `./gradlew test :core:core-infra:integrationTest :bootstrap:bootJar`를 실행하고 jar를 올린다.
 2. 검증된 jar로 Docker 이미지를 빌드해 `ticket-be:<commit SHA>`로 push한다.
 3. 운영 서버에 SSH로 들어가 `docker compose up -d`와 `docker restart ticket-nginx`를 실행한다.
 

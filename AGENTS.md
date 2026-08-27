@@ -54,33 +54,40 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
    - 의존 방향과 실행 모듈을 확인한다.
 3. `docs/development.md`, `docs/architecture.md`
    - 현재 구현 상태와 모듈 경계를 확인한다.
-4. `core/core-api`
-   - HTTP/WebSocket 진입점, 보안, 설정을 본다.
-5. `core/core-app`
-   - use case, 트랜잭션 경계, 조회 포트를 본다.
-6. `core/core-domain`
-   - 엔티티, 도메인 정책, repository/Redis port를 본다.
-7. `core/core-infra`
-   - Querydsl 조회 구현, Redis, WebSocket, 외부 HTTP, AOP 구현체를 본다.
-8. 관련 테스트
+4. `bootstrap`
+   - Spring Boot main, 실행 설정, background 트리거를 본다.
+5. `core/core-api`
+   - HTTP/WebSocket 진입점, 보안, 커서 인코딩, 설정을 본다.
+6. `core/core-app`
+   - use case, 트랜잭션 경계, 조회 포트(`*ReadRepository`), 락·이벤트 포트를 본다.
+7. `core/core-domain`
+   - 엔티티, 도메인 정책, Aggregate Repository 계약, Redis port를 본다.
+8. `core/core-infra`
+   - Repository 어댑터, Querydsl 조회 구현, Redis, 락 구현, outbox, 외부 HTTP를 본다.
+9. 관련 테스트
    - ArchUnit과 도메인 테스트로 실제 강제 규칙을 확인한다.
 
 ## 계층 경계
 
 의존 방향은 `core-api` → `core-app` → `core-domain`이고, `core-infra`는 어댑터로서 `core-app`과
-`core-domain`을 향한다. 반대 방향은 `CoreLayerArchitectureTest`가 막는다.
+`core-domain`을 향한다. `bootstrap`이 이 넷을 조립하는 실행 모듈이다.
+반대 방향은 `CoreLayerArchitectureTest`가 막는다.
 
 새 코드를 어디에 둘지 판단하는 절차와 자주 틀리는 지점은 **`/place-code` 스킬**이 원본이다.
 각 모듈이 무엇을 담는지와 27개 책임별 위치는 `docs/architecture.md`를 본다.
 
 ### 절대 금지 (ArchUnit이 실패시킨다)
 
-- `core-domain`이 `data`·`stereotype` 외의 Spring을 참조하는 것.
+- `core-domain`이 `stereotype` 외의 Spring을 참조하는 것.
   `@Transactional`, `ApplicationEventPublisher`, Querydsl, SpEL, HTTP, 보안 전부 막는다.
-- `core-app`이 Querydsl·web·http·security·messaging·scheduling을 참조하는 것.
+  `BaseEntity`의 생성·수정 감사 애노테이션만 예외다.
+- `core-domain`의 Repository 계약에 `JpaRepository`·`Pageable`·`Slice`·`@Query`·`@Lock`을 두는 것.
+- `core-app`이 Querydsl·web·http·security·messaging·scheduling·Spring Data를 참조하는 것.
 - `core-api`가 `core-domain`이나 `core-infra`를 프로덕션 코드에서 참조하는 것.
-  계약 테스트만 `testImplementation`으로 도메인 픽스처를 쓴다.
-- 실행 모듈이 도메인 port를 직접 부르는 것. use case를 거친다.
+  계약 테스트와 계층 테스트만 `testImplementation`으로 쓴다.
+- `bootstrap`이 도메인에 직접 닿는 것. use case와 어댑터를 거친다.
+- `@Scheduled`나 `@EnableScheduling`을 `bootstrap` 밖에 두는 것.
+- 토큰 라이브러리(`io.jsonwebtoken`) 타입이 `core-infra` 밖으로 새는 것.
 - 도메인 타입이 API 경계로 새는 것. 요청 DTO는 문자열로 받고 변환은 `core-app`이 한다.
 
 
@@ -88,12 +95,15 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 
 ```text
 HTTP/WebSocket 요청
-  -> core/core-api controller/config/security
+  -> core/core-api controller/config/security (커서 문자열 해석 포함)
   -> core/core-app command/query use case
-  -> core/core-domain 정책·엔티티 + port(repository/store/publisher/client)
-  -> core/core-infra adapter(Querydsl/Redis/WebSocket/HTTP)
+  -> 상태 변경: core/core-domain 정책·엔티티 + port -> core/core-infra RepositoryAdapter
+  -> 읽기 전용: core/core-app ReadRepository -> core/core-infra Querydsl 구현
   -> core/core-api response 또는 WebSocket message
 ```
+
+실행은 `bootstrap`이 조립한다. background 처리는 `bootstrap`의 트리거가
+use case(업무) 또는 infra relay(순수 전달)를 한 번 호출한다.
 
 ## 도메인별 주의 지점
 
@@ -106,7 +116,7 @@ HTTP/WebSocket 요청
 - `queue`
   - queue token, TTL, 만료 처리, admitted/waiting 상태 전이를 확인한다.
 - Redis / Redisson
-  - key naming, TTL, expiration listener, scheduler, 락 범위를 확인한다.
+  - key naming, TTL, expiration listener, 보정 트리거, 락 범위를 확인한다.
 
 ## 검증 명령
 
@@ -117,7 +127,7 @@ HTTP/WebSocket 요청
   실행한다(Docker 필요).
 - 구조나 모듈 경계를 건드렸으면 ArchUnit 구조 테스트를 먼저 돌린다.
 - 문서만 바꿨으면 Java 빌드 대신 `rg`와 `git diff --check`를 쓴다.
-- CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :core:core-api:bootJar`다.
+- CI와 같은 전체 검증은 `./gradlew test :core:core-infra:integrationTest :bootstrap:bootJar`다.
 
 각 테스트가 무엇을 고정하는지와 새 테스트를 쓰는 관례는 `docs/testing.md`를 본다.
 
