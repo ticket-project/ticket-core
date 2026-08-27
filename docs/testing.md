@@ -91,7 +91,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - 빈 배선과 기동 여부는 `bootstrap`의 `src/integrationTest`에 둔다.
 - 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `core-api/src/test`,
   `UseCase.Input` 계약은 `core-app/src/test`, 업무 불변식은 `core-domain/src/test`다.
-  같은 규칙을 두 계층에서 동시에 고정하지 않는다.
+  같은 규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [validation.md](validation.md)를 본다.
 - 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 후처리 실패, 순서 역전**을 함께 고정한다.
 - 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로
   `execute는_DB_트랜잭션을_직접_시작하지_않는다`, `주문_저장_메서드는_트랜잭션으로_실행된다`가 있다.

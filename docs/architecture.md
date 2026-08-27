@@ -20,6 +20,9 @@
 - `support:error`
 - `support:logging`
 
+`support:common`은 아직 만들지 않았다. 생성 조건과 금지 규칙은
+[support:common](#supportcommon-아직-만들지-않았다)에 있다.
+
 당장은 `core-worker`, `bootstrap-api`, `bootstrap-worker`를 만들지 않는다. `bootstrap` 한 프로세스에서
 API와 background trigger를 함께 실행하고 `worker.enabled`로 background 실행 여부를 제어한다. API와
 worker를 독립적으로 배포·확장해야 하는 시점에만 실행 모듈을 분리한다.
@@ -199,6 +202,49 @@ Redis 관련 공통 의존성을 제공한다.
 다시 확정할 예정이다. 새 ADR이 기존 결정을 명시적으로 대체하기 전까지 이 문서는 오류 타입의
 구체 모양을 새로 결정하지 않는다. 다만 `CommonErrorCode`를 업무 오류 저장소처럼 확장하거나
 `support:error`에 Spring Web 의존성을 추가해서는 안 된다.
+
+### `support:common` (아직 만들지 않았다)
+
+**공통 모듈 자체는 허용한다. 이름은 `core-common`이 아니라 `support:common`을 쓴다.** 다만 지금
+조건을 만족하는 타입이 없어 **빈 모듈을 먼저 만들지 않는다.** 첫 적합한 공통 타입이 생길 때 만든다.
+
+`support:common`에 둘 수 있는 타입은 아래를 **모두** 만족한다.
+
+- 둘 이상의 **독립** 모듈에서 실제로 쓰인다
+- 모든 소비자에게 의미가 동일하다
+- 호출 모듈별로 다르게 발전할 가능성이 낮다
+- 업무 용어가 없다 (Show, Order, Hold, Seat …)
+- 기술 용어가 없다 (HTTP, DB, Redis, JWT, 검색 …)
+- JDK만으로 성립한다
+- 독립적인 단위 테스트가 가능하다
+- 짧은 중복 코드를 줄이는 것이 목적이 아니다
+
+production 의존성은 **원칙적으로 JDK 외 금지**다. 내부 `core`·`bootstrap`·`storage` 모듈,
+Spring, Jackson, JPA/Hibernate, Querydsl, Redis/Redisson, JWT, Servlet/HTTP client,
+Elasticsearch client를 두지 않는다.
+
+다음은 조건을 만족해도 두지 않는다: Entity, Repository, UseCase, 요청/응답 DTO, `ApiResponse`,
+`HttpStatus`, 업무 오류 코드와 오류 카탈로그, `BookingPolicy`·`OrderState`·`ShowVisibility`,
+`CookieUtils`, `CursorCodec`, `RedisKeyFormatter`, `JpaQueryHelper`, `JwtUtils`, 그리고
+`CommonUtils`·`ObjectUtils`처럼 무제한으로 커지는 클래스.
+
+`support:error`와 `support:logging`은 각각 오류 계약 모듈과 logging resource 모듈로 유지하고
+`support:common`에 합치지 않는다. **`support:common`을 라이브러리 버전 전달용 모듈로 쓰지 않는다.**
+외부 라이브러리 버전은 `gradle/libs.versions.toml`이 소유한다.
+
+#### 현재 후보 판정
+
+| 후보 | 현재 위치 | 판정 | 근거 |
+| --- | --- | --- | --- |
+| `CookieUtils` | `core-api` (`support.util`) | 이동 불가 | Servlet `HttpServletResponse`와 Spring `ResponseCookie`에 의존하고, refresh token 쿠키 이름·path·SameSite는 HTTP 계약이다. `CoreDomainModuleStructureTest`가 위치를 고정한다 |
+| `CursorPage` | `core-app` (`support.cursor`) | 이동 불가 | JDK만 쓰지만 소비자가 `core-app`과 그 포트를 구현하는 `core-infra`뿐이다. 독립 모듈 둘이 아니라 계약 소유자와 그 구현자다. 읽기 포트의 반환 계약이므로 포트를 선언한 모듈이 소유해야 한다 |
+| `ShowCursorCodec` | `core-api` (`api.support.cursor`) | 이동 불가 | Jackson과 Base64 wire 표현을 다루고 이름과 대상 모두 업무 용어(Show)다. 커서 문자열은 HTTP 계약이다 |
+| `ShowQueryHelper` | `core-infra` (`show.query`) | 이동 불가 | Querydsl `BooleanExpression`을 만들고 Q 타입에 직접 의존한다. 기술 용어와 업무 용어를 동시에 갖는다 |
+| `UuidSupplier` | `core-infra` (`infra.support`) | 이동 불가 | JDK만 쓰고 업무 용어도 없지만 소비자가 `core-infra` 한 모듈뿐이다(refresh token store, OAuth2 auth code store). "둘 이상의 독립 모듈"을 만족하지 않는다 |
+
+공통처럼 보인다는 이유만으로 옮기지 않는다. 후보가 조건을 만족하면 그때 `settings.gradle`에
+모듈을 추가하고, 최소 `build.gradle`과 허용 타입·테스트만 옮기며, 금지 의존성을 구조 테스트로
+강제한다. 모든 모듈에 무조건 의존성을 추가하지 않고 **실제 소비 모듈만** 의존한다.
 
 ### `support:logging`
 
@@ -416,6 +462,8 @@ core-infra
 | Spring Boot main과 프로파일 설정 | `bootstrap` |
 | Querydsl, P6Spy 같은 기술 설정 | `core-infra` 의 `config` |
 | 프레임워크 중립 오류 계약과 예외 전달 기반 | `support:error` |
+| 요청 파라미터 Bean Validation 제약 | `core-api` 의 `controller.docs` 인터페이스 |
+| `UseCase.Input` 필수 component 계약 | `core-app` 의 `<기능>` UseCase record와 `support.validation` |
 | 도메인 규칙이 판단하는 오류 | `core-domain` 의 `error` |
 | 유스케이스가 판단하는 오류 | `core-app` 의 `error` |
 | 오류 응답 형식과 Spring 예외 변환 | `core-api` 의 `api.error` |
@@ -615,6 +663,7 @@ auth infra 구현체에 직접 의존하지 않는다.
 ## 아키텍처 리뷰 질문
 
 - 이 코드의 책임이 실행(api), 서비스 흐름(app), 업무 규칙(domain), 기술(infra) 중 어디에 속하는가
+- 같은 검증이 두 계층에서 같은 목적으로 중복 실행되지 않는가 ([validation.md](validation.md))
 - 의존이 `core-api` → `core-app` → `core-domain` 방향을 지키는가
 - `core-domain`과 `core-app`이 Redis, WebSocket, HTTP client, Querydsl, scheduler를 직접 알게 되지 않았는가
 - 새 패키지가 기능 중심 축(`command`/`query`/`model`/`repository`/`store`)을 따르는가

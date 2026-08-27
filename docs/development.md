@@ -213,6 +213,7 @@ Core는 Queue가 발급한 admission token의 서명, issuer, audience, scope, �
 2-1. **application** — use case와 트랜잭션 경계를 `core-app`에 만든다. 도메인 규칙을 순서대로 엮는다.
 3. **infrastructure** — `core-infra`에서 port를 구현한다. Redis 명령, WebSocket 발행, 외부 HTTP를 여기에 둔다.
 4. **presentation** — `core-api`에서 요청 검증, principal 추출, use case 호출, 응답 매핑만 한다.
+   어떤 검증을 어느 계층이 소유하는지는 [validation.md](validation.md)가 단일 기준이다.
 5. **migration** — DB 구조 변경이 있으면 Flyway 새 버전 파일을 추가한다([operations.md](operations.md#db-마이그레이션)).
 6. **테스트** — 도메인 규칙, use case, adapter 계약, controller 계약을 채운다([testing.md](testing.md)).
 7. **검증** — 좁은 검증부터 실행한다([testing.md](testing.md#무엇을-돌릴지)).
@@ -253,11 +254,14 @@ Controller가 repository를 직접 부르는 형태로 합치지 않는다.
 - 이미 적용된 Flyway 파일을 수정했다.
 - 오류를 빈 배열, `null`, 성공 응답으로 감춘다.
 - 변경한 흐름에 대응하는 테스트가 없다.
+- 같은 검증을 같은 목적으로 두 계층에서 중복 실행한다([validation.md](validation.md)).
 - 관측 지표나 로그만 보고 정합성을 확인했다고 판단했다.
 
 ## 개발 시 주의점
 
 - Controller에는 비즈니스 규칙이나 직접 저장소 접근을 넣지 않는다.
+- 요청 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다. 구현체에 다시 붙이면 Jakarta
+  상속 규칙 위반으로 method validation이 깨진다([validation.md](validation.md)).
 - Redis, WebSocket, 외부 HTTP 구현은 `core-infra`에 둔다.
 - domain/app 코드는 자신이 의미를 정의한 port 인터페이스에 의존한다.
 - hold, order, performanceseat, queue 변경은 동시성, TTL, 만료 후처리, 테스트 공백을 먼저 확인한다.
