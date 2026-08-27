@@ -1,0 +1,44 @@
+# 외부 라이브러리와 Gradle plugin 버전의 단일 출처다.
+#
+# 규칙
+#   - 같은 제품의 여러 artifact는 하나의 version ref를 공유한다.
+#   - Spring Boot BOM이 관리하는 starter는 여기 두지 않는다. 버전을 중복 선언하면 BOM과 어긋난다.
+#   - 각 모듈이 무엇을 쓰는지는 모듈 build.gradle에 계속 명시한다. 이 파일은 버전만 정한다.
+#   - applicationVersion과 projectGroup은 gradle.properties가, wrapper 버전은
+#     gradle/wrapper/gradle-wrapper.properties가 소유한다.
+
+[versions]
+spring-boot = "4.0.7"
+spring-dependency-management = "1.1.7"
+querydsl = "5.1.0"
+jjwt = "0.13.0"
+archunit = "1.4.1"
+fixture-monkey = "1.1.15"
+p6spy = "2.0.0"
+redisson = "4.7.0"
+springdoc = "3.0.1"
+oracle-security = "21.3.0.0"
+
+[libraries]
+# Querydsl은 jakarta classifier 변형을 쓴다. 모듈 build.gradle의 variantOf가 이를 붙인다.
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+fixture-monkey-starter = { module = "com.navercorp.fixturemonkey:fixture-monkey-starter", version.ref = "fixture-monkey" }
+
+p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
+redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
+oracle-security-osdt-cert = { module = "com.oracle.database.security:osdt_cert", version.ref = "oracle-security" }
+oracle-security-oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "oracle-security" }
+oracle-security-osdt-core = { module = "com.oracle.database.security:osdt_core", version.ref = "oracle-security" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }

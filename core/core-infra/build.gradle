@@ -8,15 +8,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-restclient'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:2.0.0'
+    implementation libs.p6spy.spring.boot.starter
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+    implementation libs.jjwt.api
+    runtimeOnly libs.jjwt.impl
+    runtimeOnly libs.jjwt.jackson
 
-    implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"
+    implementation variantOf(libs.querydsl.jpa) { classifier('jakarta') }
 
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+    testImplementation libs.archunit.junit5
     testImplementation testFixtures(project(':core:core-domain'))
     testImplementation testFixtures(project(':core:core-app'))
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'

@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' apply false
-    id 'io.spring.dependency-management'
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependency.management)
 }
 
 allprojects {
