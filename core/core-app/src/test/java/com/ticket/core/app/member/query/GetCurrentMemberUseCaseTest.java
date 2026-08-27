@@ -1,6 +1,6 @@
 package com.ticket.core.app.member.query;
 
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.Role;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class GetCurrentMemberUseCaseTest {
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @InjectMocks
     private GetCurrentMemberUseCase useCase;
@@ -33,7 +33,7 @@ class GetCurrentMemberUseCaseTest {
         when(member.getEmail()).thenReturn(Email.create("user@example.com"));
         when(member.getName()).thenReturn("홍길동");
         when(member.getRole()).thenReturn(Role.MEMBER);
-        when(memberFinder.findActiveMemberById(3L)).thenReturn(member);
+        when(memberRepository.getActiveById(3L)).thenReturn(member);
 
         //when
         GetCurrentMemberUseCase.Output output = useCase.execute(new GetCurrentMemberUseCase.Input(3L));
@@ -53,7 +53,7 @@ class GetCurrentMemberUseCaseTest {
         when(member.getEmail()).thenReturn(null);
         when(member.getName()).thenReturn("홍길동");
         when(member.getRole()).thenReturn(Role.MEMBER);
-        when(memberFinder.findActiveMemberById(3L)).thenReturn(member);
+        when(memberRepository.getActiveById(3L)).thenReturn(member);
 
         //when
         GetCurrentMemberUseCase.Output output = useCase.execute(new GetCurrentMemberUseCase.Input(3L));

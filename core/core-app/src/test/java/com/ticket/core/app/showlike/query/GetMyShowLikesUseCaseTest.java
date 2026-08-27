@@ -3,7 +3,7 @@ package com.ticket.core.app.showlike.query;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.app.showlike.query.ShowLikeQueryRepository;
 import com.ticket.core.app.support.cursor.CursorSlice;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 class GetMyShowLikesUseCaseTest {
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private ShowLikeQueryRepository showLikeQueryRepository;
@@ -53,7 +53,7 @@ class GetMyShowLikesUseCaseTest {
                 LocalDateTime.now()
         );
         when(member.getId()).thenReturn(1L);
-        when(memberFinder.findActiveMemberById(1L)).thenReturn(member);
+        when(memberRepository.getActiveById(1L)).thenReturn(member);
         when(showLikeQueryRepository.findMyLikedShows(1L, 10L, 20))
                 .thenReturn(new CursorSlice<>(new SliceImpl<>(List.of(summary)), "9"));
 
@@ -85,7 +85,7 @@ class GetMyShowLikesUseCaseTest {
     void cursor가_비어있으면_첫_페이지를_조회한다() {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
-        when(memberFinder.findActiveMemberById(1L)).thenReturn(member);
+        when(memberRepository.getActiveById(1L)).thenReturn(member);
         when(showLikeQueryRepository.findMyLikedShows(1L, null, 20))
                 .thenReturn(new CursorSlice<>(new SliceImpl<>(List.of()), null));
 

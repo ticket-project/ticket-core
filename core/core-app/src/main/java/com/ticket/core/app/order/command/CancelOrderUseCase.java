@@ -2,7 +2,7 @@ package com.ticket.core.app.order.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
 
-    private final MemberFinder memberFinder;
+    private final MemberRepository memberRepository;
     private final OrderRepository orderRepository;
     private final OrderTerminationService orderTerminationService;
     private final Clock clock;
@@ -27,7 +27,7 @@ public class CancelOrderUseCase {
 
     @Transactional
     public void execute(final Input input) {
-        memberFinder.findActiveMemberById(input.memberId());
+        memberRepository.getActiveById(input.memberId());
         final Order order = getPendingOwnedOrder(input.orderKey(), input.memberId());
         orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }

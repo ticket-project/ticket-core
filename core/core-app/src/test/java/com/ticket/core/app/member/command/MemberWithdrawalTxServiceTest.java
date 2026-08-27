@@ -6,7 +6,7 @@ import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.MemberSocialAccount;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.domain.member.model.SocialProvider;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.repository.MemberSocialAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 class MemberWithdrawalTxServiceTest {
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private MemberSocialAccountRepository memberSocialAccountRepository;
@@ -39,7 +39,7 @@ class MemberWithdrawalTxServiceTest {
     @Test
     void withdraw_marks_member_and_social_accounts_with_same_clock_time() {
         MemberWithdrawalTxService memberWithdrawalTxService = new MemberWithdrawalTxService(
-                memberFinder,
+                memberRepository,
                 memberSocialAccountRepository,
                 fixedClock
         );
@@ -50,7 +50,7 @@ class MemberWithdrawalTxServiceTest {
         MemberSocialAccount google = MemberSocialAccount.create(member, SocialProvider.GOOGLE, "google-123");
         ReflectionTestUtils.setField(kakao, "id", 1L);
         ReflectionTestUtils.setField(google, "id", 2L);
-        when(memberFinder.findActiveMemberById(3L)).thenReturn(member);
+        when(memberRepository.getActiveById(3L)).thenReturn(member);
         when(memberSocialAccountRepository.findAllActiveByMember(member)).thenReturn(List.of(kakao, google));
 
         List<String> kakaoIds = memberWithdrawalTxService.withdraw(3L);
@@ -59,7 +59,7 @@ class MemberWithdrawalTxServiceTest {
         assertThat(member.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(kakao.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(google.getDeletedAt()).isEqualTo(expectedNow);
-        verify(memberFinder).findActiveMemberById(3L);
+        verify(memberRepository).getActiveById(3L);
         verify(memberSocialAccountRepository).findAllActiveByMember(member);
     }
 }

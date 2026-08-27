@@ -3,9 +3,9 @@ package com.ticket.core.app.showlike.command;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.query.ShowFinder;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AddShowLikeUseCase {
 
     private final ShowLikeRepository showLikeRepository;
-    private final MemberFinder memberFinder;
-    private final ShowFinder showFinder;
+    private final MemberRepository memberRepository;
+    private final ShowRepository showRepository;
 
     public record Input(Long memberId, Long showId) {
     }
@@ -34,13 +34,13 @@ public class AddShowLikeUseCase {
     public Output execute(final Input input) {
         validateInput(input);
 
-        final Member member = memberFinder.findActiveMemberById(input.memberId());
+        final Member member = memberRepository.getActiveById(input.memberId());
 
         if (showLikeRepository.existsByMemberIdAndShowId(input.memberId(), input.showId())) {
             return new Output(input.showId(), true, countLikes(input.showId()));
         }
 
-        final Show show = showFinder.findById(input.showId());
+        final Show show = showRepository.getById(input.showId());
 
         try {
             showLikeRepository.save(new ShowLike(member, show));

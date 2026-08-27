@@ -3,8 +3,8 @@ package com.ticket.core.app.showlike.query;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
-import com.ticket.core.domain.show.query.ShowFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetShowLikeStatusUseCase {
 
     private final ShowLikeRepository showLikeRepository;
-    private final MemberFinder memberFinder;
-    private final ShowFinder showFinder;
+    private final MemberRepository memberRepository;
+    private final ShowRepository showRepository;
 
     public record Input(Long memberId, Long showId) {
     }
@@ -29,8 +29,8 @@ public class GetShowLikeStatusUseCase {
 
     public Output execute(final Input input) {
         validateInput(input);
-        final Member member = memberFinder.findActiveMemberById(input.memberId());
-        showFinder.validateShowExists(input.showId());
+        final Member member = memberRepository.getActiveById(input.memberId());
+        showRepository.requireExists(input.showId());
 
         final boolean liked = showLikeRepository.existsByMemberIdAndShowId(member.getId(), input.showId());
         final long likeCount = showLikeRepository.countByShowId(input.showId());

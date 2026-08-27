@@ -3,7 +3,7 @@ package com.ticket.core.app.performanceseat.command;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.DeselectedSeatIds;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class DeselectAllSeatsUseCaseTest {
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -40,7 +40,7 @@ class DeselectAllSeatsUseCaseTest {
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
-        verify(memberFinder).findActiveMemberById(1L);
+        verify(memberRepository).getActiveById(1L);
         verify(seatSelectionService).deselectAll(10L, 1L);
         verify(seatEventPublisher).publish(10L, 20L, SeatAction.DESELECTED);
         verify(seatEventPublisher).publish(10L, 21L, SeatAction.DESELECTED);

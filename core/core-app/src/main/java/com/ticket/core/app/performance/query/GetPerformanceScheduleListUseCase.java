@@ -2,7 +2,7 @@ package com.ticket.core.app.performance.query;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.show.model.Show;
@@ -17,7 +17,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GetPerformanceScheduleListUseCase {
 
-    private final PerformanceFinder performanceFinder;
     private final PerformanceRepository performanceRepository;
 
     public record Input(Long performanceId) {}
@@ -35,7 +34,7 @@ public class GetPerformanceScheduleListUseCase {
     ) {}
 
     public Output execute(final Input input) {
-        final Performance findPerformance = performanceFinder.findById(input.performanceId());
+        final Performance findPerformance = performanceRepository.getWithQueuePolicyById(input.performanceId());
 
         final Show show = findPerformance.getShow();
         if (show == null) {

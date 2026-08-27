@@ -3,7 +3,7 @@ package com.ticket.core.app.performanceseat.query;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.query.ShowFinder;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.show.venue.Venue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class GetVenueLayoutUseCaseTest {
 
     @Mock
-    private ShowFinder showFinder;
+    private ShowRepository showRepository;
 
     @InjectMocks
     private GetVenueLayoutUseCase useCase;
@@ -31,7 +31,7 @@ class GetVenueLayoutUseCaseTest {
         //given
         Show show = mock(Show.class);
         Venue venue = mock(Venue.class);
-        when(showFinder.findById(100L)).thenReturn(show);
+        when(showRepository.getById(100L)).thenReturn(show);
         when(show.getVenue()).thenReturn(venue);
         when(venue.getName()).thenReturn("올림픽홀");
         when(venue.getViewBoxWidth()).thenReturn(1000);
@@ -50,7 +50,7 @@ class GetVenueLayoutUseCaseTest {
     void 공연장_정보가_없으면_예외를_던진다() {
         //given
         Show show = mock(Show.class);
-        when(showFinder.findById(100L)).thenReturn(show);
+        when(showRepository.getById(100L)).thenReturn(show);
         when(show.getVenue()).thenReturn(null);
 
         //when

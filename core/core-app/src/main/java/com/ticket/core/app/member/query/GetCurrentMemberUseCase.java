@@ -1,7 +1,7 @@
 package com.ticket.core.app.member.query;
 
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +11,10 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class GetCurrentMemberUseCase {
-    private final MemberFinder memberFinder;
+    private final MemberRepository memberRepository;
 
     public Output execute(final Input input) {
-        final Member findMember = memberFinder.findActiveMemberById(input.memberId());
+        final Member findMember = memberRepository.getActiveById(input.memberId());
         return new Output(
                 findMember.getId(),
                 Optional.ofNullable(findMember.getEmail()).map(email -> email.getEmail()).orElse(""),

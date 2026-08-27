@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
 import com.ticket.core.app.order.command.CancelOrderUseCase;
-import com.ticket.core.domain.member.query.MemberFinder;
+import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 class CancelOrderUseCaseTest {
 
     @Mock
-    private MemberFinder memberFinder;
+    private MemberRepository memberRepository;
 
     @Mock
     private OrderRepository orderRepository;
@@ -38,7 +38,7 @@ class CancelOrderUseCaseTest {
     @Test
     void 취소_요청이면_고정_Clock_시간으로_주문을_취소한다() {
         final CancelOrderUseCase useCase = new CancelOrderUseCase(
-                memberFinder,
+                memberRepository,
                 orderRepository,
                 orderTerminationService,
                 fixedClock
@@ -49,7 +49,7 @@ class CancelOrderUseCaseTest {
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 
-        verify(memberFinder).findActiveMemberById(1L);
+        verify(memberRepository).getActiveById(1L);
         verify(orderRepository).findByOrderKeyAndMemberIdForUpdate("order-key", 1L);
         verify(orderTerminationService).cancel(order, expectedNow);
     }

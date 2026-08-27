@@ -4,7 +4,7 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.PerformanceFinder;
+import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 class GetSeatAvailabilityUseCaseTest {
 
     @Mock
-    private PerformanceFinder performanceFinder;
+    private PerformanceRepository performanceRepository;
     @Mock
     private SeatAvailabilityQueryRepository seatAvailabilityQueryRepository;
     @Mock
@@ -51,7 +51,7 @@ class GetSeatAvailabilityUseCaseTest {
         List<GetSeatAvailabilityUseCase.GradeAvailability> response =
                 List.of(new GetSeatAvailabilityUseCase.GradeAvailability("VIP", 1, 0L));
 
-        when(performanceFinder.findById(10L)).thenReturn(performance);
+        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(performance);
         when(performance.getId()).thenReturn(10L);
         when(performance.getShow()).thenReturn(show);
         when(show.getId()).thenReturn(100L);
@@ -72,7 +72,7 @@ class GetSeatAvailabilityUseCaseTest {
     void 공연이_연결되지_않은_회차면_예외를_던진다() {
         //given
         Performance performance = mock(Performance.class);
-        when(performanceFinder.findById(10L)).thenReturn(performance);
+        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(performance);
         when(performance.getShow()).thenReturn(null);
 
         //when

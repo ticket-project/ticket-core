@@ -2,7 +2,7 @@ package com.ticket.core.app.performanceseat.query;
 
 import com.ticket.core.app.performanceseat.query.model.SeatInfoView;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.query.ShowFinder;
+import com.ticket.core.domain.show.repository.ShowRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class GetShowSeatsUseCaseTest {
 
     @Mock
-    private ShowFinder showFinder;
+    private ShowRepository showRepository;
 
     @Mock
     private SeatMapQueryRepository seatMapQueryRepository;
@@ -36,7 +36,7 @@ class GetShowSeatsUseCaseTest {
         List<SeatInfoView> seats = List.of(
                 new SeatInfoView(1L, 1, "A", "10", "7", 10.0, 20.0, "VIP", "VIP", BigDecimal.TEN)
         );
-        when(showFinder.findById(100L)).thenReturn(show);
+        when(showRepository.getById(100L)).thenReturn(show);
         when(show.getId()).thenReturn(100L);
         when(seatMapQueryRepository.findShowSeats(100L)).thenReturn(seats);
 
@@ -49,7 +49,7 @@ class GetShowSeatsUseCaseTest {
     @Test
     void 공연_좌석이_없으면_빈_목록을_반환한다() {
         Show show = mock(Show.class);
-        when(showFinder.findById(100L)).thenReturn(show);
+        when(showRepository.getById(100L)).thenReturn(show);
         when(show.getId()).thenReturn(100L);
         when(seatMapQueryRepository.findShowSeats(100L)).thenReturn(List.of());
 
