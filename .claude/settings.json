@@ -4,6 +4,7 @@
     "allow": [
       "Bash(./gradlew:*)",
       "PowerShell(.\\gradlew.bat:*)",
+      "Bash(bash scripts/check-docs.sh)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -11,9 +12,46 @@
       "Bash(git branch:*)",
       "Bash(git fetch:*)",
       "Bash(git merge-tree:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git worktree list)",
+      "Bash(git stash list)",
       "Bash(gh auth status)",
       "Bash(gh pr view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh label list:*)",
       "Bash(rg:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git commit --no-verify:*)",
+      "Bash(git push --no-verify:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          { "type": "command", "command": "bash scripts/hooks/guard-branch.sh" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash scripts/hooks/session-context.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash scripts/hooks/stop-docs-check.sh" }
+        ]
+      }
     ]
   }
 }
