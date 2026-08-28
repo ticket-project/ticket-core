@@ -1,24 +1,17 @@
 package com.ticket.bootstrap;
 
-import com.ticket.TicketApplication;
+import com.ticket.bootstrap.support.BookingE2ETestSupport;
+import com.ticket.bootstrap.worker.HoldOutboxRelayTrigger;
+import com.ticket.bootstrap.worker.OrderExpirationTrigger;
 import com.ticket.core.app.event.IntegrationEventPublisher;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.ExpirePendingOrdersUseCase;
 import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRelay;
 import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRelay;
-import com.ticket.bootstrap.worker.HoldOutboxRelayTrigger;
-import com.ticket.bootstrap.worker.OrderExpirationTrigger;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,46 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>단위 테스트는 각 클래스를 직접 생성하므로 빈 배선이 깨져도 통과한다. 모듈 사이로 빈을 옮기는
  * 변경에서 기동 실패를 잡아내려면 컨텍스트를 한 번은 통째로 띄워봐야 한다.
+ *
+ * <p>기동 설정은 {@link BookingE2ETestSupport}가 소유한다. 예매 E2E 테스트와 같은 설정을 써야
+ * Spring 컨텍스트가 하나로 재사용된다.
  */
-@Testcontainers
-@SpringBootTest(
-        classes = TicketApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {
-                "spring.datasource.url=jdbc:h2:mem:context-load;MODE=Oracle;DB_CLOSE_DELAY=-1",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.jpa.hibernate.ddl-auto=create-drop",
-                "spring.flyway.enabled=false",
-                "app.seed.enabled=false",
-                "app.seed.load-test-fixture.enabled=false",
-                "JWT_SECRET=0123456789abcdef0123456789abcdef",
-                "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
-                "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
-                "GOOGLE_CLIENT_ID=context-load",
-                "GOOGLE_CLIENT_SECRET=context-load",
-                "KAKAO_CLIENT_ID=context-load",
-                "KAKAO_CLIENT_SECRET=context-load",
-                "KAKAO_ADMIN_KEY=context-load",
-                "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
-                "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
-        }
-)
-@SuppressWarnings({"NonAsciiCharacters", "resource"})
-class ApplicationContextLoadTest {
-
-    private static final int REDIS_PORT = 6379;
-
-    @Container
-    static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
-
-    @DynamicPropertySource
-    static void redisProperties(final DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
-    }
+@SuppressWarnings("NonAsciiCharacters")
+class ApplicationContextLoadTest extends BookingE2ETestSupport {
 
     @Autowired
     private ApplicationContext context;
