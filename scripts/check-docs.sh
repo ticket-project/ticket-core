@@ -21,7 +21,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-AGENTS_MAX=200
+AGENTS_MAX=100
 # 조건부·미래 참조라 없어도 정상인 경로
 ALLOW_MISSING="CONTEXT-MAP.md"
 OBS="docs/agents/observed-failures.md"
