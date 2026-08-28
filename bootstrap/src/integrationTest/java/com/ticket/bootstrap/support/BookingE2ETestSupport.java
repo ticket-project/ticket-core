@@ -1,6 +1,6 @@
 package com.ticket.bootstrap.support;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.ticket.TicketApplication;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +18,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
@@ -40,7 +38,6 @@ import static org.assertj.core.api.Assertions.fail;
  * Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 2분이라 초 단위로 끝나는 테스트를 방해하지
  * 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
  */
-@Testcontainers
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -84,9 +81,18 @@ public abstract class BookingE2ETestSupport {
     protected static final String SEAT_AVAILABLE = "AVAILABLE";
     protected static final String SEAT_OCCUPIED = "OCCUPIED";
 
-    @Container
+    /**
+     * JVM 하나에 컨테이너 하나를 쓴다. @Testcontainers의 @Container는 테스트 클래스마다 컨테이너를
+     * 띄우고 클래스가 끝나면 멈추는데, Spring 컨텍스트는 클래스 사이에 재사용된다. 그러면 두 번째
+     * 테스트 클래스가 이미 멈춘 컨테이너의 포트를 가리킨 컨텍스트를 그대로 물려받아 실패한다.
+     * 정리는 Testcontainers의 Ryuk이 JVM 종료 시 맡는다.
+     */
     static final GenericContainer<?> REDIS =
             new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
+
+    static {
+        REDIS.start();
+    }
 
     @DynamicPropertySource
     static void redisProperties(final DynamicPropertyRegistry registry) {
