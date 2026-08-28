@@ -7,18 +7,7 @@
 ## 프로젝트 구조
 
 프로젝트는 실행, HTTP 진입, 애플리케이션 흐름, 도메인 규칙, 기술 구현을 분리한 멀티 모듈
-모듈러 모놀리스다. 아래는 구현이 따라야 할 확정 구조다.
-
-확정 모듈은 다음 8개다.
-
-- `bootstrap`
-- `core:core-domain`
-- `core:core-app`
-- `core:core-infra`
-- `core:core-api`
-- `storage:redis-core`
-- `support:error`
-- `support:logging`
+모듈러 모놀리스다. 확정 모듈 목록은 `settings.gradle`이 원본이다.
 
 `support:common`은 아직 만들지 않았다. 생성 조건과 금지 규칙은
 [support:common](#supportcommon-아직-만들지-않았다)에 있다.
@@ -57,193 +46,117 @@ bootstrap과 core 모듈 ──→ support:error / support:logging (필요한 �
 
 ## 모듈 책임
 
+각 모듈이 **무엇을 담는지는 코드가 원본이다.** 여기에는 왜 그렇게 나뉘었는지와, 코드만 봐서는
+알 수 없는 경계 판단만 둔다. 실제 의존은 각 모듈 `build.gradle`이 원본이다.
+
 ### `bootstrap`
 
-실행 모듈이자 composition root다. Spring Boot main과 실행 환경 설정만 둔다.
-
-주요 책임:
-
-- `TicketApplication` (유일한 Spring Boot main)
-- 모듈 조립과 bootJar 생성
-- 프로파일별 설정과 Flyway 마이그레이션 리소스
-- background worker 트리거(`@Scheduled`)와 `worker.enabled` 스위치
-
-의존: `core:core-api`, `core:core-app`, `core:core-infra`, `support:error`, `support:logging`,
-actuator, Flyway, DB 드라이버, micrometer, JWT 런타임 구현
+실행 모듈이자 composition root다. Spring Boot main(`TicketApplication`)과 실행 환경 설정,
+bootJar, 프로파일별 설정과 Flyway 리소스, background 트리거를 둔다.
 
 트리거는 주기만 정하고 조회나 상태 판단을 하지 않는다. 업무 배치는 use case를,
-순수 relay는 core-infra의 relay를 한 번 호출한다.
+순수 relay는 core-infra의 relay를 한 번 호출한다. 실행 방식을 다른 모듈이 결정하지 않게 한다.
 
 ### `core:core-api`
 
-HTTP adapter 모듈이다. 실행 진입점은 여기에 없다.
-
-주요 책임:
-
-- REST Controller
-- 요청/응답 DTO와 HTTP 커서 문자열 인코딩·디코딩
-- Spring Security filter chain, OAuth2 HTTP 처리
-- WebSocket 진입 설정
-- Admission token 검증 같은 예매 API 진입 제어
-- 공통 응답 포맷과 HTTP 오류 변환
-
-의존:
-
-- `core:core-app`
-- `support:error`
-- `support:logging`
+HTTP adapter 모듈이다. 실행 진입점은 여기에 없다. Controller, 요청/응답 DTO, HTTP 커서 문자열,
+security filter chain, WebSocket 진입, admission token 검증, 공통 응답과 HTTP 오류 변환을 맡는다.
 
 `core-domain`과 `core-infra`는 프로덕션 의존에서 뺐다. 실행 모듈은 use case를 거쳐 도메인에 닿는다.
 계약 테스트와 계층 테스트가 필요로 하는 만큼만 `testImplementation`으로 남긴다.
 
 ### `core:core-app`
 
-애플리케이션 계층이다. 도메인 규칙과 어댑터를 엮어 실제 서비스 흐름을 만든다.
+애플리케이션 계층이다. 도메인 규칙과 어댑터를 엮어 서비스 흐름을 만든다. use case, 트랜잭션 경계,
+조회 포트와 결과 view, 그리고 **use case가 필요로 하는 출력 포트**(분산락, 이벤트 발행, 인증 토큰,
+외부 provider)를 소유한다.
 
-주요 책임:
+포트를 여기 두는 기준은 "누가 그 계약의 의미를 정하는가"다. use case가 정하면 `core-app`,
+도메인 규칙이 정하면 `core-domain`이다. 구현은 어느 쪽이든 `core-infra`다.
 
-- 기능별 use case (`*UseCase`)
-- 트랜잭션 경계와 오케스트레이션 (`*TxService`, `*Coordinator`, `*Processor`)
-- 읽기 전용 조회 포트(`*ReadRepository`)와 조회 결과 view/param
-- 커서 페이징 결과 타입 (`support.cursor.CursorPage`) — HTTP 커서 문자열은 다루지 않는다
-- 분산락 포트 (`lock`의 `LockManager`, `LockKey`, `LockOptions`)
-- 후속 처리 이벤트 포트 (`event`의 `IntegrationEventPublisher` 등)
-- 인증 주체 값과 인증 흐름에 필요한 포트
-  (`AuthenticatedMember`, `AccessTokenReader`, 토큰 발급, refresh token 저장, 비밀번호 검증 등)
-- 외부 OAuth provider, 외부 publisher/client처럼 use case가 요구하는 비-Repository 출력 포트
-
-의존:
-
-- `core:core-domain`
-- `support:error`
-- Spring context/tx/core/beans와 slf4j만 쓴다. Spring Data와 Jackson은 두지 않는다.
+커서 페이징 결과(`support.cursor.CursorPage`)는 여기 있지만 HTTP 커서 문자열은 다루지 않는다.
+Spring은 context/tx/core/beans와 slf4j까지만 쓰고 Spring Data와 Jackson은 두지 않는다.
 
 ### `core:core-domain`
 
-핵심 비즈니스 규칙 모듈이다. 기술이나 전달 방식과 무관하게 성립하는 예매 도메인만 둔다.
+기술이나 전달 방식과 무관하게 성립하는 예매 도메인만 둔다. 엔티티와 값 객체, 상태 enum, 정책과
+검증기, 도메인 이벤트와 예외, Aggregate Repository 계약을 갖는다.
 
-주요 책임:
+**JPA entity를 도메인 모델로 쓰기로 했으므로** JPA mapping annotation은 허용한다. 남은 Spring
+stereotype과 `BaseEntity`의 auditing annotation은 구조 이전 과정의 제한된 예외다. 새 도메인 코드는
+이 예외를 넓히지 않고 가능한 한 순수 Java 객체로 쓴다.
 
-- JPA entity와 값 객체 (`Hold`, `Order`, `Show` 등)
-- 도메인 상태 enum, 정책, 검증기와 도메인 서비스 (`BookingPolicyValidator` 등)
-- 도메인 이벤트, 업무 불변식과 도메인 예외
-- Aggregate Repository 인터페이스와 저장 기술에 중립적인 업무 상태 저장 계약
-- 회원 역할·권한처럼 업무 규칙에 해당하는 인증/인가 개념
-
-JPA entity를 도메인 모델로 쓰기로 했으므로 JPA mapping annotation은 허용한다. 현재 남은 Spring
-stereotype과 `BaseEntity`의 Spring Data auditing annotation은 구조 이전 과정의 제한된 예외다.
-새 도메인 코드는 이 예외를 넓히지 않고, 가능한 한 순수 Java 객체로 작성한다.
-
-Repository 계약에는 도메인 타입과 Java 기본 타입만 노출한다. `JpaRepository`, `Pageable`,
-`Slice`, `@Query`, `@Lock`은 두지 않는다. 이 기술들은 core-infra의 어댑터가 결정한다.
-
-Redis/WebSocket/외부 HTTP/JWT/비밀번호 암호화처럼 기술이나 애플리케이션 흐름 때문에 필요한 포트는
-`core-app`이 소유한다. outbox 엔티티와 상태, 분산락, 조회 최적화, use case도 이 모듈에 두지 않는다.
+Repository 계약에는 도메인 타입과 Java 기본 타입만 노출한다. 저장 기술은 어댑터가 결정한다.
+기술이나 애플리케이션 흐름 때문에 필요한 포트(Redis, WebSocket, 외부 HTTP, JWT, 암호화)는
+`core-app`이 소유하고, outbox·분산락·조회 최적화·use case도 이 모듈에 두지 않는다.
 
 ### `core:core-infra`
 
-기술 구현 모듈이다. `core-app`과 `core-domain`이 선언한 계약을 기술로 구현하고,
-Redis/WebSocket/외부 HTTP와 영속성 설정을 담당한다.
+`core-app`과 `core-domain`이 선언한 계약을 기술로 구현한다. Repository 어댑터, Querydsl 조회,
+인증 포트 구현, Redis store와 분산락, expiration listener, WebSocket publisher, 외부 HTTP client,
+outbox와 커밋 후 리스너, 시드 러너, 기술 설정이 여기 있다.
 
-주요 책임:
-
-- Aggregate Repository 어댑터와 Spring Data JPA 인터페이스
-- Querydsl 읽기 전용 조회 구현과 조건·정렬·커서 헬퍼
-- JWT 발급·검증, 비밀번호 암호화, OAuth provider client 같은 인증 포트 구현
-- Redis 기반 store adapter와 분산락 구현 (`lock`의 `RedissonLockManager`)
-- Redis key expiration listener와 handler
-- WebSocket seat event publisher
-- Kakao HTTP interface client
-- 암호화와 대기열 입장 토큰 어댑터
-- outbox 엔티티·상태·relay와 커밋 후 리스너 (`order.outbox`)
-- 시드 러너 (`seed`)
-- JPA auditing, Querydsl, P6Spy 설정
-
-기술 라이브러리 예외를 그대로 밖으로 흘리지 않는다. 어댑터가 복구 가능한 경우 처리하고,
-처리할 수 없는 경우에는 app/domain이 이해할 수 있는 실패 또는 API가 일관되게 처리할 기술 실패로
-번역한다. 어떤 라이브러리를 썼는지가 안쪽 계층의 계약에 드러나면 경계가 잘못된 것이다.
-
-의존:
-
-- `core:core-app`
-- `core:core-domain`
-- `storage:redis-core`
-- `support:error`
-- Spring Web / WebSocket / Security / Data JPA / Querydsl / P6Spy / JJWT
+**기술 라이브러리 예외를 그대로 밖으로 흘리지 않는다.** 어댑터가 복구 가능한 경우 처리하고,
+그렇지 않으면 app/domain이 이해할 수 있는 실패 또는 API가 일관되게 처리할 기술 실패로 번역한다.
+어떤 라이브러리를 썼는지가 안쪽 계층의 계약에 드러나면 경계가 잘못된 것이다.
 
 ### `storage:redis-core`
 
-Redis 관련 공통 의존성을 제공한다.
-
-주요 책임:
-
-- `spring-boot-starter-data-redis`
-- `redisson-spring-boot-starter`
-
-실제 비즈니스 Redis 구현은 `core-infra`의 기능별 adapter에 둔다.
+Redis 공통 의존성만 제공한다. 실제 비즈니스 Redis 구현은 `core-infra`의 기능별 adapter에 둔다.
 
 ### `support:error`
 
-프레임워크에 독립적인 **공통 오류 계약과 예외 전달 기반**만 제공한다. 이 모듈은 Spring Web,
-`HttpStatus`, Jackson에 의존하지 않으며 업무별 오류 코드·메시지 카탈로그를 소유하지 않는다.
+프레임워크에 독립적인 **공통 오류 계약과 예외 전달 기반**만 제공한다. Spring Web, `HttpStatus`,
+Jackson에 의존하지 않으며 업무별 오류 코드·메시지 카탈로그를 소유하지 않는다.
 
-오류는 원인을 판단할 수 있는 모듈이 정의한다. 도메인 불변식 위반은 `core-domain`, use case 흐름의
+**오류는 원인을 판단할 수 있는 모듈이 정의한다.** 도메인 불변식 위반은 `core-domain`, use case 흐름의
 실패는 `core-app`, HTTP 요청·인증·응답 변환 실패는 `core-api`, 기술 실패의 감지와 번역은
-`core-infra`가 담당한다. 실제 `HttpStatus`, `ResponseEntity`, JSON 공개 응답 형식과 직렬화는
-최외곽인 `core-api`만 소유한다.
+`core-infra`가 담당한다. `HttpStatus`, `ResponseEntity`, 공개 JSON 응답 형식과 직렬화는 `core-api`만
+소유한다.
 
-현재 구체 계약과 구현 배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)를 따른다.
-오류 코드 체계, 공개 메시지, 개발자용 진단 정보, 상태 분류와 예외 타입은 별도 오류 재설계에서
-다시 확정할 예정이다. 새 ADR이 기존 결정을 명시적으로 대체하기 전까지 이 문서는 오류 타입의
-구체 모양을 새로 결정하지 않는다. 다만 `CommonErrorCode`를 업무 오류 저장소처럼 확장하거나
-`support:error`에 Spring Web 의존성을 추가해서는 안 된다.
+구체 계약과 배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)를 따른다. 오류 코드 체계와
+상태 분류는 별도 재설계에서 다시 확정한다. 새 ADR이 기존 결정을 대체하기 전까지 이 문서는 오류
+타입의 구체 모양을 새로 정하지 않는다. `CommonErrorCode`를 업무 오류 저장소처럼 확장하거나
+`support:error`에 Spring Web 의존성을 추가하지 않는다.
 
 ### `support:common` (아직 만들지 않았다)
 
 **공통 모듈 자체는 허용한다. 이름은 `core-common`이 아니라 `support:common`을 쓴다.** 다만 지금
 조건을 만족하는 타입이 없어 **빈 모듈을 먼저 만들지 않는다.** 첫 적합한 공통 타입이 생길 때 만든다.
 
-`support:common`에 둘 수 있는 타입은 아래를 **모두** 만족한다.
+둘 수 있는 타입은 아래를 **모두** 만족한다.
 
 - 둘 이상의 **독립** 모듈에서 실제로 쓰인다
-- 모든 소비자에게 의미가 동일하다
-- 호출 모듈별로 다르게 발전할 가능성이 낮다
-- 업무 용어가 없다 (Show, Order, Hold, Seat …)
-- 기술 용어가 없다 (HTTP, DB, Redis, JWT, 검색 …)
-- JDK만으로 성립한다
-- 독립적인 단위 테스트가 가능하다
+- 모든 소비자에게 의미가 동일하고, 호출 모듈별로 다르게 발전할 가능성이 낮다
+- 업무 용어(Show, Order, Hold, Seat)도 기술 용어(HTTP, DB, Redis, JWT)도 없다
+- JDK만으로 성립하고 독립적인 단위 테스트가 가능하다
 - 짧은 중복 코드를 줄이는 것이 목적이 아니다
 
-production 의존성은 **원칙적으로 JDK 외 금지**다. 내부 `core`·`bootstrap`·`storage` 모듈,
-Spring, Jackson, JPA/Hibernate, Querydsl, Redis/Redisson, JWT, Servlet/HTTP client,
-Elasticsearch client를 두지 않는다.
+production 의존성은 **원칙적으로 JDK 외 금지**다. 조건을 만족해도 Entity, Repository, UseCase,
+DTO, `ApiResponse`, `HttpStatus`, 업무 오류 코드, `CookieUtils`, `CursorCodec`, `RedisKeyFormatter`,
+`JwtUtils`, 그리고 `CommonUtils`처럼 무제한으로 커지는 클래스는 두지 않는다.
 
-다음은 조건을 만족해도 두지 않는다: Entity, Repository, UseCase, 요청/응답 DTO, `ApiResponse`,
-`HttpStatus`, 업무 오류 코드와 오류 카탈로그, `BookingPolicy`·`OrderState`·`ShowVisibility`,
-`CookieUtils`, `CursorCodec`, `RedisKeyFormatter`, `JpaQueryHelper`, `JwtUtils`, 그리고
-`CommonUtils`·`ObjectUtils`처럼 무제한으로 커지는 클래스.
-
-`support:error`와 `support:logging`은 각각 오류 계약 모듈과 logging resource 모듈로 유지하고
-`support:common`에 합치지 않는다. **`support:common`을 라이브러리 버전 전달용 모듈로 쓰지 않는다.**
-외부 라이브러리 버전은 `gradle/libs.versions.toml`이 소유한다.
+`support:error`와 `support:logging`은 각자 역할로 유지하고 여기 합치지 않는다.
+**라이브러리 버전 전달용 모듈로 쓰지 않는다.** 버전은 `gradle/libs.versions.toml`이 소유한다.
 
 #### 현재 후보 판정
 
-| 후보 | 현재 위치 | 판정 | 근거 |
-| --- | --- | --- | --- |
-| `CookieUtils` | `core-api` (`support.util`) | 이동 불가 | Servlet `HttpServletResponse`와 Spring `ResponseCookie`에 의존하고, refresh token 쿠키 이름·path·SameSite는 HTTP 계약이다. `CoreDomainModuleStructureTest`가 위치를 고정한다 |
-| `CursorPage` | `core-app` (`support.cursor`) | 이동 불가 | JDK만 쓰지만 소비자가 `core-app`과 그 포트를 구현하는 `core-infra`뿐이다. 독립 모듈 둘이 아니라 계약 소유자와 그 구현자다. 읽기 포트의 반환 계약이므로 포트를 선언한 모듈이 소유해야 한다 |
-| `ShowCursorCodec` | `core-api` (`api.support.cursor`) | 이동 불가 | Jackson과 Base64 wire 표현을 다루고 이름과 대상 모두 업무 용어(Show)다. 커서 문자열은 HTTP 계약이다 |
-| `ShowQueryHelper` | `core-infra` (`show.query`) | 이동 불가 | Querydsl `BooleanExpression`을 만들고 Q 타입에 직접 의존한다. 기술 용어와 업무 용어를 동시에 갖는다 |
-| `UuidSupplier` | `core-infra` (`infra.support`) | 이동 불가 | JDK만 쓰고 업무 용어도 없지만 소비자가 `core-infra` 한 모듈뿐이다(refresh token store, OAuth2 auth code store). "둘 이상의 독립 모듈"을 만족하지 않는다 |
+공통처럼 보인다는 이유만으로 옮기지 않는다. 지금까지 검토한 후보는 전부 이동 불가다.
 
-공통처럼 보인다는 이유만으로 옮기지 않는다. 후보가 조건을 만족하면 그때 `settings.gradle`에
-모듈을 추가하고, 최소 `build.gradle`과 허용 타입·테스트만 옮기며, 금지 의존성을 구조 테스트로
-강제한다. 모든 모듈에 무조건 의존성을 추가하지 않고 **실제 소비 모듈만** 의존한다.
+| 후보 | 현재 위치 | 근거 |
+| --- | --- | --- |
+| `CookieUtils` | `core-api` | Servlet·Spring에 의존하고 쿠키 이름·path·SameSite는 HTTP 계약이다 |
+| `CursorPage` | `core-app` | 소비자가 계약 소유자와 그 구현자뿐이다. 독립 모듈 둘이 아니다 |
+| `ShowCursorCodec` | `core-api` | Jackson과 Base64 wire 표현을 다루고 이름과 대상이 업무 용어다 |
+| `ShowQueryHelper` | `core-infra` | Querydsl Q 타입에 직접 의존한다. 기술 용어와 업무 용어를 동시에 갖는다 |
+| `UuidSupplier` | `core-infra` | 소비자가 `core-infra` 한 모듈뿐이다 |
+
+후보가 조건을 만족하면 그때 모듈을 추가하고, 허용 타입과 테스트만 옮기며, 금지 의존성을 구조
+테스트로 강제한다. 모든 모듈에 의존성을 붙이지 않고 **실제 소비 모듈만** 의존한다.
 
 ### `support:logging`
 
-로깅 관련 공통 설정 리소스를 제공한다.
+로깅 공통 설정 리소스만 제공한다.
 
 ## 대표 실행 흐름
 
@@ -251,49 +164,31 @@ Elasticsearch client를 두지 않는다.
 나온다. `core-infra`가 app/domain을 의존하는 이유는 안쪽 계층이 선언한 인터페이스를 구현하기
 위해서이지, 안쪽 계층이 infra 구현을 직접 호출하기 위해서가 아니다.
 
-### 상태 변경 요청
+### 세 가지 흐름
 
 ```text
-bootstrap
-  → core-api Controller
-  → core-app Command UseCase / transaction boundary
-      ├→ core-domain aggregate·policy / Aggregate Repository 계약
-      └→ core-app 외부 능력 포트
-             ↓
-         core-infra adapter
-             → Spring Data JPA / Redis / 외부 시스템
+상태 변경  core-api Controller → core-app Command UseCase(트랜잭션 경계)
+             ├→ core-domain aggregate·policy / Aggregate Repository 계약
+             └→ core-app 출력 포트 → core-infra adapter → JPA·Redis·외부
+
+조회       core-api Controller → core-app Query UseCase → ReadRepository 계약
+             → core-infra Querydsl 구현 → core-app view → core-api 응답 DTO
+
+background 업무 배치: bootstrap @Scheduled → core-app UseCase → domain → infra
+           순수 relay: bootstrap @Scheduled → core-infra relay
 ```
 
-API는 요청을 해석하고 app 입력으로 변환한다. app은 트랜잭션과 작업 순서를 정하고, domain은
-상태 변경 가능 여부와 불변식을 판단한다. infra는 그 결과를 실제 저장 기술에 반영한다.
+API는 요청을 해석해 app 입력으로 바꾼다. app은 트랜잭션과 순서를 정하고, domain은 상태 변경
+가능 여부와 불변식을 판단하며, infra가 실제 저장 기술에 반영한다.
 
-### 조회 요청
-
-```text
-bootstrap
-  → core-api Controller
-  → core-app Query UseCase
-  → core-app ReadRepository 계약
-  → core-infra Querydsl 구현
-  → core-app immutable view
-  → core-api 응답 DTO
-```
-
-단순 조회도 API가 domain/infra를 직접 보지 않는다. API가 조회 구현과 결합되면 같은 조회를
+**단순 조회도 API가 domain/infra를 직접 보지 않는다.** API가 조회 구현과 결합되면 같은 조회를
 worker나 다른 adapter에서 재사용하기 어렵고, HTTP 계층이 정렬·커서·조인 전략까지 소유하게 된다.
-대신 app의 query use case를 얇게 유지하고, 복잡한 projection·집계·커서 최적화는 infra가 구현한다.
+app의 query use case는 얇게 두고 projection·집계·커서 최적화는 infra가 구현한다.
 
-### background 작업
-
-```text
-업무 배치: bootstrap @Scheduled → core-app UseCase → core-domain → core-infra adapter
-순수 relay: bootstrap @Scheduled → core-infra relay
-```
-
-`bootstrap`의 스케줄러는 실행 시각과 on/off만 책임진다. 주문 만료 판단이나 상태 전이 같은 업무는
-app/domain에 있고, outbox 레코드 전송처럼 업무 판단 없이 기술 상태만 처리하는 relay는 infra에 있다.
-현재는 API와 worker가 하나의 실행 파일을 공유하지만 `worker.enabled=false`로 트리거를 끌 수 있다.
-독립 배포·독립 스케일링이 실제로 필요해질 때만 `bootstrap-api`와 `bootstrap-worker`로 분리한다.
+**스케줄러는 실행 시각과 on/off만 책임진다.** 주문 만료 판단이나 상태 전이 같은 업무는 app/domain에
+있고, outbox 전송처럼 업무 판단 없이 기술 상태만 처리하는 relay는 infra에 있다. 지금은 API와 worker가
+한 실행 파일을 공유하되 `worker.enabled=false`로 트리거를 끌 수 있다. 독립 배포·스케일링이 실제로
+필요해질 때만 실행 모듈을 나눈다.
 
 ### 포트 소유 기준
 
