@@ -40,8 +40,9 @@ dependencies {
 
 sourceSets {
     integrationTest {
-        java.srcDir file('src/integrationTest/java')
-        resources.srcDir file('src/integrationTest/resources')
+        // srcDir을 다시 선언하지 않는다. Gradle이 source set 이름으로 src/integrationTest/java와
+        // src/integrationTest/resources를 이미 잡는다. 중복 선언하면 리소스가 두 번 복사되어
+        // processIntegrationTestResources가 duplicate로 실패한다.
         compileClasspath += sourceSets.main.output
         runtimeClasspath += sourceSets.main.output
     }
@@ -63,4 +64,15 @@ tasks.register('integrationTest', Test) {
 
 tasks.named('check') {
     dependsOn tasks.named('integrationTest')
+}
+
+// integrationTest는 실제 서블릿 컨테이너를 띄우고 HTTP로 두드린다. 그래서 web 타입과
+// TestRestTemplate이 컴파일 클래스패스에 필요하다. 단위 테스트에는 필요 없으므로
+// testImplementation이 아니라 이 source set에만 둔다.
+// Spring Boot 4에서 TestRestTemplate은 spring-boot-resttestclient로 분리됐다.
+dependencies {
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-web'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-resttestclient'
+    // Redis 상태를 테스트가 직접 비운다. storage:redis-core가 api로 노출한다.
+    integrationTestImplementation project(':storage:redis-core')
 }
