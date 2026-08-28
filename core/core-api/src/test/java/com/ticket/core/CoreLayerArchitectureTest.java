@@ -195,6 +195,19 @@ class CoreLayerArchitectureTest {
                     );
 
     /**
+     * 요청 검증은 core-api의 몫이다. core-domain과 core-app이 Bean Validation 애노테이션을
+     * 쓰기 시작하면 같은 검증이 두 계층에서 돌고, 무엇이 무엇을 보장하는지 흐려진다.
+     * 안쪽 계층은 값을 받은 시점에 이미 유효하다고 보고 자기 불변식만 지킨다.
+     *
+     * <p>기준은 docs/validation.md다.
+     */
+    @ArchTest
+    static final ArchRule core_domain과_app은_bean_validation을_참조하지_않는다 =
+            noClasses()
+                    .that().resideInAnyPackage(DOMAIN, APP)
+                    .should().dependOnClassesThat().resideInAnyPackage("jakarta.validation..");
+
+    /**
      * 토큰 라이브러리 예외는 어댑터 밖으로 나가지 않는다. HTTP 상태 결정은 core-api가 하되,
      * 무엇으로 만든 토큰인지는 알지 못한다.
      */
