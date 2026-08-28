@@ -75,28 +75,13 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 
 의존 방향은 `core-api` → `core-app` → `core-domain`이고, `core-infra`는 어댑터로서 `core-app`과
 `core-domain`을 향한다. `bootstrap`이 이 넷을 조립하는 실행 모듈이다.
-반대 방향은 `CoreLayerArchitectureTest`가 막는다.
 
-새 코드를 어디에 둘지 판단하는 절차와 자주 틀리는 지점은 **`/place-code` 스킬**이 원본이다.
-각 모듈이 무엇을 담는지와 책임별 위치는 `docs/architecture.md`를 본다.
+**무엇이 금지인지는 문서가 아니라 구조 테스트가 원본이다.** 규칙 본문을 여기 옮겨 적지 않는다 —
+옮겨 적는 순간 테스트와 어긋나고, 어긋난 쪽을 사람이 먼저 믿는다. 어떤 테스트가 무엇을 고정하는지는
+`docs/testing.md`의 구조 테스트 표에 있다.
 
-### 절대 금지 (ArchUnit이 실패시킨다)
-
-- `core-domain`이 `stereotype` 외의 Spring을 참조하는 것.
-  `@Transactional`, `ApplicationEventPublisher`, Querydsl, SpEL, HTTP, 보안 전부 막는다.
-  `BaseEntity`의 생성·수정 감사 애노테이션만 예외다.
-- `core-domain`의 Repository 계약에 `JpaRepository`·`Pageable`·`Slice`·`@Query`·`@Lock`을 두는 것.
-- `core-app`이 Querydsl·web·http·security·messaging·scheduling·Spring Data를 참조하는 것.
-- `core-api`가 `core-domain`이나 `core-infra`를 프로덕션 코드에서 참조하는 것.
-  계약 테스트와 계층 테스트만 `testImplementation`으로 쓴다.
-- `bootstrap`이 도메인에 직접 닿는 것. use case와 어댑터를 거친다.
-- `@Scheduled`나 `@EnableScheduling`을 `bootstrap` 밖에 두는 것.
-- 토큰 라이브러리(`io.jsonwebtoken`) 타입이 `core-infra` 밖으로 새는 것.
-- 도메인 타입이 API 경계로 새는 것. 요청 DTO는 문자열로 받고 변환은 `core-app`이 한다.
-- 요청 파라미터 제약을 Controller 구현체에 선언하는 것. `controller.docs` 인터페이스에만 둔다
-  (`ControllerParameterConstraintTest`). 기준은 `docs/validation.md`다.
-- `core-app`·`core-domain`에 `jakarta.validation` 의존성을 두는 것.
-
+새 코드를 어디에 둘지 판단하는 절차, 자주 틀리는 지점, 구조 테스트가 실패했을 때 볼 곳은
+**`/place-code` 스킬**이 원본이다.
 
 ## 핵심 흐름
 

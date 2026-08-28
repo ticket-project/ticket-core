@@ -19,6 +19,7 @@
 | `CoreDomainModuleStructureTest` | 도메인 파일 배치 |
 | `CoreApiArchitectureTest` | `core-api`의 의존 제약 |
 | `BootstrapArchitectureTest` | 실행 모듈이 도메인에 직접 닿지 않는지, 트리거 위치 |
+| `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 
 새 코드의 위치가 의심스러우면 `CoreLayerArchitectureTest`부터 돌린다. 무엇을 막는지는
 [architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙)에 정리돼 있다.
