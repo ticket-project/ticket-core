@@ -1,6 +1,7 @@
 # 운영과 실행 기준
 
-이 문서는 로컬 실행, 검증, 프로파일, 배포 기준을 정리한다.
+이 문서는 로컬 실행, 프로파일, DB 마이그레이션, 배포, 관측 기준을 정리한다.
+검증 명령은 `/verify` 스킬이 원본이다.
 
 ## 기본 환경
 
@@ -18,58 +19,31 @@ Redis 실행:
 docker run --name ticket-redis -p 6379:6379 -d redis:7
 ```
 
-API 실행:
+애플리케이션 실행:
 
 ```bash
-./gradlew :core:core-api:bootRun
+./gradlew :bootstrap:bootRun --args='--spring.profiles.active=local'
 ```
 
 Windows PowerShell:
 
 ```powershell
-.\gradlew.bat :core:core-api:bootRun
+.\gradlew.bat :bootstrap:bootRun --args='--spring.profiles.active=local'
 ```
+
+**실행 모듈은 `bootstrap` 하나다.** `@SpringBootApplication`과 `application*.yml`이 거기에만 있으므로
+`core-*` 모듈에는 `bootRun`할 것이 없다. `application.yml`에 기본 프로파일이 없어 프로파일을
+지정하지 않으면 datasource 설정이 비어 기동에 실패한다.
 
 Swagger:
 
 - `/api/swagger-ui.html`
 - `/api/api-docs`
 
-## 빠른 검증
+## 검증
 
-컴파일 확인:
-
-```bash
-./gradlew :core:core-api:compileJava
-```
-
-도메인/애플리케이션 검증:
-
-```bash
-./gradlew :core:core-domain:test
-./gradlew :core:core-app:test
-```
-
-계층 경계 검증:
-
-```bash
-./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"
-```
-
-배포 산출물 기준 검증:
-
-```bash
-./gradlew clean :bootstrap:bootJar -x test
-```
-
-Windows PowerShell:
-
-```powershell
-.\gradlew.bat :core:core-api:compileJava
-.\gradlew.bat :core:core-domain:test
-.\gradlew.bat :core:core-app:test
-.\gradlew.bat clean :bootstrap:bootJar -x test
-```
+무엇을 돌릴지 고르는 표, 구조 테스트 명령, 통합 테스트 조건, 결과 보고 규칙은
+**`/verify` 스킬**이 원본이다. 여기 옮겨 적지 않는다.
 
 ## 프로파일
 
