@@ -16,12 +16,12 @@ echo "$payload" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true' && e
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 git status --porcelain 2>/dev/null | grep -qE '\.md$' || exit 0
 
-out=$(bash scripts/check-docs.sh 2>&1)
+out=$(bash scripts/check-docs.sh --changed 2>&1)
 if [ $? -ne 0 ]; then
   {
     echo "문서 검사 실패. 커밋 전에 고친다."
     echo "$out" | grep '^FAIL'
-    echo "전체 출력: bash scripts/check-docs.sh"
+    echo "전체 검사: bash scripts/check-docs.sh"
   } >&2
   exit 2
 fi
