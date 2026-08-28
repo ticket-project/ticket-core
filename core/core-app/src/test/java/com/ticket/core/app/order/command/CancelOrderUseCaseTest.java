@@ -1,5 +1,6 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.app.order.command.OrderTerminationService;
@@ -19,6 +20,8 @@ import java.time.ZoneId;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -45,11 +48,12 @@ class CancelOrderUseCaseTest {
         );
         final Order order = createOrder(10L, 100L, "hold-key");
         final LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(java.util.Optional.of(order));
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 
-        verify(memberRepository).getActiveById(1L);
+        verify(memberRepository).findActiveById(1L);
         verify(orderRepository).findByOrderKeyAndMemberIdForUpdate("order-key", 1L);
         verify(orderTerminationService).cancel(order, expectedNow);
     }

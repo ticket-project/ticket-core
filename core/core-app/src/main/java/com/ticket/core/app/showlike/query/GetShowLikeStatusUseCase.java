@@ -33,8 +33,12 @@ public class GetShowLikeStatusUseCase {
     }
 
     public Output execute(final Input input) {
-        final Member member = memberRepository.getActiveById(input.memberId());
-        showRepository.requireExists(input.showId());
+        final Member member = memberRepository.findActiveById(input.memberId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+        if (!showRepository.existsById(input.showId())) {
+            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                    "공연을 찾을 수 없습니다. id=" + input.showId());
+        }
 
         final boolean liked = showLikeRepository.existsByMemberIdAndShowId(member.getId(), input.showId());
         final long likeCount = showLikeRepository.countByShowId(input.showId());

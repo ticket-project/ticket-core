@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -51,7 +52,7 @@ class GetMyShowLikesUseCaseTest {
                 LocalDateTime.now()
         );
         when(member.getId()).thenReturn(1L);
-        when(memberRepository.getActiveById(1L)).thenReturn(member);
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
         when(showLikeReadRepository.findMyLikedShows(1L, 10L, 20))
                 .thenReturn(new CursorPage<>(List.of(summary), true, 9L));
 
@@ -88,7 +89,7 @@ class GetMyShowLikesUseCaseTest {
     void 커서_위치가_없으면_첫_페이지를_조회한다() {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
-        when(memberRepository.getActiveById(1L)).thenReturn(member);
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
         when(showLikeReadRepository.findMyLikedShows(1L, null, 20))
                 .thenReturn(CursorPage.empty());
 

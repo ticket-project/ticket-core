@@ -1,5 +1,6 @@
 package com.ticket.core.app.order.command;
 
+import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -33,7 +34,8 @@ public class CancelOrderUseCase {
 
     @Transactional
     public void execute(final Input input) {
-        memberRepository.getActiveById(input.memberId());
+        memberRepository.findActiveById(input.memberId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
         final Order order = getPendingOwnedOrder(input.orderKey(), input.memberId());
         orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }

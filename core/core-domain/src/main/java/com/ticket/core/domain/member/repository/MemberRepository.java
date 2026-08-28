@@ -1,8 +1,6 @@
 package com.ticket.core.domain.member.repository;
 
-import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.support.error.CoreException;
 
 import java.util.Optional;
 
@@ -10,6 +8,9 @@ import java.util.Optional;
  * 회원 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
  *
  * <p>탈퇴한 회원은 조회 대상에서 제외한다.
+ *
+ * <p>조회 결과가 없다는 사실만 알려 주고, 그것을 어떤 오류로 볼지는 호출하는 유스케이스가 정한다.
+ * 맥락에 따라 인증 실패일 수도, not-found일 수도, 멱등 성공일 수도 있다.
  */
 public interface MemberRepository {
 
@@ -20,21 +21,4 @@ public interface MemberRepository {
     Optional<Member> findActiveById(Long id);
 
     boolean existsActiveById(Long id);
-
-    /**
-     * 활성 회원을 반환하고, 없으면 도메인 오류를 던진다.
-     */
-    default Member getActiveById(final Long id) {
-        return findActiveById(id)
-                .orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND));
-    }
-
-    /**
-     * 활성 회원이 존재하는지 확인하고, 없으면 도메인 오류를 던진다.
-     */
-    default void requireActiveExists(final Long id) {
-        if (!existsActiveById(id)) {
-            throw new CoreException(DomainErrorType.DATA_NOT_FOUND);
-        }
-    }
 }

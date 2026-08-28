@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +45,7 @@ class AddShowLikeUseCaseTest {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
         when(showLikeRepository.countByShowId(2L)).thenReturn(5L);
-        when(memberRepository.getActiveById(1L)).thenReturn(mock(Member.class));
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
@@ -59,8 +60,8 @@ class AddShowLikeUseCaseTest {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
         when(showLikeRepository.countByShowId(2L)).thenReturn(3L);
-        when(memberRepository.getActiveById(1L)).thenReturn(mock(Member.class));
-        when(showRepository.getById(2L)).thenReturn(mock(Show.class));
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(mock(Show.class)));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
@@ -74,8 +75,8 @@ class AddShowLikeUseCaseTest {
     void 저장중_중복제약이_발생하면_예외를_던진다() {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
-        when(memberRepository.getActiveById(1L)).thenReturn(mock(Member.class));
-        when(showRepository.getById(2L)).thenReturn(mock(Show.class));
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(mock(Show.class)));
         when(showLikeRepository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));
 
         //when

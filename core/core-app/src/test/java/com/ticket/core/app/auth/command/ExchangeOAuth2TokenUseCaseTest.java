@@ -46,7 +46,7 @@ class ExchangeOAuth2TokenUseCaseTest {
         IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 7L);
 
         when(oAuth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
-        when(memberRepository.getActiveById(7L)).thenReturn(member);
+        when(memberRepository.findActiveById(7L)).thenReturn(Optional.of(member));
         when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         ExchangeOAuth2TokenUseCase.Result result =
@@ -62,7 +62,7 @@ class ExchangeOAuth2TokenUseCaseTest {
                 .doesNotContain("access-token-value")
                 .doesNotContain("refresh-token-value");
         verify(oAuth2AuthCodeStore).consumeCode("oauth-code");
-        verify(memberRepository).getActiveById(7L);
+        verify(memberRepository).findActiveById(7L);
         verify(authTokenManager).issueTokens(1L, "MEMBER");
     }
 

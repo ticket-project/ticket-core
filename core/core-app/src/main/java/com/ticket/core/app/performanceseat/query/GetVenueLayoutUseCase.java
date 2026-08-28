@@ -28,7 +28,9 @@ public class GetVenueLayoutUseCase {
                          double seatDiameter) {}
 
     public Output execute(Input input) {
-        Show show = showRepository.getById(input.showId());
+        Show show = showRepository.findById(input.showId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        "공연을 찾을 수 없습니다. id=" + input.showId()));
 
         Venue venue = show.getVenue();
         if (venue == null) {

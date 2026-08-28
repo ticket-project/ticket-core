@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -51,7 +52,7 @@ class GetSeatAvailabilityUseCaseTest {
         List<GetSeatAvailabilityUseCase.GradeAvailability> response =
                 List.of(new GetSeatAvailabilityUseCase.GradeAvailability("VIP", 1, 0L));
 
-        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(performance);
+        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(performance));
         when(performance.getId()).thenReturn(10L);
         when(performance.getShow()).thenReturn(show);
         when(show.getId()).thenReturn(100L);
@@ -72,7 +73,7 @@ class GetSeatAvailabilityUseCaseTest {
     void 공연이_연결되지_않은_회차면_예외를_던진다() {
         //given
         Performance performance = mock(Performance.class);
-        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(performance);
+        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(performance));
         when(performance.getShow()).thenReturn(null);
 
         //when

@@ -1,8 +1,6 @@
 package com.ticket.core.domain.show.repository;
 
-import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.support.error.CoreException;
 
 import java.util.Optional;
 
@@ -10,29 +8,13 @@ import java.util.Optional;
  * 공연 aggregate의 복원을 담당하는 도메인 Repository다.
  *
  * <p>목록/상세 같은 읽기 전용 조회는 core-app의 read repository가 담당한다.
+ *
+ * <p>조회 결과가 없다는 사실만 알려 주고, 그것을 어떤 오류로 볼지는 호출하는 유스케이스가 정한다.
+ * 맥락에 따라 인증 실패일 수도, not-found일 수도, 멱등 성공일 수도 있다.
  */
 public interface ShowRepository {
 
     Optional<Show> findById(Long showId);
 
     boolean existsById(Long showId);
-
-    /**
-     * 공연을 반환하고, 없으면 도메인 오류를 던진다.
-     */
-    default Show getById(final Long showId) {
-        return findById(showId)
-                .orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND,
-                        "공연을 찾을 수 없습니다. id=" + showId));
-    }
-
-    /**
-     * 공연이 존재하는지 확인하고, 없으면 도메인 오류를 던진다.
-     */
-    default void requireExists(final Long showId) {
-        if (!existsById(showId)) {
-            throw new CoreException(DomainErrorType.DATA_NOT_FOUND,
-                    "공연을 찾을 수 없습니다. id=" + showId);
-        }
-    }
 }

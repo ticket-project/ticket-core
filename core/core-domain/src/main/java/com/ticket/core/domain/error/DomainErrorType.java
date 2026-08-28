@@ -18,11 +18,6 @@ public enum DomainErrorType implements ErrorDefinition {
             CommonErrorCode.E400,
             "요청이 올바르지 않습니다."
     ),
-    DATA_NOT_FOUND(
-            ErrorStatus.NOT_FOUND,
-            CommonErrorCode.E404,
-            "요청하신 정보를 찾을 수 없습니다."
-    ),
     AUTHENTICATION_FAILED(
             ErrorStatus.UNAUTHORIZED,
             CommonErrorCode.E1000,

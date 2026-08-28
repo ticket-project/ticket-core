@@ -30,6 +30,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -75,7 +76,7 @@ class SelectSeatUseCaseTest {
     @Test
     void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
         PerformanceBookingPolicyView policy = openPolicy(null);
-        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(policy);
+        when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(policy));
 
         useCase.execute(INPUT);
 
@@ -85,7 +86,7 @@ class SelectSeatUseCaseTest {
                 seatSelectionCoordinator,
                 seatEventPublisher
         );
-        inOrder.verify(performanceRepository).getBookingPolicyById(10L);
+        inOrder.verify(performanceRepository).findBookingPolicyById(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
         inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
@@ -93,7 +94,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
-        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(openPolicy(QueueMode.FORCE_OFF));
+        when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(openPolicy(QueueMode.FORCE_OFF)));
 
         useCase.execute(INPUT);
 
@@ -102,7 +103,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
-        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(openPolicy(QueueMode.FORCE_ON));
+        when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(openPolicy(QueueMode.FORCE_ON)));
         doThrow(new CoreException(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED))
                 .when(admissionGuard).ensureAdmitted(10L, 1L, "admission-token");
 
@@ -114,8 +115,8 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 예매가_마감된_회차는_좌석을_조회하지_않는다() {
-        when(performanceRepository.getBookingPolicyById(10L))
-                .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), null));
+        when(performanceRepository.findBookingPolicyById(10L))
+                .thenReturn(Optional.of(policy(NOW.minusHours(2), NOW.minusHours(1), null)));
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(CoreException.class);
@@ -130,7 +131,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 좌석_검증이_실패하면_선택하지_않는다() {
-        when(performanceRepository.getBookingPolicyById(10L)).thenReturn(openPolicy(null));
+        when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(openPolicy(null)));
         doThrow(new CoreException(DomainErrorType.SEAT_ALREADY_HOLD))
                 .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
 

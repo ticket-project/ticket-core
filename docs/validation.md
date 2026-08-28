@@ -83,6 +83,24 @@ public record Input(String orderKey, Long memberId) {
   `categoryCode`는 없으면 전체 조회다.
 - 서버가 만든 설정·컨텍스트 값은 사용자 입력이 아니다. `GetSocialLoginUrlsUseCase.Input.baseUrl`은
   설정 오류로 `IllegalStateException`을 던진다.
+- **Repository는 "없다"는 사실만 알려 주고 오류는 유스케이스가 고른다.** 도메인 Repository는
+  `Optional`과 `boolean`만 노출하고, 예외를 던지는 `getXxx`·`requireXxx` 편의 메서드를 두지 않는다.
+  같은 "회원 없음"이라도 로그인에서는 인증 실패, 조회에서는 not-found, 탈퇴에서는 멱등 성공일 수
+  있기 때문이다. 편의 메서드는 중복 코드를 줄이는 대신 그 맥락을 지운다.
+
+  ```java
+  // 금지 — domain Repository가 오류까지 정한다
+  default Member getActiveById(Long id) {
+      return findActiveById(id).orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND));
+  }
+
+  // 권장 — 호출하는 유스케이스가 맥락에 맞는 오류를 고른다
+  final Member member = memberRepository.findActiveById(input.memberId())
+          .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+  ```
+
+  근거는 [ADR 0002](adr/0002-module-owned-error-contracts.md)다. "조회 결과 없음"은
+  `ApplicationErrorType`이 소유한다고 이미 정해져 있다.
 - page size 상한은 제품 결정이 있는 유스케이스만 갖고, 그 상한은 해당 유스케이스가 소유한다
   (`GetMyShowLikesUseCase.MAX_SIZE`, `GetShowsUseCase.MAX_SIZE` = 100).
 

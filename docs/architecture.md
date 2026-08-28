@@ -496,6 +496,11 @@ Repository는 두 종류로 나뉜다.
 **Aggregate Repository** (`core-domain`): aggregate의 저장과 복원, 업무 명령에 필요한 조회를 맡는다.
 도메인 타입만 반환하고, JPA 구현은 `core-infra`의 어댑터가 맡는다.
 
+조회 실패는 `Optional`이나 `boolean`으로 돌려주고 Repository가 오류를 정하지 않는다. Repository가
+아는 것은 "결과가 없다"는 사실뿐이고, 그것이 인증 실패인지 not-found인지 멱등 성공인지는 호출하는
+유스케이스가 판단한다. 예외를 던지는 `getXxx`·`requireXxx` 편의 메서드를 두지 않는다
+([validation.md](validation.md)).
+
 - `domain.order.repository.OrderRepository` ← `infra.order.OrderRepositoryAdapter`
 
 **Read Repository** (`core-app`): 화면·검색·상세·집계·커서 페이징 같은 읽기 전용 조회를 맡는다.

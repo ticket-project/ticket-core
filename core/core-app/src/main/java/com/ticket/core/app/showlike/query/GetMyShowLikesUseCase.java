@@ -49,7 +49,8 @@ public class GetMyShowLikesUseCase {
     }
 
     public Output execute(final Input input) {
-        final Member member = memberRepository.getActiveById(input.memberId());
+        final Member member = memberRepository.findActiveById(input.memberId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
         final CursorPage<ShowLikeSummary, Long> page =
                 showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
         return new Output(page.items(), page.hasNext(), page.nextPosition());
