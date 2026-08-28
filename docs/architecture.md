@@ -46,19 +46,14 @@ bootstrap과 core 모듈 ──→ support:error / support:logging (필요한 �
 구현하기 위해서다. 런타임에는 app이 인터페이스를 호출하고 infra 구현체가 실행되지만, 컴파일
 의존성은 구현체에서 계약 쪽을 향한다.
 
-### 프로덕션 의존성 허용표
+### 프로덕션 의존성
 
-| 모듈 | 직접 의존할 수 있는 내부 모듈 | 직접 의존하면 안 되는 내부 모듈 |
-| --- | --- | --- |
-| `core-domain` | `support:error` | `core-app`, `core-infra`, `core-api`, `bootstrap` |
-| `core-app` | `core-domain`, `support:error` | `core-infra`, `core-api`, `bootstrap` |
-| `core-infra` | `core-app`, `core-domain`, `storage:redis-core`, support 모듈 | `core-api`, `bootstrap` |
-| `core-api` | `core-app`, support 모듈 | `core-domain`, `core-infra`, `bootstrap` |
-| `bootstrap` | `core-api`, `core-app`, `core-infra`, support 모듈 | 업무 코드에서 `core-domain` 직접 사용 |
-| `storage:*`, `support:*` | 같은 계층의 명시적 기반 모듈만 | 모든 `core:*`, `bootstrap` |
+모듈별로 무엇을 직접 의존할 수 있는지는 `CoreLayerArchitectureTest`와 `CoreApiArchitectureTest`가
+강제한다. 실제 의존은 각 모듈 `build.gradle`이 원본이다. 표로 옮겨 적지 않는다.
 
 테스트 fixture나 아키텍처 테스트의 `testImplementation`은 프로덕션 의존성과 구분한다. 테스트를 위한
 의존성을 production 코드에서 사용하는 근거로 삼지 않는다.
+
 
 ## 모듈 책임
 
@@ -604,57 +599,16 @@ Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
 
 ## 아키텍처 규칙
 
-아래는 권고가 아니라 테스트가 실패시키는 규칙이다. 위반하면 다른 테스트의 통과 여부와 관계없이
-완료가 아니다. 실행 명령은 [testing.md의 구조 테스트](testing.md#구조-테스트)를 따른다.
+권고가 아니라 **테스트가 실패시키는 규칙**이다. 위반하면 다른 테스트의 통과 여부와 관계없이
+완료가 아니다.
 
-### `CoreLayerArchitectureTest` (ArchUnit, core-api)
+**규칙 본문은 테스트 코드가 원본이고 여기 옮겨 적지 않는다.** 옮겨 적는 순간 테스트와 어긋나기
+시작하고, 어긋난 쪽을 사람이 먼저 믿는다. 어떤 테스트가 무엇을 고정하는지는
+[testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은 `/verify`,
+실패했을 때 볼 곳은 `/place-code`가 원본이다.
 
-계층 방향을 한곳에서 검사한다. `core-api`가 네 모듈을 모두 테스트 클래스패스에 두기 때문이다.
+규칙을 바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이 틀렸다는 사실을 먼저 밝힌다.
 
-- `core-domain`은 app·infra·api를 참조하지 않는다.
-- `core-app`은 infra·api를 참조하지 않는다.
-- `core-api`는 `core-domain`을 참조하지 않는다. use case를 거친다.
-- `core-infra`는 api를 참조하지 않는다.
-- `core-domain`과 `core-app`은 Querydsl을 직접 쓰지 않는다. 생성된 Q 타입은 제외한다.
-- `core-domain`은 `stereotype` 외의 Spring을 참조하지 않는다. `BaseEntity`의 감사 애노테이션만 예외다.
-- `core-app`은 HTTP·보안·메시징·스케줄링을 참조하지 않는다. 트랜잭션은 소유하므로 허용한다.
-- `core-app`은 Spring Data를 참조하지 않는다.
-- `core-domain`과 `core-app`은 Hibernate, Redisson, `EntityManager`를 참조하지 않는다.
-- 토큰 라이브러리(`io.jsonwebtoken`)는 `core-infra` 밖으로 새지 않는다.
-- `@EnableScheduling`과 `@Scheduled`는 `bootstrap`에만 둔다.
-
-### `BootstrapArchitectureTest` (ArchUnit, bootstrap)
-
-- `bootstrap`은 `core-domain`에 직접 닿지 않는다. use case와 어댑터를 거친다.
-- background 트리거는 `com.ticket.bootstrap.worker`에 모은다.
-
-### `CoreDomainArchitectureTest` (ArchUnit)
-
-- `com.ticket.core.infra..`와 `..domain.*.infra..` 패키지는 존재할 수 없다.
-- `infra` 바깥에서는 `org.redisson..`에 직접 의존하지 않는다.
-- `infra` 바깥에서는 `org.springframework.data.redis..`에 직접 의존하지 않는다.
-- `infra` 바깥에서는 `org.springframework.messaging..`에 직접 의존하지 않는다.
-- `infra` 바깥과 `com.ticket.core.config..` 바깥에서는 HTTP interface client annotation에 직접 의존하지 않는다.
-- `..domain..`의 메서드에는 `@Scheduled`를 붙일 수 없다.
-- `..domain..`의 메서드에는 `@TransactionalEventListener`를 붙일 수 없다.
-
-### `CoreDomainModuleStructureTest` (파일 배치 검증)
-
-- `order`와 `queue` 비즈니스는 `core-domain`이 소유하고 `core-api`에 같은 패키지를 두지 않는다.
-- `core-api`는 `core-app`을 의존하고 `core-domain`은 `testImplementation`으로만 둔다.
-- JWT 발급·검증 구현(`JwtTokenService`, `JwtProperties`)은 `core-infra`에 둔다.
-  `core-domain`과 `core-api`의 `build.gradle`에는 `jjwt`를 넣지 않는다.
-  OAuth2 엔드포인트 상수는 filter chain 설정의 일부라 `core-api`에 남는다.
-- `core-domain`의 `build.gradle`에 `springdoc-openapi`를 넣지 않고, 소스에 Swagger import를 두지 않는다.
-- `CookieUtils` 같은 HTTP 유틸리티는 `core-api`에 둔다.
-- 실행 모듈은 `bootstrap` 하나다. `bootJar`도 여기에서만 만든다.
-- `@Scheduled` 트리거는 `bootstrap`, 업무 배치는 `core-app` 유스케이스,
-  순수 relay는 `core-infra`에 둔다.
-- 시드 러너는 `core-infra`에 둔다.
-- `core:core-enum` 모듈은 부활시키지 않는다. enum은 `core-domain`에 둔다.
-
-`core-api`의 `CoreApiArchitectureTest`도 같은 성격의 경계를 검사한다. `core-api`의 `config.security`는
-auth infra 구현체에 직접 의존하지 않는다.
 
 ## 경계 판단에서 자주 틀리는 지점
 
