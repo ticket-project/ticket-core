@@ -14,6 +14,8 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 - 변경은 작업 범위 안에서만 수행한다.
 - 기존 미커밋 변경은 사용자 작업으로 보고 되돌리지 않는다.
 - 파괴적 작업은 명시적으로 요청받은 경우에만 수행한다.
+- 에이전트가 틀린 것을 발견하면 대화에서만 고치고 끝내지 않는다.
+  `docs/agents/observed-failures.md`에 적고 테스트·훅·규칙 중 하나로 옮긴다.
 
 ## 작업별로 먼저 읽을 문서
 
@@ -32,6 +34,7 @@ Codex와 Copilot은 이 파일을 직접 읽고, Claude Code는 루트 `CLAUDE.m
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 지표 | `docs/operations.md` |
 | 부하 테스트 실행과 용량 판정 | `/loadtest` 스킬, 진입점은 `docs/load-test.md` |
 | 커밋·브랜치·PR | `docs/development.md` 의 커밋과 PR 절차·컨벤션 |
+| 규칙이 왜 있는지, 반복해 틀리는 지점 | `docs/agents/observed-failures.md` |
 
 전체 맥락은 `README.md`, 실제 경계는 `settings.gradle`과 각 모듈 `build.gradle`, 강제되는 규칙은
 관련 테스트 코드가 최종 기준이다.

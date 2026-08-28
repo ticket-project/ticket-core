@@ -10,7 +10,8 @@
 #   4. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   5. UTF-8 BOM이 섞이지 않았는지
 #   6. 형제 저장소와 커밋 type 표가 어긋나지 않았는지 (나란히 있을 때만)
-#   7. 오래 손대지 않은 문서 보고 (실패시키지 않음)
+#   7. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
+#   8. 오래 손대지 않은 문서 보고 (실패시키지 않음)
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -107,8 +108,28 @@ if [ -f "$CONV" ]; then
   fi
 fi
 
+# 7 ─ 관측 태그와 실패 기록 대조
+# 근거 없는 규칙이 다시 쌓이는 것을 막는다. 문서에 규칙을 남기려면 실제 관측이 있어야 한다.
+OBS="docs/agents/observed-failures.md"
+if [ ! -f "$OBS" ]; then
+  err "$OBS 가 없다. 관측된 실패를 적는 곳이 있어야 규칙을 지울 수 있다"
+else
+  tagfail=0
+  for f in $(git ls-files '*.md') $(find .claude/skills -name '*.md' 2>/dev/null); do
+    [ -f "$f" ] || continue
+    case "$f" in docs/archive/*|"$OBS") continue ;; esac
+    for d in $(grep -oE '\[관측 [0-9]{4}-[0-9]{2}-[0-9]{2}\]' "$f" 2>/dev/null                | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | sort -u); do
+      grep -qE "^## $d" "$OBS" || {
+        err "$f 의 [관측 $d] 태그에 대응하는 항목이 $OBS 에 없다"
+        tagfail=1
+      }
+    done
+  done
+  [ "$tagfail" -eq 0 ] && ok "관측 태그와 $OBS 항목이 일치"
+fi
+
 echo
-# 7 ─ 신선도 보고 (실패시키지 않는다)
+# 8 ─ 신선도 보고 (실패시키지 않는다)
 # 손으로 적는 "기준일" 프론트매터는 반드시 실제와 어긋난다. git 이력을 신선도 신호로 쓴다.
 STALE_DAYS=${STALE_DAYS:-120}
 now=$(date +%s)
