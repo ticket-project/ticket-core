@@ -41,7 +41,7 @@
 | `core-api/src/test` | Controller 계약, 요청 binding, Bean Validation, 보안, 예외 응답. API slice test 허용 | 실제 인프라 |
 | `core-infra/src/test` | 조회 helper, codec, key formatter, 기술 값 변환, 외부 client를 mock한 adapter 단위 테스트 | `@SpringBootTest`, `EntityManager`, 실제 DB/Redis |
 | `core-infra/src/integrationTest` | JPA, Querydsl, RepositoryAdapter, Spring 트랜잭션, `@TransactionalEventListener`, Redis/Redisson, Testcontainers, H2 영속성 | 업무 규칙 단위 테스트 |
-| `bootstrap/src/integrationTest` | 전체 Spring 컨텍스트, 실제 빈 배선, 기동 smoke test | 개별 클래스 단위 검증 |
+| `bootstrap/src/integrationTest` | 전체 Spring 컨텍스트, 실제 빈 배선, 기동 smoke test, **실제 HTTP로 스택을 관통하는 예매 E2E** | 개별 클래스 단위 검증 |
 
 별도 `integration-test` Gradle 모듈은 두지 않는다. 위 두 source set과 `integrationTest` task가
 원본이다. `core-domain`에는 `testFixtures`가 없다. JPA·Querydsl 테스트 지원 코드는
@@ -59,6 +59,22 @@
 - `core-infra`: JPA·Querydsl 조회와 RepositoryAdapter(H2), 커밋 후 리스너, Redis key·TTL·
   expiration listener·분산락(Testcontainers)
 - `bootstrap`: `ApplicationContextLoadTest` — 전체 컨텍스트가 실제로 조립되는지
+- `bootstrap`: 예매 흐름 E2E — 좌석 조회부터 주문 취소까지 실제 HTTP로 관통(`BookingHappyPathE2ETest`),
+  같은 좌석 동시 주문에서 하나만 성공(`SeatContentionE2ETest`)
+
+### 예매 E2E를 쓸 때
+
+`BookingE2ETestSupport`를 상속한다. Testcontainers Redis와 H2, 인증 헬퍼, 좌석 상태 조회,
+커밋 후 처리를 기다리는 `pollUntil`이 여기 있다. 데이터는 `fixture/booking-e2e-*.sql`이 만들고
+`@Sql`이 메서드마다 초기화한다.
+
+**층 사이 연결을 보는 테스트다.** 응답 코드만 확인하면 단위 테스트와 다를 게 없다. 좌석 상태를
+다시 조회해 DB와 Redis가 함께 맞는지 본다.
+
+주의 두 가지.
+- 회차당 같은 회원은 `PENDING` 주문을 하나만 가질 수 있다. 한 테스트에서 주문을 여러 번 만들면
+  앞 주문을 취소해야 한다.
+- 커밋 후 처리는 요청 스레드 밖에서 끝난다. 고정 sleep 대신 `pollUntil`을 쓴다.
 
 Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트만으로 확인했다고 보지 않는다.
 **Docker가 없어 `integrationTest`를 돌리지 못했다면 단위 테스트 통과로 대체하지 않고 미검증으로

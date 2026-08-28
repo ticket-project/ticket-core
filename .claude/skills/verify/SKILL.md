@@ -22,6 +22,7 @@ allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git
 | Querydsl 조회, JWT, 암호화, scheduler를 고쳤다 | `./gradlew :core:core-infra:test` |
 | 모듈 경계, 패키지 위치, `build.gradle`을 건드렸다 | 구조 테스트 (아래) |
 | Redis adapter, key, TTL, expiration listener를 고쳤다 | `./gradlew :core:core-infra:integrationTest` (Docker 필요) |
+| 주문·hold·좌석 상태 흐름이나 그 조립을 고쳤다 | `./gradlew :bootstrap:integrationTest` (Docker 필요) |
 | 특정 테스트만 보고 싶다 | `./gradlew :core:core-app:test --tests "com.ticket.core.app.order.*"` |
 | 배포 산출물까지 확인한다 | `./gradlew clean :bootstrap:bootJar -x test` |
 | push·PR 직전 | `./gradlew test :core:core-infra:integrationTest :bootstrap:integrationTest :bootstrap:bootJar` (CI와 같은 명령) |
@@ -50,6 +51,10 @@ Testcontainers를 쓰므로 **Docker가 실행 중이어야 한다.** Docker가 
 아니다. `check`가 `integrationTest`에 의존하므로 `check`를 부르면 Docker 없이 실패한다.
 
 Redis key, TTL, expiration listener, Redisson 변경은 단위 테스트만으로 확인했다고 보지 않는다.
+
+`bootstrap:integrationTest`는 실제 서버를 띄우고 HTTP로 예매 흐름을 관통한다. 계층별 단위
+테스트는 각자 mock에 대해 맞으면 통과하므로 **층 사이 연결이 깨진 것을 잡지 못한다.**
+주문 생성·취소, hold, 좌석 상태 계산, 커밋 후 처리를 건드렸으면 여기까지 돌린다.
 
 ## 결과를 보고할 때
 
