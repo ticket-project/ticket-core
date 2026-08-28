@@ -1,5 +1,6 @@
 package com.ticket.core.app.performanceseat.command;
 
+import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.DeselectedSeatIds;
@@ -17,6 +18,8 @@ import java.util.List;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -36,11 +39,12 @@ class DeselectAllSeatsUseCaseTest {
 
     @Test
     void deselect_all_then_publish_each_seat() {
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
         when(seatSelectionService.deselectAll(10L, 1L)).thenReturn(DeselectedSeatIds.from(List.of(20L, 21L)));
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
-        verify(memberRepository).getActiveById(1L);
+        verify(memberRepository).findActiveById(1L);
         verify(seatSelectionService).deselectAll(10L, 1L);
         verify(seatEventPublisher).publish(10L, 20L, SeatAction.DESELECTED);
         verify(seatEventPublisher).publish(10L, 21L, SeatAction.DESELECTED);

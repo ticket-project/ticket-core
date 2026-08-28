@@ -43,7 +43,9 @@ public class GetSeatAvailabilityUseCase {
     ) {}
 
     public Output execute(Input input) {
-        final Performance performance = performanceRepository.getWithQueuePolicyById(input.performanceId());
+        final Performance performance = performanceRepository.findWithQueuePolicyById(input.performanceId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
         if (performance.getShow() == null) {
             throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,

@@ -39,7 +39,9 @@ public class GetPerformanceScheduleListUseCase {
     ) {}
 
     public Output execute(final Input input) {
-        final Performance findPerformance = performanceRepository.getWithQueuePolicyById(input.performanceId());
+        final Performance findPerformance = performanceRepository.findWithQueuePolicyById(input.performanceId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
         final Show show = findPerformance.getShow();
         if (show == null) {

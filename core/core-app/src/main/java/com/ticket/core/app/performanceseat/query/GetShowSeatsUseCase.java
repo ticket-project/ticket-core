@@ -1,5 +1,7 @@
 package com.ticket.core.app.performanceseat.query;
 
+import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.support.error.CoreException;
 import com.ticket.core.app.performanceseat.query.model.SeatInfoView;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.repository.ShowRepository;
@@ -28,7 +30,9 @@ public class GetShowSeatsUseCase {
     }
 
     public Output execute(final Input input) {
-        final Show show = showRepository.getById(input.showId());
+        final Show show = showRepository.findById(input.showId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        "공연을 찾을 수 없습니다. id=" + input.showId()));
         return new Output(seatMapReadRepository.findShowSeats(show.getId()));
     }
 }

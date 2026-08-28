@@ -32,8 +32,12 @@ public class RemoveShowLikeUseCase {
     }
 
     public Output execute(final Input input) {
-        memberRepository.getActiveById(input.memberId());
-        showRepository.requireExists(input.showId());
+        memberRepository.findActiveById(input.memberId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+        if (!showRepository.existsById(input.showId())) {
+            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                    "공연을 찾을 수 없습니다. id=" + input.showId());
+        }
 
         showLikeRepository.findByMemberIdAndShowId(input.memberId(), input.showId())
                 .ifPresent(showLikeRepository::delete);

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -47,7 +48,7 @@ class GetPerformanceScheduleListUseCaseTest {
         when(another.getPerformanceNo()).thenReturn(2L);
         when(another.getStartTime()).thenReturn(now.plusDays(1));
 
-        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(selected);
+        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(selected));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of(selected, another));
 
         //when
@@ -64,7 +65,7 @@ class GetPerformanceScheduleListUseCaseTest {
         //given
         Performance performance = mock(Performance.class);
         when(performance.getShow()).thenReturn(null);
-        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(performance);
+        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -81,7 +82,7 @@ class GetPerformanceScheduleListUseCaseTest {
         when(show.getId()).thenReturn(100L);
         when(selected.getId()).thenReturn(10L);
         when(selected.getShow()).thenReturn(show);
-        when(performanceRepository.getWithQueuePolicyById(10L)).thenReturn(selected);
+        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(selected));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of());
 
         //when

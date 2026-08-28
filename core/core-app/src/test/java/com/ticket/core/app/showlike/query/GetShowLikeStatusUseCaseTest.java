@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +42,8 @@ class GetShowLikeStatusUseCaseTest {
         //given
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
-        when(memberRepository.getActiveById(1L)).thenReturn(member);
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
+        when(showRepository.existsById(2L)).thenReturn(true);
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
         when(showLikeRepository.countByShowId(2L)).thenReturn(7L);
 
@@ -51,7 +53,7 @@ class GetShowLikeStatusUseCaseTest {
         //then
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(7L);
-        verify(showRepository).requireExists(2L);
+        verify(showRepository).existsById(2L);
     }
 
     @ParameterizedTest

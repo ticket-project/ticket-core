@@ -56,7 +56,8 @@ public class ExchangeOAuth2TokenUseCase {
     public Result execute(final Input input) {
         final Long memberId = oAuth2AuthCodeStore.consumeCode(input.code())
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED, "유효하지 않거나 만료된 인증 코드입니다."));
-        final Member member = memberRepository.getActiveById(memberId);
+        final Member member = memberRepository.findActiveById(memberId)
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
         final IssuedAuthTokens result = authTokenManager.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),

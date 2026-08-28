@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -35,7 +36,7 @@ class GetCurrentMemberUseCaseTest {
         when(member.getEmail()).thenReturn(Email.create("user@example.com"));
         when(member.getName()).thenReturn("홍길동");
         when(member.getRole()).thenReturn(Role.MEMBER);
-        when(memberRepository.getActiveById(3L)).thenReturn(member);
+        when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
 
         //when
         GetCurrentMemberUseCase.Output output = useCase.execute(new GetCurrentMemberUseCase.Input(3L));
@@ -55,7 +56,7 @@ class GetCurrentMemberUseCaseTest {
         when(member.getEmail()).thenReturn(null);
         when(member.getName()).thenReturn("홍길동");
         when(member.getRole()).thenReturn(Role.MEMBER);
-        when(memberRepository.getActiveById(3L)).thenReturn(member);
+        when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
 
         //when
         GetCurrentMemberUseCase.Output output = useCase.execute(new GetCurrentMemberUseCase.Input(3L));

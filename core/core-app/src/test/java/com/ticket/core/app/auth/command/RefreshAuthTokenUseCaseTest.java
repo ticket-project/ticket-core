@@ -48,7 +48,7 @@ class RefreshAuthTokenUseCaseTest {
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
-        when(memberRepository.getActiveById(3L)).thenReturn(member);
+        when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
         when(authTokenManager.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result =
@@ -64,7 +64,7 @@ class RefreshAuthTokenUseCaseTest {
                 .doesNotContain("access-token-value")
                 .doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
-        verify(memberRepository).getActiveById(3L);
+        verify(memberRepository).findActiveById(3L);
         verify(authTokenManager).rotateTokens(1L, "MEMBER", refreshToken);
     }
 

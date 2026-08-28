@@ -1,5 +1,6 @@
 package com.ticket.core.app.showlike.command;
 
+import com.ticket.core.domain.member.model.Member;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -43,6 +44,8 @@ class RemoveShowLikeUseCaseTest {
     void 찜이_존재하면_삭제후_false를_반환한다() {
         //given
         ShowLike showLike = mock(ShowLike.class);
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
+        when(showRepository.existsById(2L)).thenReturn(true);
         when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.of(showLike));
         when(showLikeRepository.countByShowId(2L)).thenReturn(4L);
 
@@ -58,6 +61,8 @@ class RemoveShowLikeUseCaseTest {
     @Test
     void 찜이_없어도_삭제없이_false를_반환한다() {
         //given
+        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
+        when(showRepository.existsById(2L)).thenReturn(true);
         when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.empty());
         when(showLikeRepository.countByShowId(2L)).thenReturn(0L);
 

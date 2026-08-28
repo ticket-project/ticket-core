@@ -38,13 +38,16 @@ public class AddShowLikeUseCase {
 
     public Output execute(final Input input) {
 
-        final Member member = memberRepository.getActiveById(input.memberId());
+        final Member member = memberRepository.findActiveById(input.memberId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
 
         if (showLikeRepository.existsByMemberIdAndShowId(input.memberId(), input.showId())) {
             return new Output(input.showId(), true, countLikes(input.showId()));
         }
 
-        final Show show = showRepository.getById(input.showId());
+        final Show show = showRepository.findById(input.showId())
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        "공연을 찾을 수 없습니다. id=" + input.showId()));
 
         try {
             showLikeRepository.save(new ShowLike(member, show));

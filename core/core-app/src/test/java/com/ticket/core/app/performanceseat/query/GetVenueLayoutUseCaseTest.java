@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -31,7 +32,7 @@ class GetVenueLayoutUseCaseTest {
         //given
         Show show = mock(Show.class);
         Venue venue = mock(Venue.class);
-        when(showRepository.getById(100L)).thenReturn(show);
+        when(showRepository.findById(100L)).thenReturn(Optional.of(show));
         when(show.getVenue()).thenReturn(venue);
         when(venue.getName()).thenReturn("올림픽홀");
         when(venue.getViewBoxWidth()).thenReturn(1000);
@@ -50,7 +51,7 @@ class GetVenueLayoutUseCaseTest {
     void 공연장_정보가_없으면_예외를_던진다() {
         //given
         Show show = mock(Show.class);
-        when(showRepository.getById(100L)).thenReturn(show);
+        when(showRepository.findById(100L)).thenReturn(Optional.of(show));
         when(show.getVenue()).thenReturn(null);
 
         //when

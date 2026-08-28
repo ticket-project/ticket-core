@@ -1,15 +1,16 @@
 package com.ticket.core.domain.performance.repository;
 
-import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.support.error.CoreException;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * 회차 aggregate의 복원을 담당하는 도메인 Repository다.
+ *
+ * <p>조회 결과가 없다는 사실만 알려 주고, 그것을 어떤 오류로 볼지는 호출하는 유스케이스가 정한다.
+ * 맥락에 따라 인증 실패일 수도, not-found일 수도, 멱등 성공일 수도 있다.
  */
 public interface PerformanceRepository {
 
@@ -26,22 +27,4 @@ public interface PerformanceRepository {
      * <p>불변식 판정 경로가 회차 엔티티 전체를 적재하지 않도록 도메인 값으로 좁혀 조회한다.
      */
     Optional<PerformanceBookingPolicyView> findBookingPolicyById(Long performanceId);
-
-    /**
-     * 예매 정책을 반환하고, 없으면 도메인 오류를 던진다.
-     */
-    default PerformanceBookingPolicyView getBookingPolicyById(final Long performanceId) {
-        return findBookingPolicyById(performanceId)
-                .orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND,
-                        "공연을 찾을 수 없습니다. id=" + performanceId));
-    }
-
-    /**
-     * 대기열 정책까지 적재한 회차를 반환하고, 없으면 도메인 오류를 던진다.
-     */
-    default Performance getWithQueuePolicyById(final Long performanceId) {
-        return findWithQueuePolicyById(performanceId)
-                .orElseThrow(() -> new CoreException(DomainErrorType.DATA_NOT_FOUND,
-                        "공연을 찾을 수 없습니다. id=" + performanceId));
-    }
 }

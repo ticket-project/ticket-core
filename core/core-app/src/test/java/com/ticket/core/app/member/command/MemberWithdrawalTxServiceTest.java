@@ -23,6 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -50,7 +51,7 @@ class MemberWithdrawalTxServiceTest {
         MemberSocialAccount google = MemberSocialAccount.create(member, SocialProvider.GOOGLE, "google-123");
         ReflectionTestUtils.setField(kakao, "id", 1L);
         ReflectionTestUtils.setField(google, "id", 2L);
-        when(memberRepository.getActiveById(3L)).thenReturn(member);
+        when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
         when(memberSocialAccountRepository.findAllActiveByMember(member)).thenReturn(List.of(kakao, google));
 
         List<String> kakaoIds = memberWithdrawalTxService.withdraw(3L);
@@ -59,7 +60,7 @@ class MemberWithdrawalTxServiceTest {
         assertThat(member.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(kakao.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(google.getDeletedAt()).isEqualTo(expectedNow);
-        verify(memberRepository).getActiveById(3L);
+        verify(memberRepository).findActiveById(3L);
         verify(memberSocialAccountRepository).findAllActiveByMember(member);
     }
 }

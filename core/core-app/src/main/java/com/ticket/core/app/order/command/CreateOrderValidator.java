@@ -46,12 +46,16 @@ public class CreateOrderValidator {
         final Long performanceId = input.performanceId();
         final Long memberId = input.memberId();
 
-        final PerformanceBookingPolicyView policy = performanceRepository.getBookingPolicyById(performanceId);
+        final PerformanceBookingPolicyView policy = performanceRepository.findBookingPolicyById(performanceId)
+                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        "공연을 찾을 수 없습니다. id=" + performanceId));
         BookingPolicyValidator.ensureBookingOpen(policy, now);
         BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
         ensureAdmitted(policy, memberId, input.admissionToken(), now);
 
-        memberRepository.requireActiveExists(memberId);
+        if (!memberRepository.existsActiveById(memberId)) {
+            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND);
+        }
         ensureNoPendingOrder(memberId, performanceId);
         final List<PerformanceSeat> performanceSeats =
                 holdSeatAvailabilityValidator.validate(performanceId, requestedSeatIds);
