@@ -313,95 +313,34 @@ app/domain에 있고, outbox 레코드 전송처럼 업무 판단 없이 기술 
 형식은 infra에 있다. domain은 “분산락을 얻었는가”가 아니라 락 안에서 실행된 상태 변경이 업무상
 유효한지만 판단한다.
 
-## 패키지 구조
+## 패키지와 이름 규칙
 
-### `core-api`
+패키지 목록은 코드가 원본이다. 여기에는 **새 코드를 만들 때 따라야 할 축과 이름 규칙**만 둔다.
 
-- `com.ticket.core.api.controller`
-  - HTTP endpoint
-- `com.ticket.core.api.controller.docs`
-  - Swagger 문서 인터페이스
-- `com.ticket.core.api.controller.request`
-  - 요청 DTO
-- `com.ticket.core.api`
-  - HTTP 계약 상수 (`AdmissionHeaders`)
-- `com.ticket.core.config`
-  - 웹, WebSocket, API 시스템 값 설정
-- `com.ticket.core.config.security`
-  - security filter chain, 토큰 추출, OAuth2 HTTP handler, 인증 주체 argument resolver
-  - JWT 암호 연산과 provider 연동 구현은 `core-infra`에 둔다
-- `com.ticket.core.support.response`
-  - 공통 응답 래퍼
+기능별 패키지를 기본 축으로 잡는다(`auth`, `member`, `order`, `hold`, `show`, `performanceseat` 등).
+기능 안의 하위 패키지는 아래 패턴을 쓴다.
 
-### `core-domain`
+| 하위 패키지 | 담는 것 | 두는 모듈 |
+| --- | --- | --- |
+| `model` | 엔티티와 값 객체 | `core-domain` |
+| `repository` | Aggregate Repository 인터페이스(순수 계약) | `core-domain` |
+| `store` | 저장 기술에 중립적인 업무 상태 저장 계약 | `core-domain` |
+| `query` | 정책 판정에 쓰는 도메인 read model | `core-domain` |
+| `command` | 상태를 바꾸는 use case와 트랜잭션 조립 | `core-app` |
+| `query`, `query.model` | 조회 use case, 조회 포트, 결과 view와 param | `core-app` |
 
-기능별 패키지를 기본 축으로 잡는다.
+`core-domain`은 구현체 패키지로서의 `infra`를 두지 않는다. `core-infra`는 `core-domain`의 기능 축을
+그대로 따라 어댑터를 배치하되 물리 위치는 별도 Gradle 모듈이다.
 
-- `auth`
-- `member`
-- `order`
-- `hold`
-- `queue` (mode/level 값)
-- `show`
-- `showlike`
-- `performance`
-- `performanceseat`
-- `seat`
-- `commoncode`
+`core-app`의 `support.cursor`는 타입이 있는 커서 위치와 페이징 결과만 갖는다. HTTP 커서 문자열
+codec은 `core-api`의 몫이다.
 
-기능 내부 하위 패키지 패턴:
+### 이름 규칙
 
-- `model`: 엔티티와 값 객체
-- `repository`: Aggregate Repository 인터페이스(순수 계약)
-- `store`: 저장 기술에 중립적인 업무 상태 저장 계약
-- `query`: 정책 판정에 쓰는 도메인 read model
-- `command`: 도메인 서비스
-- `support`: 도메인 보조 컴포넌트
-
-`core-domain`은 구현체 패키지로서의 `infra`를 두지 않는다. 기술 구현은 `core-infra`에 둔다.
-use case는 `core-app`에 둔다.
-
-### `core-app`
-
-`core-domain`과 같은 기능 축을 쓰되 애플리케이션 관심사만 담는다.
-
-- `com.ticket.core.app.<기능>.command`
-  - 상태를 바꾸는 use case, 트랜잭션 조립
-- `com.ticket.core.app.<기능>.query`
-  - 조회 use case와 조회 port
-- `com.ticket.core.app.<기능>.query.model`
-  - 조회 결과 view와 검색 param
-- `com.ticket.core.app.auth`
-  - 인증 흐름 use case, 인증 주체 값과 토큰·비밀번호·외부 provider 포트
-- `com.ticket.core.app.support.cursor`
-  - 타입이 있는 커서 위치와 페이징 결과
-  - HTTP 문자열 codec, Jackson, Spring Data `Slice`는 포함하지 않는다
-
-### `core-infra`
-
-`core-domain`의 패키지 구조를 따라 adapter를 배치하되, 물리 위치는 별도 Gradle 모듈이다.
-
-예시:
-
-- `com.ticket.core.infra.lock`
-- `com.ticket.core.infra.config`
-- `com.ticket.core.infra.redis`
-- `com.ticket.core.infra.support`
-- `com.ticket.core.infra.auth`, `.auth.oauth2`, `.auth.token`
-- `com.ticket.core.infra.queue`
-- `com.ticket.core.infra.hold`
-- `com.ticket.core.infra.order`, `.order.query`
-- `com.ticket.core.infra.show.query`
-- `com.ticket.core.infra.showlike.query`
-- `com.ticket.core.infra.performance.query`
-- `com.ticket.core.infra.performanceseat`, `.performanceseat.query`
-
-Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
-예: `QuerydslShowListReadRepository implements ShowListReadRepository`
-
-Aggregate Repository 어댑터는 `*RepositoryAdapter`, 그 안에서 쓰는 Spring Data 인터페이스는
-`SpringData*JpaRepository`로 이름 짓는다.
-예: `OrderRepositoryAdapter implements OrderRepository` → `SpringDataOrderJpaRepository`
+- Querydsl 조회 구현은 `Querydsl` 접두사를 붙여 포트와 구분한다.
+  `QuerydslShowListReadRepository implements ShowListReadRepository`
+- Aggregate Repository 어댑터는 `*RepositoryAdapter`.
+- 어댑터가 안에서 쓰는 Spring Data 인터페이스는 `SpringData*JpaRepository`.
 
 ```text
 core-domain
@@ -419,49 +358,12 @@ core-infra
 있어도 Repository 프레임워크까지 domain에 둘 이유는 없다. entity는 업무 상태를 표현하지만
 `JpaRepository`, JPQL, DB lock mode는 그 상태를 저장하는 방법이기 때문이다.
 
+
 ## 코드 위치 결정표
 
-새 코드는 아래 기준으로 위치를 정한다. 판단이 갈리면 "이 코드가 사라졌을 때 무엇이 먼저 깨지는가"를 본다.
+책임별 위치 표는 **`/place-code` 스킬**이 원본이다(`.claude/skills/place-code/SKILL.md`).
+판단 기준이 문서와 스킬로 갈려 있으면 한쪽만 자라고 어긋난다.
 
-| 책임 | 위치 |
-| --- | --- |
-| HTTP endpoint, 요청 검증, 인증 주체 추출, 응답 포맷 | `core-api` |
-| Swagger 문서 인터페이스 | `core-api` 의 `controller.docs` |
-| OAuth2 설정, security filter chain, 인증 필터 | `core-api` 의 `config.security` |
-| JWT 발급·검증 구현 | `core-infra` 의 `auth.token` |
-| 인증 흐름의 포트와 인증 주체·토큰 값 | `core-app` 의 `auth` |
-| 회원 역할·권한 같은 업무 개념 | `core-domain` 의 `auth` 또는 `member` |
-| HTTP 헤더 이름 같은 API 계약 상수 | `core-api` 의 `api` |
-| 상태를 바꾸는 use case | `core-app` 의 `<기능>.command` |
-| 조회 use case | `core-app` 의 `<기능>.query` |
-| 트랜잭션 경계 조립, 여러 도메인 서비스 오케스트레이션 | `core-app` |
-| 조회 결과 view와 검색 param | `core-app` 의 `<기능>.query.model` |
-| 읽기 전용 조회 port (`*ReadRepository`) | `core-app` 의 `<기능>.query` |
-| 엔티티, 값 객체 | `core-domain` 의 `<기능>.model` |
-| 도메인 정책과 검증기 | `core-domain` |
-| Aggregate Repository 인터페이스(순수 계약) | `core-domain` 의 `<기능>.repository` |
-| Repository 어댑터와 Spring Data 인터페이스 | `core-infra` |
-| 저장 기술에 중립적인 업무 상태 저장 계약 | 필요 주체에 따라 `core-domain`의 `<기능>.store` 또는 `core-app`의 포트 |
-| 분산락 port (`LockManager`, `LockKey`, `LockOptions`) | `core-app` 의 `lock` |
-| 분산락 구현과 Redis key 형식 | `core-infra` 의 `lock` |
-| 후속 처리 이벤트 port (`IntegrationEventPublisher`) | `core-app` 의 `event` |
-| outbox 엔티티·상태·relay | `core-infra` 의 `order.outbox` |
-| HTTP 커서 문자열 인코딩·디코딩 | `core-api` 의 `api.support.cursor` |
-| 커서 위치 타입과 조회 결과 | `core-app` 의 `<기능>.query.model`, `support.cursor` |
-| Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `core-infra` 의 `<기능>.query` |
-| Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `core-infra` |
-| 암호화, 대기열 입장 토큰 검증 같은 포트 구현 | `core-infra` |
-| 시드 러너 | `core-infra` 의 `seed` |
-| `@TransactionalEventListener`, background executor 설정 | `core-infra` |
-| `@Scheduled` 트리거와 실행 주기 설정 | `bootstrap` 의 `worker` |
-| Spring Boot main과 프로파일 설정 | `bootstrap` |
-| Querydsl, P6Spy 같은 기술 설정 | `core-infra` 의 `config` |
-| 프레임워크 중립 오류 계약과 예외 전달 기반 | `support:error` |
-| 요청 파라미터 Bean Validation 제약 | `core-api` 의 `controller.docs` 인터페이스 |
-| `UseCase.Input` 필수 component 계약 | `core-app` 의 `<기능>` UseCase record와 `support.validation` |
-| 도메인 규칙이 판단하는 오류 | `core-domain` 의 `error` |
-| 유스케이스가 판단하는 오류 | `core-app` 의 `error` |
-| 오류 응답 형식과 Spring 예외 변환 | `core-api` 의 `api.error` |
 
 ## 기능별 구조 원칙
 
@@ -612,11 +514,11 @@ Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
 
 ## 경계 판단에서 자주 틀리는 지점
 
-판단 절차와 자주 틀리는 지점 11가지는 **`/place-code` 스킬**이 원본이다
+판단 절차, 책임별 위치, 자주 틀리는 지점은 **`/place-code` 스킬**이 원본이다
 (`.claude/skills/place-code/SKILL.md`). 코드를 새로 두거나 옮길 때, 구조 테스트가 실패했을 때
 그 스킬이 로드된다.
 
-이 문서는 각 모듈이 무엇을 담는지와 위의 [코드 위치 결정표](#코드-위치-결정표)를 원본으로 유지한다.
+이 문서는 각 모듈이 **왜** 그렇게 나뉘었는지를 갖는다. 어디에 두는지는 스킬이 갖는다.
 
 
 ## 아키텍처 리뷰 질문

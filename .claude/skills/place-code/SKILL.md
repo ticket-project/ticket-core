@@ -28,11 +28,51 @@ allowed-tools: Bash(rg:*) Bash(./gradlew:*)
 - **엔티티를 다루면 도메인, 순서를 정하면 애플리케이션이다.** 규칙 판단은 `core-domain`,
   그 규칙들을 순서대로 부르는 조립은 `core-app`이다.
 
-그래도 갈리면 **"이 코드가 사라졌을 때 무엇이 먼저 깨지는가"**를 보고,
-[architecture.md의 코드 위치 결정표](../../../docs/architecture.md#코드-위치-결정표)에서
-27개 책임별 위치를 찾는다.
+그래도 갈리면 **"이 코드가 사라졌을 때 무엇이 먼저 깨지는가"**를 보고 아래 표에서 찾는다.
 
-## 3. 자주 틀리는 지점
+## 3. 책임별 위치
+
+| 책임 | 위치 |
+| --- | --- |
+| HTTP endpoint, 요청 검증, 인증 주체 추출, 응답 포맷 | `core-api` |
+| Swagger 문서 인터페이스 | `core-api` 의 `controller.docs` |
+| OAuth2 설정, security filter chain, 인증 필터 | `core-api` 의 `config.security` |
+| JWT 발급·검증 구현 | `core-infra` 의 `auth.token` |
+| 인증 흐름의 포트와 인증 주체·토큰 값 | `core-app` 의 `auth` |
+| 회원 역할·권한 같은 업무 개념 | `core-domain` 의 `auth` 또는 `member` |
+| HTTP 헤더 이름 같은 API 계약 상수 | `core-api` 의 `api` |
+| 상태를 바꾸는 use case | `core-app` 의 `<기능>.command` |
+| 조회 use case | `core-app` 의 `<기능>.query` |
+| 트랜잭션 경계 조립, 여러 도메인 서비스 오케스트레이션 | `core-app` |
+| 조회 결과 view와 검색 param | `core-app` 의 `<기능>.query.model` |
+| 읽기 전용 조회 port (`*ReadRepository`) | `core-app` 의 `<기능>.query` |
+| 엔티티, 값 객체 | `core-domain` 의 `<기능>.model` |
+| 도메인 정책과 검증기 | `core-domain` |
+| Aggregate Repository 인터페이스(순수 계약) | `core-domain` 의 `<기능>.repository` |
+| Repository 어댑터와 Spring Data 인터페이스 | `core-infra` |
+| 저장 기술에 중립적인 업무 상태 저장 계약 | 필요 주체에 따라 `core-domain`의 `<기능>.store` 또는 `core-app`의 포트 |
+| 분산락 port (`LockManager`, `LockKey`, `LockOptions`) | `core-app` 의 `lock` |
+| 분산락 구현과 Redis key 형식 | `core-infra` 의 `lock` |
+| 후속 처리 이벤트 port (`IntegrationEventPublisher`) | `core-app` 의 `event` |
+| outbox 엔티티·상태·relay | `core-infra` 의 `order.outbox` |
+| HTTP 커서 문자열 인코딩·디코딩 | `core-api` 의 `api.support.cursor` |
+| 커서 위치 타입과 조회 결과 | `core-app` 의 `<기능>.query.model`, `support.cursor` |
+| Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `core-infra` 의 `<기능>.query` |
+| Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `core-infra` |
+| 암호화, 대기열 입장 토큰 검증 같은 포트 구현 | `core-infra` |
+| 시드 러너 | `core-infra` 의 `seed` |
+| `@TransactionalEventListener`, background executor 설정 | `core-infra` |
+| `@Scheduled` 트리거와 실행 주기 설정 | `bootstrap` 의 `worker` |
+| Spring Boot main과 프로파일 설정 | `bootstrap` |
+| Querydsl, P6Spy 같은 기술 설정 | `core-infra` 의 `config` |
+| 프레임워크 중립 오류 계약과 예외 전달 기반 | `support:error` |
+| 요청 파라미터 Bean Validation 제약 | `core-api` 의 `controller.docs` 인터페이스 |
+| `UseCase.Input` 필수 component 계약 | `core-app` 의 `<기능>` UseCase record와 `support.validation` |
+| 도메인 규칙이 판단하는 오류 | `core-domain` 의 `error` |
+| 유스케이스가 판단하는 오류 | `core-app` 의 `error` |
+| 오류 응답 형식과 Spring 예외 변환 | `core-api` 의 `api.error` |
+
+## 4. 자주 틀리는 지점
 
 - **주기 실행이 필요한 규칙.** 규칙은 `core-app`의 use case에, `@Scheduled` 트리거만 `core-infra`에.
   도메인에 애노테이션을 붙이는 순간 ArchUnit이 막는다.
@@ -58,7 +98,7 @@ allowed-tools: Bash(rg:*) Bash(./gradlew:*)
 - **Core Redis의 용도.** seat selection, seat hold, refresh token, OAuth2 one-time auth code뿐이다.
   대기열 상태를 Core Redis에 넣지 않는다.
 
-## 4. 구조 테스트가 실패했을 때
+## 5. 구조 테스트가 실패했을 때
 
 | 실패한 테스트 | 먼저 볼 것 |
 | --- | --- |
