@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class OutboxIntegrationEventPublisherCreateTest {
+class OutboxHoldLifecycleEventPublisherCreateTest {
 
     @Mock
     private HoldCreationOutboxRepository repository;
@@ -43,7 +43,7 @@ class OutboxIntegrationEventPublisherCreateTest {
                         && outbox.getStatus() == HoldCreationOutboxStatus.PENDING
         ))).thenReturn(saved);
 
-        final Long outboxId = new OutboxIntegrationEventPublisher(
+        final Long outboxId = new OutboxHoldLifecycleEventPublisher(
                 repository,
                 releaseRepository,
                 releaseTransactionService

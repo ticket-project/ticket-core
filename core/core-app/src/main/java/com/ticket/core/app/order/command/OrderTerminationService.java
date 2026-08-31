@@ -3,7 +3,7 @@ package com.ticket.core.app.order.command;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.event.HoldReleaseRequestedEvent;
-import com.ticket.core.app.event.IntegrationEventPublisher;
+import com.ticket.core.app.event.HoldLifecycleEventPublisher;
 import com.ticket.core.app.event.HoldReleaseRequest;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.order.model.Order;
@@ -23,7 +23,7 @@ public class OrderTerminationService {
 
     private final OrderSeatRepository orderSeatRepository;
     private final HoldHistoryRecorder holdHistoryRecorder;
-    private final IntegrationEventPublisher integrationEventPublisher;
+    private final HoldLifecycleEventPublisher holdLifecycleEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void cancel(final Order order, final LocalDateTime now) {
@@ -64,7 +64,7 @@ public class OrderTerminationService {
     }
 
     private void requestHoldRelease(final HoldReleaseRequest request, final LocalDateTime now) {
-        final Long eventId = integrationEventPublisher.publishHoldReleased(request, now);
+        final Long eventId = holdLifecycleEventPublisher.publishHoldReleased(request, now);
         applicationEventPublisher.publishEvent(new HoldReleaseRequestedEvent(eventId));
     }
 }
