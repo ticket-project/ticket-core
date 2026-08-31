@@ -4,7 +4,7 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.repository.ShowRepository;
-import com.ticket.core.domain.show.venue.Venue;
+import com.ticket.core.domain.show.model.Venue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

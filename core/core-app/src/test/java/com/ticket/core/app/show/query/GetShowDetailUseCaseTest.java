@@ -2,8 +2,8 @@ package com.ticket.core.app.show.query;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.SaleType;
+import com.ticket.core.domain.show.model.BookingStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

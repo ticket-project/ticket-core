@@ -2,14 +2,14 @@ package com.ticket.core.infra.show.query;
 
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
 import com.ticket.core.app.show.query.ShowDetailReadRepository;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
-import com.ticket.core.domain.show.meta.Region;
+import com.ticket.core.domain.show.model.Region;
 import com.ticket.core.domain.show.model.Category;
 import com.ticket.core.domain.show.model.Genre;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.performer.Performer;
-import com.ticket.core.domain.show.venue.Venue;
+import com.ticket.core.domain.show.model.Performer;
+import com.ticket.core.domain.show.model.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;

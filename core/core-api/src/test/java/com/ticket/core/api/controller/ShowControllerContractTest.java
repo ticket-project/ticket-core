@@ -4,9 +4,9 @@ import com.ticket.core.api.error.GlobalExceptionHandler;
 import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
-import com.ticket.core.domain.show.BookingStatus;
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.SaleType;
+import com.ticket.core.domain.show.model.BookingStatus;
+import com.ticket.core.domain.show.model.Region;
+import com.ticket.core.domain.show.model.SaleType;
 import com.ticket.core.app.show.query.CountSearchShowsUseCase;
 import com.ticket.core.app.show.query.GetLatestShowsUseCase;
 import com.ticket.core.app.show.query.GetSaleStartApproachingShowsPageUseCase;
@@ -24,7 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.ticket.core.api.support.cursor.ShowCursorCodec;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.domain.show.meta.ShowSortKey;
+import com.ticket.core.app.show.query.ShowSort;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class ShowControllerContractTest {
 
     private static final ShowCursor NEXT_POSITION =
-            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
     /** 기존 wire 포맷을 유지한다: URL-safe Base64(JSON(ShowCursor)). */
     private static final String EXPECTED_NEXT_CURSOR = Base64.getUrlEncoder().withoutPadding()

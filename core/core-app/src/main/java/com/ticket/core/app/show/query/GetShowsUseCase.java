@@ -37,7 +37,7 @@ public class GetShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<ShowListItemView, ShowCursor> page = showListReadRepository.findAllBySearch(
-                input.param(), input.size(), input.sort().apiValue());
+                input.param(), input.size(), input.sort());
         return new Output(page.items(), page.hasNext(), page.nextPosition());
     }
 }

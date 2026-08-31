@@ -5,7 +5,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.infra.show.query.ShowSortSupport.SortOrder;
+import com.ticket.core.infra.show.query.QuerydslShowSortResolver.SortOrder;
 import com.ticket.support.error.CoreException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -23,7 +23,7 @@ import static com.ticket.core.domain.show.model.QShow.show;
  * <p>커서의 wire 표현(Base64 문자열)은 core-api가 소유한다. 여기서는 타입 값만 다룬다.
  */
 @Component
-public class ShowCursorPolicy {
+public class QuerydslShowCursorConditionBuilder {
 
     public void applyCursor(final BooleanBuilder where, final ShowCursor cursor, final SortOrder sortOrder) {
         if (cursor == null) {

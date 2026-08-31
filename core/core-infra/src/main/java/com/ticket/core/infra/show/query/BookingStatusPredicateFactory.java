@@ -1,7 +1,7 @@
 package com.ticket.core.infra.show.query;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.BookingStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import static com.ticket.core.domain.show.model.QShow.show;
 
 @Component
-public class BookingStatusWindowPolicy {
+public class BookingStatusPredicateFactory {
 
     public BooleanExpression condition(final BookingStatus bookingStatus, final LocalDateTime now) {
         if (bookingStatus == null) {

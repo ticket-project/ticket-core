@@ -60,6 +60,11 @@ public enum ApplicationErrorType implements ErrorDefinition {
             ApplicationErrorCode.E7001,
             "이미 찜한 공연입니다."
     ),
+    NOT_SUPPORT_SHOW_SORT(
+            ErrorStatus.BAD_REQUEST,
+            ApplicationErrorCode.E7002,
+            "지원하지 않는 정렬 조건입니다."
+    ),
 
     // 대기열 입장
     ADMISSION_TOKEN_REQUIRED(

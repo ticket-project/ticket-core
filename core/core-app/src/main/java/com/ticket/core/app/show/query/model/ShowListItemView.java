@@ -1,7 +1,7 @@
 package com.ticket.core.app.show.query.model;
 
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.SaleType;
+import com.ticket.core.domain.show.model.Region;
+import com.ticket.core.domain.show.model.SaleType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -1,7 +1,7 @@
 package com.ticket.core.infra.show.query;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.core.domain.show.meta.Region;
+import com.ticket.core.domain.show.model.Region;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("NonAsciiCharacters")
-class ShowQueryHelperTest {
+class QuerydslShowPredicatesTest {
 
-    private final ShowQueryHelper showQueryHelper = new ShowQueryHelper();
+    private final QuerydslShowPredicates showQueryHelper = new QuerydslShowPredicates();
 
     @Test
     void 빈_문자열_필터는_null_조건을_반환한다() {

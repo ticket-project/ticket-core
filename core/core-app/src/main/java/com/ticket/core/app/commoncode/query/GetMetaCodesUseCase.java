@@ -4,10 +4,10 @@ import com.ticket.core.domain.show.model.Category;
 import com.ticket.core.domain.show.repository.CategoryRepository;
 import com.ticket.core.domain.show.model.Genre;
 import com.ticket.core.domain.show.repository.GenreRepository;
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.meta.ShowSortKey;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.Region;
+import com.ticket.core.domain.show.model.SaleType;
+import com.ticket.core.app.show.query.ShowSort;
+import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.domain.hold.model.HoldState;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
@@ -76,7 +76,7 @@ public class GetMetaCodesUseCase {
                 mapEnumValues(Role.values(), Role::getCode, Role::getDescription),
                 mapEnumValues(SaleType.values(), SaleType::getCode, SaleType::getDescription),
                 mapEnumValues(Region.values(), Region::getCode, Region::getDescription),
-                mapEnumValues(ShowSortKey.values(), ShowSortKey::getApiValue, ShowSortKey::getDescription)
+                mapEnumValues(ShowSort.values(), ShowSort::apiValue, ShowSort::getDescription)
         );
 
         return new Output(categories, genres, enums);

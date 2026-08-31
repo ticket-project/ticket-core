@@ -7,10 +7,10 @@ import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.query.BookingEntryResolver;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
-import com.ticket.core.domain.show.mapping.ShowGrade;
-import com.ticket.core.domain.show.performer.Performer;
-import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.ShowGrade;
+import com.ticket.core.domain.show.model.Performer;
+import com.ticket.core.domain.show.model.Venue;
+import com.ticket.core.domain.show.model.BookingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 
 import static com.ticket.core.domain.performance.model.QPerformance.performance;
 import static com.ticket.core.domain.show.model.QGenre.genre;
-import static com.ticket.core.domain.show.mapping.QShowGenre.showGenre;
-import static com.ticket.core.domain.show.mapping.QShowGrade.showGrade;
-import static com.ticket.core.domain.show.performer.QPerformer.performer;
+import static com.ticket.core.domain.show.model.QShowGenre.showGenre;
+import static com.ticket.core.domain.show.model.QShowGrade.showGrade;
+import static com.ticket.core.domain.show.model.QPerformer.performer;
 import static com.ticket.core.domain.show.model.QShow.show;
 import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
 

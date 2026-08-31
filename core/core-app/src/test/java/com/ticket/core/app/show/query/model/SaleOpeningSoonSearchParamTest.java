@@ -1,7 +1,7 @@
 package com.ticket.core.app.show.query.model;
 
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.show.meta.Region;
+import com.ticket.core.domain.show.model.Region;
 import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 

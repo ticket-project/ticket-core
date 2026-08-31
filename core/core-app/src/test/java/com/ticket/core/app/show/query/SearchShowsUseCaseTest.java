@@ -1,10 +1,9 @@
 package com.ticket.core.app.show.query;
 
-import com.ticket.core.domain.show.meta.Region;
+import com.ticket.core.domain.show.model.Region;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.core.app.support.cursor.CursorPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.when;
 class SearchShowsUseCaseTest {
 
     private static final ShowCursor NEXT_POSITION =
-            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
     @Mock
     private ShowListReadRepository showListReadRepository;
@@ -46,27 +45,27 @@ class SearchShowsUseCaseTest {
                 10L
         );
         CursorPage<ShowSearchItemView, ShowCursor> result = new CursorPage<>(List.of(item), true, NEXT_POSITION);
-        when(showListReadRepository.searchShows(request, 20, "popular")).thenReturn(result);
+        when(showListReadRepository.searchShows(request, 20, ShowSort.POPULAR)).thenReturn(result);
 
         SearchShowsUseCase.Output output = useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
         assertThat(output.items()).containsExactly(item);
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListReadRepository).searchShows(request, 20, "popular");
+        verify(showListReadRepository).searchShows(request, 20, ShowSort.POPULAR);
     }
 
     @Test
     void 검색_결과가_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowSearchCriteria request = new ShowSearchCriteria("missing", null, null, null, null, null, null);
         CursorPage<ShowSearchItemView, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showListReadRepository.searchShows(request, 20, "popular")).thenReturn(result);
+        when(showListReadRepository.searchShows(request, 20, ShowSort.POPULAR)).thenReturn(result);
 
         SearchShowsUseCase.Output output = useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListReadRepository).searchShows(request, 20, "popular");
+        verify(showListReadRepository).searchShows(request, 20, ShowSort.POPULAR);
     }
 }

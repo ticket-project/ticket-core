@@ -3,8 +3,8 @@ package com.ticket.core.infra.show.query;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.app.show.query.ShowSort;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.core.domain.show.model.QShow;
 import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
@@ -18,9 +18,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
-class ShowCursorPolicyTest {
+class QuerydslShowCursorConditionBuilderTest {
 
-    private final ShowCursorPolicy showCursorPolicy = new ShowCursorPolicy();
+    private final QuerydslShowCursorConditionBuilder showCursorPolicy = new QuerydslShowCursorConditionBuilder();
 
     @Test
     void cursor가_없으면_where절을_건드리지_않는다() {
@@ -33,7 +33,7 @@ class ShowCursorPolicyTest {
 
     @Test
     void cursor의_sort가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor = new ShowCursor(ShowSortKey.LATEST, "DESC", "2026-03-15T10:00:00", 1L);
+        ShowCursor cursor = new ShowCursor(ShowSort.LATEST, "DESC", "2026-03-15T10:00:00", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
@@ -43,7 +43,7 @@ class ShowCursorPolicyTest {
 
     @Test
     void cursor의_dir가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor = new ShowCursor(ShowSortKey.POPULAR, "ASC", "10", 1L);
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "ASC", "10", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
@@ -53,7 +53,7 @@ class ShowCursorPolicyTest {
 
     @Test
     void cursor의_lastId가_없으면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor = new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", null);
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", "10", null);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
@@ -63,7 +63,7 @@ class ShowCursorPolicyTest {
 
     @Test
     void cursor의_lastValue가_없으면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor = new ShowCursor(ShowSortKey.POPULAR, "DESC", " ", 1L);
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", " ", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
@@ -73,7 +73,7 @@ class ShowCursorPolicyTest {
 
     @Test
     void cursor의_lastValue가_정렬형식과_맞지_않으면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor = new ShowCursor(ShowSortKey.LATEST, "DESC", "not-a-date", 1L);
+        ShowCursor cursor = new ShowCursor(ShowSort.LATEST, "DESC", "not-a-date", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, latestDesc()))
                 .isInstanceOf(CoreException.class)
@@ -84,7 +84,7 @@ class ShowCursorPolicyTest {
     @Test
     void 올바른_cursor면_where절에_조건을_추가한다() {
         BooleanBuilder where = new BooleanBuilder();
-        ShowCursor cursor = new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
         showCursorPolicy.applyCursor(where, cursor, popularDesc());
 
@@ -99,14 +99,14 @@ class ShowCursorPolicyTest {
 
         ShowCursor nextPosition = showCursorPolicy.buildNextPosition(List.of(tuple), 1, popularDesc());
 
-        assertThat(nextPosition).isEqualTo(new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L));
+        assertThat(nextPosition).isEqualTo(new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L));
     }
 
-    private ShowSortSupport.SortOrder popularDesc() {
-        return new ShowSortSupport.SortOrder(ShowSortKey.POPULAR, Sort.Direction.DESC);
+    private QuerydslShowSortResolver.SortOrder popularDesc() {
+        return new QuerydslShowSortResolver.SortOrder(ShowSort.POPULAR, Sort.Direction.DESC);
     }
 
-    private ShowSortSupport.SortOrder latestDesc() {
-        return new ShowSortSupport.SortOrder(ShowSortKey.LATEST, Sort.Direction.DESC);
+    private QuerydslShowSortResolver.SortOrder latestDesc() {
+        return new QuerydslShowSortResolver.SortOrder(ShowSort.LATEST, Sort.Direction.DESC);
     }
 }

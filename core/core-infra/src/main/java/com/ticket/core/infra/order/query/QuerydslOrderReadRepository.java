@@ -18,7 +18,7 @@ import static com.ticket.core.domain.performance.model.QPerformance.performance;
 import static com.ticket.core.domain.performanceseat.model.QPerformanceSeat.performanceSeat;
 import static com.ticket.core.domain.seat.model.QSeat.seat;
 import static com.ticket.core.domain.show.model.QShow.show;
-import static com.ticket.core.domain.show.venue.QVenue.venue;
+import static com.ticket.core.domain.show.model.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor

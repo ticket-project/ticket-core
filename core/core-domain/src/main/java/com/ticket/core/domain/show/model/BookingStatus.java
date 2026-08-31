@@ -1,4 +1,4 @@
-package com.ticket.core.domain.show;
+package com.ticket.core.domain.show.model;
 
 public enum BookingStatus {
     BEFORE_OPEN("예매 오픈 전"),

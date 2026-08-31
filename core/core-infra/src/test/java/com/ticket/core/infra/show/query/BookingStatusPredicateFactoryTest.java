@@ -1,7 +1,7 @@
 package com.ticket.core.infra.show.query;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.BookingStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("NonAsciiCharacters")
-class BookingStatusWindowPolicyTest {
+class BookingStatusPredicateFactoryTest {
 
-    private final BookingStatusWindowPolicy bookingStatusWindowPolicy = new BookingStatusWindowPolicy();
+    private final BookingStatusPredicateFactory bookingStatusWindowPolicy = new BookingStatusPredicateFactory();
     private final LocalDateTime fixedNow = LocalDateTime.of(2026, 3, 15, 19, 0);
 
     @Test

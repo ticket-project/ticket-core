@@ -30,7 +30,7 @@ public class SearchShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<ShowSearchItemView, ShowCursor> page = showListReadRepository.searchShows(
-                input.request(), input.size(), input.sort().apiValue());
+                input.request(), input.size(), input.sort());
         return new Output(page.items(), page.hasNext(), page.nextPosition());
     }
 }

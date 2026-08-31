@@ -1,10 +1,9 @@
 package com.ticket.core.app.show.query;
 
-import com.ticket.core.domain.show.meta.Region;
+import com.ticket.core.domain.show.model.Region;
 import com.ticket.core.app.show.query.model.SaleOpeningSoonSearchParam;
 import com.ticket.core.app.show.query.model.ShowOpeningSoonDetailView;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.domain.show.meta.ShowSortKey;
 import com.ticket.core.app.support.cursor.CursorPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.when;
 class GetSaleStartApproachingShowsPageUseCaseTest {
 
     private static final ShowCursor NEXT_POSITION =
-            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
     @Mock
     private ShowListReadRepository showListReadRepository;
@@ -56,15 +55,15 @@ class GetSaleStartApproachingShowsPageUseCaseTest {
         );
         CursorPage<ShowOpeningSoonDetailView, ShowCursor> result =
                 new CursorPage<>(List.of(show), true, NEXT_POSITION);
-        when(showListReadRepository.findSaleOpeningSoonPage(param, 10, "popular")).thenReturn(result);
+        when(showListReadRepository.findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR)).thenReturn(result);
 
         GetSaleStartApproachingShowsPageUseCase.Output output =
-                useCase.execute(new GetSaleStartApproachingShowsPageUseCase.Input(param, 10, "popular"));
+                useCase.execute(new GetSaleStartApproachingShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
 
         assertThat(output.items()).containsExactly(show);
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListReadRepository).findSaleOpeningSoonPage(param, 10, "popular");
+        verify(showListReadRepository).findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR);
     }
 
     @Test
@@ -72,14 +71,14 @@ class GetSaleStartApproachingShowsPageUseCaseTest {
         SaleOpeningSoonSearchParam param = new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         CursorPage<ShowOpeningSoonDetailView, ShowCursor> result =
                 new CursorPage<>(List.of(), false, null);
-        when(showListReadRepository.findSaleOpeningSoonPage(param, 10, "popular")).thenReturn(result);
+        when(showListReadRepository.findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR)).thenReturn(result);
 
         GetSaleStartApproachingShowsPageUseCase.Output output =
-                useCase.execute(new GetSaleStartApproachingShowsPageUseCase.Input(param, 10, "popular"));
+                useCase.execute(new GetSaleStartApproachingShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListReadRepository).findSaleOpeningSoonPage(param, 10, "popular");
+        verify(showListReadRepository).findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR);
     }
 }

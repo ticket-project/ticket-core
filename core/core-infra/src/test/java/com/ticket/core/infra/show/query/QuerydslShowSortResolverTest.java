@@ -1,25 +1,25 @@
 package com.ticket.core.infra.show.query;
 
 import com.querydsl.core.types.Order;
-import com.ticket.core.domain.show.meta.ShowSortKey;
+import com.ticket.core.app.show.query.ShowSort;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("NonAsciiCharacters")
-class ShowSortSupportTest {
+class QuerydslShowSortResolverTest {
 
-    private final ShowSortSupport showSortSupport = new ShowSortSupport();
+    private final QuerydslShowSortResolver showSortSupport = new QuerydslShowSortResolver();
 
     @Test
     void 인기순은_desc_정렬을_사용한다() {
         //given
         //when
-        ShowSortSupport.SortOrder result = showSortSupport.resolveSortOrder("popular");
+        QuerydslShowSortResolver.SortOrder result = showSortSupport.resolveSortOrder(ShowSort.POPULAR);
 
         //then
-        assertThat(result.key()).isEqualTo(ShowSortKey.POPULAR);
+        assertThat(result.key()).isEqualTo(ShowSort.POPULAR);
         assertThat(result.direction()).isEqualTo(Sort.Direction.DESC);
         assertThat(showSortSupport.primaryOrderSpecifier(result).getOrder()).isEqualTo(Order.DESC);
         assertThat(showSortSupport.tieBreakerOrder(result).getOrder()).isEqualTo(Order.DESC);
@@ -29,13 +29,12 @@ class ShowSortSupportTest {
     void 오픈임박순은_asc_정렬을_사용한다() {
         //given
         //when
-        ShowSortSupport.SortOrder result = showSortSupport.resolveSortOrder("showStartApproaching");
+        QuerydslShowSortResolver.SortOrder result = showSortSupport.resolveSortOrder(ShowSort.SHOW_START_APPROACHING);
 
         //then
-        assertThat(result.key()).isEqualTo(ShowSortKey.SHOW_START_APPROACHING);
+        assertThat(result.key()).isEqualTo(ShowSort.SHOW_START_APPROACHING);
         assertThat(result.direction()).isEqualTo(Sort.Direction.ASC);
         assertThat(showSortSupport.primaryOrderSpecifier(result).getOrder()).isEqualTo(Order.ASC);
         assertThat(showSortSupport.tieBreakerOrder(result).getOrder()).isEqualTo(Order.ASC);
     }
 }
-

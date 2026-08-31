@@ -41,7 +41,7 @@ class CoreDomainModuleStructureTest {
         assertThat(domainBuild).doesNotContain("project(':core:core-enum')");
         assertThat(Files.exists(resolve("../core-enum"))).isFalse();
         assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/member/model/Role.java"))).isTrue();
-        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/show/BookingStatus.java"))).isTrue();
+        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/show/model/BookingStatus.java"))).isTrue();
     }
 
     @Test

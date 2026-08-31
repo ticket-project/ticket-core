@@ -11,7 +11,7 @@ import java.util.Optional;
 
 import static com.ticket.core.domain.performance.model.QPerformance.performance;
 import static com.ticket.core.domain.show.model.QShow.show;
-import static com.ticket.core.domain.show.venue.QVenue.venue;
+import static com.ticket.core.domain.show.model.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor

@@ -1,13 +1,14 @@
 package com.ticket.core.infra.show.query;
 
 import com.ticket.core.app.show.query.ShowListReadRepository;
+import com.ticket.core.app.show.query.ShowSort;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.infra.show.query.ShowSortSupport.SortOrder;
+import com.ticket.core.infra.show.query.QuerydslShowSortResolver.SortOrder;
 import com.ticket.core.app.show.query.model.SaleOpeningSoonSearchParam;
 import com.ticket.core.app.show.query.model.ShowListItemView;
 import com.ticket.core.app.show.query.model.ShowOpeningSoonDetailView;
@@ -28,25 +29,25 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.ticket.core.domain.show.mapping.QShowGenre.showGenre;
+import static com.ticket.core.domain.show.model.QShowGenre.showGenre;
 import static com.ticket.core.domain.show.model.QCategory.category;
 import static com.ticket.core.domain.show.model.QGenre.genre;
 import static com.ticket.core.domain.show.model.QShow.show;
-import static com.ticket.core.domain.show.venue.QVenue.venue;
+import static com.ticket.core.domain.show.model.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
 public class QuerydslShowListReadRepository implements ShowListReadRepository {
 
     private final JPAQueryFactory queryFactory;
-    private final ShowQueryHelper queryHelper;
-    private final ShowConditionFactory showConditionFactory;
-    private final ShowSortSupport sortSupport;
-    private final ShowCursorPolicy showCursorPolicy;
+    private final QuerydslShowPredicates queryHelper;
+    private final QuerydslShowConditionBuilder showConditionFactory;
+    private final QuerydslShowSortResolver sortSupport;
+    private final QuerydslShowCursorConditionBuilder showCursorPolicy;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
     @Override
-    public CursorPage<ShowListItemView, ShowCursor> findAllBySearch(final ShowParam param, final int size, final String sort) {
+    public CursorPage<ShowListItemView, ShowCursor> findAllBySearch(final ShowParam param, final int size, final ShowSort sort) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
         final BooleanBuilder where = showConditionFactory.buildMainListCondition(param, sortOrder);
 
@@ -102,7 +103,7 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
     public CursorPage<ShowOpeningSoonDetailView, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param,
             final int size,
-            final String sort
+            final ShowSort sort
     ) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
         final BooleanBuilder where = showConditionFactory.buildSaleOpeningCondition(param);
@@ -121,7 +122,7 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
     public CursorPage<ShowSearchItemView, ShowCursor> searchShows(
             final ShowSearchCriteria request,
             final int size,
-            final String sort
+            final ShowSort sort
     ) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
         final BooleanBuilder where = showConditionFactory.buildSearchCondition(request, sortOrder);

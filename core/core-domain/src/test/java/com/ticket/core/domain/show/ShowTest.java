@@ -1,6 +1,7 @@
 package com.ticket.core.domain.show;
 
-import com.ticket.core.domain.show.meta.SaleType;
+import com.ticket.core.domain.show.model.BookingStatus;
+import com.ticket.core.domain.show.model.SaleType;
 import com.ticket.core.domain.show.model.Show;
 import org.junit.jupiter.api.Test;
 

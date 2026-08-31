@@ -1,7 +1,6 @@
-package com.ticket.core.domain.show.mapping;
+package com.ticket.core.domain.show.model;
 
 import com.ticket.core.domain.BaseEntity;
-import com.ticket.core.domain.show.model.Show;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

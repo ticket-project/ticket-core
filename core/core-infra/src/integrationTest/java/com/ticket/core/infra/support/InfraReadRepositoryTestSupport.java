@@ -1,10 +1,10 @@
 package com.ticket.core.infra.support;
 
-import com.ticket.core.infra.show.query.BookingStatusWindowPolicy;
-import com.ticket.core.infra.show.query.ShowConditionFactory;
-import com.ticket.core.infra.show.query.ShowCursorPolicy;
-import com.ticket.core.infra.show.query.ShowQueryHelper;
-import com.ticket.core.infra.show.query.ShowSortSupport;
+import com.ticket.core.infra.show.query.BookingStatusPredicateFactory;
+import com.ticket.core.infra.show.query.QuerydslShowConditionBuilder;
+import com.ticket.core.infra.show.query.QuerydslShowCursorConditionBuilder;
+import com.ticket.core.infra.show.query.QuerydslShowPredicates;
+import com.ticket.core.infra.show.query.QuerydslShowSortResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -13,11 +13,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼를 빈으로 올린다.
  */
 @Import({
-        ShowQueryHelper.class,
-        BookingStatusWindowPolicy.class,
-        ShowConditionFactory.class,
-        ShowSortSupport.class,
-        ShowCursorPolicy.class,
+        QuerydslShowPredicates.class,
+        BookingStatusPredicateFactory.class,
+        QuerydslShowConditionBuilder.class,
+        QuerydslShowSortResolver.class,
+        QuerydslShowCursorConditionBuilder.class,
         InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {
