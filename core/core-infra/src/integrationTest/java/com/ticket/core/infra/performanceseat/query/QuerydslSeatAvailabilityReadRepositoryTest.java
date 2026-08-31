@@ -1,5 +1,5 @@
 package com.ticket.core.infra.performanceseat.query;
-
+`r`nimport com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;`r`n
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
 import com.ticket.core.domain.performance.model.Performance;
@@ -54,7 +54,7 @@ class QuerydslSeatAvailabilityReadRepositoryTest extends InfraReadRepositoryTest
     void 등급정렬과_좌석ID순으로_가용좌석_원본행을_조회한다() {
         //given
         //when
-        List<SeatAvailabilityCalculator.AvailableSeatRow> result = seatAvailabilityReadRepository.findAvailableSeatRows(performanceId, showId);
+        List<AvailableSeatRow> result = seatAvailabilityReadRepository.findAvailableSeatRows(performanceId, showId);
 
         //then
         assertThat(result).extracting("gradeName").containsExactly("VIP석", "R석");

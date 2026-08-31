@@ -47,8 +47,8 @@ class GetSeatAvailabilityUseCaseTest {
         //given
         Performance performance = mock(Performance.class);
         Show show = mock(Show.class);
-        List<SeatAvailabilityCalculator.AvailableSeatRow> rows =
-                List.of(new SeatAvailabilityCalculator.AvailableSeatRow(1L, PerformanceSeatState.AVAILABLE, "VIP", 1));
+        List<AvailableSeatRow> rows =
+                List.of(new AvailableSeatRow(1L, PerformanceSeatState.AVAILABLE, "VIP", 1));
         List<GetSeatAvailabilityUseCase.GradeAvailability> response =
                 List.of(new GetSeatAvailabilityUseCase.GradeAvailability("VIP", 1, 0L));
 

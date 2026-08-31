@@ -1,5 +1,5 @@
 package com.ticket.core.infra.show.query;
-
+`r`nimport com.ticket.core.app.show.query.model.ShowDetailView;`r`n
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
 import com.ticket.core.app.show.query.ShowDetailReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -38,7 +38,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     private final Clock clock;
 
     @Override
-    public Optional<GetShowDetailUseCase.Output> findShowDetail(final Long showId) {
+    public Optional<ShowDetailView> findShowDetail(final Long showId) {
         final Show showEntity = fetchShow(showId);
         if (showEntity == null) {
             return Optional.empty();
@@ -143,7 +143,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         ).orElse(0L);
     }
 
-    private GetShowDetailUseCase.Output toShowDetail(
+    private ShowDetailView toShowDetail(
             final Show showEntity,
             final List<String> genreNames,
             final List<GetShowDetailUseCase.GradeInfo> grades,
@@ -152,7 +152,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     ) {
         final BookingStatus bookingStatus = showEntity.getBookingStatus(LocalDateTime.now(clock));
 
-        return new GetShowDetailUseCase.Output(
+        return new ShowDetailView(
                 showEntity.getId(),
                 showEntity.getTitle(),
                 showEntity.getSubTitle(),

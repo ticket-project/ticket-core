@@ -42,7 +42,7 @@ class GetMyShowLikesUseCaseTest {
     @Test
     void 찜한_공연_목록을_다음_커서_위치와_함께_조회한다() {
         Member member = mock(Member.class);
-        GetMyShowLikesUseCase.ShowLikeSummary summary = new GetMyShowLikesUseCase.ShowLikeSummary(
+        ShowLikeSummaryView summary = new ShowLikeSummaryView(
                 2L,
                 "공연",
                 "image",

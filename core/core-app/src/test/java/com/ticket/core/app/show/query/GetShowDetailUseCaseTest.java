@@ -32,7 +32,7 @@ class GetShowDetailUseCaseTest {
 
     @Test
     void 공연_상세를_그대로_반환한다() {
-        GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
+        GetShowDetailUseCase.Output detail = new ShowDetailView(
                 1L,
                 "공연",
                 "부제",

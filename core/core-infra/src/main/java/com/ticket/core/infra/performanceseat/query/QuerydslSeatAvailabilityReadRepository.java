@@ -1,5 +1,5 @@
 package com.ticket.core.infra.performanceseat.query;
-
+`r`nimport com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;`r`n
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
 import com.querydsl.core.types.Projections;
@@ -20,9 +20,9 @@ public class QuerydslSeatAvailabilityReadRepository implements SeatAvailabilityR
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<SeatAvailabilityCalculator.AvailableSeatRow> findAvailableSeatRows(Long performanceId, Long showId) {
+    public List<AvailableSeatRow> findAvailableSeatRows(Long performanceId, Long showId) {
         return queryFactory
-                .select(Projections.constructor(SeatAvailabilityCalculator.AvailableSeatRow.class,
+                .select(Projections.constructor(AvailableSeatRow.class,
                         performanceSeat.seat.id,
                         performanceSeat.state,
                         showGrade.gradeName,
