@@ -1,4 +1,4 @@
-package com.ticket.core.domain.queue;
+package com.ticket.core.app.admission;
 
 /**
  * 대기열 입장이 보장됐는지 확인하는 port.
