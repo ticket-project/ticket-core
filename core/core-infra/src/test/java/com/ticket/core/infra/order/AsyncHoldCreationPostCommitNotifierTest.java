@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command;
+package com.ticket.core.infra.order;
 
 import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxExecutor;
 import org.junit.jupiter.api.Test;

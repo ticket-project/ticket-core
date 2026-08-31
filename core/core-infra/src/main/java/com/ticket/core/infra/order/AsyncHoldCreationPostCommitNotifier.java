@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command;
+package com.ticket.core.infra.order;
 
 import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxExecutor;
 import com.ticket.core.app.event.HoldCreationPostCommitNotifier;

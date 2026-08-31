@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command;
+package com.ticket.core.infra.order;
 
 import com.ticket.core.domain.order.model.OrderSeat;
 import org.springframework.data.jpa.repository.JpaRepository;

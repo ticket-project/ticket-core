@@ -1,4 +1,4 @@
-package com.ticket.core.app.order.command;
+package com.ticket.core.infra.order;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
