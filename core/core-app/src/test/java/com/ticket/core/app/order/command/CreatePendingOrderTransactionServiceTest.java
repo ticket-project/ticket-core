@@ -1,6 +1,6 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.order.command.CreatePendingOrderTxService;
+import com.ticket.core.app.order.command.CreatePendingOrderTransactionService;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.app.order.command.OrderCreator;
 import com.ticket.core.app.event.HoldLifecycleEventPublisher;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class CreatePendingOrderTxServiceTest {
+class CreatePendingOrderTransactionServiceTest {
 
     @Mock
     private OrderCreator orderCreator;
@@ -40,11 +40,11 @@ class CreatePendingOrderTxServiceTest {
     @Mock
     private HoldLifecycleEventPublisher holdLifecycleEventPublisher;
 
-    private CreatePendingOrderTxService service;
+    private CreatePendingOrderTransactionService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreatePendingOrderTxService(orderCreator, holdHistoryRecorder, holdLifecycleEventPublisher);
+        service = new CreatePendingOrderTransactionService(orderCreator, holdHistoryRecorder, holdLifecycleEventPublisher);
     }
 
     @Test
@@ -92,7 +92,7 @@ class CreatePendingOrderTxServiceTest {
 
     @Test
     void 주문_저장_메서드는_트랜잭션으로_실행된다() throws NoSuchMethodException {
-        assertThat(CreatePendingOrderTxService.class
+        assertThat(CreatePendingOrderTransactionService.class
                 .getDeclaredMethod("create", Long.class, Long.class, Duration.class, HoldAllocation.class)
                 .isAnnotationPresent(Transactional.class))
                 .isTrue();

@@ -6,7 +6,7 @@ import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderValidator;
-import com.ticket.core.app.order.command.CreatePendingOrderTxService;
+import com.ticket.core.app.order.command.CreatePendingOrderTransactionService;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
@@ -55,7 +55,7 @@ class CreateOrderUseCaseTest {
     private HoldAllocator holdAllocator;
 
     @Mock
-    private CreatePendingOrderTxService createPendingOrderTxService;
+    private CreatePendingOrderTransactionService createPendingOrderTransactionService;
 
     @Mock
     private HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
@@ -71,7 +71,7 @@ class CreateOrderUseCaseTest {
                 lockManager,
                 validator,
                 holdAllocator,
-                createPendingOrderTxService,
+                createPendingOrderTransactionService,
                 holdCreationPostCommitNotifier,
                 fixedClock
         );
@@ -85,7 +85,7 @@ class CreateOrderUseCaseTest {
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
 
-        verifyNoInteractions(validator, holdAllocator, createPendingOrderTxService);
+        verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
     }
 
     @Test
@@ -96,7 +96,7 @@ class CreateOrderUseCaseTest {
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
 
-        verifyNoInteractions(validator, holdAllocator, createPendingOrderTxService);
+        verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
     }
 
     @Test
@@ -113,7 +113,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
         when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
-        when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
+        when(createPendingOrderTransactionService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenReturn(new PendingOrderCreationResult(order, 99L));
 
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
@@ -123,10 +123,10 @@ class CreateOrderUseCaseTest {
         assertThat(output.expiresAt()).isEqualTo(hold.expiresAt());
         assertThat(output.remainingSeconds()).isEqualTo(600L);
 
-        final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTxService, holdCreationPostCommitNotifier);
+        final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTransactionService, holdCreationPostCommitNotifier);
         inOrder.verify(validator).validate(input, seatIds, FIXED_NOW);
         inOrder.verify(holdAllocator).allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW);
-        inOrder.verify(createPendingOrderTxService).create(20L, 10L, Duration.ofSeconds(600), allocation);
+        inOrder.verify(createPendingOrderTransactionService).create(20L, 10L, Duration.ofSeconds(600), allocation);
         inOrder.verify(holdCreationPostCommitNotifier).notify(99L);
     }
 
@@ -142,7 +142,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
         when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
-        when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
+        when(createPendingOrderTransactionService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenReturn(new PendingOrderCreationResult(order, 99L));
         doThrow(new RuntimeException("queue failed")).when(holdCreationPostCommitNotifier).notify(99L);
 
@@ -163,7 +163,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
         when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
-        when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
+        when(createPendingOrderTransactionService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenThrow(new RuntimeException("order failed"));
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
@@ -185,7 +185,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
         when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
-        when(createPendingOrderTxService.create(20L, 10L, Duration.ofSeconds(600), allocation))
+        when(createPendingOrderTransactionService.create(20L, 10L, Duration.ofSeconds(600), allocation))
                 .thenThrow(originalException);
         doThrow(new RuntimeException("release failed"))
                 .when(holdAllocator).release(allocation);

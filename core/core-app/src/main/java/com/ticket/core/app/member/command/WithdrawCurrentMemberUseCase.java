@@ -13,7 +13,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @Slf4j
 public class WithdrawCurrentMemberUseCase {
 
-    private final MemberWithdrawalTxService memberWithdrawalTxService;
+    private final MemberWithdrawalTransactionService memberWithdrawalTransactionService;
     private final KakaoUnlinkService kakaoUnlinkService;
 
     public record Input(Long memberId) {
@@ -24,7 +24,7 @@ public class WithdrawCurrentMemberUseCase {
     public record Output() {}
 
     public Output execute(final Input input) {
-        final List<String> kakaoSocialIds = memberWithdrawalTxService.withdraw(input.memberId);
+        final List<String> kakaoSocialIds = memberWithdrawalTransactionService.withdraw(input.memberId);
         unlinkKakaoAccountsSafely(input.memberId(), kakaoSocialIds);
         return new Output();
     }

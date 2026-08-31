@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class MemberWithdrawalTxService {
+public class MemberWithdrawalTransactionService {
 
     private final MemberRepository memberRepository;
     private final MemberSocialAccountRepository memberSocialAccountRepository;

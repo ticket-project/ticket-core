@@ -27,7 +27,7 @@ import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class MemberWithdrawalTxServiceTest {
+class MemberWithdrawalTransactionServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
@@ -39,7 +39,7 @@ class MemberWithdrawalTxServiceTest {
 
     @Test
     void withdraw_marks_member_and_social_accounts_with_same_clock_time() {
-        MemberWithdrawalTxService memberWithdrawalTxService = new MemberWithdrawalTxService(
+        MemberWithdrawalTransactionService memberWithdrawalTransactionService = new MemberWithdrawalTransactionService(
                 memberRepository,
                 memberSocialAccountRepository,
                 fixedClock
@@ -54,7 +54,7 @@ class MemberWithdrawalTxServiceTest {
         when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
         when(memberSocialAccountRepository.findAllActiveByMember(member)).thenReturn(List.of(kakao, google));
 
-        List<String> kakaoIds = memberWithdrawalTxService.withdraw(3L);
+        List<String> kakaoIds = memberWithdrawalTransactionService.withdraw(3L);
 
         assertThat(kakaoIds).containsExactly("kakao-123");
         assertThat(member.getDeletedAt()).isEqualTo(expectedNow);

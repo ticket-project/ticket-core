@@ -17,7 +17,7 @@
 CreateOrderUseCase
   -> 요청/회차/좌석 검증
   -> Redis hold 생성                 (DB 트랜잭션 밖)
-  -> CreatePendingOrderTxService
+  -> CreatePendingOrderTransactionService
        -> PENDING 주문 저장          (짧은 DB 트랜잭션)
        -> hold history 저장
        -> hold creation outbox 저장
@@ -125,7 +125,7 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 ## 주요 코드
 
 - 주문 생성: app.order.command.CreateOrderUseCase
-- 주문 DB 저장: app.order.command.CreatePendingOrderTxService
+- 주문 DB 저장: app.order.command.CreatePendingOrderTransactionService
 - 주문 종료: app.order.command.OrderTerminationService
 - 상태 전이 규칙: domain.order.model.Order (confirm, expire, cancel)
 - 후속 처리 발행 포트: app.event.HoldLifecycleEventPublisher

@@ -14,7 +14,7 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
-public class CreatePendingOrderTxService {
+public class CreatePendingOrderTransactionService {
 
     private final OrderCreator orderCreator;
     private final HoldHistoryRecorder holdHistoryRecorder;

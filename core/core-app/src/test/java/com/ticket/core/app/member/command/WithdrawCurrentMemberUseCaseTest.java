@@ -1,7 +1,7 @@
 package com.ticket.core.app.member.command;
 
 import com.ticket.core.app.auth.oauth2.KakaoUnlinkService;
-import com.ticket.core.app.member.command.MemberWithdrawalTxService;
+import com.ticket.core.app.member.command.MemberWithdrawalTransactionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class WithdrawCurrentMemberUseCaseTest {
 
     @Mock
-    private MemberWithdrawalTxService memberWithdrawalTxService;
+    private MemberWithdrawalTransactionService memberWithdrawalTransactionService;
 
     @Mock
     private KakaoUnlinkService kakaoUnlinkService;
@@ -32,13 +32,13 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 탈퇴_후_모든_카카오_계정을_연동해제한다() {
         //given
-        when(memberWithdrawalTxService.withdraw(5L)).thenReturn(List.of("100", "200"));
+        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of("100", "200"));
 
         //when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
 
         //then
-        verify(memberWithdrawalTxService).withdraw(5L);
+        verify(memberWithdrawalTransactionService).withdraw(5L);
         verify(kakaoUnlinkService).unlinkByUserId("100");
         verify(kakaoUnlinkService).unlinkByUserId("200");
     }
@@ -46,7 +46,7 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 카카오_연동해제_중_예외가_나도_탈퇴_흐름은_계속된다() {
         //given
-        when(memberWithdrawalTxService.withdraw(5L)).thenReturn(List.of("100", "200"));
+        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of("100", "200"));
         doThrow(new IllegalStateException("boom")).when(kakaoUnlinkService).unlinkByUserId("100");
 
         //when
@@ -60,13 +60,13 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 연동해제할_카카오계정이_없으면_unlink를_호출하지_않는다() {
         //given
-        when(memberWithdrawalTxService.withdraw(5L)).thenReturn(List.of());
+        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of());
 
         //when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
 
         //then
-        verify(memberWithdrawalTxService).withdraw(5L);
+        verify(memberWithdrawalTransactionService).withdraw(5L);
         verify(kakaoUnlinkService, never()).unlinkByUserId(anyString());
     }
 }
