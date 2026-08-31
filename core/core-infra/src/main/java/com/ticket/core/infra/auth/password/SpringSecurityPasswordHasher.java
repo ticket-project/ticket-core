@@ -1,6 +1,6 @@
-package com.ticket.core.infra.auth;
+package com.ticket.core.infra.auth.password;
 
-import com.ticket.core.domain.auth.PasswordService;
+import com.ticket.core.app.auth.password.PasswordHasher;
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.RawPassword;
 import lombok.RequiredArgsConstructor;
@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PasswordEncoderPasswordService implements PasswordService {
+public class SpringSecurityPasswordHasher implements PasswordHasher {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public String encode(final String rawPassword) {
-        return passwordEncoder.encode(rawPassword);
+    public EncodedPassword hash(final RawPassword rawPassword) {
+        return EncodedPassword.create(passwordEncoder.encode(rawPassword.getPassword()));
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.ticket.core.infra.auth;
+package com.ticket.core.infra.auth.password;
 
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.RawPassword;
@@ -15,21 +15,21 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class PasswordEncoderPasswordServiceTest {
+class SpringSecurityPasswordHasherTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private PasswordEncoderPasswordService passwordService;
+    private SpringSecurityPasswordHasher passwordHasher;
 
     @Test
-    void 비밀번호_인코딩을_위임한다() {
+    void 비밀번호_해싱을_위임한다() {
         when(passwordEncoder.encode("password123!")).thenReturn("encoded");
 
-        String encoded = passwordService.encode("password123!");
+        EncodedPassword encoded = passwordHasher.hash(RawPassword.create("password123!"));
 
-        assertThat(encoded).isEqualTo("encoded");
+        assertThat(encoded).isEqualTo(EncodedPassword.create("encoded"));
         verify(passwordEncoder).encode("password123!");
     }
 
@@ -39,7 +39,7 @@ class PasswordEncoderPasswordServiceTest {
         EncodedPassword encodedPassword = EncodedPassword.create("encoded");
         when(passwordEncoder.matches("password123!", "encoded")).thenReturn(true);
 
-        boolean matched = passwordService.matches(rawPassword, encodedPassword);
+        boolean matched = passwordHasher.matches(rawPassword, encodedPassword);
 
         assertThat(matched).isTrue();
         verify(passwordEncoder).matches("password123!", "encoded");
