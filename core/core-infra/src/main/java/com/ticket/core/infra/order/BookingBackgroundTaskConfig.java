@@ -1,4 +1,4 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.app.event.HoldReleaseRequestedEvent;

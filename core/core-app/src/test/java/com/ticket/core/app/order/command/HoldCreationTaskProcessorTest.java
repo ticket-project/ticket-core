@@ -1,4 +1,4 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.hold.model.Hold;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class HoldCreationPostCommitProcessorTest {
+class HoldCreationTaskProcessorTest {
 
     @Mock
     private HoldStore holdStore;
@@ -62,8 +62,8 @@ class HoldCreationPostCommitProcessorTest {
         verifyNoInteractions(seatSelectionService, seatStatusEventPublisher);
     }
 
-    private HoldCreationPostCommitProcessor processor() {
-        return new HoldCreationPostCommitProcessor(new RecordingLockManager(), holdStore, seatSelectionService, seatStatusEventPublisher);
+    private HoldCreationTaskProcessor processor() {
+        return new HoldCreationTaskProcessor(new RecordingLockManager(), holdStore, seatSelectionService, seatStatusEventPublisher);
     }
 
     private Hold hold() {

@@ -1,4 +1,4 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;

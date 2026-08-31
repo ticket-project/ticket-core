@@ -1,4 +1,4 @@
-package com.ticket.core.infra.order;
+package com.ticket.core.app.order.command;
 
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HoldCreationPostCommitProcessor {
+public class HoldCreationTaskProcessor {
 
     private final LockManager lockManager;
     private final HoldStore holdStore;

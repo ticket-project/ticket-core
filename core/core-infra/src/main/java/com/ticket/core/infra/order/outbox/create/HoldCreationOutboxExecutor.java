@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order.outbox.create;
 
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.infra.order.HoldCreationPostCommitProcessor;
+import com.ticket.core.app.order.command.HoldCreationTaskProcessor;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
@@ -26,7 +26,7 @@ public class HoldCreationOutboxExecutor {
 
     private final LockManager lockManager;
     private final HoldCreationOutboxTransactionService transactionService;
-    private final HoldCreationPostCommitProcessor processor;
+    private final HoldCreationTaskProcessor processor;
 
     public void process(final Long outboxId, final LocalDateTime now) {
         lockManager.withLock(
