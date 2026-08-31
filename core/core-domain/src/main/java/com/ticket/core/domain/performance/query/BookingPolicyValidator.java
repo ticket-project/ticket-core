@@ -3,7 +3,7 @@ package com.ticket.core.domain.performance.query;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.performance.QueueActivation;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +19,7 @@ public final class BookingPolicyValidator {
      * 예매 가능 시각 안인지 확인한다. 조회 시점이 아니라 판정 시점의 시각으로 비교하므로
      * 정책 값을 캐시해도 오픈·마감 판정은 항상 현재 시각을 따른다.
      */
-    public static void ensureBookingOpen(final PerformanceBookingPolicyView policy, final LocalDateTime now) {
+    public static void ensureBookingOpen(final PerformanceBookingPolicySnapshot policy, final LocalDateTime now) {
         if (policy.orderOpenTime() == null || now.isBefore(policy.orderOpenTime())) {
             throw new CoreException(DomainErrorType.NOT_YET_RESERVE_TIME);
         }
@@ -32,7 +32,7 @@ public final class BookingPolicyValidator {
      * 한도가 없는 회차는 좌석 수를 제한하지 않는다.
      */
     public static void ensureWithinHoldLimit(
-            final PerformanceBookingPolicyView policy,
+            final PerformanceBookingPolicySnapshot policy,
             final long requestedSeatCount
     ) {
         if (policy.maxCanHoldCount() == null) {
@@ -43,7 +43,7 @@ public final class BookingPolicyValidator {
         }
     }
 
-    public static boolean requiresQueue(final PerformanceBookingPolicyView policy, final LocalDateTime now) {
+    public static boolean requiresQueue(final PerformanceBookingPolicySnapshot policy, final LocalDateTime now) {
         return QueueActivation.isRequiredAt(
                 policy.queueMode(),
                 policy.preopenQueueStartAt(),

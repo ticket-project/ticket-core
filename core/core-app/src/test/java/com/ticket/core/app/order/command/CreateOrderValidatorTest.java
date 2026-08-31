@@ -12,7 +12,7 @@ import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.admission.AdmissionGuard;
@@ -136,7 +136,7 @@ class CreateOrderValidatorTest {
     @Test
     void 유효한_요청이면_정책과_좌석을_함께_반환한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        PerformanceBookingPolicyView policy = openPolicy(3);
+        PerformanceBookingPolicySnapshot policy = openPolicy(3);
         List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
 
         when(memberRepository.existsActiveById(20L)).thenReturn(true);
@@ -154,7 +154,7 @@ class CreateOrderValidatorTest {
     @Test
     void 좌석_수_한도가_없으면_요청_수량을_제한하지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L, 4L, 5L));
-        PerformanceBookingPolicyView policy = openPolicy(null);
+        PerformanceBookingPolicySnapshot policy = openPolicy(null);
 
         when(memberRepository.existsActiveById(20L)).thenReturn(true);
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(policy));
@@ -181,17 +181,17 @@ class CreateOrderValidatorTest {
         return new CreateOrderUseCase.Input(10L, seatIds.toList(), 20L, "admission-token");
     }
 
-    private PerformanceBookingPolicyView openPolicy(final Integer maxCanHoldCount) {
+    private PerformanceBookingPolicySnapshot openPolicy(final Integer maxCanHoldCount) {
         return policy(maxCanHoldCount, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), null);
     }
 
-    private PerformanceBookingPolicyView policy(
+    private PerformanceBookingPolicySnapshot policy(
             final Integer maxCanHoldCount,
             final LocalDateTime orderOpenTime,
             final LocalDateTime orderCloseTime,
             final QueueMode queueMode
     ) {
-        return new PerformanceBookingPolicyView(
+        return new PerformanceBookingPolicySnapshot(
                 10L,
                 orderOpenTime,
                 orderCloseTime,

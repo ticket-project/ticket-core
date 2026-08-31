@@ -5,7 +5,7 @@ import com.ticket.core.domain.performanceseat.repository.PerformanceSeatReposito
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
+import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -53,7 +53,7 @@ class SeatSelectionAvailabilityValidatorTest {
     @Test
     void 이미_예약된_좌석이면_실패한다() {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L))
-                .thenReturn(Optional.of(new SeatSelectionAvailabilityView(30L, PerformanceSeatState.RESERVED)));
+                .thenReturn(Optional.of(new SeatSelectionAvailabilitySnapshot(30L, PerformanceSeatState.RESERVED)));
 
         assertError(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT);
 
@@ -74,7 +74,7 @@ class SeatSelectionAvailabilityValidatorTest {
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));
     }
 
-    private SeatSelectionAvailabilityView available() {
-        return new SeatSelectionAvailabilityView(30L, PerformanceSeatState.AVAILABLE);
+    private SeatSelectionAvailabilitySnapshot available() {
+        return new SeatSelectionAvailabilitySnapshot(30L, PerformanceSeatState.AVAILABLE);
     }
 }

@@ -3,7 +3,7 @@ package com.ticket.core.api.controller;
 import com.ticket.core.api.error.GlobalExceptionHandler;
 import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
-import com.ticket.core.domain.performance.query.BookingEntryResolver;
+import com.ticket.core.domain.performance.policy.BookingEntryResolver;
 import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.domain.show.model.Region;
 import com.ticket.core.domain.show.model.SaleType;

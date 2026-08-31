@@ -5,7 +5,7 @@ import com.ticket.core.domain.queue.model.QueueMode;
 
 import java.time.LocalDateTime;
 
-public record PerformanceBookingPolicyView(
+public record PerformanceBookingPolicySnapshot(
         Long performanceId,
         LocalDateTime orderOpenTime,
         LocalDateTime orderCloseTime,

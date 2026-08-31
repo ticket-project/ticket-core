@@ -2,7 +2,7 @@ package com.ticket.core.domain.performanceseat.repository;
 
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
+import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,5 +22,5 @@ public interface PerformanceSeatRepository {
      *
      * <p>고빈도 경로라 엔티티 전체를 적재하지 않고 유니크 인덱스를 그대로 타도록 좁혀 조회한다.
      */
-    Optional<SeatSelectionAvailabilityView> findSelectableSeat(Long performanceId, Long seatId);
+    Optional<SeatSelectionAvailabilitySnapshot> findSelectableSeat(Long performanceId, Long seatId);
 }

@@ -5,7 +5,7 @@ import com.ticket.core.domain.performanceseat.repository.PerformanceSeatReposito
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
+import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +21,7 @@ public class SeatSelectionAvailabilityValidator {
      * 이미 판정했으므로 여기서 다시 보지 않는다.
      */
     public void validate(final Long performanceId, final Long seatId) {
-        final SeatSelectionAvailabilityView seat = performanceSeatRepository
+        final SeatSelectionAvailabilitySnapshot seat = performanceSeatRepository
                 .findSelectableSeat(performanceId, seatId)
                 .orElseThrow(() -> new CoreException(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
 

@@ -5,7 +5,7 @@ import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.app.admission.AdmissionGuard;
 import com.ticket.core.domain.queue.model.QueueMode;
@@ -156,12 +156,12 @@ class GetSeatStatusUseCaseTest {
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
 
-    private PerformanceBookingPolicyView openPolicy() {
+    private PerformanceBookingPolicySnapshot openPolicy() {
         return policy(NOW.minusHours(1), NOW.plusHours(1));
     }
 
-    private PerformanceBookingPolicyView queuePolicy() {
-        return new PerformanceBookingPolicyView(
+    private PerformanceBookingPolicySnapshot queuePolicy() {
+        return new PerformanceBookingPolicySnapshot(
                 10L,
                 NOW.minusHours(1),
                 NOW.plusHours(1),
@@ -175,11 +175,11 @@ class GetSeatStatusUseCaseTest {
         );
     }
 
-    private PerformanceBookingPolicyView policy(
+    private PerformanceBookingPolicySnapshot policy(
             final LocalDateTime orderOpenTime,
             final LocalDateTime orderCloseTime
     ) {
-        return new PerformanceBookingPolicyView(
+        return new PerformanceBookingPolicySnapshot(
                 10L,
                 orderOpenTime,
                 orderCloseTime,

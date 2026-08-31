@@ -2,7 +2,7 @@ package com.ticket.core.infra.performance;
 
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
@@ -47,7 +47,7 @@ class PerformanceRepositoryAdapterBookingPolicyTest extends InfraReadRepositoryT
         entityManager.persist(performance);
         flushAndClear();
 
-        PerformanceBookingPolicyView policy = performanceRepository
+        PerformanceBookingPolicySnapshot policy = performanceRepository
                 .findBookingPolicyById(performance.getId())
                 .orElseThrow();
 

@@ -12,7 +12,7 @@ import com.ticket.core.domain.show.model.Performer;
 import com.ticket.core.domain.show.model.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.BookingEntryResolver;
+import com.ticket.core.domain.performance.policy.BookingEntryResolver;
 import com.ticket.core.domain.queue.model.QueueLevel;
 import com.ticket.core.domain.queue.model.QueueMode;
 import org.junit.jupiter.api.BeforeEach;

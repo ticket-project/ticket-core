@@ -4,7 +4,7 @@ import com.ticket.core.domain.performanceseat.repository.PerformanceSeatReposito
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
+import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
 import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.model.Region;
 import com.ticket.core.domain.show.model.Show;
@@ -56,7 +56,7 @@ class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryT
 
     @Test
     void 회차의_좌석_상태를_단건으로_조회한다() {
-        SeatSelectionAvailabilityView result = performanceSeatRepository
+        SeatSelectionAvailabilitySnapshot result = performanceSeatRepository
                 .findSelectableSeat(performanceId, seatId)
                 .orElseThrow();
 

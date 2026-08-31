@@ -4,7 +4,7 @@ import com.ticket.core.app.show.query.GetShowDetailUseCase;
 import com.ticket.core.app.show.query.ShowDetailReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.BookingEntryResolver;
+import com.ticket.core.domain.performance.policy.BookingEntryResolver;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.core.domain.show.model.ShowGrade;

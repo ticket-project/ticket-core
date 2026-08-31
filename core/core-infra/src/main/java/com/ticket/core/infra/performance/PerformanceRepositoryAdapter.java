@@ -3,7 +3,7 @@ package com.ticket.core.infra.performance;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -39,10 +39,10 @@ public class PerformanceRepositoryAdapter implements PerformanceRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<PerformanceBookingPolicyView> findBookingPolicyById(final Long performanceId) {
+    public Optional<PerformanceBookingPolicySnapshot> findBookingPolicyById(final Long performanceId) {
         return Optional.ofNullable(queryFactory
                 .select(Projections.constructor(
-                        PerformanceBookingPolicyView.class,
+                        PerformanceBookingPolicySnapshot.class,
                         performance.id,
                         performance.orderOpenTime,
                         performance.orderCloseTime,

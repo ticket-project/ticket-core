@@ -1,6 +1,6 @@
 package com.ticket.core.domain.order.command.create;
 
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
  * 이후 단계가 같은 값을 다시 조회하지 않게 한다.
  */
 public record ValidatedOrderRequest(
-        PerformanceBookingPolicyView policy,
+        PerformanceBookingPolicySnapshot policy,
         List<PerformanceSeat> performanceSeats
 ) {
 }

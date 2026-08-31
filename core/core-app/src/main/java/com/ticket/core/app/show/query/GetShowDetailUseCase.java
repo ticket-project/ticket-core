@@ -2,7 +2,7 @@ package com.ticket.core.app.show.query;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.performance.query.BookingEntryResolver;
+import com.ticket.core.domain.performance.policy.BookingEntryResolver;
 import com.ticket.core.domain.show.model.Region;
 import com.ticket.core.domain.show.model.SaleType;
 import com.ticket.core.domain.show.model.BookingStatus;
