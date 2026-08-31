@@ -1,4 +1,4 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.domain.performance.policy;
 
 import com.ticket.core.domain.performance.model.Performance;
 import java.time.LocalDateTime;

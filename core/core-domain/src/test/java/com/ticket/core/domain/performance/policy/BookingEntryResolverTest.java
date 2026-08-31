@@ -1,4 +1,4 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.domain.performance.policy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

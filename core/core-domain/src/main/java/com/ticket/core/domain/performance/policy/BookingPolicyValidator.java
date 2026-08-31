@@ -1,4 +1,4 @@
-package com.ticket.core.domain.performance.query;
+package com.ticket.core.domain.performance.policy;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.error.DomainErrorType;
