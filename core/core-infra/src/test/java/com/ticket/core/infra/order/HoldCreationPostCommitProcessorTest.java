@@ -4,7 +4,8 @@ import com.ticket.core.app.lock.RecordingLockManager;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -30,7 +31,7 @@ class HoldCreationPostCommitProcessorTest {
     private SeatSelectionService seatSelectionService;
 
     @Mock
-    private SeatStatusPublisher seatStatusPublisher;
+    private SeatStatusEventPublisher seatStatusEventPublisher;
 
     @Test
     void current_hold_releases_only_the_owners_selection_before_publishing_held() {
@@ -40,12 +41,13 @@ class HoldCreationPostCommitProcessorTest {
 
         processor().process(hold);
 
-        final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusPublisher);
+        final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         inOrder.verify(holdStore).isHeldBy(10L, 200L, "hold-key");
         inOrder.verify(seatSelectionService).deselectIfOwned(10L, 100L, 20L);
         inOrder.verify(seatSelectionService).deselectIfOwned(10L, 200L, 20L);
-        inOrder.verify(seatStatusPublisher).publishHeld(10L, List.of(100L, 200L));
+        inOrder.verify(seatStatusEventPublisher).publish(10L, 100L, SeatStatusAction.HELD);
+        inOrder.verify(seatStatusEventPublisher).publish(10L, 200L, SeatStatusAction.HELD);
     }
 
     @Test
@@ -57,11 +59,11 @@ class HoldCreationPostCommitProcessorTest {
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
-        verifyNoInteractions(seatSelectionService, seatStatusPublisher);
+        verifyNoInteractions(seatSelectionService, seatStatusEventPublisher);
     }
 
     private HoldCreationPostCommitProcessor processor() {
-        return new HoldCreationPostCommitProcessor(new RecordingLockManager(), holdStore, seatSelectionService, seatStatusPublisher);
+        return new HoldCreationPostCommitProcessor(new RecordingLockManager(), holdStore, seatSelectionService, seatStatusEventPublisher);
     }
 
     private Hold hold() {
