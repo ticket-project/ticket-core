@@ -4,11 +4,10 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
 import com.ticket.core.app.admission.AdmissionGuard;
 import com.ticket.core.domain.queue.model.QueueMode;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,7 +88,7 @@ class SelectSeatUseCaseTest {
         inOrder.verify(performanceRepository).findBookingPolicyById(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
-        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
+        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatStatusAction.SELECTED);
     }
 
     @Test

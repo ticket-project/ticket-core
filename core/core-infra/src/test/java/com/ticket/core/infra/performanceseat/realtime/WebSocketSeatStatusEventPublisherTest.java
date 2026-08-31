@@ -1,6 +1,6 @@
 package com.ticket.core.infra.performanceseat.realtime;
 
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class SeatEventPublisherTest {
+class WebSocketSeatStatusEventPublisherTest {
 
     @Mock
     private SimpMessagingTemplate messagingTemplate;
@@ -28,13 +28,13 @@ class SeatEventPublisherTest {
 
     @Test
     void 좌석_이벤트_발행_시_Clock_기준_시간이_메시지에_포함된다() {
-        SeatEventPublisher publisher = new SeatEventPublisher(messagingTemplate, fixedClock);
-        ArgumentCaptor<SeatStatusMessage> captor = ArgumentCaptor.forClass(SeatStatusMessage.class);
+        WebSocketSeatStatusEventPublisher publisher = new WebSocketSeatStatusEventPublisher(messagingTemplate, fixedClock);
+        ArgumentCaptor<SeatStatusEvent> captor = ArgumentCaptor.forClass(SeatStatusEvent.class);
 
-        publisher.publish(10L, 20L, SeatStatusMessage.SeatAction.HELD);
+        publisher.publish(10L, 20L, SeatStatusEvent.SeatStatusAction.HELD);
 
         verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
         assertThat(captor.getValue().timestamp()).isEqualTo(LocalDateTime.of(2026, 3, 15, 10, 0));
-        assertThat(captor.getValue().action()).isEqualTo(SeatStatusMessage.SeatAction.HELD);
+        assertThat(captor.getValue().action()).isEqualTo(SeatStatusEvent.SeatStatusAction.HELD);
     }
 }

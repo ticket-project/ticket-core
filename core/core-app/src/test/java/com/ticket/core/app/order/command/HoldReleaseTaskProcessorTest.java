@@ -4,7 +4,8 @@ import com.ticket.core.app.event.HoldReleaseProgressRecorder;
 import com.ticket.core.app.order.command.HoldReleaseTask;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.RecordingLockManager;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ class HoldReleaseTaskProcessorTest {
     private SeatSelectionService seatSelectionService;
 
     @Mock
-    private SeatStatusPublisher seatStatusPublisher;
+    private SeatStatusEventPublisher seatStatusEventPublisher;
 
     @Mock
     private HoldReleaseProgressRecorder progressRecorder;
@@ -61,10 +62,11 @@ class HoldReleaseTaskProcessorTest {
 
         taskProcessor.process(99L, task, FIXED_NOW);
 
-        final InOrder inOrder = inOrder(holdManager, progressRecorder, seatStatusPublisher);
+        final InOrder inOrder = inOrder(holdManager, progressRecorder, seatStatusEventPublisher);
         inOrder.verify(holdManager).release(1L, "old-hold", List.of(10L, 20L));
         inOrder.verify(progressRecorder).recordHoldReleased(99L, FIXED_NOW);
-        inOrder.verify(seatStatusPublisher).publishReleased(1L, List.of(10L, 20L));
+        inOrder.verify(seatStatusEventPublisher).publish(1L, 10L, SeatStatusAction.RELEASED);
+        inOrder.verify(seatStatusEventPublisher).publish(1L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test
@@ -78,7 +80,8 @@ class HoldReleaseTaskProcessorTest {
 
         verify(holdManager, never()).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, never()).recordHoldReleased(99L, FIXED_NOW.plusSeconds(30));
-        verify(seatStatusPublisher).publishReleased(1L, List.of(10L, 20L));
+        verify(seatStatusEventPublisher).publish(1L, 10L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher).publish(1L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test
@@ -90,7 +93,7 @@ class HoldReleaseTaskProcessorTest {
 
         taskProcessor.process(99L, task, FIXED_NOW.plusSeconds(30));
 
-        verifyNoInteractions(seatStatusPublisher);
+        verifyNoInteractions(seatStatusEventPublisher);
     }
 
     @Test
@@ -102,7 +105,7 @@ class HoldReleaseTaskProcessorTest {
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
-                .when(seatStatusPublisher).publishReleased(1L, List.of(10L, 20L));
+                .when(seatStatusEventPublisher).publish(1L, 10L, SeatStatusAction.RELEASED);
 
         assertThatThrownBy(() -> taskProcessor.process(99L, firstAttempt, FIXED_NOW))
                 .hasMessage("publish failed");
@@ -110,7 +113,8 @@ class HoldReleaseTaskProcessorTest {
 
         verify(holdManager, times(1)).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, times(1)).recordHoldReleased(99L, FIXED_NOW);
-        verify(seatStatusPublisher, times(2)).publishReleased(1L, List.of(10L, 20L));
+        verify(seatStatusEventPublisher, times(2)).publish(1L, 10L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(1)).publish(1L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test

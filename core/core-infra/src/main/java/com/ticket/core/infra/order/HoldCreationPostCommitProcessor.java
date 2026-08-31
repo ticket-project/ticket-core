@@ -3,7 +3,8 @@ package com.ticket.core.infra.order;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
@@ -19,7 +20,7 @@ public class HoldCreationPostCommitProcessor {
     private final LockManager lockManager;
     private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
-    private final SeatStatusPublisher seatStatusPublisher;
+    private final SeatStatusEventPublisher seatStatusEventPublisher;
 
     public void process(final Hold hold) {
         lockManager.withLock(
@@ -38,7 +39,9 @@ public class HoldCreationPostCommitProcessor {
         for (final Long seatId : hold.seatIds()) {
             seatSelectionService.deselectIfOwned(hold.performanceId(), seatId, hold.memberId());
         }
-        seatStatusPublisher.publishHeld(hold.performanceId(), hold.seatIds());
+        for (final Long seatId : hold.seatIds()) {
+            seatStatusEventPublisher.publish(hold.performanceId(), seatId, SeatStatusAction.HELD);
+        }
     }
 
     private boolean isCurrentHold(final Hold hold) {

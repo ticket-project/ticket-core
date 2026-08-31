@@ -1,9 +1,8 @@
 package com.ticket.core.app.performanceseat.command;
 
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.ticket.core.app.support.validation.RequiredInput;
@@ -25,6 +24,6 @@ public class DeselectSeatUseCase {
 
     public void execute(final Input input) {
         seatSelectionService.deselect(input.performanceId(), input.seatId(), input.memberId());
-        seatEventPublisher.publish(input.performanceId(), input.seatId(), SeatAction.DESELECTED);
+        seatEventPublisher.publish(input.performanceId(), input.seatId(), SeatStatusAction.DESELECTED);
     }
 }
