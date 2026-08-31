@@ -436,3 +436,11 @@ Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
   `@Component`로 맞출지 판단한다. 나머지 도메인 서비스는 `@Component`를 쓴다.
 - API와 worker를 다른 프로세스로 나눠야 하면 `bootstrap-api`/`bootstrap-worker`로 쪼갠다.
   지금은 `worker.enabled`로 한 프로세스 안에서 켜고 끈다.
+## 이름 규칙
+
+- `View`는 app 조회 경계의 화면/응답용 projection, `Snapshot`은 특정 시점의 읽기 결과다.
+- `Row`는 저장소 조회 한 행, `Output`은 use case가 adapter에 반환하는 결과다.
+- `Param`은 조회 조건 구성값, `Criteria`는 검색 조건, `Event`는 발생한 사실, `Request`는 외부 입력이다.
+- 도메인 정책은 `policy`, 값 객체와 기능별 모델은 해당 feature의 `model`에 둔다. Querydsl/Redis/JWT/WebSocket 구현은 infra가 소유한다.
+
+세부적으로 아직 정리하지 않은 이름과 구조는 [기술 부채 문서](technical-debt.md)에 기록한다.

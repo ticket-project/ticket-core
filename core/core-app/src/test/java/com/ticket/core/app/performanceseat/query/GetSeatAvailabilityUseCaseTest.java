@@ -8,6 +8,7 @@ import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
+import com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

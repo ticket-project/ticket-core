@@ -4,6 +4,7 @@ import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.support.cursor.CursorPage;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
