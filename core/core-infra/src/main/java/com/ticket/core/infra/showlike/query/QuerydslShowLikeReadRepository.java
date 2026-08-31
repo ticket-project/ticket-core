@@ -1,5 +1,7 @@
 package com.ticket.core.infra.showlike.query;
-`r`nimport com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;`r`n
+
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;

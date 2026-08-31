@@ -1,5 +1,7 @@
 package com.ticket.core.infra.showlike.query;
-`r`nimport com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;`r`n
+
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
+
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
 import com.ticket.core.domain.member.model.Member;

@@ -1,5 +1,7 @@
 package com.ticket.core.infra.show.query;
-`r`nimport com.ticket.core.app.show.query.model.ShowDetailView;`r`n
+
+import com.ticket.core.app.show.query.model.ShowDetailView;
+
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
 import com.ticket.core.app.show.query.ShowDetailReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;

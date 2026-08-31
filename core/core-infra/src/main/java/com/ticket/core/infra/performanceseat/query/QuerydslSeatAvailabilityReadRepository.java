@@ -1,5 +1,7 @@
 package com.ticket.core.infra.performanceseat.query;
-`r`nimport com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;`r`n
+
+import com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;
+
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
 import com.querydsl.core.types.Projections;

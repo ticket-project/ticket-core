@@ -1,5 +1,7 @@
 package com.ticket.core.api.controller;
-`r`nimport com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;`r`n
+
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
+
 import com.ticket.core.api.controller.docs.MemberControllerDocs;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
