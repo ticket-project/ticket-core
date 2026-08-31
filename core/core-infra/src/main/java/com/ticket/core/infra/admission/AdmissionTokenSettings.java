@@ -1,15 +1,15 @@
-package com.ticket.core.infra.queue;
+package com.ticket.core.infra.admission;
 
 import java.nio.charset.StandardCharsets;
 
-public record AdmissionTokenProperties(
+public record AdmissionTokenSettings(
         String issuer,
         String audience,
         String secretKey,
         long expirationSeconds
 ) {
 
-    public AdmissionTokenProperties {
+    public AdmissionTokenSettings {
         if (isBlank(issuer)) {
             throw new IllegalArgumentException("admission token issuer must not be blank");
         }

@@ -1,7 +1,7 @@
 package com.ticket.core.infra.redis;
 
 import com.ticket.core.app.order.command.ExpireOrderUseCase;
-import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
+import com.ticket.core.infra.performanceseat.store.SeatSelectionRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,12 +19,12 @@ public class HoldKeyExpirationHandler implements RedisKeyExpirationHandler {
 
     @Override
     public boolean supports(final String expiredKey) {
-        return SeatRedisKey.tryParseHoldMetaKey(expiredKey).isPresent();
+        return SeatSelectionRedisKey.tryParseHoldMetaKey(expiredKey).isPresent();
     }
 
     @Override
     public void handle(final String expiredKey) {
-        final SeatRedisKey.HoldMetaKey holdMetaKey = SeatRedisKey.tryParseHoldMetaKey(expiredKey)
+        final SeatSelectionRedisKey.HoldMetaKey holdMetaKey = SeatSelectionRedisKey.tryParseHoldMetaKey(expiredKey)
                 .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 홀드 만료 키입니다: " + expiredKey));
 
         expireOrderUseCase.expireByHoldKey(holdMetaKey.holdKey(), LocalDateTime.now(clock));

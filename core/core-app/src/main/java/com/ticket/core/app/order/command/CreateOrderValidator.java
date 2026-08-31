@@ -12,7 +12,7 @@ import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.performance.query.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.app.admission.AdmissionGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

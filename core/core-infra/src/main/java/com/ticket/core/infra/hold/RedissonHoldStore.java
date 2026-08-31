@@ -2,7 +2,7 @@ package com.ticket.core.infra.hold;
 
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
-import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
+import com.ticket.core.infra.performanceseat.store.SeatSelectionRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
@@ -34,13 +34,13 @@ public class RedissonHoldStore implements HoldStore {
         try {
             final RSetCache<Long> holdSeatIndex = holdSeatIndex(hold.performanceId());
             for (final Long seatId : hold.seatIds()) {
-                final String key = SeatRedisKey.hold(hold.performanceId(), seatId);
+                final String key = SeatSelectionRedisKey.hold(hold.performanceId(), seatId);
                 redissonClient.getBucket(key, StringCodec.INSTANCE).set(hold.holdKey(), ttl);
                 holdSeatIndex.add(seatId, ttl.toMillis(), TimeUnit.MILLISECONDS);
                 createdKeys.add(key);
             }
             final String json = holdMetaCodec.encode(hold);
-            redissonClient.getBucket(SeatRedisKey.holdMeta(hold.holdKey()), StringCodec.INSTANCE).set(json, ttl);
+            redissonClient.getBucket(SeatSelectionRedisKey.holdMeta(hold.holdKey()), StringCodec.INSTANCE).set(json, ttl);
         } catch (final Exception e) {
             rollback(createdKeys, hold.holdKey());
             throw new IllegalStateException("hold Redis 저장에 실패했습니다.", e);
@@ -56,7 +56,7 @@ public class RedissonHoldStore implements HoldStore {
         boolean fullyReleased = storedHold == null
                 || new HashSet<>(normalizedSeatIds).containsAll(storedHold.seatIds());
         for (final Long seatId : normalizedSeatIds) {
-            final RBucket<String> bucket = redissonClient.getBucket(SeatRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
+            final RBucket<String> bucket = redissonClient.getBucket(SeatSelectionRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
             final String storedHoldKey = bucket.get();
             if (holdKey.equals(storedHoldKey)) {
                 holdSeatIndex.remove(seatId);
@@ -67,7 +67,7 @@ public class RedissonHoldStore implements HoldStore {
             }
         }
         if (fullyReleased) {
-            redissonClient.getBucket(SeatRedisKey.holdMeta(holdKey), StringCodec.INSTANCE).delete();
+            redissonClient.getBucket(SeatSelectionRedisKey.holdMeta(holdKey), StringCodec.INSTANCE).delete();
         }
         return releasedSeatIds;
     }
@@ -79,13 +79,13 @@ public class RedissonHoldStore implements HoldStore {
 
     @Override
     public boolean isHeld(final Long performanceId, final Long seatId) {
-        final RBucket<String> bucket = redissonClient.getBucket(SeatRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
+        final RBucket<String> bucket = redissonClient.getBucket(SeatSelectionRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
         return bucket.get() != null;
     }
 
     @Override
     public boolean isHeldBy(final Long performanceId, final Long seatId, final String holdKey) {
-        final RBucket<String> bucket = redissonClient.getBucket(SeatRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
+        final RBucket<String> bucket = redissonClient.getBucket(SeatSelectionRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
         return Objects.equals(bucket.get(), holdKey);
     }
 
@@ -98,18 +98,18 @@ public class RedissonHoldStore implements HoldStore {
             }
         }
         try {
-            redissonClient.getBucket(SeatRedisKey.holdMeta(holdKey), StringCodec.INSTANCE).delete();
+            redissonClient.getBucket(SeatSelectionRedisKey.holdMeta(holdKey), StringCodec.INSTANCE).delete();
         } catch (final Exception rollbackException) {
             log.warn("홀드 메타 롤백에 실패했습니다. holdKey={}", holdKey, rollbackException);
         }
     }
 
     private RSetCache<Long> holdSeatIndex(final Long performanceId) {
-        return redissonClient.getSetCache(SeatRedisKey.holdSeatIndex(performanceId), LongCodec.INSTANCE);
+        return redissonClient.getSetCache(SeatSelectionRedisKey.holdSeatIndex(performanceId), LongCodec.INSTANCE);
     }
 
     private Hold readHold(final String holdKey) {
-        final RBucket<String> metaBucket = redissonClient.getBucket(SeatRedisKey.holdMeta(holdKey), StringCodec.INSTANCE);
+        final RBucket<String> metaBucket = redissonClient.getBucket(SeatSelectionRedisKey.holdMeta(holdKey), StringCodec.INSTANCE);
         final String payload = metaBucket.get();
         if (payload == null) {
             return null;

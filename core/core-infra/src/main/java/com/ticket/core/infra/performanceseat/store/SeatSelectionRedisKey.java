@@ -1,4 +1,4 @@
-package com.ticket.core.domain.performanceseat.support;
+package com.ticket.core.infra.performanceseat.store;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 /**
  * 좌석 관련 Redis key 규칙을 한 곳에서 관리한다.
  */
-public final class SeatRedisKey {
+public final class SeatSelectionRedisKey {
 
     private static final String SELECT_KEY = "seat:select:{perf:%d}:%d";
     private static final String SELECT_SEAT_INDEX_KEY = "seat:select:index:{perf:%d}";
@@ -18,7 +18,7 @@ public final class SeatRedisKey {
     private static final Pattern SELECT_KEY_PATTERN = Pattern.compile("^seat:select:\\{perf:(\\d+)}:(\\d+)$");
     private static final Pattern HOLD_META_KEY_PATTERN = Pattern.compile("^hold:key:(.+)$");
 
-    private SeatRedisKey() {}
+    private SeatSelectionRedisKey() {}
 
     public static String select(final Long perfId, final Long seatId) {
         return String.format(SELECT_KEY, perfId, seatId);

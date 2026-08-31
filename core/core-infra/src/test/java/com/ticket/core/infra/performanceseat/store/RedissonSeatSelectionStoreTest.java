@@ -1,6 +1,5 @@
 package com.ticket.core.infra.performanceseat.store;
 
-import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -46,8 +45,8 @@ class RedissonSeatSelectionStoreTest {
                 anyString(),
                 eq(RScript.ReturnType.LONG),
                 eq(List.<Object>of(
-                        SeatRedisKey.select(10L, 20L),
-                        SeatRedisKey.selectSeatIndex(10L)
+                        SeatSelectionRedisKey.select(10L, 20L),
+                        SeatSelectionRedisKey.selectSeatIndex(10L)
                 )),
                 eq(Duration.ofMinutes(5).toMillis()),
                 eq("3"),
@@ -61,7 +60,7 @@ class RedissonSeatSelectionStoreTest {
 
     @Test
     void holder를_조회하고_소유자가_맞으면_해제한다() {
-        doReturn(bucket).when(redissonClient).getBucket(SeatRedisKey.select(10L, 20L), StringCodec.INSTANCE);
+        doReturn(bucket).when(redissonClient).getBucket(SeatSelectionRedisKey.select(10L, 20L), StringCodec.INSTANCE);
         doReturn("3").when(bucket).get();
         doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
         doReturn(1L).when(script).eval(
@@ -69,8 +68,8 @@ class RedissonSeatSelectionStoreTest {
                 anyString(),
                 eq(RScript.ReturnType.LONG),
                 eq(List.<Object>of(
-                        SeatRedisKey.select(10L, 20L),
-                        SeatRedisKey.selectSeatIndex(10L)
+                        SeatSelectionRedisKey.select(10L, 20L),
+                        SeatSelectionRedisKey.selectSeatIndex(10L)
                 )),
                 eq("3"),
                 eq("20")
@@ -91,7 +90,7 @@ class RedissonSeatSelectionStoreTest {
                 eq(RScript.Mode.READ_ONLY),
                 anyString(),
                 eq(RScript.ReturnType.LIST),
-                eq(List.<Object>of(SeatRedisKey.selectSeatIndex(10L)))
+                eq(List.<Object>of(SeatSelectionRedisKey.selectSeatIndex(10L)))
         );
 
         Set<Long> result = redissonSeatSelectionStore.getSelectingSeatIds(10L);

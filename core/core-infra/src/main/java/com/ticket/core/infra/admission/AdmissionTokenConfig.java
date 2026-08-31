@@ -1,17 +1,17 @@
-package com.ticket.core.infra.queue;
+package com.ticket.core.infra.admission;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(TicketAdmissionTokenProperties.class)
+@EnableConfigurationProperties(AdmissionTokenConfigurationProperties.class)
 public class AdmissionTokenConfig {
 
     @Bean
-    public AdmissionTokenService admissionTokenService(final TicketAdmissionTokenProperties properties) {
-        return new AdmissionTokenService(
-                new AdmissionTokenProperties(
+    public JwtAdmissionGuard admissionTokenService(final AdmissionTokenConfigurationProperties properties) {
+        return new JwtAdmissionGuard(
+                new AdmissionTokenSettings(
                         properties.getIssuer(),
                         properties.getAudience(),
                         properties.getSecretKey(),

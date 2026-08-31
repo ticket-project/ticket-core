@@ -1,4 +1,4 @@
-package com.ticket.core.infra.queue;
+package com.ticket.core.infra.admission;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
@@ -18,7 +18,7 @@ import java.util.List;
 import javax.crypto.SecretKey;
 import org.junit.jupiter.api.Test;
 
-class AdmissionTokenServiceTest {
+class JwtAdmissionGuardTest {
 
     private static final String ISSUER = "ticket-queue";
     private static final String AUDIENCE = "ticket-api";
@@ -27,19 +27,19 @@ class AdmissionTokenServiceTest {
 
     @Test
     void verify는_admission_token_claim을_파싱한다() {
-        AdmissionClaims claims = admissionTokenService().verify(admissionToken(true, true, true, "10"));
+        AdmissionClaims claims = jwtAdmissionGuard().verify(admissionToken(true, true, true, "10"));
 
         assertThat(claims.subject()).isEqualTo("10");
         assertThat(claims.memberId()).isEqualTo(10L);
         assertThat(claims.performanceId()).isEqualTo(20L);
         assertThat(claims.issuedAt()).isEqualTo(NOW);
         assertThat(claims.expiresAt()).isEqualTo(NOW.plusSeconds(300));
-        assertThat(claims.scope()).isEqualTo(AdmissionTokenService.SCOPE);
+        assertThat(claims.scope()).isEqualTo(JwtAdmissionGuard.SCOPE);
     }
 
     @Test
     void verifyFor_accepts_the_queue_issuer_contract_for_the_same_member_and_performance() {
-        AdmissionClaims claims = admissionTokenService()
+        AdmissionClaims claims = jwtAdmissionGuard()
                 .verifyFor(admissionToken(true, true, true, "10"), 10L, 20L);
 
         assertThat(claims.memberId()).isEqualTo(10L);
@@ -49,7 +49,7 @@ class AdmissionTokenServiceTest {
     @Test
     void verifyFor_rejects_a_token_bound_to_another_member() {
         assertThatThrownBy(() ->
-                admissionTokenService().verifyFor(admissionToken(true, true, true, "10"), 11L, 20L)
+                jwtAdmissionGuard().verifyFor(admissionToken(true, true, true, "10"), 11L, 20L)
         )
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasMessage("admission token member mismatch");
@@ -58,7 +58,7 @@ class AdmissionTokenServiceTest {
     @Test
     void verifyFor_rejects_a_token_bound_to_another_performance() {
         assertThatThrownBy(() ->
-                admissionTokenService().verifyFor(admissionToken(true, true, true, "10"), 10L, 21L)
+                jwtAdmissionGuard().verifyFor(admissionToken(true, true, true, "10"), 10L, 21L)
         )
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasMessage("admission token performance mismatch");
@@ -66,28 +66,28 @@ class AdmissionTokenServiceTest {
 
     @Test
     void verify는_audience_없는_admission_token을_거부한다() {
-        assertThatThrownBy(() -> admissionTokenService().verify(admissionToken(false, true, true, "10")))
+        assertThatThrownBy(() -> jwtAdmissionGuard().verify(admissionToken(false, true, true, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasMessage("admission token invalid audience");
     }
 
     @Test
     void verify는_iat_없는_admission_token을_거부한다() {
-        assertThatThrownBy(() -> admissionTokenService().verify(admissionToken(true, false, true, "10")))
+        assertThatThrownBy(() -> jwtAdmissionGuard().verify(admissionToken(true, false, true, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasMessage("admission token invalid timestamps");
     }
 
     @Test
     void verify는_exp_없는_admission_token을_거부한다() {
-        assertThatThrownBy(() -> admissionTokenService().verify(admissionToken(true, true, false, "10")))
+        assertThatThrownBy(() -> jwtAdmissionGuard().verify(admissionToken(true, true, false, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasMessage("admission token invalid timestamps");
     }
 
     @Test
     void verify는_숫자가_아닌_subject를_invalid로_거부한다() {
-        assertThatThrownBy(() -> admissionTokenService().verify(admissionToken(true, true, true, "member-10")))
+        assertThatThrownBy(() -> jwtAdmissionGuard().verify(admissionToken(true, true, true, "member-10")))
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasMessage("admission token invalid subject");
     }
@@ -99,20 +99,20 @@ class AdmissionTokenServiceTest {
                 .subject("10")
                 .claim("aud", List.of(AUDIENCE))
                 .claim("performanceId", 20L)
-                .claim("scope", AdmissionTokenService.SCOPE)
+                .claim("scope", JwtAdmissionGuard.SCOPE)
                 .issuedAt(Date.from(NOW.minusSeconds(600)))
                 .expiration(Date.from(NOW.minusSeconds(300)))
                 .signWith(secretKey())
                 .compact();
 
-        assertThatThrownBy(() -> admissionTokenService().verify(token))
+        assertThatThrownBy(() -> jwtAdmissionGuard().verify(token))
                 .isInstanceOf(AdmissionTokenExpiredException.class)
                 .hasMessage("admission token expired");
     }
 
     @Test
     void ensureAdmitted는_유효한_token을_통과시킨다() {
-        assertThatCode(() -> admissionTokenService()
+        assertThatCode(() -> jwtAdmissionGuard()
                 .ensureAdmitted(20L, 10L, admissionToken(true, true, true, "10")))
                 .doesNotThrowAnyException();
     }
@@ -130,7 +130,7 @@ class AdmissionTokenServiceTest {
                 .subject("10")
                 .claim("aud", List.of(AUDIENCE))
                 .claim("performanceId", 20L)
-                .claim("scope", AdmissionTokenService.SCOPE)
+                .claim("scope", JwtAdmissionGuard.SCOPE)
                 .issuedAt(Date.from(NOW.minusSeconds(600)))
                 .expiration(Date.from(NOW.minusSeconds(300)))
                 .signWith(secretKey())
@@ -147,7 +147,7 @@ class AdmissionTokenServiceTest {
 
     @Test
     void ensureAdmitted는_다른_회원의_token을_invalid로_거부한다() {
-        assertThatThrownBy(() -> admissionTokenService()
+        assertThatThrownBy(() -> jwtAdmissionGuard()
                 .ensureAdmitted(20L, 11L, admissionToken(true, true, true, "10")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
@@ -156,8 +156,8 @@ class AdmissionTokenServiceTest {
 
     @Test
     void enforcement가_꺼져있으면_token_없이도_통과시킨다() {
-        AdmissionTokenService disabled = new AdmissionTokenService(
-                new AdmissionTokenProperties(ISSUER, AUDIENCE, SECRET_KEY, 300),
+        JwtAdmissionGuard disabled = new JwtAdmissionGuard(
+                new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY, 300),
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 false
         );
@@ -166,15 +166,15 @@ class AdmissionTokenServiceTest {
     }
 
     private void assertAdmissionError(final String token, final ApplicationErrorType errorType) {
-        assertThatThrownBy(() -> admissionTokenService().ensureAdmitted(20L, 10L, token))
+        assertThatThrownBy(() -> jwtAdmissionGuard().ensureAdmitted(20L, 10L, token))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(errorType));
     }
 
-    private AdmissionTokenService admissionTokenService() {
-        return new AdmissionTokenService(
-                new AdmissionTokenProperties(ISSUER, AUDIENCE, SECRET_KEY, 300),
+    private JwtAdmissionGuard jwtAdmissionGuard() {
+        return new JwtAdmissionGuard(
+                new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY, 300),
                 Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
@@ -189,7 +189,7 @@ class AdmissionTokenServiceTest {
                 .issuer(ISSUER)
                 .subject(subject)
                 .claim("performanceId", 20L)
-                .claim("scope", AdmissionTokenService.SCOPE)
+                .claim("scope", JwtAdmissionGuard.SCOPE)
                 .id("admission-token-id");
         if (includeAudience) {
             builder.claim("aud", List.of(AUDIENCE));

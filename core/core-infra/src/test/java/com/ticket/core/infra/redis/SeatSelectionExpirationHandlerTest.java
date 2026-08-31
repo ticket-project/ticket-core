@@ -1,6 +1,6 @@
 package com.ticket.core.infra.redis;
 
-import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
+import com.ticket.core.infra.performanceseat.store.SeatSelectionRedisKey;
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ class SeatSelectionExpirationHandlerTest {
     @Test
     void 좌석_select_키를_지원하고_deselected_이벤트를_발행한다() {
         SeatSelectionExpirationHandler handler = new SeatSelectionExpirationHandler(seatEventPublisher);
-        String expiredKey = SeatRedisKey.select(10L, 20L);
+        String expiredKey = SeatSelectionRedisKey.select(10L, 20L);
 
         assertThat(handler.supports(expiredKey)).isTrue();
 

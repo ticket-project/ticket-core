@@ -9,7 +9,7 @@ import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyVi
 import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
 import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
-import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.app.admission.AdmissionGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

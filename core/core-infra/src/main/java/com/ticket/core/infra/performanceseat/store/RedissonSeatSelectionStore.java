@@ -1,7 +1,6 @@
 package com.ticket.core.infra.performanceseat.store;
 
 import com.ticket.core.domain.performanceseat.store.SeatSelectionStore;
-import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RScript;
@@ -103,7 +102,7 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                 RScript.Mode.READ_ONLY,
                 READ_ACTIVE_SEAT_IDS_SCRIPT,
                 RScript.ReturnType.LIST,
-                List.<Object>of(SeatRedisKey.selectSeatIndex(performanceId))
+                List.<Object>of(SeatSelectionRedisKey.selectSeatIndex(performanceId))
         );
         final Set<Long> result = HashSet.newHashSet(seatIds.size());
         seatIds.forEach(seatId -> result.add(Long.valueOf(seatId)));
@@ -111,7 +110,7 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
     }
 
     private RBucket<String> bucket(final Long performanceId, final Long seatId) {
-        return redissonClient.getBucket(SeatRedisKey.select(performanceId, seatId), StringCodec.INSTANCE);
+        return redissonClient.getBucket(SeatSelectionRedisKey.select(performanceId, seatId), StringCodec.INSTANCE);
     }
 
     private RScript script() {
@@ -120,8 +119,8 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
 
     private List<Object> selectionKeys(final Long performanceId, final Long seatId) {
         return List.of(
-                SeatRedisKey.select(performanceId, seatId),
-                SeatRedisKey.selectSeatIndex(performanceId)
+                SeatSelectionRedisKey.select(performanceId, seatId),
+                SeatSelectionRedisKey.selectSeatIndex(performanceId)
         );
     }
 }
