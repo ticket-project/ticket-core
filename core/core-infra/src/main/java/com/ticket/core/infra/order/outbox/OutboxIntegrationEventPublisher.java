@@ -1,9 +1,9 @@
 package com.ticket.core.infra.order.outbox;
 
 import com.ticket.core.app.event.HoldReleaseProgressRecorder;
+import com.ticket.core.app.event.HoldReleaseRequest;
 import com.ticket.core.app.event.IntegrationEventPublisher;
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.domain.order.OrderTerminationResult;
 import com.ticket.core.infra.order.outbox.create.HoldCreationOutbox;
 import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRepository;
 import com.ticket.core.infra.order.outbox.release.HoldReleaseOutbox;
@@ -33,11 +33,11 @@ public class OutboxIntegrationEventPublisher implements IntegrationEventPublishe
     }
 
     @Override
-    public Long publishHoldReleased(final OrderTerminationResult result, final LocalDateTime occurredAt) {
+    public Long publishHoldReleased(final HoldReleaseRequest request, final LocalDateTime occurredAt) {
         final HoldReleaseOutbox outbox = holdReleaseOutboxRepository.save(HoldReleaseOutbox.create(
-                result.performanceId(),
-                result.holdKey(),
-                result.seatIds(),
+                request.performanceId(),
+                request.holdKey(),
+                request.seatIds(),
                 occurredAt
         ));
         return outbox.getId();

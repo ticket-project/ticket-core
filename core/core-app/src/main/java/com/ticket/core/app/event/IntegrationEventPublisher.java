@@ -1,7 +1,6 @@
 package com.ticket.core.app.event;
 
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.domain.order.OrderTerminationResult;
 
 import java.time.LocalDateTime;
 
@@ -17,5 +16,5 @@ public interface IntegrationEventPublisher {
 
     Long publishHoldCreated(Hold hold, LocalDateTime occurredAt);
 
-    Long publishHoldReleased(OrderTerminationResult result, LocalDateTime occurredAt);
+    Long publishHoldReleased(HoldReleaseRequest request, LocalDateTime occurredAt);
 }

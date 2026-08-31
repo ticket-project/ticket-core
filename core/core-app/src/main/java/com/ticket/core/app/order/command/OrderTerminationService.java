@@ -4,8 +4,8 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.event.HoldReleaseRequestedEvent;
 import com.ticket.core.app.event.IntegrationEventPublisher;
+import com.ticket.core.app.event.HoldReleaseRequest;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
-import com.ticket.core.domain.order.OrderTerminationResult;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.repository.OrderSeatRepository;
@@ -55,16 +55,16 @@ public class OrderTerminationService {
         return orderSeats;
     }
 
-    private OrderTerminationResult toResult(final Order order, final List<OrderSeat> orderSeats) {
-        return new OrderTerminationResult(
+    private HoldReleaseRequest toResult(final Order order, final List<OrderSeat> orderSeats) {
+        return new HoldReleaseRequest(
                 order.getPerformanceId(),
                 order.getHoldKey(),
                 orderSeats.stream().map(OrderSeat::getSeatId).toList()
         );
     }
 
-    private void requestHoldRelease(final OrderTerminationResult result, final LocalDateTime now) {
-        final Long eventId = integrationEventPublisher.publishHoldReleased(result, now);
+    private void requestHoldRelease(final HoldReleaseRequest request, final LocalDateTime now) {
+        final Long eventId = integrationEventPublisher.publishHoldReleased(request, now);
         applicationEventPublisher.publishEvent(new HoldReleaseRequestedEvent(eventId));
     }
 }
