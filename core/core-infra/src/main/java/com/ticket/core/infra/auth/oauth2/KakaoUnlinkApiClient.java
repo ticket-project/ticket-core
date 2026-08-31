@@ -11,7 +11,7 @@ import org.springframework.web.service.annotation.PostExchange;
  * Spring Framework 7 / Spring Boot 4의 HTTP Interface Client 기능 활용
  */
 @HttpExchange
-public interface KakaoApiClient {
+public interface KakaoUnlinkApiClient {
 
     @PostExchange(url = "/v1/user/unlink", contentType = "application/x-www-form-urlencoded")
     void unlink(

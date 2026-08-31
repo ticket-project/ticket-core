@@ -1,6 +1,6 @@
 package com.ticket.core.infra.auth.oauth2;
 
-import com.ticket.core.domain.auth.oauth2.KakaoUnlinkClient;
+import com.ticket.core.app.auth.oauth2.KakaoUnlinkClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -12,7 +12,7 @@ public class KakaoUnlinkHttpClient implements KakaoUnlinkClient {
 
     private static final String TARGET_ID_TYPE = "user_id";
 
-    private final KakaoApiClient kakaoApiClient;
+    private final KakaoUnlinkApiClient kakaoUnlinkApiClient;
 
     @Override
     public void unlink(final String adminAuthorization, final String kakaoUserId) {
@@ -20,6 +20,6 @@ public class KakaoUnlinkHttpClient implements KakaoUnlinkClient {
         formData.add("target_id_type", TARGET_ID_TYPE);
         formData.add("target_id", kakaoUserId);
 
-        kakaoApiClient.unlink(adminAuthorization, formData);
+        kakaoUnlinkApiClient.unlink(adminAuthorization, formData);
     }
 }

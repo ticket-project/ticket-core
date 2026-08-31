@@ -2,7 +2,7 @@ package com.ticket.core.app.auth.oauth2;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.auth.oauth2.KakaoUnlinkClient;
+import com.ticket.core.app.auth.oauth2.KakaoUnlinkClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
