@@ -1,12 +1,12 @@
 package com.ticket.core.infra.redis;
 
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import static com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction.DESELECTED;
+import static com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction.DESELECTED;
 
 @Slf4j
 @Component

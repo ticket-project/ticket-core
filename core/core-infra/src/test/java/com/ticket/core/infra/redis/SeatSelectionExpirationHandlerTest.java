@@ -1,8 +1,8 @@
 package com.ticket.core.infra.redis;
 
 import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -28,7 +28,7 @@ class SeatSelectionExpirationHandlerTest {
 
         handler.handle(expiredKey);
 
-        verify(seatEventPublisher).publish(10L, 20L, SeatStatusMessage.SeatAction.DESELECTED);
+        verify(seatEventPublisher).publish(10L, 20L, SeatStatusEvent.SeatStatusAction.DESELECTED);
     }
 
     @Test
