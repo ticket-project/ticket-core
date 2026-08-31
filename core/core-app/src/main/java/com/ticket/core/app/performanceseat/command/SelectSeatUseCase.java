@@ -3,12 +3,11 @@ package com.ticket.core.app.performanceseat.command;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import com.ticket.core.domain.performance.query.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
 import com.ticket.core.domain.queue.AdmissionGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -54,7 +53,7 @@ public class SelectSeatUseCase {
                 input.memberId(),
                 policy.orderCloseTime()
         );
-        seatEventPublisher.publish(input.performanceId(), input.seatId(), SeatAction.SELECTED);
+        seatEventPublisher.publish(input.performanceId(), input.seatId(), SeatStatusAction.SELECTED);
     }
 
     private void ensureAdmitted(

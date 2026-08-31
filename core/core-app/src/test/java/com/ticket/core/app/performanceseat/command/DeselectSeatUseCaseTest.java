@@ -1,9 +1,8 @@
 package com.ticket.core.app.performanceseat.command;
 
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -34,6 +33,6 @@ class DeselectSeatUseCaseTest {
 
         InOrder inOrder = inOrder(seatSelectionService, seatEventPublisher);
         inOrder.verify(seatSelectionService).deselect(10L, 20L, 1L);
-        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.DESELECTED);
+        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatStatusAction.DESELECTED);
     }
 }
