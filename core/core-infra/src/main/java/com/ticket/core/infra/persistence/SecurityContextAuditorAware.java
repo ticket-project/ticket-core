@@ -7,7 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
-public class AuditorAwareImpl implements AuditorAware<String> {
+public class SecurityContextAuditorAware implements AuditorAware<String> {
     private static final String DEFAULT_AUDITOR = "system";
 
     @Override

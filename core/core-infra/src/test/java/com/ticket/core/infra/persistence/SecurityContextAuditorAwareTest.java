@@ -9,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("NonAsciiCharacters")
-class AuditorAwareImplTest {
+class SecurityContextAuditorAwareTest {
 
     @AfterEach
     void tearDown() {
@@ -23,14 +23,14 @@ class AuditorAwareImplTest {
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );
 
-        AuditorAwareImpl auditorAware = new AuditorAwareImpl();
+        SecurityContextAuditorAware auditorAware = new SecurityContextAuditorAware();
 
         assertThat(auditorAware.getCurrentAuditor()).contains("7");
     }
 
     @Test
     void 인증정보가_없으면_system_감사자를_반환한다() {
-        AuditorAwareImpl auditorAware = new AuditorAwareImpl();
+        SecurityContextAuditorAware auditorAware = new SecurityContextAuditorAware();
 
         assertThat(auditorAware.getCurrentAuditor()).contains("system");
     }
@@ -41,7 +41,7 @@ class AuditorAwareImplTest {
                 new UsernamePasswordAuthenticationToken("anonymousUser", null)
         );
 
-        AuditorAwareImpl auditorAware = new AuditorAwareImpl();
+        SecurityContextAuditorAware auditorAware = new SecurityContextAuditorAware();
 
         assertThat(auditorAware.getCurrentAuditor()).contains("system");
     }

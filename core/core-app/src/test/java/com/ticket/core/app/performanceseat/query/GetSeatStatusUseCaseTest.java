@@ -46,7 +46,7 @@ class GetSeatStatusUseCaseTest {
     @Mock
     private PerformanceRepository performanceRepository;
     @Mock
-    private SeatStatusDbReader seatStatusDbReader;
+    private SeatStateSnapshotReader seatStatusDbReader;
     @Mock
     private SeatSelectionService seatSelectionService;
     @Mock

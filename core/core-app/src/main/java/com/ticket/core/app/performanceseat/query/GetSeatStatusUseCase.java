@@ -25,7 +25,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 public class GetSeatStatusUseCase {
 
     private final PerformanceRepository performanceRepository;
-    private final SeatStatusDbReader seatStatusDbReader;
+    private final SeatStateSnapshotReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
     private final AdmissionGuard admissionGuard;

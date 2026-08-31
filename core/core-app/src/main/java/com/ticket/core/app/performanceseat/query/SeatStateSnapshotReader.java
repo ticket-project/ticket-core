@@ -9,7 +9,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class SeatStatusDbReader {
+public class SeatStateSnapshotReader {
 
     private final SeatMapReadRepository seatMapReadRepository;
 
