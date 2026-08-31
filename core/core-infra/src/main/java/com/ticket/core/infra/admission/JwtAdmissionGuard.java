@@ -1,8 +1,8 @@
-package com.ticket.core.infra.queue;
+package com.ticket.core.infra.admission;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.app.admission.AdmissionGuard;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -14,34 +14,34 @@ import java.util.Date;
 import java.util.Objects;
 import javax.crypto.SecretKey;
 
-public class AdmissionTokenService implements AdmissionGuard {
+public class JwtAdmissionGuard implements AdmissionGuard {
 
     public static final String SCOPE = "ticket-admission";
 
     private static final String PERFORMANCE_ID_CLAIM = "performanceId";
     private static final String SCOPE_CLAIM = "scope";
 
-    private final AdmissionTokenProperties properties;
+    private final AdmissionTokenSettings settings;
     private final Clock clock;
     private final SecretKey secretKey;
     private final boolean enforcementEnabled;
 
-    public AdmissionTokenService(final AdmissionTokenProperties properties, final boolean enforcementEnabled) {
-        this(properties, Clock.systemUTC(), enforcementEnabled);
+    public JwtAdmissionGuard(final AdmissionTokenSettings settings, final boolean enforcementEnabled) {
+        this(settings, Clock.systemUTC(), enforcementEnabled);
     }
 
-    AdmissionTokenService(final AdmissionTokenProperties properties, final Clock clock) {
-        this(properties, clock, true);
+    JwtAdmissionGuard(final AdmissionTokenSettings settings, final Clock clock) {
+        this(settings, clock, true);
     }
 
-    AdmissionTokenService(
-            final AdmissionTokenProperties properties,
+    JwtAdmissionGuard(
+            final AdmissionTokenSettings settings,
             final Clock clock,
             final boolean enforcementEnabled
     ) {
-        this.properties = Objects.requireNonNull(properties, "properties must not be null");
+        this.settings = Objects.requireNonNull(settings, "settings must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
-        this.secretKey = Keys.hmacShaKeyFor(properties.secretKey().getBytes(StandardCharsets.UTF_8));
+        this.secretKey = Keys.hmacShaKeyFor(settings.secretKey().getBytes(StandardCharsets.UTF_8));
         this.enforcementEnabled = enforcementEnabled;
     }
 
@@ -101,7 +101,7 @@ public class AdmissionTokenService implements AdmissionGuard {
 
         try {
             return Jwts.parser()
-                    .requireIssuer(properties.issuer())
+                    .requireIssuer(settings.issuer())
                     .clock(() -> Date.from(clock.instant()))
                     .verifyWith(secretKey)
                     .build()
@@ -115,7 +115,7 @@ public class AdmissionTokenService implements AdmissionGuard {
     }
 
     private void validateAudience(final Claims claims) {
-        if (claims.getAudience() == null || !claims.getAudience().contains(properties.audience())) {
+        if (claims.getAudience() == null || !claims.getAudience().contains(settings.audience())) {
             throw new AdmissionTokenException("admission token invalid audience");
         }
     }

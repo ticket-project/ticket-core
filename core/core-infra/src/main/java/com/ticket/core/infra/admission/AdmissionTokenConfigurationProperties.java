@@ -1,4 +1,4 @@
-package com.ticket.core.infra.queue;
+package com.ticket.core.infra.admission;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "security.admission")
-public class TicketAdmissionTokenProperties {
+public class AdmissionTokenConfigurationProperties {
 
     private boolean enforcementEnabled = false;
     private String issuer = "ticket-queue";
