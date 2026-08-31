@@ -165,7 +165,7 @@ class ShowControllerContractTest {
                 null,
                 "/api/v1/queue/performances/10/enter"
         );
-        GetShowDetailUseCase.Output detail = new ShowDetailView(
+        GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
                 1L,
                 "공연",
                 "부제",
