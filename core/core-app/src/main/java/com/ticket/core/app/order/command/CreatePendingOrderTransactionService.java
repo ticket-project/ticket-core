@@ -1,6 +1,6 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.event.IntegrationEventPublisher;
+import com.ticket.core.app.event.HoldLifecycleEventPublisher;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.app.order.command.OrderCreator;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
@@ -14,11 +14,11 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
-public class CreatePendingOrderTxService {
+public class CreatePendingOrderTransactionService {
 
     private final OrderCreator orderCreator;
     private final HoldHistoryRecorder holdHistoryRecorder;
-    private final IntegrationEventPublisher integrationEventPublisher;
+    private final HoldLifecycleEventPublisher holdLifecycleEventPublisher;
 
     @Transactional
     public PendingOrderCreationResult create(
@@ -42,7 +42,7 @@ public class CreatePendingOrderTxService {
                 allocation.expiresAt(),
                 allocation.performanceSeats()
         );
-        final Long postCommitOutboxId = integrationEventPublisher.publishHoldCreated(
+        final Long postCommitOutboxId = holdLifecycleEventPublisher.publishHoldCreated(
                 allocation.hold(),
                 allocation.startedAt(holdDuration)
         );

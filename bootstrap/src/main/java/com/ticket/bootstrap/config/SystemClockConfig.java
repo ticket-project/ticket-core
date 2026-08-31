@@ -1,4 +1,4 @@
-package com.ticket.core.config;
+package com.ticket.bootstrap.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +13,7 @@ import java.time.ZoneId;
  * 주입 지점을 여기 한 곳으로 모은다.
  */
 @Configuration
-public class SystemValueConfig {
+public class SystemClockConfig {
 
     @Bean
     public Clock clock() {

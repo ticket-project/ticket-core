@@ -32,7 +32,7 @@ public class CreateOrderUseCase {
     private final LockManager lockManager;
     private final CreateOrderValidator validator;
     private final HoldAllocator holdAllocator;
-    private final CreatePendingOrderTxService createPendingOrderTxService;
+    private final CreatePendingOrderTransactionService createPendingOrderTransactionService;
     private final HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
     private final Clock clock;
 
@@ -90,7 +90,7 @@ public class CreateOrderUseCase {
 
         final PendingOrderCreationResult creationResult;
         try {
-            creationResult = createPendingOrderTxService.create(
+            creationResult = createPendingOrderTransactionService.create(
                     input.memberId(),
                     input.performanceId(),
                     holdDuration,

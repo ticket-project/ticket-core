@@ -1,9 +1,9 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.order.command.CreatePendingOrderTxService;
+import com.ticket.core.app.order.command.CreatePendingOrderTransactionService;
 import com.ticket.core.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.core.app.order.command.OrderCreator;
-import com.ticket.core.app.event.IntegrationEventPublisher;
+import com.ticket.core.app.event.HoldLifecycleEventPublisher;
 import com.ticket.core.domain.order.command.create.HoldAllocation;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.domain.hold.model.Hold;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class CreatePendingOrderTxServiceTest {
+class CreatePendingOrderTransactionServiceTest {
 
     @Mock
     private OrderCreator orderCreator;
@@ -38,13 +38,13 @@ class CreatePendingOrderTxServiceTest {
     private HoldHistoryRecorder holdHistoryRecorder;
 
     @Mock
-    private IntegrationEventPublisher integrationEventPublisher;
+    private HoldLifecycleEventPublisher holdLifecycleEventPublisher;
 
-    private CreatePendingOrderTxService service;
+    private CreatePendingOrderTransactionService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreatePendingOrderTxService(orderCreator, holdHistoryRecorder, integrationEventPublisher);
+        service = new CreatePendingOrderTransactionService(orderCreator, holdHistoryRecorder, holdLifecycleEventPublisher);
     }
 
     @Test
@@ -70,14 +70,14 @@ class CreatePendingOrderTxServiceTest {
 
         when(orderCreator.createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats))
                 .thenReturn(order);
-        when(integrationEventPublisher.publishHoldCreated(hold, hold.expiresAt().minusSeconds(600)))
+        when(holdLifecycleEventPublisher.publishHoldCreated(hold, hold.expiresAt().minusSeconds(600)))
                 .thenReturn(99L);
 
         final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation);
 
         assertThat(result.order()).isSameAs(order);
         assertThat(result.postCommitOutboxId()).isEqualTo(99L);
-        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, integrationEventPublisher);
+        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, holdLifecycleEventPublisher);
         inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats);
         inOrder.verify(holdHistoryRecorder).recordCreated(
                 20L,
@@ -87,12 +87,12 @@ class CreatePendingOrderTxServiceTest {
                 hold.expiresAt(),
                 seats
         );
-        inOrder.verify(integrationEventPublisher).publishHoldCreated(hold, hold.expiresAt().minusSeconds(600));
+        inOrder.verify(holdLifecycleEventPublisher).publishHoldCreated(hold, hold.expiresAt().minusSeconds(600));
     }
 
     @Test
     void 주문_저장_메서드는_트랜잭션으로_실행된다() throws NoSuchMethodException {
-        assertThat(CreatePendingOrderTxService.class
+        assertThat(CreatePendingOrderTransactionService.class
                 .getDeclaredMethod("create", Long.class, Long.class, Duration.class, HoldAllocation.class)
                 .isAnnotationPresent(Transactional.class))
                 .isTrue();

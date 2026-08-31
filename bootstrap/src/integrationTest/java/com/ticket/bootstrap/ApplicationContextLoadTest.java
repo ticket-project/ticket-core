@@ -3,7 +3,7 @@ package com.ticket.bootstrap;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import com.ticket.bootstrap.worker.HoldOutboxRelayTrigger;
 import com.ticket.bootstrap.worker.OrderExpirationTrigger;
-import com.ticket.core.app.event.IntegrationEventPublisher;
+import com.ticket.core.app.event.HoldLifecycleEventPublisher;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.ExpirePendingOrdersUseCase;
@@ -35,7 +35,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(context.getBean(CreateOrderUseCase.class)).isNotNull();
         assertThat(beanOf("com.ticket.core.domain.order.repository.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
-        assertThat(context.getBean(IntegrationEventPublisher.class)).isNotNull();
+        assertThat(context.getBean(HoldLifecycleEventPublisher.class)).isNotNull();
         assertThat(context.getBean(HoldCreationOutboxRelay.class)).isNotNull();
         assertThat(context.getBean(HoldReleaseOutboxRelay.class)).isNotNull();
     }
