@@ -1,4 +1,4 @@
-package com.ticket.core.domain.auth.token;
+package com.ticket.core.app.auth.token;
 
 /**
  * 발급된 인증 토큰 한 쌍이다. 두 토큰의 만료를 모두 담아, 토큰을 발급한 쪽이 정한 값을

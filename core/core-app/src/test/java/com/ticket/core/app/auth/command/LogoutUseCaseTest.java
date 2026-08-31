@@ -2,8 +2,8 @@ package com.ticket.core.app.auth.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
-import com.ticket.core.domain.auth.token.RefreshTokenStore;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
+import com.ticket.core.app.auth.token.RefreshTokenStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

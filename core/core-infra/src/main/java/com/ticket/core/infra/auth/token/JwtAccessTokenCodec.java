@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JwtTokenService implements AccessTokenReader {
+public class JwtAccessTokenCodec implements AccessTokenReader {
 
     private static final String ROLE_CLAIM = "role";
 
@@ -28,11 +28,11 @@ public class JwtTokenService implements AccessTokenReader {
     private final SecretKey secretKey;
 
     @Autowired
-    public JwtTokenService(final JwtProperties jwtProperties) {
+    public JwtAccessTokenCodec(final JwtProperties jwtProperties) {
         this(jwtProperties, Clock.systemUTC());
     }
 
-    JwtTokenService(final JwtProperties jwtProperties, final Clock clock) {
+    JwtAccessTokenCodec(final JwtProperties jwtProperties, final Clock clock) {
         this.jwtProperties = Objects.requireNonNull(jwtProperties, "jwtProperties must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));

@@ -15,7 +15,7 @@ import java.util.Date;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("NonAsciiCharacters")
-class JwtTokenServiceTest {
+class JwtAccessTokenCodecTest {
 
     private static final String ISSUER = "ticket";
     private static final String SECRET_KEY = "12345678901234567890123456789012";
@@ -24,7 +24,7 @@ class JwtTokenServiceTest {
 
     @Test
     void 발급한_토큰에서_인증_주체를_읽는다() {
-        JwtTokenService jwtTokenService = jwtTokenService();
+        JwtAccessTokenCodec jwtTokenService = jwtTokenService();
 
         String token = jwtTokenService.createAccessToken(7L, "MEMBER");
 
@@ -39,7 +39,7 @@ class JwtTokenServiceTest {
     @Test
     void 만료된_토큰은_만료로_구분해_돌려준다() {
         String token = jwtTokenService().createAccessToken(7L, "MEMBER");
-        JwtTokenService laterService = new JwtTokenService(
+        JwtAccessTokenCodec laterService = new JwtAccessTokenCodec(
                 properties(),
                 Clock.fixed(NOW.plusSeconds(3600), ZoneOffset.UTC)
         );
@@ -105,8 +105,8 @@ class JwtTokenServiceTest {
         assertThat(jwtTokenService().read(token)).isInstanceOf(AccessTokenReadResult.Invalid.class);
     }
 
-    private JwtTokenService jwtTokenService() {
-        return new JwtTokenService(properties(), Clock.fixed(NOW, ZoneOffset.UTC));
+    private JwtAccessTokenCodec jwtTokenService() {
+        return new JwtAccessTokenCodec(properties(), Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private JwtProperties properties() {

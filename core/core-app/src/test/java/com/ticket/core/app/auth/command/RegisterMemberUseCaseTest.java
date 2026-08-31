@@ -1,6 +1,6 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.app.auth.AuthService;
+import com.ticket.core.app.auth.MemberRegistrar;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.RawPassword;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 class RegisterMemberUseCaseTest {
 
     @Mock
-    private AuthService authService;
+    private MemberRegistrar memberRegistrar;
 
     @InjectMocks
     private RegisterMemberUseCase useCase;
@@ -26,7 +26,7 @@ class RegisterMemberUseCaseTest {
     @Test
     void 입력값을_값객체로_변환해_회원가입을_호출한다() {
         //given
-        when(authService.register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동"))
+        when(memberRegistrar.register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동"))
                 .thenReturn(11L);
 
         //when
@@ -35,6 +35,6 @@ class RegisterMemberUseCaseTest {
 
         //then
         assertThat(output.memberId()).isEqualTo(11L);
-        verify(authService).register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동");
+        verify(memberRegistrar).register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동");
     }
 }

@@ -1,6 +1,6 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.app.auth.AuthService;
+import com.ticket.core.app.auth.MemberRegistrar;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.RawPassword;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @RequiredArgsConstructor
 public class RegisterMemberUseCase {
 
-    private final AuthService authService;
+    private final MemberRegistrar memberRegistrar;
 
     /**
      * Email과 RawPassword의 형식 정책은 도메인 값 객체가 소유한다. 여기서는 어느 adapter에서
@@ -31,7 +31,7 @@ public class RegisterMemberUseCase {
     public record Output(Long memberId) {}
 
     public Output execute(final Input input) {
-        return new Output(authService.register(
+        return new Output(memberRegistrar.register(
                 Email.create(input.email()),
                 RawPassword.create(input.password()),
                 input.name()

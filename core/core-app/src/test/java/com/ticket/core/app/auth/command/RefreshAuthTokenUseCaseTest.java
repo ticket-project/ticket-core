@@ -3,10 +3,10 @@ package com.ticket.core.app.auth.command;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
-import com.ticket.core.domain.auth.token.RefreshTokenStore;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
+import com.ticket.core.app.auth.token.AuthTokenIssuer;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.token.RefreshTokenStore;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class RefreshAuthTokenUseCaseTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private AuthTokenManager authTokenManager;
+    private AuthTokenIssuer authTokenIssuer;
 
     @InjectMocks
     private RefreshAuthTokenUseCase useCase;
@@ -49,7 +49,7 @@ class RefreshAuthTokenUseCaseTest {
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
         when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
-        when(authTokenManager.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
+        when(authTokenIssuer.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result =
                 useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken));
@@ -65,7 +65,7 @@ class RefreshAuthTokenUseCaseTest {
                 .doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
         verify(memberRepository).findActiveById(3L);
-        verify(authTokenManager).rotateTokens(1L, "MEMBER", refreshToken);
+        verify(authTokenIssuer).rotateTokens(1L, "MEMBER", refreshToken);
     }
 
     @Test
