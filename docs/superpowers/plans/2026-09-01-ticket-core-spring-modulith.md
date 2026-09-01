@@ -184,7 +184,7 @@ git commit -m "build: Spring Boot와 Modulith 기준 버전을 고정한다"
 - Modify: `.github/workflows/deploy.yml`
 - Modify: `Dockerfile`
 
-- [ ] **Step 1: 충돌 없는 이동 manifest를 만든다**
+- [x] **Step 1: 충돌 없는 이동 manifest를 만든다**
 
 Run:
 
@@ -194,7 +194,7 @@ rg --files bootstrap core storage support | Sort-Object
 
 같은 상대경로가 겹치면 내용을 비교하고 단일 root 파일로 병합한다. 특히 모든 `application*.yml`, logging resource, `redis.yml`, static asset 642개, Flyway와 테스트 SQL fixture를 누락하지 않는다.
 
-- [ ] **Step 2: 설정 파일을 단일 프로젝트로 바꾼다**
+- [x] **Step 2: 설정 파일을 단일 프로젝트로 바꾼다**
 
 `settings.gradle`은 아래 두 줄만 유지한다.
 
@@ -231,15 +231,15 @@ tasks.named('test') { useJUnitPlatform() }
 
 기존 subproject build 파일에서 사용 중인 모든 dependency를 root로 합치되, 더 이상 참조되지 않는 dependency는 마지막 정리 Task에서 제거한다.
 
-- [ ] **Step 3: main source와 resource를 root로 이동한다**
+- [x] **Step 3: main source와 resource를 root로 이동한다**
 
 Git 이력을 보존하도록 `git mv`를 사용한다. 같은 package 경로는 같은 root에 합친다. 이 단계에서는 Java package 이름을 바꾸지 않는다.
 
-- [ ] **Step 4: 모든 테스트를 표준 source set으로 이동한다**
+- [x] **Step 4: 모든 테스트를 표준 source set으로 이동한다**
 
 기존 unit/integration test를 `src/test/java`, `src/test/resources`에 합친다. `RecordingLockManager` 같은 test fixture도 대응하는 `com.ticket...` test package로 이동한다. `integrationTest` task와 source set 선언을 삭제한다.
 
-- [ ] **Step 5: CI와 container entry를 root artifact로 바꾼다**
+- [x] **Step 5: CI와 container entry를 root artifact로 바꾼다**
 
 CI 핵심 명령은 다음으로 단순화한다.
 
@@ -249,7 +249,7 @@ CI 핵심 명령은 다음으로 단순화한다.
 
 Linux CI에서는 `./gradlew clean test bootJar`를 사용한다. CI artifact path, deploy workflow의 download path, Dockerfile의 copy path를 모두 `build/libs/*.jar` 또는 `build/libs`로 맞춘다. 어느 한 곳에도 `bootstrap/build/libs`가 남지 않아야 한다.
 
-- [ ] **Step 6: 빈 subproject 디렉터리와 build 파일을 제거한다**
+- [x] **Step 6: 빈 subproject 디렉터리와 build 파일을 제거한다**
 
 정확히 `bootstrap`, `core`, `storage`, `support` 아래의 이동 완료된 파일만 제거한다. 삭제 전에 다음으로 잔존 파일을 확인한다.
 
@@ -259,7 +259,7 @@ rg --files bootstrap core storage support
 
 Expected: 추적해야 할 파일이 남아 있지 않다.
 
-- [ ] **Step 7: 단일 프로젝트를 검증한다**
+- [x] **Step 7: 단일 프로젝트를 검증한다**
 
 Run:
 
@@ -270,7 +270,7 @@ Run:
 
 Expected: build PASS, Gradle projects 출력에 root project만 존재한다.
 
-- [ ] **Step 8: 커밋한다**
+- [x] **Step 8: 커밋한다**
 
 ```powershell
 git add -A
