@@ -91,7 +91,7 @@ src/main/java/com/ticket
 - Modify: `build.gradle`
 - Test: `bootstrap/src/test/java/com/ticket/PlatformCompatibilityTest.java` (Task 2에서 `src/test/java/com/ticket/PlatformCompatibilityTest.java`로 이동)
 
-- [ ] **Step 1: 현재 기준선을 기록한다**
+- [x] **Step 1: 현재 기준선을 기록한다**
 
 Run:
 
@@ -101,7 +101,7 @@ Run:
 
 Expected: 기존 브랜치의 테스트와 실행 jar 생성이 통과한다. 실패가 있으면 이번 변경과 무관한 기존 실패인지 먼저 기록하고 원인을 숨기지 않는다.
 
-- [ ] **Step 2: Spring Boot와 Modulith 버전을 고정한다**
+- [x] **Step 2: Spring Boot와 Modulith 버전을 고정한다**
 
 `gradle/libs.versions.toml`의 `spring-boot`를 `4.1.1`로 바꾸고 다음 버전과 library alias를 추가한다.
 
@@ -117,7 +117,7 @@ spring-modulith-starter-insight = { module = "org.springframework.modulith:sprin
 spring-modulith-starter-test = { module = "org.springframework.modulith:spring-modulith-starter-test" }
 ```
 
-- [ ] **Step 3: 아직 멀티프로젝트인 상태에서 조합만 컴파일한다**
+- [x] **Step 3: 아직 멀티프로젝트인 상태에서 조합만 컴파일한다**
 
 실행 애플리케이션이 있는 `bootstrap/build.gradle`에 BOM과 starter를 임시로 연결한다. 최종 의존성은 Task 2에서 root로 옮기므로 이 단계에서는 소스 이동을 하지 않는다.
 
@@ -135,7 +135,7 @@ dependencies {
 }
 ```
 
-- [ ] **Step 4: platform smoke test를 작성하고 실패를 확인한다**
+- [x] **Step 4: platform smoke test를 작성하고 실패를 확인한다**
 
 `PlatformCompatibilityTest`에서 `@SpringBootTest`로 context를 기동한다. 이 테스트는 Boot 4.1.1에서 기존 security/JPA/Redis 설정의 API 파손을 드러내는 용도다.
 
@@ -147,11 +147,11 @@ Run:
 
 Expected: 최초에는 변경된 Boot API나 구성 충돌이 있으면 FAIL한다.
 
-- [ ] **Step 5: 호환성 파손만 최소 수정한다**
+- [x] **Step 5: 호환성 파손만 최소 수정한다**
 
 Boot 4.1.1 전환으로 생긴 import/configuration API 변경만 수정한다. 패키지 재배치나 업무 로직 변경은 아직 하지 않는다. `@EntityScan`을 새로 추가하지 않는다. Modulith JPA publication entity 자동 검색을 막기 때문이다.
 
-- [ ] **Step 6: 기준선을 다시 검증한다**
+- [x] **Step 6: 기준선을 다시 검증한다**
 
 Run:
 
@@ -161,7 +161,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 7: 커밋한다**
+- [x] **Step 7: 커밋한다**
 
 ```powershell
 git add gradle/libs.versions.toml build.gradle bootstrap src
