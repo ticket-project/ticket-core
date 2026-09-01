@@ -3,10 +3,10 @@ package com.ticket.core.app.performanceseat.command;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,10 +34,10 @@ public class SeatSelectionCoordinator {
     ) {
         lockManager.withLock(java.util.List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
-                throw new CoreException(DomainErrorType.PERFORMANCE_IS_PAST);
+                throw new CoreException(ErrorType.PERFORMANCE_IS_PAST);
             }
             if (holdManager.isHeld(performanceId, seatId)) {
-                throw new CoreException(DomainErrorType.SEAT_ALREADY_HOLD);
+                throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
             }
             seatSelectionService.select(performanceId, seatId, memberId);
         });

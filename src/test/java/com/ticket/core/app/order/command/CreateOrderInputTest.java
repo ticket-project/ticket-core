@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -50,6 +50,6 @@ class CreateOrderInputTest {
         assertThatThrownBy(runnable::run)
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 }

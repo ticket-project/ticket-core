@@ -12,7 +12,7 @@ import com.ticket.core.app.lock.LockOptions;
 import com.ticket.core.infra.lock.RedissonLockKeyFormatter;
 import com.ticket.core.infra.lock.RedissonLockManager;
 import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.infra.support.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;

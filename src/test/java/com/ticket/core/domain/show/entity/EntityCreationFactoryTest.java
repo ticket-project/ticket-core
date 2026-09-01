@@ -1,7 +1,7 @@
 package com.ticket.core.domain.show.entity;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.model.Category;
@@ -159,6 +159,6 @@ class EntityCreationFactoryTest {
 
         assertThatThrownBy(() -> ShowSeat.link(show, seat, otherShowGrade))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
     }
 }

@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.core.app.event.HoldReleaseRequest;
 import com.ticket.core.app.event.HoldLifecycleEventPublisher;
@@ -88,7 +88,7 @@ class OrderTerminationServiceTest {
         assertThatThrownBy(() -> service().expire(order, FIXED_NOW))
                 .isInstanceOf(CoreException.class)
                 .satisfies(error -> assertThat(((CoreException) error).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
 
         assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
         verifyNoInteractions(holdHistoryRecorder, holdLifecycleEventPublisher, applicationEventPublisher);

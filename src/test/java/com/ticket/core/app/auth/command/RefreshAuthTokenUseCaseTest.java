@@ -1,7 +1,7 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.app.auth.token.AuthTokenIssuer;
@@ -75,6 +75,6 @@ class RefreshAuthTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.AUTHENTICATION_FAILED));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
     }
 }

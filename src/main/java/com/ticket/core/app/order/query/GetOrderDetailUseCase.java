@@ -1,8 +1,8 @@
 package com.ticket.core.app.order.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.order.query.model.OrderDetailRow;
@@ -72,12 +72,12 @@ public class GetOrderDetailUseCase {
     public Output execute(final Input input) {
         final List<OrderDetailRow> rows = orderReadRepository.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
-            throw new CoreException(DomainErrorType.ORDER_NOT_OWNED);
+            throw new CoreException(ErrorType.ORDER_NOT_OWNED);
         }
 
         final OrderDetailRow first = rows.getFirst();
         if (first.memberDeletedAt() != null) {
-            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND);
+            throw new CoreException(ErrorType.NOT_FOUND_DATA);
         }
 
         final LocalDateTime now = LocalDateTime.now(clock);

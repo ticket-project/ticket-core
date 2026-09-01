@@ -1,14 +1,14 @@
 package com.ticket.core.api.controller.request;
 
-import com.ticket.core.api.error.ApiErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.api.support.cursor.ShowCursorCodec;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.ShowSort;
 import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.domain.show.model.Region;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -69,7 +69,7 @@ class ShowSearchRequestTest {
         assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApiErrorType.INVALID_REQUEST));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     /**
@@ -102,7 +102,7 @@ class ShowSearchRequestTest {
         assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -120,6 +120,6 @@ class ShowSearchRequestTest {
         assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 }

@@ -1,11 +1,11 @@
 package com.ticket.core.app.member.query;
 
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -73,10 +73,10 @@ class GetCurrentMemberUseCaseTest {
         assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(null))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
         assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(0L))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 }

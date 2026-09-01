@@ -1,7 +1,7 @@
 package com.ticket.core.app.support.validation;
 
-import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -58,6 +58,6 @@ class RequiredInputTest {
         assertThatThrownBy(runnable::run)
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 }

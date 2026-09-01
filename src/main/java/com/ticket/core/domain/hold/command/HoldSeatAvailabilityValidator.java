@@ -1,7 +1,7 @@
 package com.ticket.core.domain.hold.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
@@ -21,13 +21,13 @@ public class HoldSeatAvailabilityValidator {
         final List<Long> seatIds = requestedSeatIds.toList();
         final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds);
         if (performanceSeats.size() != requestedSeatIds.size()) {
-            throw new CoreException(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
+            throw new CoreException(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
         }
 
         final boolean hasUnavailableSeat = performanceSeats.stream()
                 .anyMatch(seat -> seat.getState() != PerformanceSeatState.AVAILABLE);
         if (hasUnavailableSeat) {
-            throw new CoreException(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT);
+            throw new CoreException(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
         }
         return performanceSeats;
     }

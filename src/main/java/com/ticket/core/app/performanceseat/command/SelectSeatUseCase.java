@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.command;
 
-import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.policy.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
@@ -40,7 +40,7 @@ public class SelectSeatUseCase {
 
         final PerformanceBookingPolicySnapshot policy =
                 performanceRepository.findBookingPolicyById(input.performanceId())
-                        .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                        .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
                                 "공연을 찾을 수 없습니다. id=" + input.performanceId()));
         BookingPolicyValidator.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input, now);

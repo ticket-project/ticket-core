@@ -1,7 +1,7 @@
 package com.ticket.core.app.performance.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
@@ -40,13 +40,13 @@ public class GetPerformanceScheduleListUseCase {
 
     public Output execute(final Input input) {
         final Performance findPerformance = performanceRepository.findWithQueuePolicyById(input.performanceId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
                         "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
         final Show show = findPerformance.getShow();
         if (show == null) {
             throw new CoreException(
-                    ApplicationErrorType.DATA_NOT_FOUND,
+                    ErrorType.NOT_FOUND_DATA,
                     "회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()
             );
         }

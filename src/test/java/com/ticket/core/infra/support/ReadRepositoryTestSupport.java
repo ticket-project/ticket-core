@@ -25,6 +25,7 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
@@ -48,11 +49,24 @@ import java.time.ZoneId;
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.show-sql=false",
+        // Spring Modulith의 ModuleObservabilityAutoConfiguration은 기본으로 켜져(matchIfMissing=true)
+        // ApplicationModulesRuntime을 즉시(non-lazy) 요구하는 BeanPostProcessor를 등록한다. 이 좁은
+        // 슬라이스 컨텍스트는 실제 main class(@SpringBootApplication)가 없어 그 런타임을 만들 수
+        // 없으므로, 이 슬라이스에서는 tracing 관측을 꺼서 그 자동설정 자체가 활성화되지 않게 한다.
+        "management.tracing.enabled=false",
         "spring.autoconfigure.exclude="
                 + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
                 + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
                 + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                + "org.redisson.spring.starter.RedissonAutoConfigurationV4"
+                + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
+                // spring-modulith-actuator의 이 자동설정도 (tracing과 무관하게) ApplicationModulesRuntime을
+                // ObjectProvider.getObject()로 즉시 resolve한다. management.tracing.enabled와는 별개
+                // 원인이라 따로 꺼야 한다.
+                + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
+                // spring-modulith-runtime 자체의 이 자동설정은 항상 ApplicationModulesBootstrap을
+                // 만들며 classpath에서 @SpringBootApplication 애노테이션 클래스를 찾는다. 이 좁은
+                // 슬라이스는 그런 main class가 없으므로 이 자동설정 자체를 꺼서 부트스트랩 실패를 막는다.
+                + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
 })
 @Transactional
 @Import({
@@ -233,8 +247,19 @@ public abstract class ReadRepositoryTestSupport {
         }
     }
 
+    // @TestComponent는 Spring Boot의 TypeExcludeFilter(TestTypeExcludeFilter)가 다른
+    // @SpringBootTest 컨텍스트(TicketApplication 등)의 component scan에서 이 클래스를 제외하게
+    // 한다. 단일 Gradle 프로젝트로 합쳐지면서 이 테스트 전용 클래스가 실제 앱과 같은 com.ticket
+    // 패키지 트리 아래 놓이게 됐고, 그 결과 @Modulith(=@SpringBootApplication)의 기본 component
+    // scan이 이 클래스까지 주워 담아 clock() 같은 테스트 전용 빈이 실제 앱 빈과 충돌했다.
+    // 주의: 여기 @TestConfiguration을 쓰면 안 된다 — SpringBootTestContextBootstrapper는
+    // classes=... 로 명시한 설정이 전부 @TestConfiguration이면 "명시하지 않은 것"으로 보고
+    // 패키지를 거슬러 올라가며 다른 @SpringBootConfiguration을 추가로 찾아 병합해버린다(이 클래스
+    // 자신이 바로 그 classes=... 값이라 자기 자신도 걸린다). @TestComponent만 쓰면 TypeExcludeFilter
+    // 적용은 그대로 받으면서 그 자동 탐색-병합은 피한다.
     @SpringBootConfiguration
     @EnableAutoConfiguration
+    @TestComponent
     @EntityScan(basePackages = {"com.ticket.core.domain", "com.ticket.core.infra"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {

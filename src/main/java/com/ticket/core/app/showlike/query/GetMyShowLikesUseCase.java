@@ -1,11 +1,11 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.support.cursor.CursorPage;
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +40,7 @@ public class GetMyShowLikesUseCase {
 
     public Output execute(final Input input) {
         final Member member = memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
         final CursorPage<ShowLikeSummaryView, Long> page =
                 showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
         return new Output(page.items(), page.hasNext(), page.nextPosition());

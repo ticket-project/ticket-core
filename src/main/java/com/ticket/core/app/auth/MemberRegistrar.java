@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.app.auth.password.PasswordHasher;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.Email;
@@ -40,7 +40,7 @@ public class MemberRegistrar {
             return memberRepository.save(member).getId();
         } catch (DataIntegrityViolationException e) {
             log.warn("이메일 중복 회원가입 시도: {}", email);
-            throw new CoreException(ApplicationErrorType.MEMBER_DUPLICATE_EMAIL);
+            throw new CoreException(ErrorType.MEMBER_DUPLICATE_EMAIL);
         }
     }
 }

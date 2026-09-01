@@ -1,7 +1,7 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.app.auth.token.AuthTokenIssuer;
 import com.ticket.core.app.auth.token.IssuedAuthTokens;
@@ -60,9 +60,9 @@ public class RefreshAuthTokenUseCase {
 
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore.validate(input.refreshToken())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED, "유효하지 않거나 만료된 리프레시 토큰입니다."));
+                .orElseThrow(() -> new CoreException(ErrorType.AUTHENTICATION_ERROR, "유효하지 않거나 만료된 리프레시 토큰입니다."));
         final Member member = memberRepository.findActiveById(memberId)
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
         final IssuedAuthTokens result = authTokenIssuer.rotateTokens(member.getId(), member.getRole().name(), input.refreshToken());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),

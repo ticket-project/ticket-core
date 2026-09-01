@@ -2,8 +2,8 @@ package com.ticket.core.infra.lock;
 
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockOptions;
-import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -82,7 +82,7 @@ class RedissonLockManagerTest {
         ))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> {
-                    assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.HOLD_BUSY);
+                    assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.HOLD_BUSY);
                     // 응답 메시지는 오류 카탈로그가 정하고, 지정한 문구는 data로 함께 전달한다.
                     assertThat(((CoreException) thrown).getData()).isEqualTo("좌석 처리 중입니다.");
                 });

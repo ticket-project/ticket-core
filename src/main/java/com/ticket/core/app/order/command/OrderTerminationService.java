@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.event.HoldReleaseRequestedEvent;
 import com.ticket.core.app.event.HoldLifecycleEventPublisher;
 import com.ticket.core.app.event.HoldReleaseRequest;
@@ -50,7 +50,7 @@ public class OrderTerminationService {
         final boolean hasForeignOrderSeat = orderSeats.stream()
                 .anyMatch(orderSeat -> !Objects.equals(orderSeat.getOrder().getId(), order.getId()));
         if (hasForeignOrderSeat) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "orderSeats는 같은 order에 속해야 합니다.");
+            throw new CoreException(ErrorType.INVALID_REQUEST, "orderSeats는 같은 order에 속해야 합니다.");
         }
         return orderSeats;
     }

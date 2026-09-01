@@ -1,8 +1,8 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
@@ -35,16 +35,16 @@ public class CancelOrderUseCase {
     @Transactional
     public void execute(final Input input) {
         memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
         final Order order = getPendingOwnedOrder(input.orderKey(), input.memberId());
         orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }
 
     private Order getPendingOwnedOrder(final String orderKey, final Long memberId) {
         final Order order = orderRepository.findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
-                .orElseThrow(() -> new CoreException(DomainErrorType.ORDER_NOT_OWNED));
+                .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
         if (order.getStatus() != OrderState.PENDING) {
-            throw new CoreException(DomainErrorType.ORDER_NOT_PENDING);
+            throw new CoreException(ErrorType.ORDER_NOT_PENDING);
         }
         return order;
     }

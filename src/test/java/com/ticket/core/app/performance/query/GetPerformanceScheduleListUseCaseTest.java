@@ -1,7 +1,7 @@
 package com.ticket.core.app.performance.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
@@ -71,7 +71,7 @@ class GetPerformanceScheduleListUseCaseTest {
         //then
         assertThatThrownBy(() -> useCase.execute(new GetPerformanceScheduleListUseCase.Input(10L)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.DATA_NOT_FOUND));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
     }
 
     @Test

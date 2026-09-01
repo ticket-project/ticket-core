@@ -1,9 +1,9 @@
 package com.ticket.core.api.support.cursor;
 
-import com.ticket.core.api.error.ApiErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.show.query.ShowSort;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -57,6 +57,6 @@ class ShowCursorCodecTest {
         assertThatThrownBy(() -> codec.decode(cursor))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApiErrorType.INVALID_REQUEST));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 }

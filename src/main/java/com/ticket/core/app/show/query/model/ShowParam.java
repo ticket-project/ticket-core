@@ -1,8 +1,8 @@
 package com.ticket.core.app.show.query.model;
 
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.show.model.Region;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import lombok.Getter;
 
 /**
@@ -48,7 +48,7 @@ public class ShowParam {
         try {
             return Region.valueOf(region.trim());
         } catch (final IllegalArgumentException exception) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "region 값이 올바르지 않습니다: " + region);
+            throw new CoreException(ErrorType.INVALID_REQUEST, "region 값이 올바르지 않습니다: " + region);
         }
     }
 }

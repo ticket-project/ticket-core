@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
@@ -47,14 +47,14 @@ public class CreateOrderValidator {
         final Long memberId = input.memberId();
 
         final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
                         "공연을 찾을 수 없습니다. id=" + performanceId));
         BookingPolicyValidator.ensureBookingOpen(policy, now);
         BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
         ensureAdmitted(policy, memberId, input.admissionToken(), now);
 
         if (!memberRepository.existsActiveById(memberId)) {
-            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND);
+            throw new CoreException(ErrorType.NOT_FOUND_DATA);
         }
         ensureNoPendingOrder(memberId, performanceId);
         final List<PerformanceSeat> performanceSeats =
@@ -79,6 +79,6 @@ public class CreateOrderValidator {
         if (!orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
             return;
         }
-        throw new CoreException(ApplicationErrorType.PENDING_ORDER_ALREADY_EXISTS);
+        throw new CoreException(ErrorType.PENDING_ORDER_ALREADY_EXISTS);
     }
 }

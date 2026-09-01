@@ -3,10 +3,10 @@ package com.ticket.core.infra.show.query;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.infra.show.query.QuerydslShowSortResolver.SortOrder;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -33,7 +33,7 @@ public class QuerydslShowCursorConditionBuilder {
             validateCursorMatchesRequest(cursor, sortOrder);
             where.and(cursorCondition(cursor, sortOrder));
         } catch (IllegalArgumentException | DateTimeParseException ex) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "cursor 형식이 올바르지 않습니다.");
+            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
         }
     }
 

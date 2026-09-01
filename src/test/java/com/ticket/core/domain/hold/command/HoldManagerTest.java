@@ -1,7 +1,7 @@
 package com.ticket.core.domain.hold.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.hold.store.HoldStore;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
@@ -62,7 +62,7 @@ class HoldManagerTest {
 
         assertThatThrownBy(() -> holdManager.createHold(1L, 1L, RequestedSeatIds.from(List.of(10L)), Duration.ofMinutes(5), FIXED_NOW))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(DomainErrorType.SEAT_ALREADY_HOLD));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.SEAT_ALREADY_HOLD));
     }
 
     @Test

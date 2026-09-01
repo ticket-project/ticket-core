@@ -1,7 +1,7 @@
 package com.ticket.core.app.show.query;
 
-import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 
 /**
  * Show 목록/검색 정렬 기준의 단일 typed contract다.
@@ -33,7 +33,7 @@ public enum ShowSort {
                 return sort;
             }
         }
-        throw new CoreException(ApplicationErrorType.NOT_SUPPORT_SHOW_SORT, "지원하지 않는 sort: " + apiValue);
+        throw new CoreException(ErrorType.NOT_SUPPORT_SHOW_SORT, "지원하지 않는 sort: " + apiValue);
     }
 
     public String apiValue() {

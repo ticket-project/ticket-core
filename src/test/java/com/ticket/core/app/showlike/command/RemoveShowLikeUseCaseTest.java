@@ -1,8 +1,8 @@
 package com.ticket.core.app.showlike.command;
 
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.model.ShowLike;
@@ -87,7 +87,7 @@ class RemoveShowLikeUseCaseTest {
         assertThatThrownBy(() -> new RemoveShowLikeUseCase.Input(memberId, showId))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     /**

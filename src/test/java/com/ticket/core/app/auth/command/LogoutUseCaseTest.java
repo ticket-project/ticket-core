@@ -1,7 +1,7 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.auth.token.AuthRefreshToken;
 import com.ticket.core.app.auth.token.RefreshTokenStore;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class LogoutUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(new LogoutUseCase.Input(1L, refreshToken)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.ACCESS_DENIED));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHORIZATION_ERROR));
     }
 
     @Test
@@ -56,6 +56,6 @@ class LogoutUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(new LogoutUseCase.Input(1L, refreshToken)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.AUTHENTICATION_FAILED));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
     }
 }

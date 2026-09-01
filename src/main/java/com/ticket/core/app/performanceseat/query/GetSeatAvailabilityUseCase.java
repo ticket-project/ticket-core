@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
@@ -44,11 +44,11 @@ public class GetSeatAvailabilityUseCase {
 
     public Output execute(Input input) {
         final Performance performance = performanceRepository.findWithQueuePolicyById(input.performanceId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
                         "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
         if (performance.getShow() == null) {
-            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+            throw new CoreException(ErrorType.NOT_FOUND_DATA,
                     "회차와 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId());
         }
 

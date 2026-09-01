@@ -1,7 +1,7 @@
 package com.ticket.core.app.auth.oauth2;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.auth.oauth2.KakaoUnlinkClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,18 +27,18 @@ public class KakaoUnlinkService {
 
     public void unlinkByUserId(final String kakaoUserId) {
         if (!StringUtils.hasText(kakaoUserId)) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "카카오 사용자 ID가 비어 있습니다.");
+            throw new CoreException(ErrorType.INVALID_REQUEST, "카카오 사용자 ID가 비어 있습니다.");
         }
 
         if (!StringUtils.hasText(adminKey)) {
-            throw new CoreException(ApplicationErrorType.INVALID_INPUT, "KAKAO_ADMIN_KEY 설정이 필요합니다.");
+            throw new CoreException(ErrorType.INVALID_REQUEST, "KAKAO_ADMIN_KEY 설정이 필요합니다.");
         }
 
         try {
             kakaoUnlinkClient.unlink(KAKAO_ADMIN_AUTH_PREFIX + adminKey, kakaoUserId);
         } catch (Exception e) {
             log.error("카카오 unlink 호출 실패", e);
-            throw new CoreException(ApplicationErrorType.EXTERNAL_SERVICE_ERROR, "카카오 unlink 호출에 실패했습니다.");
+            throw new CoreException(ErrorType.DEFAULT_ERROR, "카카오 unlink 호출에 실패했습니다.");
         }
     }
 }

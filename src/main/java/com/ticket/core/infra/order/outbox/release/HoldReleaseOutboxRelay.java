@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order.outbox.release;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
@@ -84,6 +84,6 @@ public class HoldReleaseOutboxRelay {
 
     private boolean isExpectedLockContention(final RuntimeException exception) {
         return exception instanceof CoreException coreException
-                && coreException.getErrorType() == DomainErrorType.HOLD_BUSY;
+                && coreException.getErrorType() == ErrorType.HOLD_BUSY;
     }
 }

@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxExecutor;
 import com.ticket.core.app.event.HoldReleaseRequestedEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ public class HoldReleaseAfterCommitListener {
         try {
             holdReleaseOutboxExecutor.process(outboxId, LocalDateTime.now(clock));
         } catch (final CoreException e) {
-            if (e.getErrorType() == DomainErrorType.HOLD_BUSY) {
+            if (e.getErrorType() == ErrorType.HOLD_BUSY) {
                 log.debug("hold release outbox가 이미 처리 중입니다. outboxId={}", outboxId);
                 return;
             }

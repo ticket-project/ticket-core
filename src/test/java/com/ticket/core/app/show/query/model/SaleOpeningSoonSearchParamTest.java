@@ -1,8 +1,8 @@
 package com.ticket.core.app.show.query.model;
 
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.show.model.Region;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -22,7 +22,7 @@ class SaleOpeningSoonSearchParamTest {
         assertThatThrownBy(() -> param(LATE, EARLY, null, null))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -30,7 +30,7 @@ class SaleOpeningSoonSearchParamTest {
         assertThatThrownBy(() -> param(null, null, LATE, EARLY))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test

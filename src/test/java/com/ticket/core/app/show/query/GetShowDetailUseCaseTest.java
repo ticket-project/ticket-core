@@ -1,7 +1,7 @@
 package com.ticket.core.app.show.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.show.model.SaleType;
 import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.app.show.query.model.ShowDetailView;
@@ -72,7 +72,7 @@ class GetShowDetailUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetShowDetailUseCase.Input(1L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.DATA_NOT_FOUND));
+                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
     }
 
     /**
@@ -83,11 +83,11 @@ class GetShowDetailUseCaseTest {
         assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
         assertThatThrownBy(() -> new GetShowDetailUseCase.Input(0L))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     /**

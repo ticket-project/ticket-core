@@ -5,7 +5,7 @@ import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
 import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.api.support.cursor.ShowLikeCursorCodec;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
-import com.ticket.core.api.error.GlobalExceptionHandler;
+import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,7 @@ class MemberControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(

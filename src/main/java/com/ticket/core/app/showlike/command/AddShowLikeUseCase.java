@@ -1,7 +1,7 @@
 package com.ticket.core.app.showlike.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.show.model.Show;
@@ -39,20 +39,20 @@ public class AddShowLikeUseCase {
     public Output execute(final Input input) {
 
         final Member member = memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
 
         if (showLikeRepository.existsByMemberIdAndShowId(input.memberId(), input.showId())) {
             return new Output(input.showId(), true, countLikes(input.showId()));
         }
 
         final Show show = showRepository.findById(input.showId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
 
         try {
             showLikeRepository.save(new ShowLike(member, show));
         } catch (DataIntegrityViolationException e) {
-            throw new CoreException(ApplicationErrorType.SHOW_LIKE_ALREADY_EXISTS,
+            throw new CoreException(ErrorType.SHOW_LIKE_ALREADY_EXISTS,
                     "이미 찜한 공연입니다. memberId=" + input.memberId() + ", showId=" + input.showId());
         }
 

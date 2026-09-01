@@ -1,7 +1,7 @@
 package com.ticket.core.app.performance.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.performance.query.model.PerformanceSummaryView;
 import com.ticket.core.domain.show.model.Region;
 import org.junit.jupiter.api.Test;
@@ -52,7 +52,7 @@ class GetPerformanceSummaryUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetPerformanceSummaryUseCase.Input(1L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.DATA_NOT_FOUND));
+                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
     }
 
     @Test

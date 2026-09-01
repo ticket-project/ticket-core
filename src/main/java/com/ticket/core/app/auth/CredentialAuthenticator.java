@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.app.auth.password.PasswordHasher;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.RawPassword;
@@ -32,12 +32,12 @@ public class CredentialAuthenticator {
         if (optMember.isEmpty()) {
             // 타이밍 공격 방어: 회원이 없어도 해싱을 수행하여 응답 시간을 동일하게 유지
             passwordHasher.hash(RawPassword.create(TIMING_GUARD_DUMMY_PASSWORD));
-            throw new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED);
+            throw new CoreException(ErrorType.AUTHENTICATION_ERROR);
         }
 
         final Member foundMember = optMember.get();
         if (foundMember.getEncodedPassword() == null || !passwordHasher.matches(RawPassword.create(password), foundMember.getEncodedPassword())) {
-            throw new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED);
+            throw new CoreException(ErrorType.AUTHENTICATION_ERROR);
         }
         return foundMember;
     }

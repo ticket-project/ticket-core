@@ -1,7 +1,7 @@
 package com.ticket.core.infra.admission;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -119,8 +119,8 @@ class JwtAdmissionGuardTest {
 
     @Test
     void ensureAdmitted는_token이_없으면_required로_거부한다() {
-        assertAdmissionError(null, ApplicationErrorType.ADMISSION_TOKEN_REQUIRED);
-        assertAdmissionError("   ", ApplicationErrorType.ADMISSION_TOKEN_REQUIRED);
+        assertAdmissionError(null, ErrorType.ADMISSION_TOKEN_REQUIRED);
+        assertAdmissionError("   ", ErrorType.ADMISSION_TOKEN_REQUIRED);
     }
 
     @Test
@@ -136,13 +136,13 @@ class JwtAdmissionGuardTest {
                 .signWith(secretKey())
                 .compact();
 
-        assertAdmissionError(expired, ApplicationErrorType.ADMISSION_TOKEN_EXPIRED);
+        assertAdmissionError(expired, ErrorType.ADMISSION_TOKEN_EXPIRED);
     }
 
     @Test
     void ensureAdmitted는_계약을_어긴_token을_invalid로_거부한다() {
-        assertAdmissionError(admissionToken(false, true, true, "10"), ApplicationErrorType.ADMISSION_TOKEN_INVALID);
-        assertAdmissionError("not-a-jwt", ApplicationErrorType.ADMISSION_TOKEN_INVALID);
+        assertAdmissionError(admissionToken(false, true, true, "10"), ErrorType.ADMISSION_TOKEN_INVALID);
+        assertAdmissionError("not-a-jwt", ErrorType.ADMISSION_TOKEN_INVALID);
     }
 
     @Test
@@ -151,7 +151,7 @@ class JwtAdmissionGuardTest {
                 .ensureAdmitted(20L, 11L, admissionToken(true, true, true, "10")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.ADMISSION_TOKEN_INVALID));
+                        .isEqualTo(ErrorType.ADMISSION_TOKEN_INVALID));
     }
 
     @Test
@@ -165,7 +165,7 @@ class JwtAdmissionGuardTest {
         assertThatCode(() -> disabled.ensureAdmitted(20L, 10L, null)).doesNotThrowAnyException();
     }
 
-    private void assertAdmissionError(final String token, final ApplicationErrorType errorType) {
+    private void assertAdmissionError(final String token, final ErrorType errorType) {
         assertThatThrownBy(() -> jwtAdmissionGuard().ensureAdmitted(20L, 10L, token))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())

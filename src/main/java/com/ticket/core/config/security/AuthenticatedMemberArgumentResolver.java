@@ -1,8 +1,8 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.api.error.ApiErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,6 +36,6 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
     }
 
     private CoreException unauthorized() {
-        return new CoreException(ApiErrorType.AUTHENTICATION_REQUIRED);
+        return new CoreException(ErrorType.AUTHENTICATION_ERROR);
     }
 }

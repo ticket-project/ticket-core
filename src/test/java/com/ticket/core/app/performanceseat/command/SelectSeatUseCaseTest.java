@@ -1,9 +1,9 @@
 package com.ticket.core.app.performanceseat.command;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
-import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
@@ -103,7 +103,7 @@ class SelectSeatUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(openPolicy(QueueMode.FORCE_ON)));
-        doThrow(new CoreException(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED))
+        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
                 .when(admissionGuard).ensureAdmitted(10L, 1L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
@@ -131,7 +131,7 @@ class SelectSeatUseCaseTest {
     @Test
     void 좌석_검증이_실패하면_선택하지_않는다() {
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(openPolicy(null)));
-        doThrow(new CoreException(DomainErrorType.SEAT_ALREADY_HOLD))
+        doThrow(new CoreException(ErrorType.SEAT_ALREADY_HOLD))
                 .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
 
         assertThatThrownBy(() -> useCase.execute(INPUT))

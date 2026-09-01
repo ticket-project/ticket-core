@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.api.error.GlobalExceptionHandler;
+import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.showlike.command.AddShowLikeUseCase;
 import com.ticket.core.app.showlike.command.RemoveShowLikeUseCase;
@@ -42,7 +42,7 @@ class ShowLikeControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new ApiControllerAdvice())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())

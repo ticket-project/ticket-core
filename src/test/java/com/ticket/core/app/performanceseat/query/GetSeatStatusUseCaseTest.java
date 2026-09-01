@@ -1,9 +1,9 @@
 package com.ticket.core.app.performanceseat.query;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
-import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
@@ -112,7 +112,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(DomainErrorType.PERFORMANCE_IS_PAST));
+                        .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
@@ -125,7 +125,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(DomainErrorType.NOT_YET_RESERVE_TIME));
+                        .isEqualTo(ErrorType.NOT_YET_RESERVE_TIME));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
@@ -145,13 +145,13 @@ class GetSeatStatusUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(queuePolicy()));
-        doThrow(new CoreException(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED))
+        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
                 .when(admissionGuard).ensureAdmitted(10L, 100L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.ADMISSION_TOKEN_REQUIRED));
+                        .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED));
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }

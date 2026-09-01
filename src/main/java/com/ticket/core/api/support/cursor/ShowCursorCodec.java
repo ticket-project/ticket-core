@@ -1,8 +1,8 @@
 package com.ticket.core.api.support.cursor;
 
-import com.ticket.core.api.error.ApiErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
@@ -31,7 +31,7 @@ public class ShowCursorCodec {
             return Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(json.getBytes(StandardCharsets.UTF_8));
         } catch (final Exception e) {
-            throw new CoreException(ApiErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
         }
     }
 
@@ -44,7 +44,7 @@ public class ShowCursorCodec {
             final String json = new String(decoded, StandardCharsets.UTF_8);
             return jsonMapper.readValue(json, ShowCursor.class);
         } catch (final Exception e) {
-            throw new CoreException(ApiErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
         }
     }
 }

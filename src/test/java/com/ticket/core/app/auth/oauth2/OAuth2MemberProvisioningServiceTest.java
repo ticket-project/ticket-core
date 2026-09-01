@@ -1,7 +1,7 @@
 package com.ticket.core.app.auth.oauth2;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.auth.oauth2.OAuth2UserInfo;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -121,7 +121,7 @@ class OAuth2MemberProvisioningServiceTest {
         //then
         assertThatThrownBy(() -> oauth2MemberProvisioningService.getOrCreateMember(userInfo))
                 .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ApplicationErrorType.MEMBER_DUPLICATE_EMAIL));
+                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.MEMBER_DUPLICATE_EMAIL));
     }
 
     @Test

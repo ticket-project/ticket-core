@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
@@ -49,11 +50,17 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.show-sql=false",
+        // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
+        // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication
+        // main class가 없어 그 런타임을 만들 수 없으므로 tracing 관측 자체를 끈다.
+        "management.tracing.enabled=false",
         "spring.autoconfigure.exclude="
                 + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
                 + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
                 + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                + "org.redisson.spring.starter.RedissonAutoConfigurationV4"
+                + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
+                + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
+                + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
 })
 @Transactional
 @Import({
@@ -242,8 +249,15 @@ class QuerydslShowListReadRepositoryTest {
         }
     }
 
+    // @TestComponent는 이 클래스를 다른 @SpringBootTest 컨텍스트(TicketApplication 등)의
+    // component scan에서 제외시킨다. 단일 프로젝트로 합쳐지며 같은 com.ticket 패키지 트리에
+    // 놓이게 된 이 테스트 전용 설정이 실제 앱의 component scan에 섞여 들어가는 것을 막는다.
+    // @TestConfiguration을 쓰면 안 된다 — SpringBootTestContextBootstrapper가 classes=...로
+    // 명시한 설정을 전부 @TestConfiguration으로 보고 "명시하지 않은 것"처럼 취급해, 패키지를
+    // 거슬러 올라가며 다른 @SpringBootConfiguration을 찾아 잘못 병합해버린다.
     @SpringBootConfiguration
     @EnableAutoConfiguration
+    @TestComponent
     @EntityScan(basePackages = {"com.ticket.core.domain", "com.ticket.core.infra"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {

@@ -1,8 +1,8 @@
 package com.ticket.core.app.show.query.model;
 
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.show.model.Region;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -87,7 +87,7 @@ public class SaleOpeningSoonSearchParam {
         }
         if (from.isAfter(to)) {
             throw new CoreException(
-                    ApplicationErrorType.INVALID_INPUT,
+                    ErrorType.INVALID_REQUEST,
                     field + "From은 " + field + "To보다 늦을 수 없습니다."
             );
         }

@@ -1,7 +1,7 @@
 package com.ticket.core.app.order.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.order.OrderRemainingTime;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.app.order.query.model.OrderStatusView;
@@ -38,7 +38,7 @@ public class GetOrderStatusUseCase {
 
     public Output execute(final Input input) {
         final OrderStatusView status = orderReadRepository.findStatus(input.orderKey(), input.memberId())
-                .orElseThrow(() -> new CoreException(DomainErrorType.ORDER_NOT_OWNED));
+                .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
         final long remainingSeconds = OrderRemainingTime.seconds(
                 status.status(),
                 status.expiresAt(),

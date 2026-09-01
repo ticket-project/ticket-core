@@ -1,7 +1,7 @@
 package com.ticket.core.app.showlike.command;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.show.model.Show;
@@ -84,7 +84,7 @@ class AddShowLikeUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new AddShowLikeUseCase.Input(1L, 2L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.SHOW_LIKE_ALREADY_EXISTS));
+                        .isEqualTo(ErrorType.SHOW_LIKE_ALREADY_EXISTS));
     }
 
     @ParameterizedTest
@@ -99,7 +99,7 @@ class AddShowLikeUseCaseTest {
         assertThatThrownBy(() -> new AddShowLikeUseCase.Input(memberId, showId))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     /**

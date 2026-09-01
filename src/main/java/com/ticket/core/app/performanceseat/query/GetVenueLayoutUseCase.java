@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.show.model.Venue;
@@ -29,12 +29,12 @@ public class GetVenueLayoutUseCase {
 
     public Output execute(Input input) {
         Show show = showRepository.findById(input.showId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
 
         Venue venue = show.getVenue();
         if (venue == null) {
-            throw new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
+            throw new CoreException(ErrorType.NOT_FOUND_DATA,
                     "공연에 연결된 공연장을 찾을 수 없습니다.");
         }
 

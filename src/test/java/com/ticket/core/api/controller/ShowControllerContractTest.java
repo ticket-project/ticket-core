@@ -1,6 +1,6 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.api.error.GlobalExceptionHandler;
+import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.app.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.core.app.performanceseat.query.GetVenueLayoutUseCase;
 import com.ticket.core.domain.performance.policy.BookingEntryResolver;
@@ -204,7 +204,7 @@ class ShowControllerContractTest {
     void showId가_양수가_아니면_400_계약을_지킨다() throws Exception {
         GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(newController(getShowDetailUseCase))
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new ApiControllerAdvice())
                 .build();
 
         mockMvc.perform(get("/api/v1/shows/-1"))
@@ -219,7 +219,7 @@ class ShowControllerContractTest {
     void size가_양수가_아니면_400_계약을_지킨다() throws Exception {
         GetShowsUseCase getShowsUseCase = mock(GetShowsUseCase.class);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(newControllerWithShows(getShowsUseCase))
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new ApiControllerAdvice())
                 .build();
 
         mockMvc.perform(get("/api/v1/shows").param("size", "0"))

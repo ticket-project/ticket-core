@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.command;
 
-import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.DeselectedSeatIds;
 import com.ticket.core.domain.member.repository.MemberRepository;
@@ -28,7 +28,7 @@ public class DeselectAllSeatsUseCase {
 
     public void execute(final Input input) {
         memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
         final DeselectedSeatIds seatIds = seatSelectionService.deselectAll(input.performanceId(), input.memberId());
         seatIds.forEach(seatId -> seatEventPublisher.publish(input.performanceId(), seatId, SeatStatusAction.DESELECTED));
     }

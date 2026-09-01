@@ -3,8 +3,8 @@ package com.ticket.core.infra.lock;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;
-import com.ticket.core.domain.error.DomainErrorType;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.core.support.exception.CoreException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -44,13 +44,13 @@ public class RedissonLockManager implements LockManager {
         try {
             if (!tryLock(lock, options)) {
                 logLockFailure(options, lockNames);
-                throw new CoreException(DomainErrorType.HOLD_BUSY, resolveMessage(options));
+                throw new CoreException(ErrorType.HOLD_BUSY, resolveMessage(options));
             }
             return action.get();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("분산 락 대기가 중단되었습니다. reason=lock_wait_interrupted keys={}", lockNames, e);
-            throw new CoreException(DomainErrorType.HOLD_BUSY, resolveMessage(options));
+            throw new CoreException(ErrorType.HOLD_BUSY, resolveMessage(options));
         } finally {
             unlockQuietly(lock, lockNames);
         }
@@ -69,7 +69,7 @@ public class RedissonLockManager implements LockManager {
 
     private String resolveMessage(final LockOptions options) {
         return options.failureMessage() == null || options.failureMessage().isBlank()
-                ? DomainErrorType.HOLD_BUSY.getMessage()
+                ? ErrorType.HOLD_BUSY.getMessage()
                 : options.failureMessage();
     }
 

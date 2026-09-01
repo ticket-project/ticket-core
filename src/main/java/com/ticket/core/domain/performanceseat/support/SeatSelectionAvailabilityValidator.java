@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performanceseat.support;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
@@ -23,13 +23,13 @@ public class SeatSelectionAvailabilityValidator {
     public void validate(final Long performanceId, final Long seatId) {
         final SeatSelectionAvailabilitySnapshot seat = performanceSeatRepository
                 .findSelectableSeat(performanceId, seatId)
-                .orElseThrow(() -> new CoreException(DomainErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
+                .orElseThrow(() -> new CoreException(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
 
         if (seat.state() != PerformanceSeatState.AVAILABLE) {
-            throw new CoreException(DomainErrorType.NOT_EXIST_AVAILABLE_SEAT);
+            throw new CoreException(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
         }
         if (holdManager.isHeld(performanceId, seatId)) {
-            throw new CoreException(DomainErrorType.SEAT_ALREADY_HOLD);
+            throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
         }
     }
 }

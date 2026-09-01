@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.app.auth.password.PasswordHasher;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.member.model.Email;
@@ -73,6 +73,6 @@ class MemberRegistrarTest {
         //then
         assertThatThrownBy(() -> memberRegistrar.register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동"))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.MEMBER_DUPLICATE_EMAIL));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.MEMBER_DUPLICATE_EMAIL));
     }
 }

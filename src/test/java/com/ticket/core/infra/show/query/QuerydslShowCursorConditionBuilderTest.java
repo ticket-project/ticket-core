@@ -2,11 +2,11 @@ package com.ticket.core.infra.show.query;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.show.query.ShowSort;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.domain.show.model.QShow;
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
@@ -38,7 +38,7 @@ class QuerydslShowCursorConditionBuilderTest {
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -48,7 +48,7 @@ class QuerydslShowCursorConditionBuilderTest {
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -58,7 +58,7 @@ class QuerydslShowCursorConditionBuilderTest {
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -68,7 +68,7 @@ class QuerydslShowCursorConditionBuilderTest {
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test
@@ -78,7 +78,7 @@ class QuerydslShowCursorConditionBuilderTest {
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, latestDesc()))
                 .isInstanceOf(CoreException.class)
                 .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ApplicationErrorType.INVALID_INPUT));
+                        .isEqualTo(ErrorType.INVALID_REQUEST));
     }
 
     @Test

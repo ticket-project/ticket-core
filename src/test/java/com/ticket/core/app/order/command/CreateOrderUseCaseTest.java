@@ -1,9 +1,9 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.RecordingLockManager;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderValidator;
 import com.ticket.core.app.order.command.CreatePendingOrderTransactionService;
@@ -83,7 +83,7 @@ class CreateOrderUseCaseTest {
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
 
         verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
     }
@@ -94,7 +94,7 @@ class CreateOrderUseCaseTest {
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(DomainErrorType.INVALID_ARGUMENT));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
 
         verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
     }

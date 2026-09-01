@@ -1,8 +1,8 @@
 package com.ticket.core.infra.order.outbox.release;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.app.lock.RecordingLockManager;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.ErrorType;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -98,7 +98,7 @@ class HoldReleaseOutboxRelayTest {
         when(holdReleaseOutboxRepository.findAllByStatusInAndNextAttemptAtLessThanEqual(any(), any(LocalDateTime.class), any()))
                 .thenReturn(fullSlice)
                 .thenThrow(new AssertionError("같은 due 페이지를 즉시 다시 조회하면 안 됩니다."));
-        doThrow(new CoreException(DomainErrorType.HOLD_BUSY))
+        doThrow(new CoreException(ErrorType.HOLD_BUSY))
                 .when(holdReleaseOutboxExecutor).process(eq(1L), any(LocalDateTime.class));
 
         scheduler().relayPending();

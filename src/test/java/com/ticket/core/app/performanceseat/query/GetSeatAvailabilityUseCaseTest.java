@@ -1,7 +1,7 @@
 package com.ticket.core.app.performanceseat.query;
 
-import com.ticket.support.error.CoreException;
-import com.ticket.core.app.error.ApplicationErrorType;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.model.Performance;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
@@ -81,6 +81,6 @@ class GetSeatAvailabilityUseCaseTest {
         //then
         assertThatThrownBy(() -> useCase.execute(new GetSeatAvailabilityUseCase.Input(10L)))
                 .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ApplicationErrorType.DATA_NOT_FOUND));
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
     }
 }

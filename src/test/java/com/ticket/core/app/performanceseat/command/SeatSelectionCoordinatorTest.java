@@ -1,9 +1,9 @@
 package com.ticket.core.app.performanceseat.command;
 
-import com.ticket.support.error.CoreException;
+import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.RecordingLockManager;
-import com.ticket.core.domain.error.DomainErrorType;
+import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.hold.command.HoldManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +63,7 @@ class SeatSelectionCoordinatorTest {
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, NOW.plusMinutes(1)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(DomainErrorType.SEAT_ALREADY_HOLD));
+                        .isEqualTo(ErrorType.SEAT_ALREADY_HOLD));
 
         verifyNoInteractions(seatSelectionService);
     }
@@ -73,7 +73,7 @@ class SeatSelectionCoordinatorTest {
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, NOW.minusNanos(1)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(DomainErrorType.PERFORMANCE_IS_PAST));
+                        .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
 
         verifyNoInteractions(holdManager, seatSelectionService);
     }
