@@ -7,6 +7,18 @@
 - 대상: `ticket` 저장소의 Ticket Core
 - 제외: 형제 저장소 `ticket-queue`, 결제·PG callback 같은 미구현 기능 추가
 
+**2026-09-02 결정 갱신(오류 계약 supersede):** 이 문서의 `ProblemDetail` 기반 공통 오류 계약
+(`BusinessProblem`/`BusinessException`/`GlobalProblemDetailHandler`, `shared`의 두 공개 계약)은
+구현 후 사용자가 방향을 바꿔 **채택하지 않기로 결정했다.** Spring Modulith는 HTTP 오류 wire
+format을 결정하지 않는다. 오류 처리는 `support:error` 도입 이전의 전역 `ErrorType`/`ErrorCode`/
+`CoreException`/`ApiControllerAdvice`/`ApiResponse.error` envelope 구조로 되돌렸고, 이 구조는
+`com.ticket.core.support.exception`에 있다. 이 전역 `ErrorType`은 모듈별 기능 분리 전의 임시
+과도기 구조이며, 업무 모듈별 오류 소유권은 각 기능이 모듈로 이동할 때 별도로 다시 결정한다.
+이번 되돌림에서는 전역 `ErrorType`을 업무 모듈별 enum으로 분리하지 않는다. 아래 "`shared`" 절과
+"오류 처리" 관련 절은 이 결정으로 supersede되었으며, 과거 설계를 지우지 않고 이 문단으로 대체
+사실만 남긴다. 상세 근거는 `docs/adr/0002-module-owned-error-contracts.md`의 갱신된 상태 문단을
+본다.
+
 ## 한 문장 결정
 
 기존의 계층별 Gradle 멀티모듈을 하나의 Spring Boot 애플리케이션으로 통합하고,
@@ -430,18 +442,23 @@ src/main/resources/db/migration
 
 ## 오류 처리
 
+> **2026-09-02 supersede:** 아래 `ProblemDetail` 기반 절은 채택되지 않았다. 실제 오류 처리는
+> `support:error` 도입 이전의 전역 `ErrorType`/`ErrorCode`/`CoreException`/`ApiControllerAdvice`/
+> `ApiResponse.error` envelope 구조로 되돌렸다(`com.ticket.core.support.exception`). 아래는 과거
+> 설계 기록으로만 남긴다.
+
 Spring Modulith는 HTTP 오류 wire format을 규정하지 않는다. 이 설계는 다음 경계만 고정한다.
 
 - 업무 실패는 원인을 판단하는 Application Module이 소유한다.
 - 다른 모듈은 구체 internal 오류 enum이나 예외 타입을 import하지 않는다.
 - 호출자가 성공·부재·거부에 따라 분기해야 하면 공개 result type으로 표현한다.
 - 예외는 요청 전체가 실패해야 하는 경우에만 공개 API 경계를 통과한다.
-- web adapter는 Spring Framework `ProblemDetail`로 transport 오류를 표현한다.
+- web adapter는 Spring Framework의 RFC 9457 스타일 공통 오류 표현으로 transport 오류를 나타낸다.
 - 예상하지 못한 기술 오류의 내부 메시지와 stack trace를 HTTP에 노출하지 않는다.
 - listener 실패는 발행 transaction을 되돌리지 않고 Event Publication Registry의 실패·재시도 흐름으로
   처리한다.
 
-`ProblemDetail` 계약은 다음으로 고정한다.
+RFC 9457 스타일 계약은 다음으로 고정하려 했었다.
 
 - `type`: `urn:ticket:problem:{module}:{code}`
 - `title`: 로그나 stack trace를 포함하지 않는 안정적인 요약
@@ -449,9 +466,10 @@ Spring Modulith는 HTTP 오류 wire format을 규정하지 않는다. 이 설계
 - `detail`: 클라이언트에 노출 가능한 설명
 - extension `code`: `{MODULE}_{CODE}` 형식의 안정적인 업무 code
 
-각 모듈의 internal 오류 정의가 이 값을 소유하고 전역 handler는 구체 오류 타입을 알지 않는다. 기존
-E-CODE와의 호환이 필요하면 API 전환 단계에서 새 code로 매핑하되, 전역 shared 업무 카탈로그를 만들지
-않는다.
+각 모듈의 internal 오류 정의가 이 값을 소유하고 전역 handler는 구체 오류 타입을 알지 않는 구조였다.
+기존 E-CODE와의 호환이 필요하면 API 전환 단계에서 새 code로 매핑하되, 전역 shared 업무 카탈로그를
+만들지 않으려 했다. 이 방향은 채택되지 않았고, 기존 E-CODE와 envelope를 그대로 유지하는 쪽으로
+되돌렸다.
 
 ## 테스트 설계
 

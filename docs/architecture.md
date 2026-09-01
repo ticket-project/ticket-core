@@ -104,7 +104,17 @@ outbox와 커밋 후 리스너, 시드 러너, 기술 설정이 여기 있다.
 
 Redis 공통 의존성만 제공한다. 실제 비즈니스 Redis 구현은 `core-infra`의 기능별 adapter에 둔다.
 
-### `support:error`
+### `support:error` (2026-09-02 되돌림으로 supersede됨)
+
+이 절이 설명하던 모듈별 `ErrorCode`/`ErrorType` 분리는 구현되었다가 사용자 결정으로 되돌려졌다.
+현재 오류 처리는 `support:error` 도입 이전의 전역 구조이며 `com.ticket.core.support.exception`의
+`ErrorCode`/`ErrorType`/`CoreException`/`AuthException`/`NotFoundException`과
+`com.ticket.core.support.ApiControllerAdvice`, `com.ticket.core.support.response.ApiResponse`가
+모든 계층이 함께 참조하는 하나의 카탈로그다. 오류는 여전히 원인을 판단할 수 있는 코드가 값을
+던지지만(`throw new CoreException(ErrorType.XXX)`), 그 `ErrorType` 자체는 모듈별로 나뉘지 않고
+전역 하나다. 배경과 되돌림 근거는 [ADR 0002](adr/0002-module-owned-error-contracts.md)의 갱신된
+상태 문단을 따른다. 이 전역 구조는 Spring Modulith 기능별 module 분리 전까지의 임시 과도기이며,
+아래 원래 절 본문은 되돌리기 전 설계 기록으로 남긴다.
 
 프레임워크에 독립적인 **공통 오류 계약과 예외 전달 기반**만 제공한다. Spring Web, `HttpStatus`,
 Jackson에 의존하지 않으며 업무별 오류 코드·메시지 카탈로그를 소유하지 않는다.

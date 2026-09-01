@@ -8,6 +8,18 @@
 
 **Tech Stack:** Java 25, Gradle 9.6.1, Spring Boot 4.1.1, Spring Modulith 2.1.1, Spring Data JPA, Querydsl, Spring Security, Redis/Redisson, Flyway, H2/Oracle, JUnit 5, Spring Modulith Test, Testcontainers
 
+**2026-09-02 결정 갱신(오류 계약 되돌림):** Task 3에서 구현했던 `shared.BusinessProblem`/
+`BusinessException`과 `web.GlobalProblemDetailHandler`(`ProblemDetail` 기반 공통 오류 계약)는
+사용자가 방향을 바꿔 채택하지 않기로 했다. 오류 처리는 `support:error` 도입 이전의 전역
+`ErrorCode`/`ErrorType`/`CoreException`/`ApiControllerAdvice`/`ApiResponse.error` envelope
+구조로 되돌렸으며, 새 위치는 `com.ticket.core.support.exception`과 `com.ticket.core.support`다.
+이 문서 아래에 남아 있는 `BusinessProblem`/`BusinessException`/`GlobalProblemDetailHandler`/
+`ProblemDetail` 언급은 이 결정으로 supersede된 과거 설계 기록이며, 앞으로 이 이름들로 무언가를
+새로 만들지 않는다. Task 3 이후 Task(4, 13, 14, 15)의 관련 서술도 이 되돌림을 반영해 다시 읽어야
+하지만, 체크박스의 완료 상태 자체는 별도 프로세스가 관리하므로 여기서 변경하지 않는다. Spring
+Modulith가 기능별 module로 코드를 옮기는 작업(Task 4 이후) 자체는 이 되돌림과 무관하게 유효하다.
+상세 근거는 `docs/adr/0002-module-owned-error-contracts.md`의 갱신된 상태 문단을 본다.
+
 ---
 
 ## 실행 원칙과 완료 판정

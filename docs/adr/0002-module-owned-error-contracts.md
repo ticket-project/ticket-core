@@ -1,5 +1,33 @@
 # 오류 계약을 모듈별로 소유하고 API에서 공통 처리한다
 
+## 상태(2026-09-02): 구현 이후 되돌림으로 supersede됨
+
+이 ADR의 결정은 `40b43274`로 구현되어 `support:error`/`core-domain.error`/`core-app.error`/
+`core-api.error`의 모듈별 `ErrorCode`/`ErrorType`과 `ProblemDetail` 기반 `shared.BusinessProblem`/
+`BusinessException`/`web.GlobalProblemDetailHandler`가 만들어졌었다. 이후 사용자가 방향을 바꿔
+**`ProblemDetail`을 쓰지 않고, 모듈별로 나눈 오류 카탈로그도 되돌려 전역 하나로 다시 합치기로
+결정했다.** 이 결정에 따라 오류 처리는 `support:error` 도입 이전의 전역 `ErrorCode`/`ErrorType`/
+`CoreException`/`ApiControllerAdvice`/`ApiResponse.error` envelope 구조로 되돌렸다. 새 위치는
+`com.ticket.core.support.exception`(전역 `ErrorCode`, `ErrorType`, `CoreException`,
+`AuthException`, `NotFoundException`, `ErrorMessage`)과 `com.ticket.core.support`의
+`ApiControllerAdvice`다.
+
+이 되돌림 이후에도 유효한 것:
+
+- 기존 공개 E-CODE, HTTP 상태, 클라이언트 노출 메시지는 그대로 유지했다.
+- `CoreException`이 완성된 오류 정의 하나(`ErrorType`)를 들고 다니고, 전역 handler 하나가 이를
+  처리하는 구조 자체는 유지한다. 달라진 것은 그 정의가 모듈별 셋(`DomainErrorType` 등)이 아니라
+  다시 전역 하나(`ErrorType`)라는 점이다.
+- `AuthException`/`NotFoundException`이 `CoreException`을 상속해 handler를 하나로 유지하는 것도
+  이 ADR이 정한 대로 유지한다.
+
+**이번 되돌림에서는 업무 모듈별 오류 카탈로그로 재설계하지 않는다.** 전역 `ErrorType`은 Spring
+Modulith가 기능별 module로 코드를 옮기기 전까지의 임시 과도기 구조다. 향후 실제 기능이 module로
+이동할 때, 그 module이 자신의 오류를 다시 소유할지(이 ADR의 방향)와 그 경계를 어떻게 그을지는
+별도로 다시 결정한다. 아래 본문은 처음 승인됐던 결정 기록으로 남기며 조용히 고치지 않는다.
+
+---
+
 현재 `support:error`의 전역 `ErrorType`은 인증, 회원, 공연, 좌석, 주문, 홀드, 대기열의
 오류를 모두 소유한다. 각 오류는 `HttpStatus`, `ErrorCode`, 공개 메시지를 한 번에 제공하므로
 호출부는 `new CoreException(ErrorType.HOLD_BUSY)`만 작성하면 된다는 장점이 있다. 반면 다음
