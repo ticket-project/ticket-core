@@ -6,6 +6,20 @@ tasks.named('jar') {
     enabled = false
 }
 
+// Task 1: 아직 멀티프로젝트 상태에서 Boot 4.1.1 + Modulith 2.1.1 조합만 검증한다.
+// 최종 의존성 선언은 단일 프로젝트로 합치는 후속 Task에서 root build.gradle로 옮긴다.
+dependencyManagement {
+    imports {
+        mavenBom libs.spring.modulith.bom.get().toString()
+    }
+}
+
+dependencies {
+    implementation libs.spring.modulith.starter.jpa
+    runtimeOnly libs.spring.modulith.starter.insight
+    testImplementation libs.spring.modulith.starter.test
+}
+
 dependencies {
     // composition root: API/App/Infra를 한 프로세스로 조립한다.
     implementation project(':core:core-api')

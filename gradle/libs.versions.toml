@@ -8,7 +8,8 @@
 #     gradle/wrapper/gradle-wrapper.properties가 소유한다.
 
 [versions]
-spring-boot = "4.0.7"
+spring-boot = "4.1.1"
+spring-modulith = "2.1.1"
 spring-dependency-management = "1.1.7"
 querydsl = "5.1.0"
 jjwt = "0.13.0"
@@ -20,6 +21,11 @@ springdoc = "3.0.1"
 oracle-security = "21.3.0.0"
 
 [libraries]
+spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "spring-modulith" }
+spring-modulith-starter-jpa = { module = "org.springframework.modulith:spring-modulith-starter-jpa" }
+spring-modulith-starter-insight = { module = "org.springframework.modulith:spring-modulith-starter-insight" }
+spring-modulith-starter-test = { module = "org.springframework.modulith:spring-modulith-starter-test" }
+
 # Querydsl은 jakarta classifier 변형을 쓴다. 모듈 build.gradle의 variantOf가 이를 붙인다.
 querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
 querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
