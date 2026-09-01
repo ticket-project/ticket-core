@@ -4,7 +4,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilityView;
+import com.ticket.core.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
 import com.ticket.core.domain.performanceseat.repository.PerformanceSeatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -43,12 +43,12 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
      * UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스를 그대로 탄다.
      */
     @Override
-    public Optional<SeatSelectionAvailabilityView> findSelectableSeat(
+    public Optional<SeatSelectionAvailabilitySnapshot> findSelectableSeat(
             final Long performanceId,
             final Long seatId
     ) {
         return Optional.ofNullable(queryFactory
-                .select(Projections.constructor(SeatSelectionAvailabilityView.class,
+                .select(Projections.constructor(SeatSelectionAvailabilitySnapshot.class,
                         performanceSeat.id,
                         performanceSeat.state
                 ))

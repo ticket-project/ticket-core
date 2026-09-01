@@ -17,7 +17,7 @@
 CreateOrderUseCase
   -> 요청/회차/좌석 검증
   -> Redis hold 생성                 (DB 트랜잭션 밖)
-  -> CreatePendingOrderTxService
+  -> CreatePendingOrderTransactionService
        -> PENDING 주문 저장          (짧은 DB 트랜잭션)
        -> hold history 저장
        -> hold creation outbox 저장
@@ -108,7 +108,7 @@ ExpireOrderUseCase.expireByHoldKey를 호출한다.
 
 @Scheduled 트리거는 bootstrap에 있고, 커밋 후 리스너와 outbox relay는 core-infra에 있다.
 core-domain은 엔티티의 상태 전이 규칙만 소유한다. core-app은 트랜잭션 단위와 업무 후처리를 소유하고,
-후속 처리 이벤트는 IntegrationEventPublisher 포트로 발행한다. outbox는 그 포트의 구현 방식이다.
+후속 처리 이벤트는 HoldLifecycleEventPublisher 포트로 발행한다. outbox는 그 포트의 구현 방식이다.
 
 ## DB connection 관점
 
@@ -125,12 +125,12 @@ REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하
 ## 주요 코드
 
 - 주문 생성: app.order.command.CreateOrderUseCase
-- 주문 DB 저장: app.order.command.CreatePendingOrderTxService
+- 주문 DB 저장: app.order.command.CreatePendingOrderTransactionService
 - 주문 종료: app.order.command.OrderTerminationService
 - 상태 전이 규칙: domain.order.model.Order (confirm, expire, cancel)
-- 후속 처리 발행 포트: app.event.IntegrationEventPublisher
+- 후속 처리 발행 포트: app.event.HoldLifecycleEventPublisher
 - outbox 엔티티와 발행 구현: infra.order.outbox (HoldCreationOutbox, HoldReleaseOutbox,
-  OutboxIntegrationEventPublisher)
+  OutboxHoldLifecycleEventPublisher)
 - 생성 outbox 실행: infra.order.outbox.create (HoldCreationOutboxExecutor, HoldCreationOutboxRelay)
 - 해제 outbox 실행: infra.order.outbox.release (HoldReleaseOutboxExecutor, HoldReleaseOutboxRelay)
 - 해제 업무 처리: app.order.command.HoldReleaseTaskProcessor

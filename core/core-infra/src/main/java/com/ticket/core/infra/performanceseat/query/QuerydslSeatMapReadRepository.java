@@ -14,8 +14,8 @@ import java.util.List;
 
 import static com.ticket.core.domain.performanceseat.model.QPerformanceSeat.performanceSeat;
 import static com.ticket.core.domain.seat.model.QSeat.seat;
-import static com.ticket.core.domain.show.mapping.QShowGrade.showGrade;
-import static com.ticket.core.domain.show.mapping.QShowSeat.showSeat;
+import static com.ticket.core.domain.show.model.QShowGrade.showGrade;
+import static com.ticket.core.domain.show.model.QShowSeat.showSeat;
 
 @Repository
 @RequiredArgsConstructor

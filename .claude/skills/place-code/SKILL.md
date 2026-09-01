@@ -53,7 +53,7 @@ allowed-tools: Bash(rg:*) Bash(./gradlew:*)
 | 저장 기술에 중립적인 업무 상태 저장 계약 | 필요 주체에 따라 `core-domain`의 `<기능>.store` 또는 `core-app`의 포트 |
 | 분산락 port (`LockManager`, `LockKey`, `LockOptions`) | `core-app` 의 `lock` |
 | 분산락 구현과 Redis key 형식 | `core-infra` 의 `lock` |
-| 후속 처리 이벤트 port (`IntegrationEventPublisher`) | `core-app` 의 `event` |
+| 후속 처리 이벤트 port (`HoldLifecycleEventPublisher`) | `core-app` 의 `event` |
 | outbox 엔티티·상태·relay | `core-infra` 의 `order.outbox` |
 | HTTP 커서 문자열 인코딩·디코딩 | `core-api` 의 `api.support.cursor` |
 | 커서 위치 타입과 조회 결과 | `core-app` 의 `<기능>.query.model`, `support.cursor` |

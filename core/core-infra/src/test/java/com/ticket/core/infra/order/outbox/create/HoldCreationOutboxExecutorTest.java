@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order.outbox.create;
 
 import com.ticket.core.domain.hold.model.Hold;
-import com.ticket.core.infra.order.HoldCreationPostCommitProcessor;
+import com.ticket.core.app.order.command.HoldCreationTaskProcessor;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.RecordingLockManager;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class HoldCreationOutboxExecutorTest {
     private HoldCreationOutboxTransactionService transactionService;
 
     @Mock
-    private HoldCreationPostCommitProcessor processor;
+    private HoldCreationTaskProcessor processor;
 
     @InjectMocks
     private HoldCreationOutboxExecutor executor;

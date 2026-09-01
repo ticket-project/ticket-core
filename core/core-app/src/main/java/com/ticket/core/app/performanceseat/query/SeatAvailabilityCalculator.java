@@ -1,6 +1,7 @@
 package com.ticket.core.app.performanceseat.query;
 
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
+import com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -40,9 +41,6 @@ public class SeatAvailabilityCalculator {
         }
 
         return grades;
-    }
-
-    public record AvailableSeatRow(Long seatId, PerformanceSeatState state, String gradeName, int sortOrder) {
     }
 
     private record GradeKey(String gradeName, int sortOrder) {

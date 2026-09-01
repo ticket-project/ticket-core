@@ -1,9 +1,9 @@
 package com.ticket.core.app.show.query.model;
 
-import com.ticket.core.domain.show.meta.ShowSortKey;
+import com.ticket.core.app.show.query.ShowSort;
 
 public record ShowCursor(
-        ShowSortKey sort,
+        ShowSort sort,
         String dir,
         String lastValue,
         Long lastId

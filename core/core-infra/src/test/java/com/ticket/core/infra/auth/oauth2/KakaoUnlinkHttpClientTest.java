@@ -16,7 +16,7 @@ import static org.mockito.Mockito.verify;
 class KakaoUnlinkHttpClientTest {
 
     @Mock
-    private KakaoApiClient kakaoApiClient;
+    private KakaoUnlinkApiClient kakaoUnlinkApiClient;
 
     @InjectMocks
     private KakaoUnlinkHttpClient kakaoUnlinkHttpClient;
@@ -27,7 +27,7 @@ class KakaoUnlinkHttpClientTest {
         kakaoUnlinkHttpClient.unlink("KakaoAK admin-key", "123");
 
         ArgumentCaptor<MultiValueMap<String, String>> formCaptor = ArgumentCaptor.forClass(MultiValueMap.class);
-        verify(kakaoApiClient).unlink(eq("KakaoAK admin-key"), formCaptor.capture());
+        verify(kakaoUnlinkApiClient).unlink(eq("KakaoAK admin-key"), formCaptor.capture());
         assertThat(formCaptor.getValue().getFirst("target_id_type")).isEqualTo("user_id");
         assertThat(formCaptor.getValue().getFirst("target_id")).isEqualTo("123");
     }

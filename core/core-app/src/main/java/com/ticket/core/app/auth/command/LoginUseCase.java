@@ -1,8 +1,8 @@
 package com.ticket.core.app.auth.command;
 
-import com.ticket.core.app.auth.AuthService;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.CredentialAuthenticator;
+import com.ticket.core.app.auth.token.AuthTokenIssuer;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,8 +12,8 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @RequiredArgsConstructor
 public class LoginUseCase {
 
-    private final AuthService authService;
-    private final AuthTokenManager authTokenManager;
+    private final CredentialAuthenticator credentialAuthenticator;
+    private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(
             String email,
@@ -50,8 +50,8 @@ public class LoginUseCase {
     }
 
     public Result execute(final Input input) {
-        final Member member = authService.login(input.email(), input.password());
-        final IssuedAuthTokens result = authTokenManager.issueTokens(member.getId(), member.getRole().name());
+        final Member member = credentialAuthenticator.authenticate(input.email(), input.password());
+        final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
                 result.refreshToken(),

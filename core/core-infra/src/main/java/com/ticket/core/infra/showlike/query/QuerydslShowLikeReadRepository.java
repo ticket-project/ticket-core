@@ -1,5 +1,7 @@
 package com.ticket.core.infra.showlike.query;
 
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static com.ticket.core.domain.show.model.QShow.show;
-import static com.ticket.core.domain.show.venue.QVenue.venue;
+import static com.ticket.core.domain.show.model.QVenue.venue;
 import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
 
 @Repository
@@ -22,7 +24,7 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public CursorPage<GetMyShowLikesUseCase.ShowLikeSummary, Long> findMyLikedShows(
+    public CursorPage<ShowLikeSummaryView, Long> findMyLikedShows(
             final Long memberId,
             final Long cursorLikeId,
             final int size
@@ -60,7 +62,7 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
         final boolean hasNext = rows.size() > size;
         final List<Tuple> pageRows = hasNext ? rows.subList(0, size) : rows;
 
-        final List<GetMyShowLikesUseCase.ShowLikeSummary> items = pageRows.stream()
+        final List<ShowLikeSummaryView> items = pageRows.stream()
                 .map(this::mapRow)
                 .toList();
 
@@ -68,8 +70,8 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
         return new CursorPage<>(items, hasNext, nextPosition);
     }
 
-    private GetMyShowLikesUseCase.ShowLikeSummary mapRow(final Tuple tuple) {
-        return new GetMyShowLikesUseCase.ShowLikeSummary(
+    private ShowLikeSummaryView mapRow(final Tuple tuple) {
+        return new ShowLikeSummaryView(
                 tuple.get(show.id),
                 tuple.get(show.title),
                 tuple.get(show.image),

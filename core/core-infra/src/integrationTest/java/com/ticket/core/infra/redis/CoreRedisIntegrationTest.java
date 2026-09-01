@@ -3,8 +3,8 @@ package com.ticket.core.infra.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ticket.core.domain.auth.token.AuthRefreshToken;
-import com.ticket.core.domain.performanceseat.support.SeatRedisKey;
+import com.ticket.core.app.auth.token.AuthRefreshToken;
+import com.ticket.core.infra.performanceseat.store.SeatSelectionRedisKey;
 import com.ticket.core.infra.auth.token.RedisRefreshTokenStore;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
@@ -106,7 +106,7 @@ class CoreRedisIntegrationTest {
     @Test
     void seat_selection_index_expires_without_read_cleanup() throws Exception {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
-        String indexKey = SeatRedisKey.selectSeatIndex(1L);
+        String indexKey = SeatSelectionRedisKey.selectSeatIndex(1L);
 
         assertThat(store.selectIfAbsent(1L, 10L, "owner", Duration.ofMillis(150))).isTrue();
         assertThat(redissonClient.getKeys().countExists(indexKey)).isEqualTo(1L);

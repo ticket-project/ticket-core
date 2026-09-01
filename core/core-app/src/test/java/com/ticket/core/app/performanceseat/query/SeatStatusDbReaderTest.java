@@ -15,13 +15,13 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class SeatStatusDbReaderTest {
+class SeatStateSnapshotReaderTest {
 
     @Mock
     private SeatMapReadRepository seatMapReadRepository;
 
     @InjectMocks
-    private SeatStatusDbReader reader;
+    private SeatStateSnapshotReader reader;
 
     @Test
     void DB_좌석_스냅샷만_트랜잭션_경계_안에서_읽는다() {

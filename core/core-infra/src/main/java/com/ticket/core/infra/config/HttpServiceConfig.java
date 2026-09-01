@@ -1,6 +1,6 @@
 package com.ticket.core.infra.config;
 
-import com.ticket.core.infra.auth.oauth2.KakaoApiClient;
+import com.ticket.core.infra.auth.oauth2.KakaoUnlinkApiClient;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.service.registry.ImportHttpServices;
 
@@ -12,6 +12,6 @@ import org.springframework.web.service.registry.ImportHttpServices;
  * spring.http.serviceclient.{group} 프로퍼티로 자동 설정된다.
  */
 @Configuration
-@ImportHttpServices(group = "kakao", types = KakaoApiClient.class)
+@ImportHttpServices(group = "kakao", types = KakaoUnlinkApiClient.class)
 public class HttpServiceConfig {
 }

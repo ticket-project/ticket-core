@@ -2,10 +2,11 @@ package com.ticket.core.app.show.query;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.performance.query.BookingEntryResolver;
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.performance.policy.BookingEntryResolver;
+import com.ticket.core.domain.show.model.Region;
+import com.ticket.core.domain.show.model.SaleType;
+import com.ticket.core.domain.show.model.BookingStatus;
+import com.ticket.core.app.show.query.model.ShowDetailView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,6 +90,12 @@ public class GetShowDetailUseCase {
 
     public Output execute(final Input input) {
         return showDetailReadRepository.findShowDetail(input.showId())
+                .map(view -> new Output(
+                        view.id(), view.title(), view.subTitle(), view.info(), view.startDate(), view.endDate(),
+                        view.runningMinutes(), view.viewCount(), view.likeCount(), view.bookingStatus(), view.saleType(),
+                        view.saleStartDate(), view.saleEndDate(), view.image(), view.venue(), view.performer(),
+                        view.genreNames(), view.grades(), view.performanceDates()
+                ))
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
     }

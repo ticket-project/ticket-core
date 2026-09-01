@@ -3,9 +3,9 @@ package com.ticket.core.app.auth.command;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.token.AuthTokenIssuer;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class ExchangeOAuth2TokenUseCaseTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private AuthTokenManager authTokenManager;
+    private AuthTokenIssuer authTokenIssuer;
 
     @InjectMocks
     private ExchangeOAuth2TokenUseCase useCase;
@@ -47,7 +47,7 @@ class ExchangeOAuth2TokenUseCaseTest {
 
         when(oAuth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
         when(memberRepository.findActiveById(7L)).thenReturn(Optional.of(member));
-        when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);
+        when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         ExchangeOAuth2TokenUseCase.Result result =
                 useCase.execute(new ExchangeOAuth2TokenUseCase.Input("oauth-code"));
@@ -63,7 +63,7 @@ class ExchangeOAuth2TokenUseCaseTest {
                 .doesNotContain("refresh-token-value");
         verify(oAuth2AuthCodeStore).consumeCode("oauth-code");
         verify(memberRepository).findActiveById(7L);
-        verify(authTokenManager).issueTokens(1L, "MEMBER");
+        verify(authTokenIssuer).issueTokens(1L, "MEMBER");
     }
 
     @Test

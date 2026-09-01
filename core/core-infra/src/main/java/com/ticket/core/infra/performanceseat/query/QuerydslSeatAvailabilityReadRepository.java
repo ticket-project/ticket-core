@@ -1,5 +1,7 @@
 package com.ticket.core.infra.performanceseat.query;
 
+import com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;
+
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
 import com.querydsl.core.types.Projections;
@@ -10,8 +12,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static com.ticket.core.domain.performanceseat.model.QPerformanceSeat.performanceSeat;
-import static com.ticket.core.domain.show.mapping.QShowGrade.showGrade;
-import static com.ticket.core.domain.show.mapping.QShowSeat.showSeat;
+import static com.ticket.core.domain.show.model.QShowGrade.showGrade;
+import static com.ticket.core.domain.show.model.QShowSeat.showSeat;
 
 @Repository
 @RequiredArgsConstructor
@@ -20,9 +22,9 @@ public class QuerydslSeatAvailabilityReadRepository implements SeatAvailabilityR
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<SeatAvailabilityCalculator.AvailableSeatRow> findAvailableSeatRows(Long performanceId, Long showId) {
+    public List<AvailableSeatRow> findAvailableSeatRows(Long performanceId, Long showId) {
         return queryFactory
-                .select(Projections.constructor(SeatAvailabilityCalculator.AvailableSeatRow.class,
+                .select(Projections.constructor(AvailableSeatRow.class,
                         performanceSeat.seat.id,
                         performanceSeat.state,
                         showGrade.gradeName,

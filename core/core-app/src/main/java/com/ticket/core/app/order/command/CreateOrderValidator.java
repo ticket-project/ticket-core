@@ -9,10 +9,10 @@ import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.core.domain.performance.query.BookingPolicyValidator;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.policy.BookingPolicyValidator;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.app.admission.AdmissionGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +46,7 @@ public class CreateOrderValidator {
         final Long performanceId = input.performanceId();
         final Long memberId = input.memberId();
 
-        final PerformanceBookingPolicyView policy = performanceRepository.findBookingPolicyById(performanceId)
+        final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + performanceId));
         BookingPolicyValidator.ensureBookingOpen(policy, now);
@@ -64,7 +64,7 @@ public class CreateOrderValidator {
     }
 
     private void ensureAdmitted(
-            final PerformanceBookingPolicyView policy,
+            final PerformanceBookingPolicySnapshot policy,
             final Long memberId,
             final String admissionToken,
             final LocalDateTime now

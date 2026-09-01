@@ -18,9 +18,10 @@ public class GetSaleStartApproachingShowsPageUseCase {
 
     private final ShowListReadRepository showListReadRepository;
 
-    public record Input(SaleOpeningSoonSearchParam param, int size, String sort) {
+    public record Input(SaleOpeningSoonSearchParam param, int size, ShowSort sort) {
         public Input {
             RequiredInput.notNull(param, "param");
+            RequiredInput.notNull(sort, "sort");
             RequiredInput.positiveSize(size, "size");
         }
     }

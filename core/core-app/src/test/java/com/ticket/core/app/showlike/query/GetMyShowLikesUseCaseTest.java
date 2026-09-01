@@ -4,6 +4,7 @@ import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.support.cursor.CursorPage;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class GetMyShowLikesUseCaseTest {
     @Test
     void 찜한_공연_목록을_다음_커서_위치와_함께_조회한다() {
         Member member = mock(Member.class);
-        GetMyShowLikesUseCase.ShowLikeSummary summary = new GetMyShowLikesUseCase.ShowLikeSummary(
+        ShowLikeSummaryView summary = new ShowLikeSummaryView(
                 2L,
                 "공연",
                 "image",

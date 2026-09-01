@@ -1,17 +1,18 @@
 package com.ticket.core.infra.show.query;
 
 import com.ticket.core.app.show.query.ShowListReadRepository;
+import com.ticket.core.app.show.query.ShowSort;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.SaleType;
+import com.ticket.core.domain.show.model.Region;
+import com.ticket.core.domain.show.model.SaleType;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.app.show.query.model.ShowListItemView;
 import com.ticket.core.app.show.query.model.ShowParam;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
 import com.ticket.core.app.show.query.model.ShowSearchItemView;
-import com.ticket.core.domain.show.venue.Venue;
+import com.ticket.core.domain.show.model.Venue;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.support.cursor.CursorPage;
 import jakarta.persistence.EntityManager;
@@ -60,11 +61,11 @@ import static org.assertj.core.api.Assertions.assertThat;
         QuerydslShowListReadRepositoryTest.TestConfig.class,
         QuerydslShowListReadRepositoryTest.AuditingTestConfig.class,
         QuerydslShowListReadRepository.class,
-        ShowQueryHelper.class,
-        BookingStatusWindowPolicy.class,
-        ShowConditionFactory.class,
-        ShowSortSupport.class,
-        ShowCursorPolicy.class,
+        QuerydslShowPredicates.class,
+        BookingStatusPredicateFactory.class,
+        QuerydslShowConditionBuilder.class,
+        QuerydslShowSortResolver.class,
+        QuerydslShowCursorConditionBuilder.class,
         ShowCardImagePathConverter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
@@ -97,7 +98,7 @@ class QuerydslShowListReadRepositoryTest {
     void 지역으로_필터링하고_인기순으로_공연을_조회한다() {
         ShowParam param = new ShowParam(null, null, Region.SEOUL, null);
 
-        CursorPage<ShowListItemView, ShowCursor> result = showListReadRepository.findAllBySearch(param, 10, "popular");
+        CursorPage<ShowListItemView, ShowCursor> result = showListReadRepository.findAllBySearch(param, 10, ShowSort.POPULAR);
         List<ShowListItemView> slice = result.items();
 
         assertThat(slice).extracting(ShowListItemView::title)
@@ -110,10 +111,10 @@ class QuerydslShowListReadRepositoryTest {
     @Test
     void 커서를_전달하면_다음_페이지를_조회한다() {
         ShowParam firstPageParam = new ShowParam(null, null, Region.SEOUL, null);
-        CursorPage<ShowListItemView, ShowCursor> firstPage = showListReadRepository.findAllBySearch(firstPageParam, 1, "popular");
+        CursorPage<ShowListItemView, ShowCursor> firstPage = showListReadRepository.findAllBySearch(firstPageParam, 1, ShowSort.POPULAR);
 
         ShowParam secondPageParam = new ShowParam(null, null, Region.SEOUL, firstPage.nextPosition());
-        CursorPage<ShowListItemView, ShowCursor> secondPage = showListReadRepository.findAllBySearch(secondPageParam, 1, "popular");
+        CursorPage<ShowListItemView, ShowCursor> secondPage = showListReadRepository.findAllBySearch(secondPageParam, 1, ShowSort.POPULAR);
 
         assertThat(firstPage.items()).extracting(ShowListItemView::title)
                 .containsExactly("Seoul Popular");
@@ -151,7 +152,7 @@ class QuerydslShowListReadRepositoryTest {
                 null
         );
 
-        CursorPage<ShowSearchItemView, ShowCursor> result = showListReadRepository.searchShows(request, 10, "popular");
+        CursorPage<ShowSearchItemView, ShowCursor> result = showListReadRepository.searchShows(request, 10, ShowSort.POPULAR);
 
         assertThat(result.items()).extracting(ShowSearchItemView::title)
                 .containsExactly("Seoul Popular", "Seoul Normal");
@@ -161,7 +162,7 @@ class QuerydslShowListReadRepositoryTest {
     void 조건에_맞는_공연이_없으면_빈_슬라이스를_반환한다() {
         ShowParam param = new ShowParam(null, null, Region.JEOLLA, null);
 
-        CursorPage<ShowListItemView, ShowCursor> result = showListReadRepository.findAllBySearch(param, 10, "popular");
+        CursorPage<ShowListItemView, ShowCursor> result = showListReadRepository.findAllBySearch(param, 10, ShowSort.POPULAR);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();

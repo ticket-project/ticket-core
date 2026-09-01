@@ -2,9 +2,9 @@ package com.ticket.core.app.auth.command;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.token.AuthTokenIssuer;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class ExchangeOAuth2TokenUseCase {
 
     private final OAuth2AuthCodeStore oAuth2AuthCodeStore;
     private final MemberRepository memberRepository;
-    private final AuthTokenManager authTokenManager;
+    private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(String code) {
         public Input {
@@ -58,7 +58,7 @@ public class ExchangeOAuth2TokenUseCase {
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.AUTHENTICATION_FAILED, "유효하지 않거나 만료된 인증 코드입니다."));
         final Member member = memberRepository.findActiveById(memberId)
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
-        final IssuedAuthTokens result = authTokenManager.issueTokens(member.getId(), member.getRole().name());
+        final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
                 result.refreshToken(),

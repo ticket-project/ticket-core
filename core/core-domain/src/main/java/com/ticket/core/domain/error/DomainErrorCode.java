@@ -26,10 +26,7 @@ public enum DomainErrorCode implements ErrorCode {
     // 선점
     E6000("이미 선점된 좌석"),
     E6001("선점 가능한 좌석 수 초과"),
-    E6003("선점 처리 중"),
-
-    // 공연
-    E7000("미지원 공연 정렬");
+    E6003("선점 처리 중");
 
     private final String description;
 

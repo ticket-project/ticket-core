@@ -1,7 +1,7 @@
 package com.ticket.core.domain.performance.repository;
 
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,5 +26,5 @@ public interface PerformanceRepository {
      *
      * <p>불변식 판정 경로가 회차 엔티티 전체를 적재하지 않도록 도메인 값으로 좁혀 조회한다.
      */
-    Optional<PerformanceBookingPolicyView> findBookingPolicyById(Long performanceId);
+    Optional<PerformanceBookingPolicySnapshot> findBookingPolicyById(Long performanceId);
 }

@@ -1,6 +1,6 @@
 package com.ticket.core.app.auth.oauth2;
 
-import com.ticket.core.domain.auth.oauth2.OAuth2AuthCodeStore;
+import com.ticket.core.app.auth.oauth2.OAuth2AuthCodeStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

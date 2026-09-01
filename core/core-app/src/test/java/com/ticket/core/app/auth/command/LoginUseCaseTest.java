@@ -1,9 +1,9 @@
 package com.ticket.core.app.auth.command;
 
 import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.app.auth.AuthService;
-import com.ticket.core.domain.auth.token.AuthTokenManager;
-import com.ticket.core.domain.auth.token.IssuedAuthTokens;
+import com.ticket.core.app.auth.CredentialAuthenticator;
+import com.ticket.core.app.auth.token.AuthTokenIssuer;
+import com.ticket.core.app.auth.token.IssuedAuthTokens;
 import com.ticket.core.domain.member.model.Member;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,10 +21,10 @@ import static org.mockito.Mockito.when;
 class LoginUseCaseTest {
 
     @Mock
-    private AuthService authService;
+    private CredentialAuthenticator credentialAuthenticator;
 
     @Mock
-    private AuthTokenManager authTokenManager;
+    private AuthTokenIssuer authTokenIssuer;
 
     @InjectMocks
     private LoginUseCase useCase;
@@ -36,8 +36,8 @@ class LoginUseCaseTest {
         when(member.getRole()).thenReturn(Role.MEMBER);
         IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 1L);
 
-        when(authService.login("user@example.com", "password")).thenReturn(member);
-        when(authTokenManager.issueTokens(1L, "MEMBER")).thenReturn(response);
+        when(credentialAuthenticator.authenticate("user@example.com", "password")).thenReturn(member);
+        when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         LoginUseCase.Result result = useCase.execute(new LoginUseCase.Input("user@example.com", "password"));
         LoginUseCase.Output output = result.output();
@@ -50,7 +50,7 @@ class LoginUseCaseTest {
         assertThat(result.toString())
                 .doesNotContain("access-token-value")
                 .doesNotContain("refresh-token-value");
-        verify(authService).login("user@example.com", "password");
-        verify(authTokenManager).issueTokens(1L, "MEMBER");
+        verify(credentialAuthenticator).authenticate("user@example.com", "password");
+        verify(authTokenIssuer).issueTokens(1L, "MEMBER");
     }
 }

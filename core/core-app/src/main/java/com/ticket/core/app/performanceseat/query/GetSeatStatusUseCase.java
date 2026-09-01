@@ -4,10 +4,10 @@ import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.performance.query.BookingPolicyValidator;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
+import com.ticket.core.domain.performance.policy.BookingPolicyValidator;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.app.admission.AdmissionGuard;
 import com.ticket.core.app.performanceseat.query.model.SeatStateView;
 import com.ticket.core.app.performanceseat.query.model.SeatStatus;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 public class GetSeatStatusUseCase {
 
     private final PerformanceRepository performanceRepository;
-    private final SeatStatusDbReader seatStatusDbReader;
+    private final SeatStateSnapshotReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
     private final AdmissionGuard admissionGuard;
@@ -46,7 +46,7 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceBookingPolicyView policy = performanceRepository.findBookingPolicyById(performanceId)
+        final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND,
                         "공연을 찾을 수 없습니다. id=" + performanceId));
         BookingPolicyValidator.ensureBookingOpen(policy, now);
@@ -69,7 +69,7 @@ public class GetSeatStatusUseCase {
     }
 
     private void ensureAdmitted(
-            final PerformanceBookingPolicyView policy,
+            final PerformanceBookingPolicySnapshot policy,
             final Input input,
             final LocalDateTime now
     ) {

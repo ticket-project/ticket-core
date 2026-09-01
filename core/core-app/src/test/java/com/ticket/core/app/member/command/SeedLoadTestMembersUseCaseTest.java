@@ -1,7 +1,9 @@
 package com.ticket.core.app.member.command;
 
-import com.ticket.core.domain.auth.PasswordService;
+import com.ticket.core.app.auth.password.PasswordHasher;
+import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.Member;
+import com.ticket.core.domain.member.model.RawPassword;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
@@ -28,11 +30,11 @@ class SeedLoadTestMembersUseCaseTest {
     @Test
     void 기본_계정을_인코딩된_비밀번호로_만든다() {
         final MemberRepository memberRepository = mock(MemberRepository.class);
-        final PasswordService passwordService = mock(PasswordService.class);
+        final PasswordHasher passwordHasher = mock(PasswordHasher.class);
         when(memberRepository.findActiveByEmail(anyString())).thenReturn(Optional.empty());
-        when(passwordService.encode("password1234")).thenReturn("{noop}encoded-password");
+        when(passwordHasher.hash(RawPassword.create("password1234"))).thenReturn(EncodedPassword.create("{noop}encoded-password"));
         final SeedLoadTestMembersUseCase useCase =
-                new SeedLoadTestMembersUseCase(memberRepository, passwordService);
+                new SeedLoadTestMembersUseCase(memberRepository, passwordHasher);
 
         final SeedLoadTestMembersUseCase.Output output = useCase.execute(INPUT);
 
@@ -50,18 +52,18 @@ class SeedLoadTestMembersUseCaseTest {
                     assertThat(member.getEncodedPassword().getPassword()).isNotEqualTo("password1234");
                     assertThat(member.getRole()).isEqualTo(Role.MEMBER);
                 });
-        verify(passwordService, times(1)).encode("password1234");
+        verify(passwordHasher, times(1)).hash(RawPassword.create("password1234"));
     }
 
     @Test
     void 이미_있는_계정은_건너뛴다() {
         final MemberRepository memberRepository = mock(MemberRepository.class);
-        final PasswordService passwordService = mock(PasswordService.class);
+        final PasswordHasher passwordHasher = mock(PasswordHasher.class);
         final Member existingMember = mock(Member.class);
         when(memberRepository.findActiveByEmail(anyString())).thenReturn(Optional.of(existingMember));
-        when(passwordService.encode("password1234")).thenReturn("{noop}encoded-password");
+        when(passwordHasher.hash(RawPassword.create("password1234"))).thenReturn(EncodedPassword.create("{noop}encoded-password"));
         final SeedLoadTestMembersUseCase useCase =
-                new SeedLoadTestMembersUseCase(memberRepository, passwordService);
+                new SeedLoadTestMembersUseCase(memberRepository, passwordHasher);
 
         final SeedLoadTestMembersUseCase.Output output = useCase.execute(INPUT);
 

@@ -1,16 +1,18 @@
 package com.ticket.core.infra.show.query;
 
+import com.ticket.core.app.show.query.model.ShowDetailView;
+
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
 import com.ticket.core.app.show.query.ShowDetailReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.performance.query.BookingEntryResolver;
+import com.ticket.core.domain.performance.policy.BookingEntryResolver;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
-import com.ticket.core.domain.show.mapping.ShowGrade;
-import com.ticket.core.domain.show.performer.Performer;
-import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.ShowGrade;
+import com.ticket.core.domain.show.model.Performer;
+import com.ticket.core.domain.show.model.Venue;
+import com.ticket.core.domain.show.model.BookingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -23,9 +25,9 @@ import java.util.stream.Collectors;
 
 import static com.ticket.core.domain.performance.model.QPerformance.performance;
 import static com.ticket.core.domain.show.model.QGenre.genre;
-import static com.ticket.core.domain.show.mapping.QShowGenre.showGenre;
-import static com.ticket.core.domain.show.mapping.QShowGrade.showGrade;
-import static com.ticket.core.domain.show.performer.QPerformer.performer;
+import static com.ticket.core.domain.show.model.QShowGenre.showGenre;
+import static com.ticket.core.domain.show.model.QShowGrade.showGrade;
+import static com.ticket.core.domain.show.model.QPerformer.performer;
 import static com.ticket.core.domain.show.model.QShow.show;
 import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
 
@@ -38,7 +40,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     private final Clock clock;
 
     @Override
-    public Optional<GetShowDetailUseCase.Output> findShowDetail(final Long showId) {
+    public Optional<ShowDetailView> findShowDetail(final Long showId) {
         final Show showEntity = fetchShow(showId);
         if (showEntity == null) {
             return Optional.empty();
@@ -143,7 +145,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         ).orElse(0L);
     }
 
-    private GetShowDetailUseCase.Output toShowDetail(
+    private ShowDetailView toShowDetail(
             final Show showEntity,
             final List<String> genreNames,
             final List<GetShowDetailUseCase.GradeInfo> grades,
@@ -152,7 +154,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     ) {
         final BookingStatus bookingStatus = showEntity.getBookingStatus(LocalDateTime.now(clock));
 
-        return new GetShowDetailUseCase.Output(
+        return new ShowDetailView(
                 showEntity.getId(),
                 showEntity.getTitle(),
                 showEntity.getSubTitle(),

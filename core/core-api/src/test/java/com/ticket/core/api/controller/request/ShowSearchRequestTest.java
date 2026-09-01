@@ -5,9 +5,9 @@ import com.ticket.core.api.support.cursor.ShowCursorCodec;
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
 import com.ticket.core.app.show.query.model.ShowSearchCriteria;
-import com.ticket.core.domain.show.BookingStatus;
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.ShowSortKey;
+import com.ticket.core.app.show.query.ShowSort;
+import com.ticket.core.domain.show.model.BookingStatus;
+import com.ticket.core.domain.show.model.Region;
 import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,7 +24,7 @@ class ShowSearchRequestTest {
             new ShowCursorCodec(JsonMapper.builder().build());
 
     private static final ShowCursor CURSOR_POSITION =
-            new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
     private static final String ENCODED_CURSOR = CURSOR_CODEC.encode(CURSOR_POSITION);
 

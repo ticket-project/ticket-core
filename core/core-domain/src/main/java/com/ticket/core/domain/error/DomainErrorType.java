@@ -85,13 +85,6 @@ public enum DomainErrorType implements ErrorDefinition {
             ErrorStatus.CONFLICT,
             DomainErrorCode.E6003,
             "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."
-    ),
-
-    // 공연
-    NOT_SUPPORT_SHOW_SORT(
-            ErrorStatus.BAD_REQUEST,
-            DomainErrorCode.E7000,
-            "지원하지 않는 정렬 조건입니다."
     );
 
     private final ErrorStatus status;

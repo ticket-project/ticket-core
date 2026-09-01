@@ -2,6 +2,7 @@ package com.ticket.core.app.showlike.query;
 
 import com.ticket.core.app.error.ApplicationErrorType;
 import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.support.error.CoreException;
@@ -34,24 +35,13 @@ public class GetMyShowLikesUseCase {
         }
     }
 
-    public record ShowLikeSummary(
-            Long showId,
-            String title,
-            String image,
-            LocalDate startDate,
-            LocalDate endDate,
-            String venue,
-            LocalDateTime likedAt
-    ) {
-    }
-
-    public record Output(List<ShowLikeSummary> items, boolean hasNext, Long nextPosition) {
+    public record Output(List<ShowLikeSummaryView> items, boolean hasNext, Long nextPosition) {
     }
 
     public Output execute(final Input input) {
         final Member member = memberRepository.findActiveById(input.memberId())
                 .orElseThrow(() -> new CoreException(ApplicationErrorType.DATA_NOT_FOUND));
-        final CursorPage<ShowLikeSummary, Long> page =
+        final CursorPage<ShowLikeSummaryView, Long> page =
                 showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
         return new Output(page.items(), page.hasNext(), page.nextPosition());
     }

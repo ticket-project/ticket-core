@@ -4,12 +4,11 @@ import com.ticket.support.error.CoreException;
 import com.ticket.core.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicyView;
-import com.ticket.core.domain.performanceseat.support.SeatStatusEventPublisher;
+import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.core.domain.performanceseat.support.SeatStatusMessage.SeatAction;
-import com.ticket.core.domain.queue.AdmissionGuard;
+import com.ticket.core.app.admission.AdmissionGuard;
 import com.ticket.core.domain.queue.model.QueueMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,7 +74,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
-        PerformanceBookingPolicyView policy = openPolicy(null);
+        PerformanceBookingPolicySnapshot policy = openPolicy(null);
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(policy));
 
         useCase.execute(INPUT);
@@ -89,7 +88,7 @@ class SelectSeatUseCaseTest {
         inOrder.verify(performanceRepository).findBookingPolicyById(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
-        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatAction.SELECTED);
+        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatStatusAction.SELECTED);
     }
 
     @Test
@@ -141,16 +140,16 @@ class SelectSeatUseCaseTest {
         verifyNoInteractions(seatSelectionCoordinator, seatEventPublisher);
     }
 
-    private PerformanceBookingPolicyView openPolicy(final QueueMode queueMode) {
+    private PerformanceBookingPolicySnapshot openPolicy(final QueueMode queueMode) {
         return policy(NOW.minusHours(1), NOW.plusHours(1), queueMode);
     }
 
-    private PerformanceBookingPolicyView policy(
+    private PerformanceBookingPolicySnapshot policy(
             final LocalDateTime orderOpenTime,
             final LocalDateTime orderCloseTime,
             final QueueMode queueMode
     ) {
-        return new PerformanceBookingPolicyView(
+        return new PerformanceBookingPolicySnapshot(
                 10L,
                 orderOpenTime,
                 orderCloseTime,

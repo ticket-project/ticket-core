@@ -2,7 +2,7 @@ package com.ticket.core.api.support.cursor;
 
 import com.ticket.core.api.error.ApiErrorType;
 import com.ticket.core.app.show.query.model.ShowCursor;
-import com.ticket.core.domain.show.meta.ShowSortKey;
+import com.ticket.core.app.show.query.ShowSort;
 import com.ticket.support.error.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,7 +23,7 @@ class ShowCursorCodecTest {
 
     @Test
     void 커서_wire_포맷은_url_safe_base64_json이다() {
-        ShowCursor position = new ShowCursor(ShowSortKey.POPULAR, "DESC", "10", 1L);
+        ShowCursor position = new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
         String encoded = codec.encode(position);
 
@@ -34,7 +34,7 @@ class ShowCursorCodecTest {
 
     @Test
     void 인코딩한_커서를_그대로_되읽는다() {
-        ShowCursor position = new ShowCursor(ShowSortKey.SALE_START_APPROACHING, "ASC", "2026-03-15T10:00", 42L);
+        ShowCursor position = new ShowCursor(ShowSort.SALE_START_APPROACHING, "ASC", "2026-03-15T10:00", 42L);
 
         assertThat(codec.decode(codec.encode(position))).isEqualTo(position);
     }

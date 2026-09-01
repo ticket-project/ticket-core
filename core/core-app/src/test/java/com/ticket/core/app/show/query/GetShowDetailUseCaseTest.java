@@ -2,8 +2,9 @@ package com.ticket.core.app.show.query;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.BookingStatus;
+import com.ticket.core.domain.show.model.SaleType;
+import com.ticket.core.domain.show.model.BookingStatus;
+import com.ticket.core.app.show.query.model.ShowDetailView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,7 +33,7 @@ class GetShowDetailUseCaseTest {
 
     @Test
     void 공연_상세를_그대로_반환한다() {
-        GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
+        ShowDetailView detail = new ShowDetailView(
                 1L,
                 "공연",
                 "부제",
@@ -57,7 +58,10 @@ class GetShowDetailUseCaseTest {
 
         GetShowDetailUseCase.Output output = useCase.execute(new GetShowDetailUseCase.Input(1L));
 
-        assertThat(output).isEqualTo(detail);
+        assertThat(output.id()).isEqualTo(detail.id());
+        assertThat(output.title()).isEqualTo(detail.title());
+        assertThat(output.bookingStatus()).isEqualTo(detail.bookingStatus());
+        assertThat(output.genreNames()).isEqualTo(detail.genreNames());
         verify(showDetailReadRepository).findShowDetail(1L);
     }
 

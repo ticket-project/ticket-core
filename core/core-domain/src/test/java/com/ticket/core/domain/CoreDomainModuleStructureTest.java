@@ -41,7 +41,7 @@ class CoreDomainModuleStructureTest {
         assertThat(domainBuild).doesNotContain("project(':core:core-enum')");
         assertThat(Files.exists(resolve("../core-enum"))).isFalse();
         assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/member/model/Role.java"))).isTrue();
-        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/show/BookingStatus.java"))).isTrue();
+        assertThat(Files.exists(resolve("src/main/java/com/ticket/core/domain/show/model/BookingStatus.java"))).isTrue();
     }
 
     @Test
@@ -53,9 +53,9 @@ class CoreDomainModuleStructureTest {
         assertThat(Files.exists(resolve("src/main/java/com/ticket/core/config/security/JwtTokenService.java"))).isFalse();
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtTokenService.java"))).isFalse();
         assertThat(Files.exists(resolve("../core-api/src/main/java/com/ticket/core/config/security/JwtProperties.java"))).isFalse();
-        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtTokenService.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtAccessTokenCodec.java"))).isTrue();
         assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtProperties.java"))).isTrue();
-        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtAuthTokenManager.java"))).isTrue();
+        assertThat(Files.exists(resolve("../core-infra/src/main/java/com/ticket/core/infra/auth/token/JwtAuthTokenIssuer.java"))).isTrue();
 
         // 인증 필터는 구현이 아니라 포트를 본다.
         assertThat(Files.exists(resolve("../core-app/src/main/java/com/ticket/core/app/auth/token/AccessTokenReader.java"))).isTrue();

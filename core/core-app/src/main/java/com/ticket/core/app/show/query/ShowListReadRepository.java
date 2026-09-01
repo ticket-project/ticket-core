@@ -21,7 +21,7 @@ import java.util.List;
  */
 public interface ShowListReadRepository {
 
-    CursorPage<ShowListItemView, ShowCursor> findAllBySearch(ShowParam param, int size, String sort);
+    CursorPage<ShowListItemView, ShowCursor> findAllBySearch(ShowParam param, int size, ShowSort sort);
 
     List<ShowSummaryView> findLatestShows(String categoryCode, int limit);
 
@@ -30,10 +30,10 @@ public interface ShowListReadRepository {
     CursorPage<ShowOpeningSoonDetailView, ShowCursor> findSaleOpeningSoonPage(
             SaleOpeningSoonSearchParam param,
             int size,
-            String sort
+            ShowSort sort
     );
 
-    CursorPage<ShowSearchItemView, ShowCursor> searchShows(ShowSearchCriteria request, int size, String sort);
+    CursorPage<ShowSearchItemView, ShowCursor> searchShows(ShowSearchCriteria request, int size, ShowSort sort);
 
     long countSearchShows(ShowSearchCriteria request);
 }

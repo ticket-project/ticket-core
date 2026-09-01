@@ -2,10 +2,6 @@ package com.ticket.core.domain.show.model;
 
 
 import com.ticket.core.domain.BaseEntity;
-import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.performer.Performer;
-import com.ticket.core.domain.show.venue.Venue;
-import com.ticket.core.domain.show.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

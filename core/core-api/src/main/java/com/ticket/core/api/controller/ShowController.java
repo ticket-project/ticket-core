@@ -107,7 +107,7 @@ public class ShowController implements ShowControllerDocs {
             @RequestParam(defaultValue = "saleStartApproaching") final String sort
     ) {
         final GetSaleStartApproachingShowsPageUseCase.Input input =
-                new GetSaleStartApproachingShowsPageUseCase.Input(request.toParam(showCursorCodec), size, sort);
+                new GetSaleStartApproachingShowsPageUseCase.Input(request.toParam(showCursorCodec), size, ShowSort.from(sort));
         final GetSaleStartApproachingShowsPageUseCase.Output output = getSaleStartApproachingShowsPageUseCase.execute(input);
         return ApiResponse.success(SliceResponse.of(
                 output.items(),

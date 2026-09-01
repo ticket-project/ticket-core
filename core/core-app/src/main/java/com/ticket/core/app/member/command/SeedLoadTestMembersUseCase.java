@@ -1,9 +1,10 @@
 package com.ticket.core.app.member.command;
 
-import com.ticket.core.domain.auth.PasswordService;
+import com.ticket.core.app.auth.password.PasswordHasher;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.EncodedPassword;
 import com.ticket.core.domain.member.model.Member;
+import com.ticket.core.domain.member.model.RawPassword;
 import com.ticket.core.domain.member.model.Role;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Service;
 public class SeedLoadTestMembersUseCase {
 
     private final MemberRepository memberRepository;
-    private final PasswordService passwordService;
+    private final PasswordHasher passwordHasher;
 
     public record Input(String emailPrefix, String emailSuffix, int count, String rawPassword) {
     }
@@ -32,7 +33,7 @@ public class SeedLoadTestMembersUseCase {
             return new Output(0, 0);
         }
 
-        final String encodedPassword = passwordService.encode(input.rawPassword());
+        final EncodedPassword encodedPassword = passwordHasher.hash(RawPassword.create(input.rawPassword()));
         int created = 0;
 
         for (int memberNo = 1; memberNo <= count; memberNo++) {
@@ -43,7 +44,7 @@ public class SeedLoadTestMembersUseCase {
 
             memberRepository.save(new Member(
                     Email.create(email),
-                    EncodedPassword.create(encodedPassword),
+                    encodedPassword,
                     input.emailPrefix() + memberNo,
                     Role.MEMBER
             ));

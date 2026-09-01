@@ -2,8 +2,8 @@ package com.ticket.core.app.show.query.model;
 
 import com.ticket.support.error.CoreException;
 import com.ticket.core.app.error.ApplicationErrorType;
-import com.ticket.core.domain.show.BookingStatus;
-import com.ticket.core.domain.show.meta.Region;
+import com.ticket.core.domain.show.model.BookingStatus;
+import com.ticket.core.domain.show.model.Region;
 import lombok.Getter;
 
 import java.time.LocalDate;

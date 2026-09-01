@@ -3,7 +3,8 @@ package com.ticket.core.app.order.command;
 import com.ticket.core.app.order.command.HoldReleaseTask;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.domain.performanceseat.command.SeatStatusPublisher;
+import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
+import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.app.event.HoldReleaseProgressRecorder;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
@@ -22,7 +23,7 @@ public class HoldReleaseTaskProcessor {
     private final LockManager lockManager;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
-    private final SeatStatusPublisher seatStatusPublisher;
+    private final SeatStatusEventPublisher seatStatusEventPublisher;
     private final HoldReleaseProgressRecorder progressRecorder;
 
     public void process(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
@@ -39,7 +40,9 @@ public class HoldReleaseTaskProcessor {
         if (publishableSeatIds.isEmpty()) {
             return;
         }
-        seatStatusPublisher.publishReleased(task.performanceId(), publishableSeatIds);
+        for (final Long seatId : publishableSeatIds) {
+            seatStatusEventPublisher.publish(task.performanceId(), seatId, SeatStatusAction.RELEASED);
+        }
     }
 
     private void releaseHoldOnce(

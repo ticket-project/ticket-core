@@ -5,12 +5,12 @@ import com.ticket.core.domain.error.DomainErrorType;
 import com.ticket.core.domain.seat.model.Seat;
 import com.ticket.core.domain.show.model.Show;
 import com.ticket.core.domain.show.model.Category;
-import com.ticket.core.domain.show.mapping.ShowGrade;
-import com.ticket.core.domain.show.mapping.ShowSeat;
-import com.ticket.core.domain.show.meta.Region;
-import com.ticket.core.domain.show.meta.SaleType;
-import com.ticket.core.domain.show.performer.Performer;
-import com.ticket.core.domain.show.venue.Venue;
+import com.ticket.core.domain.show.model.ShowGrade;
+import com.ticket.core.domain.show.model.ShowSeat;
+import com.ticket.core.domain.show.model.Region;
+import com.ticket.core.domain.show.model.SaleType;
+import com.ticket.core.domain.show.model.Performer;
+import com.ticket.core.domain.show.model.Venue;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

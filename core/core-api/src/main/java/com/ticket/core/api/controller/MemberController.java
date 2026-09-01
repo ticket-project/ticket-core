@@ -1,5 +1,7 @@
 package com.ticket.core.api.controller;
 
+import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
+
 import com.ticket.core.api.controller.docs.MemberControllerDocs;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
@@ -42,7 +44,7 @@ public class MemberController implements MemberControllerDocs {
 
     @Override
     @GetMapping("/me/likes")
-    public ApiResponse<SliceResponse<GetMyShowLikesUseCase.ShowLikeSummary>> getMyLikes(
+    public ApiResponse<SliceResponse<ShowLikeSummaryView>> getMyLikes(
             final AuthenticatedMember member,
             @RequestParam(required = false) final String cursor,
             @RequestParam(defaultValue = "20") final int size
