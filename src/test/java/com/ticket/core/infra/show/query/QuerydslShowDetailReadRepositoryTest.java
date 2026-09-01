@@ -2,6 +2,7 @@ package com.ticket.core.infra.show.query;
 
 import com.ticket.core.app.show.query.GetShowDetailUseCase;
 import com.ticket.core.app.show.query.ShowDetailReadRepository;
+import com.ticket.core.app.show.query.model.ShowDetailView;
 import com.ticket.core.domain.show.model.BookingStatus;
 import com.ticket.core.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.core.domain.show.model.Region;
@@ -72,10 +73,10 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
 
     @Test
     void 공연_상세정보를_조합해_조회하고_예매상태는_Clock_기준으로_계산한다() {
-        Optional<GetShowDetailUseCase.Output> result = showDetailReadRepository.findShowDetail(showId);
+        Optional<ShowDetailView> result = showDetailReadRepository.findShowDetail(showId);
 
         assertThat(result).isPresent();
-        GetShowDetailUseCase.Output detail = result.orElseThrow();
+        ShowDetailView detail = result.orElseThrow();
         assertThat(detail.title()).isEqualTo("단독 공연");
         assertThat(detail.likeCount()).isEqualTo(2L);
         assertThat(detail.genreNames()).contains("케이팝");
