@@ -39,12 +39,12 @@ jobs:
       - name: Test and build
         run: |
           chmod +x ./gradlew
-          ./gradlew test :core:core-infra:integrationTest :bootstrap:integrationTest :bootstrap:bootJar --no-daemon
+          ./gradlew clean test bootJar --no-daemon
 
       - name: Upload verified application jar
         uses: actions/upload-artifact@v4
         with:
           name: ticket-core-jar
-          path: bootstrap/build/libs/*.jar
+          path: build/libs/*.jar
           if-no-files-found: error
           retention-days: 7

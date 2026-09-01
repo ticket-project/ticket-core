@@ -1,46 +1,100 @@
 plugins {
     id 'java'
-    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }
 
-allprojects {
-    group = "${property('projectGroup')}"
-    version = "${property('applicationVersion')}"
+group = "${property('projectGroup')}"
+version = "${property('applicationVersion')}"
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
-subprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management'
-
-    // toolchain은 프로젝트별 설정이라 루트에 두면 서브프로젝트가 상속하지 않는다.
-    // 여기 두어야 실제 소스가 있는 모듈이 25로 컴파일된다.
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(25)
-        }
+dependencyManagement {
+    imports {
+        mavenBom libs.spring.modulith.bom.get().toString()
     }
+}
 
-    dependencies {
-        testImplementation 'org.springframework.boot:spring-boot-starter-test'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    }
+dependencies {
+    // Spring Modulith
+    implementation libs.spring.modulith.starter.jpa
+    runtimeOnly libs.spring.modulith.starter.insight
+    testImplementation libs.spring.modulith.starter.test
 
-    tasks.named('bootJar') {
-        enabled = false
-    }
+    // Web / API
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation libs.springdoc.openapi.starter.webmvc.ui
 
-    tasks.named('jar') {
-        enabled = true
-    }
+    // 실행 환경
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly libs.jjwt.impl
+    runtimeOnly libs.jjwt.jackson
+    runtimeOnly 'org.flywaydb:flyway-database-oracle'
+    // prod/dev는 Oracle, local/test는 h2 파일 DB를 쓴다.
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly libs.oracle.security.osdt.cert
+    runtimeOnly libs.oracle.security.oraclepki
+    runtimeOnly libs.oracle.security.osdt.core
 
-    tasks.named('test') {
-        useJUnitPlatform()
-    }
+    // Data / Persistence
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation libs.p6spy.spring.boot.starter
+    implementation libs.jjwt.api
+    implementation variantOf(libs.querydsl.jpa) { classifier('jakarta') }
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'org.springframework.data:spring-data-jpa'
+
+    // 유스케이스 계층에 필요한 최소 Spring
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+    implementation 'org.springframework:spring-core'
+    implementation 'org.springframework:spring-beans'
+    implementation 'org.slf4j:slf4j-api'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation libs.redisson.spring.boot.starter
+
+    annotationProcessor variantOf(libs.querydsl.apt) { classifier('jakarta') }
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-resttestclient'
+    testImplementation libs.fixture.monkey.starter
+    testImplementation libs.archunit.junit5
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    // 제약 위반 원인 예외를 실제 타입으로 만들어 테스트한다. 프로덕션은 쓰지 않는다.
+    testImplementation 'org.hibernate.orm:hibernate-core'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
