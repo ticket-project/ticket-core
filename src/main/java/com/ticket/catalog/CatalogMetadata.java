@@ -18,6 +18,8 @@ public interface CatalogMetadata {
 
     List<CodeLabel> regions();
 
+    List<CodeLabel> showSortKeys();
+
     record CategoryCode(long id, String code, String name) {
     }
 

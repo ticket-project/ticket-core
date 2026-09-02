@@ -8,6 +8,7 @@ import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.SaleType;
 import com.ticket.catalog.internal.domain.show.repository.CategoryRepository;
 import com.ticket.catalog.internal.domain.show.repository.GenreRepository;
+import com.ticket.catalog.internal.application.show.query.ShowSort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +60,13 @@ public class CatalogMetadataService implements CatalogMetadata {
     public List<CodeLabel> regions() {
         return Arrays.stream(Region.values())
                 .map(value -> new CodeLabel(value.getCode(), value.getDescription()))
+                .toList();
+    }
+
+    @Override
+    public List<CodeLabel> showSortKeys() {
+        return Arrays.stream(ShowSort.values())
+                .map(value -> new CodeLabel(value.apiValue(), value.getDescription()))
                 .toList();
     }
 
