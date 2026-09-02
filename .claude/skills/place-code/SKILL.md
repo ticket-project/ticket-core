@@ -30,7 +30,7 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 모듈을 잘못 고르면 그 다음 판단이 전부 무의미하다. 애매하면 "이 코드가 사라지면 무엇이 먼저
 깨지는가"를 먼저 모듈 단위로 묻는다.
 
-**아직 모듈로 옮기지 않은 legacy 코드**(`com.ticket.core`/`bootstrap`/`storage`/`support`)가
+**아직 모듈로 옮기지 않은 legacy 코드**(`com.ticket.core`/`bootstrap`/`storage`(그리고 `core` 아래 nested된 `core.support`))가
 있다. 새 코드를 여기 추가하지 않는다 — 새 기능은 해당하는 모듈로 바로 만든다. legacy 코드를
 옮기는 작업 자체는 범위가 크므로 먼저 사용자와 범위를 정한다.
 

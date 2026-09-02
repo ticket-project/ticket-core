@@ -172,7 +172,7 @@ executor를 쓴다. Redis 만료 처리(`redisExpirationTaskExecutor`)처럼 명
 - 만료 보정: `booking.internal.application.order.command.ExpirePendingOrdersUseCase`
 - background 트리거(legacy): `bootstrap.worker.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.internal.infrastructure.redis.RedisExpirationListenerConfig`
-- event publication 운영: `configuration.EventPublicationMaintenance`
+- event publication 운영: `bootstrap.config.EventPublicationMaintenance`
 
 ## 운영 확인
 

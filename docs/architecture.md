@@ -21,7 +21,6 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 ```text
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
-├── configuration/           # 전역 기술 설정
 ├── booking/                 # 좌석 판매 상태·Selection·Hold·Order, 공개: BookingMetadata, OrderStarted/OrderTerminated
 ├── catalog/                 # Show·Performance·Seat·대기열 정책, 공개: BookingPolicyLookup, ShowLookup, CatalogMetadata
 ├── identity/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, IdentityMetadata
@@ -29,7 +28,9 @@ src/main/java/com/ticket
 ├── showlike/                 # Show 좋아요(write 경로만 이동, 아래 "showlike 모듈의 경계" 참고)
 ├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
 ├── shared/                   # 공유 계약을 위한 자리(현재 비어 있음, 아래 참고)
-└── core/, bootstrap/, storage/, support/   # 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존 범위")
+└── core/, bootstrap/, storage/   # 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존 범위"). support는
+    독립 top-level이 아니라 core/support 아래 nested — event publication registry 운영 등 전역
+    기술 설정은 bootstrap/config에 있다.
 ```
 
 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
@@ -346,7 +347,6 @@ hold를 만드는 구간에만 건다. DB 트랜잭션 동안 좌석 락을 쥐�
 
 ## 세부적으로 아직 정리하지 않은 것
 
-세부적으로 아직 정리하지 않은 이름과 구조는 [기술 부채 문서](technical-debt.md)에 기록한다. 그
-문서는 이번 Spring Modulith 전환 이전에 작성된 것이라 `core-app`/`core-domain`/`core-api` 같은
-계층형 경로를 그대로 쓴다 — 항목이 가리키는 legacy 코드가 아직 그 경로에 있는 동안은 유효한
-참조다.
+세부적으로 아직 정리하지 않은 이름과 구조는 [기술 부채 문서](technical-debt.md)에 기록한다. 각
+항목이 가리키는 설계 문제(app이 provider 세부사항을 안다, 계층/책임 혼재 등)는 Spring Modulith
+전환과 무관하게 여전히 유효하며, 경로는 전환 후 실제 module 위치로 갱신돼 있다.

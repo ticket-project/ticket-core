@@ -134,9 +134,11 @@ JPA 기반 registry 하나만 쓴다.
 
 `com.ticket.shared`는 여러 모듈이 공유할 최소 계약을 위한 자리로 남겨 뒀지만, 오류 계약을
 `ProblemDetail`/`BusinessProblem` 대신 기존 전역 구조로 되돌리면서(ADR 0002 참고) 현재 이
-패키지에는 class가 없다. 그래서 `TicketApplication`도 `@Modulith(sharedModules = "shared")`가
-아니라 `@Modulith`만 선언한다. 둘 이상의 독립 모듈에서 의미가 같고 특정 entity나 기술 adapter가
-아닌 타입이 다시 생기면 그때 `sharedModules = "shared"`를 되돌린다.
+패키지에는 class가 없다. `package-info.java`가 애노테이션 없이 비어 있으면 javac가
+`package-info.class`를 만들지 않아 Spring Modulith가 이 패키지 자체를 못 보므로,
+`@ApplicationModule(displayName = "Shared")`만 선언해 class 없이도 7번째 module로 잡히게 했다.
+`TicketApplication`은 계속 `@Modulith(sharedModules = "shared")`를 선언한다. 둘 이상의 독립
+모듈에서 의미가 같고 특정 entity나 기술 adapter가 아닌 타입이 생기면 그때 이 패키지에 채운다.
 
 ### 7. Module-aware Flyway와 물리 데이터 경계
 

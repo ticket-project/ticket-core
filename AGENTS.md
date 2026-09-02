@@ -29,7 +29,7 @@
 | 모듈이 왜 그렇게 나뉘었는지, 저장소·동시성 구조 | `docs/architecture.md` |
 | 기능·API·도메인 규칙 구현, Redis·분산락 작업 규칙 | `docs/development.md` |
 | 요청·입력 검증을 어느 계층에 둘지, 중복 검증 판단 | `docs/validation.md` |
-| 주문·hold 생성·취소·만료와 outbox 후처리 | `docs/core-booking-lifecycle.md` |
+| 주문·hold 생성·취소·만료와 event 후속 처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지 고르기, 테스트 실행, 결과 보고 | `/verify` 스킬 |
 | 새 테스트를 어디에 어떻게 쓰는지 | `docs/testing.md` |
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 지표 | `docs/operations.md` |
@@ -54,7 +54,7 @@
 단일 Gradle Spring Boot 프로젝트다. `com.ticket`의 직접 하위 패키지(`booking`, `catalog`,
 `identity`, `admission`, `showlike`, `metadata`, `shared`)가 Spring Modulith의 닫힌 Application
 Module이고, 모듈 root에는 다른 모듈이 쓰는 공개 계약만, 실제 구현은 `<module>.internal`에 둔다.
-`com.ticket.core`/`bootstrap`/`storage`/`support`는 아직 모듈로 옮기지 않은 legacy 코드다.
+`com.ticket.core`/`bootstrap`/`storage`(그리고 `core` 아래 nested된 `core.support`)는 아직 모듈로 옮기지 않은 legacy 코드다.
 결정 배경은 `docs/adr/0003-spring-modulith-application-module-boundaries.md`가 원본이다.
 
 **무엇이 금지인지는 문서가 아니라 구조 테스트가 원본이다.** `com.ticket.ModularityTests`가 모듈
