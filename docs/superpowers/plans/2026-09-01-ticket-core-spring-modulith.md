@@ -447,15 +447,15 @@ git commit -m "refactor: 입장 검증을 독립 Modulith 모듈로 옮긴다"
 - Create: `src/test/java/com/ticket/catalog/CatalogModuleTests.java`
 - Create/Move: catalog persistence/unit/web tests
 
-- [ ] **Step 1: 공개 계약의 consumer contract tests를 먼저 작성한다**
+- [x] **Step 1: 공개 계약의 consumer contract tests를 먼저 작성한다**
 
 `BookingPolicySnapshot`에는 booking의 즉시 판단에 필요한 scalar 값만 둔다: `performanceId`, 예매 가능 여부/시간, queue mode/level, hold 제한, 가격 계산에 필요한 값. `ShowSummary`에는 showlike 응답 조합에 필요한 show/venue 표시 값만 둔다. 컬렉션은 defensive copy한다.
 
-- [ ] **Step 2: catalog entity를 이동하고 module-local audited base를 만든다**
+- [x] **Step 2: catalog entity를 이동하고 module-local audited base를 만든다**
 
 공통 `BaseEntity` 상속을 제거하고 `CatalogAuditedEntity`를 `catalog.internal`에 만든다. Show, Performance, Seat, PerformanceQueuePolicy만 catalog가 소유한다. PerformanceSeat는 이동하지 않는다.
 
-- [ ] **Step 3: 공개 API adapter를 구현한다**
+- [x] **Step 3: 공개 API adapter를 구현한다**
 
 API별로 작은 interface를 유지한다.
 
@@ -472,15 +472,15 @@ public interface ShowLookup {
 
 빈 batch는 빈 map을 반환하고, 존재하지 않는 ID는 caller가 의미를 결정할 수 있는 공개 result 또는 catalog 소유 exception으로 일관되게 처리한다. JPA entity를 반환하지 않는다.
 
-- [ ] **Step 4: controller와 HTTP DTO를 internal.web로 옮긴다**
+- [x] **Step 4: controller와 HTTP DTO를 internal.web로 옮긴다**
 
 Performance/Show/Genre endpoint의 URL, JSON field와 pagination contract는 유지한다.
 
-- [ ] **Step 5: persistence slice와 STANDALONE test를 통과시킨다**
+- [x] **Step 5: persistence slice와 STANDALONE test를 통과시킨다**
 
 JPA adapter test는 `@DataJpaTest`와 `@ModuleSlicing`을 함께 사용한다. module test에서는 다른 업무 모듈 bean이 없어도 catalog가 기동되어야 한다.
 
-- [ ] **Step 6: 의존성 방향을 검사하고 커밋한다**
+- [x] **Step 6: 의존성 방향을 검사하고 커밋한다**
 
 ```powershell
 rg "com\.ticket\.(booking|identity|admission|showlike|metadata)" src/main/java/com/ticket/catalog
