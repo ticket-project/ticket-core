@@ -401,11 +401,11 @@ Expected: 구조 테스트 PASS. 아직 legacy package가 root 직접 하위에 
 - Create: `src/test/java/com/ticket/admission/AdmissionModuleTests.java`
 - Move/Modify: admission unit tests → `src/test/java/com/ticket/admission/internal/**`
 
-- [ ] **Step 1: 공개 계약 test를 작성한다**
+- [x] **Step 1: 공개 계약 test를 작성한다**
 
 `AdmissionVerifier.verify(long performanceId, long memberId, String token)`이 유효한 token에는 success, 만료·claim mismatch·서명 오류에는 admission 소유 `BusinessException`을 내는 동작을 고정한다. 공개 result는 기술 예외나 JWT claim 객체를 포함하지 않는 불변 record다.
 
-- [ ] **Step 2: STANDALONE module test를 작성한다**
+- [x] **Step 2: STANDALONE module test를 작성한다**
 
 ```java
 @ApplicationModuleTest
@@ -415,11 +415,11 @@ class AdmissionModuleTests {
 }
 ```
 
-- [ ] **Step 3: JWT와 header 구현을 internal로 이동한다**
+- [x] **Step 3: JWT와 header 구현을 internal로 이동한다**
 
 기존 검증 동작을 변경하지 않고 public interface 뒤에 구현한다. booking이 header 이름을 알아야 한다면 HTTP adapter가 문자열을 꺼내 `AdmissionVerifier`에 넘기게 하며 admission internal constant를 import하지 않는다.
 
-- [ ] **Step 4: direct dependency가 없는지 검증한다**
+- [x] **Step 4: direct dependency가 없는지 검증한다**
 
 ```powershell
 rg "com\.ticket\.(booking|catalog|identity|showlike|metadata)" src/main/java/com/ticket/admission
@@ -428,7 +428,7 @@ rg "com\.ticket\.(booking|catalog|identity|showlike|metadata)" src/main/java/com
 
 Expected: rg 결과 없음, tests PASS.
 
-- [ ] **Step 5: 커밋한다**
+- [x] **Step 5: 커밋한다**
 
 ```powershell
 git add src/main/java/com/ticket/admission src/test/java/com/ticket/admission
