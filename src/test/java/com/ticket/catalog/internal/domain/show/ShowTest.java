@@ -1,4 +1,4 @@
-package com.ticket.core.domain.show;
+package com.ticket.catalog.internal.domain.show;
 
 import com.ticket.catalog.internal.domain.show.BookingStatus;
 import com.ticket.catalog.internal.domain.show.SaleType;
