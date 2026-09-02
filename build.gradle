@@ -97,6 +97,11 @@ dependencies {
     // module-aware Flyway 분기(SpringModulithFlywayMigrationStrategy)를 실제 운영과 같은 class로
     // 검증한다. 둘 다 spring-modulith-starter-jpa가 runtime scope로 이미 가져오는 module이다.
     testCompileOnly 'org.springframework.modulith:spring-modulith-runtime'
+    // Task 12 Step 4: /actuator/modulith endpoint 빈과 module observability(AOP 계측) 빈이
+    // 실제로 등록되는지를 타입으로 확인한다. 둘 다 spring-modulith-starter-insight가 runtime
+    // scope로 이미 가져오는 module이다.
+    testCompileOnly 'org.springframework.modulith:spring-modulith-actuator'
+    testCompileOnly 'org.springframework.modulith:spring-modulith-observability-core'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     testCompileOnly 'org.projectlombok:lombok'
