@@ -502,23 +502,23 @@ Expected: catalog에서 다른 업무 모듈 import 0, tests PASS.
 - Create: `src/test/java/com/ticket/identity/IdentityModuleTests.java`
 - Create/Move: identity persistence/security/web tests
 
-- [ ] **Step 1: 인증 principal과 회원 조회 계약을 test-first로 정의한다**
+- [x] **Step 1: 인증 principal과 회원 조회 계약을 test-first로 정의한다**
 
 `AuthenticatedMember`는 `memberId`와 인가에 꼭 필요한 role만 가진 불변 record다. `MemberLookup`은 member entity 대신 공개 `MemberStatus`를 반환하거나 active member를 검증한다. booking/showlike는 identity internal exception을 import하지 않는다.
 
-- [ ] **Step 2: 인증·회원 코드를 identity internal로 이동한다**
+- [x] **Step 2: 인증·회원 코드를 identity internal로 이동한다**
 
 Member, MemberSocialAccount, refresh-token 상태, OAuth adapter, password, token/security filter를 identity가 소유한다. 공통 `BaseEntity`는 `IdentityAuditedEntity`로 교체한다.
 
-- [ ] **Step 3: security 설정의 경계를 정리한다**
+- [x] **Step 3: security 설정의 경계를 정리한다**
 
 사용자 인증 해석은 identity 내부에 두되 전역 filter chain이 필요하면 identity가 `SecurityFilterChain` bean을 제공한다. 다른 module controller는 `AuthenticatedMember`만 parameter로 사용하고 JWT/JPA Member를 보지 않는다. WebSocket 설정은 booking에 남긴다.
 
-- [ ] **Step 4: metadata 계약을 구현한다**
+- [x] **Step 4: metadata 계약을 구현한다**
 
 Role/SocialProvider 목록을 `IdentityMetadata`가 공개 scalar code/label record로 제공한다. metadata module이 internal enum을 import하지 않게 한다.
 
-- [ ] **Step 5: 독립 검증 후 커밋한다**
+- [x] **Step 5: 독립 검증 후 커밋한다**
 
 ```powershell
 rg "com\.ticket\.(booking|catalog|admission|showlike|metadata)" src/main/java/com/ticket/identity
