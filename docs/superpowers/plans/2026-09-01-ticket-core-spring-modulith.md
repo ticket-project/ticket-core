@@ -949,12 +949,29 @@ git commit -m "test: Modulith 경계와 운영 가시성을 검증한다"
 
 ### Task 13: legacy package와 의존성 제거
 
+> **실행 결과 (2026-09-02): "전부 제거"는 더 이상 이 Task의 목표가 아니다.** 이 절이 쓰였을
+> 때는 Task 4~10이 모든 legacy 코드를 각자 module로 옮기는 것을 전제했지만, 실행 중 세 가지가
+> 의도적으로 legacy에 영구히 또는 별도 후속 Task까지 남기로 결정됐다: (1)
+> `com.ticket.core.support.exception`/`com.ticket.core.support`는 legacy가 아니라 오류 계약
+> 되돌림(문서 상단 결정 갱신 참고) 이후의 **현재 활성 구조**이고 앞으로도 여기 남는다, (2)
+> showlike의 read 경로(`ShowLike` entity·`GetMyShowLikesUseCase` 등, `showlike/package-info.java`
+> 참고)는 identity/catalog와의 순환 위험 때문에 legacy에 남았다, (3)
+> `WebSocketAuthInterceptor`·`CorsProperties`·`bootstrap.worker.OrderExpirationTrigger`·
+> `core.infra.seed`·`core.infra.config`·`core.config.WebConfig`는 아직 이동 일정이 잡히지 않은
+> 별도 후속 작업이다. 그래서 Step 1~2는 "0이어야 한다"가 아니라 "위 세 범주 밖의 것만 0이어야
+> 한다"로 다시 읽는다. 실제로 한 것: 완전히 빈 legacy 디렉터리 제거(git에 잡히지 않는 변경),
+> 미사용 `fixture-monkey` 의존성 제거(커밋 `ee60607a`). `spring-boot-security-test`는 직접
+> import가 없어도 `@WebMvcTest`의 Spring Security auto-configuration에 필요해 제거했다가
+> 되돌렸다 — 이유를 `build.gradle` 주석으로 남겼다. `shared`는 `package-info.java` 하나만
+> 존재하는 게 맞다(Step 4 참고, `BusinessProblem`/`BusinessException`은 되돌림으로 의도적으로
+> 없다).
+
 **Files:**
 - Remove: legacy `com.ticket.core`, `com.ticket.bootstrap`, `com.ticket.storage`, `com.ticket.support` package remnants
 - Modify: `build.gradle`, `gradle/libs.versions.toml`
 - Modify: imports across `src/main`, `src/test`
 
-- [ ] **Step 1: 잔존 legacy symbol을 전수 조사한다**
+- [x] **Step 1: 잔존 legacy symbol을 전수 조사한다**
 
 ```powershell
 rg "package com\.ticket\.(core|bootstrap|storage|support)" src
@@ -964,7 +981,7 @@ rg -i "outbox|integrationTest" build.gradle settings.gradle src .github Dockerfi
 
 Expected: 발견된 항목을 모두 소유 module/internal package로 옮기거나 historical migration/comment처럼 남아야 하는 이유를 확인한다.
 
-- [ ] **Step 2: cross-module persistence coupling을 정적으로 검사한다**
+- [x] **Step 2: cross-module persistence coupling을 정적으로 검사한다 — legacy 3범주 예외로 다시 읽는다**
 
 ```powershell
 rg "import com\.ticket\.[^.]+\.internal" src/main/java
@@ -972,21 +989,28 @@ rg "@(ManyToOne|OneToOne|OneToMany|ManyToMany)" src/main/java/com/ticket
 rg "Repository" src/main/java/com/ticket/booking src/main/java/com/ticket/showlike src/main/java/com/ticket/metadata
 ```
 
-첫 명령 결과는 0이어야 한다. JPA 관계 결과는 같은 module 내부 관계만 허용한다. repository 결과는 자기 module repository만 허용한다.
+첫 명령 결과에는 위 실행 결과의 3범주(활성 오류 구조, showlike read 경로, WebSocket/worker/seed/config
+legacy)에서 나오는 결과만 있어야 한다 — 그 밖의 module에서 다른 module `internal`을 참조하면 실패로
+본다. JPA 관계 결과는 같은 module 내부 관계만 허용하되 showlike의 `ShowLike.member`/`.show`
+`@ManyToOne`은 위 범주(2)로 알려진 예외다. repository 결과는 자기 module repository만 허용한다.
 
-- [ ] **Step 3: 더 이상 쓰지 않는 dependency와 설정을 제거한다**
+- [x] **Step 3: 더 이상 쓰지 않는 dependency와 설정을 제거한다**
 
-custom outbox, 옛 multi-project, 중복 ArchUnit, 불필요한 library를 제거한다. Querydsl, Redis, security 등 실제 사용 dependency는 단일 root build에 유지한다.
+custom outbox(Task 8에서 이미 제거)와 옛 multi-project 설정(Task 2에서 이미 제거)은 이전 Task에서
+끝났다. 이 Task에서는 미사용 library(`fixture-monkey-starter`)만 추가로 제거했다. 중복 ArchUnit
+정리는 Task 12에서 이미 검토를 마쳤다(중복 없음으로 결론). Querydsl, Redis, security 등 실제 사용
+dependency는 단일 root build에 유지했다.
 
-- [ ] **Step 4: shared 오염을 검사한다**
+- [x] **Step 4: shared 오염을 검사한다**
 
 ```powershell
 rg --files src/main/java/com/ticket/shared
 ```
 
-Expected: `package-info.java`, `BusinessProblem.java`, `BusinessException.java`만 존재한다.
+Expected(갱신): `package-info.java`만 존재한다. `BusinessProblem.java`/`BusinessException.java`는
+오류 계약 되돌림으로 의도적으로 없다(문서 상단 결정 갱신, ADR 0002 참고) — 복원 대상이 아니다.
 
-- [ ] **Step 5: full test 후 커밋한다**
+- [x] **Step 5: full test 후 커밋한다**
 
 ```powershell
 .\gradlew.bat clean test bootJar
