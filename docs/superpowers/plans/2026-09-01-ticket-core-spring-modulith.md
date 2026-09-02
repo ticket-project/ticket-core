@@ -1011,23 +1011,23 @@ git commit -m "refactor: 기존 계층 모듈과 임시 호환 코드를 제거�
 - Modify: `.claude/skills/verify/SKILL.md`
 - Modify: `.claude/skills/commit-pr/**` only if path/commands are stale
 
-- [ ] **Step 1: ADR로 이전 결정을 명시적으로 대체한다**
+- [x] **Step 1: ADR로 이전 결정을 명시적으로 대체한다**
 
 ADR 0003에는 단일 Gradle project, package-based closed module, DAG, scalar cross-module refs, public API/event, JPA registry, module-aware Flyway를 기록한다. ADR 0001/0002의 어떤 부분을 supersede하는지 명시하되 과거 문서는 삭제하지 않는다.
 
-- [ ] **Step 2: 개발자 문서를 실제 명령과 구조로 바꾼다**
+- [x] **Step 2: 개발자 문서를 실제 명령과 구조로 바꾼다**
 
 모든 `:bootstrap:*`, `:core:*`, `integrationTest` 명령을 root `test`, `bootJar`로 바꾼다. 새 코드 배치 규칙은 module root public/internal 캡슐화와 allowed dependency를 설명한다.
 
-- [ ] **Step 3: 업무와 운영 runbook을 갱신한다**
+- [x] **Step 3: 업무와 운영 runbook을 갱신한다**
 
 Order transaction 순서, Redis 보상, event publication 상태, 1분 재제출, 10회 자동 중단, 30일 archive purge, 수동 재처리와 alert 확인 절차를 기록한다. broker/outbox externalization은 현재 범위가 아님을 명시한다.
 
-- [ ] **Step 4: repository-local skills를 새 구조로 갱신한다**
+- [x] **Step 4: repository-local skills를 새 구조로 갱신한다**
 
 `place-code`는 기능별 module root/internal 규칙을, `verify`는 `clean test bootJar`, ModularityTests, module/slice/Scenario 검증을 가리키게 한다. junction인 `.agents/skills`가 아니라 Git이 추적하는 `.claude/skills` 파일을 수정한다.
 
-- [ ] **Step 5: 문서의 stale path를 검사한다**
+- [x] **Step 5: 문서의 stale path를 검사한다**
 
 ```powershell
 rg ":(bootstrap|core|storage|support):|integrationTest|core-(api|app|domain|infra)" AGENTS.md README.md CONTEXT.md docs .claude/skills
@@ -1035,7 +1035,7 @@ rg ":(bootstrap|core|storage|support):|integrationTest|core-(api|app|domain|infr
 
 Expected: archive와 역사 설명을 제외한 실행 지침에서 결과 0.
 
-- [ ] **Step 6: 커밋한다**
+- [x] **Step 6: 커밋한다**
 
 ```powershell
 git add AGENTS.md README.md CONTEXT.md docs .claude/skills
