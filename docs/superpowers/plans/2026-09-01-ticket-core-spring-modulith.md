@@ -903,23 +903,23 @@ git commit -m "refactor: Flyway 이력을 Modulith 모듈 소유권에 맞춘다
 - Modify: actuator/security/application profile configuration
 - Remove/Reduce: legacy architecture-wide ArchUnit tests
 
-- [ ] **Step 1: 정확한 module set과 DAG assertion을 추가한다**
+- [x] **Step 1: 정확한 module set과 DAG assertion을 추가한다**
 
 `ModularityTests`는 `verify()`뿐 아니라 발견된 module 이름이 정확히 7개이고, 업무 dependency가 승인된 DAG와 일치하는지 assertion한다. open module이 하나라도 있으면 실패한다.
 
-- [ ] **Step 2: module별 STANDALONE test를 완성한다**
+- [x] **Step 2: module별 STANDALONE test를 완성한다**
 
 booking, catalog, identity, admission, showlike, metadata에 최소 하나씩 둔다. shared는 독립 업무 bootstrap 대상이 아니므로 구조 테스트로 검증한다. 외부 API는 `@MockitoBean`, 의도적인 통합만 DIRECT_DEPENDENCIES, ALL_DEPENDENCIES는 전체 조합 이유가 있는 소수 테스트에만 사용한다.
 
-- [ ] **Step 3: Documenter test를 작성한다**
+- [x] **Step 3: Documenter test를 작성한다**
 
 `ApplicationModules.of(TicketApplication.class)`와 `Documenter`로 전체 dependency diagram, 각 module canvas, exposed beans, events를 `build/spring-modulith-docs` 아래에 생성한다. 생성물은 CI artifact이며 source 문서로 commit하지 않는다.
 
-- [ ] **Step 4: insight와 actuator 접근을 검증한다**
+- [x] **Step 4: insight와 actuator 접근을 검증한다**
 
 `spring-modulith-starter-insight`를 runtime scope에 유지한다. `/actuator/modulith`는 public permit-all 목록에 넣지 않고 관리망/인증 actuator chain으로만 접근 가능하게 한다. module API trace와 event publication metric이 등록되는 smoke test를 둔다.
 
-- [ ] **Step 5: profile별 runtime verification을 고정한다**
+- [x] **Step 5: profile별 runtime verification을 고정한다**
 
 local/test/staging:
 
@@ -935,11 +935,11 @@ spring.modulith.runtime.verification-enabled: false
 
 CI의 `ModularityTests`가 권위 있는 gate이며 production artifact는 해당 CI를 통과한 동일 jar만 배포한다.
 
-- [ ] **Step 6: legacy ArchUnit 중복을 정리한다**
+- [x] **Step 6: legacy ArchUnit 중복을 정리한다**
 
 기존 계층형 module 구조를 복제하는 ArchUnit rule은 제거한다. Spring Modulith가 검사하지 않는 domain purity rule만 구체적 이유와 함께 남긴다.
 
-- [ ] **Step 7: 검증하고 커밋한다**
+- [x] **Step 7: 검증하고 커밋한다**
 
 ```powershell
 .\gradlew.bat test --tests "com.ticket.ModularityTests" --tests "com.ticket.DocumentationTests" --tests "*ModuleTests" --tests "*ApplicationContextLoadTest"
