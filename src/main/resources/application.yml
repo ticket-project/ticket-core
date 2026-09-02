@@ -1,8 +1,6 @@
 spring:
   application:
     name: ticket-core
-  modulith:
-    detection-strategy: explicitly-annotated
   datasource:
     hikari:
       pool-name: ticket-core
