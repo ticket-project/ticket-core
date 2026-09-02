@@ -86,7 +86,7 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
                 .isEqualTo("CANCELED");
 
         // 7. 취소하면 좌석이 다시 팔 수 있는 상태로 돌아와야 한다.
-        //    hold 해제는 커밋 후 outbox 경로를 타므로 여기도 폴링한다.
+        //    hold 해제는 커밋 뒤 비동기 event listener 경로를 타므로 여기도 폴링한다.
         pollUntil("취소한 좌석이 판매 가능으로 복귀", ASYNC_TIMEOUT,
                 () -> SEAT_AVAILABLE.equals(seatStatus(token, seatId)));
     }

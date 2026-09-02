@@ -26,20 +26,4 @@ public record LockKey(LockScope scope, List<String> identifiers) {
     public static LockKey orderStart(final Long memberId, final Long performanceId) {
         return new LockKey(LockScope.ORDER_START, List.of(String.valueOf(memberId), String.valueOf(performanceId)));
     }
-
-    public static LockKey holdCreationOutboxEntry(final Long outboxId) {
-        return new LockKey(LockScope.HOLD_CREATION_OUTBOX_ENTRY, List.of(String.valueOf(outboxId)));
-    }
-
-    public static LockKey holdReleaseOutboxEntry(final Long outboxId) {
-        return new LockKey(LockScope.HOLD_RELEASE_OUTBOX_ENTRY, List.of(String.valueOf(outboxId)));
-    }
-
-    public static LockKey holdCreationOutboxBatch() {
-        return new LockKey(LockScope.HOLD_CREATION_OUTBOX_BATCH, List.of());
-    }
-
-    public static LockKey holdReleaseOutboxBatch() {
-        return new LockKey(LockScope.HOLD_RELEASE_OUTBOX_BATCH, List.of());
-    }
 }

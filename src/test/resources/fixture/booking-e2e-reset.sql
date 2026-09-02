@@ -5,8 +5,9 @@
 --
 -- FK 역순으로 지운다. 스키마는 Hibernate가 ddl-auto=create-drop으로 만든 것을 따른다.
 
-DELETE FROM order_hold_release_outbox;
-DELETE FROM order_hold_creation_outbox;
+DELETE FROM order_hold_release_progress;
+DELETE FROM event_publication;
+DELETE FROM event_publication_archive;
 DELETE FROM hold_history;
 DELETE FROM order_seats;
 DELETE FROM orders;

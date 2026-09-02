@@ -18,10 +18,6 @@ public class RedissonLockKeyFormatter {
         return switch (key.scope()) {
             case SEAT -> LOCK_PREFIX + "hold:" + join(key);
             case ORDER_START -> LOCK_PREFIX + "start-order:" + join(key);
-            case HOLD_CREATION_OUTBOX_ENTRY -> LOCK_PREFIX + "hold-creation-outbox-entry:" + join(key);
-            case HOLD_RELEASE_OUTBOX_ENTRY -> LOCK_PREFIX + "hold-release-outbox-entry:" + join(key);
-            case HOLD_CREATION_OUTBOX_BATCH -> LOCK_PREFIX + "hold-creation-outbox:batch";
-            case HOLD_RELEASE_OUTBOX_BATCH -> LOCK_PREFIX + "hold-release-outbox:batch";
         };
     }
 

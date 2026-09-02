@@ -1,14 +1,10 @@
 package com.ticket.bootstrap;
 
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
-import com.ticket.bootstrap.worker.HoldOutboxRelayTrigger;
 import com.ticket.bootstrap.worker.OrderExpirationTrigger;
-import com.ticket.booking.internal.application.event.HoldLifecycleEventPublisher;
 import com.ticket.booking.internal.application.lock.LockManager;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.application.order.command.ExpirePendingOrdersUseCase;
-import com.ticket.booking.internal.infrastructure.order.outbox.create.HoldCreationOutboxRelay;
-import com.ticket.booking.internal.infrastructure.order.outbox.release.HoldReleaseOutboxRelay;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -35,9 +31,8 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(context.getBean(CreateOrderUseCase.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.internal.domain.order.repository.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
-        assertThat(context.getBean(HoldLifecycleEventPublisher.class)).isNotNull();
-        assertThat(context.getBean(HoldCreationOutboxRelay.class)).isNotNull();
-        assertThat(context.getBean(HoldReleaseOutboxRelay.class)).isNotNull();
+        assertThat(beanOf("com.ticket.booking.internal.application.BookingEventListeners")).isNotNull();
+        assertThat(beanOf("com.ticket.configuration.EventPublicationMaintenance")).isNotNull();
     }
 
     /**
@@ -67,7 +62,6 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     @Test
     void worker가_켜져_있으면_background_트리거가_등록된다() {
         assertThat(context.getBeansOfType(OrderExpirationTrigger.class)).hasSize(1);
-        assertThat(context.getBeansOfType(HoldOutboxRelayTrigger.class)).hasSize(1);
         assertThat(context.getBean(ExpirePendingOrdersUseCase.class)).isNotNull();
     }
 }
