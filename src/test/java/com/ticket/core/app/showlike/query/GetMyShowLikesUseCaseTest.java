@@ -2,8 +2,8 @@ package com.ticket.core.app.showlike.query;
 
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.app.support.cursor.CursorPage;
-import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;

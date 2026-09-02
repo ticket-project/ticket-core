@@ -4,7 +4,7 @@ import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
-import com.ticket.core.domain.member.model.Member;
+import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.Venue;

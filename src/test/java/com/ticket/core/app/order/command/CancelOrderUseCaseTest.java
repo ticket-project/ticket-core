@@ -1,8 +1,8 @@
 package com.ticket.core.app.order.command;
 
-import com.ticket.core.domain.member.model.Member;
+import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;

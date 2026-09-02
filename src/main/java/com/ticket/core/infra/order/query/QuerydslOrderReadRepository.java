@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-import static com.ticket.core.domain.member.model.QMember.member;
+import static com.ticket.identity.internal.domain.member.model.QMember.member;
 import static com.ticket.core.domain.order.model.QOrder.order;
 import static com.ticket.core.domain.order.model.QOrderSeat.orderSeat;
 import static com.ticket.catalog.internal.domain.performance.QPerformance.performance;

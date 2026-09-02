@@ -3,7 +3,7 @@ package com.ticket.core.app.order.command;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.core.app.order.command.OrderTerminationService;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.repository.OrderRepository;

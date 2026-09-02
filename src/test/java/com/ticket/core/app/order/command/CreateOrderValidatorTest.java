@@ -10,7 +10,7 @@ import com.ticket.core.app.order.command.CreateOrderValidator;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;

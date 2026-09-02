@@ -4,7 +4,7 @@ import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.core.domain.performanceseat.command.DeselectedSeatIds;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import lombok.RequiredArgsConstructor;

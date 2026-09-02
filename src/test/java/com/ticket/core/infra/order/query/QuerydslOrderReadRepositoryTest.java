@@ -1,7 +1,7 @@
 package com.ticket.core.infra.order.query;
 
 import com.ticket.core.app.order.query.OrderReadRepository;
-import com.ticket.core.domain.member.model.Member;
+import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.model.OrderState;

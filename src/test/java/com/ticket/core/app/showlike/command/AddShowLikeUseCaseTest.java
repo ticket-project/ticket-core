@@ -2,8 +2,8 @@ package com.ticket.core.app.showlike.command;
 
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;

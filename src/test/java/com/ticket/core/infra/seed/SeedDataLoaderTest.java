@@ -1,8 +1,8 @@
 package com.ticket.core.infra.seed;
 
-import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.member.model.Role;
-import com.ticket.core.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.identity.internal.domain.member.model.Role;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
