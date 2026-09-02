@@ -3,19 +3,19 @@ package com.ticket.core.infra.support;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
-import com.ticket.core.domain.performance.model.Performance;
+import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.domain.seat.model.Seat;
-import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.model.Category;
-import com.ticket.core.domain.show.model.Genre;
-import com.ticket.core.domain.show.model.ShowGenre;
-import com.ticket.core.domain.show.model.ShowGrade;
-import com.ticket.core.domain.show.model.ShowSeat;
-import com.ticket.core.domain.show.model.Region;
-import com.ticket.core.domain.show.model.SaleType;
-import com.ticket.core.domain.show.model.Performer;
-import com.ticket.core.domain.show.model.Venue;
+import com.ticket.catalog.internal.domain.seat.Seat;
+import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.catalog.internal.domain.show.Category;
+import com.ticket.catalog.internal.domain.show.Genre;
+import com.ticket.catalog.internal.domain.show.ShowGenre;
+import com.ticket.catalog.internal.domain.show.ShowGrade;
+import com.ticket.catalog.internal.domain.show.ShowSeat;
+import com.ticket.catalog.internal.domain.show.Region;
+import com.ticket.catalog.internal.domain.show.SaleType;
+import com.ticket.catalog.internal.domain.show.Performer;
+import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.core.domain.member.model.Role;
@@ -260,7 +260,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.core.domain", "com.ticket.core.infra"})
+    @EntityScan(basePackages = {"com.ticket.core.domain", "com.ticket.core.infra", "com.ticket.catalog.internal.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

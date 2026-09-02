@@ -1,10 +1,10 @@
 package com.ticket.core.infra.support;
 
-import com.ticket.core.infra.show.query.BookingStatusPredicateFactory;
-import com.ticket.core.infra.show.query.QuerydslShowConditionBuilder;
-import com.ticket.core.infra.show.query.QuerydslShowCursorConditionBuilder;
-import com.ticket.core.infra.show.query.QuerydslShowPredicates;
-import com.ticket.core.infra.show.query.QuerydslShowSortResolver;
+import com.ticket.catalog.internal.infrastructure.show.query.BookingStatusPredicateFactory;
+import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowConditionBuilder;
+import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowCursorConditionBuilder;
+import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowPredicates;
+import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowSortResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -26,7 +26,7 @@ public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestS
      * RepositoryAdapter가 쓰는 Spring Data 인터페이스를 테스트 컨텍스트에 올린다.
      */
     @Configuration
-    @EnableJpaRepositories(basePackages = "com.ticket.core.infra")
+    @EnableJpaRepositories(basePackages = {"com.ticket.core.infra", "com.ticket.catalog.internal.infrastructure"})
     static class InfraJpaRepositoriesTestConfig {
     }
 }
