@@ -46,11 +46,11 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     @Test
     void 도메인_Repository는_infra_어댑터로_구현된다() {
         assertThat(beanOf("com.ticket.booking.internal.domain.order.repository.OrderRepository").getClass().getName())
-                .startsWith("com.ticket.core.infra.");
+                .startsWith("com.ticket.booking.internal.infrastructure.");
         assertThat(beanOf("com.ticket.booking.internal.domain.hold.store.HoldStore").getClass().getName())
-                .startsWith("com.ticket.core.infra.");
+                .startsWith("com.ticket.booking.internal.infrastructure.");
         assertThat(context.getBean(LockManager.class).getClass().getName())
-                .startsWith("com.ticket.core.infra.");
+                .startsWith("com.ticket.booking.internal.infrastructure.");
     }
 
     /**
