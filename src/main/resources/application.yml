@@ -17,6 +17,11 @@ spring:
         published: 5m
         processing: 10m
         resubmitted: 10m
+    runtime:
+      # module별 migration 폴더(db/migration/{module}, db/migration-vendor/{h2|oracle}/{module})를
+      # module마다 독립된 flyway_schema_history_{module} table로 적용한다. 자세한 내용은
+      # SpringModulithFlywayMigrationStrategy(spring-modulith-runtime) 참고.
+      flyway-enabled: true
   http:
     serviceclient:
       kakao:

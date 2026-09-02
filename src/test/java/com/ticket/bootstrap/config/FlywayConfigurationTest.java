@@ -36,6 +36,13 @@ class FlywayConfigurationTest {
     }
 
     @Test
+    void modulith_runtime_flyway_is_enabled_to_split_migrations_per_module() throws Exception {
+        final PropertySource<?> application = loadYaml("application.yml");
+
+        assertThat(application.getProperty("spring.modulith.runtime.flyway-enabled")).isEqualTo(true);
+    }
+
+    @Test
     void local_profile_bootstraps_h2_database_with_hibernate_and_seed_data() throws Exception {
         final PropertySource<?> local = loadYaml("application-local.yml");
 
@@ -51,7 +58,7 @@ class FlywayConfigurationTest {
         final PropertySource<?> dev = loadYaml("application-dev.yml");
 
         assertThat(dev.getProperty("spring.datasource.url")).isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
-        assertThat(dev.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("none");
+        assertThat(dev.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         assertThat(dev.getProperty("spring.flyway.enabled")).isEqualTo(true);
         assertThat(dev.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
         assertThat(dev.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
@@ -63,7 +70,7 @@ class FlywayConfigurationTest {
     void prod_profile_enables_flyway_with_existing_schema_baseline() throws Exception {
         final PropertySource<?> prod = loadYaml("application-prod.yml");
 
-        assertThat(prod.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("none");
+        assertThat(prod.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         assertThat(prod.getProperty("spring.flyway.enabled")).isEqualTo(true);
         assertThat(prod.getProperty("spring.flyway.baseline-on-migrate")).isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
         assertThat(prod.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
