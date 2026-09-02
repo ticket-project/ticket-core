@@ -1,6 +1,5 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.booking.internal.application.order.command.HoldReleaseTask;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -26,16 +26,16 @@ public class HoldReleaseTaskProcessor {
     private final SeatStatusEventPublisher seatStatusEventPublisher;
     private final HoldReleaseProgressRecorder progressRecorder;
 
-    public void process(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
+    public void process(final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
         lockManager.withLock(
                 LockKey.seats(task.performanceId(), task.seatIds()),
                 LockOptions.defaults(),
-                () -> releaseAndPublish(outboxId, task, now)
+                () -> releaseAndPublish(eventId, task, now)
         );
     }
 
-    private void releaseAndPublish(final Long outboxId, final HoldReleaseTask task, final LocalDateTime now) {
-        releaseHoldOnce(outboxId, task, now);
+    private void releaseAndPublish(final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
+        releaseHoldOnce(eventId, task, now);
         final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(task);
         if (publishableSeatIds.isEmpty()) {
             return;
@@ -46,7 +46,7 @@ public class HoldReleaseTaskProcessor {
     }
 
     private void releaseHoldOnce(
-            final Long outboxId,
+            final UUID eventId,
             final HoldReleaseTask task,
             final LocalDateTime now
     ) {
@@ -54,7 +54,7 @@ public class HoldReleaseTaskProcessor {
             return;
         }
         holdManager.release(task.performanceId(), task.holdKey(), task.seatIds());
-        progressRecorder.recordHoldReleased(outboxId, now);
+        progressRecorder.recordHoldReleased(eventId, now);
     }
 
     private List<Long> findCurrentlyAvailableSeats(final HoldReleaseTask task) {
