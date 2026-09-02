@@ -81,10 +81,14 @@ dependencies {
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // ActuatorSecurityConfigTest 등 @WebMvcTest + Import(SecurityConfig)가 실제 Security filter chain을
+    // MockMvc에 적용하려면 spring-security-test가 classpath에 있어야 한다(@ConditionalOnClass로
+    // SecurityMockMvcConfigurer가 자동 등록됨). 코드에서 org.springframework.security.test.*를 직접
+    // import하지 않아 겉보기엔 미사용처럼 보이지만 제거하면 해당 테스트의 ApplicationContext 로딩이
+    // 깨진다 — 2026-09-02 Task 13에서 실측 확인.
     testImplementation 'org.springframework.boot:spring-boot-security-test'
     testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-resttestclient'
-    testImplementation libs.fixture.monkey.starter
     testImplementation libs.archunit.junit5
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     // Task 11 Step 7: 저장소에 Oracle Testcontainers 인프라가 없어 CI에서 Oracle 방언 migration을

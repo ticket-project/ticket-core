@@ -14,7 +14,6 @@ spring-dependency-management = "1.1.7"
 querydsl = "5.1.0"
 jjwt = "0.13.0"
 archunit = "1.4.1"
-fixture-monkey = "1.1.15"
 p6spy = "2.0.0"
 redisson = "4.7.0"
 springdoc = "3.0.1"
@@ -35,7 +34,6 @@ jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
-fixture-monkey-starter = { module = "com.navercorp.fixturemonkey:fixture-monkey-starter", version.ref = "fixture-monkey" }
 
 p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
