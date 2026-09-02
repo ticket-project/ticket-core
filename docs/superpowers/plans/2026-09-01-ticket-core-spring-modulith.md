@@ -613,7 +613,7 @@ Expected: 두 rg에서 교차 모듈 사용 0, tests PASS.
 - Remove: custom outbox publisher/repository/entity/job code
 - Create: publication tests under `src/test/java/com/ticket/booking/**`
 
-- [ ] **Step 1: 이벤트 schema를 먼저 고정한다**
+- [x] **Step 1: 이벤트 schema를 먼저 고정한다**
 
 두 이벤트는 stable scalar payload만 갖는다.
 
@@ -644,7 +644,7 @@ public record OrderTerminated(
 
 초기 `schemaVersion`은 1이다. entity, lazy proxy, repository, exception을 payload에 넣지 않는다.
 
-- [ ] **Step 2: transaction rollback/publication 원자성 테스트를 작성한다**
+- [x] **Step 2: transaction rollback/publication 원자성 테스트를 작성한다**
 
 `PublishedEvents`와 실제 publication repository 상태를 사용해 다음을 검증한다.
 
@@ -652,19 +652,19 @@ public record OrderTerminated(
 - transaction rollback 시 order와 publication이 모두 없다.
 - `PendingOrderCreationResult`에는 더 이상 outbox ID가 없다.
 
-- [ ] **Step 3: custom outbox 대신 transaction 내부에서 event를 발행한다**
+- [x] **Step 3: custom outbox 대신 transaction 내부에서 event를 발행한다**
 
 `ApplicationEventPublisher.publishEvent(...)`는 Order/OrderSeat/HoldHistory 저장과 같은 booking transaction 안에서 호출한다. manual post-commit notifier를 제거한다.
 
-- [ ] **Step 4: 후속 처리를 `@ApplicationModuleListener`로 이동한다**
+- [x] **Step 4: 후속 처리를 `@ApplicationModuleListener`로 이동한다**
 
 selection 정리, Redis hold release, WebSocket 발행을 명시적인 listener method로 분리한다. listener는 실패를 catch-and-log로 삼키지 않고 throw하여 registry가 FAILED로 기록하게 한다.
 
-- [ ] **Step 5: listener 멱등성과 stale-event 방어 테스트를 작성한다**
+- [x] **Step 5: listener 멱등성과 stale-event 방어 테스트를 작성한다**
 
 동일 `eventId`가 여러 번 전달되어도 최종 상태와 WebSocket 의미가 한 번 처리한 것과 같아야 한다. Redis release 직전에 현재 holdKey/order 상태를 다시 확인하고, 예전 event가 새 hold/selection을 지우지 못하게 한다. 필요한 local processed marker는 booking이 소유하며 event ID unique constraint를 둔다.
 
-- [ ] **Step 6: registry 운영 component를 구현한다**
+- [x] **Step 6: registry 운영 component를 구현한다**
 
 ```java
 @Component
@@ -687,7 +687,7 @@ class EventPublicationMaintenance {
 
 실제 2.1.1 API signature에 맞춰 컴파일하되 정책값은 바꾸지 않는다. 10회를 초과한 publication은 자동 대상에서 제외하고 metric/structured log로 alert 가능한 신호를 남긴다. 수동 복구 runbook에서 ID를 확인할 수 있어야 한다.
 
-- [ ] **Step 7: 설정을 고정한다**
+- [x] **Step 7: 설정을 고정한다**
 
 모든 profile 공통 설정:
 
@@ -706,11 +706,11 @@ spring:
 
 broker dependency와 `@Externalized`는 추가하지 않는다.
 
-- [ ] **Step 8: 성공·실패·재처리 Scenario test를 통과시킨다**
+- [x] **Step 8: 성공·실패·재처리 Scenario test를 통과시킨다**
 
 `Scenario`로 listener 완료를 기다리고, 첫 시도 실패 후 publication FAILED, 재제출 성공 후 COMPLETED/ARCHIVED, 11회째 자동 제외를 검증한다. 고정 clock과 deterministic fake를 사용하며 `Thread.sleep`을 쓰지 않는다.
 
-- [ ] **Step 9: custom outbox를 흐름별로 제거하고 커밋한다**
+- [x] **Step 9: custom outbox를 흐름별로 제거하고 커밋한다**
 
 ```powershell
 rg -i "outbox|postcommit|pendingordercreationresult" src/main src/test
@@ -723,17 +723,31 @@ Expected: custom outbox runtime code 0. migration 명칭의 historical outbox �
 
 ### Task 9: showlike를 scalar-ID 모듈로 추출
 
+> **실행 결과 (2026-09-02): 계획한 범위를 완결하지 못하고 의도적으로 축소했다.**
+> 이동을 시작해 보니 identity의 `MemberController`(`GET /me/likes`)와 catalog의
+> `QuerydslShowDetailReadRepository`(공연 상세 `likeCount`)가 legacy showlike 코드를 직접
+> 참조하고 있었다. 이 둘은 승인된 DAG(`identity`/`catalog`의 `allowedDependencies = {}`)상
+> showlike에 의존할 수 없으므로, `ShowLike` entity·`GetMyShowLikesUseCase` 계열까지 통째로
+> 옮기면 identity↔showlike, catalog↔showlike 순환이 생긴다. 그래서 **외부 소비자가 없는
+> 부분만** `com.ticket.showlike`로 옮기고(Step 1·3·4 완료), **외부 소비자가 있는 부분은
+> legacy에 남겨** Step 2(scalar ID 전환)를 보류했다. 남긴 범위와 이유는
+> `src/main/java/com/ticket/showlike/package-info.java`(그리고 대칭적으로
+> `catalog`/`identity`의 package-info)에 기록되어 있다. **후속 작업**(이 계획의 범위 밖,
+> 별도 backlog)이 필요한 것: identity의 `/me/likes` 엔드포인트를 showlike로 옮기거나, catalog의
+> `likeCount` 조회 방식을 바꾼(이벤트 기반 local projection 등) 뒤에야 `ShowLike`를 scalar ID로
+> 바꾸고 나머지를 옮길 수 있다.
+
 **Files:**
 - Move: showlike app/domain/infra/api → `src/main/java/com/ticket/showlike/internal/**`
 - Modify: ShowLike entity and Querydsl repository
 - Create: `src/test/java/com/ticket/showlike/ShowLikeModuleTests.java`
 - Create/Move: showlike persistence/application/web tests
 
-- [ ] **Step 1: 중복과 batch enrichment test를 먼저 작성한다**
+- [x] **Step 1: 중복과 batch enrichment test를 먼저 작성한다**
 
 `(memberId, showId)` 중복 거부, active member 확인, show 존재 확인, liked-list 순서/커서 유지, catalog batch 호출 1회를 검증한다.
 
-- [ ] **Step 2: JPA 관계를 scalar ID로 바꾼다**
+- [ ] **Step 2: JPA 관계를 scalar ID로 바꾼다 — 보류(위 실행 결과 참고)**
 
 ```text
 ShowLike.member -> long memberId
@@ -742,11 +756,21 @@ ShowLike.show   -> long showId
 
 `ShowLikeAuditedEntity`를 만들고 Member/Show entity import와 cross-module DB FK를 제거한다. unique constraint는 `(member_id, show_id)`로 유지한다.
 
-- [ ] **Step 3: application flow를 공개 API로 바꾼다**
+**보류 사유**: `ShowLike`(entity)와 `ShowLikeRepository`는 `com.ticket.core.domain.showlike.**`에
+그대로 남아 있다. `QuerydslShowDetailReadRepository`가 `QShowLike`를 직접 join해 `likeCount`를
+채우기 때문에, `show`를 scalar column으로 바꾸면 그 navigable property가 사라져 catalog가
+컴파일되지 않는다. 위 실행 결과에 적은 후속 작업이 끝난 뒤에만 이 Step을 완결할 수 있다.
+
+- [x] **Step 3: application flow를 공개 API로 바꾼다 — write 경로만 완료**
 
 write 전 `MemberLookup`, `ShowLookup.requireExisting`를 호출한다. liked-list는 local ShowLike refs를 먼저 page한 다음 show IDs를 한 번의 `ShowLookup.getSummaries`로 조회하여 원래 순서대로 조합한다. Querydsl에서 Show/Venue join을 제거한다.
 
-- [ ] **Step 4: STANDALONE/slice test를 통과시키고 커밋한다**
+`AddShowLikeUseCase`/`RemoveShowLikeUseCase`/`GetShowLikeStatusUseCase`(write·상태조회)는
+`MemberLookup`/`ShowLookup`으로 재배선을 완료했다. `GetMyShowLikesUseCase`(liked-list 조회)는
+identity의 `MemberController`가 직접 호출하고 있어 legacy에 남았고, `ShowLookup.getSummaries`
+조합으로 바꾸는 작업도 함께 보류됐다 — Step 2와 같은 후속 작업 대상이다.
+
+- [x] **Step 4: STANDALONE/slice test를 통과시키고 커밋한다**
 
 ```powershell
 rg "(MemberRepository|ShowRepository|QShow|QMember)" src/main/java/com/ticket/showlike
@@ -762,19 +786,19 @@ git commit -m "refactor: 좋아요를 독립 showlike 모듈로 분리한다"
 - Create: `src/test/java/com/ticket/metadata/MetadataModuleTests.java`
 - Remove: 사용되지 않는 CommonCode JPA entity/repository code
 
-- [ ] **Step 1: metadata HTTP contract test를 작성한다**
+- [x] **Step 1: metadata HTTP contract test를 작성한다**
 
 기존 endpoint의 응답 키와 code/label을 보존하면서 catalog, booking, identity 공개 metadata API를 각각 한 번 호출하는지 검증한다.
 
-- [ ] **Step 2: internal enum import를 제거한다**
+- [x] **Step 2: internal enum import를 제거한다**
 
 metadata는 `CatalogMetadata`, `BookingCatalog`, `IdentityMetadata`만 주입받아 결과를 조합한다. 다른 module의 internal enum/entity/repository를 import하지 않는다.
 
-- [ ] **Step 3: 사용되지 않는 CommonCode persistence code를 제거한다**
+- [x] **Step 3: 사용되지 않는 CommonCode persistence code를 제거한다**
 
 코드 사용처가 0임을 `rg`로 확인한 뒤 Java code만 제거한다. 운영 DB에 존재할 수 있는 legacy table을 추측으로 drop하지 않는다.
 
-- [ ] **Step 4: STANDALONE module test를 통과시키고 커밋한다**
+- [x] **Step 4: STANDALONE module test를 통과시키고 커밋한다**
 
 ```powershell
 rg "com\.ticket\.(catalog|booking|identity)\.internal" src/main/java/com/ticket/metadata
