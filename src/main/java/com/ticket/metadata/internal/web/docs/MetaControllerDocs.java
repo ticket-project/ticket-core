@@ -1,7 +1,7 @@
-package com.ticket.core.api.controller.docs;
+package com.ticket.metadata.internal.web.docs;
 
-import com.ticket.core.app.commoncode.query.GetMetaCodesUseCase;
 import com.ticket.core.support.response.ApiResponse;
+import com.ticket.metadata.internal.application.query.GetMetaCodesUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
