@@ -1,4 +1,4 @@
-package com.ticket.configuration;
+package com.ticket.bootstrap.config;
 
 import com.ticket.TicketApplication;
 import lombok.extern.slf4j.Slf4j;
