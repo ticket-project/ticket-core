@@ -1,54 +1,54 @@
 # Core 예매 수명주기
 
-> **STALE (2026-09-02)**: 이 문서는 Task 8(Spring Modulith 이벤트 전환) 이전의 custom outbox
-> 기반 구조를 설명한다. `HoldCreationOutboxExecutor`, `HoldReleaseOutboxRelay`,
-> `HoldOutboxRelayTrigger`, `HoldLifecycleEventPublisher`와 `worker.*-outbox.fixed-delay` 설정은
-> 모두 제거됐다. 현재는 booking DB transaction 안에서 `OrderStarted`/`OrderTerminated`를
-> 발행하고 `BookingEventListeners`(`@ApplicationModuleListener`)가 commit 이후 처리한다. 전체
-> 재작성은 Task 14(문서 갱신)에서 한다 — 그 전까지 이 문서의 outbox 관련 서술을 현재 코드의
-> 근거로 인용하지 않는다.
+이 문서는 주문 생성, 취소, 만료와 Redis hold 후처리의 실행 순서를 설명한다. 핵심 목적은 DB
+트랜잭션과 외부 I/O의 경계, 그리고 Spring Modulith 이벤트가 어떻게 이어지는지 한눈에 확인하는
+것이다. 모듈 경계 결정 배경은 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을
+본다.
 
-이 문서는 주문 생성, 취소, 만료와 Redis hold 후처리의 실행 순서를 설명한다.
-핵심 목적은 DB 트랜잭션과 외부 I/O의 경계를 한눈에 확인하는 것이다.
+이 문서가 설명하는 코드는 모두 `booking` Application Module 소유다(`com.ticket.booking.internal.**`).
+커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 설정 패키지
+(`com.ticket.configuration`)에 있다.
 
 ## 지켜야 할 원칙
 
 - Redis 또는 WebSocket 호출 중에는 DB connection을 점유하지 않는다.
 - Redis TTL 이벤트가 한꺼번에 들어와도 DB로 진입하는 작업 수는 제한한다.
-- 주문 저장 또는 상태 변경과 그에 대응하는 hold outbox 적재는 같은 DB 트랜잭션에서 처리한다.
-- 커밋 후 트리거는 후처리를 직접 실행하지 않고 제한된 작업 큐에 제출만 한다.
-- 즉시 후처리가 누락되거나 실패해도 보정 스케줄러가 outbox를 다시 처리한다.
+- 주문 저장 또는 상태 변경과 그에 대응하는 이벤트 발행은 같은 DB 트랜잭션에서 처리한다.
+- 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고
+  throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
+- 다른 모듈 API 호출(catalog 정책 조회, identity 회원 확인, admission token 검증)은 booking DB
+  트랜잭션 밖에서 끝낸다.
 
 ## 주문 생성
 
 ~~~text
 CreateOrderUseCase
-  -> 요청/회차/좌석 검증
-  -> Redis hold 생성                 (DB 트랜잭션 밖)
+  -> LockScope.ORDER_START 락(같은 회원·회차 직렬화)
+  -> CreateOrderValidator
+       -> catalog BookingPolicyLookup: 예매 정책·좌석 소속·가격 snapshot (DB 트랜잭션 밖)
+       -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
+       -> identity MemberLookup: active member 확인 (밖)
+       -> booking local read: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
+  -> LockScope.SEAT 락 안에서 Redis에 좌석 hold 생성 (밖)
   -> CreatePendingOrderTransactionService
-       -> PENDING 주문 저장          (짧은 DB 트랜잭션)
-       -> hold history 저장
-       -> hold creation outbox 저장
+       -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
+       -> 같은 트랜잭션 안에서 OrderStarted 이벤트 발행
   -> DB 커밋 및 connection 반환
-  -> HoldCreationPostCommitNotifier
-       -> 제한된 background queue에 outbox ID 제출
-  -> HoldCreationOutboxExecutor
-       -> outbox 조회                (짧은 read transaction)
-       -> 같은 좌석의 hold 분산락 획득
-       -> 기록된 holdKey가 현재 hold인지 확인
-       -> 주문 회원 소유 selection만 해제 (Redis)
-       -> HELD 상태 발행             (WebSocket)
-       -> 완료 또는 재시도 기록      (짧은 write transaction)
+  -> BookingEventListeners.on(OrderStarted)             (@ApplicationModuleListener, 커밋 후)
+       -> orderId로 order/orderSeat 재조회(payload를 신뢰하지 않는다)
+       -> HoldCreationTaskProcessor
+            -> 주문 회원 소유 selection만 해제 (Redis)
+            -> HELD 상태 발행             (WebSocket)
 ~~~
 
-DB 저장이 실패하면 CreateOrderUseCase가 이미 만든 Redis hold를 보상 해제한다.
-DB 커밋 뒤 후처리 제출이나 실행이 실패해도 커밋된 주문과 hold는 되돌리지 않는다.
-대신 주문과 같은 트랜잭션에 저장된 creation outbox를 스케줄러가 다시 처리한다.
-따라서 메모리 queue가 가득 차거나 프로세스가 재시작되어도 작업 입력은 DB에 남는다.
-hold가 실제 점유의 기준이며 selection은 UX 보조 상태이다.
-주문 생성 후처리와 hold 해제는 같은 좌석 잠금을 사용한다. 해제가 먼저 끝났다면
-이전 hold의 후처리는 아무 작업도 하지 않고, 생성 후처리가 먼저라면 HELD 뒤에
-RELEASED가 발행된다. WebSocket은 세션별 발행 순서를 보존한다.
+DB 저장이 실패하면 `CreateOrderUseCase`가 이미 만든 Redis hold를 보상 해제한다(같은 스레드에서
+`LockScope.SEAT` 락을 다시 잡고 해제).
+
+커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
+`OrderStarted` publication은 Event Publication Registry에 FAILED로 남는다.
+`EventPublicationMaintenance`가 1분마다 재제출한다(아래 [이벤트 재시도와 보정](#이벤트-재시도와-보정)).
+따라서 프로세스가 재시작되거나 즉시 처리가 실패해도 후속 처리 입력은 DB(publication row)에
+남는다. hold가 실제 점유의 기준이며 selection은 UX 보조 상태다.
 
 주문 시작, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
 만료 시각이고, `remainingSeconds`는 응답을 만드는 서버 시각부터 `expiresAt`까지 남은
@@ -58,8 +58,8 @@ RELEASED가 발행된다. WebSocket은 세션별 발행 순서를 보존한다.
 
 ## 주문 취소와 만료
 
-취소는 소유권과 현재 상태를 검증하고, 만료는 orderId 또는 holdKey로
-PENDING 주문을 잠근다. 이후 공통 절차는 OrderTerminationService가 담당한다.
+취소는 소유권과 현재 상태를 검증하고, 만료는 orderId 또는 holdKey로 PENDING 주문을 잠근다.
+이후 공통 절차는 `OrderTerminationService`가 담당한다.
 
 ~~~text
 CancelOrderUseCase / ExpireOrderUseCase
@@ -68,90 +68,119 @@ CancelOrderUseCase / ExpireOrderUseCase
        -> 주문 좌석 검증
        -> CANCELED 또는 EXPIRED 전이
        -> hold history 저장
-       -> hold release outbox 저장
+       -> 같은 트랜잭션 안에서 OrderTerminated 이벤트 발행
   -> DB 커밋 및 connection 반환
-  -> HoldReleaseAfterCommitListener
-       -> 제한된 background queue에 outbox ID 제출
-  -> HoldReleaseOutboxExecutor
-       -> outbox 조회                (짧은 read transaction)
-       -> 좌석별 현재 holdKey 확인
-       -> 일치하는 hold만 해제        (Redis, DB transaction 없음)
-       -> hold 해제 완료 단계 기록    (짧은 write transaction)
-       -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket, DB transaction 없음)
-       -> 완료 또는 재시도 기록      (짧은 write transaction)
+  -> BookingEventListeners.on(OrderTerminated)          (@ApplicationModuleListener, 커밋 후)
+       -> orderId로 order/orderSeat 재조회
+       -> HoldReleaseProgressRecorder로 이미 Redis 해제가 끝난 event인지 확인
+       -> HoldReleaseTaskProcessor
+            -> (아직이면) 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
+            -> Redis 해제 완료를 eventId 기준으로 기록      (HoldReleaseProgressRecorder)
+            -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket)
 ~~~
 
-같은 outbox를 즉시 작업자와 스케줄러가 동시에 집어도 outbox ID 분산락으로
-외부 부수효과를 한 번에 하나만 실행한다. 다만 이 락은 **동시 실행**을 직렬화할 뿐,
-첫 실행의 부수효과 뒤 완료 기록이 실패해서 나중에 순차 재실행되는 것까지 막지는 않는다.
-그래서 생성 후처리는 현재 holdKey를 다시 확인한다. 해제 후처리는 Redis 해제 성공 단계를
-WebSocket 발행 전에 outbox에 기록한다. 발행이 실패한 재시도에서는 Redis 해제를 반복하지 않고,
-현재 hold와 selection이 모두 없는 좌석만 RELEASED로 다시 발행한다. 새 hold나 selection이 생긴
-좌석에는 오래된 해제 알림을 보내지 않는다.
+같은 `OrderTerminated` publication이 재시도로 다시 전달돼도 `HoldReleaseProgressRecorder`가
+`eventId` 단위로 Redis 해제 완료 여부를 기억하므로 Redis 해제 자체는 반복되지 않는다. 다만
+WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새 hold나 selection이 생긴
+좌석에는 오래된 해제 알림을 보내지 않는다. 발행 자체가 다시 실패하면 같은 RELEASED가 다시
+발행될 수 있다 — 이 이벤트는 좌석을 특정 상태로 맞추는 멱등 상태 알림으로 취급하며 전달
+보장은 at-least-once다. 중복보다 누락을 피하되, 매 발행 직전 현재 상태 검증으로 더 최신
+상태를 덮어쓰지 않는 것이 기준이다.
 
-완료 기록이 실패하면 같은 RELEASED가 다시 발행될 수 있다. 이 이벤트는 좌석을 특정 상태로 맞추는
-멱등 상태 알림으로 취급하며 전달 보장은 at-least-once이다. 중복보다 누락을 피하되, 매 발행 직전
-현재 상태 검증으로 더 최신 상태를 덮어쓰지 않는 것이 기준이다.
+## 이벤트 재시도와 보정
 
-실패 시 `nextAttemptAt`은 현재 시각의 30초 뒤로 기록된다. 이는 정확히 30초 뒤 실행된다는 뜻이
-아니라 **그 시각부터 재시도 대상이 된다**는 뜻이다. 정상 경로는 커밋 직후 작업자가 즉시 실행하고,
-그 실행을 놓친 작업은 2분 주기의 scheduler가 다음 조회에서 처리한다.
-스케줄러가 한 페이지에서 처리 시작 실패를 만나면 그 실행은 다음 페이지 재조회 없이
-끝낸다. 따라서 첫 100건이 그대로 남은 상황에서 같은 페이지를 무한 반복하지 않는다.
+`BookingEventListeners`의 실패는 Spring Modulith의 JPA Event Publication Registry가 관리한다.
+운영 정책(모든 profile 공통, `application.yml`):
+
+```yaml
+spring:
+  modulith:
+    events:
+      completion-mode: archive
+      republish-outstanding-events-on-restart: false
+      staleness:
+        check-interval: 1m
+        published: 5m
+        processing: 10m
+        resubmitted: 10m
+```
+
+`EventPublicationMaintenance`(`com.ticket.configuration`)가 두 가지 주기 작업을 한다.
+
+| 작업 | 주기 | 동작 |
+| --- | --- | --- |
+| `resubmitFailed` | 1분(`fixedDelayString = "PT1M"`) | `FailedEventPublications.resubmit`을 batch 100건·동시 4건(`withMaxInFlight(4)`)으로 실행한다. `completionAttempts <= 10`인 publication만 대상이다 |
+| `purgeArchive` | 매일 03:00 KST(`cron = "0 0 3 * * *"`) | `CompletedEventPublications.deletePublicationsOlderThan(Duration.ofDays(30))`으로 30일이 지난 완료 publication을 지운다 |
+
+**10회를 초과해 계속 실패하는 publication은 자동 재제출 대상에서 제외되고 `ERROR` 레벨 구조화
+로그**(`eventPublicationId`, `completionAttempts`, `event` 포함)로 남는다. 이 로그가 수동 개입이
+필요하다는 신호다. 알림 채널에서 이 로그 패턴을 감시하고, 발견하면 수동 재처리 절차로 넘어간다.
+
+### 수동 재처리 절차
+
+1. `EventPublicationMaintenance.isRetryable`이 남긴 `ERROR` 로그 또는 `EVENT_PUBLICATION` /
+   `EVENT_PUBLICATION_ARCHIVE` 테이블에서 `COMPLETION_ATTEMPTS > 10`인 행을 찾는다.
+2. `event_type`과 `serialized_event`로 어떤 `OrderStarted`/`OrderTerminated`가 실패했는지, 어떤
+   `orderId`/`holdKey`에 해당하는지 확인한다. `serialized_event`는 `VARCHAR(255)`라서 원본
+   payload가 잘려 있을 수 있다 — 이 경우 `orderId`만으로도 booking 테이블에서 실제 주문/좌석
+   상태를 다시 조회할 수 있다(리스너 자체도 payload를 신뢰하지 않고 재조회한다).
+3. 근본 원인을 판단한다: listener 예외(코드 결함), 외부 의존성 장애(Redis 연결 등), 또는
+   `serialized_event` 크기 초과([architecture.md의 이벤트와 후속 처리](architecture.md#이벤트와-후속-처리)
+   참고, 다중 좌석 주문에서 발생 가능)로 나눈다.
+4. 원인이 해소됐다면 해당 publication의 `completion_attempts`를 초기화하거나 애플리케이션의
+   `FailedEventPublications` API를 관리 스크립트/actuator 경로로 다시 호출해 재제출 대상에
+   포함시킨다. 이 저장소는 아직 이 재처리를 자동화하는 전용 endpoint를 두지 않았다 — DB 직접
+   조작 또는 임시 운영 스크립트로 수행하고, 좌석/주문의 최종 상태와 어긋나지 않는지 반드시
+   확인한 뒤 반영한다.
+5. 원인이 해소되지 않았다면(예: payload 크기 초과가 반복되는 구조적 문제) 재제출을 강행하지
+   않고 별도 결정을 먼저 내린다.
 
 ## TTL 폭주와 보정
 
-Redis hold meta key가 만료되면 RedisKeyExpirationListener가
-ExpireOrderUseCase.expireByHoldKey를 호출한다.
+Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrderUseCase.expireByHoldKey`를
+호출한다.
 
-- redisExpirationSubscriptionExecutor: Redis 구독 전용 worker 1~2개
-- redisExpirationTaskExecutor: 만료 handler worker 2개, queue 256개, 공유 permit 2개
+- `redisExpirationSubscriptionExecutor`: Redis 구독 전용 worker 1~2개
+- `redisExpirationTaskExecutor`: 만료 handler worker 2개, queue 256개, 공유 permit 2개
 - queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
-- OrderExpirationTrigger(bootstrap) -> ExpirePendingOrdersUseCase: 5분마다 만료 주문을 100개씩 보정한다.
-- HoldOutboxRelayTrigger(bootstrap) -> HoldCreationOutboxRelay: 2분마다 미완료 생성 후처리 outbox를 100개씩 보정한다.
-- HoldOutboxRelayTrigger(bootstrap) -> HoldReleaseOutboxRelay: 2분마다 미완료 outbox를 100개씩 보정한다.
+- `OrderExpirationTrigger`(`com.ticket.bootstrap.worker`, 아직 이동하지 않은 legacy 위치) →
+  `ExpirePendingOrdersUseCase`: `worker.order-expiration.fixed-delay`(기본 5분)마다 만료 주문을
+  보정한다.
 
-보정 주기는 bootstrap의 `worker.*.fixed-delay` 설정이고, `worker.enabled=false`면 트리거 자체가
+`@Scheduled` 트리거(`OrderExpirationTrigger`)는 아직 `com.ticket.bootstrap`(legacy)에 있고,
+booking 모듈로 옮기는 것은 이후 정리 작업의 범위다. `worker.enabled=false`면 이 트리거 자체가
 등록되지 않는다.
 
-@Scheduled 트리거는 bootstrap에 있고, 커밋 후 리스너와 outbox relay는 core-infra에 있다.
-core-domain은 엔티티의 상태 전이 규칙만 소유한다. core-app은 트랜잭션 단위와 업무 후처리를 소유하고,
-후속 처리 이벤트는 HoldLifecycleEventPublisher 포트로 발행한다. outbox는 그 포트의 구현 방식이다.
-
-## DB connection 관점
-
-Hikari 최대 connection이 10개일 때 background 작업이 무제한으로 DB에
-들어오면 요청 처리와 서로 connection을 빼앗는다. 현재 동시성 예산은 다음과 같다.
-
-- Redis 만료 처리: 최대 2개 작업
-- 주문 커밋 후 작업: 최대 2개 작업
-- outbox 외부 I/O: DB connection 미점유
-
-따라서 과거처럼 만료 handler가 바깥 connection을 잡은 채
-REQUIRES_NEW로 두 번째 connection을 기다리는 순환 대기는 발생하지 않는다.
+**주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 과거 outbox worker 같은 명시적
+동시성 상한이 설정돼 있지 않다.** `@ApplicationModuleListener`는 기본적으로 비동기 실행되며,
+전용 `ThreadPoolTaskExecutor`를 따로 구성하지 않았으므로 Spring Boot의 기본 비동기 task
+executor를 쓴다. Redis 만료 처리(`redisExpirationTaskExecutor`)처럼 명시적으로 2개로 제한된
+경로와 달리, 이벤트 리스너 동시 실행 수는 운영 중 관측(아래 참고)으로 확인해야 한다. 이 상한이
+필요하다고 판단되면 전용 executor 도입을 별도로 결정한다.
 
 ## 주요 코드
 
-- 주문 생성: app.order.command.CreateOrderUseCase
-- 주문 DB 저장: app.order.command.CreatePendingOrderTransactionService
-- 주문 종료: app.order.command.OrderTerminationService
-- 상태 전이 규칙: domain.order.model.Order (confirm, expire, cancel)
-- 후속 처리 발행 포트: app.event.HoldLifecycleEventPublisher
-- outbox 엔티티와 발행 구현: infra.order.outbox (HoldCreationOutbox, HoldReleaseOutbox,
-  OutboxHoldLifecycleEventPublisher)
-- 생성 outbox 실행: infra.order.outbox.create (HoldCreationOutboxExecutor, HoldCreationOutboxRelay)
-- 해제 outbox 실행: infra.order.outbox.release (HoldReleaseOutboxExecutor, HoldReleaseOutboxRelay)
-- 해제 업무 처리: app.order.command.HoldReleaseTaskProcessor
-- 만료 보정: app.order.command.ExpirePendingOrdersUseCase
-- background 트리거: bootstrap.worker
-- Redis TTL 진입 제한: infra.redis.RedisExpirationListenerConfig
-- background queue와 트리거: infra.order
+- 주문 생성: `booking.internal.application.order.command.CreateOrderUseCase`,
+  `CreateOrderValidator`
+- 주문 DB 저장: `booking.internal.application.order.command.CreatePendingOrderTransactionService`
+- 주문 종료: `booking.internal.application.order.command.OrderTerminationService`
+- 상태 전이 규칙: `booking.internal.domain.order.model.Order`(confirm, expire, cancel)
+- 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
+- 커밋 후 리스너: `booking.internal.application.BookingEventListeners`
+- hold 생성/해제 후속 처리: `booking.internal.application.order.command.HoldCreationTaskProcessor`,
+  `HoldReleaseTaskProcessor`, `booking.internal.application.event.HoldReleaseProgressRecorder`
+- 만료 보정: `booking.internal.application.order.command.ExpirePendingOrdersUseCase`
+- background 트리거(legacy): `bootstrap.worker.OrderExpirationTrigger`
+- Redis TTL 진입 제한: `booking.internal.infrastructure.redis.RedisExpirationListenerConfig`
+- event publication 운영: `configuration.EventPublicationMaintenance`
 
 ## 운영 확인
 
 - hikaricp_connections_pending이 지속적으로 0인지 확인한다.
-- redisExpirationSubscriptionExecutor, redisExpirationTaskExecutor,
-  bookingBackgroundTaskExecutor의 active/queued 값을 본다.
-- background queue 포화 경고와 outbox 재시도 로그를 확인한다.
-- 같은 조건의 연속 부하 테스트 전에는 이전 회차의 PENDING 주문, hold TTL,
-  outbox backlog가 모두 정리됐는지 확인한다.
+- redisExpirationSubscriptionExecutor, redisExpirationTaskExecutor의 active/queued 값을 본다.
+- `EventPublicationMaintenance.isRetryable`이 남기는 `ERROR` 로그(최대 재시도 초과)를 alert로
+  감시한다.
+- `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE` 테이블에서 오래 남아 있는 미완료 publication이
+  없는지 확인한다.
+- 같은 조건의 연속 부하 테스트 전에는 이전 회차의 PENDING 주문, hold TTL, 미완료 event
+  publication이 모두 정리됐는지 확인한다.
