@@ -18,6 +18,11 @@ public interface OrderRepository {
     Order save(Order order);
 
     /**
+     * 잠금 없이 주문을 조회한다. 커밋 뒤 이벤트 listener가 현재 상태를 읽기 전용으로 다시 확인할 때 쓴다.
+     */
+    Optional<Order> findById(Long orderId);
+
+    /**
      * 주문을 잠근 뒤 반환한다. 상태 전이 전에 동시 갱신을 막기 위해 쓴다.
      */
     Optional<Order> findByOrderKeyAndMemberIdForUpdate(String orderKey, Long memberId);

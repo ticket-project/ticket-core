@@ -1,9 +1,7 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.booking.internal.application.order.command.CreatePendingOrderTransactionService;
+import com.ticket.booking.OrderStarted;
 import com.ticket.booking.internal.domain.order.command.create.PendingOrderCreationResult;
-import com.ticket.booking.internal.application.order.command.OrderCreator;
-import com.ticket.booking.internal.application.event.HoldLifecycleEventPublisher;
 import com.ticket.booking.internal.domain.order.command.create.HoldAllocation;
 import com.ticket.booking.internal.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.booking.internal.domain.hold.model.Hold;
@@ -12,15 +10,22 @@ import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.inOrder;
@@ -31,6 +36,8 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("NonAsciiCharacters")
 class CreatePendingOrderTransactionServiceTest {
 
+    private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+
     @Mock
     private OrderCreator orderCreator;
 
@@ -38,19 +45,21 @@ class CreatePendingOrderTransactionServiceTest {
     private HoldHistoryRecorder holdHistoryRecorder;
 
     @Mock
-    private HoldLifecycleEventPublisher holdLifecycleEventPublisher;
+    private ApplicationEventPublisher eventPublisher;
 
     private CreatePendingOrderTransactionService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreatePendingOrderTransactionService(orderCreator, holdHistoryRecorder, holdLifecycleEventPublisher);
+        service = new CreatePendingOrderTransactionService(orderCreator, holdHistoryRecorder, eventPublisher, FIXED_CLOCK);
     }
 
     @Test
-    void 주문과_hold_이력을_같은_트랜잭션에_저장한다() {
+    void 주문과_hold_이력을_같은_트랜잭션에_저장하고_OrderStarted를_발행한다() {
         final Duration holdDuration = Duration.ofSeconds(600);
-        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
+        final PerformanceSeat seat = mock(PerformanceSeat.class);
+        when(seat.getId()).thenReturn(501L);
+        final List<PerformanceSeat> seats = List.of(seat);
         final Hold hold = new Hold(
                 "hold-key",
                 20L,
@@ -67,17 +76,15 @@ class CreatePendingOrderTransactionServiceTest {
                 BigDecimal.valueOf(120000),
                 hold.expiresAt()
         );
+        ReflectionTestUtils.setField(order, "id", 55L);
 
         when(orderCreator.createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats))
                 .thenReturn(order);
-        when(holdLifecycleEventPublisher.publishHoldCreated(hold, hold.expiresAt().minusSeconds(600)))
-                .thenReturn(99L);
 
         final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation);
 
         assertThat(result.order()).isSameAs(order);
-        assertThat(result.postCommitOutboxId()).isEqualTo(99L);
-        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, holdLifecycleEventPublisher);
+        final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, eventPublisher);
         inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats);
         inOrder.verify(holdHistoryRecorder).recordCreated(
                 20L,
@@ -87,7 +94,16 @@ class CreatePendingOrderTransactionServiceTest {
                 hold.expiresAt(),
                 seats
         );
-        inOrder.verify(holdLifecycleEventPublisher).publishHoldCreated(hold, hold.expiresAt().minusSeconds(600));
+        final ArgumentCaptor<OrderStarted> captor = ArgumentCaptor.forClass(OrderStarted.class);
+        inOrder.verify(eventPublisher).publishEvent(captor.capture());
+        final OrderStarted event = captor.getValue();
+        assertThat(event.orderId()).isEqualTo(55L);
+        assertThat(event.memberId()).isEqualTo(20L);
+        assertThat(event.holdKey()).isEqualTo("hold-key");
+        assertThat(event.performanceSeatIds()).isEqualTo(Set.of(501L));
+        assertThat(event.schemaVersion()).isEqualTo(OrderStarted.SCHEMA_VERSION);
+        assertThat(event.occurredAt())
+                .isEqualTo(hold.expiresAt().minusSeconds(600).atZone(ZoneId.of("Asia/Seoul")).toInstant());
     }
 
     @Test

@@ -3,7 +3,6 @@ package com.ticket.booking.internal.application.order.command;
 import com.ticket.booking.internal.application.lock.LockKey;
 import com.ticket.booking.internal.application.lock.LockManager;
 import com.ticket.booking.internal.application.lock.LockOptions;
-import com.ticket.booking.internal.application.event.HoldCreationPostCommitNotifier;
 import com.ticket.booking.internal.domain.order.OrderRemainingTime;
 import com.ticket.booking.internal.domain.order.command.create.HoldAllocation;
 import com.ticket.booking.internal.domain.order.command.create.HoldAllocator;
@@ -33,7 +32,6 @@ public class CreateOrderUseCase {
     private final CreateOrderValidator validator;
     private final HoldAllocator holdAllocator;
     private final CreatePendingOrderTransactionService createPendingOrderTransactionService;
-    private final HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
     private final Clock clock;
 
     /**
@@ -100,21 +98,12 @@ public class CreateOrderUseCase {
             releaseHold(seatLocks, allocation, e);
             throw e;
         }
-        notifyHoldCreated(creationResult.postCommitOutboxId(), allocation.holdKey());
         return new Output(
                 creationResult.order().getOrderKey(),
                 OrderState.PENDING,
                 allocation.expiresAt(),
                 OrderRemainingTime.seconds(OrderState.PENDING, allocation.expiresAt(), LocalDateTime.now(clock))
         );
-    }
-
-    private void notifyHoldCreated(final Long outboxId, final String holdKey) {
-        try {
-            holdCreationPostCommitNotifier.notify(outboxId);
-        } catch (final RuntimeException e) {
-            log.warn("주문 생성 후처리를 제출하지 못했습니다. holdKey={}", holdKey, e);
-        }
     }
 
     private void releaseHold(

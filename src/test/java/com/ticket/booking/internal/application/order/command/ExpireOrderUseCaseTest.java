@@ -44,7 +44,7 @@ class ExpireOrderUseCaseTest {
     }
 
     @Test
-    void orderId로_조회한_주문이_있으면_만료_outbox를_적재한다() {
+    void orderId로_조회한_주문이_있으면_만료를_처리한다() {
         final Order order = createOrder(10L, 100L, "hold-key");
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
         when(orderRepository.findByIdAndStatusForUpdate(10L, OrderState.PENDING)).thenReturn(java.util.Optional.of(order));
@@ -55,7 +55,7 @@ class ExpireOrderUseCaseTest {
     }
 
     @Test
-    void holdKey로_조회한_주문이_있으면_만료_outbox를_적재한다() {
+    void holdKey로_조회한_주문이_있으면_만료를_처리한다() {
         final Order order = createOrder(10L, 100L, "hold-key");
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
         when(orderRepository.findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING)).thenReturn(java.util.Optional.of(order));
@@ -66,7 +66,7 @@ class ExpireOrderUseCaseTest {
     }
 
     @Test
-    void duplicate_hold_expiration_creates_one_outbox() {
+    void duplicate_hold_expiration_publishes_only_once() {
         final Order order = createOrder(10L, 100L, "hold-key");
         when(orderRepository.findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING))
                 .thenReturn(java.util.Optional.of(order), java.util.Optional.empty());

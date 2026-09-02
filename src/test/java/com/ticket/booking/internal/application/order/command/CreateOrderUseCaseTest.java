@@ -12,7 +12,6 @@ import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.internal.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.booking.internal.domain.order.command.create.HoldAllocator;
 import com.ticket.booking.internal.domain.order.command.create.HoldAllocation;
-import com.ticket.booking.internal.application.event.HoldCreationPostCommitNotifier;
 import com.ticket.booking.internal.domain.hold.model.Hold;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.model.OrderState;
@@ -39,7 +38,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -57,9 +55,6 @@ class CreateOrderUseCaseTest {
     @Mock
     private CreatePendingOrderTransactionService createPendingOrderTransactionService;
 
-    @Mock
-    private HoldCreationPostCommitNotifier holdCreationPostCommitNotifier;
-
     private final RecordingLockManager lockManager = new RecordingLockManager();
     private CreateOrderUseCase createOrderUseCase;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
@@ -72,7 +67,6 @@ class CreateOrderUseCaseTest {
                 validator,
                 holdAllocator,
                 createPendingOrderTransactionService,
-                holdCreationPostCommitNotifier,
                 fixedClock
         );
     }
@@ -114,7 +108,7 @@ class CreateOrderUseCaseTest {
         when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
                 .thenReturn(allocation);
         when(createPendingOrderTransactionService.create(20L, 10L, Duration.ofSeconds(600), allocation))
-                .thenReturn(new PendingOrderCreationResult(order, 99L));
+                .thenReturn(new PendingOrderCreationResult(order));
 
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
 
@@ -123,33 +117,10 @@ class CreateOrderUseCaseTest {
         assertThat(output.expiresAt()).isEqualTo(hold.expiresAt());
         assertThat(output.remainingSeconds()).isEqualTo(600L);
 
-        final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTransactionService, holdCreationPostCommitNotifier);
+        final InOrder inOrder = inOrder(validator, holdAllocator, createPendingOrderTransactionService);
         inOrder.verify(validator).validate(input, seatIds, FIXED_NOW);
         inOrder.verify(holdAllocator).allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW);
         inOrder.verify(createPendingOrderTransactionService).create(20L, 10L, Duration.ofSeconds(600), allocation);
-        inOrder.verify(holdCreationPostCommitNotifier).notify(99L);
-    }
-
-    @Test
-    void 후처리_제출이_실패해도_커밋된_주문과_hold를_유지한다() {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
-        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final BookingPolicySnapshot performance = createPerformance(5, 600);
-        final Hold hold = hold(seatIds.toList());
-        final HoldAllocation allocation = new HoldAllocation(hold, List.of(mock(PerformanceSeat.class)));
-        final Order order = order(hold);
-        when(validator.validate(input, seatIds, FIXED_NOW))
-                .thenReturn(new ValidatedOrderRequest(performance, allocation.performanceSeats()));
-        when(holdAllocator.allocate(20L, 10L, seatIds, allocation.performanceSeats(), Duration.ofSeconds(600), FIXED_NOW))
-                .thenReturn(allocation);
-        when(createPendingOrderTransactionService.create(20L, 10L, Duration.ofSeconds(600), allocation))
-                .thenReturn(new PendingOrderCreationResult(order, 99L));
-        doThrow(new RuntimeException("queue failed")).when(holdCreationPostCommitNotifier).notify(99L);
-
-        final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
-
-        assertThat(output.orderKey()).isEqualTo("order-key");
-        verify(holdAllocator, never()).release(allocation);
     }
 
     @Test
