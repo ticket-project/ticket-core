@@ -4,41 +4,46 @@
 [architecture.md](architecture.md), 오류 계약은 [ADR 0002](adr/0002-module-owned-error-contracts.md),
 테스트 배치는 [testing.md](testing.md)를 함께 본다.
 
-판단 기준 한 문장 — **"이 검증이 사라지면 무엇이 먼저 깨지는가."** HTTP 응답 품질만 나빠지면 API,
-다른 adapter에서 호출해도 흐름이 깨지면 app, 어떤 호출 경로에서도 업무가 틀리면 domain,
-기술 경계에서만 성립하면 infra다.
+이 문서가 말하는 "계층"은 별도 Gradle 모듈이 아니라 각 Application Module 안의
+`internal.web`/`internal.application`/`internal.domain`/`internal.infrastructure` 패키지다.
+모듈 경계 자체(무엇이 `booking`이고 무엇이 `catalog`인지)는 이 문서의 범위가 아니다.
+
+판단 기준 한 문장 — **"이 검증이 사라지면 무엇이 먼저 깨지는가."** HTTP 응답 품질만 나빠지면
+`internal.web`, 다른 adapter에서 호출해도 흐름이 깨지면 `internal.application`, 어떤 호출
+경로에서도 업무가 틀리면 `internal.domain`, 기술 경계에서만 성립하면 `internal.infrastructure`다.
 
 ## 책임표
 
 | 계층 | 소유하는 검증 | 실패 표현 |
 | --- | --- | --- |
-| `core-api` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식, page size의 구조적 범위 | Bean Validation → `ErrorType.INVALID_REQUEST` (400 / `E400`) |
-| `core-app` | HTTP가 아닌 adapter에서도 지켜야 하는 `UseCase.Input` 계약, 여러 입력의 조합, 날짜 from/to 범위, page size·cursor의 유스케이스 조건, 데이터 존재 여부, 요청 권한, 중복·멱등성·선행 작업, 여러 domain·port를 엮는 실행 선행조건 | `ErrorType` (`INVALID_REQUEST`, `NOT_FOUND_DATA`, `AUTHORIZATION_ERROR` 등) |
-| `core-domain` | 어떤 호출 경로에서도 깨지면 안 되는 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도, 주문 상태 규칙, 공개 가능 여부 | `ErrorType`의 업무별 값(`SEAT_ALREADY_HOLD` 등) |
-| `core-infra` | Redis·JWT·외부 API payload decode, 외부 응답 유효성, DB constraint와 기술 예외 번역, 설정값과 기술 형식 | 기술 예외를 app/domain이 이해할 실패로 번역 |
+| `internal.web` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식, page size의 구조적 범위 | Bean Validation → `ErrorType.INVALID_REQUEST` (400 / `E400`) |
+| `internal.application` | HTTP가 아닌 adapter에서도 지켜야 하는 `UseCase.Input` 계약, 여러 입력의 조합, 날짜 from/to 범위, page size·cursor의 유스케이스 조건, 데이터 존재 여부, 요청 권한, 중복·멱등성·선행 작업, 여러 domain·다른 모듈 공개 API를 엮는 실행 선행조건 | `ErrorType` (`INVALID_REQUEST`, `NOT_FOUND_DATA`, `AUTHORIZATION_ERROR` 등) |
+| `internal.domain` | 어떤 호출 경로에서도 깨지면 안 되는 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도, 주문 상태 규칙, 공개 가능 여부 | `ErrorType`의 업무별 값(`SEAT_ALREADY_HOLD` 등) |
+| `internal.infrastructure` | Redis·JWT·외부 API payload decode, 외부 응답 유효성, DB constraint와 기술 예외 번역, 설정값과 기술 형식 | 기술 예외를 application/domain이 이해할 실패로 번역 |
 
-> **2026-09-02:** `ApiErrorType`/`ApplicationErrorType`/`DomainErrorType`로 계층별 카탈로그를 나누던
-> 구조는 되돌려졌다. 지금은 계층 구분 없이 전역 `com.ticket.core.support.exception.ErrorType` 하나를
-> 모든 계층이 함께 참조한다. 위 표의 "실패 표현" 칸은 그 전역 `ErrorType` 값 중 이 계층이 주로 던지는
-> 것을 예시로 든 것이지, 계층별로 별도 enum이 있다는 뜻이 아니다. 배경은
+> **2026-09-02:** 오류 처리는 아직 어떤 Application Module로도 옮겨지지 않은 legacy 코드다.
+> `ApiErrorType`/`ApplicationErrorType`/`DomainErrorType`로 계층별 카탈로그를 나누던 구조는
+> 되돌려졌다. 지금은 계층 구분 없이 전역 `com.ticket.core.support.exception.ErrorType` 하나를
+> 모든 모듈이 함께 참조한다. 위 표의 "실패 표현" 칸은 그 전역 `ErrorType` 값 중 이 계층이 주로
+> 던지는 것을 예시로 든 것이지, 계층별로 별도 enum이 있다는 뜻이 아니다. 배경은
 > [ADR 0002](adr/0002-module-owned-error-contracts.md)의 갱신된 상태 문단을 본다.
 
-## core-api 규칙
+## `internal.web` 규칙
 
-**Bean Validation은 core-api만 쓴다.** `core-app`과 `core-domain`의 `build.gradle`에
-`jakarta.validation`을 추가하지 않는다.
+**Bean Validation은 `internal.web`만 쓴다.** `internal.application`과 `internal.domain`에
+`jakarta.validation`을 끌어들이지 않는다.
 
 **파라미터 제약은 `controller.docs` 인터페이스에만 선언한다.** Controller는 binding 애노테이션
 (`@PathVariable`, `@RequestParam`, `@RequestBody`, `@RequestHeader`)만 갖는다.
 
 ```java
-// controller/docs/ShowLikeControllerDocs.java — 제약을 선언하는 유일한 곳
+// internal/web/controller/docs/ShowLikeControllerDocs.java — 제약을 선언하는 유일한 곳
 ApiResponse<AddShowLikeUseCase.Output> likeShow(
         @Parameter(hidden = true) AuthenticatedMember member,
         @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long showId
 );
 
-// controller/ShowLikeController.java — binding만
+// internal/web/controller/ShowLikeController.java — binding만
 @Override
 @PostMapping("/shows/{showId}")
 public ApiResponse<AddShowLikeUseCase.Output> likeShow(
@@ -57,18 +62,19 @@ method validation 전체가 500으로 무너진다. Controller가 문서 인터�
 **`@Validated`를 Controller에 붙이지 않는다.** 붙이면 AOP 프록시 경로가 켜져 같은 상속 규칙
 위반을 되살린다. 문서 인터페이스에 제약이 있으면 Spring MVC의 기본 method validation이 적용한다.
 
-실패 변환은 `ApiControllerAdvice`의 고정 변환 두 개가 담당한다.
+실패 변환은 `ApiControllerAdvice`(legacy 전역 handler, `com.ticket.core.support`)의 고정 변환
+두 개가 담당한다.
 
 | 예외 | 응답 |
 | --- | --- |
 | `MethodArgumentNotValidException` (요청 body) | 400 `E400`, `error.data`에 `field: message` |
 | `HandlerMethodValidationException` (path·query·header) | 400 `E400`, `error.data`에 `parameter: message` |
 
-## core-app 규칙
+## `internal.application` 규칙
 
 **필수 component는 record compact constructor 한곳에서 판정한다.** 같은 검증을 생성자와
-`execute()`에서 반복하지 않는다. 공통 판정은
-`com.ticket.core.app.support.validation.RequiredInput`을 쓴다.
+`execute()`에서 반복하지 않는다. 공통 판정은 `com.ticket.core.app.support.validation.RequiredInput`
+(legacy 위치)을 쓴다.
 
 ```java
 public record Input(String orderKey, Long memberId) {
@@ -83,16 +89,16 @@ public record Input(String orderKey, Long memberId) {
   HTTP status를 만들지 않는다.
 - **`execute(null)`은 사용자 입력 오류가 아니라 호출부의 프로그래머 오류다.** `INVALID_REQUEST`로
   감싸지 않고 `NullPointerException`으로 드러낸다.
-- domain 값 객체를 즉시 만들어 검증하는 값은 app에서 같은 규칙을 다시 구현하지 않는다.
+- domain 값 객체를 즉시 만들어 검증하는 값은 application에서 같은 규칙을 다시 구현하지 않는다.
   예: `CreateOrderUseCase.Input`은 `seatIds`를 판정하지 않고 `RequestedSeatIds`에 맡긴다.
 - optional 검색 조건을 required로 바꾸지 않는다. 예: `GetGenresByCategoryUseCase`의
   `categoryCode`는 없으면 전체 조회다.
 - 서버가 만든 설정·컨텍스트 값은 사용자 입력이 아니다. `GetSocialLoginUrlsUseCase.Input.baseUrl`은
   설정 오류로 `IllegalStateException`을 던진다.
-- **Repository는 "없다"는 사실만 알려 주고 오류는 유스케이스가 고른다.** 도메인 Repository는
-  `Optional`과 `boolean`만 노출하고, 예외를 던지는 `getXxx`·`requireXxx` 편의 메서드를 두지 않는다.
-  같은 "회원 없음"이라도 로그인에서는 인증 실패, 조회에서는 not-found, 탈퇴에서는 멱등 성공일 수
-  있기 때문이다. 편의 메서드는 중복 코드를 줄이는 대신 그 맥락을 지운다.
+- **자기 모듈 Repository는 "없다"는 사실만 알려 주고 오류는 유스케이스가 고른다.** 도메인
+  Repository는 `Optional`과 `boolean`만 노출하고, 예외를 던지는 `getXxx`·`requireXxx` 편의
+  메서드를 두지 않는다. 같은 "회원 없음"이라도 로그인에서는 인증 실패, 조회에서는 not-found,
+  탈퇴에서는 멱등 성공일 수 있기 때문이다.
 
   ```java
   // 금지 — domain Repository가 오류까지 정한다
@@ -104,6 +110,12 @@ public record Input(String orderKey, Long memberId) {
   final Member member = memberRepository.findActiveById(input.memberId())
           .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
   ```
+
+  **다른 모듈의 공개 API도 같은 원칙을 따른다.** 예를 들어 `identity.MemberLookup`은 회원이
+  없거나 비활성이면 그 모듈이 정한 결과(`requireActive`가 던지는 예외 또는 `MemberStatus`)를
+  돌려주고, 호출하는 booking 쪽 유스케이스가 그 결과를 자신의 맥락에 맞는 실패로 다시 해석하지
+  않고 그대로 전파하거나 자신의 도메인 규칙과 조합한다. 다른 모듈의 internal 예외 타입을 직접
+  잡지 않는다 — 잡으려면 그 모듈이 공개 API 계약의 일부로 던지는 타입이어야 한다.
 
   "조회 결과 없음"을 어느 코드가 판단해 던지는지는 여전히 유스케이스가 정하지만, 던지는 값
   자체는 계층별 enum이 아니라 전역 `ErrorType.NOT_FOUND_DATA`다. 배경은
@@ -132,9 +144,9 @@ public Output execute(final Input input) {
 }
 ```
 
-**금지**: 업무 정책 값을 API나 app으로 복사하는 것. 최대 선점 좌석 수는
-`PerformanceBookingPolicyView.maxCanHoldCount`와 `BookingPolicyValidator`가 소유한다.
-API 요청 DTO나 `UseCase.Input`에 같은 상한을 두지 않는다.
+**금지**: 업무 정책 값을 API나 application으로 복사하는 것. 최대 선점 좌석 수는 catalog가 공개한
+`BookingPolicySnapshot`과 booking의 도메인 검증기가 소유한다. API 요청 DTO나 `UseCase.Input`에
+같은 상한을 두지 않는다.
 
 **금지**: 같은 값 변환 규칙을 여러 곳에 두는 것. `region` 문자열 → `Region` 변환은
 `ShowParam.parseRegion` 한곳이 소유하고 `ShowSearchCriteria`와
@@ -144,11 +156,11 @@ API 요청 DTO나 `UseCase.Input`에 같은 상한을 두지 않는다.
 
 | 검증 | 테스트 위치 |
 | --- | --- |
-| 요청 DTO Bean Validation | `core-api/src/test`의 `controller/request/*Test` |
-| Controller invalid request 계약(400과 `E400`) | `core-api/src/test`의 `*ContractTest` |
-| 파라미터 제약 선언 위치 | `core-api/src/test`의 `ControllerParameterConstraintTest` |
-| `UseCase.Input` 계약 | `core-app/src/test` — API를 거치지 않고 Input을 직접 생성한다 |
-| 업무 불변식과 값 객체 | `core-domain/src/test` |
+| 요청 DTO Bean Validation | 모듈 `src/test`의 `internal.web.controller.request.*Test` |
+| Controller invalid request 계약(400과 `E400`) | 모듈 `src/test`의 `*ContractTest` |
+| 파라미터 제약 선언 위치 | `src/test`의 `ControllerParameterConstraintTest` |
+| `UseCase.Input` 계약 | 모듈 `src/test`의 `internal.application.**` — API를 거치지 않고 Input을 직접 생성한다 |
+| 업무 불변식과 값 객체 | 모듈 `src/test`의 `internal.domain.**` |
 
 ## 남은 제품 정책 결정
 

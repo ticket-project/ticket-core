@@ -1,244 +1,180 @@
 # 아키텍처 기준
 
 이 문서는 Ticket Core가 따라야 할 **모듈 책임과 의존성 방향의 단일 기준**이다. 현재 코드가 이 문서와
-다르면 현재 위치를 선례로 삼지 말고, 미완료된 구조 이전으로 판단한다. 개발 흐름은
+다르면 현재 위치를 선례로 삼지 말고, 미완료된 구조 이전으로 판단한다. 결정 배경은
+[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md), 개발 흐름은
 [development.md](development.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
 
 ## 프로젝트 구조
 
-프로젝트는 실행, HTTP 진입, 애플리케이션 흐름, 도메인 규칙, 기술 구현을 분리한 멀티 모듈
-모듈러 모놀리스다. 확정 모듈 목록은 `settings.gradle`이 원본이다.
+Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:core-api`/`core:core-app`/
+`core:core-domain`/`core:core-infra`/`storage:redis-core`/`support:error`/`support:logging`
+서브프로젝트는 폐지됐고, `settings.gradle`은 `rootProject.name = 'ticket'` 한 줄만 갖는다.
+`integrationTest` source set과 별도 Gradle subproject는 없다 — 모든 테스트가 `src/test`에 있고
+실행 특성(Spring 컨텍스트·DB·Redis 필요 여부)으로 구분한다. 배경은
+[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 본다.
 
-`support:common`은 아직 만들지 않았다. 생성 조건과 금지 규칙은
-[support:common](#supportcommon-아직-만들지-않았다)에 있다.
-
-당장은 `core-worker`, `bootstrap-api`, `bootstrap-worker`를 만들지 않는다. `bootstrap` 한 프로세스에서
-API와 background trigger를 함께 실행하고 `worker.enabled`로 background 실행 여부를 제어한다. API와
-worker를 독립적으로 배포·확장해야 하는 시점에만 실행 모듈을 분리한다.
-
-의존 방향은 아래와 같고 `CoreLayerArchitectureTest`가 강제한다.
-
-```text
-bootstrap ──→ core-api ──→ core-app ──→ core-domain
-    │                          ↑            ↑
-    └──────→ core-infra ───────┴────────────┘
-                    │
-                    └──→ storage:redis-core
-
-bootstrap과 core 모듈 ──→ support:error / support:logging (필요한 모듈만)
-```
-
-`bootstrap`이 composition root다. API와 어댑터, background worker를 한 프로세스로 조립한다.
-`core-api`는 더 이상 `core-infra`를 프로덕션 의존으로 두지 않는다.
-
-`core-infra`가 `core-app`과 `core-domain`을 의존하는 것은 안쪽 계층이 선언한 포트와 Repository를
-구현하기 위해서다. 런타임에는 app이 인터페이스를 호출하고 infra 구현체가 실행되지만, 컴파일
-의존성은 구현체에서 계약 쪽을 향한다.
-
-### 프로덕션 의존성
-
-모듈별로 무엇을 직접 의존할 수 있는지는 `CoreLayerArchitectureTest`와 `CoreApiArchitectureTest`가
-강제한다. 실제 의존은 각 모듈 `build.gradle`이 원본이다. 표로 옮겨 적지 않는다.
-
-테스트 fixture나 아키텍처 테스트의 `testImplementation`은 프로덕션 의존성과 구분한다. 테스트를 위한
-의존성을 production 코드에서 사용하는 근거로 삼지 않는다.
-
-
-## 모듈 책임
-
-각 모듈이 **무엇을 담는지는 코드가 원본이다.** 여기에는 왜 그렇게 나뉘었는지와, 코드만 봐서는
-알 수 없는 경계 판단만 둔다. 실제 의존은 각 모듈 `build.gradle`이 원본이다.
-
-### `bootstrap`
-
-실행 모듈이자 composition root다. Spring Boot main(`TicketApplication`)과 실행 환경 설정,
-bootJar, 프로파일별 설정과 Flyway 리소스, background 트리거를 둔다.
-
-트리거는 주기만 정하고 조회나 상태 판단을 하지 않는다. 업무 배치는 use case를,
-순수 relay는 core-infra의 relay를 한 번 호출한다. 실행 방식을 다른 모듈이 결정하지 않게 한다.
-
-### `core:core-api`
-
-HTTP adapter 모듈이다. 실행 진입점은 여기에 없다. Controller, 요청/응답 DTO, HTTP 커서 문자열,
-security filter chain, WebSocket 진입, admission token 검증, 공통 응답과 HTTP 오류 변환을 맡는다.
-
-`core-domain`과 `core-infra`는 프로덕션 의존에서 뺐다. 실행 모듈은 use case를 거쳐 도메인에 닿는다.
-계약 테스트와 계층 테스트가 필요로 하는 만큼만 `testImplementation`으로 남긴다.
-
-### `core:core-app`
-
-애플리케이션 계층이다. 도메인 규칙과 어댑터를 엮어 서비스 흐름을 만든다. use case, 트랜잭션 경계,
-조회 포트와 결과 view, 그리고 **use case가 필요로 하는 출력 포트**(분산락, 이벤트 발행, 인증 토큰,
-외부 provider)를 소유한다.
-
-포트를 여기 두는 기준은 "누가 그 계약의 의미를 정하는가"다. use case가 정하면 `core-app`,
-도메인 규칙이 정하면 `core-domain`이다. 구현은 어느 쪽이든 `core-infra`다.
-
-커서 페이징 결과(`support.cursor.CursorPage`)는 여기 있지만 HTTP 커서 문자열은 다루지 않는다.
-Spring은 context/tx/core/beans와 slf4j까지만 쓰고 Spring Data와 Jackson은 두지 않는다.
-
-### `core:core-domain`
-
-기술이나 전달 방식과 무관하게 성립하는 예매 도메인만 둔다. 엔티티와 값 객체, 상태 enum, 정책과
-검증기, 도메인 이벤트와 예외, Aggregate Repository 계약을 갖는다.
-
-**JPA entity를 도메인 모델로 쓰기로 했으므로** JPA mapping annotation은 허용한다. 남은 Spring
-stereotype과 `BaseEntity`의 auditing annotation은 구조 이전 과정의 제한된 예외다. 새 도메인 코드는
-이 예외를 넓히지 않고 가능한 한 순수 Java 객체로 쓴다.
-
-Repository 계약에는 도메인 타입과 Java 기본 타입만 노출한다. 저장 기술은 어댑터가 결정한다.
-기술이나 애플리케이션 흐름 때문에 필요한 포트(Redis, WebSocket, 외부 HTTP, JWT, 암호화)는
-`core-app`이 소유하고, outbox·분산락·조회 최적화·use case도 이 모듈에 두지 않는다.
-
-### `core:core-infra`
-
-`core-app`과 `core-domain`이 선언한 계약을 기술로 구현한다. Repository 어댑터, Querydsl 조회,
-인증 포트 구현, Redis store와 분산락, expiration listener, WebSocket publisher, 외부 HTTP client,
-outbox와 커밋 후 리스너, 시드 러너, 기술 설정이 여기 있다.
-
-**기술 라이브러리 예외를 그대로 밖으로 흘리지 않는다.** 어댑터가 복구 가능한 경우 처리하고,
-그렇지 않으면 app/domain이 이해할 수 있는 실패 또는 API가 일관되게 처리할 기술 실패로 번역한다.
-어떤 라이브러리를 썼는지가 안쪽 계층의 계약에 드러나면 경계가 잘못된 것이다.
-
-### `storage:redis-core`
-
-Redis 공통 의존성만 제공한다. 실제 비즈니스 Redis 구현은 `core-infra`의 기능별 adapter에 둔다.
-
-### `support:error` (2026-09-02 되돌림으로 supersede됨)
-
-이 절이 설명하던 모듈별 `ErrorCode`/`ErrorType` 분리는 구현되었다가 사용자 결정으로 되돌려졌다.
-현재 오류 처리는 `support:error` 도입 이전의 전역 구조이며 `com.ticket.core.support.exception`의
-`ErrorCode`/`ErrorType`/`CoreException`/`AuthException`/`NotFoundException`과
-`com.ticket.core.support.ApiControllerAdvice`, `com.ticket.core.support.response.ApiResponse`가
-모든 계층이 함께 참조하는 하나의 카탈로그다. 오류는 여전히 원인을 판단할 수 있는 코드가 값을
-던지지만(`throw new CoreException(ErrorType.XXX)`), 그 `ErrorType` 자체는 모듈별로 나뉘지 않고
-전역 하나다. 배경과 되돌림 근거는 [ADR 0002](adr/0002-module-owned-error-contracts.md)의 갱신된
-상태 문단을 따른다. 이 전역 구조는 Spring Modulith 기능별 module 분리 전까지의 임시 과도기이며,
-아래 원래 절 본문은 되돌리기 전 설계 기록으로 남긴다.
-
-프레임워크에 독립적인 **공통 오류 계약과 예외 전달 기반**만 제공한다. Spring Web, `HttpStatus`,
-Jackson에 의존하지 않으며 업무별 오류 코드·메시지 카탈로그를 소유하지 않는다.
-
-**오류는 원인을 판단할 수 있는 모듈이 정의한다.** 도메인 불변식 위반은 `core-domain`, use case 흐름의
-실패는 `core-app`, HTTP 요청·인증·응답 변환 실패는 `core-api`, 기술 실패의 감지와 번역은
-`core-infra`가 담당한다. `HttpStatus`, `ResponseEntity`, 공개 JSON 응답 형식과 직렬화는 `core-api`만
-소유한다.
-
-구체 계약과 배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)를 따른다. 오류 코드 체계와
-상태 분류는 별도 재설계에서 다시 확정한다. 새 ADR이 기존 결정을 대체하기 전까지 이 문서는 오류
-타입의 구체 모양을 새로 정하지 않는다. `CommonErrorCode`를 업무 오류 저장소처럼 확장하거나
-`support:error`에 Spring Web 의존성을 추가하지 않는다.
-
-### `support:common` (아직 만들지 않았다)
-
-**공통 모듈 자체는 허용한다. 이름은 `core-common`이 아니라 `support:common`을 쓴다.** 다만 지금
-조건을 만족하는 타입이 없어 **빈 모듈을 먼저 만들지 않는다.** 첫 적합한 공통 타입이 생길 때 만든다.
-
-둘 수 있는 타입은 아래를 **모두** 만족한다.
-
-- 둘 이상의 **독립** 모듈에서 실제로 쓰인다
-- 모든 소비자에게 의미가 동일하고, 호출 모듈별로 다르게 발전할 가능성이 낮다
-- 업무 용어(Show, Order, Hold, Seat)도 기술 용어(HTTP, DB, Redis, JWT)도 없다
-- JDK만으로 성립하고 독립적인 단위 테스트가 가능하다
-- 짧은 중복 코드를 줄이는 것이 목적이 아니다
-
-production 의존성은 **원칙적으로 JDK 외 금지**다. 조건을 만족해도 Entity, Repository, UseCase,
-DTO, `ApiResponse`, `HttpStatus`, 업무 오류 코드, `CookieUtils`, `CursorCodec`, `RedisKeyFormatter`,
-`JwtUtils`, 그리고 `CommonUtils`처럼 무제한으로 커지는 클래스는 두지 않는다.
-
-`support:error`와 `support:logging`은 각자 역할로 유지하고 여기 합치지 않는다.
-**라이브러리 버전 전달용 모듈로 쓰지 않는다.** 버전은 `gradle/libs.versions.toml`이 소유한다.
-
-#### 현재 후보 판정
-
-공통처럼 보인다는 이유만으로 옮기지 않는다. 지금까지 검토한 후보는 전부 이동 불가다.
-
-| 후보 | 현재 위치 | 근거 |
-| --- | --- | --- |
-| `CookieUtils` | `core-api` | Servlet·Spring에 의존하고 쿠키 이름·path·SameSite는 HTTP 계약이다 |
-| `CursorPage` | `core-app` | 소비자가 계약 소유자와 그 구현자뿐이다. 독립 모듈 둘이 아니다 |
-| `ShowCursorCodec` | `core-api` | Jackson과 Base64 wire 표현을 다루고 이름과 대상이 업무 용어다 |
-| `ShowQueryHelper` | `core-infra` | Querydsl Q 타입에 직접 의존한다. 기술 용어와 업무 용어를 동시에 갖는다 |
-| `UuidSupplier` | `core-infra` | 소비자가 `core-infra` 한 모듈뿐이다 |
-
-후보가 조건을 만족하면 그때 모듈을 추가하고, 허용 타입과 테스트만 옮기며, 금지 의존성을 구조
-테스트로 강제한다. 모든 모듈에 의존성을 붙이지 않고 **실제 소비 모듈만** 의존한다.
-
-### `support:logging`
-
-로깅 공통 설정 리소스만 제공한다.
-
-## 대표 실행 흐름
-
-컴파일 의존성은 안쪽의 계약을 향하고, 런타임 호출은 바깥에서 안쪽으로 들어갔다가 어댑터로
-나온다. `core-infra`가 app/domain을 의존하는 이유는 안쪽 계층이 선언한 인터페이스를 구현하기
-위해서이지, 안쪽 계층이 infra 구현을 직접 호출하기 위해서가 아니다.
-
-### 세 가지 흐름
+모듈 경계는 **Gradle subproject가 아니라 Spring Modulith의 Application Module**이 강제한다.
+`com.ticket`의 직접 하위 패키지가 닫힌 모듈이고, `com.ticket.ModularityTests`가 경계 위반을 잡는다.
+확정 모듈 목록과 실제 `allowedDependencies`는 각 모듈 `package-info.java`가 원본이다.
 
 ```text
-상태 변경  core-api Controller → core-app Command UseCase(트랜잭션 경계)
-             ├→ core-domain aggregate·policy / Aggregate Repository 계약
-             └→ core-app 출력 포트 → core-infra adapter → JPA·Redis·외부
-
-조회       core-api Controller → core-app Query UseCase → ReadRepository 계약
-             → core-infra Querydsl 구현 → core-app view → core-api 응답 DTO
-
-background 업무 배치: bootstrap @Scheduled → core-app UseCase → domain → infra
-           순수 relay: bootstrap @Scheduled → core-infra relay
+src/main/java/com/ticket
+├── TicketApplication.java   # @Modulith root, main
+├── configuration/           # 전역 기술 설정
+├── booking/                 # 좌석 판매 상태·Selection·Hold·Order, 공개: BookingMetadata, OrderStarted/OrderTerminated
+├── catalog/                 # Show·Performance·Seat·대기열 정책, 공개: BookingPolicyLookup, ShowLookup, CatalogMetadata
+├── identity/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, IdentityMetadata
+├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
+├── showlike/                 # Show 좋아요(write 경로만 이동, 아래 "showlike 모듈의 경계" 참고)
+├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
+├── shared/                   # 공유 계약을 위한 자리(현재 비어 있음, 아래 참고)
+└── core/, bootstrap/, storage/, support/   # 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존 범위")
 ```
 
-API는 요청을 해석해 app 입력으로 바꾼다. app은 트랜잭션과 순서를 정하고, domain은 상태 변경
-가능 여부와 불변식을 판단하며, infra가 실제 저장 기술에 반영한다.
+각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
+두고, 실제 구현(web/application/domain/infrastructure)은 모두 `<module>.internal` 아래에 둔다.
+어떤 모듈도 `Type.OPEN`으로 선언하지 않는다.
 
-**단순 조회도 API가 domain/infra를 직접 보지 않는다.** API가 조회 구현과 결합되면 같은 조회를
-worker나 다른 adapter에서 재사용하기 어렵고, HTTP 계층이 정렬·커서·조인 전략까지 소유하게 된다.
-app의 query use case는 얇게 두고 projection·집계·커서 최적화는 infra가 구현한다.
+## 승인된 의존 DAG
 
-**스케줄러는 실행 시각과 on/off만 책임진다.** 주문 만료 판단이나 상태 전이 같은 업무는 app/domain에
-있고, outbox 전송처럼 업무 판단 없이 기술 상태만 처리하는 relay는 infra에 있다. 지금은 API와 worker가
-한 실행 파일을 공유하되 `worker.enabled=false`로 트리거를 끌 수 있다. 독립 배포·스케일링이 실제로
-필요해질 때만 실행 모듈을 나눈다.
+```text
+booking   -> catalog, identity, admission
+catalog   -> (없음)
+identity  -> (없음)
+admission -> (없음)
+metadata  -> catalog, booking, identity
+showlike  -> catalog, identity
+shared    -> 모든 모듈이 참조할 수 있는 공유 자리(현재 미사용)
+```
 
-### 포트 소유 기준
+`catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `booking`과
+`showlike`가 그 위에 얹히고, `metadata`는 세 모듈의 공개 계약만 조합한다. 순환은 없다. 이 DAG를
+바꾸려면 먼저 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 갱신한다.
 
-포트는 구현체가 아니라 **그 기능을 필요로 하고 의미를 정의하는 안쪽 계층**이 소유한다.
-모든 포트를 domain에 모으지 않는다.
+**모듈 발견 전략은 기본값(`direct-sub-packages`)이다.** `explicitly-annotated`로 바꾸면
+`@ApplicationModule`을 빼먹은 미래 모듈을 조용히 놓칠 수 있어 채택하지 않았다. 대신
+`com.ticket.ModularityTests`가 `ApplicationModules.of(TicketApplication.class, <predicate>)`로
+아직 이동하지 않은 legacy 패키지만 검증 대상에서 제외한다. 정확한 모듈 집합과 DAG assertion,
+`Documenter`, actuator/insight 노출 범위는 모듈 테스트가 계속 다듬고 있는 영역이며, 무엇을
+검증하는지는 이 문서가 아니라 `ModularityTests`와 `/verify` 스킬이 원본이다.
 
-| 계약의 성격 | 소유 모듈 | 이유 |
+## 모듈 간 참조 규칙
+
+- **cross-module JPA 연관관계와 DB FK는 금지한다.** 다른 모듈의 aggregate를 참조해야 하면
+  `long` 같은 scalar ID 컬럼만 갖는다. 예: booking이 소유한 `PerformanceSeat`는
+  `performanceId`/`seatId`를 scalar 컬럼으로 갖고 catalog의 `Performance`/`Seat` 엔티티를 JPA로
+  참조하지 않는다.
+- **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 `internal` 패키지,
+  Repository, JPA entity를 직접 import하지 않는다. 공개 API는 작은 단위 interface(예:
+  `catalog.BookingPolicyLookup`, `identity.MemberLookup`, `admission.AdmissionVerifier`)와 그
+  반환값인 불변 `record` snapshot(`BookingPolicySnapshot`, `MemberStatus`,
+  `AdmissionVerification` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에
+  두지 않는다. 컬렉션은 defensive copy한다.
+- **모듈 후속 처리는 커밋 이후 이벤트로 한다.** booking이 발행하는 `OrderStarted`/
+  `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
+  본다.
+- **`metadata`는 어떤 모듈의 internal enum/entity/repository도 import하지 않는다.** 각 모듈이
+  공개한 `*Metadata` 계약(`CatalogMetadata`, `BookingMetadata`, `IdentityMetadata`)만 주입받는다.
+
+### showlike 모듈의 경계 — 완결되지 않은 상태를 그대로 기록한다
+
+`showlike`는 write 경로(`AddShowLikeUseCase`/`RemoveShowLikeUseCase`/
+`GetShowLikeStatusUseCase`와 이를 노출하는 controller)만 `com.ticket.showlike.internal`로
+옮겼고, read 경로는 legacy에 남아 있다. identity의 `MemberController`(`GET /me/likes`)와
+catalog의 `QuerydslShowDetailReadRepository`(공연 상세 `likeCount`)가 legacy
+`com.ticket.core.domain.showlike.model.ShowLike`(entity, 여전히 `Member`/`Show`에
+`@ManyToOne`)를 직접 참조하기 때문에, 이 부분을 옮기면 승인된 DAG를 벗어난
+`identity ↔ showlike`, `catalog ↔ showlike` 순환이 생긴다. 그래서 의도적으로 legacy에 남겨 뒀고
+`ModularityTests`의 legacy 제외 predicate가 검증에서 뺀다.
+
+**이것은 버그가 아니라 기록된 후속 작업이다.** 정리하려면 identity의 `/me/likes`를 showlike로
+옮기거나 catalog의 `likeCount` 조회 방식을 바꾼(예: 이벤트 기반 local projection) 뒤에야 `ShowLike`를
+scalar ID로 바꾸고 나머지를 옮길 수 있다. 옮기지 못한 정확한 클래스 목록과 이유는
+`src/main/java/com/ticket/showlike/package-info.java`(대칭적으로 `catalog`/`identity`의
+package-info)에 있다. 이 gap을 해결된 것으로 서술하지 않는다.
+
+## 이벤트와 후속 처리
+
+주문 생성/종료 이후 처리(Redis selection 정리, hold 해제, WebSocket 발행)는 custom outbox가
+아니라 Spring Modulith 이벤트와 JPA Event Publication Registry(`spring-modulith-starter-jpa`)로
+한다. `OrderStarted`/`OrderTerminated`는 Order/OrderSeat/HoldHistory 저장과 같은 booking DB
+transaction 안에서 `ApplicationEventPublisher.publishEvent(...)`로 발행되고,
+`@ApplicationModuleListener`(`BookingEventListeners`)가 커밋 이후 처리한다. 정확한 운영
+정책(archive, staleness, 재제출 주기와 횟수 상한, 수동 재처리)은
+[core-booking-lifecycle.md](core-booking-lifecycle.md)가 원본이고, 결정 배경은
+[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 본다. broker
+externalization(`@Externalized`, 메시지 브로커)은 현재 범위가 아니다.
+
+**추적 중인 운영 리스크**: registry의 `EVENT_PUBLICATION.serialized_event` 컬럼은 라이브러리
+제약으로 `VARCHAR(255)`다. 다중 좌석 주문의 `OrderStarted` 직렬화 결과가 이를 넘으면 event
+publication 저장 자체가 실패할 수 있다. 상세는 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)을 본다.
+
+## 오류 처리(legacy, 이 문서의 범위 밖)
+
+오류 처리는 아직 어떤 Application Module로도 옮겨지지 않은 legacy 코드다. `ProblemDetail` 기반
+공통 계약(`shared.BusinessProblem`/`BusinessException`)을 도입했다가 사용자 결정으로 되돌렸고,
+현재는 `support:error` 도입 이전의 전역 구조
+(`com.ticket.core.support.exception.ErrorType`/`ErrorCode`/`CoreException`과
+`com.ticket.core.support.ApiControllerAdvice`, `ApiResponse.error`)를 모든 모듈이 함께
+참조한다. 배경과 갱신된 상태는 [ADR 0002](adr/0002-module-owned-error-contracts.md)의 상태
+문단이 원본이며, [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)은 이
+결정을 다시 다루지 않는다. 오류 계약을 모듈이 다시 소유할지는 별도로 결정한다.
+
+## 레거시 잔존 범위
+
+`com.ticket.core`/`com.ticket.bootstrap`/`com.ticket.storage`/`com.ticket.support`는 아직
+Application Module로 옮기지 않은 코드다. `ModularityTests`가 명시 predicate로 검증에서 제외한다.
+현재 남아 있는 것:
+
+- 전역 오류 처리(`core.support.exception`, `core.support.response`, `core.support`) — 위 절 참고
+- showlike read 경로(`core.app.showlike`, `core.domain.showlike`, `core.infra.showlike`) — 위
+  [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
+- WebSocket 인증 인터셉터(`core.config.security.WebSocketAuthInterceptor`) — identity가 소유한
+  `AccessTokenReader`를 직접 참조한다. 차단 요인은 없고 아직 옮기지 않은 상태다
+- 전역 기술 설정(`core.config`의 Swagger/CORS/WebSocket 설정, `core.infra.persistence`의 JPA
+  auditing, `core.infra.seed`의 시드 러너)
+
+새 코드를 이 legacy 패키지에 추가하지 않는다. 기존 legacy 코드를 옮기는 작업은 이 문서가 아니라
+이후 정리 작업의 범위다.
+
+## 모듈 내부 구조
+
+각 모듈 내부는 계층형 프로젝트가 쓰던 것과 같은 축을 따른다. 물리적으로 별도 Gradle 모듈이
+아니라 `<module>.internal` 아래의 패키지일 뿐이다.
+
+| 하위 패키지 | 담는 것 |
+| --- | --- |
+| `internal.web` | Controller, 요청/응답 DTO, HTTP 커서 문자열 |
+| `internal.application` | use case, 트랜잭션 경계, 조회 포트와 결과 view, 그 use case가 필요로 하는 출력 포트(분산락, 이벤트 발행, 외부 provider) |
+| `internal.domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
+| `internal.infrastructure` | Repository 어댑터, Querydsl 조회, Redis/Redisson, WebSocket publisher, 외부 HTTP client, 기술 설정 |
+
+작은 모듈(`admission`)은 이 네 하위 패키지를 모두 갖지 않고 `internal` 바로 아래에 평평하게 둘
+수 있다. 무엇을 쪼갤지는 실제 복잡도가 결정한다.
+
+포트 소유 기준은 계층형 시절과 같다 — **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
+
+| 계약의 성격 | 소유 위치 | 이유 |
 | --- | --- | --- |
-| aggregate 저장·복원과 업무 명령에 필요한 조회 | `core-domain` | domain이 필요한 저장 의미와 반환할 도메인 타입을 정의한다 |
-| 화면 조회·검색·집계 결과 | `core-app` | 특정 use case의 읽기 요구이며 aggregate 복원 계약이 아니다 |
-| 분산락, 토큰, 비밀번호, 외부 OAuth, publisher/client | `core-app` | 업무 규칙 자체가 아니라 use case를 실행하기 위한 외부 능력이다 |
-| HTTP 입력·출력 계약 | `core-api` | 전달 방식이 HTTP일 때만 존재한다 |
-| JPA, Querydsl, Redis, Redisson, JWT 라이브러리 구현 | `core-infra` | 교체 가능한 기술 선택이며 안쪽 계약을 구현한다 |
-
-이 기준을 따르면 domain은 핵심 업무 언어에 집중하고, app은 실행 환경에 필요한 능력을 구체 기술명
-없이 요청할 수 있다. 예를 들어 `LockManager`는 app에 있지만 `RedissonLockManager`와 Redis key
-형식은 infra에 있다. domain은 “분산락을 얻었는가”가 아니라 락 안에서 실행된 상태 변경이 업무상
-유효한지만 판단한다.
+| aggregate 저장·복원과 업무 명령에 필요한 조회 | `internal.domain` | domain이 필요한 저장 의미와 반환할 도메인 타입을 정의한다 |
+| 화면 조회·검색·집계 결과 | `internal.application` | 특정 use case의 읽기 요구이며 aggregate 복원 계약이 아니다 |
+| 분산락, 토큰, 외부 provider, publisher/client | `internal.application` | 업무 규칙 자체가 아니라 use case를 실행하기 위한 외부 능력이다 |
+| HTTP 입력·출력 계약 | `internal.web` | 전달 방식이 HTTP일 때만 존재한다 |
+| JPA, Querydsl, Redis, Redisson, JWT 라이브러리 구현 | `internal.infrastructure` | 교체 가능한 기술 선택이며 안쪽 계약을 구현한다 |
 
 ## 패키지와 이름 규칙
 
-패키지 목록은 코드가 원본이다. 여기에는 **새 코드를 만들 때 따라야 할 축과 이름 규칙**만 둔다.
+기능별 패키지를 기본 축으로 잡는다(`order`, `hold`, `show`, `performanceseat` 등). 기능 안의
+하위 패키지는 아래 패턴을 쓴다.
 
-기능별 패키지를 기본 축으로 잡는다(`auth`, `member`, `order`, `hold`, `show`, `performanceseat` 등).
-기능 안의 하위 패키지는 아래 패턴을 쓴다.
-
-| 하위 패키지 | 담는 것 | 두는 모듈 |
-| --- | --- | --- |
-| `model` | 엔티티와 값 객체 | `core-domain` |
-| `repository` | Aggregate Repository 인터페이스(순수 계약) | `core-domain` |
-| `store` | 저장 기술에 중립적인 업무 상태 저장 계약 | `core-domain` |
-| `query` | 정책 판정에 쓰는 도메인 read model | `core-domain` |
-| `command` | 상태를 바꾸는 use case와 트랜잭션 조립 | `core-app` |
-| `query`, `query.model` | 조회 use case, 조회 포트, 결과 view와 param | `core-app` |
-
-`core-domain`은 구현체 패키지로서의 `infra`를 두지 않는다. `core-infra`는 `core-domain`의 기능 축을
-그대로 따라 어댑터를 배치하되 물리 위치는 별도 Gradle 모듈이다.
-
-`core-app`의 `support.cursor`는 타입이 있는 커서 위치와 페이징 결과만 갖는다. HTTP 커서 문자열
-codec은 `core-api`의 몫이다.
+| 하위 패키지 | 담는 것 |
+| --- | --- |
+| `model` | 엔티티와 값 객체 |
+| `repository` | Aggregate Repository 인터페이스(순수 계약) |
+| `store` | 저장 기술에 중립적인 업무 상태 저장 계약 |
+| `query` | 정책 판정에 쓰는 도메인 read model, 또는 조회 use case·포트·결과 view |
+| `command` | 상태를 바꾸는 use case와 트랜잭션 조립 |
 
 ### 이름 규칙
 
@@ -248,27 +184,25 @@ codec은 `core-api`의 몫이다.
 - 어댑터가 안에서 쓰는 Spring Data 인터페이스는 `SpringData*JpaRepository`.
 
 ```text
-core-domain
+internal.domain
   OrderRepository                 (순수 Java 계약)
           ↑ implements
-core-infra
+internal.infrastructure
   OrderRepositoryAdapter          (계약과 Spring Data를 연결)
           ↓ delegates
   SpringDataOrderJpaRepository    (JpaRepository, @Query, @Lock)
 ```
 
-중간 Adapter를 두는 이유는 이름을 하나 더 만들기 위해서가 아니다. domain 계약이 Spring Data의
-상속 메서드와 annotation에 오염되지 않게 하고, `save`·lock 조회·예외 번역처럼 기술 동작을 한곳에
-가두며, 나중에 영속 기술을 바꾸더라도 app/domain 호출부를 유지하기 위해서다. JPA entity가 domain에
-있어도 Repository 프레임워크까지 domain에 둘 이유는 없다. entity는 업무 상태를 표현하지만
-`JpaRepository`, JPQL, DB lock mode는 그 상태를 저장하는 방법이기 때문이다.
-
+- `View`는 조회 경계의 화면/응답용 projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개
+  API에서는 cross-module 스냅샷을 뜻한다)다.
+- `Row`는 저장소 조회 한 행, `Output`은 use case가 반환하는 결과다.
+- `Param`은 조회 조건 구성값, `Criteria`는 검색 조건, `Event`는 발생한 사실, `Request`는
+  외부 입력이다.
 
 ## 코드 위치 결정표
 
 책임별 위치 표는 **`/place-code` 스킬**이 원본이다(`.claude/skills/place-code/SKILL.md`).
 판단 기준이 문서와 스킬로 갈려 있으면 한쪽만 자라고 어긋난다.
-
 
 ## 기능별 구조 원칙
 
@@ -277,7 +211,7 @@ core-infra
 Controller는 가능한 한 얇게 유지한다.
 
 - 요청 검증
-- 인증 principal 추출
+- 인증 principal 추출(`identity.AuthenticatedMember`)
 - use case 호출
 - 응답 포맷 반환
 
@@ -285,74 +219,53 @@ Controller는 가능한 한 얇게 유지한다.
 
 ### Command / Query
 
-- `command`: 상태를 변경하는 use case (`core-app`)
-- `query`: 조회 전용 use case와 조회 port (`core-app`)
+- `command`: 상태를 변경하는 use case
+- `query`: 조회 전용 use case와 조회 port
 
 Repository 한 번 호출한 뒤 not-found 예외만 던지는 `*Finder` 계층은 두지 않는다. command/query
-use case가 해당 Repository를 직접 호출한다. 여러 use case에서 반복된다는 이유만으로 Finder를
-만들지 않으며, 반복 코드가 실제 업무 규칙이면 domain 정책/서비스로, 애플리케이션 절차면 이름이
-그 목적을 드러내는 app 서비스로 추출한다.
+use case가 해당 Repository를 직접 호출한다.
 
 Repository는 두 종류로 나뉜다.
 
-**Aggregate Repository** (`core-domain`): aggregate의 저장과 복원, 업무 명령에 필요한 조회를 맡는다.
-도메인 타입만 반환하고, JPA 구현은 `core-infra`의 어댑터가 맡는다.
+**Aggregate Repository**(`internal.domain`): aggregate의 저장과 복원, 업무 명령에 필요한 조회를
+맡는다. 도메인 타입만 반환하고, JPA 구현은 `internal.infrastructure`의 어댑터가 맡는다. 조회
+실패는 `Optional`이나 `boolean`으로 돌려주고 오류는 호출하는 유스케이스가 고른다. 예외를 던지는
+`getXxx`·`requireXxx` 편의 메서드를 두지 않는다([validation.md](validation.md)).
 
-조회 실패는 `Optional`이나 `boolean`으로 돌려주고 Repository가 오류를 정하지 않는다. Repository가
-아는 것은 "결과가 없다"는 사실뿐이고, 그것이 인증 실패인지 not-found인지 멱등 성공인지는 호출하는
-유스케이스가 판단한다. 예외를 던지는 `getXxx`·`requireXxx` 편의 메서드를 두지 않는다
-([validation.md](validation.md)).
+**Read Repository**(`internal.application`): 화면·검색·상세·집계·커서 페이징 같은 읽기 전용
+조회를 맡는다. app이 소유한 immutable read model이나 원시 타입을 반환하며 domain entity 반환을
+강제하지 않는다.
 
-- `domain.order.repository.OrderRepository` ← `infra.order.OrderRepositoryAdapter`
-
-**Read Repository** (`core-app`): 화면·검색·상세·집계·커서 페이징 같은 읽기 전용 조회를 맡는다.
-app이 소유한 immutable read model이나 원시 타입을 반환하며 domain entity 반환을 강제하지 않는다.
-
-- `app.show.query.ShowListReadRepository` ← `infra.show.query.QuerydslShowListReadRepository`
-- `app.show.query.model.ShowListItemView`
-- `app.performanceseat.query.SeatMapReadRepository` ← `infra.performanceseat.query.QuerydslSeatMapReadRepository`
-
-읽기 경로는 domain entity를 거치지 않아도 된다. 상태를 바꾸지 않기 때문이다. 반대로 상태를 바꾸는
-command는 반드시 domain aggregate와 Aggregate Repository를 거쳐 불변식을 다시 검증한다.
-
-Read Repository 계약에는 app read model, `List`, `Optional`, `long`, `boolean`, 순수 Java/domain value,
-타입 커서 위치, limit만 노출한다. API 응답 DTO, Spring `Slice`/`Page`/`Pageable`, Querydsl `Tuple`,
-`EntityManager`, `Object[]`, HTTP 커서 문자열은 두지 않는다.
-
-정책 판정에 쓰이는 조회는 Read Repository가 아니라 Aggregate Repository가 도메인 값으로 돌려준다.
-예: `PerformanceRepository.findBookingPolicyById`, `PerformanceSeatRepository.findSelectableSeat`
+읽기 경로는 domain entity를 거치지 않아도 된다. 상태를 바꾸지 않기 때문이다. 반대로 상태를
+바꾸는 command는 반드시 domain aggregate와 Aggregate Repository를 거쳐 불변식을 다시
+검증한다.
 
 ## 저장소 구조
 
 ### RDB
 
-주 영속 저장소는 RDB다.
+주 영속 저장소는 RDB다. 업무 상태를 표현하는 JPA entity는 각 모듈의 `internal.domain`에 둔다.
+Spring Data 인터페이스, JPQL, Querydsl, `EntityManager`, DB lock annotation과 Repository
+adapter는 `internal.infrastructure`에 둔다.
 
-주요 대상:
-
-- 회원
-- 공연/회차
-- 좌석
-- 주문
-- hold 이력
-
-업무 상태를 표현하는 JPA entity는 `core-domain`에 둔다. 반면 Spring Data 인터페이스, JPQL,
-Querydsl, `EntityManager`, DB lock annotation과 Repository adapter는 `core-infra`에 둔다.
-outbox처럼 업무 aggregate가 아니라 기술적 전달을 위한 테이블의 entity와 repository도
-`core-infra`가 소유한다.
+Flyway migration은 module 소유권을 따른다. 기존 이력(V2~V8)은 내용 변경 없이
+`db/migration/__root`, `db/migration-vendor/{h2,oracle}/__root`에 있고, 모듈이 소유하는 새
+schema 변경은 `db/migration/{module}`, `db/migration-vendor/{h2,oracle}/{module}`에 module별로
+독립 버전을 매겨 추가한다(`spring.modulith.runtime.flyway-enabled=true`). 상세 절차는
+[operations.md](operations.md#db-마이그레이션)를 본다.
 
 ### Redis
 
-Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌석 처리에 사용한다. 대기열 상태는 `ticket-queue`가 별도 Redis에서 관리하며, 현재 애플리케이션과 배포 설정은 단일 Redis 서버를 사용한다.
+Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌석 처리에 사용한다. 대기열 상태는
+`ticket-queue`가 별도 Redis에서 관리하며, 현재 애플리케이션과 배포 설정은 단일 Redis 서버를
+사용한다.
 
 주요 대상:
 
-- seat selection
-- seat hold
-- refresh token
-- OAuth2 one-time auth code
+- seat selection, seat hold(`booking`)
+- refresh token, OAuth2 one-time auth code(`identity`)
 
-Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
+Redis 구현체는 소유 모듈의 `internal.infrastructure`에 위치한다.
 
 ## 실시간 처리
 
@@ -361,23 +274,23 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 - 좌석 선택과 홀드는 Redis TTL을 사용한다.
 - 만료 시 listener 및 보정용 scheduler로 후속 정리를 수행한다.
 - 좌석 상태 변경은 WebSocket 메시지로 전파한다.
-- Redis 만료 listener는 worker 2개와 유한 queue를 사용해 TTL 폭주가 DB 동시성 폭주로 번지는 것을 막는다.
-- 주문 생성 후 selection 정리와 HELD 발행은 DB 커밋과 connection 반환 뒤에 실행하고, 실패 입력은 creation outbox로 보존한다.
-- `@Scheduled` 트리거와 실행 주기·활성화 설정은 `bootstrap`이 소유한다.
-- 업무 판단과 상태 전이 오케스트레이션은 `core-app`, Redis listener·WebSocket publisher와
-  기술 executor/relay 구현은 `core-infra`가 소유한다.
+- Redis 만료 listener는 worker 2개와 유한 queue를 사용해 TTL 폭주가 DB 동시성 폭주로 번지는
+  것을 막는다.
+- 주문 생성 커밋 이후 selection 정리와 HELD 발행은 `OrderStarted` 이벤트의
+  `@ApplicationModuleListener`가 실행한다. 실패는 Event Publication Registry가 FAILED로 기록해
+  재시도한다.
+- `@Scheduled` 트리거와 실행 주기·활성화 설정은 `worker.*` 설정이 소유한다.
+- 업무 판단과 상태 전이 오케스트레이션은 booking의 `internal.application`, Redis listener·
+  WebSocket publisher와 기술 executor 구현은 `internal.infrastructure`가 소유한다.
 
 ### 주문 후처리 보정
 
-- 즉시 이벤트 처리만으로 끝내지 않고, 보정용 scheduler를 함께 둔다.
-- listener 누락이나 운영 중 일시 장애가 있어도 정합성을 다시 맞추는 것이 목적이다.
-- 주문 생성 시에는 PENDING 주문, hold history, hold creation outbox를 하나의 짧은 DB 트랜잭션에 저장한다.
-- 주문 종료 시에는 상태 전이, hold history, hold release outbox를 하나의 짧은 DB 트랜잭션에 저장한다.
-- 커밋 후 트리거는 outbox ID를 제한된 queue에 제출만 한다.
-- outbox 조회와 완료/실패 기록은 각각 짧은 트랜잭션으로 실행한다.
-- hold 해제 완료 단계는 WebSocket 발행 전에 기록해 발행 실패 재시도에서 Redis 해제를 반복하지 않는다.
-- Redis selection/hold 변경과 WebSocket 발행 중에는 DB connection을 점유하지 않는다.
-- 상세 흐름은 docs/core-booking-lifecycle.md를 기준으로 한다.
+- 즉시 이벤트 처리만으로 끝내지 않고, Event Publication Registry의 재제출·staleness 정책이
+  보정 역할을 겸한다.
+- 주문 생성/종료 시 상태 저장과 `OrderStarted`/`OrderTerminated` 발행은 같은 booking DB
+  트랜잭션에서 일어난다.
+- 커밋 후 처리(Redis selection/hold 변경, WebSocket 발행)는 DB connection을 점유하지 않는다.
+- 상세 흐름은 [core-booking-lifecycle.md](core-booking-lifecycle.md)를 기준으로 한다.
 
 ## 동시성 제어
 
@@ -385,24 +298,20 @@ Redis 구현체는 `core-infra`의 기능별 adapter에 위치한다.
 
 현재 구현 위치:
 
-- 포트: `com.ticket.core.app.lock.LockManager` (core-app)
+- 포트: `com.ticket.booking.internal.application.lock.LockManager`
 - 잠글 대상: `LockKey`, `LockScope` — 업무 의미만 담고 key 문자열은 담지 않는다
 - 획득 방식: `LockOptions` — 대기 시간, 임대 시간, 실패 로그 수준
-- 구현: `com.ticket.core.infra.lock.RedissonLockManager` (core-infra)
-- key 형식: `com.ticket.core.infra.lock.RedissonLockKeyFormatter` (core-infra)
+- 구현: `com.ticket.booking.internal.infrastructure.lock.RedissonLockManager`
+- key 형식: `com.ticket.booking.internal.infrastructure.lock.RedissonLockKeyFormatter`
 
 적용 예:
 
 - 동일 회원/공연 조합의 중복 주문 시작 방지 (`LockScope.ORDER_START`)
 - 동일 좌석 동시 점유 방지 (`LockScope.SEAT`)
-- outbox 단건 중복 실행 방지와 보정 배치 단일 실행
 
-락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다.
-좌석 락은 Redis hold를 만드는 구간에만 건다. DB 트랜잭션 동안 좌석 락을 쥐고 있으면
-connection 경합이 좌석 경합으로 번진다.
-
-Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
-`CoreRedisIntegrationTest`가 고정한다.
+락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다. 좌석 락은 Redis
+hold를 만드는 구간에만 건다. DB 트랜잭션 동안 좌석 락을 쥐고 있으면 connection 경합이 좌석
+경합으로 번진다.
 
 ## 아키텍처 규칙
 
@@ -410,12 +319,11 @@ Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
 완료가 아니다.
 
 **규칙 본문은 테스트 코드가 원본이고 여기 옮겨 적지 않는다.** 옮겨 적는 순간 테스트와 어긋나기
-시작하고, 어긋난 쪽을 사람이 먼저 믿는다. 어떤 테스트가 무엇을 고정하는지는
-[testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은 `/verify`,
-실패했을 때 볼 곳은 `/place-code`가 원본이다.
+시작하고, 어긋난 쪽을 사람이 먼저 믿는다. 모듈 구조 검증은 `com.ticket.ModularityTests`가 담당한다.
+어떤 테스트가 무엇을 고정하는지는 [testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은
+`/verify`, 실패했을 때 볼 곳은 `/place-code`가 원본이다.
 
 규칙을 바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이 틀렸다는 사실을 먼저 밝힌다.
-
 
 ## 경계 판단에서 자주 틀리는 지점
 
@@ -425,32 +333,20 @@ Redis key 형식은 `RedissonLockKeyFormatterTest`가, 실제 상호 배제는
 
 이 문서는 각 모듈이 **왜** 그렇게 나뉘었는지를 갖는다. 어디에 두는지는 스킬이 갖는다.
 
-
 ## 아키텍처 리뷰 질문
 
-- 이 코드의 책임이 실행(api), 서비스 흐름(app), 업무 규칙(domain), 기술(infra) 중 어디에 속하는가
-- 같은 검증이 두 계층에서 같은 목적으로 중복 실행되지 않는가 ([validation.md](validation.md))
-- 의존이 `core-api` → `core-app` → `core-domain` 방향을 지키는가
-- `core-domain`과 `core-app`이 Redis, WebSocket, HTTP client, Querydsl, scheduler를 직접 알게 되지 않았는가
+- 이 코드의 책임이 web, application, domain, infrastructure 중 어디에 속하는가
+- 같은 검증이 두 계층에서 같은 목적으로 중복 실행되지 않는가([validation.md](validation.md))
+- 다른 모듈의 `internal` 패키지, Repository, JPA entity를 직접 참조하지 않는가
+- 모듈을 넘는 JPA 연관관계나 DB FK가 새로 생기지 않았는가
+- 새 공개 계약이 JPA entity, Redis/JWT/Spring Web 타입을 노출하지 않는가
 - 새 패키지가 기능 중심 축(`command`/`query`/`model`/`repository`/`store`)을 따르는가
 - DB 상태와 Redis 상태를 합치는 규칙의 소유자가 한 곳인가
 - 새 추상화가 실제 경계를 보호하는가, 사용하지 않는 계층을 늘리기만 하는가
 
-## 다음 구조 정리 방향
+## 세부적으로 아직 정리하지 않은 것
 
-- `BaseEntity`의 생성·수정 감사만 Spring Data auditing에 남아 있다. JPA 생명주기 콜백으로 바꾸려면
-  감사 주체를 도메인에 포트로 노출해야 하므로, 감사 컬럼 요구가 바뀔 때 함께 판단한다.
-- Querydsl Q 타입은 엔티티가 있는 `core-domain`에서 생성된다. 애노테이션 프로세서 특성상
-  다른 모듈에서 생성할 수 없어 현재 배치를 유지한다.
-- `core-domain`의 `@Service` 세 곳(`PerformanceSeatService`, `SeatStatusPublisher` 등)을
-  `@Component`로 맞출지 판단한다. 나머지 도메인 서비스는 `@Component`를 쓴다.
-- API와 worker를 다른 프로세스로 나눠야 하면 `bootstrap-api`/`bootstrap-worker`로 쪼갠다.
-  지금은 `worker.enabled`로 한 프로세스 안에서 켜고 끈다.
-## 이름 규칙
-
-- `View`는 app 조회 경계의 화면/응답용 projection, `Snapshot`은 특정 시점의 읽기 결과다.
-- `Row`는 저장소 조회 한 행, `Output`은 use case가 adapter에 반환하는 결과다.
-- `Param`은 조회 조건 구성값, `Criteria`는 검색 조건, `Event`는 발생한 사실, `Request`는 외부 입력이다.
-- 도메인 정책은 `policy`, 값 객체와 기능별 모델은 해당 feature의 `model`에 둔다. Querydsl/Redis/JWT/WebSocket 구현은 infra가 소유한다.
-
-세부적으로 아직 정리하지 않은 이름과 구조는 [기술 부채 문서](technical-debt.md)에 기록한다.
+세부적으로 아직 정리하지 않은 이름과 구조는 [기술 부채 문서](technical-debt.md)에 기록한다. 그
+문서는 이번 Spring Modulith 전환 이전에 작성된 것이라 `core-app`/`core-domain`/`core-api` 같은
+계층형 경로를 그대로 쓴다 — 항목이 가리키는 legacy 코드가 아직 그 경로에 있는 동안은 유효한
+참조다.

@@ -49,12 +49,17 @@
 
 부하 테스트의 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`를 기준으로 본다.
 
-## 계층 경계
+## 모듈 경계
 
-의존 방향은 `core-api` → `core-app` → `core-domain`이고, `core-infra`는 어댑터로서 `core-app`과
-`core-domain`을 향한다. `bootstrap`이 이 넷을 조립하는 실행 모듈이다.
+단일 Gradle Spring Boot 프로젝트다. `com.ticket`의 직접 하위 패키지(`booking`, `catalog`,
+`identity`, `admission`, `showlike`, `metadata`, `shared`)가 Spring Modulith의 닫힌 Application
+Module이고, 모듈 root에는 다른 모듈이 쓰는 공개 계약만, 실제 구현은 `<module>.internal`에 둔다.
+`com.ticket.core`/`bootstrap`/`storage`/`support`는 아직 모듈로 옮기지 않은 legacy 코드다.
+결정 배경은 `docs/adr/0003-spring-modulith-application-module-boundaries.md`가 원본이다.
 
-**무엇이 금지인지는 문서가 아니라 구조 테스트가 원본이다.** 어떤 테스트가 무엇을 고정하는지는
+**무엇이 금지인지는 문서가 아니라 구조 테스트가 원본이다.** `com.ticket.ModularityTests`가 모듈
+경계 위반을, 각 모듈의 `internal.web`/`internal.application`/`internal.domain`/
+`internal.infrastructure` 배치는 관례가 정한다. 어떤 테스트가 무엇을 고정하는지는
 `docs/testing.md`의 구조 테스트 표에 있다. 새 코드의 위치, 자주 틀리는 지점, 테스트가 실패했을 때
 볼 곳은 **`/place-code` 스킬**이 원본이다.
 
