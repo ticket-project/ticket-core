@@ -1,0 +1,84 @@
+package com.ticket.booking.internal.application.order.command;
+
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
+import com.ticket.booking.internal.domain.order.command.create.ValidatedOrderRequest;
+import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
+import com.ticket.booking.internal.domain.hold.command.HoldSeatAvailabilityValidator;
+import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.booking.internal.domain.order.model.OrderState;
+import com.ticket.booking.internal.domain.order.repository.OrderRepository;
+import com.ticket.catalog.internal.domain.performance.policy.BookingPolicyValidator;
+import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
+import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.admission.AdmissionVerifier;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class CreateOrderValidator {
+
+    private final MemberRepository memberRepository;
+    private final PerformanceRepository performanceRepository;
+    private final OrderRepository orderRepository;
+    private final HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
+    private final AdmissionVerifier admissionVerifier;
+
+    /**
+     * 주문 생성 전 검증을 비용 순서로 수행한다.
+     *
+     * <p>회차 정책을 한 번 조회해 오픈·마감, 좌석 수 한도, 입장 검사를 모두 판정하고(T1),
+     * 그다음 DB 조회가 필요한 검증을 같은 트랜잭션에서 수행한다(T2). 한 트랜잭션으로 묶는 이유는
+     * 커넥션 획득 횟수를 1회로 줄이는 것이다. Redis hold 생성은 이 경계가 닫힌 뒤에 수행한다.
+     */
+    @Transactional(readOnly = true)
+    public ValidatedOrderRequest validate(
+            final CreateOrderUseCase.Input input,
+            final RequestedSeatIds requestedSeatIds,
+            final LocalDateTime now
+    ) {
+        final Long performanceId = input.performanceId();
+        final Long memberId = input.memberId();
+
+        final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                        "공연을 찾을 수 없습니다. id=" + performanceId));
+        BookingPolicyValidator.ensureBookingOpen(policy, now);
+        BookingPolicyValidator.ensureWithinHoldLimit(policy, requestedSeatIds.size());
+        ensureAdmitted(policy, memberId, input.admissionToken(), now);
+
+        if (!memberRepository.existsActiveById(memberId)) {
+            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+        }
+        ensureNoPendingOrder(memberId, performanceId);
+        final List<PerformanceSeat> performanceSeats =
+                holdSeatAvailabilityValidator.validate(performanceId, requestedSeatIds);
+
+        return new ValidatedOrderRequest(policy, performanceSeats);
+    }
+
+    private void ensureAdmitted(
+            final PerformanceBookingPolicySnapshot policy,
+            final Long memberId,
+            final String admissionToken,
+            final LocalDateTime now
+    ) {
+        if (!BookingPolicyValidator.requiresQueue(policy, now)) {
+            return;
+        }
+        admissionVerifier.verify(policy.performanceId(), memberId, admissionToken);
+    }
+
+    private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {
+        if (!orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
+            return;
+        }
+        throw new CoreException(ErrorType.PENDING_ORDER_ALREADY_EXISTS);
+    }
+}

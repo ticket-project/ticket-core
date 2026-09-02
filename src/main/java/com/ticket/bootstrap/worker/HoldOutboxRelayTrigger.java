@@ -1,7 +1,7 @@
 package com.ticket.bootstrap.worker;
 
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRelay;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRelay;
+import com.ticket.booking.internal.infrastructure.order.outbox.create.HoldCreationOutboxRelay;
+import com.ticket.booking.internal.infrastructure.order.outbox.release.HoldReleaseOutboxRelay;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;

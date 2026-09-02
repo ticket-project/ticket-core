@@ -1,8 +1,8 @@
 package com.ticket.bootstrap.worker;
 
-import com.ticket.core.app.order.command.ExpirePendingOrdersUseCase;
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRelay;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRelay;
+import com.ticket.booking.internal.application.order.command.ExpirePendingOrdersUseCase;
+import com.ticket.booking.internal.infrastructure.order.outbox.create.HoldCreationOutboxRelay;
+import com.ticket.booking.internal.infrastructure.order.outbox.release.HoldReleaseOutboxRelay;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;

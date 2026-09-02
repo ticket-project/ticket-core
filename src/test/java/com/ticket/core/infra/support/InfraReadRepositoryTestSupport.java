@@ -27,7 +27,8 @@ public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestS
      */
     @Configuration
     @EnableJpaRepositories(basePackages = {
-            "com.ticket.core.infra", "com.ticket.catalog.internal.infrastructure", "com.ticket.identity.internal.infrastructure"
+            "com.ticket.core.infra", "com.ticket.catalog.internal.infrastructure", "com.ticket.identity.internal.infrastructure",
+            "com.ticket.booking.internal.infrastructure"
     })
     static class InfraJpaRepositoriesTestConfig {
     }

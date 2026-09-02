@@ -1,17 +1,17 @@
-package com.ticket.core.infra.redis;
+package com.ticket.booking.internal.infrastructure.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
-import com.ticket.core.infra.performanceseat.store.SeatSelectionRedisKey;
+import com.ticket.booking.internal.infrastructure.performanceseat.store.SeatSelectionRedisKey;
 import com.ticket.identity.internal.infrastructure.auth.token.RedisRefreshTokenStore;
-import com.ticket.core.app.lock.LockKey;
-import com.ticket.core.app.lock.LockManager;
-import com.ticket.core.app.lock.LockOptions;
-import com.ticket.core.infra.lock.RedissonLockKeyFormatter;
-import com.ticket.core.infra.lock.RedissonLockManager;
-import com.ticket.core.infra.performanceseat.store.RedissonSeatSelectionStore;
+import com.ticket.booking.internal.application.lock.LockKey;
+import com.ticket.booking.internal.application.lock.LockManager;
+import com.ticket.booking.internal.application.lock.LockOptions;
+import com.ticket.booking.internal.infrastructure.lock.RedissonLockKeyFormatter;
+import com.ticket.booking.internal.infrastructure.lock.RedissonLockManager;
+import com.ticket.booking.internal.infrastructure.performanceseat.store.RedissonSeatSelectionStore;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.infra.support.UuidSupplier;
 import java.time.Duration;

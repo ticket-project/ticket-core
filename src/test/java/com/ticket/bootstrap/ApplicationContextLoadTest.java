@@ -3,12 +3,12 @@ package com.ticket.bootstrap;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import com.ticket.bootstrap.worker.HoldOutboxRelayTrigger;
 import com.ticket.bootstrap.worker.OrderExpirationTrigger;
-import com.ticket.core.app.event.HoldLifecycleEventPublisher;
-import com.ticket.core.app.lock.LockManager;
-import com.ticket.core.app.order.command.CreateOrderUseCase;
-import com.ticket.core.app.order.command.ExpirePendingOrdersUseCase;
-import com.ticket.core.infra.order.outbox.create.HoldCreationOutboxRelay;
-import com.ticket.core.infra.order.outbox.release.HoldReleaseOutboxRelay;
+import com.ticket.booking.internal.application.event.HoldLifecycleEventPublisher;
+import com.ticket.booking.internal.application.lock.LockManager;
+import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
+import com.ticket.booking.internal.application.order.command.ExpirePendingOrdersUseCase;
+import com.ticket.booking.internal.infrastructure.order.outbox.create.HoldCreationOutboxRelay;
+import com.ticket.booking.internal.infrastructure.order.outbox.release.HoldReleaseOutboxRelay;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -33,7 +33,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     @Test
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
         assertThat(context.getBean(CreateOrderUseCase.class)).isNotNull();
-        assertThat(beanOf("com.ticket.core.domain.order.repository.OrderRepository")).isNotNull();
+        assertThat(beanOf("com.ticket.booking.internal.domain.order.repository.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
         assertThat(context.getBean(HoldLifecycleEventPublisher.class)).isNotNull();
         assertThat(context.getBean(HoldCreationOutboxRelay.class)).isNotNull();
@@ -45,9 +45,9 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
      */
     @Test
     void 도메인_Repository는_infra_어댑터로_구현된다() {
-        assertThat(beanOf("com.ticket.core.domain.order.repository.OrderRepository").getClass().getName())
+        assertThat(beanOf("com.ticket.booking.internal.domain.order.repository.OrderRepository").getClass().getName())
                 .startsWith("com.ticket.core.infra.");
-        assertThat(beanOf("com.ticket.core.domain.hold.store.HoldStore").getClass().getName())
+        assertThat(beanOf("com.ticket.booking.internal.domain.hold.store.HoldStore").getClass().getName())
                 .startsWith("com.ticket.core.infra.");
         assertThat(context.getBean(LockManager.class).getClass().getName())
                 .startsWith("com.ticket.core.infra.");
