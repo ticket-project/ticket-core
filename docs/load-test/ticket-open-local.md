@@ -56,7 +56,7 @@ $env:GOOGLE_CLIENT_SECRET="local-google-client-secret"
 $env:KAKAO_CLIENT_ID="local-kakao-client-id"
 $env:KAKAO_CLIENT_SECRET="local-kakao-client-secret"
 $env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
-.\gradlew.bat :core:core-api:bootRun
+.\gradlew.bat bootRun
 ```
 
 Queue API:

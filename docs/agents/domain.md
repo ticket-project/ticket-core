@@ -3,8 +3,8 @@
 엔지니어링 스킬이 이 저장소를 탐색할 때 도메인 문서를 어떻게 읽어야 하는지 정한다.
 
 이 저장소는 **단일 컨텍스트**다. 루트 `CONTEXT.md` 하나와 `docs/adr/`를 쓴다.
-Gradle 멀티모듈(`core/core-api`, `core/core-domain`, `core/core-infra`, `storage/redis-core`,
-`support/logging`)은 계층 분리이지 별개의 바운디드 컨텍스트가 아니다.
+단일 Gradle 프로젝트 안의 Spring Modulith Application Module(`booking`, `catalog`, `identity`,
+`admission`, `showlike`, `metadata`)은 업무 기능 경계이지 별개의 바운디드 컨텍스트가 아니다.
 
 ## 탐색 전에 읽을 것
 
@@ -28,10 +28,11 @@ Gradle 멀티모듈(`core/core-api`, `core/core-domain`, `core/core-infra`, `sto
 ├── CONTEXT.md
 ├── docs/adr/
 │   ├── 0001-....md
-│   └── 0002-....md
-├── core/
-├── storage/
-└── support/
+│   ├── 0002-....md
+│   └── 0003-....md
+└── src/main/java/com/ticket/
+    ├── booking/, catalog/, identity/, admission/, showlike/, metadata/, shared/
+    └── core/, bootstrap/, storage/, support/   # 아직 모듈로 옮기지 않은 legacy
 ```
 
 ## 용어집의 어휘를 쓴다

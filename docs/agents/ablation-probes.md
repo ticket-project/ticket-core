@@ -20,11 +20,18 @@
 경계 판단은 드러난다. 판정이 애매하면 그때만 구현시키고 구조 테스트를 돌린다.
 
 ```bash
-./gradlew :core:core-api:test --tests "com.ticket.core.CoreLayerArchitectureTest"
-./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainArchitectureTest"
-./gradlew :core:core-domain:test --tests "com.ticket.core.domain.CoreDomainModuleStructureTest"
-./gradlew :core:core-api:test --tests "com.ticket.core.CoreApiArchitectureTest"
+./gradlew test --tests "com.ticket.ModularityTests"
+./gradlew test --tests "com.ticket.*.*ModuleTests"
+./gradlew test --tests "com.ticket.core.CoreLayerArchitectureTest"
 ```
+
+> **2026-09-02 갱신**: 단일 Gradle 프로젝트 전환(Spring Modulith)으로 `:core:core-api:test` 같은
+> subproject 명령은 더 이상 없다. 아래 A/B/C 프로브의 "합격/불합격 신호"는 이번 전환 이전에
+> 작성된 것이라 `core-app`/`core-domain`/`core-infra`/`bootstrap` 같은 계층형 모듈 이름을 쓴다.
+> 새로 프로브를 돌릴 때는 이 이름을 소유 Application Module의 `internal.application`/
+> `internal.domain`/`internal.infrastructure`로, `bootstrap`을 소유 모듈의 `internal.web`이나
+> 전역 설정으로 바꿔 읽는다. 표는 그대로 두고(무엇을 측정했는지의 기록이므로) 판정할 때만
+> 새 경로로 치환한다.
 
 ## 프로브
 
