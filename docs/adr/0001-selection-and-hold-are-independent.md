@@ -1,5 +1,14 @@
 # Selection과 Hold를 독립으로 둔다
 
+> **구현 참조 갱신(2026-09-02):** 아래 본문의 업무 결정 자체는 바뀌지 않았다. 다만 예시로 든
+> 클래스는 Spring Modulith 모듈 전환으로 이동·대체됐다 —
+> `CreateOrderValidator`/`HoldSeatAvailabilityValidator`는
+> `com.ticket.booking.internal.domain.hold.command.HoldSeatAvailabilityValidator`로,
+> `AsyncHoldCreationPostCommitNotifier`는 booking이 발행하는 `OrderStarted`/`OrderTerminated`
+> 이벤트와 `BookingEventListeners`로 대체됐다. 상세는
+> [ADR 0003의 "ADR 0001과의 관계"](0003-spring-modulith-application-module-boundaries.md#adr-0001과의-관계)를
+> 본다.
+
 좌석에는 Redis 기반 점유가 두 종류 있다. **Selection**은 회원이 좌석을 살펴보는 동안의 임시
 표시이고, **Hold**는 진행 중인 Order가 좌석을 붙잡은 상태다. 주문 생성은 Hold와 판매 상태만
 검증하고 Selection은 보지 않는다(`CreateOrderValidator` → `HoldSeatAvailabilityValidator`).
