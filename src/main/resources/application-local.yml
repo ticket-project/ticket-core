@@ -16,6 +16,11 @@ spring:
     defer-datasource-initialization: true
   flyway:
     enabled: false
+  modulith:
+    runtime:
+      # CI의 ModularityTests가 권위 있는 gate다. 이 profile은 로컬 기동 시 추가로 한 번 더
+      # 구조를 검증해 배포 전에 문제를 조기에 드러낸다. production에서는 끈다(application-prod.yml).
+      verification-enabled: true
 
 app:
   seed:

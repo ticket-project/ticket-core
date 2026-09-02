@@ -19,6 +19,11 @@ spring:
     baseline-version: "1"
     baseline-description: existing schema before Flyway
     clean-disabled: true
+  modulith:
+    runtime:
+      # CI의 ModularityTests가 배포 전 gate를 이미 통과시켰다. production 기동에서 같은 검증을
+      # 다시 돌리면 시작 시간만 늘어나므로 끈다. local/test/dev에서는 켠다.
+      verification-enabled: false
 decorator:
   datasource:
     p6spy:

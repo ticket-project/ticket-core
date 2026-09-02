@@ -23,3 +23,11 @@ spring:
     init:
       mode: never
       encoding: UTF-8
+  modulith:
+    runtime:
+      # local/dev와 함께 켠다. CI의 ModularityTests가 권위 있는 gate이며, production만 끈다
+      # (application-prod.yml). 이 profile은 spring.profiles.active=test를 명시적으로 켠 테스트에서만
+      # 로드된다 — BookingE2ETestSupport 기반 통합 테스트나 STANDALONE 모듈 테스트는 profile을
+      # 지정하지 않아(default profile) 이 파일을 읽지 않으므로, 과거 전역 설정이 깨뜨렸던 narrow
+      # slice에는 영향이 없다.
+      verification-enabled: true
