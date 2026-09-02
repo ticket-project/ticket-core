@@ -8,9 +8,7 @@ import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.SaleType;
 import com.ticket.catalog.internal.application.show.query.ShowSort;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
-import com.ticket.booking.internal.domain.hold.model.HoldState;
-import com.ticket.booking.internal.domain.order.model.OrderState;
-import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
+import com.ticket.booking.BookingCatalog;
 import com.ticket.identity.internal.domain.member.model.Role;
 import com.ticket.identity.internal.domain.member.model.SocialProvider;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +26,7 @@ public class GetMetaCodesUseCase {
 
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
+    private final BookingCatalog bookingCatalog;
 
     public record CategoryCodeItem(Long id, String code, String name) {
     }
@@ -69,9 +68,9 @@ public class GetMetaCodesUseCase {
 
         final EnumCodes enums = new EnumCodes(
                 mapEnumValues(BookingStatus.values(), BookingStatus::getCode, BookingStatus::getDescription),
-                mapEnumValues(PerformanceSeatState.values(), PerformanceSeatState::getCode, PerformanceSeatState::getDescription),
-                mapEnumValues(HoldState.values(), HoldState::getCode, HoldState::getDescription),
-                mapEnumValues(OrderState.values(), OrderState::getCode, OrderState::getDescription),
+                toEnumCodeItems(bookingCatalog.performanceSeatStates()),
+                toEnumCodeItems(bookingCatalog.holdStates()),
+                toEnumCodeItems(bookingCatalog.orderStates()),
                 mapEnumValues(SocialProvider.values(), SocialProvider::getCode, SocialProvider::getDescription),
                 mapEnumValues(Role.values(), Role::getCode, Role::getDescription),
                 mapEnumValues(SaleType.values(), SaleType::getCode, SaleType::getDescription),
@@ -102,6 +101,12 @@ public class GetMetaCodesUseCase {
     ) {
         return Arrays.stream(values)
                 .map(value -> new EnumCodeItem(codeMapper.apply(value), descriptionMapper.apply(value)))
+                .toList();
+    }
+
+    private List<EnumCodeItem> toEnumCodeItems(final List<BookingCatalog.CodeLabel> codeLabels) {
+        return codeLabels.stream()
+                .map(codeLabel -> new EnumCodeItem(codeLabel.code(), codeLabel.label()))
                 .toList();
     }
 }
