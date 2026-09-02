@@ -1,28 +1,23 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.MemberLookup;
-import com.ticket.booking.internal.application.order.command.OrderTerminationService;
-import com.ticket.booking.internal.domain.order.model.Order;
-import com.ticket.booking.internal.domain.order.repository.OrderRepository;
-import com.ticket.booking.internal.domain.order.model.OrderState;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
 import com.ticket.core.app.support.validation.RequiredInput;
 
+/**
+ * 회원 활성 확인(identity 공개 API)은 booking 쓰기 트랜잭션 밖에서 먼저 수행한다. 다른 module
+ * 호출이 booking 트랜잭션 안에 있으면 그 module의 지연이나 실패가 booking connection을 붙잡는다
+ * ({@link CreateOrderValidator}와 같은 이유). booking local 취소 처리는 {@link CancelOrderTransactionService}의
+ * 짧은 쓰기 트랜잭션에서 수행한다.
+ */
 @Service
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
 
     private final MemberLookup memberLookup;
-    private final OrderRepository orderRepository;
-    private final OrderTerminationService orderTerminationService;
-    private final Clock clock;
+    private final CancelOrderTransactionService cancelOrderTransactionService;
 
     public record Input(String orderKey, Long memberId) {
         public Input {
@@ -31,19 +26,8 @@ public class CancelOrderUseCase {
         }
     }
 
-    @Transactional
     public void execute(final Input input) {
         memberLookup.requireActive(input.memberId());
-        final Order order = getPendingOwnedOrder(input.orderKey(), input.memberId());
-        orderTerminationService.cancel(order, LocalDateTime.now(clock));
-    }
-
-    private Order getPendingOwnedOrder(final String orderKey, final Long memberId) {
-        final Order order = orderRepository.findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
-        if (order.getStatus() != OrderState.PENDING) {
-            throw new CoreException(ErrorType.ORDER_NOT_PENDING);
-        }
-        return order;
+        cancelOrderTransactionService.cancel(input.orderKey(), input.memberId());
     }
 }

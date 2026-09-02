@@ -1,26 +1,16 @@
 package com.ticket.booking.internal.application.order.command;
 
 import com.ticket.identity.MemberLookup;
-import com.ticket.booking.internal.application.order.command.CancelOrderUseCase;
-import com.ticket.booking.internal.application.order.command.OrderTerminationService;
-import com.ticket.booking.internal.domain.order.model.Order;
-import com.ticket.booking.internal.domain.order.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -30,35 +20,26 @@ class CancelOrderUseCaseTest {
     private MemberLookup memberLookup;
 
     @Mock
-    private OrderRepository orderRepository;
-
-    @Mock
-    private OrderTerminationService orderTerminationService;
-
-    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    private CancelOrderTransactionService cancelOrderTransactionService;
 
     @Test
-    void 취소_요청이면_고정_Clock_시간으로_주문을_취소한다() {
-        final CancelOrderUseCase useCase = new CancelOrderUseCase(
-                memberLookup,
-                orderRepository,
-                orderTerminationService,
-                fixedClock
-        );
-        final Order order = createOrder(10L, 100L, "hold-key");
-        final LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(java.util.Optional.of(order));
+    void execute는_트랜잭션_없이_다른_module_공개_API를_호출한다() throws NoSuchMethodException {
+        Transactional transactional = CancelOrderUseCase.class
+                .getDeclaredMethod("execute", CancelOrderUseCase.Input.class)
+                .getAnnotation(Transactional.class);
+
+        assertThat(transactional).isNull();
+    }
+
+    @Test
+    void 회원_활성_확인_후_booking_local_취소를_위임한다() {
+        final CancelOrderUseCase useCase = new CancelOrderUseCase(memberLookup, cancelOrderTransactionService);
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 
-        verify(memberLookup).requireActive(1L);
-        verify(orderRepository).findByOrderKeyAndMemberIdForUpdate("order-key", 1L);
-        verify(orderTerminationService).cancel(order, expectedNow);
-    }
-
-    private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
-        final Order order = new Order(1L, performanceId, "order-key", holdKey, BigDecimal.TEN, LocalDateTime.now().plusMinutes(5));
-        ReflectionTestUtils.setField(order, "id", id);
-        return order;
+        final InOrder order = inOrder(memberLookup, cancelOrderTransactionService);
+        order.verify(memberLookup).requireActive(1L);
+        order.verify(cancelOrderTransactionService).cancel("order-key", 1L);
+        verify(cancelOrderTransactionService).cancel("order-key", 1L);
     }
 }
