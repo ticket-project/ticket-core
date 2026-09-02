@@ -31,27 +31,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 검증한다.
  *
  * <p>이상적으로는 {@code @DataJpaTest @ModuleSlicing}(plan 원문)으로 Spring context 수준에서
- * 검증하고 싶었지만, 실제로 시도해보니 Boot 4.1.1의 Spring Data repository/entity 자동
- * base-package 추론({@code DataJpaRepositoriesAutoConfiguration}, {@code HibernateJpaAutoConfiguration}이
- * 쓰는 {@code AutoConfigurationPackages.get(beanFactory)})이 Modulith 2.1.1의
- * {@code ModuleContextCustomizer}(자체적으로 auto-configuration/entity-scan package를 재설정)와
- * 충돌한다:
- * <ul>
- *   <li>{@code @DataJpaTest + @ModuleSlicing} → {@code AutoConfigurationPackages.get()}에서
- *   "Unable to retrieve @EnableAutoConfiguration base packages"로 context 로딩 자체가 깨짐.</li>
- *   <li>{@code @ApplicationModuleTest + @AutoConfigureDataJpa} → 같은 원인, 같은 예외.</li>
- *   <li>{@code @ApplicationModuleTest} + {@code @EnableJpaRepositories(basePackageClasses=...)} +
- *   {@code @EntityScan(basePackageClasses=...)}(자동 추론을 우회하는 명시적 설정) → 다른 실패로
- *   바뀐다: "JPA metamodel must not be empty" — {@code HibernateJpaAutoConfiguration} 자체가 이
- *   조합에서 활성화되지 않는다(원인 미상, {@code BookingModuleTests}처럼 JPA 없이 wiring만 보는
- *   {@code @ApplicationModuleTest} 단독 사용은 정상 동작하므로 JPA autoconfiguration과의 상호작용
- *   문제로 보인다).</li>
- * </ul>
- * {@code @DataJpaTest} 단독(Modulith 없이)은 정상 동작을 직접 확인했다 — 즉 두 프레임워크
- * 각각은 멀쩡하고 조합에서만 깨진다. Spring context 없이 순수 Hibernate로 같은 목표(root+module
- * migration만으로 만든 schema가 module의 JPA 매핑과 실제로 맞고 CRUD가 되는지)를 검증하는 쪽으로
- * 우회했다 — 이 저장소의 {@link EventPublicationRegistrySchemaValidationTest}와 같은, 이미 검증된
- * 기법이다.
+ * 검증하고 싶었다. 최초 구현 시도에서 이 조합이 깨진다고 판단해 Hibernate 단독 검증으로
+ * 우회했는데, 이후 리뷰에서 그 진단이 부정확했다는 게 밝혀졌다 — 실제 원인은 프레임워크 비호환이
+ * 아니라 {@code @ModuleSlicing}의 기본값 {@code verifyAutomatically = true}가
+ * {@code com.ticket.ModularityTests}의 legacy package 제외 predicate 없이 전체 구조를 검증하며
+ * "catalog → core → catalog" 같은 (이미 알려진) legacy 오탐 순환을 잡아내는 것이었다.
+ * {@code BookingModuleTests}가 이미 같은 이유로 {@code verifyAutomatically = false}를 쓰고
+ * 있으므로, {@code @DataJpaTest @ModuleSlicing(module = "booking", verifyAutomatically = false)}
+ * 조합도 실제로 context가 뜨고 module-scoped entity/repository scan이 동작하는 것까지는 리뷰에서
+ * 재현됐다(Flyway 통합까지 마저 배선하는 작업은 남아 있다). 즉 plan 원문의 API가 불가능한 것은
+ * 아니다 — 이 클래스는 그 배선을 마치기 전 임시 대안으로 남아 있다.
+ *
+ * <p>지금은 Spring context 없이 순수 Hibernate로 같은 목표(root+module migration만으로 만든
+ * schema가 module의 JPA 매핑과 실제로 맞고 CRUD가 되는지)를 검증한다 — 이 저장소의
+ * {@link EventPublicationRegistrySchemaValidationTest}와 같은, 이미 검증된 기법이며 그 자체로
+ * 유효한 검증이다. {@code @DataJpaTest @ModuleSlicing}로의 전환은 별도 후속 작업이다.
  */
 class BookingModuleSlicingSchemaTest {
 

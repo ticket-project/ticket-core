@@ -25,9 +25,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Task 11 Step 7: 저장소에 기존 Oracle Testcontainers/profile 인프라가 없어(확인함:
  * {@code build.gradle}에 Oracle Testcontainers 모듈이 전혀 없었다) 이 Task에서 새로 추가한다.
- * 실제 Oracle(Testcontainers {@code gvenzl/oracle-free}) 위에서 {@code __root}와 {@code booking}의
- * Oracle 방언 migration(V2~V9, 특히 V8의 RAW(16)/CHECK 제약, V9의 PL/SQL 동적 FK 제거)이 문법
- * 오류 없이 실제로 적용되는지 검증한다.
+ * 실제 Oracle(Testcontainers {@code gvenzl/oracle-free}) 위에서 {@code __root}(V2~V8, 특히 V8의
+ * RAW(16)/CHECK 제약)와 독립된 {@code booking} module 자체 이력(V1의 PL/SQL 동적 FK 제거, V2의
+ * outbox table 제거)의 Oracle 방언 migration이 문법 오류 없이 실제로 적용되는지 검증한다.
+ * {@code booking}은 {@code spring.modulith.runtime.flyway-enabled}로 자신만의
+ * {@code flyway_schema_history_booking}을 가지므로 root의 V-번호와 겹치지 않는다.
  *
  * <p>Docker가 없는 환경에서는 이 클래스 전체가 Testcontainers에 의해 자동으로 건너뛰어진다
  * ({@code @Testcontainers}의 기본 동작).

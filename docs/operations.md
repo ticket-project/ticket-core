@@ -1,5 +1,14 @@
 # 운영과 실행 기준
 
+> **STALE (2026-09-02) — migration 경로·outbox 섹션**: Task 2(단일 Gradle 프로젝트 통합)로
+> `bootstrap/src/main/resources/db/...` 경로는 `src/main/resources/db/...`로 바뀌었고, Task 11로
+> migration이 `db/migration/__root`(기존 이력)와 `db/migration/{module}`(module 소유 신규)로
+> 나뉘었다. `V5__create_order_hold_release_outbox.sql`/`V6__create_order_hold_creation_outbox.sql`/
+> `V7__add_hold_released_at_to_outbox.sql`이 만든 outbox 테이블은 Task 8(Modulith 이벤트 전환)로
+> 더는 쓰이지 않고 `db/migration/booking/V2__drop_legacy_hold_outbox_tables.sql`이 삭제했다 — 이
+> 섹션의 outbox scheduler·재시도 설명은 현재 코드와 맞지 않는다. 전체 재작성은 Task 14에서
+> 한다. 그 전까지 이 문서의 migration 경로·outbox 관련 서술을 장애 대응 근거로 쓰지 않는다.
+
 이 문서는 로컬 실행, 프로파일, DB 마이그레이션, 배포, 관측 기준을 정리한다.
 검증 명령은 `/verify` 스킬이 원본이다.
 
