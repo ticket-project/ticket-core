@@ -537,7 +537,7 @@ git commit -m "refactor: 회원과 인증을 identity 모듈로 캡슐화한다"
 - Modify: order creation orchestration
 - Move/Modify: Selection·Hold·Order unit/integration tests
 
-- [ ] **Step 1: 핵심 불변식 회귀 테스트를 먼저 한곳에 모은다**
+- [x] **Step 1: 핵심 불변식 회귀 테스트를 먼저 한곳에 모은다**
 
 다음을 각각 이름이 드러나는 테스트로 고정한다.
 
@@ -548,11 +548,11 @@ git commit -m "refactor: 회원과 인증을 identity 모듈로 캡슐화한다"
 - 주문 가격은 주문 시작 시점 snapshot으로 보존된다.
 - stale release가 새 selection/hold를 제거하지 않는다.
 
-- [ ] **Step 2: booking entity와 audited base를 이동한다**
+- [x] **Step 2: booking entity와 audited base를 이동한다**
 
 PerformanceSeat, Selection, Hold, Order, OrderSeat를 booking이 소유한다. `BookingAuditedEntity`를 만들고 module 외부 `BaseEntity` 상속을 제거한다.
 
-- [ ] **Step 3: 교차 module JPA 관계를 scalar ID로 바꾼다**
+- [x] **Step 3: 교차 module JPA 관계를 scalar ID로 바꾼다**
 
 ```text
 PerformanceSeat.performance -> long performanceId
@@ -561,7 +561,7 @@ PerformanceSeat.seat        -> long seatId
 
 JPA annotation에서 `@ManyToOne`과 join column을 제거하고 동일 컬럼 값이 유지되도록 scalar column mapping으로 바꾼다. booking query에서 Performance/Seat table join을 제거한다.
 
-- [ ] **Step 4: CreateOrderValidator의 직접 repository 의존을 공개 API로 바꾼다**
+- [x] **Step 4: CreateOrderValidator의 직접 repository 의존을 공개 API로 바꾼다**
 
 최종 orchestration 순서는 아래와 같아야 한다.
 
@@ -578,19 +578,19 @@ HTTP adapter
 
 다른 module API 호출과 Redis I/O를 booking write transaction 안에 두지 않는다. transaction method는 booking internal service의 별도 public method가 아니라 package-private component로 분리해 self-invocation 문제를 피한다.
 
-- [ ] **Step 5: booking 조회를 catalog snapshot 조합으로 바꾼다**
+- [x] **Step 5: booking 조회를 catalog snapshot 조합으로 바꾼다**
 
 selection/status/seat-map/order 응답이 physical seat/show/venue 정보가 필요하면 booking repository는 local ID만 조회하고 catalog 공개 batch API로 조합한다. catalog repository를 직접 import하거나 cross-module Querydsl join을 만들지 않는다.
 
-- [ ] **Step 6: metadata 공개 계약을 구현한다**
+- [x] **Step 6: metadata 공개 계약을 구현한다**
 
 `BookingCatalog`는 PerformanceSeatState/HoldState/OrderState의 code와 label snapshot을 반환한다. internal enum 자체를 반환하지 않는다.
 
-- [ ] **Step 7: module test에서 외부 API를 mock한다**
+- [x] **Step 7: module test에서 외부 API를 mock한다**
 
 `@ApplicationModuleTest` 기본 STANDALONE, 외부 `BookingPolicyLookup`, `MemberLookup`, `AdmissionVerifier`는 `@MockitoBean`으로 대체한다. 실제 의존 module 조합이 필요한 단 하나의 contract test만 `DIRECT_DEPENDENCIES`를 쓴다.
 
-- [ ] **Step 8: 검증하고 커밋한다**
+- [x] **Step 8: 검증하고 커밋한다**
 
 ```powershell
 rg "(MemberRepository|PerformanceRepository|ShowRepository)" src/main/java/com/ticket/booking
