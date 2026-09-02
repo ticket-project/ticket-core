@@ -1,7 +1,9 @@
 package com.ticket.catalog.internal.application.publicapi;
 
+import com.ticket.catalog.PerformanceSummary;
 import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.VenueLayout;
+import com.ticket.catalog.internal.application.performance.query.PerformanceSummaryBatchReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSeatMapReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRepository;
 import com.ticket.catalog.internal.domain.show.Show;
@@ -16,8 +18,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,6 +41,9 @@ class ShowLookupServiceTest {
 
     @Mock
     private ShowSeatMapReadRepository showSeatMapReadRepository;
+
+    @Mock
+    private PerformanceSummaryBatchReadRepository performanceSummaryBatchReadRepository;
 
     @InjectMocks
     private ShowLookupService service;
@@ -94,5 +102,15 @@ class ShowLookupServiceTest {
         assertThatThrownBy(() -> service.getSeatMap(100L))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+    }
+
+    @Test
+    void 회차_표시값_배치를_조회한다() {
+        Map<Long, PerformanceSummary> summaries = Map.of(
+                200L, new PerformanceSummary(200L, 100L, 3L, LocalDateTime.of(2026, 3, 20, 19, 30))
+        );
+        when(performanceSummaryBatchReadRepository.findSummaries(Set.of(200L))).thenReturn(summaries);
+
+        assertThat(service.getPerformanceSummaries(Set.of(200L))).isEqualTo(summaries);
     }
 }

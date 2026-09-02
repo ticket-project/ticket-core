@@ -2,10 +2,15 @@ package com.ticket.booking.internal.application.order.query;
 
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.OrderRemainingTime;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderDetailRow;
+import com.ticket.catalog.PerformanceSummary;
+import com.ticket.catalog.ShowLookup;
+import com.ticket.catalog.ShowSeatMapEntry;
+import com.ticket.catalog.ShowSummary;
+import com.ticket.identity.MemberLookup;
+import com.ticket.identity.MemberProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +19,9 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
@@ -22,6 +30,8 @@ import com.ticket.core.app.support.validation.RequiredInput;
 public class GetOrderDetailUseCase {
 
     private final OrderReadRepository orderReadRepository;
+    private final ShowLookup showLookup;
+    private final MemberLookup memberLookup;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {
@@ -76,13 +86,19 @@ public class GetOrderDetailUseCase {
         }
 
         final OrderDetailRow first = rows.getFirst();
-        if (first.memberDeletedAt() != null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA);
-        }
+        // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
+        // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
+        final MemberProfile member = memberLookup.getProfile(first.memberId());
+
+        final PerformanceSummary performanceSummary = requirePerformanceSummary(first.performanceId());
+        final ShowSummary showSummary = requireShowSummary(performanceSummary.showId());
+        final Map<Long, ShowSeatMapEntry> seatMapBySeatId = showLookup.getSeatMap(performanceSummary.showId())
+                .stream()
+                .collect(Collectors.toMap(ShowSeatMapEntry::seatId, entry -> entry));
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final List<TicketSeat> seats = rows.stream()
-                .map(this::toTicketSeat)
+                .map(row -> toTicketSeat(row, seatMapBySeatId.get(row.seatId())))
                 .toList();
         final BigDecimal ticketAmount = rows.stream()
                 .map(OrderDetailRow::price)
@@ -94,14 +110,14 @@ public class GetOrderDetailUseCase {
                 first.status(),
                 first.expiresAt(),
                 remainingSeconds,
-                new ShowInfo(first.showId(), first.showTitle(), first.showImageUrl()),
+                new ShowInfo(performanceSummary.showId(), showSummary.title(), showSummary.image()),
                 new PerformanceInfo(
-                        first.performanceId(),
-                        first.performanceNo(),
-                        first.startTime(),
-                        first.venueName()
+                        performanceSummary.performanceId(),
+                        performanceSummary.performanceNo(),
+                        performanceSummary.startTime(),
+                        showSummary.venueName()
                 ),
-                new BookerInfo(first.memberId(), first.memberName(), first.memberEmail()),
+                new BookerInfo(member.memberId(), member.name(), member.email()),
                 new PriceInfo(
                         ticketAmount,
                         BigDecimal.ZERO,
@@ -113,19 +129,38 @@ public class GetOrderDetailUseCase {
         );
     }
 
-    private TicketSeat toTicketSeat(final OrderDetailRow row) {
-        final String label = row.floor() + "F "
-                + row.section() + "구역 "
-                + row.rowNo() + "열 "
-                + row.seatNo() + "번";
+    private PerformanceSummary requirePerformanceSummary(final Long performanceId) {
+        final PerformanceSummary summary = showLookup.getPerformanceSummaries(Set.of(performanceId)).get(performanceId);
+        if (summary == null) {
+            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+        }
+        return summary;
+    }
+
+    private ShowSummary requireShowSummary(final long showId) {
+        final ShowSummary summary = showLookup.getSummaries(Set.of(showId)).get(showId);
+        if (summary == null) {
+            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+        }
+        return summary;
+    }
+
+    private TicketSeat toTicketSeat(final OrderDetailRow row, final ShowSeatMapEntry entry) {
+        if (entry == null) {
+            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+        }
+        final String label = entry.floor() + "F "
+                + entry.section() + "구역 "
+                + entry.rowNo() + "열 "
+                + entry.seatNo() + "번";
 
         return new TicketSeat(
                 row.performanceSeatId(),
                 row.seatId(),
-                row.floor(),
-                row.section(),
-                row.rowNo(),
-                row.seatNo(),
+                entry.floor(),
+                entry.section(),
+                entry.rowNo(),
+                entry.seatNo(),
                 label,
                 row.price()
         );

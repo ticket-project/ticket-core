@@ -4,6 +4,7 @@ import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderStatusView;
+import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +19,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,11 +35,14 @@ class GetOrderStatusUseCaseTest {
     @Mock
     private OrderReadRepository repository;
 
+    @Mock
+    private MemberLookup memberLookup;
+
     private GetOrderStatusUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderStatusUseCase(repository, CLOCK);
+        useCase = new GetOrderStatusUseCase(repository, memberLookup, CLOCK);
     }
 
     @Test
@@ -53,6 +59,7 @@ class GetOrderStatusUseCaseTest {
 
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
         assertThat(output.remainingSeconds()).isEqualTo(600L);
+        verify(memberLookup).requireActive(1L);
     }
 
     @Test
@@ -60,6 +67,21 @@ class GetOrderStatusUseCaseTest {
         when(repository.findStatus("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("missing", 1L)))
+                .isInstanceOf(CoreException.class)
+                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
+                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+    }
+
+    @Test
+    void 탈퇴한_회원의_주문상태는_조회하지_않는다() {
+        when(repository.findStatus("order-key", 1L)).thenReturn(Optional.of(new OrderStatusView(
+                "order-key",
+                OrderState.PENDING,
+                LocalDateTime.of(2026, 3, 15, 19, 10)
+        )));
+        doThrow(new CoreException(ErrorType.NOT_FOUND_DATA)).when(memberLookup).requireActive(1L);
+
+        assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))
                 .isInstanceOf(CoreException.class)
                 .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
                         .isEqualTo(ErrorType.ORDER_NOT_OWNED));

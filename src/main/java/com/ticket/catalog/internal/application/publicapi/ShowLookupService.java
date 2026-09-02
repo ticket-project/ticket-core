@@ -1,9 +1,11 @@
 package com.ticket.catalog.internal.application.publicapi;
 
+import com.ticket.catalog.PerformanceSummary;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.ShowSummary;
 import com.ticket.catalog.VenueLayout;
+import com.ticket.catalog.internal.application.performance.query.PerformanceSummaryBatchReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSeatMapReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRepository;
 import com.ticket.catalog.internal.domain.show.Show;
@@ -30,6 +32,7 @@ public class ShowLookupService implements ShowLookup {
     private final ShowRepository showRepository;
     private final ShowSummaryBatchReadRepository showSummaryBatchReadRepository;
     private final ShowSeatMapReadRepository showSeatMapReadRepository;
+    private final PerformanceSummaryBatchReadRepository performanceSummaryBatchReadRepository;
 
     @Override
     public void requireExisting(final long showId) {
@@ -59,5 +62,10 @@ public class ShowLookupService implements ShowLookup {
     public List<ShowSeatMapEntry> getSeatMap(final long showId) {
         requireExisting(showId);
         return showSeatMapReadRepository.findSeatMap(showId);
+    }
+
+    @Override
+    public Map<Long, PerformanceSummary> getPerformanceSummaries(final Set<Long> performanceIds) {
+        return performanceSummaryBatchReadRepository.findSummaries(performanceIds);
     }
 }
