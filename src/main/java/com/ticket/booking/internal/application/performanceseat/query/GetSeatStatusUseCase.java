@@ -1,13 +1,11 @@
 package com.ticket.booking.internal.application.performanceseat.query;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
+import com.ticket.booking.internal.application.support.BookingPolicyGuard;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
-import com.ticket.catalog.internal.domain.performance.policy.BookingPolicyValidator;
-import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.admission.AdmissionVerifier;
+import com.ticket.catalog.BookingPolicyLookup;
+import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
 
-    private final PerformanceRepository performanceRepository;
+    private final BookingPolicyLookup bookingPolicyLookup;
     private final SeatStateSnapshotReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
@@ -46,11 +44,9 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
-                        "공연을 찾을 수 없습니다. id=" + performanceId));
-        BookingPolicyValidator.ensureBookingOpen(policy, now);
-        ensureAdmitted(policy, input, now);
+        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(performanceId, List.of());
+        BookingPolicyGuard.ensureBookingOpen(policy, now);
+        ensureAdmitted(policy, input);
 
         final List<SeatStateView> dbStates = seatStatusDbReader.read(performanceId);
 
@@ -69,11 +65,10 @@ public class GetSeatStatusUseCase {
     }
 
     private void ensureAdmitted(
-            final PerformanceBookingPolicySnapshot policy,
-            final Input input,
-            final LocalDateTime now
+            final BookingPolicySnapshot policy,
+            final Input input
     ) {
-        if (!BookingPolicyValidator.requiresQueue(policy, now)) {
+        if (!policy.queueRequired()) {
             return;
         }
         admissionVerifier.verify(policy.performanceId(), input.memberId(), input.admissionToken());

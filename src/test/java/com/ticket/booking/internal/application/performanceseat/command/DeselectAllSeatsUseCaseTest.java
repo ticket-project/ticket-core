@@ -1,9 +1,8 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.identity.MemberLookup;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.internal.domain.performanceseat.command.DeselectedSeatIds;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ import java.util.Optional;
 class DeselectAllSeatsUseCaseTest {
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberLookup memberLookup;
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -38,12 +37,11 @@ class DeselectAllSeatsUseCaseTest {
 
     @Test
     void deselect_all_then_publish_each_seat() {
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
         when(seatSelectionService.deselectAll(10L, 1L)).thenReturn(DeselectedSeatIds.from(List.of(20L, 21L)));
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
-        verify(memberRepository).findActiveById(1L);
+        verify(memberLookup).requireActive(1L);
         verify(seatSelectionService).deselectAll(10L, 1L);
         verify(seatEventPublisher).publish(10L, 20L, SeatStatusAction.DESELECTED);
         verify(seatEventPublisher).publish(10L, 21L, SeatStatusAction.DESELECTED);

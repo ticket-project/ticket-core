@@ -16,7 +16,7 @@ import com.ticket.booking.internal.application.event.HoldCreationPostCommitNotif
 import com.ticket.booking.internal.domain.hold.model.Hold;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.model.OrderState;
-import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
+import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -103,7 +103,7 @@ class CreateOrderUseCaseTest {
     void 유효한_요청이면_hold와_주문을_생성한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceBookingPolicySnapshot performance = createPerformance(5, 600);
+        final BookingPolicySnapshot performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
         final HoldAllocation allocation = new HoldAllocation(hold, seats);
@@ -134,7 +134,7 @@ class CreateOrderUseCaseTest {
     void 후처리_제출이_실패해도_커밋된_주문과_hold를_유지한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceBookingPolicySnapshot performance = createPerformance(5, 600);
+        final BookingPolicySnapshot performance = createPerformance(5, 600);
         final Hold hold = hold(seatIds.toList());
         final HoldAllocation allocation = new HoldAllocation(hold, List.of(mock(PerformanceSeat.class)));
         final Order order = order(hold);
@@ -156,7 +156,7 @@ class CreateOrderUseCaseTest {
     void 주문_저장_트랜잭션이_실패하면_hold를_해제한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceBookingPolicySnapshot performance = createPerformance(5, 600);
+        final BookingPolicySnapshot performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
 
         when(validator.validate(input, seatIds, FIXED_NOW))
@@ -177,7 +177,7 @@ class CreateOrderUseCaseTest {
     void hold_해제에_실패해도_원래_예외를_유지한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceBookingPolicySnapshot performance = createPerformance(5, 600);
+        final BookingPolicySnapshot performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
         final RuntimeException originalException = new RuntimeException("order failed");
 
@@ -215,10 +215,11 @@ class CreateOrderUseCaseTest {
         return new Order(20L, 10L, "order-key", "hold-key", BigDecimal.valueOf(120000), hold.expiresAt());
     }
 
-    private PerformanceBookingPolicySnapshot createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {
+    private BookingPolicySnapshot createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        return new PerformanceBookingPolicySnapshot(
+        return new BookingPolicySnapshot(
                 10L,
+                true,
                 now.minusHours(1),
                 now.plusHours(3),
                 maxCanHoldCount,
@@ -226,8 +227,8 @@ class CreateOrderUseCaseTest {
                 null,
                 null,
                 null,
-                null,
-                null
+                false,
+                java.util.Map.of()
         );
     }
 }

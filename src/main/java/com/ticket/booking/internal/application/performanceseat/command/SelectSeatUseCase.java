@@ -1,26 +1,25 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
-import com.ticket.catalog.internal.domain.performance.policy.BookingPolicyValidator;
-import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
+import com.ticket.booking.internal.application.support.BookingPolicyGuard;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.booking.internal.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
 import com.ticket.admission.AdmissionVerifier;
+import com.ticket.catalog.BookingPolicyLookup;
+import com.ticket.catalog.BookingPolicySnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
 import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
 public class SelectSeatUseCase {
 
-    private final PerformanceRepository performanceRepository;
+    private final BookingPolicyLookup bookingPolicyLookup;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
     private final AdmissionVerifier admissionVerifier;
@@ -38,12 +37,10 @@ public class SelectSeatUseCase {
     public void execute(final Input input) {
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceBookingPolicySnapshot policy =
-                performanceRepository.findBookingPolicyById(input.performanceId())
-                        .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
-                                "공연을 찾을 수 없습니다. id=" + input.performanceId()));
-        BookingPolicyValidator.ensureBookingOpen(policy, now);
-        ensureAdmitted(policy, input, now);
+        final BookingPolicySnapshot policy =
+                bookingPolicyLookup.getBookingPolicy(input.performanceId(), List.of());
+        BookingPolicyGuard.ensureBookingOpen(policy, now);
+        ensureAdmitted(policy, input);
 
         seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
 
@@ -57,11 +54,10 @@ public class SelectSeatUseCase {
     }
 
     private void ensureAdmitted(
-            final PerformanceBookingPolicySnapshot policy,
-            final Input input,
-            final LocalDateTime now
+            final BookingPolicySnapshot policy,
+            final Input input
     ) {
-        if (!BookingPolicyValidator.requiresQueue(policy, now)) {
+        if (!policy.queueRequired()) {
             return;
         }
         admissionVerifier.verify(policy.performanceId(), input.memberId(), input.admissionToken());

@@ -1,10 +1,8 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.internal.domain.performanceseat.command.DeselectedSeatIds;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.identity.MemberLookup;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +13,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @RequiredArgsConstructor
 public class DeselectAllSeatsUseCase {
 
-    private final MemberRepository memberRepository;
+    private final MemberLookup memberLookup;
     private final SeatSelectionService seatSelectionService;
     private final SeatStatusEventPublisher seatEventPublisher;
 
@@ -27,8 +25,7 @@ public class DeselectAllSeatsUseCase {
     }
 
     public void execute(final Input input) {
-        memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+        memberLookup.requireActive(input.memberId());
         final DeselectedSeatIds seatIds = seatSelectionService.deselectAll(input.performanceId(), input.memberId());
         seatIds.forEach(seatId -> seatEventPublisher.publish(input.performanceId(), seatId, SeatStatusAction.DESELECTED));
     }

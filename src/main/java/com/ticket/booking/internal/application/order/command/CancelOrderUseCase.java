@@ -1,9 +1,8 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.identity.MemberLookup;
 import com.ticket.booking.internal.application.order.command.OrderTerminationService;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.repository.OrderRepository;
@@ -20,7 +19,7 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
 
-    private final MemberRepository memberRepository;
+    private final MemberLookup memberLookup;
     private final OrderRepository orderRepository;
     private final OrderTerminationService orderTerminationService;
     private final Clock clock;
@@ -34,8 +33,7 @@ public class CancelOrderUseCase {
 
     @Transactional
     public void execute(final Input input) {
-        memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+        memberLookup.requireActive(input.memberId());
         final Order order = getPendingOwnedOrder(input.orderKey(), input.memberId());
         orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }

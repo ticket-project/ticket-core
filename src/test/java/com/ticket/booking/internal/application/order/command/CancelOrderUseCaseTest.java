@@ -1,8 +1,7 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.identity.MemberLookup;
 import com.ticket.booking.internal.application.order.command.CancelOrderUseCase;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.booking.internal.application.order.command.OrderTerminationService;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.repository.OrderRepository;
@@ -28,7 +27,7 @@ import java.util.Optional;
 class CancelOrderUseCaseTest {
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberLookup memberLookup;
 
     @Mock
     private OrderRepository orderRepository;
@@ -41,19 +40,18 @@ class CancelOrderUseCaseTest {
     @Test
     void 취소_요청이면_고정_Clock_시간으로_주문을_취소한다() {
         final CancelOrderUseCase useCase = new CancelOrderUseCase(
-                memberRepository,
+                memberLookup,
                 orderRepository,
                 orderTerminationService,
                 fixedClock
         );
         final Order order = createOrder(10L, 100L, "hold-key");
         final LocalDateTime expectedNow = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(java.util.Optional.of(order));
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 
-        verify(memberRepository).findActiveById(1L);
+        verify(memberLookup).requireActive(1L);
         verify(orderRepository).findByOrderKeyAndMemberIdForUpdate("order-key", 1L);
         verify(orderTerminationService).cancel(order, expectedNow);
     }
