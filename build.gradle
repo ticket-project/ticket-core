@@ -87,8 +87,16 @@ dependencies {
     testImplementation libs.fixture.monkey.starter
     testImplementation libs.archunit.junit5
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    // Task 11 Step 7: 저장소에 Oracle Testcontainers 인프라가 없어 CI에서 Oracle 방언 migration을
+    // 실제로 검증할 수 있는 유일한 수단으로 새로 추가한다.
+    testImplementation 'org.testcontainers:testcontainers-oracle-free'
     // 제약 위반 원인 예외를 실제 타입으로 만들어 테스트한다. 프로덕션은 쓰지 않는다.
     testImplementation 'org.hibernate.orm:hibernate-core'
+    // registry(EVENT_PUBLICATION/EVENT_PUBLICATION_ARCHIVE) DDL을 실제 엔티티 매핑으로 검증한다.
+    testCompileOnly 'org.springframework.modulith:spring-modulith-events-jpa'
+    // module-aware Flyway 분기(SpringModulithFlywayMigrationStrategy)를 실제 운영과 같은 class로
+    // 검증한다. 둘 다 spring-modulith-starter-jpa가 runtime scope로 이미 가져오는 module이다.
+    testCompileOnly 'org.springframework.modulith:spring-modulith-runtime'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     testCompileOnly 'org.projectlombok:lombok'

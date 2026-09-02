@@ -1,11 +1,9 @@
 package com.ticket.bootstrap.migration;
 
-import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -15,6 +13,15 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Task 11: {@code __root}(module-owned이 아닌 공용) migration만으로 실행되는 시나리오다. 실제 운영
+ * 실행은 {@code spring.modulith.runtime.flyway-enabled=true}가 등록하는
+ * {@code SpringModulithFlywayMigrationStrategy}가 {@code __root}와 각 module을 별도
+ * {@code flyway_schema_history_*} table로 나눠 돌리므로, 이 테스트도
+ * {@link ModulithFlywayTestSupport}로 그 실제 mechanism을 그대로 사용한다(module identifier 없이
+ * 호출 = root만 돈다). booking module 자체 migration(FK 제거, outbox drop)은
+ * {@link BookingModuleMigrationTest}가 다룬다.
+ */
 class CoreQueryIndexMigrationTest {
 
     @Test
@@ -22,15 +29,20 @@ class CoreQueryIndexMigrationTest {
         String url = databaseUrl("success");
         createExistingSchema(url, false);
 
-        flyway(url).migrate();
+        ModulithFlywayTestSupport.migrateRootOnly(url);
 
-        try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
+        try (Connection connection = ModulithFlywayTestSupport.connect(url)) {
             assertThat(indexNames(connection, "PERFORMANCE_SEATS"))
                     .contains("UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT");
             assertThat(indexNames(connection, "ORDER_SEATS"))
                     .contains("IDX_ORDER_SEATS_ORDER_ID");
-            assertThat(tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX")).isTrue();
-            assertThat(tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX")).isTrue();
+            // root 혼자서는 V5/V6이 만드는 custom outbox table을 만들기만 한다 — 제거하는 V2는
+            // booking module 소유(BookingModuleMigrationTest 참고)라 여기서는 돌지 않는다.
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX")).isTrue();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX")).isTrue();
+            // V8(Task 11)이 만드는 Spring Modulith JPA event publication registry.
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "EVENT_PUBLICATION")).isTrue();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "EVENT_PUBLICATION_ARCHIVE")).isTrue();
         }
     }
 
@@ -39,24 +51,12 @@ class CoreQueryIndexMigrationTest {
         String url = databaseUrl("duplicates");
         createExistingSchema(url, true);
 
-        assertThatThrownBy(() -> flyway(url).migrate())
+        assertThatThrownBy(() -> ModulithFlywayTestSupport.migrateRootOnly(url))
                 .isInstanceOf(FlywayException.class);
     }
 
-    private Flyway flyway(final String url) {
-        return Flyway.configure()
-                .dataSource(url, "sa", "")
-                .locations(
-                        "classpath:db/migration",
-                        "classpath:db/migration-vendor/h2"
-                )
-                .baselineOnMigrate(true)
-                .baselineVersion("1")
-                .load();
-    }
-
     private void createExistingSchema(final String url, final boolean withDuplicates) throws SQLException {
-        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+        try (Connection connection = ModulithFlywayTestSupport.connect(url);
              Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE performances (id BIGINT PRIMARY KEY)");
             statement.execute("CREATE TABLE performance_seats (performance_id BIGINT NOT NULL, seat_id BIGINT NOT NULL)");
@@ -78,12 +78,6 @@ class CoreQueryIndexMigrationTest {
             }
         }
         return names;
-    }
-
-    private boolean tableExists(final Connection connection, final String tableName) throws SQLException {
-        try (ResultSet tables = connection.getMetaData().getTables(null, null, tableName, new String[]{"TABLE"})) {
-            return tables.next();
-        }
     }
 
     private String databaseUrl(final String name) {
