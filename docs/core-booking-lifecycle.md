@@ -7,7 +7,7 @@
 
 이 문서가 설명하는 코드는 모두 `booking` Application Module 소유다(`com.ticket.booking.internal.**`).
 커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 설정 패키지
-(`com.ticket.configuration`)에 있다.
+(`com.ticket.bootstrap.config`)에 있다.
 
 ## 지켜야 할 원칙
 
@@ -105,7 +105,7 @@ spring:
         resubmitted: 10m
 ```
 
-`EventPublicationMaintenance`(`com.ticket.configuration`)가 두 가지 주기 작업을 한다.
+`EventPublicationMaintenance`(`com.ticket.bootstrap.config`)가 두 가지 주기 작업을 한다.
 
 | 작업 | 주기 | 동작 |
 | --- | --- | --- |
