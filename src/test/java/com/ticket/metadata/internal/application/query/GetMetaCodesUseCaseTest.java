@@ -1,6 +1,6 @@
 package com.ticket.metadata.internal.application.query;
 
-import com.ticket.booking.BookingCatalog;
+import com.ticket.booking.BookingMetadata;
 import com.ticket.catalog.CatalogMetadata;
 import com.ticket.identity.IdentityMetadata;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class GetMetaCodesUseCaseTest {
     private CatalogMetadata catalogMetadata;
 
     @Mock
-    private BookingCatalog bookingCatalog;
+    private BookingMetadata bookingCatalog;
 
     @Mock
     private IdentityMetadata identityMetadata;
@@ -47,11 +47,11 @@ class GetMetaCodesUseCaseTest {
         when(catalogMetadata.showSortKeys())
                 .thenReturn(List.of(new CatalogMetadata.CodeLabel("popular", "인기순")));
         when(bookingCatalog.performanceSeatStates())
-                .thenReturn(List.of(new BookingCatalog.CodeLabel("AVAILABLE", "예매가능")));
+                .thenReturn(List.of(new BookingMetadata.CodeLabel("AVAILABLE", "예매가능")));
         when(bookingCatalog.holdStates())
-                .thenReturn(List.of(new BookingCatalog.CodeLabel("ACTIVE", "선점 중")));
+                .thenReturn(List.of(new BookingMetadata.CodeLabel("ACTIVE", "선점 중")));
         when(bookingCatalog.orderStates())
-                .thenReturn(List.of(new BookingCatalog.CodeLabel("PENDING", "결제 대기")));
+                .thenReturn(List.of(new BookingMetadata.CodeLabel("PENDING", "결제 대기")));
         when(identityMetadata.roles())
                 .thenReturn(List.of(new IdentityMetadata.CodeLabel("USER", "일반 회원")));
         when(identityMetadata.socialProviders())

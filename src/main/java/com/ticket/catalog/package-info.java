@@ -8,9 +8,13 @@
  * {@link com.ticket.catalog.ShowSummary}(showlike 등이 쓰는 show 존재 확인·표시값 조회),
  * {@link com.ticket.catalog.CatalogMetadata}(metadata module이 조합하는 code/label).
  *
- * <p>{@code PerformanceSeat}(회차별 좌석 판매 상태)는 catalog가 아니라 booking 소유다(Task 7에서
- * 이동). 그때까지 legacy {@code com.ticket.core.*} 아래의 PerformanceSeat 관련 코드가 이 module의
- * {@code internal} entity(Performance, Seat, Show)를 직접 참조하는 임시 결합이 남아 있다.
+ * <p>{@code PerformanceSeat}(회차별 좌석 판매 상태)는 catalog가 아니라 booking 소유이며 Task 7에서
+ * scalar ID 참조로 정리됐다. 지금 남은 임시 결합은 legacy {@code com.ticket.core.domain.showlike}
+ * 뿐이다: {@code ShowLike}가 아직 이 module의 {@code internal} entity({@code Show})를 `@ManyToOne`으로
+ * 직접 참조하고, {@code QuerydslShowDetailReadRepository}(catalog 소유)가 showlike의 `QShowLike`를
+ * 직접 join해 `likeCount`를 채운다. showlike는 identity·catalog에 의존하지만 그 반대는 허용 dependency가
+ * 아니므로(Task 9), 두 모듈 다 옮기면 순환이 생겨 Task 9에서 의도적으로 legacy에 남겨 뒀다 — showlike의
+ * `package-info.java`에 같은 결합이 기록되어 있다.
  */
 @ApplicationModule(displayName = "Catalog", allowedDependencies = {})
 package com.ticket.catalog;

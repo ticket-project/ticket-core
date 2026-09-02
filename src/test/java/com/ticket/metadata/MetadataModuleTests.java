@@ -1,6 +1,6 @@
 package com.ticket.metadata;
 
-import com.ticket.booking.BookingCatalog;
+import com.ticket.booking.BookingMetadata;
 import com.ticket.catalog.CatalogMetadata;
 import com.ticket.identity.IdentityMetadata;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
  * {@code verify()}를 돌리면 아직 legacy {@code com.ticket.core} 아래에 남은 코드와의 임시 결합이
  * 오탐될 수 있어 자동 검증을 꺼 둔다.
  *
- * <p>metadata는 자체 도메인이 없고 {@link CatalogMetadata}/{@link BookingCatalog}/
+ * <p>metadata는 자체 도메인이 없고 {@link CatalogMetadata}/{@link BookingMetadata}/
  * {@link IdentityMetadata}만 조합한다. STANDALONE bootstrap은 {@code com.ticket.metadata}
  * package tree만 component-scan하므로 이 세 계약의 실제 구현(catalog/booking/identity 소유)은
  * 스캔되지 않는다 — 각 module의 infra까지 띄우지 않고 이 module만 독립적으로 기동됨을 확인하기
@@ -41,8 +41,8 @@ class MetadataModuleTests {
         }
 
         @Bean
-        BookingCatalog bookingCatalog() {
-            return mock(BookingCatalog.class);
+        BookingMetadata bookingCatalog() {
+            return mock(BookingMetadata.class);
         }
 
         @Bean

@@ -2,8 +2,9 @@
  * Booking module: PerformanceSeat 판매 상태, Selection, Hold, Order/OrderSeat, 주문 취소·만료,
  * 좌석 분산락, Redis Selection/Hold, 좌석 상태 WebSocket 발행을 소유한다.
  *
- * <p>실제 코드는 아직 이 module로 이동하지 않았다 — 이 package는 target module 경계만 먼저 선언한
- * 빈 skeleton이다.
+ * <p>공개 API는 {@link com.ticket.booking.BookingMetadata}이고, 구현은 {@code internal} 아래에
+ * 있다. {@link com.ticket.booking.OrderStarted}/{@link com.ticket.booking.OrderTerminated}는
+ * commit 이후 후속 처리(Redis hold 해제, WebSocket 발행)를 위한 공개 이벤트다.
  */
 @ApplicationModule(displayName = "Booking", allowedDependencies = {"catalog", "identity", "admission"})
 package com.ticket.booking;
