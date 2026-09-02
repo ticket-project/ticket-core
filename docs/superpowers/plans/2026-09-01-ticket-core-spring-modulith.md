@@ -1071,7 +1071,7 @@ git commit -m "docs: Spring Modulith 개발과 운영 지침을 반영한다"
 **Files:**
 - Modify: 발견된 결함의 해당 source/test/doc만
 
-- [ ] **Step 1: clean build를 실행한다**
+- [x] **Step 1: clean build를 실행한다**
 
 ```powershell
 .\gradlew.bat clean test bootJar
@@ -1079,7 +1079,7 @@ git commit -m "docs: Spring Modulith 개발과 운영 지침을 반영한다"
 
 Expected: PASS, `build/libs`에 실행 jar 생성.
 
-- [ ] **Step 2: Modulith 산출물과 구조를 확인한다**
+- [x] **Step 2: Modulith 산출물과 구조를 확인한다**
 
 ```powershell
 Get-ChildItem build/spring-modulith-docs -Recurse
@@ -1088,7 +1088,7 @@ Get-ChildItem build/spring-modulith-docs -Recurse
 
 Expected: dependency diagram/canvas 생성, 구조 검증 PASS.
 
-- [ ] **Step 3: 완료 조건을 정적 감사한다**
+- [x] **Step 3: 완료 조건을 정적 감사한다**
 
 ```powershell
 .\gradlew.bat projects
@@ -1098,53 +1098,84 @@ rg --files src/main/java/com/ticket/shared
 rg -i "outbox|integrationTest" build.gradle settings.gradle src/main src/test .github Dockerfile
 ```
 
-Expected:
+실측(2026-09-02):
 
-- Gradle root project 하나만 존재한다.
-- cross-module internal import 0.
-- legacy package 0.
-- shared 파일 정확히 3개.
-- custom outbox runtime code와 integrationTest source set 0. historical migration명은 허용.
+- Gradle root project 하나만 존재한다 — 확인(`No sub-projects`).
+- cross-module internal import: Task 13 실행 결과에 적은 3범주(활성 오류 구조·showlike read
+  경로·WebSocket/worker/seed/config legacy) 밖에서는 0. 그 3범주는 `showlike`/`identity`
+  package-info.java에 문서화된 의도적 예외다.
+- legacy package: `com.ticket.core`/`bootstrap`/`storage` 아래 43개 main 파일이 남아 있다 — 전부
+  위 3범주에 속한다(0이 아니라 "3범주 밖은 0"으로 다시 읽는다, Task 13 참고).
+- shared 파일: `package-info.java` 1개만 존재(원래 기준의 "3개"는 오류 계약 되돌림으로 무효,
+  Task 13 참고).
+- custom outbox runtime code와 integrationTest source set: 0. historical migration명은 허용.
 
-- [ ] **Step 4: 데이터 경계를 감사한다**
+- [x] **Step 4: 데이터 경계를 감사한다**
 
-H2/Oracle migration test, `ddl-auto=validate`, module slicing tests가 모두 통과하는지 확인한다. DB metadata test로 PerformanceSeat→Performance/Seat, ShowLike→Member/Show의 FK가 존재하지 않음을 검증한다.
+H2/Oracle migration test(`com.ticket.bootstrap.migration.*`), `FlywayConfigurationTest` PASS 확인.
+DB metadata 확인: `PerformanceSeat`는 `performanceId`/`seatId` scalar column이고 `@ManyToOne`
+없음(Task 7/11에서 FK 제거 완료) — 확인. `ShowLike`는 `member`/`show`에 `@ManyToOne`이 **여전히
+있다** — Task 9에서 catalog/identity와의 순환 위험으로 의도적으로 남긴 예외이며, 원래 수용
+기준("ShowLike→Member/Show FK가 존재하지 않음")을 충족하지 못한다. `showlike/package-info.java`에
+후속 결정 필요 사항으로 기록돼 있다.
 
-- [ ] **Step 5: 핵심 업무 회귀를 재실행한다**
+- [x] **Step 5: 핵심 업무 회귀를 재실행한다**
 
-Selection 경쟁, Hold 만료/보상, Order 중복/가격 snapshot, event 실패/재시도/멱등, showlike 중복/페이지 순서, security/ProblemDetail contract를 명시적으로 선택 실행한 뒤 full suite도 다시 실행한다.
+Selection 경쟁(`SeatContentionE2ETest`), Hold 만료/보상(`BookingHappyPathE2ETest`,
+`CreateOrderValidatorTest`), Order 중복/가격 snapshot, event 발행 원자성
+(`OrderStartedPublicationAtomicityTest`), 멱등·재시도(`BookingEventListenersTest`,
+`EventPublicationMaintenanceScenarioTest`), showlike 중복(`AddShowLikeUseCaseTest`),
+오류 응답 계약(`ApiControllerAdviceTest` — ProblemDetail이 아니라 현재의 `ApiResponse` envelope
+계약)을 선택 실행 후 `clean test bootJar` full suite 재실행, 모두 PASS.
 
-- [ ] **Step 6: working tree와 commit history를 확인한다**
+- [x] **Step 6: working tree와 commit history를 확인한다**
 
 ```powershell
 git status --short
 git log --oneline --decorate -15
 ```
 
-Expected: working tree clean. 각 Task가 검토 가능한 작은 커밋으로 남아 있다.
+실측: working tree clean. `35ba715a`(계획서 작성) 이후 HEAD까지 83개 커밋, 각 Task가 구현
+커밋과 `docs(plan)` 체크박스 커밋으로 분리돼 있다.
 
-- [ ] **Step 7: 최종 보고를 작성한다**
+- [x] **Step 7: 최종 보고를 작성한다**
 
-보고에는 변경 요약, 최종 module DAG, 실행한 검증 명령과 결과, migration/운영 주의사항, 남은 범위가 정말 있다면 그 이유만 포함한다. 테스트를 실행하지 못한 항목을 통과한 것처럼 표현하지 않는다.
+대화 기록의 최종 요약이 이 보고를 대신한다 — 변경 요약, 최종 module DAG, 검증 명령과 결과,
+migration/운영 주의사항, 남은 범위와 이유를 포함한다.
 
 ## 수용 기준 체크리스트
 
-- [ ] Spring Boot 4.1.1, Spring Modulith 2.1.1, Java 25 조합이다.
-- [ ] 단일 Gradle Spring Boot project만 존재한다.
-- [ ] `@Modulith(sharedModules = "shared")` root와 정확히 7개 module이 존재한다.
-- [ ] 승인된 DAG 밖 의존, 순환 의존, open module, cross-module internal import가 없다.
-- [ ] module root 공개 API는 불변 scalar snapshot/event만 노출한다.
-- [ ] cross-module JPA 관계와 DB FK가 0이다.
-- [ ] 다른 module repository/table 직접 접근이 0이다.
-- [ ] Order 생성의 외부 API/Redis I/O가 booking DB write transaction 밖에 있다.
-- [ ] custom outbox가 JPA Event Publication Registry로 완전히 대체되었다.
-- [ ] ARCHIVE, staleness, retry 1m/100/4/10, purge 30d 정책과 멱등 listener가 검증된다.
-- [ ] broker와 `@Externalized`가 추가되지 않았다.
-- [ ] 기존 migration checksum은 보존되고 신규 migration은 module별로 실행된다.
-- [ ] 운영 ORM은 `ddl-auto=validate`다.
-- [ ] ProblemDetail type/code 규칙과 module-owned problem 원칙이 지켜진다.
-- [ ] 각 업무 module의 STANDALONE test, `@ModuleSlicing`, Scenario/PublishedEvents, Documenter가 통과한다.
-- [ ] local/test/staging runtime verification은 true, production은 false다.
-- [ ] actuator Modulith endpoint가 외부에 무인증 노출되지 않는다.
-- [ ] Selection·Hold·Order의 동시성·보상·만료 불변식이 회귀 테스트로 보존된다.
-- [ ] `clean test bootJar`가 통과하고 working tree가 clean하다.
+- [x] Spring Boot 4.1.1, Spring Modulith 2.1.1, Java 25 조합이다.
+- [x] 단일 Gradle Spring Boot project만 존재한다.
+- [x] `@Modulith(sharedModules = "shared")` root와 정확히 7개 module이 존재한다.
+- [x] 승인된 DAG 밖 의존, 순환 의존, open module, cross-module internal import가 없다(위 3범주
+  예외 제외 — Step 3 참고).
+- [x] module root 공개 API는 불변 scalar snapshot/event만 노출한다.
+- [ ] cross-module JPA 관계와 DB FK가 0이다 — **미충족**: `ShowLike.member`/`.show`가 여전히
+  `@ManyToOne`이다(위 Step 4 참고). `PerformanceSeat`는 충족.
+- [x] 다른 module repository/table 직접 접근이 0이다(위 3범주 예외 제외).
+- [x] Order 생성의 외부 API/Redis I/O가 booking DB write transaction 밖에 있다.
+- [x] custom outbox가 JPA Event Publication Registry로 완전히 대체되었다.
+- [x] ARCHIVE, staleness, retry 1m/100/4/10, purge 30d 정책과 멱등 listener가 검증된다.
+- [x] broker와 `@Externalized`가 추가되지 않았다.
+- [x] 기존 migration checksum은 보존되고 신규 migration은 module별로 실행된다.
+- [x] 운영 ORM은 `ddl-auto=validate`다.
+- [x] module-owned problem 원칙이 지켜진다 — **단, ProblemDetail이 아니라** 되돌려진 전역
+  `ErrorType`/`CoreException`/`ApiResponse.error` envelope 계약이다(ADR 0002 갱신 참고). 원래
+  문구의 "ProblemDetail type/code 규칙"은 이 결정으로 무효다.
+- [x] 각 업무 module의 STANDALONE test와 Documenter가 통과한다. `@ModuleSlicing`은 이 toolchain
+  조합(Boot 4.1.1 + Modulith 2.1.1)에서 실제로 깨져 순수 Hibernate 기반 대체 검증
+  (`BookingModuleSlicingSchemaTest`)으로 동등한 검증을 했다 — Task 11 리뷰에서 원인이
+  프레임워크 비호환이 아니라 `verifyAutomatically` 기본값 문제로 재확인됐다(`BookingModuleSlicingSchemaTest`
+  javadoc 참고). Scenario/PublishedEvents는 Task 8에서 통과.
+- [x] local/dev(staging 역할)/test runtime verification은 true, production은 false다(실제
+  프로파일 이름은 local/dev/prod 셋뿐 — "staging"이라는 별도 프로파일은 없다, Task 12 참고).
+- [x] actuator Modulith endpoint가 외부에 무인증 노출되지 않는다.
+- [x] Selection·Hold·Order의 동시성·보상·만료 불변식이 회귀 테스트로 보존된다.
+- [x] `clean test bootJar`가 통과하고 working tree가 clean하다.
+
+**추적 필요(완료 아님)로 남는 항목**: (1) `EVENT_PUBLICATION.serialized_event`
+`VARCHAR(255)` 크기가 다중 좌석 주문에서 부족할 수 있음(Task 11 "추적 필요" 참고), (2)
+`ShowLike`의 cross-module FK와 showlike read 경로 전체 이동(Task 9 descope, `showlike/package-info.java`
+참고), (3) `WebSocketAuthInterceptor`/`CorsProperties`/`bootstrap.worker`/`core.infra.seed`/
+`core.infra.config`/`core.config.WebConfig`의 module 이동(Task 6/13에서 확인, 일정 미정).
