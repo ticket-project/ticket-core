@@ -1,11 +1,10 @@
-package com.ticket.core.app.showlike.query;
+package com.ticket.showlike.internal.application.query;
 
+import com.ticket.catalog.ShowLookup;
+import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
-import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
-import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,10 +18,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -31,19 +28,15 @@ class GetShowLikeStatusUseCaseTest {
     @Mock
     private ShowLikeRepository showLikeRepository;
     @Mock
-    private MemberRepository memberRepository;
+    private MemberLookup memberLookup;
     @Mock
-    private ShowRepository showRepository;
+    private ShowLookup showLookup;
     @InjectMocks
     private GetShowLikeStatusUseCase useCase;
 
     @Test
     void 찜_상태와_총_찜수를_반환한다() {
         //given
-        Member member = mock(Member.class);
-        when(member.getId()).thenReturn(1L);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
-        when(showRepository.existsById(2L)).thenReturn(true);
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
         when(showLikeRepository.countByShowId(2L)).thenReturn(7L);
 
@@ -53,7 +46,8 @@ class GetShowLikeStatusUseCaseTest {
         //then
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(7L);
-        verify(showRepository).existsById(2L);
+        verify(memberLookup).requireActive(1L);
+        verify(showLookup).requireExisting(2L);
     }
 
     @ParameterizedTest

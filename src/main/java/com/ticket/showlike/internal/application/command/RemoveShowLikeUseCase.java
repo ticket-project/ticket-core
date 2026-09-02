@@ -1,14 +1,12 @@
-package com.ticket.core.app.showlike.command;
+package com.ticket.showlike.internal.application.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
-import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
+import com.ticket.catalog.ShowLookup;
+import com.ticket.core.app.support.validation.RequiredInput;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.identity.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
 @Transactional
@@ -16,8 +14,8 @@ import com.ticket.core.app.support.validation.RequiredInput;
 public class RemoveShowLikeUseCase {
 
     private final ShowLikeRepository showLikeRepository;
-    private final MemberRepository memberRepository;
-    private final ShowRepository showRepository;
+    private final MemberLookup memberLookup;
+    private final ShowLookup showLookup;
 
     public record Input(Long memberId, Long showId) {
         public Input {
@@ -32,12 +30,8 @@ public class RemoveShowLikeUseCase {
     }
 
     public Output execute(final Input input) {
-        memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
-        if (!showRepository.existsById(input.showId())) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA,
-                    "공연을 찾을 수 없습니다. id=" + input.showId());
-        }
+        memberLookup.requireActive(input.memberId());
+        showLookup.requireExisting(input.showId());
 
         showLikeRepository.findByMemberIdAndShowId(input.memberId(), input.showId())
                 .ifPresent(showLikeRepository::delete);

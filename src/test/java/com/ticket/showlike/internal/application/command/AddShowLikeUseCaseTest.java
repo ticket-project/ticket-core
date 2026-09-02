@@ -1,12 +1,10 @@
-package com.ticket.core.app.showlike.command;
+package com.ticket.showlike.internal.application.command;
 
+import com.ticket.catalog.ShowLookup;
+import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
-import com.ticket.catalog.internal.domain.show.Show;
-import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
-import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,11 +19,10 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -34,9 +31,9 @@ class AddShowLikeUseCaseTest {
     @Mock
     private ShowLikeRepository showLikeRepository;
     @Mock
-    private MemberRepository memberRepository;
+    private MemberLookup memberLookup;
     @Mock
-    private ShowRepository showRepository;
+    private ShowLookup showLookup;
     @InjectMocks
     private AddShowLikeUseCase useCase;
 
@@ -45,7 +42,6 @@ class AddShowLikeUseCaseTest {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
         when(showLikeRepository.countByShowId(2L)).thenReturn(5L);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
@@ -53,6 +49,8 @@ class AddShowLikeUseCaseTest {
         //then
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(5L);
+        verify(memberLookup).requireActive(1L);
+        verifyNoInteractions(showLookup);
     }
 
     @Test
@@ -60,24 +58,23 @@ class AddShowLikeUseCaseTest {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
         when(showLikeRepository.countByShowId(2L)).thenReturn(3L);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(mock(Show.class)));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
 
         //then
         assertThat(output.liked()).isTrue();
-        verify(showLikeRepository).save(any());
+        verify(memberLookup).requireActive(1L);
+        verify(showLookup).requireExisting(2L);
+        verify(showLikeRepository).like(1L, 2L);
     }
 
     @Test
     void 저장중_중복제약이_발생하면_예외를_던진다() {
         //given
         when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(mock(Show.class)));
-        when(showLikeRepository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));
+        doThrow(new DataIntegrityViolationException("duplicate"))
+                .when(showLikeRepository).like(1L, 2L);
 
         //when
         //then

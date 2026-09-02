@@ -1,9 +1,9 @@
-package com.ticket.core.api.controller.docs;
+package com.ticket.showlike.internal.web.docs;
 
 import com.ticket.identity.AuthenticatedMember;
-import com.ticket.core.app.showlike.command.AddShowLikeUseCase;
-import com.ticket.core.app.showlike.query.GetShowLikeStatusUseCase;
-import com.ticket.core.app.showlike.command.RemoveShowLikeUseCase;
+import com.ticket.showlike.internal.application.command.AddShowLikeUseCase;
+import com.ticket.showlike.internal.application.command.RemoveShowLikeUseCase;
+import com.ticket.showlike.internal.application.query.GetShowLikeStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

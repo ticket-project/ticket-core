@@ -1,12 +1,11 @@
-package com.ticket.core.app.showlike.command;
+package com.ticket.showlike.internal.application.command;
 
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
-import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
+import com.ticket.catalog.ShowLookup;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.core.support.exception.ErrorType;
+import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,9 +33,9 @@ class RemoveShowLikeUseCaseTest {
     @Mock
     private ShowLikeRepository showLikeRepository;
     @Mock
-    private MemberRepository memberRepository;
+    private MemberLookup memberLookup;
     @Mock
-    private ShowRepository showRepository;
+    private ShowLookup showLookup;
     @InjectMocks
     private RemoveShowLikeUseCase useCase;
 
@@ -44,8 +43,6 @@ class RemoveShowLikeUseCaseTest {
     void 찜이_존재하면_삭제후_false를_반환한다() {
         //given
         ShowLike showLike = mock(ShowLike.class);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
-        when(showRepository.existsById(2L)).thenReturn(true);
         when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.of(showLike));
         when(showLikeRepository.countByShowId(2L)).thenReturn(4L);
 
@@ -55,14 +52,14 @@ class RemoveShowLikeUseCaseTest {
         //then
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
+        verify(memberLookup).requireActive(1L);
+        verify(showLookup).requireExisting(2L);
         verify(showLikeRepository).delete(showLike);
     }
 
     @Test
     void 찜이_없어도_삭제없이_false를_반환한다() {
         //given
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(mock(Member.class)));
-        when(showRepository.existsById(2L)).thenReturn(true);
         when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.empty());
         when(showLikeRepository.countByShowId(2L)).thenReturn(0L);
 
