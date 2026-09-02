@@ -1,16 +1,16 @@
-package com.ticket.core.api.controller;
+package com.ticket.identity.internal.web;
 
-import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
-import com.ticket.core.app.auth.command.LoginUseCase;
-import com.ticket.core.app.auth.command.LogoutUseCase;
-import com.ticket.core.app.auth.command.RefreshAuthTokenUseCase;
-import com.ticket.core.app.auth.command.RegisterMemberUseCase;
-import com.ticket.core.app.auth.query.GetSocialLoginUrlsUseCase;
+import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.identity.internal.application.auth.command.ExchangeOAuth2TokenUseCase;
+import com.ticket.identity.internal.application.auth.command.LoginUseCase;
+import com.ticket.identity.internal.application.auth.command.LogoutUseCase;
+import com.ticket.identity.internal.application.auth.command.RefreshAuthTokenUseCase;
+import com.ticket.identity.internal.application.auth.command.RegisterMemberUseCase;
+import com.ticket.identity.internal.application.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

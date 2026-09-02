@@ -1,6 +1,6 @@
-package com.ticket.core.api.controller.request;
+package com.ticket.identity.internal.web.request;
 
-import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
+import com.ticket.identity.internal.application.auth.command.ExchangeOAuth2TokenUseCase;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

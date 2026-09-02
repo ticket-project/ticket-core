@@ -1,6 +1,6 @@
-package com.ticket.core.api.controller.request;
+package com.ticket.identity.internal.web.request;
 
-import com.ticket.core.app.auth.command.ExchangeOAuth2TokenUseCase;
+import com.ticket.identity.internal.application.auth.command.ExchangeOAuth2TokenUseCase;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,12 +1,12 @@
-package com.ticket.core.api.controller;
+package com.ticket.identity.internal.web;
 
-import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
-import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
+import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.identity.internal.application.member.query.GetCurrentMemberUseCase;
+import com.ticket.identity.internal.application.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.api.support.cursor.ShowLikeCursorCodec;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

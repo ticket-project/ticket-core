@@ -1,10 +1,10 @@
-package com.ticket.core.api.controller.docs;
+package com.ticket.identity.internal.web.docs;
 
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 
-import com.ticket.core.app.auth.token.AuthenticatedMember;
-import com.ticket.core.app.member.query.GetCurrentMemberUseCase;
-import com.ticket.core.app.member.command.WithdrawCurrentMemberUseCase;
+import com.ticket.identity.AuthenticatedMember;
+import com.ticket.identity.internal.application.member.query.GetCurrentMemberUseCase;
+import com.ticket.identity.internal.application.member.command.WithdrawCurrentMemberUseCase;
 import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.core.support.response.ApiResponse;
 import com.ticket.core.support.response.SliceResponse;
