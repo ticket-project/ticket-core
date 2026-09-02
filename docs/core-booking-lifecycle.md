@@ -1,5 +1,13 @@
 # Core 예매 수명주기
 
+> **STALE (2026-09-02)**: 이 문서는 Task 8(Spring Modulith 이벤트 전환) 이전의 custom outbox
+> 기반 구조를 설명한다. `HoldCreationOutboxExecutor`, `HoldReleaseOutboxRelay`,
+> `HoldOutboxRelayTrigger`, `HoldLifecycleEventPublisher`와 `worker.*-outbox.fixed-delay` 설정은
+> 모두 제거됐다. 현재는 booking DB transaction 안에서 `OrderStarted`/`OrderTerminated`를
+> 발행하고 `BookingEventListeners`(`@ApplicationModuleListener`)가 commit 이후 처리한다. 전체
+> 재작성은 Task 14(문서 갱신)에서 한다 — 그 전까지 이 문서의 outbox 관련 서술을 현재 코드의
+> 근거로 인용하지 않는다.
+
 이 문서는 주문 생성, 취소, 만료와 Redis hold 후처리의 실행 순서를 설명한다.
 핵심 목적은 DB 트랜잭션과 외부 I/O의 경계를 한눈에 확인하는 것이다.
 
