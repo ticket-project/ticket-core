@@ -820,7 +820,7 @@ git commit -m "refactor: 메타데이터 조회를 공개 계약 조합으로 �
 - Modify: `src/main/resources/application*.yml`
 - Create: migration integration tests
 
-- [ ] **Step 1: 적용 이력이 있는 migration을 내용 변경 없이 이동한다**
+- [x] **Step 1: 적용 이력이 있는 migration을 내용 변경 없이 이동한다**
 
 기존 V2 및 H2/Oracle V3~V7 파일의 checksum이 바뀌지 않도록 byte-for-byte로 각 configured location의 `__root`에 이동한다. 즉 V2는 `db/migration/__root`, vendor migration은 `db/migration-vendor/{h2|oracle}/__root`에 둔다. 이동 전 원본 hash manifest를 만들고 이동 후 대상 hash와 비교한다.
 
@@ -837,21 +837,21 @@ Compare-Object (Get-Content build/migration-before.sha256) (Get-Content build/mi
 
 Expected: `Compare-Object` 출력 없음.
 
-- [ ] **Step 2: registry DDL을 `__root`의 새 버전으로 추가한다**
+- [x] **Step 2: registry DDL을 `__root`의 새 버전으로 추가한다**
 
 JPA starter 2.1.1의 `JpaEventPublication`, `DefaultJpaEventPublication`, `ArchivedJpaEventPublication` mapping을 기준으로 `EVENT_PUBLICATION`, `EVENT_PUBLICATION_ARCHIVE`를 만든다. 필드는 `id`, `publication_date`, `listener_id`, `serialized_event`, `event_type`, `completion_date`, `last_resubmission_date`, `completion_attempts`, `status`다.
 
 타입을 추측하지 않는다. H2와 Oracle 각각에 대해 임시 test profile에서 Hibernate schema export를 실행해 2.1.1/Boot 4.1.1이 생성하는 column type/nullability를 캡처한 후 Flyway DDL로 옮긴다. 특히 UUID는 H2의 native UUID/BINARY(16)와 Oracle RAW(16) mapping, `serialized_event`는 CLOB, `status`는 문자열 enum mapping을 검증한다. 그 다음 `ddl-auto=validate`로 두 table 모두 validation을 통과시킨다. Hibernate create는 DDL 확인용 test에서만 쓰고 커밋되는 운영 설정에는 두지 않는다.
 
-- [ ] **Step 3: module별 신규 migration을 소유 module 폴더에 둔다**
+- [x] **Step 3: module별 신규 migration을 소유 module 폴더에 둔다**
 
 교차 JPA 관계를 scalar column으로 바꾸는 schema change, module 간 FK 제거, 필요한 unique/index를 각각 `booking`/`showlike`에 새 migration으로 추가한다. 공통 SQL은 `db/migration/{module}`, DB별 SQL은 `db/migration-vendor/{h2|oracle}/{module}`에 둔다. 새 migration 버전은 각 configured location과 module history의 조합에서 충돌하지 않게 1부터 시작하고 같은 module 안에서만 증가한다.
 
-- [ ] **Step 4: custom outbox drop migration을 마지막에 추가한다**
+- [x] **Step 4: custom outbox drop migration을 마지막에 추가한다**
 
 Task 8의 publication success/failure/retry 테스트가 통과한 뒤에만 custom outbox table/index를 새 `booking` migration으로 제거한다. 기존 V5~V7은 수정하지 않는다. 불명확한 legacy table은 삭제하지 않는다.
 
-- [ ] **Step 5: Modulith runtime Flyway 설정을 켠다**
+- [x] **Step 5: Modulith runtime Flyway 설정을 켠다**
 
 ```yaml
 spring:
@@ -865,21 +865,34 @@ spring:
 
 production은 반드시 validate다. test도 migration 검증 test에서는 validate를 사용한다.
 
-- [ ] **Step 6: module slicing migration test를 작성한다**
+- [x] **Step 6: module slicing migration test를 작성한다**
 
 각 persistence module의 `@DataJpaTest @ModuleSlicing`에서 root + 해당 module migration만으로 context/schema가 생성되고 CRUD가 동작하는지 검증한다. catalog test가 booking/showlike migration을 필요로 하거나 그 반대면 실패로 간주한다.
 
-- [ ] **Step 7: H2와 Oracle 호환성을 검증한다**
+- [x] **Step 7: H2와 Oracle 호환성을 검증한다**
 
 H2 전체 test를 통과시키고, 저장소의 기존 Oracle Testcontainers/profile이 있으면 동일 migration을 실행한다. Oracle 환경이 CI에 없다면 Testcontainers 기반 migration-only test를 추가해 CI에서 실행한다.
 
-- [ ] **Step 8: 커밋한다**
+- [x] **Step 8: 커밋한다**
 
 ```powershell
 .\gradlew.bat clean test
 git add src/main/resources src/test
 git commit -m "refactor: Flyway 이력을 Modulith 모듈 소유권에 맞춘다"
 ```
+
+> **추적 필요(2026-09-02): `EVENT_PUBLICATION.serialized_event` 컬럼 크기.** Task 11 리뷰에서
+> `spring-modulith-events-jpa:2.1.1`의 `JpaEventPublication.serializedEvent`에 `@Lob`이 없어
+> `VARCHAR(255)`/`VARCHAR2(255 CHAR)`로 매핑됨을 실제 소스로 확인했다. `OrderStarted`가
+> `performanceSeatIds`를 포함해 좌석 4개(seed 데이터의 `max_can_hold_count` 기준, 일반적인
+> 케이스)만 담아도 직렬화 JSON이 이미 255자를 넘을 가능성이 크다 — INSERT가 거부되어 event
+> publication 자체가 실패할 수 있는 실사용 리스크다. 이는 Task 11(migration)의 결함이 아니라
+> Task 8에서 확정한 이벤트 스키마(사용자가 직접 지정한 필드 구성)와 상위 라이브러리 제약이
+> 만나는 지점이라 이 계획 실행 중에는 임의로 스키마를 바꾸지 않았다. 실제 다중 좌석 주문
+> 트래픽 앞에 배포하기 전에 별도로 결정해야 한다: (a) `OrderStarted`/`OrderTerminated`에서
+> `performanceSeatIds`를 빼고 listener가 DB에서 다시 조회하게 하거나(이미 listener는 payload를
+> source of truth로 쓰지 않고 재조회한다), (b) 이 실패를 감수하고 모니터링하거나, (c) 다른
+> 방식. 이 계획의 나머지 Task는 이 항목을 전제하지 않는다.
 
 ### Task 12: 모듈 테스트·문서화·runtime insight 완성
 
