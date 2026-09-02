@@ -3,7 +3,7 @@ package com.ticket.core.domain.showlike.model;
 import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.domain.member.model.Email;
 import com.ticket.core.domain.member.model.EncodedPassword;
-import com.ticket.core.domain.show.model.Show;
+import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.core.domain.member.model.Role;
 import org.junit.jupiter.api.Test;
 

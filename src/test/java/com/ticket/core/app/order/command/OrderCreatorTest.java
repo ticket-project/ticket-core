@@ -6,7 +6,7 @@ import com.ticket.core.domain.order.model.OrderSeat;
 import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.order.repository.OrderSeatRepository;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.domain.seat.model.Seat;
+import com.ticket.catalog.internal.domain.seat.Seat;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

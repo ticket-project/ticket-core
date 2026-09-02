@@ -1,14 +1,14 @@
 package com.ticket.core.app.performanceseat.query;
 
 import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.domain.performance.repository.PerformanceRepository;
+import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
+import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.admission.AdmissionVerifier;
-import com.ticket.core.domain.queue.model.QueueMode;
+import com.ticket.catalog.internal.domain.queue.QueueMode;
 import com.ticket.core.app.performanceseat.query.model.SeatStateView;
 import com.ticket.core.app.performanceseat.query.model.SeatStatus;
 import org.junit.jupiter.api.BeforeEach;

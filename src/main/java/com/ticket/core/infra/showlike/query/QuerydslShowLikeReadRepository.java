@@ -13,8 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static com.ticket.core.domain.show.model.QShow.show;
-import static com.ticket.core.domain.show.model.QVenue.venue;
+import static com.ticket.catalog.internal.domain.show.QShow.show;
+import static com.ticket.catalog.internal.domain.show.QVenue.venue;
 import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
 
 @Repository

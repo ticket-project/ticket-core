@@ -1,8 +1,8 @@
 package com.ticket.core.domain.performanceseat.model;
 
 import com.ticket.core.domain.BaseEntity;
-import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.seat.model.Seat;
+import com.ticket.catalog.internal.domain.performance.Performance;
+import com.ticket.catalog.internal.domain.seat.Seat;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

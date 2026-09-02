@@ -3,7 +3,7 @@ package com.ticket.core.app.showlike.command;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.core.domain.show.repository.ShowRepository;
+import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

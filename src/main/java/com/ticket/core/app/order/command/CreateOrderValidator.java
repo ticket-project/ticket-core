@@ -2,15 +2,15 @@ package com.ticket.core.app.order.command;
 
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.domain.performance.repository.PerformanceRepository;
+import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
 import com.ticket.core.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.core.domain.order.command.create.RequestedSeatIds;
 import com.ticket.core.domain.hold.command.HoldSeatAvailabilityValidator;
 import com.ticket.core.domain.member.repository.MemberRepository;
 import com.ticket.core.domain.order.model.OrderState;
 import com.ticket.core.domain.order.repository.OrderRepository;
-import com.ticket.core.domain.performance.policy.BookingPolicyValidator;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
+import com.ticket.catalog.internal.domain.performance.policy.BookingPolicyValidator;
+import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.admission.AdmissionVerifier;
 import lombok.RequiredArgsConstructor;

@@ -2,7 +2,7 @@ package com.ticket.core.domain.showlike.model;
 
 import com.ticket.core.domain.BaseEntity;
 import com.ticket.core.domain.member.model.Member;
-import com.ticket.core.domain.show.model.Show;
+import com.ticket.catalog.internal.domain.show.Show;
 import jakarta.persistence.*;
 import lombok.Getter;
 

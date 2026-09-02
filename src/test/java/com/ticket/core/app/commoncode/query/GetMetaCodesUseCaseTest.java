@@ -1,9 +1,9 @@
 package com.ticket.core.app.commoncode.query;
 
-import com.ticket.core.domain.show.model.Category;
-import com.ticket.core.domain.show.repository.CategoryRepository;
-import com.ticket.core.domain.show.model.Genre;
-import com.ticket.core.domain.show.repository.GenreRepository;
+import com.ticket.catalog.internal.domain.show.Category;
+import com.ticket.catalog.internal.domain.show.repository.CategoryRepository;
+import com.ticket.catalog.internal.domain.show.Genre;
+import com.ticket.catalog.internal.domain.show.repository.GenreRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

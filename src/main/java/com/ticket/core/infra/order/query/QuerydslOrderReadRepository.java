@@ -14,11 +14,11 @@ import java.util.Optional;
 import static com.ticket.core.domain.member.model.QMember.member;
 import static com.ticket.core.domain.order.model.QOrder.order;
 import static com.ticket.core.domain.order.model.QOrderSeat.orderSeat;
-import static com.ticket.core.domain.performance.model.QPerformance.performance;
+import static com.ticket.catalog.internal.domain.performance.QPerformance.performance;
 import static com.ticket.core.domain.performanceseat.model.QPerformanceSeat.performanceSeat;
-import static com.ticket.core.domain.seat.model.QSeat.seat;
-import static com.ticket.core.domain.show.model.QShow.show;
-import static com.ticket.core.domain.show.model.QVenue.venue;
+import static com.ticket.catalog.internal.domain.seat.QSeat.seat;
+import static com.ticket.catalog.internal.domain.show.QShow.show;
+import static com.ticket.catalog.internal.domain.show.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor

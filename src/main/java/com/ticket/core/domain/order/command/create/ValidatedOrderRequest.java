@@ -1,6 +1,6 @@
 package com.ticket.core.domain.order.command.create;
 
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
+import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 
 import java.util.List;

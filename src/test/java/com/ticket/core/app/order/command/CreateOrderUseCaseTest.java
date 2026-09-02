@@ -16,7 +16,7 @@ import com.ticket.core.app.event.HoldCreationPostCommitNotifier;
 import com.ticket.core.domain.hold.model.Hold;
 import com.ticket.core.domain.order.model.Order;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
+import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

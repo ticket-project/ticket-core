@@ -4,7 +4,7 @@ import com.ticket.core.domain.member.model.Member;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.member.repository.MemberRepository;
-import com.ticket.core.domain.show.repository.ShowRepository;
+import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import org.junit.jupiter.api.Test;

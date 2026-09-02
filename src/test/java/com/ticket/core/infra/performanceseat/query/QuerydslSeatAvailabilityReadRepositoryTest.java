@@ -4,12 +4,12 @@ import com.ticket.core.app.performanceseat.query.model.AvailableSeatRow;
 
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityCalculator;
 import com.ticket.core.app.performanceseat.query.SeatAvailabilityReadRepository;
-import com.ticket.core.domain.performance.model.Performance;
-import com.ticket.core.domain.seat.model.Seat;
-import com.ticket.core.domain.show.model.Show;
-import com.ticket.core.domain.show.model.ShowGrade;
-import com.ticket.core.domain.show.model.Region;
-import com.ticket.core.domain.show.model.Venue;
+import com.ticket.catalog.internal.domain.performance.Performance;
+import com.ticket.catalog.internal.domain.seat.Seat;
+import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.catalog.internal.domain.show.ShowGrade;
+import com.ticket.catalog.internal.domain.show.Region;
+import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeatState;
 import org.junit.jupiter.api.BeforeEach;
