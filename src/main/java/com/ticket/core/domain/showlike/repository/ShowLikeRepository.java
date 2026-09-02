@@ -6,10 +6,14 @@ import java.util.Optional;
 
 /**
  * 찜 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
+ *
+ * <p>{@link #like(Long, Long)}은 scalar id만 받는다 — showlike module의 {@code AddShowLikeUseCase}가
+ * identity/catalog internal entity(Member/Show)를 참조하지 않고 memberId/showId만 넘길 수 있도록,
+ * entity를 실제로 구성하는 일은 이 인터페이스의 구현({@code ShowLikeRepositoryAdapter})에 맡긴다.
  */
 public interface ShowLikeRepository {
 
-    ShowLike save(ShowLike showLike);
+    ShowLike like(Long memberId, Long showId);
 
     void delete(ShowLike showLike);
 
