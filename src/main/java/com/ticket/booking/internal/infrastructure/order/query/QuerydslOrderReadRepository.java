@@ -55,10 +55,16 @@ public class QuerydslOrderReadRepository implements OrderReadRepository {
                 .from(order)
                 .join(orderSeat).on(orderSeat.order.id.eq(order.id))
                 .join(performanceSeat).on(performanceSeat.id.eq(orderSeat.performanceSeatId))
-                .join(performanceSeat.performance, performance)
+                // TODO(Task 7 후속): performanceSeat는 scalar performanceId/seatId만 가진다.
+                // 아래 join은 여전히 ID로 catalog/identity 테이블을 직접 조인하는 cross-module
+                // Querydsl join이다 (Step 5 위반, 의도적으로 남긴 기존 동작 보존). catalog가
+                // performance/show/venue/seat 표시값 batch API를, identity가 member 표시값
+                // batch API를 공개하기 전까지는 제거할 수 없다 — 두 module의 공개 계약 확장이
+                // 필요해 이번 task 범위에서 완료하지 못했다.
+                .join(performance).on(performance.id.eq(performanceSeat.performanceId))
                 .join(performance.show, show)
                 .leftJoin(show.venue, venue)
-                .join(performanceSeat.seat, seat)
+                .join(seat).on(seat.id.eq(performanceSeat.seatId))
                 .join(member).on(member.id.eq(order.memberId))
                 .where(
                         order.orderKey.eq(orderKey),

@@ -50,7 +50,7 @@ class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryT
                 BigDecimal.valueOf(120000)
         );
         performanceId = performance.getId();
-        seatId = performanceSeat.getSeat().getId();
+        seatId = performanceSeat.getSeatId();
         flushAndClear();
     }
 

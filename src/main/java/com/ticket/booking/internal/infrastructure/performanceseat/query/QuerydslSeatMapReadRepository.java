@@ -50,12 +50,12 @@ public class QuerydslSeatMapReadRepository implements SeatMapReadRepository {
     public List<SeatStateView> findSeatStatuses(final Long performanceId) {
         return queryFactory
                 .select(Projections.constructor(SeatStateRow.class,
-                        performanceSeat.seat.id,
+                        performanceSeat.seatId,
                         performanceSeat.state
                 ))
                 .from(performanceSeat)
-                .where(performanceSeat.performance.id.eq(performanceId))
-                .orderBy(performanceSeat.seat.id.asc())
+                .where(performanceSeat.performanceId.eq(performanceId))
+                .orderBy(performanceSeat.seatId.asc())
                 .fetch()
                 .stream()
                 .map(SeatStateRow::toView)

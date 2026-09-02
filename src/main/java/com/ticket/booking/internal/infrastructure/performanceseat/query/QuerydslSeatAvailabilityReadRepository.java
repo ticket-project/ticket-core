@@ -25,21 +25,21 @@ public class QuerydslSeatAvailabilityReadRepository implements SeatAvailabilityR
     public List<AvailableSeatRow> findAvailableSeatRows(Long performanceId, Long showId) {
         return queryFactory
                 .select(Projections.constructor(AvailableSeatRow.class,
-                        performanceSeat.seat.id,
+                        performanceSeat.seatId,
                         performanceSeat.state,
                         showGrade.gradeName,
                         showGrade.sortOrder
                 ))
                 .from(performanceSeat)
                 .join(showSeat).on(
-                        showSeat.seat.id.eq(performanceSeat.seat.id),
+                        showSeat.seat.id.eq(performanceSeat.seatId),
                         showSeat.show.id.eq(showId)
                 )
                 .join(showGrade).on(showGrade.id.eq(showSeat.showGrade.id))
                 .where(
-                        performanceSeat.performance.id.eq(performanceId)
+                        performanceSeat.performanceId.eq(performanceId)
                 )
-                .orderBy(showGrade.sortOrder.asc(), performanceSeat.seat.id.asc())
+                .orderBy(showGrade.sortOrder.asc(), performanceSeat.seatId.asc())
                 .fetch();
     }
 }

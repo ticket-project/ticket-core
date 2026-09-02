@@ -55,7 +55,7 @@ public class OrderCreator {
 
     private List<OrderSeat> toOrderSeats(final Order order, final List<PerformanceSeat> performanceSeats) {
         return performanceSeats.stream()
-                .map(seat -> new OrderSeat(order, seat.getId(), seat.getSeat().getId(), seat.getPrice()))
+                .map(seat -> new OrderSeat(order, seat.getId(), seat.getSeatId(), seat.getPrice()))
                 .toList();
     }
 }

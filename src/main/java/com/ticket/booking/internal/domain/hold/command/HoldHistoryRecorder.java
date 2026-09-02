@@ -31,7 +31,7 @@ public class HoldHistoryRecorder {
                         memberId,
                         performanceId,
                         seat.getId(),
-                        seat.getSeat().getId(),
+                        seat.getSeatId(),
                         occurredAt,
                         expiresAt
                 ))

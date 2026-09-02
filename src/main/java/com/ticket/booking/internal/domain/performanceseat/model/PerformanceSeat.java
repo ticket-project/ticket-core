@@ -1,8 +1,6 @@
 package com.ticket.booking.internal.domain.performanceseat.model;
 
 import com.ticket.booking.internal.domain.BookingAuditedEntity;
-import com.ticket.catalog.internal.domain.performance.Performance;
-import com.ticket.catalog.internal.domain.seat.Seat;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -26,22 +24,20 @@ public class PerformanceSeat extends BookingAuditedEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "performance_id", nullable = false)
-    private Performance performance;
+    @Column(name = "performance_id", nullable = false)
+    private Long performanceId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seat_id", nullable = false)
-    private Seat seat;
+    @Column(name = "seat_id", nullable = false)
+    private Long seatId;
 
     @Enumerated(EnumType.STRING)
     private PerformanceSeatState state;
 
     private BigDecimal price;
 
-    public PerformanceSeat(final Performance performance, final Seat seat, final PerformanceSeatState state, final BigDecimal price) {
-        this.performance = performance;
-        this.seat = seat;
+    public PerformanceSeat(final Long performanceId, final Long seatId, final PerformanceSeatState state, final BigDecimal price) {
+        this.performanceId = performanceId;
+        this.seatId = seatId;
         this.state = state;
         this.price = price;
     }

@@ -116,10 +116,8 @@ class HoldHistoryRecorderTest {
 
     private PerformanceSeat createPerformanceSeat(final Long performanceSeatId, final Long seatId) {
         PerformanceSeat performanceSeat = mock(PerformanceSeat.class);
-        Seat seat = mock(Seat.class);
         when(performanceSeat.getId()).thenReturn(performanceSeatId);
-        when(performanceSeat.getSeat()).thenReturn(seat);
-        when(seat.getId()).thenReturn(seatId);
+        when(performanceSeat.getSeatId()).thenReturn(seatId);
         return performanceSeat;
     }
 

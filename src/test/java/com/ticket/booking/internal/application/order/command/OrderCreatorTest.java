@@ -114,11 +114,9 @@ class OrderCreatorTest {
 
     private PerformanceSeat createPerformanceSeat(final Long performanceSeatId, final Long seatId, final BigDecimal price) {
         final PerformanceSeat performanceSeat = org.mockito.Mockito.mock(PerformanceSeat.class);
-        final Seat seat = org.mockito.Mockito.mock(Seat.class);
         when(performanceSeat.getId()).thenReturn(performanceSeatId);
         when(performanceSeat.getPrice()).thenReturn(price);
-        when(performanceSeat.getSeat()).thenReturn(seat);
-        when(seat.getId()).thenReturn(seatId);
+        when(performanceSeat.getSeatId()).thenReturn(seatId);
         return performanceSeat;
     }
 

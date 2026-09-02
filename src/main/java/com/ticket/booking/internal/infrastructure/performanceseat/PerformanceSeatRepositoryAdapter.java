@@ -54,8 +54,8 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
                 ))
                 .from(performanceSeat)
                 .where(
-                        performanceSeat.performance.id.eq(performanceId),
-                        performanceSeat.seat.id.eq(seatId)
+                        performanceSeat.performanceId.eq(performanceId),
+                        performanceSeat.seatId.eq(seatId)
                 )
                 .fetchOne());
     }
