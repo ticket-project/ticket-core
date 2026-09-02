@@ -10,6 +10,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+/**
+ * {@code com.ticket.core} 안에서 Spring Modulith가 보지 못하는 domain purity를 고정한다 —
+ * Redisson/Spring Data Redis/WebSocket messaging/http-interface-client에 대한 직접 의존 금지,
+ * domain package에 scheduler·transactional event listener를 두지 않는 것.
+ *
+ * <p>{@code com.ticket.ModularityTests}와 겹치지 않는다 — {@code com.ticket.core}는 legacy로
+ * 분석 대상에서 빠지므로 Spring Modulith는 이 규칙들을 전혀 검사하지 않는다. {@code com.ticket.core}가
+ * 7개 module로 완전히 옮겨지면 이 파일도 함께 지운다.
+ */
 @AnalyzeClasses(
         packages = "com.ticket.core",
         importOptions = {ImportOption.DoNotIncludeTests.class}
