@@ -1,5 +1,6 @@
-package com.ticket.core.infra.admission;
+package com.ticket.admission.internal;
 
+import com.ticket.admission.AdmissionVerifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 public class AdmissionTokenConfig {
 
     @Bean
-    public JwtAdmissionGuard admissionTokenService(final AdmissionTokenConfigurationProperties properties) {
-        return new JwtAdmissionGuard(
+    public AdmissionVerifier admissionVerifier(final AdmissionTokenConfigurationProperties properties) {
+        return new JwtAdmissionVerifier(
                 new AdmissionTokenSettings(
                         properties.getIssuer(),
                         properties.getAudience(),

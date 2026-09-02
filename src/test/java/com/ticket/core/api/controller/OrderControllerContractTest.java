@@ -1,6 +1,5 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
@@ -77,7 +76,7 @@ class OrderControllerContractTest {
 
         mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(AdmissionHeaders.ADMISSION_TOKEN, "admission-token")
+                        .header("X-Admission-Token", "admission-token")
                         .content("""
                                 {
                                   "performanceId": 10,

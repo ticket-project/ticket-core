@@ -1,7 +1,6 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceControllerDocs;
-import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.performance.query.GetPerformanceScheduleListUseCase;
 import com.ticket.core.app.performance.query.GetPerformanceSummaryUseCase;
@@ -56,7 +55,8 @@ public class PerformanceController implements PerformanceControllerDocs {
     @GetMapping("/{performanceId}/seats/status")
     public ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
             @PathVariable final Long performanceId,
-            @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
+            // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission internal 상수를 import하지 않는다.
+            @RequestHeader(value = "X-Admission-Token", required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {
         final GetSeatStatusUseCase.Input input = new GetSeatStatusUseCase.Input(

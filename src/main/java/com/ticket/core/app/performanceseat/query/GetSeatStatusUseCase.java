@@ -7,7 +7,7 @@ import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.policy.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.app.admission.AdmissionGuard;
+import com.ticket.admission.AdmissionVerifier;
 import com.ticket.core.app.performanceseat.query.model.SeatStateView;
 import com.ticket.core.app.performanceseat.query.model.SeatStatus;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class GetSeatStatusUseCase {
     private final SeatStateSnapshotReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
-    private final AdmissionGuard admissionGuard;
+    private final AdmissionVerifier admissionVerifier;
     private final Clock clock;
 
     public record Input(Long performanceId, Long memberId, String admissionToken) {
@@ -76,7 +76,7 @@ public class GetSeatStatusUseCase {
         if (!BookingPolicyValidator.requiresQueue(policy, now)) {
             return;
         }
-        admissionGuard.ensureAdmitted(policy.performanceId(), input.memberId(), input.admissionToken());
+        admissionVerifier.verify(policy.performanceId(), input.memberId(), input.admissionToken());
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {

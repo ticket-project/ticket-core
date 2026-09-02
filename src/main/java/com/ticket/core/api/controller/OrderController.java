@@ -2,7 +2,6 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.OrderControllerDocs;
 import com.ticket.core.api.controller.request.CreateOrderRequest;
-import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.order.command.CancelOrderUseCase;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
@@ -36,7 +35,8 @@ public class OrderController implements OrderControllerDocs {
     @PostMapping
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @RequestBody final CreateOrderRequest request,
-            @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
+            // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission internal 상수를 import하지 않는다.
+            @RequestHeader(value = "X-Admission-Token", required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(

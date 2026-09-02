@@ -2,7 +2,6 @@ package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.HoldControllerDocs;
 import com.ticket.core.api.controller.request.CreateHoldRequest;
-import com.ticket.core.api.AdmissionHeaders;
 import com.ticket.core.app.auth.token.AuthenticatedMember;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.support.response.ApiResponse;
@@ -30,7 +29,8 @@ public class HoldController implements HoldControllerDocs {
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
             @PathVariable final Long performanceId,
             @RequestBody final CreateHoldRequest request,
-            @RequestHeader(value = AdmissionHeaders.ADMISSION_TOKEN, required = false) final String admissionToken,
+            // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission internal 상수를 import하지 않는다.
+            @RequestHeader(value = "X-Admission-Token", required = false) final String admissionToken,
             final AuthenticatedMember member
     ) {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(

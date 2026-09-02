@@ -8,7 +8,7 @@ import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySn
 import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.core.app.admission.AdmissionGuard;
+import com.ticket.admission.AdmissionVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ public class SelectSeatUseCase {
     private final PerformanceRepository performanceRepository;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
-    private final AdmissionGuard admissionGuard;
+    private final AdmissionVerifier admissionVerifier;
     private final SeatStatusEventPublisher seatEventPublisher;
     private final Clock clock;
 
@@ -64,6 +64,6 @@ public class SelectSeatUseCase {
         if (!BookingPolicyValidator.requiresQueue(policy, now)) {
             return;
         }
-        admissionGuard.ensureAdmitted(policy.performanceId(), input.memberId(), input.admissionToken());
+        admissionVerifier.verify(policy.performanceId(), input.memberId(), input.admissionToken());
     }
 }

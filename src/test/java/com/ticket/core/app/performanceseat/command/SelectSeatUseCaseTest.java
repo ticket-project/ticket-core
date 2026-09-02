@@ -8,7 +8,7 @@ import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySn
 import com.ticket.core.app.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.core.app.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.core.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.core.app.admission.AdmissionGuard;
+import com.ticket.admission.AdmissionVerifier;
 import com.ticket.core.domain.queue.model.QueueMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ class SelectSeatUseCaseTest {
     private SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
 
     @Mock
-    private AdmissionGuard admissionGuard;
+    private AdmissionVerifier admissionVerifier;
 
     @Mock
     private SeatStatusEventPublisher seatEventPublisher;
@@ -66,7 +66,7 @@ class SelectSeatUseCaseTest {
                 performanceRepository,
                 seatSelectionCoordinator,
                 seatSelectionAvailabilityValidator,
-                admissionGuard,
+                admissionVerifier,
                 seatEventPublisher,
                 CLOCK
         );
@@ -97,14 +97,14 @@ class SelectSeatUseCaseTest {
 
         useCase.execute(INPUT);
 
-        verify(admissionGuard, never()).ensureAdmitted(10L, 1L, "admission-token");
+        verify(admissionVerifier, never()).verify(10L, 1L, "admission-token");
     }
 
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(openPolicy(QueueMode.FORCE_ON)));
         doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
-                .when(admissionGuard).ensureAdmitted(10L, 1L, "admission-token");
+                .when(admissionVerifier).verify(10L, 1L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(CoreException.class);
@@ -124,7 +124,7 @@ class SelectSeatUseCaseTest {
                 seatSelectionAvailabilityValidator,
                 seatSelectionCoordinator,
                 seatEventPublisher,
-                admissionGuard
+                admissionVerifier
         );
     }
 

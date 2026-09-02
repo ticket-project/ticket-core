@@ -1,8 +1,9 @@
-package com.ticket.core.infra.admission;
+package com.ticket.admission.internal;
 
+import com.ticket.admission.AdmissionVerification;
+import com.ticket.admission.AdmissionVerifier;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.app.admission.AdmissionGuard;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -14,7 +15,7 @@ import java.util.Date;
 import java.util.Objects;
 import javax.crypto.SecretKey;
 
-public class JwtAdmissionGuard implements AdmissionGuard {
+public class JwtAdmissionVerifier implements AdmissionVerifier {
 
     public static final String SCOPE = "ticket-admission";
 
@@ -26,15 +27,15 @@ public class JwtAdmissionGuard implements AdmissionGuard {
     private final SecretKey secretKey;
     private final boolean enforcementEnabled;
 
-    public JwtAdmissionGuard(final AdmissionTokenSettings settings, final boolean enforcementEnabled) {
+    public JwtAdmissionVerifier(final AdmissionTokenSettings settings, final boolean enforcementEnabled) {
         this(settings, Clock.systemUTC(), enforcementEnabled);
     }
 
-    JwtAdmissionGuard(final AdmissionTokenSettings settings, final Clock clock) {
+    JwtAdmissionVerifier(final AdmissionTokenSettings settings, final Clock clock) {
         this(settings, clock, true);
     }
 
-    JwtAdmissionGuard(
+    JwtAdmissionVerifier(
             final AdmissionTokenSettings settings,
             final Clock clock,
             final boolean enforcementEnabled
@@ -46,13 +47,13 @@ public class JwtAdmissionGuard implements AdmissionGuard {
     }
 
     /**
-     * 도메인이 호출하는 진입점. 토큰 검증 실패를 도메인 오류로 번역한다.
+     * 공개 진입점. 토큰 검증 실패를 admission 소유 {@code ErrorType}으로 번역한다.
      * 대기열이 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
      */
     @Override
-    public void ensureAdmitted(final Long performanceId, final Long memberId, final String admissionToken) {
+    public AdmissionVerification verify(final long performanceId, final long memberId, final String admissionToken) {
         if (!enforcementEnabled) {
-            return;
+            return new AdmissionVerification(performanceId, memberId);
         }
         if (admissionToken == null || admissionToken.isBlank()) {
             throw new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED);
@@ -64,6 +65,7 @@ public class JwtAdmissionGuard implements AdmissionGuard {
         } catch (final AdmissionTokenException exception) {
             throw new CoreException(ErrorType.ADMISSION_TOKEN_INVALID);
         }
+        return new AdmissionVerification(performanceId, memberId);
     }
 
     AdmissionClaims verify(final String token) {
@@ -83,12 +85,12 @@ public class JwtAdmissionGuard implements AdmissionGuard {
         );
     }
 
-    AdmissionClaims verifyFor(final String token, final Long memberId, final Long performanceId) {
+    AdmissionClaims verifyFor(final String token, final long memberId, final long performanceId) {
         AdmissionClaims claims = verify(token);
         if (!Objects.equals(claims.memberId(), memberId)) {
             throw new AdmissionTokenException("admission token member mismatch");
         }
-        if (!claims.performanceId().equals(performanceId)) {
+        if (!Objects.equals(claims.performanceId(), performanceId)) {
             throw new AdmissionTokenException("admission token performance mismatch");
         }
         return claims;

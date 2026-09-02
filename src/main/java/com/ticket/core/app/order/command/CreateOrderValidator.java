@@ -12,7 +12,7 @@ import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.performance.policy.BookingPolicyValidator;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.app.admission.AdmissionGuard;
+import com.ticket.admission.AdmissionVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ public class CreateOrderValidator {
     private final PerformanceRepository performanceRepository;
     private final OrderRepository orderRepository;
     private final HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
-    private final AdmissionGuard admissionGuard;
+    private final AdmissionVerifier admissionVerifier;
 
     /**
      * 주문 생성 전 검증을 비용 순서로 수행한다.
@@ -72,7 +72,7 @@ public class CreateOrderValidator {
         if (!BookingPolicyValidator.requiresQueue(policy, now)) {
             return;
         }
-        admissionGuard.ensureAdmitted(policy.performanceId(), memberId, admissionToken);
+        admissionVerifier.verify(policy.performanceId(), memberId, admissionToken);
     }
 
     private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {

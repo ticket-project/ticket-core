@@ -7,7 +7,7 @@ import com.ticket.core.support.exception.ErrorType;
 import com.ticket.core.domain.hold.command.HoldManager;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.core.app.admission.AdmissionGuard;
+import com.ticket.admission.AdmissionVerifier;
 import com.ticket.core.domain.queue.model.QueueMode;
 import com.ticket.core.app.performanceseat.query.model.SeatStateView;
 import com.ticket.core.app.performanceseat.query.model.SeatStatus;
@@ -52,7 +52,7 @@ class GetSeatStatusUseCaseTest {
     @Mock
     private HoldManager holdManager;
     @Mock
-    private AdmissionGuard admissionGuard;
+    private AdmissionVerifier admissionVerifier;
 
     private GetSeatStatusUseCase useCase;
 
@@ -63,7 +63,7 @@ class GetSeatStatusUseCaseTest {
                 seatStatusDbReader,
                 seatSelectionService,
                 holdManager,
-                admissionGuard,
+                admissionVerifier,
                 CLOCK
         );
     }
@@ -139,14 +139,14 @@ class GetSeatStatusUseCaseTest {
 
         useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
-        verify(admissionGuard, never()).ensureAdmitted(10L, 100L, "admission-token");
+        verify(admissionVerifier, never()).verify(10L, 100L, "admission-token");
     }
 
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceRepository.findBookingPolicyById(10L)).thenReturn(Optional.of(queuePolicy()));
         doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
-                .when(admissionGuard).ensureAdmitted(10L, 100L, "admission-token");
+                .when(admissionVerifier).verify(10L, 100L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(CoreException.class)

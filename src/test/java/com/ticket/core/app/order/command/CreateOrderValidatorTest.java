@@ -15,7 +15,7 @@ import com.ticket.core.domain.order.repository.OrderRepository;
 import com.ticket.core.domain.performance.query.model.PerformanceBookingPolicySnapshot;
 import com.ticket.core.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.core.domain.order.model.OrderState;
-import com.ticket.core.app.admission.AdmissionGuard;
+import com.ticket.admission.AdmissionVerifier;
 import com.ticket.core.domain.queue.model.QueueMode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +55,7 @@ class CreateOrderValidatorTest {
     private HoldSeatAvailabilityValidator holdSeatAvailabilityValidator;
 
     @Mock
-    private AdmissionGuard admissionGuard;
+    private AdmissionVerifier admissionVerifier;
 
     @InjectMocks
     private CreateOrderValidator validator;
@@ -83,7 +83,7 @@ class CreateOrderValidatorTest {
 
         assertError(seatIds, ErrorType.PERFORMANCE_IS_PAST);
 
-        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
+        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator, admissionVerifier);
     }
 
     @Test
@@ -93,7 +93,7 @@ class CreateOrderValidatorTest {
 
         assertError(seatIds, ErrorType.EXCEED_HOLD_LIMIT);
 
-        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator, admissionGuard);
+        verifyNoInteractions(memberRepository, orderRepository, holdSeatAvailabilityValidator, admissionVerifier);
     }
 
     @Test
@@ -106,7 +106,7 @@ class CreateOrderValidatorTest {
 
         validator.validate(input(seatIds), seatIds, FIXED_NOW);
 
-        verify(admissionGuard, never()).ensureAdmitted(10L, 20L, "admission-token");
+        verify(admissionVerifier, never()).verify(10L, 20L, "admission-token");
     }
 
     @Test
@@ -168,7 +168,7 @@ class CreateOrderValidatorTest {
 
     private void doThrowAdmissionRequired() {
         org.mockito.Mockito.doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
-                .when(admissionGuard).ensureAdmitted(10L, 20L, "admission-token");
+                .when(admissionVerifier).verify(10L, 20L, "admission-token");
     }
 
     private void assertError(final RequestedSeatIds seatIds, final ErrorType errorType) {
