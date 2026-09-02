@@ -2,16 +2,14 @@ package com.ticket.booking.internal.infrastructure.performanceseat.query;
 
 import com.ticket.booking.internal.application.performanceseat.query.SeatMapReadRepository;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.booking.internal.application.performanceseat.query.model.SeatInfoView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.seat.Seat;
-import com.ticket.catalog.internal.domain.show.ShowGrade;
 import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
-import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
+import com.ticket.core.infra.support.ReadRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,42 +21,31 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * booking local 조회(회차 좌석 판매 상태)만 검증한다. 물리 좌석·등급 조합은 catalog
+ * {@code QuerydslShowSeatMapReadRepository}가 소유하고 별도로 검증한다.
+ */
 @Import(QuerydslSeatMapReadRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatMapReadRepositoryTest extends InfraReadRepositoryTestSupport {
+class QuerydslSeatMapReadRepositoryTest extends ReadRepositoryTestSupport {
 
     @Autowired
     private SeatMapReadRepository seatMapReadRepository;
 
-    private Long showId;
     private Long performanceId;
 
     @BeforeEach
     void setUp() throws Exception {
         Venue venue = persistVenue("venue", Region.SEOUL);
         Show show = persistShow("show", venue, null, 10L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(5));
-        showId = show.getId();
-        ShowGrade vip = persistShowGrade(show, "VIP", "VIP", BigDecimal.valueOf(150000), 1);
-        ShowGrade r = persistShowGrade(show, "R", "R", BigDecimal.valueOf(100000), 2);
         Seat seat1 = persistSeat("A", "01", "02", 1);
         Seat seat2 = persistSeat("A", "01", "01", 1);
-        persistShowSeat(show, seat1, r);
-        persistShowSeat(show, seat2, vip);
 
         Performance performance = persistPerformance(show, 1L, LocalDateTime.now().plusDays(1));
         performanceId = performance.getId();
         persistPerformanceSeat(performance, seat1, PerformanceSeatState.RESERVED, BigDecimal.valueOf(100000));
         persistPerformanceSeat(performance, seat2, PerformanceSeatState.AVAILABLE, BigDecimal.valueOf(150000));
         flushAndClear();
-    }
-
-    @Test
-    void 공연_좌석_정보를_정렬해서_조회한다() {
-        List<SeatInfoView> result = seatMapReadRepository.findShowSeats(showId);
-
-        assertThat(result).extracting(SeatInfoView::seatId).hasSize(2);
-        assertThat(result).extracting(SeatInfoView::gradeCode).containsExactly("VIP", "R");
-        assertThat(result).extracting(SeatInfoView::col).containsExactly("01", "02");
     }
 
     @Test

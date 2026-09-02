@@ -4,7 +4,6 @@ import com.ticket.booking.internal.application.performanceseat.query.SeatMapRead
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.booking.internal.application.performanceseat.query.model.SeatInfoView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import lombok.RequiredArgsConstructor;
@@ -13,38 +12,12 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static com.ticket.booking.internal.domain.performanceseat.model.QPerformanceSeat.performanceSeat;
-import static com.ticket.catalog.internal.domain.seat.QSeat.seat;
-import static com.ticket.catalog.internal.domain.show.QShowGrade.showGrade;
-import static com.ticket.catalog.internal.domain.show.QShowSeat.showSeat;
 
 @Repository
 @RequiredArgsConstructor
 public class QuerydslSeatMapReadRepository implements SeatMapReadRepository {
 
     private final JPAQueryFactory queryFactory;
-
-    @Override
-    public List<SeatInfoView> findShowSeats(final Long showId) {
-        return queryFactory
-                .select(Projections.constructor(SeatInfoView.class,
-                        seat.id,
-                        seat.floor,
-                        seat.section,
-                        seat.rowNo,
-                        seat.seatNo,
-                        seat.x,
-                        seat.y,
-                        showGrade.gradeCode,
-                        showGrade.gradeName,
-                        showGrade.price
-                ))
-                .from(showSeat)
-                .join(seat).on(seat.id.eq(showSeat.seat.id))
-                .join(showGrade).on(showGrade.id.eq(showSeat.showGrade.id))
-                .where(showSeat.show.id.eq(showId))
-                .orderBy(seat.floor.asc(), seat.section.asc(), seat.rowNo.asc(), seat.seatNo.asc())
-                .fetch();
-    }
 
     @Override
     public List<SeatStateView> findSeatStatuses(final Long performanceId) {

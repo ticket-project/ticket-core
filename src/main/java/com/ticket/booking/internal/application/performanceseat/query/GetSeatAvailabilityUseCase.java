@@ -1,17 +1,21 @@
 package com.ticket.booking.internal.application.performanceseat.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
-import com.ticket.catalog.internal.domain.performance.Performance;
-import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
+import com.ticket.booking.internal.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
+import com.ticket.booking.internal.application.performanceseat.query.model.AvailableSeatRow;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.catalog.BookingPolicyLookup;
+import com.ticket.catalog.BookingPolicySnapshot;
+import com.ticket.catalog.ShowLookup;
+import com.ticket.catalog.ShowSeatMapEntry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import com.ticket.core.app.support.validation.RequiredInput;
 
@@ -20,7 +24,8 @@ import com.ticket.core.app.support.validation.RequiredInput;
 @RequiredArgsConstructor
 public class GetSeatAvailabilityUseCase {
 
-    private final PerformanceRepository performanceRepository;
+    private final BookingPolicyLookup bookingPolicyLookup;
+    private final ShowLookup showLookup;
     private final SeatAvailabilityReadRepository seatAvailabilityReadRepository;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
@@ -43,19 +48,38 @@ public class GetSeatAvailabilityUseCase {
     ) {}
 
     public Output execute(Input input) {
-        final Performance performance = performanceRepository.findWithQueuePolicyById(input.performanceId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
-                        "공연을 찾을 수 없습니다. id=" + input.performanceId()));
+        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(input.performanceId(), List.of());
 
-        if (performance.getShow() == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA,
-                    "회차와 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId());
-        }
+        final List<AvailableSeatRow> rows = toAvailableSeatRows(input.performanceId(), policy.showId());
 
         return new Output(seatAvailabilityCalculator.calculate(
-                seatAvailabilityReadRepository.findAvailableSeatRows(performance.getId(), performance.getShow().getId()),
-                mergeRedisOccupiedIds(performance.getId())
+                rows,
+                mergeRedisOccupiedIds(input.performanceId())
         ));
+    }
+
+    private List<AvailableSeatRow> toAvailableSeatRows(final Long performanceId, final long showId) {
+        final List<PerformanceSeatStateRow> stateRows = seatAvailabilityReadRepository.findSeatStates(performanceId);
+        if (stateRows.isEmpty()) {
+            return List.of();
+        }
+
+        final Map<Long, ShowSeatMapEntry> seatMapBySeatId = new HashMap<>();
+        for (final ShowSeatMapEntry entry : showLookup.getSeatMap(showId)) {
+            seatMapBySeatId.put(entry.seatId(), entry);
+        }
+
+        return stateRows.stream()
+                .map(row -> toAvailableSeatRow(row, seatMapBySeatId.get(row.seatId())))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private AvailableSeatRow toAvailableSeatRow(final PerformanceSeatStateRow row, final ShowSeatMapEntry entry) {
+        if (entry == null) {
+            return null;
+        }
+        return new AvailableSeatRow(row.seatId(), row.state(), entry.gradeName(), entry.gradeSortOrder());
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {

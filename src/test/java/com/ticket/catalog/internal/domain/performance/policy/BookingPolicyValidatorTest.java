@@ -117,7 +117,7 @@ class BookingPolicyValidatorTest {
 
     private PerformanceBookingPolicySnapshot queuePolicy(final QueueMode queueMode) {
         return new PerformanceBookingPolicySnapshot(
-                10L, NOW.minusHours(1), NOW.plusHours(1), 4, 300, queueMode, null, null, null, null);
+                10L, 1L, NOW.minusHours(1), NOW.plusHours(1), 4, 300, queueMode, null, null, null, null);
     }
 
     private PerformanceBookingPolicySnapshot policy(
@@ -126,6 +126,6 @@ class BookingPolicyValidatorTest {
             final Integer maxCanHoldCount
     ) {
         return new PerformanceBookingPolicySnapshot(
-                10L, orderOpenTime, orderCloseTime, maxCanHoldCount, 300, null, null, null, null, null);
+                10L, 1L, orderOpenTime, orderCloseTime, maxCanHoldCount, 300, null, null, null, null, null);
     }
 }

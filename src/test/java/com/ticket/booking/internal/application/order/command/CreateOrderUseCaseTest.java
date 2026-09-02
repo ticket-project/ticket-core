@@ -219,6 +219,7 @@ class CreateOrderUseCaseTest {
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
         return new BookingPolicySnapshot(
                 10L,
+                1L,
                 true,
                 now.minusHours(1),
                 now.plusHours(3),

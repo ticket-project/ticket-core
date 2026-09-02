@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 public record PerformanceBookingPolicySnapshot(
         Long performanceId,
+        Long showId,
         LocalDateTime orderOpenTime,
         LocalDateTime orderCloseTime,
         Integer maxCanHoldCount,

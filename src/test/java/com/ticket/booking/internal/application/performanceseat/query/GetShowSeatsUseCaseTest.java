@@ -1,8 +1,8 @@
 package com.ticket.booking.internal.application.performanceseat.query;
 
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatInfoView;
-import com.ticket.catalog.internal.domain.show.Show;
-import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
+import com.ticket.catalog.ShowLookup;
+import com.ticket.catalog.ShowSeatMapEntry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,50 +13,41 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowSeatsUseCaseTest {
 
     @Mock
-    private ShowRepository showRepository;
-
-    @Mock
-    private SeatMapReadRepository seatMapReadRepository;
+    private ShowLookup showLookup;
 
     @InjectMocks
     private GetShowSeatsUseCase useCase;
 
     @Test
     void 공연_좌석_정보를_조회한다() {
-        Show show = mock(Show.class);
-        List<SeatInfoView> seats = List.of(
-                new SeatInfoView(1L, 1, "A", "10", "7", 10.0, 20.0, "VIP", "VIP", BigDecimal.TEN)
+        List<ShowSeatMapEntry> seats = List.of(
+                new ShowSeatMapEntry(1L, 1, "A", "10", "7", 10.0, 20.0, "VIP", "VIP", BigDecimal.TEN, 1)
         );
-        when(showRepository.findById(100L)).thenReturn(Optional.of(show));
-        when(show.getId()).thenReturn(100L);
-        when(seatMapReadRepository.findShowSeats(100L)).thenReturn(seats);
+        when(showLookup.getSeatMap(100L)).thenReturn(seats);
 
         GetShowSeatsUseCase.Output output = useCase.execute(new GetShowSeatsUseCase.Input(100L));
 
-        assertThat(output.seats()).containsExactlyElementsOf(seats);
-        verify(seatMapReadRepository).findShowSeats(100L);
+        assertThat(output.seats()).containsExactly(
+                new SeatInfoView(1L, 1, "A", "10", "7", 10.0, 20.0, "VIP", "VIP", BigDecimal.TEN)
+        );
+        verify(showLookup).getSeatMap(100L);
     }
 
     @Test
     void 공연_좌석이_없으면_빈_목록을_반환한다() {
-        Show show = mock(Show.class);
-        when(showRepository.findById(100L)).thenReturn(Optional.of(show));
-        when(show.getId()).thenReturn(100L);
-        when(seatMapReadRepository.findShowSeats(100L)).thenReturn(List.of());
+        when(showLookup.getSeatMap(100L)).thenReturn(List.of());
 
         GetShowSeatsUseCase.Output output = useCase.execute(new GetShowSeatsUseCase.Input(100L));
 
         assertThat(output.seats()).isEmpty();
-        verify(seatMapReadRepository).findShowSeats(100L);
+        verify(showLookup).getSeatMap(100L);
     }
 }

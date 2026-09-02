@@ -1,8 +1,13 @@
 package com.ticket.catalog.internal.application.publicapi;
 
 import com.ticket.catalog.ShowLookup;
+import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.ShowSummary;
+import com.ticket.catalog.VenueLayout;
+import com.ticket.catalog.internal.application.show.query.ShowSeatMapReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRepository;
+import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
 import com.ticket.core.support.exception.CoreException;
 import com.ticket.core.support.exception.ErrorType;
@@ -10,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,6 +29,7 @@ public class ShowLookupService implements ShowLookup {
 
     private final ShowRepository showRepository;
     private final ShowSummaryBatchReadRepository showSummaryBatchReadRepository;
+    private final ShowSeatMapReadRepository showSeatMapReadRepository;
 
     @Override
     public void requireExisting(final long showId) {
@@ -34,5 +41,23 @@ public class ShowLookupService implements ShowLookup {
     @Override
     public Map<Long, ShowSummary> getSummaries(final Set<Long> showIds) {
         return showSummaryBatchReadRepository.findSummaries(showIds);
+    }
+
+    @Override
+    public VenueLayout getVenueLayout(final long showId) {
+        final Show show = showRepository.findById(showId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                        "공연을 찾을 수 없습니다. id=" + showId));
+        final Venue venue = show.getVenue();
+        if (venue == null) {
+            throw new CoreException(ErrorType.NOT_FOUND_DATA, "공연에 연결된 공연장을 찾을 수 없습니다.");
+        }
+        return new VenueLayout(venue.getName(), venue.getViewBoxWidth(), venue.getViewBoxHeight(), venue.getSeatDiameter());
+    }
+
+    @Override
+    public List<ShowSeatMapEntry> getSeatMap(final long showId) {
+        requireExisting(showId);
+        return showSeatMapReadRepository.findSeatMap(showId);
     }
 }

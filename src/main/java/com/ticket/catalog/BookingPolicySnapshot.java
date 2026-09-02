@@ -12,6 +12,7 @@ import java.util.Map;
  */
 public record BookingPolicySnapshot(
         long performanceId,
+        long showId,
         boolean bookingOpen,
         LocalDateTime orderOpenTime,
         LocalDateTime orderCloseTime,

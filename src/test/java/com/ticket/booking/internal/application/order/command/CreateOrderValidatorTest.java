@@ -187,6 +187,7 @@ class CreateOrderValidatorTest {
     ) {
         return new BookingPolicySnapshot(
                 10L,
+                1L,
                 true,
                 orderOpenTime,
                 orderCloseTime,

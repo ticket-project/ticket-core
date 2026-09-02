@@ -45,6 +45,7 @@ public class BookingPolicyLookupService implements BookingPolicyLookup {
 
         return new BookingPolicySnapshot(
                 performanceId,
+                policy.showId(),
                 bookingOpen,
                 policy.orderOpenTime(),
                 policy.orderCloseTime(),

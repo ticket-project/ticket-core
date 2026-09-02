@@ -44,6 +44,7 @@ public class PerformanceRepositoryAdapter implements PerformanceRepository {
                 .select(Projections.constructor(
                         PerformanceBookingPolicySnapshot.class,
                         performance.id,
+                        performance.show.id,
                         performance.orderOpenTime,
                         performance.orderCloseTime,
                         performance.maxCanHoldCount,

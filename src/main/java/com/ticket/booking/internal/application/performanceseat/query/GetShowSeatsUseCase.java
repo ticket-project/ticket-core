@@ -1,24 +1,19 @@
 package com.ticket.booking.internal.application.performanceseat.query;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatInfoView;
-import com.ticket.catalog.internal.domain.show.Show;
-import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
+import com.ticket.catalog.ShowLookup;
+import com.ticket.catalog.ShowSeatMapEntry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import com.ticket.core.app.support.validation.RequiredInput;
 
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowSeatsUseCase {
 
-    private final ShowRepository showRepository;
-    private final SeatMapReadRepository seatMapReadRepository;
+    private final ShowLookup showLookup;
 
     public record Input(Long showId) {
         public Input {
@@ -30,9 +25,24 @@ public class GetShowSeatsUseCase {
     }
 
     public Output execute(final Input input) {
-        final Show show = showRepository.findById(input.showId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
-                        "공연을 찾을 수 없습니다. id=" + input.showId()));
-        return new Output(seatMapReadRepository.findShowSeats(show.getId()));
+        final List<SeatInfoView> seats = showLookup.getSeatMap(input.showId()).stream()
+                .map(this::toSeatInfoView)
+                .toList();
+        return new Output(seats);
+    }
+
+    private SeatInfoView toSeatInfoView(final ShowSeatMapEntry entry) {
+        return new SeatInfoView(
+                entry.seatId(),
+                entry.floor(),
+                entry.section(),
+                entry.rowNo(),
+                entry.seatNo(),
+                entry.x(),
+                entry.y(),
+                entry.gradeCode(),
+                entry.gradeName(),
+                entry.price()
+        );
     }
 }
