@@ -41,7 +41,7 @@ class MetadataModuleTests {
         }
 
         @Bean
-        BookingMetadata bookingCatalog() {
+        BookingMetadata bookingMetadata() {
             return mock(BookingMetadata.class);
         }
 

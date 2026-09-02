@@ -21,7 +21,7 @@ import java.util.function.Function;
 public class GetMetaCodesUseCase {
 
     private final CatalogMetadata catalogMetadata;
-    private final BookingMetadata bookingCatalog;
+    private final BookingMetadata bookingMetadata;
     private final IdentityMetadata identityMetadata;
 
     public record CategoryCodeItem(Long id, String code, String name) {
@@ -64,9 +64,9 @@ public class GetMetaCodesUseCase {
 
         final EnumCodes enums = new EnumCodes(
                 toEnumCodeItems(catalogMetadata.bookingStatuses(), CatalogMetadata.CodeLabel::code, CatalogMetadata.CodeLabel::label),
-                toEnumCodeItems(bookingCatalog.performanceSeatStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
-                toEnumCodeItems(bookingCatalog.holdStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
-                toEnumCodeItems(bookingCatalog.orderStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
+                toEnumCodeItems(bookingMetadata.performanceSeatStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
+                toEnumCodeItems(bookingMetadata.holdStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
+                toEnumCodeItems(bookingMetadata.orderStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
                 toEnumCodeItems(identityMetadata.socialProviders(), IdentityMetadata.CodeLabel::code, IdentityMetadata.CodeLabel::label),
                 toEnumCodeItems(identityMetadata.roles(), IdentityMetadata.CodeLabel::code, IdentityMetadata.CodeLabel::label),
                 toEnumCodeItems(catalogMetadata.saleTypes(), CatalogMetadata.CodeLabel::code, CatalogMetadata.CodeLabel::label),

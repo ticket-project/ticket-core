@@ -27,7 +27,7 @@ class GetMetaCodesUseCaseTest {
     private CatalogMetadata catalogMetadata;
 
     @Mock
-    private BookingMetadata bookingCatalog;
+    private BookingMetadata bookingMetadata;
 
     @Mock
     private IdentityMetadata identityMetadata;
@@ -46,18 +46,18 @@ class GetMetaCodesUseCaseTest {
                 .thenReturn(List.of(new CatalogMetadata.CodeLabel("SEOUL", "서울")));
         when(catalogMetadata.showSortKeys())
                 .thenReturn(List.of(new CatalogMetadata.CodeLabel("popular", "인기순")));
-        when(bookingCatalog.performanceSeatStates())
+        when(bookingMetadata.performanceSeatStates())
                 .thenReturn(List.of(new BookingMetadata.CodeLabel("AVAILABLE", "예매가능")));
-        when(bookingCatalog.holdStates())
+        when(bookingMetadata.holdStates())
                 .thenReturn(List.of(new BookingMetadata.CodeLabel("ACTIVE", "선점 중")));
-        when(bookingCatalog.orderStates())
+        when(bookingMetadata.orderStates())
                 .thenReturn(List.of(new BookingMetadata.CodeLabel("PENDING", "결제 대기")));
         when(identityMetadata.roles())
                 .thenReturn(List.of(new IdentityMetadata.CodeLabel("USER", "일반 회원")));
         when(identityMetadata.socialProviders())
                 .thenReturn(List.of(new IdentityMetadata.CodeLabel("KAKAO", "카카오")));
 
-        GetMetaCodesUseCase useCase = new GetMetaCodesUseCase(catalogMetadata, bookingCatalog, identityMetadata);
+        GetMetaCodesUseCase useCase = new GetMetaCodesUseCase(catalogMetadata, bookingMetadata, identityMetadata);
 
         GetMetaCodesUseCase.Output output = useCase.execute();
 
@@ -90,9 +90,9 @@ class GetMetaCodesUseCaseTest {
         verify(catalogMetadata, times(1)).saleTypes();
         verify(catalogMetadata, times(1)).regions();
         verify(catalogMetadata, times(1)).showSortKeys();
-        verify(bookingCatalog, times(1)).performanceSeatStates();
-        verify(bookingCatalog, times(1)).holdStates();
-        verify(bookingCatalog, times(1)).orderStates();
+        verify(bookingMetadata, times(1)).performanceSeatStates();
+        verify(bookingMetadata, times(1)).holdStates();
+        verify(bookingMetadata, times(1)).orderStates();
         verify(identityMetadata, times(1)).roles();
         verify(identityMetadata, times(1)).socialProviders();
     }
