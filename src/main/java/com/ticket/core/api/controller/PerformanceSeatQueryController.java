@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.PerformanceSeatQueryControllerDocs;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import com.ticket.core.app.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.core.app.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.core.support.response.ApiResponse;

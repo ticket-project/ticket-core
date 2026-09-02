@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.ShowLikeControllerDocs;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import com.ticket.core.app.showlike.command.AddShowLikeUseCase;
 import com.ticket.core.app.showlike.query.GetShowLikeStatusUseCase;
 import com.ticket.core.app.showlike.command.RemoveShowLikeUseCase;

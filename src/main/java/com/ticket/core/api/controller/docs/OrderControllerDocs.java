@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller.docs;
 
 import com.ticket.core.api.controller.request.CreateOrderRequest;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import com.ticket.core.app.order.command.CreateOrderUseCase;
 import com.ticket.core.app.order.query.GetOrderDetailUseCase;
 import com.ticket.core.app.order.query.GetOrderStatusUseCase;

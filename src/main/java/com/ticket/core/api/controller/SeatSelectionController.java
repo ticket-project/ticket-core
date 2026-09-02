@@ -1,7 +1,7 @@
 package com.ticket.core.api.controller;
 
 import com.ticket.core.api.controller.docs.SeatSelectionControllerDocs;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import com.ticket.core.app.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.app.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.core.app.performanceseat.command.SelectSeatUseCase;

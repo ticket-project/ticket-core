@@ -1,11 +1,11 @@
 package com.ticket.core.api.controller;
 
-import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.core.app.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.core.app.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.core.app.performanceseat.command.SelectSeatUseCase;
 import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
+import com.ticket.identity.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
