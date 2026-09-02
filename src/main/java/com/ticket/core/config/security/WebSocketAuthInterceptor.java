@@ -1,8 +1,8 @@
 package com.ticket.core.config.security;
 
-import com.ticket.core.app.auth.token.AccessTokenReadResult;
-import com.ticket.core.app.auth.token.AuthenticatedMember;
-import com.ticket.core.app.auth.token.AccessTokenReader;
+import com.ticket.identity.internal.application.auth.token.AccessTokenReadResult;
+import com.ticket.identity.AuthenticatedMember;
+import com.ticket.identity.internal.application.auth.token.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import lombok.RequiredArgsConstructor;

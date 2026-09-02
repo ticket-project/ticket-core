@@ -3,9 +3,9 @@ package com.ticket.core.infra.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ticket.core.app.auth.token.AuthRefreshToken;
+import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
 import com.ticket.core.infra.performanceseat.store.SeatSelectionRedisKey;
-import com.ticket.core.infra.auth.token.RedisRefreshTokenStore;
+import com.ticket.identity.internal.infrastructure.auth.token.RedisRefreshTokenStore;
 import com.ticket.core.app.lock.LockKey;
 import com.ticket.core.app.lock.LockManager;
 import com.ticket.core.app.lock.LockOptions;

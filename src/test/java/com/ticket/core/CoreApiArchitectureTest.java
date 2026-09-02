@@ -17,7 +17,7 @@ class CoreApiArchitectureTest {
     static final ArchRule security_should_not_depend_on_auth_infra =
             noClasses()
                     .that().resideInAnyPackage("com.ticket.core.config.security..")
-                    .should().dependOnClassesThat().resideInAnyPackage("com.ticket.core.infra.auth..");
+                    .should().dependOnClassesThat().resideInAnyPackage("com.ticket.identity.internal.infrastructure.auth..");
 
     @ArchTest
     static final ArchRule core_api_should_not_depend_on_infra =

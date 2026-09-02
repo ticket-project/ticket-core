@@ -1,6 +1,6 @@
 package com.ticket.core.config;
 
-import com.ticket.core.config.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

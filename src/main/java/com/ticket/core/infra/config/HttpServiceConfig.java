@@ -1,6 +1,6 @@
 package com.ticket.core.infra.config;
 
-import com.ticket.core.infra.auth.oauth2.KakaoUnlinkApiClient;
+import com.ticket.identity.internal.infrastructure.auth.oauth2.KakaoUnlinkApiClient;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.service.registry.ImportHttpServices;
 

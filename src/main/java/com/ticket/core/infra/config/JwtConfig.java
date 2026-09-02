@@ -1,6 +1,6 @@
 package com.ticket.core.infra.config;
 
-import com.ticket.core.infra.auth.token.JwtProperties;
+import com.ticket.identity.internal.infrastructure.auth.token.JwtProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 

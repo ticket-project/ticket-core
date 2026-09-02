@@ -26,7 +26,9 @@ public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestS
      * RepositoryAdapter가 쓰는 Spring Data 인터페이스를 테스트 컨텍스트에 올린다.
      */
     @Configuration
-    @EnableJpaRepositories(basePackages = {"com.ticket.core.infra", "com.ticket.catalog.internal.infrastructure"})
+    @EnableJpaRepositories(basePackages = {
+            "com.ticket.core.infra", "com.ticket.catalog.internal.infrastructure", "com.ticket.identity.internal.infrastructure"
+    })
     static class InfraJpaRepositoriesTestConfig {
     }
 }
