@@ -65,8 +65,12 @@ auth, member, show, performance, performanceseat, hold, order, queue
 권장 모듈·기술 scope:
 
 ```text
-core, core-api, core-domain, core-infra, redis, logging, seed, tools, ci, review, codex
+booking, catalog, identity, admission, showlike, metadata, shared, redis, logging, seed, tools, ci, review, codex
 ```
+
+여러 Application Module에 걸친 구조 변경(Spring Modulith 경계, 전역 설정 등)은 특정 모듈
+scope 대신 `modulith`를 쓰거나 scope를 생략한다. 계층형 시절의 `core-api`/`core-domain`/
+`core-infra`는 legacy 코드(`com.ticket.core.*`)를 다룰 때만 쓴다.
 
 기존 scope로 표현할 수 있으면 새 scope를 임의로 만들지 않는다. 새 scope가 필요하면 실제 도메인,
 모듈 또는 안정적인 하위 시스템 이름을 쓴다.
