@@ -51,11 +51,15 @@ identity  -> (없음)
 admission -> (없음)
 metadata  -> catalog, booking, identity
 showlike  -> catalog, identity
-shared    -> 모든 모듈이 참조할 수 있는 공유 자리(현재 class 없음, 아래 6번 참고)
+shared    -> 모든 모듈이 참조할 수 있는 공유 자리(범용 유틸리티·domain-free 기술 설정, 아래 6번 참고)
+config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
+             (여러 module의 internal을 참조하는 composition-root module, 아래 9번 참고)
 ```
 
 순환은 없다. `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이고,
-`booking`과 `showlike`가 그 위에 얹히며, `metadata`가 세 모듈의 공개 계약을 조합만 한다.
+`booking`과 `showlike`가 그 위에 얹히며, `metadata`가 세 모듈의 공개 계약을 조합만 한다. `shared`는
+어떤 모듈도 참조하지 않는 leaf고, `config`는 identity/booking의 특정 internal package와 shared를
+참조하지만 반대로 `config`를 참조하는 모듈은 없다.
 
 ### 4. 모듈 간 참조는 scalar ID와 공개 API로만
 
@@ -138,7 +142,9 @@ JPA 기반 registry 하나만 쓴다.
 
 - **범용 유틸리티**: 둘 이상의 독립 module에서 의미가 같고 특정 entity나 기술 adapter가 아닌
   타입. 예: `RequiredInput`(입력 검증 계약, booking/catalog/identity/showlike가 참조),
-  `CursorPage`(커서 기반 페이지네이션, catalog가 참조).
+  `CursorPage`(커서 기반 페이지네이션, catalog가 참조), `CorsProperties`(CORS 허용 origin
+  `@ConfigurationProperties`, identity의 `SecurityConfig`와 `config`의 `WebSocketConfig`가 함께
+  참조 — 특정 module 전유물이 아니라 shared에 둔다).
 - **domain-free 기술 설정**: 어떤 business module도 참조하지 않는 순수 기술 `@Configuration`과
   그 지원 타입. 예: `SwaggerConfig`, `P6SpyConfig`, `QuerydslConfig`, `UuidSupplierConfig`(공개
   계약은 `com.ticket.shared.UuidSupplier`, identity가 참조), `RedissonConfig`,
@@ -149,12 +155,13 @@ JPA 기반 registry 하나만 쓴다.
   채우는 감사자 id)는 identity의 공개 계약 `AuthenticatedMember`를 참조한다. 처음에는 이것만
   예외로 `shared`에 두려 했으나, identity가 이미 `shared`(`RequiredInput`/`UuidSupplier`)를
   참조하는 것과 맞물려 `identity ↔ shared` 순환이 되어 `ApplicationModules.verify()`가
-  실패했다(`com.ticket.ModularityTests.verifiesModuleStructure()`에서 실측 확인). 그래서 이 둘은
-  `com.ticket.bootstrap.config`에 남았다(§8) — "여러 module의 공개 계약/internal을 동시에 알아야
-  하는 코드"의 실제 사례다.
+  실패했다(`com.ticket.ModularityTests.verifiesModuleStructure()`에서 실측 확인). 같은 이유로
+  `WebConfig`/`WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`도 shared에 둘 수 없다 — 이
+  넷은 애초에 특정 module의 `internal`을 직접 참조해 domain-free하지도 않다. 이 여섯 개는 대신
+  8번째 module `com.ticket.config`로 옮겼다(§9).
 
 `shared`에 두지 **않는** 것: business logic이나 특정 module에만 의미 있는 동작, 그리고 여러
-module의 internal을 동시에 참조해야만 배선되는 설정(§8 `bootstrap` 참고) — 후자를 shared에 두면
+module의 internal을 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 후자를 shared에 두면
 shared가 사실상 모든 module과 결합돼 "safe to depend on without redeploy coupling"이라는 존재
 이유가 무너진다.
 
@@ -174,42 +181,55 @@ V3~V7)은 byte-for-byte 그대로 `db/migration/__root`,
 독립 이력을 가진 모듈은 `booking` 하나다. 상세 절차는 [`docs/operations.md`](../operations.md)를
 따른다.
 
-### 8. bootstrap: 영구 composition-root/전역 설정 계층 (legacy 아님)
+### 8. bootstrap: 영구 composition-root 예외 자리 (legacy 아님, 지금은 비어 있다)
 
 `com.ticket.bootstrap`은 `com.ticket.core`/`storage`/`support`와 같은 predicate로 Modulith 검증에서
 제외되지만, 성격은 다르다. 이들은 "아직 옮기지 못한 legacy 코드"로 다른 작업이 계속 줄이고
 있고 이동이 끝나면 사라진다. `bootstrap`은 반대로 **의도적이고 영구적인 네 번째 카테고리**다 —
-업무 Application Module(`booking`/`catalog`/`identity`/`admission`/`showlike`/`metadata`), 공유
-유틸리티/기술 설정 module(`shared`, §6)에 이어 composition root(합성 지점) 역할을 한다.
+업무 Application Module, 공유 유틸리티/기술 설정 module(`shared`, §6), composition-root module
+(`config`, §9)에 이어 필요할 때 쓰는 예외 자리다.
 
-무엇이 여기 속하는가: **여러 business module의 internal을 동시에 참조해야만 배선할 수 있는 전역
-기술 설정**. `shared`(§6)와의 경계는 정확히 이 지점이다 — module 결합이 없으면 `shared`, 특정
-module의 internal을 알아야만 하면 `bootstrap`이다. 그런 코드를 특정 module 소유로 두면 그
+**현재 상태**: 처음에는 `JpaAuditingConfig`/`SecurityContextAuditorAware`(identity의
+`AuthenticatedMember` 참조)가 여기 남았었지만, `com.ticket.config` module이 `@NamedInterface`로
+identity/booking의 필요한 internal만 좁게 열 수 있음을 확인한 뒤(§9) 그쪽으로 다시 옮겼다. 그
+결과 지금 `com.ticket.bootstrap`에는 production class가 하나도 없다.
+
+그래도 이 자리 자체는 지우지 않는다. `config`가 `@NamedInterface`로 좁혀 열 수 없을 만큼 결합이
+크거나 임시적인 cross-module 배선이 생기면(예: 여러 module의 `internal`을 광범위하게 참조해야
+하는 임시 조치), Modulith 검증에서 완전히 빠지는 이 자리가 그 도피처로 남는다 — `config`보다
+느슨하고 감시가 없는 대신, 남용 시 눈에 잘 띄지 않는다는 trade-off가 있다.
+
+### 9. config: 여러 module의 internal을 참조하는 composition-root module
+
+`com.ticket.config`는 8번째 Application Module이다. `shared`(§6)와 반대되는 존재 이유를 갖는다 —
+`shared`는 module 결합이 전혀 없어야 하고, `config`는 정확히 그 반대로 **특정 module의 internal을
+알아야만 배선할 수 있는 전역 기술 설정**이 있을 자리다. 그런 코드를 특정 module 소유로 두면 그
 module이 나머지 module들을 부당하게 참조하는 것처럼 보이게 되므로, 애초에 module 후보에서 뺀다.
+`bootstrap`(§8)과 달리 이 module은 Modulith 검증에서 제외되지 않는다 — 정식 module로 선언되고
+Spring Modulith의 `@NamedInterface`로 필요한 internal package만 좁혀 열어, 무엇을 얼마나
+참조하는지 `com.ticket.ModularityTests.verifiesModuleStructure()`가 계속 감시한다.
 
-무엇이 여기 속하지 않는가: business logic이나 특정 module에만 의미 있는 동작(→ 그 module의
-`internal`), module 결합이 없는 순수 기술 설정(→ `shared`, §6).
+**포함 클래스와 참조 대상**:
 
-**현재 상태**: 이 task(전역 기술 설정 통합 정리)에서, 이전에 `bootstrap.config`에 있던
-`EventPublicationMaintenance`/`SchedulingConfig`/`SystemClockConfig`는 실제로는 어떤 business
-module도 참조하지 않는 domain-free 코드였음이 드러나 `shared`(§6)로 옮겼다. 반대로
-`JpaAuditingConfig`/`SecurityContextAuditorAware`는 identity의 `AuthenticatedMember`를 참조해
-`shared`에 두면 순환이 생기므로(§6 참고) `com.ticket.bootstrap.config`에 남았다 — 지금
-`com.ticket.bootstrap`에 실제로 있는 production class는 이 둘이다. 아래 네 클래스는 같은 이유로
-이 자리로 옮길 후보이지만 아직 옮기지 않았다.
-
-| 클래스 | 현재 위치(legacy) | internal 결합 |
+| 클래스 | 참조 대상 | 노출 방식 |
 | --- | --- | --- |
-| `WebConfig` | `com.ticket.core.config` | `identity.internal`의 `AuthenticatedMemberArgumentResolver` |
-| `WebSocketConfig` | `com.ticket.core.config` | `booking.internal`로 옮겨질 예정인 `CorsProperties`/`WebSocketAuthInterceptor` |
-| `HttpServiceConfig` | `com.ticket.core.infra.config` | `identity.internal`의 `KakaoUnlinkApiClient` |
-| `JwtConfig` | `com.ticket.core.infra.config` | `identity.internal`의 `JwtProperties` |
+| `WebConfig` | `identity.internal.infrastructure.security`의 `AuthenticatedMemberArgumentResolver` | `@NamedInterface("security")` |
+| `WebSocketConfig` | `booking.internal.infrastructure.websocket`의 `WebSocketAuthInterceptor` | `@NamedInterface("websocket")` |
+| `HttpServiceConfig` | `identity.internal.infrastructure.auth.oauth2`의 `KakaoUnlinkApiClient` | `@NamedInterface("oauth2")` |
+| `JwtConfig` | `identity.internal.infrastructure.auth.token`의 `JwtProperties` | `@NamedInterface("token")` |
+| `JpaAuditingConfig`/`SecurityContextAuditorAware` | `identity`의 공개 계약 `AuthenticatedMember` | 일반 module 의존(`identity`) — 공개 root API라 NamedInterface 불필요 |
 
-이 네 클래스를 `bootstrap`으로 옮기려면 먼저 identity(그리고 `WebSocketConfig`는 booking)가 각
-클래스가 실제로 필요로 하는 최소 공개 API를 module root에 노출해야 한다 — 지금은 `.internal`
-타입을 직접 참조하고 있어 그대로 옮기면 `bootstrap`이 `.internal` 캡슐화를 우회하는 통로가 된다.
-그 최소 공개 API 설계와 실제 이동은 **이 task의 범위가 아닌 후속 작업**이다. 그때까지 이 네
-클래스는 legacy 위치에 그대로 둔다.
+`allowedDependencies`는 각 이름을 `"identity :: security"` 형태로 명시해, 노출된 package 이외의
+identity/booking internal은 여전히 참조하지 못한다(`com.ticket.config`의 package-info가 각
+NamedInterface의 정확한 노출 범위를 문서화한다). `identity.internal.infrastructure.security`·
+`auth.oauth2`·`auth.token` package에는 `config`가 실제로 쓰는 타입 하나 외에 identity 전용 구현도
+함께 있어, NamedInterface가 그것까지 노출한다 — 딱 필요한 타입만 더 좁은 package로 재구성하는
+작업은 하지 않았다(과한 조정으로 판단, identity/booking 소유 코드를 이 task에서 재배치하는 것은
+범위 밖).
+
+`config`는 `shared`(`CorsProperties`)도 참조한다(§6) — module 결합이 없는 shared 참조는 제한
+없이 허용된다. `config`를 참조하는 다른 module은 없다(leaf) — composition root는 재사용 가능한
+공개 API가 아니라 배선 지점이기 때문이다.
 
 ## 승인된 것 외에 결정하지 않은 것
 
@@ -225,9 +245,9 @@ module도 참조하지 않는 domain-free 코드였음이 드러나 `shared`(§6
   범위다. 이 ADR은 검증 메커니즘 자체가 `ModularityTests`에 있다는 사실만 전제하고, 그 구현
   세부사항을 여기서 단정하지 않는다.
 - **legacy `com.ticket.core`/`storage`/`support`의 완전 제거**는 이 ADR의 범위가 아니다. 남은
-  코드(오류 처리, showlike read 경로, WebSocket 인증 인터셉터, 시드 러너, 그리고 §8이 나열한
-  `bootstrap` 이동 후보 네 클래스가 당분간 머무를 자리)는 아직 이동 대상 후보로 남아 있다.
-  `com.ticket.bootstrap` 자체는 이 완전 제거 대상이 아니다(§8).
+  코드(오류 처리, showlike read 경로, 시드 러너)는 아직 이동 대상 후보로 남아 있다.
+  `com.ticket.bootstrap`은 지금 비어 있지만 완전 제거 대상이 아니다 — legacy가 아니라 영구
+  예외 자리이기 때문이다(§8).
 
 ## ADR 0001과의 관계
 
