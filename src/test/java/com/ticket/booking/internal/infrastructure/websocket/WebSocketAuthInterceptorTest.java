@@ -1,9 +1,8 @@
 package com.ticket.booking.internal.infrastructure.websocket;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.AccessTokenAuthenticator;
 import com.ticket.identity.AuthenticatedMember;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,7 +57,7 @@ class WebSocketAuthInterceptorTest {
     @Test
     void 토큰_검증에_실패하면_연결을_차단한다() {
         when(accessTokenAuthenticator.authenticate("bad-token"))
-                .thenThrow(new CoreException(ErrorType.AUTHENTICATION_ERROR));
+                .thenThrow(new UnauthenticatedException());
 
         final StompHeaderAccessor accessor = connectAccessor("Bearer bad-token");
 

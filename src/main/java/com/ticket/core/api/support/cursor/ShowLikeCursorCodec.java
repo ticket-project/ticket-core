@@ -1,7 +1,6 @@
 package com.ticket.core.api.support.cursor;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,7 +22,7 @@ public class ShowLikeCursorCodec {
         try {
             return Long.parseLong(cursor.trim());
         } catch (final NumberFormatException exception) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+            throw new InvalidRequestException("cursor 형식이 올바르지 않습니다.");
         }
     }
 }

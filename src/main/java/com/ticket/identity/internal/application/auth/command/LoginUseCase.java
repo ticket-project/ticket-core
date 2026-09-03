@@ -1,12 +1,12 @@
 package com.ticket.identity.internal.application.auth.command;
 
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.internal.application.auth.CredentialAuthenticator;
 import com.ticket.identity.internal.application.auth.token.AuthTokenIssuer;
 import com.ticket.identity.internal.application.auth.token.IssuedAuthTokens;
 import com.ticket.identity.internal.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +20,12 @@ public class LoginUseCase {
             String password
     ) {
         public Input {
-            RequiredInput.notBlank(email, "email");
-            RequiredInput.notBlank(password, "password");
+            if (email == null || email.isBlank()) {
+                throw new InvalidRequestException("email는 필수입니다.");
+            }
+            if (password == null || password.isBlank()) {
+                throw new InvalidRequestException("password는 필수입니다.");
+            }
         }
     }
     public record Output(String accessToken,

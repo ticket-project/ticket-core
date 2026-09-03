@@ -4,7 +4,7 @@ import com.ticket.booking.internal.web.docs.PerformanceSeatQueryControllerDocs;
 import com.ticket.identity.AuthenticatedMember;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatStatusUseCase;
-import com.ticket.core.support.response.ApiResponse;
+import com.ticket.shared.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

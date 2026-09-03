@@ -3,8 +3,7 @@ package com.ticket.showlike.internal.application.command;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.core.domain.showlike.model.ShowLike;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,9 +81,7 @@ class RemoveShowLikeUseCaseTest {
         //when
         //then
         assertThatThrownBy(() -> new RemoveShowLikeUseCase.Input(memberId, showId))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     /**

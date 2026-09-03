@@ -1,11 +1,14 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.exception.BookingException;
+import com.ticket.booking.internal.exception.ExceedHoldLimitException;
+import com.ticket.booking.internal.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.internal.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.identity.MemberLookup;
@@ -79,7 +82,7 @@ class CreateOrderValidatorTest {
         when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList()))
                 .thenReturn(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), false));
 
-        assertError(seatIds, ErrorType.PERFORMANCE_IS_PAST);
+        assertError(seatIds, PerformanceIsPastException.class);
 
         verifyNoInteractions(orderRepositoryCollaborators());
     }
@@ -89,7 +92,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L));
         when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(openPolicy(2));
 
-        assertError(seatIds, ErrorType.EXCEED_HOLD_LIMIT);
+        assertError(seatIds, ExceedHoldLimitException.class);
 
         verifyNoInteractions(memberLookup, admissionVerifier, pendingOrderLocalValidator);
     }
@@ -112,7 +115,8 @@ class CreateOrderValidatorTest {
                 .thenReturn(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true));
         doThrowAdmissionRequired();
 
-        assertError(seatIds, ErrorType.ADMISSION_TOKEN_REQUIRED);
+        assertThatThrownBy(() -> validator.validate(input(seatIds), seatIds, FIXED_NOW))
+                .isInstanceOf(AdmissionTokenRequiredException.class);
 
         verifyNoInteractions(memberLookup, pendingOrderLocalValidator);
     }
@@ -122,9 +126,9 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
         when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(openPolicy(3));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds))
-                .thenThrow(new CoreException(ErrorType.PENDING_ORDER_ALREADY_EXISTS));
+                .thenThrow(new PendingOrderAlreadyExistsException());
 
-        assertError(seatIds, ErrorType.PENDING_ORDER_ALREADY_EXISTS);
+        assertError(seatIds, PendingOrderAlreadyExistsException.class);
     }
 
     @Test
@@ -161,14 +165,13 @@ class CreateOrderValidatorTest {
     }
 
     private void doThrowAdmissionRequired() {
-        org.mockito.Mockito.doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+        org.mockito.Mockito.doThrow(new AdmissionTokenRequiredException())
                 .when(admissionVerifier).verify(10L, 20L, "admission-token");
     }
 
-    private void assertError(final RequestedSeatIds seatIds, final ErrorType errorType) {
+    private void assertError(final RequestedSeatIds seatIds, final Class<? extends BookingException> expected) {
         assertThatThrownBy(() -> validator.validate(input(seatIds), seatIds, FIXED_NOW))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));
+                .isInstanceOf(expected);
     }
 
     private CreateOrderUseCase.Input input(final RequestedSeatIds seatIds) {

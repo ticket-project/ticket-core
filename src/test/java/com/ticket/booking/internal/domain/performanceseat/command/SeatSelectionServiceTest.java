@@ -1,8 +1,8 @@
 package com.ticket.booking.internal.domain.performanceseat.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.performanceseat.store.SeatSelectionStore;
+import com.ticket.booking.internal.exception.SeatAlreadySelectedException;
+import com.ticket.booking.internal.exception.SeatNotOwnedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,8 +47,7 @@ class SeatSelectionServiceTest {
         //when
         //then
         assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.SEAT_ALREADY_SELECTED));
+                .isInstanceOf(SeatAlreadySelectedException.class);
     }
 
     @Test
@@ -71,8 +70,7 @@ class SeatSelectionServiceTest {
         //when
         //then
         assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.SEAT_NOT_OWNED));
+                .isInstanceOf(SeatNotOwnedException.class);
     }
 
     @Test
@@ -107,8 +105,7 @@ class SeatSelectionServiceTest {
         //when
         //then
         assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.SEAT_NOT_OWNED));
+                .isInstanceOf(SeatNotOwnedException.class);
     }
 
     @Test

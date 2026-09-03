@@ -3,8 +3,7 @@ package com.ticket.booking.internal.infrastructure.lock;
 import com.ticket.booking.internal.application.lock.LockKey;
 import com.ticket.booking.internal.application.lock.LockManager;
 import com.ticket.booking.internal.application.lock.LockOptions;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.booking.internal.exception.HoldBusyException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -44,13 +43,13 @@ public class RedissonLockManager implements LockManager {
         try {
             if (!tryLock(lock, options)) {
                 logLockFailure(options, lockNames);
-                throw new CoreException(ErrorType.HOLD_BUSY, resolveMessage(options));
+                throw new HoldBusyException(resolveMessage(options));
             }
             return action.get();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("분산 락 대기가 중단되었습니다. reason=lock_wait_interrupted keys={}", lockNames, e);
-            throw new CoreException(ErrorType.HOLD_BUSY, resolveMessage(options));
+            throw new HoldBusyException(resolveMessage(options));
         } finally {
             unlockQuietly(lock, lockNames);
         }
@@ -69,7 +68,7 @@ public class RedissonLockManager implements LockManager {
 
     private String resolveMessage(final LockOptions options) {
         return options.failureMessage() == null || options.failureMessage().isBlank()
-                ? ErrorType.HOLD_BUSY.getMessage()
+                ? HoldBusyException.MESSAGE
                 : options.failureMessage();
     }
 

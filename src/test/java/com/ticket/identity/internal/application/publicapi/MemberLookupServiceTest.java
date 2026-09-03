@@ -1,7 +1,6 @@
 package com.ticket.identity.internal.application.publicapi;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberProfile;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.Member;
@@ -46,8 +45,6 @@ class MemberLookupServiceTest {
         when(memberRepository.findActiveById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getProfile(1L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
     }
 }

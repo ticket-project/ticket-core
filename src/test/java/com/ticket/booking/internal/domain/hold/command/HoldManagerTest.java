@@ -1,10 +1,9 @@
 package com.ticket.booking.internal.domain.hold.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.hold.model.Hold;
 import com.ticket.booking.internal.domain.hold.store.HoldStore;
 import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
+import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,8 +60,7 @@ class HoldManagerTest {
         when(holdStore.isHeld(1L, 10L)).thenReturn(true);
 
         assertThatThrownBy(() -> holdManager.createHold(1L, 1L, RequestedSeatIds.from(List.of(10L)), Duration.ofMinutes(5), FIXED_NOW))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.SEAT_ALREADY_HOLD));
+                .isInstanceOf(SeatAlreadyHoldException.class);
     }
 
     @Test

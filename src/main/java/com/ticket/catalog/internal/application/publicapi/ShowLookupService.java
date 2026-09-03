@@ -11,8 +11,7 @@ import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRe
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +36,7 @@ public class ShowLookupService implements ShowLookup {
     @Override
     public void requireExisting(final long showId) {
         if (!showRepository.existsById(showId)) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA, "공연을 찾을 수 없습니다. id=" + showId);
+            throw new NotFoundException("공연을 찾을 수 없습니다. id=" + showId);
         }
     }
 
@@ -49,11 +48,11 @@ public class ShowLookupService implements ShowLookup {
     @Override
     public VenueLayout getVenueLayout(final long showId) {
         final Show show = showRepository.findById(showId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + showId));
         final Venue venue = show.getVenue();
         if (venue == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA, "공연에 연결된 공연장을 찾을 수 없습니다.");
+            throw new NotFoundException("공연에 연결된 공연장을 찾을 수 없습니다.");
         }
         return new VenueLayout(venue.getName(), venue.getViewBoxWidth(), venue.getViewBoxHeight(), venue.getSeatDiameter());
     }

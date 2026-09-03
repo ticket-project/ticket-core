@@ -1,10 +1,9 @@
 package com.ticket.showlike.internal.application.command;
 
 import com.ticket.catalog.ShowLookup;
-import com.ticket.shared.RequiredInput;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.showlike.internal.exception.ShowLikeAlreadyExistsException;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,8 +21,18 @@ public class AddShowLikeUseCase {
 
     public record Input(Long memberId, Long showId) {
         public Input {
-            RequiredInput.positiveId(memberId, "memberId");
-            RequiredInput.positiveId(showId, "showId");
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
+            if (showId == null) {
+                throw new InvalidRequestException("showId는 필수입니다.");
+            }
+            if (showId <= 0) {
+                throw new InvalidRequestException("showId는 양수여야 합니다.");
+            }
         }
     }
 
@@ -45,8 +54,7 @@ public class AddShowLikeUseCase {
         try {
             showLikeRepository.like(input.memberId(), input.showId());
         } catch (DataIntegrityViolationException e) {
-            throw new CoreException(ErrorType.SHOW_LIKE_ALREADY_EXISTS,
-                    "이미 찜한 공연입니다. memberId=" + input.memberId() + ", showId=" + input.showId());
+            throw new ShowLikeAlreadyExistsException(input.memberId(), input.showId());
         }
 
         return new Output(input.showId(), true, countLikes(input.showId()));

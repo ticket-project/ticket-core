@@ -65,7 +65,7 @@ class CoreLayerArchitectureTest {
 
     /**
      * 오류 처리는 support:error 도입 이전 구조로 되돌아가 {@code com.ticket.core.support.exception}의
-     * 전역 {@code ErrorType}/{@code CoreException}을 모든 계층이 함께 참조한다(ADR 0002는 이 결정으로
+     * 공통 오류는 {@code com.ticket.error} module이, 업무 오류는 각 module의 {@code internal.exception}이 소유한다(ADR 0002는 이 결정으로
      * supersede됨). 따라서 도메인·애플리케이션 전용 오류 카탈로그 격리 규칙은 더 이상 유효하지 않다.
      * 다만 도메인·애플리케이션이 spring-web에 직접 의존하지 않는 일반 계층 경계는 계속 지킨다.
      */

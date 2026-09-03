@@ -1,11 +1,11 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import com.ticket.shared.CursorPage;
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
-import com.ticket.core.support.exception.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -30,8 +29,15 @@ public class GetMyShowLikesUseCase {
      */
     public record Input(Long memberId, Long cursorLikeId, int size) {
         public Input {
-            RequiredInput.positiveId(memberId, "memberId");
-            RequiredInput.sizeWithin(size, MAX_SIZE, "size");
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
+            if (size <= 0 || size > MAX_SIZE) {
+                throw new InvalidRequestException("size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
+            }
         }
     }
 
@@ -40,7 +46,7 @@ public class GetMyShowLikesUseCase {
 
     public Output execute(final Input input) {
         final Member member = memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+                .orElseThrow(() -> new NotFoundException());
         final CursorPage<ShowLikeSummaryView, Long> page =
                 showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
         return new Output(page.items(), page.hasNext(), page.nextPosition());

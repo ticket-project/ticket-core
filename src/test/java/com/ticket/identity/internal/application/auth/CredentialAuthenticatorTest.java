@@ -1,14 +1,13 @@
 package com.ticket.identity.internal.application.auth;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.identity.internal.application.auth.password.PasswordHasher;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.EncodedPassword;
 import com.ticket.identity.internal.domain.member.model.RawPassword;
 import com.ticket.identity.internal.domain.member.model.Role;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,7 +42,7 @@ class CredentialAuthenticatorTest {
         //when
         //then
         assertThatThrownBy(() -> credentialAuthenticator.authenticate("missing@example.com", "password123!"))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(UnauthenticatedException.class);
 
         verify(passwordHasher).hash(RawPassword.create("timing-guard-dummy-password"));
     }
@@ -57,7 +56,7 @@ class CredentialAuthenticatorTest {
         //when
         //then
         assertThatThrownBy(() -> credentialAuthenticator.authenticate("social@example.com", "password123!"))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(UnauthenticatedException.class);
     }
 
     @Test
@@ -70,7 +69,7 @@ class CredentialAuthenticatorTest {
         //when
         //then
         assertThatThrownBy(() -> credentialAuthenticator.authenticate("user@example.com", "wrong-password"))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(UnauthenticatedException.class);
     }
 
     @Test

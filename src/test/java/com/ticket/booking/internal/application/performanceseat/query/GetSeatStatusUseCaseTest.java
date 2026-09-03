@@ -1,8 +1,9 @@
 package com.ticket.booking.internal.application.performanceseat.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
+import com.ticket.booking.internal.exception.NotYetReserveTimeException;
+import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
@@ -108,9 +109,7 @@ class GetSeatStatusUseCaseTest {
                 .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), false));
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
+                .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
@@ -121,9 +120,7 @@ class GetSeatStatusUseCaseTest {
                 .thenReturn(policy(NOW.plusHours(1), NOW.plusHours(2), false));
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_YET_RESERVE_TIME));
+                .isInstanceOf(NotYetReserveTimeException.class);
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }
@@ -143,13 +140,11 @@ class GetSeatStatusUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(queuePolicy());
-        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+        doThrow(new AdmissionTokenRequiredException())
                 .when(admissionVerifier).verify(10L, 100L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ADMISSION_TOKEN_REQUIRED));
+                .isInstanceOf(AdmissionTokenRequiredException.class);
 
         verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
     }

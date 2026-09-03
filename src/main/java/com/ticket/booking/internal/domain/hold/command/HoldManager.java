@@ -1,10 +1,9 @@
 package com.ticket.booking.internal.domain.hold.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.hold.model.Hold;
 import com.ticket.booking.internal.domain.hold.store.HoldStore;
 import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
+import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -57,7 +56,7 @@ public class HoldManager {
     private void ensureSeatsNotHeld(final Long performanceId, final List<Long> seatIds) {
         for (final Long seatId : seatIds) {
             if (isHeld(performanceId, seatId)) {
-                throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
+                throw new SeatAlreadyHoldException();
             }
         }
     }

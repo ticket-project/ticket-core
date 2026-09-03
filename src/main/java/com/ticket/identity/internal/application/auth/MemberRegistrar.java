@@ -1,13 +1,12 @@
 package com.ticket.identity.internal.application.auth;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.identity.internal.application.auth.password.PasswordHasher;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.RawPassword;
 import com.ticket.identity.internal.domain.member.model.Role;
+import com.ticket.identity.internal.exception.DuplicateEmailException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ public class MemberRegistrar {
             return memberRepository.save(member).getId();
         } catch (DataIntegrityViolationException e) {
             log.warn("이메일 중복 회원가입 시도: {}", email);
-            throw new CoreException(ErrorType.MEMBER_DUPLICATE_EMAIL);
+            throw new DuplicateEmailException();
         }
     }
 }

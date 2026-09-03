@@ -1,7 +1,6 @@
 package com.ticket.booking.internal.domain.order.command.create;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -17,22 +16,19 @@ class RequestedSeatIdsTest {
     @Test
     void 빈_좌석_id_목록이면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(List.of()))
-                .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
     void null_좌석_id_목록이면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(null))
-                .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
     void 중복된_좌석_id가_있으면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(List.of(3L, 1L, 3L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -40,8 +36,7 @@ class RequestedSeatIdsTest {
         final List<Long> seatIds = Arrays.asList(3L, null, 5L);
 
         assertThatThrownBy(() -> RequestedSeatIds.from(seatIds))
-                .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test

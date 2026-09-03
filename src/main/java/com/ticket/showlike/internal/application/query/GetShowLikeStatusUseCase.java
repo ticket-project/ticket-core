@@ -1,8 +1,8 @@
 package com.ticket.showlike.internal.application.query;
 
 import com.ticket.catalog.ShowLookup;
-import com.ticket.shared.RequiredInput;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,8 +19,18 @@ public class GetShowLikeStatusUseCase {
 
     public record Input(Long memberId, Long showId) {
         public Input {
-            RequiredInput.positiveId(memberId, "memberId");
-            RequiredInput.positiveId(showId, "showId");
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
+            if (showId == null) {
+                throw new InvalidRequestException("showId는 필수입니다.");
+            }
+            if (showId <= 0) {
+                throw new InvalidRequestException("showId는 양수여야 합니다.");
+            }
         }
     }
 

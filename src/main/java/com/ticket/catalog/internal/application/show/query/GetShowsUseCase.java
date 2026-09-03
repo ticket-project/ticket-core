@@ -3,13 +3,13 @@ package com.ticket.catalog.internal.application.show.query;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
 import com.ticket.catalog.internal.application.show.query.model.ShowListItemView;
 import com.ticket.catalog.internal.application.show.query.model.ShowParam;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.shared.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,9 +26,15 @@ public class GetShowsUseCase {
 
     public record Input(ShowParam param, int size, ShowSort sort) {
         public Input {
-            RequiredInput.notNull(param, "param");
-            RequiredInput.notNull(sort, "sort");
-            RequiredInput.sizeWithin(size, MAX_SIZE, "size");
+            if (param == null) {
+                throw new InvalidRequestException("param는 필수입니다.");
+            }
+            if (sort == null) {
+                throw new InvalidRequestException("sort는 필수입니다.");
+            }
+            if (size <= 0 || size > MAX_SIZE) {
+                throw new InvalidRequestException("size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
+            }
         }
     }
 

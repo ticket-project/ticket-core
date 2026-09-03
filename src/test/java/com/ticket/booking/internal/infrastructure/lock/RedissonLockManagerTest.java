@@ -2,8 +2,7 @@ package com.ticket.booking.internal.infrastructure.lock;
 
 import com.ticket.booking.internal.application.lock.LockKey;
 import com.ticket.booking.internal.application.lock.LockOptions;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.booking.internal.exception.HoldBusyException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -80,11 +79,11 @@ class RedissonLockManagerTest {
                 LockOptions.defaults().withFailureMessage("좌석 처리 중입니다."),
                 () -> executed.set(true)
         ))
-                .isInstanceOf(CoreException.class)
+                .isInstanceOf(HoldBusyException.class)
                 .satisfies(thrown -> {
-                    assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.HOLD_BUSY);
+                    assertThat(thrown).isInstanceOf(HoldBusyException.class);
                     // 응답 메시지는 오류 카탈로그가 정하고, 지정한 문구는 data로 함께 전달한다.
-                    assertThat(((CoreException) thrown).getData()).isEqualTo("좌석 처리 중입니다.");
+                    assertThat(((HoldBusyException) thrown).getData()).isEqualTo("좌석 처리 중입니다.");
                 });
 
         assertThat(executed).isFalse();

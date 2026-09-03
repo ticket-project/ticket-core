@@ -1,8 +1,7 @@
 package com.ticket.booking.internal.domain.order.command.create;
 
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -26,21 +25,21 @@ public final class RequestedSeatIds {
         if (requestedSeatIds != null) {
             return;
         }
-        throw new CoreException(ErrorType.INVALID_REQUEST, "좌석 ID 목록은 null일 수 없습니다.");
+        throw new InvalidRequestException("좌석 ID 목록은 null일 수 없습니다.");
     }
 
     private static void validateNullElement(final List<Long> requestedSeatIds) {
         if (requestedSeatIds.stream().noneMatch(Objects::isNull)) {
             return;
         }
-        throw new CoreException(ErrorType.INVALID_REQUEST, "null seatId가 포함되어 있습니다.");
+        throw new InvalidRequestException("null seatId가 포함되어 있습니다.");
     }
 
     private static void validateDuplicate(final List<Long> requestedSeatIds) {
         if (requestedSeatIds.size() == new HashSet<>(requestedSeatIds).size()) {
             return;
         }
-        throw new CoreException(ErrorType.INVALID_REQUEST, "중복된 seatId가 포함되어 있습니다.");
+        throw new InvalidRequestException("중복된 seatId가 포함되어 있습니다.");
     }
 
     private static List<Long> normalize(final List<Long> requestedSeatIds) {
@@ -55,7 +54,7 @@ public final class RequestedSeatIds {
         if (!seatIds.isEmpty()) {
             return;
         }
-        throw new CoreException(ErrorType.INVALID_REQUEST, "선택한 좌석이 없습니다.");
+        throw new InvalidRequestException("선택한 좌석이 없습니다.");
     }
 
     public int size() {

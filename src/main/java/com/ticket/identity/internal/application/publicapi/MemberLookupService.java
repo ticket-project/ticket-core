@@ -1,7 +1,6 @@
 package com.ticket.identity.internal.application.publicapi;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberLookup;
 import com.ticket.identity.MemberProfile;
 import com.ticket.identity.MemberStatus;
@@ -24,7 +23,7 @@ public class MemberLookupService implements MemberLookup {
     @Override
     public void requireActive(final long memberId) {
         if (!memberRepository.existsActiveById(memberId)) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA, "회원을 찾을 수 없습니다. id=" + memberId);
+            throw new NotFoundException("회원을 찾을 수 없습니다. id=" + memberId);
         }
     }
 
@@ -42,6 +41,6 @@ public class MemberLookupService implements MemberLookup {
 
     private Member findActiveOrThrow(final long memberId) {
         return memberRepository.findActiveById(memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA, "회원을 찾을 수 없습니다. id=" + memberId));
+                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다. id=" + memberId));
     }
 }

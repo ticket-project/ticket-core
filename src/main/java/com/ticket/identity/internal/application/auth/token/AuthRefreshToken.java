@@ -1,7 +1,6 @@
 package com.ticket.identity.internal.application.auth.token;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
@@ -30,7 +29,7 @@ public final class AuthRefreshToken {
         if (!value.isBlank()) {
             return;
         }
-        throw new CoreException(ErrorType.AUTHENTICATION_ERROR);
+        throw new UnauthenticatedException();
     }
 
     public String value() {

@@ -1,11 +1,12 @@
 package com.ticket.booking.internal.domain.performanceseat.support;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.booking.internal.domain.performanceseat.repository.PerformanceSeatRepository;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.booking.internal.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.internal.exception.NoAvailableSeatException;
+import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
+import com.ticket.booking.internal.exception.SeatMismatchInPerformanceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,13 +24,13 @@ public class SeatSelectionAvailabilityValidator {
     public void validate(final Long performanceId, final Long seatId) {
         final SeatSelectionAvailabilitySnapshot seat = performanceSeatRepository
                 .findSelectableSeat(performanceId, seatId)
-                .orElseThrow(() -> new CoreException(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE));
+                .orElseThrow(() -> new SeatMismatchInPerformanceException());
 
         if (seat.state() != PerformanceSeatState.AVAILABLE) {
-            throw new CoreException(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
+            throw new NoAvailableSeatException();
         }
         if (holdManager.isHeld(performanceId, seatId)) {
-            throw new CoreException(ErrorType.SEAT_ALREADY_HOLD);
+            throw new SeatAlreadyHoldException();
         }
     }
 }

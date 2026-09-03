@@ -1,10 +1,10 @@
 package com.ticket.catalog.internal.application.show.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.show.SaleType;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
 import com.ticket.catalog.internal.application.show.query.model.ShowDetailView;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -70,9 +70,7 @@ class GetShowDetailUseCaseTest {
         when(showDetailReadRepository.findShowDetail(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetShowDetailUseCase.Input(1L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
     }
 
     /**
@@ -81,13 +79,9 @@ class GetShowDetailUseCaseTest {
     @Test
     void showId가_유효하지_않으면_Input_생성에서_예외를_던진다() {
         assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
         assertThatThrownBy(() -> new GetShowDetailUseCase.Input(0L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     /**

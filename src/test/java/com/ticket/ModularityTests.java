@@ -66,7 +66,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
  * {@code booking}, {@code catalog}, {@code identity}, {@code admission}, {@code showlike},
- * {@code metadata}, {@code shared}, {@code config} 정확히 8개다.
+ * {@code metadata}, {@code shared}, {@code config}, {@code error} 정확히 9개다.
  */
 class ModularityTests {
 
@@ -78,34 +78,40 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 8개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 9개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "config");
+            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "config", "error");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
      * 집합이다 — {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라
      * (catalog/identity/admission은 상한을 비워 둬 "제한 없음"을 뜻한다), 실제로 관측되는 edge를
      * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. admission은 다른 module을
-     * 참조하지 않는 기반 module이다. {@code shared}는 {@code RequiredInput}(booking/catalog/
-     * identity/showlike가 참조)·{@code CursorPage}(catalog가 참조)·{@code CorsProperties}(identity·
-     * config가 참조) 같은 순수 범용 유틸리티와 {@code UuidSupplier}(identity가 참조)·
+     * 참조하지 않는 기반 module이다(오류 계약과 응답 봉투를 뜻하는 error·shared는 예외다). {@code shared}는 {@code CursorPage}(catalog가 참조)·
+     * {@code CorsProperties}(identity·config가 참조) 같은 순수 범용 유틸리티와
+     * {@code UuidSupplier}(identity가 참조)·
      * {@code SwaggerConfig}·{@code QuerydslConfig} 등 domain-free 기술 설정만 담아 다른 어떤
      * module도 참조하지 않는 leaf고, 그래서 이 module들이 shared를 향한 edge를 갖는다.
+     * {@code ApiResponse}/{@code ErrorMessage}/{@code SliceResponse} 응답 봉투도 shared에 있어
+     * controller를 가진 module은 전부 shared를 향한 edge를 갖는다 — 자체 오류를 던지지 않는
+     * {@code metadata}가 shared edge를 갖는 이유가 이것뿐이다.
      * {@code config}는 여러 module의 internal을 동시에 참조해야 하는 composition-root 성격의
      * 8번째 module이라(클래스 javadoc과 {@code com.ticket.config}의 package-info 참고) identity·
      * booking을 향한 edge를 갖고, {@code CorsProperties}(shared) 참조로 shared를 향한 edge도
      * 갖는다. 반대로 이 module을 참조하는 다른 module은 없다(leaf).
+     * {@code error}는 공통 오류 계약과 전역 handler를 소유하고 응답 봉투를 만들기 위해 shared만
+     * 참조한다 — 업무 module이 자기 오류를 소유해 가면서 이 module을 향한 edge가 늘어난다.
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.of(
-            "booking", Set.of("catalog", "identity", "admission", "shared"),
-            "catalog", Set.of("shared"),
-            "identity", Set.of("shared"),
-            "admission", Set.of(),
-            "showlike", Set.of("catalog", "identity", "shared"),
-            "metadata", Set.of("catalog", "booking", "identity"),
+            "booking", Set.of("catalog", "identity", "admission", "shared", "error"),
+            "catalog", Set.of("shared", "error"),
+            "identity", Set.of("shared", "error"),
+            "admission", Set.of("shared", "error"),
+            "showlike", Set.of("catalog", "identity", "shared", "error"),
+            "metadata", Set.of("catalog", "booking", "identity", "shared"),
             "shared", Set.of(),
-            "config", Set.of("identity", "booking", "shared")
+            "config", Set.of("identity", "booking", "shared"),
+            "error", Set.of("shared")
     );
 
     @Test
@@ -114,7 +120,7 @@ class ModularityTests {
     }
 
     @Test
-    void 모듈_package가_com_ticket_직속에_정확히_8개_선언돼_있다() {
+    void 모듈_package가_com_ticket_직속에_정확히_9개_선언돼_있다() {
         final Path ticketRoot = Path.of("src", "main", "java", "com", "ticket");
 
         try (Stream<Path> children = Files.list(ticketRoot)) {

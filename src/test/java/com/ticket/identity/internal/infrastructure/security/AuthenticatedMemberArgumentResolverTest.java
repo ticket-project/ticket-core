@@ -1,6 +1,7 @@
 package com.ticket.identity.internal.infrastructure.security;
 
 import com.ticket.identity.AuthenticatedMember;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -9,8 +10,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
 
 class AuthenticatedMemberArgumentResolverTest {
 
@@ -24,8 +23,7 @@ class AuthenticatedMemberArgumentResolverTest {
     @Test
     void 인증이_없으면_401을_던진다() {
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
-                .isInstanceOfSatisfying(CoreException.class, exception ->
-                        assertThat(exception.getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 
     @Test
@@ -47,7 +45,6 @@ class AuthenticatedMemberArgumentResolverTest {
         );
 
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
-                .isInstanceOfSatisfying(CoreException.class, exception ->
-                        assertThat(exception.getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 }

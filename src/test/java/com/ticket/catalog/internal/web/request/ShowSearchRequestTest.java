@@ -1,13 +1,12 @@
 package com.ticket.catalog.internal.web.request;
 
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.web.support.cursor.ShowCursorCodec;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriteria;
 import com.ticket.catalog.internal.application.show.query.ShowSort;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
 import com.ticket.catalog.internal.domain.show.Region;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -66,9 +65,7 @@ class ShowSearchRequestTest {
         );
 
         assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     /**
@@ -99,9 +96,7 @@ class ShowSearchRequestTest {
         );
 
         assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -117,8 +112,6 @@ class ShowSearchRequestTest {
         );
 
         assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 }

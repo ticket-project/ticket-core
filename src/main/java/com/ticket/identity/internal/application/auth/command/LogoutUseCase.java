@@ -1,12 +1,12 @@
 package com.ticket.identity.internal.application.auth.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
 import com.ticket.identity.internal.application.auth.token.RefreshTokenStore;
+import com.ticket.identity.internal.exception.AuthorizationException;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -16,7 +16,12 @@ public class LogoutUseCase {
 
     public record Input(Long memberId, AuthRefreshToken refreshToken) {
         public Input {
-            RequiredInput.positiveId(memberId, "memberId");
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
         }
 
         /**
@@ -33,12 +38,12 @@ public class LogoutUseCase {
         final boolean revoked = refreshTokenStore.revokeIfOwned(input.refreshToken(), input.memberId());
         if (!revoked) {
             final Long tokenOwnerId = refreshTokenStore.validateWithoutConsume(input.refreshToken())
-                    .orElseThrow(() -> new CoreException(ErrorType.AUTHENTICATION_ERROR, "유효하지 않은 리프레시 토큰입니다."));
+                    .orElseThrow(() -> new UnauthenticatedException("유효하지 않은 리프레시 토큰입니다."));
             if (!tokenOwnerId.equals(input.memberId())) {
-                throw new CoreException(ErrorType.AUTHORIZATION_ERROR, "본인 토큰만 무효화할 수 있습니다.");
+                throw new AuthorizationException("본인 토큰만 무효화할 수 있습니다.");
             }
 
-            throw new CoreException(ErrorType.AUTHENTICATION_ERROR, "이미 무효화된 토큰이거나 처리할 수 없는 상태입니다.");
+            throw new UnauthenticatedException("이미 무효화된 토큰이거나 처리할 수 없는 상태입니다.");
         }
 
         return new Output();

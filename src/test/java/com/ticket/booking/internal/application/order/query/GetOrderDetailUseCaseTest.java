@@ -1,13 +1,13 @@
 package com.ticket.booking.internal.application.order.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderDetailRow;
+import com.ticket.booking.internal.exception.OrderNotOwnedException;
 import com.ticket.catalog.PerformanceSummary;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.ShowSummary;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberLookup;
 import com.ticket.identity.MemberProfile;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,9 +90,7 @@ class GetOrderDetailUseCaseTest {
         when(orderReadRepository.findDetailRows("missing", 1L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("missing", 1L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                .isInstanceOf(OrderNotOwnedException.class);
 
         verifyNoInteractions(memberLookup, showLookup);
     }
@@ -100,12 +98,10 @@ class GetOrderDetailUseCaseTest {
     @Test
     void 탈퇴한_회원의_주문이면_조회하지_않는다() {
         when(orderReadRepository.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
-        when(memberLookup.getProfile(1L)).thenThrow(new CoreException(ErrorType.NOT_FOUND_DATA));
+        when(memberLookup.getProfile(1L)).thenThrow(new NotFoundException());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
 
         verifyNoInteractions(showLookup);
     }

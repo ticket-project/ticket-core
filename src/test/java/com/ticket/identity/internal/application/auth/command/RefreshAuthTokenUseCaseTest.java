@@ -1,7 +1,5 @@
 package com.ticket.identity.internal.application.auth.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.member.model.Role;
 import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
 import com.ticket.identity.internal.application.auth.token.AuthTokenIssuer;
@@ -9,6 +7,7 @@ import com.ticket.identity.internal.application.auth.token.IssuedAuthTokens;
 import com.ticket.identity.internal.application.auth.token.RefreshTokenStore;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -74,7 +73,6 @@ class RefreshAuthTokenUseCaseTest {
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 }

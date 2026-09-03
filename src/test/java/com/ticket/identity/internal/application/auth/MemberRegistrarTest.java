@@ -1,14 +1,13 @@
 package com.ticket.identity.internal.application.auth;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.identity.internal.application.auth.password.PasswordHasher;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.EncodedPassword;
 import com.ticket.identity.internal.domain.member.model.RawPassword;
 import com.ticket.identity.internal.domain.member.model.Role;
+import com.ticket.identity.internal.exception.DuplicateEmailException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -72,7 +71,6 @@ class MemberRegistrarTest {
         //when
         //then
         assertThatThrownBy(() -> memberRegistrar.register(Email.create("user@example.com"), RawPassword.create("password123!"), "홍길동"))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.MEMBER_DUPLICATE_EMAIL));
+                .isInstanceOf(DuplicateEmailException.class);
     }
 }

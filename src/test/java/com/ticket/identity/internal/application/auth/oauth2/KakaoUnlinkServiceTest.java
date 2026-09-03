@@ -1,7 +1,7 @@
 package com.ticket.identity.internal.application.auth.oauth2;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InternalErrorException;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.internal.application.auth.oauth2.KakaoUnlinkClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,8 +30,7 @@ class KakaoUnlinkServiceTest {
         //when
         //then
         assertThatThrownBy(() -> kakaoUnlinkService.unlinkByUserId(" "))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(kakaoUnlinkClient);
     }
@@ -44,8 +43,7 @@ class KakaoUnlinkServiceTest {
         //when
         //then
         assertThatThrownBy(() -> kakaoUnlinkService.unlinkByUserId("123"))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(kakaoUnlinkClient);
     }
@@ -71,8 +69,7 @@ class KakaoUnlinkServiceTest {
         //when
         //then
         assertThatThrownBy(() -> kakaoUnlinkService.unlinkByUserId("123"))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.DEFAULT_ERROR));
+                .isInstanceOf(InternalErrorException.class);
     }
 }
 

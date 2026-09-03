@@ -3,13 +3,13 @@ package com.ticket.catalog.internal.application.show.query;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriteria;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchItemView;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.shared.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -19,9 +19,15 @@ public class SearchShowsUseCase {
 
     public record Input(ShowSearchCriteria request, int size, ShowSort sort) {
         public Input {
-            RequiredInput.notNull(request, "request");
-            RequiredInput.notNull(sort, "sort");
-            RequiredInput.positiveSize(size, "size");
+            if (request == null) {
+                throw new InvalidRequestException("request는 필수입니다.");
+            }
+            if (sort == null) {
+                throw new InvalidRequestException("sort는 필수입니다.");
+            }
+            if (size <= 0) {
+                throw new InvalidRequestException("size는 1 이상이어야 합니다.");
+            }
         }
     }
 

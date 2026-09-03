@@ -1,9 +1,8 @@
 package com.ticket.catalog.internal.web.support.cursor;
 
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
 import com.ticket.catalog.internal.application.show.query.ShowSort;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -55,8 +54,6 @@ class ShowCursorCodecTest {
     @ValueSource(strings = {"cursor-1", "!!!not-base64!!!", "eyJicm9rZW4iOg"})
     void 해석할_수_없는_커서는_400으로_끊는다(final String cursor) {
         assertThatThrownBy(() -> codec.decode(cursor))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 }

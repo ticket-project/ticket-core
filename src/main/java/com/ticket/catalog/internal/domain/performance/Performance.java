@@ -1,11 +1,10 @@
 package com.ticket.catalog.internal.domain.performance;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.CatalogAuditedEntity;
 import com.ticket.catalog.internal.domain.queue.QueueLevel;
 import com.ticket.catalog.internal.domain.queue.QueueMode;
 import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.error.InvalidRequestException;
 import jakarta.persistence.Column;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -114,6 +113,6 @@ public class Performance extends CatalogAuditedEntity {
         if (maxCanHoldCount >= 2) {
             return maxCanHoldCount;
         }
-        throw new CoreException(ErrorType.INVALID_REQUEST, "maxCanHoldCount는 2 이상 또는 null 이어야 합니다.");
+        throw new InvalidRequestException("maxCanHoldCount는 2 이상 또는 null 이어야 합니다.");
     }
 }

@@ -1,8 +1,7 @@
 package com.ticket.catalog.internal.web.support.cursor;
 
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
@@ -31,7 +30,7 @@ public class ShowCursorCodec {
             return Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(json.getBytes(StandardCharsets.UTF_8));
         } catch (final Exception e) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+            throw new InvalidRequestException("cursor 형식이 올바르지 않습니다.");
         }
     }
 
@@ -44,7 +43,7 @@ public class ShowCursorCodec {
             final String json = new String(decoded, StandardCharsets.UTF_8);
             return jsonMapper.readValue(json, ShowCursor.class);
         } catch (final Exception e) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "cursor 형식이 올바르지 않습니다.");
+            throw new InvalidRequestException("cursor 형식이 올바르지 않습니다.");
         }
     }
 }

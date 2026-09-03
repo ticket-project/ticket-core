@@ -1,7 +1,6 @@
 package com.ticket.identity.internal.application.member.command;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.model.MemberSocialAccount;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
@@ -27,7 +26,7 @@ public class MemberWithdrawalTransactionService {
     public List<String> withdraw(final Long memberId) {
         final LocalDateTime now = LocalDateTime.now(clock);
         final Member member = memberRepository.findActiveById(memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+                .orElseThrow(() -> new NotFoundException());
         final List<MemberSocialAccount> socialAccounts = memberSocialAccountRepository.findAllActiveByMember(member);
 
         final List<String> kakaoSocialIds = socialAccounts.stream()

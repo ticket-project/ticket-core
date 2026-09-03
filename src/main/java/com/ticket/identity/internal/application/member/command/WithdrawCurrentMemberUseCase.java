@@ -1,12 +1,12 @@
 package com.ticket.identity.internal.application.member.command;
 
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.internal.application.auth.oauth2.KakaoUnlinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +18,12 @@ public class WithdrawCurrentMemberUseCase {
 
     public record Input(Long memberId) {
         public Input {
-            RequiredInput.positiveId(memberId, "memberId");
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
         }
     }
     public record Output() {}

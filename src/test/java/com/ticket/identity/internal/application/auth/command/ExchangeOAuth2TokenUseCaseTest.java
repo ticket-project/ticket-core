@@ -1,13 +1,12 @@
 package com.ticket.identity.internal.application.auth.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.member.model.Role;
 import com.ticket.identity.internal.application.auth.oauth2.OAuth2AuthCodeStore;
 import com.ticket.identity.internal.application.auth.token.AuthTokenIssuer;
 import com.ticket.identity.internal.application.auth.token.IssuedAuthTokens;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -71,7 +70,6 @@ class ExchangeOAuth2TokenUseCaseTest {
         when(oAuth2AuthCodeStore.consumeCode("invalid")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new ExchangeOAuth2TokenUseCase.Input("invalid")))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 }

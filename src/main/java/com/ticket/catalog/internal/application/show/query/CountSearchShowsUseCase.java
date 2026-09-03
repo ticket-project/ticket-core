@@ -2,10 +2,10 @@ package com.ticket.catalog.internal.application.show.query;
 
 import com.ticket.catalog.internal.application.show.query.ShowListReadRepository;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriteria;
+import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ticket.shared.RequiredInput;
 
 /**
  * 공연 검색 결과 개수 조회 UseCase
@@ -19,7 +19,9 @@ public class CountSearchShowsUseCase {
 
     public record Input(ShowSearchCriteria request) {
         public Input {
-            RequiredInput.notNull(request, "request");
+            if (request == null) {
+                throw new InvalidRequestException("request는 필수입니다.");
+            }
         }
     }
 

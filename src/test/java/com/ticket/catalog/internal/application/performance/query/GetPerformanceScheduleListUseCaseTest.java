@@ -1,11 +1,10 @@
 package com.ticket.catalog.internal.application.performance.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
 import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
 import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -70,8 +69,7 @@ class GetPerformanceScheduleListUseCaseTest {
         //when
         //then
         assertThatThrownBy(() -> useCase.execute(new GetPerformanceScheduleListUseCase.Input(10L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test

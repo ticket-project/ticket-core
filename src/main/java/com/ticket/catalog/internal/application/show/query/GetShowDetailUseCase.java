@@ -1,12 +1,12 @@
 package com.ticket.catalog.internal.application.show.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.performance.policy.BookingEntryResolver;
 import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.SaleType;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
 import com.ticket.catalog.internal.application.show.query.model.ShowDetailView;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,7 +25,12 @@ public class GetShowDetailUseCase {
 
     public record Input(Long showId) {
         public Input {
-            RequiredInput.positiveId(showId, "showId");
+            if (showId == null) {
+                throw new InvalidRequestException("showId는 필수입니다.");
+            }
+            if (showId <= 0) {
+                throw new InvalidRequestException("showId는 양수여야 합니다.");
+            }
         }
     }
 
@@ -96,7 +100,7 @@ public class GetShowDetailUseCase {
                         view.saleStartDate(), view.saleEndDate(), view.image(), view.venue(), view.performer(),
                         view.genreNames(), view.grades(), view.performanceDates()
                 ))
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
     }
 

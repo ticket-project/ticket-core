@@ -1,11 +1,11 @@
 package com.ticket.identity.internal.application.auth.command;
 
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.internal.application.auth.MemberRegistrar;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.RawPassword;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +23,15 @@ public class RegisterMemberUseCase {
             String name
     ) {
         public Input {
-            RequiredInput.notBlank(email, "email");
-            RequiredInput.notBlank(password, "password");
-            RequiredInput.notBlank(name, "name");
+            if (email == null || email.isBlank()) {
+                throw new InvalidRequestException("email는 필수입니다.");
+            }
+            if (password == null || password.isBlank()) {
+                throw new InvalidRequestException("password는 필수입니다.");
+            }
+            if (name == null || name.isBlank()) {
+                throw new InvalidRequestException("name는 필수입니다.");
+            }
         }
     }
     public record Output(Long memberId) {}

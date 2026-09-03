@@ -1,15 +1,15 @@
 package com.ticket.identity.internal.application.auth.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.internal.application.auth.oauth2.OAuth2AuthCodeStore;
 import com.ticket.identity.internal.application.auth.token.AuthTokenIssuer;
 import com.ticket.identity.internal.application.auth.token.IssuedAuthTokens;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +21,9 @@ public class ExchangeOAuth2TokenUseCase {
 
     public record Input(String code) {
         public Input {
-            RequiredInput.notBlank(code, "code");
+            if (code == null || code.isBlank()) {
+                throw new InvalidRequestException("code는 필수입니다.");
+            }
         }
     }
 
@@ -55,9 +57,9 @@ public class ExchangeOAuth2TokenUseCase {
 
     public Result execute(final Input input) {
         final Long memberId = oAuth2AuthCodeStore.consumeCode(input.code())
-                .orElseThrow(() -> new CoreException(ErrorType.AUTHENTICATION_ERROR, "유효하지 않거나 만료된 인증 코드입니다."));
+                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다."));
         final Member member = memberRepository.findActiveById(memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+                .orElseThrow(() -> new NotFoundException());
         final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.getId(), member.getRole().name());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),

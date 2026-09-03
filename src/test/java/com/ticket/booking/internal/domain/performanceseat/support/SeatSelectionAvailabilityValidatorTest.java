@@ -1,11 +1,13 @@
 package com.ticket.booking.internal.domain.performanceseat.support;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.booking.internal.domain.performanceseat.repository.PerformanceSeatRepository;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.booking.internal.domain.performanceseat.query.model.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.internal.exception.BookingException;
+import com.ticket.booking.internal.exception.NoAvailableSeatException;
+import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
+import com.ticket.booking.internal.exception.SeatMismatchInPerformanceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,7 +47,7 @@ class SeatSelectionAvailabilityValidatorTest {
     void 회차에_없는_좌석이면_실패한다() {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.empty());
 
-        assertError(ErrorType.SEAT_MISMATCH_IN_PERFORMANCE);
+        assertError(SeatMismatchInPerformanceException.class);
 
         verifyNoInteractions(holdManager);
     }
@@ -55,7 +57,7 @@ class SeatSelectionAvailabilityValidatorTest {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L))
                 .thenReturn(Optional.of(new SeatSelectionAvailabilitySnapshot(30L, PerformanceSeatState.RESERVED)));
 
-        assertError(ErrorType.NOT_EXIST_AVAILABLE_SEAT);
+        assertError(NoAvailableSeatException.class);
 
         verifyNoInteractions(holdManager);
     }
@@ -65,13 +67,12 @@ class SeatSelectionAvailabilityValidatorTest {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
-        assertError(ErrorType.SEAT_ALREADY_HOLD);
+        assertError(SeatAlreadyHoldException.class);
     }
 
-    private void assertError(final ErrorType errorType) {
+    private void assertError(final Class<? extends BookingException> expected) {
         assertThatThrownBy(() -> validator.validate(10L, 20L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(errorType));
+                .isInstanceOf(expected);
     }
 
     private SeatSelectionAvailabilitySnapshot available() {

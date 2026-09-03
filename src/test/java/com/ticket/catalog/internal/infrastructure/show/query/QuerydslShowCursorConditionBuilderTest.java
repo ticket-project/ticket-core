@@ -2,11 +2,10 @@ package com.ticket.catalog.internal.infrastructure.show.query;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.application.show.query.ShowSort;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
 import com.ticket.catalog.internal.domain.show.QShow;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
@@ -36,9 +35,7 @@ class QuerydslShowCursorConditionBuilderTest {
         ShowCursor cursor = new ShowCursor(ShowSort.LATEST, "DESC", "2026-03-15T10:00:00", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -46,9 +43,7 @@ class QuerydslShowCursorConditionBuilderTest {
         ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "ASC", "10", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -56,9 +51,7 @@ class QuerydslShowCursorConditionBuilderTest {
         ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", "10", null);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -66,9 +59,7 @@ class QuerydslShowCursorConditionBuilderTest {
         ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", " ", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -76,9 +67,7 @@ class QuerydslShowCursorConditionBuilderTest {
         ShowCursor cursor = new ShowCursor(ShowSort.LATEST, "DESC", "not-a-date", 1L);
 
         assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, latestDesc()))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test

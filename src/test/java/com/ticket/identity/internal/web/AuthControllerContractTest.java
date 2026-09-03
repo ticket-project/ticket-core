@@ -1,5 +1,6 @@
 package com.ticket.identity.internal.web;
 
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.identity.internal.application.auth.command.ExchangeOAuth2TokenUseCase;
 import com.ticket.identity.internal.application.auth.command.LoginUseCase;
@@ -7,9 +8,7 @@ import com.ticket.identity.internal.application.auth.command.LogoutUseCase;
 import com.ticket.identity.internal.application.auth.command.RefreshAuthTokenUseCase;
 import com.ticket.identity.internal.application.auth.command.RegisterMemberUseCase;
 import com.ticket.identity.internal.application.auth.query.GetSocialLoginUrlsUseCase;
-import com.ticket.core.support.ApiControllerAdvice;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.identity.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +50,7 @@ class AuthControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new ApiControllerAdvice())
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -165,7 +164,7 @@ class AuthControllerContractTest {
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
         );
         when(logoutUseCase.execute(any(LogoutUseCase.Input.class)))
-                .thenThrow(new CoreException(ErrorType.AUTHENTICATION_ERROR));
+                .thenThrow(new UnauthenticatedException());
 
         mockMvc.perform(post("/api/v1/auth/logout")
                         .cookie(new MockCookie("refresh_token", "refresh-token")))

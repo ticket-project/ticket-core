@@ -1,11 +1,10 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.shared.CursorPage;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
-import com.ticket.core.support.exception.CoreException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,9 +71,7 @@ class GetMyShowLikesUseCaseTest {
             final int size
     ) {
         assertThatThrownBy(() -> new GetMyShowLikesUseCase.Input(memberId, null, size))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     /**

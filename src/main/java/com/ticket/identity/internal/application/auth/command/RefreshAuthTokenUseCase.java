@@ -1,13 +1,13 @@
 package com.ticket.identity.internal.application.auth.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
 import com.ticket.identity.internal.application.auth.token.AuthTokenIssuer;
 import com.ticket.identity.internal.application.auth.token.IssuedAuthTokens;
 import com.ticket.identity.internal.application.auth.token.RefreshTokenStore;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -60,9 +60,9 @@ public class RefreshAuthTokenUseCase {
 
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore.validate(input.refreshToken())
-                .orElseThrow(() -> new CoreException(ErrorType.AUTHENTICATION_ERROR, "유효하지 않거나 만료된 리프레시 토큰입니다."));
+                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
         final Member member = memberRepository.findActiveById(memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+                .orElseThrow(() -> new NotFoundException());
         final IssuedAuthTokens result = authTokenIssuer.rotateTokens(member.getId(), member.getRole().name(), input.refreshToken());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),

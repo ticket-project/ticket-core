@@ -14,7 +14,7 @@ import org.springframework.modulith.Modulith;
  * {@code package-info.java}에 {@code @ApplicationModule}을 선언해 두어 Spring Modulith가
  * {@code shared}를 7번째 module로 인식하고, {@code sharedModules}가 그 이름을 참조할 수 있다.
  */
-@Modulith(sharedModules = "shared")
+@Modulith(sharedModules = {"shared", "error"})
 public class TicketApplication {
 
     public static void main(String[] args) {

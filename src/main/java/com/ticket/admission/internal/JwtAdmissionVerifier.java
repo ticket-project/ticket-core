@@ -2,8 +2,9 @@ package com.ticket.admission.internal;
 
 import com.ticket.admission.AdmissionVerification;
 import com.ticket.admission.AdmissionVerifier;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.admission.internal.exception.AdmissionTokenException;
+import com.ticket.admission.internal.exception.AdmissionTokenExpiredException;
+import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -47,7 +48,8 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     }
 
     /**
-     * 공개 진입점. 토큰 검증 실패를 admission 소유 {@code ErrorType}으로 번역한다.
+     * 공개 진입점. 검증 실패는 이 module이 소유한 예외로 그대로 나간다 — 예외가 HTTP 상태와 E-code를
+     * 스스로 들고 있으므로 여기서 다시 번역하지 않는다.
      * 대기열이 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
      */
     @Override
@@ -56,15 +58,9 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
             return new AdmissionVerification(performanceId, memberId);
         }
         if (admissionToken == null || admissionToken.isBlank()) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED);
+            throw new AdmissionTokenRequiredException();
         }
-        try {
-            verifyFor(admissionToken, memberId, performanceId);
-        } catch (final AdmissionTokenExpiredException exception) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_EXPIRED);
-        } catch (final AdmissionTokenException exception) {
-            throw new CoreException(ErrorType.ADMISSION_TOKEN_INVALID);
-        }
+        verifyFor(admissionToken, memberId, performanceId);
         return new AdmissionVerification(performanceId, memberId);
     }
 

@@ -1,9 +1,8 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.repository.OrderRepository;
+import com.ticket.booking.internal.exception.OrderNotOwnedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,9 +68,7 @@ class CancelOrderTransactionServiceTest {
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.cancel("missing", 1L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                .isInstanceOf(OrderNotOwnedException.class);
     }
 
     private Order createOrder(final Long id, final Long performanceId, final String holdKey) {

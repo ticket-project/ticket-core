@@ -1,12 +1,12 @@
 package com.ticket.catalog.internal.application.show.query;
 
 import com.ticket.catalog.internal.application.show.query.model.ShowOpeningSoonSummaryView;
+import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -16,7 +16,9 @@ public class GetSaleStartApproachingShowsUseCase {
 
     public record Input(String category, int size) {
         public Input {
-            RequiredInput.positiveSize(size, "size");
+            if (size <= 0) {
+                throw new InvalidRequestException("size는 1 이상이어야 합니다.");
+            }
         }
     }
 

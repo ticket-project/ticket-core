@@ -2,8 +2,8 @@ package com.ticket.showlike.internal.application.command;
 
 import com.ticket.catalog.ShowLookup;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.showlike.internal.exception.ShowLikeAlreadyExistsException;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,9 +79,9 @@ class AddShowLikeUseCaseTest {
         //when
         //then
         assertThatThrownBy(() -> useCase.execute(new AddShowLikeUseCase.Input(1L, 2L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.SHOW_LIKE_ALREADY_EXISTS));
+                .isInstanceOf(ShowLikeAlreadyExistsException.class)
+                .satisfies(exception -> assertThat(((ShowLikeAlreadyExistsException) exception).getData())
+                        .isEqualTo("이미 찜한 공연입니다. memberId=1, showId=2"));
     }
 
     @ParameterizedTest
@@ -94,9 +94,7 @@ class AddShowLikeUseCaseTest {
         //when
         //then
         assertThatThrownBy(() -> new AddShowLikeUseCase.Input(memberId, showId))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     /**

@@ -1,9 +1,9 @@
 package com.ticket.booking.internal.application.order.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderStatusView;
+import com.ticket.booking.internal.exception.OrderNotOwnedException;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,9 +67,7 @@ class GetOrderStatusUseCaseTest {
         when(repository.findStatus("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("missing", 1L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                .isInstanceOf(OrderNotOwnedException.class);
     }
 
     @Test
@@ -79,11 +77,9 @@ class GetOrderStatusUseCaseTest {
                 OrderState.PENDING,
                 LocalDateTime.of(2026, 3, 15, 19, 10)
         )));
-        doThrow(new CoreException(ErrorType.NOT_FOUND_DATA)).when(memberLookup).requireActive(1L);
+        doThrow(new NotFoundException()).when(memberLookup).requireActive(1L);
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ORDER_NOT_OWNED));
+                .isInstanceOf(OrderNotOwnedException.class);
     }
 }

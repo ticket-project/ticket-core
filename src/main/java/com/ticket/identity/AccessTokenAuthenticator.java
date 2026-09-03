@@ -12,8 +12,7 @@ public interface AccessTokenAuthenticator {
 
     /**
      * 원본 access token 문자열을 검증해 인증된 회원을 반환한다. 만료됐거나 무효한 토큰이면
-     * identity가 소유한 {@code com.ticket.core.support.exception.CoreException}
-     * ({@code ErrorType.AUTHENTICATION_ERROR})을 던진다.
+     * identity가 소유한 {@code UnauthenticatedException}(401, E1000)을 던진다.
      */
     AuthenticatedMember authenticate(String accessToken);
 }

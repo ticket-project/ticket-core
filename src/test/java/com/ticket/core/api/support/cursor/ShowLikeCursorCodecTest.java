@@ -1,7 +1,6 @@
 package com.ticket.core.api.support.cursor;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -37,8 +36,6 @@ class ShowLikeCursorCodecTest {
     @ValueSource(strings = {"abc", "1.5", "9999999999999999999999"})
     void 숫자가_아니면_400으로_끊는다(final String cursor) {
         assertThatThrownBy(() -> codec.decode(cursor))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 }

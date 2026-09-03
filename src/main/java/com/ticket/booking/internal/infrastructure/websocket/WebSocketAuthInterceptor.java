@@ -1,6 +1,6 @@
 package com.ticket.booking.internal.infrastructure.websocket;
 
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.TicketException;
 import com.ticket.identity.AccessTokenAuthenticator;
 import com.ticket.identity.AuthenticatedMember;
 import java.util.List;
@@ -47,7 +47,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 final AuthenticatedMember member;
                 try {
                     member = accessTokenAuthenticator.authenticate(token);
-                } catch (final CoreException exception) {
+                } catch (final TicketException exception) {
                     log.warn("웹소켓 JWT 인증에 실패해 연결을 차단합니다.");
                     throw new MessageDeliveryException("JWT 인증 실패");
                 }

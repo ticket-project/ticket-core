@@ -6,8 +6,7 @@ import com.ticket.catalog.internal.application.performance.query.BookingSeatPric
 import com.ticket.catalog.internal.domain.performance.policy.BookingPolicyValidator;
 import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +33,7 @@ public class BookingPolicyLookupService implements BookingPolicyLookup {
     @Transactional(readOnly = true)
     public BookingPolicySnapshot getBookingPolicy(final long performanceId, final List<Long> seatIds) {
         final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + performanceId));
 
         final LocalDateTime now = LocalDateTime.now(clock);

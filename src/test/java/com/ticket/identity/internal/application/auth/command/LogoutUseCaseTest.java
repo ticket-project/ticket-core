@@ -1,9 +1,9 @@
 package com.ticket.identity.internal.application.auth.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
 import com.ticket.identity.internal.application.auth.token.RefreshTokenStore;
+import com.ticket.identity.internal.exception.AuthorizationException;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,8 +44,7 @@ class LogoutUseCaseTest {
         when(refreshTokenStore.validateWithoutConsume(refreshToken)).thenReturn(Optional.of(2L));
 
         assertThatThrownBy(() -> useCase.execute(new LogoutUseCase.Input(1L, refreshToken)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHORIZATION_ERROR));
+                .isInstanceOf(AuthorizationException.class);
     }
 
     @Test
@@ -55,7 +54,6 @@ class LogoutUseCaseTest {
         when(refreshTokenStore.validateWithoutConsume(refreshToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new LogoutUseCase.Input(1L, refreshToken)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 }

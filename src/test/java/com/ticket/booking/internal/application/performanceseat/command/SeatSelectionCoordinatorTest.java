@@ -1,11 +1,11 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.booking.internal.application.lock.LockKey;
 import com.ticket.booking.internal.application.lock.RecordingLockManager;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
+import com.ticket.booking.internal.exception.PerformanceIsPastException;
+import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,9 +61,7 @@ class SeatSelectionCoordinatorTest {
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, NOW.plusMinutes(1)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.SEAT_ALREADY_HOLD));
+                .isInstanceOf(SeatAlreadyHoldException.class);
 
         verifyNoInteractions(seatSelectionService);
     }
@@ -71,9 +69,7 @@ class SeatSelectionCoordinatorTest {
     @Test
     void 락_획득_시점에_예매가_마감됐으면_선점을_중단한다() {
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, NOW.minusNanos(1)))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.PERFORMANCE_IS_PAST));
+                .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(holdManager, seatSelectionService);
     }

@@ -10,6 +10,7 @@ import com.ticket.booking.internal.domain.order.command.create.PendingOrderCreat
 import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.internal.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.internal.domain.order.model.OrderState;
+import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Slf4j
 @Service
@@ -40,8 +40,18 @@ public class CreateOrderUseCase {
      */
     public record Input(Long performanceId, List<Long> seatIds, Long memberId, String admissionToken) {
         public Input {
-            RequiredInput.positiveId(performanceId, "performanceId");
-            RequiredInput.positiveId(memberId, "memberId");
+            if (performanceId == null) {
+                throw new InvalidRequestException("performanceId는 필수입니다.");
+            }
+            if (performanceId <= 0) {
+                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
+            }
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
         }
     }
 

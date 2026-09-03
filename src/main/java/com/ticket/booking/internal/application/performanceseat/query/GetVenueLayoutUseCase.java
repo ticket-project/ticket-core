@@ -2,9 +2,9 @@ package com.ticket.booking.internal.application.performanceseat.query;
 
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.VenueLayout;
+import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -14,7 +14,12 @@ public class GetVenueLayoutUseCase {
 
     public record Input(Long showId) {
         public Input {
-            RequiredInput.positiveId(showId, "showId");
+            if (showId == null) {
+                throw new InvalidRequestException("showId는 필수입니다.");
+            }
+            if (showId <= 0) {
+                throw new InvalidRequestException("showId는 양수여야 합니다.");
+            }
         }
     }
     public record Output(String name,

@@ -1,8 +1,9 @@
 package com.ticket.booking.internal.application.support;
 
+import com.ticket.booking.internal.exception.ExceedHoldLimitException;
+import com.ticket.booking.internal.exception.NotYetReserveTimeException;
+import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.catalog.BookingPolicySnapshot;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 
 import java.time.LocalDateTime;
 
@@ -22,10 +23,10 @@ public final class BookingPolicyGuard {
      */
     public static void ensureBookingOpen(final BookingPolicySnapshot policy, final LocalDateTime now) {
         if (policy.orderOpenTime() == null || now.isBefore(policy.orderOpenTime())) {
-            throw new CoreException(ErrorType.NOT_YET_RESERVE_TIME);
+            throw new NotYetReserveTimeException();
         }
         if (policy.orderCloseTime() == null || now.isAfter(policy.orderCloseTime())) {
-            throw new CoreException(ErrorType.PERFORMANCE_IS_PAST);
+            throw new PerformanceIsPastException();
         }
     }
 
@@ -37,7 +38,7 @@ public final class BookingPolicyGuard {
             return;
         }
         if (requestedSeatCount > policy.maxCanHoldCount()) {
-            throw new CoreException(ErrorType.EXCEED_HOLD_LIMIT);
+            throw new ExceedHoldLimitException();
         }
     }
 }

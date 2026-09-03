@@ -1,7 +1,5 @@
 package com.ticket.identity.internal.application.auth.oauth2;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.auth.oauth2.OAuth2UserInfo;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
@@ -9,6 +7,7 @@ import com.ticket.identity.internal.domain.member.model.MemberSocialAccount;
 import com.ticket.identity.internal.domain.member.repository.MemberSocialAccountRepository;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.Role;
+import com.ticket.identity.internal.exception.DuplicateEmailException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +46,7 @@ public class OAuth2MemberProvisioningService {
 
     private Member validateSameSocialAccount(final MemberSocialAccount linkedAccount, final OAuth2UserInfo userInfo) {
         if (!linkedAccount.isSameSocialId(userInfo.providerId())) {
-            throw new CoreException(ErrorType.MEMBER_DUPLICATE_EMAIL, "Email is already linked to another social account.");
+            throw new DuplicateEmailException("Email is already linked to another social account.");
         }
         return linkedAccount.getMember();
     }

@@ -12,7 +12,7 @@ import com.ticket.booking.internal.application.lock.LockOptions;
 import com.ticket.booking.internal.infrastructure.lock.RedissonLockKeyFormatter;
 import com.ticket.booking.internal.infrastructure.lock.RedissonLockManager;
 import com.ticket.booking.internal.infrastructure.performanceseat.store.RedissonSeatSelectionStore;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.booking.internal.exception.HoldBusyException;
 import com.ticket.shared.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -145,7 +145,7 @@ class CoreRedisIntegrationTest {
                     SAME_KEY,
                     new CountDownLatch(1),
                     new CountDownLatch(0)
-            )).isInstanceOf(CoreException.class);
+            )).isInstanceOf(HoldBusyException.class);
 
             releaseFirst.countDown();
             first.get(5, TimeUnit.SECONDS);

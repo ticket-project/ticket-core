@@ -1,14 +1,13 @@
 package com.ticket.identity.internal.application.member.query;
 
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -17,7 +16,7 @@ public class GetCurrentMemberUseCase {
 
     public Output execute(final Input input) {
         final Member findMember = memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
+                .orElseThrow(() -> new NotFoundException());
         return new Output(
                 findMember.getId(),
                 Optional.ofNullable(findMember.getEmail()).map(email -> email.getEmail()).orElse(""),
@@ -28,7 +27,12 @@ public class GetCurrentMemberUseCase {
 
     public record Input(Long memberId) {
         public Input {
-            RequiredInput.positiveId(memberId, "memberId");
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
         }
     }
 

@@ -1,8 +1,7 @@
 package com.ticket.identity.internal.infrastructure.security;
 
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.AuthenticatedMember;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +34,7 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
         throw unauthorized();
     }
 
-    private CoreException unauthorized() {
-        return new CoreException(ErrorType.AUTHENTICATION_ERROR);
+    private UnauthenticatedException unauthorized() {
+        return new UnauthenticatedException();
     }
 }

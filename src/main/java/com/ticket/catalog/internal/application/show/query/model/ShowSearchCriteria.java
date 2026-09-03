@@ -1,9 +1,8 @@
 package com.ticket.catalog.internal.application.show.query.model;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
 import com.ticket.catalog.internal.domain.show.Region;
+import com.ticket.error.InvalidRequestException;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -75,7 +74,7 @@ public class ShowSearchCriteria {
         try {
             return Enum.valueOf(type, value);
         } catch (final IllegalArgumentException exception) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, field + " 값이 올바르지 않습니다: " + value);
+            throw new InvalidRequestException(field + " 값이 올바르지 않습니다: " + value);
         }
     }
 
@@ -84,7 +83,7 @@ public class ShowSearchCriteria {
             return;
         }
         if (startDateFrom.isAfter(startDateTo)) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "startDateFrom은 startDateTo보다 늦을 수 없습니다.");
+            throw new InvalidRequestException("startDateFrom은 startDateTo보다 늦을 수 없습니다.");
         }
     }
 }

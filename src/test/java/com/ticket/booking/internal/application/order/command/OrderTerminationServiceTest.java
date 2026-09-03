@@ -1,13 +1,12 @@
 package com.ticket.booking.internal.application.order.command;
 
 import com.ticket.booking.OrderTerminated;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.model.OrderSeat;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.domain.order.repository.OrderSeatRepository;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -86,9 +85,7 @@ class OrderTerminationServiceTest {
         when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(foreignOrderSeat));
 
         assertThatThrownBy(() -> service().expire(order, FIXED_NOW))
-                .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
 
         assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
         verifyNoInteractions(holdHistoryRecorder, eventPublisher);

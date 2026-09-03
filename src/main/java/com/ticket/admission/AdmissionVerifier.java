@@ -9,9 +9,10 @@ package com.ticket.admission;
 public interface AdmissionVerifier {
 
     /**
-     * 입장 자격을 검증한다. 유효하면 검증 결과를 반환하고, 그렇지 않으면 admission 소유
-     * {@code ErrorType}(예: {@code ADMISSION_TOKEN_REQUIRED}, {@code ADMISSION_TOKEN_EXPIRED},
-     * {@code ADMISSION_TOKEN_INVALID})을 담은 {@code CoreException}을 던진다.
+     * 입장 자격을 검증한다. 유효하면 검증 결과를 반환하고, 그렇지 않으면 admission이 소유한 예외를
+     * 던진다 — 토큰이 없으면 {@code AdmissionTokenRequiredException}(E8000), 만료면
+     * {@code AdmissionTokenExpiredException}(E8001), 그 밖의 검증 실패는
+     * {@code AdmissionTokenException}(E8002)이다. 셋 다 HTTP 403이다.
      *
      * @param performanceId 예매하려는 회차 id
      * @param memberId 요청한 회원 id

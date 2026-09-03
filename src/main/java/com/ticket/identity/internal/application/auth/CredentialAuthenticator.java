@@ -1,11 +1,10 @@
 package com.ticket.identity.internal.application.auth;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.identity.internal.application.auth.password.PasswordHasher;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import com.ticket.identity.internal.domain.member.model.RawPassword;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +31,12 @@ public class CredentialAuthenticator {
         if (optMember.isEmpty()) {
             // 타이밍 공격 방어: 회원이 없어도 해싱을 수행하여 응답 시간을 동일하게 유지
             passwordHasher.hash(RawPassword.create(TIMING_GUARD_DUMMY_PASSWORD));
-            throw new CoreException(ErrorType.AUTHENTICATION_ERROR);
+            throw new UnauthenticatedException();
         }
 
         final Member foundMember = optMember.get();
         if (foundMember.getEncodedPassword() == null || !passwordHasher.matches(RawPassword.create(password), foundMember.getEncodedPassword())) {
-            throw new CoreException(ErrorType.AUTHENTICATION_ERROR);
+            throw new UnauthenticatedException();
         }
         return foundMember;
     }

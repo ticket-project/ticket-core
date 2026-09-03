@@ -1,11 +1,10 @@
 package com.ticket.identity.internal.application.publicapi;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.AccessTokenAuthenticator;
 import com.ticket.identity.AuthenticatedMember;
 import com.ticket.identity.internal.application.auth.token.AccessTokenReadResult;
 import com.ticket.identity.internal.application.auth.token.AccessTokenReader;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,6 @@ public class AccessTokenAuthenticatorService implements AccessTokenAuthenticator
         if (accessTokenReader.read(accessToken) instanceof AccessTokenReadResult.Authenticated authenticated) {
             return authenticated.member();
         }
-        throw new CoreException(ErrorType.AUTHENTICATION_ERROR);
+        throw new UnauthenticatedException();
     }
 }

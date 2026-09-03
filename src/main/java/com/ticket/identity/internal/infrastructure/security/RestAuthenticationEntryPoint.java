@@ -1,8 +1,8 @@
 package com.ticket.identity.internal.infrastructure.security;
 
 import tools.jackson.databind.json.JsonMapper;
-import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.support.response.ApiResponse;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
+import com.ticket.shared.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -28,23 +28,25 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             final HttpServletResponse response,
             final AuthenticationException authException
     ) throws IOException, ServletException {
-        response.setStatus(ErrorType.AUTHENTICATION_ERROR.getStatus().value());
+        final String jwtError = (String) request.getAttribute(JWT_ERROR_ATTRIBUTE);
+        final UnauthenticatedException error = new UnauthenticatedException(resolveMessage(jwtError));
+
+        response.setStatus(error.getStatus().value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        final String jwtError = (String) request.getAttribute(JWT_ERROR_ATTRIBUTE);
-        final String message = resolveMessage(jwtError);
-        jsonMapper.writeValue(response.getWriter(), ApiResponse.error(ErrorType.AUTHENTICATION_ERROR, message));
+        jsonMapper.writeValue(response.getWriter(), ApiResponse.error(
+                error.getErrorCode().getCode(), error.getMessage(), error.getData()));
     }
 
     private String resolveMessage(final String jwtError) {
         if (jwtError == null) {
-            return ErrorType.AUTHENTICATION_ERROR.getMessage();
+            return UnauthenticatedException.MESSAGE;
         }
         return switch (jwtError) {
             case "expired" -> "토큰이 만료되었습니다. 다시 로그인해주세요.";
             case "invalid" -> "유효하지 않은 토큰입니다.";
-            default -> ErrorType.AUTHENTICATION_ERROR.getMessage();
+            default -> UnauthenticatedException.MESSAGE;
         };
     }
 }

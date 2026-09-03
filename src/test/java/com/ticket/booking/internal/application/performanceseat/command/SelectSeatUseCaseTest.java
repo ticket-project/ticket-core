@@ -1,7 +1,8 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.exception.PerformanceIsPastException;
+import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
@@ -102,11 +103,11 @@ class SelectSeatUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(openPolicy(true));
-        doThrow(new CoreException(ErrorType.ADMISSION_TOKEN_REQUIRED))
+        doThrow(new AdmissionTokenRequiredException())
                 .when(admissionVerifier).verify(10L, 1L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(AdmissionTokenRequiredException.class);
 
         verifyNoInteractions(seatSelectionAvailabilityValidator, seatSelectionCoordinator, seatEventPublisher);
     }
@@ -117,7 +118,7 @@ class SelectSeatUseCaseTest {
                 .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), false));
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(
                 seatSelectionAvailabilityValidator,
@@ -130,11 +131,11 @@ class SelectSeatUseCaseTest {
     @Test
     void 좌석_검증이_실패하면_선택하지_않는다() {
         when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(openPolicy(false));
-        doThrow(new CoreException(ErrorType.SEAT_ALREADY_HOLD))
+        doThrow(new SeatAlreadyHoldException())
                 .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(CoreException.class);
+                .isInstanceOf(SeatAlreadyHoldException.class);
 
         verifyNoInteractions(seatSelectionCoordinator, seatEventPublisher);
     }

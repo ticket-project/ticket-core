@@ -1,10 +1,10 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.domain.order.repository.OrderRepository;
+import com.ticket.booking.internal.exception.OrderNotOwnedException;
+import com.ticket.booking.internal.exception.OrderNotPendingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,9 +37,9 @@ class CancelOrderTransactionService {
 
     private Order getPendingOwnedOrder(final String orderKey, final Long memberId) {
         final Order order = orderRepository.findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
-                .orElseThrow(() -> new CoreException(ErrorType.ORDER_NOT_OWNED));
+                .orElseThrow(() -> new OrderNotOwnedException());
         if (order.getStatus() != OrderState.PENDING) {
-            throw new CoreException(ErrorType.ORDER_NOT_PENDING);
+            throw new OrderNotPendingException();
         }
         return order;
     }

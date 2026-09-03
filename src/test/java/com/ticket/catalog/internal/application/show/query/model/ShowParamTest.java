@@ -1,8 +1,7 @@
 package com.ticket.catalog.internal.application.show.query.model;
 
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.show.Region;
-import com.ticket.core.support.exception.CoreException;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -39,8 +38,6 @@ class ShowParamTest {
     @Test
     void 알_수_없는_지역이면_invalid_input_예외를_던진다() {
         assertThatThrownBy(() -> ShowParam.of(null, null, "NOWHERE", null))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 }

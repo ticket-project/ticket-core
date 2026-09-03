@@ -1,14 +1,15 @@
 package com.ticket.booking.internal.application.order.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.domain.order.OrderRemainingTime;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderDetailRow;
+import com.ticket.booking.internal.exception.OrderNotOwnedException;
 import com.ticket.catalog.PerformanceSummary;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.ShowSummary;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberLookup;
 import com.ticket.identity.MemberProfile;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +36,15 @@ public class GetOrderDetailUseCase {
 
     public record Input(String orderKey, Long memberId) {
         public Input {
-            RequiredInput.notBlank(orderKey, "orderKey");
-            RequiredInput.positiveId(memberId, "memberId");
+            if (orderKey == null || orderKey.isBlank()) {
+                throw new InvalidRequestException("orderKey는 필수입니다.");
+            }
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
         }
     }
     public record Output(
@@ -82,7 +89,7 @@ public class GetOrderDetailUseCase {
     public Output execute(final Input input) {
         final List<OrderDetailRow> rows = orderReadRepository.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
-            throw new CoreException(ErrorType.ORDER_NOT_OWNED);
+            throw new OrderNotOwnedException();
         }
 
         final OrderDetailRow first = rows.getFirst();
@@ -132,7 +139,7 @@ public class GetOrderDetailUseCase {
     private PerformanceSummary requirePerformanceSummary(final Long performanceId) {
         final PerformanceSummary summary = showLookup.getPerformanceSummaries(Set.of(performanceId)).get(performanceId);
         if (summary == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+            throw new NotFoundException();
         }
         return summary;
     }
@@ -140,14 +147,14 @@ public class GetOrderDetailUseCase {
     private ShowSummary requireShowSummary(final long showId) {
         final ShowSummary summary = showLookup.getSummaries(Set.of(showId)).get(showId);
         if (summary == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+            throw new NotFoundException();
         }
         return summary;
     }
 
     private TicketSeat toTicketSeat(final OrderDetailRow row, final ShowSeatMapEntry entry) {
         if (entry == null) {
-            throw new CoreException(ErrorType.NOT_FOUND_DATA);
+            throw new NotFoundException();
         }
         final String label = entry.floor() + "F "
                 + entry.section() + "구역 "

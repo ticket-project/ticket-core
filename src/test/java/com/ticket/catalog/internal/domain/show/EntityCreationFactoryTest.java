@@ -1,7 +1,5 @@
 package com.ticket.catalog.internal.domain.show;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.seat.Seat;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Category;
@@ -11,6 +9,7 @@ import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.SaleType;
 import com.ticket.catalog.internal.domain.show.Performer;
 import com.ticket.catalog.internal.domain.show.Venue;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -158,7 +157,6 @@ class EntityCreationFactoryTest {
         ShowGrade otherShowGrade = ShowGrade.link(otherShow, "VIP", "VIP석", BigDecimal.valueOf(150000), 1);
 
         assertThatThrownBy(() -> ShowSeat.link(show, seat, otherShowGrade))
-                .isInstanceOf(CoreException.class)
-                .satisfies(thrown -> assertThat(((CoreException) thrown).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
     }
 }

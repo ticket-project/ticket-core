@@ -9,8 +9,7 @@ import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRe
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.catalog.internal.domain.show.repository.ShowRepository;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -69,8 +68,7 @@ class ShowLookupServiceTest {
         when(showRepository.findById(100L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getVenueLayout(100L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -80,8 +78,7 @@ class ShowLookupServiceTest {
         when(show.getVenue()).thenReturn(null);
 
         assertThatThrownBy(() -> service.getVenueLayout(100L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -100,8 +97,7 @@ class ShowLookupServiceTest {
         when(showRepository.existsById(100L)).thenReturn(false);
 
         assertThatThrownBy(() -> service.getSeatMap(100L))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_DATA));
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test

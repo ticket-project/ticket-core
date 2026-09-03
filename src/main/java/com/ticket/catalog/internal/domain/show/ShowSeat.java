@@ -1,9 +1,8 @@
 package com.ticket.catalog.internal.domain.show;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.CatalogAuditedEntity;
 import com.ticket.catalog.internal.domain.seat.Seat;
+import com.ticket.error.InvalidRequestException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -39,7 +38,7 @@ public class ShowSeat extends CatalogAuditedEntity {
 
     public static ShowSeat link(final Show show, final Seat seat, final ShowGrade showGrade) {
         if (show != null && showGrade != null && showGrade.getShow() != show) {
-            throw new CoreException(ErrorType.INVALID_REQUEST, "show와 showGrade의 show가 일치하지 않습니다.");
+            throw new InvalidRequestException("show와 showGrade의 show가 일치하지 않습니다.");
         }
         return new ShowSeat(show, seat, showGrade);
     }

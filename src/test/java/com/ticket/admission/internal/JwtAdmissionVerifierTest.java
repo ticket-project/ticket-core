@@ -1,8 +1,10 @@
 package com.ticket.admission.internal;
 
 import com.ticket.admission.AdmissionVerification;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.admission.internal.exception.AdmissionErrorCode;
+import com.ticket.admission.internal.exception.AdmissionTokenException;
+import com.ticket.admission.internal.exception.AdmissionTokenExpiredException;
+import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,7 +55,9 @@ class JwtAdmissionVerifierTest {
                 jwtAdmissionVerifier().verifyFor(admissionToken(true, true, true, "10"), 11L, 20L)
         )
                 .isInstanceOf(AdmissionTokenException.class)
-                .hasMessage("admission token member mismatch");
+                .hasMessage("대기열 입장 토큰이 올바르지 않습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token member mismatch"));
     }
 
     @Test
@@ -62,35 +66,45 @@ class JwtAdmissionVerifierTest {
                 jwtAdmissionVerifier().verifyFor(admissionToken(true, true, true, "10"), 10L, 21L)
         )
                 .isInstanceOf(AdmissionTokenException.class)
-                .hasMessage("admission token performance mismatch");
+                .hasMessage("대기열 입장 토큰이 올바르지 않습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token performance mismatch"));
     }
 
     @Test
     void verify는_audience_없는_admission_token을_거부한다() {
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(admissionToken(false, true, true, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
-                .hasMessage("admission token invalid audience");
+                .hasMessage("대기열 입장 토큰이 올바르지 않습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token invalid audience"));
     }
 
     @Test
     void verify는_iat_없는_admission_token을_거부한다() {
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(admissionToken(true, false, true, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
-                .hasMessage("admission token invalid timestamps");
+                .hasMessage("대기열 입장 토큰이 올바르지 않습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token invalid timestamps"));
     }
 
     @Test
     void verify는_exp_없는_admission_token을_거부한다() {
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(admissionToken(true, true, false, "10")))
                 .isInstanceOf(AdmissionTokenException.class)
-                .hasMessage("admission token invalid timestamps");
+                .hasMessage("대기열 입장 토큰이 올바르지 않습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token invalid timestamps"));
     }
 
     @Test
     void verify는_숫자가_아닌_subject를_invalid로_거부한다() {
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(admissionToken(true, true, true, "member-10")))
                 .isInstanceOf(AdmissionTokenException.class)
-                .hasMessage("admission token invalid subject");
+                .hasMessage("대기열 입장 토큰이 올바르지 않습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token invalid subject"));
     }
 
     @Test
@@ -108,7 +122,9 @@ class JwtAdmissionVerifierTest {
 
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(token))
                 .isInstanceOf(AdmissionTokenExpiredException.class)
-                .hasMessage("admission token expired");
+                .hasMessage("대기열 입장 토큰이 만료되었습니다.")
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
+                        .isEqualTo("admission token expired"));
     }
 
     @Test
@@ -121,8 +137,8 @@ class JwtAdmissionVerifierTest {
 
     @Test
     void verify는_token이_없으면_required로_거부한다() {
-        assertAdmissionError(null, ErrorType.ADMISSION_TOKEN_REQUIRED);
-        assertAdmissionError("   ", ErrorType.ADMISSION_TOKEN_REQUIRED);
+        assertAdmissionError(null, AdmissionTokenRequiredException.class, AdmissionErrorCode.E8000);
+        assertAdmissionError("   ", AdmissionTokenRequiredException.class, AdmissionErrorCode.E8000);
     }
 
     @Test
@@ -138,22 +154,25 @@ class JwtAdmissionVerifierTest {
                 .signWith(secretKey())
                 .compact();
 
-        assertAdmissionError(expired, ErrorType.ADMISSION_TOKEN_EXPIRED);
+        assertAdmissionError(expired, AdmissionTokenExpiredException.class, AdmissionErrorCode.E8001);
     }
 
     @Test
     void verify는_계약을_어긴_token을_invalid로_거부한다() {
-        assertAdmissionError(admissionToken(false, true, true, "10"), ErrorType.ADMISSION_TOKEN_INVALID);
-        assertAdmissionError("not-a-jwt", ErrorType.ADMISSION_TOKEN_INVALID);
+        assertAdmissionError(
+                admissionToken(false, true, true, "10"),
+                AdmissionTokenException.class,
+                AdmissionErrorCode.E8002);
+        assertAdmissionError("not-a-jwt", AdmissionTokenException.class, AdmissionErrorCode.E8002);
     }
 
     @Test
     void verify는_다른_회원의_token을_invalid로_거부한다() {
         assertThatThrownBy(() -> jwtAdmissionVerifier()
                 .verify(20L, 11L, admissionToken(true, true, true, "10")))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.ADMISSION_TOKEN_INVALID));
+                .isInstanceOf(AdmissionTokenException.class)
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getErrorCode())
+                        .isEqualTo(AdmissionErrorCode.E8002));
     }
 
     @Test
@@ -167,11 +186,19 @@ class JwtAdmissionVerifierTest {
         assertThatCode(() -> disabled.verify(20L, 10L, null)).doesNotThrowAnyException();
     }
 
-    private void assertAdmissionError(final String token, final ErrorType errorType) {
+    /**
+     * 예외 타입과 E-code를 함께 본다 — 타입만 보면 만료(E8001)와 무효(E8002)가 상속 관계라
+     * 구분되지 않고, code만 보면 어느 예외가 던져졌는지 놓친다.
+     */
+    private void assertAdmissionError(
+            final String token,
+            final Class<? extends AdmissionTokenException> expectedType,
+            final AdmissionErrorCode expectedCode
+    ) {
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(20L, 10L, token))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(errorType));
+                .isInstanceOf(expectedType)
+                .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getErrorCode())
+                        .isEqualTo(expectedCode));
     }
 
     private JwtAdmissionVerifier jwtAdmissionVerifier() {

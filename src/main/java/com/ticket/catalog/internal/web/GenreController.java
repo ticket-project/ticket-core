@@ -2,7 +2,7 @@ package com.ticket.catalog.internal.web;
 
 import com.ticket.catalog.internal.web.docs.GenreControllerDocs;
 import com.ticket.catalog.internal.application.show.query.GetGenresByCategoryUseCase;
-import com.ticket.core.support.response.ApiResponse;
+import com.ticket.shared.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

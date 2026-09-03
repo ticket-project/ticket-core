@@ -5,8 +5,7 @@ import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.domain.order.repository.OrderRepository;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.booking.internal.exception.PendingOrderAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +37,6 @@ class PendingOrderLocalValidator {
         if (!orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
             return;
         }
-        throw new CoreException(ErrorType.PENDING_ORDER_ALREADY_EXISTS);
+        throw new PendingOrderAlreadyExistsException();
     }
 }

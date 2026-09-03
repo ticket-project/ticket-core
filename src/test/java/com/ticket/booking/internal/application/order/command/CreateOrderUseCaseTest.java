@@ -1,9 +1,7 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.core.support.exception.CoreException;
 import com.ticket.booking.internal.application.lock.LockKey;
 import com.ticket.booking.internal.application.lock.RecordingLockManager;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.application.order.command.CreateOrderValidator;
 import com.ticket.booking.internal.application.order.command.CreatePendingOrderTransactionService;
@@ -17,6 +15,7 @@ import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,8 +75,7 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(3L, 1L, 3L), 20L, "admission-token");
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
     }
@@ -87,8 +85,7 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(), 20L, "admission-token");
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType()).isEqualTo(ErrorType.INVALID_REQUEST));
+                .isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
     }

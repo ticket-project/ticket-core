@@ -1,10 +1,9 @@
 package com.ticket.identity.internal.application.publicapi;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.identity.AuthenticatedMember;
 import com.ticket.identity.internal.application.auth.token.AccessTokenReadResult;
 import com.ticket.identity.internal.application.auth.token.AccessTokenReader;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,9 +39,7 @@ class AccessTokenAuthenticatorServiceTest {
         when(accessTokenReader.read("expired-token")).thenReturn(AccessTokenReadResult.expired());
 
         assertThatThrownBy(() -> service.authenticate("expired-token"))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 
     @Test
@@ -50,8 +47,6 @@ class AccessTokenAuthenticatorServiceTest {
         when(accessTokenReader.read("invalid-token")).thenReturn(AccessTokenReadResult.invalid());
 
         assertThatThrownBy(() -> service.authenticate("invalid-token"))
-                .isInstanceOf(CoreException.class)
-                .satisfies(exception -> assertThat(((CoreException) exception).getErrorType())
-                        .isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 }

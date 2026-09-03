@@ -1,7 +1,6 @@
 package com.ticket.identity.internal.application.auth.token;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
+import com.ticket.identity.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,7 +19,6 @@ class AuthRefreshTokenTest {
     @Test
     void 빈값이면_인증_예외를_던진다() {
         assertThatThrownBy(() -> AuthRefreshToken.from("   "))
-                .isInstanceOf(CoreException.class)
-                .satisfies(error -> assertThat(((CoreException) error).getErrorType()).isEqualTo(ErrorType.AUTHENTICATION_ERROR));
+                .isInstanceOf(UnauthenticatedException.class);
     }
 }

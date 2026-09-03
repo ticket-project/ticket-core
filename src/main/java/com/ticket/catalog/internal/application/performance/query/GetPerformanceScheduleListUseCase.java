@@ -1,17 +1,16 @@
 package com.ticket.catalog.internal.application.performance.query;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
 import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.performance.repository.PerformanceRepository;
 import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,7 +21,12 @@ public class GetPerformanceScheduleListUseCase {
 
     public record Input(Long performanceId) {
         public Input {
-            RequiredInput.positiveId(performanceId, "performanceId");
+            if (performanceId == null) {
+                throw new InvalidRequestException("performanceId는 필수입니다.");
+            }
+            if (performanceId <= 0) {
+                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
+            }
         }
     }
 
@@ -40,14 +44,13 @@ public class GetPerformanceScheduleListUseCase {
 
     public Output execute(final Input input) {
         final Performance findPerformance = performanceRepository.findWithQueuePolicyById(input.performanceId())
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA,
+                .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
         final Show show = findPerformance.getShow();
         if (show == null) {
-            throw new CoreException(
-                    ErrorType.NOT_FOUND_DATA,
-                    "회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()
+            throw new NotFoundException(
+                                        "회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()
             );
         }
 

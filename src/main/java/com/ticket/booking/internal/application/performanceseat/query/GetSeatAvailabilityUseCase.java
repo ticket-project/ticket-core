@@ -8,6 +8,7 @@ import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.ShowSeatMapEntry;
+import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)
@@ -33,7 +33,12 @@ public class GetSeatAvailabilityUseCase {
 
     public record Input(Long performanceId) {
         public Input {
-            RequiredInput.positiveId(performanceId, "performanceId");
+            if (performanceId == null) {
+                throw new InvalidRequestException("performanceId는 필수입니다.");
+            }
+            if (performanceId <= 0) {
+                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
+            }
         }
     }
 
