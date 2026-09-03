@@ -1,4 +1,4 @@
-package com.ticket.core.infra.persistence;
+package com.ticket.bootstrap.config;
 
 import com.ticket.identity.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
