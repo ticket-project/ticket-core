@@ -271,7 +271,11 @@ NamedInterface의 정확한 노출 범위를 문서화한다). `identity.interna
   범위다. 이 ADR은 검증 메커니즘 자체가 `ModularityTests`에 있다는 사실만 전제하고, 그 구현
   세부사항을 여기서 단정하지 않는다.
 - **legacy `com.ticket.core`/`storage`/`support`의 완전 제거**는 이 ADR의 범위가 아니다. 남은
-  코드(오류 처리, showlike read 경로, 시드 러너)는 아직 이동 대상 후보로 남아 있다.
+  코드(오류 처리, showlike read 경로)는 아직 이동 대상 후보로 남아 있다. 시드 러너(옛
+  `core.infra.seed`)는 이후 정리에서 10번째 module `com.ticket.seed`로 옮겨졌다 — 특정
+  module이 전유하지 않고 여러 module의 테이블을 raw SQL로 적재하므로 `bootstrap`(§8)이 아니라
+  정식 module로 두고, 부하 테스트 회원만 identity가 `@NamedInterface("seed")`로 좁혀 연
+  `member.command` package를 통해 만든다.
   `com.ticket.bootstrap`은 지금 비어 있지만 완전 제거 대상이 아니다 — legacy가 아니라 영구
   예외 자리이기 때문이다(§8).
 

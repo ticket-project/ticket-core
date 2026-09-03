@@ -28,6 +28,7 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | 둘 이상 독립 모듈이 의미 동일하게 공유하는 호출 대상 계약(응답 봉투 `ApiResponse`, `UuidSupplier`, `CorsProperties`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
 | 어느 모듈의 것도 아닌 공통 오류(E400·E404·E500), 예외 base 타입, 전역 handler | `error` |
 | 전역 `@Configuration` 전부(domain-free 기술 설정 + 여러 module의 internal을 참조해야만 배선되는 설정) | `config` |
+| 여러 module의 테이블을 raw SQL로 적재하는 시드 러너 | `seed` |
 
 모듈을 잘못 고르면 그 다음 판단이 전부 무의미하다. 애매하면 "이 코드가 사라지면 무엇이 먼저
 깨지는가"를 먼저 모듈 단위로 묻는다.
@@ -98,7 +99,7 @@ legacy 코드를 옮기는 작업 자체는 범위가 크므로 먼저 사용자
 | 커서 위치 타입과 조회 결과 | `internal.application.<기능>.query.model` |
 | Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `internal.infrastructure.<기능>.query` |
 | Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `internal.infrastructure` |
-| 시드 러너 | 아직 legacy(`com.ticket.core.infra.seed`) |
+| 시드 러너 | `seed.internal` |
 | `@Scheduled` 트리거와 실행 주기 설정 | 소유 모듈의 `internal.infrastructure.worker`(예: `booking.internal.infrastructure.worker.OrderExpirationTrigger`) |
 | Spring Boot main과 `@Modulith` 선언 | `com.ticket.TicketApplication` |
 | module 결합 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, JPA auditing 등록, scheduling/clock) | `com.ticket.config.internal`, 그 공개 계약(예: `UuidSupplier`)은 `com.ticket.shared` |

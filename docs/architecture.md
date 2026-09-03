@@ -30,6 +30,7 @@ src/main/java/com/ticket
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(응답 봉투, UuidSupplier, CorsProperties, CursorPage)
 ├── config/                   # 전역 배선 전부(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig,
 │                                JpaAuditingConfig + Swagger/Querydsl/Redisson/P6Spy/scheduling/clock)
+├── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
 └── core/, bootstrap/, storage/   # core/storage는 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존
     범위"). support는 독립 top-level이 아니라 core/support 아래 nested. bootstrap은 legacy가 아니라
     영구 composition-root 예외 자리이며 지금은 비어 있다.
@@ -50,12 +51,15 @@ metadata  -> catalog, booking, identity
 showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, bean 등록 없음)
 config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
+seed      -> identity :: seed
 ```
 
 `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `booking`과
 `showlike`가 그 위에 얹히고, `metadata`는 세 모듈의 공개 계약만 조합한다. `shared`는 어떤 모듈도
 참조하지 않고, `config`는 identity/booking의 특정 internal package(`@NamedInterface`로 좁혀 열림)와
-shared를 참조하지만 `config`를 참조하는 모듈은 없다. 순환은 없다. 이 DAG를 바꾸려면 먼저
+shared를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로
+적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은
+없다. 이 DAG를 바꾸려면 먼저
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 갱신한다.
 
 **모듈 발견 전략은 기본값(`direct-sub-packages`)이다.** `explicitly-annotated`로 바꾸면
@@ -152,7 +156,6 @@ production class가 없다). 근거와 경계는
 
 - showlike read 경로(`core.app.showlike`, `core.domain.showlike`, `core.infra.showlike`) — 위
   [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
-- `core.infra.seed`의 시드 러너
 
 전역 기술 설정은 legacy가 아니다 — **`@Configuration`은 전부 `com.ticket.config`가 소유한다.**
 module 결합이 없는 것(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, event-publication registry
