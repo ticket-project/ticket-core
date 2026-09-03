@@ -1,6 +1,6 @@
 package com.ticket.identity.internal.infrastructure.security;
 
-import com.ticket.core.config.security.CorsProperties;
+import com.ticket.shared.CorsProperties;
 import com.ticket.identity.internal.application.auth.token.AccessTokenReader;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
