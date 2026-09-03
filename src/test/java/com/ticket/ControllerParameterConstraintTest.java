@@ -1,4 +1,4 @@
-package com.ticket.core.api.controller;
+package com.ticket;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Valid;
