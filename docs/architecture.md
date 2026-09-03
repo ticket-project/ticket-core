@@ -124,19 +124,33 @@ publication 저장 자체가 실패할 수 있다. 상세는 [ADR 0003](adr/0003
 
 ## 레거시 잔존 범위
 
-`com.ticket.core`/`com.ticket.bootstrap`/`com.ticket.storage`/`com.ticket.support`는 아직
-Application Module로 옮기지 않은 코드다. `ModularityTests`가 명시 predicate로 검증에서 제외한다.
-현재 남아 있는 것:
+`com.ticket.core`/`com.ticket.storage`/`com.ticket.support`는 아직 Application Module로 옮기지
+않은 코드다. `ModularityTests`가 명시 predicate로 검증에서 제외한다. `com.ticket.bootstrap`도 같은
+predicate로 제외되지만 성격은 다르다 — legacy가 아니라 영구적인 composition-root/전역 설정
+계층이다. 근거와 경계는 [ADR 0003 §8](adr/0003-spring-modulith-application-module-boundaries.md)이
+원본이다.
+
+레거시로 현재 남아 있는 것:
 
 - 전역 오류 처리(`core.support.exception`, `core.support.response`, `core.support`) — 위 절 참고
 - showlike read 경로(`core.app.showlike`, `core.domain.showlike`, `core.infra.showlike`) — 위
   [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
 - WebSocket 인증 인터셉터(`core.config.security.WebSocketAuthInterceptor`) — identity가 소유한
   `AccessTokenReader`를 직접 참조한다. 차단 요인은 없고 아직 옮기지 않은 상태다
-- 전역 기술 설정(`core.config`의 Swagger/CORS/WebSocket 설정, `core.infra.persistence`의 JPA
-  auditing, `core.infra.seed`의 시드 러너)
+- `core.infra.seed`의 시드 러너
+- 여러 module을 직접 참조해 아직 `bootstrap`으로 옮기지 못한 전역 기술 설정 4종 — `core.config`의
+  `WebConfig`/`WebSocketConfig`, `core.infra.config`의 `HttpServiceConfig`/`JwtConfig`. 옮기려면
+  먼저 identity(`WebSocketConfig`는 booking도)가 최소 공개 API를 노출해야 한다 —
+  [ADR 0003 §8](adr/0003-spring-modulith-application-module-boundaries.md) 참고
 
-새 코드를 이 legacy 패키지에 추가하지 않는다. 기존 legacy 코드를 옮기는 작업은 이 문서가 아니라
+module 결합이 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson,
+event-publication registry 유지보수, scheduling/clock 설정)은 legacy가 아니라
+`com.ticket.shared.internal.config`에 있다 — [ADR 0003 §6](adr/0003-spring-modulith-application-module-boundaries.md)
+참고. JPA auditing(`JpaAuditingConfig`/`SecurityContextAuditorAware`)은 identity의
+`AuthenticatedMember`를 참조해 `shared`에 두면 module 순환이 생기므로 대신
+`com.ticket.bootstrap.config`에 있다 — 같은 절 참고.
+
+새 코드를 legacy 패키지에 추가하지 않는다. 기존 legacy 코드를 옮기는 작업은 이 문서가 아니라
 이후 정리 작업의 범위다.
 
 ## 모듈 내부 구조
