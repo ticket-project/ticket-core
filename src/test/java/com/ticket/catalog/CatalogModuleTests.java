@@ -1,13 +1,7 @@
 package com.ticket.catalog;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.modulith.test.ApplicationModuleTest;
-
-import java.time.Clock;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -19,29 +13,17 @@ import java.time.Clock;
  * 전역으로 바꾸는 대신 이 테스트에서만 자동 검증을 꺼서, 아직 {@code @ApplicationModule}을 붙이지 않은
  * 미래 모듈이 조용히 검증에서 빠지는 위험을 피한다.
  *
- * <p>STANDALONE bootstrap mode는 {@code com.ticket.catalog} package tree만 component-scan하고, 그 밖의
- * package에 있는 {@code @Configuration}은 {@code @Import}로 끌어와도 같은 필터에 걸려 등록되지 않는다.
- * {@code JPAQueryFactory} bean은 아직 legacy {@code com.ticket.core.infra.config.QuerydslConfig}에 있어
- * 그 필터 밖이므로, 이 테스트 안에서 직접 정의해 catalog 어댑터가 필요로 하는 bean만 채운다.
+ * <p>STANDALONE bootstrap mode는 {@code com.ticket.catalog} package tree만 component-scan하지만,
+ * catalog가 실제로 참조하는 {@code shared}는 {@code @Modulith(sharedModules = "shared")} 선언 덕에
+ * 이 테스트에도 자동으로 포함된다({@code JPAQueryFactory}는 {@code shared.internal.config.QuerydslConfig},
+ * {@code Clock}은 {@code shared.internal.config.SystemClockConfig}가 제공한다) — 그래서 이 테스트가
+ * 로컬 stub으로 직접 채워야 하는 bean은 이제 없다. 로컬 stub을 남겨 두면 shared가 제공하는 진짜
+ * bean과 이름이 겹쳐 {@code BeanDefinitionOverrideException}이 난다(실측 확인).
  */
 @ApplicationModuleTest(verifyAutomatically = false)
-@Import(CatalogModuleTests.TestQuerydslConfig.class)
 class CatalogModuleTests {
 
     @Test
     void bootstraps() {
-    }
-
-    static class TestQuerydslConfig {
-
-        @Bean
-        JPAQueryFactory jpaQueryFactory(final EntityManager entityManager) {
-            return new JPAQueryFactory(entityManager);
-        }
-
-        @Bean
-        Clock clock() {
-            return Clock.systemDefaultZone();
-        }
     }
 }

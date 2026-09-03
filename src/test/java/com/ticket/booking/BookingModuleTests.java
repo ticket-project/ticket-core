@@ -6,13 +6,8 @@ import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import java.time.Clock;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -28,10 +23,12 @@ import java.time.Clock;
  * {@code AdmissionVerifier}는 그 필터 밖이라 {@code @MockitoBean}으로 대체한다. {@code JPAQueryFactory}도
  * {@code @MockitoBean}으로 대체한다 — 이 테스트는 booking bean들이 module 경계 안에서 서로 정상
  * 배선되는지만 확인하는 wiring smoke test이지 실제 DB 접근을 검증하지 않는다. 그 검증은 각 Querydsl
- * repository의 통합 테스트가 담당한다.
+ * repository의 통합 테스트가 담당한다. {@code Clock}은 booking이 실제로 참조하는 {@code shared}가
+ * {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에도 자동 포함돼
+ * {@code shared.internal.config.SystemClockConfig}가 진짜 bean을 채우므로 로컬 stub을 두지 않는다 —
+ * 두면 이름이 겹쳐 {@code BeanDefinitionOverrideException}이 난다(실측 확인).
  */
 @ApplicationModuleTest(verifyAutomatically = false)
-@Import(BookingModuleTests.TestSupportConfig.class)
 class BookingModuleTests {
 
     @MockitoBean
@@ -51,14 +48,5 @@ class BookingModuleTests {
 
     @Test
     void bootstraps() {
-    }
-
-    @Configuration
-    static class TestSupportConfig {
-
-        @Bean
-        Clock clock() {
-            return Clock.systemDefaultZone();
-        }
     }
 }
