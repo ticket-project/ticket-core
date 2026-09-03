@@ -1,46 +1,22 @@
 package com.ticket.catalog.internal.domain.performance.policy;
 
-import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.support.exception.ErrorType;
 import com.ticket.catalog.internal.domain.performance.QueueActivation;
 import com.ticket.catalog.internal.domain.performance.query.PerformanceBookingPolicySnapshot;
 
 import java.time.LocalDateTime;
 
 /**
- * 회차 예매 정책을 판정한다. 정책을 한 번 조회해 오픈·마감, 좌석 수 한도, 대기열 필요 여부를 모두 답한다.
+ * 회차 예매 정책 중 catalog가 판정하는 것을 담는다. 현재는 대기열 필요 여부뿐이다.
+ *
+ * <p>예전에는 오픈·마감({@code ensureBookingOpen})과 좌석 수 한도({@code ensureWithinHoldLimit})
+ * 판정도 여기 있었지만 <b>프로덕션에서 호출하는 곳이 없었다</b> — 실제로는 booking의
+ * {@code BookingPolicyGuard}가 catalog의 공개 계약 {@code BookingPolicySnapshot}으로 같은 규칙을
+ * 다시 계산한다. 두 곳이 같은 규칙을 갖고 있으면 그 규칙이 내는 오류(E3001·E3002·E6001)를 어느
+ * module이 소유하는지 정할 수 없어, 호출자가 없는 이쪽을 지웠다.
  */
 public final class BookingPolicyValidator {
 
     private BookingPolicyValidator() {
-    }
-
-    /**
-     * 예매 가능 시각 안인지 확인한다. 조회 시점이 아니라 판정 시점의 시각으로 비교하므로
-     * 정책 값을 캐시해도 오픈·마감 판정은 항상 현재 시각을 따른다.
-     */
-    public static void ensureBookingOpen(final PerformanceBookingPolicySnapshot policy, final LocalDateTime now) {
-        if (policy.orderOpenTime() == null || now.isBefore(policy.orderOpenTime())) {
-            throw new CoreException(ErrorType.NOT_YET_RESERVE_TIME);
-        }
-        if (policy.orderCloseTime() == null || now.isAfter(policy.orderCloseTime())) {
-            throw new CoreException(ErrorType.PERFORMANCE_IS_PAST);
-        }
-    }
-
-    /**
-     * 한도가 없는 회차는 좌석 수를 제한하지 않는다.
-     */
-    public static void ensureWithinHoldLimit(
-            final PerformanceBookingPolicySnapshot policy,
-            final long requestedSeatCount
-    ) {
-        if (policy.maxCanHoldCount() == null) {
-            return;
-        }
-        if (requestedSeatCount > policy.maxCanHoldCount()) {
-            throw new CoreException(ErrorType.EXCEED_HOLD_LIMIT);
-        }
     }
 
     public static boolean requiresQueue(final PerformanceBookingPolicySnapshot policy, final LocalDateTime now) {
