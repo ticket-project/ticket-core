@@ -1,6 +1,6 @@
 package com.ticket.core.app.showlike.query;
 
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 
 /**

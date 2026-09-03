@@ -5,7 +5,7 @@ import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.identity.internal.domain.member.model.RawPassword;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor

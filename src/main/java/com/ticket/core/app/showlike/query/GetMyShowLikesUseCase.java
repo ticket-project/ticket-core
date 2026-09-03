@@ -1,7 +1,7 @@
 package com.ticket.core.app.showlike.query;
 
 import com.ticket.core.support.exception.ErrorType;
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)

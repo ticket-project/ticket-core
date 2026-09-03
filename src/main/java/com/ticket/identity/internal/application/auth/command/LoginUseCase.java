@@ -6,7 +6,7 @@ import com.ticket.identity.internal.application.auth.token.IssuedAuthTokens;
 import com.ticket.identity.internal.domain.member.model.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor

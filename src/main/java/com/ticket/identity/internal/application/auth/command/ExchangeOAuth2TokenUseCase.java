@@ -9,7 +9,7 @@ import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor

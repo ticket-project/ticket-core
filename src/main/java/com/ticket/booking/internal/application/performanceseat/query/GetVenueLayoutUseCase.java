@@ -4,7 +4,7 @@ import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.VenueLayout;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor

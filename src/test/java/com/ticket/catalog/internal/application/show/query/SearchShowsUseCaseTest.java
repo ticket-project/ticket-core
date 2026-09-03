@@ -4,7 +4,7 @@ import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriteria;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchItemView;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

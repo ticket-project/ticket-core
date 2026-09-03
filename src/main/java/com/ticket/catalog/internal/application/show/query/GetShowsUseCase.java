@@ -3,13 +3,13 @@ package com.ticket.catalog.internal.application.show.query;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
 import com.ticket.catalog.internal.application.show.query.model.ShowListItemView;
 import com.ticket.catalog.internal.application.show.query.model.ShowParam;
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @Transactional(readOnly = true)

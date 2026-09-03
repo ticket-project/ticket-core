@@ -14,7 +14,7 @@ import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriter
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchItemView;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

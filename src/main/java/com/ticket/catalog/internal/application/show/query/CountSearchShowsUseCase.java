@@ -5,7 +5,7 @@ import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriter
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 /**
  * 공연 검색 결과 개수 조회 UseCase

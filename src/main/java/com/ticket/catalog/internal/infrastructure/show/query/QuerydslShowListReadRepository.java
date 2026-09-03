@@ -18,7 +18,7 @@ import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriter
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchItemView;
 import com.ticket.catalog.internal.application.show.query.model.ShowSummaryView;
 import com.ticket.catalog.internal.application.show.query.model.ShowCursor;
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

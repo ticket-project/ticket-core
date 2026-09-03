@@ -1,7 +1,7 @@
 package com.ticket.showlike.internal.application.command;
 
 import com.ticket.catalog.ShowLookup;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.identity.MemberLookup;
 import lombok.RequiredArgsConstructor;

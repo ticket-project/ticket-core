@@ -9,7 +9,7 @@ import com.ticket.catalog.internal.application.show.query.model.ShowParam;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchCriteria;
 import com.ticket.catalog.internal.application.show.query.model.ShowSearchItemView;
 import com.ticket.catalog.internal.application.show.query.model.ShowSummaryView;
-import com.ticket.core.app.support.cursor.CursorPage;
+import com.ticket.shared.CursorPage;
 
 import java.util.List;
 

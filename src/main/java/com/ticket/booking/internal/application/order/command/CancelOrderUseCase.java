@@ -4,7 +4,7 @@ import com.ticket.identity.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 /**
  * 회원 활성 확인(identity 공개 API)은 booking 쓰기 트랜잭션 밖에서 먼저 수행한다. 다른 module

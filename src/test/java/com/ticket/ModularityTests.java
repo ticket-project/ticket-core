@@ -20,14 +20,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Modulith 구조 검증이다.
  *
- * <p>{@code com.ticket.core}, {@code com.ticket.bootstrap}, {@code com.ticket.storage},
- * {@code com.ticket.support}는 아직 target Application Module로 이동하지 않은 legacy package다.
- * 기본 {@code direct-sub-packages} 감지 전략은 root 직접 하위 package를 모두 후보 module로 보므로,
- * 이 legacy package들을 그대로 두면 서로 얽힌 참조가 닫힌 module 캡슐화 위반으로 잡힌다.
+ * <p>{@code com.ticket.core}, {@code com.ticket.storage}, {@code com.ticket.support}는 아직 target
+ * Application Module로 이동하지 않은 legacy package다. 다른 작업이 이 코드를 계속 줄이는 중이고,
+ * 이동이 끝나면 이 package들은 사라진다.
  *
- * <p>이 legacy package를 임시 명시 module로 선언하지 않기 위해(그 자체가 이후 이동 Task가 할 일이다),
- * {@link ApplicationModules#of(Class, DescribedPredicate)}로 legacy package의 클래스를 검증 대상에서
- * 제외한다. 실제 코드가 이동을 마치면 이 predicate와 함께 이 주석도 지운다.
+ * <p>{@code com.ticket.bootstrap}은 성격이 다르다 — legacy(언젠가 없어질 코드)가 아니라
+ * **composition root/전역 기술 설정 계층**이고, 영구히 남는다. 여러 business module의 internal을
+ * 한 번에 봐야만 배선할 수 있는 전역 기술 설정(예: 여러 module의 argument resolver·HTTP
+ * client·JWT 설정을 한 곳에서 등록하는 {@code @Configuration})이 이 자리에 속한다 — 그런 코드를
+ * 특정 module 소유로 두면 그 module이 나머지 module을 부당하게 참조하게 되므로, 애초에 module
+ * 후보에서 빼는 쪽이 맞다. 이 category를 legacy와 같은 predicate로 검증에서 제외하는 이유는
+ * legacy와 같다(참조하는 module에 따라 결합이 거짓으로 잡히는 것을 막는다)는 점뿐이고, "언젠가
+ * 이동해서 없어진다"는 legacy의 성질은 없다.
+ *
+ * <p>이 정리 작업 시점에는 이전까지 {@code bootstrap.config}에 있던 순수 기술 설정
+ * ({@code EventPublicationMaintenance}, {@code SchedulingConfig}, {@code SystemClockConfig})이
+ * 실은 어떤 business module의 internal도 보지 않는 domain-free 코드였음이 드러나
+ * {@code com.ticket.shared.internal.config}로 옮겨졌고, 그 결과 {@code com.ticket.bootstrap}에는
+ * 당장 production class가 없다 — 그래도 이 자리 자체는 계속 필요하다. {@code WebConfig}/
+ * {@code WebSocketConfig}/{@code HttpServiceConfig}/{@code JwtConfig}(현재
+ * {@code com.ticket.core.config}/{@code com.ticket.core.infra.config}에 legacy로 남아 있다)가
+ * identity(그리고 {@code WebSocketConfig}는 booking)의 internal을 직접 참조해 이 자리로 옮길
+ * 후보이지만, 그러려면 먼저 identity/booking이 각자 필요한 최소 공개 API를 노출해야 한다 — 그
+ * 작업은 아직 하지 않은 후속 과제다.
+ *
+ * <p>기본 {@code direct-sub-packages} 감지 전략은 root 직접 하위 package를 모두 후보 module로
+ * 보므로, 이 legacy package들과 {@code bootstrap}을 그대로 두면 서로 얽힌 참조가 닫힌 module
+ * 캡슐화 위반으로 잡힌다.
+ *
+ * <p>legacy package와 {@code bootstrap}을 명시 module로 선언하지 않기 위해,
+ * {@link ApplicationModules#of(Class, DescribedPredicate)}로 이 package들의 클래스를 검증 대상에서
+ * 제외한다. legacy 코드가 이동을 마치면 그만큼만 이 predicate와 주석에서 지운다 —
+ * {@code bootstrap} 관련 제외는 legacy가 모두 사라진 뒤에도 남는다.
  *
  * <p><b>{@code shared}가 class 없이도 module로 잡히는 이유</b> — {@code shared}의
  * {@code package-info.java}는 아직 업무 class가 하나도 없지만 {@code @ApplicationModule}을
@@ -41,10 +65,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ModularityTests {
 
     private static final DescribedPredicate<JavaClass> LEGACY_PACKAGES = DescribedPredicate.describe(
-            "com.ticket.core, com.ticket.bootstrap, com.ticket.storage, com.ticket.support 아래의 "
-                    + "아직 이동하지 않은 legacy 코드",
+            "com.ticket.core, com.ticket.storage, com.ticket.support 아래의 아직 이동하지 않은 legacy "
+                    + "코드, 그리고 com.ticket.bootstrap의 영구 composition-root 코드",
             ModularityTests::isLegacy);
 
+    /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
     /** 파일시스템 기준으로 선언된 7개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
@@ -55,18 +80,22 @@ class ModularityTests {
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
      * 집합이다 — {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라
      * (catalog/identity/admission은 상한을 비워 둬 "제한 없음"을 뜻한다), 실제로 관측되는 edge를
-     * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. catalog/identity/admission은
-     * 다른 module을 참조하지 않는 기반 module이고, {@code shared}는 아직 class가 없어 의존도
-     * 없다.
+     * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. admission은 다른 module을
+     * 참조하지 않는 기반 module이다. {@code shared}는 {@code RequiredInput}(booking/catalog/
+     * identity/showlike가 참조)·{@code CursorPage}(catalog가 참조) 같은 순수 범용 유틸리티와
+     * {@code SwaggerConfig}·{@code QuerydslConfig} 등 domain-free 기술 설정을 담는데, 그중
+     * {@code SecurityContextAuditorAware}(JPA auditing이 감사자 id를 채우는 데 쓴다)만
+     * {@code identity.AuthenticatedMember}(공개 계약)를 참조해 shared가 identity를 향한 edge를
+     * 하나 갖는다. 그 밖의 shared 코드는 어떤 module도 참조하지 않는다.
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.of(
-            "booking", Set.of("catalog", "identity", "admission"),
-            "catalog", Set.of(),
-            "identity", Set.of(),
+            "booking", Set.of("catalog", "identity", "admission", "shared"),
+            "catalog", Set.of("shared"),
+            "identity", Set.of("shared"),
             "admission", Set.of(),
-            "showlike", Set.of("catalog", "identity"),
+            "showlike", Set.of("catalog", "identity", "shared"),
             "metadata", Set.of("catalog", "booking", "identity"),
-            "shared", Set.of()
+            "shared", Set.of("identity")
     );
 
     @Test

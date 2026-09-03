@@ -5,7 +5,7 @@ import com.ticket.booking.internal.application.performanceseat.event.SeatStatusE
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ticket.core.app.support.validation.RequiredInput;
+import com.ticket.shared.RequiredInput;
 
 @Service
 @RequiredArgsConstructor
