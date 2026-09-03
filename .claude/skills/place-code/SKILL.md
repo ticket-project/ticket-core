@@ -25,14 +25,20 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | admission token 설정·decode·검증 | `admission` |
 | Show 좋아요 write 경로(추가/삭제/상태 조회) | `showlike`(read 경로는 아래 "showlike 예외" 참고) |
 | catalog/booking/identity가 공개한 code/label 조합 | `metadata` |
-| 둘 이상 독립 모듈이 의미 동일하게 공유하는 최소 계약(현재 비어 있음) | `shared` |
+| 둘 이상 독립 모듈이 의미 동일하게 공유하는 범용 유틸리티, module 결합이 없는 domain-free 기술 설정 | `shared` |
+| 여러 module의 internal을 동시에 참조해야만 배선할 수 있는 전역 기술 설정(composition-root) | `config` |
 
 모듈을 잘못 고르면 그 다음 판단이 전부 무의미하다. 애매하면 "이 코드가 사라지면 무엇이 먼저
 깨지는가"를 먼저 모듈 단위로 묻는다.
 
-**아직 모듈로 옮기지 않은 legacy 코드**(`com.ticket.core`/`bootstrap`/`storage`(그리고 `core` 아래 nested된 `core.support`))가
-있다. 새 코드를 여기 추가하지 않는다 — 새 기능은 해당하는 모듈로 바로 만든다. legacy 코드를
-옮기는 작업 자체는 범위가 크므로 먼저 사용자와 범위를 정한다.
+**아직 모듈로 옮기지 않은 legacy 코드**(`com.ticket.core`/`storage`(그리고 `core` 아래 nested된
+`core.support`))가 있다. 새 코드를 여기 추가하지 않는다 — 새 기능은 해당하는 모듈로 바로 만든다.
+legacy 코드를 옮기는 작업 자체는 범위가 크므로 먼저 사용자와 범위를 정한다.
+
+`com.ticket.bootstrap`은 legacy가 아니다 — 여러 module의 internal을 동시에 참조해야만 배선할 수
+있는 코드를 위한 영구 composition-root 예외 자리이고, 지금은 production class가 하나도 없다.
+`@NamedInterface`로 좁혀 열 수 있는 배선은 `config`가 맡고, `config`로도 감당할 수 없을 만큼
+결합이 크거나 임시적인 배선이 생길 때만 이 자리를 쓴다.
 
 ## 1. 모듈을 골랐으면 계층을 고른다
 
@@ -92,7 +98,7 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `internal.infrastructure.<기능>.query` |
 | Redis adapter, expiration listener, WebSocket publisher, 외부 HTTP client | `internal.infrastructure` |
 | 시드 러너 | 아직 legacy(`com.ticket.core.infra.seed`) |
-| `@Scheduled` 트리거와 실행 주기 설정 | 아직 legacy(`com.ticket.bootstrap.worker`). booking으로 옮기는 것은 후속 작업이다 |
+| `@Scheduled` 트리거와 실행 주기 설정 | 소유 모듈의 `internal.infrastructure.worker`(예: `booking.internal.infrastructure.worker.OrderExpirationTrigger`) |
 | Spring Boot main과 `@Modulith` 선언 | `com.ticket.TicketApplication` |
 | module 결합 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, JPA auditing 등록, scheduling/clock) | `com.ticket.shared.internal.config`, 공개 계약(예: `UuidSupplier`, `CorsProperties`)은 `com.ticket.shared` |
 | 특정 module의 internal을 참조해야만 배선되는 전역 기술 설정(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig, JpaAuditingConfig 등) | `com.ticket.config`(8번째 Application Module, `@NamedInterface`로 identity/booking의 필요한 internal만 참조) |
@@ -126,7 +132,7 @@ gap을 조용히 옮기지 않는다 — 옮기려면 identity/catalog의 해당
   `@ManyToMany`는 같은 모듈 안에서만 허용한다. 다른 모듈의 aggregate를 참조해야 하면 scalar
   ID(`long performanceId` 등) 컬럼만 갖는다.
 - **주기 실행이 필요한 규칙.** 규칙은 `internal.application`의 use case에, `@Scheduled` 트리거는
-  아직 legacy(`bootstrap.worker`)에 있다.
+  소유 모듈의 `internal.infrastructure.worker`에 둔다(예: `booking.internal.infrastructure.worker.OrderExpirationTrigger`).
 - **Redis 상태를 읽는 조회 로직.** 좌석 상태는 DB와 Redis 점유를 합쳐 계산한다. 합치는 규칙은
   booking의 `internal.application` query use case가 소유하고 Redis 조회 자체는 `store` port를
   통한다.
@@ -157,7 +163,7 @@ gap을 조용히 옮기지 않는다 — 옮기려면 identity/catalog의 해당
 | `com.ticket.ModularityTests` | 모듈 경계 위반. 새 import가 다른 모듈의 `internal`을 향했는지, cross-module JPA 관계가 생겼는지 |
 | `<Module>ModuleTests`(예: `BookingModuleTests`) | 해당 모듈이 STANDALONE으로 부트스트랩되는지. 외부 모듈 빈을 mock 없이 요구하지 않는지 |
 | `ControllerParameterConstraintTest` | 파라미터 제약 선언 위치 |
-| `CoreLayerArchitectureTest` 등 legacy ArchUnit 테스트 | 아직 옮기지 않은 `com.ticket.core`/`bootstrap` 코드의 계층 방향. 이 테스트들은 legacy 정리가 끝나기 전까지 유효하다 |
+| `CoreLayerArchitectureTest` 등 legacy ArchUnit 테스트 | 아직 옮기지 않은 `com.ticket.core` 코드의 계층 방향. 이 테스트들은 legacy 정리가 끝나기 전까지 유효하다 |
 
 **테스트를 고쳐서 통과시키지 않는다.** 규칙이 틀렸다고 판단되면 먼저
 [architecture.md](../../../docs/architecture.md#아키텍처-규칙)의 근거를 읽고, 규칙을 바꿔야
