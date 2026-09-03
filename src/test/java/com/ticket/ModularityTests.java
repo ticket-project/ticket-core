@@ -76,9 +76,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code package-info.class}를 만들지 않아 Modulith가 그 존재 자체를 볼 수 없다({@code shared}
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
- * {@code booking}, {@code catalog}, {@code identity}, {@code admission}, {@code showlike},
+ * {@code booking}, {@code catalog}, {@code identity}, {@code admission},
  * {@code metadata}, {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed}
- * 정확히 11개다.
+ * 정확히 10개다. {@code showlike}는 더 이상 없다 — 찜(개수·추가·삭제·내 목록)을 catalog가
+ * 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도 module로 두면 catalog·identity와 순환
+ * 결합이 생겨서다(catalog의 package-info 참고).
  */
 class ModularityTests {
 
@@ -90,9 +92,9 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 10개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "web", "config",
+            "booking", "catalog", "identity", "admission", "metadata", "shared", "web", "config",
             "error", "seed");
 
     /**
@@ -106,6 +108,9 @@ class ModularityTests {
      * {@code UuidSupplier}(identity가 참조) 같은 <b>호출 대상 계약만</b> 담아 다른 어떤 module도
      * 참조하지 않는 leaf고, 그래서 이 module들이 shared를 향한 edge를 갖는다. 전역
      * {@code @Configuration}은 {@code config}가 소유한다.
+     * {@code catalog}가 identity를 향한 edge를 갖는 이유는 찜(showlike) 흡수로 회원 존재 확인이
+     * 필요해졌기 때문이다({@code MemberLookup}) — booking이 {@code Order.memberId}를 위해
+     * identity를 참조하는 것과 같은 패턴이다(catalog의 package-info 참고).
      * {@code web}은 REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
      * {@code SliceResponse})를 소유하는 leaf라, HTTP를 노출하는 module은 전부 web을 향한 edge를
      * 갖는다 — 자체 오류를 던지지 않는 {@code metadata}가 error 없이 web edge만 갖는 이유가
@@ -122,17 +127,16 @@ class ModularityTests {
      * {@code error}는 공통 오류 계약과 전역 handler를 소유하고 응답 봉투를 만들기 위해 web만
      * 참조한다({@code error -> web} 단방향) — 업무 module이 자기 오류를 소유해 가면서 이 module을
      * 향한 edge가 늘어난다.
-     * {@code seed}는 여러 module의 테이블을 raw SQL로 적재하는 10번째 module이고, 부하 테스트
+     * {@code seed}는 여러 module의 테이블을 raw SQL로 적재하는 module이고, 부하 테스트
      * 회원만 identity가 {@code @NamedInterface("seed")}로 연 {@code member.command} package를
      * 통해 호출해 identity를 향한 edge를 갖는다. 반대로 이 module을 참조하는 다른 module은
      * 없다(leaf).
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
             Map.entry("booking", Set.of("catalog", "identity", "admission", "shared", "web", "error")),
-            Map.entry("catalog", Set.of("shared", "web", "error")),
+            Map.entry("catalog", Set.of("identity", "shared", "web", "error")),
             Map.entry("identity", Set.of("shared", "web", "error")),
             Map.entry("admission", Set.of("web", "error")),
-            Map.entry("showlike", Set.of("catalog", "identity", "web", "error")),
             Map.entry("metadata", Set.of("catalog", "booking", "identity", "web")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),
@@ -147,7 +151,7 @@ class ModularityTests {
     }
 
     @Test
-    void 모듈_package가_com_ticket_직속에_정확히_11개_선언돼_있다() {
+    void 모듈_package가_com_ticket_직속에_정확히_10개_선언돼_있다() {
         final Path ticketRoot = Path.of("src", "main", "java", "com", "ticket");
 
         try (Stream<Path> children = Files.list(ticketRoot)) {
