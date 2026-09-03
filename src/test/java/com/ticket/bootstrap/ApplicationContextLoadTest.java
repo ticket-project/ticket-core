@@ -1,10 +1,10 @@
 package com.ticket.bootstrap;
 
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
-import com.ticket.bootstrap.worker.OrderExpirationTrigger;
 import com.ticket.booking.internal.application.lock.LockManager;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.application.order.command.ExpirePendingOrdersUseCase;
+import com.ticket.booking.internal.infrastructure.worker.OrderExpirationTrigger;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -32,7 +32,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(beanOf("com.ticket.booking.internal.domain.order.repository.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.internal.application.BookingEventListeners")).isNotNull();
-        assertThat(beanOf("com.ticket.bootstrap.config.EventPublicationMaintenance")).isNotNull();
+        assertThat(beanOf("com.ticket.shared.internal.config.EventPublicationMaintenance")).isNotNull();
     }
 
     /**

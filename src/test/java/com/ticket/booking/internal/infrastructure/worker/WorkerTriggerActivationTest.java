@@ -1,4 +1,4 @@
-package com.ticket.bootstrap.worker;
+package com.ticket.booking.internal.infrastructure.worker;
 
 import com.ticket.booking.internal.application.order.command.ExpirePendingOrdersUseCase;
 import org.junit.jupiter.api.Test;
