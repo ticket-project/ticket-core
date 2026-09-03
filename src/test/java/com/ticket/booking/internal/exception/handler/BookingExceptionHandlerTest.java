@@ -13,7 +13,7 @@ import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
 import com.ticket.booking.internal.exception.SeatAlreadySelectedException;
 import com.ticket.booking.internal.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.internal.exception.SeatNotOwnedException;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

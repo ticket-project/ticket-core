@@ -1,4 +1,4 @@
-package com.ticket.shared;
+package com.ticket.web;
 
 import lombok.Getter;
 

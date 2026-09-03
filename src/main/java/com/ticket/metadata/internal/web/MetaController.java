@@ -1,6 +1,6 @@
 package com.ticket.metadata.internal.web;
 
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import com.ticket.metadata.internal.application.query.GetMetaCodesUseCase;
 import com.ticket.metadata.internal.web.docs.MetaControllerDocs;
 import lombok.RequiredArgsConstructor;

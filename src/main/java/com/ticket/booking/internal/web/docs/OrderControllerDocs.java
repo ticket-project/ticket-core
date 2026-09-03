@@ -5,7 +5,7 @@ import com.ticket.identity.AuthenticatedMember;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.application.order.query.GetOrderDetailUseCase;
 import com.ticket.booking.internal.application.order.query.GetOrderStatusUseCase;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -57,7 +57,7 @@ public interface OrderControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
                     description = "이미 선점된 좌석이 있거나 진행 중인 PENDING 주문이 존재",
-                    content = @Content(schema = @Schema(implementation = com.ticket.shared.ApiResponse.class))
+                    content = @Content(schema = @Schema(implementation = com.ticket.web.ApiResponse.class))
             )
     })
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(

@@ -52,14 +52,23 @@ admission -> (없음)
 metadata  -> catalog, booking, identity
 showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, 아래 6번 참고)
+web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, 아래 10번 참고)
+error     -> web (오류를 HTTP 본문으로 옮길 때만)
 config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
              (여러 module의 internal을 참조하는 composition-root module, 아래 9번 참고)
 ```
 
 순환은 없다. `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이고,
-`booking`과 `showlike`가 그 위에 얹히며, `metadata`가 세 모듈의 공개 계약을 조합만 한다. `shared`는
-어떤 모듈도 참조하지 않는 leaf고, `config`는 identity/booking의 특정 internal package와 shared를
-참조하지만 반대로 `config`를 참조하는 모듈은 없다.
+`booking`과 `showlike`가 그 위에 얹히며, `metadata`가 세 모듈의 공개 계약을 조합만 한다. `shared`와
+`web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 identity/booking의 특정 internal package와
+shared를 참조하지만 반대로 `config`를 참조하는 모듈은 없다.
+
+**`shared`/`error`/`web`은 `@Modulith(sharedModules = ...)`로 선언한다.** 업무 의미가 없고 거의 모든
+모듈이 참조하는 leaf 계약이라 각 모듈 `allowedDependencies`에 일일이 적지 않고 전역 허용으로 두며,
+그 목록에는 업무 모듈 의존만 남긴다. `allowedDependencies`를 비운 모듈(catalog/identity/admission)은
+"제한 없음"이 아니라 **업무 모듈 의존이 하나도 없다**는 뜻이다 — 이 셋을 향한 참조만 허용된다
+(`ApplicationModules.verify()`가 그 밖의 참조를 거부하는 것을 실측 확인). 어느 모듈이 실제로 이 셋을
+참조하는지는 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정한다.
 
 ### 4. 모듈 간 참조는 scalar ID와 공개 API로만
 
@@ -145,8 +154,10 @@ JPA 기반 registry 하나만 쓴다.
 `shared`에 두는 것은 **호출 대상 계약**뿐이다: 둘 이상의 독립 module이 의미 그대로 공유하고, 그
 타입을 쓰기 위해 어떤 스타터도 추가하지 않아도 되는 타입. 현재 `UuidSupplier`,
 `CorsProperties`(CORS 허용 origin `@ConfigurationProperties` 값 홀더 — 스스로 bean을 등록하지 않고,
-등록은 값을 쓰는 identity의 `SecurityConfig`가 `@EnableConfigurationProperties`로 한다), 응답 봉투
-4종(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)이 있다.
+등록은 값을 쓰는 identity의 `SecurityConfig`가 `@EnableConfigurationProperties`로 한다),
+`CursorPage`가 있다. REST 응답 봉투 4종은 처음에 여기 있었지만 §10에서 `com.ticket.web`으로
+옮겼다 — Jackson·Swagger에 결합된 HTTP 표현 계약이라 "프로토콜 결합이 없는 계약"이라는 이 자리의
+기준을 만족하지 않는다.
 
 **왜 bean 등록(`@Configuration`)을 두지 않는가.** 계약은 다른 module이 *불러 쓰는* 것이고
 `@Configuration`은 포함하는 것만으로 *적용되는* 것이다. 둘이 한 module에 있으면 `shared`를
@@ -256,6 +267,35 @@ NamedInterface의 정확한 노출 범위를 문서화한다). `identity.interna
 `config`는 `shared`(`CorsProperties`)도 참조한다(§6) — module 결합이 없는 shared 참조는 제한
 없이 허용된다. `config`를 참조하는 다른 module은 없다(leaf) — composition root는 재사용 가능한
 공개 API가 아니라 배선 지점이기 때문이다.
+
+### 10. web module: REST 표현 계약
+
+REST 응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는 `com.ticket.web`이
+소유한다. 처음에는 `shared`에 뒀지만(§6), 이 자리의 기준("프로토콜·프레임워크 결합이 없는 호출
+대상 계약")을 만족하지 않는다.
+
+- **`shared`가 아닌 이유**: 봉투는 Jackson·Swagger 애노테이션을 달고 있는 HTTP 표현 계약이고, 이
+  앱의 모든 채널이 쓰는 것도 아니다 — booking이 좌석 상태를 발행하는 WebSocket payload는 이 봉투를
+  쓰지 않는다. `shared`에 두면 "전 module 공통 유틸리티"처럼 보여 범위가 가려지고, 다음 사람이 같은
+  근거로 무엇이든 `shared`에 넣게 된다. 값 자체가 외부 API 계약이라 변경 주체가 분명해야 하는데
+  `shared`는 구조적으로 "공통이니 아무나"가 된다.
+- **`error`가 아닌 이유**: `error`는 오류 계약(code·예외 base·전역 handler)을 소유한다. 성공 응답
+  봉투까지 그 module에 두면 이름과 내용이 어긋난다. 방향은 `error -> web` 하나이며, 반대로 `web`이
+  오류 타입을 참조하면 순환이 되어 `ApplicationModules.verify()`가 실패한다 — `ApiResponse`가 오류
+  타입을 모른 채 완성된 code·message·data 문자열만 받는 이유는 ADR 0002 이후 그대로다.
+- **`sharedModules`로 선언한다**: `shared`·`error`와 같은 관례다(§3). 각 module의
+  `allowedDependencies`에는 업무 module 의존만 남고, 어느 module이 실제로 web을 참조하는지는
+  `ModularityTests.APPROVED_DEPENDENCY_DAG`가 고정한다(현재 admission·booking·catalog·identity·
+  metadata·showlike·error). 그 대신 이 module에도 bean을 등록하는 코드를 두지 않는다 —
+  `sharedModules`는 web을 모든 `@ApplicationModuleTest`에 포함시키므로 §6과 같은 이유가 그대로
+  적용된다.
+- **`internal`이 없다**: 구현이랄 것이 없고 전부 다른 module이 쓰는 공개 계약이라 module root에만
+  class가 있다. 각 module의 controller가 사는 `<module>.internal.web`과는 다른 자리다 — 그쪽은 그
+  module의 endpoint이고, 이 module은 그 endpoint들이 공유하는 표현 계약이다.
+
+**이 결정으로 바뀌지 않은 것**: 봉투의 JSON 모양(`{result, data, error{code, message, data}}`),
+필드 이름, `SliceResponse`의 커서 필드는 그대로다. `ticket-fe`와 `gatling-test`가 이 모양에
+의존하므로 package 이동만 하고 타입 구조는 손대지 않았다.
 
 ## 승인된 것 외에 결정하지 않은 것
 

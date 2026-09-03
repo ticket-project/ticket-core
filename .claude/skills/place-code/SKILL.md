@@ -25,7 +25,8 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | admission token 설정·decode·검증 | `admission` |
 | Show 좋아요 write 경로(추가/삭제/상태 조회) | `showlike`(read 경로는 아래 "showlike 예외" 참고) |
 | catalog/booking/identity가 공개한 code/label 조합 | `metadata` |
-| 둘 이상 독립 모듈이 의미 동일하게 공유하는 호출 대상 계약(응답 봉투 `ApiResponse`, `UuidSupplier`, `CorsProperties`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
+| 둘 이상 독립 모듈이 의미 동일하게 공유하고 프로토콜·프레임워크 결합이 없는 호출 대상 계약(`UuidSupplier`, `CorsProperties`, `CursorPage`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
+| REST 응답 표현 계약(응답 봉투 `ApiResponse`/`ErrorMessage`/`ResultType`, 무한스크롤 `SliceResponse`) — bean은 두지 않는다 | `web` |
 | 어느 모듈의 것도 아닌 공통 오류(E400·E404·E500), 예외 base 타입, 전역 handler | `error` |
 | 전역 `@Configuration` 전부(domain-free 기술 설정 + 여러 module의 internal을 참조해야만 배선되는 설정) | `config` |
 | 여러 module의 테이블을 raw SQL로 적재하는 시드 러너 | `seed` |
@@ -127,8 +128,8 @@ com/ticket/<module>/internal/exception/
 
 어느 모듈의 것도 아닌 오류(E400 잘못된 요청, E404 없음, E500 내부 오류)만 `com.ticket.error`에
 있고, 전역 `GlobalExceptionHandler`(`@Order(LOWEST_PRECEDENCE)`)가 프레임워크 예외와 fallback을
-맡는다. 응답 봉투(`ApiResponse`)는 `com.ticket.shared`에 있다 — `error`가 봉투를 만들므로
-`shared`가 `error`를 참조하면 순환이 된다.
+맡는다. 응답 봉투(`ApiResponse`)는 `com.ticket.web`에 있다 — `error`가 봉투를 만들므로
+`web`이 `error`를 참조하면 순환이 된다.
 
 **메시지와 data를 바꿔 담지 않는다.** `message`는 오류마다 고정된 공개 문구이고, 어느 요청이
 막혔는지를 좁히는 값은 `data`에 넣는다. 각각 응답의 `error.message`와 `error.data`가 된다.

@@ -5,7 +5,7 @@ import com.ticket.error.ErrorCode;
 import com.ticket.error.InternalErrorException;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.error.TicketException;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;

@@ -27,7 +27,8 @@ src/main/java/com/ticket
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
 ├── showlike/                 # Show 좋아요(write 경로만 이동, 아래 "showlike 모듈의 경계" 참고)
 ├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
-├── shared/                   # 다른 모듈이 호출하는 공유 계약만(응답 봉투, UuidSupplier, CorsProperties, CursorPage)
+├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
+├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
 ├── config/                   # 전역 배선 전부(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig,
 │                                JpaAuditingConfig + Swagger/Querydsl/Redisson/P6Spy/scheduling/clock)
 ├── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
@@ -50,13 +51,20 @@ admission -> (없음)
 metadata  -> catalog, booking, identity
 showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, bean 등록 없음)
+web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, bean 등록 없음)
+error     -> web (오류를 HTTP 본문으로 옮길 때만)
 config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
 seed      -> identity :: seed
 ```
 
+`shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수 있다.
+그래서 각 모듈 `allowedDependencies`에는 **업무 모듈 의존만** 적는다. 대신 어느 모듈이 실제로 이
+셋을 참조하는지는 `ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정하므로, HTTP를
+노출하지 않던 모듈에 응답 봉투가 새로 들어오면 그 테스트가 실패한다.
+
 `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `booking`과
-`showlike`가 그 위에 얹히고, `metadata`는 세 모듈의 공개 계약만 조합한다. `shared`는 어떤 모듈도
-참조하지 않고, `config`는 identity/booking의 특정 internal package(`@NamedInterface`로 좁혀 열림)와
+`showlike`가 그 위에 얹히고, `metadata`는 세 모듈의 공개 계약만 조합한다. `shared`와 `web`은 어떤
+모듈도 참조하지 않는 leaf고, `config`는 identity/booking의 특정 internal package(`@NamedInterface`로 좁혀 열림)와
 shared를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로
 적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은
 없다. 이 DAG를 바꾸려면 먼저
@@ -132,10 +140,12 @@ enum과 예외 클래스가 있고, 예외가 HTTP 상태·E-code·공개 메시
 `ErrorCode` interface, 그리고 프레임워크 예외와 fallback을 맡는
 `GlobalExceptionHandler`(`@Order(LOWEST_PRECEDENCE)`)다.
 
-응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는 `com.ticket.shared`에 있다.
-`error`가 봉투를 만들어 반환하므로 `error -> shared` 단방향이며, `shared`가 `error`를 참조하면
-곧바로 순환이 되어 `ModularityTests`가 실패한다 — `ApiResponse`가 오류 타입을 모른 채 완성된
-문자열만 받는 이유이고, 오류를 던지던 `shared.RequiredInput`이 지워진 이유이기도 하다.
+응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는 `com.ticket.web`에 있다 —
+Jackson·Swagger에 결합된 REST 표현 계약이고 이 앱의 모든 채널이 쓰는 것도 아니라서(booking의 좌석
+상태 WebSocket payload는 쓰지 않는다) `shared`가 아니라 소유 모듈을 둔다. `error`가 봉투를 만들어
+반환하므로 `error -> web` 단방향이며, `web`이 `error`를 참조하면 곧바로 순환이 되어
+`ModularityTests`가 실패한다 — `ApiResponse`가 오류 타입을 모른 채 완성된 문자열만 받는 이유이고,
+오류를 던지던 `shared.RequiredInput`이 지워진 이유이기도 하다.
 
 E-code 값은 외부 계약이다. `gatling-test`가 `E4001`·`E6000`·`E6003`을 하드코딩하므로 소유 모듈이
 바뀌어도 재번호하지 않는다(그래서 E7001은 showlike, E7002는 catalog처럼 대역과 모듈 경계가

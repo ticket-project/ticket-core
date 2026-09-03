@@ -1,6 +1,6 @@
 package com.ticket.showlike.internal.exception.handler;
 
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import com.ticket.showlike.internal.exception.ShowLikeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;

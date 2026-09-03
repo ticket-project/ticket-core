@@ -1,7 +1,7 @@
 package com.ticket.catalog.internal.exception.handler;
 
 import com.ticket.catalog.internal.exception.CatalogException;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;

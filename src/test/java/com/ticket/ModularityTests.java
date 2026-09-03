@@ -69,7 +69,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
  * {@code booking}, {@code catalog}, {@code identity}, {@code admission}, {@code showlike},
- * {@code metadata}, {@code shared}, {@code config}, {@code error}, {@code seed} 정확히 10개다.
+ * {@code metadata}, {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed}
+ * 정확히 11개다.
  */
 class ModularityTests {
 
@@ -81,43 +82,51 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 10개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "config", "error", "seed");
+            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "web", "config",
+            "error", "seed");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
      * 집합이다 — {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라
-     * (catalog/identity/admission은 상한을 비워 둬 "제한 없음"을 뜻한다), 실제로 관측되는 edge를
+     * (catalog/identity/admission은 상한이 비어 있어 업무 module 의존이 하나도 없다는 뜻이다 —
+     * 비워 두어도 {@code sharedModules}인 shared·error·web은 항상 허용된다), 실제로 관측되는 edge를
      * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. admission은 다른 module을
-     * 참조하지 않는 기반 module이다(오류 계약과 응답 봉투를 뜻하는 error·shared는 예외다). {@code shared}는 {@code CursorPage}(catalog가 참조)·
-     * {@code CorsProperties}(identity·config가 참조)·{@code UuidSupplier}(identity가 참조) 같은
-     * <b>호출 대상 계약만</b> 담아 다른 어떤 module도 참조하지 않는 leaf고, 그래서 이 module들이
-     * shared를 향한 edge를 갖는다. 전역 {@code @Configuration}은 {@code config}가 소유한다.
-     * {@code ApiResponse}/{@code ErrorMessage}/{@code SliceResponse} 응답 봉투도 shared에 있어
-     * controller를 가진 module은 전부 shared를 향한 edge를 갖는다 — 자체 오류를 던지지 않는
-     * {@code metadata}가 shared edge를 갖는 이유가 이것뿐이다.
+     * 참조하지 않는 기반 module이다(오류 계약 error와 응답 봉투 web은 예외다). {@code shared}는
+     * {@code CursorPage}(catalog가 참조)·{@code CorsProperties}(identity·config가 참조)·
+     * {@code UuidSupplier}(identity가 참조) 같은 <b>호출 대상 계약만</b> 담아 다른 어떤 module도
+     * 참조하지 않는 leaf고, 그래서 이 module들이 shared를 향한 edge를 갖는다. 전역
+     * {@code @Configuration}은 {@code config}가 소유한다.
+     * {@code web}은 REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
+     * {@code SliceResponse})를 소유하는 leaf라, HTTP를 노출하는 module은 전부 web을 향한 edge를
+     * 갖는다 — 자체 오류를 던지지 않는 {@code metadata}가 error 없이 web edge만 갖는 이유가
+     * 이것이다. {@code shared}·{@code error}와 같이 {@code @Modulith(sharedModules = ...)}로 전역
+     * 허용해 각 module의 {@code allowedDependencies}에는 업무 module 의존만 남기고, 어느 module이
+     * 실제로 web을 참조하는지는 이 DAG가 고정한다.
      * {@code config}는 여러 module의 internal을 동시에 참조해야 하는 composition-root 성격의
      * 8번째 module이라(클래스 javadoc과 {@code com.ticket.config}의 package-info 참고) identity·
      * booking을 향한 edge를 갖고, {@code CorsProperties}(shared) 참조로 shared를 향한 edge도
      * 갖는다. 반대로 이 module을 참조하는 다른 module은 없다(leaf).
-     * {@code error}는 공통 오류 계약과 전역 handler를 소유하고 응답 봉투를 만들기 위해 shared만
-     * 참조한다 — 업무 module이 자기 오류를 소유해 가면서 이 module을 향한 edge가 늘어난다.
+     * {@code error}는 공통 오류 계약과 전역 handler를 소유하고 응답 봉투를 만들기 위해 web만
+     * 참조한다({@code error -> web} 단방향) — 업무 module이 자기 오류를 소유해 가면서 이 module을
+     * 향한 edge가 늘어난다.
      * {@code seed}는 여러 module의 테이블을 raw SQL로 적재하는 10번째 module이고, 부하 테스트
      * 회원만 identity가 {@code @NamedInterface("seed")}로 연 {@code member.command} package를
      * 통해 호출해 identity를 향한 edge를 갖는다. 반대로 이 module을 참조하는 다른 module은
      * 없다(leaf).
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
-            Map.entry("booking", Set.of("catalog", "identity", "admission", "shared", "error")),
-            Map.entry("catalog", Set.of("shared", "error")),
-            Map.entry("identity", Set.of("shared", "error")),
-            Map.entry("admission", Set.of("shared", "error")),
-            Map.entry("showlike", Set.of("catalog", "identity", "shared", "error")),
-            Map.entry("metadata", Set.of("catalog", "booking", "identity", "shared")),
+            Map.entry("booking", Set.of("catalog", "identity", "admission", "web", "error")),
+            Map.entry("catalog", Set.of("shared", "web", "error")),
+            Map.entry("identity", Set.of("shared", "web", "error")),
+            Map.entry("admission", Set.of("web", "error")),
+            Map.entry("showlike", Set.of("catalog", "identity", "web", "error")),
+            Map.entry("metadata", Set.of("catalog", "booking", "identity", "web")),
             Map.entry("shared", Set.of()),
+            Map.entry("web", Set.of()),
             Map.entry("config", Set.of("identity", "booking", "shared")),
-            Map.entry("error", Set.of("shared")),
+            Map.entry("error", Set.of("web")),
             Map.entry("seed", Set.of("identity"))
     );
 
@@ -127,7 +136,7 @@ class ModularityTests {
     }
 
     @Test
-    void 모듈_package가_com_ticket_직속에_정확히_10개_선언돼_있다() {
+    void 모듈_package가_com_ticket_직속에_정확히_11개_선언돼_있다() {
         final Path ticketRoot = Path.of("src", "main", "java", "com", "ticket");
 
         try (Stream<Path> children = Files.list(ticketRoot)) {

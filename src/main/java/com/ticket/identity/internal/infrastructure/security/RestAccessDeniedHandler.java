@@ -2,7 +2,7 @@ package com.ticket.identity.internal.infrastructure.security;
 
 import tools.jackson.databind.json.JsonMapper;
 import com.ticket.identity.internal.exception.AuthorizationException;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;

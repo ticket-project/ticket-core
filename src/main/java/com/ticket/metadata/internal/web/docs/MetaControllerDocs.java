@@ -1,6 +1,6 @@
 package com.ticket.metadata.internal.web.docs;
 
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import com.ticket.metadata.internal.application.query.GetMetaCodesUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

@@ -46,6 +46,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | --- | --- |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()`). 아직 이동하지 않은 legacy 패키지는 명시 predicate로 검증 대상에서 뺀다 |
 | `com.ticket.*.*ModuleTests` (`AdmissionModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
+| `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 
 `com.ticket.core` 패키지에는 이 전환 이전에 만들어진 계층형 ArchUnit 테스트(`CoreLayerArchitectureTest`,

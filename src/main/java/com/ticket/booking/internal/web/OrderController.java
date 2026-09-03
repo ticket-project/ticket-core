@@ -7,7 +7,7 @@ import com.ticket.booking.internal.application.order.command.CancelOrderUseCase;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.application.order.query.GetOrderDetailUseCase;
 import com.ticket.booking.internal.application.order.query.GetOrderStatusUseCase;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;

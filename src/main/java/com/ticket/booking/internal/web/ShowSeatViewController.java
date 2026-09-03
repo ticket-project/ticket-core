@@ -3,7 +3,7 @@ package com.ticket.booking.internal.web;
 import com.ticket.booking.internal.web.docs.ShowSeatViewControllerDocs;
 import com.ticket.booking.internal.application.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetVenueLayoutUseCase;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

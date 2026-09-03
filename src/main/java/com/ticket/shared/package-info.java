@@ -19,19 +19,19 @@
  * 홀더는 스스로 bean을 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이
  * {@code @EnableConfigurationProperties}로 한다(identity의 {@code SecurityConfig}).
  *
- * <p><b>이 module은 아무 module도 참조하지 않는 leaf여야 한다.</b> 응답 봉투
- * ({@link ApiResponse}/{@link ErrorMessage}/{@link ResultType}/{@link SliceResponse})가 여기 있고
- * {@code com.ticket.error}의 전역 handler가 그 봉투를 만들므로 {@code error -> shared} edge가 있다.
- * 여기서 {@code error}의 예외나 오류 code를 참조하면 곧바로 순환이 되어
- * {@code com.ticket.ModularityTests}가 실패한다 — 봉투가 오류 타입을 모른 채 완성된 문자열만
- * 받는 이유가 이것이다.
+ * <p><b>이 module은 아무 module도 참조하지 않는 leaf여야 한다.</b> 여기서 다른 module의 타입을
+ * 참조하면 그 module이 이미 {@code shared}를 참조하고 있는 만큼 곧바로 순환이 되어
+ * {@code com.ticket.ModularityTests}가 실패한다.
+ *
+ * <p>REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
+ * {@code SliceResponse})는 여기 없다 — Jackson·Swagger에 결합된 HTTP 표현 계약이고 이 앱의 모든
+ * 채널이 쓰는 것도 아니라서 {@code com.ticket.web}이 소유한다(그 package-info 참고).
  *
  * <p>다른 module이 직접 호출해야 하는 이 module의 공개 API이므로 다른 module의 공개 계약과
  * 같은 자리(module root)에 둔다 — 하위 package에 두면 닫힌 module 캡슐화 때문에 다른 module이
  * 참조할 수 없다({@code com.ticket.ModularityTests}가 이를 실측으로 확인한다).
- * 현재 {@link CursorPage}(커서 페이징 조회 결과), {@link CorsProperties}, {@link UuidSupplier},
- * 그리고 응답 봉투 4종({@link ApiResponse}/{@link ErrorMessage}/{@link ResultType}/
- * {@link SliceResponse})이 있다.
+ * 현재 {@link CursorPage}(커서 페이징 조회 결과), {@link CorsProperties}, {@link UuidSupplier}가
+ * 있다.
  *
  * <p><b>아직 기준을 만족하지 못하는 것</b>: {@link CursorPage}는 실측상 {@code catalog}와 legacy
  * {@code com.ticket.core}의 showlike read 경로만 쓴다("둘 이상의 독립 module" 미달). legacy가 함께

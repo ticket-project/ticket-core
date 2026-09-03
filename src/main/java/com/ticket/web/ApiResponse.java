@@ -1,4 +1,4 @@
-package com.ticket.shared;
+package com.ticket.web;
 
 /**
  * 모든 HTTP 응답을 감싸는 공통 봉투다. 성공이든 실패든 바깥 모양이 같고 알맹이만

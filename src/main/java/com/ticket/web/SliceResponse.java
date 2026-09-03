@@ -1,4 +1,4 @@
-package com.ticket.shared;
+package com.ticket.web;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;

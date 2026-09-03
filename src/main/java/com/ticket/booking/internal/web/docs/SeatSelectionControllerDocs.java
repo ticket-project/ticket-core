@@ -1,7 +1,7 @@
 package com.ticket.booking.internal.web.docs;
 
 import com.ticket.identity.AuthenticatedMember;
-import com.ticket.shared.ApiResponse;
+import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
