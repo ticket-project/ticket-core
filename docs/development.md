@@ -146,8 +146,11 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 - Event Publication Registry의 `serialized_event` 컬럼 크기(`VARCHAR(255)`) 리스크 — 상세는
   [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)을
   본다
-- `com.ticket.core`/`bootstrap`/`storage`/`support` legacy 코드(오류 처리, WebSocket 인증
-  인터셉터 등)의 모듈 이전
+- `com.ticket.core`/`storage`/`support` legacy 코드(오류 처리, `core.infra.seed`의 시드 러너
+  등)의 모듈 이전
+- identity 전용인 `com.ticket.core.support.util.CookieUtils`(`refresh_token` 쿠키 이름과
+  `/api/v1/auth` 경로를 하드코딩)를 `identity.internal.web`으로 옮기는 작업 — 아직 legacy
+  위치에 남아 있다
 - Flyway 기반 운영 마이그레이션 스크립트 누적과 검증 환경 보강
 - Redis key scan 기반 조회 구조 최적화
 - 운영 관측성 대시보드와 알림 보강
