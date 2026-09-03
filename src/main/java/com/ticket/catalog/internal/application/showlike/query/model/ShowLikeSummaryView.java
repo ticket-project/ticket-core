@@ -1,4 +1,4 @@
-package com.ticket.core.app.showlike.query.model;
+package com.ticket.catalog.internal.application.showlike.query.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -1,18 +1,12 @@
-package com.ticket.core.app.showlike.query;
+package com.ticket.catalog.internal.application.showlike.query;
 
+import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.error.NotFoundException;
+import com.ticket.identity.MemberLookup;
 import com.ticket.shared.CursorPage;
-import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -21,7 +15,7 @@ public class GetMyShowLikesUseCase {
 
     private static final int MAX_SIZE = 100;
 
-    private final MemberRepository memberRepository;
+    private final MemberLookup memberLookup;
     private final ShowLikeReadRepository showLikeReadRepository;
 
     /**
@@ -41,14 +35,13 @@ public class GetMyShowLikesUseCase {
         }
     }
 
-    public record Output(List<ShowLikeSummaryView> items, boolean hasNext, Long nextPosition) {
+    public record Output(java.util.List<ShowLikeSummaryView> items, boolean hasNext, Long nextPosition) {
     }
 
     public Output execute(final Input input) {
-        final Member member = memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new NotFoundException());
+        memberLookup.requireActive(input.memberId());
         final CursorPage<ShowLikeSummaryView, Long> page =
-                showLikeReadRepository.findMyLikedShows(member.getId(), input.cursorLikeId(), input.size());
+                showLikeReadRepository.findMyLikedShows(input.memberId(), input.cursorLikeId(), input.size());
         return new Output(page.items(), page.hasNext(), page.nextPosition());
     }
 

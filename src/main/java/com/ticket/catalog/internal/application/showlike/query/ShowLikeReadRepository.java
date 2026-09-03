@@ -1,12 +1,12 @@
-package com.ticket.core.app.showlike.query;
+package com.ticket.catalog.internal.application.showlike.query;
 
+import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.shared.CursorPage;
-import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 
 /**
  * 내 찜 목록 읽기 전용 조회 포트다.
  *
- * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 core-api가 한다.
+ * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 이 module의 {@code internal.web}이 한다.
  */
 public interface ShowLikeReadRepository {
 

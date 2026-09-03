@@ -1,10 +1,9 @@
-package com.ticket.core.app.showlike.query;
+package com.ticket.catalog.internal.application.showlike.query;
 
+import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.identity.MemberLookup;
 import com.ticket.shared.CursorPage;
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.identity.internal.domain.member.repository.MemberRepository;
-import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,17 +20,15 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.Optional;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetMyShowLikesUseCaseTest {
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberLookup memberLookup;
 
     @Mock
     private ShowLikeReadRepository showLikeReadRepository;
@@ -41,7 +38,6 @@ class GetMyShowLikesUseCaseTest {
 
     @Test
     void 찜한_공연_목록을_다음_커서_위치와_함께_조회한다() {
-        Member member = mock(Member.class);
         ShowLikeSummaryView summary = new ShowLikeSummaryView(
                 2L,
                 "공연",
@@ -51,8 +47,6 @@ class GetMyShowLikesUseCaseTest {
                 "장소",
                 LocalDateTime.now()
         );
-        when(member.getId()).thenReturn(1L);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
         when(showLikeReadRepository.findMyLikedShows(1L, 10L, 20))
                 .thenReturn(new CursorPage<>(List.of(summary), true, 9L));
 
@@ -61,6 +55,7 @@ class GetMyShowLikesUseCaseTest {
         assertThat(output.items()).containsExactly(summary);
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
+        verify(memberLookup).requireActive(1L);
         verify(showLikeReadRepository).findMyLikedShows(1L, 10L, 20);
     }
 
@@ -85,9 +80,6 @@ class GetMyShowLikesUseCaseTest {
 
     @Test
     void 커서_위치가_없으면_첫_페이지를_조회한다() {
-        Member member = mock(Member.class);
-        when(member.getId()).thenReturn(1L);
-        when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
         when(showLikeReadRepository.findMyLikedShows(1L, null, 20))
                 .thenReturn(CursorPage.empty());
 

@@ -1,6 +1,7 @@
 package com.ticket.catalog;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -24,6 +25,10 @@ import java.time.Clock;
  * 대체한다 — 이 테스트는 catalog bean들이 module 경계 안에서 서로 정상 배선되는지만 확인하는 wiring
  * smoke test이지 실제 DB 접근이나 시간 계산을 검증하지 않는다. 그 검증은 각 Querydsl repository의
  * 통합 테스트와 use case 테스트가 담당한다.
+ *
+ * <p>찜(showlike) 흡수로 catalog가 identity의 {@link MemberLookup}을 참조하게 됐다 — 회원 존재
+ * 확인용이다. identity는 이 STANDALONE 스캔 범위 밖이라 마찬가지로 {@code @MockitoBean}으로
+ * 대체한다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class CatalogModuleTests {
@@ -33,6 +38,9 @@ class CatalogModuleTests {
 
     @MockitoBean
     private Clock clock;
+
+    @MockitoBean
+    private MemberLookup memberLookup;
 
     @Test
     void bootstraps() {

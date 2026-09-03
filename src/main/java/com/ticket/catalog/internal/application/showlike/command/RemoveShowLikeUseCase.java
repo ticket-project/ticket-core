@@ -1,7 +1,7 @@
-package com.ticket.showlike.internal.application.command;
+package com.ticket.catalog.internal.application.showlike.command;
 
 import com.ticket.catalog.ShowLookup;
-import com.ticket.core.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.catalog.internal.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.identity.MemberLookup;
 import lombok.RequiredArgsConstructor;
