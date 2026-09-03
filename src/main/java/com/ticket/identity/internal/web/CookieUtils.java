@@ -1,4 +1,4 @@
-package com.ticket.core.support.util;
+package com.ticket.identity.internal.web;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;

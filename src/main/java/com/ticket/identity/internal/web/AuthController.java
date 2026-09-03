@@ -12,7 +12,6 @@ import com.ticket.identity.internal.application.auth.command.RefreshAuthTokenUse
 import com.ticket.identity.internal.application.auth.command.RegisterMemberUseCase;
 import com.ticket.identity.internal.application.auth.query.GetSocialLoginUrlsUseCase;
 import com.ticket.shared.ApiResponse;
-import com.ticket.core.support.util.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

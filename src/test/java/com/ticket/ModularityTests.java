@@ -69,7 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
  * {@code booking}, {@code catalog}, {@code identity}, {@code admission}, {@code showlike},
- * {@code metadata}, {@code shared}, {@code config}, {@code error} 정확히 9개다.
+ * {@code metadata}, {@code shared}, {@code config}, {@code error}, {@code seed} 정확히 10개다.
  */
 class ModularityTests {
 
@@ -81,9 +81,9 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 9개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 10개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "config", "error");
+            "booking", "catalog", "identity", "admission", "showlike", "metadata", "shared", "config", "error", "seed");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
@@ -103,17 +103,22 @@ class ModularityTests {
      * 갖는다. 반대로 이 module을 참조하는 다른 module은 없다(leaf).
      * {@code error}는 공통 오류 계약과 전역 handler를 소유하고 응답 봉투를 만들기 위해 shared만
      * 참조한다 — 업무 module이 자기 오류를 소유해 가면서 이 module을 향한 edge가 늘어난다.
+     * {@code seed}는 여러 module의 테이블을 raw SQL로 적재하는 10번째 module이고, 부하 테스트
+     * 회원만 identity가 {@code @NamedInterface("seed")}로 연 {@code member.command} package를
+     * 통해 호출해 identity를 향한 edge를 갖는다. 반대로 이 module을 참조하는 다른 module은
+     * 없다(leaf).
      */
-    private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.of(
-            "booking", Set.of("catalog", "identity", "admission", "shared", "error"),
-            "catalog", Set.of("shared", "error"),
-            "identity", Set.of("shared", "error"),
-            "admission", Set.of("shared", "error"),
-            "showlike", Set.of("catalog", "identity", "shared", "error"),
-            "metadata", Set.of("catalog", "booking", "identity", "shared"),
-            "shared", Set.of(),
-            "config", Set.of("identity", "booking", "shared"),
-            "error", Set.of("shared")
+    private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
+            Map.entry("booking", Set.of("catalog", "identity", "admission", "shared", "error")),
+            Map.entry("catalog", Set.of("shared", "error")),
+            Map.entry("identity", Set.of("shared", "error")),
+            Map.entry("admission", Set.of("shared", "error")),
+            Map.entry("showlike", Set.of("catalog", "identity", "shared", "error")),
+            Map.entry("metadata", Set.of("catalog", "booking", "identity", "shared")),
+            Map.entry("shared", Set.of()),
+            Map.entry("config", Set.of("identity", "booking", "shared")),
+            Map.entry("error", Set.of("shared")),
+            Map.entry("seed", Set.of("identity"))
     );
 
     @Test
@@ -122,7 +127,7 @@ class ModularityTests {
     }
 
     @Test
-    void 모듈_package가_com_ticket_직속에_정확히_9개_선언돼_있다() {
+    void 모듈_package가_com_ticket_직속에_정확히_10개_선언돼_있다() {
         final Path ticketRoot = Path.of("src", "main", "java", "com", "ticket");
 
         try (Stream<Path> children = Files.list(ticketRoot)) {
