@@ -77,6 +77,7 @@ class WebSocketAuthInterceptorTest {
 
     private static StompHeaderAccessor connectAccessor(final String authorizationHeader) {
         final StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
+        accessor.setLeaveMutable(true);
         if (authorizationHeader != null) {
             accessor.addNativeHeader("Authorization", authorizationHeader);
         }
