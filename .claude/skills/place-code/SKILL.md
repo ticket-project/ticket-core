@@ -86,7 +86,7 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | 분산락 구현과 Redis key 형식 | `booking.internal.infrastructure.lock` |
 | 커밋 후 후속 처리 이벤트 리스너 | `internal.application`의 `@ApplicationModuleListener`(예: `BookingEventListeners`) |
 | 모듈이 다른 모듈에 공개하는 이벤트 | 모듈 root(예: `booking.OrderStarted`, `booking.OrderTerminated`) |
-| event publication registry 운영(purge·재제출) | `com.ticket.bootstrap.config`(전역 설정, 특정 모듈 소유 아님, 예: `EventPublicationMaintenance`) |
+| event publication registry 운영(purge·재제출) | `com.ticket.shared.internal.config`(domain-free 전역 기술 설정, 예: `EventPublicationMaintenance`) |
 | HTTP 커서 문자열 인코딩·디코딩 | `internal.web`의 cursor 유틸 |
 | 커서 위치 타입과 조회 결과 | `internal.application.<기능>.query.model` |
 | Querydsl 조회 구현과 조건·정렬·커서 헬퍼 | `internal.infrastructure.<기능>.query` |
@@ -94,7 +94,8 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | 시드 러너 | 아직 legacy(`com.ticket.core.infra.seed`) |
 | `@Scheduled` 트리거와 실행 주기 설정 | 아직 legacy(`com.ticket.bootstrap.worker`). booking으로 옮기는 것은 후속 작업이다 |
 | Spring Boot main과 `@Modulith` 선언 | `com.ticket.TicketApplication` |
-| 전역 기술 설정(CORS, Swagger, WebSocket 기본 설정) | `com.ticket.bootstrap.config` 또는 아직 legacy(`com.ticket.core.config`) |
+| module 결합 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, JPA auditing 등록, scheduling/clock) | `com.ticket.shared.internal.config`, 공개 계약(예: `UuidSupplier`, `CorsProperties`)은 `com.ticket.shared` |
+| 특정 module의 internal을 참조해야만 배선되는 전역 기술 설정(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig, JpaAuditingConfig 등) | `com.ticket.config`(8번째 Application Module, `@NamedInterface`로 identity/booking의 필요한 internal만 참조) |
 | 프레임워크 중립 오류 계약과 예외 전달 기반 | 아직 legacy 전역 구조(`com.ticket.core.support.exception`, `com.ticket.core.support`) — 아래 "오류 처리" 참고 |
 | 요청 파라미터 Bean Validation 제약 | `internal.web`의 `controller.docs` 인터페이스 |
 | `UseCase.Input` 필수 component 계약 | `internal.application`의 UseCase record와 `support.validation` |
