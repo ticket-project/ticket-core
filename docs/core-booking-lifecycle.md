@@ -5,9 +5,9 @@
 것이다. 모듈 경계 결정 배경은 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을
 본다.
 
-이 문서가 설명하는 코드는 모두 `booking` Application Module 소유다(`com.ticket.booking.internal.**`).
-커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 설정 패키지
-(`com.ticket.bootstrap.config`)에 있다.
+이 문서가 설명하는 코드는 대부분 `booking` Application Module 소유다(`com.ticket.booking.internal.**`).
+커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 domain-free 전역 기술 설정 패키지
+(`com.ticket.shared.internal.config`)에 있다.
 
 ## 지켜야 할 원칙
 
@@ -105,7 +105,7 @@ spring:
         resubmitted: 10m
 ```
 
-`EventPublicationMaintenance`(`com.ticket.bootstrap.config`)가 두 가지 주기 작업을 한다.
+`EventPublicationMaintenance`(`com.ticket.shared.internal.config`)가 두 가지 주기 작업을 한다.
 
 | 작업 | 주기 | 동작 |
 | --- | --- | --- |
@@ -143,13 +143,12 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 - `redisExpirationSubscriptionExecutor`: Redis 구독 전용 worker 1~2개
 - `redisExpirationTaskExecutor`: 만료 handler worker 2개, queue 256개, 공유 permit 2개
 - queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
-- `OrderExpirationTrigger`(`com.ticket.bootstrap.worker`, 아직 이동하지 않은 legacy 위치) →
+- `OrderExpirationTrigger`(`com.ticket.booking.internal.infrastructure.worker`) →
   `ExpirePendingOrdersUseCase`: `worker.order-expiration.fixed-delay`(기본 5분)마다 만료 주문을
   보정한다.
 
-`@Scheduled` 트리거(`OrderExpirationTrigger`)는 아직 `com.ticket.bootstrap`(legacy)에 있고,
-booking 모듈로 옮기는 것은 이후 정리 작업의 범위다. `worker.enabled=false`면 이 트리거 자체가
-등록되지 않는다.
+`@Scheduled` 트리거(`OrderExpirationTrigger`)는 `booking`이 소유한다. `worker.enabled=false`면
+이 트리거 자체가 등록되지 않는다.
 
 **주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 과거 outbox worker 같은 명시적
 동시성 상한이 설정돼 있지 않다.** `@ApplicationModuleListener`는 기본적으로 비동기 실행되며,
@@ -170,9 +169,9 @@ executor를 쓴다. Redis 만료 처리(`redisExpirationTaskExecutor`)처럼 명
 - hold 생성/해제 후속 처리: `booking.internal.application.order.command.HoldCreationTaskProcessor`,
   `HoldReleaseTaskProcessor`, `booking.internal.application.event.HoldReleaseProgressRecorder`
 - 만료 보정: `booking.internal.application.order.command.ExpirePendingOrdersUseCase`
-- background 트리거(legacy): `bootstrap.worker.OrderExpirationTrigger`
+- background 트리거: `booking.internal.infrastructure.worker.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.internal.infrastructure.redis.RedisExpirationListenerConfig`
-- event publication 운영: `bootstrap.config.EventPublicationMaintenance`
+- event publication 운영: `shared.internal.config.EventPublicationMaintenance`
 
 ## 운영 확인
 
