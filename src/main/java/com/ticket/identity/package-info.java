@@ -13,12 +13,13 @@
  * SecurityConfig}) — 인증·인가 해석이 결국 identity 소유이기 때문이다.
  *
  * <p>{@code order}·{@code performanceseat}(현재는 booking 소유)는 Task 7에서
- * {@link com.ticket.identity.MemberLookup}으로 재배선을 끝냈다. 남은 임시 결합 둘:
+ * {@link com.ticket.identity.MemberLookup}으로 재배선을 끝냈다. WebSocket 인증도 후속 정리에서
+ * 닫혔다 — {@code booking.internal.infrastructure.websocket.WebSocketAuthInterceptor}(booking
+ * 소유)는 더 이상 identity internal을 직접 참조하지 않고, 이 module이 공개한
+ * {@link com.ticket.identity.AccessTokenAuthenticator}로만 원본 access token 문자열을 검증한다.
+ *
+ * <p>남은 임시 결합 하나:
  * <ul>
- *   <li>{@code com.ticket.core.config.security.WebSocketAuthInterceptor}가 identity가 internal로
- *   옮긴 {@code AccessTokenReader}/{@code AccessTokenReadResult}를 직접 참조한다. booking module은
- *   이미 있지만(Task 7) WebSocket 설정 자체는 아직 legacy에서 옮겨지지 않았다 — 차단 요인은 없고
- *   단지 아직 하지 않은 상태다.</li>
  *   <li>showlike의 legacy 잔존 코드({@code ShowLike}, {@code GetMyShowLikesUseCase},
  *   {@code ShowLikeRepositoryAdapter})가 identity internal {@code Member}를 직접 참조한다 — Task 9가
  *   catalog와의 순환 문제 때문에 의도적으로 legacy에 남겨 뒀다(showlike의 package-info 참고).</li>
