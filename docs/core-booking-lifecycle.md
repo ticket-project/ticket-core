@@ -6,8 +6,8 @@
 본다.
 
 이 문서가 설명하는 코드는 대부분 `booking` Application Module 소유다(`com.ticket.booking.internal.**`).
-커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 domain-free 전역 기술 설정 패키지
-(`com.ticket.shared.internal.config`)에 있다.
+커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 배선 module
+(`com.ticket.config.internal`)에 있다.
 
 ## 지켜야 할 원칙
 
@@ -105,7 +105,7 @@ spring:
         resubmitted: 10m
 ```
 
-`EventPublicationMaintenance`(`com.ticket.shared.internal.config`)가 두 가지 주기 작업을 한다.
+`EventPublicationMaintenance`(`com.ticket.config.internal`)가 두 가지 주기 작업을 한다.
 
 | 작업 | 주기 | 동작 |
 | --- | --- | --- |
@@ -171,7 +171,7 @@ executor를 쓴다. Redis 만료 처리(`redisExpirationTaskExecutor`)처럼 명
 - 만료 보정: `booking.internal.application.order.command.ExpirePendingOrdersUseCase`
 - background 트리거: `booking.internal.infrastructure.worker.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.internal.infrastructure.redis.RedisExpirationListenerConfig`
-- event publication 운영: `shared.internal.config.EventPublicationMaintenance`
+- event publication 운영: `config.internal.EventPublicationMaintenance`
 
 ## 운영 확인
 

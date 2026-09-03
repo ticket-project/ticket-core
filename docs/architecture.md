@@ -27,9 +27,9 @@ src/main/java/com/ticket
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
 ├── showlike/                 # Show 좋아요(write 경로만 이동, 아래 "showlike 모듈의 경계" 참고)
 ├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
-├── shared/                   # 범용 유틸리티(RequiredInput, CursorPage)와 domain-free 전역 기술 설정
-├── config/                   # 여러 module의 internal을 참조하는 composition-root module(WebConfig,
-│                                WebSocketConfig, HttpServiceConfig, JwtConfig, JpaAuditingConfig 등)
+├── shared/                   # 다른 모듈이 호출하는 공유 계약만(응답 봉투, UuidSupplier, CorsProperties, CursorPage)
+├── config/                   # 전역 배선 전부(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig,
+│                                JpaAuditingConfig + Swagger/Querydsl/Redisson/P6Spy/scheduling/clock)
 └── core/, bootstrap/, storage/   # core/storage는 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존
     범위"). support는 독립 top-level이 아니라 core/support 아래 nested. bootstrap은 legacy가 아니라
     영구 composition-root 예외 자리이며 지금은 비어 있다.
@@ -48,7 +48,7 @@ identity  -> (없음)
 admission -> (없음)
 metadata  -> catalog, booking, identity
 showlike  -> catalog, identity
-shared    -> 모든 모듈이 참조할 수 있는 공유 자리(범용 유틸리티·domain-free 기술 설정)
+shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, bean 등록 없음)
 config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
 ```
 
@@ -154,15 +154,15 @@ production class가 없다). 근거와 경계는
   [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
 - `core.infra.seed`의 시드 러너
 
-module 결합이 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson,
-event-publication registry 유지보수, scheduling/clock 설정, `CorsProperties`)은 legacy가 아니라
-`com.ticket.shared`(공개 계약)/`com.ticket.shared.internal.config`(구현)에 있다 —
-[ADR 0003 §6](adr/0003-spring-modulith-application-module-boundaries.md) 참고. 반대로 특정
-module의 internal을 직접 참조해야만 배선되는 전역 기술 설정(`WebConfig`/`WebSocketConfig`/
-`HttpServiceConfig`/`JwtConfig`/`JpaAuditingConfig`/`SecurityContextAuditorAware`)은 legacy도
-아니고 shared도 아니다 — 8번째 Application Module `com.ticket.config`에 있다. identity/booking의
-필요한 internal package만 Spring Modulith의 `@NamedInterface`로 좁혀 열어 참조한다 —
-[ADR 0003 §9](adr/0003-spring-modulith-application-module-boundaries.md) 참고.
+전역 기술 설정은 legacy가 아니다 — **`@Configuration`은 전부 `com.ticket.config`가 소유한다.**
+module 결합이 없는 것(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, event-publication registry
+유지보수, scheduling/clock)과 특정 module의 internal을 참조해야만 배선되는 것(`WebConfig`/
+`WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`/`JpaAuditingConfig`/`SecurityContextAuditorAware`)이
+함께 있고, 후자는 identity/booking의 필요한 internal package만 Spring Modulith의
+`@NamedInterface`로 좁혀 열어 참조한다. `com.ticket.shared`에는 다른 모듈이 **호출하는 계약**만 두고
+bean 등록은 두지 않으며, 이 규칙은 `com.ticket.shared.SharedModulePurityTest`가 강제한다. 근거는
+[ADR 0003 §6](adr/0003-spring-modulith-application-module-boundaries.md)과
+[§9](adr/0003-spring-modulith-application-module-boundaries.md)를 본다.
 
 새 코드를 legacy 패키지에 추가하지 않는다. 기존 legacy 코드를 옮기는 작업은 이 문서가 아니라
 이후 정리 작업의 범위다.

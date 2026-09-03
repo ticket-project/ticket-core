@@ -34,8 +34,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>이 정리 작업 시점에 이전까지 {@code bootstrap.config}에 있던 코드는 실은 둘로 나뉜다는 게
  * 드러났다. {@code EventPublicationMaintenance}/{@code SchedulingConfig}/{@code SystemClockConfig}는
- * 어떤 business module도 참조하지 않는 domain-free 코드라 {@code com.ticket.shared.internal.config}로
- * 옮겼다. {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}(identity의 공개 계약
+ * 어떤 business module도 참조하지 않는 domain-free 코드라 처음에는 {@code com.ticket.shared}로
+ * 옮겼다가, bean을 등록하는 코드는 호출 대상 계약과 성질이 다르고 {@code sharedModules} 선언
+ * 때문에 모든 module 테스트에 함께 뜬다는 이유로 {@code com.ticket.config.internal}로 다시
+ * 옮겼다({@code com.ticket.shared.SharedModulePurityTest}가 그 규칙을 강제한다).
+ * {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}(identity의 공개 계약
  * {@code AuthenticatedMember} 참조)와, legacy {@code com.ticket.core.config}/
  * {@code com.ticket.core.infra.config}에 있던 {@code WebConfig}/{@code WebSocketConfig}/
  * {@code HttpServiceConfig}/{@code JwtConfig}(각각 identity·booking의 internal을 직접 참조)는
@@ -88,10 +91,9 @@ class ModularityTests {
      * (catalog/identity/admission은 상한을 비워 둬 "제한 없음"을 뜻한다), 실제로 관측되는 edge를
      * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. admission은 다른 module을
      * 참조하지 않는 기반 module이다(오류 계약과 응답 봉투를 뜻하는 error·shared는 예외다). {@code shared}는 {@code CursorPage}(catalog가 참조)·
-     * {@code CorsProperties}(identity·config가 참조) 같은 순수 범용 유틸리티와
-     * {@code UuidSupplier}(identity가 참조)·
-     * {@code SwaggerConfig}·{@code QuerydslConfig} 등 domain-free 기술 설정만 담아 다른 어떤
-     * module도 참조하지 않는 leaf고, 그래서 이 module들이 shared를 향한 edge를 갖는다.
+     * {@code CorsProperties}(identity·config가 참조)·{@code UuidSupplier}(identity가 참조) 같은
+     * <b>호출 대상 계약만</b> 담아 다른 어떤 module도 참조하지 않는 leaf고, 그래서 이 module들이
+     * shared를 향한 edge를 갖는다. 전역 {@code @Configuration}은 {@code config}가 소유한다.
      * {@code ApiResponse}/{@code ErrorMessage}/{@code SliceResponse} 응답 봉투도 shared에 있어
      * controller를 가진 module은 전부 shared를 향한 edge를 갖는다 — 자체 오류를 던지지 않는
      * {@code metadata}가 shared edge를 갖는 이유가 이것뿐이다.

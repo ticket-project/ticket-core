@@ -1,7 +1,11 @@
 package com.ticket.catalog;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import java.time.Clock;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -13,15 +17,22 @@ import org.springframework.modulith.test.ApplicationModuleTest;
  * 전역으로 바꾸는 대신 이 테스트에서만 자동 검증을 꺼서, 아직 {@code @ApplicationModule}을 붙이지 않은
  * 미래 모듈이 조용히 검증에서 빠지는 위험을 피한다.
  *
- * <p>STANDALONE bootstrap mode는 {@code com.ticket.catalog} package tree만 component-scan하지만,
- * catalog가 실제로 참조하는 {@code shared}는 {@code @Modulith(sharedModules = "shared")} 선언 덕에
- * 이 테스트에도 자동으로 포함된다({@code JPAQueryFactory}는 {@code shared.internal.config.QuerydslConfig},
- * {@code Clock}은 {@code shared.internal.config.SystemClockConfig}가 제공한다) — 그래서 이 테스트가
- * 로컬 stub으로 직접 채워야 하는 bean은 이제 없다. 로컬 stub을 남겨 두면 shared가 제공하는 진짜
- * bean과 이름이 겹쳐 {@code BeanDefinitionOverrideException}이 난다(실측 확인).
+ * <p>STANDALONE bootstrap mode는 {@code com.ticket.catalog} package tree만 component-scan한다.
+ * {@code shared}는 {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에도 포함되지만 이제
+ * 호출 대상 계약만 갖고 bean을 등록하지 않으므로(전역 기술 설정은 {@code com.ticket.config}가
+ * 소유한다), 스캔 범위 밖에서 오는 {@code JPAQueryFactory}와 {@code Clock}은 {@code @MockitoBean}으로
+ * 대체한다 — 이 테스트는 catalog bean들이 module 경계 안에서 서로 정상 배선되는지만 확인하는 wiring
+ * smoke test이지 실제 DB 접근이나 시간 계산을 검증하지 않는다. 그 검증은 각 Querydsl repository의
+ * 통합 테스트와 use case 테스트가 담당한다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class CatalogModuleTests {
+
+    @MockitoBean
+    private JPAQueryFactory jpaQueryFactory;
+
+    @MockitoBean
+    private Clock clock;
 
     @Test
     void bootstraps() {

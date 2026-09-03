@@ -1,4 +1,4 @@
-package com.ticket.shared.internal.config;
+package com.ticket.config.internal;
 
 import com.ticket.shared.UuidSupplier;
 import org.springframework.context.annotation.Bean;

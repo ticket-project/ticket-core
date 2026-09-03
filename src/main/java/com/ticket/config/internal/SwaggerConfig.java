@@ -1,4 +1,4 @@
-package com.ticket.shared.internal.config;
+package com.ticket.config.internal;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

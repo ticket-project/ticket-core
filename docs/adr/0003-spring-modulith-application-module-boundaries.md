@@ -51,7 +51,7 @@ identity  -> (없음)
 admission -> (없음)
 metadata  -> catalog, booking, identity
 showlike  -> catalog, identity
-shared    -> 모든 모듈이 참조할 수 있는 공유 자리(범용 유틸리티·domain-free 기술 설정, 아래 6번 참고)
+shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, 아래 6번 참고)
 config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
              (여러 module의 internal을 참조하는 composition-root module, 아래 9번 참고)
 ```
@@ -134,40 +134,59 @@ JPA 기반 registry 하나만 쓴다.
 `docs/superpowers/plans/2026-09-01-ticket-core-spring-modulith.md`의 Task 11 "추적 필요" 기록을
 본다.
 
-### 6. shared module: 범용 유틸리티와 domain-free 기술 설정
+### 6. shared module: 호출 대상 계약만 두는 자리
 
-`com.ticket.shared`는 여러 모듈이 공유할 최소 계약을 위한 자리로 남겨 뒀다. 처음에는 오류 계약을
+`com.ticket.shared`는 여러 모듈이 공유할 최소 계약을 위한 자리다. 처음에는 오류 계약을
 `ProblemDetail`/`BusinessProblem` 대신 기존 전역 구조로 되돌리면서(ADR 0002 참고) class가 하나도
-없었지만, 이후 두 갈래의 코드가 이 자리로 옮겨 왔다.
+없었고, 이후 범용 유틸리티와 domain-free 기술 설정 두 갈래가 이 자리로 옮겨 왔다. **그중 기술
+설정(`@Configuration`) 여덟 개는 다시 `config`로 옮겼다** — 아래 "왜 bean 등록을 두지 않는가"가 그
+근거다.
 
-- **범용 유틸리티**: 둘 이상의 독립 module에서 의미가 같고 특정 entity나 기술 adapter가 아닌
-  타입. 예: `RequiredInput`(입력 검증 계약, booking/catalog/identity/showlike가 참조),
-  `CursorPage`(커서 기반 페이지네이션, catalog가 참조), `CorsProperties`(CORS 허용 origin
-  `@ConfigurationProperties`, identity의 `SecurityConfig`와 `config`의 `WebSocketConfig`가 함께
-  참조 — 특정 module 전유물이 아니라 shared에 둔다).
-- **domain-free 기술 설정**: 어떤 business module도 참조하지 않는 순수 기술 `@Configuration`과
-  그 지원 타입. 예: `SwaggerConfig`, `P6SpyConfig`, `QuerydslConfig`, `UuidSupplierConfig`(공개
-  계약은 `com.ticket.shared.UuidSupplier`, identity가 참조), `RedissonConfig`,
-  `EventPublicationMaintenance`, `SchedulingConfig`, `SystemClockConfig`. 이들은 module 결합이
-  없어 그대로 `shared`에 둘 수 있다는 점에서 위 유틸리티와 같은 성질이다.
+`shared`에 두는 것은 **호출 대상 계약**뿐이다: 둘 이상의 독립 module이 의미 그대로 공유하고, 그
+타입을 쓰기 위해 어떤 스타터도 추가하지 않아도 되는 타입. 현재 `UuidSupplier`,
+`CorsProperties`(CORS 허용 origin `@ConfigurationProperties` 값 홀더 — 스스로 bean을 등록하지 않고,
+등록은 값을 쓰는 identity의 `SecurityConfig`가 `@EnableConfigurationProperties`로 한다), 응답 봉투
+4종(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)이 있다.
 
-  **`shared`에 두지 못한 반례**: `JpaAuditingConfig`/`SecurityContextAuditorAware`(JPA auditing이
-  채우는 감사자 id)는 identity의 공개 계약 `AuthenticatedMember`를 참조한다. 처음에는 이것만
-  예외로 `shared`에 두려 했으나, identity가 이미 `shared`(`RequiredInput`/`UuidSupplier`)를
-  참조하는 것과 맞물려 `identity ↔ shared` 순환이 되어 `ApplicationModules.verify()`가
-  실패했다(`com.ticket.ModularityTests.verifiesModuleStructure()`에서 실측 확인). 같은 이유로
-  `WebConfig`/`WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`도 shared에 둘 수 없다 — 이
-  넷은 애초에 특정 module의 `internal`을 직접 참조해 domain-free하지도 않다. 이 여섯 개는 대신
-  8번째 module `com.ticket.config`로 옮겼다(§9).
+**왜 bean 등록(`@Configuration`)을 두지 않는가.** 계약은 다른 module이 *불러 쓰는* 것이고
+`@Configuration`은 포함하는 것만으로 *적용되는* 것이다. 둘이 한 module에 있으면 `shared`를
+참조하는 쪽이 Redisson·Querydsl·Swagger·P6Spy 스택과 그 bean까지 강제로 함께 받아 "가져다 쓸 수
+있는 모듈"이 성립하지 않는다. 게다가 `TicketApplication`이 `@Modulith(sharedModules = "shared")`를
+선언하므로 `shared`는 **모든 `@ApplicationModuleTest`에 항상 포함된다** — bean 등록이 여기 있으면
+모든 module의 STANDALONE 테스트가 실제 Redis 연결까지 함께 띄우고, 그 배선이 module 테스트의
+성패를 좌우한다. 그래서 `SwaggerConfig`/`P6SpyConfig`/`QuerydslConfig`/`RedissonConfig`/
+`UuidSupplierConfig`/`EventPublicationMaintenance`/`SchedulingConfig`/`SystemClockConfig`를
+`com.ticket.config`로 옮겼고(§9), `com.ticket.shared.internal`은 비어 사라졌다. 이 규칙은
+`com.ticket.shared.SharedModulePurityTest`가 강제한다(`@Configuration`을 일부러 넣어 실패하는 것을
+실측 확인).
 
-`shared`에 두지 **않는** 것: business logic이나 특정 module에만 의미 있는 동작, 그리고 여러
-module의 internal을 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 후자를 shared에 두면
-shared가 사실상 모든 module과 결합돼 "safe to depend on without redeploy coupling"이라는 존재
-이유가 무너진다.
+옮기고 나서 module 테스트 두 개가 실제로 bean을 잃었다 — `CatalogModuleTests`(`JPAQueryFactory`·
+`Clock`)와 `BookingModuleTests`(`Clock`)는 `@MockitoBean`으로 대체했다. STANDALONE wiring smoke
+test가 진짜 DB·시계를 받지 않는 쪽이 격리에 맞고, 이 대체는 두 테스트가 이미 다른 외부 의존에
+쓰던 방식과 같다.
+
+**`shared`에 두지 못한 반례(기록 유지)**: `JpaAuditingConfig`/`SecurityContextAuditorAware`(JPA
+auditing이 채우는 감사자 id)는 identity의 공개 계약 `AuthenticatedMember`를 참조한다. 처음에는
+이것만 예외로 `shared`에 두려 했으나, identity가 이미 `shared`(`UuidSupplier`)를 참조하는 것과
+맞물려 `identity ↔ shared` 순환이 되어 `ApplicationModules.verify()`가 실패했다
+(`com.ticket.ModularityTests.verifiesModuleStructure()`에서 실측 확인). `WebConfig`/
+`WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`는 애초에 특정 module의 `internal`을 직접 참조해
+domain-free하지도 않다. 이 여섯 개도 `com.ticket.config`가 소유한다(§9).
+
+**아직 이 기준을 만족하지 못하는 것**: `CursorPage`는 실측상 `catalog`와 legacy `com.ticket.core`의
+showlike read 경로만 쓴다("둘 이상의 독립 module" 미달). legacy가 함께 쓰는 동안 `catalog.internal`로
+내리면 legacy → `catalog.internal` 참조가 새로 생기므로 이번에 옮기지 않았다. §4의 showlike read
+경로 정리가 끝나는 시점에 catalog 소유로 내린다. **이 문서는 이 gap을 해결된 것으로 서술하지
+않는다.**
+
+`shared`에 두지 **않는** 것: business logic, 특정 module에만 의미 있는 동작, bean을 등록하는 코드,
+그리고 여러 module의 internal을 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 마지막 것을
+shared에 두면 shared가 사실상 모든 module과 결합돼 "safe to depend on without redeploy coupling"
+이라는 존재 이유가 무너진다.
 
 `package-info.java`가 애노테이션 없이 비어 있으면 javac가 `package-info.class`를 만들지 않아
 Spring Modulith가 이 패키지 자체를 못 보므로, `@ApplicationModule(displayName = "Shared")`만
-선언해 class 없이도 7번째 module로 잡히게 했다(지금은 class가 있어도 이 선언은 그대로 유지한다).
+선언해 class 없이도 module로 잡히게 했다(지금은 class가 있어도 이 선언은 그대로 유지한다).
 `TicketApplication`은 계속 `@Modulith(sharedModules = "shared")`를 선언한다.
 
 ### 7. Module-aware Flyway와 물리 데이터 경계
@@ -199,11 +218,18 @@ identity/booking의 필요한 internal만 좁게 열 수 있음을 확인한 뒤
 하는 임시 조치), Modulith 검증에서 완전히 빠지는 이 자리가 그 도피처로 남는다 — `config`보다
 느슨하고 감시가 없는 대신, 남용 시 눈에 잘 띄지 않는다는 trade-off가 있다.
 
-### 9. config: 여러 module의 internal을 참조하는 composition-root module
+### 9. config: 전역 배선을 소유하는 composition-root module
 
 `com.ticket.config`는 8번째 Application Module이다. `shared`(§6)와 반대되는 존재 이유를 갖는다 —
-`shared`는 module 결합이 전혀 없어야 하고, `config`는 정확히 그 반대로 **특정 module의 internal을
-알아야만 배선할 수 있는 전역 기술 설정**이 있을 자리다. 그런 코드를 특정 module 소유로 두면 그
+`shared`는 다른 module이 **호출하는 계약**만 갖고 bean을 등록하지 않으며, `config`는 정확히 그
+반대로 **앱에 적용되는 전역 배선**이 있을 자리다. 두 갈래를 소유한다: (a) 특정 module의 internal을
+알아야만 배선할 수 있는 설정(아래 표), (b) 어떤 business module도 참조하지 않는 domain-free 전역
+기술 설정(`SwaggerConfig`, `P6SpyConfig`, `QuerydslConfig`, `RedissonConfig`, `UuidSupplierConfig`,
+`EventPublicationMaintenance`, `SchedulingConfig`, `SystemClockConfig` — §6에서 `shared`로부터 옮겨
+왔다). (b)는 module 결합이 없어 `shared`에 둘 수도 있어 보이지만 bean을 등록한다는 점에서 계약과
+성질이 다르고, `sharedModules` 선언 때문에 모든 module 테스트에 함께 뜬다(§6).
+그런 전역 기술 설정을 특정 module 소유로 두면 그 module이 나머지 module을 부당하게 참조하는
+것처럼 보이게 되므로, 애초에 module 후보에서 뺀다. 그런 코드를 특정 module 소유로 두면 그
 module이 나머지 module들을 부당하게 참조하는 것처럼 보이게 되므로, 애초에 module 후보에서 뺀다.
 `bootstrap`(§8)과 달리 이 module은 Modulith 검증에서 제외되지 않는다 — 정식 module로 선언되고
 Spring Modulith의 `@NamedInterface`로 필요한 internal package만 좁혀 열어, 무엇을 얼마나

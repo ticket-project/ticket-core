@@ -32,7 +32,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(beanOf("com.ticket.booking.internal.domain.order.repository.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.internal.application.BookingEventListeners")).isNotNull();
-        assertThat(beanOf("com.ticket.shared.internal.config.EventPublicationMaintenance")).isNotNull();
+        assertThat(beanOf("com.ticket.config.internal.EventPublicationMaintenance")).isNotNull();
     }
 
     /**

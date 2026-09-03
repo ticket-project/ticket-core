@@ -1,4 +1,4 @@
-package com.ticket.shared.internal.config;
+package com.ticket.config.internal;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
