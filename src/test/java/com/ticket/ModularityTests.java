@@ -33,16 +33,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  * legacy와 같다(참조하는 module에 따라 결합이 거짓으로 잡히는 것을 막는다)는 점뿐이고, "언젠가
  * 이동해서 없어진다"는 legacy의 성질은 없다.
  *
- * <p>이 정리 작업 시점에는 이전까지 {@code bootstrap.config}에 있던 순수 기술 설정
- * ({@code EventPublicationMaintenance}, {@code SchedulingConfig}, {@code SystemClockConfig})이
+ * <p>이 정리 작업 시점에 이전까지 {@code bootstrap.config}에 있던 순수 기술 설정
+ * ({@code EventPublicationMaintenance}, {@code SchedulingConfig}, {@code SystemClockConfig})은
  * 실은 어떤 business module의 internal도 보지 않는 domain-free 코드였음이 드러나
- * {@code com.ticket.shared.internal.config}로 옮겨졌고, 그 결과 {@code com.ticket.bootstrap}에는
- * 당장 production class가 없다 — 그래도 이 자리 자체는 계속 필요하다. {@code WebConfig}/
- * {@code WebSocketConfig}/{@code HttpServiceConfig}/{@code JwtConfig}(현재
- * {@code com.ticket.core.config}/{@code com.ticket.core.infra.config}에 legacy로 남아 있다)가
- * identity(그리고 {@code WebSocketConfig}는 booking)의 internal을 직접 참조해 이 자리로 옮길
- * 후보이지만, 그러려면 먼저 identity/booking이 각자 필요한 최소 공개 API를 노출해야 한다 — 그
- * 작업은 아직 하지 않은 후속 과제다.
+ * {@code com.ticket.shared.internal.config}로 옮겼다. 반대로 {@code JpaAuditingConfig}/
+ * {@code SecurityContextAuditorAware}(JPA auditing이 채우는 감사자 id)는 identity의 공개 계약
+ * {@code AuthenticatedMember}를 참조하는데, {@code shared}에 두면 {@code identity}가 이미
+ * {@code shared}를 참조하는 것과 맞물려 module 간 순환(cycle)이 되어 {@code verifiesModuleStructure()}가
+ * 실패한다 — 그래서 이 둘은 {@code bootstrap.config}에 남았고, 이게 바로 "여러 module의 internal/공개
+ * 계약을 동시에 알아야 하는 코드"의 실제 사례다. {@code WebConfig}/{@code WebSocketConfig}/
+ * {@code HttpServiceConfig}/{@code JwtConfig}(현재 {@code com.ticket.core.config}/
+ * {@code com.ticket.core.infra.config}에 legacy로 남아 있다)도 identity(그리고
+ * {@code WebSocketConfig}는 booking)의 internal을 직접 참조해 이 자리로 옮길 후보이지만, 그러려면
+ * 먼저 identity/booking이 각자 필요한 최소 공개 API를 노출해야 한다 — 그 작업은 아직 하지 않은
+ * 후속 과제다.
  *
  * <p>기본 {@code direct-sub-packages} 감지 전략은 root 직접 하위 package를 모두 후보 module로
  * 보므로, 이 legacy package들과 {@code bootstrap}을 그대로 두면 서로 얽힌 참조가 닫힌 module
@@ -83,10 +87,11 @@ class ModularityTests {
      * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. admission은 다른 module을
      * 참조하지 않는 기반 module이다. {@code shared}는 {@code RequiredInput}(booking/catalog/
      * identity/showlike가 참조)·{@code CursorPage}(catalog가 참조) 같은 순수 범용 유틸리티와
-     * {@code SwaggerConfig}·{@code QuerydslConfig} 등 domain-free 기술 설정을 담는데, 그중
-     * {@code SecurityContextAuditorAware}(JPA auditing이 감사자 id를 채우는 데 쓴다)만
-     * {@code identity.AuthenticatedMember}(공개 계약)를 참조해 shared가 identity를 향한 edge를
-     * 하나 갖는다. 그 밖의 shared 코드는 어떤 module도 참조하지 않는다.
+     * {@code UuidSupplier}(identity가 참조)·{@code SwaggerConfig}·{@code QuerydslConfig} 등
+     * domain-free 기술 설정만 담아 다른 어떤 module도 참조하지 않는 leaf고, 그래서 이 module들이
+     * shared를 향한 edge를 갖는다. identity의 공개 계약을 참조하는 {@code SecurityContextAuditorAware}는
+     * 그래서 shared가 아니라 {@code bootstrap}에 있다(클래스 javadoc 참고) — shared에 두면
+     * identity·shared가 서로를 향하는 순환이 된다.
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.of(
             "booking", Set.of("catalog", "identity", "admission", "shared"),
@@ -95,7 +100,7 @@ class ModularityTests {
             "admission", Set.of(),
             "showlike", Set.of("catalog", "identity", "shared"),
             "metadata", Set.of("catalog", "booking", "identity"),
-            "shared", Set.of("identity")
+            "shared", Set.of()
     );
 
     @Test

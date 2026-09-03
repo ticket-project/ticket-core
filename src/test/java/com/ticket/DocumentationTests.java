@@ -31,10 +31,14 @@ class DocumentationTests {
 
     private static final String OUTPUT_FOLDER = "build/spring-modulith-docs";
 
-    /** com.ticket.ModularityTests와 같은 legacy 제외 predicate다. 어긋나면 두 테스트가 따로 깨진다. */
+    /**
+     * com.ticket.ModularityTests와 같은 legacy 제외 predicate다. 어긋나면 두 테스트가 따로 깨진다.
+     * {@code bootstrap}이 "아직 이동하지 않은 legacy"가 아니라 영구 composition-root 예외인 이유는
+     * {@code ModularityTests}의 클래스 javadoc 참고.
+     */
     private static final DescribedPredicate<JavaClass> LEGACY_PACKAGES = DescribedPredicate.describe(
-            "com.ticket.core, com.ticket.bootstrap, com.ticket.storage, com.ticket.support 아래의 "
-                    + "아직 이동하지 않은 legacy 코드",
+            "com.ticket.core, com.ticket.storage, com.ticket.support 아래의 아직 이동하지 않은 legacy "
+                    + "코드, 그리고 com.ticket.bootstrap의 영구 composition-root 코드",
             DocumentationTests::isLegacy);
 
     @Test
