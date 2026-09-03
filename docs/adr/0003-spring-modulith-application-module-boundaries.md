@@ -46,21 +46,21 @@ production/test 소스를 루트 `src/main`, `src/test`로 합쳤다. `settings.
 
 ```text
 booking   -> catalog, identity, admission
-catalog   -> (없음)
+catalog   -> identity (§11)
 identity  -> (없음)
 admission -> (없음)
 metadata  -> catalog, booking, identity
-showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, 아래 6번 참고)
 web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, 아래 10번 참고)
 error     -> web (오류를 HTTP 본문으로 옮길 때만)
 config    -> identity (공개 계약 AuthenticatedMember만. 전역 배선 module, 아래 9번 참고)
 ```
 
-순환은 없다. `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이고,
-`booking`과 `showlike`가 그 위에 얹히며, `metadata`가 세 모듈의 공개 계약을 조합만 한다. `shared`와
-`web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 identity/booking의 특정 internal package와
-shared를 참조하지만 반대로 `config`를 참조하는 모듈은 없다.
+순환은 없다. `identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `catalog`는
+찜(showlike) 흡수로 회원 존재 확인을 위해 identity를 참조한다(§11). `booking`이 그 위에 얹히며,
+`metadata`가 세 모듈의 공개 계약을 조합만 한다. `shared`와 `web`은 어떤 모듈도 참조하지 않는
+leaf고, `config`는 identity/booking의 특정 internal package와 shared를 참조하지만 반대로
+`config`를 참조하는 모듈은 없다.
 
 **`shared`/`error`/`web`은 `@Modulith(sharedModules = ...)`로 선언한다.** 업무 의미가 없고 거의 모든
 모듈이 참조하는 leaf 계약이라 각 모듈 `allowedDependencies`에 일일이 적지 않고 전역 허용으로 두며,
@@ -87,18 +87,10 @@ shared를 참조하지만 반대로 `config`를 참조하는 모듈은 없다.
 `metadata`처럼 code/label만 조합하는 모듈은 각 모듈이 공개한 `*Metadata` 계약(`CatalogMetadata`,
 `BookingMetadata`, `IdentityMetadata`)만 주입받고 어떤 모듈의 internal enum도 import하지 않는다.
 
-**알려진 예외(추적 중인 기술 부채)**: `showlike` 모듈은 이 원칙을 완전히 만족하지 못한다.
-`identity`의 `/me/likes` 엔드포인트와 `catalog`의 공연 상세 `likeCount` 조회가 legacy
-`com.ticket.core.domain.showlike.model.ShowLike`(entity, 여전히 `Member`/`Show`에
-`@ManyToOne`)를 직접 참조하기 때문에, 이 부분을 옮기면 `identity ↔ showlike`,
-`catalog ↔ showlike` 순환이 생긴다. write 경로(`AddShowLikeUseCase` 등)만
-`com.ticket.showlike`로 옮겨 `MemberLookup`/`ShowLookup`을 쓰게 했고, 위 read 경로 관련 클래스는
-의도적으로 legacy에 남겨 `com.ticket.ModularityTests`의 legacy 제외 predicate로 검증 대상에서
-뺐다. 정리 순서와 옮기지 못한 정확한 클래스 목록은
-`src/main/java/com/ticket/showlike/package-info.java`(대칭적으로 `catalog`/`identity`의
-package-info)에 있다. **이 문서는 이 gap을 해결된 것으로 서술하지 않는다** — identity의
-`/me/likes`를 showlike로 옮기거나 catalog의 `likeCount` 조회 방식을 바꾸는 별도 후속 작업이
-끝난 뒤에만 완결된다.
+**해결된 예외**: `showlike`는 한때 별도 module이었고 write 경로(`AddShowLikeUseCase` 등)만
+`com.ticket.showlike`로, entity와 read 경로는 `identity ↔ showlike`/`catalog ↔ showlike` 순환
+때문에 legacy에 남겨 뒀었다. 이후 §11에서 찜 전체(개수·추가·삭제·내 목록)를 catalog module로
+흡수해 이 gap을 완결했다 — showlike module과 legacy 잔존분 모두 지금은 없다.
 
 ### 5. Spring Modulith 이벤트와 JPA Event Publication Registry
 
@@ -183,11 +175,10 @@ auditing이 채우는 감사자 id)는 identity의 공개 계약 `AuthenticatedM
 `WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`는 애초에 특정 module의 `internal`을 직접 참조해
 domain-free하지도 않다. 이 여섯 개도 `com.ticket.config`가 소유한다(§9).
 
-**아직 이 기준을 만족하지 못하는 것**: `CursorPage`는 실측상 `catalog`와 legacy `com.ticket.core`의
-showlike read 경로만 쓴다("둘 이상의 독립 module" 미달). legacy가 함께 쓰는 동안 `catalog.internal`로
-내리면 legacy → `catalog.internal` 참조가 새로 생기므로 이번에 옮기지 않았다. §4의 showlike read
-경로 정리가 끝나는 시점에 catalog 소유로 내린다. **이 문서는 이 gap을 해결된 것으로 서술하지
-않는다.**
+**아직 이 기준을 만족하지 못하는 것**: §11에서 찜(showlike)이 catalog로 흡수되며 `CursorPage`를
+실제로 쓰는 곳이 `catalog` 하나만 남았다("둘 이상의 독립 module" 미달). `shared`에 남겨 둔 채
+`catalog.internal`로 내리지 않았다 — 이 gap을 해결된 것으로 서술하지 않는다. `catalog.internal`로
+내리는 작업은 별도로 결정한다.
 
 `shared`에 두지 **않는** 것: business logic, 특정 module에만 의미 있는 동작, bean을 등록하는 코드,
 그리고 여러 module의 internal을 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 마지막 것을
@@ -294,7 +285,7 @@ REST 응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는
 - **`sharedModules`로 선언한다**: `shared`·`error`와 같은 관례다(§3). 각 module의
   `allowedDependencies`에는 업무 module 의존만 남고, 어느 module이 실제로 web을 참조하는지는
   `ModularityTests.APPROVED_DEPENDENCY_DAG`가 고정한다(현재 admission·booking·catalog·identity·
-  metadata·showlike·error). 그 대신 이 module에도 bean을 등록하는 코드를 두지 않는다 —
+  metadata·error). 그 대신 이 module에도 bean을 등록하는 코드를 두지 않는다 —
   `sharedModules`는 web을 모든 `@ApplicationModuleTest`에 포함시키므로 §6과 같은 이유가 그대로
   적용된다.
 - **`internal`이 없다**: 구현이랄 것이 없고 전부 다른 module이 쓰는 공개 계약이라 module root에만
@@ -305,7 +296,41 @@ REST 응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는
 필드 이름, `SliceResponse`의 커서 필드는 그대로다. `ticket-fe`와 `gatling-test`가 이 모양에
 의존하므로 package 이동만 하고 타입 구조는 손대지 않았다.
 
-## 승인된 것 외에 결정하지 않은 것
+### 11. showlike 흡수: catalog가 찜을 소유한다
+
+`com.ticket.showlike` module을 지우고 찜(개수·추가·삭제·내 찜 목록)을 전부 catalog가
+소유하게 했다. §4가 "알려진 예외"로 기록했던 `identity ↔ showlike`/`catalog ↔ showlike` 순환을
+해소하는 결정이다.
+
+**왜 역전 port나 이벤트 기반 projection이 아니라 흡수인가.** 둘 다 순환의 방향은 없애지만 결합
+자체는 남긴다 — catalog가 여전히 showlike가 소유한 데이터를 실시간으로 필요로 한다는 사실은
+바뀌지 않는다. 좋아요 개수는 `Show.viewCount`와 같은 성격의 파생 지표이지 독자적인 업무가
+아니라는 판단이 근거다("찜하기/해제하기"도 Show를 설명하는 부가 동작으로 본다). 반면 "내 찜
+목록"(`GET /api/v1/members/me/likes`)은 회원 관점 조회라 identity에 남기는 방안도 검토했지만,
+그러면 identity가 catalog의 찜 데이터를 조회해야 해서(identity → catalog) catalog의 회원 확인
+참조(catalog → identity)와 만나 순환이 그대로 재발한다. 그래서 찜에 관한 모든 것을 한 module에
+모아 순환의 여지 자체를 없앴다.
+
+**바뀐 것**:
+- `ShowLike.member`를 identity `Member`에 대한 `@ManyToOne`에서 scalar `memberId` column으로
+  바꿨다(§4의 "모듈 간 참조는 scalar ID와 공개 API로만" 원칙). `ShowLike.show`는 같은 module
+  안이라 `@ManyToOne` 그대로다.
+- `catalog`가 회원 존재 확인을 위해 identity의 `MemberLookup`을 참조한다(§3의 DAG에 반영,
+  단방향). booking이 `Order.memberId`를 위해 identity를 참조하는 것과 같은 패턴이다.
+- `GET /api/v1/members/me/likes`의 controller가 identity에서 catalog로 옮겨졌다. URL 문자열은
+  Java package와 무관하므로 옮겨도 외부 계약(FE, gatling-test)에 영향이 없다.
+- 오류 코드 `E7001`(이미 찜한 공연)을 `CatalogErrorCode`가 흡수했다. 코드 값은 외부 계약이라
+  그대로 유지했다 — `E7xxx` 대역이 "공연"으로 묶여 있어 원래도 module 경계와 어긋나 있었다.
+- `member_id` FK 제약이 남아있을 환경을 위해 booking의
+  `V1__drop_performance_seat_cross_module_fk.sql`과 같은 패턴의 방어적 Flyway migration을
+  `db/migration-vendor/{h2,oracle}/catalog`에 추가했다(존재 여부를 동적으로 확인, 없으면 no-op).
+
+**함께 사라진 것**: `com.ticket.core`에 legacy로 남아 있던 찜 read 경로(§4가 기록한 부분)도 이
+흡수로 함께 정리돼 `com.ticket.core`가 완전히 비었다. declared module 개수는 `showlike`가
+없어지며 10개다(`com.ticket.ModularityTests` 참고).
+
+**바뀌지 않고 남은 gap**: `CursorPage`를 `catalog` 하나만 쓰게 됐지만 `shared`에서 내리지
+않았다(§6 참고) — 별도로 결정한다.
 
 - **모듈 발견 전략**은 기본값(`direct-sub-packages`)을 그대로 둔다. `explicitly-annotated`로
   바꾸는 안을 검토했지만, `@ApplicationModule` 선언을 빼먹은 미래 모듈을 조용히 통과시킬 수 있어
@@ -318,9 +343,11 @@ REST 응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는
   노출, profile별 `spring.modulith.runtime.verification-enabled`)은 계속 진행 중인 별도 작업의
   범위다. 이 ADR은 검증 메커니즘 자체가 `ModularityTests`에 있다는 사실만 전제하고, 그 구현
   세부사항을 여기서 단정하지 않는다.
-- **legacy `com.ticket.core`/`storage`/`support`의 완전 제거**는 이 ADR의 범위가 아니다. 남은
-  코드(오류 처리, showlike read 경로)는 아직 이동 대상 후보로 남아 있다. 시드 러너(옛
-  `core.infra.seed`)는 이후 정리에서 10번째 module `com.ticket.seed`로 옮겨졌다 — 특정
+- **legacy `com.ticket.core`/`storage`/`support`**: `com.ticket.core`는 §11의 찜(showlike) 흡수로
+  지금 production class가 하나도 없다. 다만 `com.ticket.ModularityTests`의 legacy 제외
+  predicate와 `com.ticket.core.infra.support`의 test-support 기반 클래스(여러 module 테스트가
+  함께 쓴다)는 아직 남아 있다 — 이 정리는 이 ADR의 범위가 아니다. 시드 러너(옛
+  `core.infra.seed`)는 이후 정리에서 `com.ticket.seed`라는 별도 module로 옮겨졌다 — 특정
   module이 전유하지 않고 여러 module의 테이블을 raw SQL로 적재하므로 `bootstrap`(§8)이 아니라
   정식 module로 두고, 부하 테스트 회원만 identity가 `@NamedInterface("seed")`로 좁혀 연
   `member.command` package를 통해 만든다.

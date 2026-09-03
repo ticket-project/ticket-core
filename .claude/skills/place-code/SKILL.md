@@ -23,7 +23,7 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | Show, Performance, Seat, 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차·좌석 조회 | `catalog` |
 | Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `identity` |
 | admission token 설정·decode·검증 | `admission` |
-| Show 좋아요 write 경로(추가/삭제/상태 조회) | `showlike`(read 경로는 아래 "showlike 예외" 참고) |
+| Show 좋아요(찜) 개수·추가·삭제·내 찜 목록 | `catalog`(Show의 부가 속성으로 취급, "showlike 흡수" 참고) |
 | catalog/booking/identity가 공개한 code/label 조합 | `metadata` |
 | 둘 이상 독립 모듈이 의미 동일하게 공유하고 프로토콜·프레임워크 결합이 없는 호출 대상 계약(`UuidSupplier`, `CorsProperties`, `CursorPage`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
 | REST 응답 표현 계약(응답 봉투 `ApiResponse`/`ErrorMessage`/`ResultType`, 무한스크롤 `SliceResponse`) — bean은 두지 않는다 | `web` |
@@ -143,14 +143,14 @@ com/ticket/<module>/internal/exception/
 
 배경은 `docs/adr/0002-module-owned-error-contracts.md`가 원본이다.
 
-### showlike 예외
+### showlike 흡수
 
-`showlike`의 write 경로(`AddShowLikeUseCase` 등)만 `showlike.internal`로 옮겨졌다. read 경로
-(`GetMyShowLikesUseCase`, `ShowLike` entity 등)는 identity의 `/me/likes`와 catalog의
-`likeCount` 조회가 직접 참조하고 있어 legacy(`com.ticket.core.*.showlike`)에 남아 있다. 이
-gap을 조용히 옮기지 않는다 — 옮기려면 identity/catalog의 해당 참조를 먼저 끊어야 하고, 순환이
-생기지 않는지 `ModularityTests`로 확인해야 한다. 상세는 `docs/architecture.md`의
-"showlike 모듈의 경계"와 `src/main/java/com/ticket/showlike/package-info.java`를 본다.
+찜(개수·추가/삭제·내 찜 목록)은 `showlike`라는 별도 module이 아니라 `catalog.internal`에
+있다. `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/`GetShowLikeStatusUseCase`/
+`GetMyShowLikesUseCase`와 `ShowLike` entity 모두 catalog 소유다. 좋아요 개수는
+`Show.viewCount`와 같은 성격의 파생 지표라는 판단으로, catalog가 회원 존재 확인을 위해
+identity의 `MemberLookup`을 참조한다(단방향). 상세 배경은
+`docs/adr/0003-spring-modulith-application-module-boundaries.md` §11을 본다.
 
 ## 4. 자주 틀리는 지점
 

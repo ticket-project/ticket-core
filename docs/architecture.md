@@ -22,20 +22,23 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
 ├── booking/                 # 좌석 판매 상태·Selection·Hold·Order, 공개: BookingMetadata, OrderStarted/OrderTerminated
-├── catalog/                 # Show·Performance·Seat·대기열 정책, 공개: BookingPolicyLookup, ShowLookup, CatalogMetadata
+├── catalog/                 # Show·Performance·Seat·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, CatalogMetadata
 ├── identity/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, IdentityMetadata
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
-├── showlike/                 # Show 좋아요(write 경로만 이동, 아래 "showlike 모듈의 경계" 참고)
 ├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
 ├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
 │                                scheduling/clock/UUID/event publication + JpaAuditingConfig)
-├── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
-└── core/, bootstrap/, storage/   # core/storage는 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존
-    범위"). support는 독립 top-level이 아니라 core/support 아래 nested. bootstrap은 legacy가 아니라
-    영구 composition-root 예외 자리이며 지금은 비어 있다.
+└── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
 ```
+
+`com.ticket.core`는 완전히 비었다 — 남았던 찜(showlike) 관련 코드가 모두 catalog로 옮겨졌다.
+`com.ticket.bootstrap`은 legacy가 아니라 영구 composition-root 예외 자리이며 지금 production
+class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스트가 함께 쓰는 test-support
+기반 클래스(`ReadRepositoryTestSupport`/`InfraReadRepositoryTestSupport`)는 아직
+`src/test/java/com/ticket/core/infra/support`에 남아 있다 — 이건 legacy 정리 대상이 아니라
+별도로 결정할 test 인프라 소유권 문제라 이번 범위에서 건드리지 않았다.
 
 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
 두고, 실제 구현(web/application/domain/infrastructure)은 모두 `<module>.internal` 아래에 둔다.
@@ -45,11 +48,10 @@ src/main/java/com/ticket
 
 ```text
 booking   -> catalog, identity, admission
-catalog   -> (없음)
+catalog   -> identity
 identity  -> (없음)
 admission -> (없음)
 metadata  -> catalog, booking, identity
-showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, bean 등록 없음)
 web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, bean 등록 없음)
 error     -> web (오류를 HTTP 본문으로 옮길 때만)
@@ -62,12 +64,13 @@ seed      -> identity :: seed
 셋을 참조하는지는 `ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정하므로, HTTP를
 노출하지 않던 모듈에 응답 봉투가 새로 들어오면 그 테스트가 실패한다.
 
-`catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `booking`과
-`showlike`가 그 위에 얹히고, `metadata`는 세 모듈의 공개 계약만 조합한다. `shared`와 `web`은 어떤
-모듈도 참조하지 않는 leaf고, `config`는 identity의 공개 계약(`AuthenticatedMember`)과 shared를
-참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로
-적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은
-없다. 이 DAG를 바꾸려면 먼저
+`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `catalog`는 찜(showlike)
+흡수로 회원 존재 확인을 위해 identity를 참조한다(`MemberLookup`) — booking이
+`Order.memberId`를 위해 identity를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹히고,
+`metadata`는 세 모듈의 공개 계약만 조합한다. `shared`와 `web`은 어떤 모듈도 참조하지 않는
+leaf고, `config`는 identity의 공개 계약(`AuthenticatedMember`)과 shared를 참조하지만 `config`를
+참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로 적재하고, 부하 테스트 회원만
+identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은 없다. 이 DAG를 바꾸려면 먼저
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 갱신한다.
 
 **모듈 발견 전략은 기본값(`direct-sub-packages`)이다.** `explicitly-annotated`로 바꾸면
@@ -95,22 +98,20 @@ seed      -> identity :: seed
 - **`metadata`는 어떤 모듈의 internal enum/entity/repository도 import하지 않는다.** 각 모듈이
   공개한 `*Metadata` 계약(`CatalogMetadata`, `BookingMetadata`, `IdentityMetadata`)만 주입받는다.
 
-### showlike 모듈의 경계 — 완결되지 않은 상태를 그대로 기록한다
+### 찜(showlike)은 catalog가 흡수한다
 
-`showlike`는 write 경로(`AddShowLikeUseCase`/`RemoveShowLikeUseCase`/
-`GetShowLikeStatusUseCase`와 이를 노출하는 controller)만 `com.ticket.showlike.internal`로
-옮겼고, read 경로는 legacy에 남아 있다. identity의 `MemberController`(`GET /me/likes`)와
-catalog의 `QuerydslShowDetailReadRepository`(공연 상세 `likeCount`)가 legacy
-`com.ticket.core.domain.showlike.model.ShowLike`(entity, 여전히 `Member`/`Show`에
-`@ManyToOne`)를 직접 참조하기 때문에, 이 부분을 옮기면 승인된 DAG를 벗어난
-`identity ↔ showlike`, `catalog ↔ showlike` 순환이 생긴다. 그래서 의도적으로 legacy에 남겨 뒀고
-`ModularityTests`의 legacy 제외 predicate가 검증에서 뺀다.
+찜 개수·추가·삭제·내 찜 목록은 모두 catalog가 소유한다. 원래는 별도 module
+(`com.ticket.showlike`)이었지만, catalog의 공연 상세가 좋아요 개수를 얻으려면 찜 데이터를
+참조해야 하고(catalog → showlike) showlike의 write 경로는 공연 존재 확인을 위해 catalog를
+참조해야 해서(showlike → catalog) 두 module 사이에 순환이 생겼다. "내 찜 목록"
+(`/api/v1/members/me/likes`)까지 identity에 남기면 회원 관점 조회 때문에 identity와 같은
+순환이 재발하므로, 찜에 관한 모든 것을 catalog 하나로 흡수해 순환의 여지 자체를 없앴다.
 
-**이것은 버그가 아니라 기록된 후속 작업이다.** 정리하려면 identity의 `/me/likes`를 showlike로
-옮기거나 catalog의 `likeCount` 조회 방식을 바꾼(예: 이벤트 기반 local projection) 뒤에야 `ShowLike`를
-scalar ID로 바꾸고 나머지를 옮길 수 있다. 옮기지 못한 정확한 클래스 목록과 이유는
-`src/main/java/com/ticket/showlike/package-info.java`(대칭적으로 `catalog`/`identity`의
-package-info)에 있다. 이 gap을 해결된 것으로 서술하지 않는다.
+개수는 `Show.viewCount`와 같은 성격의 파생 지표이지 독자적인 업무가 아니라는 판단이 근거다.
+`ShowLike.member`는 identity Member에 대한 `@ManyToOne` 대신 scalar `memberId` column이고
+(module을 넘나드는 JPA 연관관계는 금지), `ShowLike.show`는 같은 module 안이라 `@ManyToOne` 그대로
+쓴다. catalog는 회원 존재 확인을 위해 identity의 `MemberLookup`을 참조한다(단방향, 순환 없음).
+URL·JSON 계약(`/api/v1/likes/**`, `/api/v1/members/me/likes`)은 흡수 전과 동일하다.
 
 ## 이벤트와 후속 처리
 
@@ -148,24 +149,20 @@ Jackson·Swagger에 결합된 REST 표현 계약이고 이 앱의 모든 채널�
 오류를 던지던 `shared.RequiredInput`이 지워진 이유이기도 하다.
 
 E-code 값은 외부 계약이다. `gatling-test`가 `E4001`·`E6000`·`E6003`을 하드코딩하므로 소유 모듈이
-바뀌어도 재번호하지 않는다(그래서 E7001은 showlike, E7002는 catalog처럼 대역과 모듈 경계가
-어긋난 곳이 있다). 전역 유일성은 `com.ticket.error.ErrorCodeUniquenessTest`가, 모듈 handler가
-자기 오류만 잡는지는 `ExceptionHandlerScopeTest`가 강제한다.
+바뀌어도 재번호하지 않는다. 전역 유일성은 `com.ticket.error.ErrorCodeUniquenessTest`가, 모듈
+handler가 자기 오류만 잡는지는 `ExceptionHandlerScopeTest`가 강제한다.
 
 배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)가 원본이다.
 
 ## 레거시 잔존 범위
 
-`com.ticket.core`/`com.ticket.storage`/`com.ticket.support`는 아직 Application Module로 옮기지
-않은 코드다. `ModularityTests`가 명시 predicate로 검증에서 제외한다. `com.ticket.bootstrap`도 같은
-predicate로 제외되지만 성격은 다르다 — legacy가 아니라 영구적인 composition-root 예외 자리다(지금은
-production class가 없다). 근거와 경계는
+`com.ticket.core`/`com.ticket.storage`/`com.ticket.support`는 Application Module로 옮기지 않은
+legacy 패키지를 위한 자리이고, `ModularityTests`가 명시 predicate로 검증에서 제외한다.
+`com.ticket.core`는 지금 production class가 없다 — 마지막까지 남아 있던 찜(showlike) 관련
+코드가 catalog로 흡수되며 완전히 비었다. `com.ticket.bootstrap`도 같은 predicate로 제외되지만
+성격은 다르다 — legacy가 아니라 영구적인 composition-root 예외 자리다(지금은 production
+class가 없다). 근거와 경계는
 [ADR 0003 §8](adr/0003-spring-modulith-application-module-boundaries.md)이 원본이다.
-
-레거시로 현재 남아 있는 것:
-
-- showlike read 경로(`core.app.showlike`, `core.domain.showlike`, `core.infra.showlike`) — 위
-  [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
 
 전역 기술 설정은 legacy가 아니다 — **어떤 업무 모듈도 참조하지 않는 `@Configuration`은
 `com.ticket.config`가 소유한다**(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson,
