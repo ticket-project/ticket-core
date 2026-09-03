@@ -21,9 +21,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
  *
  * <p><b>{@code com.ticket.ModularityTests}와 겹치지 않는다.</b> 여기서 보는 계층은 모두
  * {@code com.ticket.core.*} 아래에 있고, {@code ModularityTests}는 이 package 전체를 legacy로
- * 분석 대상에서 뺀다(아직 7개 Application Module로 옮기지 못한 코드라서). 즉 Spring Modulith의
+ * 분석 대상에서 뺀다(아직 8개 Application Module로 옮기지 못한 코드라서). 즉 Spring Modulith의
  * {@code ApplicationModules.verify()}는 이 package 안의 계층 방향을 전혀 검사하지 않으므로, 이
- * ArchUnit rule을 지워도 그 자리를 대신 채워줄 검증이 없다. 코드가 7개 module로 완전히 옮겨져
+ * ArchUnit rule을 지워도 그 자리를 대신 채워줄 검증이 없다. 코드가 8개 module로 완전히 옮겨져
  * {@code com.ticket.core}가 사라지는 날 이 파일도 함께 지운다.
  */
 @AnalyzeClasses(
