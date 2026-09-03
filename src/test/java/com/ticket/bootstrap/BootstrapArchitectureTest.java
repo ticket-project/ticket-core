@@ -5,7 +5,6 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
@@ -16,9 +15,13 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *
  * <p>{@code com.ticket.ModularityTests}와 겹치지 않는다 — {@code com.ticket.bootstrap}은
  * {@code com.ticket.core}/{@code storage}/{@code support}와 함께 legacy로 분석 대상에서 빠진다.
- * Spring Modulith는 실행 모듈이 도메인을 우회하는지, background trigger가 정해진 package에
- * 있는지 전혀 검사하지 않는다. bootstrap이 7개 module 체계 안으로 정리되는 날 이 파일도
- * 다시 검토한다.
+ * Spring Modulith는 실행 모듈이 도메인을 우회하는지 전혀 검사하지 않는다. bootstrap이 7개
+ * module 체계 안으로 정리되는 날 이 파일도 다시 검토한다.
+ *
+ * <p>{@code background_트리거는_worker_패키지에_모은다} 규칙은 뺐다 — 후속 정리로 유일한
+ * {@code *Trigger} 클래스({@code OrderExpirationTrigger})가 booking module로 옮겨져
+ * {@code com.ticket.bootstrap} 안에는 이 규칙이 검사할 클래스가 더 이상 없다. ArchUnit은 매치되는
+ * 클래스가 없는 rule을 기본적으로 실패로 본다({@code archRule.failOnEmptyShould}).
  */
 @AnalyzeClasses(
         packages = "com.ticket.bootstrap",
@@ -32,10 +35,4 @@ class BootstrapArchitectureTest {
             noClasses()
                     .that().resideInAPackage("com.ticket.bootstrap..")
                     .should().dependOnClassesThat().resideInAPackage("com.ticket.core.domain..");
-
-    @ArchTest
-    static final ArchRule background_트리거는_worker_패키지에_모은다 =
-            classes()
-                    .that().haveSimpleNameEndingWith("Trigger")
-                    .should().resideInAPackage("com.ticket.bootstrap.worker..");
 }
