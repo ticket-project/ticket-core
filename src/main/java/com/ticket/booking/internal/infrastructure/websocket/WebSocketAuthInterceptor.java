@@ -1,8 +1,8 @@
-package com.ticket.core.config.security;
+package com.ticket.booking.internal.infrastructure.websocket;
 
-import com.ticket.identity.internal.application.auth.token.AccessTokenReadResult;
+import com.ticket.core.support.exception.CoreException;
+import com.ticket.identity.AccessTokenAuthenticator;
 import com.ticket.identity.AuthenticatedMember;
-import com.ticket.identity.internal.application.auth.token.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final AccessTokenReader accessTokenReader;
+    private final AccessTokenAuthenticator accessTokenAuthenticator;
 
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) {
@@ -44,11 +44,13 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
             if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
                 final String token = authorization.substring(BEARER_PREFIX.length());
-                if (!(accessTokenReader.read(token) instanceof AccessTokenReadResult.Authenticated authenticated)) {
+                final AuthenticatedMember member;
+                try {
+                    member = accessTokenAuthenticator.authenticate(token);
+                } catch (final CoreException exception) {
                     log.warn("웹소켓 JWT 인증에 실패해 연결을 차단합니다.");
                     throw new MessageDeliveryException("JWT 인증 실패");
                 }
-                final AuthenticatedMember member = authenticated.member();
                 accessor.setUser(new UsernamePasswordAuthenticationToken(
                         member,
                         null,

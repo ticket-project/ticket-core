@@ -1,7 +1,7 @@
 package com.ticket.core.config;
 
+import com.ticket.booking.internal.infrastructure.websocket.WebSocketAuthInterceptor;
 import com.ticket.core.config.security.CorsProperties;
-import com.ticket.core.config.security.WebSocketAuthInterceptor;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 
