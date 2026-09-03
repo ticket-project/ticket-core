@@ -1,7 +1,5 @@
-package com.ticket.showlike.internal.exception;
+package com.ticket.catalog.internal.exception;
 
-import com.ticket.error.ErrorCode;
-import com.ticket.error.TicketException;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -11,12 +9,12 @@ import org.springframework.http.HttpStatus;
  * 공개 메시지와 문구가 겹쳐 보이지만 역할이 다르다 — message는 고정 문구, data는 어느 요청이
  * 막혔는지를 좁히는 값이다.
  */
-public class ShowLikeAlreadyExistsException extends ShowLikeException {
+public class ShowLikeAlreadyExistsException extends CatalogException {
 
     private static final String MESSAGE = "이미 찜한 공연입니다.";
 
     public ShowLikeAlreadyExistsException(final Long memberId, final Long showId) {
-        super(HttpStatus.CONFLICT, ShowLikeErrorCode.E7001, MESSAGE,
+        super(HttpStatus.CONFLICT, CatalogErrorCode.E7001, MESSAGE,
                 MESSAGE + " memberId=" + memberId + ", showId=" + showId);
     }
 }
