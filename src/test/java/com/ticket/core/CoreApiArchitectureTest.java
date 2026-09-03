@@ -15,10 +15,12 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * Modulith가 전혀 검사하지 않는다. {@code com.ticket.core}가 7개 module로 완전히 옮겨지면 이
  * 파일도 함께 지운다.
  *
- * <p>{@code com.ticket.core.config}(security 하위 포함)는 8번째 module {@code com.ticket.config}로
- * 전부 옮겨져 지금은 class가 없다 — 그 안에서 identity 인증 infra를 참조하지 않는지 보던
- * {@code security_should_not_depend_on_auth_infra} 규칙은 검사 대상이 없어져 지웠다. 같은 참조는
- * 이제 Spring Modulith가 {@code com.ticket.config}의 {@code @NamedInterface} 경계로 검증한다
+ * <p>{@code com.ticket.core.config}(security 하위 포함)는 전역 배선 module
+ * {@code com.ticket.config}로 전부 옮겨져 지금은 class가 없다 — 그 안에서 identity 인증 infra를
+ * 참조하지 않는지 보던 {@code security_should_not_depend_on_auth_infra} 규칙은 검사 대상이 없어져
+ * 지웠다. 같은 참조는 이제 Spring Modulith의 닫힌 module 경계가 검증한다 — 그 배선은 소유
+ * module이 자기 안에서 하므로({@code identity.internal.infrastructure.security.IdentityWebMvcConfig}
+ * 등) {@code config}가 identity internal을 참조할 일이 아예 없다
  * ({@code com.ticket.ModularityTests}, {@code com.ticket.config}의 package-info 참고).
  */
 @AnalyzeClasses(

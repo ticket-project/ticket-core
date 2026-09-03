@@ -54,8 +54,7 @@ showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, 아래 6번 참고)
 web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, 아래 10번 참고)
 error     -> web (오류를 HTTP 본문으로 옮길 때만)
-config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
-             (여러 module의 internal을 참조하는 composition-root module, 아래 9번 참고)
+config    -> identity (공개 계약 AuthenticatedMember만. 전역 배선 module, 아래 9번 참고)
 ```
 
 순환은 없다. `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이고,
@@ -231,42 +230,51 @@ identity/booking의 필요한 internal만 좁게 열 수 있음을 확인한 뒤
 
 ### 9. config: 전역 배선을 소유하는 composition-root module
 
-`com.ticket.config`는 8번째 Application Module이다. `shared`(§6)와 반대되는 존재 이유를 갖는다 —
-`shared`는 다른 module이 **호출하는 계약**만 갖고 bean을 등록하지 않으며, `config`는 정확히 그
-반대로 **앱에 적용되는 전역 배선**이 있을 자리다. 두 갈래를 소유한다: (a) 특정 module의 internal을
-알아야만 배선할 수 있는 설정(아래 표), (b) 어떤 business module도 참조하지 않는 domain-free 전역
-기술 설정(`SwaggerConfig`, `P6SpyConfig`, `QuerydslConfig`, `RedissonConfig`, `UuidSupplierConfig`,
+`com.ticket.config`는 `shared`(§6)와 반대되는 존재 이유를 갖는다 — `shared`는 다른 module이
+**호출하는 계약**만 갖고 bean을 등록하지 않으며, `config`는 정확히 그 반대로 **앱에 적용되는 전역
+배선**이 있을 자리다. 어떤 business module도 참조하지 않는 domain-free 전역 기술 설정
+(`SwaggerConfig`, `P6SpyConfig`, `QuerydslConfig`, `RedissonConfig`, `UuidSupplierConfig`,
 `EventPublicationMaintenance`, `SchedulingConfig`, `SystemClockConfig` — §6에서 `shared`로부터 옮겨
-왔다). (b)는 module 결합이 없어 `shared`에 둘 수도 있어 보이지만 bean을 등록한다는 점에서 계약과
-성질이 다르고, `sharedModules` 선언 때문에 모든 module 테스트에 함께 뜬다(§6).
-그런 전역 기술 설정을 특정 module 소유로 두면 그 module이 나머지 module을 부당하게 참조하는
-것처럼 보이게 되므로, 애초에 module 후보에서 뺀다. 그런 코드를 특정 module 소유로 두면 그
-module이 나머지 module들을 부당하게 참조하는 것처럼 보이게 되므로, 애초에 module 후보에서 뺀다.
-`bootstrap`(§8)과 달리 이 module은 Modulith 검증에서 제외되지 않는다 — 정식 module로 선언되고
-Spring Modulith의 `@NamedInterface`로 필요한 internal package만 좁혀 열어, 무엇을 얼마나
-참조하는지 `com.ticket.ModularityTests.verifiesModuleStructure()`가 계속 감시한다.
+왔다)과, identity의 공개 계약만 쓰는 `JpaAuditingConfig`/`SecurityContextAuditorAware`가 있다.
+domain-free 설정은 module 결합이 없어 `shared`에 둘 수도 있어 보이지만 bean을 등록한다는 점에서
+계약과 성질이 다르고, `sharedModules` 선언 때문에 모든 module 테스트에 함께 뜬다(§6). 그런 코드를
+특정 module 소유로 두면 그 module이 나머지 module을 부당하게 참조하는 것처럼 보이게 되므로 애초에
+module 후보에서 뺀다. `bootstrap`(§8)과 달리 이 module은 Modulith 검증에서 제외되지 않는다.
 
-**포함 클래스와 참조 대상**:
+**등록은 소유 module이 한다 — `@NamedInterface` 네 갈래는 없앴다.**
 
-| 클래스 | 참조 대상 | 노출 방식 |
-| --- | --- | --- |
-| `WebConfig` | `identity.internal.infrastructure.security`의 `AuthenticatedMemberArgumentResolver` | `@NamedInterface("security")` |
-| `WebSocketConfig` | `booking.internal.infrastructure.websocket`의 `WebSocketAuthInterceptor` | `@NamedInterface("websocket")` |
-| `HttpServiceConfig` | `identity.internal.infrastructure.auth.oauth2`의 `KakaoUnlinkApiClient` | `@NamedInterface("oauth2")` |
-| `JwtConfig` | `identity.internal.infrastructure.auth.token`의 `JwtProperties` | `@NamedInterface("token")` |
-| `JpaAuditingConfig`/`SecurityContextAuditorAware` | `identity`의 공개 계약 `AuthenticatedMember` | 일반 module 의존(`identity`) — 공개 root API라 NamedInterface 불필요 |
+처음에는 `config`가 `WebConfig`/`WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`로 identity·booking의
+물건을 대신 등록해 주면서 `identity :: security`·`identity :: oauth2`·`identity :: token`·
+`booking :: websocket`을 참조했다. 등록할 물건의 주인이 직접 등록하면 그 참조가 아예 필요 없다는
+점을 확인하고 넷 다 소유 module로 옮겼다.
 
-`allowedDependencies`는 각 이름을 `"identity :: security"` 형태로 명시해, 노출된 package 이외의
-identity/booking internal은 여전히 참조하지 못한다(`com.ticket.config`의 package-info가 각
-NamedInterface의 정확한 노출 범위를 문서화한다). `identity.internal.infrastructure.security`·
-`auth.oauth2`·`auth.token` package에는 `config`가 실제로 쓰는 타입 하나 외에 identity 전용 구현도
-함께 있어, NamedInterface가 그것까지 노출한다 — 딱 필요한 타입만 더 좁은 package로 재구성하는
-작업은 하지 않았다(과한 조정으로 판단, identity/booking 소유 코드를 이 task에서 재배치하는 것은
-범위 밖).
+| 배선 | 소유 |
+| --- | --- |
+| `AuthenticatedMemberArgumentResolver` 등록 | `identity.internal.infrastructure.security.IdentityWebMvcConfig` |
+| `JwtProperties` 등록 | `identity.internal.infrastructure.auth.token.JwtConfig` |
+| 카카오 HTTP client 등록(`@ImportHttpServices`) | `identity.internal.infrastructure.auth.oauth2.HttpServiceConfig` |
+| STOMP 브로커·endpoint·인증 인터셉터(`@EnableWebSocketMessageBroker`) | `booking.internal.infrastructure.websocket.WebSocketConfig` |
 
-`config`는 `shared`(`CorsProperties`)도 참조한다(§6) — module 결합이 없는 shared 참조는 제한
-없이 허용된다. `config`를 참조하는 다른 module은 없다(leaf) — composition root는 재사용 가능한
-공개 API가 아니라 배선 지점이기 때문이다.
+근거는 Spring이 `WebMvcConfigurer`·`WebSocketMessageBrokerConfigurer` 구현을 **여러 개 모아**
+순서대로 적용한다는 것이다 — module마다 자기 것을 하나씩 둬도 되고, 그러면 **새 module이 자기
+확장점을 추가할 때 `config`를 고칠 필요가 없다**(전역 설정이 module 수만큼 커지지 않는다).
+그 결과 `allowedDependencies`는 `{"identity"}` 하나로 줄었고 `@NamedInterface`는 하나도 남지
+않았다(`seed`가 identity의 `member.command`를 참조하는 것은 별개 결정이다).
+
+부수 효과 둘: `@EnableWebSocketMessageBroker`가 booking으로 가면서 STOMP endpoint의 허용 origin을
+booking이 직접 읽어야 해 `WebSocketConfig`가 `shared`의 `CorsProperties`를
+`@EnableConfigurationProperties`로 등록한다(identity의 `SecurityConfig`도 같은 타입을 등록하지만
+bean은 하나다). 그래서 `booking -> shared` edge가 생기고 `config -> booking` edge가 사라졌다 —
+`ModularityTests.APPROVED_DEPENDENCY_DAG`에 그대로 반영했다.
+
+`config`는 `shared`(`UuidSupplier`)도 참조한다(§6) — module 결합이 없는 shared 참조는 제한 없이
+허용된다. `config`를 참조하는 다른 module은 없다(leaf) — composition root는 재사용 가능한 공개
+API가 아니라 배선 지점이기 때문이다.
+
+**남긴 선택지**: `@EnableWebSocketMessageBroker`는 앱 전체에 한 곳만 있어야 한다. 지금은 WebSocket을
+쓰는 module이 booking 하나라 booking이 통째로 갖는 것이 맞지만, 두 번째 module이 WebSocket을 쓰기
+시작하면 활성화만 떼어내 `config`로 올린다(그때도 인터셉터 등록은 각 module이 자기
+`WebSocketMessageBrokerConfigurer`로 한다).
 
 ### 10. web module: REST 표현 계약
 

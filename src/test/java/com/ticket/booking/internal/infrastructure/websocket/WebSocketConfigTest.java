@@ -1,6 +1,5 @@
-package com.ticket.config.internal;
+package com.ticket.booking.internal.infrastructure.websocket;
 
-import com.ticket.booking.internal.infrastructure.websocket.WebSocketAuthInterceptor;
 import com.ticket.shared.CorsProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

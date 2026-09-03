@@ -32,10 +32,11 @@ import java.time.Clock;
  * {@code shared}는 {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에 포함되지만 이제 호출
  * 대상 계약만 갖고 bean을 등록하지 않고, {@code Clock}을 만드는 {@code SystemClockConfig}는
  * {@code com.ticket.config}가 소유해 STANDALONE 스캔 범위 밖이다. {@code SimpMessagingTemplate}은
- * {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 하는데, 이 bean을
- * 실제로 만드는 {@code @EnableWebSocketMessageBroker} 설정({@code com.ticket.config.internal.WebSocketConfig})은
- * 8번째 module인 {@code config}에 있어 STANDALONE 스캔 범위 밖이다 — 그래서 이것도 다른 외부
- * 의존과 같은 이유로 {@code @MockitoBean}으로 대체한다.
+ * {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 한다. 이 bean을
+ * 만드는 {@code @EnableWebSocketMessageBroker} 설정
+ * ({@code booking.internal.infrastructure.websocket.WebSocketConfig})은 이제 booking 소유라 스캔
+ * 범위 안이지만, wiring smoke test에서 실제 STOMP 브로커 배선까지 띄울 이유가 없어 계속
+ * {@code @MockitoBean}으로 대체한다({@code @MockitoBean}은 같은 타입의 실제 bean 정의를 대체한다).
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class BookingModuleTests {

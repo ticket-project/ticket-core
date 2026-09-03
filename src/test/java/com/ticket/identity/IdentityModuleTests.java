@@ -16,10 +16,9 @@ import java.util.UUID;
  * {@code com.ticket.core.support.exception}이 legacy {@code com.ticket.core} 아래에 있고, legacy
  * {@code showlike}가 아직 이동하지 않아 identity internal({@code Member}, {@code MemberRepository})을
  * 그대로 참조해 "identity → core"·"core → identity" 순환으로 오탐된다. {@code CorsProperties}(이제
- * {@code com.ticket.shared.CorsProperties})와 {@code WebConfig}/{@code AuthenticatedMemberArgumentResolver}
- * (이제 {@code com.ticket.config} module, {@code identity.internal.infrastructure.security}의
- * {@code @NamedInterface}로 참조)는 각각 shared/config라는 정식 module 경계로 옮겨져 더 이상 이
- * 순환의 원인이 아니다. {@code spring.modulith.detection-strategy}를 전역으로 바꾸는 대신 이
+ * {@code com.ticket.shared.CorsProperties})와 argument resolver 등록(이제 identity가 자기
+ * {@code internal.infrastructure.security.IdentityWebMvcConfig}에서 직접 한다)은 더 이상 이 순환의
+ * 원인이 아니다. {@code spring.modulith.detection-strategy}를 전역으로 바꾸는 대신 이
  * 테스트에서만 자동 검증을 꺼서, 아직 {@code @ApplicationModule}을 붙이지 않은 미래 모듈이 조용히
  * 검증에서 빠지는 위험을 피한다.
  *

@@ -42,16 +42,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code AuthenticatedMember} 참조)와, legacy {@code com.ticket.core.config}/
  * {@code com.ticket.core.infra.config}에 있던 {@code WebConfig}/{@code WebSocketConfig}/
  * {@code HttpServiceConfig}/{@code JwtConfig}(각각 identity·booking의 internal을 직접 참조)는
- * 실제로 여러 module의 internal/공개 계약을 동시에 알아야 하는 코드다. 이 여섯 개는
- * {@code bootstrap}에 두는 대신 별도의 정식 8번째 module {@code com.ticket.config}로 옮기고,
+ * 실제로 여러 module의 internal/공개 계약을 동시에 알아야 하는 코드였다. 이 여섯 개를
+ * {@code bootstrap}에 두는 대신 정식 module {@code com.ticket.config}로 옮기고,
  * {@code org.springframework.modulith.NamedInterface}로 identity/booking의 필요한 internal
- * package만 좁게 열었다({@code com.ticket.config}의 package-info, 그리고 각 NamedInterface가
- * 선언된 package-info 참고) — {@code bootstrap}으로 두면 검증에서 완전히 빠져 이 참조가 실제로
- * 무엇을 얼마나 쓰는지 어떤 테스트도 확인하지 않지만, 정식 module + NamedInterface는
- * {@code verifiesModuleStructure()}가 계속 감시한다. 그 결과 {@code com.ticket.bootstrap}에는
- * 지금 production class가 하나도 없다 — 그래도 이 자리 자체(그리고 검증 제외)는 legacy와 무관하게
- * 계속 필요하다: 앞으로도 여러 module의 internal을 동시에 참조해야 하는 코드가 생기면, NamedInterface로
- * 좁혀 열 수 없을 만큼 결합이 크거나 임시적인 경우 이 자리를 쓴다.
+ * package만 좁게 열었다.
+ *
+ * <p>그 뒤 <b>등록을 소유 module로 옮겨 그 네 갈래를 없앴다</b> —
+ * {@code IdentityWebMvcConfig}(argument resolver), {@code JwtConfig}({@code JwtProperties}),
+ * {@code HttpServiceConfig}(카카오 client)는 identity가, {@code WebSocketConfig}(STOMP 브로커와
+ * 인터셉터)는 booking이 자기 안에서 등록한다. Spring이 {@code WebMvcConfigurer}/
+ * {@code WebSocketMessageBrokerConfigurer} 구현을 여러 개 모아 적용하므로 module마다 하나씩 둬도
+ * 되고, 새 module이 자기 확장점을 추가할 때 {@code config}를 고칠 필요가 없다. 그래서
+ * {@code config}에 남은 module 참조는 {@code JpaAuditingConfig} 계열의 {@code identity} 공개 계약
+ * 하나이고, {@code @NamedInterface}는 하나도 남지 않았다.
+ *
+ * <p>{@code com.ticket.bootstrap}에는 지금 production class가 하나도 없다 — 그래도 이 자리
+ * 자체(그리고 검증 제외)는 legacy와 무관하게 계속 필요하다: 앞으로도 여러 module의 internal을
+ * 동시에 참조해야 하는 코드가 생기면, NamedInterface로 좁혀 열 수 없을 만큼 결합이 크거나 임시적인
+ * 경우 이 자리를 쓴다.
  *
  * <p>기본 {@code direct-sub-packages} 감지 전략은 root 직접 하위 package를 모두 후보 module로
  * 보므로, 이 legacy package들과 {@code bootstrap}을 그대로 두면 서로 얽힌 참조가 닫힌 module
@@ -104,10 +112,13 @@ class ModularityTests {
      * 이것이다. {@code shared}·{@code error}와 같이 {@code @Modulith(sharedModules = ...)}로 전역
      * 허용해 각 module의 {@code allowedDependencies}에는 업무 module 의존만 남기고, 어느 module이
      * 실제로 web을 참조하는지는 이 DAG가 고정한다.
-     * {@code config}는 여러 module의 internal을 동시에 참조해야 하는 composition-root 성격의
-     * 8번째 module이라(클래스 javadoc과 {@code com.ticket.config}의 package-info 참고) identity·
-     * booking을 향한 edge를 갖고, {@code CorsProperties}(shared) 참조로 shared를 향한 edge도
-     * 갖는다. 반대로 이 module을 참조하는 다른 module은 없다(leaf).
+     * {@code config}는 전역 배선을 소유하는 composition-root module이다(클래스 javadoc과
+     * {@code com.ticket.config}의 package-info 참고). 등록을 소유 module로 옮긴 뒤 남은 module
+     * 참조는 {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}가 쓰는 identity의 공개
+     * 계약 하나뿐이고, {@code UuidSupplierConfig}의 {@code UuidSupplier} 참조로 shared를 향한
+     * edge를 갖는다. 반대로 이 module을 참조하는 다른 module은 없다(leaf).
+     * {@code booking}이 shared를 향한 edge를 갖는 이유는 {@code WebSocketConfig}가 STOMP
+     * endpoint 허용 origin을 {@code CorsProperties}에서 읽기 때문이다.
      * {@code error}는 공통 오류 계약과 전역 handler를 소유하고 응답 봉투를 만들기 위해 web만
      * 참조한다({@code error -> web} 단방향) — 업무 module이 자기 오류를 소유해 가면서 이 module을
      * 향한 edge가 늘어난다.
@@ -117,7 +128,7 @@ class ModularityTests {
      * 없다(leaf).
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
-            Map.entry("booking", Set.of("catalog", "identity", "admission", "web", "error")),
+            Map.entry("booking", Set.of("catalog", "identity", "admission", "shared", "web", "error")),
             Map.entry("catalog", Set.of("shared", "web", "error")),
             Map.entry("identity", Set.of("shared", "web", "error")),
             Map.entry("admission", Set.of("web", "error")),
@@ -125,7 +136,7 @@ class ModularityTests {
             Map.entry("metadata", Set.of("catalog", "booking", "identity", "web")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),
-            Map.entry("config", Set.of("identity", "booking", "shared")),
+            Map.entry("config", Set.of("identity", "shared")),
             Map.entry("error", Set.of("web")),
             Map.entry("seed", Set.of("identity"))
     );

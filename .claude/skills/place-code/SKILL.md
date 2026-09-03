@@ -40,8 +40,9 @@ legacy 코드를 옮기는 작업 자체는 범위가 크므로 먼저 사용자
 
 `com.ticket.bootstrap`은 legacy가 아니다 — 여러 module의 internal을 동시에 참조해야만 배선할 수
 있는 코드를 위한 영구 composition-root 예외 자리이고, 지금은 production class가 하나도 없다.
-`@NamedInterface`로 좁혀 열 수 있는 배선은 `config`가 맡고, `config`로도 감당할 수 없을 만큼
-결합이 크거나 임시적인 배선이 생길 때만 이 자리를 쓴다.
+업무 module을 모르는 전역 배선은 `config`가 맡고, **특정 module의 물건을 등록하는 배선은 그
+module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없을 만큼 결합이 크거나 임시적인 배선이
+생길 때만 이 자리를 쓴다.
 
 ## 1. 모듈을 골랐으면 계층을 고른다
 
@@ -104,7 +105,8 @@ legacy 코드를 옮기는 작업 자체는 범위가 크므로 먼저 사용자
 | `@Scheduled` 트리거와 실행 주기 설정 | 소유 모듈의 `internal.infrastructure.worker`(예: `booking.internal.infrastructure.worker.OrderExpirationTrigger`) |
 | Spring Boot main과 `@Modulith` 선언 | `com.ticket.TicketApplication` |
 | module 결합 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, JPA auditing 등록, scheduling/clock) | `com.ticket.config.internal`, 그 공개 계약(예: `UuidSupplier`)은 `com.ticket.shared` |
-| 특정 module의 internal을 참조해야만 배선되는 전역 기술 설정(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig, JpaAuditingConfig 등) | `com.ticket.config`(`@NamedInterface`로 identity/booking의 필요한 internal만 참조) |
+| identity의 공개 계약만 쓰는 전역 배선(JpaAuditingConfig 등) | `com.ticket.config`(`allowedDependencies = {"identity"}`) |
+| **특정 module의 물건을 Spring에 등록하는 배선**(argument resolver, `@ConfigurationProperties`, HTTP client, STOMP 인터셉터) | **그 module의 `internal`에 자기 `@Configuration`을 둔다** — Spring이 `WebMvcConfigurer`·`WebSocketMessageBrokerConfigurer`를 여러 개 모아 적용하므로 module마다 하나씩 둘 수 있다. 예: `identity.internal.infrastructure.security.IdentityWebMvcConfig`, `booking.internal.infrastructure.websocket.WebSocketConfig`. 전역 설정 module이 대신 등록해 주면 `@NamedInterface`로 internal을 열어야 하므로 하지 않는다 |
 | `shared`에 `@Configuration`을 두려는 판단 | 하지 않는다 — `com.ticket.shared.SharedModulePurityTest`가 막는다. bean 등록은 `config`가 소유한다 |
 | 프레임워크 중립 오류 계약과 예외 전달 기반 | `com.ticket.error`(`ErrorCode`, `TicketException`, 공통 예외, `handler`) — 아래 "오류 처리" 참고 |
 | 요청 파라미터 Bean Validation 제약 | `internal.web`의 `controller.docs` 인터페이스 |

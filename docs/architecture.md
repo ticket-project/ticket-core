@@ -29,8 +29,8 @@ src/main/java/com/ticket
 ├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
-├── config/                   # 전역 배선 전부(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig,
-│                                JpaAuditingConfig + Swagger/Querydsl/Redisson/P6Spy/scheduling/clock)
+├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
+│                                scheduling/clock/UUID/event publication + JpaAuditingConfig)
 ├── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
 └── core/, bootstrap/, storage/   # core/storage는 아직 모듈로 이동하지 않은 legacy(아래 "레거시 잔존
     범위"). support는 독립 top-level이 아니라 core/support 아래 nested. bootstrap은 legacy가 아니라
@@ -53,7 +53,7 @@ showlike  -> catalog, identity
 shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, bean 등록 없음)
 web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, bean 등록 없음)
 error     -> web (오류를 HTTP 본문으로 옮길 때만)
-config    -> identity :: security, identity :: oauth2, identity :: token, identity, booking :: websocket
+config    -> identity (공개 계약 AuthenticatedMember만)
 seed      -> identity :: seed
 ```
 
@@ -64,8 +64,8 @@ seed      -> identity :: seed
 
 `catalog`/`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `booking`과
 `showlike`가 그 위에 얹히고, `metadata`는 세 모듈의 공개 계약만 조합한다. `shared`와 `web`은 어떤
-모듈도 참조하지 않는 leaf고, `config`는 identity/booking의 특정 internal package(`@NamedInterface`로 좁혀 열림)와
-shared를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로
+모듈도 참조하지 않는 leaf고, `config`는 identity의 공개 계약(`AuthenticatedMember`)과 shared를
+참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로
 적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은
 없다. 이 DAG를 바꾸려면 먼저
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 갱신한다.
@@ -167,13 +167,26 @@ production class가 없다). 근거와 경계는
 - showlike read 경로(`core.app.showlike`, `core.domain.showlike`, `core.infra.showlike`) — 위
   [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
 
-전역 기술 설정은 legacy가 아니다 — **`@Configuration`은 전부 `com.ticket.config`가 소유한다.**
-module 결합이 없는 것(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, event-publication registry
-유지보수, scheduling/clock)과 특정 module의 internal을 참조해야만 배선되는 것(`WebConfig`/
-`WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`/`JpaAuditingConfig`/`SecurityContextAuditorAware`)이
-함께 있고, 후자는 identity/booking의 필요한 internal package만 Spring Modulith의
-`@NamedInterface`로 좁혀 열어 참조한다. `com.ticket.shared`에는 다른 모듈이 **호출하는 계약**만 두고
-bean 등록은 두지 않으며, 이 규칙은 `com.ticket.shared.SharedModulePurityTest`가 강제한다. 근거는
+전역 기술 설정은 legacy가 아니다 — **어떤 업무 모듈도 참조하지 않는 `@Configuration`은
+`com.ticket.config`가 소유한다**(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson,
+event-publication registry 유지보수, scheduling/clock, 그리고 identity의 공개 계약만 쓰는
+`JpaAuditingConfig`/`SecurityContextAuditorAware`).
+
+**특정 모듈의 물건을 Spring에 등록하는 배선은 그 모듈이 자기 안에서 한다.** Spring이
+`WebMvcConfigurer`·`WebSocketMessageBrokerConfigurer` 구현을 여러 개 모아 적용하므로 모듈마다
+하나씩 둘 수 있고, 새 모듈이 자기 확장점을 추가할 때 전역 설정을 고칠 필요가 없다.
+
+| 배선 | 소유 |
+| --- | --- |
+| `AuthenticatedMemberArgumentResolver` 등록 | `identity.internal.infrastructure.security.IdentityWebMvcConfig` |
+| `JwtProperties` 등록 | `identity.internal.infrastructure.auth.token.JwtConfig` |
+| 카카오 HTTP client 등록 | `identity.internal.infrastructure.auth.oauth2.HttpServiceConfig` |
+| STOMP 브로커·endpoint·인증 인터셉터 | `booking.internal.infrastructure.websocket.WebSocketConfig` |
+
+그 결과 `config`가 다른 모듈의 `internal`을 참조할 일이 없어 **`@NamedInterface`는 하나도 남지
+않았다**(`seed`가 identity의 `member.command`를 참조하는 것은 별개다).
+`com.ticket.shared`에는 다른 모듈이 **호출하는 계약**만 두고 bean 등록은 두지 않으며, 이 규칙은
+`com.ticket.shared.SharedModulePurityTest`가 강제한다. 근거는
 [ADR 0003 §6](adr/0003-spring-modulith-application-module-boundaries.md)과
 [§9](adr/0003-spring-modulith-application-module-boundaries.md)를 본다.
 
