@@ -25,7 +25,8 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | admission token 설정·decode·검증 | `admission` |
 | Show 좋아요 write 경로(추가/삭제/상태 조회) | `showlike`(read 경로는 아래 "showlike 예외" 참고) |
 | catalog/booking/identity가 공개한 code/label 조합 | `metadata` |
-| 둘 이상 독립 모듈이 의미 동일하게 공유하는 범용 유틸리티, module 결합이 없는 domain-free 기술 설정 | `shared` |
+| 둘 이상 독립 모듈이 의미 동일하게 공유하는 범용 유틸리티, 응답 봉투(`ApiResponse`), module 결합이 없는 domain-free 기술 설정 | `shared` |
+| 어느 모듈의 것도 아닌 공통 오류(E400·E404·E500), 예외 base 타입, 전역 handler | `error` |
 | 여러 module의 internal을 동시에 참조해야만 배선할 수 있는 전역 기술 설정(composition-root) | `config` |
 
 모듈을 잘못 고르면 그 다음 판단이 전부 무의미하다. 애매하면 "이 코드가 사라지면 무엇이 먼저
@@ -102,18 +103,40 @@ legacy 코드를 옮기는 작업 자체는 범위가 크므로 먼저 사용자
 | Spring Boot main과 `@Modulith` 선언 | `com.ticket.TicketApplication` |
 | module 결합 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, JPA auditing 등록, scheduling/clock) | `com.ticket.shared.internal.config`, 공개 계약(예: `UuidSupplier`, `CorsProperties`)은 `com.ticket.shared` |
 | 특정 module의 internal을 참조해야만 배선되는 전역 기술 설정(WebConfig, WebSocketConfig, HttpServiceConfig, JwtConfig, JpaAuditingConfig 등) | `com.ticket.config`(8번째 Application Module, `@NamedInterface`로 identity/booking의 필요한 internal만 참조) |
-| 프레임워크 중립 오류 계약과 예외 전달 기반 | 아직 legacy 전역 구조(`com.ticket.core.support.exception`, `com.ticket.core.support`) — 아래 "오류 처리" 참고 |
+| 프레임워크 중립 오류 계약과 예외 전달 기반 | `com.ticket.error`(`ErrorCode`, `TicketException`, 공통 예외, `handler`) — 아래 "오류 처리" 참고 |
 | 요청 파라미터 Bean Validation 제약 | `internal.web`의 `controller.docs` 인터페이스 |
-| `UseCase.Input` 필수 component 계약 | `internal.application`의 UseCase record와 `support.validation` |
-| 도메인 규칙이 판단하는 오류 | legacy 전역 `ErrorType`(모듈이 오류를 아직 소유하지 않는다) |
+| `UseCase.Input` 필수 component 계약 | `internal.application`의 UseCase record compact constructor(공통 유틸 없이 직접 판정) |
+| 도메인 규칙이 판단하는 오류 | 소유 모듈의 `internal.exception`(`<Module>ErrorCode` + 예외 클래스) |
 
-### 오류 처리는 아직 legacy다
+### 오류는 그 업무를 소유한 모듈이 갖는다
 
-`ProblemDetail` 기반 모듈별 오류 계약을 만들었다가 사용자 결정으로 되돌렸다. 지금은 모든 모듈이
-`com.ticket.core.support.exception.ErrorType`/`CoreException`과
-`com.ticket.core.support.ApiControllerAdvice`를 그대로 참조한다. 오류를 추가할 때 새 모듈별
-카탈로그를 만들지 않는다. 배경은 `docs/adr/0002-module-owned-error-contracts.md`의 갱신된 상태
-문단이 원본이다.
+**오류를 추가할 때 전역 카탈로그를 찾지 않는다.** 그 업무를 소유한 모듈의
+`<module>/internal/exception/`에 예외 클래스를 만들고, 코드는 같은 패키지의 `<Module>ErrorCode`
+enum에 추가한다. 예외가 HTTP 상태·E-code·공개 메시지를 생성자에서 확정하므로 handler는 고치지
+않는다.
+
+```
+com/ticket/<module>/internal/exception/
+  <Module>ErrorCode.java          enum implements com.ticket.error.ErrorCode
+  <Module>Exception.java          abstract extends com.ticket.error.TicketException
+  <구체 예외>.java                 상태·코드·메시지를 생성자에서 확정
+  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡는다
+```
+
+어느 모듈의 것도 아닌 오류(E400 잘못된 요청, E404 없음, E500 내부 오류)만 `com.ticket.error`에
+있고, 전역 `GlobalExceptionHandler`(`@Order(LOWEST_PRECEDENCE)`)가 프레임워크 예외와 fallback을
+맡는다. 응답 봉투(`ApiResponse`)는 `com.ticket.shared`에 있다 — `error`가 봉투를 만들므로
+`shared`가 `error`를 참조하면 순환이 된다.
+
+**메시지와 data를 바꿔 담지 않는다.** `message`는 오류마다 고정된 공개 문구이고, 어느 요청이
+막혔는지를 좁히는 값은 `data`에 넣는다. 각각 응답의 `error.message`와 `error.data`가 된다.
+
+**자주 틀리는 것**: 모듈 handler가 `RuntimeException` 같은 넓은 타입을 잡으면 다른 모듈의 오류까지
+삼킨다(Spring은 order 순으로 매칭되는 첫 advice에서 멈춘다). E-code 값은 외부 계약이라
+`gatling-test`가 하드코딩하므로 모듈이 바뀌어도 재번호하지 않는다. 두 규칙 모두
+`com.ticket.error.ExceptionHandlerScopeTest`와 `ErrorCodeUniquenessTest`가 강제한다.
+
+배경은 `docs/adr/0002-module-owned-error-contracts.md`가 원본이다.
 
 ### showlike 예외
 

@@ -116,16 +116,29 @@ externalization(`@Externalized`, 메시지 브로커)은 현재 범위가 아니
 제약으로 `VARCHAR(255)`다. 다중 좌석 주문의 `OrderStarted` 직렬화 결과가 이를 넘으면 event
 publication 저장 자체가 실패할 수 있다. 상세는 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)을 본다.
 
-## 오류 처리(legacy, 이 문서의 범위 밖)
+## 오류 처리
 
-오류 처리는 아직 어떤 Application Module로도 옮겨지지 않은 legacy 코드다. `ProblemDetail` 기반
-공통 계약(`shared.BusinessProblem`/`BusinessException`)을 도입했다가 사용자 결정으로 되돌렸고,
-현재는 `support:error` 도입 이전의 전역 구조
-(`com.ticket.core.support.exception.ErrorType`/`ErrorCode`/`CoreException`과
-`com.ticket.core.support.ApiControllerAdvice`, `ApiResponse.error`)를 모든 모듈이 함께
-참조한다. 배경과 갱신된 상태는 [ADR 0002](adr/0002-module-owned-error-contracts.md)의 상태
-문단이 원본이며, [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)은 이
-결정을 다시 다루지 않는다. 오류 계약을 모듈이 다시 소유할지는 별도로 결정한다.
+**오류는 그 업무를 소유한 모듈이 갖는다.** 각 모듈의 `internal.exception`에 `<Module>ErrorCode`
+enum과 예외 클래스가 있고, 예외가 HTTP 상태·E-code·공개 메시지를 생성자에서 확정한다. 모듈마다
+`internal.exception.handler`의 얇은 handler(`@Order(HIGHEST_PRECEDENCE)`)가 자기 base 예외 하나만
+잡아 응답으로 옮긴다.
+
+어느 모듈의 것도 아닌 오류만 `com.ticket.error`에 있다 — `InvalidRequestException`(E400),
+`NotFoundException`(E404), `InternalErrorException`(E500), 예외 base 타입 `TicketException`,
+`ErrorCode` interface, 그리고 프레임워크 예외와 fallback을 맡는
+`GlobalExceptionHandler`(`@Order(LOWEST_PRECEDENCE)`)다.
+
+응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는 `com.ticket.shared`에 있다.
+`error`가 봉투를 만들어 반환하므로 `error -> shared` 단방향이며, `shared`가 `error`를 참조하면
+곧바로 순환이 되어 `ModularityTests`가 실패한다 — `ApiResponse`가 오류 타입을 모른 채 완성된
+문자열만 받는 이유이고, 오류를 던지던 `shared.RequiredInput`이 지워진 이유이기도 하다.
+
+E-code 값은 외부 계약이다. `gatling-test`가 `E4001`·`E6000`·`E6003`을 하드코딩하므로 소유 모듈이
+바뀌어도 재번호하지 않는다(그래서 E7001은 showlike, E7002는 catalog처럼 대역과 모듈 경계가
+어긋난 곳이 있다). 전역 유일성은 `com.ticket.error.ErrorCodeUniquenessTest`가, 모듈 handler가
+자기 오류만 잡는지는 `ExceptionHandlerScopeTest`가 강제한다.
+
+배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)가 원본이다.
 
 ## 레거시 잔존 범위
 
@@ -137,7 +150,6 @@ production class가 없다). 근거와 경계는
 
 레거시로 현재 남아 있는 것:
 
-- 전역 오류 처리(`core.support.exception`, `core.support.response`, `core.support`) — 위 절 참고
 - showlike read 경로(`core.app.showlike`, `core.domain.showlike`, `core.infra.showlike`) — 위
   [showlike 모듈의 경계](#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다) 참고
 - `core.infra.seed`의 시드 러너

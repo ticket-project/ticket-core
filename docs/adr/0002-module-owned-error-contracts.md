@@ -1,5 +1,27 @@
 # 오류 계약을 모듈별로 소유하고 API에서 공통 처리한다
 
+## 상태: 모듈 소유로 재채택됨(되돌림 이후 다시 결정)
+
+아래 "상태(2026-09-02)" 문단이 기록한 되돌림은 그 문단 자체가 예고한 대로 **Spring Modulith
+이동이 끝난 뒤 다시 결정됐고, 결론은 모듈 소유다.** 지금 구조는 이렇다.
+
+- 업무 오류는 소유 모듈의 `<module>.internal.exception`에 있다 — `<Module>ErrorCode` enum과 예외
+  클래스, 그리고 `internal.exception.handler`의 얇은 handler(`@Order(HIGHEST_PRECEDENCE)`).
+- 어느 모듈의 것도 아닌 오류(E400·E404·E500)와 base 타입 `TicketException`, `ErrorCode`
+  interface, 전역 `GlobalExceptionHandler`(`@Order(LOWEST_PRECEDENCE)`)는 `com.ticket.error`다.
+- **`ProblemDetail`은 채택하지 않았다.** 되돌림 때 결정한 대로 `ApiResponse`
+  (`{result, data, error{code, message, data}}`) envelope와 E-code·HTTP 상태를 그대로 쓴다.
+  `ticket-fe`가 `res.data`로 봉투를 벗기고 `gatling-test`가 E-code를 하드코딩하므로 외부 계약은
+  한 글자도 바뀌지 않았다.
+- 봉투는 `com.ticket.shared`에 있다. `error -> shared` 단방향을 지키려고 `ApiResponse`는 오류
+  타입을 모르고, 오류를 던지던 `shared.RequiredInput`은 제거해 각 `UseCase.Input`으로 인라인했다.
+
+첫 시도(`40b43274`)와 다른 점은 **계층별이 아니라 모듈별로 나눴다**는 것과 `ProblemDetail`을
+쓰지 않는다는 것이다. 강제 장치는 `com.ticket.error.ErrorCodeUniquenessTest`(E-code 전역 유일성)와
+`ExceptionHandlerScopeTest`(모듈 handler가 자기 오류만 잡는지)다.
+
+아래 두 문단은 과거 기록이며 조용히 고치지 않는다.
+
 ## 상태(2026-09-02): 구현 이후 되돌림으로 supersede됨
 
 이 ADR의 결정은 `40b43274`로 구현되어 `support:error`/`core-domain.error`/`core-app.error`/
