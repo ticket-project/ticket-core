@@ -1,6 +1,6 @@
-package com.ticket.core.infra.config;
+package com.ticket.shared.internal.config;
 
-import com.ticket.core.infra.support.UuidSupplier;
+import com.ticket.shared.UuidSupplier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

@@ -1,7 +1,7 @@
 package com.ticket.identity.internal.infrastructure.auth.oauth2;
 
 import com.ticket.identity.internal.application.auth.oauth2.OAuth2AuthCodeStore;
-import com.ticket.core.infra.support.UuidSupplier;
+import com.ticket.shared.UuidSupplier;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;

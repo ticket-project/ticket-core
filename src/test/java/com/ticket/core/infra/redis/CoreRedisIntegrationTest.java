@@ -13,7 +13,7 @@ import com.ticket.booking.internal.infrastructure.lock.RedissonLockKeyFormatter;
 import com.ticket.booking.internal.infrastructure.lock.RedissonLockManager;
 import com.ticket.booking.internal.infrastructure.performanceseat.store.RedissonSeatSelectionStore;
 import com.ticket.core.support.exception.CoreException;
-import com.ticket.core.infra.support.UuidSupplier;
+import com.ticket.shared.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.ticket.core.infra.config;
+package com.ticket.shared.internal.config;
 
 import com.p6spy.engine.logging.Category;
 import com.p6spy.engine.spy.P6SpyOptions;

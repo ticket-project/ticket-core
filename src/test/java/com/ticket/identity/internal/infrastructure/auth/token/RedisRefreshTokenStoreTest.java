@@ -1,7 +1,7 @@
 package com.ticket.identity.internal.infrastructure.auth.token;
 
 import com.ticket.identity.internal.application.auth.token.AuthRefreshToken;
-import com.ticket.core.infra.support.UuidSupplier;
+import com.ticket.shared.UuidSupplier;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

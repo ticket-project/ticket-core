@@ -1,4 +1,4 @@
-package com.ticket.storage.redis.core.config;
+package com.ticket.shared.internal.config;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

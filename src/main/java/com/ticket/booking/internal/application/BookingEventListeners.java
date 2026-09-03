@@ -25,7 +25,7 @@ import java.util.List;
  *
  * <p>Spring Modulith의 JPA event publication registry가 커밋 뒤 최소 한 번 전달을 보장한다. 여기서
  * 실패를 catch-and-log로 삼키지 않고 그대로 던져 registry가 FAILED로 기록하게 하고,
- * {@code com.ticket.bootstrap.config.EventPublicationMaintenance}가 재시도한다.
+ * {@code com.ticket.shared.internal.config.EventPublicationMaintenance}가 재시도한다.
  *
  * <p>event payload의 스냅샷을 그대로 믿지 않고 {@code orderId}로 현재 저장된 order·orderSeat를
  * 다시 읽어 처리한다. hold 생성 후처리({@link HoldCreationTaskProcessor})와 hold 해제 후처리

@@ -1,4 +1,4 @@
-package com.ticket.core.infra.config;
+package com.ticket.shared.internal.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;

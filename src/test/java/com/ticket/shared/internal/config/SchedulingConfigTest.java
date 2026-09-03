@@ -1,4 +1,4 @@
-package com.ticket.bootstrap.config;
+package com.ticket.shared.internal.config;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;

@@ -1,6 +1,6 @@
 package com.ticket.identity;
 
-import com.ticket.shared.internal.config.UuidSupplier;
+import com.ticket.shared.UuidSupplier;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,8 @@ import java.util.UUID;
  * 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.identity} package tree만 component-scan한다.
- * {@code UuidSupplier} bean은 {@code com.ticket.shared.internal.config.UuidSupplierConfig}에 있어
+ * {@code UuidSupplier}(공개 계약은 {@code com.ticket.shared.UuidSupplier}) bean은
+ * {@code com.ticket.shared.internal.config.UuidSupplierConfig}에 있어
  * 그 필터 밖이므로, {@code RedisOAuth2AuthCodeStore} 같은 identity 어댑터가 필요로 하는 bean만 이
  * 테스트 안에서 직접 채운다.
  */

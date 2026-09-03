@@ -1,4 +1,4 @@
-package com.ticket.core.infra.support;
+package com.ticket.shared;
 
 import java.util.UUID;
 

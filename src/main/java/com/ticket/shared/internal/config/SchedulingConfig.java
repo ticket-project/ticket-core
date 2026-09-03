@@ -1,4 +1,4 @@
-package com.ticket.bootstrap.config;
+package com.ticket.shared.internal.config;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
