@@ -48,12 +48,14 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | `com.ticket.*.*ModuleTests` (`AdmissionModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 
-`com.ticket.core`/`com.ticket.bootstrap` 패키지에는 이 전환 이전에 만들어진 계층형 ArchUnit
-테스트(`CoreLayerArchitectureTest`, `CoreApiArchitectureTest`, `CoreDomainArchitectureTest`,
-`CoreInfraArchitectureTest`, `BootstrapArchitectureTest`)가 아직 남아 있다. 이 테스트들은 아직
-모듈로 옮기지 않은 legacy 코드의 계층 방향을 계속 강제하며, 어떤 것을 정리하고 어떤 것을 유지할지는
-진행 중인 별도 작업의 범위다 — 이 문서는 그 결과를 단정하지 않는다. legacy 코드를 다룰 때는 이
-테스트들도 함께 돌아가는지 확인한다.
+`com.ticket.core` 패키지에는 이 전환 이전에 만들어진 계층형 ArchUnit 테스트(`CoreLayerArchitectureTest`,
+`CoreApiArchitectureTest`, `CoreDomainArchitectureTest`, `CoreInfraArchitectureTest`)가 아직 남아
+있다. 이 테스트들은 아직 모듈로 옮기지 않은 legacy 코드의 계층 방향을 계속 강제하며, 어떤 것을
+정리하고 어떤 것을 유지할지는 진행 중인 별도 작업의 범위다 — 이 문서는 그 결과를 단정하지 않는다.
+legacy 코드를 다룰 때는 이 테스트들도 함께 돌아가는지 확인한다. `com.ticket.bootstrap`을 검사하던
+`BootstrapArchitectureTest`는 그 패키지가 완전히 비어(§ADR 0003 §8·§9, 전역 기술 설정이 `shared`/
+`config`로 옮겨져) ArchUnit이 검사 대상 없는 rule을 실패로 보는 것을 실측 확인해 지웠다 —
+`com.ticket.bootstrap`이 다시 class를 가지면 그때 필요한 규칙을 다시 만든다.
 
 새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 무엇을 막는지는
 [architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙)에 정리돼 있다.
