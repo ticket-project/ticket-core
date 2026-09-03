@@ -1,11 +1,11 @@
-package com.ticket.showlike.internal.web;
+package com.ticket.catalog.internal.web;
 
+import com.ticket.catalog.internal.application.showlike.command.AddShowLikeUseCase;
+import com.ticket.catalog.internal.application.showlike.command.RemoveShowLikeUseCase;
+import com.ticket.catalog.internal.application.showlike.query.GetShowLikeStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.identity.AuthenticatedMember;
 import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.showlike.internal.application.command.AddShowLikeUseCase;
-import com.ticket.showlike.internal.application.command.RemoveShowLikeUseCase;
-import com.ticket.showlike.internal.application.query.GetShowLikeStatusUseCase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

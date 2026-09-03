@@ -18,12 +18,9 @@
  * 소유)는 더 이상 identity internal을 직접 참조하지 않고, 이 module이 공개한
  * {@link com.ticket.identity.AccessTokenAuthenticator}로만 원본 access token 문자열을 검증한다.
  *
- * <p>남은 임시 결합 하나:
- * <ul>
- *   <li>showlike의 legacy 잔존 코드({@code ShowLike}, {@code GetMyShowLikesUseCase},
- *   {@code ShowLikeRepositoryAdapter})가 identity internal {@code Member}를 직접 참조한다 — Task 9가
- *   catalog와의 순환 문제 때문에 의도적으로 legacy에 남겨 뒀다(showlike의 package-info 참고).</li>
- * </ul>
+ * <p>찜(showlike)은 더 이상 이 module과 결합이 없다 — {@code ShowLike}·찜 use case·
+ * {@code /me/likes} 엔드포인트가 모두 catalog로 옮겨졌고, catalog는 회원 확인만
+ * {@link com.ticket.identity.MemberLookup}으로 이 module을 참조한다(단방향, 순환 없음).
  */
 @ApplicationModule(displayName = "Identity", allowedDependencies = {})
 package com.ticket.identity;

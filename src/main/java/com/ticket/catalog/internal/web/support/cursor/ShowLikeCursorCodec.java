@@ -1,4 +1,4 @@
-package com.ticket.core.api.support.cursor;
+package com.ticket.catalog.internal.web.support.cursor;
 
 import com.ticket.error.InvalidRequestException;
 import org.springframework.stereotype.Component;

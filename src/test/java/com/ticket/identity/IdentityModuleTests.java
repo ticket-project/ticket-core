@@ -13,9 +13,8 @@ import java.util.UUID;
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
  * {@code com.ticket.ModularityTests}가 legacy package를 제외한 predicate로 이미 전담한다. 기본값(true)으로
  * 두면 이 STANDALONE 테스트가 별도로 {@code verify()}를 실행하는데, identity가 의존하는
- * {@code com.ticket.core.support.exception}이 legacy {@code com.ticket.core} 아래에 있고, legacy
- * {@code showlike}가 아직 이동하지 않아 identity internal({@code Member}, {@code MemberRepository})을
- * 그대로 참조해 "identity → core"·"core → identity" 순환으로 오탐된다. {@code CorsProperties}(이제
+ * {@code com.ticket.core.support.exception}이 legacy {@code com.ticket.core} 아래에 있어
+ * "identity → core"·"core → identity" 순환으로 오탐된다. {@code CorsProperties}(이제
  * {@code com.ticket.shared.CorsProperties})와 argument resolver 등록(이제 identity가 자기
  * {@code internal.infrastructure.security.IdentityWebMvcConfig}에서 직접 한다)은 더 이상 이 순환의
  * 원인이 아니다. {@code spring.modulith.detection-strategy}를 전역으로 바꾸는 대신 이

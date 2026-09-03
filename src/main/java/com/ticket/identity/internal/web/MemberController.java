@@ -1,15 +1,10 @@
 package com.ticket.identity.internal.web;
 
-import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
-
 import com.ticket.identity.internal.web.docs.MemberControllerDocs;
 import com.ticket.identity.AuthenticatedMember;
 import com.ticket.identity.internal.application.member.query.GetCurrentMemberUseCase;
 import com.ticket.identity.internal.application.member.command.WithdrawCurrentMemberUseCase;
-import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.web.ApiResponse;
-import com.ticket.core.api.support.cursor.ShowLikeCursorCodec;
-import com.ticket.web.SliceResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,8 +18,6 @@ public class MemberController implements MemberControllerDocs {
 
     private final GetCurrentMemberUseCase getCurrentMemberUseCase;
     private final WithdrawCurrentMemberUseCase withdrawCurrentMemberUseCase;
-    private final GetMyShowLikesUseCase getMyShowLikesUseCase;
-    private final ShowLikeCursorCodec showLikeCursorCodec;
 
     @Override
     @GetMapping
@@ -40,26 +33,5 @@ public class MemberController implements MemberControllerDocs {
         final WithdrawCurrentMemberUseCase.Output output = withdrawCurrentMemberUseCase.execute(input);
         SecurityContextHolder.clearContext();
         return ApiResponse.success(output);
-    }
-
-    @Override
-    @GetMapping("/me/likes")
-    public ApiResponse<SliceResponse<ShowLikeSummaryView>> getMyLikes(
-            final AuthenticatedMember member,
-            @RequestParam(required = false) final String cursor,
-            @RequestParam(defaultValue = "20") final int size
-    ) {
-        final GetMyShowLikesUseCase.Input input = new GetMyShowLikesUseCase.Input(
-                member.memberId(),
-                showLikeCursorCodec.decode(cursor),
-                size
-        );
-        final GetMyShowLikesUseCase.Output output = getMyShowLikesUseCase.execute(input);
-        return ApiResponse.success(SliceResponse.of(
-                output.items(),
-                output.hasNext(),
-                size,
-                showLikeCursorCodec.encode(output.nextPosition())
-        ));
     }
 }
