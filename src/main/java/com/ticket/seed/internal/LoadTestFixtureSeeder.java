@@ -1,4 +1,4 @@
-package com.ticket.core.infra.seed;
+package com.ticket.seed.internal;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.ticket.core.infra.seed;
+package com.ticket.seed.internal;
 
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.model.Role;

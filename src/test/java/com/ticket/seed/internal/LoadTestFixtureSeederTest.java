@@ -1,4 +1,4 @@
-package com.ticket.core.infra.seed;
+package com.ticket.seed.internal;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
