@@ -1,12 +1,10 @@
-package com.ticket.core.infra.showlike.query;
+package com.ticket.catalog.internal.infrastructure.showlike.query;
 
-import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
-
+import com.ticket.catalog.internal.application.showlike.query.ShowLikeReadRepository;
+import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
-import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
 import com.ticket.shared.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -15,7 +13,7 @@ import java.util.List;
 
 import static com.ticket.catalog.internal.domain.show.QShow.show;
 import static com.ticket.catalog.internal.domain.show.QVenue.venue;
-import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
+import static com.ticket.catalog.internal.domain.showlike.model.QShowLike.showLike;
 
 @Repository
 @RequiredArgsConstructor
@@ -30,7 +28,7 @@ public class QuerydslShowLikeReadRepository implements ShowLikeReadRepository {
             final int size
     ) {
         final BooleanBuilder where = new BooleanBuilder();
-        where.and(showLike.member.id.eq(memberId));
+        where.and(showLike.memberId.eq(memberId));
 
         if (cursorLikeId != null) {
             where.and(showLike.id.lt(cursorLikeId));

@@ -1,7 +1,6 @@
-package com.ticket.core.domain.showlike.model;
+package com.ticket.catalog.internal.domain.showlike.model;
 
-import com.ticket.core.domain.BaseEntity;
-import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.catalog.internal.domain.CatalogAuditedEntity;
 import com.ticket.catalog.internal.domain.show.Show;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,15 +19,18 @@ import java.util.Objects;
                 @Index(name = "IDX_SHOW_LIKES_SHOW_ID", columnList = "show_id")
         }
 )
-public class ShowLike extends BaseEntity {
+public class ShowLike extends CatalogAuditedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    /**
+     * identity가 소유한 회원의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로
+     * {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR 0003 §4).
+     */
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "show_id", nullable = false)
@@ -37,8 +39,8 @@ public class ShowLike extends BaseEntity {
     protected ShowLike() {
     }
 
-    public ShowLike(final Member member, final Show show) {
-        this.member = Objects.requireNonNull(member, "member must not be null");
+    public ShowLike(final Long memberId, final Show show) {
+        this.memberId = Objects.requireNonNull(memberId, "memberId must not be null");
         this.show = Objects.requireNonNull(show, "show must not be null");
     }
 

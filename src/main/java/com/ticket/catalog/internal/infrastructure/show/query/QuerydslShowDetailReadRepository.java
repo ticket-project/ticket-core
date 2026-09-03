@@ -29,7 +29,7 @@ import static com.ticket.catalog.internal.domain.show.QShowGenre.showGenre;
 import static com.ticket.catalog.internal.domain.show.QShowGrade.showGrade;
 import static com.ticket.catalog.internal.domain.show.QPerformer.performer;
 import static com.ticket.catalog.internal.domain.show.QShow.show;
-import static com.ticket.core.domain.showlike.model.QShowLike.showLike;
+import static com.ticket.catalog.internal.domain.showlike.model.QShowLike.showLike;
 
 @Repository
 @RequiredArgsConstructor

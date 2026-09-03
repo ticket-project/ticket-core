@@ -1,14 +1,12 @@
-package com.ticket.core.infra.showlike.query;
+package com.ticket.catalog.internal.infrastructure.showlike.query;
 
-import com.ticket.core.app.showlike.query.model.ShowLikeSummaryView;
-
-import com.ticket.core.app.showlike.query.GetMyShowLikesUseCase;
-import com.ticket.core.app.showlike.query.ShowLikeReadRepository;
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.catalog.internal.domain.show.Show;
+import com.ticket.catalog.internal.application.showlike.query.ShowLikeReadRepository;
+import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.catalog.internal.domain.show.Region;
+import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
+import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.shared.CursorPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
