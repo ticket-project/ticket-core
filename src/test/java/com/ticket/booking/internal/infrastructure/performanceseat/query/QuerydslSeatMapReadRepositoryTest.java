@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * booking local 조회(회차 좌석 판매 상태)만 검증한다. 물리 좌석·등급 조합은 catalog
- * {@code QuerydslShowSeatMapReadRepository}가 소유하고 별도로 검증한다.
+ * {@code QuerydslPerformanceVenueLayoutReadRepository}가 소유하고 별도로 검증한다.
  */
 @Import(QuerydslSeatMapReadRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
