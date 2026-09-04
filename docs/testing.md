@@ -1,10 +1,12 @@
 # 테스트 기준
 
-> **진행 중인 설계**: [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)의
-> `payment`/`ticketing` module 신설과 catalog/booking schema 재설계가 진행 중이다. 새 module
-> STANDALONE 테스트와 module set/DAG 표는 구현 완료 후 이 문서에 반영한다. Phase 1 산출물인
-> 현재 schema 계약 테스트는 `com.ticket.bootstrap.migration.CurrentSeatVenueShowGradeSchemaTest`,
-> `ShowGradePerformanceSeatPriceMismatchQueryTest`를 본다.
+> [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)의
+> `payment`/`ticketing` module 신설과 catalog/booking schema 재설계가 구현됐다(entity-only 단계 —
+> PG 연동, 결제 승인 API, `OrderConfirmed` listener는 아직 없다). 아래 모듈 테스트·구조 테스트·
+> module별 migration slice 테스트 표는 이 구현을 반영한다. `ShowGrade`/`ShowSeat` 제거(계획 문서
+> Phase 3 Task 8)가 끝나면서 그 둘을 대상으로 하던 Phase 1 baseline 테스트
+> (`CurrentSeatVenueShowGradeSchemaTest`, `ShowGradePerformanceSeatPriceMismatchQueryTest`)도 함께
+> 지워졌다 — 이 문서에서 더 이상 인용하지 않는다.
 
 이 문서는 **새 테스트를 쓸 때의 관례와 각 테스트가 무엇을 고정하는지**를 정리한다. 모듈 경계는
 [architecture.md](architecture.md), 구현 흐름은 [development.md](development.md), 실행 환경은
@@ -35,7 +37,9 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
 테스트를 최소 하나씩 둔다(`AdmissionModuleTests`, `CatalogModuleTests`, `IdentityModuleTests`,
-`BookingModuleTests`, `ShowLikeModuleTests`, `MetadataModuleTests`). `verifyAutomatically = false`인
+`BookingModuleTests`, `MetadataModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`,
+`TicketingModuleTests`). `showlike`는 별도 module이 아니라 catalog가 흡수했다(찜 기능은
+`catalog` STANDALONE 테스트 안에서 검증한다). `verifyAutomatically = false`인
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
 곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
 
@@ -85,10 +89,42 @@ legacy 코드를 다룰 때는 이 테스트들도 함께 돌아가는지 확인
 ## 모듈별 migration slice 테스트
 
 각 모듈이 자신의 Flyway 이력(`db/migration/__root` + `db/migration/{module}`)만으로 schema가
-만들어지고 CRUD가 동작하는지 `@DataJpaTest`와 module slicing 조합으로 검증한다(예:
-`BookingModuleSlicingSchemaTest`). 다른 모듈의 migration이 있어야만 통과하면 실패로 간주한다.
+만들어지고 CRUD가 동작하는지 `@DataJpaTest`와 module slicing 조합으로 검증한다. 지금 존재하는
+네 개는 `BookingModuleSlicingSchemaTest`, `CatalogModuleSlicingSchemaTest`,
+`PaymentModuleSlicingSchemaTest`, `TicketingModuleSlicingSchemaTest`
+(`src/test/java/com/ticket/bootstrap/migration/`)다. 다른 모듈의 migration이 있어야만 통과하면
+실패로 간주한다.
+
+`payment`/`ticketing`은 ADR 0005의 entity-only 단계라 두 slicing test가 검증하는 범위도 그만큼
+좁다 — 각자의 module migration만으로 `PAYMENTS`/`TICKETS` 테이블이 만들어지고 entity가
+저장·조회되는지, 그리고 다른 업무 모듈(booking 등)의 migration 없이도 그 자체로 성립하는지만
+고정한다. controller나 PG/QR 연동은 이 범위가 아니다.
+
 H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationCompatibilityTest` 등)로
 확인한다. 상세는 [operations.md의 DB 마이그레이션](operations.md#db-마이그레이션)을 본다.
+
+## performance 기준 API와 가격 snapshot 회귀
+
+ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
+테스트는 모두 `PerformanceSeatQueryControllerContractTest`
+(`src/test/java/com/ticket/booking/internal/web/`) 하나에 있다.
+
+- `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
+- `GET /api/v1/performances/{id}/seats/status` — 동적 판매 상태(`performanceSeatId` 기준)
+- `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
+
+**N+1 회귀**는 `GetPerformanceSeatMapUseCaseTest`가 고정한다. `GetPerformanceSeatMapUseCase`는
+Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 catalog `PerformanceVenueLayoutCatalog`에서,
+판매 편성된 좌석과 확정 가격을 booking `PerformanceSeatMapReadRepository`에서 각각 정확히 한 번만
+조회해 조합한다(N+1 없이 고정된 query 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한
+번만 호출되는지 확인한다 — 회차 좌석 수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
+
+**가격 snapshot 불변성**은 두 단계로 고정된다. `OrderCreatorTest`는 주문 금액이 오직
+`PerformanceSeat.unitPrice` 합계로만 계산되고(`sumTotalAmount`), catalog snapshot
+(`PerformanceSaleCatalog`)은 표시값(등급 코드/이름, 좌석 라벨, show/venue 이름)에만 쓰인다는 것을
+고정한다. `GetOrderDetailUseCaseTest`는 주문 상세 조회가 Order/OrderSeat에 생성 시점에 남긴
+snapshot만 쓰고 catalog를 다시 조회하지 않는다는 것을 고정한다 — catalog 쪽 가격·표시값이 나중에
+바뀌어도 기존 주문 상세가 그대로임을 보장하는 지점이 이 테스트다.
 
 ## 통합 테스트와 E2E
 
