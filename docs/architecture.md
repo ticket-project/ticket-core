@@ -1,15 +1,16 @@
 # 아키텍처 기준
 
-> **진행 중인 설계**: Venue/Seat/Grade/PerformanceGrade/PerformanceSeat 도메인 재설계와
-> `payment`/`ticketing` module 신설이
-> [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)로
-> 승인됐고 아직 구현 중이다. 이 문서의 모듈 목록·DAG는 구현 완료 후 갱신한다 — 지금은 현재 코드
-> 기준을 그대로 유지한다.
-
 이 문서는 Ticket Core가 따라야 할 **모듈 책임과 의존성 방향의 단일 기준**이다. 현재 코드가 이 문서와
 다르면 현재 위치를 선례로 삼지 말고, 미완료된 구조 이전으로 판단한다. 결정 배경은
-[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md), 개발 흐름은
+[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)과
+[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md), 개발 흐름은
 [development.md](development.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
+
+**ADR 0005 반영 완료**: Venue/Seat/Grade/PerformanceGrade/PerformanceSeat 도메인 재설계와
+`payment`/`ticketing` module 신설은 구현이 끝났다. `ShowGrade`/`ShowSeat`는 entity·schema 모두
+제거됐고, 아래 모듈 목록·DAG는 이 시점의 실제 코드(`ModularityTests`) 기준이다. `payment`/
+`ticketing`은 이번 범위에서 entity/schema/repository만 있는 entity-only 모듈이며, PG 연동과 티켓
+발급 흐름은 각각 후속 ADR/계획으로 별도 승인한다(ADR 0005 §3, §4).
 
 ## 프로젝트 구조
 
@@ -27,8 +28,8 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 ```text
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
-├── booking/                 # 좌석 판매 상태·Selection·Hold·Order, 공개: BookingMetadata, OrderStarted/OrderTerminated
-├── catalog/                 # Show·Performance·Seat·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, CatalogMetadata
+├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat, 공개: BookingMetadata, OrderStarted/OrderTerminated
+├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog, CatalogMetadata
 ├── identity/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, IdentityMetadata
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
 ├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
@@ -36,8 +37,24 @@ src/main/java/com/ticket
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
 ├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
 │                                scheduling/clock/UUID/event publication + JpaAuditingConfig)
-└── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
+├── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
+├── payment/                  # Payment(결제 시도) entity/schema/repository만 갖는 entity-only 모듈
+└── ticketing/                # Ticket(발급 티켓) entity/schema/repository만 갖는 entity-only 모듈
 ```
+
+`com.ticket`의 직접 하위 패키지는 12개다(`booking`, `catalog`, `identity`, `admission`, `metadata`,
+`shared`, `web`, `config`, `error`, `seed`, `payment`, `ticketing`) — `showlike`는 없다(찜을 catalog가
+흡수했다. [찜(showlike)은 catalog가 흡수한다](#찜showlike은-catalog가-흡수한다) 참고).
+
+`payment`와 `ticketing`은 ADR 0005로 신설됐다. **이번 구현 범위는 entity/schema/repository와 구조·
+schema 검증 테스트까지다** — controller, PG client, 결제 승인/실패/취소 API, callback/webhook,
+`OrderConfirmed` listener, 자동 티켓 발급, QR/입장/사용/양도는 만들지 않았다. 그래서 두 모듈 모두
+`ModularityTests.APPROVED_DEPENDENCY_DAG`에서 다른 어떤 모듈(`shared`/`web`/`error` 포함)도 참조하지
+않는 완전한 leaf다(cross-module 의존 0). `payment.Payment`는 `orderId`를, `ticketing.Ticket`은
+`orderSeatId`/`ownerMemberId`를 scalar 컬럼으로만 갖고 booking·identity의 entity를 JPA로 참조하지
+않는다. 실제 PG 정산(`payment -> booking`)과 `OrderConfirmed` 구독(`ticketing -> booking`) edge는
+그 공개 계약을 구현하는 후속 단계에서만 추가한다 — 지금 빈 public contract로 미리 만들지 않는다
+(ADR 0005 §3, §4).
 
 `com.ticket.core`는 완전히 비었다 — 남았던 찜(showlike) 관련 코드가 모두 catalog로 옮겨졌다.
 `com.ticket.bootstrap`은 legacy가 아니라 영구 composition-root 예외 자리이며 지금 production
@@ -52,32 +69,46 @@ class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스�
 
 ## 승인된 의존 DAG
 
+`com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`가 고정한 실제 값이다(`shared`/`error`/`web`을
+포함해 각 모듈이 실제로 참조하는 모듈 전부를 담는다).
+
 ```text
-booking   -> catalog, identity, admission
-catalog   -> identity
-identity  -> (없음)
-admission -> (없음)
-metadata  -> catalog, booking, identity
-shared    -> 모든 모듈이 참조할 수 있는 공유 자리(호출 대상 계약만, bean 등록 없음)
-web       -> HTTP를 노출하는 모든 모듈이 참조하는 REST 표현 계약(leaf, bean 등록 없음)
-error     -> web (오류를 HTTP 본문으로 옮길 때만)
-config    -> identity (공개 계약 AuthenticatedMember만)
-seed      -> identity :: seed
+booking   -> catalog, identity, admission, shared, web, error
+catalog   -> identity, shared, web, error
+identity  -> shared, web, error
+admission -> web, error
+metadata  -> catalog, booking, identity, web
+shared    -> (없음)
+web       -> (없음)
+config    -> identity, shared
+error     -> web
+seed      -> identity
+payment   -> (없음)
+ticketing -> (없음)
 ```
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수 있다.
-그래서 각 모듈 `allowedDependencies`에는 **업무 모듈 의존만** 적는다. 대신 어느 모듈이 실제로 이
+그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만** 적는다
+(`catalog`/`identity`/`admission`은 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
+`sharedModules`인 shared·error·web은 상한과 무관하게 항상 허용된다). 대신 어느 모듈이 실제로 이
 셋을 참조하는지는 `ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정하므로, HTTP를
 노출하지 않던 모듈에 응답 봉투가 새로 들어오면 그 테스트가 실패한다.
 
-`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 leaf 모듈이다. `catalog`는 찜(showlike)
-흡수로 회원 존재 확인을 위해 identity를 참조한다(`MemberLookup`) — booking이
+`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). `catalog`는
+찜(showlike) 흡수로 회원 존재 확인을 위해 identity를 참조한다(`MemberLookup`) — booking이
 `Order.memberId`를 위해 identity를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹히고,
-`metadata`는 세 모듈의 공개 계약만 조합한다. `shared`와 `web`은 어떤 모듈도 참조하지 않는
-leaf고, `config`는 identity의 공개 계약(`AuthenticatedMember`)과 shared를 참조하지만 `config`를
-참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로 적재하고, 부하 테스트 회원만
-identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은 없다. 이 DAG를 바꾸려면 먼저
-[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을 갱신한다.
+`metadata`는 세 모듈의 공개 계약만 조합한다(자체 오류를 던지지 않아 `error` edge는 없다). `shared`와
+`web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 identity의 공개 계약(`AuthenticatedMember`)과
+shared(`UuidSupplier`)를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을
+raw SQL로 적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
+
+`payment`와 `ticketing`은 **이번 entity-only 단계에서 완전한 leaf다** — 업무 모듈은 물론 `shared`/
+`web`/`error`도 참조하지 않는다. controller가 없어 응답 봉투(`web`)가 필요 없고, 자기 오류 타입을
+아직 던지지 않아 `error`도 필요 없다. 실제 PG 정산·티켓 발급 단계에서 `payment -> booking`,
+`ticketing -> booking` edge가 추가되면 그 시점에 `web`/`error` 참조도 함께 늘어날 수 있다(ADR 0005
+§4). 순환은 없다. 이 DAG를 바꾸려면 먼저
+[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)과
+[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 갱신한다.
 
 **모듈 발견 전략은 기본값(`direct-sub-packages`)이다.** `explicitly-annotated`로 바꾸면
 `@ApplicationModule`을 빼먹은 미래 모듈을 조용히 놓칠 수 있어 채택하지 않았다. 대신
@@ -103,6 +134,42 @@ identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다. 순환은 
   본다.
 - **`metadata`는 어떤 모듈의 internal enum/entity/repository도 import하지 않는다.** 각 모듈이
   공개한 `*Metadata` 계약(`CatalogMetadata`, `BookingMetadata`, `IdentityMetadata`)만 주입받는다.
+
+### Show/Performance/Grade/PerformanceGrade/PerformanceSeat와 catalog-booking 공개 계약
+
+`Grade`(catalog)는 `VIP`/`R`/`S`/`A` 같은 재사용 가능한 코드·이름만 갖고 가격을 갖지 않는다.
+`PerformanceGrade`(catalog, `Grade N:M Performance`의 연결 entity)가 특정 Performance에서 쓸 Grade
+선택·회차별 가격·표시 순서를 갖는다 — 가격의 원본은 여기다. `PerformanceSeat`(booking)는
+`performanceId`/`seatId`/`performanceGradeId`를 scalar 컬럼으로만 갖고 catalog entity를 JPA로
+참조하지 않으며, 판매 좌석 생성 시 `PerformanceGrade.price`를 `unitPrice`로 snapshot하고
+`@Version`으로 동시 확정을 방어한다. 가격은 세 시점의 사실로 나뉜다.
+
+```text
+PerformanceGrade.price   운영자가 구성한 회차 등급 가격 (판매 오픈 전에만 변경 가능)
+  -> PerformanceSeat.unitPrice   판매 좌석 생성 시 snapshot (판매 오픈 후 불변)
+    -> OrderSeat.unitPrice       주문 생성 시 snapshot (생성 후 불변)
+```
+
+booking이 이 판매 편성·주문 표시 snapshot을 만들 때 쓰는 catalog 공개 계약은 두 개다. JPA entity는
+어느 쪽도 노출하지 않는다.
+
+- `catalog.PerformanceSaleCatalog#getSaleSnapshot(performanceId, seatIds)` — `PerformanceSaleSnapshot`
+  (요청 seat 중 그 회차 Venue에 실제로 속한 좌석의 표시값 + 그 회차에 배정된 모든
+  PerformanceGrade 표시값·가격)을 반환한다. `PerformanceSeat` 생성과 `GetSeatAvailabilityUseCase`
+  (등급별 잔여석)가 쓴다.
+- `catalog.PerformanceVenueLayoutCatalog#getVenueLayout(performanceId)` — `PerformanceVenueLayout`
+  (Venue 배치·그 Venue의 모든 물리 Seat 좌표 + 그 회차에 배정된 PerformanceGrade 표시값, 가격은
+  담지 않음)을 반환한다. 정적 seat-map API(`GetPerformanceSeatMapUseCase`)가 쓰고, 판매 편성되지
+  않은 물리 Seat는 booking local 조회로 걸러낸다.
+
+**`ShowGrade`/`ShowSeat`는 폐기됐다 — entity·schema 모두 제거됐고 참조하지 않는다.** Show 단위
+공통 가격표가 필요하면 `PerformanceGrade`에서 `minPrice`/`maxPrice`를 파생한다
+(`catalog.GetShowDetailUseCase.PriceSummary`). Show 전체 회차에 적용할 좌석 템플릿이 실제로
+필요해지면 그때 별도 개념(`ShowSeatTemplate` 등)을 추가한다 — 지금 이름만 바꿔 남기지 않는다.
+`booking.internal.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
+Venue 배치만 반환하는 별개의 show 기준 API이고,
+회차 기준 `/api/v1/performances/{performanceId}/seat-map`과는 다른 용도다(둘 다 참고
+[개발 기준](development.md#쇼회차좌석-조회)).
 
 ### 찜(showlike)은 catalog가 흡수한다
 
