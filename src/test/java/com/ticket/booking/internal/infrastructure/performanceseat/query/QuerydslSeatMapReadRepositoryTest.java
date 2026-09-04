@@ -1,8 +1,9 @@
 package com.ticket.booking.internal.infrastructure.performanceseat.query;
 
 import com.ticket.booking.internal.application.performanceseat.query.SeatMapReadRepository;
+import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
+import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateSnapshotRow;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.seat.Seat;
@@ -33,6 +34,8 @@ class QuerydslSeatMapReadRepositoryTest extends ReadRepositoryTestSupport {
     private SeatMapReadRepository seatMapReadRepository;
 
     private Long performanceId;
+    private PerformanceSeat performanceSeat1;
+    private PerformanceSeat performanceSeat2;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -43,18 +46,18 @@ class QuerydslSeatMapReadRepositoryTest extends ReadRepositoryTestSupport {
 
         Performance performance = persistPerformance(show, 1L, LocalDateTime.now().plusDays(1));
         performanceId = performance.getId();
-        persistPerformanceSeat(performance, seat1, PerformanceSeatState.RESERVED, BigDecimal.valueOf(100000));
-        persistPerformanceSeat(performance, seat2, PerformanceSeatState.AVAILABLE, BigDecimal.valueOf(150000));
+        performanceSeat1 = persistPerformanceSeat(performance, seat1, PerformanceSeatState.RESERVED, BigDecimal.valueOf(100000));
+        performanceSeat2 = persistPerformanceSeat(performance, seat2, PerformanceSeatState.AVAILABLE, BigDecimal.valueOf(150000));
         flushAndClear();
     }
 
     @Test
-    void 좌석별_상태를_api_상태로_변환한다() {
-        List<SeatStateView> result = seatMapReadRepository.findSeatStatuses(performanceId);
+    void 좌석별_상태를_performanceSeatId_기준_api_상태로_변환한다() {
+        List<SeatStateSnapshotRow> result = seatMapReadRepository.findSeatStatuses(performanceId);
 
         assertThat(result).containsExactly(
-                new SeatStateView(result.get(0).seatId(), SeatStatus.OCCUPIED),
-                new SeatStateView(result.get(1).seatId(), SeatStatus.AVAILABLE)
+                new SeatStateSnapshotRow(performanceSeat1.getId(), performanceSeat1.getSeatId(), SeatStatus.OCCUPIED),
+                new SeatStateSnapshotRow(performanceSeat2.getId(), performanceSeat2.getSeatId(), SeatStatus.AVAILABLE)
         );
     }
 }

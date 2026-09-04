@@ -8,6 +8,7 @@ import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateSnapshotRow;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,8 +72,8 @@ class GetSeatStatusUseCaseTest {
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy());
         when(seatStatusDbReader.read(10L)).thenReturn(List.of(
-                new SeatStateView(1L, SeatStatus.AVAILABLE),
-                new SeatStateView(2L, SeatStatus.OCCUPIED)
+                new SeatStateSnapshotRow(101L, 1L, SeatStatus.AVAILABLE),
+                new SeatStateSnapshotRow(102L, 2L, SeatStatus.OCCUPIED)
         ));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
@@ -80,17 +81,17 @@ class GetSeatStatusUseCaseTest {
         GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
         assertThat(output.seats()).containsExactly(
-                new SeatStateView(1L, SeatStatus.OCCUPIED),
-                new SeatStateView(2L, SeatStatus.OCCUPIED)
+                new SeatStateView(101L, SeatStatus.OCCUPIED),
+                new SeatStateView(102L, SeatStatus.OCCUPIED)
         );
         verify(bookingPolicyLookup).getBookingPolicy(10L);
     }
 
     @Test
-    void redis_점유좌석이_없으면_db_상태를_그대로_반환한다() {
-        List<SeatStateView> dbStates = List.of(
-                new SeatStateView(1L, SeatStatus.AVAILABLE),
-                new SeatStateView(2L, SeatStatus.OCCUPIED)
+    void redis_점유좌석이_없으면_db_상태를_performanceSeatId_기준으로_그대로_반환한다() {
+        List<SeatStateSnapshotRow> dbStates = List.of(
+                new SeatStateSnapshotRow(101L, 1L, SeatStatus.AVAILABLE),
+                new SeatStateSnapshotRow(102L, 2L, SeatStatus.OCCUPIED)
         );
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy());
         when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
@@ -99,7 +100,10 @@ class GetSeatStatusUseCaseTest {
 
         GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
-        assertThat(output.seats()).containsExactlyElementsOf(dbStates);
+        assertThat(output.seats()).containsExactly(
+                new SeatStateView(101L, SeatStatus.AVAILABLE),
+                new SeatStateView(102L, SeatStatus.OCCUPIED)
+        );
         verify(seatStatusDbReader).read(10L);
     }
 
