@@ -1,5 +1,11 @@
 # 아키텍처 기준
 
+> **진행 중인 설계**: Venue/Seat/Grade/PerformanceGrade/PerformanceSeat 도메인 재설계와
+> `payment`/`ticketing` module 신설이
+> [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)로
+> 승인됐고 아직 구현 중이다. 이 문서의 모듈 목록·DAG는 구현 완료 후 갱신한다 — 지금은 현재 코드
+> 기준을 그대로 유지한다.
+
 이 문서는 Ticket Core가 따라야 할 **모듈 책임과 의존성 방향의 단일 기준**이다. 현재 코드가 이 문서와
 다르면 현재 위치를 선례로 삼지 말고, 미완료된 구조 이전으로 판단한다. 결정 배경은
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md), 개발 흐름은

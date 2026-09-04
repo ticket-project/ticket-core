@@ -1,5 +1,9 @@
 # 운영과 실행 기준
 
+> **진행 중인 설계**: [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)가
+> catalog/booking migration 추가와 `payment`/`ticketing` module 신규 migration 폴더를 예고한다.
+> 아직 구현 전이며, 완료 후 이 문서의 DB 마이그레이션 절을 갱신한다.
+
 이 문서는 로컬 실행, 프로파일, DB 마이그레이션, 배포, 관측 기준을 정리한다. 결정 배경은
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md), 검증 명령은 `/verify`
 스킬이 원본이다.

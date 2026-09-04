@@ -1,5 +1,10 @@
 # 개발 기준
 
+> **진행 중인 설계**: Grade/PerformanceGrade 가격 모델, ShowGrade/ShowSeat 폐기,
+> `Order.PAYMENT_FAILED` 제거, `payment`/`ticketing` module 신설이
+> [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)로
+> 승인됐고 아직 구현 중이다. 아래 "핵심 도메인 모델"의 Order 상태 등은 구현 완료 후 갱신한다.
+
 이 문서는 현재 코드 기준 개발 맥락을 정리한다. 모듈 경계와 상세 구조는
 [architecture.md](architecture.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
 

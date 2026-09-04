@@ -1,5 +1,11 @@
 # 테스트 기준
 
+> **진행 중인 설계**: [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)의
+> `payment`/`ticketing` module 신설과 catalog/booking schema 재설계가 진행 중이다. 새 module
+> STANDALONE 테스트와 module set/DAG 표는 구현 완료 후 이 문서에 반영한다. Phase 1 산출물인
+> 현재 schema 계약 테스트는 `com.ticket.bootstrap.migration.CurrentSeatVenueShowGradeSchemaTest`,
+> `ShowGradePerformanceSeatPriceMismatchQueryTest`를 본다.
+
 이 문서는 **새 테스트를 쓸 때의 관례와 각 테스트가 무엇을 고정하는지**를 정리한다. 모듈 경계는
 [architecture.md](architecture.md), 구현 흐름은 [development.md](development.md), 실행 환경은
 [operations.md](operations.md)를 함께 본다.
