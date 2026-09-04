@@ -1,6 +1,7 @@
 package com.ticket.booking.internal.web.docs;
 
 import com.ticket.identity.AuthenticatedMember;
+import com.ticket.booking.internal.application.performanceseat.query.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.web.ApiResponse;
@@ -19,6 +20,17 @@ import jakarta.validation.constraints.Positive;
  */
 @Tag(name = "Performance", description = "회차 좌석 판매 상태 조회 API")
 public interface PerformanceSeatQueryControllerDocs {
+
+    @Operation(
+            summary = "Get performance seat map",
+            description = "Returns the static seat map (venue layout, seat coordinates, grade and price) for a performance."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
+    })
+    ApiResponse<GetPerformanceSeatMapUseCase.Output> getSeatMap(
+            @Parameter(description = "Performance ID", example = "1", required = true) @Positive Long performanceId
+    );
 
     @Operation(
             summary = "Get seat availability by grade",
