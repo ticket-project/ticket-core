@@ -78,14 +78,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
  * {@code booking}, {@code catalog}, {@code identity}, {@code admission},
  * {@code metadata}, {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed},
- * {@code payment} 정확히 11개다. {@code showlike}는 더 이상 없다 — 찜(개수·추가·삭제·내 목록)을
- * catalog가 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도 module로 두면 catalog·identity와
- * 순환 결합이 생겨서다(catalog의 package-info 참고).
+ * {@code payment}, {@code ticketing} 정확히 12개다. {@code showlike}는 더 이상 없다 —
+ * 찜(개수·추가·삭제·내 목록)을 catalog가 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도
+ * module로 두면 catalog·identity와 순환 결합이 생겨서다(catalog의 package-info 참고).
  *
  * <p>{@code payment}는 ADR 0005(Phase 5 Task 11)로 신설된 module이다. Order에 대한 결제 시도
  * entity/schema/repository까지만 다루는 entity-only 단계라 다른 업무 module을 import하지 않는
  * leaf다({@code payment -> 없음}). 실제 PG 정산을 구현하는 후속 단계(Task 13이 아닌 별도 작업)에서만
  * {@code payment -> booking} 공개 계약 의존이 추가된다(ADR 0005 §4, payment의 package-info 참고).
+ *
+ * <p>{@code ticketing}은 ADR 0005(Phase 5 Task 12)로 신설된 module이다. 결제 성공으로 확정된
+ * OrderSeat에 대해 발급되는 Ticket의 entity/schema/repository까지만 다루는 entity-only 단계라
+ * 다른 업무 module을 import하지 않는 leaf다({@code ticketing -> 없음}). 실제 {@code OrderConfirmed}
+ * 구독을 구현하는 후속 단계(Task 13이 아닌 별도 작업)에서만 {@code ticketing -> booking} 공개 계약
+ * 의존이 추가된다(ADR 0005 §4, ticketing의 package-info 참고).
  */
 class ModularityTests {
 
@@ -97,10 +103,10 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 12개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
             "booking", "catalog", "identity", "admission", "metadata", "shared", "web", "config",
-            "error", "seed", "payment");
+            "error", "seed", "payment", "ticketing");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
@@ -148,7 +154,8 @@ class ModularityTests {
             Map.entry("config", Set.of("identity", "shared")),
             Map.entry("error", Set.of("web")),
             Map.entry("seed", Set.of("identity")),
-            Map.entry("payment", Set.of())
+            Map.entry("payment", Set.of()),
+            Map.entry("ticketing", Set.of())
     );
 
     @Test
