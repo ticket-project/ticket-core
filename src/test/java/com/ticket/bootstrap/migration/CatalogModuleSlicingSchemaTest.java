@@ -29,13 +29,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * ticket-domain-module-redesign Phase 2 Task 3(ADR 0005): {@code catalog} module이 {@code __root} +
- * 자신의 migration(V1 cross-module FK 제거, V2 Seat-Venue 관계 추가)만으로(booking·identity 등 다른
- * module의 migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는 schema를 만들고, Venue별
- * 좌석 주소 unique 제약이 실제로 동작하는지 검증한다.
+ * 자신의 migration(V1 cross-module FK 제거, V3 Seat-Venue 관계 추가, V4 Grade/PerformanceGrade 추가)만으로
+ * (booking·identity 등 다른 module의 migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는
+ * schema를 만들고, Venue별 좌석 주소 unique 제약이 실제로 동작하는지 검증한다.
  *
  * <p>{@code BookingModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로
  * {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다. {@code SEATS}/{@code VENUES}는
- * 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이므로(V2는 기존 SEATS에 컬럼을 더할
+ * 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이므로(V3는 기존 SEATS에 컬럼을 더할
  * 뿐이다) legacy baseline schema를 먼저 만든 뒤 module migration을 적용한다.
  */
 class CatalogModuleSlicingSchemaTest {

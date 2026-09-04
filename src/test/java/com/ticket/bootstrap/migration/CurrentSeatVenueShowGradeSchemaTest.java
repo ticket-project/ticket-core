@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Phase 2 Task 3에서 {@code Seat}에 필수 Venue 연관관계가 추가되며 이 baseline의 첫 번째 사실이
  * 바뀌었다 — {@code seat에는_venue_연관관계가_없다}를
  * {@code seat는_venue에_속하고_venue_seat_주소_조합이_유일하다}로 갱신했다({@code db/migration-vendor/
- * {h2,oracle}/catalog/V2__add_seat_venue_relationship.sql} 참고). 남은 두 가지는
+ * {h2,oracle}/catalog/V3__add_seat_venue_relationship.sql} 참고). 남은 두 가지는
  * {@code docs/superpowers/specs/2026-09-04-ticket-domain-module-redesign.md}가 지적하는 아직
  * 바뀌지 않은 현재 사실이다.
  *
