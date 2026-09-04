@@ -1,27 +1,32 @@
 # 개발 기준
 
-> **진행 중인 설계**: Grade/PerformanceGrade 가격 모델, ShowGrade/ShowSeat 폐기,
-> `Order.PAYMENT_FAILED` 제거, `payment`/`ticketing` module 신설이
-> [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)로
-> 승인됐고 아직 구현 중이다. 아래 "핵심 도메인 모델"의 Order 상태 등은 구현 완료 후 갱신한다.
-
 이 문서는 현재 코드 기준 개발 맥락을 정리한다. 모듈 경계와 상세 구조는
 [architecture.md](architecture.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
+
+**ADR 0005 반영 완료**: Grade/PerformanceGrade 가격 모델, ShowGrade/ShowSeat 폐기,
+`Order.PAYMENT_FAILED` 제거, `payment`/`ticketing` module 신설은 구현이 끝났다. 아래 내용은 그
+결과를 반영한 현재 코드 기준이다. PG 연동·결제 승인/실패/콜백·자동 티켓 발급은 아직 별도 구현
+대상이다([미구현 또는 후속 범위](#미구현-또는-후속-범위) 참고).
 
 ## 프로젝트 요약
 
 Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `catalog`,
-`identity`, `admission`, `showlike`, `metadata`를 Spring Modulith Application Module로 나눈다.
-현재 구현의 중심은 아래 흐름이다.
+`identity`, `admission`, `metadata`, `payment`, `ticketing`을 포함해 12개 Spring Modulith
+Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). 현재
+구현의 중심은 아래 흐름이다.
 
 - 인증/회원(`identity`): 이메일 회원가입, 로그인, JWT 갱신, OAuth2 로그인 URL 조회 및 토큰 교환
-- 공연/전시 조회(`catalog`): 쇼, 장르, 회차/좌석 레이아웃 조회, 대기열 필요 여부 정책
+- 공연/전시 조회(`catalog`): 쇼, 장르, 회차별 Venue 배치·좌석·등급(Grade/PerformanceGrade) 조회,
+  대기열 필요 여부 정책
 - 메타 코드 조회(`metadata`): catalog/booking/identity가 공개한 code/label을 한 번에 조합
 - 좌석 선택(`booking`): Redis TTL 기반 임시 선택 상태와 WebSocket 전파
-- 좌석 선점과 주문(`booking`): Redis 기반 hold, `PENDING` 주문 생성, 조회, 취소, 만료 처리
+- 좌석 선점과 주문(`booking`): Redis 기반 hold, `PENDING` 주문 생성, 조회, 취소, 만료 처리.
+  판매 좌석(`PerformanceSeat`)은 회차 단위로 편성되고 판매 오픈 시점 가격을 snapshot한다
 - 입장 검증(`admission`): `ticket-queue`가 발급한 admission token 검증
-- 좋아요(`showlike`): write 경로만 이동 완료. 상세는
-  [architecture.md의 showlike 모듈의 경계](architecture.md#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다)를 본다
+- 좋아요(`showlike`): catalog가 흡수했다. 상세는
+  [architecture.md의 찜(showlike)은 catalog가 흡수한다](architecture.md#찜showlike은-catalog가-흡수한다)를 본다
+- 결제 시도(`payment`), 발급 티켓(`ticketing`): 이번 범위는 entity/schema/repository까지다. PG
+  연동, 결제 승인/실패/취소 API, 자동 티켓 발급, QR/입장/사용/양도는 없다
 - 대기열: Ticket Server가 회차별 DIRECT/QUEUE를 결정하고, `ticket-queue` 별도 서비스가
   shard/local sequence와 public state 기반 대기 상태 및 admission token 발급을 담당
 
@@ -47,6 +52,28 @@ Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로
 - **좌석 상태는 DB 상태와 Redis 점유 상태를 합쳐 계산한다.** 합치는 규칙의 소유자는 booking
   모듈 한 곳이다.
 - 잔여 좌석 수는 Redis `SELECTING`, `HOLDING` 상태를 반영한다.
+- 좌석·등급·가격 조회의 기준 식별자는 `performanceId`/`performanceSeatId`/`performanceGradeId`다.
+  `showId` 기준으로 등급·가격을 조회하는 API는 만들지 않는다 — 같은 Show라도 회차마다 편성과
+  가격이 다를 수 있다(ADR 0005).
+- performance 기준 API 3종(`booking.internal.web.PerformanceSeatQueryController`,
+  `/api/v1/performances/{performanceId}/**`)은 각각 다른 것을 반환한다.
+  - `GET .../seat-map`: 정적 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값·확정 가격
+    (`GetPerformanceSeatMapUseCase`). catalog `PerformanceVenueLayoutCatalog`와 booking local
+    `PerformanceSeat` 조회를 각각 한 번씩만 호출해 N+1 없이 고정된 query 수로 조합한다. Performance에
+    판매 편성되지 않은 물리 Seat는 응답에 아예 나타나지 않는다.
+  - `GET .../seats/status`: 동적 상태(`performanceSeatId` -> AVAILABLE/OCCUPIED). DB `RESERVED`와
+    Redis `SELECTING`/`HOLDING`을 합친다(`GetSeatStatusUseCase`).
+  - `GET .../seats/availability`: 등급별 잔여석(`GetSeatAvailabilityUseCase`). 그룹 key는 이름이
+    같아도 바뀔 수 있는 `gradeName`이 아니라 `performanceGradeId`다.
+  - **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지 않는다.**
+    새 좌석·등급 조회 API를 추가할 때도 이 원칙을 지킨다 — 상태 누락을 판매 가능으로 조용히
+    치환하지 않는다.
+  - 새 조회를 추가할 때 회차당 고정된 query 수(요청 회차 크기와 무관)를 유지하는지 확인한다.
+    catalog 쪽 좌표·등급 표시값이 booking 쪽 판매 편성과 어긋나면(데이터 불일치) 예외를 던지지 않고
+    조용히 그 좌석만 제외한다 — 어떤 오류로 다룰지는 조합 시점에 판정하지 않는다.
+  - `booking.internal.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
+    Venue 배치만 반환하는 별개의 레거시 show 기준 API다. 새 기능은 여기 추가하지 않고 performance
+    기준 API 3종에 추가한다.
 
 ### 좌석 선택
 
@@ -112,14 +139,50 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 
 ## 핵심 도메인 모델
 
+### 가격 원본과 snapshot 체인(catalog -> booking)
+
+가격은 세 시점의 사실로 나뉘고, **뒤 단계는 앞 단계를 다시 조회하지 않는다.**
+
+```text
+PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 — 판매 오픈 전에만 변경
+  -> PerformanceSeat.unitPrice(booking)   판매 좌석 생성 시 snapshot — 판매 오픈 후 불변
+    -> OrderSeat.unitPrice(booking)       주문 생성 시 snapshot — 생성 후 불변
+```
+
+- `Grade`(catalog)는 `VIP`/`R`/`S`/`A` 같은 코드·이름만 갖고 가격이 없다. 같은 Grade라도 회차마다
+  가격이 다를 수 있어 `PerformanceGrade`(`Grade N:M Performance` 연결 entity, catalog)가 회차별
+  가격·표시 순서를 갖는다 — **가격의 원본은 `PerformanceGrade.price`다.**
+- `PerformanceSeat`(booking)는 판매 좌석 생성 시 `PerformanceGrade.price`를 `unitPrice`로 복사하고,
+  이후 이 값은 불변이다. `PerformanceGrade` 가격을 나중에 바꿔도 이미 생성된 `PerformanceSeat`는
+  바뀌지 않는다.
+- `OrderSeat`(booking)는 주문 생성 시 `PerformanceSeat.unitPrice`를 복사한다. **주문 합계는 서버가
+  `PerformanceSeat.unitPrice`만으로 계산하고, 클라이언트가 보낸 가격은 받지도 계산 근거로
+  쓰지도 않는다.**
+- 과거 주문 조회는 현재 `PerformanceGrade`/`PerformanceSeat` 가격을 다시 조회하지 않는다.
+  `OrderSeat.unitPrice`가 그 시점의 계약을 이미 보존하므로, catalog 쪽 가격·표시 이름이 바뀌어도
+  기존 주문 상세는 바뀌지 않아야 한다.
+- 새 가격 관련 기능을 추가할 때 이 체인 중간을 건너뛰어 상위 단계(`PerformanceGrade.price`)를 직접
+  참조하지 않는다 — 그 순간 스냅샷을 보존하는 이유 자체가 무너진다.
+
+### Show/Performance/Grade/PerformanceGrade/PerformanceSeat(catalog + booking)
+
+- `Show`는 `Performance`를 회차 단위로 갖는다(`Show 1 : 0..N Performance`).
+- `Grade N:M Performance`는 `PerformanceGrade`가 연결한다. `Performance N:M Seat`는
+  `PerformanceSeat`가 연결하고, 어느 `PerformanceGrade`에 속하는지는 `PerformanceSeat`가 갖는다.
+- `ShowGrade`/`ShowSeat`(Show 단위 등급·좌석)는 폐기됐다. Show 상세의 공통 가격표가 필요하면
+  `PerformanceGrade`에서 `minPrice`/`maxPrice`를 파생한다(`GetShowDetailUseCase.PriceSummary`).
+  Show 전체 회차에 적용할 좌석 템플릿이 실제로 필요해지기 전에는 별도 개념을 미리 만들지 않는다.
+
 ### Order(`booking`)
 
 - 내부 PK: `id`
 - 외부 식별자: `orderKey`
-- 주요 상태: `PENDING`, `CONFIRMED`, `EXPIRED`, `CANCELED`, `PAYMENT_FAILED`
+- 주요 상태: `PENDING -> CONFIRMED`, `PENDING -> EXPIRED`, `PENDING -> CANCELED`
 
-주문 상태 모델은 결제 성공/실패를 수용할 수 있지만, 실제 결제 유스케이스는 아직 별도 구현
-대상이다.
+`PAYMENT_FAILED`는 Order 상태에서 제거됐다. Payment 실패는 Payment의 상태
+(`READY`/`PROCESSING` -> `FAILED`)이고, Order는 만료 전까지 다시 결제를 시도할 수 있다(`Order 1 :
+0..N Payment`, ADR 0005). 결제 재시도를 정말로 닫아야 하는 업무 사건이 생기면 그때 별도 Order
+종료 상태를 추가한다 — 지금 미리 대체 상태를 만들지 않는다.
 
 ### Hold(`booking`)
 
@@ -132,6 +195,17 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 - Redis TTL 기반 UX 보조 상태
 - 실제 점유 권리는 hold가 담당
 
+### Payment(`payment`), Ticket(`ticketing`)
+
+- `Payment`는 Order에 대한 한 번의 결제 시도다(`Order 1 : 0..N Payment`). `orderId`는
+  cross-module scalar 컬럼이고 booking `Order` entity를 JPA로 참조하지 않는다.
+- `Ticket`은 결제 성공으로 확정된 OrderSeat에 대해 발급되는 입장 권리다
+  (`OrderSeat 1 : 0..1 Ticket`). `orderSeatId`/`ownerMemberId`도 cross-module scalar다.
+- **두 모듈 모두 이번 범위는 entity/schema/repository와 구조·중복 방지 테스트까지다.** controller,
+  PG client, 결제 승인/실패/취소 API, callback/webhook, `OrderConfirmed` listener, 자동 티켓 발급,
+  QR/입장/사용/양도는 만들지 않는다. 이 범위를 넘는 코드를 추가하려면 먼저 별도 설계·ADR 승인을
+  받는다(ADR 0005 §3, "이 ADR이 결정하지 않는 것").
+
 ### Queue
 
 - 대기열 상태는 `ticket-queue`가 관리한다.
@@ -143,8 +217,11 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 
 ## 미구현 또는 후속 범위
 
-- 결제 도메인, controller, callback, PG 연동
-- 결제 성공 시 주문 확정과 최종 좌석 판매 확정
+- `payment`/`ticketing`의 controller, PG client, 결제 승인/실패/취소 API, callback/webhook
+- `payment -> booking`(결제 정산), `ticketing -> booking`(`OrderConfirmed` 구독) 공개 계약과
+  cross-module 의존 edge 자체 — entity-only 단계에서는 두 모듈 다 다른 모듈을 참조하지 않는다
+- 결제 성공 시 주문 확정과 최종 좌석 판매 확정(`payment`가 booking에 공개할 정산 계약 포함)
+- Ticket 자동 발급 listener, QR, 입장, 사용, 취소, 환불, 양도
 - `showlike` read 경로(`GetMyShowLikesUseCase` 등)의 모듈 이전 — 상세는
   [architecture.md](architecture.md#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다)를
   본다
@@ -214,6 +291,27 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 - 같은 회원·회차의 중복 주문 시작과 같은 좌석 동시 점유를 막는 데 사용한다.
 - 락 범위 안에서 외부 I/O를 늘리지 않는다. 임계 구역은 짧게 유지한다.
 - 락 키를 바꾸면 보호 대상이 그대로인지 테스트로 고정한다.
+
+## payment/ticketing 개발 규칙
+
+`payment`, `ticketing`은 ADR 0005로 신설된 **entity-only 모듈**이다. 이번 범위를 넘는 코드를
+추가하지 않는다.
+
+- **범위는 entity/schema/repository와 구조·중복 방지 테스트까지다.** controller, PG client, 결제
+  승인/실패/취소 API, callback/webhook, `OrderConfirmed` listener, 자동 티켓 발급, QR/입장/사용/
+  양도를 이 모듈에 추가하지 않는다. 필요해지면 먼저 별도 설계·ADR 승인을 받는다.
+- **cross-module 참조는 scalar ID만 쓴다.** `Payment.orderId`, `Ticket.orderSeatId`/
+  `ownerMemberId`는 booking/identity entity를 JPA로 참조하지 않는 scalar 컬럼이다. cross-module
+  물리 FK를 새로 만들지 않는다.
+- **다른 업무 모듈을 import하지 않는다.** `ModularityTests.APPROVED_DEPENDENCY_DAG`에서 두 모듈
+  모두 `Set.of()`다(`shared`/`web`/`error` 포함 완전한 leaf) — booking의 `internal` 패키지나
+  entity를 직접 참조하는 코드를 추가하면 그 테스트가 실패한다.
+- **향후 PG 연동·티켓 발급은 별도 계획이다.** `payment -> booking`(정산 계약), `ticketing ->
+  booking`(`OrderConfirmed` 구독) edge는 그 공개 계약을 실제로 구현하는 후속 단계에서만 추가한다.
+  지금 빈 public interface나 가짜 이벤트 구독으로 미리 만들지 않는다(ADR 0005 §4).
+- entity만 추가해도 운영 `ddl-auto=validate` 때문에 H2/Oracle 양쪽 Flyway migration이 반드시
+  함께 있어야 한다 — "entity-only"는 controller/PG 연동을 만들지 않는다는 뜻이지 migration 없이
+  Java 파일만 추가한다는 뜻이 아니다.
 
 ## 완료로 판정하지 않는 조건
 
