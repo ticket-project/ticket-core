@@ -102,7 +102,8 @@ public class CreateOrderUseCase {
                     input.memberId(),
                     input.performanceId(),
                     holdDuration,
-                    allocation
+                    allocation,
+                    validated.saleSnapshot()
             );
         } catch (final RuntimeException e) {
             releaseHold(seatLocks, allocation, e);

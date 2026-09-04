@@ -6,6 +6,7 @@ import com.ticket.booking.internal.domain.order.model.OrderSeat;
 import com.ticket.booking.internal.domain.order.repository.OrderRepository;
 import com.ticket.booking.internal.domain.order.repository.OrderSeatRepository;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.catalog.PerformanceSaleSnapshot;
 import com.ticket.catalog.internal.domain.seat.Seat;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -47,14 +48,25 @@ class OrderCreatorTest {
     @Test
     void 좌석_가격_합계로_pending_주문과_orderSeat를_생성한다() {
         // given
-        final PerformanceSeat firstSeat = createPerformanceSeat(101L, 201L, BigDecimal.TEN);
-        final PerformanceSeat secondSeat = createPerformanceSeat(102L, 202L, BigDecimal.valueOf(20));
+        final PerformanceSeat firstSeat = createPerformanceSeat(101L, 201L, 1L, BigDecimal.TEN);
+        final PerformanceSeat secondSeat = createPerformanceSeat(102L, 202L, 2L, BigDecimal.valueOf(20));
         when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
             final Order order = invocation.getArgument(0);
             ReflectionTestUtils.setField(order, "id", 99L);
             return order;
         });
+        final PerformanceSaleSnapshot saleSnapshot = new PerformanceSaleSnapshot(
+                10L, 1L, "show-title", 1L, "venue-name", LocalDateTime.of(2026, 3, 20, 19, 0),
+                java.util.Map.of(
+                        201L, new PerformanceSaleSnapshot.SeatInfo(201L, 1, "가", "A", "1"),
+                        202L, new PerformanceSaleSnapshot.SeatInfo(202L, 1, "가", "A", "2")
+                ),
+                java.util.Map.of(
+                        1L, new PerformanceSaleSnapshot.GradeInfo(1L, "VIP", "VIP석", 1, BigDecimal.TEN),
+                        2L, new PerformanceSaleSnapshot.GradeInfo(2L, "R", "R석", 2, BigDecimal.valueOf(20))
+                )
+        );
 
         // when
         final Order order = orderCreator.createPendingOrder(
@@ -62,7 +74,8 @@ class OrderCreatorTest {
                 10L,
                 "hold-key",
                 LocalDateTime.of(2026, 3, 15, 12, 0),
-                List.of(firstSeat, secondSeat)
+                List.of(firstSeat, secondSeat),
+                saleSnapshot
         );
 
         // then
@@ -91,7 +104,8 @@ class OrderCreatorTest {
                 10L,
                 "hold-key",
                 LocalDateTime.now(),
-                List.of(priceOnlyPerformanceSeat(BigDecimal.TEN))
+                List.of(priceOnlyPerformanceSeat(BigDecimal.TEN)),
+                emptySaleSnapshot()
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -108,15 +122,19 @@ class OrderCreatorTest {
                 10L,
                 "hold-key",
                 LocalDateTime.now(),
-                List.of(priceOnlyPerformanceSeat(BigDecimal.TEN))
+                List.of(priceOnlyPerformanceSeat(BigDecimal.TEN)),
+                emptySaleSnapshot()
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    private PerformanceSeat createPerformanceSeat(final Long performanceSeatId, final Long seatId, final BigDecimal price) {
+    private PerformanceSeat createPerformanceSeat(
+            final Long performanceSeatId, final Long seatId, final Long performanceGradeId, final BigDecimal price
+    ) {
         final PerformanceSeat performanceSeat = org.mockito.Mockito.mock(PerformanceSeat.class);
         when(performanceSeat.getId()).thenReturn(performanceSeatId);
         when(performanceSeat.getUnitPrice()).thenReturn(price);
         when(performanceSeat.getSeatId()).thenReturn(seatId);
+        when(performanceSeat.getPerformanceGradeId()).thenReturn(performanceGradeId);
         return performanceSeat;
     }
 
@@ -124,5 +142,12 @@ class OrderCreatorTest {
         final PerformanceSeat performanceSeat = org.mockito.Mockito.mock(PerformanceSeat.class);
         when(performanceSeat.getUnitPrice()).thenReturn(price);
         return performanceSeat;
+    }
+
+    private PerformanceSaleSnapshot emptySaleSnapshot() {
+        return new PerformanceSaleSnapshot(
+                10L, 1L, "show-title", 1L, "venue-name", LocalDateTime.now(),
+                java.util.Map.of(), java.util.Map.of()
+        );
     }
 }

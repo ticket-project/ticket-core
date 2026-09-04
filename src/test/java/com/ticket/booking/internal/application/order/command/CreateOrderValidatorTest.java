@@ -11,6 +11,8 @@ import com.ticket.admission.AdmissionVerifier;
 import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
+import com.ticket.catalog.PerformanceSaleCatalog;
+import com.ticket.catalog.PerformanceSaleSnapshot;
 import com.ticket.identity.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,6 +43,9 @@ class CreateOrderValidatorTest {
 
     @Mock
     private BookingPolicyLookup bookingPolicyLookup;
+
+    @Mock
+    private PerformanceSaleCatalog performanceSaleCatalog;
 
     @Mock
     private AdmissionVerifier admissionVerifier;
@@ -79,7 +83,7 @@ class CreateOrderValidatorTest {
     @Test
     void 예매가_마감된_회차는_DB_검증으로_넘어가지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList()))
+        when(bookingPolicyLookup.getBookingPolicy(10L))
                 .thenReturn(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), false));
 
         assertError(seatIds, PerformanceIsPastException.class);
@@ -90,7 +94,7 @@ class CreateOrderValidatorTest {
     @Test
     void 최대_선점_가능_수량을_초과하면_DB_검증으로_넘어가지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L));
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(openPolicy(2));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(2));
 
         assertError(seatIds, ExceedHoldLimitException.class);
 
@@ -100,7 +104,7 @@ class CreateOrderValidatorTest {
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(openPolicy(3));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(3));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(List.of());
 
         validator.validate(input(seatIds), seatIds, FIXED_NOW);
@@ -111,7 +115,7 @@ class CreateOrderValidatorTest {
     @Test
     void 대기열이_필요한_회차는_입장_검사를_DB_검증보다_먼저_한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList()))
+        when(bookingPolicyLookup.getBookingPolicy(10L))
                 .thenReturn(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true));
         doThrowAdmissionRequired();
 
@@ -124,7 +128,7 @@ class CreateOrderValidatorTest {
     @Test
     void 진행중인_pending_주문이_있으면_예외를_전파한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(openPolicy(3));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(3));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds))
                 .thenThrow(new PendingOrderAlreadyExistsException());
 
@@ -137,7 +141,7 @@ class CreateOrderValidatorTest {
         BookingPolicySnapshot policy = openPolicy(3);
         List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
 
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(policy);
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(seats);
 
         ValidatedOrderRequest result = validator.validate(input(seatIds), seatIds, FIXED_NOW);
@@ -152,7 +156,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L, 4L, 5L));
         BookingPolicySnapshot policy = openPolicy(null);
 
-        when(bookingPolicyLookup.getBookingPolicy(10L, seatIds.toList())).thenReturn(policy);
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(List.of());
 
         ValidatedOrderRequest result = validator.validate(input(seatIds), seatIds, FIXED_NOW);
@@ -199,8 +203,7 @@ class CreateOrderValidatorTest {
                 null,
                 null,
                 null,
-                queueRequired,
-                Map.of()
+                queueRequired
         );
     }
 }

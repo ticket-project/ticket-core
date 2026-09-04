@@ -7,6 +7,7 @@ import com.ticket.booking.internal.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.booking.internal.domain.hold.model.Hold;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.catalog.PerformanceSaleSnapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,18 +75,24 @@ class CreatePendingOrderTransactionServiceTest {
                 "order-key",
                 "hold-key",
                 BigDecimal.valueOf(120000),
-                hold.expiresAt()
+                hold.expiresAt(),
+                "show-title",
+                hold.expiresAt().plusDays(1),
+                "venue-name"
         );
         ReflectionTestUtils.setField(order, "id", 55L);
+        final PerformanceSaleSnapshot saleSnapshot = new PerformanceSaleSnapshot(
+                10L, 1L, "show-title", 1L, "venue-name", hold.expiresAt().plusDays(1),
+                java.util.Map.of(), java.util.Map.of());
 
-        when(orderCreator.createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats))
+        when(orderCreator.createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats, saleSnapshot))
                 .thenReturn(order);
 
-        final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation);
+        final PendingOrderCreationResult result = service.create(20L, 10L, holdDuration, allocation, saleSnapshot);
 
         assertThat(result.order()).isSameAs(order);
         final InOrder inOrder = inOrder(orderCreator, holdHistoryRecorder, eventPublisher);
-        inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats);
+        inOrder.verify(orderCreator).createPendingOrder(20L, 10L, "hold-key", hold.expiresAt(), seats, saleSnapshot);
         inOrder.verify(holdHistoryRecorder).recordCreated(
                 20L,
                 10L,
@@ -109,7 +116,7 @@ class CreatePendingOrderTransactionServiceTest {
     @Test
     void 주문_저장_메서드는_트랜잭션으로_실행된다() throws NoSuchMethodException {
         assertThat(CreatePendingOrderTransactionService.class
-                .getDeclaredMethod("create", Long.class, Long.class, Duration.class, HoldAllocation.class)
+                .getDeclaredMethod("create", Long.class, Long.class, Duration.class, HoldAllocation.class, PerformanceSaleSnapshot.class)
                 .isAnnotationPresent(Transactional.class))
                 .isTrue();
     }

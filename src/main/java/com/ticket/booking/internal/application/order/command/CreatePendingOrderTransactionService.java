@@ -7,6 +7,7 @@ import com.ticket.booking.internal.domain.order.command.create.HoldAllocation;
 import com.ticket.booking.internal.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.booking.internal.domain.order.model.Order;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.catalog.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -34,14 +35,16 @@ public class CreatePendingOrderTransactionService {
             final Long memberId,
             final Long performanceId,
             final Duration holdDuration,
-            final HoldAllocation allocation
+            final HoldAllocation allocation,
+            final PerformanceSaleSnapshot saleSnapshot
     ) {
         final Order order = orderCreator.createPendingOrder(
                 memberId,
                 performanceId,
                 allocation.holdKey(),
                 allocation.expiresAt(),
-                allocation.performanceSeats()
+                allocation.performanceSeats(),
+                saleSnapshot
         );
         final LocalDateTime startedAt = allocation.startedAt(holdDuration);
         holdHistoryRecorder.recordCreated(

@@ -101,7 +101,7 @@ class OrderStartedPublicationAtomicityTest {
         final HoldAllocation allocation = allocationWithPersistedSeat(holdKey);
 
         final PendingOrderCreationResult result = createPendingOrderTransactionService.create(
-                MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, allocation);
+                MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, allocation, saleSnapshotFor(allocation));
 
         assertThat(orderRepository.findById(result.order().getId())).isPresent();
         // listener가 비동기로 매우 빨리 완료돼 event_publication -> event_publication_archive로
@@ -117,7 +117,8 @@ class OrderStartedPublicationAtomicityTest {
         final HoldAllocation allocation = allocationWithPersistedSeat(holdKey);
 
         assertThatThrownBy(() -> new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-            createPendingOrderTransactionService.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, allocation);
+            createPendingOrderTransactionService.create(
+                    MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, allocation, saleSnapshotFor(allocation));
             throw new IllegalStateException("의도적인 롤백");
         })).isInstanceOf(IllegalStateException.class);
 
@@ -160,6 +161,21 @@ class OrderStartedPublicationAtomicityTest {
         final LocalDateTime expiresAt = LocalDateTime.now().plus(HOLD_DURATION);
         final Hold hold = new Hold(holdKey, MEMBER_ID, PERFORMANCE_ID, List.of(seat.getSeatId()), expiresAt);
         return new HoldAllocation(hold, List.of(seat));
+    }
+
+    private com.ticket.catalog.PerformanceSaleSnapshot saleSnapshotFor(final HoldAllocation allocation) {
+        final java.util.Map<Long, com.ticket.catalog.PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
+                new java.util.HashMap<>();
+        for (final PerformanceSeat seat : allocation.performanceSeats()) {
+            seatInfoBySeatId.put(seat.getSeatId(),
+                    new com.ticket.catalog.PerformanceSaleSnapshot.SeatInfo(seat.getSeatId(), 1, "가", "A", "1"));
+        }
+        return new com.ticket.catalog.PerformanceSaleSnapshot(
+                PERFORMANCE_ID, 1L, "show-title", 1L, "venue-name", LocalDateTime.now().plusDays(1),
+                seatInfoBySeatId,
+                java.util.Map.of(1L, new com.ticket.catalog.PerformanceSaleSnapshot.GradeInfo(
+                        1L, "R", "R석", 1, BigDecimal.valueOf(10_000)))
+        );
     }
 
     private PerformanceSeat persistSeat() {

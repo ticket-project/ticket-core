@@ -165,12 +165,14 @@ class BookingEventListenersTest {
     }
 
     private Order order(final Long id, final Long performanceId, final String holdKey, final LocalDateTime expiresAt) {
-        final Order order = new Order(20L, performanceId, "order-" + id, holdKey, BigDecimal.TEN, expiresAt);
+        final Order order = new Order(
+                20L, performanceId, "order-" + id, holdKey, BigDecimal.TEN, expiresAt,
+                "show-title", expiresAt.minusDays(1), "venue-name");
         ReflectionTestUtils.setField(order, "id", id);
         return order;
     }
 
     private OrderSeat orderSeat(final Order order, final Long performanceSeatId, final Long seatId) {
-        return new OrderSeat(order, performanceSeatId, seatId, BigDecimal.TEN);
+        return new OrderSeat(order, performanceSeatId, seatId, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
     }
 }

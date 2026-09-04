@@ -79,7 +79,7 @@ class ExpireOrderUseCaseTest {
     }
 
     private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
-        final Order order = new Order(1L, performanceId, "order-key", holdKey, BigDecimal.TEN, LocalDateTime.now().plusMinutes(5));
+        final Order order = new Order(1L, performanceId, "order-key", holdKey, BigDecimal.TEN, LocalDateTime.now().plusMinutes(5), "show-title", LocalDateTime.now().plusDays(1), "venue-name");
         ReflectionTestUtils.setField(order, "id", id);
         return order;
     }

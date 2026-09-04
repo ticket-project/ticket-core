@@ -181,7 +181,10 @@ class OrderRepositoryAdapterIntegrationTest {
                 "order-" + suffix,
                 "hold-" + suffix,
                 BigDecimal.valueOf(10_000),
-                expiresAt
+                expiresAt,
+                "show-title",
+                expiresAt.plusDays(1),
+                "venue-name"
         );
     }
 

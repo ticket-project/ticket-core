@@ -47,7 +47,7 @@ class OrderTerminationServiceTest {
     @Test
     void cancel_changes_state_records_history_and_publishes_order_terminated() {
         final Order order = order(10L, "hold-key");
-        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
+        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
         when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
 
         service().cancel(order, FIXED_NOW);
@@ -66,7 +66,7 @@ class OrderTerminationServiceTest {
     @Test
     void expire_changes_state_records_history_and_publishes_order_terminated() {
         final Order order = order(10L, "hold-key");
-        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN);
+        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
         when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
 
         service().expire(order, FIXED_NOW);
@@ -81,7 +81,7 @@ class OrderTerminationServiceTest {
     void foreign_order_seat_stops_the_entire_termination_flow() {
         final Order order = order(10L, "hold-key");
         final Order otherOrder = order(11L, "other-hold-key");
-        final OrderSeat foreignOrderSeat = new OrderSeat(otherOrder, 501L, 42L, BigDecimal.TEN);
+        final OrderSeat foreignOrderSeat = new OrderSeat(otherOrder, 501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
         when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(foreignOrderSeat));
 
         assertThatThrownBy(() -> service().expire(order, FIXED_NOW))
@@ -113,7 +113,10 @@ class OrderTerminationServiceTest {
                 "order-" + id,
                 holdKey,
                 BigDecimal.TEN,
-                FIXED_NOW.plusMinutes(5)
+                FIXED_NOW.plusMinutes(5),
+                "show-title",
+                FIXED_NOW.plusDays(1),
+                "venue-name"
         );
         ReflectionTestUtils.setField(order, "id", id);
         return order;
