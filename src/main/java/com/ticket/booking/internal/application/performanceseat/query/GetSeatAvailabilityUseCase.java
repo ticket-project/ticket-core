@@ -2,7 +2,6 @@ package com.ticket.booking.internal.application.performanceseat.query;
 
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
-import com.ticket.booking.internal.application.performanceseat.query.model.AvailableSeatRow;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.PerformanceSaleCatalog;
@@ -12,8 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -43,8 +46,15 @@ public class GetSeatAvailabilityUseCase {
             List<GradeAvailability> grades
     ) {}
 
+    /**
+     * 그룹 key는 {@code performanceGradeId}다 — 변경 가능한 {@code gradeName}이 같아도 ID가 다르면
+     * 별개의 grade로 취급한다.
+     */
     public record GradeAvailability(
+            Long performanceGradeId,
+            String gradeCode,
             String gradeName,
+            BigDecimal price,
             int sortOrder,
             long availableSeats
     ) {}
@@ -53,35 +63,42 @@ public class GetSeatAvailabilityUseCase {
         // 회차 예매 정책 조회는 회차 존재 확인을 겸한다.
         bookingPolicyLookup.getBookingPolicy(input.performanceId());
 
-        final List<AvailableSeatRow> rows = toAvailableSeatRows(input.performanceId());
-
-        return new Output(seatAvailabilityCalculator.calculate(
-                rows,
-                mergeRedisOccupiedIds(input.performanceId())
-        ));
-    }
-
-    private List<AvailableSeatRow> toAvailableSeatRows(final Long performanceId) {
-        final List<PerformanceSeatStateRow> stateRows = seatAvailabilityReadRepository.findSeatStates(performanceId);
+        final List<PerformanceSeatStateRow> stateRows = seatAvailabilityReadRepository.findSeatStates(input.performanceId());
         if (stateRows.isEmpty()) {
-            return List.of();
+            return new Output(List.of());
         }
 
-        final PerformanceSaleSnapshot saleSnapshot = performanceSaleCatalog.getSaleSnapshot(performanceId, Set.of());
+        final PerformanceSaleSnapshot saleSnapshot = performanceSaleCatalog.getSaleSnapshot(input.performanceId(), Set.of());
+        final Map<Long, Long> availableCountsByGrade =
+                seatAvailabilityCalculator.calculate(stateRows, mergeRedisOccupiedIds(input.performanceId()));
 
-        return stateRows.stream()
-                .map(row -> toAvailableSeatRow(row, saleSnapshot))
-                .filter(java.util.Objects::nonNull)
+        final List<GradeAvailability> grades = availableCountsByGrade.entrySet().stream()
+                .map(entry -> toGradeAvailability(entry.getKey(), entry.getValue(), saleSnapshot))
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparingInt(GradeAvailability::sortOrder))
                 .toList();
+
+        return new Output(grades);
     }
 
-    private AvailableSeatRow toAvailableSeatRow(final PerformanceSeatStateRow row, final PerformanceSaleSnapshot saleSnapshot) {
+    private GradeAvailability toGradeAvailability(
+            final Long performanceGradeId,
+            final Long availableSeats,
+            final PerformanceSaleSnapshot saleSnapshot
+    ) {
         final PerformanceSaleSnapshot.GradeInfo gradeInfo =
-                saleSnapshot.gradeInfoByPerformanceGradeId().get(row.performanceGradeId());
+                saleSnapshot.gradeInfoByPerformanceGradeId().get(performanceGradeId);
         if (gradeInfo == null) {
             return null;
         }
-        return new AvailableSeatRow(row.seatId(), row.state(), gradeInfo.gradeName(), gradeInfo.sortOrder());
+        return new GradeAvailability(
+                performanceGradeId,
+                gradeInfo.gradeCode(),
+                gradeInfo.gradeName(),
+                gradeInfo.price(),
+                gradeInfo.sortOrder(),
+                availableSeats
+        );
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {
