@@ -1,0 +1,43 @@
+-- ticket-domain-module-redesign Phase 2 Task 5(ADR 0005): PERFORMANCE_SEATS에 Task 6이 JPA로 매핑할
+-- performance_grade_id/unit_price 컬럼을 nullable로 미리 추가하고, 기존 ShowSeat의 등급 배정과
+-- PerformanceSeat.price를 이용해 값을 채운다. PerformanceSeat entity는 아직 이 컬럼을 모른다(Task 6
+-- 전) -- NOT NULL 전환과 entity 매핑 자체는 Task 6이 한다. PERFORMANCE_SEATS.price 컬럼은 이번에
+-- 지우지 않는다. 컬럼 추가(ALTER)는 SHOW_SEATS 존재 여부와 무관하게 항상 실행한다 -- 컬럼만
+-- nullable로 추가하는 것은 안전한 구조 변경이다.
+--
+-- 매핑 경로(V5가 만든 PERFORMANCE_GRADES까지 필요하므로 V5보다 나중 버전이어야 한다):
+--   PERFORMANCE_SEATS(performance_id, seat_id)
+--     -> PERFORMANCES.show_id
+--       -> SHOW_SEATS(같은 show_id, seat_id) -> SHOW_GRADES(show_grade_id) -> GRADES(grade_code)
+--     -> PERFORMANCE_GRADES(같은 performance_id, grade_id)
+-- 이 join 경로는 ShowGradePerformanceSeatPriceMismatchQueryTest(Phase 1)가 고정한 경로와 같다.
+--
+-- SHOW_SEATS/SHOWS는 어떤 Flyway migration도 만들지 않은 pre-Flyway baseline이다. 다른 catalog
+-- migration 검증 baseline(CatalogCommonCodeSchemaTest, OracleMigrationCompatibilityTest 등)은
+-- SHOW_SEATS를 아직 모르는 legacy 상태를 재현하므로, backfill UPDATE는 V5와 같은 패턴으로 SHOW_SEATS
+-- 존재 여부를 먼저 확인하고 없으면 no-op이다.
+--
+-- **알려진 한계**: V5와 같다 -- seed가 이 migration 실행 이후에 넣는 PERFORMANCE_SEATS/SHOW_SEATS는
+-- 이 1회성 backfill이 자동으로 반영하지 않는다. ShowGradePerformanceGradeBackfillMigrationTest가
+-- 이 SQL을 재실행해 seed 이후 데이터에도 같은 결과가 나오는지 검증한다.
+ALTER TABLE PERFORMANCE_SEATS ADD performance_grade_id BIGINT;
+ALTER TABLE PERFORMANCE_SEATS ADD unit_price DECIMAL(19, 2);
+
+EXECUTE IMMEDIATE COALESCE((
+    SELECT '
+        UPDATE PERFORMANCE_SEATS ps
+        SET performance_grade_id = (
+                SELECT pg.id
+                FROM PERFORMANCES p
+                JOIN SHOW_SEATS ss ON ss.show_id = p.show_id AND ss.seat_id = ps.seat_id
+                JOIN SHOW_GRADES sg ON sg.id = ss.show_grade_id
+                JOIN GRADES g ON g.code = sg.grade_code
+                JOIN PERFORMANCE_GRADES pg ON pg.performance_id = p.id AND pg.grade_id = g.id
+                WHERE p.id = ps.performance_id
+            ),
+            unit_price = ps.price
+        WHERE ps.performance_grade_id IS NULL'
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_NAME = 'SHOW_SEATS'
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
