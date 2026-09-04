@@ -22,11 +22,12 @@ public class WebSocketSeatStatusEventPublisher implements SeatStatusEventPublish
     private final Clock clock;
 
     @Override
-    public void publish(final Long performanceId, final Long seatId, final SeatStatusAction action) {
-        final SeatStatusEvent event = SeatStatusEvent.of(performanceId, seatId, action, LocalDateTime.now(clock));
+    public void publish(final Long performanceId, final Long performanceSeatId, final SeatStatusAction action) {
+        final SeatStatusEvent event =
+                SeatStatusEvent.of(performanceId, performanceSeatId, action, LocalDateTime.now(clock));
         final String destination = String.format(SEAT_TOPIC_FORMAT, event.performanceId());
         messagingTemplate.convertAndSend(destination, event);
-        log.debug("seat event published: action={}, perfId={}, seatId={}",
-                event.action(), event.performanceId(), event.seatId());
+        log.debug("seat event published: action={}, perfId={}, performanceSeatId={}",
+                event.action(), event.performanceId(), event.performanceSeatId());
     }
 }

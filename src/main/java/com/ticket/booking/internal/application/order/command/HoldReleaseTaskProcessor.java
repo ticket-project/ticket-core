@@ -2,6 +2,8 @@ package com.ticket.booking.internal.application.order.command;
 
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.booking.internal.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.booking.internal.application.event.HoldReleaseProgressRecorder;
@@ -13,8 +15,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +27,7 @@ public class HoldReleaseTaskProcessor {
     private final LockManager lockManager;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
+    private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
     private final HoldReleaseProgressRecorder progressRecorder;
 
@@ -40,9 +45,16 @@ public class HoldReleaseTaskProcessor {
         if (publishableSeatIds.isEmpty()) {
             return;
         }
+        final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(task, publishableSeatIds);
         for (final Long seatId : publishableSeatIds) {
-            seatStatusEventPublisher.publish(task.performanceId(), seatId, SeatStatusAction.RELEASED);
+            seatStatusEventPublisher.publish(
+                    task.performanceId(), performanceSeatIdBySeatId.get(seatId), SeatStatusAction.RELEASED);
         }
+    }
+
+    private Map<Long, Long> resolvePerformanceSeatIds(final HoldReleaseTask task, final List<Long> seatIds) {
+        return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(task.performanceId(), seatIds).stream()
+                .collect(Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
     }
 
     private void releaseHoldOnce(

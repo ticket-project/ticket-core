@@ -57,7 +57,7 @@ public class SelectSeatUseCase {
         BookingPolicyGuard.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input);
 
-        seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
+        final Long performanceSeatId = seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
 
         seatSelectionCoordinator.select(
                 input.performanceId(),
@@ -65,7 +65,7 @@ public class SelectSeatUseCase {
                 input.memberId(),
                 policy.orderCloseTime()
         );
-        seatEventPublisher.publish(input.performanceId(), input.seatId(), SeatStatusAction.SELECTED);
+        seatEventPublisher.publish(input.performanceId(), performanceSeatId, SeatStatusAction.SELECTED);
     }
 
     private void ensureAdmitted(

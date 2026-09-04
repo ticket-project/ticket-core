@@ -1,17 +1,22 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.booking.internal.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class DeselectSeatUseCase {
 
     private final SeatSelectionService seatSelectionService;
+    private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatEventPublisher;
 
     public record Input(Long performanceId, Long seatId, Long memberId) {
@@ -39,6 +44,15 @@ public class DeselectSeatUseCase {
 
     public void execute(final Input input) {
         seatSelectionService.deselect(input.performanceId(), input.seatId(), input.memberId());
-        seatEventPublisher.publish(input.performanceId(), input.seatId(), SeatStatusAction.DESELECTED);
+        final Long performanceSeatId = resolvePerformanceSeatId(input.performanceId(), input.seatId());
+        seatEventPublisher.publish(input.performanceId(), performanceSeatId, SeatStatusAction.DESELECTED);
+    }
+
+    private Long resolvePerformanceSeatId(final Long performanceId, final Long seatId) {
+        return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, List.of(seatId))
+                .stream()
+                .findFirst()
+                .map(PerformanceSeat::getId)
+                .orElse(null);
     }
 }

@@ -4,5 +4,8 @@ import com.ticket.booking.internal.application.performanceseat.event.SeatStatusE
 
 public interface SeatStatusEventPublisher {
 
-    void publish(Long performanceId, Long seatId, SeatStatusAction action);
+    /**
+     * @param performanceSeatId 외부 판매 좌석 식별자(물리 {@code seatId}가 아니다).
+     */
+    void publish(Long performanceId, Long performanceSeatId, SeatStatusAction action);
 }
