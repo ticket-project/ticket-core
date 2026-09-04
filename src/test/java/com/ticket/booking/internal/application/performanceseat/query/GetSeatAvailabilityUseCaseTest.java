@@ -4,7 +4,6 @@ import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.booking.internal.application.performanceseat.query.model.AvailableSeatRow;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.catalog.PerformanceSaleCatalog;
@@ -49,25 +48,55 @@ class GetSeatAvailabilityUseCaseTest {
         //given
         List<PerformanceSeatStateRow> stateRows =
                 List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L));
-        PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", 1);
-        List<AvailableSeatRow> rows =
-                List.of(new AvailableSeatRow(1L, PerformanceSeatState.AVAILABLE, "VIP", 1));
-        List<GetSeatAvailabilityUseCase.GradeAvailability> response =
-                List.of(new GetSeatAvailabilityUseCase.GradeAvailability("VIP", 1, 0L));
+        PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", "VIP석", 1);
 
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(stateRows);
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
-        when(seatAvailabilityCalculator.calculate(rows, Set.of(1L, 2L))).thenReturn(response);
+        when(seatAvailabilityCalculator.calculate(stateRows, Set.of(1L, 2L))).thenReturn(Map.of(31L, 0L));
 
         //when
         GetSeatAvailabilityUseCase.Output output = useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
 
         //then
-        assertThat(output.grades()).isEqualTo(response);
-        verify(seatAvailabilityCalculator).calculate(rows, Set.of(1L, 2L));
+        assertThat(output.grades()).containsExactly(
+                new GetSeatAvailabilityUseCase.GradeAvailability(31L, "VIP", "VIP석", BigDecimal.TEN, 1, 0L)
+        );
+        verify(seatAvailabilityCalculator).calculate(stateRows, Set.of(1L, 2L));
+    }
+
+    @Test
+    void 이름이_같아도_performanceGradeId가_다르면_따로_집계한다() {
+        //given
+        List<PerformanceSeatStateRow> stateRows = List.of(
+                new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L),
+                new PerformanceSeatStateRow(2L, PerformanceSeatState.AVAILABLE, 32L)
+        );
+        PerformanceSaleSnapshot saleSnapshot = new PerformanceSaleSnapshot(
+                10L, 100L, "show-title", 1L, "venue-name", null,
+                Map.of(),
+                Map.of(
+                        31L, new PerformanceSaleSnapshot.GradeInfo(31L, "VIP", "같은이름", 1, BigDecimal.TEN),
+                        32L, new PerformanceSaleSnapshot.GradeInfo(32L, "R", "같은이름", 2, BigDecimal.valueOf(5))
+                )
+        );
+
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
+        when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(stateRows);
+        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
+        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(seatAvailabilityCalculator.calculate(stateRows, Set.of())).thenReturn(Map.of(31L, 1L, 32L, 1L));
+
+        //when
+        GetSeatAvailabilityUseCase.Output output = useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
+
+        //then
+        assertThat(output.grades()).hasSize(2);
+        assertThat(output.grades()).extracting(GetSeatAvailabilityUseCase.GradeAvailability::performanceGradeId)
+                .containsExactlyInAnyOrder(31L, 32L);
     }
 
     @Test
@@ -75,9 +104,6 @@ class GetSeatAvailabilityUseCaseTest {
         //given
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(List.of());
-        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
-        when(seatAvailabilityCalculator.calculate(List.of(), Set.of())).thenReturn(List.of());
 
         //when
         useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
@@ -94,12 +120,17 @@ class GetSeatAvailabilityUseCaseTest {
         );
     }
 
-    private PerformanceSaleSnapshot saleSnapshotWithGrade(final long performanceGradeId, final String gradeName, final int sortOrder) {
+    private PerformanceSaleSnapshot saleSnapshotWithGrade(
+            final long performanceGradeId,
+            final String gradeCode,
+            final String gradeName,
+            final int sortOrder
+    ) {
         return new PerformanceSaleSnapshot(
                 10L, 100L, "show-title", 1L, "venue-name", null,
                 Map.of(),
                 Map.of(performanceGradeId, new PerformanceSaleSnapshot.GradeInfo(
-                        performanceGradeId, gradeName, gradeName, sortOrder, BigDecimal.TEN))
+                        performanceGradeId, gradeCode, gradeName, sortOrder, BigDecimal.TEN))
         );
     }
 }
