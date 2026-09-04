@@ -13,6 +13,7 @@ DELETE FROM order_seats;
 DELETE FROM orders;
 
 DELETE FROM performance_seats;
+DELETE FROM performance_grades;
 DELETE FROM performance_queue_policies;
 DELETE FROM performances;
 DELETE FROM show_seats;

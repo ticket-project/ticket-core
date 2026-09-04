@@ -98,6 +98,8 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
         seedShowSeats(now, gradeIds);
         seedPerformances(now);
         seedQueuePolicies(now);
+        final java.util.Map<String, Long> gradeIdsByCode = ensureGrades(now);
+        seedPerformanceGrades(now, gradeIdsByCode);
         seedPerformanceSeats(now);
 
         log.info(
@@ -275,6 +277,61 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
                 """, batch);
     }
 
+    /**
+     * ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): GRADES는 재사용 가능한 등급 코드다.
+     * {@code SeedDataLoader}(공용 시드)가 먼저 돌아 VIP/R/S/A code를 이미 만들어 뒀을 수 있어(이
+     * 시더는 그 다음 순서로 실행된다), code당 하나만 있도록 존재하면 재사용하고 없으면 새로 만든다.
+     */
+    private java.util.Map<String, Long> ensureGrades(final LocalDateTime now) {
+        final Timestamp createdAt = Timestamp.valueOf(now);
+        final String[][] gradeDefs = {{"VIP", "VIP석"}, {"R", "R석"}, {"S", "S석"}, {"A", "A석"}};
+        final java.util.Map<String, Long> idsByCode = new java.util.LinkedHashMap<>();
+        for (String[] def : gradeDefs) {
+            final List<Long> existing = jdbcTemplate.queryForList(
+                    "SELECT id FROM grades WHERE code = ?", Long.class, def[0]);
+            if (existing.isEmpty()) {
+                jdbcTemplate.update("""
+                                INSERT INTO grades (code, name, created_at, created_by) VALUES (?, ?, ?, ?)
+                                """,
+                        def[0], def[1], createdAt, CREATED_BY);
+                idsByCode.put(def[0], jdbcTemplate.queryForObject(
+                        "SELECT id FROM grades WHERE code = ?", Long.class, def[0]));
+            } else {
+                idsByCode.put(def[0], existing.get(0));
+            }
+        }
+        return idsByCode;
+    }
+
+    /**
+     * PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) -- show_grades와
+     * 같은 가격·표시 순서로 회차마다 PERFORMANCE_GRADES를 만든다.
+     */
+    private void seedPerformanceGrades(final LocalDateTime now, final java.util.Map<String, Long> gradeIdsByCode) {
+        final Timestamp createdAt = Timestamp.valueOf(now);
+        final String[][] grades = {
+                {"VIP", "150000", "1"},
+                {"R", "120000", "2"},
+                {"S", "90000", "3"},
+                {"A", "60000", "4"}
+        };
+        final List<Object[]> batch = new ArrayList<>(performanceCount * grades.length);
+        for (int performance = 1; performance <= performanceCount; performance++) {
+            final long performanceId = ID_BASE + performance;
+            for (String[] grade : grades) {
+                batch.add(new Object[]{
+                        performanceId, gradeIdsByCode.get(grade[0]), new BigDecimal(grade[1]),
+                        Integer.parseInt(grade[2]), createdAt, CREATED_BY
+                });
+            }
+        }
+        jdbcTemplate.batchUpdate("""
+                INSERT INTO performance_grades (
+                  performance_id, grade_id, price, sort_order, created_at, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """, batch);
+    }
+
     private void seedPerformanceSeats(final LocalDateTime now) {
         final Timestamp createdAt = Timestamp.valueOf(now);
         final List<BigDecimal> prices = jdbcTemplate.queryForList(
@@ -282,17 +339,23 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
                 BigDecimal.class, SHOW_ID);
         for (int performance = 1; performance <= performanceCount; performance++) {
             final long performanceId = ID_BASE + performance;
+            final List<Long> performanceGradeIds = jdbcTemplate.queryForList(
+                    "SELECT id FROM performance_grades WHERE performance_id = ? ORDER BY sort_order",
+                    Long.class, performanceId);
             final List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
             for (int index = 1; index <= SEAT_COUNT; index++) {
+                final int gradeIdx = gradeIndex(index);
                 batch.add(new Object[]{
                         performanceId, ID_BASE + index, "AVAILABLE",
-                        prices.get(gradeIndex(index)), createdAt, CREATED_BY
+                        performanceGradeIds.get(gradeIdx), prices.get(gradeIdx), 0L,
+                        createdAt, CREATED_BY
                 });
                 if (batch.size() == BATCH_SIZE || index == SEAT_COUNT) {
                     jdbcTemplate.batchUpdate("""
                             INSERT INTO performance_seats (
-                              performance_id, seat_id, state, price, created_at, created_by
-                            ) VALUES (?, ?, ?, ?, ?, ?)
+                              performance_id, seat_id, state, performance_grade_id, unit_price, version,
+                              created_at, created_by
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """, batch);
                     batch.clear();
                 }

@@ -63,6 +63,20 @@ INSERT INTO performances (
   CURRENT_TIMESTAMP, 'BOOKING_E2E'
 );
 
+-- ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): PerformanceSeat.unitPrice의 원본은
+-- PerformanceGrade.price다. GRADES는 code당 하나만 있어야 해서 이미 있으면 재사용한다.
+MERGE INTO grades g
+USING (SELECT 920000001 AS id, 'R' AS code, 'R석' AS name) src
+ON (g.code = src.code)
+WHEN NOT MATCHED THEN INSERT (id, code, name, created_at, created_by)
+  VALUES (src.id, src.code, src.name, CURRENT_TIMESTAMP, 'BOOKING_E2E');
+
+INSERT INTO performance_grades (id, performance_id, grade_id, price, sort_order, created_at, created_by)
+VALUES (
+  920000001, 920000001, (SELECT id FROM grades WHERE code = 'R'), 120000, 1,
+  CURRENT_TIMESTAMP, 'BOOKING_E2E'
+);
+
 -- FORCE_OFF: 대기열 없이 Core를 직접 호출하는 회차. admission token 검증 경로를 타지 않는다.
 INSERT INTO performance_queue_policies (
   performance_id, queue_mode, queue_level, preopen_queue_start_at,
@@ -72,8 +86,10 @@ INSERT INTO performance_queue_policies (
   '통합 테스트 전용', '대기열 없이 Core를 직접 검증하는 회차', CURRENT_TIMESTAMP, 'BOOKING_E2E'
 );
 
-INSERT INTO performance_seats (id, performance_id, seat_id, state, price, created_at, created_by) VALUES
-  (920000001, 920000001, 920000001, 'AVAILABLE', 120000, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000002, 920000001, 920000002, 'AVAILABLE', 120000, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000003, 920000001, 920000003, 'AVAILABLE', 120000, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000004, 920000001, 920000004, 'AVAILABLE', 120000, CURRENT_TIMESTAMP, 'BOOKING_E2E');
+INSERT INTO performance_seats (
+  id, performance_id, seat_id, state, performance_grade_id, unit_price, version, created_at, created_by
+) VALUES
+  (920000001, 920000001, 920000001, 'AVAILABLE', 920000001, 120000, 0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
+  (920000002, 920000001, 920000002, 'AVAILABLE', 920000001, 120000, 0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
+  (920000003, 920000001, 920000003, 'AVAILABLE', 920000001, 120000, 0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
+  (920000004, 920000001, 920000004, 'AVAILABLE', 920000001, 120000, 0, CURRENT_TIMESTAMP, 'BOOKING_E2E');

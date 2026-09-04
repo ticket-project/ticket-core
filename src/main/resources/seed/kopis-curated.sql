@@ -3872,12 +3872,52 @@ CROSS JOIN (
     UNION ALL SELECT 'S', 'S석', 3 FROM dual
     UNION ALL SELECT 'A', 'A석', 4 FROM dual
 ) g;
+
+-- ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): PerformanceSeat entity가 이제
+-- performance_grade_id/unit_price를 NOT NULL로 매핑하므로, 이 시드도 PerformanceGrade가 가격의
+-- 원본이라는 새 모델을 그대로 따라 GRADES/PERFORMANCE_GRADES를 채운다. 값은 위 SHOW_GRADES와
+-- 의도적으로 동일하게 맞춘다(회차 단위로 세분화하지 않는 단순 시드) -- 실제 회차별 차등 가격은
+-- 운영 데이터가 결정할 몫이다. GRADES는 이미 migration(V5 backfill)이 만들었을 수 있어 code당
+-- 하나만 있도록 존재 여부를 확인한다.
+INSERT INTO GRADES (code, name, created_at, created_by)
+SELECT g.grade_code, g.grade_name, '2026-01-01 10:00:00', '시드'
+FROM (
+    SELECT 'VIP' grade_code, 'VIP석' grade_name FROM dual
+    UNION ALL SELECT 'R', 'R석' FROM dual
+    UNION ALL SELECT 'S', 'S석' FROM dual
+    UNION ALL SELECT 'A', 'A석' FROM dual
+) g
+WHERE NOT EXISTS (SELECT 1 FROM GRADES existing WHERE existing.code = g.grade_code);
+
+INSERT INTO PERFORMANCE_GRADES (performance_id, grade_id, price, sort_order, created_at, created_by)
+SELECT p.id, gr.id,
+    CASE gr.code
+        WHEN 'VIP' THEN 170000
+        WHEN 'R' THEN 140000
+        WHEN 'S' THEN 110000
+        ELSE 80000
+    END,
+    CASE gr.code
+        WHEN 'VIP' THEN 1
+        WHEN 'R' THEN 2
+        WHEN 'S' THEN 3
+        ELSE 4
+    END,
+    '2026-01-01 10:00:00', '시드'
+FROM PERFORMANCES p
+CROSS JOIN GRADES gr
+WHERE gr.code IN ('VIP', 'R', 'S', 'A')
+    AND NOT EXISTS (
+        SELECT 1 FROM PERFORMANCE_GRADES existing
+        WHERE existing.performance_id = p.id AND existing.grade_id = gr.id
+    );
+
 INSERT INTO SHOW_SEATS (show_id, seat_id, show_grade_id, created_at, created_by)
 SELECT s.id, st.id,
     (SELECT sg.id FROM SHOW_GRADES sg WHERE sg.show_id = s.id AND sg.grade_code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
     '2026-01-01 10:00:00', '시드'
 FROM SHOWS s JOIN SEATS st ON st.venue_id = s.venue_id;
-INSERT INTO PERFORMANCE_SEATS (performance_id, seat_id, state, price, created_at, created_by)
+INSERT INTO PERFORMANCE_SEATS (performance_id, seat_id, state, performance_grade_id, unit_price, created_at, created_by)
 SELECT p.id, st.id,
     CASE
         WHEN MOD(
@@ -3928,7 +3968,10 @@ SELECT p.id, st.id,
         ) THEN 'RESERVED'
         ELSE 'AVAILABLE'
     END,
-    (SELECT sg.price FROM SHOW_GRADES sg WHERE sg.show_id = p.show_id AND sg.grade_code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
+    (SELECT pg.id FROM PERFORMANCE_GRADES pg JOIN GRADES gg ON gg.id = pg.grade_id
+        WHERE pg.performance_id = p.id AND gg.code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
+    (SELECT pg.price FROM PERFORMANCE_GRADES pg JOIN GRADES gg ON gg.id = pg.grade_id
+        WHERE pg.performance_id = p.id AND gg.code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
     '2026-01-01 10:00:00', '시드'
 FROM PERFORMANCES p
 JOIN SHOWS sh ON sh.id = p.show_id

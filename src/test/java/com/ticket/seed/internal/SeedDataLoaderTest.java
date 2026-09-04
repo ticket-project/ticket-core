@@ -173,12 +173,18 @@ class SeedDataLoaderTest {
             statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
             statement.execute("CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
             statement.execute("CREATE TABLE SHOW_GRADES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL, grade_code VARCHAR(10), price NUMBER(10, 0))");
-            statement.execute("CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), price NUMBER(10, 0), created_at TIMESTAMP, created_by VARCHAR(50))");
+            // ticket-domain-module-redesign Phase 3 Task 6: PERFORMANCE_SEATS 시드가 이제
+            // performance_grade_id/unit_price도 PERFORMANCE_GRADES에서 채운다(ADR 0005).
+            statement.execute("CREATE TABLE GRADES (id BIGINT PRIMARY KEY, code VARCHAR(10))");
+            statement.execute("CREATE TABLE PERFORMANCE_GRADES (id BIGINT PRIMARY KEY, performance_id BIGINT NOT NULL, grade_id BIGINT NOT NULL, price NUMBER(10, 0))");
+            statement.execute("CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), price NUMBER(10, 0), performance_grade_id BIGINT, unit_price NUMBER(10, 0), created_at TIMESTAMP, created_by VARCHAR(50))");
 
             statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (100, 1)");
             statement.execute("INSERT INTO PERFORMANCES (id, show_id) VALUES (1, 100)");
             statement.execute("INSERT INTO SEATS (id, venue_id, section, row_no, seat_no) VALUES (10, 1, '가', 'A', '1')");
             statement.execute("INSERT INTO SHOW_GRADES (id, show_id, grade_code, price) VALUES (1000, 100, 'R', 120000)");
+            statement.execute("INSERT INTO GRADES (id, code) VALUES (2000, 'R')");
+            statement.execute("INSERT INTO PERFORMANCE_GRADES (id, performance_id, grade_id, price) VALUES (3000, 1, 2000, 120000)");
 
             statement.executeUpdate(performanceSeatStatement);
 
