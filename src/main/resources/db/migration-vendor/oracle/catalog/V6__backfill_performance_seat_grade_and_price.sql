@@ -19,8 +19,32 @@
 -- **알려진 한계**: V5와 같다 -- seed가 이 migration 실행 이후에 넣는 PERFORMANCE_SEATS/SHOW_SEATS는
 -- 이 1회성 backfill이 자동으로 반영하지 않는다. ShowGradePerformanceGradeBackfillMigrationTest(H2)가
 -- 이 SQL을 재실행해 seed 이후 데이터에도 같은 결과가 나오는지 검증한다.
-ALTER TABLE PERFORMANCE_SEATS ADD performance_grade_id NUMBER(19, 0);
-ALTER TABLE PERFORMANCE_SEATS ADD unit_price NUMBER(19, 2);
+--
+-- **컬럼 추가는 이미 존재하면 건너뛴다**: module별 Flyway는 서로 다른 module 순서로 실행될 수 있고
+-- (실측: OracleMigrationCompatibilityTest는 booking을 catalog보다 먼저 적용한다), booking Task 6의
+-- 자체 migration(V3, `db/migration-vendor/{h2,oracle}/booking`)이 이 module보다 먼저 실행되면 같은
+-- 컬럼을 이미 만들어 뒀을 수 있다. 그래서 두 ADD COLUMN 모두 존재 여부를 먼저 확인한다.
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM user_tab_columns
+    WHERE table_name = 'PERFORMANCE_SEATS' AND column_name = 'PERFORMANCE_GRADE_ID';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'ALTER TABLE PERFORMANCE_SEATS ADD performance_grade_id NUMBER(19, 0)';
+    END IF;
+END;
+/
+
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM user_tab_columns
+    WHERE table_name = 'PERFORMANCE_SEATS' AND column_name = 'UNIT_PRICE';
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE 'ALTER TABLE PERFORMANCE_SEATS ADD unit_price NUMBER(19, 2)';
+    END IF;
+END;
+/
 
 DECLARE
     v_count NUMBER;

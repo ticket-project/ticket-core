@@ -17,11 +17,31 @@
 -- SHOW_SEATS를 아직 모르는 legacy 상태를 재현하므로, backfill UPDATE는 V5와 같은 패턴으로 SHOW_SEATS
 -- 존재 여부를 먼저 확인하고 없으면 no-op이다.
 --
+-- **컬럼 추가는 이미 존재하면 건너뛴다**: module별 Flyway는 서로 다른 module 순서로 실행될 수 있고
+-- (실측: OracleMigrationCompatibilityTest는 booking을 catalog보다 먼저 적용한다), booking Task 6의
+-- 자체 migration(V3, `db/migration-vendor/{h2,oracle}/booking`)이 이 module보다 먼저 실행되면 같은
+-- 컬럼을 이미 만들어 뒀을 수 있다. 그래서 두 ADD COLUMN 모두 존재 여부를 먼저 확인한다.
+--
 -- **알려진 한계**: V5와 같다 -- seed가 이 migration 실행 이후에 넣는 PERFORMANCE_SEATS/SHOW_SEATS는
 -- 이 1회성 backfill이 자동으로 반영하지 않는다. ShowGradePerformanceGradeBackfillMigrationTest가
 -- 이 SQL을 재실행해 seed 이후 데이터에도 같은 결과가 나오는지 검증한다.
-ALTER TABLE PERFORMANCE_SEATS ADD performance_grade_id BIGINT;
-ALTER TABLE PERFORMANCE_SEATS ADD unit_price DECIMAL(19, 2);
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE PERFORMANCE_SEATS ADD performance_grade_id BIGINT'
+    FROM DUAL
+    WHERE NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'PERFORMANCE_SEATS' AND COLUMN_NAME = 'PERFORMANCE_GRADE_ID'
+    )
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE PERFORMANCE_SEATS ADD unit_price DECIMAL(19, 2)'
+    FROM DUAL
+    WHERE NOT EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'PERFORMANCE_SEATS' AND COLUMN_NAME = 'UNIT_PRICE'
+    )
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
 
 EXECUTE IMMEDIATE COALESCE((
     SELECT '
