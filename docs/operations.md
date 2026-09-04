@@ -1,12 +1,9 @@
 # 운영과 실행 기준
 
-> **진행 중인 설계**: [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)가
-> catalog/booking migration 추가와 `payment`/`ticketing` module 신규 migration 폴더를 예고한다.
-> 아직 구현 전이며, 완료 후 이 문서의 DB 마이그레이션 절을 갱신한다.
-
 이 문서는 로컬 실행, 프로파일, DB 마이그레이션, 배포, 관측 기준을 정리한다. 결정 배경은
-[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md), 검증 명령은 `/verify`
-스킬이 원본이다.
+[ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)과
+[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md), 검증
+명령은 `/verify` 스킬이 원본이다.
 
 ## 기본 환경
 
@@ -134,13 +131,18 @@ src/main/resources/db/migration-vendor/h2/{module}             # module 소유 �
 src/main/resources/db/migration-vendor/oracle/{module}         # module 소유 신규 Oracle migration
 ```
 
-`spring.modulith.runtime.flyway-enabled: true`(dev/prod)로 각 모듈이 독립된
-`flyway_schema_history_{module}` 이력 테이블을 갖는다. 전환 이전부터 있던 공통 이력은
-`__root` 이력(기존 `flyway_schema_history`에 대응)으로 그대로 유지되고, 버전 번호도 바꾸지
-않았다. 모듈이 소유하는 새 schema 변경(cross-module FK 제거, scalar column 전환 등)은
-module별 폴더에 **1부터 새로 버전을 매겨** 추가한다 — `__root`의 V 번호와 독립적이다. 현재
-독립 migration 이력을 가진 모듈은 `booking` 하나다. 공통 SQL은 `db/migration/{module}`, DB별
-문법 차이가 있는 SQL은 `db/migration-vendor/{h2,oracle}/{module}`에 같은 버전으로 각각 둔다.
+`spring.modulith.runtime.flyway-enabled: true`(모든 프로파일 공통, `application.yml`)로 각
+모듈이 독립된 `flyway_schema_history_{module}` 이력 테이블을 갖는다. 전환 이전부터 있던 공통
+이력은 `__root` 이력(기존 `flyway_schema_history`에 대응)으로 그대로 유지되고, 버전 번호도
+바꾸지 않았다. 모듈이 소유하는 새 schema 변경(cross-module FK 제거, scalar column 전환,
+신규 module의 첫 schema 등)은 module별 폴더에 **1부터 새로 버전을 매겨** 추가한다 — `__root`의
+V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `catalog`, `booking`, `payment`,
+`ticketing` 넷이다(ADR 0005). `payment`/`ticketing`은 이번 entity-only 단계 첫 schema라
+`V1__create_payments.sql`/`V1__create_tickets.sql`부터 시작하고, `catalog`/`booking`은 기존
+이력 위에 이어서 버전을 매긴다. 공통 SQL은 `db/migration/{module}`, DB별 문법 차이가 있는
+SQL은 `db/migration-vendor/{h2,oracle}/{module}`에 같은 버전으로 각각 둔다 — 모듈에 DB별
+차이만 있고 공통 SQL이 없으면(현재 `catalog`, `payment`, `ticketing`) `db/migration/{module}`
+폴더 자체를 만들지 않는다. `db/migration`에는 현재 `__root`와 `booking`만 있다.
 
 공통 migration은 `db/migration/__root`(또는 `{module}`)에 두고, Oracle과 H2의 문법이 다른
 migration은 `db/migration-vendor/oracle`, `db/migration-vendor/h2`에 같은 버전으로 각각 둔다.
@@ -181,6 +183,18 @@ outbox 테이블은 이 시점에 별도 booking migration으로 제거됐다). 
 배포 전에는 `docs/database/core-api-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
 중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
 대표 행을 결정한 뒤 정리한다. migration에서 중복 행을 임의 삭제하지 않는다.
+
+ADR 0005의 가격 재설계는 `catalog`(V4~V7)와 `booking`(V3~V4) migration으로 이미 반영됐다.
+`catalog` V4가 `GRADES`/`PERFORMANCE_GRADES`를 만들고, V5~V6가 기존 `SHOW_GRADES`/`SHOW_SEATS`
+데이터를 각각 `PERFORMANCE_GRADES`, `PERFORMANCE_SEATS.performance_grade_id`/`unit_price`로
+backfill하며, V7이 이관이 끝난 `SHOW_GRADES`/`SHOW_SEATS`를 drop한다(expand -> migrate ->
+contract). `booking` V3는 `PERFORMANCE_SEATS`에 같은 컬럼을 NOT NULL로 조이고, V4는
+`ORDERS`/`ORDER_SEATS`에 주문 시점 snapshot 컬럼을 추가하면서 `payment_failed_at`을 제거한다
+(`Order.PAYMENT_FAILED` 상태 폐기). `payment`(`PAYMENTS`)와 `ticketing`(`TICKETS`)은 이번
+entity-only 단계의 신규 schema라 각각 `V1__create_payments.sql`/`V1__create_tickets.sql`로
+시작한다. 위 migration들은 `SHOW_GRADES`/`SHOW_SEATS`/`ORDERS`/`ORDER_SEATS` 등 pre-Flyway
+baseline table이 존재하지 않는 검증 환경(`OracleMigrationCompatibilityTest` 등)에서는 no-op이
+되도록 존재 여부를 먼저 확인한다.
 
 Oracle DDL은 실행 시 암묵적으로 커밋된다. 인덱스처럼 실패 후 재시도가 필요한 변경은 여러
 migration으로 분리하고, 각 migration은 같은 목적의 기존 인덱스가 있으면 건너뛴다. 실패 후
