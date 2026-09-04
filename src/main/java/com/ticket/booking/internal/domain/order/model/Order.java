@@ -54,13 +54,24 @@ public class Order extends BookingAuditedEntity {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    /**
+     * 주문 생성 시점의 표시 snapshot이다(ADR 0005). catalog의 Show/Performance/Venue 표시값이 나중에
+     * 바뀌어도 이미 만든 주문 상세는 바뀌지 않아야 하므로 다시 조회하지 않고 이 값을 그대로 쓴다.
+     */
+    @Column(name = "show_title_snapshot", nullable = false, length = 1000)
+    private String showTitleSnapshot;
+
+    @Column(name = "performance_start_at_snapshot", nullable = false)
+    private LocalDateTime performanceStartAtSnapshot;
+
+    @Column(name = "venue_name_snapshot", nullable = false)
+    private String venueNameSnapshot;
+
     private LocalDateTime confirmedAt;
 
     private LocalDateTime expiredAt;
 
     private LocalDateTime canceledAt;
-
-    private LocalDateTime paymentFailedAt;
 
     public Order(
             final Long memberId,
@@ -68,7 +79,10 @@ public class Order extends BookingAuditedEntity {
             final String orderKey,
             final String holdKey,
             final BigDecimal totalAmount,
-            final LocalDateTime expiresAt
+            final LocalDateTime expiresAt,
+            final String showTitleSnapshot,
+            final LocalDateTime performanceStartAtSnapshot,
+            final String venueNameSnapshot
     ) {
         this.memberId = memberId;
         this.performanceId = performanceId;
@@ -77,6 +91,9 @@ public class Order extends BookingAuditedEntity {
         this.status = OrderState.PENDING;
         this.totalAmount = totalAmount;
         this.expiresAt = expiresAt;
+        this.showTitleSnapshot = showTitleSnapshot;
+        this.performanceStartAtSnapshot = performanceStartAtSnapshot;
+        this.venueNameSnapshot = venueNameSnapshot;
     }
 
     public void confirm(final LocalDateTime now) {
@@ -95,12 +112,6 @@ public class Order extends BookingAuditedEntity {
         validatePendingTransition("cancel");
         this.status = OrderState.CANCELED;
         this.canceledAt = now;
-    }
-
-    public void failPayment(final LocalDateTime now) {
-        validatePendingTransition("failPayment");
-        this.status = OrderState.PAYMENT_FAILED;
-        this.paymentFailedAt = now;
     }
 
     public boolean isPending() {

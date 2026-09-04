@@ -15,12 +15,16 @@ class OrderSeatTest {
     void 주문좌석을_생성하면_좌석_스냅샷_정보만_보관한다() {
         Order order = createOrder();
 
-        OrderSeat orderSeat = new OrderSeat(order, 100L, 200L, BigDecimal.valueOf(12000));
+        OrderSeat orderSeat = new OrderSeat(
+                order, 100L, 200L, BigDecimal.valueOf(12000), "R", "R석", "1F 가구역 A열 1번");
 
         assertThat(orderSeat.getOrder()).isSameAs(order);
         assertThat(orderSeat.getPerformanceSeatId()).isEqualTo(100L);
         assertThat(orderSeat.getSeatId()).isEqualTo(200L);
-        assertThat(orderSeat.getPrice()).isEqualByComparingTo("12000");
+        assertThat(orderSeat.getUnitPrice()).isEqualByComparingTo("12000");
+        assertThat(orderSeat.getGradeCodeSnapshot()).isEqualTo("R");
+        assertThat(orderSeat.getGradeNameSnapshot()).isEqualTo("R석");
+        assertThat(orderSeat.getSeatLabelSnapshot()).isEqualTo("1F 가구역 A열 1번");
     }
 
     @Test
@@ -44,7 +48,10 @@ class OrderSeatTest {
                 "order-key",
                 "hold-key",
                 BigDecimal.valueOf(12000),
-                LocalDateTime.of(2026, 3, 15, 12, 30)
+                LocalDateTime.of(2026, 3, 15, 12, 30),
+                "show-title",
+                LocalDateTime.of(2026, 3, 15, 19, 0),
+                "venue-name"
         );
     }
 }

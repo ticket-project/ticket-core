@@ -72,20 +72,6 @@ class OrderTest {
     }
 
     @Test
-    void pending_주문은_결제실패로_전이할_수_있다() {
-        //given
-        LocalDateTime now = LocalDateTime.of(2026, 3, 15, 12, 0);
-        Order order = createOrder(now.plusMinutes(10));
-
-        //when
-        order.failPayment(now);
-
-        //then
-        assertThat(order.getStatus()).isEqualTo(OrderState.PAYMENT_FAILED);
-        assertThat(order.getPaymentFailedAt()).isEqualTo(now);
-    }
-
-    @Test
     void pending이_아닌_주문은_다시_전이할_수_없다() {
         //given
         Order order = createOrder(LocalDateTime.of(2026, 3, 15, 12, 30));
@@ -124,6 +110,9 @@ class OrderTest {
     }
 
     private Order createOrder(final LocalDateTime expiresAt) {
-        return new Order(1L, 10L, "order-key", "hold-key", BigDecimal.valueOf(15000), expiresAt);
+        return new Order(
+                1L, 10L, "order-key", "hold-key", BigDecimal.valueOf(15000), expiresAt,
+                "show-title", expiresAt.minusDays(1), "venue-name"
+        );
     }
 }
