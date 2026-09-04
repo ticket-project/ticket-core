@@ -108,6 +108,27 @@ class GetSeatStatusUseCaseTest {
     }
 
     @Test
+    void DB에_존재하는_좌석은_상태를_생략하지_않고_그대로_노출한다() {
+        // 정적 seat-map(Task 9)과 같은 PerformanceSeat 조회원본을 쓰므로, 여기 나타난 좌석을
+        // 응답에서 누락시키면 클라이언트가 그 좌석을 AVAILABLE로 잘못 추정할 수 있다.
+        List<SeatStateSnapshotRow> dbStates = List.of(
+                new SeatStateSnapshotRow(101L, 1L, SeatStatus.AVAILABLE),
+                new SeatStateSnapshotRow(102L, 2L, SeatStatus.OCCUPIED),
+                new SeatStateSnapshotRow(103L, 3L, SeatStatus.AVAILABLE)
+        );
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy());
+        when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
+        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+
+        GetSeatStatusUseCase.Output output = useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
+
+        assertThat(output.seats()).hasSize(dbStates.size());
+        assertThat(output.seats()).extracting(SeatStateView::performanceSeatId)
+                .containsExactly(101L, 102L, 103L);
+    }
+
+    @Test
     void 예매가_마감된_회차는_좌석_상태를_조회하지_않는다() {
         when(bookingPolicyLookup.getBookingPolicy(10L))
                 .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), false));
