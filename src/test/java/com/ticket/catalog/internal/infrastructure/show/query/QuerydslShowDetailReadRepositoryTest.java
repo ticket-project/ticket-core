@@ -1,6 +1,5 @@
 package com.ticket.catalog.internal.infrastructure.show.query;
 
-import com.ticket.catalog.internal.application.show.query.GetShowDetailUseCase;
 import com.ticket.catalog.internal.application.show.query.ShowDetailReadRepository;
 import com.ticket.catalog.internal.application.show.query.model.ShowDetailView;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
@@ -12,6 +11,7 @@ import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Performer;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
+import com.ticket.catalog.internal.domain.grade.Grade;
 import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.performance.policy.BookingEntryResolver;
 import com.ticket.catalog.internal.domain.queue.QueueLevel;
@@ -60,12 +60,17 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
                 .setParameter("id", showId)
                 .executeUpdate();
         persistShowGenre(show, genre);
-        persistShowGrade(show, "VIP", "VIP석", BigDecimal.valueOf(150000), 1);
-        persistShowGrade(show, "R", "R석", BigDecimal.valueOf(100000), 2);
         Performance queuedPerformance = persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
         queuedPerformance.updateQueuePolicy(QueueMode.FORCE_ON, QueueLevel.LEVEL_1, null, null, null);
         Performance directPerformance = persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
         directPerformance.updateQueuePolicy(QueueMode.FORCE_OFF, QueueLevel.LEVEL_1, null, null, null);
+        // ADR 0005: 가격은 회차(Performance) 단위로만 존재한다. 두 회차에 서로 다른 가격 범위를 둬
+        // show 상세의 priceSummary가 회차 전체의 min/max를 파생하는지 확인한다.
+        Grade vip = persistGrade("VIP", "VIP석");
+        Grade r = persistGrade("R", "R석");
+        persistPerformanceGrade(queuedPerformance, vip, BigDecimal.valueOf(150000), 1);
+        persistPerformanceGrade(queuedPerformance, r, BigDecimal.valueOf(100000), 2);
+        persistPerformanceGrade(directPerformance, vip, BigDecimal.valueOf(180000), 1);
         persistShowLike(persistMember("a@example.com", "A"), show);
         persistShowLike(persistMember("b@example.com", "B"), show);
         flushAndClear();
@@ -80,7 +85,8 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
         assertThat(detail.title()).isEqualTo("단독 공연");
         assertThat(detail.likeCount()).isEqualTo(2L);
         assertThat(detail.genreNames()).contains("케이팝");
-        assertThat(detail.grades()).extracting(GetShowDetailUseCase.GradeInfo::gradeCode).containsExactly("VIP", "R");
+        assertThat(detail.priceSummary().minPrice()).isEqualByComparingTo("100000");
+        assertThat(detail.priceSummary().maxPrice()).isEqualByComparingTo("180000");
         assertThat(detail.performanceDates()).hasSize(1);
         assertThat(detail.performanceDates().getFirst().performances()).hasSize(2);
         assertThat(detail.performanceDates().getFirst().performances().getFirst().entryType())

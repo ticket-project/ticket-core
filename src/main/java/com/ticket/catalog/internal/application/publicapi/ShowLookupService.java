@@ -2,11 +2,9 @@ package com.ticket.catalog.internal.application.publicapi;
 
 import com.ticket.catalog.PerformanceSummary;
 import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.ShowSummary;
 import com.ticket.catalog.VenueLayout;
 import com.ticket.catalog.internal.application.performance.query.PerformanceSummaryBatchReadRepository;
-import com.ticket.catalog.internal.application.show.query.ShowSeatMapReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRepository;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
@@ -30,7 +28,6 @@ public class ShowLookupService implements ShowLookup {
 
     private final ShowRepository showRepository;
     private final ShowSummaryBatchReadRepository showSummaryBatchReadRepository;
-    private final ShowSeatMapReadRepository showSeatMapReadRepository;
     private final PerformanceSummaryBatchReadRepository performanceSummaryBatchReadRepository;
 
     @Override
@@ -55,12 +52,6 @@ public class ShowLookupService implements ShowLookup {
             throw new NotFoundException("공연에 연결된 공연장을 찾을 수 없습니다.");
         }
         return new VenueLayout(venue.getName(), venue.getViewBoxWidth(), venue.getViewBoxHeight(), venue.getSeatDiameter());
-    }
-
-    @Override
-    public List<ShowSeatMapEntry> getSeatMap(final long showId) {
-        requireExisting(showId);
-        return showSeatMapReadRepository.findSeatMap(showId);
     }
 
     @Override

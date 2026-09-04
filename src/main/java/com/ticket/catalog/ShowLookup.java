@@ -28,13 +28,6 @@ public interface ShowLookup {
     VenueLayout getVenueLayout(long showId);
 
     /**
-     * show의 좌석 맵을 물리 좌석·등급·가격과 함께 조회한다. show가 존재하지 않으면
-     * {@code com.ticket.error.NotFoundException}을 던진다. show는 있지만 연결된
-     * 좌석이 없으면 빈 목록을 반환한다.
-     */
-    List<ShowSeatMapEntry> getSeatMap(long showId);
-
-    /**
      * 빈 {@code performanceIds}는 빈 map을 반환한다. 존재하지 않는 ID는 결과 map에서 조용히
      * 빠진다 — 어떤 ID가 없었는지 의미를 부여하는 것은 호출자의 몫이다.
      */

@@ -51,7 +51,7 @@ class GetShowDetailUseCaseTest {
                 null,
                 null,
                 List.of("장르"),
-                List.of(),
+                new GetShowDetailUseCase.PriceSummary(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
                 List.of()
         );
         when(showDetailReadRepository.findShowDetail(1L)).thenReturn(Optional.of(detail));

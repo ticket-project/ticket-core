@@ -175,7 +175,7 @@ class ShowControllerContractTest {
                 null,
                 null,
                 List.of("콘서트"),
-                List.of(),
+                new GetShowDetailUseCase.PriceSummary(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
                 List.of(new GetShowDetailUseCase.PerformanceDateInfo(
                         LocalDate.of(2026, 3, 20),
                         List.of(performance)

@@ -1,10 +1,8 @@
 package com.ticket.catalog.internal.application.publicapi;
 
 import com.ticket.catalog.PerformanceSummary;
-import com.ticket.catalog.ShowSeatMapEntry;
 import com.ticket.catalog.VenueLayout;
 import com.ticket.catalog.internal.application.performance.query.PerformanceSummaryBatchReadRepository;
-import com.ticket.catalog.internal.application.show.query.ShowSeatMapReadRepository;
 import com.ticket.catalog.internal.application.show.query.ShowSummaryBatchReadRepository;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
@@ -16,9 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -37,9 +33,6 @@ class ShowLookupServiceTest {
 
     @Mock
     private ShowSummaryBatchReadRepository showSummaryBatchReadRepository;
-
-    @Mock
-    private ShowSeatMapReadRepository showSeatMapReadRepository;
 
     @Mock
     private PerformanceSummaryBatchReadRepository performanceSummaryBatchReadRepository;
@@ -78,25 +71,6 @@ class ShowLookupServiceTest {
         when(show.getVenue()).thenReturn(null);
 
         assertThatThrownBy(() -> service.getVenueLayout(100L))
-                .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void 좌석_맵을_조회한다() {
-        when(showRepository.existsById(100L)).thenReturn(true);
-        List<ShowSeatMapEntry> seats = List.of(
-                new ShowSeatMapEntry(1L, 1, "A", "10", "7", 10.0, 20.0, "VIP", "VIP", BigDecimal.TEN, 1)
-        );
-        when(showSeatMapReadRepository.findSeatMap(100L)).thenReturn(seats);
-
-        assertThat(service.getSeatMap(100L)).isEqualTo(seats);
-    }
-
-    @Test
-    void 존재하지_않는_공연의_좌석_맵을_조회하면_예외를_던진다() {
-        when(showRepository.existsById(100L)).thenReturn(false);
-
-        assertThatThrownBy(() -> service.getSeatMap(100L))
                 .isInstanceOf(NotFoundException.class);
     }
 

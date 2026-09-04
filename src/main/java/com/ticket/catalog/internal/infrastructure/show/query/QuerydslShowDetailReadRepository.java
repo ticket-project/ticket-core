@@ -9,7 +9,6 @@ import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.performance.policy.BookingEntryResolver;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.image.ShowCardImagePathConverter;
-import com.ticket.catalog.internal.domain.show.ShowGrade;
 import com.ticket.catalog.internal.domain.show.Performer;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.catalog.internal.domain.show.BookingStatus;
@@ -24,9 +23,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.ticket.catalog.internal.domain.performance.QPerformance.performance;
+import static com.ticket.catalog.internal.domain.performance.QPerformanceGrade.performanceGrade;
 import static com.ticket.catalog.internal.domain.show.QGenre.genre;
 import static com.ticket.catalog.internal.domain.show.QShowGenre.showGenre;
-import static com.ticket.catalog.internal.domain.show.QShowGrade.showGrade;
 import static com.ticket.catalog.internal.domain.show.QPerformer.performer;
 import static com.ticket.catalog.internal.domain.show.QShow.show;
 import static com.ticket.catalog.internal.domain.showlike.model.QShowLike.showLike;
@@ -47,11 +46,11 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         }
 
         final List<String> genreNames = fetchGenreNames(showId);
-        final List<GetShowDetailUseCase.GradeInfo> grades = fetchGrades(showId);
+        final GetShowDetailUseCase.PriceSummary priceSummary = fetchPriceSummary(showId);
         final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates = fetchPerformanceDates(showId);
         final long likeCount = fetchLikeCount(showId);
 
-        return Optional.of(toShowDetail(showEntity, genreNames, grades, performanceDates, likeCount));
+        return Optional.of(toShowDetail(showEntity, genreNames, priceSummary, performanceDates, likeCount));
     }
 
     private Show fetchShow(final Long showId) {
@@ -72,25 +71,26 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
                 .fetch();
     }
 
-    private List<GetShowDetailUseCase.GradeInfo> fetchGrades(final Long showId) {
-        return queryFactory
-                .selectFrom(showGrade)
-                .where(showGrade.show.id.eq(showId))
-                .orderBy(showGrade.sortOrder.asc())
-                .fetch()
-                .stream()
-                .map(this::toGradeInfo)
-                .toList();
-    }
-
-    private GetShowDetailUseCase.GradeInfo toGradeInfo(final ShowGrade grade) {
-        return new GetShowDetailUseCase.GradeInfo(
-                grade.getId(),
-                grade.getGradeCode(),
-                grade.getGradeName(),
-                grade.getPrice(),
-                grade.getSortOrder()
-        );
+    /**
+     * ADR 0005: show-level 가격표는 없다. 이 show의 모든 Performance에 배정된 PerformanceGrade.price
+     * 중 최소/최대만 파생한다 — 대표 회차 하나의 가격을 show 전체 가격처럼 보여주지 않는다.
+     */
+    private GetShowDetailUseCase.PriceSummary fetchPriceSummary(final Long showId) {
+        final com.querydsl.core.Tuple result = queryFactory
+                .select(performanceGrade.price.min(), performanceGrade.price.max())
+                .from(performanceGrade)
+                .join(performanceGrade.performance, performance)
+                .where(performance.show.id.eq(showId))
+                .fetchOne();
+        if (result == null) {
+            return null;
+        }
+        final var minPrice = result.get(performanceGrade.price.min());
+        final var maxPrice = result.get(performanceGrade.price.max());
+        if (minPrice == null || maxPrice == null) {
+            return null;
+        }
+        return new GetShowDetailUseCase.PriceSummary(minPrice, maxPrice);
     }
 
     private List<GetShowDetailUseCase.PerformanceDateInfo> fetchPerformanceDates(final Long showId) {
@@ -148,7 +148,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     private ShowDetailView toShowDetail(
             final Show showEntity,
             final List<String> genreNames,
-            final List<GetShowDetailUseCase.GradeInfo> grades,
+            final GetShowDetailUseCase.PriceSummary priceSummary,
             final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates,
             final long likeCount
     ) {
@@ -172,7 +172,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
                 toVenueInfo(showEntity.getVenue()),
                 toPerformerInfo(showEntity.getPerformer()),
                 genreNames,
-                grades,
+                priceSummary,
                 performanceDates
         );
     }

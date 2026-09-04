@@ -16,6 +16,6 @@ public record ShowDetailView(
         Integer runningMinutes, long viewCount, long likeCount, BookingStatus bookingStatus, SaleType saleType,
         LocalDateTime saleStartDate, LocalDateTime saleEndDate, String image,
         GetShowDetailUseCase.VenueInfo venue, GetShowDetailUseCase.PerformerInfo performer,
-        List<String> genreNames, List<GetShowDetailUseCase.GradeInfo> grades,
+        List<String> genreNames, GetShowDetailUseCase.PriceSummary priceSummary,
         List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates
 ) {}

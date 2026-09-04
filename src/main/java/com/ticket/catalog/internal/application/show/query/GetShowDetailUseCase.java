@@ -37,7 +37,13 @@ public class GetShowDetailUseCase {
     public record PerformerInfo(Long id, String name, String profileImageUrl) {
     }
 
-    public record GradeInfo(Long id, String gradeCode, String gradeName, BigDecimal price, Integer sortOrder) {
+    /**
+     * ADR 0005: show-level 가격표(과거 ShowGrade)는 폐기됐다. 등급·가격은 회차(Performance)마다
+     * 다를 수 있어 show 상세는 그 회차들의 PerformanceGrade.price 중 최소/최대만 요약해 보여준다.
+     * 정확한 가격은 회차를 고른 뒤 그 회차의 등급 API로 확인한다. 이 show에 등급이 하나도 없으면
+     * {@code null}이다.
+     */
+    public record PriceSummary(BigDecimal minPrice, BigDecimal maxPrice) {
     }
 
     public record PerformanceInfo(
@@ -87,7 +93,7 @@ public class GetShowDetailUseCase {
             VenueInfo venue,
             PerformerInfo performer,
             List<String> genreNames,
-            List<GradeInfo> grades,
+            PriceSummary priceSummary,
             List<PerformanceDateInfo> performanceDates
     ) {
     }
@@ -98,7 +104,7 @@ public class GetShowDetailUseCase {
                         view.id(), view.title(), view.subTitle(), view.info(), view.startDate(), view.endDate(),
                         view.runningMinutes(), view.viewCount(), view.likeCount(), view.bookingStatus(), view.saleType(),
                         view.saleStartDate(), view.saleEndDate(), view.image(), view.venue(), view.performer(),
-                        view.genreNames(), view.grades(), view.performanceDates()
+                        view.genreNames(), view.priceSummary(), view.performanceDates()
                 ))
                 .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + input.showId()));

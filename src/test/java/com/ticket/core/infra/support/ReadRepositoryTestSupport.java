@@ -12,8 +12,6 @@ import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Category;
 import com.ticket.catalog.internal.domain.show.Genre;
 import com.ticket.catalog.internal.domain.show.ShowGenre;
-import com.ticket.catalog.internal.domain.show.ShowGrade;
-import com.ticket.catalog.internal.domain.show.ShowSeat;
 import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.SaleType;
 import com.ticket.catalog.internal.domain.show.Performer;
@@ -163,23 +161,10 @@ public abstract class ReadRepositoryTestSupport {
         return showGenre;
     }
 
-    protected ShowGrade persistShowGrade(final Show show, final String gradeCode, final String gradeName, final BigDecimal price, final int sortOrder)
-            throws Exception {
-        ShowGrade showGrade = ShowGrade.link(show, gradeCode, gradeName, price, sortOrder);
-        entityManager.persist(showGrade);
-        return showGrade;
-    }
-
     protected Seat persistSeat(final Venue venue, final String section, final String rowNo, final String seatNo, final int floor) {
         Seat seat = new Seat(venue, section, rowNo, seatNo, floor, 10.0, 20.0);
         entityManager.persist(seat);
         return seat;
-    }
-
-    protected ShowSeat persistShowSeat(final Show show, final Seat seat, final ShowGrade showGrade) throws Exception {
-        ShowSeat showSeat = ShowSeat.link(show, seat, showGrade);
-        entityManager.persist(showSeat);
-        return showSeat;
     }
 
     protected Performance persistPerformance(final Show show, final long performanceNo, final LocalDateTime startTime) {
