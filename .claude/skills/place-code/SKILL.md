@@ -20,7 +20,9 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | 다루는 업무 | 모듈 |
 | --- | --- |
 | 좌석 판매 상태(`PerformanceSeat`), Selection, Hold, Order/OrderSeat, 주문 취소·만료, 좌석 분산락, WebSocket 좌석 발행 | `booking` |
-| Show, Performance, Seat, 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차·좌석 조회 | `catalog` |
+| Show, Performance, Venue, Seat, Grade(등급 코드·이름), PerformanceGrade(회차별 등급 가격·표시 순서), 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차·좌석 조회 | `catalog` |
+| Order에 대한 결제 시도(Payment)의 생명주기 | `payment` |
+| 결제 확정으로 발급되는 Ticket(입장 권리)의 생명주기 | `ticketing` |
 | Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `identity` |
 | admission token 설정·decode·검증 | `admission` |
 | Show 좋아요(찜) 개수·추가·삭제·내 찜 목록 | `catalog`(Show의 부가 속성으로 취급, "showlike 흡수" 참고) |
@@ -112,6 +114,11 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | 요청 파라미터 Bean Validation 제약 | `internal.web`의 `controller.docs` 인터페이스 |
 | `UseCase.Input` 필수 component 계약 | `internal.application`의 UseCase record compact constructor(공통 유틸 없이 직접 판정) |
 | 도메인 규칙이 판단하는 오류 | 소유 모듈의 `internal.exception`(`<Module>ErrorCode` + 예외 클래스) |
+| Grade(재사용 가능한 등급 코드·이름, 가격 없음) | `catalog.internal.domain.grade` |
+| PerformanceGrade(회차별 등급 가격·표시 순서, 가격의 원본) | `catalog.internal.domain.performance` |
+| PerformanceSeat의 `performanceGradeId`/`unitPrice`/`version`(catalog `PerformanceGrade.price`의 snapshot, 낙관적 락) | `booking.internal.domain.performanceseat.model` |
+| Payment entity·상태(`READY`/`PROCESSING`/`FAILED`), Order 참조는 scalar `orderId` | `payment.internal.domain.payment` |
+| Ticket entity·상태, OrderSeat/Member 참조는 scalar `orderSeatId`/`ownerMemberId` | `ticketing.internal.domain.ticket` |
 
 ### 오류는 그 업무를 소유한 모듈이 갖는다
 
@@ -142,6 +149,22 @@ com/ticket/<module>/internal/exception/
 `com.ticket.error.ExceptionHandlerScopeTest`와 `ErrorCodeUniquenessTest`가 강제한다.
 
 배경은 `docs/adr/0002-module-owned-error-contracts.md`가 원본이다.
+
+### payment/ticketing은 entity-only 모듈이다
+
+`payment`, `ticketing`은 ADR 0005로 신설된 닫힌 Application Module이지만, 지금은 entity/schema/
+repository와 구조·중복 방지 테스트까지만 있다. 그래서 실제로 쓰이는 계층은 `internal.domain`
+(entity, 상태 enum, Repository 인터페이스)과 `internal.infrastructure`(Repository 어댑터,
+Spring Data JPA 인터페이스)뿐이다. `internal.application`(use case)과 `internal.web`
+(controller)은 아직 없다 — PG client, 결제 승인/실패/취소 API, callback/webhook, 자동 티켓
+발급, QR/입장/사용/양도 API가 추가되는 후속 단계에서 채워진다. 두 모듈 모두
+`allowedDependencies = {}`인 leaf module이다(`payment -> 없음`, `ticketing -> 없음`) — 다른
+업무 모듈을 import하지 않는다. `booking`의 Order/OrderSeat, `identity`의 Member를 참조할 때도
+scalar `orderId`/`orderSeatId`/`ownerMemberId` 컬럼일 뿐 JPA 연관관계가 아니다. 실제 PG 정산
+(`payment -> booking`)이나 `OrderConfirmed` 구독(`ticketing -> booking`) 같은 공개 계약 의존은
+그 기능을 구현하는 후속 단계에서만 추가한다 — 지금 빈 인터페이스나 가짜 호출로 미리 만들지
+않는다. 배경은 `docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md`
+§3~4가 원본이다.
 
 ### showlike 흡수
 
