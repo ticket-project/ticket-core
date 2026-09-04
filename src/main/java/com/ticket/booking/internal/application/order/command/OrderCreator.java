@@ -49,13 +49,13 @@ public class OrderCreator {
 
     private BigDecimal sumTotalAmount(final List<PerformanceSeat> performanceSeats) {
         return performanceSeats.stream()
-                .map(PerformanceSeat::getPrice)
+                .map(PerformanceSeat::getUnitPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private List<OrderSeat> toOrderSeats(final Order order, final List<PerformanceSeat> performanceSeats) {
         return performanceSeats.stream()
-                .map(seat -> new OrderSeat(order, seat.getId(), seat.getSeatId(), seat.getPrice()))
+                .map(seat -> new OrderSeat(order, seat.getId(), seat.getSeatId(), seat.getUnitPrice()))
                 .toList();
     }
 }
