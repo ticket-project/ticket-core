@@ -7,8 +7,8 @@ import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatS
 import com.ticket.booking.internal.application.performanceseat.query.model.AvailableSeatRow;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
-import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.ShowSeatMapEntry;
+import com.ticket.catalog.PerformanceSaleCatalog;
+import com.ticket.catalog.PerformanceSaleSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +31,7 @@ class GetSeatAvailabilityUseCaseTest {
     @Mock
     private BookingPolicyLookup bookingPolicyLookup;
     @Mock
-    private ShowLookup showLookup;
+    private PerformanceSaleCatalog performanceSaleCatalog;
     @Mock
     private SeatAvailabilityReadRepository seatAvailabilityReadRepository;
     @Mock
@@ -48,10 +48,8 @@ class GetSeatAvailabilityUseCaseTest {
     void DB와_redis_점유좌석을_합쳐_잔여석을_계산한다() {
         //given
         List<PerformanceSeatStateRow> stateRows =
-                List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE));
-        List<ShowSeatMapEntry> seatMap = List.of(
-                new ShowSeatMapEntry(1L, 1, "A", "10", "7", 10.0, 20.0, "VIP", "VIP", BigDecimal.TEN, 1)
-        );
+                List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L));
+        PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", 1);
         List<AvailableSeatRow> rows =
                 List.of(new AvailableSeatRow(1L, PerformanceSeatState.AVAILABLE, "VIP", 1));
         List<GetSeatAvailabilityUseCase.GradeAvailability> response =
@@ -59,7 +57,7 @@ class GetSeatAvailabilityUseCaseTest {
 
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(stateRows);
-        when(showLookup.getSeatMap(100L)).thenReturn(seatMap);
+        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
         when(seatAvailabilityCalculator.calculate(rows, Set.of(1L, 2L))).thenReturn(response);
@@ -73,7 +71,7 @@ class GetSeatAvailabilityUseCaseTest {
     }
 
     @Test
-    void 회차의_좌석_상태가_없으면_catalog_seat_map을_조회하지_않는다() {
+    void 회차의_좌석_상태가_없으면_catalog_판매_snapshot을_조회하지_않는다() {
         //given
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(List.of());
@@ -85,13 +83,23 @@ class GetSeatAvailabilityUseCaseTest {
         useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
 
         //then
-        verify(showLookup, org.mockito.Mockito.never()).getSeatMap(org.mockito.ArgumentMatchers.anyLong());
+        verify(performanceSaleCatalog, org.mockito.Mockito.never())
+                .getSaleSnapshot(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anySet());
     }
 
     private BookingPolicySnapshot policy(final long showId) {
         return new BookingPolicySnapshot(
                 10L, showId, true,
                 null, null, 4, 300, null, null, null, false
+        );
+    }
+
+    private PerformanceSaleSnapshot saleSnapshotWithGrade(final long performanceGradeId, final String gradeName, final int sortOrder) {
+        return new PerformanceSaleSnapshot(
+                10L, 100L, "show-title", 1L, "venue-name", null,
+                Map.of(),
+                Map.of(performanceGradeId, new PerformanceSaleSnapshot.GradeInfo(
+                        performanceGradeId, gradeName, gradeName, sortOrder, BigDecimal.TEN))
         );
     }
 }

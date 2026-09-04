@@ -5,18 +5,15 @@ import com.ticket.booking.internal.application.performanceseat.query.SeatAvailab
 import com.ticket.booking.internal.application.performanceseat.query.model.AvailableSeatRow;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.catalog.BookingPolicyLookup;
-import com.ticket.catalog.BookingPolicySnapshot;
-import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.ShowSeatMapEntry;
+import com.ticket.catalog.PerformanceSaleCatalog;
+import com.ticket.catalog.PerformanceSaleSnapshot;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -25,7 +22,7 @@ import java.util.Set;
 public class GetSeatAvailabilityUseCase {
 
     private final BookingPolicyLookup bookingPolicyLookup;
-    private final ShowLookup showLookup;
+    private final PerformanceSaleCatalog performanceSaleCatalog;
     private final SeatAvailabilityReadRepository seatAvailabilityReadRepository;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
@@ -53,9 +50,10 @@ public class GetSeatAvailabilityUseCase {
     ) {}
 
     public Output execute(Input input) {
-        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(input.performanceId());
+        // 회차 예매 정책 조회는 회차 존재 확인을 겸한다.
+        bookingPolicyLookup.getBookingPolicy(input.performanceId());
 
-        final List<AvailableSeatRow> rows = toAvailableSeatRows(input.performanceId(), policy.showId());
+        final List<AvailableSeatRow> rows = toAvailableSeatRows(input.performanceId());
 
         return new Output(seatAvailabilityCalculator.calculate(
                 rows,
@@ -63,28 +61,27 @@ public class GetSeatAvailabilityUseCase {
         ));
     }
 
-    private List<AvailableSeatRow> toAvailableSeatRows(final Long performanceId, final long showId) {
+    private List<AvailableSeatRow> toAvailableSeatRows(final Long performanceId) {
         final List<PerformanceSeatStateRow> stateRows = seatAvailabilityReadRepository.findSeatStates(performanceId);
         if (stateRows.isEmpty()) {
             return List.of();
         }
 
-        final Map<Long, ShowSeatMapEntry> seatMapBySeatId = new HashMap<>();
-        for (final ShowSeatMapEntry entry : showLookup.getSeatMap(showId)) {
-            seatMapBySeatId.put(entry.seatId(), entry);
-        }
+        final PerformanceSaleSnapshot saleSnapshot = performanceSaleCatalog.getSaleSnapshot(performanceId, Set.of());
 
         return stateRows.stream()
-                .map(row -> toAvailableSeatRow(row, seatMapBySeatId.get(row.seatId())))
+                .map(row -> toAvailableSeatRow(row, saleSnapshot))
                 .filter(java.util.Objects::nonNull)
                 .toList();
     }
 
-    private AvailableSeatRow toAvailableSeatRow(final PerformanceSeatStateRow row, final ShowSeatMapEntry entry) {
-        if (entry == null) {
+    private AvailableSeatRow toAvailableSeatRow(final PerformanceSeatStateRow row, final PerformanceSaleSnapshot saleSnapshot) {
+        final PerformanceSaleSnapshot.GradeInfo gradeInfo =
+                saleSnapshot.gradeInfoByPerformanceGradeId().get(row.performanceGradeId());
+        if (gradeInfo == null) {
             return null;
         }
-        return new AvailableSeatRow(row.seatId(), row.state(), entry.gradeName(), entry.gradeSortOrder());
+        return new AvailableSeatRow(row.seatId(), row.state(), gradeInfo.gradeName(), gradeInfo.sortOrder());
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {

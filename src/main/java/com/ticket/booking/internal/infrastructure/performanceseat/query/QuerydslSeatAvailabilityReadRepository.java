@@ -21,7 +21,8 @@ public class QuerydslSeatAvailabilityReadRepository implements SeatAvailabilityR
         return queryFactory
                 .select(Projections.constructor(PerformanceSeatStateRow.class,
                         performanceSeat.seatId,
-                        performanceSeat.state
+                        performanceSeat.state,
+                        performanceSeat.performanceGradeId
                 ))
                 .from(performanceSeat)
                 .where(performanceSeat.performanceId.eq(performanceId))

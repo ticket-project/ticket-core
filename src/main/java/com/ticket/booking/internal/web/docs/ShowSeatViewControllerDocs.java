@@ -1,6 +1,5 @@
 package com.ticket.booking.internal.web.docs;
 
-import com.ticket.booking.internal.application.performanceseat.query.GetShowSeatsUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetVenueLayoutUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,21 +29,6 @@ public interface ShowSeatViewControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
     ApiResponse<GetVenueLayoutUseCase.Output> getVenueLayout(
-            @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long showId
-    );
-
-    @Operation(
-            summary = "공연 좌석 정보 조회",
-            description = """
-                    공연 ID로 해당 공연의 등급 목록과 좌석별 좌표/등급 정보를 조회합니다.
-                    같은 공연의 모든 회차는 동일한 좌석 구성이므로 공연 단위로 조회합니다.
-                    이 정보는 거의 변하지 않으므로 캐싱에 적합합니다.
-                    """
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
-    })
-    ApiResponse<GetShowSeatsUseCase.Output> getShowSeats(
             @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long showId
     );
 }
