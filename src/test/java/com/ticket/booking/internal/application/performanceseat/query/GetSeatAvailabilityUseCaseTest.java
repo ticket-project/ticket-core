@@ -57,7 +57,7 @@ class GetSeatAvailabilityUseCaseTest {
         List<GetSeatAvailabilityUseCase.GradeAvailability> response =
                 List.of(new GetSeatAvailabilityUseCase.GradeAvailability("VIP", 1, 0L));
 
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(policy(100L));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(stateRows);
         when(showLookup.getSeatMap(100L)).thenReturn(seatMap);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
@@ -75,7 +75,7 @@ class GetSeatAvailabilityUseCaseTest {
     @Test
     void 회차의_좌석_상태가_없으면_catalog_seat_map을_조회하지_않는다() {
         //given
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(policy(100L));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(List.of());
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
@@ -91,7 +91,7 @@ class GetSeatAvailabilityUseCaseTest {
     private BookingPolicySnapshot policy(final long showId) {
         return new BookingPolicySnapshot(
                 10L, showId, true,
-                null, null, 4, 300, null, null, null, false, Map.of()
+                null, null, 4, 300, null, null, null, false
         );
     }
 }

@@ -53,7 +53,7 @@ public class GetSeatAvailabilityUseCase {
     ) {}
 
     public Output execute(Input input) {
-        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(input.performanceId(), List.of());
+        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(input.performanceId());
 
         final List<AvailableSeatRow> rows = toAvailableSeatRows(input.performanceId(), policy.showId());
 

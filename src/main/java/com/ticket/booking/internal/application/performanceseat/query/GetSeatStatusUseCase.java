@@ -54,7 +54,7 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(performanceId, List.of());
+        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(performanceId);
         BookingPolicyGuard.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input);
 

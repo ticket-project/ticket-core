@@ -75,7 +75,7 @@ class SelectSeatUseCaseTest {
     @Test
     void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
         BookingPolicySnapshot policy = openPolicy(false);
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(policy);
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
 
         useCase.execute(INPUT);
 
@@ -85,7 +85,7 @@ class SelectSeatUseCaseTest {
                 seatSelectionCoordinator,
                 seatEventPublisher
         );
-        inOrder.verify(bookingPolicyLookup).getBookingPolicy(10L, List.of());
+        inOrder.verify(bookingPolicyLookup).getBookingPolicy(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
         inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatStatusAction.SELECTED);
@@ -93,7 +93,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(openPolicy(false));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(false));
 
         useCase.execute(INPUT);
 
@@ -102,7 +102,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(openPolicy(true));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(true));
         doThrow(new AdmissionTokenRequiredException())
                 .when(admissionVerifier).verify(10L, 1L, "admission-token");
 
@@ -114,7 +114,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 예매가_마감된_회차는_좌석을_조회하지_않는다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of()))
+        when(bookingPolicyLookup.getBookingPolicy(10L))
                 .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), false));
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
@@ -130,7 +130,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 좌석_검증이_실패하면_선택하지_않는다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L, List.of())).thenReturn(openPolicy(false));
+        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(false));
         doThrow(new SeatAlreadyHoldException())
                 .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
 
@@ -160,8 +160,7 @@ class SelectSeatUseCaseTest {
                 null,
                 null,
                 null,
-                queueRequired,
-                Map.of()
+                queueRequired
         );
     }
 }

@@ -53,7 +53,7 @@ public class SelectSeatUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         final BookingPolicySnapshot policy =
-                bookingPolicyLookup.getBookingPolicy(input.performanceId(), List.of());
+                bookingPolicyLookup.getBookingPolicy(input.performanceId());
         BookingPolicyGuard.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input);
 
