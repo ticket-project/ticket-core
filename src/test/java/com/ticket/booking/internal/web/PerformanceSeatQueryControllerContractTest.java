@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.booking.internal.application.performanceseat.query.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
@@ -26,6 +27,7 @@ class PerformanceSeatQueryControllerContractTest {
 
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase = Mockito.mock(GetSeatAvailabilityUseCase.class);
     private final GetSeatStatusUseCase getSeatStatusUseCase = Mockito.mock(GetSeatStatusUseCase.class);
+    private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase = Mockito.mock(GetPerformanceSeatMapUseCase.class);
 
     private MockMvc mockMvc;
 
@@ -33,7 +35,8 @@ class PerformanceSeatQueryControllerContractTest {
     void setUp() {
         PerformanceSeatQueryController controller = new PerformanceSeatQueryController(
                 getSeatAvailabilityUseCase,
-                getSeatStatusUseCase
+                getSeatStatusUseCase,
+                getPerformanceSeatMapUseCase
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
@@ -47,6 +50,20 @@ class PerformanceSeatQueryControllerContractTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void seat_map은_admission_token_없이_조회한다() throws Exception {
+        when(getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(10L)))
+                .thenReturn(new GetPerformanceSeatMapUseCase.Output(
+                        new GetPerformanceSeatMapUseCase.VenueView(1L, "venue", 500, 356, 4.8),
+                        List.of()
+                ));
+        SecurityContextHolder.clearContext();
+
+        mockMvc.perform(get("/api/v1/performances/10/seat-map"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"));
     }
 
     @Test
