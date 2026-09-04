@@ -43,14 +43,20 @@ class QuerydslOrderReadRepositoryTest extends ReadRepositoryTestSupport {
                 "order-key",
                 "hold-key",
                 BigDecimal.valueOf(120000),
-                LocalDateTime.now(clock).plusMinutes(10)
+                LocalDateTime.now(clock).plusMinutes(10),
+                "show-title",
+                LocalDateTime.now(clock).plusDays(1),
+                "venue-name"
         );
         entityManager.persist(order);
         entityManager.persist(new OrderSeat(
                 order,
                 501L,
                 42L,
-                BigDecimal.valueOf(120000)
+                BigDecimal.valueOf(120000),
+                "R",
+                "R석",
+                "1F 가구역 A열 1번"
         ));
         orderKey = order.getOrderKey();
         flushAndClear();
@@ -66,7 +72,11 @@ class QuerydslOrderReadRepositoryTest extends ReadRepositoryTestSupport {
         assertThat(row.performanceId()).isEqualTo(performanceId);
         assertThat(row.performanceSeatId()).isEqualTo(501L);
         assertThat(row.seatId()).isEqualTo(42L);
-        assertThat(row.price()).isEqualByComparingTo("120000");
+        assertThat(row.unitPrice()).isEqualByComparingTo("120000");
+        assertThat(row.showTitleSnapshot()).isEqualTo("show-title");
+        assertThat(row.venueNameSnapshot()).isEqualTo("venue-name");
+        assertThat(row.gradeCodeSnapshot()).isEqualTo("R");
+        assertThat(row.seatLabelSnapshot()).isEqualTo("1F 가구역 A열 1번");
     }
 
     @Test

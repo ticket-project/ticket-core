@@ -6,9 +6,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * booking이 소유한 order/orderSeat 테이블만으로 조회한 주문상세 한 좌석분 행이다. catalog/identity
- * 표시값(공연·공연장·회원 이름 등)은 담지 않는다 — {@code GetOrderDetailUseCase}가 이 행의
- * {@code performanceId}·{@code memberId}·{@code seatId}로 그 module들의 공개 API를 조회해 합성한다.
+ * booking이 소유한 order/orderSeat 테이블만으로 조회한 주문상세 한 좌석분 행이다. show/venue/
+ * grade/좌석 표시값은 주문 생성 시점에 Order/OrderSeat가 이미 snapshot한 값을 그대로 담는다
+ * (ADR 0005) — catalog 표시값이 나중에 바뀌어도 이 값은 바뀌지 않는다. {@code memberId}로 회원의
+ * 현재(live) 이름·이메일만 identity 공개 API로 추가 조회한다.
  */
 public record OrderDetailRow(
         String orderKey,
@@ -16,8 +17,14 @@ public record OrderDetailRow(
         LocalDateTime expiresAt,
         Long memberId,
         Long performanceId,
+        String showTitleSnapshot,
+        LocalDateTime performanceStartAtSnapshot,
+        String venueNameSnapshot,
         Long performanceSeatId,
         Long seatId,
-        BigDecimal price
+        BigDecimal unitPrice,
+        String gradeCodeSnapshot,
+        String gradeNameSnapshot,
+        String seatLabelSnapshot
 ) {
 }

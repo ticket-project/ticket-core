@@ -4,12 +4,7 @@ import com.ticket.booking.internal.domain.order.OrderRemainingTime;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderDetailRow;
 import com.ticket.booking.internal.exception.OrderNotOwnedException;
-import com.ticket.catalog.PerformanceSummary;
-import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.ShowSeatMapEntry;
-import com.ticket.catalog.ShowSummary;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberLookup;
 import com.ticket.identity.MemberProfile;
 import lombok.RequiredArgsConstructor;
@@ -20,17 +15,19 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+/**
+ * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 catalog를 다시 조회하지 않고
+ * Order/OrderSeat가 주문 생성 시점에 이미 남긴 snapshot을 그대로 쓴다 — catalog의 표시값이나
+ * 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 identity의 공개 API로
+ * 추가 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
 
     private final OrderReadRepository orderReadRepository;
-    private final ShowLookup showLookup;
     private final MemberLookup memberLookup;
     private final Clock clock;
 
@@ -59,9 +56,9 @@ public class GetOrderDetailUseCase {
             TicketInfo tickets
     ) {}
 
-    public record ShowInfo(Long showId, String title, String imageUrl) {}
+    public record ShowInfo(String title) {}
 
-    public record PerformanceInfo(Long performanceId, Long performanceNo, LocalDateTime startTime, String venueName) {}
+    public record PerformanceInfo(Long performanceId, LocalDateTime startTime, String venueName) {}
 
     public record BookerInfo(Long memberId, String name, String email) {}
 
@@ -78,10 +75,8 @@ public class GetOrderDetailUseCase {
     public record TicketSeat(
             Long performanceSeatId,
             Long seatId,
-            int floor,
-            String section,
-            String rowNo,
-            String seatNo,
+            String gradeCode,
+            String gradeName,
             String label,
             BigDecimal price
     ) {}
@@ -97,18 +92,12 @@ public class GetOrderDetailUseCase {
         // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
         final MemberProfile member = memberLookup.getProfile(first.memberId());
 
-        final PerformanceSummary performanceSummary = requirePerformanceSummary(first.performanceId());
-        final ShowSummary showSummary = requireShowSummary(performanceSummary.showId());
-        final Map<Long, ShowSeatMapEntry> seatMapBySeatId = showLookup.getSeatMap(performanceSummary.showId())
-                .stream()
-                .collect(Collectors.toMap(ShowSeatMapEntry::seatId, entry -> entry));
-
         final LocalDateTime now = LocalDateTime.now(clock);
         final List<TicketSeat> seats = rows.stream()
-                .map(row -> toTicketSeat(row, seatMapBySeatId.get(row.seatId())))
+                .map(this::toTicketSeat)
                 .toList();
         final BigDecimal ticketAmount = rows.stream()
-                .map(OrderDetailRow::price)
+                .map(OrderDetailRow::unitPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         final long remainingSeconds = OrderRemainingTime.seconds(first.status(), first.expiresAt(), now);
 
@@ -117,12 +106,11 @@ public class GetOrderDetailUseCase {
                 first.status(),
                 first.expiresAt(),
                 remainingSeconds,
-                new ShowInfo(performanceSummary.showId(), showSummary.title(), showSummary.image()),
+                new ShowInfo(first.showTitleSnapshot()),
                 new PerformanceInfo(
-                        performanceSummary.performanceId(),
-                        performanceSummary.performanceNo(),
-                        performanceSummary.startTime(),
-                        showSummary.venueName()
+                        first.performanceId(),
+                        first.performanceStartAtSnapshot(),
+                        first.venueNameSnapshot()
                 ),
                 new BookerInfo(member.memberId(), member.name(), member.email()),
                 new PriceInfo(
@@ -136,40 +124,14 @@ public class GetOrderDetailUseCase {
         );
     }
 
-    private PerformanceSummary requirePerformanceSummary(final Long performanceId) {
-        final PerformanceSummary summary = showLookup.getPerformanceSummaries(Set.of(performanceId)).get(performanceId);
-        if (summary == null) {
-            throw new NotFoundException();
-        }
-        return summary;
-    }
-
-    private ShowSummary requireShowSummary(final long showId) {
-        final ShowSummary summary = showLookup.getSummaries(Set.of(showId)).get(showId);
-        if (summary == null) {
-            throw new NotFoundException();
-        }
-        return summary;
-    }
-
-    private TicketSeat toTicketSeat(final OrderDetailRow row, final ShowSeatMapEntry entry) {
-        if (entry == null) {
-            throw new NotFoundException();
-        }
-        final String label = entry.floor() + "F "
-                + entry.section() + "구역 "
-                + entry.rowNo() + "열 "
-                + entry.seatNo() + "번";
-
+    private TicketSeat toTicketSeat(final OrderDetailRow row) {
         return new TicketSeat(
                 row.performanceSeatId(),
                 row.seatId(),
-                entry.floor(),
-                entry.section(),
-                entry.rowNo(),
-                entry.seatNo(),
-                label,
-                row.price()
+                row.gradeCodeSnapshot(),
+                row.gradeNameSnapshot(),
+                row.seatLabelSnapshot(),
+                row.unitPrice()
         );
     }
 }

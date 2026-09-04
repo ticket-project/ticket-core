@@ -3,10 +3,6 @@ package com.ticket.booking.internal.application.order.query;
 import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderDetailRow;
 import com.ticket.booking.internal.exception.OrderNotOwnedException;
-import com.ticket.catalog.PerformanceSummary;
-import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.ShowSeatMapEntry;
-import com.ticket.catalog.ShowSummary;
 import com.ticket.error.NotFoundException;
 import com.ticket.identity.MemberLookup;
 import com.ticket.identity.MemberProfile;
@@ -19,12 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,31 +37,19 @@ class GetOrderDetailUseCaseTest {
     private OrderReadRepository orderReadRepository;
 
     @Mock
-    private ShowLookup showLookup;
-
-    @Mock
     private MemberLookup memberLookup;
 
     private GetOrderDetailUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderDetailUseCase(orderReadRepository, showLookup, memberLookup, FIXED_CLOCK);
+        useCase = new GetOrderDetailUseCase(orderReadRepository, memberLookup, FIXED_CLOCK);
     }
 
     @Test
     void 단일_조회결과를_주문상세로_조합한다() {
         when(orderReadRepository.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
         when(memberLookup.getProfile(1L)).thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
-        when(showLookup.getPerformanceSummaries(Set.of(10L))).thenReturn(Map.of(
-                10L, new PerformanceSummary(10L, 100L, 1L, LocalDateTime.of(2026, 3, 20, 19, 30))
-        ));
-        when(showLookup.getSummaries(Set.of(100L))).thenReturn(Map.of(
-                100L, new ShowSummary(100L, "뮤지컬", "show.png", LocalDate.of(2026, 3, 1), LocalDate.of(2026, 4, 1), "올림픽홀")
-        ));
-        when(showLookup.getSeatMap(100L)).thenReturn(List.of(
-                new ShowSeatMapEntry(42L, 1, "A", "10", "7", 0, 0, "VIP", "VIP", BigDecimal.TEN, 1)
-        ));
 
         GetOrderDetailUseCase.Output output = useCase.execute(
                 new GetOrderDetailUseCase.Input("order-key", 1L)
@@ -77,12 +58,26 @@ class GetOrderDetailUseCaseTest {
         assertThat(output.orderKey()).isEqualTo("order-key");
         assertThat(output.show().title()).isEqualTo("뮤지컬");
         assertThat(output.performance().venueName()).isEqualTo("올림픽홀");
-        assertThat(output.performance().performanceNo()).isEqualTo(1L);
         assertThat(output.booker().email()).isEqualTo("user@example.com");
         assertThat(output.price().ticketAmount()).isEqualByComparingTo("120000");
         assertThat(output.tickets().count()).isEqualTo(1);
         assertThat(output.tickets().seats().getFirst().label()).isEqualTo("1F A구역 10열 7번");
+        assertThat(output.tickets().seats().getFirst().gradeCode()).isEqualTo("VIP");
         assertThat(output.remainingSeconds()).isEqualTo(600L);
+    }
+
+    @Test
+    void catalog_값이_바뀌어도_이미_만든_주문_상세는_바뀌지_않는다() {
+        // Order/OrderSeat가 생성 시점에 남긴 snapshot만 쓰므로 catalog를 다시 조회하지 않는다.
+        when(orderReadRepository.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
+        when(memberLookup.getProfile(1L)).thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
+
+        GetOrderDetailUseCase.Output output = useCase.execute(
+                new GetOrderDetailUseCase.Input("order-key", 1L)
+        );
+
+        assertThat(output.show().title()).isEqualTo("뮤지컬");
+        assertThat(output.tickets().seats().getFirst().price()).isEqualByComparingTo("120000");
     }
 
     @Test
@@ -92,7 +87,7 @@ class GetOrderDetailUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("missing", 1L)))
                 .isInstanceOf(OrderNotOwnedException.class);
 
-        verifyNoInteractions(memberLookup, showLookup);
+        verifyNoInteractions(memberLookup);
     }
 
     @Test
@@ -102,8 +97,6 @@ class GetOrderDetailUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L)))
                 .isInstanceOf(NotFoundException.class);
-
-        verifyNoInteractions(showLookup);
     }
 
     private OrderDetailRow row() {
@@ -113,9 +106,15 @@ class GetOrderDetailUseCaseTest {
                 LocalDateTime.of(2026, 3, 15, 19, 10),
                 1L,
                 10L,
+                "뮤지컬",
+                LocalDateTime.of(2026, 3, 20, 19, 30),
+                "올림픽홀",
                 501L,
                 42L,
-                BigDecimal.valueOf(120000)
+                BigDecimal.valueOf(120000),
+                "VIP",
+                "VIP",
+                "1F A구역 10열 7번"
         );
     }
 }

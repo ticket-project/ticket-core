@@ -34,9 +34,15 @@ public class QuerydslOrderReadRepository implements OrderReadRepository {
                         order.expiresAt,
                         order.memberId,
                         order.performanceId,
+                        order.showTitleSnapshot,
+                        order.performanceStartAtSnapshot,
+                        order.venueNameSnapshot,
                         orderSeat.performanceSeatId,
                         orderSeat.seatId,
-                        orderSeat.price
+                        orderSeat.unitPrice,
+                        orderSeat.gradeCodeSnapshot,
+                        orderSeat.gradeNameSnapshot,
+                        orderSeat.seatLabelSnapshot
                 ))
                 .from(order)
                 .join(orderSeat).on(orderSeat.order.id.eq(order.id))
