@@ -76,6 +76,7 @@ class SelectSeatUseCaseTest {
     void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
         BookingPolicySnapshot policy = openPolicy(false);
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
+        when(seatSelectionAvailabilityValidator.validate(10L, 20L)).thenReturn(501L);
 
         useCase.execute(INPUT);
 
@@ -88,7 +89,8 @@ class SelectSeatUseCaseTest {
         inOrder.verify(bookingPolicyLookup).getBookingPolicy(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
-        inOrder.verify(seatEventPublisher).publish(10L, 20L, SeatStatusAction.SELECTED);
+        // 외부 판매 좌석 식별자는 seatId가 아니라 이미 검증에서 얻은 performanceSeatId다.
+        inOrder.verify(seatEventPublisher).publish(10L, 501L, SeatStatusAction.SELECTED);
     }
 
     @Test

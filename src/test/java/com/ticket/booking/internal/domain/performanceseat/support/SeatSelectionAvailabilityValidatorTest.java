@@ -17,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -36,11 +35,11 @@ class SeatSelectionAvailabilityValidatorTest {
     private SeatSelectionAvailabilityValidator validator;
 
     @Test
-    void 선택_가능한_좌석이면_통과한다() {
+    void 선택_가능한_좌석이면_performanceSeatId를_반환한다() {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(false);
 
-        assertThatCode(() -> validator.validate(10L, 20L)).doesNotThrowAnyException();
+        assertThat(validator.validate(10L, 20L)).isEqualTo(30L);
     }
 
     @Test
