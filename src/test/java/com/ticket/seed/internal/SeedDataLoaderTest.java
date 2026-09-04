@@ -168,12 +168,16 @@ class SeedDataLoaderTest {
             Statement statement = connection.createStatement()
         ) {
             statement.execute("CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
-            statement.execute("CREATE TABLE SEATS (id BIGINT PRIMARY KEY, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
+            // ticket-domain-module-redesign Phase 2 Task 3: PERFORMANCE_SEATS 시드가 이제
+            // Performance -> Show -> Seat(같은 venue_id)로 조인한다(ADR 0005, 재생성 전략).
+            statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
             statement.execute("CREATE TABLE SHOW_GRADES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL, grade_code VARCHAR(10), price NUMBER(10, 0))");
             statement.execute("CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), price NUMBER(10, 0), created_at TIMESTAMP, created_by VARCHAR(50))");
 
+            statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (100, 1)");
             statement.execute("INSERT INTO PERFORMANCES (id, show_id) VALUES (1, 100)");
-            statement.execute("INSERT INTO SEATS (id, section, row_no, seat_no) VALUES (10, '가', 'A', '1')");
+            statement.execute("INSERT INTO SEATS (id, venue_id, section, row_no, seat_no) VALUES (10, 1, '가', 'A', '1')");
             statement.execute("INSERT INTO SHOW_GRADES (id, show_id, grade_code, price) VALUES (1000, 100, 'R', 120000)");
 
             statement.executeUpdate(performanceSeatStatement);
@@ -181,6 +185,92 @@ class SeedDataLoaderTest {
             try (var resultSet = statement.executeQuery("SELECT COUNT(*) FROM PERFORMANCE_SEATS")) {
                 assertThat(resultSet.next()).isTrue();
                 assertThat(resultSet.getInt(1)).isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
+    void seats_venue_replication_statement_duplicates_the_template_per_venue() throws Exception {
+        // ticket-domain-module-redesign Phase 2 Task 3(ADR 0005): 모든 VENUES가 같은 600개 좌석
+        // 집합을 공유하던 기존 CROSS JOIN SEATS 구조를 제거하고, VENUE 1의 템플릿을 나머지 VENUE에
+        // 결정적으로 복제한다.
+        final List<String> statements = parseStatements();
+        final String replicationStatement = statements.stream()
+            .filter(statement -> statement.startsWith("INSERT INTO SEATS")
+                && statement.contains("CROSS JOIN VENUES"))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(statements)
+            .withFailMessage("SHOW_SEATS/PERFORMANCE_SEATS 시드가 여전히 venue 경계 없는 CROSS JOIN SEATS를 씁니다.")
+            .noneMatch(statement -> statement.contains("CROSS JOIN SEATS"));
+
+        try (
+            Connection connection = DriverManager.getConnection("jdbc:h2:mem:seed_loader_seat_replication_test;MODE=Oracle;DB_CLOSE_DELAY=-1");
+            Statement statement = connection.createStatement()
+        ) {
+            statement.execute("CREATE TABLE VENUES (id BIGINT PRIMARY KEY)");
+            statement.execute("CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10), floor INT, x DOUBLE, y DOUBLE, created_at TIMESTAMP, created_by VARCHAR(50))");
+
+            statement.execute("INSERT INTO VENUES (id) VALUES (1)");
+            statement.execute("INSERT INTO VENUES (id) VALUES (2)");
+            statement.execute("INSERT INTO VENUES (id) VALUES (3)");
+            for (int seatId = 1; seatId <= 600; seatId++) {
+                statement.execute("INSERT INTO SEATS (id, venue_id, section, row_no, seat_no, floor, x, y, created_at, created_by) VALUES ("
+                    + seatId + ", 1, 'S', 'A', '" + seatId + "', 1, 0, 0, '2026-01-01 10:00:00', 't')");
+            }
+
+            statement.executeUpdate(replicationStatement);
+
+            try (var resultSet = statement.executeQuery("SELECT COUNT(*) FROM SEATS")) {
+                assertThat(resultSet.next()).isTrue();
+                // VENUE 3개 * 좌석 600석 = 1800석. VENUE 2/3이 VENUE 1의 template을 그대로 복제한다.
+                assertThat(resultSet.getInt(1)).isEqualTo(1800);
+            }
+            try (var resultSet = statement.executeQuery(
+                    "SELECT COUNT(DISTINCT venue_id) FROM SEATS WHERE section = 'S' AND row_no = 'A' AND seat_no = '1'")) {
+                assertThat(resultSet.next()).isTrue();
+                assertThat(resultSet.getInt(1)).isEqualTo(3);
+            }
+        }
+    }
+
+    @Test
+    void show_seats_seed_only_joins_seats_of_the_shows_own_venue() throws Exception {
+        final String showSeatsStatement = parseStatements().stream()
+            .filter(statement -> statement.startsWith("INSERT INTO SHOW_SEATS"))
+            .findFirst()
+            .orElseThrow();
+
+        try (
+            Connection connection = DriverManager.getConnection("jdbc:h2:mem:seed_loader_show_seats_test;MODE=Oracle;DB_CLOSE_DELAY=-1");
+            Statement statement = connection.createStatement()
+        ) {
+            statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
+            statement.execute("CREATE TABLE SHOW_GRADES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL, grade_code VARCHAR(10), grade_name VARCHAR(10), price NUMBER(10, 0))");
+            statement.execute("CREATE TABLE SHOW_SEATS (show_id BIGINT, seat_id BIGINT, show_grade_id BIGINT, created_at TIMESTAMP, created_by VARCHAR(50))");
+
+            statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (100, 1)");
+            statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (200, 2)");
+            statement.execute("INSERT INTO SEATS (id, venue_id, section, row_no, seat_no) VALUES (10, 1, '나', 'A', '1')");
+            statement.execute("INSERT INTO SEATS (id, venue_id, section, row_no, seat_no) VALUES (20, 2, '나', 'A', '1')");
+            statement.execute("INSERT INTO SHOW_GRADES (id, show_id, grade_code, grade_name, price) VALUES (1000, 100, 'VIP', 'VIP석', 150000)");
+            statement.execute("INSERT INTO SHOW_GRADES (id, show_id, grade_code, grade_name, price) VALUES (2000, 200, 'VIP', 'VIP석', 150000)");
+
+            statement.executeUpdate(showSeatsStatement);
+
+            // Show 100은 VENUE 1의 SEAT(10)만, Show 200은 VENUE 2의 SEAT(20)만 갖는다 — 서로의
+            // VENUE에 속하지 않은 좌석과는 절대 섞이지 않는다.
+            try (var resultSet = statement.executeQuery(
+                    "SELECT show_id, seat_id FROM SHOW_SEATS ORDER BY show_id")) {
+                assertThat(resultSet.next()).isTrue();
+                assertThat(resultSet.getLong("show_id")).isEqualTo(100L);
+                assertThat(resultSet.getLong("seat_id")).isEqualTo(10L);
+                assertThat(resultSet.next()).isTrue();
+                assertThat(resultSet.getLong("show_id")).isEqualTo(200L);
+                assertThat(resultSet.getLong("seat_id")).isEqualTo(20L);
+                assertThat(resultSet.next()).isFalse();
             }
         }
     }

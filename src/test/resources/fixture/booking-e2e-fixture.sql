@@ -34,11 +34,11 @@ INSERT INTO shows (
   CURRENT_TIMESTAMP, 'BOOKING_E2E'
 );
 
-INSERT INTO seats (id, section, row_no, seat_no, floor, x, y, created_at, created_by) VALUES
-  (920000001, 'SEC-01', 'ROW-01', '01', 1, 20.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000002, 'SEC-01', 'ROW-01', '02', 1, 29.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000003, 'SEC-01', 'ROW-01', '03', 1, 38.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000004, 'SEC-01', 'ROW-01', '04', 1, 47.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E');
+INSERT INTO seats (id, venue_id, section, row_no, seat_no, floor, x, y, created_at, created_by) VALUES
+  (920000001, 920000001, 'SEC-01', 'ROW-01', '01', 1, 20.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
+  (920000002, 920000001, 'SEC-01', 'ROW-01', '02', 1, 29.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
+  (920000003, 920000001, 'SEC-01', 'ROW-01', '03', 1, 38.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
+  (920000004, 920000001, 'SEC-01', 'ROW-01', '04', 1, 47.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E');
 
 INSERT INTO show_grades (id, show_id, grade_code, grade_name, price, sort_order, created_at, created_by)
 VALUES (920000001, 920000001, 'R', 'R석', 120000, 1, CURRENT_TIMESTAMP, 'BOOKING_E2E');

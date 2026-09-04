@@ -44,8 +44,9 @@ class LoadTestFixtureSeederTest {
                 """);
         jdbcTemplate.execute("""
                 CREATE TABLE seats (
-                  id BIGINT PRIMARY KEY, section VARCHAR(50) NOT NULL, row_no VARCHAR(50) NOT NULL,
-                  seat_no VARCHAR(50) NOT NULL, floor INT NOT NULL, x DOUBLE NOT NULL, y DOUBLE NOT NULL,
+                  id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(50) NOT NULL,
+                  row_no VARCHAR(50) NOT NULL, seat_no VARCHAR(50) NOT NULL, floor INT NOT NULL,
+                  x DOUBLE NOT NULL, y DOUBLE NOT NULL,
                   created_at TIMESTAMP NOT NULL, created_by VARCHAR(255) NOT NULL)
                 """);
         jdbcTemplate.execute("""
@@ -98,7 +99,7 @@ class LoadTestFixtureSeederTest {
 
     @Test
     void runsAfterTheSharedSeedLoader() {
-        // 공용 시드는 FROM SHOWS s CROSS JOIN SEATS st로 그 시점의 모든 행을 훑는다.
+        // 공용 시드는 FROM SHOWS s CROSS JOIN (VIP/R/S/A ...)로 그 시점의 모든 SHOWS를 훑는다.
         // 이 시더가 먼저 돌면 전용 show에 공용 등급이 덧붙어 grade_code가 중복되고 기동이 실패한다.
         final int sharedSeedOrder = SeedDataLoader.class.getAnnotation(Order.class).value();
         final int fixtureOrder = LoadTestFixtureSeeder.class.getAnnotation(Order.class).value();

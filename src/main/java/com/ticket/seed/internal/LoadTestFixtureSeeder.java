@@ -31,10 +31,12 @@ import java.util.List;
 public class LoadTestFixtureSeeder implements ApplicationRunner {
 
     /**
-     * 반드시 {@link SeedDataLoader} 다음에 실행해야 한다. 공용 시드의 SHOW_GRADES·SHOW_SEATS는
-     * {@code FROM SHOWS s CROSS JOIN SEATS st}로 그 시점의 모든 SHOWS·SEATS를 훑는다.
+     * 반드시 {@link SeedDataLoader} 다음에 실행해야 한다. 공용 시드의 SHOW_GRADES INSERT는
+     * {@code FROM SHOWS s CROSS JOIN (VIP/R/S/A ...)}로 그 시점의 모든 SHOWS를 훑는다.
      * 이 시더가 먼저 돌면 전용 show에도 공용 등급이 덧붙어 grade_code가 중복되고,
-     * SHOW_SEATS의 스칼라 서브쿼리가 2행을 반환해 기동이 실패한다.
+     * SHOW_SEATS의 스칼라 서브쿼리가 2행을 반환해 기동이 실패한다. (SHOW_SEATS 자체는
+     * {@code st.venue_id = s.venue_id}로 그 Show의 VENUE에 속한 SEATS만 훑으므로 이 시더가
+     * 만드는 전용 VENUE/SEATS와는 섞이지 않는다.)
      */
     static final int ORDER = SeedDataLoader.ORDER + 100;
 
@@ -158,6 +160,7 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
             final int seatNo = (index - 1) % SEATS_PER_ROW + 1;
             batch.add(new Object[]{
                     ID_BASE + index,
+                    VENUE_ID,
                     String.format("SEC-%02d", section),
                     String.format("ROW-%02d", rowNo),
                     String.format("%02d", seatNo),
@@ -169,8 +172,8 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
             });
             if (batch.size() == BATCH_SIZE || index == SEAT_COUNT) {
                 jdbcTemplate.batchUpdate("""
-                        INSERT INTO seats (id, section, row_no, seat_no, floor, x, y, created_at, created_by)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO seats (id, venue_id, section, row_no, seat_no, floor, x, y, created_at, created_by)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, batch);
                 batch.clear();
             }
