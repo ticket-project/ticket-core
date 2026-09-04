@@ -4,6 +4,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.identity.internal.domain.member.model.Member;
 import com.ticket.identity.internal.domain.member.model.Email;
 import com.ticket.catalog.internal.domain.performance.Performance;
+import com.ticket.catalog.internal.domain.performance.PerformanceGrade;
+import com.ticket.catalog.internal.domain.grade.Grade;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.catalog.internal.domain.seat.Seat;
 import com.ticket.catalog.internal.domain.show.Show;
@@ -193,6 +195,23 @@ public abstract class ReadRepositoryTestSupport {
         );
         entityManager.persist(performance);
         return performance;
+    }
+
+    protected Grade persistGrade(final String code, final String name) {
+        Grade grade = Grade.of(code, name);
+        entityManager.persist(grade);
+        return grade;
+    }
+
+    protected PerformanceGrade persistPerformanceGrade(
+            final Performance performance,
+            final Grade grade,
+            final BigDecimal price,
+            final int sortOrder
+    ) {
+        PerformanceGrade performanceGrade = PerformanceGrade.assign(performance, grade, price, sortOrder);
+        entityManager.persist(performanceGrade);
+        return performanceGrade;
     }
 
     protected PerformanceSeat persistPerformanceSeat(
