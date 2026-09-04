@@ -2,6 +2,13 @@
 
 ## 상태(2026-09-02): 채택. ADR 0001/0002를 부분적으로 supersede
 
+**2026-09-04 갱신**: 본 ADR은 [ADR 0005](0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)에
+의해 §3(승인된 의존 DAG)의 module set과 DAG 범위에서 부분적으로 supersede됐다 — `payment`,
+`ticketing` module이 추가되고 그 DAG는 ADR 0005가 원본이다. 아래 §3의 값은 이 갱신 이전
+시점의 기록으로 남겨 두고, 실제 구현이 반영된 뒤에는 `docs/architecture.md`와
+`com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`가 현재 값의 원본이다. 그 밖의 모든 결정
+(§1, §2, §4~§11)은 그대로 유효하다.
+
 기존 `bootstrap`/`core-api`/`core-app`/`core-domain`/`core-infra`/`storage`/`support` Gradle
 멀티프로젝트를 단일 Gradle Spring Boot 프로젝트로 통합하고, `com.ticket`의 직접 하위 패키지를
 Spring Modulith의 닫힌 Application Module(`booking`, `catalog`, `identity`, `admission`,
