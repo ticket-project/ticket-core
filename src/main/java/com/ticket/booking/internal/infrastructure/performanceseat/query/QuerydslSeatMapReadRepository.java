@@ -4,7 +4,7 @@ import com.ticket.booking.internal.application.performanceseat.query.SeatMapRead
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
+import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateSnapshotRow;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -20,9 +20,10 @@ public class QuerydslSeatMapReadRepository implements SeatMapReadRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<SeatStateView> findSeatStatuses(final Long performanceId) {
+    public List<SeatStateSnapshotRow> findSeatStatuses(final Long performanceId) {
         return queryFactory
                 .select(Projections.constructor(SeatStateRow.class,
+                        performanceSeat.id,
                         performanceSeat.seatId,
                         performanceSeat.state
                 ))
@@ -31,14 +32,14 @@ public class QuerydslSeatMapReadRepository implements SeatMapReadRepository {
                 .orderBy(performanceSeat.seatId.asc())
                 .fetch()
                 .stream()
-                .map(SeatStateRow::toView)
+                .map(SeatStateRow::toSnapshotRow)
                 .toList();
     }
 
-    public record SeatStateRow(Long seatId, PerformanceSeatState state) {
+    public record SeatStateRow(Long performanceSeatId, Long seatId, PerformanceSeatState state) {
 
-        private SeatStateView toView() {
-            return new SeatStateView(seatId, SeatStatus.from(state));
+        private SeatStateSnapshotRow toSnapshotRow() {
+            return new SeatStateSnapshotRow(performanceSeatId, seatId, SeatStatus.from(state));
         }
     }
 }

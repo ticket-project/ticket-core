@@ -6,6 +6,7 @@ import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionS
 import com.ticket.admission.AdmissionVerifier;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
+import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateSnapshotRow;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;
 import com.ticket.error.InvalidRequestException;
@@ -58,20 +59,20 @@ public class GetSeatStatusUseCase {
         BookingPolicyGuard.ensureBookingOpen(policy, now);
         ensureAdmitted(policy, input);
 
-        final List<SeatStateView> dbStates = seatStatusDbReader.read(performanceId);
+        final List<SeatStateSnapshotRow> dbStates = seatStatusDbReader.read(performanceId);
 
         final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
-        if (redisOccupiedIds.isEmpty()) {
-            return new Output(dbStates);
-        }
 
-        final List<SeatStateView> merged = dbStates.stream()
-                .map(seat -> redisOccupiedIds.contains(seat.seatId())
-                        ? new SeatStateView(seat.seatId(), SeatStatus.OCCUPIED)
-                        : seat)
+        final List<SeatStateView> seats = dbStates.stream()
+                .map(row -> toSeatStateView(row, redisOccupiedIds))
                 .toList();
 
-        return new Output(merged);
+        return new Output(seats);
+    }
+
+    private SeatStateView toSeatStateView(final SeatStateSnapshotRow row, final Set<Long> redisOccupiedIds) {
+        final SeatStatus status = redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : row.status();
+        return new SeatStateView(row.performanceSeatId(), status);
     }
 
     private void ensureAdmitted(
