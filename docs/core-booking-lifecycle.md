@@ -2,8 +2,15 @@
 
 이 문서는 주문 생성, 취소, 만료와 Redis hold 후처리의 실행 순서를 설명한다. 핵심 목적은 DB
 트랜잭션과 외부 I/O의 경계, 그리고 Spring Modulith 이벤트가 어떻게 이어지는지 한눈에 확인하는
-것이다. 모듈 경계 결정 배경은 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을
-본다.
+것이다. 모듈 경계 결정 배경은 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을,
+가격 책임과 Payment/Order 관계의 결정 배경은
+[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 본다.
+
+**ADR 0005 적용 범위**: `payment`/`ticketing` module은 entity/schema/repository까지만 존재하는
+entity-only 단계다. PG 승인, `OrderConfirmed` listener, 실제 결제 정산 서비스는 아직 구현되지 않았다
+— 현재 코드에서 `Order.confirm()`을 호출하는 곳은 없다(`rg -n "\.confirm\(" src/main`로 확인 가능).
+아래 수명주기는 지금 실제로 동작하는 PENDING 생성·취소·만료 경로를 설명하고, 결제 확정 흐름은
+아직 존재하지 않는 후속 작업임을 명시한다.
 
 이 문서가 설명하는 코드는 대부분 `booking` Application Module 소유다(`com.ticket.booking.internal.**`).
 커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 배선 module
@@ -18,6 +25,11 @@
   throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
 - 다른 모듈 API 호출(catalog 정책 조회, identity 회원 확인, admission token 검증)은 booking DB
   트랜잭션 밖에서 끝낸다.
+- 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다(ADR 0005). 클라이언트가 보낸 가격도,
+  catalog가 다시 계산한 가격도 금액 계산 근거로 쓰지 않는다.
+- Order/OrderSeat에 남긴 표시 snapshot(show/performance/venue 이름, 등급 코드·이름, 좌석 라벨,
+  가격)은 생성 이후 다시 조회하지 않는다. catalog 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
+  주문 상세는 바뀌지 않는다.
 
 ## 주문 생성
 
@@ -25,13 +37,18 @@
 CreateOrderUseCase
   -> LockScope.ORDER_START 락(같은 회원·회차 직렬화)
   -> CreateOrderValidator
-       -> catalog BookingPolicyLookup: 예매 정책·좌석 소속·가격 snapshot (DB 트랜잭션 밖)
+       -> catalog BookingPolicyLookup: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) (DB 트랜잭션 밖)
        -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
        -> identity MemberLookup: active member 확인 (밖)
        -> booking local read: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
+       -> catalog PerformanceSaleCatalog: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
+          show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 Redis에 좌석 hold 생성 (밖)
   -> CreatePendingOrderTransactionService
+       -> OrderCreator: 주문 금액 = Σ PerformanceSeat.unitPrice (ADR 0005, 다른 값을 계산에 섞지 않는다)
        -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
+            Order에는 show/performance/venue 표시 snapshot을, OrderSeat에는 등급·좌석 라벨·unitPrice
+            snapshot을 함께 저장한다 — 둘 다 생성 후 불변이다.
        -> 같은 트랜잭션 안에서 OrderStarted 이벤트 발행
   -> DB 커밋 및 connection 반환
   -> BookingEventListeners.on(OrderStarted)             (@ApplicationModuleListener, 커밋 후)
@@ -44,6 +61,13 @@ CreateOrderUseCase
 DB 저장이 실패하면 `CreateOrderUseCase`가 이미 만든 Redis hold를 보상 해제한다(같은 스레드에서
 `LockScope.SEAT` 락을 다시 잡고 해제).
 
+이 시점의 동시성 방어는 여전히 `LockScope.SEAT` 분산락과 `PendingOrderLocalValidator`의 좌석 판매
+상태 확인이다. `PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만, 현재
+주문 생성 경로 어디에서도 호출되지 않는다 — 결제 승인 시점에 `PerformanceSeat`를 `RESERVED`로
+전이하는 정산 흐름은 아직 구현되지 않은 후속 작업이다(ADR 0005 "이 ADR이 결정하지 않는 것" 참고).
+지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
+나타낼 뿐 주문 확정으로 바뀌지 않는다.
+
 커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
 `OrderStarted` publication은 Event Publication Registry에 FAILED로 남는다.
 `EventPublicationMaintenance`가 1분마다 재제출한다(아래 [이벤트 재시도와 보정](#이벤트-재시도와-보정)).
@@ -55,6 +79,27 @@ DB 저장이 실패하면 `CreateOrderUseCase`가 이미 만든 Redis hold를 �
 완전한 초다. PENDING이 아니거나 이미 만료 경계를 지났으면 0이다. 클라이언트는 로컬
 시계로 `expiresAt - now`를 다시 계산하지 않고 `remainingSeconds`로 카운트다운을 시작한 뒤,
 상태 조회 응답으로 주기적으로 보정한다.
+
+## 결제 시도와 Order 상태
+
+`Order`의 상태 전이는 `PENDING -> CONFIRMED`, `PENDING -> EXPIRED`, `PENDING -> CANCELED` 세 가지뿐이다
+(`booking.internal.domain.order.model.OrderState`). 과거 있었던 `PAYMENT_FAILED`는 ADR 0005로
+제거됐다 — `rg -n "PAYMENT_FAILED|failPayment" --type java`로 확인해도 `Order`/`OrderState`에는
+남아 있지 않다(`HoldReleaseReason.PAYMENT_FAILED`는 hold 해제 사유를 기록하는 별개의 enum이고
+Order 상태가 아니다).
+
+이렇게 바뀐 이유는 Payment가 결제 완료 건이 아니라 **결제 시도**이기 때문이다(`Order 1 : 0..N
+Payment`, ADR 0005). 결제 시도 한 번이 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있어야
+하므로, 결제 실패는 Payment 자신의 상태(`READY/PROCESSING -> FAILED`)로만 표현하고 Order를 끝내는
+사건으로 취급하지 않는다.
+
+**현재 구현 범위**: `payment` Application Module은 지금 entity/schema/repository까지만 있는
+entity-only 단계다(ADR 0005 §3). PG 연동, 결제 승인/실패 API, `Order.confirm()`을 호출하는 정산
+서비스, `OrderConfirmed` listener는 아직 코드에 없다 — `rg -n "\.confirm\("`로 확인해도 main
+소스에서 `Order.confirm()`을 호출하는 곳이 없다. 즉 지금은 Order가 결제 승인으로 `CONFIRMED`가
+되는 실제 경로 자체가 아직 배선되지 않았고, `PENDING` 주문은 만료(`ExpireOrderUseCase`) 또는
+취소(`CancelOrderUseCase`)로만 종료된다. 결제 승인·재시도·Hold 만료 경쟁 정책은 ADR 0005가 명시적으로
+범위 밖으로 남긴 별도 설계 대상이다.
 
 ## 주문 취소와 만료
 
@@ -161,9 +206,14 @@ executor를 쓴다. Redis 만료 처리(`redisExpirationTaskExecutor`)처럼 명
 
 - 주문 생성: `booking.internal.application.order.command.CreateOrderUseCase`,
   `CreateOrderValidator`
-- 주문 DB 저장: `booking.internal.application.order.command.CreatePendingOrderTransactionService`
+- 주문 DB 저장: `booking.internal.application.order.command.CreatePendingOrderTransactionService`,
+  `OrderCreator`(금액 계산과 snapshot 조립)
+- 예매 정책 조회: `catalog.BookingPolicyLookup` / 표시 snapshot 조회: `catalog.PerformanceSaleCatalog`
+- 판매 좌석과 가격 원본: `booking.internal.domain.performanceseat.model.PerformanceSeat`
+  (`unitPrice`, `performanceGradeId`, `@Version`)
 - 주문 종료: `booking.internal.application.order.command.OrderTerminationService`
-- 상태 전이 규칙: `booking.internal.domain.order.model.Order`(confirm, expire, cancel)
+- 상태 전이 규칙: `booking.internal.domain.order.model.Order`(confirm, expire, cancel),
+  `OrderState`(PENDING/CONFIRMED/EXPIRED/CANCELED)
 - 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
 - 커밋 후 리스너: `booking.internal.application.BookingEventListeners`
 - hold 생성/해제 후속 처리: `booking.internal.application.order.command.HoldCreationTaskProcessor`,
