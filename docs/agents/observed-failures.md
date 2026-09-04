@@ -57,3 +57,34 @@ class도 설정도 없다. 실행 모듈을 `bootstrap`으로 옮긴 리팩터�
 
 **막은 방법**: 결정표를 `/place-code` 스킬로 옮겨 원본을 한 곳으로 모았다. 개수를 세어 부르는
 표현은 지웠다 — 세는 순간 어긋난다.
+
+## [관측 2026-09-04] 병렬 워크트리가 같은 module Flyway 버전 번호를 잡았다
+
+**무엇을**: Task 3(Seat-Venue)와 Task 4(Grade/PerformanceGrade)를 각자 워크트리에서 병렬로
+진행하며 둘 다 `catalog` 모듈의 `V2` 파일명을 독립적으로 선점했다. 병합 후 버전이 충돌했고,
+무관하게 진행 중이던 다른 작업(ADR 0004, 공통 코드)의 untracked `V2__create_common_codes.sql`과도
+겹쳤다.
+
+**왜**: module별 Flyway 버전 번호는 파일시스템 다음 정수를 손으로 고르는 방식이라, 같은 모듈을
+동시에 건드리는 워크트리끼리는 서로의 선점을 볼 수 없다.
+
+**막은 방법**: `bd78f8b2`에서 V3/V4로 재번호하고, 영향받은 schema 검증 테스트(baseline에
+VENUES/SEATS 컬럼 추가, `CatalogModuleSlicingSchemaTest`, `CurrentSeatVenueShowGradeSchemaTest`)를
+같은 커밋에서 맞췄다. 병렬 워크트리로 같은 module의 Flyway migration을 나눠 맡길 때는 병합 직전에
+버전 번호가 실제로 비어 있는지 다시 확인해야 한다 — 계획 단계에서 번호를 미리 예약해도 다른
+무관한 작업이 같은 번호를 쓸 수 있다.
+
+## [관측 2026-09-04] 공유 EntityScan 테스트 설정이 새 module entity 패키지를 누락했다
+
+**무엇을**: Task 11(`payment` 모듈 신설) 병합 후 catalog `internal.infrastructure` 계열
+`@DataJpaTest` 22건이 `Not a managed type: Payment`로 실패했다.
+
+**왜**: `@EnableJpaRepositories(basePackages = "com.ticket")`는 `SpringDataPaymentJpaRepository`를
+자동으로 주웠지만, 같은 테스트가 공유하는 `com.ticket.core.infra.support.ReadRepositoryTestSupport`의
+`@EntityScan`은 기존 module domain 패키지 목록으로 하드코딩돼 있어 `Payment` entity를 Hibernate가
+몰랐다.
+
+**막은 방법**: `f8d54281`에서 `ReadRepositoryTestSupport`의 `@EntityScan`에 payment domain 패키지를
+추가했다. 새 Application Module을 추가할 때는 그 module의 entity를 Hibernate가 인식하는지
+`ModularityTests`뿐 아니라 여러 module 테스트가 공유하는 `@EntityScan`/`@DataJpaTest` 기반 클래스
+목록도 함께 갱신해야 한다 — 새 module 자신의 테스트만 통과 확인하면 이 종류의 실패는 놓친다.
