@@ -39,8 +39,8 @@ class QuerydslSeatAvailabilityReadRepositoryTest extends ReadRepositoryTestSuppo
     void setUp() throws Exception {
         Venue venue = persistVenue("공연장", Region.SEOUL);
         Show show = persistShow("공연", venue, null, 10L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(5));
-        Seat seat1 = persistSeat("A", "01", "01", 1);
-        Seat seat2 = persistSeat("A", "01", "02", 1);
+        Seat seat1 = persistSeat(venue, "A", "01", "01", 1);
+        Seat seat2 = persistSeat(venue, "A", "01", "02", 1);
         seat1Id = seat1.getId();
         seat2Id = seat2.getId();
 

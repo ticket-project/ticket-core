@@ -92,7 +92,7 @@ class EntityCreationFactoryTest {
                 null,
                 120
         );
-        Seat seat = new Seat("A", "3", "5", 1, 10.0, 20.0);
+        Seat seat = new Seat(venue, "A", "3", "5", 1, 10.0, 20.0);
 
         ShowGrade showGrade = ShowGrade.link(show, "VIP", "VIP석", BigDecimal.valueOf(150000), 1);
         ShowSeat showSeat = ShowSeat.link(show, seat, showGrade);
@@ -153,7 +153,7 @@ class EntityCreationFactoryTest {
                 null,
                 120
         );
-        Seat seat = new Seat("A", "3", "5", 1, 10.0, 20.0);
+        Seat seat = new Seat(venue, "A", "3", "5", 1, 10.0, 20.0);
         ShowGrade otherShowGrade = ShowGrade.link(otherShow, "VIP", "VIP석", BigDecimal.valueOf(150000), 1);
 
         assertThatThrownBy(() -> ShowSeat.link(show, seat, otherShowGrade))

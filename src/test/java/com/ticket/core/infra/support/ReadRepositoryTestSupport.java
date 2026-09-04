@@ -168,8 +168,8 @@ public abstract class ReadRepositoryTestSupport {
         return showGrade;
     }
 
-    protected Seat persistSeat(final String section, final String rowNo, final String seatNo, final int floor) {
-        Seat seat = new Seat(section, rowNo, seatNo, floor, 10.0, 20.0);
+    protected Seat persistSeat(final Venue venue, final String section, final String rowNo, final String seatNo, final int floor) {
+        Seat seat = new Seat(venue, section, rowNo, seatNo, floor, 10.0, 20.0);
         entityManager.persist(seat);
         return seat;
     }

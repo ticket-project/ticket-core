@@ -38,8 +38,8 @@ class QuerydslSeatMapReadRepositoryTest extends ReadRepositoryTestSupport {
     void setUp() throws Exception {
         Venue venue = persistVenue("venue", Region.SEOUL);
         Show show = persistShow("show", venue, null, 10L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(5));
-        Seat seat1 = persistSeat("A", "01", "02", 1);
-        Seat seat2 = persistSeat("A", "01", "01", 1);
+        Seat seat1 = persistSeat(venue, "A", "01", "02", 1);
+        Seat seat2 = persistSeat(venue, "A", "01", "01", 1);
 
         Performance performance = persistPerformance(show, 1L, LocalDateTime.now().plusDays(1));
         performanceId = performance.getId();

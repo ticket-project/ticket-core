@@ -42,7 +42,7 @@ class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryT
                 LocalDateTime.now(clock).plusDays(1)
         );
         Performance performance = persistPerformance(show, 1L, LocalDateTime.now(clock).plusDays(1));
-        Seat seat = persistSeat("A", "10", "7", 1);
+        Seat seat = persistSeat(venue, "A", "10", "7", 1);
         PerformanceSeat performanceSeat = persistPerformanceSeat(
                 performance,
                 seat,

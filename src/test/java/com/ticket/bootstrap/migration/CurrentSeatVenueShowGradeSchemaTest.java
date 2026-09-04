@@ -29,22 +29,26 @@ import static org.assertj.core.api.Assertions.assertThat;
  * ticket-domain-module-redesign Phase 1 / Task 1: 재설계 전 현재 Venue/Seat/ShowGrade/ShowSeat/
  * PerformanceSeat schema를 계약으로 캡처한다.
  *
- * <p>이 테스트는 {@code docs/superpowers/specs/2026-09-04-ticket-domain-module-redesign.md}가 지적하는
- * 두 가지 현재 사실을 실측으로 고정한다.
+ * <p>Phase 2 Task 3에서 {@code Seat}에 필수 Venue 연관관계가 추가되며 이 baseline의 첫 번째 사실이
+ * 바뀌었다 — {@code seat에는_venue_연관관계가_없다}를
+ * {@code seat는_venue에_속하고_venue_seat_주소_조합이_유일하다}로 갱신했다({@code db/migration-vendor/
+ * {h2,oracle}/catalog/V2__add_seat_venue_relationship.sql} 참고). 남은 두 가지는
+ * {@code docs/superpowers/specs/2026-09-04-ticket-domain-module-redesign.md}가 지적하는 아직
+ * 바뀌지 않은 현재 사실이다.
  *
  * <ul>
- *   <li><b>Seat에는 Venue 연관관계가 없다.</b> {@code SEATS} table에 {@code venue_id} 컬럼이 없고,
- *   {@code VENUES}는 {@code SHOWS.venue_id}로만 참조된다.</li>
  *   <li><b>PerformanceSeat는 아직 등급(PerformanceGrade)도 낙관적 락도 갖지 않는다.</b> 현재
  *   {@code price} 컬럼 하나만 갖고, {@code performance_id}/{@code seat_id}는 scalar column(모듈 간
  *   cross-module FK 없음)이다. Phase 3(Task 6)에서 이 schema가 바뀌면 이 테스트도 그때 함께 갱신해야
  *   한다 — 지금은 "바뀌기 전" 상태를 잠그는 것이 목적이다.</li>
  * </ul>
  *
- * <p>이 5개 테이블은 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이다
+ * <p>이 5개 테이블은 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이었으나, Seat-Venue
+ * 관계만은 Task 3에서 catalog module 소유 Flyway migration(V2)이 생겼다
  * ({@code docs/operations.md} 참고, {@link CatalogCommonCodeSchemaTest}의 baseline 주석과 같은 사실).
  * 그래서 이 테스트는 Flyway를 거치지 않고 {@link CatalogCommonCodeSchemaTest}와 같은 기법으로 순수
- * Hibernate {@code hbm2ddl.auto=create}가 현재 entity 매핑으로부터 만드는 schema를 그대로 검사한다.
+ * Hibernate {@code hbm2ddl.auto=create}가 현재 entity 매핑으로부터 만드는 schema를 그대로 검사한다 —
+ * entity 매핑 자체는 migration 존재 여부와 무관하게 이 baseline의 검증 대상이다.
  */
 class CurrentSeatVenueShowGradeSchemaTest {
 
@@ -93,15 +97,19 @@ class CurrentSeatVenueShowGradeSchemaTest {
     }
 
     @Test
-    void seat에는_venue_연관관계가_없다() throws SQLException {
+    void seat는_venue에_속하고_venue_seat_주소_조합이_유일하다() throws SQLException {
         try (Connection connection = connect()) {
-            assertThat(columnNames(connection, "SEATS")).doesNotContain("VENUE_ID");
+            assertThat(columnNames(connection, "SEATS")).contains("VENUE_ID");
             assertThat(columnNames(connection, "SEATS"))
                     .contains("SECTION", "ROW_NO", "SEAT_NO", "FLOOR", "X", "Y");
-            // Venue는 SHOWS.venue_id로만 참조된다(Seat가 아니라 Show가 Venue를 안다).
+            // Show도 여전히 자신의 Venue를 안다 — Seat-Venue 추가가 Show-Venue를 대체하지 않는다.
             assertThat(columnNames(connection, "SHOWS")).contains("VENUE_ID");
             assertThat(importedKeyReferencedTables(connection, "SHOWS")).contains("VENUES");
-            assertThat(importedKeyReferencedTables(connection, "SEATS")).doesNotContain("VENUES");
+            // Seat-Venue는 같은 catalog module 내부 관계라 cross-module 제약과 달리 실제 FK를 갖는다.
+            assertThat(importedKeyReferencedTables(connection, "SEATS")).contains("VENUES");
+            assertThat(uniqueIndexColumnSets(connection, "SEATS"))
+                    .contains(Set.of("VENUE_ID", "FLOOR", "SECTION", "ROW_NO", "SEAT_NO"));
+            assertThat(isNullable(connection, "SEATS", "VENUE_ID")).isFalse();
         }
     }
 
@@ -138,6 +146,15 @@ class CurrentSeatVenueShowGradeSchemaTest {
 
     private Connection connect() throws SQLException {
         return DriverManager.getConnection(URL, "sa", "");
+    }
+
+    private boolean isNullable(final Connection connection, final String tableName, final String columnName) throws SQLException {
+        try (ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, columnName)) {
+            if (columns.next()) {
+                return "YES".equals(columns.getString("IS_NULLABLE"));
+            }
+        }
+        throw new IllegalStateException("컬럼을 찾을 수 없습니다. table=" + tableName + ", column=" + columnName);
     }
 
     private Set<String> columnNames(final Connection connection, final String tableName) throws SQLException {

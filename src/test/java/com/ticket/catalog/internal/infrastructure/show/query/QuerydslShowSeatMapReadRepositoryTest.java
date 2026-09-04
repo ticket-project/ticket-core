@@ -35,8 +35,8 @@ class QuerydslShowSeatMapReadRepositoryTest extends InfraReadRepositoryTestSuppo
         showId = show.getId();
         ShowGrade vip = persistShowGrade(show, "VIP", "VIP", BigDecimal.valueOf(150000), 1);
         ShowGrade r = persistShowGrade(show, "R", "R", BigDecimal.valueOf(100000), 2);
-        Seat seat1 = persistSeat("A", "01", "02", 1);
-        Seat seat2 = persistSeat("A", "01", "01", 1);
+        Seat seat1 = persistSeat(venue, "A", "01", "02", 1);
+        Seat seat2 = persistSeat(venue, "A", "01", "01", 1);
         persistShowSeat(show, seat1, r);
         persistShowSeat(show, seat2, vip);
         flushAndClear();

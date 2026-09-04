@@ -2,6 +2,7 @@ package com.ticket.catalog.internal.domain.seat;
 
 
 import com.ticket.catalog.internal.domain.CatalogAuditedEntity;
+import com.ticket.catalog.internal.domain.show.Venue;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,12 +10,22 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "SEATS")
+@Table(
+        name = "SEATS",
+        uniqueConstraints = @UniqueConstraint(
+                name = "UK_SEATS_VENUE_SEAT_ADDRESS",
+                columnNames = {"venue_id", "floor", "section", "row_no", "seat_no"}
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Seat extends CatalogAuditedEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "venue_id", nullable = false)
+    private Venue venue;
 
     @Column(nullable = false)
     private String section;
@@ -31,7 +42,8 @@ public class Seat extends CatalogAuditedEntity {
 
     private double y;
 
-    public Seat(final String section, final String rowNo, final String seatNo, final int floor, final double x, final double y) {
+    public Seat(final Venue venue, final String section, final String rowNo, final String seatNo, final int floor, final double x, final double y) {
+        this.venue = venue;
         this.section = section;
         this.rowNo = rowNo;
         this.seatNo = seatNo;
