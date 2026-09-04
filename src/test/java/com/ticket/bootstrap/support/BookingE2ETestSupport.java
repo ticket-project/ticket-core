@@ -204,7 +204,10 @@ public abstract class BookingE2ETestSupport {
                 get("/api/v1/performances/" + PERFORMANCE_ID + "/seats/status", accessToken);
         final JsonNode seats = requireData(response.getBody(), "좌석 상태").get("seats");
         for (final JsonNode seat : seats) {
-            if (seat.get("seatId").asLong() == seatId) {
+            // ticket-domain-module-redesign Phase 4 Task 10: 외부 판매 좌석 식별자는 이제
+            // performanceSeatId다. 이 fixture는 performance_seats.id를 seats.id와 같은 값으로
+            // 심어뒀으므로(920000001~) 물리 seatId 인자를 그대로 비교해도 맞는다.
+            if (seat.get("performanceSeatId").asLong() == seatId) {
                 return seat.get("status").asText();
             }
         }
