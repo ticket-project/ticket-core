@@ -26,6 +26,11 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public List<PerformanceSeat> saveAll(final List<PerformanceSeat> performanceSeats) {
+        return jpaRepository.saveAll(performanceSeats);
+    }
+
+    @Override
     public List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(
             final Long performanceId,
             final Collection<Long> seatIds

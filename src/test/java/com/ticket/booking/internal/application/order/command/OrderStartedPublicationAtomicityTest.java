@@ -167,6 +167,7 @@ class OrderStartedPublicationAtomicityTest {
             final PerformanceSeat seat = new PerformanceSeat(
                     PERFORMANCE_ID,
                     (long) (Math.random() * 1_000_000_000L),
+                    1L,
                     PerformanceSeatState.AVAILABLE,
                     BigDecimal.valueOf(10_000)
             );

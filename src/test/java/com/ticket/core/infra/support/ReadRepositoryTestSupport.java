@@ -220,7 +220,7 @@ public abstract class ReadRepositoryTestSupport {
             final PerformanceSeatState state,
             final BigDecimal price
     ) {
-        PerformanceSeat performanceSeat = new PerformanceSeat(performance.getId(), seat.getId(), state, price);
+        PerformanceSeat performanceSeat = new PerformanceSeat(performance.getId(), seat.getId(), 1L, state, price);
         entityManager.persist(performanceSeat);
         return performanceSeat;
     }

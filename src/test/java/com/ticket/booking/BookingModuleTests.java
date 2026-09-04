@@ -3,6 +3,7 @@ package com.ticket.booking;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.admission.AdmissionVerifier;
 import com.ticket.catalog.BookingPolicyLookup;
+import com.ticket.catalog.PerformanceSaleCatalog;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.identity.AccessTokenAuthenticator;
 import com.ticket.identity.MemberLookup;
@@ -43,6 +44,9 @@ class BookingModuleTests {
 
     @MockitoBean
     private BookingPolicyLookup bookingPolicyLookup;
+
+    @MockitoBean
+    private PerformanceSaleCatalog performanceSaleCatalog;
 
     @MockitoBean
     private ShowLookup showLookup;
