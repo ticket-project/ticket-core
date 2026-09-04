@@ -1,17 +1,17 @@
 # 가격은 PerformanceGrade가 원본이고, Payment/Ticketing은 entity-only 모듈로 시작한다
 
-## 상태(2026-09-04): 채택. 아직 코드 구현 전 — 설계를 코드보다 먼저 승인하는 ADR. ADR 0003을 module
-## set/DAG 범위에서 부분적으로 supersede한다.
+## 상태(2026-09-04): 채택·구현됨. ADR 0003을 module set/DAG 범위에서 부분적으로 supersede한다.
 
 이 ADR은 `docs/superpowers/specs/2026-09-04-ticket-domain-module-redesign.md`(설계 원본, 이하
 "재설계 스펙")와 `docs/superpowers/plans/2026-09-04-ticket-domain-module-redesign.md`(실행 계획)가
 이미 확정한 결정을 도메인 문서 체계(ADR/CONTEXT.md)에 반영한다. 이 ADR 자체가 새로 논의를 여는
 것이 아니라, 이미 승인된 설계를 실행 가능한 결정 기록으로 옮기는 것이다.
 
-**이 ADR이 쓰이는 시점에 코드는 아직 이 결정을 반영하지 않았다.** Phase 2~5(Task 3~13, 실행
-계획 참고)가 실제 entity/schema/module을 바꾼다. 이 ADR은 "무엇을 왜 바꾸는가"를 codify하고,
-architecture/development/testing/operations 문서가 구현 완료 후 이 결정에 맞춰 갱신될 때
-참조할 근거를 남긴다.
+**Phase 2~5(Task 3~13, 실행 계획 참고)가 이 결정을 반영해 실제 entity/schema/module을 바꿨다.**
+`payment`/`ticketing` module, `Grade`/`PerformanceGrade`/`PerformanceSeat.unitPrice`/
+`Order.PAYMENT_FAILED` 제거가 모두 코드에 반영됐고, `com.ticket.ModularityTests`가 12개 module과
+새 DAG를 고정한다. 이 ADR은 "무엇을 왜 바꿨는가"를 codify하고, architecture/development/testing/
+operations 문서가 이 결정에 맞춰 갱신될 때 참조할 근거로 남는다.
 
 ## 배경
 
