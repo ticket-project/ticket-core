@@ -40,15 +40,6 @@ INSERT INTO seats (id, venue_id, section, row_no, seat_no, floor, x, y, created_
   (920000003, 920000001, 'SEC-01', 'ROW-01', '03', 1, 38.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
   (920000004, 920000001, 'SEC-01', 'ROW-01', '04', 1, 47.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E');
 
-INSERT INTO show_grades (id, show_id, grade_code, grade_name, price, sort_order, created_at, created_by)
-VALUES (920000001, 920000001, 'R', 'R석', 120000, 1, CURRENT_TIMESTAMP, 'BOOKING_E2E');
-
-INSERT INTO show_seats (id, show_id, seat_id, show_grade_id, created_at, created_by) VALUES
-  (920000001, 920000001, 920000001, 920000001, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000002, 920000001, 920000002, 920000001, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000003, 920000001, 920000003, 920000001, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
-  (920000004, 920000001, 920000004, 920000001, CURRENT_TIMESTAMP, 'BOOKING_E2E');
-
 -- order_open_time < now < order_close_time 이어야 주문이 열린다.
 -- hold_time을 넉넉히 두어 스케줄러 만료가 테스트 중에 끼어들지 않게 한다.
 INSERT INTO performances (

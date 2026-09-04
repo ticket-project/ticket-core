@@ -6,18 +6,20 @@
 -- 구성:
 --  1) 기존 KOPIS 시드 (SHOWS 1..194, PERFORMERS 1..125, VENUES 1..112 등)
 --  2) 신규 KOPIS 시드 (다음 id 부터, 카테고리/장르는 기존 GENRES 1..15 매핑)
---  3) SHOW_GRADES INSERT (CROSS JOIN, 기존+신규 자동 적용)
+--  3) GRADES/PERFORMANCE_GRADES INSERT (CROSS JOIN, 기존+신규 자동 적용) — ADR 0005 이후
+--     show 단위 가격표(ShowGrade)는 폐기했고 회차(PerformanceGrade) 단위로만 가격을 둔다
 --  4) SEATS: VENUE 1의 600석 템플릿을 리터럴로 넣고 나머지 VENUE에 결정적으로 복제
 --     (ticket-domain-module-redesign Phase 2 Task 3, ADR 0005 "데이터 전환" 참고 — 하나의
 --     물리 좌석 집합을 모든 Show/Performance가 공유하던 이전 구조를 제거했다)
---  5) SHOW_SEATS / PERFORMANCE_SEATS: Show/Performance의 VENUE에 속한 SEATS만 JOIN(기존+신규 자동 적용)
+--  5) PERFORMANCE_SEATS: Performance의 VENUE에 속한 SEATS만 JOIN(기존+신규 자동 적용)
 -- ============================================================
 
 -- ===== 기존 base 시드 (CROSS JOIN INSERT 제외) =====
 -- ============================================================
 -- ShowController 로컬 개발용 시드 데이터
--- 포함 테이블: CATEGORIES, GENRES, PERFORMERS, VENUES, SHOWS, SHOW_GENRES, SHOW_GRADES, PERFORMANCES
--- 제외 테이블: SEATS, SHOW_SEATS, PERFORMANCE_SEATS (현재 ShowController 미사용)
+-- 포함 테이블: CATEGORIES, GENRES, PERFORMERS, VENUES, SHOWS, SHOW_GENRES, PERFORMANCES
+-- 제외 테이블: SEATS, PERFORMANCE_SEATS (현재 ShowController 미사용). SHOW_GRADES/SHOW_SEATS는
+-- ADR 0005로 폐기됐다.
 -- ============================================================
 
 -- 카테고리
@@ -3856,29 +3858,11 @@ INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, ord
 INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (1560, 392, 2, '2026-11-09 20:00:00', '2026-11-09 22:30:00', '2026-05-13 10:00:00', '2026-11-09 19:00:00', 4, 600, '2026-01-01 10:00:00', 'KOPIS_SEED');
 INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (1561, 392, 3, '2026-11-10 20:00:00', '2026-11-10 22:30:00', '2026-05-13 10:00:00', '2026-11-10 19:00:00', 4, 600, '2026-01-01 10:00:00', 'KOPIS_SEED');
 
-INSERT INTO SHOW_GRADES (show_id, grade_code, grade_name, price, sort_order, created_at, created_by)
-SELECT s.id, g.grade_code, g.grade_name,
-    CASE g.grade_code
-        WHEN 'VIP' THEN 170000
-        WHEN 'R' THEN 140000
-        WHEN 'S' THEN 110000
-        ELSE 80000
-    END,
-    g.sort_order, '2026-01-01 10:00:00', '시드'
-FROM SHOWS s
-CROSS JOIN (
-    SELECT 'VIP' grade_code, 'VIP석' grade_name, 1 sort_order FROM dual
-    UNION ALL SELECT 'R', 'R석', 2 FROM dual
-    UNION ALL SELECT 'S', 'S석', 3 FROM dual
-    UNION ALL SELECT 'A', 'A석', 4 FROM dual
-) g;
-
--- ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): PerformanceSeat entity가 이제
--- performance_grade_id/unit_price를 NOT NULL로 매핑하므로, 이 시드도 PerformanceGrade가 가격의
--- 원본이라는 새 모델을 그대로 따라 GRADES/PERFORMANCE_GRADES를 채운다. 값은 위 SHOW_GRADES와
--- 의도적으로 동일하게 맞춘다(회차 단위로 세분화하지 않는 단순 시드) -- 실제 회차별 차등 가격은
--- 운영 데이터가 결정할 몫이다. GRADES는 이미 migration(V5 backfill)이 만들었을 수 있어 code당
--- 하나만 있도록 존재 여부를 확인한다.
+-- ticket-domain-module-redesign Phase 3 Task 6/8(ADR 0005): PerformanceSeat entity가 이제
+-- performance_grade_id/unit_price를 NOT NULL로 매핑하고, ShowGrade(show 단위 가격)는 폐기됐다.
+-- 이 시드는 PerformanceGrade가 가격의 원본이라는 새 모델만 따라 GRADES/PERFORMANCE_GRADES를
+-- 채운다. GRADES는 이미 migration(V5 backfill)이 만들었을 수 있어 code당 하나만 있도록 존재
+-- 여부를 확인한다.
 INSERT INTO GRADES (code, name, created_at, created_by)
 SELECT g.grade_code, g.grade_name, '2026-01-01 10:00:00', '시드'
 FROM (
@@ -3912,11 +3896,6 @@ WHERE gr.code IN ('VIP', 'R', 'S', 'A')
         WHERE existing.performance_id = p.id AND existing.grade_id = gr.id
     );
 
-INSERT INTO SHOW_SEATS (show_id, seat_id, show_grade_id, created_at, created_by)
-SELECT s.id, st.id,
-    (SELECT sg.id FROM SHOW_GRADES sg WHERE sg.show_id = s.id AND sg.grade_code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
-    '2026-01-01 10:00:00', '시드'
-FROM SHOWS s JOIN SEATS st ON st.venue_id = s.venue_id;
 INSERT INTO PERFORMANCE_SEATS (performance_id, seat_id, state, performance_grade_id, unit_price, created_at, created_by)
 SELECT p.id, st.id,
     CASE

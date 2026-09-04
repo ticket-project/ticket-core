@@ -132,8 +132,8 @@ class LoadTestFixtureSeederTest {
         assertEquals(1, count("SELECT COUNT(*) FROM venues WHERE id = " + (ID_BASE + 1)));
         assertEquals(1, count("SELECT COUNT(*) FROM shows WHERE id = " + (ID_BASE + 1)));
         assertEquals(2000, count("SELECT COUNT(*) FROM seats"));
-        assertEquals(4, count("SELECT COUNT(*) FROM show_grades"));
-        assertEquals(2000, count("SELECT COUNT(*) FROM show_seats"));
+        assertEquals(4, count("SELECT COUNT(*) FROM grades"));
+        assertEquals(12, count("SELECT COUNT(*) FROM performance_grades"));
         assertEquals(3, count("SELECT COUNT(*) FROM performances"));
         assertEquals(6000, count("SELECT COUNT(*) FROM performance_seats"));
     }

@@ -31,12 +31,9 @@ import java.util.List;
 public class LoadTestFixtureSeeder implements ApplicationRunner {
 
     /**
-     * 반드시 {@link SeedDataLoader} 다음에 실행해야 한다. 공용 시드의 SHOW_GRADES INSERT는
-     * {@code FROM SHOWS s CROSS JOIN (VIP/R/S/A ...)}로 그 시점의 모든 SHOWS를 훑는다.
-     * 이 시더가 먼저 돌면 전용 show에도 공용 등급이 덧붙어 grade_code가 중복되고,
-     * SHOW_SEATS의 스칼라 서브쿼리가 2행을 반환해 기동이 실패한다. (SHOW_SEATS 자체는
-     * {@code st.venue_id = s.venue_id}로 그 Show의 VENUE에 속한 SEATS만 훑으므로 이 시더가
-     * 만드는 전용 VENUE/SEATS와는 섞이지 않는다.)
+     * 반드시 {@link SeedDataLoader} 다음에 실행해야 한다. 공용 시드가 GRADES에 VIP/R/S/A code를
+     * 먼저 만들어 두면 이 시더는 그 code를 재사용한다(같은 code로 GRADES row를 중복 생성하지
+     * 않는다).
      */
     static final int ORDER = SeedDataLoader.ORDER + 100;
 
@@ -94,8 +91,6 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
         seedVenue(now);
         seedShow(now);
         seedSeats(now);
-        final List<Long> gradeIds = seedShowGrades(now);
-        seedShowSeats(now, gradeIds);
         seedPerformances(now);
         seedQueuePolicies(now);
         final java.util.Map<String, Long> gradeIdsByCode = ensureGrades(now);
@@ -182,44 +177,17 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
         }
     }
 
-    private List<Long> seedShowGrades(final LocalDateTime now) {
-        final Timestamp createdAt = Timestamp.valueOf(now);
-        final String[][] grades = {
-                {"VIP", "VIP석", "150000", "1"},
-                {"R", "R석", "120000", "2"},
-                {"S", "S석", "90000", "3"},
-                {"A", "A석", "60000", "4"}
-        };
-        for (String[] grade : grades) {
-            jdbcTemplate.update("""
-                            INSERT INTO show_grades (
-                              show_id, grade_code, grade_name, price, sort_order, created_at, created_by
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                            """,
-                    SHOW_ID, grade[0], grade[1], new BigDecimal(grade[2]),
-                    Integer.parseInt(grade[3]), createdAt, CREATED_BY);
-        }
-        return jdbcTemplate.queryForList(
-                "SELECT id FROM show_grades WHERE show_id = ? ORDER BY sort_order",
-                Long.class, SHOW_ID);
-    }
-
-    private void seedShowSeats(final LocalDateTime now, final List<Long> gradeIds) {
-        final Timestamp createdAt = Timestamp.valueOf(now);
-        final List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
-        for (int index = 1; index <= SEAT_COUNT; index++) {
-            batch.add(new Object[]{
-                    SHOW_ID, ID_BASE + index, gradeIds.get(gradeIndex(index)), createdAt, CREATED_BY
-            });
-            if (batch.size() == BATCH_SIZE || index == SEAT_COUNT) {
-                jdbcTemplate.batchUpdate("""
-                        INSERT INTO show_seats (show_id, seat_id, show_grade_id, created_at, created_by)
-                        VALUES (?, ?, ?, ?, ?)
-                        """, batch);
-                batch.clear();
-            }
-        }
-    }
+    /**
+     * 회차·좌석 등급 배정에 쓰는 공통 정의다. code, name, price, sortOrder 순서다. ADR 0005 이후
+     * 등급 가격은 회차(PerformanceGrade) 단위로만 존재하므로 show 단위 가격표(과거 ShowGrade)는
+     * 만들지 않는다.
+     */
+    private static final String[][] GRADE_DEFS = {
+            {"VIP", "VIP석", "150000", "1"},
+            {"R", "R석", "120000", "2"},
+            {"S", "S석", "90000", "3"},
+            {"A", "A석", "60000", "4"}
+    };
 
     /** 구역 1~2는 VIP, 3~4는 R, 5~7은 S, 나머지는 A로 나눈다. 운영 전용 데이터와 같은 비율이다. */
     private int gradeIndex(final int seatIndex) {
@@ -284,9 +252,8 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
      */
     private java.util.Map<String, Long> ensureGrades(final LocalDateTime now) {
         final Timestamp createdAt = Timestamp.valueOf(now);
-        final String[][] gradeDefs = {{"VIP", "VIP석"}, {"R", "R석"}, {"S", "S석"}, {"A", "A석"}};
         final java.util.Map<String, Long> idsByCode = new java.util.LinkedHashMap<>();
-        for (String[] def : gradeDefs) {
+        for (String[] def : GRADE_DEFS) {
             final List<Long> existing = jdbcTemplate.queryForList(
                     "SELECT id FROM grades WHERE code = ?", Long.class, def[0]);
             if (existing.isEmpty()) {
@@ -304,24 +271,18 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
     }
 
     /**
-     * PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) -- show_grades와
-     * 같은 가격·표시 순서로 회차마다 PERFORMANCE_GRADES를 만든다.
+     * PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) -- 회차마다
+     * PERFORMANCE_GRADES를 만든다.
      */
     private void seedPerformanceGrades(final LocalDateTime now, final java.util.Map<String, Long> gradeIdsByCode) {
         final Timestamp createdAt = Timestamp.valueOf(now);
-        final String[][] grades = {
-                {"VIP", "150000", "1"},
-                {"R", "120000", "2"},
-                {"S", "90000", "3"},
-                {"A", "60000", "4"}
-        };
-        final List<Object[]> batch = new ArrayList<>(performanceCount * grades.length);
+        final List<Object[]> batch = new ArrayList<>(performanceCount * GRADE_DEFS.length);
         for (int performance = 1; performance <= performanceCount; performance++) {
             final long performanceId = ID_BASE + performance;
-            for (String[] grade : grades) {
+            for (String[] grade : GRADE_DEFS) {
                 batch.add(new Object[]{
-                        performanceId, gradeIdsByCode.get(grade[0]), new BigDecimal(grade[1]),
-                        Integer.parseInt(grade[2]), createdAt, CREATED_BY
+                        performanceId, gradeIdsByCode.get(grade[0]), new BigDecimal(grade[2]),
+                        Integer.parseInt(grade[3]), createdAt, CREATED_BY
                 });
             }
         }
@@ -334,9 +295,9 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
 
     private void seedPerformanceSeats(final LocalDateTime now) {
         final Timestamp createdAt = Timestamp.valueOf(now);
-        final List<BigDecimal> prices = jdbcTemplate.queryForList(
-                "SELECT price FROM show_grades WHERE show_id = ? ORDER BY sort_order",
-                BigDecimal.class, SHOW_ID);
+        final List<BigDecimal> prices = java.util.Arrays.stream(GRADE_DEFS)
+                .map(def -> new BigDecimal(def[2]))
+                .toList();
         for (int performance = 1; performance <= performanceCount; performance++) {
             final long performanceId = ID_BASE + performance;
             final List<Long> performanceGradeIds = jdbcTemplate.queryForList(

@@ -16,8 +16,6 @@ DELETE FROM performance_seats;
 DELETE FROM performance_grades;
 DELETE FROM performance_queue_policies;
 DELETE FROM performances;
-DELETE FROM show_seats;
-DELETE FROM show_grades;
 DELETE FROM shows;
 DELETE FROM seats;
 DELETE FROM venues;
