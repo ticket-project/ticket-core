@@ -109,8 +109,8 @@ _Avoid_: 결제(Payment 자체가 결제 완료가 아니라 시도라는 사실
 결제 성공으로 확정된 OrderSeat에 대해 발급되는 입장 권리다. OrderSeat는 결제 전에는 Ticket이
 없고, 발급 후에는 최대 하나만 가진다(`1:0..1`). Member 1명은 Ticket 여러 장을 가질 수 있다
 (`1:0..N`). Admission(대기열 통과 자격)과는 다른 개념이다 — 혼동해 같은 말로 쓰지 않는다.
-`ticketing`은 다른 업무 모듈을 참조하지 않는 독립 Application Module이며, 이번 구현 범위는
-entity/schema/repository까지다 — 자동 발급 listener, QR, 입장, 사용, 취소, 양도는 아직 없다.
+Ticket은 `booking` module이 소유한다(ADR 0005가 신설한 별도 `ticketing` module은 booking으로 흡수됐다).
+이번 구현 범위는 entity/schema/repository까지다 — 자동 발급 listener, QR, 입장, 사용, 취소, 양도는 아직 없다.
 _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
 
 ### 회원

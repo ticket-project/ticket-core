@@ -1,6 +1,6 @@
-package com.ticket.ticketing.internal.infrastructure.ticket;
+package com.ticket.booking.internal.infrastructure.ticket;
 
-import com.ticket.ticketing.internal.domain.ticket.model.Ticket;
+import com.ticket.booking.internal.domain.ticket.model.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

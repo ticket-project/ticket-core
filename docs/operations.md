@@ -136,12 +136,13 @@ src/main/resources/db/migration-vendor/oracle/{module}         # module 소유 �
 이력은 `__root` 이력(기존 `flyway_schema_history`에 대응)으로 그대로 유지되고, 버전 번호도
 바꾸지 않았다. 모듈이 소유하는 새 schema 변경(cross-module FK 제거, scalar column 전환,
 신규 module의 첫 schema 등)은 module별 폴더에 **1부터 새로 버전을 매겨** 추가한다 — `__root`의
-V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `catalog`, `booking`, `payment`,
-`ticketing` 넷이다(ADR 0005). `payment`/`ticketing`은 이번 entity-only 단계 첫 schema라
-`V1__create_payments.sql`/`V1__create_tickets.sql`부터 시작하고, `catalog`/`booking`은 기존
-이력 위에 이어서 버전을 매긴다. 공통 SQL은 `db/migration/{module}`, DB별 문법 차이가 있는
+V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `catalog`, `booking`, `payment` 셋이다(ADR 0005).
+`payment`는 이번 entity-only 단계 첫 schema라 `V1__create_payments.sql`부터 시작하고,
+`catalog`/`booking`은 기존 이력 위에 이어서 버전을 매긴다. `TICKETS`는 원래 `ticketing` module의 V1이었으나
+ticketing이 booking으로 흡수되며 booking V5(`V5__create_tickets.sql`)로 옮겼다 —
+`flyway_schema_history_ticketing`이 이미 있는 로컬 H2 파일 DB는 초기화가 필요하다. 공통 SQL은 `db/migration/{module}`, DB별 문법 차이가 있는
 SQL은 `db/migration-vendor/{h2,oracle}/{module}`에 같은 버전으로 각각 둔다 — 모듈에 DB별
-차이만 있고 공통 SQL이 없으면(현재 `catalog`, `payment`, `ticketing`) `db/migration/{module}`
+차이만 있고 공통 SQL이 없으면(현재 `catalog`, `payment`) `db/migration/{module}`
 폴더 자체를 만들지 않는다. `db/migration`에는 현재 `__root`와 `booking`만 있다.
 
 공통 migration은 `db/migration/__root`(또는 `{module}`)에 두고, Oracle과 H2의 문법이 다른
@@ -190,9 +191,8 @@ ADR 0005의 가격 재설계는 `catalog`(V4~V7)와 `booking`(V3~V4) migration�
 backfill하며, V7이 이관이 끝난 `SHOW_GRADES`/`SHOW_SEATS`를 drop한다(expand -> migrate ->
 contract). `booking` V3는 `PERFORMANCE_SEATS`에 같은 컬럼을 NOT NULL로 조이고, V4는
 `ORDERS`/`ORDER_SEATS`에 주문 시점 snapshot 컬럼을 추가하면서 `payment_failed_at`을 제거한다
-(`Order.PAYMENT_FAILED` 상태 폐기). `payment`(`PAYMENTS`)와 `ticketing`(`TICKETS`)은 이번
-entity-only 단계의 신규 schema라 각각 `V1__create_payments.sql`/`V1__create_tickets.sql`로
-시작한다. 위 migration들은 `SHOW_GRADES`/`SHOW_SEATS`/`ORDERS`/`ORDER_SEATS` 등 pre-Flyway
+(`Order.PAYMENT_FAILED` 상태 폐기). `payment`(`PAYMENTS`)는 이번 entity-only 단계의 신규 schema라 `V1__create_payments.sql`로
+시작하고, `TICKETS`는 booking V5(`V5__create_tickets.sql`)가 만든다. 위 migration들은 `SHOW_GRADES`/`SHOW_SEATS`/`ORDERS`/`ORDER_SEATS` 등 pre-Flyway
 baseline table이 존재하지 않는 검증 환경(`OracleMigrationCompatibilityTest` 등)에서는 no-op이
 되도록 존재 여부를 먼저 확인한다.
 

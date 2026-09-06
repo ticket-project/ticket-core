@@ -1,6 +1,6 @@
-package com.ticket.ticketing.internal.domain.ticket.model;
+package com.ticket.booking.internal.domain.ticket.model;
 
-import com.ticket.ticketing.internal.domain.TicketingAuditedEntity;
+import com.ticket.booking.internal.domain.BookingAuditedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,9 +21,10 @@ import java.time.LocalDateTime;
  * 결제 성공으로 확정된 OrderSeat에 대해 발급되는 입장 권리다(CONTEXT.md의 Ticket, ADR 0005).
  *
  * <p>OrderSeat는 결제 전에는 Ticket이 없고, 발급 후에는 최대 하나만 가진다(`1:0..1`). {@code
- * orderSeatId}는 booking {@code OrderSeat}에 대한, {@code ownerMemberId}는 member {@code Member}에
- * 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다
- * (ADR 0003, ADR 0005 §4). {@code ownerMemberId}는 최초 발급 시 주문 구매자로 고정되고, 양도 모델은
+ * ownerMemberId}는 member {@code Member}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module
+ * JPA 관계와 물리 FK는 만들지 않는다(ADR 0003). {@code orderSeatId}는 같은 booking module의
+ * {@code OrderSeat}를 가리키지만 기존 schema 관례대로 scalar 컬럼으로 둔다. Ticket은 원래 별도
+ * {@code ticketing} module(ADR 0005)이었으나 booking으로 흡수됐다. {@code ownerMemberId}는 최초 발급 시 주문 구매자로 고정되고, 양도 모델은
  * 존재하지 않는다.
  *
  * <p>이번 entity-only 단계는 {@code OrderConfirmed} listener, 자동 발급, QR, 입장, 사용, 취소,
@@ -44,7 +45,7 @@ import java.time.LocalDateTime;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Ticket extends TicketingAuditedEntity {
+public class Ticket extends BookingAuditedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

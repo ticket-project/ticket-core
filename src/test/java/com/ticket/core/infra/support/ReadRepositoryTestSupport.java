@@ -264,7 +264,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.member.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure", "com.ticket.payment.internal.domain", "com.ticket.ticketing.internal.domain"})
+    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.member.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure", "com.ticket.payment.internal.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

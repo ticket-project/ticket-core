@@ -1,7 +1,7 @@
-package com.ticket.ticketing.internal.infrastructure.ticket;
+package com.ticket.booking.internal.infrastructure.ticket;
 
-import com.ticket.ticketing.internal.domain.ticket.model.Ticket;
-import com.ticket.ticketing.internal.domain.ticket.repository.TicketRepository;
+import com.ticket.booking.internal.domain.ticket.model.Ticket;
+import com.ticket.booking.internal.domain.ticket.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

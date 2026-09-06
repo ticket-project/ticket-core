@@ -2,7 +2,7 @@
 
 공연/전시 티켓 예매 백엔드다. 인증, 공연 조회, 좌석 선택, 좌석 선점, 주문 시작/취소/만료를
 단일 Gradle Spring Boot 프로젝트와 Spring Modulith Application Module(`booking`, `catalog`,
-`member`, `admission`, `payment`, `ticketing`)로 다룬다. 대기열 처리는 `ticket-queue` 별도
+`member`, `admission`, `payment`)로 다룬다. 대기열 처리는 `ticket-queue` 별도
 서버가 담당하고, 이 서버는 Queue Server가 발급한 admission token을 검증해 예매 API 진입을
 제어한다.
 

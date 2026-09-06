@@ -12,7 +12,5 @@
  * PG 정산을 구현하는 후속 단계에서만 {@code payment -> booking} 공개 계약 의존이 추가된다(ADR 0005
  * §4).
  */
-@ApplicationModule(displayName = "Payment", allowedDependencies = {})
+@org.springframework.modulith.ApplicationModule(displayName = "Payment", allowedDependencies = {})
 package com.ticket.payment;
-
-import org.springframework.modulith.ApplicationModule;

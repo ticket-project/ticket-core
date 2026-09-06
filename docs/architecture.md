@@ -7,10 +7,12 @@
 [development.md](development.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
 
 **ADR 0005 반영 완료**: Venue/Seat/Grade/PerformanceGrade/PerformanceSeat 도메인 재설계와
-`payment`/`ticketing` module 신설은 구현이 끝났다. `ShowGrade`/`ShowSeat`는 entity·schema 모두
-제거됐고, 아래 모듈 목록·DAG는 이 시점의 실제 코드(`ModularityTests`) 기준이다. `payment`/
-`ticketing`은 이번 범위에서 entity/schema/repository만 있는 entity-only 모듈이며, PG 연동과 티켓
-발급 흐름은 각각 후속 ADR/계획으로 별도 승인한다(ADR 0005 §3, §4).
+`payment` module 신설은 구현이 끝났다. `ShowGrade`/`ShowSeat`는 entity·schema 모두 제거됐고, 아래
+모듈 목록·DAG는 이 시점의 실제 코드(`ModularityTests`) 기준이다. `payment`는 이번 범위에서
+entity/schema/repository만 있는 entity-only 모듈이며, PG 연동 흐름은 후속 ADR/계획으로 별도 승인한다
+(ADR 0005 §3, §4). ADR 0005가 별도 module로 신설했던 `ticketing`은 2026-09-06에 booking으로 흡수됐다 —
+`Ticket` entity/repository는 `booking.internal.{domain,infrastructure}.ticket`에 있고 `TICKETS` migration은
+booking V5다.
 
 ## 프로젝트 구조
 
@@ -28,7 +30,7 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 ```text
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
-├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat, 공개: OrderStarted/OrderTerminated
+├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat·Ticket(entity-only), 공개: OrderStarted/OrderTerminated
 ├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
 ├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
@@ -37,23 +39,25 @@ src/main/java/com/ticket
 ├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
 │                                scheduling/clock/UUID/event publication + JpaAuditingConfig)
 ├── seed/                     # 여러 모듈의 테이블을 raw SQL로 적재하는 시드 러너
-├── payment/                  # Payment(결제 시도) entity/schema/repository만 갖는 entity-only 모듈
-└── ticketing/                # Ticket(발급 티켓) entity/schema/repository만 갖는 entity-only 모듈
+└── payment/                  # Payment(결제 시도) entity/schema/repository만 갖는 entity-only 모듈
 ```
 
-`com.ticket`의 직접 하위 패키지는 11개다(`booking`, `catalog`, `member`, `admission`,
-`shared`, `web`, `config`, `error`, `seed`, `payment`, `ticketing`) — `showlike`는 없다(찜을 catalog가
+`com.ticket`의 직접 하위 패키지는 10개다(`booking`, `catalog`, `member`, `admission`,
+`shared`, `web`, `config`, `error`, `seed`, `payment`) — `showlike`는 없다(찜을 catalog가
 흡수했다. [찜(showlike)은 catalog가 흡수한다](#찜showlike은-catalog가-흡수한다) 참고).
 
-`payment`와 `ticketing`은 ADR 0005로 신설됐다. **이번 구현 범위는 entity/schema/repository와 구조·
-schema 검증 테스트까지다** — controller, PG client, 결제 승인/실패/취소 API, callback/webhook,
-`OrderConfirmed` listener, 자동 티켓 발급, QR/입장/사용/양도는 만들지 않았다. 그래서 두 모듈 모두
-`ModularityTests.APPROVED_DEPENDENCY_DAG`에서 다른 어떤 모듈(`shared`/`web`/`error` 포함)도 참조하지
-않는 완전한 leaf다(cross-module 의존 0). `payment.Payment`는 `orderId`를, `ticketing.Ticket`은
-`orderSeatId`/`ownerMemberId`를 scalar 컬럼으로만 갖고 booking·member의 entity를 JPA로 참조하지
-않는다. 실제 PG 정산(`payment -> booking`)과 `OrderConfirmed` 구독(`ticketing -> booking`) edge는
-그 공개 계약을 구현하는 후속 단계에서만 추가한다 — 지금 빈 public contract로 미리 만들지 않는다
-(ADR 0005 §3, §4).
+`payment`는 ADR 0005로 신설됐다. **이번 구현 범위는 entity/schema/repository와 구조·schema 검증
+테스트까지다** — controller, PG client, 결제 승인/실패/취소 API, callback/webhook은 만들지 않았다. 그래서
+`ModularityTests.APPROVED_DEPENDENCY_DAG`에서 다른 어떤 모듈(`shared`/`web`/`error` 포함)도 참조하지 않는
+완전한 leaf다(cross-module 의존 0). `payment.Payment`는 `orderId`를 scalar 컬럼으로만 갖고 booking의
+entity를 JPA로 참조하지 않는다. 실제 PG 정산(`payment -> booking`) edge는 그 공개 계약을 구현하는 후속
+단계에서만 추가한다 — 지금 빈 public contract로 미리 만들지 않는다(ADR 0005 §3, §4).
+
+`Ticket`(확정된 OrderSeat에 발급되는 입장 권리)은 ADR 0005가 별도 `ticketing` module로 신설했지만
+booking으로 흡수됐다. entity-only 상태에서 module 하나를 더 유지할 이유가 없었고, 발급 트리거가 되는
+`OrderConfirmed`가 booking 안의 사건이라 같은 module에 두는 편이 단순하다. `Ticket.ownerMemberId`는
+member에 대한 scalar 컬럼이고, `orderSeatId`는 같은 module의 OrderSeat를 가리키지만 기존 schema 관례대로
+scalar 컬럼으로 둔다. 자동 발급 listener, QR/입장/사용/양도는 여전히 미구현이다.
 
 `com.ticket.core`는 완전히 비었다 — 남았던 찜(showlike) 관련 코드가 모두 catalog로 옮겨졌다.
 `com.ticket.bootstrap`은 legacy가 아니라 영구 composition-root 예외 자리이며 지금 production
@@ -82,7 +86,6 @@ config    -> member, shared
 error     -> web
 seed      -> member
 payment   -> (없음)
-ticketing -> (없음)
 ```
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수 있다.
@@ -99,10 +102,9 @@ ticketing -> (없음)
 shared(`UuidSupplier`)를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을
 raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
 
-`payment`와 `ticketing`은 **이번 entity-only 단계에서 완전한 leaf다** — 업무 모듈은 물론 `shared`/
-`web`/`error`도 참조하지 않는다. controller가 없어 응답 봉투(`web`)가 필요 없고, 자기 오류 타입을
-아직 던지지 않아 `error`도 필요 없다. 실제 PG 정산·티켓 발급 단계에서 `payment -> booking`,
-`ticketing -> booking` edge가 추가되면 그 시점에 `web`/`error` 참조도 함께 늘어날 수 있다(ADR 0005
+`payment`는 **이번 entity-only 단계에서 완전한 leaf다** — 업무 모듈은 물론 `shared`/`web`/`error`도
+참조하지 않는다. controller가 없어 응답 봉투(`web`)가 필요 없고, 자기 오류 타입을 아직 던지지 않아
+`error`도 필요 없다. 실제 PG 정산 단계에서 `payment -> booking` edge가 추가되면 그 시점에 `web`/`error` 참조도 함께 늘어날 수 있다(ADR 0005
 §4). 순환은 없다. 이 DAG를 바꾸려면 먼저
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)과
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 갱신한다.

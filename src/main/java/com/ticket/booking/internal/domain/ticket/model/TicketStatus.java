@@ -1,4 +1,4 @@
-package com.ticket.ticketing.internal.domain.ticket.model;
+package com.ticket.booking.internal.domain.ticket.model;
 
 /**
  * Ticket(입장 권리)의 상태다. 양도 모델은 존재하지 않는다 — {@code ownerMemberId}는 최초 발급 시

@@ -1,7 +1,7 @@
 # 테스트 기준
 
 > [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)의
-> `payment`/`ticketing` module 신설과 catalog/booking schema 재설계가 구현됐다(entity-only 단계 —
+> `payment` module 신설과 catalog/booking schema 재설계가 구현됐다(`ticketing`은 이후 booking으로 흡수)(entity-only 단계 —
 > PG 연동, 결제 승인 API, `OrderConfirmed` listener는 아직 없다). 아래 모듈 테스트·구조 테스트·
 > module별 migration slice 테스트 표는 이 구현을 반영한다. `ShowGrade`/`ShowSeat` 제거(계획 문서
 > Phase 3 Task 8)가 끝나면서 그 둘을 대상으로 하던 Phase 1 baseline 테스트
@@ -37,8 +37,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
 테스트를 최소 하나씩 둔다(`AdmissionModuleTests`, `CatalogModuleTests`, `MemberModuleTests`,
-`BookingModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`,
-`TicketingModuleTests`). `showlike`는 별도 module이 아니라 catalog가 흡수했다(찜 기능은
+`BookingModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). `showlike`는 별도 module이 아니라 catalog가 흡수했다(찜 기능은
 `catalog` STANDALONE 테스트 안에서 검증한다). `verifyAutomatically = false`인
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
 곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
@@ -91,13 +90,14 @@ legacy 코드를 다룰 때는 이 테스트들도 함께 돌아가는지 확인
 각 모듈이 자신의 Flyway 이력(`db/migration/__root` + `db/migration/{module}`)만으로 schema가
 만들어지고 CRUD가 동작하는지 `@DataJpaTest`와 module slicing 조합으로 검증한다. 지금 존재하는
 네 개는 `BookingModuleSlicingSchemaTest`, `CatalogModuleSlicingSchemaTest`,
-`PaymentModuleSlicingSchemaTest`, `TicketingModuleSlicingSchemaTest`
+`PaymentModuleSlicingSchemaTest`, `BookingTicketSlicingSchemaTest`(TICKETS는 booking V5)
 (`src/test/java/com/ticket/bootstrap/migration/`)다. 다른 모듈의 migration이 있어야만 통과하면
 실패로 간주한다.
 
-`payment`/`ticketing`은 ADR 0005의 entity-only 단계라 두 slicing test가 검증하는 범위도 그만큼
-좁다 — 각자의 module migration만으로 `PAYMENTS`/`TICKETS` 테이블이 만들어지고 entity가
-저장·조회되는지, 그리고 다른 업무 모듈(booking 등)의 migration 없이도 그 자체로 성립하는지만
+`payment`는 ADR 0005의 entity-only 단계라 `PaymentModuleSlicingSchemaTest`가 검증하는 범위도 그만큼
+좁다 — payment migration만으로 `PAYMENTS` 테이블이 만들어지고 entity가 저장·조회되는지, 그리고 다른
+업무 모듈(booking 등)의 migration 없이도 그 자체로 성립하는지만(`TICKETS`는 booking V5라
+`BookingTicketSlicingSchemaTest`가 booking migration 안에서 검증한다)
 고정한다. controller나 PG/QR 연동은 이 범위가 아니다.
 
 H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationCompatibilityTest` 등)로

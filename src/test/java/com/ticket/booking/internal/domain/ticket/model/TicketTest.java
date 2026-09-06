@@ -1,4 +1,4 @@
-package com.ticket.ticketing.internal.domain.ticket.model;
+package com.ticket.booking.internal.domain.ticket.model;
 
 import org.junit.jupiter.api.Test;
 

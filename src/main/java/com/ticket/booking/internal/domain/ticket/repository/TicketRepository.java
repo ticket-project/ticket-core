@@ -1,6 +1,6 @@
-package com.ticket.ticketing.internal.domain.ticket.repository;
+package com.ticket.booking.internal.domain.ticket.repository;
 
-import com.ticket.ticketing.internal.domain.ticket.model.Ticket;
+import com.ticket.booking.internal.domain.ticket.model.Ticket;
 
 import java.util.Optional;
 

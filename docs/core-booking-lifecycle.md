@@ -6,8 +6,8 @@
 가격 책임과 Payment/Order 관계의 결정 배경은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 본다.
 
-**ADR 0005 적용 범위**: `payment`/`ticketing` module은 entity/schema/repository까지만 존재하는
-entity-only 단계다. PG 승인, `OrderConfirmed` listener, 실제 결제 정산 서비스는 아직 구현되지 않았다
+**ADR 0005 적용 범위**: `payment` module과 booking의 `Ticket`은 entity/schema/repository까지만 존재하는 entity-only
+단계다(ADR 0005의 `ticketing` module은 booking으로 흡수됐다). PG 승인, `OrderConfirmed` listener, 실제 결제 정산 서비스는 아직 구현되지 않았다
 — 현재 코드에서 `Order.confirm()`을 호출하는 곳은 없다(`rg -n "\.confirm\(" src/main`로 확인 가능).
 아래 수명주기는 지금 실제로 동작하는 PENDING 생성·취소·만료 경로를 설명하고, 결제 확정 흐름은
 아직 존재하지 않는 후속 작업임을 명시한다.

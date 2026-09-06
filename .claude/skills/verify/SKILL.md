@@ -44,7 +44,7 @@ Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
 [architecture.md](../../../docs/architecture.md#아키텍처-규칙)를 본다.
 
 각 모듈의 `<Module>ModuleTests`(`AdmissionModuleTests`, `CatalogModuleTests`,
-`MemberModuleTests`, `BookingModuleTests`, `PaymentModuleTests`, `TicketingModuleTests`)는
+`MemberModuleTests`, `BookingModuleTests`, `PaymentModuleTests`)는
 `@ApplicationModuleTest(verifyAutomatically = false)`로 그 모듈이 STANDALONE으로
 부트스트랩되는지만 본다. 전체 구조 검증은 여기서 하지 않는다 — `ModularityTests`의 몫이다.
 

@@ -55,11 +55,11 @@ class DocumentationTests {
         assertThat(outputDir.resolve("components.puml")).exists();
 
         // module별 canvas(공개 API·의존·발행 이벤트를 표로 정리한 AsciiDoc)와 개별 diagram.
-        // 파일명은 Documenter가 module identifier(소문자)로 만든다 — legacy를 뺀 6개 각각
-        // (showlike는 catalog로 흡수돼 더 이상 없다, payment/ticketing은 ticket-domain-module-redesign
-        // Phase 5에서 신설된 entity-only module이다).
+        // 파일명은 Documenter가 module identifier(소문자)로 만든다 — legacy를 뺀 5개 각각
+        // (showlike는 catalog로, ticketing은 booking으로 흡수돼 더 이상 없다. payment는
+        // ticket-domain-module-redesign Phase 5에서 신설된 entity-only module이다).
         for (final String moduleName : new String[] {
-                "booking", "catalog", "member", "admission", "payment", "ticketing"
+                "booking", "catalog", "member", "admission", "payment"
         }) {
             assertThat(outputDir.resolve("module-" + moduleName + ".adoc"))
                     .as("%s module canvas", moduleName)

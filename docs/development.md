@@ -4,14 +4,15 @@
 [architecture.md](architecture.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
 
 **ADR 0005 반영 완료**: Grade/PerformanceGrade 가격 모델, ShowGrade/ShowSeat 폐기,
-`Order.PAYMENT_FAILED` 제거, `payment`/`ticketing` module 신설은 구현이 끝났다. 아래 내용은 그
+`Order.PAYMENT_FAILED` 제거, `payment` module 신설은 구현이 끝났다(ADR 0005의 `ticketing` module은
+이후 booking으로 흡수됐다 — Ticket은 `booking.internal.domain.ticket`에 있다). 아래 내용은 그
 결과를 반영한 현재 코드 기준이다. PG 연동·결제 승인/실패/콜백·자동 티켓 발급은 아직 별도 구현
 대상이다([미구현 또는 후속 범위](#미구현-또는-후속-범위) 참고).
 
 ## 프로젝트 요약
 
 Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `catalog`,
-`member`, `admission`, `payment`, `ticketing`을 포함해 11개 Spring Modulith
+`member`, `admission`, `payment`를 포함해 10개 Spring Modulith
 Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). 현재
 구현의 중심은 아래 흐름이다.
 
@@ -24,7 +25,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 - 입장 검증(`admission`): `ticket-queue`가 발급한 admission token 검증
 - 좋아요(`showlike`): catalog가 흡수했다. 상세는
   [architecture.md의 찜(showlike)은 catalog가 흡수한다](architecture.md#찜showlike은-catalog가-흡수한다)를 본다
-- 결제 시도(`payment`), 발급 티켓(`ticketing`): 이번 범위는 entity/schema/repository까지다. PG
+- 결제 시도(`payment`), 발급 티켓(`booking`의 Ticket): 이번 범위는 entity/schema/repository까지다. PG
   연동, 결제 승인/실패/취소 API, 자동 티켓 발급, QR/입장/사용/양도는 없다
 - 대기열: Ticket Server가 회차별 DIRECT/QUEUE를 결정하고, `ticket-queue` 별도 서비스가
   shard/local sequence와 public state 기반 대기 상태 및 admission token 발급을 담당
@@ -194,13 +195,14 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 - Redis TTL 기반 UX 보조 상태
 - 실제 점유 권리는 hold가 담당
 
-### Payment(`payment`), Ticket(`ticketing`)
+### Payment(`payment`), Ticket(`booking`)
 
 - `Payment`는 Order에 대한 한 번의 결제 시도다(`Order 1 : 0..N Payment`). `orderId`는
   cross-module scalar 컬럼이고 booking `Order` entity를 JPA로 참조하지 않는다.
 - `Ticket`은 결제 성공으로 확정된 OrderSeat에 대해 발급되는 입장 권리다
-  (`OrderSeat 1 : 0..1 Ticket`). `orderSeatId`/`ownerMemberId`도 cross-module scalar다.
-- **두 모듈 모두 이번 범위는 entity/schema/repository와 구조·중복 방지 테스트까지다.** controller,
+  (`OrderSeat 1 : 0..1 Ticket`). booking 소유다(ADR 0005의 별도 `ticketing` module은 흡수됐다).
+  `ownerMemberId`는 cross-module scalar, `orderSeatId`는 같은 module 안이지만 관례대로 scalar다.
+- **Payment·Ticket 모두 이번 범위는 entity/schema/repository와 구조·중복 방지 테스트까지다.** controller,
   PG client, 결제 승인/실패/취소 API, callback/webhook, `OrderConfirmed` listener, 자동 티켓 발급,
   QR/입장/사용/양도는 만들지 않는다. 이 범위를 넘는 코드를 추가하려면 먼저 별도 설계·ADR 승인을
   받는다(ADR 0005 §3, "이 ADR이 결정하지 않는 것").
@@ -216,9 +218,10 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 
 ## 미구현 또는 후속 범위
 
-- `payment`/`ticketing`의 controller, PG client, 결제 승인/실패/취소 API, callback/webhook
-- `payment -> booking`(결제 정산), `ticketing -> booking`(`OrderConfirmed` 구독) 공개 계약과
-  cross-module 의존 edge 자체 — entity-only 단계에서는 두 모듈 다 다른 모듈을 참조하지 않는다
+- `payment`의 controller, PG client, 결제 승인/실패/취소 API, callback/webhook, 그리고 booking 안의
+  Ticket 자동 발급(`OrderConfirmed` 후속 처리)
+- `payment -> booking`(결제 정산) 공개 계약과 cross-module 의존 edge 자체 — entity-only 단계에서는
+  payment가 다른 모듈을 참조하지 않는다
 - 결제 성공 시 주문 확정과 최종 좌석 판매 확정(`payment`가 booking에 공개할 정산 계약 포함)
 - Ticket 자동 발급 listener, QR, 입장, 사용, 취소, 환불, 양도
 - `showlike` read 경로(`GetMyShowLikesUseCase` 등)의 모듈 이전 — 상세는
@@ -291,22 +294,23 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 - 락 범위 안에서 외부 I/O를 늘리지 않는다. 임계 구역은 짧게 유지한다.
 - 락 키를 바꾸면 보호 대상이 그대로인지 테스트로 고정한다.
 
-## payment/ticketing 개발 규칙
+## payment 개발 규칙
 
-`payment`, `ticketing`은 ADR 0005로 신설된 **entity-only 모듈**이다. 이번 범위를 넘는 코드를
-추가하지 않는다.
+`payment`는 ADR 0005로 신설된 **entity-only 모듈**이다. 이번 범위를 넘는 코드를 추가하지 않는다.
+ADR 0005가 함께 신설했던 `ticketing`은 booking으로 흡수됐다 — `Ticket`도 아직 entity-only이며 아래
+범위 규칙은 booking 안의 Ticket에도 그대로 적용한다.
 
 - **범위는 entity/schema/repository와 구조·중복 방지 테스트까지다.** controller, PG client, 결제
   승인/실패/취소 API, callback/webhook, `OrderConfirmed` listener, 자동 티켓 발급, QR/입장/사용/
   양도를 이 모듈에 추가하지 않는다. 필요해지면 먼저 별도 설계·ADR 승인을 받는다.
-- **cross-module 참조는 scalar ID만 쓴다.** `Payment.orderId`, `Ticket.orderSeatId`/
-  `ownerMemberId`는 booking/member entity를 JPA로 참조하지 않는 scalar 컬럼이다. cross-module
+- **cross-module 참조는 scalar ID만 쓴다.** `Payment.orderId`, `Ticket.ownerMemberId`는 booking/member
+  entity를 JPA로 참조하지 않는 scalar 컬럼이다. cross-module
   물리 FK를 새로 만들지 않는다.
-- **다른 업무 모듈을 import하지 않는다.** `ModularityTests.APPROVED_DEPENDENCY_DAG`에서 두 모듈
-  모두 `Set.of()`다(`shared`/`web`/`error` 포함 완전한 leaf) — booking의 `internal` 패키지나
+- **다른 업무 모듈을 import하지 않는다.** `ModularityTests.APPROVED_DEPENDENCY_DAG`에서 `payment`는
+  `Set.of()`다(`shared`/`web`/`error` 포함 완전한 leaf) — booking의 `internal` 패키지나
   entity를 직접 참조하는 코드를 추가하면 그 테스트가 실패한다.
-- **향후 PG 연동·티켓 발급은 별도 계획이다.** `payment -> booking`(정산 계약), `ticketing ->
-  booking`(`OrderConfirmed` 구독) edge는 그 공개 계약을 실제로 구현하는 후속 단계에서만 추가한다.
+- **향후 PG 연동·티켓 발급은 별도 계획이다.** `payment -> booking`(정산 계약) edge는 그 공개 계약을
+  실제로 구현하는 후속 단계에서만 추가한다.
   지금 빈 public interface나 가짜 이벤트 구독으로 미리 만들지 않는다(ADR 0005 §4).
 - entity만 추가해도 운영 `ddl-auto=validate` 때문에 H2/Oracle 양쪽 Flyway migration이 반드시
   함께 있어야 한다 — "entity-only"는 controller/PG 연동을 만들지 않는다는 뜻이지 migration 없이

@@ -1,6 +1,6 @@
 package com.ticket.bootstrap.migration;
 
-import com.ticket.ticketing.internal.domain.ticket.model.Ticket;
+import com.ticket.booking.internal.domain.ticket.model.Ticket;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -25,28 +25,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * ticket-domain-module-redesign Phase 5 Task 12(ADR 0005): {@code ticketing} module이 {@code __root} +
- * 자신의 migration(V1 {@code TICKETS} 생성)만으로(booking 등 다른 module의 migration 없이)
- * {@link Ticket} 매핑과 실제로 맞는 schema를 만들고, {@code ticket_key}/{@code order_seat_id} unique
- * 제약이 실제로 동작하는지 검증한다.
+ * {@code booking} module이 {@code __root} + 자신의 migration만으로(catalog·member 등 다른 module의
+ * migration 없이) {@link Ticket} 매핑과 실제로 맞는 schema를 만들고, {@code ticket_key}/
+ * {@code order_seat_id} unique 제약이 실제로 동작하는지 검증한다. Ticket은 원래 별도 {@code ticketing}
+ * module(ADR 0005)이었지만 booking으로 흡수됐고, {@code TICKETS} 생성 migration은 booking의 V5다.
  *
- * <p>{@code PaymentModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로
- * {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다. {@code TICKETS} 자체는
- * 이번에 새로 생기는 table이지만, {@code __root} 이력의 기존 V2~V4가 pre-Flyway baseline인
- * {@code PERFORMANCES}/{@code SEATS}/{@code PERFORMANCE_SEATS}/{@code ORDER_SEATS}를 이미 전제하므로
- * (ticketing과 무관하게 __root가 항상 요구한다), {@link PaymentModuleSlicingSchemaTest}와 같은 최소
- * legacy baseline을 재현한다.
+ * <p>{@link BookingModuleSlicingSchemaTest}·{@link PaymentModuleSlicingSchemaTest}와 같은 기법이다 — Spring
+ * context 없이 순수 Hibernate로 {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다.
+ * booking의 V1(cross-module FK 제거)이 정상 동작하도록 legacy baseline은 {@link BookingModuleSlicingSchemaTest}와
+ * 같은 형태로 재현한다.
  */
-class TicketingModuleSlicingSchemaTest {
+class BookingTicketSlicingSchemaTest {
 
     private static final String URL =
-            "jdbc:h2:mem:ticketing-module-slicing-schema;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+            "jdbc:h2:mem:booking-ticket-slicing-schema;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 
     @Test
-    void root_and_ticketing_migrations_alone_produce_a_schema_the_ticket_mapping_can_use() throws Exception {
+    void root_and_booking_migrations_alone_produce_a_schema_the_ticket_mapping_can_use() throws Exception {
         createLegacyBaselineSchema();
-        // 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 — __root와 ticketing뿐이다.
-        ModulithFlywayTestSupport.migrate(URL, List.of("ticketing"));
+        // 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 — __root와 booking뿐이다.
+        ModulithFlywayTestSupport.migrate(URL, List.of("booking"));
 
         final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .applySetting("hibernate.connection.url", URL)
@@ -63,7 +61,7 @@ class TicketingModuleSlicingSchemaTest {
                     .addAnnotatedClass(Ticket.class)
                     .buildMetadata();
 
-            // (1) __root + ticketing migration만으로 만든 schema가 Ticket 매핑과 실제로 맞는지 —
+            // (1) __root + booking migration만으로 만든 schema가 Ticket 매핑과 실제로 맞는지 —
             // 운영이 쓰는 ddl-auto=validate와 같은 검증이다.
             validateSchema(registry, metadata);
 
@@ -145,10 +143,8 @@ class TicketingModuleSlicingSchemaTest {
 
     /**
      * PERFORMANCES/SEATS/PERFORMANCE_SEATS/ORDER_SEATS는 어떤 Flyway migration도 만들지 않는
-     * pre-Flyway baseline이다(docs/operations.md 참고). ticketing schema 자체는 이 table들을
-     * 참조하지 않지만, {@code __root} 이력의 기존 V2~V4가 이를 전제하므로 ticketing만 골라
-     * 검증하더라도 __root 이력이 요구하는 만큼은 재현해야 한다({@link PaymentModuleSlicingSchemaTest}의
-     * baseline과 같다).
+     * pre-Flyway baseline이다(docs/operations.md 참고). booking V1이 제거하는 cross-module FK까지
+     * {@link BookingModuleSlicingSchemaTest}와 같이 재현한다.
      */
     private void createLegacyBaselineSchema() throws Exception {
         try (Connection connection = ModulithFlywayTestSupport.connect(URL);
@@ -165,18 +161,20 @@ class TicketingModuleSlicingSchemaTest {
                     "  created_at TIMESTAMP NOT NULL, " +
                     "  created_by VARCHAR(255) NOT NULL, " +
                     "  updated_at TIMESTAMP, " +
-                    "  updated_by VARCHAR(255)" +
+                    "  updated_by VARCHAR(255), " +
+                    "  CONSTRAINT legacy_fk_performance FOREIGN KEY (performance_id) REFERENCES performances, " +
+                    "  CONSTRAINT legacy_fk_seat FOREIGN KEY (seat_id) REFERENCES seats" +
                     ")");
             statement.execute("CREATE TABLE order_seats (order_id BIGINT NOT NULL)");
         }
     }
 
     private void persist(final Session session, final Object entity) {
-        // TicketingAuditedEntity의 감사 필드는 Spring Data JPA auditing(AuditingEntityListener +
+        // BookingAuditedEntity의 감사 필드는 Spring Data JPA auditing(AuditingEntityListener +
         // AuditorAware)이 채운다 — 이 테스트는 Spring context 없이 순수 Hibernate만 쓰므로 직접
         // 채운다. Spring auditing 배선 자체는 다른 통합 테스트가 이미 고정한다.
         ReflectionTestUtils.setField(entity, "createdAt", LocalDateTime.now());
-        ReflectionTestUtils.setField(entity, "createdBy", "ticketing-module-slicing-test");
+        ReflectionTestUtils.setField(entity, "createdBy", "booking-ticket-slicing-test");
 
         session.getTransaction().begin();
         try {
