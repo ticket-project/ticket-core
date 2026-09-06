@@ -5,7 +5,5 @@
  * <p>공개 API는 {@link com.ticket.admission.AdmissionVerifier}와
  * {@link com.ticket.admission.AdmissionVerification}이고, 구현은 {@code internal} 아래에 있다.
  */
-@ApplicationModule(displayName = "Admission", allowedDependencies = {})
+@org.springframework.modulith.ApplicationModule(displayName = "Admission", allowedDependencies = {})
 package com.ticket.admission;
-
-import org.springframework.modulith.ApplicationModule;

@@ -12,7 +12,5 @@
  * module 소유로 두지 않고 이 module에 둔다. {@code com.ticket.core.infra.seed}에 있던 legacy
  * 코드를 옮긴 것이다.
  */
-@ApplicationModule(displayName = "Seed", allowedDependencies = {"member :: seed"})
+@org.springframework.modulith.ApplicationModule(displayName = "Seed", allowedDependencies = {"member :: seed"})
 package com.ticket.seed;
-
-import org.springframework.modulith.ApplicationModule;

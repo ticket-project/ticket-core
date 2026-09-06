@@ -36,7 +36,5 @@
  * {@code @ConfigurationProperties} 값 홀더는 스스로 bean을 등록하지 않아 {@code shared}의 규칙에도
  * 어긋나지 않고, 등록은 그 값을 쓰는 두 module이 각자 {@code @EnableConfigurationProperties}로 한다.
  */
-@ApplicationModule(displayName = "Config", allowedDependencies = {"member"})
+@org.springframework.modulith.ApplicationModule(displayName = "Config", allowedDependencies = {"member"})
 package com.ticket.config;
-
-import org.springframework.modulith.ApplicationModule;

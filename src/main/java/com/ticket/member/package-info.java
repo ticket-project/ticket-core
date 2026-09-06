@@ -20,7 +20,5 @@
  * {@code /me/likes} 엔드포인트가 모두 catalog로 옮겨졌고, catalog는 회원 확인만
  * {@link com.ticket.member.MemberLookup}으로 이 module을 참조한다(단방향, 순환 없음).
  */
-@ApplicationModule(displayName = "Member", allowedDependencies = {})
+@org.springframework.modulith.ApplicationModule(displayName = "Member", allowedDependencies = {})
 package com.ticket.member;
-
-import org.springframework.modulith.ApplicationModule;

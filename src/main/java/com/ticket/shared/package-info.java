@@ -45,7 +45,5 @@
  * {@code TicketApplication}의 {@code @Modulith(sharedModules = ...)}가 이름으로 참조할
  * 대상이 실제로 존재하게 된다.
  */
-@ApplicationModule(displayName = "Shared")
+@org.springframework.modulith.ApplicationModule(displayName = "Shared")
 package com.ticket.shared;
-
-import org.springframework.modulith.ApplicationModule;

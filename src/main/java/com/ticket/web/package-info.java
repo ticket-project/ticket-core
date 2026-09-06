@@ -39,7 +39,5 @@
  * 다른 자리다: 그쪽은 그 module의 endpoint이고, 이 module은 그 endpoint들이 공유하는 표현
  * 계약이다.
  */
-@ApplicationModule(displayName = "Web")
+@org.springframework.modulith.ApplicationModule(displayName = "Web")
 package com.ticket.web;
-
-import org.springframework.modulith.ApplicationModule;

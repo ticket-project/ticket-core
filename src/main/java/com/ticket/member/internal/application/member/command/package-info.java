@@ -9,7 +9,5 @@
  * 이 하나만 더 좁게 떼어내는 재구성은 하지 않았다(과한 조정으로 판단, member 소유 코드를 이
  * task에서 재배치하는 것은 범위 밖).
  */
-@NamedInterface("seed")
+@org.springframework.modulith.NamedInterface("seed")
 package com.ticket.member.internal.application.member.command;
-
-import org.springframework.modulith.NamedInterface;

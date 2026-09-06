@@ -11,7 +11,5 @@
  * {@code com.ticket.web.ApiResponse}가 오류 타입을 모른 채 완성된 code·message·data 문자열만
  * 받는 이유다.
  */
-@ApplicationModule(displayName = "Error")
+@org.springframework.modulith.ApplicationModule(displayName = "Error")
 package com.ticket.error;
-
-import org.springframework.modulith.ApplicationModule;

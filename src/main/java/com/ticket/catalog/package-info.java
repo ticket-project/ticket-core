@@ -21,7 +21,5 @@
  * {@link com.ticket.member.MemberLookup}을 참조한다(단방향) — booking이 {@code Order.memberId}를
  * 위해 member를 참조하는 것과 같은 패턴이다.
  */
-@ApplicationModule(displayName = "Catalog", allowedDependencies = {"member"})
+@org.springframework.modulith.ApplicationModule(displayName = "Catalog", allowedDependencies = {"member"})
 package com.ticket.catalog;
-
-import org.springframework.modulith.ApplicationModule;
