@@ -258,7 +258,7 @@ class QuerydslShowListReadRepositoryTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.identity.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure"})
+    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.member.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

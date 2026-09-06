@@ -2,7 +2,7 @@ package com.ticket.catalog.internal.application.showlike.query;
 
 import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import com.ticket.shared.CursorPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -52,7 +52,7 @@
 ## 모듈 경계
 
 단일 Gradle Spring Boot 프로젝트다. `com.ticket`의 직접 하위 패키지(`booking`, `catalog`,
-`identity`, `admission`, `metadata`, `shared`, `web`, `config`, `error`, `seed`)가 Spring
+`member`, `admission`, `metadata`, `shared`, `web`, `config`, `error`, `seed`)가 Spring
 Modulith의 닫힌 Application Module(총 10개)이고, 모듈 root에는 다른 모듈이 쓰는 공개 계약만,
 실제 구현은 `<module>.internal`에 둔다. `com.ticket.core`는 production class가 없고, `storage`도
 없다. 아직 모듈로 옮기지 않은 legacy 코드가 생기면 이 자리를 쓴다. `com.ticket.bootstrap`은 legacy가

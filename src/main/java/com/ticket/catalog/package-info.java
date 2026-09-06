@@ -17,12 +17,12 @@
  * 얻으려면 찜 데이터를 참조해야 하고(catalog → showlike) showlike의 write 경로는 공연 존재 확인을
  * 위해 catalog를 참조해야 해서(showlike → catalog) 두 module 사이에 순환이 생겼다. "내 찜 목록"
  * ({@code /api/v1/members/me/likes})까지 감안하면 회원 관점 조회를 별도 module에 남겨도 결국
- * identity와 같은 순환이 재발하므로, 찜에 관한 모든 것(entity·추가·삭제·개수·내 목록)을 이 module
+ * member와 같은 순환이 재발하므로, 찜에 관한 모든 것(entity·추가·삭제·개수·내 목록)을 이 module
  * 하나로 흡수해 순환의 여지 자체를 없앴다. 그 결과 이 module은 회원 존재 확인을 위해
- * {@link com.ticket.identity.MemberLookup}을 참조한다(단방향) — booking이 {@code Order.memberId}를
- * 위해 identity를 참조하는 것과 같은 패턴이다.
+ * {@link com.ticket.member.MemberLookup}을 참조한다(단방향) — booking이 {@code Order.memberId}를
+ * 위해 member를 참조하는 것과 같은 패턴이다.
  */
-@ApplicationModule(displayName = "Catalog", allowedDependencies = {"identity"})
+@ApplicationModule(displayName = "Catalog", allowedDependencies = {"member"})
 package com.ticket.catalog;
 
 import org.springframework.modulith.ApplicationModule;

@@ -4,7 +4,7 @@ import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderStatusView;
 import com.ticket.booking.internal.exception.OrderNotOwnedException;
 import com.ticket.error.NotFoundException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

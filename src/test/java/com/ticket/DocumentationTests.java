@@ -59,7 +59,7 @@ class DocumentationTests {
         // (showlike는 catalog로 흡수돼 더 이상 없다, payment/ticketing은 ticket-domain-module-redesign
         // Phase 5에서 신설된 entity-only module이다).
         for (final String moduleName : new String[] {
-                "booking", "catalog", "identity", "admission", "metadata", "payment", "ticketing"
+                "booking", "catalog", "member", "admission", "metadata", "payment", "ticketing"
         }) {
             assertThat(outputDir.resolve("module-" + moduleName + ".adoc"))
                     .as("%s module canvas", moduleName)
@@ -72,7 +72,7 @@ class DocumentationTests {
         assertThat(outputDir.resolve("all-docs.adoc")).as("종합 문서").exists();
 
         // canvas가 실제로 exposed bean과 이벤트를 담는지, 빈 표가 아닌지 내용까지 확인한다.
-        // booking은 catalog/identity/admission의 공개 bean을 참조하고 자기 이벤트를 듣는다.
+        // booking은 catalog/member/admission의 공개 bean을 참조하고 자기 이벤트를 듣는다.
         final String bookingCanvas = Files.readString(outputDir.resolve("module-booking.adoc"));
         assertThat(bookingCanvas)
                 .as("booking module canvas")

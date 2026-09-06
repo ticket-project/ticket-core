@@ -3,7 +3,7 @@ package com.ticket.catalog.internal.application.showlike.command;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.internal.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

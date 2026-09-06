@@ -25,7 +25,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Task 11 Step 6: {@code booking} module이 {@code __root} + 자신의 migration만으로(catalog·identity
+ * Task 11 Step 6: {@code booking} module이 {@code __root} + 자신의 migration만으로(catalog·member
  * 등 다른 module의 migration 없이) 실제 schema를 만들고, {@code booking}의 JPA 매핑({@link
  * PerformanceSeat})이 그 schema에 대해 {@code ddl-auto=validate}를 통과하며, CRUD가 동작하는지
  * 검증한다.
@@ -55,7 +55,7 @@ class BookingModuleSlicingSchemaTest {
     @Test
     void root_and_booking_migrations_alone_produce_a_schema_the_booking_mapping_can_use() throws Exception {
         createLegacyBaselineSchema();
-        // catalog/identity/showlike 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
+        // catalog/member/showlike 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
         // __root와 booking뿐이다.
         ModulithFlywayTestSupport.migrate(URL, List.of("booking"));
 

@@ -127,7 +127,7 @@ public record Input(String orderKey, Long memberId) {
           .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_DATA));
   ```
 
-  **다른 모듈의 공개 API도 같은 원칙을 따른다.** 예를 들어 `identity.MemberLookup`은 회원이
+  **다른 모듈의 공개 API도 같은 원칙을 따른다.** 예를 들어 `member.MemberLookup`은 회원이
   없거나 비활성이면 그 모듈이 정한 결과(`requireActive`가 던지는 예외 또는 `MemberStatus`)를
   돌려주고, 호출하는 booking 쪽 유스케이스가 그 결과를 자신의 맥락에 맞는 실패로 다시 해석하지
   않고 그대로 전파하거나 자신의 도메인 규칙과 조합한다. 다른 모듈의 internal 예외 타입을 직접

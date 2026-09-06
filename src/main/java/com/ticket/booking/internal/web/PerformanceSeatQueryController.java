@@ -1,7 +1,7 @@
 package com.ticket.booking.internal.web;
 
 import com.ticket.booking.internal.web.docs.PerformanceSeatQueryControllerDocs;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.internal.application.performanceseat.query.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatStatusUseCase;

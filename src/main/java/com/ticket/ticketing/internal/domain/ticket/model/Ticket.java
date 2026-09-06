@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  * 결제 성공으로 확정된 OrderSeat에 대해 발급되는 입장 권리다(CONTEXT.md의 Ticket, ADR 0005).
  *
  * <p>OrderSeat는 결제 전에는 Ticket이 없고, 발급 후에는 최대 하나만 가진다(`1:0..1`). {@code
- * orderSeatId}는 booking {@code OrderSeat}에 대한, {@code ownerMemberId}는 identity {@code Member}에
+ * orderSeatId}는 booking {@code OrderSeat}에 대한, {@code ownerMemberId}는 member {@code Member}에
  * 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다
  * (ADR 0003, ADR 0005 §4). {@code ownerMemberId}는 최초 발급 시 주문 구매자로 고정되고, 양도 모델은
  * 존재하지 않는다.

@@ -1,7 +1,7 @@
 package com.ticket.booking.internal.web;
 
 import com.ticket.booking.internal.web.docs.SeatSelectionControllerDocs;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.internal.application.performanceseat.command.DeselectAllSeatsUseCase;
 import com.ticket.booking.internal.application.performanceseat.command.DeselectSeatUseCase;
 import com.ticket.booking.internal.application.performanceseat.command.SelectSeatUseCase;

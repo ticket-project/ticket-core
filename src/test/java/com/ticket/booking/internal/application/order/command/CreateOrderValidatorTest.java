@@ -13,7 +13,7 @@ import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.catalog.PerformanceSaleCatalog;
 import com.ticket.catalog.PerformanceSaleSnapshot;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

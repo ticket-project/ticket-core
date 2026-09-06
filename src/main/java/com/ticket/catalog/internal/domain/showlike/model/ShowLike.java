@@ -26,7 +26,7 @@ public class ShowLike extends CatalogAuditedEntity {
     private Long id;
 
     /**
-     * identity가 소유한 회원의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로
+     * member가 소유한 회원의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로
      * {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR 0003 §4).
      */
     @Column(name = "member_id", nullable = false)

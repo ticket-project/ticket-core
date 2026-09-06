@@ -1,8 +1,8 @@
 package com.ticket.booking.internal.infrastructure.websocket;
 
 import com.ticket.error.TicketException;
-import com.ticket.identity.AccessTokenAuthenticator;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AccessTokenAuthenticator;
+import com.ticket.member.AuthenticatedMember;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import lombok.RequiredArgsConstructor;

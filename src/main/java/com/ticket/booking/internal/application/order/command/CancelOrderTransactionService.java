@@ -13,7 +13,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
- * 주문 취소의 booking local DB 쓰기만 담당한다. {@link CancelOrderUseCase}가 identity 공개 API를
+ * 주문 취소의 booking local DB 쓰기만 담당한다. {@link CancelOrderUseCase}가 member 공개 API를
  * 트랜잭션 밖에서 호출한 뒤, 이 component가 짧은 쓰기 트랜잭션 안에서 pending 주문 조회와 취소만
  * 수행한다.
  *

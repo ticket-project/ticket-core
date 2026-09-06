@@ -1,6 +1,6 @@
 package com.ticket.config.internal;
 
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

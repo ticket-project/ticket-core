@@ -17,7 +17,7 @@
  *
  * <p>{@link CorsProperties}가 예외처럼 보이지만 아니다 — {@code @ConfigurationProperties} 값
  * 홀더는 스스로 bean을 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이
- * {@code @EnableConfigurationProperties}로 한다(identity의 {@code SecurityConfig}).
+ * {@code @EnableConfigurationProperties}로 한다(member의 {@code SecurityConfig}).
  *
  * <p><b>이 module은 아무 module도 참조하지 않는 leaf여야 한다.</b> 여기서 다른 module의 타입을
  * 참조하면 그 module이 이미 {@code shared}를 참조하고 있는 만큼 곧바로 순환이 되어

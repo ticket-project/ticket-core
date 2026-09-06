@@ -1,7 +1,7 @@
 package com.ticket.booking.internal.web.docs;
 
 import com.ticket.booking.internal.web.request.CreateHoldRequest;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;

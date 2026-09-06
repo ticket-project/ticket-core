@@ -30,9 +30,9 @@ src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
 ├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat, 공개: BookingMetadata, OrderStarted/OrderTerminated
 ├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog, CatalogMetadata
-├── identity/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, IdentityMetadata
+├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, MemberMetadata
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
-├── metadata/                 # catalog/booking/identity 공개 계약을 code/label로 조합
+├── metadata/                 # catalog/booking/member 공개 계약을 code/label로 조합
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
 ├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
@@ -42,7 +42,7 @@ src/main/java/com/ticket
 └── ticketing/                # Ticket(발급 티켓) entity/schema/repository만 갖는 entity-only 모듈
 ```
 
-`com.ticket`의 직접 하위 패키지는 12개다(`booking`, `catalog`, `identity`, `admission`, `metadata`,
+`com.ticket`의 직접 하위 패키지는 12개다(`booking`, `catalog`, `member`, `admission`, `metadata`,
 `shared`, `web`, `config`, `error`, `seed`, `payment`, `ticketing`) — `showlike`는 없다(찜을 catalog가
 흡수했다. [찜(showlike)은 catalog가 흡수한다](#찜showlike은-catalog가-흡수한다) 참고).
 
@@ -51,7 +51,7 @@ schema 검증 테스트까지다** — controller, PG client, 결제 승인/실�
 `OrderConfirmed` listener, 자동 티켓 발급, QR/입장/사용/양도는 만들지 않았다. 그래서 두 모듈 모두
 `ModularityTests.APPROVED_DEPENDENCY_DAG`에서 다른 어떤 모듈(`shared`/`web`/`error` 포함)도 참조하지
 않는 완전한 leaf다(cross-module 의존 0). `payment.Payment`는 `orderId`를, `ticketing.Ticket`은
-`orderSeatId`/`ownerMemberId`를 scalar 컬럼으로만 갖고 booking·identity의 entity를 JPA로 참조하지
+`orderSeatId`/`ownerMemberId`를 scalar 컬럼으로만 갖고 booking·member의 entity를 JPA로 참조하지
 않는다. 실제 PG 정산(`payment -> booking`)과 `OrderConfirmed` 구독(`ticketing -> booking`) edge는
 그 공개 계약을 구현하는 후속 단계에서만 추가한다 — 지금 빈 public contract로 미리 만들지 않는다
 (ADR 0005 §3, §4).
@@ -73,34 +73,34 @@ class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스�
 포함해 각 모듈이 실제로 참조하는 모듈 전부를 담는다).
 
 ```text
-booking   -> catalog, identity, admission, shared, web, error
-catalog   -> identity, shared, web, error
-identity  -> shared, web, error
+booking   -> catalog, member, admission, shared, web, error
+catalog   -> member, shared, web, error
+member  -> shared, web, error
 admission -> web, error
-metadata  -> catalog, booking, identity, web
+metadata  -> catalog, booking, member, web
 shared    -> (없음)
 web       -> (없음)
-config    -> identity, shared
+config    -> member, shared
 error     -> web
-seed      -> identity
+seed      -> member
 payment   -> (없음)
 ticketing -> (없음)
 ```
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수 있다.
 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만** 적는다
-(`catalog`/`identity`/`admission`은 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
+(`catalog`/`member`/`admission`은 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
 `sharedModules`인 shared·error·web은 상한과 무관하게 항상 허용된다). 대신 어느 모듈이 실제로 이
 셋을 참조하는지는 `ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정하므로, HTTP를
 노출하지 않던 모듈에 응답 봉투가 새로 들어오면 그 테스트가 실패한다.
 
-`identity`/`admission`은 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). `catalog`는
-찜(showlike) 흡수로 회원 존재 확인을 위해 identity를 참조한다(`MemberLookup`) — booking이
-`Order.memberId`를 위해 identity를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹히고,
+`member`/`admission`은 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). `catalog`는
+찜(showlike) 흡수로 회원 존재 확인을 위해 member를 참조한다(`MemberLookup`) — booking이
+`Order.memberId`를 위해 member를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹히고,
 `metadata`는 세 모듈의 공개 계약만 조합한다(자체 오류를 던지지 않아 `error` edge는 없다). `shared`와
-`web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 identity의 공개 계약(`AuthenticatedMember`)과
+`web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과
 shared(`UuidSupplier`)를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을
-raw SQL로 적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
+raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
 
 `payment`와 `ticketing`은 **이번 entity-only 단계에서 완전한 leaf다** — 업무 모듈은 물론 `shared`/
 `web`/`error`도 참조하지 않는다. controller가 없어 응답 봉투(`web`)가 필요 없고, 자기 오류 타입을
@@ -125,7 +125,7 @@ raw SQL로 적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@Nam
   참조하지 않는다.
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 `internal` 패키지,
   Repository, JPA entity를 직접 import하지 않는다. 공개 API는 작은 단위 interface(예:
-  `catalog.BookingPolicyLookup`, `identity.MemberLookup`, `admission.AdmissionVerifier`)와 그
+  `catalog.BookingPolicyLookup`, `member.MemberLookup`, `admission.AdmissionVerifier`)와 그
   반환값인 불변 `record` snapshot(`BookingPolicySnapshot`, `MemberStatus`,
   `AdmissionVerification` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에
   두지 않는다. 컬렉션은 defensive copy한다.
@@ -133,7 +133,7 @@ raw SQL로 적재하고, 부하 테스트 회원만 identity가 좁혀 연 `@Nam
   `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
   본다.
 - **`metadata`는 어떤 모듈의 internal enum/entity/repository도 import하지 않는다.** 각 모듈이
-  공개한 `*Metadata` 계약(`CatalogMetadata`, `BookingMetadata`, `IdentityMetadata`)만 주입받는다.
+  공개한 `*Metadata` 계약(`CatalogMetadata`, `BookingMetadata`, `MemberMetadata`)만 주입받는다.
 
 ### Show/Performance/Grade/PerformanceGrade/PerformanceSeat와 catalog-booking 공개 계약
 
@@ -177,13 +177,13 @@ Venue 배치만 반환하는 별개의 show 기준 API이고,
 (`com.ticket.showlike`)이었지만, catalog의 공연 상세가 좋아요 개수를 얻으려면 찜 데이터를
 참조해야 하고(catalog → showlike) showlike의 write 경로는 공연 존재 확인을 위해 catalog를
 참조해야 해서(showlike → catalog) 두 module 사이에 순환이 생겼다. "내 찜 목록"
-(`/api/v1/members/me/likes`)까지 identity에 남기면 회원 관점 조회 때문에 identity와 같은
+(`/api/v1/members/me/likes`)까지 member에 남기면 회원 관점 조회 때문에 member와 같은
 순환이 재발하므로, 찜에 관한 모든 것을 catalog 하나로 흡수해 순환의 여지 자체를 없앴다.
 
 개수는 `Show.viewCount`와 같은 성격의 파생 지표이지 독자적인 업무가 아니라는 판단이 근거다.
-`ShowLike.member`는 identity Member에 대한 `@ManyToOne` 대신 scalar `memberId` column이고
+`ShowLike.member`는 member Member에 대한 `@ManyToOne` 대신 scalar `memberId` column이고
 (module을 넘나드는 JPA 연관관계는 금지), `ShowLike.show`는 같은 module 안이라 `@ManyToOne` 그대로
-쓴다. catalog는 회원 존재 확인을 위해 identity의 `MemberLookup`을 참조한다(단방향, 순환 없음).
+쓴다. catalog는 회원 존재 확인을 위해 member의 `MemberLookup`을 참조한다(단방향, 순환 없음).
 URL·JSON 계약(`/api/v1/likes/**`, `/api/v1/members/me/likes`)은 흡수 전과 동일하다.
 
 ## 이벤트와 후속 처리
@@ -239,7 +239,7 @@ class가 없다). 근거와 경계는
 
 전역 기술 설정은 legacy가 아니다 — **어떤 업무 모듈도 참조하지 않는 `@Configuration`은
 `com.ticket.config`가 소유한다**(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson,
-event-publication registry 유지보수, scheduling/clock, 그리고 identity의 공개 계약만 쓰는
+event-publication registry 유지보수, scheduling/clock, 그리고 member의 공개 계약만 쓰는
 `JpaAuditingConfig`/`SecurityContextAuditorAware`).
 
 **특정 모듈의 물건을 Spring에 등록하는 배선은 그 모듈이 자기 안에서 한다.** Spring이
@@ -248,13 +248,13 @@ event-publication registry 유지보수, scheduling/clock, 그리고 identity의
 
 | 배선 | 소유 |
 | --- | --- |
-| `AuthenticatedMemberArgumentResolver` 등록 | `identity.internal.infrastructure.security.IdentityWebMvcConfig` |
-| `JwtProperties` 등록 | `identity.internal.infrastructure.auth.token.JwtConfig` |
-| 카카오 HTTP client 등록 | `identity.internal.infrastructure.auth.oauth2.HttpServiceConfig` |
+| `AuthenticatedMemberArgumentResolver` 등록 | `member.internal.infrastructure.security.MemberWebMvcConfig` |
+| `JwtProperties` 등록 | `member.internal.infrastructure.auth.token.JwtConfig` |
+| 카카오 HTTP client 등록 | `member.internal.infrastructure.auth.oauth2.HttpServiceConfig` |
 | STOMP 브로커·endpoint·인증 인터셉터 | `booking.internal.infrastructure.websocket.WebSocketConfig` |
 
 그 결과 `config`가 다른 모듈의 `internal`을 참조할 일이 없어 **`@NamedInterface`는 하나도 남지
-않았다**(`seed`가 identity의 `member.command`를 참조하는 것은 별개다).
+않았다**(`seed`가 member의 `member.command`를 참조하는 것은 별개다).
 `com.ticket.shared`에는 다른 모듈이 **호출하는 계약**만 두고 bean 등록은 두지 않으며, 이 규칙은
 `com.ticket.shared.SharedModulePurityTest`가 강제한다. 근거는
 [ADR 0003 §6](adr/0003-spring-modulith-application-module-boundaries.md)과
@@ -336,7 +336,7 @@ internal.infrastructure
 Controller는 가능한 한 얇게 유지한다.
 
 - 요청 검증
-- 인증 principal 추출(`identity.AuthenticatedMember`)
+- 인증 principal 추출(`member.AuthenticatedMember`)
 - use case 호출
 - 응답 포맷 반환
 
@@ -388,7 +388,7 @@ Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌�
 주요 대상:
 
 - seat selection, seat hold(`booking`)
-- refresh token, OAuth2 one-time auth code(`identity`)
+- refresh token, OAuth2 one-time auth code(`member`)
 
 Redis 구현체는 소유 모듈의 `internal.infrastructure`에 위치한다.
 

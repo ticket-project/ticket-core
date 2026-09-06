@@ -4,7 +4,7 @@ import com.ticket.catalog.internal.application.showlike.command.AddShowLikeUseCa
 import com.ticket.catalog.internal.application.showlike.command.RemoveShowLikeUseCase;
 import com.ticket.catalog.internal.application.showlike.query.GetShowLikeStatusUseCase;
 import com.ticket.catalog.internal.web.docs.ShowLikeControllerDocs;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

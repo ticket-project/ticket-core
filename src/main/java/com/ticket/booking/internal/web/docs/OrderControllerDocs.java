@@ -1,7 +1,7 @@
 package com.ticket.booking.internal.web.docs;
 
 import com.ticket.booking.internal.web.request.CreateOrderRequest;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.application.order.query.GetOrderDetailUseCase;
 import com.ticket.booking.internal.application.order.query.GetOrderStatusUseCase;

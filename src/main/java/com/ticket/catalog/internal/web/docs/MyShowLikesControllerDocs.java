@@ -2,7 +2,7 @@ package com.ticket.catalog.internal.web.docs;
 
 import com.ticket.catalog.internal.application.showlike.query.GetMyShowLikesUseCase;
 import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.web.ApiResponse;
 import com.ticket.web.SliceResponse;
 import io.swagger.v3.oas.annotations.Operation;

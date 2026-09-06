@@ -38,22 +38,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 옮겼다가, bean을 등록하는 코드는 호출 대상 계약과 성질이 다르고 {@code sharedModules} 선언
  * 때문에 모든 module 테스트에 함께 뜬다는 이유로 {@code com.ticket.config.internal}로 다시
  * 옮겼다({@code com.ticket.shared.SharedModulePurityTest}가 그 규칙을 강제한다).
- * {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}(identity의 공개 계약
+ * {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}(member의 공개 계약
  * {@code AuthenticatedMember} 참조)와, legacy {@code com.ticket.core.config}/
  * {@code com.ticket.core.infra.config}에 있던 {@code WebConfig}/{@code WebSocketConfig}/
- * {@code HttpServiceConfig}/{@code JwtConfig}(각각 identity·booking의 internal을 직접 참조)는
+ * {@code HttpServiceConfig}/{@code JwtConfig}(각각 member·booking의 internal을 직접 참조)는
  * 실제로 여러 module의 internal/공개 계약을 동시에 알아야 하는 코드였다. 이 여섯 개를
  * {@code bootstrap}에 두는 대신 정식 module {@code com.ticket.config}로 옮기고,
- * {@code org.springframework.modulith.NamedInterface}로 identity/booking의 필요한 internal
+ * {@code org.springframework.modulith.NamedInterface}로 member/booking의 필요한 internal
  * package만 좁게 열었다.
  *
  * <p>그 뒤 <b>등록을 소유 module로 옮겨 그 네 갈래를 없앴다</b> —
- * {@code IdentityWebMvcConfig}(argument resolver), {@code JwtConfig}({@code JwtProperties}),
- * {@code HttpServiceConfig}(카카오 client)는 identity가, {@code WebSocketConfig}(STOMP 브로커와
+ * {@code MemberWebMvcConfig}(argument resolver), {@code JwtConfig}({@code JwtProperties}),
+ * {@code HttpServiceConfig}(카카오 client)는 member가, {@code WebSocketConfig}(STOMP 브로커와
  * 인터셉터)는 booking이 자기 안에서 등록한다. Spring이 {@code WebMvcConfigurer}/
  * {@code WebSocketMessageBrokerConfigurer} 구현을 여러 개 모아 적용하므로 module마다 하나씩 둬도
  * 되고, 새 module이 자기 확장점을 추가할 때 {@code config}를 고칠 필요가 없다. 그래서
- * {@code config}에 남은 module 참조는 {@code JpaAuditingConfig} 계열의 {@code identity} 공개 계약
+ * {@code config}에 남은 module 참조는 {@code JpaAuditingConfig} 계열의 {@code member} 공개 계약
  * 하나이고, {@code @NamedInterface}는 하나도 남지 않았다.
  *
  * <p>{@code com.ticket.bootstrap}에는 지금 production class가 하나도 없다 — 그래도 이 자리
@@ -76,11 +76,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code package-info.class}를 만들지 않아 Modulith가 그 존재 자체를 볼 수 없다({@code shared}
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
- * {@code booking}, {@code catalog}, {@code identity}, {@code admission},
+ * {@code booking}, {@code catalog}, {@code member}, {@code admission},
  * {@code metadata}, {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed},
  * {@code payment}, {@code ticketing} 정확히 12개다. {@code showlike}는 더 이상 없다 —
  * 찜(개수·추가·삭제·내 목록)을 catalog가 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도
- * module로 두면 catalog·identity와 순환 결합이 생겨서다(catalog의 package-info 참고).
+ * module로 두면 catalog·member와 순환 결합이 생겨서다(catalog의 package-info 참고).
  *
  * <p>{@code payment}는 ADR 0005(Phase 5 Task 11)로 신설된 module이다. Order에 대한 결제 시도
  * entity/schema/repository까지만 다루는 entity-only 단계라 다른 업무 module을 import하지 않는
@@ -105,23 +105,23 @@ class ModularityTests {
 
     /** 파일시스템 기준으로 선언된 12개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "identity", "admission", "metadata", "shared", "web", "config",
+            "booking", "catalog", "member", "admission", "metadata", "shared", "web", "config",
             "error", "seed", "payment", "ticketing");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
      * 집합이다 — {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라
-     * (catalog/identity/admission은 상한이 비어 있어 업무 module 의존이 하나도 없다는 뜻이다 —
+     * (catalog/member/admission은 상한이 비어 있어 업무 module 의존이 하나도 없다는 뜻이다 —
      * 비워 두어도 {@code sharedModules}인 shared·error·web은 항상 허용된다), 실제로 관측되는 edge를
      * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. admission은 다른 module을
      * 참조하지 않는 기반 module이다(오류 계약 error와 응답 봉투 web은 예외다). {@code shared}는
-     * {@code CursorPage}(catalog가 참조)·{@code CorsProperties}(identity·config가 참조)·
-     * {@code UuidSupplier}(identity가 참조) 같은 <b>호출 대상 계약만</b> 담아 다른 어떤 module도
+     * {@code CursorPage}(catalog가 참조)·{@code CorsProperties}(member·config가 참조)·
+     * {@code UuidSupplier}(member가 참조) 같은 <b>호출 대상 계약만</b> 담아 다른 어떤 module도
      * 참조하지 않는 leaf고, 그래서 이 module들이 shared를 향한 edge를 갖는다. 전역
      * {@code @Configuration}은 {@code config}가 소유한다.
-     * {@code catalog}가 identity를 향한 edge를 갖는 이유는 찜(showlike) 흡수로 회원 존재 확인이
+     * {@code catalog}가 member를 향한 edge를 갖는 이유는 찜(showlike) 흡수로 회원 존재 확인이
      * 필요해졌기 때문이다({@code MemberLookup}) — booking이 {@code Order.memberId}를 위해
-     * identity를 참조하는 것과 같은 패턴이다(catalog의 package-info 참고).
+     * member를 참조하는 것과 같은 패턴이다(catalog의 package-info 참고).
      * {@code web}은 REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
      * {@code SliceResponse})를 소유하는 leaf라, HTTP를 노출하는 module은 전부 web을 향한 edge를
      * 갖는다 — 자체 오류를 던지지 않는 {@code metadata}가 error 없이 web edge만 갖는 이유가
@@ -130,7 +130,7 @@ class ModularityTests {
      * 실제로 web을 참조하는지는 이 DAG가 고정한다.
      * {@code config}는 전역 배선을 소유하는 composition-root module이다(클래스 javadoc과
      * {@code com.ticket.config}의 package-info 참고). 등록을 소유 module로 옮긴 뒤 남은 module
-     * 참조는 {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}가 쓰는 identity의 공개
+     * 참조는 {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}가 쓰는 member의 공개
      * 계약 하나뿐이고, {@code UuidSupplierConfig}의 {@code UuidSupplier} 참조로 shared를 향한
      * edge를 갖는다. 반대로 이 module을 참조하는 다른 module은 없다(leaf).
      * {@code booking}이 shared를 향한 edge를 갖는 이유는 {@code WebSocketConfig}가 STOMP
@@ -139,21 +139,21 @@ class ModularityTests {
      * 참조한다({@code error -> web} 단방향) — 업무 module이 자기 오류를 소유해 가면서 이 module을
      * 향한 edge가 늘어난다.
      * {@code seed}는 여러 module의 테이블을 raw SQL로 적재하는 module이고, 부하 테스트
-     * 회원만 identity가 {@code @NamedInterface("seed")}로 연 {@code member.command} package를
-     * 통해 호출해 identity를 향한 edge를 갖는다. 반대로 이 module을 참조하는 다른 module은
+     * 회원만 member가 {@code @NamedInterface("seed")}로 연 {@code member.command} package를
+     * 통해 호출해 member를 향한 edge를 갖는다. 반대로 이 module을 참조하는 다른 module은
      * 없다(leaf).
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
-            Map.entry("booking", Set.of("catalog", "identity", "admission", "shared", "web", "error")),
-            Map.entry("catalog", Set.of("identity", "shared", "web", "error")),
-            Map.entry("identity", Set.of("shared", "web", "error")),
+            Map.entry("booking", Set.of("catalog", "member", "admission", "shared", "web", "error")),
+            Map.entry("catalog", Set.of("member", "shared", "web", "error")),
+            Map.entry("member", Set.of("shared", "web", "error")),
             Map.entry("admission", Set.of("web", "error")),
-            Map.entry("metadata", Set.of("catalog", "booking", "identity", "web")),
+            Map.entry("metadata", Set.of("catalog", "booking", "member", "web")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),
-            Map.entry("config", Set.of("identity", "shared")),
+            Map.entry("config", Set.of("member", "shared")),
             Map.entry("error", Set.of("web")),
-            Map.entry("seed", Set.of("identity")),
+            Map.entry("seed", Set.of("member")),
             Map.entry("payment", Set.of()),
             Map.entry("ticketing", Set.of())
     );

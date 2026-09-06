@@ -1,6 +1,6 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.internal.domain.performanceseat.command.DeselectedSeatIds;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;

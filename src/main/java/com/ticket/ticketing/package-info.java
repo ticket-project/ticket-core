@@ -6,7 +6,7 @@
  * {@code OrderConfirmed} listener, 자동 티켓 발급, QR, 입장, 사용, 취소, 환불, 양도 API는 이번
  * 범위가 아니다.
  *
- * <p>booking의 OrderSeat, identity의 Member를 참조할 때 {@code orderSeatId}/{@code ownerMemberId}는
+ * <p>booking의 OrderSeat, member의 Member를 참조할 때 {@code orderSeatId}/{@code ownerMemberId}는
  * scalar {@code Long} 컬럼일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는
  * 금지된다(ADR 0003, ADR 0005 §4).
  *

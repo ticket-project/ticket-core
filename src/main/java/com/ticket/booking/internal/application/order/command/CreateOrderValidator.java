@@ -9,7 +9,7 @@ import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.catalog.PerformanceSaleCatalog;
 import com.ticket.catalog.PerformanceSaleSnapshot;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +30,7 @@ public class CreateOrderValidator {
     /**
      * 주문 생성 전 검증을 비용 순서로 수행한다.
      *
-     * <p>회원 활성 확인(identity), 예매 정책 조회·주문 표시 snapshot 조회(catalog), 필요 시 입장 검사
+     * <p>회원 활성 확인(member), 예매 정책 조회·주문 표시 snapshot 조회(catalog), 필요 시 입장 검사
      * (admission)는 모두 booking DB 트랜잭션 밖에서 호출한다. 다른 module 호출이 booking 트랜잭션
      * 안에 있으면 그 module의 지연이나 실패가 booking connection을 붙잡는다. booking local read
      * (pending 주문 중복, 좌석 판매 상태)만 {@link PendingOrderLocalValidator}의 짧은 읽기

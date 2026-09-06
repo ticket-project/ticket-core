@@ -3,7 +3,7 @@
 엔지니어링 스킬이 이 저장소를 탐색할 때 도메인 문서를 어떻게 읽어야 하는지 정한다.
 
 이 저장소는 **단일 컨텍스트**다. 루트 `CONTEXT.md` 하나와 `docs/adr/`를 쓴다.
-단일 Gradle 프로젝트 안의 Spring Modulith Application Module(`booking`, `catalog`, `identity`,
+단일 Gradle 프로젝트 안의 Spring Modulith Application Module(`booking`, `catalog`, `member`,
 `admission`, `showlike`, `metadata`)은 업무 기능 경계이지 별개의 바운디드 컨텍스트가 아니다.
 
 ## 탐색 전에 읽을 것
@@ -31,7 +31,7 @@
 │   ├── 0002-....md
 │   └── 0003-....md
 └── src/main/java/com/ticket/
-    ├── booking/, catalog/, identity/, admission/, showlike/, metadata/, shared/
+    ├── booking/, catalog/, member/, admission/, showlike/, metadata/, shared/
     └── core/, bootstrap/, storage/, support/   # 아직 모듈로 옮기지 않은 legacy
 ```
 

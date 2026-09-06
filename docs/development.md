@@ -11,14 +11,14 @@
 ## 프로젝트 요약
 
 Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `catalog`,
-`identity`, `admission`, `metadata`, `payment`, `ticketing`을 포함해 12개 Spring Modulith
+`member`, `admission`, `metadata`, `payment`, `ticketing`을 포함해 12개 Spring Modulith
 Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). 현재
 구현의 중심은 아래 흐름이다.
 
-- 인증/회원(`identity`): 이메일 회원가입, 로그인, JWT 갱신, OAuth2 로그인 URL 조회 및 토큰 교환
+- 인증/회원(`member`): 이메일 회원가입, 로그인, JWT 갱신, OAuth2 로그인 URL 조회 및 토큰 교환
 - 공연/전시 조회(`catalog`): 쇼, 장르, 회차별 Venue 배치·좌석·등급(Grade/PerformanceGrade) 조회,
   대기열 필요 여부 정책
-- 메타 코드 조회(`metadata`): catalog/booking/identity가 공개한 code/label을 한 번에 조합
+- 메타 코드 조회(`metadata`): catalog/booking/member가 공개한 code/label을 한 번에 조합
 - 좌석 선택(`booking`): Redis TTL 기반 임시 선택 상태와 WebSocket 전파
 - 좌석 선점과 주문(`booking`): Redis 기반 hold, `PENDING` 주문 생성, 조회, 취소, 만료 처리.
   판매 좌석(`PerformanceSeat`)은 회차 단위로 편성되고 판매 오픈 시점 가격을 snapshot한다
@@ -40,11 +40,11 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 ### 인증
 
 - API 인증은 JWT 기반 stateless 방식이다.
-- OAuth2 인가 흐름은 별도 filter chain에서 처리한다. 전역 `SecurityFilterChain`은 `identity`가
+- OAuth2 인가 흐름은 별도 filter chain에서 처리한다. 전역 `SecurityFilterChain`은 `member`가
   제공한다.
 - Refresh token과 OAuth2 1회용 코드는 Redis를 쓴다.
 - 공개 GET API를 제외한 대부분의 API는 인증이 필요하다. 다른 모듈의 controller는
-  `identity.AuthenticatedMember`만 parameter로 받고 JWT나 identity의 internal `Member`를 보지
+  `member.AuthenticatedMember`만 parameter로 받고 JWT나 member의 internal `Member`를 보지
   않는다.
 
 ### 쇼·회차·좌석 조회
@@ -93,7 +93,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 2. catalog `BookingPolicyLookup`으로 예매 정책·좌석 소속·가격 snapshot을 조회한다(booking DB
    트랜잭션 밖)
 3. 정책상 대기열이 필요한 회차만 admission `AdmissionVerifier`로 token을 검증한다(밖)
-4. identity `MemberLookup`으로 회원이 active인지 확인한다(밖)
+4. member `MemberLookup`으로 회원이 active인지 확인한다(밖)
 5. booking local read로 같은 회원의 `PENDING` 주문 중복과 좌석 판매 상태를 확인한다(짧은 read
    트랜잭션)
 6. 좌석별 분산락(`LockScope.SEAT`) 안에서 Redis에 좌석 hold를 생성한다(밖)
@@ -212,7 +212,7 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 - Core(`catalog`)는 예매 API 진입 시 회차 정책을 먼저 확인하고, 대기열이 필요한 회차에서만
   `admission` 모듈이 `X-Admission-Token`의 서명, 만료, memberId와 performanceId 일치 여부를
   검증한다.
-- Core의 Redis는 좌석 선택, hold(`booking`), refresh token, OAuth2 one-time auth code(`identity`)
+- Core의 Redis는 좌석 선택, hold(`booking`), refresh token, OAuth2 one-time auth code(`member`)
   용도로만 사용한다.
 
 ## 미구현 또는 후속 범위
@@ -230,8 +230,8 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
   본다
 - `com.ticket.core`/`storage`/`support` legacy 코드(오류 처리, `core.infra.seed`의 시드 러너
   등)의 모듈 이전
-- identity 전용인 `com.ticket.core.support.util.CookieUtils`(`refresh_token` 쿠키 이름과
-  `/api/v1/auth` 경로를 하드코딩)를 `identity.internal.web`으로 옮기는 작업 — 아직 legacy
+- member 전용인 `com.ticket.core.support.util.CookieUtils`(`refresh_token` 쿠키 이름과
+  `/api/v1/auth` 경로를 하드코딩)를 `member.internal.web`으로 옮기는 작업 — 아직 legacy
   위치에 남아 있다
 - Flyway 기반 운영 마이그레이션 스크립트 누적과 검증 환경 보강
 - Redis key scan 기반 조회 구조 최적화
@@ -301,7 +301,7 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
   승인/실패/취소 API, callback/webhook, `OrderConfirmed` listener, 자동 티켓 발급, QR/입장/사용/
   양도를 이 모듈에 추가하지 않는다. 필요해지면 먼저 별도 설계·ADR 승인을 받는다.
 - **cross-module 참조는 scalar ID만 쓴다.** `Payment.orderId`, `Ticket.orderSeatId`/
-  `ownerMemberId`는 booking/identity entity를 JPA로 참조하지 않는 scalar 컬럼이다. cross-module
+  `ownerMemberId`는 booking/member entity를 JPA로 참조하지 않는 scalar 컬럼이다. cross-module
   물리 FK를 새로 만들지 않는다.
 - **다른 업무 모듈을 import하지 않는다.** `ModularityTests.APPROVED_DEPENDENCY_DAG`에서 두 모듈
   모두 `Set.of()`다(`shared`/`web`/`error` 포함 완전한 leaf) — booking의 `internal` 패키지나

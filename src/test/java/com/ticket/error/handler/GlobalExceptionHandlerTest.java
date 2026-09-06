@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>RFC 9457 스타일의 공통 오류 표현 대신, 기존 {@code ApiResponse} 오류 envelope
  * ({@code result/data/error})와 E-code, HTTP 상태를 그대로 유지하는지 검증한다.
  *
- * <p><b>업무 오류는 이 파일이 소유한 fixture로 검증한다.</b> 예전에는 booking의 E6000과 identity의
+ * <p><b>업무 오류는 이 파일이 소유한 fixture로 검증한다.</b> 예전에는 booking의 E6000과 member의
  * E1000/E1001을 빌려 와 "예외가 들고 있는 상태·code·message를 그대로 직렬화한다"는 한 가지 동작을
  * 세 번 확인했다. 그 code들은 이제 각 module의 계약이고 각 module의 handler 테스트와 controller
  * 계약 테스트가 고정하므로, 여기서는 어느 module에도 속하지 않는 {@link TestErrorCode}로 확인한다.

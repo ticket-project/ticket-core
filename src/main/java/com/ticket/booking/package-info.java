@@ -6,7 +6,7 @@
  * 있다. {@link com.ticket.booking.OrderStarted}/{@link com.ticket.booking.OrderTerminated}는
  * commit 이후 후속 처리(Redis hold 해제, WebSocket 발행)를 위한 공개 이벤트다.
  */
-@ApplicationModule(displayName = "Booking", allowedDependencies = {"catalog", "identity", "admission"})
+@ApplicationModule(displayName = "Booking", allowedDependencies = {"catalog", "member", "admission"})
 package com.ticket.booking;
 
 import org.springframework.modulith.ApplicationModule;

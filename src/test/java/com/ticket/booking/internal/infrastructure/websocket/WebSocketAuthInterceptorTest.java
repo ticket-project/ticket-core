@@ -1,8 +1,8 @@
 package com.ticket.booking.internal.infrastructure.websocket;
 
-import com.ticket.identity.AccessTokenAuthenticator;
-import com.ticket.identity.AuthenticatedMember;
-import com.ticket.identity.internal.exception.UnauthenticatedException;
+import com.ticket.member.AccessTokenAuthenticator;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.internal.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

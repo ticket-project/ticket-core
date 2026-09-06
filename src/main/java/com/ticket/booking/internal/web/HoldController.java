@@ -2,7 +2,7 @@ package com.ticket.booking.internal.web;
 
 import com.ticket.booking.internal.web.docs.HoldControllerDocs;
 import com.ticket.booking.internal.web.request.CreateHoldRequest;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;

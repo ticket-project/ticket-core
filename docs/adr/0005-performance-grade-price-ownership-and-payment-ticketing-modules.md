@@ -77,11 +77,11 @@ ADR 0003 §3이 승인한 DAG는 `payment`/`ticketing`을 몰랐다. 이 ADR은 
 ```text
 payment   -> 없음
 ticketing -> 없음
-booking   -> catalog, identity, admission
-catalog   -> identity
-identity  -> 없음
+booking   -> catalog, member, admission
+catalog   -> member
+member  -> 없음
 admission -> 없음
-metadata  -> catalog, booking, identity 그리고 필요 시 payment/ticketing의 공개 metadata
+metadata  -> catalog, booking, member 그리고 필요 시 payment/ticketing의 공개 metadata
 ```
 
 `payment`와 `ticketing`은 다른 업무 모듈을 import하지 않는다. 미래 의존 edge(`payment -> booking`,

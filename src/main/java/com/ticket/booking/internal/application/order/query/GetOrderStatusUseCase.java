@@ -6,7 +6,7 @@ import com.ticket.booking.internal.application.order.query.model.OrderStatusView
 import com.ticket.booking.internal.exception.OrderNotOwnedException;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -5,12 +5,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.member.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.booking.internal.application.performanceseat.query.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatAvailabilityUseCase;
 import com.ticket.booking.internal.application.performanceseat.query.GetSeatStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

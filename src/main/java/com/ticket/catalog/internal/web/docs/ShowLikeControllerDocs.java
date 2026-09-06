@@ -1,6 +1,6 @@
 package com.ticket.catalog.internal.web.docs;
 
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.catalog.internal.application.showlike.command.AddShowLikeUseCase;
 import com.ticket.catalog.internal.application.showlike.command.RemoveShowLikeUseCase;
 import com.ticket.catalog.internal.application.showlike.query.GetShowLikeStatusUseCase;

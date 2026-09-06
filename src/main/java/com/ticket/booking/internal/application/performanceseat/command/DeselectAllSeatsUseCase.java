@@ -5,7 +5,7 @@ import com.ticket.booking.internal.domain.performanceseat.command.DeselectedSeat
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.booking.internal.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import lombok.RequiredArgsConstructor;

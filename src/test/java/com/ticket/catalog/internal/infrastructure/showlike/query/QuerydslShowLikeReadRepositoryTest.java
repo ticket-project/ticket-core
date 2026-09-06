@@ -6,7 +6,7 @@ import com.ticket.catalog.internal.domain.show.Region;
 import com.ticket.catalog.internal.domain.show.Show;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
-import com.ticket.identity.internal.domain.member.model.Member;
+import com.ticket.member.internal.domain.member.model.Member;
 import com.ticket.shared.CursorPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

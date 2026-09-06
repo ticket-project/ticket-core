@@ -23,7 +23,7 @@ entity-only 단계다. PG 승인, `OrderConfirmed` listener, 실제 결제 정�
 - 주문 저장 또는 상태 변경과 그에 대응하는 이벤트 발행은 같은 DB 트랜잭션에서 처리한다.
 - 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고
   throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
-- 다른 모듈 API 호출(catalog 정책 조회, identity 회원 확인, admission token 검증)은 booking DB
+- 다른 모듈 API 호출(catalog 정책 조회, member 회원 확인, admission token 검증)은 booking DB
   트랜잭션 밖에서 끝낸다.
 - 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다(ADR 0005). 클라이언트가 보낸 가격도,
   catalog가 다시 계산한 가격도 금액 계산 근거로 쓰지 않는다.
@@ -39,7 +39,7 @@ CreateOrderUseCase
   -> CreateOrderValidator
        -> catalog BookingPolicyLookup: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) (DB 트랜잭션 밖)
        -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
-       -> identity MemberLookup: active member 확인 (밖)
+       -> member MemberLookup: active member 확인 (밖)
        -> booking local read: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
        -> catalog PerformanceSaleCatalog: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
           show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다

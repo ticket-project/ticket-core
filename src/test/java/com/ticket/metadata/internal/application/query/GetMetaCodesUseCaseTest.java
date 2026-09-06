@@ -2,7 +2,7 @@ package com.ticket.metadata.internal.application.query;
 
 import com.ticket.booking.BookingMetadata;
 import com.ticket.catalog.CatalogMetadata;
-import com.ticket.identity.IdentityMetadata;
+import com.ticket.member.MemberMetadata;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * catalog·booking·identity의 공개 metadata 계약만으로 코드/라벨을 조합하는지 검증한다.
+ * catalog·booking·member의 공개 metadata 계약만으로 코드/라벨을 조합하는지 검증한다.
  * 어떤 module의 internal enum·entity·repository도 직접 참조하지 않는다.
  */
 @ExtendWith(MockitoExtension.class)
@@ -30,10 +30,10 @@ class GetMetaCodesUseCaseTest {
     private BookingMetadata bookingMetadata;
 
     @Mock
-    private IdentityMetadata identityMetadata;
+    private MemberMetadata memberMetadata;
 
     @Test
-    void catalog_booking_identity_공개_계약을_각각_한_번씩_호출해_코드를_조합한다() {
+    void catalog_booking_member_공개_계약을_각각_한_번씩_호출해_코드를_조합한다() {
         when(catalogMetadata.categories())
                 .thenReturn(List.of(new CatalogMetadata.CategoryCode(1L, "CONCERT", "콘서트")));
         when(catalogMetadata.genres())
@@ -52,12 +52,12 @@ class GetMetaCodesUseCaseTest {
                 .thenReturn(List.of(new BookingMetadata.CodeLabel("ACTIVE", "선점 중")));
         when(bookingMetadata.orderStates())
                 .thenReturn(List.of(new BookingMetadata.CodeLabel("PENDING", "결제 대기")));
-        when(identityMetadata.roles())
-                .thenReturn(List.of(new IdentityMetadata.CodeLabel("USER", "일반 회원")));
-        when(identityMetadata.socialProviders())
-                .thenReturn(List.of(new IdentityMetadata.CodeLabel("KAKAO", "카카오")));
+        when(memberMetadata.roles())
+                .thenReturn(List.of(new MemberMetadata.CodeLabel("USER", "일반 회원")));
+        when(memberMetadata.socialProviders())
+                .thenReturn(List.of(new MemberMetadata.CodeLabel("KAKAO", "카카오")));
 
-        GetMetaCodesUseCase useCase = new GetMetaCodesUseCase(catalogMetadata, bookingMetadata, identityMetadata);
+        GetMetaCodesUseCase useCase = new GetMetaCodesUseCase(catalogMetadata, bookingMetadata, memberMetadata);
 
         GetMetaCodesUseCase.Output output = useCase.execute();
 
@@ -93,7 +93,7 @@ class GetMetaCodesUseCaseTest {
         verify(bookingMetadata, times(1)).performanceSeatStates();
         verify(bookingMetadata, times(1)).holdStates();
         verify(bookingMetadata, times(1)).orderStates();
-        verify(identityMetadata, times(1)).roles();
-        verify(identityMetadata, times(1)).socialProviders();
+        verify(memberMetadata, times(1)).roles();
+        verify(memberMetadata, times(1)).socialProviders();
     }
 }

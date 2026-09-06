@@ -4,7 +4,7 @@ import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.internal.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.catalog.internal.exception.ShowLikeAlreadyExistsException;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;

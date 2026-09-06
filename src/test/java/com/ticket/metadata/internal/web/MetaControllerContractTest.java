@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * {@code GET /api/v1/meta/codes}의 기존 응답 키(카테고리/장르/enum code·label)를 그대로
- * 유지하는지 검증한다. catalog/booking/identity 공개 계약을 조합한 이후에도 wire format은
+ * 유지하는지 검증한다. catalog/booking/member 공개 계약을 조합한 이후에도 wire format은
  * 이동 전과 같아야 한다.
  */
 @SuppressWarnings("NonAsciiCharacters")

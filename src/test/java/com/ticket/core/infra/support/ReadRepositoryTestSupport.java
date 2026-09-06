@@ -1,8 +1,8 @@
 package com.ticket.core.infra.support;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.identity.internal.domain.member.model.Member;
-import com.ticket.identity.internal.domain.member.model.Email;
+import com.ticket.member.internal.domain.member.model.Member;
+import com.ticket.member.internal.domain.member.model.Email;
 import com.ticket.catalog.internal.domain.performance.Performance;
 import com.ticket.catalog.internal.domain.performance.PerformanceGrade;
 import com.ticket.catalog.internal.domain.grade.Grade;
@@ -18,7 +18,7 @@ import com.ticket.catalog.internal.domain.show.Performer;
 import com.ticket.catalog.internal.domain.show.Venue;
 import com.ticket.catalog.internal.domain.showlike.model.ShowLike;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.identity.internal.domain.member.model.Role;
+import com.ticket.member.internal.domain.member.model.Role;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -264,7 +264,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.identity.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure", "com.ticket.payment.internal.domain", "com.ticket.ticketing.internal.domain"})
+    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.member.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure", "com.ticket.payment.internal.domain", "com.ticket.ticketing.internal.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

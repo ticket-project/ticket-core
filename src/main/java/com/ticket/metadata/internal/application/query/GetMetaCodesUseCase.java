@@ -2,7 +2,7 @@ package com.ticket.metadata.internal.application.query;
 
 import com.ticket.booking.BookingMetadata;
 import com.ticket.catalog.CatalogMetadata;
-import com.ticket.identity.IdentityMetadata;
+import com.ticket.member.MemberMetadata;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 /**
  * 프론트가 한 번에 조회하는 공통 코드/Enum을 {@link CatalogMetadata}, {@link BookingMetadata},
- * {@link IdentityMetadata}에서 각각 조합한다. 어떤 module의 internal enum·entity·repository도
+ * {@link MemberMetadata}에서 각각 조합한다. 어떤 module의 internal enum·entity·repository도
  * 직접 import하지 않는다.
  */
 @Service
@@ -22,7 +22,7 @@ public class GetMetaCodesUseCase {
 
     private final CatalogMetadata catalogMetadata;
     private final BookingMetadata bookingMetadata;
-    private final IdentityMetadata identityMetadata;
+    private final MemberMetadata memberMetadata;
 
     public record CategoryCodeItem(Long id, String code, String name) {
     }
@@ -67,8 +67,8 @@ public class GetMetaCodesUseCase {
                 toEnumCodeItems(bookingMetadata.performanceSeatStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
                 toEnumCodeItems(bookingMetadata.holdStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
                 toEnumCodeItems(bookingMetadata.orderStates(), BookingMetadata.CodeLabel::code, BookingMetadata.CodeLabel::label),
-                toEnumCodeItems(identityMetadata.socialProviders(), IdentityMetadata.CodeLabel::code, IdentityMetadata.CodeLabel::label),
-                toEnumCodeItems(identityMetadata.roles(), IdentityMetadata.CodeLabel::code, IdentityMetadata.CodeLabel::label),
+                toEnumCodeItems(memberMetadata.socialProviders(), MemberMetadata.CodeLabel::code, MemberMetadata.CodeLabel::label),
+                toEnumCodeItems(memberMetadata.roles(), MemberMetadata.CodeLabel::code, MemberMetadata.CodeLabel::label),
                 toEnumCodeItems(catalogMetadata.saleTypes(), CatalogMetadata.CodeLabel::code, CatalogMetadata.CodeLabel::label),
                 toEnumCodeItems(catalogMetadata.regions(), CatalogMetadata.CodeLabel::code, CatalogMetadata.CodeLabel::label),
                 toEnumCodeItems(catalogMetadata.showSortKeys(), CatalogMetadata.CodeLabel::code, CatalogMetadata.CodeLabel::label)

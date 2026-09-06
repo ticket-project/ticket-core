@@ -4,7 +4,7 @@ import com.ticket.catalog.internal.application.showlike.query.GetMyShowLikesUseC
 import com.ticket.catalog.internal.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.catalog.internal.web.docs.MyShowLikesControllerDocs;
 import com.ticket.catalog.internal.web.support.cursor.ShowLikeCursorCodec;
-import com.ticket.identity.AuthenticatedMember;
+import com.ticket.member.AuthenticatedMember;
 import com.ticket.web.ApiResponse;
 import com.ticket.web.SliceResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * {@code /api/v1/members/me/likes}는 identity가 아니라 catalog가 구현한다 — 찜 데이터
- * ({@code ShowLike})를 catalog가 소유하므로, identity가 이 엔드포인트를 구현하면
- * {@code catalog -> identity}(회원 확인)와 {@code identity -> catalog}(찜 목록 조회)가 만나
+ * {@code /api/v1/members/me/likes}는 member가 아니라 catalog가 구현한다 — 찜 데이터
+ * ({@code ShowLike})를 catalog가 소유하므로, member가 이 엔드포인트를 구현하면
+ * {@code catalog -> member}(회원 확인)와 {@code member -> catalog}(찜 목록 조회)가 만나
  * 순환이 생긴다. URL은 기존 계약을 그대로 유지한다.
  */
 @RestController

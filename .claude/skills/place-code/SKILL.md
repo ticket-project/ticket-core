@@ -23,10 +23,10 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | Show, Performance, Venue, Seat, Grade(등급 코드·이름), PerformanceGrade(회차별 등급 가격·표시 순서), 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차·좌석 조회 | `catalog` |
 | Order에 대한 결제 시도(Payment)의 생명주기 | `payment` |
 | 결제 확정으로 발급되는 Ticket(입장 권리)의 생명주기 | `ticketing` |
-| Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `identity` |
+| Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `member` |
 | admission token 설정·decode·검증 | `admission` |
 | Show 좋아요(찜) 개수·추가·삭제·내 찜 목록 | `catalog`(Show의 부가 속성으로 취급, "showlike 흡수" 참고) |
-| catalog/booking/identity가 공개한 code/label 조합 | `metadata` |
+| catalog/booking/member가 공개한 code/label 조합 | `metadata` |
 | 둘 이상 독립 모듈이 의미 동일하게 공유하고 프로토콜·프레임워크 결합이 없는 호출 대상 계약(`UuidSupplier`, `CorsProperties`, `CursorPage`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
 | REST 응답 표현 계약(응답 봉투 `ApiResponse`/`ErrorMessage`/`ResultType`, 무한스크롤 `SliceResponse`) — bean은 두지 않는다 | `web` |
 | 어느 모듈의 것도 아닌 공통 오류(E400·E404·E500), 예외 base 타입, 전역 handler | `error` |
@@ -76,11 +76,11 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | --- | --- |
 | HTTP endpoint, 요청 검증, 인증 주체 추출, 응답 포맷 | 소유 모듈의 `internal.web` |
 | Swagger 문서 인터페이스 | `internal.web`의 `controller.docs` |
-| OAuth2 설정, 전역 security filter chain, 인증 필터 | `identity.internal`의 security 설정 |
-| JWT 발급·검증 구현 | `identity.internal`의 token 구현 |
-| 인증 흐름의 포트와 인증 주체·토큰 값 | `identity.internal.application` |
-| 다른 모듈이 받는 인증 principal | `identity.AuthenticatedMember`(공개 계약) |
-| 회원 역할·권한 같은 업무 개념 | `identity.internal.domain` |
+| OAuth2 설정, 전역 security filter chain, 인증 필터 | `member.internal`의 security 설정 |
+| JWT 발급·검증 구현 | `member.internal`의 token 구현 |
+| 인증 흐름의 포트와 인증 주체·토큰 값 | `member.internal.application` |
+| 다른 모듈이 받는 인증 principal | `member.AuthenticatedMember`(공개 계약) |
+| 회원 역할·권한 같은 업무 개념 | `member.internal.domain` |
 | admission token 설정·claim decode | `admission.internal` |
 | 다른 모듈이 부르는 admission 검증 API | `admission.AdmissionVerifier`/`AdmissionVerification`(공개 계약) |
 | HTTP 헤더 이름 같은 API 계약 상수 | 소유 모듈의 `internal.web` |
@@ -107,8 +107,8 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | `@Scheduled` 트리거와 실행 주기 설정 | 소유 모듈의 `internal.infrastructure.worker`(예: `booking.internal.infrastructure.worker.OrderExpirationTrigger`) |
 | Spring Boot main과 `@Modulith` 선언 | `com.ticket.TicketApplication` |
 | module 결합 없는 전역 기술 설정(Swagger, P6Spy, Querydsl, UUID 공급자, Redisson, JPA auditing 등록, scheduling/clock) | `com.ticket.config.internal`, 그 공개 계약(예: `UuidSupplier`)은 `com.ticket.shared` |
-| identity의 공개 계약만 쓰는 전역 배선(JpaAuditingConfig 등) | `com.ticket.config`(`allowedDependencies = {"identity"}`) |
-| **특정 module의 물건을 Spring에 등록하는 배선**(argument resolver, `@ConfigurationProperties`, HTTP client, STOMP 인터셉터) | **그 module의 `internal`에 자기 `@Configuration`을 둔다** — Spring이 `WebMvcConfigurer`·`WebSocketMessageBrokerConfigurer`를 여러 개 모아 적용하므로 module마다 하나씩 둘 수 있다. 예: `identity.internal.infrastructure.security.IdentityWebMvcConfig`, `booking.internal.infrastructure.websocket.WebSocketConfig`. 전역 설정 module이 대신 등록해 주면 `@NamedInterface`로 internal을 열어야 하므로 하지 않는다 |
+| member의 공개 계약만 쓰는 전역 배선(JpaAuditingConfig 등) | `com.ticket.config`(`allowedDependencies = {"member"}`) |
+| **특정 module의 물건을 Spring에 등록하는 배선**(argument resolver, `@ConfigurationProperties`, HTTP client, STOMP 인터셉터) | **그 module의 `internal`에 자기 `@Configuration`을 둔다** — Spring이 `WebMvcConfigurer`·`WebSocketMessageBrokerConfigurer`를 여러 개 모아 적용하므로 module마다 하나씩 둘 수 있다. 예: `member.internal.infrastructure.security.MemberWebMvcConfig`, `booking.internal.infrastructure.websocket.WebSocketConfig`. 전역 설정 module이 대신 등록해 주면 `@NamedInterface`로 internal을 열어야 하므로 하지 않는다 |
 | `shared`에 `@Configuration`을 두려는 판단 | 하지 않는다 — `com.ticket.shared.SharedModulePurityTest`가 막는다. bean 등록은 `config`가 소유한다 |
 | 프레임워크 중립 오류 계약과 예외 전달 기반 | `com.ticket.error`(`ErrorCode`, `TicketException`, 공통 예외, `handler`) — 아래 "오류 처리" 참고 |
 | 요청 파라미터 Bean Validation 제약 | `internal.web`의 `controller.docs` 인터페이스 |
@@ -159,7 +159,7 @@ Spring Data JPA 인터페이스)뿐이다. `internal.application`(use case)과 `
 (controller)은 아직 없다 — PG client, 결제 승인/실패/취소 API, callback/webhook, 자동 티켓
 발급, QR/입장/사용/양도 API가 추가되는 후속 단계에서 채워진다. 두 모듈 모두
 `allowedDependencies = {}`인 leaf module이다(`payment -> 없음`, `ticketing -> 없음`) — 다른
-업무 모듈을 import하지 않는다. `booking`의 Order/OrderSeat, `identity`의 Member를 참조할 때도
+업무 모듈을 import하지 않는다. `booking`의 Order/OrderSeat, `member`의 Member를 참조할 때도
 scalar `orderId`/`orderSeatId`/`ownerMemberId` 컬럼일 뿐 JPA 연관관계가 아니다. 실제 PG 정산
 (`payment -> booking`)이나 `OrderConfirmed` 구독(`ticketing -> booking`) 같은 공개 계약 의존은
 그 기능을 구현하는 후속 단계에서만 추가한다 — 지금 빈 인터페이스나 가짜 호출로 미리 만들지
@@ -172,7 +172,7 @@ scalar `orderId`/`orderSeatId`/`ownerMemberId` 컬럼일 뿐 JPA 연관관계가
 있다. `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/`GetShowLikeStatusUseCase`/
 `GetMyShowLikesUseCase`와 `ShowLike` entity 모두 catalog 소유다. 좋아요 개수는
 `Show.viewCount`와 같은 성격의 파생 지표라는 판단으로, catalog가 회원 존재 확인을 위해
-identity의 `MemberLookup`을 참조한다(단방향). 상세 배경은
+member의 `MemberLookup`을 참조한다(단방향). 상세 배경은
 `docs/adr/0003-spring-modulith-application-module-boundaries.md` §11을 본다.
 
 ## 4. 자주 틀리는 지점
@@ -200,12 +200,12 @@ identity의 `MemberLookup`을 참조한다(단방향). 상세 배경은
   `@Transactional`은 흐름을 엮는 방법이다. 규칙은 `internal.domain`에, 경계와 발행은
   `internal.application`에.
 - **다른 모듈이 필요한 경우.** 상대 모듈의 `internal` repository나 store를 직접 부르지 않고
-  공개 API(예: `catalog.BookingPolicyLookup`, `identity.MemberLookup`)를 호출한다.
+  공개 API(예: `catalog.BookingPolicyLookup`, `member.MemberLookup`)를 호출한다.
 - **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별
   `entryType` 계산(`catalog`)과 admission token 검증(`admission`)만 담당하며 queue token
   저장소나 만료 핸들러를 두지 않는다.
 - **Core Redis의 용도.** seat selection, seat hold(`booking`), refresh token, OAuth2
-  one-time auth code(`identity`)뿐이다. 대기열 상태를 Core Redis에 넣지 않는다.
+  one-time auth code(`member`)뿐이다. 대기열 상태를 Core Redis에 넣지 않는다.
 
 ## 5. 구조 테스트가 실패했을 때
 

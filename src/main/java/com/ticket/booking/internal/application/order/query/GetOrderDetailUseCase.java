@@ -5,8 +5,8 @@ import com.ticket.booking.internal.domain.order.model.OrderState;
 import com.ticket.booking.internal.application.order.query.model.OrderDetailRow;
 import com.ticket.booking.internal.exception.OrderNotOwnedException;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.identity.MemberLookup;
-import com.ticket.identity.MemberProfile;
+import com.ticket.member.MemberLookup;
+import com.ticket.member.MemberProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 catalog를 다시 조회하지 않고
  * Order/OrderSeat가 주문 생성 시점에 이미 남긴 snapshot을 그대로 쓴다 — catalog의 표시값이나
- * 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 identity의 공개 API로
+ * 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 member의 공개 API로
  * 추가 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
  */
 @Service

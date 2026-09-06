@@ -3,7 +3,7 @@ package com.ticket.catalog.internal.application.showlike.query;
 import com.ticket.catalog.ShowLookup;
 import com.ticket.catalog.internal.domain.showlike.repository.ShowLikeRepository;
 import com.ticket.error.InvalidRequestException;
-import com.ticket.identity.MemberLookup;
+import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

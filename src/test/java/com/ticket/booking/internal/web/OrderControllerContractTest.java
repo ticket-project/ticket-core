@@ -1,7 +1,7 @@
 package com.ticket.booking.internal.web;
 
-import com.ticket.identity.AuthenticatedMember;
-import com.ticket.identity.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.internal.infrastructure.security.AuthenticatedMemberArgumentResolver;
 import com.ticket.booking.internal.application.order.command.CancelOrderUseCase;
 import com.ticket.booking.internal.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.internal.domain.order.model.OrderState;
