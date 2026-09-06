@@ -9,6 +9,9 @@
 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`가 현재 값의 원본이다. 그 밖의 모든 결정
 (§1, §2, §4~§11)은 그대로 유효하다.
 
+**2026-09-06 갱신**: `metadata` module(`/api/v1/meta/codes`, `*Metadata` 공개 계약 조합)은 FE를
+포함해 호출자가 없음을 확인하고 제거됐다. 아래 본문의 `metadata`·`*Metadata` 언급은 제거 이전 기록이다.
+
 기존 `bootstrap`/`core-api`/`core-app`/`core-domain`/`core-infra`/`storage`/`support` Gradle
 멀티프로젝트를 단일 Gradle Spring Boot 프로젝트로 통합하고, `com.ticket`의 직접 하위 패키지를
 Spring Modulith의 닫힌 Application Module(`booking`, `catalog`, `member`, `admission`,

@@ -28,11 +28,10 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 ```text
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
-├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat, 공개: BookingMetadata, OrderStarted/OrderTerminated
-├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog, CatalogMetadata
-├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup, MemberMetadata
+├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat, 공개: OrderStarted/OrderTerminated
+├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
+├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup
 ├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
-├── metadata/                 # catalog/booking/member 공개 계약을 code/label로 조합
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
 ├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
@@ -42,7 +41,7 @@ src/main/java/com/ticket
 └── ticketing/                # Ticket(발급 티켓) entity/schema/repository만 갖는 entity-only 모듈
 ```
 
-`com.ticket`의 직접 하위 패키지는 12개다(`booking`, `catalog`, `member`, `admission`, `metadata`,
+`com.ticket`의 직접 하위 패키지는 11개다(`booking`, `catalog`, `member`, `admission`,
 `shared`, `web`, `config`, `error`, `seed`, `payment`, `ticketing`) — `showlike`는 없다(찜을 catalog가
 흡수했다. [찜(showlike)은 catalog가 흡수한다](#찜showlike은-catalog가-흡수한다) 참고).
 
@@ -77,7 +76,6 @@ booking   -> catalog, member, admission, shared, web, error
 catalog   -> member, shared, web, error
 member  -> shared, web, error
 admission -> web, error
-metadata  -> catalog, booking, member, web
 shared    -> (없음)
 web       -> (없음)
 config    -> member, shared
@@ -96,8 +94,7 @@ ticketing -> (없음)
 
 `member`/`admission`은 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). `catalog`는
 찜(showlike) 흡수로 회원 존재 확인을 위해 member를 참조한다(`MemberLookup`) — booking이
-`Order.memberId`를 위해 member를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹히고,
-`metadata`는 세 모듈의 공개 계약만 조합한다(자체 오류를 던지지 않아 `error` edge는 없다). `shared`와
+`Order.memberId`를 위해 member를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹힌다. `shared`와
 `web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과
 shared(`UuidSupplier`)를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을
 raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
@@ -132,8 +129,6 @@ raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@Named
 - **모듈 후속 처리는 커밋 이후 이벤트로 한다.** booking이 발행하는 `OrderStarted`/
   `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
   본다.
-- **`metadata`는 어떤 모듈의 internal enum/entity/repository도 import하지 않는다.** 각 모듈이
-  공개한 `*Metadata` 계약(`CatalogMetadata`, `BookingMetadata`, `MemberMetadata`)만 주입받는다.
 
 ### Show/Performance/Grade/PerformanceGrade/PerformanceSeat와 catalog-booking 공개 계약
 

@@ -77,8 +77,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
  * {@code booking}, {@code catalog}, {@code member}, {@code admission},
- * {@code metadata}, {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed},
- * {@code payment}, {@code ticketing} 정확히 12개다. {@code showlike}는 더 이상 없다 —
+ * {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed},
+ * {@code payment}, {@code ticketing} 정확히 11개다. {@code metadata}(공통 code/label 조합 API)는
+ * FE를 포함해 호출자가 없어 제거됐다. {@code showlike}는 더 이상 없다 —
  * 찜(개수·추가·삭제·내 목록)을 catalog가 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도
  * module로 두면 catalog·member와 순환 결합이 생겨서다(catalog의 package-info 참고).
  *
@@ -103,9 +104,9 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 12개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "member", "admission", "metadata", "shared", "web", "config",
+            "booking", "catalog", "member", "admission", "shared", "web", "config",
             "error", "seed", "payment", "ticketing");
 
     /**
@@ -124,8 +125,7 @@ class ModularityTests {
      * member를 참조하는 것과 같은 패턴이다(catalog의 package-info 참고).
      * {@code web}은 REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
      * {@code SliceResponse})를 소유하는 leaf라, HTTP를 노출하는 module은 전부 web을 향한 edge를
-     * 갖는다 — 자체 오류를 던지지 않는 {@code metadata}가 error 없이 web edge만 갖는 이유가
-     * 이것이다. {@code shared}·{@code error}와 같이 {@code @Modulith(sharedModules = ...)}로 전역
+     * 갖는다. {@code shared}·{@code error}와 같이 {@code @Modulith(sharedModules = ...)}로 전역
      * 허용해 각 module의 {@code allowedDependencies}에는 업무 module 의존만 남기고, 어느 module이
      * 실제로 web을 참조하는지는 이 DAG가 고정한다.
      * {@code config}는 전역 배선을 소유하는 composition-root module이다(클래스 javadoc과
@@ -148,7 +148,6 @@ class ModularityTests {
             Map.entry("catalog", Set.of("member", "shared", "web", "error")),
             Map.entry("member", Set.of("shared", "web", "error")),
             Map.entry("admission", Set.of("web", "error")),
-            Map.entry("metadata", Set.of("catalog", "booking", "member", "web")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),
             Map.entry("config", Set.of("member", "shared")),

@@ -22,7 +22,7 @@
 | TD-09 | `admission.internal` | admission token 책임을 설정/검증 관점으로 함께 표현한다 | 설정과 검증 책임이 분리되지 않는다 | token settings와 guard의 경계를 문서화 | 기존 구성키 유지 필요 | JWT claim/TTL 유지 | 책임별 테스트와 문서 일치 | `AdmissionTokenSettings`, `JwtAdmissionVerifier`(구 `JwtAdmissionGuard`) |
 | TD-10 | 각 module의 `internal.domain` | command 패키지에 정책/값 객체/서비스가 혼재한다 | 계층과 책임 판별이 어렵다 | policy/model/feature root로 재분류 | 대규모 이동으로 별도 단계 필요 | import만 변경, 동작 유지 | domain command 잔존 목록과 예외 문서화 | `<module>.internal.domain.**.command` |
 
-[^td04]: 컨트롤러가 booking/catalog/member/metadata 각 module의 `internal.web`로 옮겨지며
+[^td04]: 컨트롤러가 booking/catalog/member 각 module의 `internal.web`로 옮겨지며
 문제의 소재도 함께 옮겨졌다 — module 경계와는 무관하게 여전히 유효한 항목이다.
 
 [^td05]: `core.api.support`에 마지막까지 남아 있던 `ShowLikeCursorCodec`은 찜(showlike)이 catalog

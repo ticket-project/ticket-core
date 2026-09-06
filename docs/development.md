@@ -11,14 +11,13 @@
 ## 프로젝트 요약
 
 Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `catalog`,
-`member`, `admission`, `metadata`, `payment`, `ticketing`을 포함해 12개 Spring Modulith
+`member`, `admission`, `payment`, `ticketing`을 포함해 11개 Spring Modulith
 Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). 현재
 구현의 중심은 아래 흐름이다.
 
 - 인증/회원(`member`): 이메일 회원가입, 로그인, JWT 갱신, OAuth2 로그인 URL 조회 및 토큰 교환
 - 공연/전시 조회(`catalog`): 쇼, 장르, 회차별 Venue 배치·좌석·등급(Grade/PerformanceGrade) 조회,
   대기열 필요 여부 정책
-- 메타 코드 조회(`metadata`): catalog/booking/member가 공개한 code/label을 한 번에 조합
 - 좌석 선택(`booking`): Redis TTL 기반 임시 선택 상태와 WebSocket 전파
 - 좌석 선점과 주문(`booking`): Redis 기반 hold, `PENDING` 주문 생성, 조회, 취소, 만료 처리.
   판매 좌석(`PerformanceSeat`)은 회차 단위로 편성되고 판매 오픈 시점 가격을 snapshot한다

@@ -37,7 +37,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
 테스트를 최소 하나씩 둔다(`AdmissionModuleTests`, `CatalogModuleTests`, `MemberModuleTests`,
-`BookingModuleTests`, `MetadataModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`,
+`BookingModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`,
 `TicketingModuleTests`). `showlike`는 별도 module이 아니라 catalog가 흡수했다(찜 기능은
 `catalog` STANDALONE 테스트 안에서 검증한다). `verifyAutomatically = false`인
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한

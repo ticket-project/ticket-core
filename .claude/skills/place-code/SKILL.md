@@ -26,7 +26,6 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `member` |
 | admission token 설정·decode·검증 | `admission` |
 | Show 좋아요(찜) 개수·추가·삭제·내 찜 목록 | `catalog`(Show의 부가 속성으로 취급, "showlike 흡수" 참고) |
-| catalog/booking/member가 공개한 code/label 조합 | `metadata` |
 | 둘 이상 독립 모듈이 의미 동일하게 공유하고 프로토콜·프레임워크 결합이 없는 호출 대상 계약(`UuidSupplier`, `CorsProperties`, `CursorPage`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
 | REST 응답 표현 계약(응답 봉투 `ApiResponse`/`ErrorMessage`/`ResultType`, 무한스크롤 `SliceResponse`) — bean은 두지 않는다 | `web` |
 | 어느 모듈의 것도 아닌 공통 오류(E400·E404·E500), 예외 base 타입, 전역 handler | `error` |
@@ -56,7 +55,7 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | use case, 트랜잭션 경계, 여러 서비스 조립, 조회 포트와 결과 view | `<module>.internal.application` |
 | 엔티티, 값 객체, 도메인 정책, `*Finder`, port 선언 | `<module>.internal.domain` |
 | Querydsl, Redis, JWT, 암호화, 외부 HTTP, scheduler, AOP | `<module>.internal.infrastructure` |
-| 다른 모듈이 쓸 공개 계약(작은 interface + 불변 record snapshot, 공개 이벤트) | 모듈 root(예: `booking.BookingMetadata`, `booking.OrderStarted`) |
+| 다른 모듈이 쓸 공개 계약(작은 interface + 불변 record snapshot, 공개 이벤트) | 모듈 root(예: `catalog.ShowLookup`, `booking.OrderStarted`) |
 
 **모듈 root에는 공개 계약만 둔다.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
 어떤 모듈도 `Type.OPEN`이 아니다.

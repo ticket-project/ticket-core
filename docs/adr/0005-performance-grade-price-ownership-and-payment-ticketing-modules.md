@@ -84,6 +84,9 @@ admission -> 없음
 metadata  -> catalog, booking, member 그리고 필요 시 payment/ticketing의 공개 metadata
 ```
 
+`metadata` module은 2026-09-06에 호출자가 없어 제거됐다(ADR 0003의 갱신 참고). 위 DAG의 `metadata` 행은
+그 이전 기록이다.
+
 `payment`와 `ticketing`은 다른 업무 모듈을 import하지 않는다. 미래 의존 edge(`payment -> booking`,
 `ticketing -> booking`)는 실제 공개 계약(결제 정산, `OrderConfirmed` 구독)을 구현하는 후속
 단계에서만 추가한다 — 지금 빈 public contract나 가짜 호출로 미리 만들지 않는다. 그 시점의 목표

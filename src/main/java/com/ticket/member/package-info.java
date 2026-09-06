@@ -5,9 +5,7 @@
  * <p>구현은 모두 {@code internal} 아래에 있고, 이 module root에는 다른 module이 쓰는 공개 계약만
  * 둔다: {@link com.ticket.member.AuthenticatedMember}(다른 module controller가 parameter로
  * 받는 인증 principal — memberId와 role만 가진다), {@link com.ticket.member.MemberLookup}/
- * {@link com.ticket.member.MemberStatus}(entity 대신 쓰는 회원 조회·활성 검증 계약),
- * {@link com.ticket.member.MemberMetadata}(metadata module이 조합할 Role/SocialProvider
- * code/label).
+ * {@link com.ticket.member.MemberStatus}(entity 대신 쓰는 회원 조회·활성 검증 계약).
  *
  * <p>전역 {@code SecurityFilterChain}은 member가 제공한다({@code internal.infrastructure.security.
  * SecurityConfig}) — 인증·인가 해석이 결국 member 소유이기 때문이다.
