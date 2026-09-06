@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 같은 제약을 두 곳에 두면 method validation 자체가 깨진다.
  *
  * <p>Spring Modulith 전환으로 controller/docs 인터페이스가 legacy 단일 패키지가 아니라
- * 각 module의 {@code <module>.internal.web}·{@code <module>.internal.web.docs}에 흩어져
+ * 각 module의 {@code <module>.web}·{@code <module>.web.docs}에 흩어져
  * 있다. 그래서 고정 디렉터리 하나 대신 {@code src/main/java/com/ticket} 전체에서 이 두 패턴에
  * 맞는 디렉터리를 재귀적으로 찾는다.
  *

@@ -1,0 +1,74 @@
+package com.ticket.booking.web.docs;
+
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.web.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
+
+/**
+ * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
+ *
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
+ * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고,
+ * 제약과 @Valid cascade는 여기 한곳에 둔다.
+ */
+@Tag(name = "좌석 선택", description = "좌석 선택/해제 API (실시간 알림은 WebSocket 구독)")
+public interface SeatSelectionControllerDocs {
+
+    @Operation(
+            summary = "좌석 선택",
+            description = """
+                    특정 좌석을 임시 선택 상태로 변경합니다.
+                    Redis에 선택 상태를 저장하고, 성공하면 WebSocket으로 SELECTED 이벤트를 전파합니다.
+                    선택 상태는 5분 뒤 자동 만료됩니다.
+                    이 선택 상태는 화면 UX 보조용이며, HOLD 생성의 필수 선행 조건은 아닙니다.
+                    좌석은 실제로 존재하고 해당 회차 소속이며 DB 기준 예매 가능한 상태여야 선택할 수 있습니다.
+                    """
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좌석 선택 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 선택된 좌석")
+    })
+    ApiResponse<Void> selectSeat(
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
+            @Parameter(description = "좌석 ID", example = "42", required = true) @Positive Long seatId,
+            @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
+            @Parameter(hidden = true) AuthenticatedMember member
+    );
+
+    @Operation(
+            summary = "좌석 선택 해제",
+            description = """
+                    특정 좌석의 선택 상태를 해제합니다.
+                    본인이 선택한 좌석만 해제할 수 있으며, 성공하면 WebSocket으로 DESELECTED 이벤트를 전파합니다.
+                    """
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좌석 선택 해제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인이 선택한 좌석이 아님")
+    })
+    ApiResponse<Void> deselectSeat(
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
+            @Parameter(description = "좌석 ID", example = "42", required = true) @Positive Long seatId,
+            @Parameter(hidden = true) AuthenticatedMember member
+    );
+
+    @Operation(
+            summary = "내 선택 좌석 전체 해제",
+            description = """
+                    현재 사용자가 해당 공연에서 선택한 좌석을 모두 해제합니다.
+                    브라우저 종료나 페이지 이탈 직전에 호출하는 정리용 API로 사용할 수 있습니다.
+                    해제된 각 좌석에 대해 WebSocket으로 DESELECTED 이벤트를 전파합니다.
+                    """
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 선택 좌석 전체 해제 성공")
+    })
+    ApiResponse<Void> deselectAllSeats(
+            @Parameter(description = "회차 ID", example = "1", required = true) @Positive Long performanceId,
+            @Parameter(hidden = true) AuthenticatedMember member
+    );
+}

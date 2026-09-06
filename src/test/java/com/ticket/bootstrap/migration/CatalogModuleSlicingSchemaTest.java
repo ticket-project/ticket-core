@@ -1,8 +1,8 @@
 package com.ticket.bootstrap.migration;
 
-import com.ticket.catalog.internal.domain.seat.Seat;
-import com.ticket.catalog.internal.domain.show.Region;
-import com.ticket.catalog.internal.domain.show.Venue;
+import com.ticket.catalog.domain.seat.Seat;
+import com.ticket.catalog.domain.show.Region;
+import com.ticket.catalog.domain.show.Venue;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;

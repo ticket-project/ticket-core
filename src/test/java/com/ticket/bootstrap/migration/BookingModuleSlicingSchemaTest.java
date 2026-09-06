@@ -1,7 +1,7 @@
 package com.ticket.bootstrap.migration;
 
-import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
+import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;

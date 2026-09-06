@@ -13,8 +13,8 @@
 $1
 **2026-09-06 갱신(admission)**: `admission` module은 booking으로 흡수됐다. 공개 계약 `AdmissionVerifier`/
 `AdmissionVerification`을 쓰는 곳이 booking뿐이어서 module 경계가 보호하는 소비자가 없었다.
-`booking.internal.application.admission`(포트)과 `booking.internal.infrastructure.admission`(JWT 구현·설정)으로
-옮겼고, `AdmissionErrorCode`(E8xxx)와 `AdmissionExceptionHandler`는 booking의 `internal.exception` 아래로
+`booking.application.admission`(포트)과 `booking.infrastructure.admission`(JWT 구현·설정)으로
+옮겼고, `AdmissionErrorCode`(E8xxx)와 `AdmissionExceptionHandler`는 booking의 `exception` 아래로
 옮겨 값은 유지했다. 아래 본문의 `admission` module 언급은 흡수 이전 기록이다.
 
 기존 `bootstrap`/`core-api`/`core-app`/`core-domain`/`core-infra`/`storage`/`support` Gradle
@@ -50,8 +50,13 @@ production/test 소스를 루트 `src/main`, `src/test`로 합쳤다. `settings.
 
 `com.ticket`의 직접 하위 패키지가 Application Module이다. 각 모듈 root에는
 `@ApplicationModule`을 선언한 `package-info.java`와 다른 모듈이 쓸 공개 계약만 두고, 나머지
-구현(web/application/domain/infrastructure 전부)은 `<module>.internal` 아래에 둔다. 어떤
-모듈도 `Type.OPEN`으로 선언하지 않는다. 무엇을 어디에 두는지의 실무 판단표는 `/place-code`
+구현(web/application/domain/infrastructure 전부)은 `<module>` 아래에 둔다. 어떤
+모듈도 `Type.OPEN`으로 선언하지 않는다.
+
+**2026-09-06 갱신**: 원래 구현은 `<module>.internal` 아래에 두는 관례였으나 `internal` 계층을 없앴다. Spring
+Modulith는 module root 패키지의 타입만 공개로, 하위 패키지는 이름과 무관하게 모두 내부로 취급하므로
+`internal`은 캡슐화에 기여하지 않았고 정보량 없는 폴더 한 층만 반복됐다. 지금은 `<module>.{web,application,
+domain,infrastructure,exception}`이 바로 module root 아래에 있다. 아래 본문의 `internal` 언급은 그 이전 기록이다. 무엇을 어디에 두는지의 실무 판단표는 `/place-code`
 스킬이 원본이다.
 
 ### 3. 승인된 의존 DAG
@@ -192,11 +197,11 @@ domain-free하지도 않다. 이 여섯 개도 `com.ticket.config`가 소유한�
 
 **아직 이 기준을 만족하지 못하는 것**: §11에서 찜(showlike)이 catalog로 흡수되며 `CursorPage`를
 실제로 쓰는 곳이 `catalog` 하나만 남았다("둘 이상의 독립 module" 미달). `shared`에 남겨 둔 채
-`catalog.internal`로 내리지 않았다 — 이 gap을 해결된 것으로 서술하지 않는다. `catalog.internal`로
+`catalog`로 내리지 않았다 — 이 gap을 해결된 것으로 서술하지 않는다. `catalog`로
 내리는 작업은 별도로 결정한다.
 
 `shared`에 두지 **않는** 것: business logic, 특정 module에만 의미 있는 동작, bean을 등록하는 코드,
-그리고 여러 module의 internal을 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 마지막 것을
+그리고 여러 module의 내부를 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 마지막 것을
 shared에 두면 shared가 사실상 모든 module과 결합돼 "safe to depend on without redeploy coupling"
 이라는 존재 이유가 무너진다.
 
@@ -256,10 +261,10 @@ module 후보에서 뺀다. `bootstrap`(§8)과 달리 이 module은 Modulith �
 
 | 배선 | 소유 |
 | --- | --- |
-| `AuthenticatedMemberArgumentResolver` 등록 | `member.internal.infrastructure.security.MemberWebMvcConfig` |
-| `JwtProperties` 등록 | `member.internal.infrastructure.auth.token.JwtConfig` |
-| 카카오 HTTP client 등록(`@ImportHttpServices`) | `member.internal.infrastructure.auth.oauth2.HttpServiceConfig` |
-| STOMP 브로커·endpoint·인증 인터셉터(`@EnableWebSocketMessageBroker`) | `booking.internal.infrastructure.websocket.WebSocketConfig` |
+| `AuthenticatedMemberArgumentResolver` 등록 | `member.infrastructure.security.MemberWebMvcConfig` |
+| `JwtProperties` 등록 | `member.infrastructure.auth.token.JwtConfig` |
+| 카카오 HTTP client 등록(`@ImportHttpServices`) | `member.infrastructure.auth.oauth2.HttpServiceConfig` |
+| STOMP 브로커·endpoint·인증 인터셉터(`@EnableWebSocketMessageBroker`) | `booking.infrastructure.websocket.WebSocketConfig` |
 
 근거는 Spring이 `WebMvcConfigurer`·`WebSocketMessageBrokerConfigurer` 구현을 **여러 개 모아**
 순서대로 적용한다는 것이다 — module마다 자기 것을 하나씩 둬도 되고, 그러면 **새 module이 자기
@@ -304,7 +309,7 @@ REST 응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는
   `sharedModules`는 web을 모든 `@ApplicationModuleTest`에 포함시키므로 §6과 같은 이유가 그대로
   적용된다.
 - **`internal`이 없다**: 구현이랄 것이 없고 전부 다른 module이 쓰는 공개 계약이라 module root에만
-  class가 있다. 각 module의 controller가 사는 `<module>.internal.web`과는 다른 자리다 — 그쪽은 그
+  class가 있다. 각 module의 controller가 사는 `<module>.web`과는 다른 자리다 — 그쪽은 그
   module의 endpoint이고, 이 module은 그 endpoint들이 공유하는 표현 계약이다.
 
 **이 결정으로 바뀌지 않은 것**: 봉투의 JSON 모양(`{result, data, error{code, message, data}}`),
@@ -376,10 +381,10 @@ UX 보조 상태이고 Hold만이 판매 정합성을 지킨다는 원칙은 이
 
 다만 ADR 0001이 예시로 든 구현 클래스 이름은 이 전환으로 옮겨지거나 대체됐다.
 `CreateOrderValidator`/`HoldSeatAvailabilityValidator`는
-`com.ticket.booking.internal.domain.hold.command.HoldSeatAvailabilityValidator`로,
+`com.ticket.booking.domain.hold.command.HoldSeatAvailabilityValidator`로,
 `AsyncHoldCreationPostCommitNotifier`(커밋 후 selection 정리)는 5번에서 설명한
 `OrderStarted`/`OrderTerminated` 발행과 `BookingEventListeners`
-(`com.ticket.booking.internal.application.BookingEventListeners`)로 대체됐다. ADR 0001의
+(`com.ticket.booking.application.BookingEventListeners`)로 대체됐다. ADR 0001의
 결론 문단이 가리키는 동작(같은 좌석에 A가 Selection, B가 주문하면 B가 성공한다)은 동일하게
 성립하며, 이 ADR은 그 결정을 뒤집지 않는다 — 소유 모듈과 클래스 이름만 최신화한다.
 

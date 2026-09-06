@@ -5,7 +5,7 @@
 
 **ADR 0005 반영 완료**: Grade/PerformanceGrade 가격 모델, ShowGrade/ShowSeat 폐기,
 `Order.PAYMENT_FAILED` 제거, `payment` module 신설은 구현이 끝났다(ADR 0005의 `ticketing` module은
-이후 booking으로 흡수됐다 — Ticket은 `booking.internal.domain.ticket`에 있다). 아래 내용은 그
+이후 booking으로 흡수됐다 — Ticket은 `booking.domain.ticket`에 있다). 아래 내용은 그
 결과를 반영한 현재 코드 기준이다. PG 연동·결제 승인/실패/콜백·자동 티켓 발급은 아직 별도 구현
 대상이다([미구현 또는 후속 범위](#미구현-또는-후속-범위) 참고).
 
@@ -44,7 +44,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
   제공한다.
 - Refresh token과 OAuth2 1회용 코드는 Redis를 쓴다.
 - 공개 GET API를 제외한 대부분의 API는 인증이 필요하다. 다른 모듈의 controller는
-  `member.AuthenticatedMember`만 parameter로 받고 JWT나 member의 internal `Member`를 보지
+  `member.AuthenticatedMember`만 parameter로 받고 JWT나 member 내부의 `Member`를 보지
   않는다.
 
 ### 쇼·회차·좌석 조회
@@ -55,7 +55,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 - 좌석·등급·가격 조회의 기준 식별자는 `performanceId`/`performanceSeatId`/`performanceGradeId`다.
   `showId` 기준으로 등급·가격을 조회하는 API는 만들지 않는다 — 같은 Show라도 회차마다 편성과
   가격이 다를 수 있다(ADR 0005).
-- performance 기준 API 3종(`booking.internal.web.PerformanceSeatQueryController`,
+- performance 기준 API 3종(`booking.web.PerformanceSeatQueryController`,
   `/api/v1/performances/{performanceId}/**`)은 각각 다른 것을 반환한다.
   - `GET .../seat-map`: 정적 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값·확정 가격
     (`GetPerformanceSeatMapUseCase`). catalog `PerformanceVenueLayoutCatalog`와 booking local
@@ -71,7 +71,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
   - 새 조회를 추가할 때 회차당 고정된 query 수(요청 회차 크기와 무관)를 유지하는지 확인한다.
     catalog 쪽 좌표·등급 표시값이 booking 쪽 판매 편성과 어긋나면(데이터 불일치) 예외를 던지지 않고
     조용히 그 좌석만 제외한다 — 어떤 오류로 다룰지는 조합 시점에 판정하지 않는다.
-  - `booking.internal.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
+  - `booking.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
     Venue 배치만 반환하는 별개의 레거시 show 기준 API다. 새 기능은 여기 추가하지 않고 performance
     기준 API 3종에 추가한다.
 
@@ -233,7 +233,7 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 - `com.ticket.core`/`storage`/`support` legacy 코드(오류 처리, `core.infra.seed`의 시드 러너
   등)의 모듈 이전
 - member 전용인 `com.ticket.core.support.util.CookieUtils`(`refresh_token` 쿠키 이름과
-  `/api/v1/auth` 경로를 하드코딩)를 `member.internal.web`으로 옮기는 작업 — 아직 legacy
+  `/api/v1/auth` 경로를 하드코딩)를 `member.web`으로 옮기는 작업 — 아직 legacy
   위치에 남아 있다
 - Flyway 기반 운영 마이그레이션 스크립트 누적과 검증 환경 보강
 - Redis key scan 기반 조회 구조 최적화
@@ -241,7 +241,7 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 
 ## 작업 시작 전
 
-1. 대상 모듈의 `internal.application`/`internal.domain`/`internal.infrastructure`/`internal.web`과
+1. 대상 모듈의 `application`/`domain`/`infrastructure`/`web`과
    기존 테스트를 읽는다.
 2. 바꿀 API의 요청·응답·오류 계약과 Swagger 문서 인터페이스를 확인한다.
 3. 트랜잭션 경계, Redis key와 TTL, 모듈을 넘는 참조가 scalar ID/공개 API로만 이뤄지는지
@@ -253,12 +253,12 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 
 1. **계약 확정** — endpoint, 인증 요구, request/response, 상태 코드, 오류를 먼저 정한다.
 2. **domain** — 엔티티와 도메인 규칙, 필요한 port(`store`, publisher, client)를 소유 모듈의
-   `internal.domain`에 정의한다.
-3. **application** — use case와 트랜잭션 경계를 소유 모듈의 `internal.application`에 만든다.
+   `domain`에 정의한다.
+3. **application** — use case와 트랜잭션 경계를 소유 모듈의 `application`에 만든다.
    다른 모듈이 필요하면 그 모듈의 공개 API(interface + snapshot)만 호출한다.
-4. **infrastructure** — 소유 모듈의 `internal.infrastructure`에서 port를 구현한다. Redis 명령,
+4. **infrastructure** — 소유 모듈의 `infrastructure`에서 port를 구현한다. Redis 명령,
    WebSocket 발행, 외부 HTTP를 여기에 둔다.
-5. **presentation** — 소유 모듈의 `internal.web`에서 요청 검증, principal 추출, use case 호출,
+5. **presentation** — 소유 모듈의 `web`에서 요청 검증, principal 추출, use case 호출,
    응답 매핑만 한다. 어떤 검증을 어느 계층이 소유하는지는 [validation.md](validation.md)가
    단일 기준이다.
 6. **migration** — DB 구조 변경이 있으면 해당 모듈 소유 폴더(`db/migration/{module}`)에 새
@@ -277,8 +277,8 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 
 ## Redis 작업 규칙
 
-- key 조립과 물리 TTL은 소유 모듈의 `internal.infrastructure` adapter가 소유한다.
-  `internal.application`/`internal.domain`은 Redis 타입이나 key가 아니라 자신이 소유한 저장
+- key 조립과 물리 TTL은 소유 모듈의 `infrastructure` adapter가 소유한다.
+  `application`/`domain`은 Redis 타입이나 key가 아니라 자신이 소유한 저장
   기술 중립 계약만 본다.
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식이나 인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차를 함께 설계한다.
@@ -307,7 +307,7 @@ ADR 0005가 함께 신설했던 `ticketing`은 booking으로 흡수됐다 — `T
   entity를 JPA로 참조하지 않는 scalar 컬럼이다. cross-module
   물리 FK를 새로 만들지 않는다.
 - **다른 업무 모듈을 import하지 않는다.** `ModularityTests.APPROVED_DEPENDENCY_DAG`에서 `payment`는
-  `Set.of()`다(`shared`/`web`/`error` 포함 완전한 leaf) — booking의 `internal` 패키지나
+  `Set.of()`다(`shared`/`web`/`error` 포함 완전한 leaf) — booking의 하위 패키지나
   entity를 직접 참조하는 코드를 추가하면 그 테스트가 실패한다.
 - **향후 PG 연동·티켓 발급은 별도 계획이다.** `payment -> booking`(정산 계약) edge는 그 공개 계약을
   실제로 구현하는 후속 단계에서만 추가한다.
@@ -320,7 +320,7 @@ ADR 0005가 함께 신설했던 `ticketing`은 booking으로 흡수됐다 — `T
 
 - [architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙) 중 하나라도 어겼다.
 - `com.ticket.ModularityTests`가 실패한다.
-- 다른 모듈의 `internal` 패키지, Repository, JPA entity를 직접 import했다.
+- 다른 모듈의 하위 패키지, Repository, JPA entity를 직접 import했다.
 - 모듈을 넘는 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 연관관계나 DB FK가 생겼다.
 - Controller가 다른 모듈의 repository나 Redis adapter를 직접 주입받는다.
 - DB 트랜잭션 안에서 다른 모듈 API, Redis, 또는 WebSocket을 호출한다.
@@ -338,7 +338,7 @@ ADR 0005가 함께 신설했던 `ticketing`은 booking으로 흡수됐다 — `T
 - Controller에는 비즈니스 규칙이나 직접 저장소 접근을 넣지 않는다.
 - 요청 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다. 구현체에 다시 붙이면 Jakarta
   상속 규칙 위반으로 method validation이 깨진다([validation.md](validation.md)).
-- Redis, WebSocket, 외부 HTTP 구현은 소유 모듈의 `internal.infrastructure`에 둔다.
+- Redis, WebSocket, 외부 HTTP 구현은 소유 모듈의 `infrastructure`에 둔다.
 - domain/application 코드는 자신이 의미를 정의한 port 인터페이스에 의존한다.
 - hold, order, performanceseat, queue 변경은 동시성, TTL, 이벤트 재시도, 테스트 공백을 먼저
   확인한다.

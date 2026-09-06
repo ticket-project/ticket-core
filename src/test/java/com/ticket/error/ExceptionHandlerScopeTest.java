@@ -70,7 +70,7 @@ class ExceptionHandlerScopeTest {
                 .isEmpty();
     }
 
-    /** {@code com.ticket.<module>.internal.exception.handler} -> {@code com.ticket.<module>.internal.exception} */
+    /** {@code com.ticket.<module>.exception.handler} -> {@code com.ticket.<module>.exception} */
     private String modulePackageOf(final JavaClass advice) {
         final String packageName = advice.getPackageName();
         final int lastDot = packageName.lastIndexOf('.');

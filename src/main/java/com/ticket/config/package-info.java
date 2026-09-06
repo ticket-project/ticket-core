@@ -8,20 +8,20 @@
  * bean을 등록한다는 점에서 계약과 성질이 다르고 {@code sharedModules} 선언 때문에 모든 module
  * 테스트에 함께 뜬다({@code com.ticket.shared}의 package-info 참고).
  *
- * <p>여기에 남은 유일한 module 참조는 {@link com.ticket.config.internal.JpaAuditingConfig}·
- * {@link com.ticket.config.internal.SecurityContextAuditorAware}다. JPA auditing이 채우는 감사자 id를
+ * <p>여기에 남은 유일한 module 참조는 {@link com.ticket.config.JpaAuditingConfig}·
+ * {@link com.ticket.config.SecurityContextAuditorAware}다. JPA auditing이 채우는 감사자 id를
  * member의 <b>공개 계약</b> {@link com.ticket.member.AuthenticatedMember}에서 읽으므로
- * {@code allowedDependencies}에 {@code "member"}만 있으면 되고, internal을 열 필요가 없다.
+ * {@code allowedDependencies}에 {@code "member"}만 있으면 되고, 내부를 열 필요가 없다.
  *
  * <p><b>{@code @NamedInterface}로 열던 네 갈래는 사라졌다.</b> 예전에는 이 module이
  * {@code WebConfig}/{@code WebSocketConfig}/{@code HttpServiceConfig}/{@code JwtConfig}로
  * member·booking의 물건을 대신 등록해 주면서 {@code member :: security}·
  * {@code member :: oauth2}·{@code member :: token}·{@code booking :: websocket}을 참조해야 했다.
  * 등록을 소유 module로 옮겨 그 참조가 필요 없어졌다 —
- * {@code member.internal.infrastructure.security.MemberWebMvcConfig},
- * {@code member.internal.infrastructure.auth.token.JwtConfig},
- * {@code member.internal.infrastructure.auth.oauth2.HttpServiceConfig},
- * {@code booking.internal.infrastructure.websocket.WebSocketConfig}가 각자 자기 것을 등록한다.
+ * {@code member.infrastructure.security.MemberWebMvcConfig},
+ * {@code member.infrastructure.auth.token.JwtConfig},
+ * {@code member.infrastructure.auth.oauth2.HttpServiceConfig},
+ * {@code booking.infrastructure.websocket.WebSocketConfig}가 각자 자기 것을 등록한다.
  * Spring이 {@code WebMvcConfigurer}/{@code WebSocketMessageBrokerConfigurer} 구현을 여러 개 모아
  * 적용하므로 module마다 하나씩 둬도 되고, <b>새 module이 자기 확장점을 추가할 때 이 module을 고칠
  * 필요가 없다</b>.

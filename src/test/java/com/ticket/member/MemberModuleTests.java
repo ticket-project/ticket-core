@@ -16,14 +16,14 @@ import java.util.UUID;
  * {@code com.ticket.core.support.exception}이 legacy {@code com.ticket.core} 아래에 있어
  * "member → core"·"core → member" 순환으로 오탐된다. {@code CorsProperties}(이제
  * {@code com.ticket.shared.CorsProperties})와 argument resolver 등록(이제 member가 자기
- * {@code internal.infrastructure.security.MemberWebMvcConfig}에서 직접 한다)은 더 이상 이 순환의
+ * {@code infrastructure.security.MemberWebMvcConfig}에서 직접 한다)은 더 이상 이 순환의
  * 원인이 아니다. {@code spring.modulith.detection-strategy}를 전역으로 바꾸는 대신 이
  * 테스트에서만 자동 검증을 꺼서, 아직 {@code @ApplicationModule}을 붙이지 않은 미래 모듈이 조용히
  * 검증에서 빠지는 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.member} package tree만 component-scan한다.
  * {@code UuidSupplier}(공개 계약은 {@code com.ticket.shared.UuidSupplier}) bean은
- * {@code com.ticket.config.internal.UuidSupplierConfig}에 있어
+ * {@code com.ticket.config.UuidSupplierConfig}에 있어
  * 그 필터 밖이므로, {@code RedisOAuth2AuthCodeStore} 같은 member 어댑터가 필요로 하는 bean만 이
  * 테스트 안에서 직접 채운다.
  */

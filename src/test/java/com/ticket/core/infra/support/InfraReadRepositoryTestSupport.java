@@ -1,10 +1,10 @@
 package com.ticket.core.infra.support;
 
-import com.ticket.catalog.internal.infrastructure.show.query.BookingStatusPredicateFactory;
-import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowConditionBuilder;
-import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowCursorConditionBuilder;
-import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowPredicates;
-import com.ticket.catalog.internal.infrastructure.show.query.QuerydslShowSortResolver;
+import com.ticket.catalog.infrastructure.show.query.BookingStatusPredicateFactory;
+import com.ticket.catalog.infrastructure.show.query.QuerydslShowConditionBuilder;
+import com.ticket.catalog.infrastructure.show.query.QuerydslShowCursorConditionBuilder;
+import com.ticket.catalog.infrastructure.show.query.QuerydslShowPredicates;
+import com.ticket.catalog.infrastructure.show.query.QuerydslShowSortResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;

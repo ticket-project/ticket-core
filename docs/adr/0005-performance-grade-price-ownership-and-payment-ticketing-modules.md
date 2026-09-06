@@ -87,7 +87,7 @@ metadata  -> catalog, booking, member 그리고 필요 시 payment/ticketing의 
 $1
 **2026-09-06 갱신(ticketing)**: 결정 3이 신설한 `ticketing` module은 booking으로 흡수됐다. entity-only 상태에서
 module 하나를 더 유지할 이유가 없고, 발급 트리거인 `OrderConfirmed`가 booking 안의 사건이라 같은 module에
-두는 편이 단순하다는 판단이다. `Ticket`은 `booking.internal.domain.ticket`, `TICKETS` migration은 booking V5로
+두는 편이 단순하다는 판단이다. `Ticket`은 `booking.domain.ticket`, `TICKETS` migration은 booking V5로
 옮겼다. 위 DAG의 `ticketing` 행과 §3의 방안 C 서술 중 ticketing 부분은 그 이전 기록이다. payment 분리는 그대로다.
 
 `payment`와 `ticketing`은 다른 업무 모듈을 import하지 않는다. 미래 의존 edge(`payment -> booking`,
@@ -147,7 +147,7 @@ row를 실제 Venue에 임의로 짜맞추려 하지 않는다. 운영 데이터
 
 ## ADR 0003과의 관계
 
-ADR 0003의 module 경계 원칙(패키지 기반 닫힌 module, `<module>.internal`, 공개 계약은 작은
+ADR 0003의 module 경계 원칙(패키지 기반 닫힌 module, `<module>`, 공개 계약은 작은
 interface + 불변 record snapshot, cross-module JPA 금지, Spring Modulith 이벤트, module-aware
 Flyway)은 그대로 유효하다 — 이 ADR은 그 메커니즘을 바꾸지 않는다.
 

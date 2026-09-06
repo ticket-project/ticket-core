@@ -1,24 +1,24 @@
 package com.ticket.core.infra.support;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.member.internal.domain.member.model.Member;
-import com.ticket.member.internal.domain.member.model.Email;
-import com.ticket.catalog.internal.domain.performance.Performance;
-import com.ticket.catalog.internal.domain.performance.PerformanceGrade;
-import com.ticket.catalog.internal.domain.grade.Grade;
-import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.catalog.internal.domain.seat.Seat;
-import com.ticket.catalog.internal.domain.show.Show;
-import com.ticket.catalog.internal.domain.show.Category;
-import com.ticket.catalog.internal.domain.show.Genre;
-import com.ticket.catalog.internal.domain.show.ShowGenre;
-import com.ticket.catalog.internal.domain.show.Region;
-import com.ticket.catalog.internal.domain.show.SaleType;
-import com.ticket.catalog.internal.domain.show.Performer;
-import com.ticket.catalog.internal.domain.show.Venue;
-import com.ticket.catalog.internal.domain.showlike.model.ShowLike;
-import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.member.internal.domain.member.model.Role;
+import com.ticket.member.domain.member.model.Member;
+import com.ticket.member.domain.member.model.Email;
+import com.ticket.catalog.domain.performance.Performance;
+import com.ticket.catalog.domain.performance.PerformanceGrade;
+import com.ticket.catalog.domain.grade.Grade;
+import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
+import com.ticket.catalog.domain.seat.Seat;
+import com.ticket.catalog.domain.show.Show;
+import com.ticket.catalog.domain.show.Category;
+import com.ticket.catalog.domain.show.Genre;
+import com.ticket.catalog.domain.show.ShowGenre;
+import com.ticket.catalog.domain.show.Region;
+import com.ticket.catalog.domain.show.SaleType;
+import com.ticket.catalog.domain.show.Performer;
+import com.ticket.catalog.domain.show.Venue;
+import com.ticket.catalog.domain.showlike.model.ShowLike;
+import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
+import com.ticket.member.domain.member.model.Role;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -264,7 +264,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.catalog.internal.domain", "com.ticket.member.internal.domain", "com.ticket.booking.internal.domain", "com.ticket.booking.internal.infrastructure", "com.ticket.payment.internal.domain"})
+    @EntityScan(basePackages = {"com.ticket.catalog.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

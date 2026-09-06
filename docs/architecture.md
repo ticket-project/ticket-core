@@ -11,7 +11,7 @@
 모듈 목록·DAG는 이 시점의 실제 코드(`ModularityTests`) 기준이다. `payment`는 이번 범위에서
 entity/schema/repository만 있는 entity-only 모듈이며, PG 연동 흐름은 후속 ADR/계획으로 별도 승인한다
 (ADR 0005 §3, §4). ADR 0005가 별도 module로 신설했던 `ticketing`은 2026-09-06에 booking으로 흡수됐다 —
-`Ticket` entity/repository는 `booking.internal.{domain,infrastructure}.ticket`에 있고 `TICKETS` migration은
+`Ticket` entity/repository는 `booking.{domain,infrastructure}.ticket`에 있고 `TICKETS` migration은
 booking V5다.
 
 ## 프로젝트 구조
@@ -66,7 +66,8 @@ class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스�
 별도로 결정할 test 인프라 소유권 문제라 이번 범위에서 건드리지 않았다.
 
 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
-두고, 실제 구현(web/application/domain/infrastructure)은 모두 `<module>.internal` 아래에 둔다.
+두고, 실제 구현은 module root 바로 아래의 `web`/`application`/`domain`/`infrastructure`/`exception` 패키지에 둔다
+(별도 `internal` 계층은 두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다).
 어떤 모듈도 `Type.OPEN`으로 선언하지 않는다.
 
 ## 승인된 의존 DAG
@@ -95,7 +96,7 @@ payment   -> (없음)
 
 `member`는 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). admission token 검증은
 원래 별도 `admission` module이었으나 booking만 쓰는 능력이라 booking으로 흡수됐다
-(`booking.internal.{application,infrastructure}.admission`, E8xxx 오류 코드 유지). `catalog`는
+(`booking.{application,infrastructure}.admission`, E8xxx 오류 코드 유지). `catalog`는
 찜(showlike) 흡수로 회원 존재 확인을 위해 member를 참조한다(`MemberLookup`) — booking이
 `Order.memberId`를 위해 member를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹힌다. `shared`와
 `web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과
@@ -122,7 +123,7 @@ raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@Named
   `long` 같은 scalar ID 컬럼만 갖는다. 예: booking이 소유한 `PerformanceSeat`는
   `performanceId`/`seatId`를 scalar 컬럼으로 갖고 catalog의 `Performance`/`Seat` 엔티티를 JPA로
   참조하지 않는다.
-- **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 `internal` 패키지,
+- **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 하위 패키지,
   Repository, JPA entity를 직접 import하지 않는다. 공개 API는 작은 단위 interface(예:
   `catalog.BookingPolicyLookup`, `member.MemberLookup`)와 그
   반환값인 불변 `record` snapshot(`BookingPolicySnapshot`, `MemberStatus` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에
@@ -162,7 +163,7 @@ booking이 이 판매 편성·주문 표시 snapshot을 만들 때 쓰는 catalo
 공통 가격표가 필요하면 `PerformanceGrade`에서 `minPrice`/`maxPrice`를 파생한다
 (`catalog.GetShowDetailUseCase.PriceSummary`). Show 전체 회차에 적용할 좌석 템플릿이 실제로
 필요해지면 그때 별도 개념(`ShowSeatTemplate` 등)을 추가한다 — 지금 이름만 바꿔 남기지 않는다.
-`booking.internal.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
+`booking.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
 Venue 배치만 반환하는 별개의 show 기준 API이고,
 회차 기준 `/api/v1/performances/{performanceId}/seat-map`과는 다른 용도다(둘 다 참고
 [개발 기준](development.md#쇼회차좌석-조회)).
@@ -200,9 +201,9 @@ publication 저장 자체가 실패할 수 있다. 상세는 [ADR 0003](adr/0003
 
 ## 오류 처리
 
-**오류는 그 업무를 소유한 모듈이 갖는다.** 각 모듈의 `internal.exception`에 `<Module>ErrorCode`
+**오류는 그 업무를 소유한 모듈이 갖는다.** 각 모듈의 `exception`에 `<Module>ErrorCode`
 enum과 예외 클래스가 있고, 예외가 HTTP 상태·E-code·공개 메시지를 생성자에서 확정한다. 모듈마다
-`internal.exception.handler`의 얇은 handler(`@Order(HIGHEST_PRECEDENCE)`)가 자기 base 예외 하나만
+`exception.handler`의 얇은 handler(`@Order(HIGHEST_PRECEDENCE)`)가 자기 base 예외 하나만
 잡아 응답으로 옮긴다.
 
 어느 모듈의 것도 아닌 오류만 `com.ticket.error`에 있다 — `InvalidRequestException`(E400),
@@ -244,12 +245,12 @@ event-publication registry 유지보수, scheduling/clock, 그리고 member의 �
 
 | 배선 | 소유 |
 | --- | --- |
-| `AuthenticatedMemberArgumentResolver` 등록 | `member.internal.infrastructure.security.MemberWebMvcConfig` |
-| `JwtProperties` 등록 | `member.internal.infrastructure.auth.token.JwtConfig` |
-| 카카오 HTTP client 등록 | `member.internal.infrastructure.auth.oauth2.HttpServiceConfig` |
-| STOMP 브로커·endpoint·인증 인터셉터 | `booking.internal.infrastructure.websocket.WebSocketConfig` |
+| `AuthenticatedMemberArgumentResolver` 등록 | `member.infrastructure.security.MemberWebMvcConfig` |
+| `JwtProperties` 등록 | `member.infrastructure.auth.token.JwtConfig` |
+| 카카오 HTTP client 등록 | `member.infrastructure.auth.oauth2.HttpServiceConfig` |
+| STOMP 브로커·endpoint·인증 인터셉터 | `booking.infrastructure.websocket.WebSocketConfig` |
 
-그 결과 `config`가 다른 모듈의 `internal`을 참조할 일이 없어 **`@NamedInterface`는 하나도 남지
+그 결과 `config`가 다른 모듈의 하위 패키지를 참조할 일이 없어 **`@NamedInterface`는 하나도 남지
 않았다**(`seed`가 member의 `member.command`를 참조하는 것은 별개다).
 `com.ticket.shared`에는 다른 모듈이 **호출하는 계약**만 두고 bean 등록은 두지 않으며, 이 규칙은
 `com.ticket.shared.SharedModulePurityTest`가 강제한다. 근거는
@@ -262,27 +263,27 @@ event-publication registry 유지보수, scheduling/clock, 그리고 member의 �
 ## 모듈 내부 구조
 
 각 모듈 내부는 계층형 프로젝트가 쓰던 것과 같은 축을 따른다. 물리적으로 별도 Gradle 모듈이
-아니라 `<module>.internal` 아래의 패키지일 뿐이다.
+아니라 `<module>` 아래의 패키지일 뿐이다.
 
 | 하위 패키지 | 담는 것 |
 | --- | --- |
-| `internal.web` | Controller, 요청/응답 DTO, HTTP 커서 문자열 |
-| `internal.application` | use case, 트랜잭션 경계, 조회 포트와 결과 view, 그 use case가 필요로 하는 출력 포트(분산락, 이벤트 발행, 외부 provider) |
-| `internal.domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
-| `internal.infrastructure` | Repository 어댑터, Querydsl 조회, Redis/Redisson, WebSocket publisher, 외부 HTTP client, 기술 설정 |
+| `web` | Controller, 요청/응답 DTO, HTTP 커서 문자열 |
+| `application` | use case, 트랜잭션 경계, 조회 포트와 결과 view, 그 use case가 필요로 하는 출력 포트(분산락, 이벤트 발행, 외부 provider) |
+| `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
+| `infrastructure` | Repository 어댑터, Querydsl 조회, Redis/Redisson, WebSocket publisher, 외부 HTTP client, 기술 설정 |
 
-작은 모듈은 이 네 하위 패키지를 모두 갖지 않고 `internal` 바로 아래에 평평하게 둘 수 있다
+작은 모듈은 이 네 하위 패키지를 모두 갖지 않고 모듈 root 바로 아래에 평평하게 둘 수 있다
 (`payment`가 그 예다). 무엇을 쪼갤지는 실제 복잡도가 결정한다.
 
 포트 소유 기준은 계층형 시절과 같다 — **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
 | 계약의 성격 | 소유 위치 | 이유 |
 | --- | --- | --- |
-| aggregate 저장·복원과 업무 명령에 필요한 조회 | `internal.domain` | domain이 필요한 저장 의미와 반환할 도메인 타입을 정의한다 |
-| 화면 조회·검색·집계 결과 | `internal.application` | 특정 use case의 읽기 요구이며 aggregate 복원 계약이 아니다 |
-| 분산락, 토큰, 외부 provider, publisher/client | `internal.application` | 업무 규칙 자체가 아니라 use case를 실행하기 위한 외부 능력이다 |
-| HTTP 입력·출력 계약 | `internal.web` | 전달 방식이 HTTP일 때만 존재한다 |
-| JPA, Querydsl, Redis, Redisson, JWT 라이브러리 구현 | `internal.infrastructure` | 교체 가능한 기술 선택이며 안쪽 계약을 구현한다 |
+| aggregate 저장·복원과 업무 명령에 필요한 조회 | `domain` | domain이 필요한 저장 의미와 반환할 도메인 타입을 정의한다 |
+| 화면 조회·검색·집계 결과 | `application` | 특정 use case의 읽기 요구이며 aggregate 복원 계약이 아니다 |
+| 분산락, 토큰, 외부 provider, publisher/client | `application` | 업무 규칙 자체가 아니라 use case를 실행하기 위한 외부 능력이다 |
+| HTTP 입력·출력 계약 | `web` | 전달 방식이 HTTP일 때만 존재한다 |
+| JPA, Querydsl, Redis, Redisson, JWT 라이브러리 구현 | `infrastructure` | 교체 가능한 기술 선택이며 안쪽 계약을 구현한다 |
 
 ## 패키지와 이름 규칙
 
@@ -305,10 +306,10 @@ event-publication registry 유지보수, scheduling/clock, 그리고 member의 �
 - 어댑터가 안에서 쓰는 Spring Data 인터페이스는 `SpringData*JpaRepository`.
 
 ```text
-internal.domain
+domain
   OrderRepository                 (순수 Java 계약)
           ↑ implements
-internal.infrastructure
+infrastructure
   OrderRepositoryAdapter          (계약과 Spring Data를 연결)
           ↓ delegates
   SpringDataOrderJpaRepository    (JpaRepository, @Query, @Lock)
@@ -348,12 +349,12 @@ use case가 해당 Repository를 직접 호출한다.
 
 Repository는 두 종류로 나뉜다.
 
-**Aggregate Repository**(`internal.domain`): aggregate의 저장과 복원, 업무 명령에 필요한 조회를
-맡는다. 도메인 타입만 반환하고, JPA 구현은 `internal.infrastructure`의 어댑터가 맡는다. 조회
+**Aggregate Repository**(`domain`): aggregate의 저장과 복원, 업무 명령에 필요한 조회를
+맡는다. 도메인 타입만 반환하고, JPA 구현은 `infrastructure`의 어댑터가 맡는다. 조회
 실패는 `Optional`이나 `boolean`으로 돌려주고 오류는 호출하는 유스케이스가 고른다. 예외를 던지는
 `getXxx`·`requireXxx` 편의 메서드를 두지 않는다([validation.md](validation.md)).
 
-**Read Repository**(`internal.application`): 화면·검색·상세·집계·커서 페이징 같은 읽기 전용
+**Read Repository**(`application`): 화면·검색·상세·집계·커서 페이징 같은 읽기 전용
 조회를 맡는다. app이 소유한 immutable read model이나 원시 타입을 반환하며 domain entity 반환을
 강제하지 않는다.
 
@@ -365,9 +366,9 @@ Repository는 두 종류로 나뉜다.
 
 ### RDB
 
-주 영속 저장소는 RDB다. 업무 상태를 표현하는 JPA entity는 각 모듈의 `internal.domain`에 둔다.
+주 영속 저장소는 RDB다. 업무 상태를 표현하는 JPA entity는 각 모듈의 `domain`에 둔다.
 Spring Data 인터페이스, JPQL, Querydsl, `EntityManager`, DB lock annotation과 Repository
-adapter는 `internal.infrastructure`에 둔다.
+adapter는 `infrastructure`에 둔다.
 
 Flyway migration은 module 소유권을 따른다. 기존 이력(V2~V8)은 내용 변경 없이
 `db/migration/__root`, `db/migration-vendor/{h2,oracle}/__root`에 있고, 모듈이 소유하는 새
@@ -386,7 +387,7 @@ Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장, 실시간 좌�
 - seat selection, seat hold(`booking`)
 - refresh token, OAuth2 one-time auth code(`member`)
 
-Redis 구현체는 소유 모듈의 `internal.infrastructure`에 위치한다.
+Redis 구현체는 소유 모듈의 `infrastructure`에 위치한다.
 
 ## 실시간 처리
 
@@ -401,8 +402,8 @@ Redis 구현체는 소유 모듈의 `internal.infrastructure`에 위치한다.
   `@ApplicationModuleListener`가 실행한다. 실패는 Event Publication Registry가 FAILED로 기록해
   재시도한다.
 - `@Scheduled` 트리거와 실행 주기·활성화 설정은 `worker.*` 설정이 소유한다.
-- 업무 판단과 상태 전이 오케스트레이션은 booking의 `internal.application`, Redis listener·
-  WebSocket publisher와 기술 executor 구현은 `internal.infrastructure`가 소유한다.
+- 업무 판단과 상태 전이 오케스트레이션은 booking의 `application`, Redis listener·
+  WebSocket publisher와 기술 executor 구현은 `infrastructure`가 소유한다.
 
 ### 주문 후처리 보정
 
@@ -419,11 +420,11 @@ Redis 구현체는 소유 모듈의 `internal.infrastructure`에 위치한다.
 
 현재 구현 위치:
 
-- 포트: `com.ticket.booking.internal.application.lock.LockManager`
+- 포트: `com.ticket.booking.application.lock.LockManager`
 - 잠글 대상: `LockKey`, `LockScope` — 업무 의미만 담고 key 문자열은 담지 않는다
 - 획득 방식: `LockOptions` — 대기 시간, 임대 시간, 실패 로그 수준
-- 구현: `com.ticket.booking.internal.infrastructure.lock.RedissonLockManager`
-- key 형식: `com.ticket.booking.internal.infrastructure.lock.RedissonLockKeyFormatter`
+- 구현: `com.ticket.booking.infrastructure.lock.RedissonLockManager`
+- key 형식: `com.ticket.booking.infrastructure.lock.RedissonLockKeyFormatter`
 
 적용 예:
 
@@ -458,7 +459,7 @@ hold를 만드는 구간에만 건다. DB 트랜잭션 동안 좌석 락을 쥐�
 
 - 이 코드의 책임이 web, application, domain, infrastructure 중 어디에 속하는가
 - 같은 검증이 두 계층에서 같은 목적으로 중복 실행되지 않는가([validation.md](validation.md))
-- 다른 모듈의 `internal` 패키지, Repository, JPA entity를 직접 참조하지 않는가
+- 다른 모듈의 하위 패키지, Repository, JPA entity를 직접 참조하지 않는가
 - 모듈을 넘는 JPA 연관관계나 DB FK가 새로 생기지 않았는가
 - 새 공개 계약이 JPA entity, Redis/JWT/Spring Web 타입을 노출하지 않는가
 - 새 패키지가 기능 중심 축(`command`/`query`/`model`/`repository`/`store`)을 따르는가

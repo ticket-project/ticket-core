@@ -5,21 +5,21 @@
 테스트 배치는 [testing.md](testing.md)를 함께 본다.
 
 이 문서가 말하는 "계층"은 별도 Gradle 모듈이 아니라 각 Application Module 안의
-`internal.web`/`internal.application`/`internal.domain`/`internal.infrastructure` 패키지다.
+`web`/`application`/`domain`/`infrastructure` 패키지다.
 모듈 경계 자체(무엇이 `booking`이고 무엇이 `catalog`인지)는 이 문서의 범위가 아니다.
 
 판단 기준 한 문장 — **"이 검증이 사라지면 무엇이 먼저 깨지는가."** HTTP 응답 품질만 나빠지면
-`internal.web`, 다른 adapter에서 호출해도 흐름이 깨지면 `internal.application`, 어떤 호출
-경로에서도 업무가 틀리면 `internal.domain`, 기술 경계에서만 성립하면 `internal.infrastructure`다.
+`web`, 다른 adapter에서 호출해도 흐름이 깨지면 `application`, 어떤 호출
+경로에서도 업무가 틀리면 `domain`, 기술 경계에서만 성립하면 `infrastructure`다.
 
 ## 책임표
 
 | 계층 | 소유하는 검증 | 실패 표현 |
 | --- | --- | --- |
-| `internal.web` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식, page size의 구조적 범위 | Bean Validation → `InvalidRequestException` (400 / `E400`) |
-| `internal.application` | HTTP가 아닌 adapter에서도 지켜야 하는 `UseCase.Input` 계약, 여러 입력의 조합, 날짜 from/to 범위, page size·cursor의 유스케이스 조건, 데이터 존재 여부, 요청 권한, 중복·멱등성·선행 작업, 여러 domain·다른 모듈 공개 API를 엮는 실행 선행조건 | 공통 예외(`InvalidRequestException`, `NotFoundException`)나 소유 모듈의 예외(`OrderNotOwnedException` 등) |
-| `internal.domain` | 어떤 호출 경로에서도 깨지면 안 되는 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도, 주문 상태 규칙, 공개 가능 여부 | 소유 모듈 `internal.exception`의 업무 예외(`SeatAlreadyHoldException` 등) |
-| `internal.infrastructure` | Redis·JWT·외부 API payload decode, 외부 응답 유효성, DB constraint와 기술 예외 번역, 설정값과 기술 형식 | 기술 예외를 application/domain이 이해할 실패로 번역 |
+| `web` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식, page size의 구조적 범위 | Bean Validation → `InvalidRequestException` (400 / `E400`) |
+| `application` | HTTP가 아닌 adapter에서도 지켜야 하는 `UseCase.Input` 계약, 여러 입력의 조합, 날짜 from/to 범위, page size·cursor의 유스케이스 조건, 데이터 존재 여부, 요청 권한, 중복·멱등성·선행 작업, 여러 domain·다른 모듈 공개 API를 엮는 실행 선행조건 | 공통 예외(`InvalidRequestException`, `NotFoundException`)나 소유 모듈의 예외(`OrderNotOwnedException` 등) |
+| `domain` | 어떤 호출 경로에서도 깨지면 안 되는 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도, 주문 상태 규칙, 공개 가능 여부 | 소유 모듈 `exception`의 업무 예외(`SeatAlreadyHoldException` 등) |
+| `infrastructure` | Redis·JWT·외부 API payload decode, 외부 응답 유효성, DB constraint와 기술 예외 번역, 설정값과 기술 형식 | 기술 예외를 application/domain이 이해할 실패로 번역 |
 
 > **오류 소유는 계층이 아니라 모듈 기준이다.** `ApiErrorType`/`ApplicationErrorType`/
 > `DomainErrorType`로 계층별 카탈로그를 나누던 구조는 되돌려졌고, 지금은 계층과 무관하게 그 업무를
@@ -27,22 +27,22 @@
 > 것이지 계층별 카탈로그가 있다는 뜻이 아니다. 배경은
 > [ADR 0002](adr/0002-module-owned-error-contracts.md)를 본다.
 
-## `internal.web` 규칙
+## `web` 규칙
 
-**Bean Validation은 `internal.web`만 쓴다.** `internal.application`과 `internal.domain`에
+**Bean Validation은 `web`만 쓴다.** `application`과 `domain`에
 `jakarta.validation`을 끌어들이지 않는다.
 
 **파라미터 제약은 `controller.docs` 인터페이스에만 선언한다.** Controller는 binding 애노테이션
 (`@PathVariable`, `@RequestParam`, `@RequestBody`, `@RequestHeader`)만 갖는다.
 
 ```java
-// internal/web/controller/docs/ShowLikeControllerDocs.java — 제약을 선언하는 유일한 곳
+// web/controller/docs/ShowLikeControllerDocs.java — 제약을 선언하는 유일한 곳
 ApiResponse<AddShowLikeUseCase.Output> likeShow(
         @Parameter(hidden = true) AuthenticatedMember member,
         @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long showId
 );
 
-// internal/web/controller/ShowLikeController.java — binding만
+// web/controller/ShowLikeController.java — binding만
 @Override
 @PostMapping("/shows/{showId}")
 public ApiResponse<AddShowLikeUseCase.Output> likeShow(
@@ -69,7 +69,7 @@ method validation 전체가 500으로 무너진다. Controller가 문서 인터�
 | `MethodArgumentNotValidException` (요청 body) | 400 `E400`, `error.data`에 `field: message` |
 | `HandlerMethodValidationException` (path·query·header) | 400 `E400`, `error.data`에 `parameter: message` |
 
-## `internal.application` 규칙
+## `application` 규칙
 
 **필수 component는 record compact constructor 한곳에서 판정한다.** 같은 검증을 생성자와
 `execute()`에서 반복하지 않는다.
@@ -130,7 +130,7 @@ public record Input(String orderKey, Long memberId) {
   **다른 모듈의 공개 API도 같은 원칙을 따른다.** 예를 들어 `member.MemberLookup`은 회원이
   없거나 비활성이면 그 모듈이 정한 결과(`requireActive`가 던지는 예외 또는 `MemberStatus`)를
   돌려주고, 호출하는 booking 쪽 유스케이스가 그 결과를 자신의 맥락에 맞는 실패로 다시 해석하지
-  않고 그대로 전파하거나 자신의 도메인 규칙과 조합한다. 다른 모듈의 internal 예외 타입을 직접
+  않고 그대로 전파하거나 자신의 도메인 규칙과 조합한다. 다른 모듈의 내부 예외 타입을 직접
   잡지 않는다 — 잡으려면 그 모듈이 공개 API 계약의 일부로 던지는 타입이어야 한다.
 
   "조회 결과 없음"을 어느 코드가 판단해 던지는지는 여전히 유스케이스가 정하지만, 던지는 값
@@ -172,11 +172,11 @@ public Output execute(final Input input) {
 
 | 검증 | 테스트 위치 |
 | --- | --- |
-| 요청 DTO Bean Validation | 모듈 `src/test`의 `internal.web.controller.request.*Test` |
+| 요청 DTO Bean Validation | 모듈 `src/test`의 `web.controller.request.*Test` |
 | Controller invalid request 계약(400과 `E400`) | 모듈 `src/test`의 `*ContractTest` |
 | 파라미터 제약 선언 위치 | `src/test`의 `ControllerParameterConstraintTest` |
-| `UseCase.Input` 계약 | 모듈 `src/test`의 `internal.application.**` — API를 거치지 않고 Input을 직접 생성한다 |
-| 업무 불변식과 값 객체 | 모듈 `src/test`의 `internal.domain.**` |
+| `UseCase.Input` 계약 | 모듈 `src/test`의 `application.**` — API를 거치지 않고 Input을 직접 생성한다 |
+| 업무 불변식과 값 객체 | 모듈 `src/test`의 `domain.**` |
 
 ## 남은 제품 정책 결정
 

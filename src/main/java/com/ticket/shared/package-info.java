@@ -35,7 +35,7 @@
  *
  * <p><b>아직 기준을 만족하지 못하는 것</b>: {@link CursorPage}는 실측상 {@code catalog}와 legacy
  * {@code com.ticket.core}의 showlike read 경로만 쓴다("둘 이상의 독립 module" 미달). legacy가 함께
- * 쓰는 동안 {@code catalog.internal}로 내리면 legacy가 {@code catalog.internal}을 참조하게 되므로
+ * 쓰는 동안 {@code catalog}로 내리면 legacy가 {@code catalog}을 참조하게 되므로
  * 옮기지 않았다 — showlike read 경로 정리가 끝나는 시점에 catalog 소유로 내린다.
  *
  * <p><b>{@code @ApplicationModule}을 선언하는 이유</b>: package-info에 annotation이 없으면

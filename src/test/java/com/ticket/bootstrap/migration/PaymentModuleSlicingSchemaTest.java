@@ -1,6 +1,6 @@
 package com.ticket.bootstrap.migration;
 
-import com.ticket.payment.internal.domain.payment.model.Payment;
+import com.ticket.payment.domain.payment.model.Payment;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;

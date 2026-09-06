@@ -107,7 +107,7 @@ H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationC
 
 ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
 테스트는 모두 `PerformanceSeatQueryControllerContractTest`
-(`src/test/java/com/ticket/booking/internal/web/`) 하나에 있다.
+(`src/test/java/com/ticket/booking/web/`) 하나에 있다.
 
 - `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
 - `GET /api/v1/performances/{id}/seats/status` — 동적 판매 상태(`performanceSeatId` 기준)
@@ -189,8 +189,8 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   이름과 애노테이션(`DIRECT_DEPENDENCIES`)으로 드러낸다.
 - Redis나 DB에 실제로 붙어야 하는 검증은 `@DataJpaTest`/Testcontainers로 분리한다. 단위 테스트에
   섞지 않는다.
-- 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `internal.web`,
-  `UseCase.Input` 계약은 `internal.application`, 업무 불변식은 `internal.domain` 테스트다. 같은
+- 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `web`,
+  `UseCase.Input` 계약은 `application`, 업무 불변식은 `domain` 테스트다. 같은
   규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [validation.md](validation.md)를 본다.
 - 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 이벤트 재시도, 순서 역전**을
   함께 고정한다.

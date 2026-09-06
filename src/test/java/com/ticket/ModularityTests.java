@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 이동이 끝나면 이 package들은 사라진다.
  *
  * <p>{@code com.ticket.bootstrap}은 성격이 다르다 — legacy(언젠가 없어질 코드)가 아니라
- * **composition root/전역 기술 설정 계층**이고, 영구히 남는다. 여러 business module의 internal을
+ * **composition root/전역 기술 설정 계층**이고, 영구히 남는다. 여러 business module의 내부를
  * 한 번에 봐야만 배선할 수 있는 전역 기술 설정이 이 자리에 속한다 — 그런 코드를 특정 module
  * 소유로 두면 그 module이 나머지 module을 부당하게 참조하게 되므로, 애초에 module 후보에서 빼는
  * 쪽이 맞다. 이 category를 legacy와 같은 predicate로 검증에서 제외하는 이유는 legacy와 같다(참조
@@ -36,15 +36,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 드러났다. {@code EventPublicationMaintenance}/{@code SchedulingConfig}/{@code SystemClockConfig}는
  * 어떤 business module도 참조하지 않는 domain-free 코드라 처음에는 {@code com.ticket.shared}로
  * 옮겼다가, bean을 등록하는 코드는 호출 대상 계약과 성질이 다르고 {@code sharedModules} 선언
- * 때문에 모든 module 테스트에 함께 뜬다는 이유로 {@code com.ticket.config.internal}로 다시
+ * 때문에 모든 module 테스트에 함께 뜬다는 이유로 {@code com.ticket.config}로 다시
  * 옮겼다({@code com.ticket.shared.SharedModulePurityTest}가 그 규칙을 강제한다).
  * {@code JpaAuditingConfig}/{@code SecurityContextAuditorAware}(member의 공개 계약
  * {@code AuthenticatedMember} 참조)와, legacy {@code com.ticket.core.config}/
  * {@code com.ticket.core.infra.config}에 있던 {@code WebConfig}/{@code WebSocketConfig}/
- * {@code HttpServiceConfig}/{@code JwtConfig}(각각 member·booking의 internal을 직접 참조)는
- * 실제로 여러 module의 internal/공개 계약을 동시에 알아야 하는 코드였다. 이 여섯 개를
+ * {@code HttpServiceConfig}/{@code JwtConfig}(각각 member·booking의 내부를 직접 참조)는
+ * 실제로 여러 module의 내부/공개 계약을 동시에 알아야 하는 코드였다. 이 여섯 개를
  * {@code bootstrap}에 두는 대신 정식 module {@code com.ticket.config}로 옮기고,
- * {@code org.springframework.modulith.NamedInterface}로 member/booking의 필요한 internal
+ * {@code org.springframework.modulith.NamedInterface}로 member/booking의 필요한 내부
  * package만 좁게 열었다.
  *
  * <p>그 뒤 <b>등록을 소유 module로 옮겨 그 네 갈래를 없앴다</b> —
@@ -57,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 하나이고, {@code @NamedInterface}는 하나도 남지 않았다.
  *
  * <p>{@code com.ticket.bootstrap}에는 지금 production class가 하나도 없다 — 그래도 이 자리
- * 자체(그리고 검증 제외)는 legacy와 무관하게 계속 필요하다: 앞으로도 여러 module의 internal을
+ * 자체(그리고 검증 제외)는 legacy와 무관하게 계속 필요하다: 앞으로도 여러 module의 내부를
  * 동시에 참조해야 하는 코드가 생기면, NamedInterface로 좁혀 열 수 없을 만큼 결합이 크거나 임시적인
  * 경우 이 자리를 쓴다.
  *
@@ -200,7 +200,7 @@ class ModularityTests {
         final ApplicationModules modules = ApplicationModules.of(TicketApplication.class, LEGACY_PACKAGES);
 
         assertThat(modules.stream().filter(ApplicationModule::isOpen))
-                .as("모든 module은 CLOSED(internal package 캡슐화)여야 한다")
+                .as("모든 module은 CLOSED(하위 package 캡슐화)여야 한다")
                 .isEmpty();
     }
 

@@ -2,7 +2,7 @@
  * Catalog module: Show, Performance, Seat, 공연별 예매 가능 시간과 Hold 한도, PerformanceQueuePolicy,
  * QueueMode, QueueLevel, 공연·회차·좌석 조회, 그리고 Show 좋아요(찜)를 소유한다.
  *
- * <p>구현은 모두 {@code internal} 아래에 있고, 이 module root에는 다른 module이 쓰는 공개 계약만
+ * <p>구현은 하위 package(web/application/domain/infrastructure)에 있고, 이 module root에는 다른 module이 쓰는 공개 계약만
  * 둔다: {@link com.ticket.catalog.BookingPolicyLookup}/{@link com.ticket.catalog.BookingPolicySnapshot}
  * (booking의 즉시 판단용 예매 정책·가격 snapshot), {@link com.ticket.catalog.ShowLookup}/
  * {@link com.ticket.catalog.ShowSummary}(show 존재 확인·표시값 조회).

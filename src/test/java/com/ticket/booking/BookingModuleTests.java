@@ -36,7 +36,7 @@ import java.time.Clock;
  * {@code com.ticket.config}가 소유해 STANDALONE 스캔 범위 밖이다. {@code SimpMessagingTemplate}은
  * {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 한다. 이 bean을
  * 만드는 {@code @EnableWebSocketMessageBroker} 설정
- * ({@code booking.internal.infrastructure.websocket.WebSocketConfig})은 이제 booking 소유라 스캔
+ * ({@code booking.infrastructure.websocket.WebSocketConfig})은 이제 booking 소유라 스캔
  * 범위 안이지만, wiring smoke test에서 실제 STOMP 브로커 배선까지 띄울 이유가 없어 계속
  * {@code @MockitoBean}으로 대체한다({@code @MockitoBean}은 같은 타입의 실제 bean 정의를 대체한다).
  */

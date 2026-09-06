@@ -3,7 +3,7 @@
 > **구현 참조 갱신(2026-09-02):** 아래 본문의 업무 결정 자체는 바뀌지 않았다. 다만 예시로 든
 > 클래스는 Spring Modulith 모듈 전환으로 이동·대체됐다 —
 > `CreateOrderValidator`/`HoldSeatAvailabilityValidator`는
-> `com.ticket.booking.internal.domain.hold.command.HoldSeatAvailabilityValidator`로,
+> `com.ticket.booking.domain.hold.command.HoldSeatAvailabilityValidator`로,
 > `AsyncHoldCreationPostCommitNotifier`는 booking이 발행하는 `OrderStarted`/`OrderTerminated`
 > 이벤트와 `BookingEventListeners`로 대체됐다. 상세는
 > [ADR 0003의 "ADR 0001과의 관계"](0003-spring-modulith-application-module-boundaries.md#adr-0001과의-관계)를

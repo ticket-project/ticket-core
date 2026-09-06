@@ -24,7 +24,7 @@ allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git
 | Redis adapter, key, TTL, expiration listener를 고쳤다 | `./gradlew test --tests "com.ticket.core.infra.redis.CoreRedisIntegrationTest"` (Docker 필요) |
 | 주문·hold·좌석 상태 흐름이나 모듈 간 조립을 고쳤다 | `./gradlew test --tests "com.ticket.bootstrap.*"` (Docker 필요, 전체 컨텍스트·E2E) |
 | Modulith 이벤트(발행·리스너·재시도)를 고쳤다 | `./gradlew test --tests "*EventPublication*" --tests "*ScenarioTest"` |
-| 특정 테스트만 보고 싶다 | `./gradlew test --tests "com.ticket.booking.internal.application.order.command.*"` |
+| 특정 테스트만 보고 싶다 | `./gradlew test --tests "com.ticket.booking.application.order.command.*"` |
 | 배포 산출물까지 확인한다 | `./gradlew clean bootJar -x test` |
 | push·PR 직전 | `./gradlew clean test bootJar`(CI와 같은 명령) |
 | 문서만 바꿨다 | `rg -n "찾을_문구"` 와 `git diff --check` |

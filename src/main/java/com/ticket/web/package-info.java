@@ -34,8 +34,8 @@
  * module을 모든 {@code @ApplicationModuleTest}에 포함시키므로, 여기 배선이 있으면 모든 module의
  * STANDALONE 테스트가 그것을 함께 띄운다({@code com.ticket.shared}와 같은 이유다).
  *
- * <p>구현이랄 것이 없어 {@code internal}이 없다 — 다른 module이 직접 쓰는 공개 계약뿐이므로
- * 전부 module root에 있다. 각 module의 controller가 사는 {@code <module>.internal.web}과는
+ * <p>구현이랄 것이 없어 하위 package가 없다 — 다른 module이 직접 쓰는 공개 계약뿐이므로
+ * 전부 module root에 있다. 각 module의 controller가 사는 {@code <module>.web}과는
  * 다른 자리다: 그쪽은 그 module의 endpoint이고, 이 module은 그 endpoint들이 공유하는 표현
  * 계약이다.
  */
