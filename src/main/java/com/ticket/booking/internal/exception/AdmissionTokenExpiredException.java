@@ -1,4 +1,4 @@
-package com.ticket.admission.internal.exception;
+package com.ticket.booking.internal.exception;
 
 /**
  * admission token이 만료됐다. 만료는 클라이언트가 대기열을 다시 타야 한다는 뜻이라 다른 검증 실패와

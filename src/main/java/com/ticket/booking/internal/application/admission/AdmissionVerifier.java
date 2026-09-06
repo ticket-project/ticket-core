@@ -1,10 +1,10 @@
-package com.ticket.admission;
+package com.ticket.booking.internal.application.admission;
 
 /**
- * 대기열 입장 자격을 검증하는 Admission module의 공개 계약이다.
+ * 대기열 입장 자격을 검증하는 booking의 출력 포트다(원래 별도 admission module의 공개 계약이었다).
  *
  * <p>호출자는 회차가 대기열 입장을 요구하는지 스스로 판단한 뒤에만 이 method를 호출한다. 토큰이
- * 어떤 형식이고 어떻게 서명·해석되는지는 {@code internal} 구현만 안다.
+ * 어떤 형식이고 어떻게 서명·해석되는지는 {@code internal.infrastructure.admission} 구현만 안다.
  */
 public interface AdmissionVerifier {
 

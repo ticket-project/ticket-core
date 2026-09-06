@@ -1,10 +1,10 @@
-package com.ticket.admission.internal.exception;
+package com.ticket.booking.internal.exception;
 
 import com.ticket.error.TicketException;
 import org.springframework.http.HttpStatus;
 
 /**
- * admission token이 유효하지 않다. 이 module의 base 예외이며 그 자체로 E8002 계약을 갖는다.
+ * admission token이 유효하지 않다. admission 검증 예외의 base이며 그 자체로 E8002 계약을 갖는다.
  *
  * <p><b>{@code reason}은 응답에 노출되지 않는다.</b> 서명 불일치·audience 불일치·subject 파싱 실패처럼
  * 검증이 어디서 깨졌는지는 공격자에게 알려줄 정보가 아니므로, 공개 메시지는 사유와 무관하게 하나로

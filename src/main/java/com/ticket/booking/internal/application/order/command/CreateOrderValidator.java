@@ -1,6 +1,6 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
 import com.ticket.booking.internal.application.support.BookingPolicyGuard;
 import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.internal.domain.order.command.create.ValidatedOrderRequest;

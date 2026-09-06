@@ -12,7 +12,7 @@
 ## 프로젝트 요약
 
 Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `catalog`,
-`member`, `admission`, `payment`를 포함해 10개 Spring Modulith
+`member`, `payment`를 포함해 9개 Spring Modulith
 Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). 현재
 구현의 중심은 아래 흐름이다.
 
@@ -22,7 +22,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 - 좌석 선택(`booking`): Redis TTL 기반 임시 선택 상태와 WebSocket 전파
 - 좌석 선점과 주문(`booking`): Redis 기반 hold, `PENDING` 주문 생성, 조회, 취소, 만료 처리.
   판매 좌석(`PerformanceSeat`)은 회차 단위로 편성되고 판매 오픈 시점 가격을 snapshot한다
-- 입장 검증(`admission`): `ticket-queue`가 발급한 admission token 검증
+- 입장 검증(`booking`의 admission 검증): `ticket-queue`가 발급한 admission token 검증
 - 좋아요(`showlike`): catalog가 흡수했다. 상세는
   [architecture.md의 찜(showlike)은 catalog가 흡수한다](architecture.md#찜showlike은-catalog가-흡수한다)를 본다
 - 결제 시도(`payment`), 발급 티켓(`booking`의 Ticket): 이번 범위는 entity/schema/repository까지다. PG
@@ -92,7 +92,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 1. 같은 회원·같은 회차의 주문 시작을 분산락으로 직렬화한다(`LockScope.ORDER_START`)
 2. catalog `BookingPolicyLookup`으로 예매 정책·좌석 소속·가격 snapshot을 조회한다(booking DB
    트랜잭션 밖)
-3. 정책상 대기열이 필요한 회차만 admission `AdmissionVerifier`로 token을 검증한다(밖)
+3. 정책상 대기열이 필요한 회차만 booking 안의 `AdmissionVerifier`로 token을 검증한다(밖)
 4. member `MemberLookup`으로 회원이 active인지 확인한다(밖)
 5. booking local read로 같은 회원의 `PENDING` 주문 중복과 좌석 판매 상태를 확인한다(짧은 read
    트랜잭션)
@@ -131,7 +131,7 @@ Queue Server hot path는 Core DB와 회차별 정책 snapshot을 조회하지 �
 요청 회차에 애플리케이션 기본 입장 속도와 TTL을 적용하며, `join`에서 받은 `shardId`와
 `localSeq`를 public `/state` 응답의 `serving[shardId]`와 비교해 입장 가능 여부를 판단한다.
 
-Core(`admission` 모듈)는 Queue가 발급한 admission token의 서명, issuer, audience, scope, 만료
+Core(`booking`의 admission 검증)는 Queue가 발급한 admission token의 서명, issuer, audience, scope, 만료
 시각과 `memberId`, `performanceId` 일치 여부를 검증한다. **주문 생성 후 Queue Server에 session
 완료 요청을 보내지 않으며**, 입장 후 shopping session은 Queue Server의 TTL로 정리된다.
 
@@ -211,7 +211,7 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 
 - 대기열 상태는 `ticket-queue`가 관리한다.
 - Core(`catalog`)는 예매 API 진입 시 회차 정책을 먼저 확인하고, 대기열이 필요한 회차에서만
-  `admission` 모듈이 `X-Admission-Token`의 서명, 만료, memberId와 performanceId 일치 여부를
+  `booking`의 admission 검증이 `X-Admission-Token`의 서명, 만료, memberId와 performanceId 일치 여부를
   검증한다.
 - Core의 Redis는 좌석 선택, hold(`booking`), refresh token, OAuth2 one-time auth code(`member`)
   용도로만 사용한다.

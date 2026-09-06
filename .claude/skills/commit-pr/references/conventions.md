@@ -65,7 +65,7 @@ auth, member, show, performance, performanceseat, hold, order, queue
 권장 모듈·기술 scope:
 
 ```text
-booking, catalog, member, admission, payment, shared, config, redis, logging, seed, tools, ci, review, codex
+booking, catalog, member, payment, shared, config, redis, logging, seed, tools, ci, review, codex
 ```
 
 여러 Application Module에 걸친 구조 변경(Spring Modulith 경계, 전역 설정 등)은 특정 모듈

@@ -24,7 +24,7 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | Order에 대한 결제 시도(Payment)의 생명주기 | `payment` |
 | 결제 확정으로 발급되는 Ticket(입장 권리)의 생명주기 | `booking`(entity-only, 원래 `ticketing` module이었다) |
 | Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `member` |
-| admission token 설정·decode·검증 | `admission` |
+| admission token 설정·decode·검증 | `booking`(원래 별도 `admission` module이었다) |
 | Show 좋아요(찜) 개수·추가·삭제·내 찜 목록 | `catalog`(Show의 부가 속성으로 취급, "showlike 흡수" 참고) |
 | 둘 이상 독립 모듈이 의미 동일하게 공유하고 프로토콜·프레임워크 결합이 없는 호출 대상 계약(`UuidSupplier`, `CorsProperties`, `CursorPage`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
 | REST 응답 표현 계약(응답 봉투 `ApiResponse`/`ErrorMessage`/`ResultType`, 무한스크롤 `SliceResponse`) — bean은 두지 않는다 | `web` |
@@ -80,8 +80,8 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | 인증 흐름의 포트와 인증 주체·토큰 값 | `member.internal.application` |
 | 다른 모듈이 받는 인증 principal | `member.AuthenticatedMember`(공개 계약) |
 | 회원 역할·권한 같은 업무 개념 | `member.internal.domain` |
-| admission token 설정·claim decode | `admission.internal` |
-| 다른 모듈이 부르는 admission 검증 API | `admission.AdmissionVerifier`/`AdmissionVerification`(공개 계약) |
+| admission token 설정·claim decode·JWT 검증 | `booking.internal.infrastructure.admission` |
+| booking use case가 부르는 admission 검증 포트 | `booking.internal.application.admission.AdmissionVerifier`/`AdmissionVerification` |
 | HTTP 헤더 이름 같은 API 계약 상수 | 소유 모듈의 `internal.web` |
 | 상태를 바꾸는 use case | 소유 모듈의 `internal.application.<기능>.command` |
 | 조회 use case | 소유 모듈의 `internal.application.<기능>.query` |
@@ -201,7 +201,7 @@ member의 `MemberLookup`을 참조한다(단방향). 상세 배경은
 - **다른 모듈이 필요한 경우.** 상대 모듈의 `internal` repository나 store를 직접 부르지 않고
   공개 API(예: `catalog.BookingPolicyLookup`, `member.MemberLookup`)를 호출한다.
 - **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별
-  `entryType` 계산(`catalog`)과 admission token 검증(`admission`)만 담당하며 queue token
+  `entryType` 계산(`catalog`)과 admission token 검증(`booking`)만 담당하며 queue token
   저장소나 만료 핸들러를 두지 않는다.
 - **Core Redis의 용도.** seat selection, seat hold(`booking`), refresh token, OAuth2
   one-time auth code(`member`)뿐이다. 대기열 상태를 Core Redis에 넣지 않는다.

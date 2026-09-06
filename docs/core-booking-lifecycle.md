@@ -23,7 +23,7 @@
 - 주문 저장 또는 상태 변경과 그에 대응하는 이벤트 발행은 같은 DB 트랜잭션에서 처리한다.
 - 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고
   throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
-- 다른 모듈 API 호출(catalog 정책 조회, member 회원 확인, admission token 검증)은 booking DB
+- 다른 모듈 API 호출(catalog 정책 조회, member 회원 확인)과 admission token 검증은 booking DB
   트랜잭션 밖에서 끝낸다.
 - 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다(ADR 0005). 클라이언트가 보낸 가격도,
   catalog가 다시 계산한 가격도 금액 계산 근거로 쓰지 않는다.

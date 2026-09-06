@@ -1,13 +1,13 @@
 package com.ticket.booking.internal.application.performanceseat.query;
 
-import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.exception.NotYetReserveTimeException;
 import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateSnapshotRow;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStatus;

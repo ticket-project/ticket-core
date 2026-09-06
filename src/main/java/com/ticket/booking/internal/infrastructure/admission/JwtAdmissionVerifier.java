@@ -1,10 +1,10 @@
-package com.ticket.admission.internal;
+package com.ticket.booking.internal.infrastructure.admission;
 
-import com.ticket.admission.AdmissionVerification;
-import com.ticket.admission.AdmissionVerifier;
-import com.ticket.admission.internal.exception.AdmissionTokenException;
-import com.ticket.admission.internal.exception.AdmissionTokenExpiredException;
-import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.application.admission.AdmissionVerification;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
+import com.ticket.booking.internal.exception.AdmissionTokenException;
+import com.ticket.booking.internal.exception.AdmissionTokenExpiredException;
+import com.ticket.booking.internal.exception.AdmissionTokenRequiredException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -48,7 +48,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     }
 
     /**
-     * 공개 진입점. 검증 실패는 이 module이 소유한 예외로 그대로 나간다 — 예외가 HTTP 상태와 E-code를
+     * 공개 진입점. 검증 실패는 admission 예외로 그대로 나간다 — 예외가 HTTP 상태와 E-code를
      * 스스로 들고 있으므로 여기서 다시 번역하지 않는다.
      * 대기열이 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
      */

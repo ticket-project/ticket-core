@@ -3,7 +3,7 @@ package com.ticket.booking.internal.application.performanceseat.query;
 import com.ticket.booking.internal.application.support.BookingPolicyGuard;
 import com.ticket.booking.internal.domain.hold.command.HoldManager;
 import com.ticket.booking.internal.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.application.performanceseat.query.model.SeatStateSnapshotRow;

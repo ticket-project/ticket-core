@@ -1,11 +1,11 @@
-package com.ticket.admission.internal.exception;
+package com.ticket.booking.internal.exception;
 
 import com.ticket.error.ErrorCode;
 
 /**
- * admission module이 소유하는 오류 코드다.
+ * admission token 검증 오류 코드다(원래 별도 admission module이 소유했다).
  *
- * <p>코드 값은 외부 계약이라 module 경계가 바뀌어도 재번호하지 않는다. E8xxx 대역이 이 module의
+ * <p>코드 값은 외부 계약이라 module 경계가 바뀌어도 재번호하지 않는다. E8xxx 대역이 admission의
  * 것이다.
  */
 public enum AdmissionErrorCode implements ErrorCode {

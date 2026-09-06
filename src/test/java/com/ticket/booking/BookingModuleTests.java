@@ -1,7 +1,6 @@
 package com.ticket.booking;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.admission.AdmissionVerifier;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.PerformanceSaleCatalog;
 import com.ticket.catalog.PerformanceVenueLayoutCatalog;
@@ -27,7 +26,7 @@ import java.time.Clock;
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.booking} package tree만 component-scan한다.
  * catalog {@code BookingPolicyLookup}·{@code PerformanceSaleCatalog}·{@code PerformanceVenueLayoutCatalog}·
  * {@code ShowLookup}, member {@code MemberLookup}·
- * {@code AccessTokenAuthenticator}(WebSocket 인증이 참조), admission {@code AdmissionVerifier}는 그
+ * {@code AccessTokenAuthenticator}(WebSocket 인증이 참조)는 그
  * 필터 밖이라 {@code @MockitoBean}으로 대체한다. {@code JPAQueryFactory}도
  * {@code @MockitoBean}으로 대체한다 — 이 테스트는 booking bean들이 module 경계 안에서 서로 정상
  * 배선되는지만 확인하는 wiring smoke test이지 실제 DB 접근을 검증하지 않는다. 그 검증은 각 Querydsl
@@ -61,9 +60,6 @@ class BookingModuleTests {
 
     @MockitoBean
     private AccessTokenAuthenticator accessTokenAuthenticator;
-
-    @MockitoBean
-    private AdmissionVerifier admissionVerifier;
 
     @MockitoBean
     private JPAQueryFactory jpaQueryFactory;

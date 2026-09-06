@@ -1,4 +1,4 @@
-package com.ticket.admission.internal.exception;
+package com.ticket.booking.internal.exception;
 
 /**
  * 대기열이 필요한 회차인데 admission token이 아예 오지 않았다.

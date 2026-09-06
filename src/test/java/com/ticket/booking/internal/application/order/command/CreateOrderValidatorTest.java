@@ -1,13 +1,13 @@
 package com.ticket.booking.internal.application.order.command;
 
-import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.internal.exception.BookingException;
 import com.ticket.booking.internal.exception.ExceedHoldLimitException;
 import com.ticket.booking.internal.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.internal.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.internal.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.internal.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
 import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;

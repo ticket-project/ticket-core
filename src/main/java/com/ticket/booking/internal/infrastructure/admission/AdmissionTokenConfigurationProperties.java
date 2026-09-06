@@ -1,4 +1,4 @@
-package com.ticket.admission.internal;
+package com.ticket.booking.internal.infrastructure.admission;
 
 import lombok.Getter;
 import lombok.Setter;

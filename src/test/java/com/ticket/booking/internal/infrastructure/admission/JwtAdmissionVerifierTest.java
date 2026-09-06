@@ -1,10 +1,10 @@
-package com.ticket.admission.internal;
+package com.ticket.booking.internal.infrastructure.admission;
 
-import com.ticket.admission.AdmissionVerification;
-import com.ticket.admission.internal.exception.AdmissionErrorCode;
-import com.ticket.admission.internal.exception.AdmissionTokenException;
-import com.ticket.admission.internal.exception.AdmissionTokenExpiredException;
-import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.application.admission.AdmissionVerification;
+import com.ticket.booking.internal.exception.AdmissionErrorCode;
+import com.ticket.booking.internal.exception.AdmissionTokenException;
+import com.ticket.booking.internal.exception.AdmissionTokenExpiredException;
+import com.ticket.booking.internal.exception.AdmissionTokenRequiredException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

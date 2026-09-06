@@ -30,10 +30,9 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 ```text
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
-├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat·Ticket(entity-only), 공개: OrderStarted/OrderTerminated
+├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat·Ticket(entity-only), 공개: OrderStarted/OrderTerminated. admission token 검증(원래 admission module)도 소유
 ├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
 ├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup
-├── admission/                # admission token 검증, 공개: AdmissionVerifier, AdmissionVerification
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
 ├── config/                   # 업무 모듈을 모르는 전역 배선(Swagger/Querydsl/Redisson/P6Spy/
@@ -42,7 +41,7 @@ src/main/java/com/ticket
 └── payment/                  # Payment(결제 시도) entity/schema/repository만 갖는 entity-only 모듈
 ```
 
-`com.ticket`의 직접 하위 패키지는 10개다(`booking`, `catalog`, `member`, `admission`,
+`com.ticket`의 직접 하위 패키지는 9개다(`booking`, `catalog`, `member`,
 `shared`, `web`, `config`, `error`, `seed`, `payment`) — `showlike`는 없다(찜을 catalog가
 흡수했다. [찜(showlike)은 catalog가 흡수한다](#찜showlike은-catalog가-흡수한다) 참고).
 
@@ -76,10 +75,9 @@ class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스�
 포함해 각 모듈이 실제로 참조하는 모듈 전부를 담는다).
 
 ```text
-booking   -> catalog, member, admission, shared, web, error
+booking   -> catalog, member, shared, web, error
 catalog   -> member, shared, web, error
 member  -> shared, web, error
-admission -> web, error
 shared    -> (없음)
 web       -> (없음)
 config    -> member, shared
@@ -90,12 +88,14 @@ payment   -> (없음)
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수 있다.
 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만** 적는다
-(`catalog`/`member`/`admission`은 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
+(`catalog`/`member`는 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
 `sharedModules`인 shared·error·web은 상한과 무관하게 항상 허용된다). 대신 어느 모듈이 실제로 이
 셋을 참조하는지는 `ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정하므로, HTTP를
 노출하지 않던 모듈에 응답 봉투가 새로 들어오면 그 테스트가 실패한다.
 
-`member`/`admission`은 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). `catalog`는
+`member`는 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). admission token 검증은
+원래 별도 `admission` module이었으나 booking만 쓰는 능력이라 booking으로 흡수됐다
+(`booking.internal.{application,infrastructure}.admission`, E8xxx 오류 코드 유지). `catalog`는
 찜(showlike) 흡수로 회원 존재 확인을 위해 member를 참조한다(`MemberLookup`) — booking이
 `Order.memberId`를 위해 member를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹힌다. `shared`와
 `web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과
@@ -124,9 +124,8 @@ raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@Named
   참조하지 않는다.
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 `internal` 패키지,
   Repository, JPA entity를 직접 import하지 않는다. 공개 API는 작은 단위 interface(예:
-  `catalog.BookingPolicyLookup`, `member.MemberLookup`, `admission.AdmissionVerifier`)와 그
-  반환값인 불변 `record` snapshot(`BookingPolicySnapshot`, `MemberStatus`,
-  `AdmissionVerification` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에
+  `catalog.BookingPolicyLookup`, `member.MemberLookup`)와 그
+  반환값인 불변 `record` snapshot(`BookingPolicySnapshot`, `MemberStatus` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에
   두지 않는다. 컬렉션은 defensive copy한다.
 - **모듈 후속 처리는 커밋 이후 이벤트로 한다.** booking이 발행하는 `OrderStarted`/
   `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
@@ -272,8 +271,8 @@ event-publication registry 유지보수, scheduling/clock, 그리고 member의 �
 | `internal.domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
 | `internal.infrastructure` | Repository 어댑터, Querydsl 조회, Redis/Redisson, WebSocket publisher, 외부 HTTP client, 기술 설정 |
 
-작은 모듈(`admission`)은 이 네 하위 패키지를 모두 갖지 않고 `internal` 바로 아래에 평평하게 둘
-수 있다. 무엇을 쪼갤지는 실제 복잡도가 결정한다.
+작은 모듈은 이 네 하위 패키지를 모두 갖지 않고 `internal` 바로 아래에 평평하게 둘 수 있다
+(`payment`가 그 예다). 무엇을 쪼갤지는 실제 복잡도가 결정한다.
 
 포트 소유 기준은 계층형 시절과 같다 — **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 

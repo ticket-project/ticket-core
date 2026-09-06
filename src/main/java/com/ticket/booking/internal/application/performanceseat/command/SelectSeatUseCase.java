@@ -4,7 +4,7 @@ import com.ticket.booking.internal.application.support.BookingPolicyGuard;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.booking.internal.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
 import com.ticket.catalog.BookingPolicyLookup;
 import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.error.InvalidRequestException;

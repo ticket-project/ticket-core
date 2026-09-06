@@ -1,6 +1,6 @@
 package com.ticket.booking.internal.application.performanceseat.command;
 
-import com.ticket.admission.internal.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.internal.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.internal.exception.PerformanceIsPastException;
 import com.ticket.booking.internal.exception.SeatAlreadyHoldException;
 import com.ticket.catalog.BookingPolicyLookup;
@@ -8,7 +8,7 @@ import com.ticket.catalog.BookingPolicySnapshot;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.internal.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.booking.internal.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
-import com.ticket.admission.AdmissionVerifier;
+import com.ticket.booking.internal.application.admission.AdmissionVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

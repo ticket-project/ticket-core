@@ -10,7 +10,12 @@
 (§1, §2, §4~§11)은 그대로 유효하다.
 
 **2026-09-06 갱신**: `metadata` module(`/api/v1/meta/codes`, `*Metadata` 공개 계약 조합)은 FE를
-포함해 호출자가 없음을 확인하고 제거됐다. 아래 본문의 `metadata`·`*Metadata` 언급은 제거 이전 기록이다.
+$1
+**2026-09-06 갱신(admission)**: `admission` module은 booking으로 흡수됐다. 공개 계약 `AdmissionVerifier`/
+`AdmissionVerification`을 쓰는 곳이 booking뿐이어서 module 경계가 보호하는 소비자가 없었다.
+`booking.internal.application.admission`(포트)과 `booking.internal.infrastructure.admission`(JWT 구현·설정)으로
+옮겼고, `AdmissionErrorCode`(E8xxx)와 `AdmissionExceptionHandler`는 booking의 `internal.exception` 아래로
+옮겨 값은 유지했다. 아래 본문의 `admission` module 언급은 흡수 이전 기록이다.
 
 기존 `bootstrap`/`core-api`/`core-app`/`core-domain`/`core-infra`/`storage`/`support` Gradle
 멀티프로젝트를 단일 Gradle Spring Boot 프로젝트로 통합하고, `com.ticket`의 직접 하위 패키지를
