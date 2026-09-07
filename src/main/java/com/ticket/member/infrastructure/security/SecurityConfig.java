@@ -104,6 +104,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/shows/**",
                                 "/api/v1/performances/**",
+                                "/api/v1/booking/performances/*/booking-mode",
                                 "/api/v1/genres/**",
                                 "/api/v1/meta/**"
                         ).permitAll()
