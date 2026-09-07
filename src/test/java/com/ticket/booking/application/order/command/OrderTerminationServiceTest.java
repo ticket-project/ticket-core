@@ -5,8 +5,6 @@ import com.ticket.booking.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.booking.domain.order.model.Order;
 import com.ticket.booking.domain.order.model.OrderSeat;
 import com.ticket.booking.domain.order.model.OrderState;
-import com.ticket.booking.domain.order.repository.OrderSeatRepository;
-import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,19 +22,13 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OrderTerminationServiceTest {
 
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 10, 0);
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
-
-    @Mock
-    private OrderSeatRepository orderSeatRepository;
 
     @Mock
     private HoldHistoryRecorder holdHistoryRecorder;
@@ -47,8 +39,7 @@ class OrderTerminationServiceTest {
     @Test
     void cancel_changes_state_records_history_and_publishes_order_terminated() {
         final Order order = order(10L, "hold-key");
-        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
-        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
+        final OrderSeat orderSeat = order.addOrderSeat(501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
 
         service().cancel(order, FIXED_NOW);
 
@@ -66,8 +57,7 @@ class OrderTerminationServiceTest {
     @Test
     void expire_changes_state_records_history_and_publishes_order_terminated() {
         final Order order = order(10L, "hold-key");
-        final OrderSeat orderSeat = new OrderSeat(order, 501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
-        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(orderSeat));
+        final OrderSeat orderSeat = order.addOrderSeat(501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
 
         service().expire(order, FIXED_NOW);
 
@@ -78,17 +68,15 @@ class OrderTerminationServiceTest {
     }
 
     @Test
-    void foreign_order_seat_stops_the_entire_termination_flow() {
+    void 여러_좌석은_id_오름차순_그대로_종료_처리에_넘어간다() {
         final Order order = order(10L, "hold-key");
-        final Order otherOrder = order(11L, "other-hold-key");
-        final OrderSeat foreignOrderSeat = new OrderSeat(otherOrder, 501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
-        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(foreignOrderSeat));
+        final OrderSeat first = order.addOrderSeat(501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
+        final OrderSeat second = order.addOrderSeat(502L, 43L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 2번");
 
-        assertThatThrownBy(() -> service().expire(order, FIXED_NOW))
-                .isInstanceOf(InvalidRequestException.class);
+        service().cancel(order, FIXED_NOW);
 
-        assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
-        verifyNoInteractions(holdHistoryRecorder, eventPublisher);
+        verify(holdHistoryRecorder).recordCanceled(1L, 100L, "hold-key", FIXED_NOW, List.of(first, second));
+        assertThat(capturedEvent().performanceSeatIds()).isEqualTo(Set.of(501L, 502L));
     }
 
     private OrderTerminated capturedEvent() {
@@ -99,7 +87,6 @@ class OrderTerminationServiceTest {
 
     private OrderTerminationService service() {
         return new OrderTerminationService(
-                orderSeatRepository,
                 holdHistoryRecorder,
                 eventPublisher,
                 FIXED_CLOCK
