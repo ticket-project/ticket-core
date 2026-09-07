@@ -1,7 +1,6 @@
 package com.ticket.show.domain.performance;
 
 import com.ticket.show.domain.ShowAuditedEntity;
-import com.ticket.show.domain.grade.Grade;
 import com.ticket.error.InvalidRequestException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,9 +46,13 @@ public class PerformanceGrade extends ShowAuditedEntity {
     @JoinColumn(name = "performance_id", nullable = false)
     private Performance performance;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grade_id", nullable = false)
-    private Grade grade;
+    /**
+     * Grade는 PerformanceGrade와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate
+     * 경계를 넘는 참조는 ID로 한다 — {@code docs/architecture.md}의 참조 규칙). 반면 위
+     * {@code performance}는 같은 aggregate 안(부모)이라 객체 참조를 유지한다.
+     */
+    @Column(name = "grade_id", nullable = false)
+    private Long gradeId;
 
     @Column(nullable = false)
     private BigDecimal price;
@@ -59,23 +62,23 @@ public class PerformanceGrade extends ShowAuditedEntity {
 
     private PerformanceGrade(
             final Performance performance,
-            final Grade grade,
+            final Long gradeId,
             final BigDecimal price,
             final Integer sortOrder
     ) {
         this.performance = performance;
-        this.grade = grade;
+        this.gradeId = gradeId;
         this.price = validatePrice(price);
         this.sortOrder = sortOrder;
     }
 
     public static PerformanceGrade assign(
             final Performance performance,
-            final Grade grade,
+            final Long gradeId,
             final BigDecimal price,
             final Integer sortOrder
     ) {
-        return new PerformanceGrade(performance, grade, price, sortOrder);
+        return new PerformanceGrade(performance, gradeId, price, sortOrder);
     }
 
     private BigDecimal validatePrice(final BigDecimal price) {

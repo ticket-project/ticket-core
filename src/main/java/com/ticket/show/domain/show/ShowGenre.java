@@ -20,17 +20,20 @@ public class ShowGenre extends ShowAuditedEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "show_id", nullable = false)
-    private Show show;
+    /**
+     * Show·Genre는 각각 ShowGenre와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate
+     * 경계를 넘는 참조는 ID로 한다 — {@code docs/architecture.md}의 참조 규칙). 컬럼명은 옛
+     * {@code @ManyToOne} 매핑과 같은 {@code show_id}/{@code genre_id}를 그대로 쓴다.
+     */
+    @Column(name = "show_id", nullable = false)
+    private Long showId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "genre_id", nullable = false)
-    private Genre genre;
+    @Column(name = "genre_id", nullable = false)
+    private Long genreId;
 
-    public ShowGenre(Show show, Genre genre) {
-        this.show = show;
-        this.genre = genre;
+    public ShowGenre(Long showId, Long genreId) {
+        this.showId = showId;
+        this.genreId = genreId;
     }
 
 }

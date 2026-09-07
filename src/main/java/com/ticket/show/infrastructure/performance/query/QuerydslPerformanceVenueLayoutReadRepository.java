@@ -37,7 +37,7 @@ public class QuerydslPerformanceVenueLayoutReadRepository implements Performance
         final Tuple row = queryFactory
                 .select(performance.id, show.venueId)
                 .from(performance)
-                .join(show).on(show.eq(performance.show))
+                .join(show).on(show.id.eq(performance.showId))
                 .where(performance.id.eq(performanceId))
                 .fetchOne();
         if (row == null) {
@@ -74,7 +74,7 @@ public class QuerydslPerformanceVenueLayoutReadRepository implements Performance
                         performanceGrade.sortOrder
                 ))
                 .from(performanceGrade)
-                .join(grade).on(grade.eq(performanceGrade.grade))
+                .join(grade).on(grade.id.eq(performanceGrade.gradeId))
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .fetch();
     }

@@ -123,7 +123,7 @@ public abstract class ReadRepositoryTestSupport {
     }
 
     protected Genre persistGenre(final String code, final String name, final Category category) {
-        Genre genre = new Genre(code, name, category);
+        Genre genre = new Genre(code, name, category.getId());
         entityManager.persist(genre);
         return genre;
     }
@@ -148,7 +148,7 @@ public abstract class ReadRepositoryTestSupport {
                 saleEndDate,
                 "https://example.com/show.png",
                 venue == null ? null : venue.getId(),
-                performer,
+                performer == null ? null : performer.getId(),
                 120
         );
         entityManager.persist(show);
@@ -156,20 +156,20 @@ public abstract class ReadRepositoryTestSupport {
     }
 
     protected ShowGenre persistShowGenre(final Show show, final Genre genre) {
-        ShowGenre showGenre = new ShowGenre(show, genre);
+        ShowGenre showGenre = new ShowGenre(show.getId(), genre.getId());
         entityManager.persist(showGenre);
         return showGenre;
     }
 
     protected Seat persistSeat(final Venue venue, final String section, final String rowNo, final String seatNo, final int floor) {
-        Seat seat = new Seat(venue, section, rowNo, seatNo, floor, 10.0, 20.0);
+        Seat seat = new Seat(venue.getId(), section, rowNo, seatNo, floor, 10.0, 20.0);
         entityManager.persist(seat);
         return seat;
     }
 
     protected Performance persistPerformance(final Show show, final long performanceNo, final LocalDateTime startTime) {
         Performance performance = new Performance(
-                show,
+                show.getId(),
                 performanceNo,
                 startTime,
                 startTime.plusHours(2)
@@ -190,7 +190,7 @@ public abstract class ReadRepositoryTestSupport {
             final BigDecimal price,
             final int sortOrder
     ) {
-        PerformanceGrade performanceGrade = PerformanceGrade.assign(performance, grade, price, sortOrder);
+        PerformanceGrade performanceGrade = PerformanceGrade.assign(performance, grade.getId(), price, sortOrder);
         entityManager.persist(performanceGrade);
         return performanceGrade;
     }

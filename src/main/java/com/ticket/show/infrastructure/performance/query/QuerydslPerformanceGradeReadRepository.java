@@ -29,7 +29,7 @@ public class QuerydslPerformanceGradeReadRepository implements PerformanceGradeR
                         performanceGrade.sortOrder
                 ))
                 .from(performanceGrade)
-                .join(performanceGrade.grade, grade)
+                .join(grade).on(grade.id.eq(performanceGrade.gradeId))
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .orderBy(performanceGrade.sortOrder.asc())
                 .fetch();

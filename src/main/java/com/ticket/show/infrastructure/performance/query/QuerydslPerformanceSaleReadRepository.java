@@ -38,7 +38,7 @@ public class QuerydslPerformanceSaleReadRepository implements PerformanceSaleRea
         final Tuple row = queryFactory
                 .select(performance.id, show.id, show.title, show.venueId, performance.startTime)
                 .from(performance)
-                .join(show).on(show.eq(performance.show))
+                .join(show).on(show.id.eq(performance.showId))
                 .where(performance.id.eq(performanceId))
                 .fetchOne();
         if (row == null) {
@@ -81,7 +81,7 @@ public class QuerydslPerformanceSaleReadRepository implements PerformanceSaleRea
                         performanceGrade.price
                 ))
                 .from(performanceGrade)
-                .join(grade).on(grade.eq(performanceGrade.grade))
+                .join(grade).on(grade.id.eq(performanceGrade.gradeId))
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .fetch();
     }

@@ -25,7 +25,7 @@ public class QuerydslPerformanceReadRepository implements PerformanceReadReposit
         final Tuple row = queryFactory
                 .select(show.title, show.venueId, performance.startTime)
                 .from(performance)
-                .join(performance.show, show)
+                .join(show).on(show.id.eq(performance.showId))
                 .where(performance.id.eq(performanceId))
                 .fetchOne();
         if (row == null) {

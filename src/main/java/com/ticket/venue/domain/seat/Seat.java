@@ -1,7 +1,6 @@
 package com.ticket.venue.domain.seat;
 
 import com.ticket.venue.domain.VenueAuditedEntity;
-import com.ticket.venue.domain.venue.Venue;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,9 +21,13 @@ public class Seat extends VenueAuditedEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "venue_id", nullable = false)
-    private Venue venue;
+    /**
+     * Venue는 Seat와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는
+     * 참조는 ID로 한다 — {@code docs/architecture.md}의 참조 규칙). 컬럼명은 옛 {@code @ManyToOne
+     * Venue venue} 매핑과 같은 {@code venue_id}를 그대로 써서 스키마가 바뀌지 않는다.
+     */
+    @Column(name = "venue_id", nullable = false)
+    private Long venueId;
 
     @Column(nullable = false)
     private String section;
@@ -41,8 +44,8 @@ public class Seat extends VenueAuditedEntity {
 
     private double y;
 
-    public Seat(final Venue venue, final String section, final String rowNo, final String seatNo, final int floor, final double x, final double y) {
-        this.venue = venue;
+    public Seat(final Long venueId, final String section, final String rowNo, final String seatNo, final int floor, final double x, final double y) {
+        this.venueId = venueId;
         this.section = section;
         this.rowNo = rowNo;
         this.seatNo = seatNo;
