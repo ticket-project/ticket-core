@@ -10,8 +10,9 @@ import com.ticket.show.domain.performance.policy.BookingEntryResolver;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.Performer;
-import com.ticket.show.domain.show.Venue;
 import com.ticket.show.domain.show.BookingStatus;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -35,6 +36,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
 
     private final JPAQueryFactory queryFactory;
     private final ShowCardImagePathConverter showCardImagePathConverter;
+    private final VenueLookup venueLookup;
     private final Clock clock;
 
     @Override
@@ -47,15 +49,17 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         final List<String> genreNames = fetchGenreNames(showId);
         final GetShowDetailUseCase.PriceSummary priceSummary = fetchPriceSummary(showId);
         final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates = fetchPerformanceDates(showId);
+        final VenueSummary venue = showEntity.getVenueId() == null
+                ? null
+                : venueLookup.findSummary(showEntity.getVenueId()).orElse(null);
 
-        return Optional.of(toShowDetail(showEntity, genreNames, priceSummary, performanceDates));
+        return Optional.of(toShowDetail(showEntity, venue, genreNames, priceSummary, performanceDates));
     }
 
     private Show fetchShow(final Long showId) {
         return queryFactory
                 .selectFrom(show)
                 .leftJoin(show.performer, performer).fetchJoin()
-                .leftJoin(show.venue).fetchJoin()
                 .where(show.id.eq(showId))
                 .fetchOne();
     }
@@ -136,6 +140,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
 
     private ShowDetailView toShowDetail(
             final Show showEntity,
+            final VenueSummary venue,
             final List<String> genreNames,
             final GetShowDetailUseCase.PriceSummary priceSummary,
             final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates
@@ -156,7 +161,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
                 showEntity.getSaleStartDate(),
                 showEntity.getSaleEndDate(),
                 showCardImagePathConverter.toCardImage(showEntity.getImage()),
-                toVenueInfo(showEntity.getVenue()),
+                toVenueInfo(venue),
                 toPerformerInfo(showEntity.getPerformer()),
                 genreNames,
                 priceSummary,
@@ -175,19 +180,19 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         );
     }
 
-    private GetShowDetailUseCase.VenueInfo toVenueInfo(final Venue venueEntity) {
-        if (venueEntity == null) {
+    private GetShowDetailUseCase.VenueInfo toVenueInfo(final VenueSummary venue) {
+        if (venue == null) {
             return null;
         }
         return new GetShowDetailUseCase.VenueInfo(
-                venueEntity.getId(),
-                venueEntity.getName(),
-                venueEntity.getAddress(),
-                venueEntity.getRegion(),
-                venueEntity.getLatitude(),
-                venueEntity.getLongitude(),
-                venueEntity.getPhone(),
-                venueEntity.getImageUrl()
+                venue.venueId(),
+                venue.name(),
+                venue.address(),
+                venue.region(),
+                venue.latitude(),
+                venue.longitude(),
+                venue.phone(),
+                venue.imageUrl()
         );
     }
 }

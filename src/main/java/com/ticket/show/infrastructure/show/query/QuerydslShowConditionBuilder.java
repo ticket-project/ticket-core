@@ -6,6 +6,7 @@ import com.ticket.show.infrastructure.show.query.QuerydslShowSortResolver.SortOr
 import com.ticket.show.application.show.query.model.SaleOpeningSoonSearchParam;
 import com.ticket.show.application.show.query.model.ShowParam;
 import com.ticket.show.application.show.query.model.ShowSearchCriteria;
+import com.ticket.venue.VenueLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,12 +26,13 @@ public class QuerydslShowConditionBuilder {
 
     private final QuerydslShowPredicates showPredicates;
     private final BookingStatusPredicateFactory bookingStatusPredicateFactory;
+    private final VenueLookup venueLookup;
     private final Clock clock;
 
     public BooleanBuilder buildMainListCondition(final ShowParam param, final SortOrder sortOrder) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(showPredicates.categoryCodeEq(param.getCategory()));
-        where.and(showPredicates.regionEq(param.getRegion()));
+        appendRegionCondition(where, param.getRegion());
         where.and(showPredicates.genreEq(param.getGenre()));
         appendShowStartApproachingCondition(where, sortOrder, LocalDate.now(clock));
         return where;
@@ -47,7 +49,7 @@ public class QuerydslShowConditionBuilder {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(show.saleStartDate.goe(LocalDateTime.now(clock)));
         where.and(showPredicates.categoryCodeEq(param.getCategory()));
-        where.and(showPredicates.regionEq(param.getRegion()));
+        appendRegionCondition(where, param.getRegion());
         where.and(showPredicates.titleContains(param.getTitle()));
         where.and(showPredicates.saleStartDateGoe(param.getSaleStartDateFrom()));
         where.and(showPredicates.saleStartDateLoe(param.getSaleStartDateTo()));
@@ -61,12 +63,23 @@ public class QuerydslShowConditionBuilder {
         final LocalDateTime now = LocalDateTime.now(clock);
         where.and(showPredicates.keywordContains(request.getKeyword()));
         where.and(showPredicates.categoryCodeEq(request.getCategory()));
-        where.and(showPredicates.regionEq(request.getRegion()));
+        appendRegionCondition(where, request.getRegion());
         where.and(showPredicates.startDateGoe(request.getStartDateFrom()));
         where.and(showPredicates.startDateLoe(request.getStartDateTo()));
         where.and(bookingStatusPredicateFactory.condition(request.getBookingStatus(), now));
         appendShowStartApproachingCondition(where, sortOrder, now.toLocalDate());
         return where;
+    }
+
+    /**
+     * region 검색 조건을 venueId 집합으로 해석해 붙인다. show는 venue module의 Region entity를
+     * 직접 참조하지 않는다 — {@code VenueLookup.findIdsByRegion}로 얻은 venueId 집합에 대해서만
+     * {@code show.venueId.in(...)}을 건다.
+     */
+    private void appendRegionCondition(final BooleanBuilder where, final com.ticket.venue.Region region) {
+        if (region != null) {
+            where.and(showPredicates.venueIdIn(venueLookup.findIdsByRegion(region)));
+        }
     }
 
     private void appendShowStartApproachingCondition(

@@ -1,7 +1,7 @@
 package com.ticket.show.application.performance.query;
 
 import com.ticket.show.application.performance.query.model.PerformanceSummaryView;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

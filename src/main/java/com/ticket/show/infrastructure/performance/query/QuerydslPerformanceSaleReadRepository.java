@@ -1,48 +1,63 @@
 package com.ticket.show.infrastructure.performance.query;
 
-import com.querydsl.core.types.Projections;
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.application.performance.query.PerformanceSaleReadRepository;
 import com.ticket.show.domain.performance.query.PerformanceSaleContext;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSeatAddress;
+import com.ticket.venue.VenueSeatLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.ticket.show.domain.grade.QGrade.grade;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
-import static com.ticket.show.domain.seat.QSeat.seat;
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.domain.show.QVenue.venue;
 
 /**
  * {@link PerformanceSaleReadRepository}의 show 소유 구현이다. booking data를 참조하지 않는다.
+ * 좌석 주소는 venue module의 {@link VenueSeatLookup}에서 조회한다 — show는 물리 좌석 entity를
+ * 참조하지 않는다.
  */
 @Repository
 @RequiredArgsConstructor
 public class QuerydslPerformanceSaleReadRepository implements PerformanceSaleReadRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final VenueLookup venueLookup;
+    private final VenueSeatLookup venueSeatLookup;
 
     @Override
     public Optional<PerformanceSaleContext> findContext(final long performanceId) {
-        return Optional.ofNullable(queryFactory
-                .select(Projections.constructor(PerformanceSaleContext.class,
-                        performance.id,
-                        show.id,
-                        show.title,
-                        venue.id,
-                        venue.name,
-                        performance.startTime
-                ))
+        final Tuple row = queryFactory
+                .select(performance.id, show.id, show.title, show.venueId, performance.startTime)
                 .from(performance)
                 .join(show).on(show.eq(performance.show))
-                .leftJoin(venue).on(venue.eq(show.venue))
                 .where(performance.id.eq(performanceId))
-                .fetchOne());
+                .fetchOne();
+        if (row == null) {
+            return Optional.empty();
+        }
+
+        final Long venueId = row.get(show.venueId);
+        final String venueName = venueId == null
+                ? null
+                : venueLookup.findSummary(venueId).map(v -> v.name()).orElse(null);
+
+        return Optional.of(new PerformanceSaleContext(
+                row.get(performance.id),
+                row.get(show.id),
+                row.get(show.title),
+                venueId,
+                venueName,
+                row.get(performance.startTime)
+        ));
     }
 
     @Override
@@ -50,26 +65,15 @@ public class QuerydslPerformanceSaleReadRepository implements PerformanceSaleRea
         if (seatIds.isEmpty()) {
             return List.of();
         }
-        return queryFactory
-                .select(Projections.constructor(SeatAddressRow.class,
-                        seat.id,
-                        seat.floor,
-                        seat.section,
-                        seat.rowNo,
-                        seat.seatNo
-                ))
-                .from(seat)
-                .where(
-                        seat.venue.id.eq(venueId),
-                        seat.id.in(seatIds)
-                )
-                .fetch();
+        return venueSeatLookup.findSeatAddresses(venueId, Set.copyOf(seatIds)).stream()
+                .map(this::toSeatAddressRow)
+                .toList();
     }
 
     @Override
     public List<PerformanceGradeRow> findPerformanceGrades(final long performanceId) {
         return queryFactory
-                .select(Projections.constructor(PerformanceGradeRow.class,
+                .select(com.querydsl.core.types.Projections.constructor(PerformanceGradeRow.class,
                         performanceGrade.id,
                         grade.code,
                         grade.name,
@@ -80,5 +84,9 @@ public class QuerydslPerformanceSaleReadRepository implements PerformanceSaleRea
                 .join(grade).on(grade.eq(performanceGrade.grade))
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .fetch();
+    }
+
+    private SeatAddressRow toSeatAddressRow(final VenueSeatAddress address) {
+        return new SeatAddressRow(address.seatId(), address.floor(), address.section(), address.rowNo(), address.seatNo());
     }
 }

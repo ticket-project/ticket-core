@@ -76,9 +76,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code package-info.class}를 만들지 않아 Modulith가 그 존재 자체를 볼 수 없다({@code shared}
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
- * {@code booking}, {@code show}, {@code favorite}, {@code member},
+ * {@code booking}, {@code show}, {@code venue}, {@code favorite}, {@code member},
  * {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed},
- * {@code payment} 정확히 10개다. {@code ticketing}(Ticket entity-only module)과 {@code admission}(admission token 검증)은
+ * {@code payment} 정확히 11개다. {@code ticketing}(Ticket entity-only module)과 {@code admission}(admission token 검증)은
  * booking으로 흡수됐다. {@code metadata}(공통 code/label 조합 API)는
  * FE를 포함해 호출자가 없어 제거됐다. {@code showlike}는 한때 show(옛 catalog)가 흡수했었지만
  * (찜 개수·추가·삭제·내 목록을 Show를 설명하는 부가 속성으로 보고 순환 회피를 위해 흡수),
@@ -86,7 +86,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 방향 중 {@code favorite -> show}(공연 존재 확인, 표시값 조회) 방향을 show 쪽 로컬 조회로 되돌려
  * 없앴고, {@code show -> favorite}(찜 개수 조회) 방향만 남아 순환이 생기지 않는다. favorite는
  * 업무 module 의존이 하나도 없는 leaf다(show의 package-info, favorite의 package-info,
- * {@code docs/adr/0006-bounded-context-module-boundaries.md} 참고).
+ * {@code docs/adr/0006-bounded-context-module-boundaries.md} 참고). {@code venue}도 같은 재편으로
+ * 신설된 module이다 — 물리 공연장·좌석(Venue/Seat/Region)을 show(옛 catalog)에서 분리했다.
+ * {@code show -> venue}(공연장 표시값 조립, region 검색 조건 해석) edge만 있고 반대 방향은
+ * 없다(venue의 {@code allowedDependencies}가 비어 있다). booking이 쓰는
+ * {@code PerformanceSaleCatalog}/{@code PerformanceVenueLayoutCatalog}는 show가 façade로 유지해
+ * venue를 향한 edge가 booking에는 생기지 않는다.
  *
  * <p>{@code payment}는 ADR 0005(Phase 5 Task 11)로 신설된 module이다. Order에 대한 결제 시도
  * entity/schema/repository까지만 다루는 entity-only 단계라 다른 업무 module을 import하지 않는
@@ -103,9 +108,9 @@ class ModularityTests {
     /** 검증에서 빠지는 package 이름. {@code bootstrap}이 legacy와 같은 목록에 있는 이유는 클래스 javadoc 참고. */
     private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
-    /** 파일시스템 기준으로 선언된 10개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "show", "favorite", "member", "shared", "web", "config",
+            "booking", "show", "venue", "favorite", "member", "shared", "web", "config",
             "error", "seed", "payment");
 
     /**
@@ -123,6 +128,9 @@ class ModularityTests {
      * 같은 패턴이다(show의 package-info 참고). {@code show}가 favorite를 향한 edge를 갖는 이유는
      * 공연 상세의 찜 개수 조회와 찜 use case의 위임({@code ShowLikeQuery}/{@code ShowLikeCommand})
      * 이다 — 반대 방향은 없다({@code favorite}의 {@code allowedDependencies}가 비어 있다).
+     * {@code show}가 venue를 향한 edge를 갖는 이유는 목록·상세·검색의 공연장 표시값 조립
+     * ({@code VenueLookup})과 좌석 주소·좌석 배치 조회({@code VenueSeatLookup})다 — 반대 방향은
+     * 없다({@code venue}의 {@code allowedDependencies}가 비어 있다, payment와 같은 leaf 형태).
      * {@code web}은 REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
      * {@code SliceResponse})를 소유하는 leaf라, HTTP를 노출하는 module은 전부 web을 향한 edge를
      * 갖는다. {@code shared}·{@code error}와 같이 {@code @Modulith(sharedModules = ...)}로 전역
@@ -145,7 +153,8 @@ class ModularityTests {
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
             Map.entry("booking", Set.of("show", "member", "shared", "web", "error")),
-            Map.entry("show", Set.of("favorite", "member", "shared", "web", "error")),
+            Map.entry("show", Set.of("venue", "favorite", "member", "shared", "web", "error")),
+            Map.entry("venue", Set.of()),
             Map.entry("favorite", Set.of("shared", "web", "error")),
             Map.entry("member", Set.of("shared", "web", "error")),
             Map.entry("shared", Set.of()),

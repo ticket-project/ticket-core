@@ -5,16 +5,20 @@ import com.ticket.show.application.show.query.ShowSort;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.domain.show.BookingStatus;
 import com.ticket.show.domain.show.image.ShowCardImagePathConverter;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.application.show.query.model.ShowListItemView;
 import com.ticket.show.application.show.query.model.ShowParam;
 import com.ticket.show.application.show.query.model.ShowSearchCriteria;
 import com.ticket.show.application.show.query.model.ShowSearchItemView;
-import com.ticket.show.domain.show.Venue;
+import com.ticket.venue.domain.venue.Venue;
 import com.ticket.show.application.show.query.model.ShowCursor;
 import com.ticket.shared.CursorPage;
+import com.ticket.venue.application.publicapi.VenueLookupService;
+import com.ticket.venue.application.publicapi.VenueSeatLookupService;
+import com.ticket.venue.infrastructure.seat.query.QuerydslVenueSeatReadRepository;
+import com.ticket.venue.infrastructure.venue.query.QuerydslVenueSummaryReadRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +77,11 @@ import static org.assertj.core.api.Assertions.assertThat;
         QuerydslShowConditionBuilder.class,
         QuerydslShowSortResolver.class,
         QuerydslShowCursorConditionBuilder.class,
-        ShowCardImagePathConverter.class
+        ShowCardImagePathConverter.class,
+        VenueLookupService.class,
+        QuerydslVenueSummaryReadRepository.class,
+        VenueSeatLookupService.class,
+        QuerydslVenueSeatReadRepository.class
 })
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowListReadRepositoryTest {
@@ -216,7 +224,7 @@ class QuerydslShowListReadRepositoryTest {
                 saleStartDate,
                 saleEndDate,
                 "https://example.com/show.png",
-                venue,
+                venue == null ? null : venue.getId(),
                 null,
                 120
         );
@@ -258,7 +266,7 @@ class QuerydslShowListReadRepositoryTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure"})
+    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.venue.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

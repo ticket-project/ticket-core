@@ -7,15 +7,15 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.grade.Grade;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.show.domain.seat.Seat;
+import com.ticket.venue.domain.seat.Seat;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.Category;
 import com.ticket.show.domain.show.Genre;
 import com.ticket.show.domain.show.ShowGenre;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Performer;
-import com.ticket.show.domain.show.Venue;
+import com.ticket.venue.domain.venue.Venue;
 import com.ticket.favorite.domain.showlike.model.ShowLike;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.member.domain.member.model.Role;
@@ -147,7 +147,7 @@ public abstract class ReadRepositoryTestSupport {
                 saleStartDate,
                 saleEndDate,
                 "https://example.com/show.png",
-                venue,
+                venue == null ? null : venue.getId(),
                 performer,
                 120
         );
@@ -264,7 +264,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.favorite.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
+    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.venue.domain", "com.ticket.favorite.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

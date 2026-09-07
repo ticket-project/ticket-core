@@ -1,7 +1,7 @@
 package com.ticket.show.application.show.query.model;
 
 import com.ticket.show.domain.show.BookingStatus;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.error.InvalidRequestException;
 import lombok.Getter;
 
