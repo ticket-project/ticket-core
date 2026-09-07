@@ -1,7 +1,7 @@
 package com.ticket.booking.application.performanceseat.query;
 
-import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.VenueLayout;
+import com.ticket.show.ShowLookup;
+import com.ticket.show.VenueLayout;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

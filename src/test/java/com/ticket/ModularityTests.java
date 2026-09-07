@@ -76,13 +76,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code package-info.class}를 만들지 않아 Modulith가 그 존재 자체를 볼 수 없다({@code shared}
  * package-info의 javadoc 참고) — class가 없어도 있어도 이 선언은 그대로 둔다. 그래서
  * {@link ApplicationModules#of(Class, DescribedPredicate)}가 legacy를 뺀 뒤 찾아내는 module은
- * {@code booking}, {@code catalog}, {@code member},
+ * {@code booking}, {@code show}, {@code member},
  * {@code shared}, {@code web}, {@code config}, {@code error}, {@code seed},
  * {@code payment} 정확히 9개다. {@code ticketing}(Ticket entity-only module)과 {@code admission}(admission token 검증)은
  * booking으로 흡수됐다. {@code metadata}(공통 code/label 조합 API)는
  * FE를 포함해 호출자가 없어 제거됐다. {@code showlike}는 더 이상 없다 —
- * 찜(개수·추가·삭제·내 목록)을 catalog가 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도
- * module로 두면 catalog·member와 순환 결합이 생겨서다(catalog의 package-info 참고).
+ * 찜(개수·추가·삭제·내 목록)을 show가 흡수했다. Show를 설명하는 부가 속성일 뿐이고, 별도
+ * module로 두면 show·member와 순환 결합이 생겨서다(show의 package-info 참고).
  *
  * <p>{@code payment}는 ADR 0005(Phase 5 Task 11)로 신설된 module이다. Order에 대한 결제 시도
  * entity/schema/repository까지만 다루는 entity-only 단계라 다른 업무 module을 import하지 않는
@@ -101,22 +101,22 @@ class ModularityTests {
 
     /** 파일시스템 기준으로 선언된 9개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "catalog", "member", "shared", "web", "config",
+            "booking", "show", "member", "shared", "web", "config",
             "error", "seed", "payment");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 나머지 module 중 실제로 직접 참조하는 module 이름
      * 집합이다 — {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라
-     * (catalog/member는 상한이 비어 있어 업무 module 의존이 하나도 없다는 뜻이다 —
+     * (show/member는 상한이 비어 있어 업무 module 의존이 하나도 없다는 뜻이다 —
      * 비워 두어도 {@code sharedModules}인 shared·error·web은 항상 허용된다), 실제로 관측되는 edge를
      * 여기 고정해 새 module 간 결합이 조용히 늘어나는 것을 잡는다. {@code shared}는
-     * {@code CursorPage}(catalog가 참조)·{@code CorsProperties}(member·config가 참조)·
+     * {@code CursorPage}(show가 참조)·{@code CorsProperties}(member·config가 참조)·
      * {@code UuidSupplier}(member가 참조) 같은 <b>호출 대상 계약만</b> 담아 다른 어떤 module도
      * 참조하지 않는 leaf고, 그래서 이 module들이 shared를 향한 edge를 갖는다. 전역
      * {@code @Configuration}은 {@code config}가 소유한다.
-     * {@code catalog}가 member를 향한 edge를 갖는 이유는 찜(showlike) 흡수로 회원 존재 확인이
+     * {@code show}가 member를 향한 edge를 갖는 이유는 찜(showlike) 흡수로 회원 존재 확인이
      * 필요해졌기 때문이다({@code MemberLookup}) — booking이 {@code Order.memberId}를 위해
-     * member를 참조하는 것과 같은 패턴이다(catalog의 package-info 참고).
+     * member를 참조하는 것과 같은 패턴이다(show의 package-info 참고).
      * {@code web}은 REST 응답 봉투({@code ApiResponse}/{@code ErrorMessage}/{@code ResultType}/
      * {@code SliceResponse})를 소유하는 leaf라, HTTP를 노출하는 module은 전부 web을 향한 edge를
      * 갖는다. {@code shared}·{@code error}와 같이 {@code @Modulith(sharedModules = ...)}로 전역
@@ -138,8 +138,8 @@ class ModularityTests {
      * 없다(leaf).
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
-            Map.entry("booking", Set.of("catalog", "member", "shared", "web", "error")),
-            Map.entry("catalog", Set.of("member", "shared", "web", "error")),
+            Map.entry("booking", Set.of("show", "member", "shared", "web", "error")),
+            Map.entry("show", Set.of("member", "shared", "web", "error")),
             Map.entry("member", Set.of("shared", "web", "error")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),
@@ -155,7 +155,7 @@ class ModularityTests {
     }
 
     @Test
-    void 모듈_package가_com_ticket_직속에_정확히_10개_선언돼_있다() {
+    void 모듈_package가_com_ticket_직속에_선언된_목록과_일치한다() {
         final Path ticketRoot = Path.of("src", "main", "java", "com", "ticket");
 
         try (Stream<Path> children = Files.list(ticketRoot)) {

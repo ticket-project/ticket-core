@@ -15,7 +15,7 @@ import static com.ticket.booking.domain.order.model.QOrder.order;
 import static com.ticket.booking.domain.order.model.QOrderSeat.orderSeat;
 
 /**
- * booking이 소유한 order/orderSeat 테이블만 조회한다. catalog/member 표시값은 여기서 조회하지
+ * booking이 소유한 order/orderSeat 테이블만 조회한다. show/member 표시값은 여기서 조회하지
  * 않는다 — {@code GetOrderDetailUseCase}/{@code GetOrderStatusUseCase}가 그 module들의 공개 API를
  * 호출해 합성한다.
  */

@@ -6,7 +6,7 @@ import com.ticket.booking.domain.order.model.OrderSeat;
 import com.ticket.booking.domain.order.repository.OrderRepository;
 import com.ticket.booking.domain.order.repository.OrderSeatRepository;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.catalog.PerformanceSaleSnapshot;
+import com.ticket.show.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +24,9 @@ public class OrderCreator {
     private final OrderKeyGenerator orderKeyGenerator;
 
     /**
-     * 주문 생성 시점의 catalog 표시값을 Order/OrderSeat에 snapshot으로 남긴다(ADR 0005). 금액은
-     * catalog 값이 아니라 오직 {@link PerformanceSeat#getUnitPrice()}로만 계산한다 — 클라이언트가
-     * 보낸 가격도, catalog가 다시 계산한 가격도 받지 않는다.
+     * 주문 생성 시점의 show 표시값을 Order/OrderSeat에 snapshot으로 남긴다(ADR 0005). 금액은
+     * show 값이 아니라 오직 {@link PerformanceSeat#getUnitPrice()}로만 계산한다 — 클라이언트가
+     * 보낸 가격도, show가 다시 계산한 가격도 받지 않는다.
      */
     @Transactional
     public Order createPendingOrder(

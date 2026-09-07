@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 catalog를 다시 조회하지 않고
- * Order/OrderSeat가 주문 생성 시점에 이미 남긴 snapshot을 그대로 쓴다 — catalog의 표시값이나
+ * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 show를 다시 조회하지 않고
+ * Order/OrderSeat가 주문 생성 시점에 이미 남긴 snapshot을 그대로 쓴다 — show의 표시값이나
  * 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 member의 공개 API로
  * 추가 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
  */

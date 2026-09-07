@@ -4,10 +4,10 @@ import com.ticket.booking.domain.hold.command.HoldManager;
 import com.ticket.booking.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
 import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.catalog.BookingPolicyLookup;
-import com.ticket.catalog.BookingPolicySnapshot;
-import com.ticket.catalog.PerformanceSaleCatalog;
-import com.ticket.catalog.PerformanceSaleSnapshot;
+import com.ticket.show.BookingPolicyLookup;
+import com.ticket.show.BookingPolicySnapshot;
+import com.ticket.show.PerformanceSaleCatalog;
+import com.ticket.show.PerformanceSaleSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -100,7 +100,7 @@ class GetSeatAvailabilityUseCaseTest {
     }
 
     @Test
-    void 회차의_좌석_상태가_없으면_catalog_판매_snapshot을_조회하지_않는다() {
+    void 회차의_좌석_상태가_없으면_show_판매_snapshot을_조회하지_않는다() {
         //given
         when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(List.of());

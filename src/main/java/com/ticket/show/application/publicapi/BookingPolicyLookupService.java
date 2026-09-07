@@ -1,0 +1,59 @@
+package com.ticket.show.application.publicapi;
+
+import com.ticket.show.BookingPolicyLookup;
+import com.ticket.show.BookingPolicySnapshot;
+import com.ticket.show.domain.performance.policy.BookingPolicyValidator;
+import com.ticket.show.domain.performance.query.PerformanceBookingPolicySnapshot;
+import com.ticket.show.domain.performance.repository.PerformanceRepository;
+import com.ticket.error.NotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+
+/**
+ * {@link BookingPolicyLookup}의 show 소유 구현이다. 회차 예매 정책을 조회해 booking에게 scalar
+ * snapshot만 넘긴다.
+ */
+@Service
+@RequiredArgsConstructor
+public class BookingPolicyLookupService implements BookingPolicyLookup {
+
+    private final PerformanceRepository performanceRepository;
+    private final Clock clock;
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingPolicySnapshot getBookingPolicy(final long performanceId) {
+        final PerformanceBookingPolicySnapshot policy = performanceRepository.findBookingPolicyById(performanceId)
+                .orElseThrow(() -> new NotFoundException(
+                        "공연을 찾을 수 없습니다. id=" + performanceId));
+
+        final LocalDateTime now = LocalDateTime.now(clock);
+        final boolean bookingOpen = isBookingOpen(policy, now);
+        final boolean queueRequired = BookingPolicyValidator.requiresQueue(policy, now);
+
+        return new BookingPolicySnapshot(
+                performanceId,
+                policy.showId(),
+                bookingOpen,
+                policy.orderOpenTime(),
+                policy.orderCloseTime(),
+                policy.maxCanHoldCount(),
+                policy.holdTime(),
+                policy.queueMode() == null ? null : policy.queueMode().name(),
+                policy.queueLevel() == null ? null : policy.queueLevel().name(),
+                policy.preopenQueueStartAt(),
+                queueRequired
+        );
+    }
+
+    private boolean isBookingOpen(final PerformanceBookingPolicySnapshot policy, final LocalDateTime now) {
+        if (policy.orderOpenTime() == null || now.isBefore(policy.orderOpenTime())) {
+            return false;
+        }
+        return policy.orderCloseTime() != null && !now.isAfter(policy.orderCloseTime());
+    }
+}

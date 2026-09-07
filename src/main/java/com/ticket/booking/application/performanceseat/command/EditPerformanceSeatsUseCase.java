@@ -6,8 +6,8 @@ import com.ticket.booking.domain.performanceseat.repository.PerformanceSeatRepos
 import com.ticket.booking.exception.PerformanceGradeMismatchException;
 import com.ticket.booking.exception.PerformanceSeatAlreadyEditionedException;
 import com.ticket.booking.exception.SeatVenueMismatchException;
-import com.ticket.catalog.PerformanceSaleCatalog;
-import com.ticket.catalog.PerformanceSaleSnapshot;
+import com.ticket.show.PerformanceSaleCatalog;
+import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * catalog가 공개하는 판매 좌석 편성 snapshot({@link PerformanceSaleCatalog})을 입력으로 받아 회차의
+ * show가 공개하는 판매 좌석 편성 snapshot({@link PerformanceSaleCatalog})을 입력으로 받아 회차의
  * 판매 좌석(PerformanceSeat)을 생성한다.
  *
  * <p>생성 시점에 요청한 Seat가 그 회차의 Venue에 속하는지, 요청한 PerformanceGrade가 그 회차에
- * 속하는지를 catalog 공개 snapshot으로 검증하고, {@code PerformanceGrade.price}를
+ * 속하는지를 show 공개 snapshot으로 검증하고, {@code PerformanceGrade.price}를
  * {@code PerformanceSeat.unitPrice}로 snapshot한다. 이후 이 unitPrice는 바꾸지 않는다(고정 결정,
  * ADR 0005).
  */

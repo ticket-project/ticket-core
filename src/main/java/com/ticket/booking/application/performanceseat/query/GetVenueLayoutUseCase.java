@@ -1,7 +1,7 @@
 package com.ticket.booking.application.performanceseat.query;
 
-import com.ticket.catalog.ShowLookup;
-import com.ticket.catalog.VenueLayout;
+import com.ticket.show.ShowLookup;
+import com.ticket.show.VenueLayout;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

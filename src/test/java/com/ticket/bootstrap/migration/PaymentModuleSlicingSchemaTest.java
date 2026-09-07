@@ -32,12 +32,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * attempt_no)}/{@code provider_payment_key} unique 제약과 {@code amount >= 0} CHECK 제약이 실제로
  * 동작하는지 검증한다.
  *
- * <p>{@code BookingModuleSlicingSchemaTest}/{@code CatalogModuleSlicingSchemaTest}와 같은 기법이다 —
+ * <p>{@code BookingModuleSlicingSchemaTest}/{@code ShowModuleSlicingSchemaTest}와 같은 기법이다 —
  * Spring context 없이 순수 Hibernate로 {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을
  * 확인한다. {@code PAYMENTS} 자체는 이번에 새로 생기는 table이지만, {@code __root} 이력의 기존
  * V2(`PERFORMANCE_QUEUE_POLICIES`)가 pre-Flyway baseline인 {@code PERFORMANCES}를 이미 전제하므로
  * (payment와 무관하게 __root가 항상 요구한다), {@link BookingModuleSlicingSchemaTest}/
- * {@link CatalogModuleSlicingSchemaTest}와 같은 최소 legacy baseline을 재현한다.
+ * {@link ShowModuleSlicingSchemaTest}와 같은 최소 legacy baseline을 재현한다.
  */
 class PaymentModuleSlicingSchemaTest {
 

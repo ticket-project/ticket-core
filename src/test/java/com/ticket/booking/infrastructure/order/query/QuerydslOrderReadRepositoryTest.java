@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * booking이 소유한 order/orderSeat 테이블만으로 조회하는지 확인한다. catalog/member 표시값
+ * booking이 소유한 order/orderSeat 테이블만으로 조회하는지 확인한다. show/member 표시값
  * 합성은 {@code GetOrderDetailUseCase}/{@code GetOrderStatusUseCase} 단위 테스트가 담당한다.
  */
 @Import(QuerydslOrderReadRepository.class)

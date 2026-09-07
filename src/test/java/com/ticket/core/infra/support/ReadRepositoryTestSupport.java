@@ -3,20 +3,20 @@ package com.ticket.core.infra.support;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.member.domain.member.model.Member;
 import com.ticket.member.domain.member.model.Email;
-import com.ticket.catalog.domain.performance.Performance;
-import com.ticket.catalog.domain.performance.PerformanceGrade;
-import com.ticket.catalog.domain.grade.Grade;
+import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceGrade;
+import com.ticket.show.domain.grade.Grade;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.catalog.domain.seat.Seat;
-import com.ticket.catalog.domain.show.Show;
-import com.ticket.catalog.domain.show.Category;
-import com.ticket.catalog.domain.show.Genre;
-import com.ticket.catalog.domain.show.ShowGenre;
-import com.ticket.catalog.domain.show.Region;
-import com.ticket.catalog.domain.show.SaleType;
-import com.ticket.catalog.domain.show.Performer;
-import com.ticket.catalog.domain.show.Venue;
-import com.ticket.catalog.domain.showlike.model.ShowLike;
+import com.ticket.show.domain.seat.Seat;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.Category;
+import com.ticket.show.domain.show.Genre;
+import com.ticket.show.domain.show.ShowGenre;
+import com.ticket.show.domain.show.Region;
+import com.ticket.show.domain.show.SaleType;
+import com.ticket.show.domain.show.Performer;
+import com.ticket.show.domain.show.Venue;
+import com.ticket.show.domain.showlike.model.ShowLike;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.member.domain.member.model.Role;
 import jakarta.persistence.EntityManager;
@@ -264,7 +264,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.catalog.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
+    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

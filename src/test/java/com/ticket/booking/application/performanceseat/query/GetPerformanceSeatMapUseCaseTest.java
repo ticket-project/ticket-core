@@ -1,8 +1,8 @@
 package com.ticket.booking.application.performanceseat.query;
 
 import com.ticket.booking.application.performanceseat.query.PerformanceSeatMapReadRepository.PerformanceSeatMapRow;
-import com.ticket.catalog.PerformanceVenueLayout;
-import com.ticket.catalog.PerformanceVenueLayoutCatalog;
+import com.ticket.show.PerformanceVenueLayout;
+import com.ticket.show.PerformanceVenueLayoutCatalog;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -97,7 +97,7 @@ class GetPerformanceSeatMapUseCaseTest {
     }
 
     @Test
-    void 좌석_수와_무관하게_catalog와_booking_조회는_각각_한_번씩만_한다() {
+    void 좌석_수와_무관하게_show와_booking_조회는_각각_한_번씩만_한다() {
         //given
         Map<Long, PerformanceVenueLayout.SeatLayout> seatLayouts = new java.util.HashMap<>();
         List<PerformanceSeatMapRow> rows = new java.util.ArrayList<>();
