@@ -1,6 +1,5 @@
 package com.ticket.show.application.performance.query;
 
-import com.ticket.show.domain.performance.repository.PerformanceRepository;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.repository.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
@@ -47,7 +46,7 @@ class GetPerformanceScheduleListUseCaseTest {
         when(another.getPerformanceNo()).thenReturn(2L);
         when(another.getStartTime()).thenReturn(now.plusDays(1));
 
-        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(selected));
+        when(performanceRepository.findById(10L)).thenReturn(Optional.of(selected));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of(selected, another));
 
         //when
@@ -64,7 +63,7 @@ class GetPerformanceScheduleListUseCaseTest {
         //given
         Performance performance = mock(Performance.class);
         when(performance.getShow()).thenReturn(null);
-        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findById(10L)).thenReturn(Optional.of(performance));
 
         //when
         //then
@@ -80,7 +79,7 @@ class GetPerformanceScheduleListUseCaseTest {
         when(show.getId()).thenReturn(100L);
         when(selected.getId()).thenReturn(10L);
         when(selected.getShow()).thenReturn(show);
-        when(performanceRepository.findWithQueuePolicyById(10L)).thenReturn(Optional.of(selected));
+        when(performanceRepository.findById(10L)).thenReturn(Optional.of(selected));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of());
 
         //when

@@ -31,7 +31,7 @@ class GetPerformanceSummaryUseCaseTest {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
         when(performanceReadRepository.findByPerformanceId(1L))
                 .thenReturn(Optional.of(new PerformanceSummaryView(
-                        "싱어게인", Region.CHUNGCHEONG, startTime, 4
+                        "싱어게인", Region.CHUNGCHEONG, startTime
                 )));
 
         GetPerformanceSummaryUseCase.Output output = useCase.execute(
@@ -41,7 +41,6 @@ class GetPerformanceSummaryUseCaseTest {
         assertThat(output.title()).isEqualTo("싱어게인");
         assertThat(output.region()).isEqualTo("충청");
         assertThat(output.startTime()).isEqualTo(startTime);
-        assertThat(output.maxCanHoldCount()).isEqualTo(4);
     }
 
     @Test
@@ -57,7 +56,7 @@ class GetPerformanceSummaryUseCaseTest {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
         when(performanceReadRepository.findByPerformanceId(1L))
                 .thenReturn(Optional.of(new PerformanceSummaryView(
-                        "싱어게인", null, startTime, null
+                        "싱어게인", null, startTime
                 )));
 
         GetPerformanceSummaryUseCase.Output output = useCase.execute(
@@ -65,6 +64,5 @@ class GetPerformanceSummaryUseCaseTest {
         );
 
         assertThat(output.region()).isNull();
-        assertThat(output.maxCanHoldCount()).isNull();
     }
 }

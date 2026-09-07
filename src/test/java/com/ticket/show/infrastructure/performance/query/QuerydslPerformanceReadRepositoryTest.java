@@ -43,6 +43,5 @@ class QuerydslPerformanceReadRepositoryTest extends InfraReadRepositoryTestSuppo
         assertThat(result.title()).isEqualTo("싱어게인");
         assertThat(result.region()).isEqualTo(Region.SEOUL);
         assertThat(result.startTime()).isEqualTo(startTime);
-        assertThat(result.maxCanHoldCount()).isEqualTo(4);
     }
 }

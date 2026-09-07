@@ -1,4 +1,4 @@
-package com.ticket.show.domain.queue;
+package com.ticket.booking.domain.performancepolicy.model;
 
 public enum QueueMode {
     AUTO,

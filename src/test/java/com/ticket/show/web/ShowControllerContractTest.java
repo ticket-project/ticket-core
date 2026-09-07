@@ -1,7 +1,6 @@
 package com.ticket.show.web;
 
 import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.show.domain.performance.policy.BookingEntryResolver;
 import com.ticket.show.domain.show.BookingStatus;
 import com.ticket.venue.Region;
 import com.ticket.show.domain.show.SaleType;
@@ -131,7 +130,7 @@ class ShowControllerContractTest {
                 .andExpect(jsonPath("$.error").isEmpty());
     }
     @Test
-    void show_detail_response_includes_booking_entry_for_each_performance() throws Exception {
+    void show_detail_response의_회차는_일정만_담고_예매_정책_필드를_노출하지_않는다() throws Exception {
         GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
         ShowController controller = new ShowController(
                 mock(GetShowsUseCase.class),
@@ -149,13 +148,7 @@ class ShowControllerContractTest {
                 10L,
                 1L,
                 LocalDateTime.of(2026, 3, 20, 19, 0),
-                LocalDateTime.of(2026, 3, 20, 21, 0),
-                LocalDateTime.of(2026, 3, 10, 10, 0),
-                LocalDateTime.of(2026, 3, 20, 20, 0),
-                BookingEntryResolver.EntryType.QUEUE,
-                true,
-                null,
-                "/api/v1/queue/performances/10/enter"
+                LocalDateTime.of(2026, 3, 20, 21, 0)
         );
         GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
                 1L,
@@ -186,10 +179,14 @@ class ShowControllerContractTest {
 
         mockMvc.perform(get("/api/v1/shows/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].entryType").value("QUEUE"))
-                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueRequired").value(true))
-                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueEnterUrl")
-                        .value("/api/v1/queue/performances/10/enter"));
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].id").value(10))
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].performanceNo").value(1))
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].orderOpenTime").doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].orderCloseTime").doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].entryType").doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueRequired").doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].redirectUrl").doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueEnterUrl").doesNotExist());
     }
 
     @Test

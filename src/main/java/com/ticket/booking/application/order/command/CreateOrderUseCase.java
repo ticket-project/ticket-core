@@ -79,7 +79,7 @@ public class CreateOrderUseCase {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
         final ValidatedOrderRequest validated = validator.validate(input, requestedSeatIds, now);
-        final Duration holdDuration = Duration.ofSeconds(validated.policy().holdTime());
+        final Duration holdDuration = validated.policy().holdDuration();
         final List<LockKey> seatLocks = LockKey.seats(input.performanceId(), requestedSeatIds.toList());
 
         final HoldAllocation allocation = lockManager.withLock(

@@ -5,11 +5,15 @@ import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.ExceedHoldLimitException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.domain.order.command.create.RequestedSeatIds;
+import com.ticket.booking.domain.performancepolicy.model.BookingEntryPolicy;
+import com.ticket.booking.domain.performancepolicy.model.HoldPolicy;
+import com.ticket.booking.domain.performancepolicy.model.OrderAcceptanceWindow;
+import com.ticket.booking.domain.performancepolicy.model.PerformanceSalesPolicy;
+import com.ticket.booking.domain.performancepolicy.model.QueueMode;
+import com.ticket.booking.domain.performancepolicy.repository.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.booking.application.admission.AdmissionVerifier;
 import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.show.BookingPolicyLookup;
-import com.ticket.show.BookingPolicySnapshot;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.member.MemberLookup;
@@ -20,8 +24,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +47,7 @@ class CreateOrderValidatorTest {
     private MemberLookup memberLookup;
 
     @Mock
-    private BookingPolicyLookup bookingPolicyLookup;
+    private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
 
     @Mock
     private PerformanceSaleCatalog performanceSaleCatalog;
@@ -82,8 +88,8 @@ class CreateOrderValidatorTest {
     @Test
     void 예매가_마감된_회차는_DB_검증으로_넘어가지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L))
-                .thenReturn(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), false));
+        when(performanceSalesPolicyRepository.findById(10L))
+                .thenReturn(Optional.of(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), false)));
 
         assertError(seatIds, PerformanceIsPastException.class);
 
@@ -93,7 +99,7 @@ class CreateOrderValidatorTest {
     @Test
     void 최대_선점_가능_수량을_초과하면_DB_검증으로_넘어가지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L));
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(2));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(2)));
 
         assertError(seatIds, ExceedHoldLimitException.class);
 
@@ -103,7 +109,7 @@ class CreateOrderValidatorTest {
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(3));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(3)));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(List.of());
 
         validator.validate(input(seatIds), seatIds, FIXED_NOW);
@@ -114,8 +120,8 @@ class CreateOrderValidatorTest {
     @Test
     void 대기열이_필요한_회차는_입장_검사를_DB_검증보다_먼저_한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L))
-                .thenReturn(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true));
+        when(performanceSalesPolicyRepository.findById(10L))
+                .thenReturn(Optional.of(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true)));
         doThrowAdmissionRequired();
 
         assertThatThrownBy(() -> validator.validate(input(seatIds), seatIds, FIXED_NOW))
@@ -127,7 +133,7 @@ class CreateOrderValidatorTest {
     @Test
     void 진행중인_pending_주문이_있으면_예외를_전파한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(3));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(3)));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds))
                 .thenThrow(new PendingOrderAlreadyExistsException());
 
@@ -137,10 +143,10 @@ class CreateOrderValidatorTest {
     @Test
     void 유효한_요청이면_정책과_좌석을_함께_반환한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
-        BookingPolicySnapshot policy = openPolicy(3);
+        PerformanceSalesPolicy policy = openPolicy(3);
         List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
 
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(seats);
 
         ValidatedOrderRequest result = validator.validate(input(seatIds), seatIds, FIXED_NOW);
@@ -153,9 +159,9 @@ class CreateOrderValidatorTest {
     @Test
     void 좌석_수_한도가_없으면_요청_수량을_제한하지_않는다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L, 3L, 4L, 5L));
-        BookingPolicySnapshot policy = openPolicy(null);
+        PerformanceSalesPolicy policy = openPolicy(null);
 
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(List.of());
 
         ValidatedOrderRequest result = validator.validate(input(seatIds), seatIds, FIXED_NOW);
@@ -181,28 +187,23 @@ class CreateOrderValidatorTest {
         return new CreateOrderUseCase.Input(10L, seatIds.toList(), 20L, "admission-token");
     }
 
-    private BookingPolicySnapshot openPolicy(final Integer maxCanHoldCount) {
+    private PerformanceSalesPolicy openPolicy(final Integer maxCanHoldCount) {
         return policy(maxCanHoldCount, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), false);
     }
 
-    private BookingPolicySnapshot policy(
+    private PerformanceSalesPolicy policy(
             final Integer maxCanHoldCount,
             final LocalDateTime orderOpenTime,
             final LocalDateTime orderCloseTime,
             final boolean queueRequired
     ) {
-        return new BookingPolicySnapshot(
+        return new PerformanceSalesPolicy(
                 10L,
-                1L,
-                true,
-                orderOpenTime,
-                orderCloseTime,
-                maxCanHoldCount,
-                300,
-                null,
-                null,
-                null,
+                new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
+                new HoldPolicy(maxCanHoldCount, Duration.ofSeconds(300)),
                 queueRequired
+                        ? new BookingEntryPolicy(QueueMode.FORCE_ON, null, null, null, null)
+                        : BookingEntryPolicy.none()
         );
     }
 }

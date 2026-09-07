@@ -1,17 +1,21 @@
 /**
  * Show module(옛 catalog): Show, Category, Genre, ShowGenre, Performer, Performance, Grade,
- * PerformanceGrade, PerformanceQueuePolicy, 공연별 예매 가능 시간과 Hold 한도, 공연·회차 조회를
- * 소유한다. 찜(ShowLike)의 HTTP endpoint와 use case도 여기 있지만, 찜의 데이터·불변식은
- * {@code com.ticket.favorite} module이 소유한다(아래 참고). 물리 공연장(Venue)과 물리 좌석(Seat)은
- * {@code com.ticket.venue} module이 소유한다 — {@link com.ticket.show.domain.show.Show}는
- * {@code venueId} scalar column만 갖는다(아래 참고).
+ * PerformanceGrade, 공연·회차 조회를 소유한다. {@link com.ticket.show.domain.performance.Performance}는
+ * 회차 정체성과 일정(startTime/endTime)만 소유한다 — 예매 접수 기간·Hold 한도·대기열 진입 정책은
+ * Booking BC의 {@code booking.domain.performancepolicy.model.PerformanceSalesPolicy}가 소유하고,
+ * {@code performanceId} scalar로만 연결된다(ADR 0006 "Performance의 책임 혼재" A2). 찜(ShowLike)의
+ * HTTP endpoint와 use case도 여기 있지만, 찜의 데이터·불변식은 {@code com.ticket.favorite} module이
+ * 소유한다(아래 참고). 물리 공연장(Venue)과 물리 좌석(Seat)은 {@code com.ticket.venue} module이
+ * 소유한다 — {@link com.ticket.show.domain.show.Show}는 {@code venueId} scalar column만 갖는다(아래
+ * 참고).
  *
- * <p>구현은 하위 package(web/application/domain/infrastructure)에 있고, 이 module root에는 다른 module이 쓰는 공개 계약만
- * 둔다: {@link com.ticket.show.BookingPolicyLookup}/{@link com.ticket.show.BookingPolicySnapshot}
- * (booking의 즉시 판단용 예매 정책·가격 snapshot), {@link com.ticket.show.PerformanceSaleCatalog}/
+ * <p>구현은 하위 package(web/application/domain/infrastructure)에 있고, 이 module root에는 다른
+ * module이 쓰는 공개 계약만 둔다: {@link com.ticket.show.PerformanceSaleCatalog}/
  * {@link com.ticket.show.PerformanceVenueLayoutCatalog}(booking이 좌석 판매 편성·seat-map 조합에
  * 쓰는 snapshot — Performance+Show+Venue+Seat+Grade 데이터가 섞인 façade이며, 내부에서 venue
- * module의 공개 계약을 호출해 조립한다).
+ * module의 공개 계약을 호출해 조립한다). 예매 정책 조회 공개 계약({@code BookingPolicyLookup}/
+ * {@code BookingPolicySnapshot})은 정책 소유권이 booking으로 이관되며 사라졌다 — booking은 이제
+ * 자기 local DB로 정책을 조회한다.
  *
  * <p>{@code PerformanceSeat}(회차별 좌석 판매 상태)는 show가 아니라 booking 소유이며 Task 7에서
  * scalar ID 참조로 정리됐다.

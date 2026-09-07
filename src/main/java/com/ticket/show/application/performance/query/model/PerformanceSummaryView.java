@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 public record PerformanceSummaryView(
         String title,
         Region region,
-        LocalDateTime startTime,
-        Integer maxCanHoldCount
+        LocalDateTime startTime
 ) {
 }

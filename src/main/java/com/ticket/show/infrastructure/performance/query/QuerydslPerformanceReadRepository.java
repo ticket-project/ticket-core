@@ -23,7 +23,7 @@ public class QuerydslPerformanceReadRepository implements PerformanceReadReposit
     @Override
     public Optional<PerformanceSummaryView> findByPerformanceId(final Long performanceId) {
         final Tuple row = queryFactory
-                .select(show.title, show.venueId, performance.startTime, performance.maxCanHoldCount)
+                .select(show.title, show.venueId, performance.startTime)
                 .from(performance)
                 .join(performance.show, show)
                 .where(performance.id.eq(performanceId))
@@ -38,8 +38,7 @@ public class QuerydslPerformanceReadRepository implements PerformanceReadReposit
         return Optional.of(new PerformanceSummaryView(
                 row.get(show.title),
                 region,
-                row.get(performance.startTime),
-                row.get(performance.maxCanHoldCount)
+                row.get(performance.startTime)
         ));
     }
 }
