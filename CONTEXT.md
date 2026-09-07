@@ -22,7 +22,7 @@ _Avoid_: 공연장(Show를 가리키는 말과 혼동), 복합 시설 전체를 
 Show 1개는 Performance 여러 개를 가지며(`1:0..N`), Performance는 정확히 하나의 Show에 속한다.
 **등급별 가격은 Show가 직접 갖지 않는다** — 좌석 편성·등급·가격은 회차(Performance)마다 다를 수
 있어 Grade/PerformanceGrade가 회차 단위로 소유한다(설계 배경은
-[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)). Show
+[ADR 0005](docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)). Show
 상세의 가격 표시는 PerformanceGrade에서 파생한 요약값(minPrice/maxPrice)이며, 이 요약을 만들던
 원본 테이블 `ShowGrade`는 제거됐다.
 _Avoid_: 공연물, Event, Product, `ShowGrade`(제거됨 — Show 단위 가격이라는 개념 자체를 쓰지 않는다)
@@ -102,7 +102,7 @@ Order에 대한 한 번의 결제 시도다. Order 하나에는 Payment 여러 �
 끝내던 `PAYMENT_FAILED` 상태는 제거됐다. `payment`는 다른 업무 모듈을 참조하지 않는 독립
 Application Module이며, 이번 구현 범위는 결제 시도 entity/schema/repository까지다 — PG 연동,
 승인/실패/취소 API, callback/webhook은 아직 없다. 설계 배경은
-[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 본다.
+[ADR 0005](docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 본다.
 _Avoid_: 결제(Payment 자체가 결제 완료가 아니라 시도라는 사실을 흐린다), 결제내역이 Order와 1:1이라는 전제
 
 **Ticket**:

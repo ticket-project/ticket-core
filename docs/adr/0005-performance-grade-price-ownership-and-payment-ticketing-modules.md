@@ -2,10 +2,10 @@
 
 ## 상태(2026-09-04): 채택·구현됨. ADR 0003을 module set/DAG 범위에서 부분적으로 supersede한다.
 
-이 ADR은 `docs/superpowers/specs/2026-09-04-ticket-domain-module-redesign.md`(설계 원본, 이하
-"재설계 스펙")와 `docs/superpowers/plans/2026-09-04-ticket-domain-module-redesign.md`(실행 계획)가
-이미 확정한 결정을 도메인 문서 체계(ADR/CONTEXT.md)에 반영한다. 이 ADR 자체가 새로 논의를 여는
-것이 아니라, 이미 승인된 설계를 실행 가능한 결정 기록으로 옮기는 것이다.
+이 ADR은 이미 대화로 승인된 설계(설계 원본, 이하 "재설계 스펙")를 도메인 문서 체계(ADR/CONTEXT.md)에
+반영한다. 원본 스펙·실행 계획 문서(`docs/superpowers/specs/`, `docs/superpowers/plans/`)는 반영이 끝난 뒤
+정리돼 저장소에 남아 있지 않다. 이 ADR 자체가 새로 논의를 여는 것이 아니라, 이미 승인된 설계를 실행
+가능한 결정 기록으로 옮기는 것이다.
 
 **Phase 2~5(Task 3~13, 실행 계획 참고)가 이 결정을 반영해 실제 entity/schema/module을 바꿨다.**
 `payment`/`ticketing` module, `Grade`/`PerformanceGrade`/`PerformanceSeat.unitPrice`/
@@ -84,7 +84,9 @@ admission -> 없음
 metadata  -> catalog, booking, member 그리고 필요 시 payment/ticketing의 공개 metadata
 ```
 
-$1
+**2026-09-06 갱신(metadata)**: 위 DAG의 `metadata` 행은 제거 이전 기록이다. `metadata` module은 호출자가
+없는 순수 leaf였음이 확인돼 삭제됐다(배경은 ADR 0003의 같은 날짜 갱신 노트를 본다, 커밋 848b9ddb).
+
 **2026-09-06 갱신(ticketing)**: 결정 3이 신설한 `ticketing` module은 booking으로 흡수됐다. entity-only 상태에서
 module 하나를 더 유지할 이유가 없고, 발급 트리거인 `OrderConfirmed`가 booking 안의 사건이라 같은 module에
 두는 편이 단순하다는 판단이다. `Ticket`은 `booking.domain.ticket`, `TICKETS` migration은 booking V5로

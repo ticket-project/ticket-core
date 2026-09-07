@@ -9,8 +9,12 @@
 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`가 현재 값의 원본이다. 그 밖의 모든 결정
 (§1, §2, §4~§11)은 그대로 유효하다.
 
-**2026-09-06 갱신**: `metadata` module(`/api/v1/meta/codes`, `*Metadata` 공개 계약 조합)은 FE를
-$1
+**2026-09-06 갱신(metadata)**: `metadata` module(`/api/v1/meta/codes`, `*Metadata` 공개 계약 조합)은 FE를
+위한 편의 API였다. ticket-fe·gatling-test·ticket-queue와 백엔드 내부 module 전체를 확인한 결과 호출자가
+없는 순수 leaf였다. `CatalogMetadata`/`BookingMetadata`/`MemberMetadata`와 각 `*MetadataService`,
+`MetaController`/`GetMetaCodesUseCase`를 함께 삭제했다(커밋 848b9ddb). 아래 본문의 `metadata` module 언급은
+제거 이전 기록이다.
+
 **2026-09-06 갱신(admission)**: `admission` module은 booking으로 흡수됐다. 공개 계약 `AdmissionVerifier`/
 `AdmissionVerification`을 쓰는 곳이 booking뿐이어서 module 경계가 보호하는 소비자가 없었다.
 `booking.application.admission`(포트)과 `booking.infrastructure.admission`(JWT 구현·설정)으로
