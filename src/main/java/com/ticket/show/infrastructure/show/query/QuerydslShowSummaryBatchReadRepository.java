@@ -2,8 +2,8 @@ package com.ticket.show.infrastructure.show.query;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.ShowSummary;
 import com.ticket.show.application.show.query.ShowSummaryBatchReadRepository;
+import com.ticket.show.application.show.query.model.ShowSummaryRow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -22,7 +22,7 @@ public class QuerydslShowSummaryBatchReadRepository implements ShowSummaryBatchR
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Map<Long, ShowSummary> findSummaries(final Set<Long> showIds) {
+    public Map<Long, ShowSummaryRow> findSummaries(final Set<Long> showIds) {
         if (showIds.isEmpty()) {
             return Map.of();
         }
@@ -42,7 +42,7 @@ public class QuerydslShowSummaryBatchReadRepository implements ShowSummaryBatchR
                 .fetch();
 
         return rows.stream()
-                .map(row -> new ShowSummary(
+                .map(row -> new ShowSummaryRow(
                         row.get(show.id),
                         row.get(show.title),
                         row.get(show.image),
@@ -50,6 +50,6 @@ public class QuerydslShowSummaryBatchReadRepository implements ShowSummaryBatchR
                         row.get(show.endDate),
                         row.get(venue.name)
                 ))
-                .collect(Collectors.toMap(ShowSummary::showId, summary -> summary));
+                .collect(Collectors.toMap(ShowSummaryRow::showId, summary -> summary));
     }
 }

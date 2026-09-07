@@ -71,8 +71,6 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
         persistPerformanceGrade(queuedPerformance, vip, BigDecimal.valueOf(150000), 1);
         persistPerformanceGrade(queuedPerformance, r, BigDecimal.valueOf(100000), 2);
         persistPerformanceGrade(directPerformance, vip, BigDecimal.valueOf(180000), 1);
-        persistShowLike(persistMember("a@example.com", "A"), show);
-        persistShowLike(persistMember("b@example.com", "B"), show);
         flushAndClear();
     }
 
@@ -83,7 +81,6 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
         assertThat(result).isPresent();
         ShowDetailView detail = result.orElseThrow();
         assertThat(detail.title()).isEqualTo("단독 공연");
-        assertThat(detail.likeCount()).isEqualTo(2L);
         assertThat(detail.genreNames()).contains("케이팝");
         assertThat(detail.priceSummary().minPrice()).isEqualByComparingTo("100000");
         assertThat(detail.priceSummary().maxPrice()).isEqualByComparingTo("180000");

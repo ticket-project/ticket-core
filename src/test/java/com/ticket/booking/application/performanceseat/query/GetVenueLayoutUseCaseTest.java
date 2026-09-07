@@ -1,7 +1,7 @@
 package com.ticket.booking.application.performanceseat.query;
 
-import com.ticket.show.ShowLookup;
 import com.ticket.show.VenueLayout;
+import com.ticket.show.VenueLayoutLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 class GetVenueLayoutUseCaseTest {
 
     @Mock
-    private ShowLookup showLookup;
+    private VenueLayoutLookup venueLayoutLookup;
 
     @InjectMocks
     private GetVenueLayoutUseCase useCase;
@@ -24,7 +24,7 @@ class GetVenueLayoutUseCaseTest {
     @Test
     void 공연장_레이아웃을_반환한다() {
         //given
-        when(showLookup.getVenueLayout(100L)).thenReturn(new VenueLayout("올림픽홀", 1000, 800, 12.0));
+        when(venueLayoutLookup.getVenueLayout(100L)).thenReturn(new VenueLayout("올림픽홀", 1000, 800, 12.0));
 
         //when
         GetVenueLayoutUseCase.Output output = useCase.execute(new GetVenueLayoutUseCase.Input(100L));

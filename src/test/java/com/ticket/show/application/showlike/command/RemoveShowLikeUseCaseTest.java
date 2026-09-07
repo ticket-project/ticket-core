@@ -1,9 +1,10 @@
 package com.ticket.show.application.showlike.command;
 
-import com.ticket.show.ShowLookup;
-import com.ticket.show.domain.showlike.model.ShowLike;
-import com.ticket.show.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.show.domain.show.repository.ShowRepository;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
+import com.ticket.favorite.ShowLikeCommand;
+import com.ticket.favorite.ShowLikeInfo;
 import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,13 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,20 +29,19 @@ import static org.mockito.Mockito.when;
 class RemoveShowLikeUseCaseTest {
 
     @Mock
-    private ShowLikeRepository showLikeRepository;
-    @Mock
     private MemberLookup memberLookup;
     @Mock
-    private ShowLookup showLookup;
+    private ShowRepository showRepository;
+    @Mock
+    private ShowLikeCommand showLikeCommand;
     @InjectMocks
     private RemoveShowLikeUseCase useCase;
 
     @Test
-    void 찜이_존재하면_삭제후_false를_반환한다() {
+    void 공연이_존재하면_favorite에_찜_해제를_위임한다() {
         //given
-        ShowLike showLike = mock(ShowLike.class);
-        when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.of(showLike));
-        when(showLikeRepository.countByShowId(2L)).thenReturn(4L);
+        when(showRepository.existsById(2L)).thenReturn(true);
+        when(showLikeCommand.unlike(1L, 2L)).thenReturn(new ShowLikeInfo(false, 4L));
 
         //when
         RemoveShowLikeUseCase.Output output = useCase.execute(new RemoveShowLikeUseCase.Input(1L, 2L));
@@ -52,23 +50,19 @@ class RemoveShowLikeUseCaseTest {
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
         verify(memberLookup).requireActive(1L);
-        verify(showLookup).requireExisting(2L);
-        verify(showLikeRepository).delete(showLike);
+        verify(showLikeCommand).unlike(1L, 2L);
     }
 
     @Test
-    void 찜이_없어도_삭제없이_false를_반환한다() {
+    void 공연이_없으면_favorite를_부르지_않고_예외를_던진다() {
         //given
-        when(showLikeRepository.findByMemberIdAndShowId(1L, 2L)).thenReturn(Optional.empty());
-        when(showLikeRepository.countByShowId(2L)).thenReturn(0L);
+        when(showRepository.existsById(2L)).thenReturn(false);
 
         //when
-        RemoveShowLikeUseCase.Output output = useCase.execute(new RemoveShowLikeUseCase.Input(1L, 2L));
-
         //then
-        assertThat(output.liked()).isFalse();
-        assertThat(output.likeCount()).isZero();
-        verify(showLikeRepository, never()).delete(any());
+        assertThatThrownBy(() -> useCase.execute(new RemoveShowLikeUseCase.Input(1L, 2L)))
+                .isInstanceOf(NotFoundException.class);
+        verify(showLikeCommand, never()).unlike(anyLong(), anyLong());
     }
 
     @ParameterizedTest

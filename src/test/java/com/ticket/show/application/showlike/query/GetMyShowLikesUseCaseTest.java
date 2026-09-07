@@ -1,7 +1,11 @@
 package com.ticket.show.application.showlike.query;
 
+import com.ticket.show.application.show.query.ShowSummaryBatchReadRepository;
+import com.ticket.show.application.show.query.model.ShowSummaryRow;
 import com.ticket.show.application.showlike.query.model.ShowLikeSummaryView;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.favorite.ShowLikeEntry;
+import com.ticket.favorite.ShowLikeQuery;
 import com.ticket.member.MemberLookup;
 import com.ticket.shared.CursorPage;
 import org.junit.jupiter.api.Test;
@@ -16,6 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,32 +37,48 @@ class GetMyShowLikesUseCaseTest {
     private MemberLookup memberLookup;
 
     @Mock
-    private ShowLikeReadRepository showLikeReadRepository;
+    private ShowLikeQuery showLikeQuery;
+
+    @Mock
+    private ShowSummaryBatchReadRepository showSummaryBatchReadRepository;
 
     @InjectMocks
     private GetMyShowLikesUseCase useCase;
 
     @Test
-    void 찜한_공연_목록을_다음_커서_위치와_함께_조회한다() {
-        ShowLikeSummaryView summary = new ShowLikeSummaryView(
-                2L,
-                "공연",
-                "image",
-                LocalDate.now(),
-                LocalDate.now().plusDays(1),
-                "장소",
-                LocalDateTime.now()
+    void 찜한_공연_목록을_show_표시값과_조합해_반환한다() {
+        LocalDateTime likedAt = LocalDateTime.now();
+        ShowLikeEntry entry = new ShowLikeEntry(9L, 2L, likedAt);
+        when(showLikeQuery.findLikedShows(1L, 10L, 20))
+                .thenReturn(new CursorPage<>(List.of(entry), true, 9L));
+
+        ShowSummaryRow summary = new ShowSummaryRow(
+                2L, "공연", "image", LocalDate.now(), LocalDate.now().plusDays(1), "장소"
         );
-        when(showLikeReadRepository.findMyLikedShows(1L, 10L, 20))
-                .thenReturn(new CursorPage<>(List.of(summary), true, 9L));
+        when(showSummaryBatchReadRepository.findSummaries(Set.of(2L))).thenReturn(Map.of(2L, summary));
 
         GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, 10L, 20));
 
-        assertThat(output.items()).containsExactly(summary);
+        assertThat(output.items()).containsExactly(
+                new ShowLikeSummaryView(2L, "공연", "image", summary.startDate(), summary.endDate(), "장소", likedAt)
+        );
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
         verify(memberLookup).requireActive(1L);
-        verify(showLikeReadRepository).findMyLikedShows(1L, 10L, 20);
+        verify(showLikeQuery).findLikedShows(1L, 10L, 20);
+    }
+
+    @Test
+    void show_표시값을_찾지_못한_항목은_건너뛴다() {
+        ShowLikeEntry entry = new ShowLikeEntry(9L, 2L, LocalDateTime.now());
+        when(showLikeQuery.findLikedShows(1L, null, 20))
+                .thenReturn(new CursorPage<>(List.of(entry), false, null));
+        when(showSummaryBatchReadRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());
+
+        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
+
+        assertThat(output.items()).isEmpty();
+        assertThat(output.hasNext()).isFalse();
     }
 
     @ParameterizedTest
@@ -80,7 +102,7 @@ class GetMyShowLikesUseCaseTest {
 
     @Test
     void 커서_위치가_없으면_첫_페이지를_조회한다() {
-        when(showLikeReadRepository.findMyLikedShows(1L, null, 20))
+        when(showLikeQuery.findLikedShows(1L, null, 20))
                 .thenReturn(CursorPage.empty());
 
         GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
@@ -88,7 +110,7 @@ class GetMyShowLikesUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.hasNext()).isFalse();
         assertThat(output.nextPosition()).isNull();
-        verify(showLikeReadRepository).findMyLikedShows(1L, null, 20);
+        verify(showLikeQuery).findLikedShows(1L, null, 20);
     }
 
     private static Stream<Arguments> invalidComponents() {

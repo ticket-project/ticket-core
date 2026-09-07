@@ -5,6 +5,7 @@ import com.ticket.show.domain.show.BookingStatus;
 import com.ticket.show.application.show.query.model.ShowDetailView;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
+import com.ticket.favorite.ShowLikeQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,11 +29,14 @@ class GetShowDetailUseCaseTest {
     @Mock
     private ShowDetailReadRepository showDetailReadRepository;
 
+    @Mock
+    private ShowLikeQuery showLikeQuery;
+
     @InjectMocks
     private GetShowDetailUseCase useCase;
 
     @Test
-    void 공연_상세를_그대로_반환한다() {
+    void 공연_상세를_그대로_반환하고_찜_개수를_favorite에서_채운다() {
         ShowDetailView detail = new ShowDetailView(
                 1L,
                 "공연",
@@ -42,7 +46,6 @@ class GetShowDetailUseCaseTest {
                 LocalDate.now().plusDays(1),
                 120,
                 100L,
-                10L,
                 BookingStatus.ON_SALE,
                 SaleType.GENERAL,
                 LocalDateTime.now(),
@@ -55,6 +58,7 @@ class GetShowDetailUseCaseTest {
                 List.of()
         );
         when(showDetailReadRepository.findShowDetail(1L)).thenReturn(Optional.of(detail));
+        when(showLikeQuery.countByShowId(1L)).thenReturn(10L);
 
         GetShowDetailUseCase.Output output = useCase.execute(new GetShowDetailUseCase.Input(1L));
 
@@ -62,7 +66,9 @@ class GetShowDetailUseCaseTest {
         assertThat(output.title()).isEqualTo(detail.title());
         assertThat(output.bookingStatus()).isEqualTo(detail.bookingStatus());
         assertThat(output.genreNames()).isEqualTo(detail.genreNames());
+        assertThat(output.likeCount()).isEqualTo(10L);
         verify(showDetailReadRepository).findShowDetail(1L);
+        verify(showLikeQuery).countByShowId(1L);
     }
 
     @Test

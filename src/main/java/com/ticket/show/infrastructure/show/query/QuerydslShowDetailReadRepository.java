@@ -28,7 +28,6 @@ import static com.ticket.show.domain.show.QGenre.genre;
 import static com.ticket.show.domain.show.QShowGenre.showGenre;
 import static com.ticket.show.domain.show.QPerformer.performer;
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.domain.showlike.model.QShowLike.showLike;
 
 @Repository
 @RequiredArgsConstructor
@@ -48,9 +47,8 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         final List<String> genreNames = fetchGenreNames(showId);
         final GetShowDetailUseCase.PriceSummary priceSummary = fetchPriceSummary(showId);
         final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates = fetchPerformanceDates(showId);
-        final long likeCount = fetchLikeCount(showId);
 
-        return Optional.of(toShowDetail(showEntity, genreNames, priceSummary, performanceDates, likeCount));
+        return Optional.of(toShowDetail(showEntity, genreNames, priceSummary, performanceDates));
     }
 
     private Show fetchShow(final Long showId) {
@@ -136,21 +134,11 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         );
     }
 
-    private long fetchLikeCount(final Long showId) {
-        return Optional.ofNullable(
-                queryFactory.select(showLike.count())
-                        .from(showLike)
-                        .where(showLike.show.id.eq(showId))
-                        .fetchOne()
-        ).orElse(0L);
-    }
-
     private ShowDetailView toShowDetail(
             final Show showEntity,
             final List<String> genreNames,
             final GetShowDetailUseCase.PriceSummary priceSummary,
-            final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates,
-            final long likeCount
+            final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates
     ) {
         final BookingStatus bookingStatus = showEntity.getBookingStatus(LocalDateTime.now(clock));
 
@@ -163,7 +151,6 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
                 showEntity.getEndDate(),
                 showEntity.getRunningMinutes(),
                 showEntity.getViewCount(),
-                likeCount,
                 bookingStatus,
                 showEntity.getSaleType(),
                 showEntity.getSaleStartDate(),

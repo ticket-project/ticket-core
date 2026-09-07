@@ -1,8 +1,10 @@
 package com.ticket.show.application.showlike.command;
 
-import com.ticket.show.ShowLookup;
-import com.ticket.show.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.show.domain.show.repository.ShowRepository;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
+import com.ticket.favorite.ShowLikeCommand;
+import com.ticket.favorite.ShowLikeInfo;
 import com.ticket.member.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RemoveShowLikeUseCase {
 
-    private final ShowLikeRepository showLikeRepository;
     private final MemberLookup memberLookup;
-    private final ShowLookup showLookup;
+    private final ShowRepository showRepository;
+    private final ShowLikeCommand showLikeCommand;
 
     public record Input(Long memberId, Long showId) {
         public Input {
@@ -41,16 +43,12 @@ public class RemoveShowLikeUseCase {
 
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
-        showLookup.requireExisting(input.showId());
 
-        showLikeRepository.findByMemberIdAndShowId(input.memberId(), input.showId())
-                .ifPresent(showLikeRepository::delete);
+        if (!showRepository.existsById(input.showId())) {
+            throw new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId());
+        }
 
-        return new Output(
-                input.showId(),
-                false,
-                showLikeRepository.countByShowId(input.showId())
-        );
+        final ShowLikeInfo info = showLikeCommand.unlike(input.memberId(), input.showId());
+        return new Output(input.showId(), info.liked(), info.likeCount());
     }
-
 }

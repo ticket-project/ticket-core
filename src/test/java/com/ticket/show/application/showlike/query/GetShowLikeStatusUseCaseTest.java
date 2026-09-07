@@ -1,8 +1,10 @@
 package com.ticket.show.application.showlike.query;
 
-import com.ticket.show.ShowLookup;
-import com.ticket.show.domain.showlike.repository.ShowLikeRepository;
+import com.ticket.show.domain.show.repository.ShowRepository;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
+import com.ticket.favorite.ShowLikeInfo;
+import com.ticket.favorite.ShowLikeQuery;
 import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,19 +27,19 @@ import static org.mockito.Mockito.when;
 class GetShowLikeStatusUseCaseTest {
 
     @Mock
-    private ShowLikeRepository showLikeRepository;
-    @Mock
     private MemberLookup memberLookup;
     @Mock
-    private ShowLookup showLookup;
+    private ShowRepository showRepository;
+    @Mock
+    private ShowLikeQuery showLikeQuery;
     @InjectMocks
     private GetShowLikeStatusUseCase useCase;
 
     @Test
     void 찜_상태와_총_찜수를_반환한다() {
         //given
-        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
-        when(showLikeRepository.countByShowId(2L)).thenReturn(7L);
+        when(showRepository.existsById(2L)).thenReturn(true);
+        when(showLikeQuery.getShowLike(2L, 1L)).thenReturn(new ShowLikeInfo(true, 7L));
 
         //when
         GetShowLikeStatusUseCase.Output output = useCase.execute(new GetShowLikeStatusUseCase.Input(1L, 2L));
@@ -46,7 +48,17 @@ class GetShowLikeStatusUseCaseTest {
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(7L);
         verify(memberLookup).requireActive(1L);
-        verify(showLookup).requireExisting(2L);
+    }
+
+    @Test
+    void 공연이_없으면_예외를_던진다() {
+        //given
+        when(showRepository.existsById(2L)).thenReturn(false);
+
+        //when
+        //then
+        assertThatThrownBy(() -> useCase.execute(new GetShowLikeStatusUseCase.Input(1L, 2L)))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @ParameterizedTest

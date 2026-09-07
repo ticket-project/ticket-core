@@ -1,9 +1,10 @@
 package com.ticket.show.application.showlike.command;
 
-import com.ticket.show.ShowLookup;
-import com.ticket.show.domain.showlike.repository.ShowLikeRepository;
-import com.ticket.show.exception.ShowLikeAlreadyExistsException;
+import com.ticket.show.domain.show.repository.ShowRepository;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
+import com.ticket.favorite.ShowLikeCommand;
+import com.ticket.favorite.ShowLikeInfo;
 import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,15 +14,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -29,19 +29,19 @@ import static org.mockito.Mockito.when;
 class AddShowLikeUseCaseTest {
 
     @Mock
-    private ShowLikeRepository showLikeRepository;
-    @Mock
     private MemberLookup memberLookup;
     @Mock
-    private ShowLookup showLookup;
+    private ShowRepository showRepository;
+    @Mock
+    private ShowLikeCommand showLikeCommand;
     @InjectMocks
     private AddShowLikeUseCase useCase;
 
     @Test
-    void 이미_찜한_공연이면_저장하지_않고_상태만_반환한다() {
+    void 공연이_존재하면_favorite에_찜을_위임한다() {
         //given
-        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(true);
-        when(showLikeRepository.countByShowId(2L)).thenReturn(5L);
+        when(showRepository.existsById(2L)).thenReturn(true);
+        when(showLikeCommand.like(1L, 2L)).thenReturn(new ShowLikeInfo(true, 5L));
 
         //when
         AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
@@ -50,38 +50,19 @@ class AddShowLikeUseCaseTest {
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(5L);
         verify(memberLookup).requireActive(1L);
-        verifyNoInteractions(showLookup);
+        verify(showLikeCommand).like(1L, 2L);
     }
 
     @Test
-    void 새로_찜하면_저장후_개수를_반환한다() {
+    void 공연이_없으면_favorite를_부르지_않고_예외를_던진다() {
         //given
-        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
-        when(showLikeRepository.countByShowId(2L)).thenReturn(3L);
-
-        //when
-        AddShowLikeUseCase.Output output = useCase.execute(new AddShowLikeUseCase.Input(1L, 2L));
-
-        //then
-        assertThat(output.liked()).isTrue();
-        verify(memberLookup).requireActive(1L);
-        verify(showLookup).requireExisting(2L);
-        verify(showLikeRepository).like(1L, 2L);
-    }
-
-    @Test
-    void 저장중_중복제약이_발생하면_예외를_던진다() {
-        //given
-        when(showLikeRepository.existsByMemberIdAndShowId(1L, 2L)).thenReturn(false);
-        doThrow(new DataIntegrityViolationException("duplicate"))
-                .when(showLikeRepository).like(1L, 2L);
+        when(showRepository.existsById(2L)).thenReturn(false);
 
         //when
         //then
         assertThatThrownBy(() -> useCase.execute(new AddShowLikeUseCase.Input(1L, 2L)))
-                .isInstanceOf(ShowLikeAlreadyExistsException.class)
-                .satisfies(exception -> assertThat(((ShowLikeAlreadyExistsException) exception).getData())
-                        .isEqualTo("이미 찜한 공연입니다. memberId=1, showId=2"));
+                .isInstanceOf(NotFoundException.class);
+        verify(showLikeCommand, never()).like(anyLong(), anyLong());
     }
 
     @ParameterizedTest

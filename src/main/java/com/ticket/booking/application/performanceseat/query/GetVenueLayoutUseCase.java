@@ -1,7 +1,7 @@
 package com.ticket.booking.application.performanceseat.query;
 
-import com.ticket.show.ShowLookup;
 import com.ticket.show.VenueLayout;
+import com.ticket.show.VenueLayoutLookup;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GetVenueLayoutUseCase {
 
-    private final ShowLookup showLookup;
+    private final VenueLayoutLookup venueLayoutLookup;
 
     public record Input(Long showId) {
         public Input {
@@ -28,7 +28,7 @@ public class GetVenueLayoutUseCase {
                          double seatDiameter) {}
 
     public Output execute(Input input) {
-        final VenueLayout layout = showLookup.getVenueLayout(input.showId());
+        final VenueLayout layout = venueLayoutLookup.getVenueLayout(input.showId());
         return new Output(
                 layout.name(),
                 layout.viewBoxWidth(),
