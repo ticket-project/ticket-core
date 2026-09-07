@@ -211,6 +211,23 @@ V5(`V5__create_tickets.sql`)가 만든다. 위 migration들은 `SHOW_GRADES`/`SH
 baseline table이 존재하지 않는 검증 환경(`OracleMigrationCompatibilityTest` 등)에서는 no-op이
 되도록 존재 여부를 먼저 확인한다.
 
+### 정책 소유권 이관(booking V6, ADR 0006 "Performance의 책임 혼재" A2)
+
+`booking` V6(`V6__create_booking_performance_sales_policies.sql`)는 예매 접수 기간·Hold 한도·
+대기열 진입 정책의 원본과 판단을 Show/`__root`에서 Booking BC로 이관한다. `BOOKING_PERFORMANCE_SALES_POLICIES`를
+멱등하게 만든 뒤, 옛 `__root` V2 소유 `PERFORMANCE_QUEUE_POLICIES`와 pre-Flyway baseline인
+`PERFORMANCES`의 정책 컬럼 4개(`order_open_time`/`order_close_time`/`max_can_hold_count`/`hold_time`)를
+backfill하고 제거한다. **다른 module 소유 schema를 만지는 것은 이 저장소의 일반 규칙상 금지지만,
+이 migration은 소유권 자체가 이관되는 일회성 예외다**(ADR 0006 참고) — booking과 show의 독립
+migration 실행 순서에 기대지 않도록 create -> backfill -> drop을 한 파일 안에서 원자적으로
+수행한다. backfill 규칙: 접수 기간(`order_open_time`/`order_close_time`)이 둘 다 null인 회차는
+정책 미구성으로 보아 row를 만들지 않고, 한쪽만 null이거나 시작이 마감보다 늦은 데이터는 대상
+컬럼의 `NOT NULL`/`CHECK` 제약 위반으로 migration 자체를 실패시켜 원본 데이터를 먼저 확인하게
+한다. `hold_time`이 null이면 `Performance.holdTime`의 기존 Java 기본값과 같은 600초를 적용한다
+(`BookingPerformanceSalesPolicyMigrationTest`가 이 결정을 고정한다). 이 migration도 정책 컬럼이
+아예 없는 검증 환경(`BookingModuleSlicingSchemaTest`, `OracleMigrationCompatibilityTest` 등)에서는
+no-op이 되도록 컬럼 존재 여부를 먼저 확인한다.
+
 Oracle DDL은 실행 시 암묵적으로 커밋된다. 인덱스처럼 실패 후 재시도가 필요한 변경은 여러
 migration으로 분리하고, 각 migration은 같은 목적의 기존 인덱스가 있으면 건너뛴다. 실패 후
 재시도하기 전에는 `USER_IND_COLUMNS`와 `flyway_schema_history`(module 소유라면

@@ -128,8 +128,14 @@ Module(기술 모듈 제외)은 Bounded Context와 일치한다([ADR 0006](adr/0
 ### 대기열
 
 대기열 런타임은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도, queue token
-저장소도, 만료 핸들러도 갖지 않는다. 대신 show의 `PerformanceQueuePolicy`로 공연 상세 응답의
-회차별 `entryType`을 계산하고, 클라이언트가 예매 버튼에서 DIRECT/QUEUE를 분기한다.
+저장소도, 만료 핸들러도 갖지 않는다. 대기열 진입 정책(`PerformanceSalesPolicy`의
+`BookingEntryPolicy`)은 Booking BC가 소유하며, 인증 없이 조회하는
+`GET /api/v1/booking/performances/{performanceId}/booking-mode`가 회차의 접수
+상태(`acceptanceStatus`)와 예매 방식(`bookingMode`: DIRECT/QUEUE/UNAVAILABLE)을 계산해 반환한다.
+이 조회는 안내용이라 실제 좌석 선택·상태·주문 API는 실행 시점에 정책을 다시 검사한다. Show 상세
+응답에는 더 이상 `entryType`/`redirectUrl`/`queueEnterUrl`이 없다 — 클라이언트는 이 Booking 예매
+방식 API를 별도로 호출해 DIRECT/QUEUE를 분기해야 한다(FE 후속 작업, 아래 "미구현 또는 후속 범위"
+참고).
 
 Queue Server hot path는 Core DB와 회차별 정책 snapshot을 조회하지 않는다. Queue Server는 모든
 요청 회차에 애플리케이션 기본 입장 속도와 TTL을 적용하며, `join`에서 받은 `shardId`와
@@ -228,8 +234,17 @@ PerformanceGrade.price(show)   운영자가 구성한 회차 등급 가격 — �
   payment가 다른 모듈을 참조하지 않는다
 - 결제 성공 시 주문 확정과 최종 좌석 판매 확정(`payment`가 booking에 공개할 정산 계약 포함)
 - Ticket 자동 발급 listener, QR, 입장, 사용, 취소, 환불, 양도
-- Performance의 회차 일정/예매 정책/대기열 정책 책임 혼재 정리(A1/A2 중 선택) — 사실과 방안은
-  [ADR 0006](adr/0006-bounded-context-module-boundaries.md#performance의-책임-혼재)을 본다
+- ~~Performance의 회차 일정/예매 정책/대기열 정책 책임 혼재 정리~~ — **완료(2026-09-07)**. A2(예매·
+  대기열 정책을 Booking BC의 `PerformanceSalesPolicy`로 이관)를 구현했다. Performance는 이제 회차
+  일정만 소유하고, `booking.domain.performancepolicy.model.PerformanceSalesPolicy`가 예매 접수
+  기간·Hold 한도·대기열 진입 정책의 원본과 판정을 소유한다. 남은 것은 FE 후속뿐이다(아래).
+- **FE 후속 작업(이번 백엔드 이관에서 미구현)** — Show 상세의 회차 응답에서
+  `orderOpenTime`/`orderCloseTime`과 예매 진입 파생값이 제거됐고 Booking 소유 예매 방식 조회 API
+  (`GET /api/v1/booking/performances/{performanceId}/booking-mode`)가 추가됐다. `ticket-fe`는 회차
+  타입을 갱신하고 회차 선택·예매 버튼 시 이 API를 조회해 `DIRECT`/`QUEUE`/`UNAVAILABLE`을 분기해야 한다.
+  선택 시 안내용으로 조회하더라도 버튼 클릭과 실제 좌석·주문 API에서 최신 정책을 다시 확인해야
+  한다. 이 후속 작업 전까지 `ticket-fe` 파일은
+  수정하지 않는다
 - Event Publication Registry의 `serialized_event` 컬럼 크기(`VARCHAR(255)`) 리스크 — 상세는
   [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)을
   본다

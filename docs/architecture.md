@@ -33,8 +33,8 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 ```text
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
-├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat·Ticket(entity-only), 공개: OrderStarted/OrderTerminated. admission token 검증(원래 admission module)도 소유
-├── show/                    # Show·Category·Genre·Performer·Performance·Grade/PerformanceGrade·대기열 정책(`catalog` 개명), 공개: BookingPolicyLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
+├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat·Ticket(entity-only)·PerformanceSalesPolicy(회차 예매 접수 기간·Hold 한도·대기열 진입 정책), 공개: OrderStarted/OrderTerminated. admission token 검증(원래 admission module)도 소유
+├── show/                    # Show·Category·Genre·Performer·Performance(회차 일정만)·Grade/PerformanceGrade(`catalog` 개명), 공개: PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
 ├── venue/                   # Venue·Seat·Region(물리 시설, show에서 분리), 공개: VenueLookup, VenueSeatLookup
 ├── favorite/                # ShowLike(찜, show에서 분리), 공개: ShowLikeQuery, ShowLikeCommand
 ├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup
@@ -140,10 +140,12 @@ leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과 shared(`U
   JPA로 참조하지 않는다. show의 `Show`도 `venueId`를 scalar 컬럼으로만 갖는다.
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 하위 패키지,
   Repository, JPA entity를 직접 import하지 않는다. 공개 API는 작은 단위 interface(예:
-  `show.BookingPolicyLookup`, `venue.VenueLookup`, `favorite.ShowLikeQuery`,
-  `member.MemberLookup`)와 그 반환값인 불변 `record` snapshot(`BookingPolicySnapshot`,
+  `show.PerformanceSaleCatalog`, `venue.VenueLookup`, `favorite.ShowLikeQuery`,
+  `member.MemberLookup`)와 그 반환값인 불변 `record` snapshot(`PerformanceSaleSnapshot`,
   `VenueSummary`, `MemberStatus` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개
-  계약에 두지 않는다. 컬렉션은 defensive copy한다.
+  계약에 두지 않는다. 컬렉션은 defensive copy한다. 회차 예매 정책은 이제 booking local
+  aggregate(`booking.domain.performancepolicy.model.PerformanceSalesPolicy`)이므로 이 규칙의
+  대상이 아니다 — cross-module 공개 API를 거치지 않고 booking 자신의 Repository로 조회한다.
 - **모듈 후속 처리는 커밋 이후 이벤트로 한다.** booking이 발행하는 `OrderStarted`/
   `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
   본다.
@@ -404,6 +406,14 @@ Flyway migration은 module 소유권을 따른다. 기존 이력(V2~V8)은 내�
 schema 변경은 `db/migration/{module}`, `db/migration-vendor/{h2,oracle}/{module}`에 module별로
 독립 버전을 매겨 추가한다(`spring.modulith.runtime.flyway-enabled=true`). 상세 절차는
 [operations.md](operations.md#db-마이그레이션)를 본다.
+
+**정책 소유권 이관(ownership handoff) 예외**: booking V6(`V6__create_booking_performance_sales_policies.sql`)는
+과거 show/`__root` 소유였던 `PERFORMANCE_QUEUE_POLICIES`(`__root` V2)와 `PERFORMANCES`의 예매 정책
+컬럼 4개(pre-Flyway baseline)를 읽고 제거한다. 다른 module 소유 테이블을 만지는 것은 보통 금지지만,
+이 migration은 정책의 원본과 판단 자체가 Booking BC로 이관되는 일회성 소유권 이전이라 예외로
+허용했다(ADR 0006 "Performance의 책임 혼재" A2). create(BOOKING_PERFORMANCE_SALES_POLICIES) ->
+backfill -> drop(PERFORMANCE_QUEUE_POLICIES, PERFORMANCES 정책 컬럼)을 한 파일 안에서 원자적으로
+수행해 show/booking의 독립 migration 실행 순서에 기대지 않는다.
 
 ### Redis
 

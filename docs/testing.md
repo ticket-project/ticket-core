@@ -94,6 +94,13 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 `BookingTicketSlicingSchemaTest`(TICKETS는 booking V5)(`src/test/java/com/ticket/bootstrap/migration/`)다.
 다른 모듈의 migration이 있어야만 통과하면 실패로 간주한다.
 
+`BookingPerformanceSalesPolicyMigrationTest`(booking V6)는 ADR 0006 "Performance의 책임 혼재" A2
+정책 소유권 이관 migration을 검증한다 — 옛 show/`__root` 소유 `PERFORMANCE_QUEUE_POLICIES`/
+`PERFORMANCES` 정책 컬럼 4개를 `BOOKING_PERFORMANCE_SALES_POLICIES`로 손실 없이 backfill하는지,
+접수 기간이 해석 불가한 데이터(한쪽만 null, opens>=closes)는 migration을 실패시키는지, hold_time이
+null이면 600초 기본값을 적용하는지, 정책 컬럼이 아예 없는 최소 baseline에서는 no-op인지를
+고정한다. `OracleMigrationCompatibilityTest`도 이 backfill을 실제 Oracle에서 확인한다(Docker 필요).
+
 `payment`는 ADR 0005의 entity-only 단계라 `PaymentModuleSlicingSchemaTest`가 검증하는 범위도 그만큼
 좁다 — payment migration만으로 `PAYMENTS` 테이블이 만들어지고 entity가 저장·조회되는지, 그리고 다른
 업무 모듈(booking 등)의 migration 없이도 그 자체로 성립하는지만(`TICKETS`는 booking V5라
