@@ -10,6 +10,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 주문 생성 절차 중 hold 배분·해제 단계다. {@code domain/hold}(hold aggregate 자체)가 아니라
+ * {@code domain/order/command/create}에 있는 이유는 이 클래스가 hold 개념 자체가 아니라
+ * "주문 생성이 hold를 어떻게 쓰는가"라는 order 생성 절차의 한 단계이기 때문이다 — hold의 저장·
+ * 조회·해제 규칙 자체는 {@link HoldManager}(domain/hold)가 그대로 소유한다.
+ */
 @Component
 @RequiredArgsConstructor
 public class HoldAllocator {

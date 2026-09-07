@@ -3,7 +3,6 @@ package com.ticket.booking.application.order.command;
 import com.ticket.booking.application.admission.AdmissionVerifier;
 import com.ticket.booking.application.support.BookingPolicyGuard;
 import com.ticket.booking.domain.order.command.create.RequestedSeatIds;
-import com.ticket.booking.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.show.BookingPolicyLookup;
 import com.ticket.show.BookingPolicySnapshot;

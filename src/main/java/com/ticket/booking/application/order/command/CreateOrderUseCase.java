@@ -8,7 +8,6 @@ import com.ticket.booking.domain.order.command.create.HoldAllocation;
 import com.ticket.booking.domain.order.command.create.HoldAllocator;
 import com.ticket.booking.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.booking.domain.order.command.create.RequestedSeatIds;
-import com.ticket.booking.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.domain.order.model.OrderState;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;

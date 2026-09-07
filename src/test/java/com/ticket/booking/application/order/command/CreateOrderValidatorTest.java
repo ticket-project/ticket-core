@@ -4,7 +4,6 @@ import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.ExceedHoldLimitException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.booking.application.admission.AdmissionVerifier;

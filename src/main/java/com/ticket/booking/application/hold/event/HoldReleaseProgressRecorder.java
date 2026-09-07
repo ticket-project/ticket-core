@@ -1,4 +1,4 @@
-package com.ticket.booking.application.event;
+package com.ticket.booking.application.hold.event;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

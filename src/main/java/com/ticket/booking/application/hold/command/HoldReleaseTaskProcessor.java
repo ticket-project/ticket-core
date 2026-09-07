@@ -1,4 +1,4 @@
-package com.ticket.booking.application.order.command;
+package com.ticket.booking.application.hold.command;
 
 import com.ticket.booking.domain.hold.command.HoldManager;
 import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
@@ -6,7 +6,7 @@ import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.booking.domain.performanceseat.repository.PerformanceSeatRepository;
 import com.ticket.booking.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.performanceseat.event.SeatStatusEventPublisher;
-import com.ticket.booking.application.event.HoldReleaseProgressRecorder;
+import com.ticket.booking.application.hold.event.HoldReleaseProgressRecorder;
 import com.ticket.booking.application.lock.LockKey;
 import com.ticket.booking.application.lock.LockManager;
 import com.ticket.booking.application.lock.LockOptions;

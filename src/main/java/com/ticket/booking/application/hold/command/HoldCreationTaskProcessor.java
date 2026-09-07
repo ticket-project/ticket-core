@@ -1,4 +1,4 @@
-package com.ticket.booking.application.order.command;
+package com.ticket.booking.application.hold.command;
 
 import com.ticket.booking.domain.hold.model.Hold;
 import com.ticket.booking.domain.hold.store.HoldStore;

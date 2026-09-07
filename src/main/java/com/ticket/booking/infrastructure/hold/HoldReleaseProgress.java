@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.order;
+package com.ticket.booking.infrastructure.hold;
 
 import com.ticket.booking.domain.BookingAuditedEntity;
 import jakarta.persistence.Column;
