@@ -160,9 +160,9 @@ public Output execute(final Input input) {
 }
 ```
 
-**금지**: 업무 정책 값을 API나 application으로 복사하는 것. 최대 선점 좌석 수는 catalog가 공개한
-`BookingPolicySnapshot`과 booking의 도메인 검증기가 소유한다. API 요청 DTO나 `UseCase.Input`에
-같은 상한을 두지 않는다.
+**금지**: 업무 정책 값을 API나 application으로 복사하는 것. 최대 선점 좌석 수는 booking local
+aggregate `PerformanceSalesPolicy`(`booking.domain.performancepolicy.model`)가 소유한다. API
+요청 DTO나 `UseCase.Input`에 같은 상한을 두지 않는다.
 
 **금지**: 같은 값 변환 규칙을 여러 곳에 두는 것. `region` 문자열 → `Region` 변환은
 `ShowParam.parseRegion` 한곳이 소유하고 `ShowSearchCriteria`와

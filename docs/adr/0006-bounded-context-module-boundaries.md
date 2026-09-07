@@ -2,6 +2,20 @@
 
 ## 상태(2026-09-07): 채택·구현됨. ADR 0003 §3·§11, ADR 0005 §4를 module set·DAG 범위에서 다시 supersede
 
+**2026-09-07 갱신(Performance 책임 혼재 후속 결정)**: 아래 "결정하지 않는 것"이 미루었던 A1/A2
+선택은 **A2(예매·대기열 정책을 Booking BC의 `PerformanceSalesPolicy`로 이관)로 확정·구현됐다.**
+`Performance`(show)는 이제 회차 일정(startTime/endTime)만 소유하고,
+`booking.domain.performancepolicy.model.PerformanceSalesPolicy`가 예매 접수 기간·Hold 좌석 수
+한도·대기열 진입 정책의 원본과 모든 판정을 소유한다. `show.BookingPolicyLookup`/
+`BookingPolicySnapshot`과 `PerformanceQueuePolicy`/`QueueActivation`/`BookingPolicyValidator`/
+`BookingEntryResolver`는 제거됐다. `booking -> show` 의존은 좌석/가격 조합용
+`PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog` 때문에 그대로 남아 있고, `show -> booking`
+의존은 추가되지 않았다(순환 없음 유지). booking이 `GET /api/v1/booking/performances/{id}/booking-mode`로
+회차 예매 방식을 인증 없이 공개한다. DB는 booking V6 migration이 옛 show/`__root` 소유
+`PERFORMANCE_QUEUE_POLICIES`/`PERFORMANCES` 정책 컬럼 4개를 backfill 후 제거했다(정책 소유권 이관
+예외, `docs/architecture.md`/`docs/operations.md`의 "DB 마이그레이션" 절 참고). 아래 "결정하지 않는
+것" 절의 본문은 그 이전 결정 시점의 기록으로 남긴다.
+
 `docs/agents/domain.md`는 "Application Module은 업무 기능 경계이지 BC(Bounded Context)가 아니다"를
 전제로 삼아 왔다. 이 ADR은 그 전제를 뒤집는다 — **지금부터 Application Module(기술 모듈 제외)은 곧
 BC다.** `catalog` 하나가 물리 시설(Venue/Seat), 작품·회차(Show/Performance/Grade), 찜(ShowLike)을
@@ -186,6 +200,9 @@ module-aware Flyway(`SpringModulithFlywayMigrationStrategy`)는 module 식별자
 무관하게 동적으로 찾아 없을 때는 no-op이다.
 
 ## 결정하지 않는 것 (별도 결정으로 미룸)
+
+> **"Performance의 책임 혼재" 항목은 2026-09-07 이후 A2로 후속 결정·구현됐다** — 이 문서 상단의
+> "2026-09-07 갱신" 문단을 본다. 아래 본문은 그 결정 이전 시점의 관측 기록이다.
 
 ### Performance의 책임 혼재
 

@@ -19,7 +19,8 @@ Venue / Favorite / Member -> (없음, leaf)
 
 - **Venue**: Venue, Seat. 물리 시설.
 - **Show**: Show, Category, Genre, Performer, Performance, Grade, PerformanceGrade. 작품·회차.
-- **Booking**: Selection, Hold, Order, OrderSeat, Ticket. 좌석 선점부터 주문·발권까지.
+- **Booking**: Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy(회차 예매 접수
+  기간·Hold 한도·대기열 진입 정책). 좌석 선점부터 주문·발권까지.
 - **Payment**: Payment. 결제 시도.
 - **Favorite**: ShowLike. 찜.
 - **Member**: Member. 회원과 인증.
@@ -53,11 +54,13 @@ Category에 속한다. Show는 여러 Genre를 가질 수 있고 Genre도 여러
 _Avoid_: 태그, Tag
 
 **Performance**:
-Show의 특정 상영 회차다. 회차 번호와 시작 시각을 가지며, 좌석 편성·등급·가격·예매 정책·대기열
-정책은 이 단위로 붙는다. 예매 정책(orderOpenTime/orderCloseTime/maxCanHoldCount/holdTime)과
-대기열 정책은 지금은 회차 속성으로 Show BC가 소유하지만, 실제 소비자는 거의 전부
-Booking이다(admission 검사, hold 시간 계산) — 이 혼재는 해결하지 않고 사실만 기록해 두었다
-([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md) "결정하지 않는 것" 참고).
+Show의 특정 상영 회차다. 회차 번호와 시작 시각을 가지며, 좌석 편성·등급·가격은 이 단위로 붙는다.
+Performance 자신은 회차 정체성과 일정(startTime/endTime)만 소유한다. 예매 접수 기간·Hold
+한도·대기열 진입 정책은 **Booking BC의 `PerformanceSalesPolicy`**가 소유한다 — 실제 소비자가
+거의 전부 Booking(admission 검사, hold 시간 계산)이었기 때문에 원본과 판단을 그쪽으로 이관했다
+([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md) "Performance의 책임 혼재" A2,
+2026-09-07 이후 구현). `PerformanceSalesPolicy`는 `performanceId` scalar로만 Performance와
+연결되고 cross-module JPA 연관관계나 DB FK는 없다.
 _Avoid_: 회차 공연, Schedule, Session
 
 **Seat**:
@@ -115,6 +118,14 @@ _Avoid_: 선점, 임시 예약, Reservation, 찜(Favorite BC의 ShowLike와 혼�
 진행 중인 Order가 좌석을 붙잡아 둔 상태다. 판매 정합성을 지키는 쪽은 Selection이 아니라 이것이다.
 Order와 1:1이며 같은 `holdKey`로 이어지고, Order가 살아 있는 동안만 유지된다.
 _Avoid_: 점유, Lock, Reservation
+
+**PerformanceSalesPolicy**:
+회차 하나의 예매 접수 기간(OrderAcceptanceWindow)·Hold 좌석 수 한도(HoldPolicy)·대기열 진입
+정책(BookingEntryPolicy)을 소유하는 Booking BC aggregate다. Performance(Show BC)에 대해
+`performanceId` scalar 식별자로만 연결되며, 예매 가능 여부(BEFORE_OPEN/OPEN/CLOSED)와 대기열
+필요 여부를 스스로 판정한다. 이 정책이 없는 회차는 "회차는 있지만 Booking 판매 정책이 아직
+구성되지 않음"을 뜻한다.
+_Avoid_: 이 정책을 Show가 소유한다는 서술(과거 구조), BookingPolicySnapshot(제거됨)
 
 **Admission**:
 대기열을 통과해 예매 API를 호출할 자격이다. `ticket-queue`가 토큰으로 발급하고 이 서비스가 검증한다.
