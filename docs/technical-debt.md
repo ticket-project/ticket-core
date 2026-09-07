@@ -18,13 +18,14 @@
 | TD-05 | 해결됨[^td05] | — | — | — | — | — | — | — |
 | TD-06 | `booking.domain.{performanceseat.command, hold.command}` | `PerformanceSeatService`, `HoldReleaseLockException` 사용 여부가 불명확하다 | 미사용 코드 제거 판단이 어렵다 | 호출 그래프 확인 후 제거 또는 명시적 역할 부여 | 삭제는 이번 범위 밖 | public class 삭제 금지 | 사용처/삭제 결정 문서화 | 해당 클래스 |
 | TD-07 | 해결됨[^td07] | — | — | — | — | — | — | — |
-| TD-08 | `show.domain.queue` | `QueueMode`, `QueueLevel` 명명이 책임을 충분히 설명하지 않는다 | 정책 의미와 실행 단계가 혼동될 수 있다 | 정책/단계 용어를 ADR로 확정 후 rename | API/claim 영향 검토 필요 | token claim 유지 | 의미와 wire mapping 고정 | `QueueMode`, `QueueLevel` |
+| TD-08 | `booking.domain.performancepolicy.model` | `QueueMode`, `QueueLevel` 명명이 책임을 충분히 설명하지 않는다 | 정책 의미와 실행 단계가 혼동될 수 있다 | 정책/단계 용어를 ADR로 확정 후 rename | API/claim 영향 검토 필요 | token claim 유지 | 의미와 wire mapping 고정 | `QueueMode`, `QueueLevel` |
 | TD-09 | `booking.infrastructure.admission` | admission token 책임을 설정/검증 관점으로 함께 표현한다 | 설정과 검증 책임이 분리되지 않는다 | token settings와 guard의 경계를 문서화 | 기존 구성키 유지 필요 | JWT claim/TTL 유지 | 책임별 테스트와 문서 일치 | `AdmissionTokenSettings`, `JwtAdmissionVerifier`(구 `JwtAdmissionGuard`) |
 | TD-10 | 각 module의 `domain` | command 패키지에 정책/값 객체/서비스가 혼재한다 | 계층과 책임 판별이 어렵다 | policy/model/feature root로 재분류 | 대규모 이동으로 별도 단계 필요 | import만 변경, 동작 유지 | domain command 잔존 목록과 예외 문서화 | `<module>.domain.**.command` |
 | TD-11 | 해결됨[^td11] | — | — | — | — | — | — | — |
 | TD-12 | `show.domain.show` | `Show.getBookingStatus`와 `infrastructure`의 `BookingStatusPredicateFactory`가 "예매 가능 여부" 규칙을 각자 구현한다 | 한쪽만 바뀌면 조용히 어긋난다 | `@Embeddable SaleWindow` + `statusAt(now)`로 통합, 두 구현이 같은 결과를 내는지 파라미터화 테스트로 고정 | Q-path 변경이 venue 분리와 겹쳐 별도 단계로 미룸 | 응답 값 불변 | 단일 구현 + 회귀 테스트 | `Show`, `BookingStatusPredicateFactory` |
 | TD-13 | `show.domain.show` | `Show.viewCount`를 증가시키는 코드가 없는데 `POPULAR` 정렬·커서 키로 쓰인다 | 제품 결정이 필요한 사안(비동기 증가 도입 or 정렬 폐기) | 상세 조회 시 비동기 증가, 또는 `POPULAR` 정렬 폐기 | 제품 결정 사안, 코드 문제 아님 | 정렬 API 계약 영향 분석 필요 | 결정 후 반영 | `Show.viewCount`, `ShowSort.POPULAR` |
 | TD-14 | `venue.domain.venue` | `Venue.gapX`/`gapY`(좌석 간격)를 읽는 코드가 없다 | 죽은 컬럼일 가능성 | 소비자 없음을 재확인 후 컬럼 제거 여부 결정 | 컬럼 drop은 운영 migration이라 신중히 별도 결정 | 응답 영향 없음(비노출 필드) | 컬럼 제거 또는 실제 소비자 확인 | `Venue`, `VenueSummary.SeatMapLayout` |
+| TD-15 | `show.domain.performance` | "판매 오픈 전에만 가격을 바꿀 수 있다"는 `PerformanceGrade`의 불변식인데, 그 판단 근거(접수 시각·좌석 편성 여부)가 Booking BC에 있다 | show가 혼자 판정할 수 없고 `show -> booking`은 순환이라 금지다. 지금은 가격 변경 메서드 자체가 없어 드러나지 않을 뿐 강제되는 규칙이 아니다 | (A) 잠금 기준을 "좌석 편성"으로 바꾸고 `EditPerformanceSeatsUseCase`가 show의 공개 command API로 잠금을 알린다(`booking -> show`라 순환 없고 snapshot 시점과 일치) / (B) booking이 편성 시 단가 불일치를 사후 감지 / (C) 문서 규칙으로만 유지 | 가격 변경 기능이 아직 없어 실제로 깨지지 않는다 — 관리자 CRUD 착수 시점에 결정한다 | 가격 snapshot 체인(`PerformanceGrade.price` -> `PerformanceSeat.unitPrice` -> `OrderSeat.unitPrice`) 의미 보존 | 잠금 주체·시점을 결정하고 테스트로 고정 | `PerformanceGrade`, `EditPerformanceSeatsUseCase`, `PerformanceSalesPolicy` |
 
 [^td04]: 컨트롤러가 booking/show/member 각 module의 `web`로 옮겨지며
 문제의 소재도 함께 옮겨졌다 — module 경계와는 무관하게 여전히 유효한 항목이다.
@@ -42,7 +43,7 @@ favorite 분리 이후에도 show에 남는다). `core.api.support`는 이제 �
 `booking.domain.performancepolicy.model.PerformanceSalesPolicy`가 예매 접수 기간·Hold 한도·대기열
 진입 정책을 소유한다. `show.BookingPolicyLookup`/`BookingPolicySnapshot`/`PerformanceQueuePolicy`/
 `QueueActivation`/`BookingPolicyValidator`/`BookingEntryResolver`는 제거됐고, booking이
-`GET /api/v1/booking/performances/{id}/entry`로 진입 상태를 공개한다. 기존 정책 데이터는 booking
+`GET /api/v1/booking/performances/{id}/booking-mode`로 회차 예매 방식을 공개한다. 기존 정책 데이터는 booking
 V6 migration이 손실 없이 backfill했다. FE 후속(`ticket-fe`가 이 새 API로 DIRECT/QUEUE를 분기하는
 작업)은 이 항목의 범위가 아니다 — `development.md`의 "미구현 또는 후속 범위"를 본다.
 

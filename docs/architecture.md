@@ -150,6 +150,44 @@ leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과 shared(`U
   `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
   본다.
 
+### 경계별 참조와 Repository 소유
+
+위 규칙은 module(BC) 경계만 다룬다. 실제 경계는 네 층위이고 층위마다 허용되는 매핑과 Repository
+소유가 다르다. aggregate 목록은 [CONTEXT.md](../CONTEXT.md)의 "Aggregate 경계"가 원본이다.
+
+| 경계 | 참조 | Repository |
+| --- | --- | --- |
+| 같은 Aggregate 내부 | Entity 연관관계 가능 | Root만 Repository |
+| 같은 BC, 다른 Aggregate | ID 참조 권장 | 각 Root별 Repository |
+| 다른 BC | ID 참조(강제) | 각 BC가 자기 Repository 소유 |
+| 조회 전용 | 자유롭게 JOIN 가능 | QueryRepository 별도 가능 |
+
+**같은 aggregate 안**에서는 자식이 부모를 `@ManyToOne(fetch = LAZY, optional = false)`로 가리키고
+**자식은 자기 Repository를 갖지 않는다** — 저장·복원이 root Repository 하나를 지난다. 현재
+`OrderSeat`→`Order`, `MemberSocialAccount`→`Member`, `PerformanceGrade`→`Performance`가 이 형태다.
+부모 쪽 `@OneToMany` 컬렉션은 자식 수가 적고 lifecycle이 완전히 묶일 때만 둔다 — `Venue`→`Seat`,
+`Performance`→`PerformanceSeat`처럼 자식이 수천 개인 관계는 컬렉션으로 두지 않는다(로딩과 락 범위가
+함께 커진다). **soft delete를 쓰는 자식에는 `orphanRemoval`을 붙이지 않는다** —
+`Member`→`MemberSocialAccount`는 `deletedAt`으로 지우므로 `cascade = {PERSIST, MERGE}`만 쓴다.
+
+**자식 조건으로 root를 찾는 조회**는 컬렉션으로 대체할 수 없어 root Repository가 가진다
+(`MemberRepository.findActiveBySocialAccount(provider, socialId)`). Repository가 root를 반환하되
+검색 조건이 자식 속성인 것은 이 규칙 위반이 아니다.
+
+**같은 BC 다른 aggregate**는 scalar ID로 참조한다. aggregate 경계가 곧 트랜잭션 경계인데 객체로
+붙어 있으면 한 트랜잭션에서 둘을 같이 고치는 코드가 쉽게 써지기 때문이다. `Seat.venueId`,
+`Performance.showId`, `Genre.categoryId`, `ShowGenre.showId`/`genreId`, `PerformanceGrade.gradeId`,
+`Show.performerId`, `OrderSeat.performanceSeatId`, `Ticket.orderSeatId`가 여기 해당한다.
+
+**조회 전용 경로는 이 제약을 받지 않는다.** `application`의 `*ReadRepository` 포트와
+`infrastructure`의 `Querydsl*ReadRepository` 구현은 필요한 만큼 join한다 — 참조가 scalar로 바뀌어도
+`.on(child.parentId.eq(parent.id))` 형태로 같은 조회를 그대로 쓴다.
+
+**객체 참조를 scalar로 바꿀 때 주의**: Spring Data **파생 쿼리가 런타임에 깨진다.**
+`findAllByCategory_CodeOrderByName`처럼 메서드 이름이 연관관계 경로를 타고 있으면 컴파일은 통과하고
+컨텍스트 로딩 시점에 `PropertyReferenceException`이 난다. 경로를 더 이상 탈 수 없으므로 명시적 join
+JPQL(`@Query`)로 바꾼다. 컬럼명을 그대로 유지하면 스키마와 물리 FK는 바뀌지 않는다.
+
 ### Show/Performance/Grade/PerformanceGrade/PerformanceSeat와 show-booking 공개 계약
 
 `Grade`(show)는 `VIP`/`R`/`S`/`A` 같은 재사용 가능한 코드·이름만 갖고 가격을 갖지 않는다.

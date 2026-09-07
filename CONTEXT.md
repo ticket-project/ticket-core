@@ -25,6 +25,45 @@ Venue / Favorite / Member -> (없음, leaf)
 - **Favorite**: ShowLike. 찜.
 - **Member**: Member. 회원과 인증.
 
+## Aggregate 경계
+
+BC 안에서 **함께 저장되고 함께 불변식을 지키는 단위**가 Aggregate다. 각 root와 그 안에 사는 것은
+아래와 같다.
+
+| Aggregate root | 함께 사는 것 | BC |
+| --- | --- | --- |
+| Venue | — | Venue |
+| Seat | — | Venue |
+| Show | — | Show |
+| Performance | PerformanceGrade | Show |
+| Grade / Category / Genre / Performer | — | Show |
+| PerformanceSalesPolicy | OrderAcceptanceWindow · HoldPolicy · BookingEntryPolicy(값 객체) | Booking |
+| PerformanceSeat | — | Booking |
+| Order | OrderSeat | Booking |
+| Ticket | — | Booking |
+| Payment | — | Payment |
+| ShowLike | — | Favorite |
+| Member | MemberSocialAccount | Member |
+
+나누는 기준은 두 가지다.
+
+- **자식이 부모 없이 존재할 수 없으면 같은 aggregate다.** OrderSeat는 Order 없이, MemberSocialAccount는
+  Member 없이, PerformanceGrade는 Performance 없이 의미가 없다.
+- **수가 많거나 독립적으로 경합하면 분리한다.** Venue와 Seat, Performance와 PerformanceSeat가 그
+  예다. 공연장 하나에 좌석이 수천 개라 한 aggregate로 묶으면 로딩과 락 범위가 함께 커지고, 좌석 한
+  자리를 파는 데 회차 전체가 잠긴다. PerformanceSeat가 좌석 단위 동시 확정을 낙관적 락으로 막을 수
+  있는 것도 분리돼 있기 때문이다.
+
+**aggregate 사이는 식별자로 참조한다.** 다른 aggregate를 객체로 붙잡고 있으면 한 트랜잭션에서 둘을
+같이 고치는 코드가 쉽게 써지기 때문이다. 어떤 경계에서 어떤 매핑을 쓰는지(같은 aggregate 안, 같은
+BC 다른 aggregate, 다른 BC, 조회 전용)는 구현 규칙이라
+[architecture.md](docs/architecture.md)의 "모듈 간 참조 규칙"이 원본이다.
+
+**Hold와 Selection은 DB aggregate가 아니다.** 둘 다 Redis에만 있는 짧은 수명 상태이고, `Hold`는 JPA
+매핑이 없는 값이며 Selection은 도메인 클래스조차 없다. DB에 남는 것은 좌석 단위 이력인
+`HoldHistory`뿐이고 `holdKey` 문자열로 Order와 이어진다. 그래서 좌석의 현재 상태는 한 곳에서 읽을
+수 없고 `PerformanceSeat`(DB)와 Selection·Hold(Redis)를 합쳐 계산한다.
+
 ## Language
 
 ### 상품
@@ -78,7 +117,10 @@ _Avoid_: 좌석 등급 자체에 가격이 고정된 것처럼 다루는 서술
 **PerformanceGrade**:
 특정 Performance에서 사용할 Grade다. 회차별 가격과 표시 순서를 가진다. Grade와 Performance의
 다대다 관계를 표현하는 단순 join table이 아니라 그 자체로 업무 속성(가격, 표시 순서)을 가진
-연결 entity이며, 가격의 원본(source of truth)이다. 판매 오픈 전에만 가격을 바꿀 수 있다.
+연결 entity이며, 가격의 원본(source of truth)이다. "판매 오픈 전에만 가격을 바꿀 수 있다"가 업무
+규칙이지만 **지금 코드가 강제하지는 않는다** — 가격을 바꾸는 메서드 자체가 없어 어길 수단이 없을
+뿐이고, 강제하려 해도 판단 근거(접수 시각·좌석 편성 여부)가 Booking BC에 있어 Show가 혼자 판정할 수
+없다. 상세와 선택지는 [기술 부채 TD-15](docs/technical-debt.md)를 본다.
 _Avoid_: `ShowGrade`(제거됨 — Show 단위 가격 개념 자체를 쓰지 않는다)
 
 **PerformanceSeat**:
