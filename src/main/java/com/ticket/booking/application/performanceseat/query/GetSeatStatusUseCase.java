@@ -1,15 +1,15 @@
 package com.ticket.booking.application.performanceseat.query;
 
-import com.ticket.booking.application.support.BookingPolicyGuard;
-import com.ticket.booking.domain.hold.command.HoldManager;
-import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.application.admission.AdmissionVerifier;
-import com.ticket.show.BookingPolicyLookup;
-import com.ticket.show.BookingPolicySnapshot;
+import com.ticket.booking.domain.hold.command.HoldManager;
+import com.ticket.booking.domain.performancepolicy.model.PerformanceSalesPolicy;
+import com.ticket.booking.domain.performancepolicy.repository.PerformanceSalesPolicyRepository;
+import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.application.performanceseat.query.model.SeatStateSnapshotRow;
 import com.ticket.booking.application.performanceseat.query.model.SeatStateView;
 import com.ticket.booking.application.performanceseat.query.model.SeatStatus;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
 
-    private final BookingPolicyLookup bookingPolicyLookup;
+    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private final SeatStateSnapshotReader seatStatusDbReader;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
@@ -55,9 +55,9 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(performanceId);
-        BookingPolicyGuard.ensureBookingOpen(policy, now);
-        ensureAdmitted(policy, input);
+        final PerformanceSalesPolicy policy = findPolicy(performanceId);
+        policy.ensureAcceptingOrders(now);
+        ensureAdmitted(policy, input, now);
 
         final List<SeatStateSnapshotRow> dbStates = seatStatusDbReader.read(performanceId);
 
@@ -70,19 +70,26 @@ public class GetSeatStatusUseCase {
         return new Output(seats);
     }
 
+    private PerformanceSalesPolicy findPolicy(final Long performanceId) {
+        return performanceSalesPolicyRepository.findById(performanceId)
+                .orElseThrow(() -> new NotFoundException(
+                        "회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
+    }
+
     private SeatStateView toSeatStateView(final SeatStateSnapshotRow row, final Set<Long> redisOccupiedIds) {
         final SeatStatus status = redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : row.status();
         return new SeatStateView(row.performanceSeatId(), status);
     }
 
     private void ensureAdmitted(
-            final BookingPolicySnapshot policy,
-            final Input input
+            final PerformanceSalesPolicy policy,
+            final Input input,
+            final LocalDateTime now
     ) {
-        if (!policy.queueRequired()) {
+        if (!policy.isQueueRequired(now)) {
             return;
         }
-        admissionVerifier.verify(policy.performanceId(), input.memberId(), input.admissionToken());
+        admissionVerifier.verify(input.performanceId(), input.memberId(), input.admissionToken());
     }
 
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {

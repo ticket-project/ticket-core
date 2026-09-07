@@ -3,9 +3,12 @@ package com.ticket.booking.application.performanceseat.query;
 import com.ticket.booking.domain.hold.command.HoldManager;
 import com.ticket.booking.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
 import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
+import com.ticket.booking.domain.performancepolicy.model.BookingEntryPolicy;
+import com.ticket.booking.domain.performancepolicy.model.HoldPolicy;
+import com.ticket.booking.domain.performancepolicy.model.OrderAcceptanceWindow;
+import com.ticket.booking.domain.performancepolicy.model.PerformanceSalesPolicy;
+import com.ticket.booking.domain.performancepolicy.repository.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.show.BookingPolicyLookup;
-import com.ticket.show.BookingPolicySnapshot;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
 import org.junit.jupiter.api.Test;
@@ -15,8 +18,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +34,7 @@ import static org.mockito.Mockito.when;
 class GetSeatAvailabilityUseCaseTest {
 
     @Mock
-    private BookingPolicyLookup bookingPolicyLookup;
+    private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     @Mock
     private PerformanceSaleCatalog performanceSaleCatalog;
     @Mock
@@ -50,7 +56,7 @@ class GetSeatAvailabilityUseCaseTest {
                 List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L));
         PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", "VIP석", 1);
 
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy()));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(stateRows);
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
@@ -83,7 +89,7 @@ class GetSeatAvailabilityUseCaseTest {
                 )
         );
 
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy()));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(stateRows);
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
@@ -102,7 +108,7 @@ class GetSeatAvailabilityUseCaseTest {
     @Test
     void 회차의_좌석_상태가_없으면_show_판매_snapshot을_조회하지_않는다() {
         //given
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy(100L));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy()));
         when(seatAvailabilityReadRepository.findSeatStates(10L)).thenReturn(List.of());
 
         //when
@@ -113,10 +119,13 @@ class GetSeatAvailabilityUseCaseTest {
                 .getSaleSnapshot(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anySet());
     }
 
-    private BookingPolicySnapshot policy(final long showId) {
-        return new BookingPolicySnapshot(
-                10L, showId, true,
-                null, null, 4, 300, null, null, null, false
+    private PerformanceSalesPolicy policy() {
+        final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
+        return new PerformanceSalesPolicy(
+                10L,
+                new OrderAcceptanceWindow(now.minusHours(1), now.plusHours(3)),
+                new HoldPolicy(4, Duration.ofSeconds(300)),
+                BookingEntryPolicy.none()
         );
     }
 

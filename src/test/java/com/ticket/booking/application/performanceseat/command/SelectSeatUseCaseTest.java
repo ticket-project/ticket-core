@@ -3,8 +3,12 @@ package com.ticket.booking.application.performanceseat.command;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHoldException;
-import com.ticket.show.BookingPolicyLookup;
-import com.ticket.show.BookingPolicySnapshot;
+import com.ticket.booking.domain.performancepolicy.model.BookingEntryPolicy;
+import com.ticket.booking.domain.performancepolicy.model.HoldPolicy;
+import com.ticket.booking.domain.performancepolicy.model.OrderAcceptanceWindow;
+import com.ticket.booking.domain.performancepolicy.model.PerformanceSalesPolicy;
+import com.ticket.booking.domain.performancepolicy.model.QueueMode;
+import com.ticket.booking.domain.performancepolicy.repository.PerformanceSalesPolicyRepository;
 import com.ticket.booking.application.performanceseat.event.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.booking.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
@@ -17,11 +21,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
@@ -44,7 +48,7 @@ class SelectSeatUseCaseTest {
             new SelectSeatUseCase.Input(10L, 20L, 1L, "admission-token");
 
     @Mock
-    private BookingPolicyLookup bookingPolicyLookup;
+    private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
 
     @Mock
     private SeatSelectionCoordinator seatSelectionCoordinator;
@@ -63,7 +67,7 @@ class SelectSeatUseCaseTest {
     @BeforeEach
     void setUp() {
         useCase = new SelectSeatUseCase(
-                bookingPolicyLookup,
+                performanceSalesPolicyRepository,
                 seatSelectionCoordinator,
                 seatSelectionAvailabilityValidator,
                 admissionVerifier,
@@ -74,28 +78,28 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
-        BookingPolicySnapshot policy = openPolicy(false);
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(policy);
+        PerformanceSalesPolicy policy = openPolicy(false);
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
         when(seatSelectionAvailabilityValidator.validate(10L, 20L)).thenReturn(501L);
 
         useCase.execute(INPUT);
 
         InOrder inOrder = inOrder(
-                bookingPolicyLookup,
+                performanceSalesPolicyRepository,
                 seatSelectionAvailabilityValidator,
                 seatSelectionCoordinator,
                 seatEventPublisher
         );
-        inOrder.verify(bookingPolicyLookup).getBookingPolicy(10L);
+        inOrder.verify(performanceSalesPolicyRepository).findById(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
-        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.orderCloseTime());
+        inOrder.verify(seatSelectionCoordinator).select(10L, 20L, 1L, policy.getOrderAcceptanceWindow().getClosesAt());
         // 외부 판매 좌석 식별자는 seatId가 아니라 이미 검증에서 얻은 performanceSeatId다.
         inOrder.verify(seatEventPublisher).publish(10L, 501L, SeatStatusAction.SELECTED);
     }
 
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(false));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(false)));
 
         useCase.execute(INPUT);
 
@@ -104,7 +108,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(true));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(true)));
         doThrow(new AdmissionTokenRequiredException())
                 .when(admissionVerifier).verify(10L, 1L, "admission-token");
 
@@ -116,8 +120,8 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 예매가_마감된_회차는_좌석을_조회하지_않는다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L))
-                .thenReturn(policy(NOW.minusHours(2), NOW.minusHours(1), false));
+        when(performanceSalesPolicyRepository.findById(10L))
+                .thenReturn(Optional.of(policy(NOW.minusHours(2), NOW.minusHours(1), false)));
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(PerformanceIsPastException.class);
@@ -132,7 +136,7 @@ class SelectSeatUseCaseTest {
 
     @Test
     void 좌석_검증이_실패하면_선택하지_않는다() {
-        when(bookingPolicyLookup.getBookingPolicy(10L)).thenReturn(openPolicy(false));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(false)));
         doThrow(new SeatAlreadyHoldException())
                 .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
 
@@ -142,27 +146,22 @@ class SelectSeatUseCaseTest {
         verifyNoInteractions(seatSelectionCoordinator, seatEventPublisher);
     }
 
-    private BookingPolicySnapshot openPolicy(final boolean queueRequired) {
+    private PerformanceSalesPolicy openPolicy(final boolean queueRequired) {
         return policy(NOW.minusHours(1), NOW.plusHours(1), queueRequired);
     }
 
-    private BookingPolicySnapshot policy(
+    private PerformanceSalesPolicy policy(
             final LocalDateTime orderOpenTime,
             final LocalDateTime orderCloseTime,
             final boolean queueRequired
     ) {
-        return new BookingPolicySnapshot(
+        return new PerformanceSalesPolicy(
                 10L,
-                1L,
-                true,
-                orderOpenTime,
-                orderCloseTime,
-                4,
-                300,
-                null,
-                null,
-                null,
+                new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
+                new HoldPolicy(4, Duration.ofSeconds(300)),
                 queueRequired
+                        ? new BookingEntryPolicy(QueueMode.FORCE_ON, null, null, null, null)
+                        : BookingEntryPolicy.none()
         );
     }
 }

@@ -1,6 +1,5 @@
 package com.ticket.show.application.performance.query;
 
-import com.ticket.show.domain.performance.repository.PerformanceRepository;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.repository.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
@@ -43,7 +42,7 @@ public class GetPerformanceScheduleListUseCase {
     ) {}
 
     public Output execute(final Input input) {
-        final Performance findPerformance = performanceRepository.findWithQueuePolicyById(input.performanceId())
+        final Performance findPerformance = performanceRepository.findById(input.performanceId())
                 .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 

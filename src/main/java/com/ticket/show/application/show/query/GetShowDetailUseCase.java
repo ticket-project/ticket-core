@@ -1,6 +1,5 @@
 package com.ticket.show.application.show.query;
 
-import com.ticket.show.domain.performance.policy.BookingEntryResolver;
 import com.ticket.venue.Region;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.BookingStatus;
@@ -52,13 +51,7 @@ public class GetShowDetailUseCase {
             Long id,
             Long performanceNo,
             LocalDateTime startTime,
-            LocalDateTime endTime,
-            LocalDateTime orderOpenTime,
-            LocalDateTime orderCloseTime,
-            BookingEntryResolver.EntryType entryType,
-            boolean queueRequired,
-            String redirectUrl,
-            String queueEnterUrl
+            LocalDateTime endTime
     ) {
     }
 

@@ -2,11 +2,12 @@ package com.ticket.booking.application.performanceseat.query;
 
 import com.ticket.booking.domain.hold.command.HoldManager;
 import com.ticket.booking.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
+import com.ticket.booking.domain.performancepolicy.repository.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
-import com.ticket.show.BookingPolicyLookup;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.error.InvalidRequestException;
+import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class GetSeatAvailabilityUseCase {
 
-    private final BookingPolicyLookup bookingPolicyLookup;
+    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private final PerformanceSaleCatalog performanceSaleCatalog;
     private final SeatAvailabilityReadRepository seatAvailabilityReadRepository;
     private final HoldManager holdManager;
@@ -60,8 +61,11 @@ public class GetSeatAvailabilityUseCase {
     ) {}
 
     public Output execute(Input input) {
-        // 회차 예매 정책 조회는 회차 존재 확인을 겸한다.
-        bookingPolicyLookup.getBookingPolicy(input.performanceId());
+        // 회차 판매 정책 조회는 회차 존재 확인을 겸한다. 접수 기간 차단은 기존과 같이 여기서 새로
+        // 추가하지 않는다 — 잔여석 조회는 접수 종료 후에도 조회 가능해야 한다.
+        performanceSalesPolicyRepository.findById(input.performanceId())
+                .orElseThrow(() -> new NotFoundException(
+                        "회차 판매 정책을 찾을 수 없습니다. id=" + input.performanceId()));
 
         final List<PerformanceSeatStateRow> stateRows = seatAvailabilityReadRepository.findSeatStates(input.performanceId());
         if (stateRows.isEmpty()) {

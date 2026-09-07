@@ -12,7 +12,10 @@ import com.ticket.booking.domain.order.command.create.HoldAllocation;
 import com.ticket.booking.domain.hold.model.Hold;
 import com.ticket.booking.domain.order.model.Order;
 import com.ticket.booking.domain.order.model.OrderState;
-import com.ticket.show.BookingPolicySnapshot;
+import com.ticket.booking.domain.performancepolicy.model.BookingEntryPolicy;
+import com.ticket.booking.domain.performancepolicy.model.HoldPolicy;
+import com.ticket.booking.domain.performancepolicy.model.OrderAcceptanceWindow;
+import com.ticket.booking.domain.performancepolicy.model.PerformanceSalesPolicy;
 import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.error.InvalidRequestException;
@@ -94,7 +97,7 @@ class CreateOrderUseCaseTest {
     void 유효한_요청이면_hold와_주문을_생성한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final BookingPolicySnapshot performance = createPerformance(5, 600);
+        final PerformanceSalesPolicy performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
         final HoldAllocation allocation = new HoldAllocation(hold, seats);
@@ -125,7 +128,7 @@ class CreateOrderUseCaseTest {
     void 주문_저장_트랜잭션이_실패하면_hold를_해제한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final BookingPolicySnapshot performance = createPerformance(5, 600);
+        final PerformanceSalesPolicy performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
 
@@ -147,7 +150,7 @@ class CreateOrderUseCaseTest {
     void hold_해제에_실패해도_원래_예외를_유지한다() {
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final BookingPolicySnapshot performance = createPerformance(5, 600);
+        final PerformanceSalesPolicy performance = createPerformance(5, 600);
         final HoldAllocation allocation = new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
         final RuntimeException originalException = new RuntimeException("order failed");
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
@@ -189,20 +192,13 @@ class CreateOrderUseCaseTest {
         );
     }
 
-    private BookingPolicySnapshot createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {
+    private PerformanceSalesPolicy createPerformance(final int maxCanHoldCount, final int holdTimeSeconds) {
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        return new BookingPolicySnapshot(
+        return new PerformanceSalesPolicy(
                 10L,
-                1L,
-                true,
-                now.minusHours(1),
-                now.plusHours(3),
-                maxCanHoldCount,
-                holdTimeSeconds,
-                null,
-                null,
-                null,
-                false
+                new OrderAcceptanceWindow(now.minusHours(1), now.plusHours(3)),
+                new HoldPolicy(maxCanHoldCount, Duration.ofSeconds(holdTimeSeconds)),
+                BookingEntryPolicy.none()
         );
     }
 

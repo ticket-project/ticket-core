@@ -6,7 +6,6 @@ import com.ticket.show.application.show.query.GetShowDetailUseCase;
 import com.ticket.show.application.show.query.ShowDetailReadRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.domain.performance.Performance;
-import com.ticket.show.domain.performance.policy.BookingEntryResolver;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.image.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.Performer;
@@ -114,27 +113,17 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     private List<Performance> fetchPerformances(final Long showId) {
         return queryFactory
                 .selectFrom(performance)
-                .leftJoin(performance.queuePolicy).fetchJoin()
                 .where(performance.show.id.eq(showId))
                 .orderBy(performance.startTime.asc(), performance.performanceNo.asc())
                 .fetch();
     }
 
     private GetShowDetailUseCase.PerformanceInfo toPerformanceInfo(final Performance performanceEntity) {
-        final BookingEntryResolver.Output bookingEntry =
-                BookingEntryResolver.resolve(performanceEntity.getId(), performanceEntity, LocalDateTime.now(clock));
-
         return new GetShowDetailUseCase.PerformanceInfo(
                 performanceEntity.getId(),
                 performanceEntity.getPerformanceNo(),
                 performanceEntity.getStartTime(),
-                performanceEntity.getEndTime(),
-                performanceEntity.getOrderOpenTime(),
-                performanceEntity.getOrderCloseTime(),
-                bookingEntry.entryType(),
-                bookingEntry.queueRequired(),
-                bookingEntry.redirectUrl(),
-                bookingEntry.queueEnterUrl()
+                performanceEntity.getEndTime()
         );
     }
 

@@ -172,11 +172,7 @@ public abstract class ReadRepositoryTestSupport {
                 show,
                 performanceNo,
                 startTime,
-                startTime.plusHours(2),
-                startTime.minusDays(10),
-                startTime.plusDays(1),
-                4,
-                300
+                startTime.plusHours(2)
         );
         entityManager.persist(performance);
         return performance;

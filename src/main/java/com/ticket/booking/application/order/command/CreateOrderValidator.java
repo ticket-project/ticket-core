@@ -1,11 +1,11 @@
 package com.ticket.booking.application.order.command;
 
 import com.ticket.booking.application.admission.AdmissionVerifier;
-import com.ticket.booking.application.support.BookingPolicyGuard;
 import com.ticket.booking.domain.order.command.create.RequestedSeatIds;
+import com.ticket.booking.domain.performancepolicy.model.PerformanceSalesPolicy;
+import com.ticket.booking.domain.performancepolicy.repository.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.show.BookingPolicyLookup;
-import com.ticket.show.BookingPolicySnapshot;
+import com.ticket.error.NotFoundException;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.member.MemberLookup;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class CreateOrderValidator {
 
     private final MemberLookup memberLookup;
-    private final BookingPolicyLookup bookingPolicyLookup;
+    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private final PerformanceSaleCatalog performanceSaleCatalog;
     private final AdmissionVerifier admissionVerifier;
     private final PendingOrderLocalValidator pendingOrderLocalValidator;
@@ -29,9 +29,9 @@ public class CreateOrderValidator {
     /**
      * 주문 생성 전 검증을 비용 순서로 수행한다.
      *
-     * <p>회원 활성 확인(member), 예매 정책 조회·주문 표시 snapshot 조회(show), 필요 시 입장 검사
-     * (admission)는 모두 booking DB 트랜잭션 밖에서 호출한다. 다른 module 호출이 booking 트랜잭션
-     * 안에 있으면 그 module의 지연이나 실패가 booking connection을 붙잡는다. booking local read
+     * <p>회원 활성 확인(member), 판매 정책 조회(booking local)·주문 표시 snapshot 조회(show), 필요 시
+     * 입장 검사(admission)는 모두 booking DB 트랜잭션 밖에서 호출한다. 판매 정책이 local DB
+     * 조회라는 이유로 show/member 호출까지 하나의 긴 트랜잭션에 넣지 않는다. booking local read
      * (pending 주문 중복, 좌석 판매 상태)만 {@link PendingOrderLocalValidator}의 짧은 읽기
      * 트랜잭션에서 수행한다. Redis hold 생성은 이 모든 검증이 끝난 뒤에 수행한다.
      *
@@ -47,10 +47,10 @@ public class CreateOrderValidator {
         final Long performanceId = input.performanceId();
         final Long memberId = input.memberId();
 
-        final BookingPolicySnapshot policy = bookingPolicyLookup.getBookingPolicy(performanceId);
-        BookingPolicyGuard.ensureBookingOpen(policy, now);
-        BookingPolicyGuard.ensureWithinHoldLimit(policy, requestedSeatIds.size());
-        ensureAdmitted(policy, memberId, input.admissionToken());
+        final PerformanceSalesPolicy policy = findPolicy(performanceId);
+        policy.ensureAcceptingOrders(now);
+        policy.ensureWithinHoldLimit(requestedSeatIds.size());
+        ensureAdmitted(policy, performanceId, memberId, input.admissionToken(), now);
 
         memberLookup.requireActive(memberId);
 
@@ -63,14 +63,22 @@ public class CreateOrderValidator {
         return new ValidatedOrderRequest(policy, performanceSeats, saleSnapshot);
     }
 
+    private PerformanceSalesPolicy findPolicy(final Long performanceId) {
+        return performanceSalesPolicyRepository.findById(performanceId)
+                .orElseThrow(() -> new NotFoundException(
+                        "회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
+    }
+
     private void ensureAdmitted(
-            final BookingPolicySnapshot policy,
+            final PerformanceSalesPolicy policy,
+            final Long performanceId,
             final Long memberId,
-            final String admissionToken
+            final String admissionToken,
+            final LocalDateTime now
     ) {
-        if (!policy.queueRequired()) {
+        if (!policy.isQueueRequired(now)) {
             return;
         }
-        admissionVerifier.verify(policy.performanceId(), memberId, admissionToken);
+        admissionVerifier.verify(performanceId, memberId, admissionToken);
     }
 }

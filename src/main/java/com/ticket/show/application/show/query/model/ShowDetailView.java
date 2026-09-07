@@ -1,7 +1,6 @@
 package com.ticket.show.application.show.query.model;
 
 import com.ticket.show.application.show.query.GetShowDetailUseCase;
-import com.ticket.show.domain.performance.policy.BookingEntryResolver;
 import com.ticket.show.domain.show.BookingStatus;
 import com.ticket.venue.Region;
 import com.ticket.show.domain.show.SaleType;

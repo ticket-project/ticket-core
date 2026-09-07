@@ -1,90 +1,27 @@
 package com.ticket.show.domain.performance;
 
-import com.ticket.show.domain.queue.QueueLevel;
-import com.ticket.show.domain.queue.QueueMode;
-import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Performance는 이제 회차 일정 책임만 갖는다. 예매 정책·Hold 한도·대기열 정책 테스트는
+ * {@code booking.domain.performancepolicy.model} 아래로 이관됐다(ADR 0006 "Performance의 책임 혼재" A2).
+ */
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceTest {
 
     @Test
-    void 기본_holdTime은_10분이다() throws Exception {
-        Constructor<Performance> constructor = Performance.class.getDeclaredConstructor();
-        constructor.setAccessible(true);
+    void 회차_정체성과_일정을_그대로_보관한다() {
+        LocalDateTime startTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime endTime = startTime.plusHours(2);
 
-        Performance performance = constructor.newInstance();
+        Performance performance = new Performance(null, 1L, startTime, endTime);
 
-        assertThat(performance.getHoldTime()).isEqualTo(600);
-    }
-
-    @Test
-    void rejects_hold_limit_less_than_two() {
-        assertThatThrownBy(() -> createPerformance(1, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10)))
-                .isInstanceOf(InvalidRequestException.class);
-
-        assertThatThrownBy(() -> createPerformance(0, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10)))
-                .isInstanceOf(InvalidRequestException.class);
-    }
-
-    @Test
-    void accepts_hold_limit_of_two_as_minimum_boundary() {
-        assertThatCode(() -> createPerformance(2, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10)))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void 한도가_없으면_그대로_둔다() {
-        Performance performance = createPerformance(null, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10));
-
-        assertThat(performance.getMaxCanHoldCount()).isNull();
-    }
-
-    @Test
-    void updateQueuePolicy는_대기열_정책값을_변경한다() {
-        // given
-        Performance performance = createPerformance(3, LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10));
-        LocalDateTime preopen = LocalDateTime.of(2026, 3, 15, 19, 50);
-
-        // when
-        performance.updateQueuePolicy(
-                QueueMode.FORCE_ON,
-                QueueLevel.LEVEL_2,
-                preopen,
-                "대기열 운영",
-                "초기 정책"
-        );
-
-        // then
-        PerformanceQueuePolicy queuePolicy = performance.getQueuePolicy();
-        assertThat(queuePolicy.getQueueMode()).isEqualTo(QueueMode.FORCE_ON);
-        assertThat(queuePolicy.getQueueLevel()).isEqualTo(QueueLevel.LEVEL_2);
-        assertThat(queuePolicy.getPreopenQueueStartAt()).isEqualTo(preopen);
-        assertThat(queuePolicy.getWaitingRoomMessage()).isEqualTo("대기열 운영");
-        assertThat(queuePolicy.getReason()).isEqualTo("초기 정책");
-    }
-
-    private Performance createPerformance(
-            final Integer maxCanHoldCount,
-            final LocalDateTime orderOpenTime,
-            final LocalDateTime orderCloseTime
-    ) {
-        return new Performance(
-                null,
-                1L,
-                LocalDateTime.now().plusDays(1),
-                LocalDateTime.now().plusDays(1).plusHours(2),
-                orderOpenTime,
-                orderCloseTime,
-                maxCanHoldCount,
-                300
-        );
+        assertThat(performance.getPerformanceNo()).isEqualTo(1L);
+        assertThat(performance.getStartTime()).isEqualTo(startTime);
+        assertThat(performance.getEndTime()).isEqualTo(endTime);
     }
 }

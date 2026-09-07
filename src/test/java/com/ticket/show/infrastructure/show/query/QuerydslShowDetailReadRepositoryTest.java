@@ -13,9 +13,6 @@ import com.ticket.venue.domain.venue.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.show.domain.grade.Grade;
 import com.ticket.show.domain.performance.Performance;
-import com.ticket.show.domain.performance.policy.BookingEntryResolver;
-import com.ticket.show.domain.queue.QueueLevel;
-import com.ticket.show.domain.queue.QueueMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,17 +57,15 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
                 .setParameter("id", showId)
                 .executeUpdate();
         persistShowGenre(show, genre);
-        Performance queuedPerformance = persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
-        queuedPerformance.updateQueuePolicy(QueueMode.FORCE_ON, QueueLevel.LEVEL_1, null, null, null);
-        Performance directPerformance = persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
-        directPerformance.updateQueuePolicy(QueueMode.FORCE_OFF, QueueLevel.LEVEL_1, null, null, null);
+        Performance firstPerformance = persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
+        Performance secondPerformance = persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
         // ADR 0005: 가격은 회차(Performance) 단위로만 존재한다. 두 회차에 서로 다른 가격 범위를 둬
         // show 상세의 priceSummary가 회차 전체의 min/max를 파생하는지 확인한다.
         Grade vip = persistGrade("VIP", "VIP석");
         Grade r = persistGrade("R", "R석");
-        persistPerformanceGrade(queuedPerformance, vip, BigDecimal.valueOf(150000), 1);
-        persistPerformanceGrade(queuedPerformance, r, BigDecimal.valueOf(100000), 2);
-        persistPerformanceGrade(directPerformance, vip, BigDecimal.valueOf(180000), 1);
+        persistPerformanceGrade(firstPerformance, vip, BigDecimal.valueOf(150000), 1);
+        persistPerformanceGrade(firstPerformance, r, BigDecimal.valueOf(100000), 2);
+        persistPerformanceGrade(secondPerformance, vip, BigDecimal.valueOf(180000), 1);
         flushAndClear();
     }
 
@@ -86,33 +81,12 @@ class QuerydslShowDetailReadRepositoryTest extends InfraReadRepositoryTestSuppor
         assertThat(detail.priceSummary().maxPrice()).isEqualByComparingTo("180000");
         assertThat(detail.performanceDates()).hasSize(1);
         assertThat(detail.performanceDates().getFirst().performances()).hasSize(2);
-        assertThat(detail.performanceDates().getFirst().performances().getFirst().entryType())
-                .isEqualTo(BookingEntryResolver.EntryType.QUEUE);
-        assertThat(detail.performanceDates().getFirst().performances().getFirst().queueRequired()).isTrue();
-        assertThat(detail.performanceDates().getFirst().performances().getFirst().queueEnterUrl())
-                .isEqualTo("/api/v1/queue/performances/%d/enter".formatted(
-                        detail.performanceDates().getFirst().performances().getFirst().id()
-                ));
-        assertThat(detail.performanceDates().getFirst().performances().get(1).entryType())
-                .isEqualTo(BookingEntryResolver.EntryType.DIRECT);
-        assertThat(detail.performanceDates().getFirst().performances().get(1).queueRequired()).isFalse();
-        assertThat(detail.performanceDates().getFirst().performances().get(1).redirectUrl())
-                .isEqualTo("/booking/seat?performanceId=%d".formatted(
-                        detail.performanceDates().getFirst().performances().get(1).id()
-                ));
+        assertThat(detail.performanceDates().getFirst().performances().getFirst().performanceNo()).isEqualTo(1L);
+        assertThat(detail.performanceDates().getFirst().performances().get(1).performanceNo()).isEqualTo(2L);
         assertThat(detail.image()).isEqualTo("/api/images/shows/card/" + showId + ".jpg");
         assertThat(detail.venue().name()).isEqualTo("예술의전당");
         assertThat(detail.performer().name()).isEqualTo("홍길동");
         assertThat(detail.bookingStatus()).isEqualTo(BookingStatus.ON_SALE);
-    }
-
-    @Test
-    void 대기열_정책은_PERFORMANCES가_아닌_별도_테이블에_저장된다() {
-        Number count = (Number) entityManager
-                .createNativeQuery("select count(*) from performance_queue_policies")
-                .getSingleResult();
-
-        assertThat(count.longValue()).isEqualTo(2L);
     }
 
     @Test
