@@ -92,7 +92,7 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
         seedShow(now);
         seedSeats(now);
         seedPerformances(now);
-        seedQueuePolicies(now);
+        seedSalesPolicies(now);
         final java.util.Map<String, Long> gradeIdsByCode = ensureGrades(now);
         seedPerformanceGrades(now, gradeIdsByCode);
         seedPerformanceSeats(now);
@@ -213,35 +213,43 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
                     ID_BASE + index, SHOW_ID, index,
                     Timestamp.valueOf(startTime),
                     Timestamp.valueOf(startTime.plusMinutes(120)),
-                    Timestamp.valueOf(now.minusDays(1)),
-                    Timestamp.valueOf(now.plusDays(30)),
-                    2, 600, createdAt, CREATED_BY
+                    createdAt, CREATED_BY
             });
         }
         jdbcTemplate.batchUpdate("""
                 INSERT INTO performances (
                   id, show_id, performance_no, start_time, end_time,
-                  order_open_time, order_close_time, max_can_hold_count, hold_time,
                   created_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, batch);
     }
 
-    private void seedQueuePolicies(final LocalDateTime now) {
+    /**
+     * ADR 0006 "Performance의 책임 혼재" A2: 예매 접수 기간·Hold 한도·대기열 정책은 이제 Booking BC의
+     * BOOKING_PERFORMANCE_SALES_POLICIES가 소유한다. FORCE_OFF는 이 부하 테스트 전용 회차가 Queue
+     * 없이 Core를 직접 호출한다는 기존 의미를 그대로 보존한다.
+     */
+    private void seedSalesPolicies(final LocalDateTime now) {
         final Timestamp createdAt = Timestamp.valueOf(now);
         final List<Object[]> batch = new ArrayList<>(performanceCount);
         for (int index = 1; index <= performanceCount; index++) {
             batch.add(new Object[]{
-                    ID_BASE + index, "FORCE_OFF", "LEVEL_1", null,
+                    ID_BASE + index,
+                    Timestamp.valueOf(now.minusDays(1)),
+                    Timestamp.valueOf(now.plusDays(30)),
+                    2, 600L,
+                    "FORCE_OFF", "LEVEL_1", null,
                     "로컬 Core 부하 측정 전용", "Queue 없이 Core를 직접 호출하는 전용 회차",
-                    createdAt, CREATED_BY
+                    0L, createdAt, CREATED_BY
             });
         }
         jdbcTemplate.batchUpdate("""
-                INSERT INTO performance_queue_policies (
-                  performance_id, queue_mode, queue_level, preopen_queue_start_at,
-                  waiting_room_message, reason, created_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO booking_performance_sales_policies (
+                  performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds,
+                  queue_mode, queue_level, preopen_queue_starts_at,
+                  waiting_room_message, queue_policy_reason,
+                  version, created_at, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, batch);
     }
 

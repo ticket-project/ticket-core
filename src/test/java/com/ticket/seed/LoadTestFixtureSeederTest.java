@@ -65,15 +65,18 @@ class LoadTestFixtureSeederTest {
         jdbcTemplate.execute("""
                 CREATE TABLE performances (
                   id BIGINT PRIMARY KEY, show_id BIGINT, performance_no INT,
-                  start_time TIMESTAMP, end_time TIMESTAMP, order_open_time TIMESTAMP,
-                  order_close_time TIMESTAMP, max_can_hold_count INT, hold_time INT,
+                  start_time TIMESTAMP, end_time TIMESTAMP,
                   created_at TIMESTAMP NOT NULL, created_by VARCHAR(255) NOT NULL)
                 """);
         jdbcTemplate.execute("""
-                CREATE TABLE performance_queue_policies (
-                  performance_id BIGINT PRIMARY KEY, queue_mode VARCHAR(50), queue_level VARCHAR(50),
-                  preopen_queue_start_at TIMESTAMP, waiting_room_message VARCHAR(500),
-                  reason VARCHAR(500), created_at TIMESTAMP NOT NULL, created_by VARCHAR(255) NOT NULL)
+                CREATE TABLE booking_performance_sales_policies (
+                  performance_id BIGINT PRIMARY KEY, order_opens_at TIMESTAMP NOT NULL,
+                  order_closes_at TIMESTAMP NOT NULL, max_hold_seat_count INT,
+                  hold_duration_seconds BIGINT NOT NULL,
+                  queue_mode VARCHAR(50), queue_level VARCHAR(50),
+                  preopen_queue_starts_at TIMESTAMP, waiting_room_message VARCHAR(500),
+                  queue_policy_reason VARCHAR(500), version BIGINT NOT NULL DEFAULT 0,
+                  created_at TIMESTAMP NOT NULL, created_by VARCHAR(255) NOT NULL)
                 """);
         // ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): PerformanceSeat.unitPrice의
         // 원본은 PerformanceGrade.price다.
@@ -152,9 +155,9 @@ class LoadTestFixtureSeederTest {
     void marksEveryPerformanceQueuePolicyAsForceOff() {
         seeder(true, 4).seedLoadTestFixture();
 
-        assertEquals(4, count("SELECT COUNT(*) FROM performance_queue_policies"));
+        assertEquals(4, count("SELECT COUNT(*) FROM booking_performance_sales_policies"));
         assertEquals(4, count(
-                "SELECT COUNT(*) FROM performance_queue_policies WHERE queue_mode = 'FORCE_OFF'"));
+                "SELECT COUNT(*) FROM booking_performance_sales_policies WHERE queue_mode = 'FORCE_OFF'"));
     }
 
     @Test
