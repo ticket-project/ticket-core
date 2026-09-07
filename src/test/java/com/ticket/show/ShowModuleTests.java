@@ -1,6 +1,8 @@
 package com.ticket.show;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.favorite.ShowLikeCommand;
+import com.ticket.favorite.ShowLikeQuery;
 import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;
@@ -26,8 +28,9 @@ import java.time.Clock;
  * smoke test이지 실제 DB 접근이나 시간 계산을 검증하지 않는다. 그 검증은 각 Querydsl repository의
  * 통합 테스트와 use case 테스트가 담당한다.
  *
- * <p>찜(showlike) 흡수로 show가 member의 {@link MemberLookup}을 참조하게 됐다 — 회원 존재
- * 확인용이다. member는 이 STANDALONE 스캔 범위 밖이라 마찬가지로 {@code @MockitoBean}으로
+ * <p>show는 회원 존재 확인을 위해 member의 {@link MemberLookup}을 참조하고, 찜의 데이터·불변식을
+ * 소유하는 favorite의 {@link ShowLikeQuery}/{@link ShowLikeCommand}를 참조한다(공연 상세의 찜
+ * 개수 조회, 찜 use case의 위임). 둘 다 이 STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로
  * 대체한다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
@@ -41,6 +44,12 @@ class ShowModuleTests {
 
     @MockitoBean
     private MemberLookup memberLookup;
+
+    @MockitoBean
+    private ShowLikeQuery showLikeQuery;
+
+    @MockitoBean
+    private ShowLikeCommand showLikeCommand;
 
     @Test
     void bootstraps() {

@@ -16,7 +16,7 @@ import com.ticket.show.domain.show.Region;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Performer;
 import com.ticket.show.domain.show.Venue;
-import com.ticket.show.domain.showlike.model.ShowLike;
+import com.ticket.favorite.domain.showlike.model.ShowLike;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
 import com.ticket.member.domain.member.model.Role;
 import jakarta.persistence.EntityManager;
@@ -217,7 +217,7 @@ public abstract class ReadRepositoryTestSupport {
     }
 
     protected ShowLike persistShowLike(final Member member, final Show show) {
-        ShowLike showLike = new ShowLike(member.getId(), show);
+        ShowLike showLike = new ShowLike(member.getId(), show.getId());
         entityManager.persist(showLike);
         return showLike;
     }
@@ -264,7 +264,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
+    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.favorite.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

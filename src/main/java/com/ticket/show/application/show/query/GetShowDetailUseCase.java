@@ -7,6 +7,7 @@ import com.ticket.show.domain.show.BookingStatus;
 import com.ticket.show.application.show.query.model.ShowDetailView;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
+import com.ticket.favorite.ShowLikeQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.List;
 public class GetShowDetailUseCase {
 
     private final ShowDetailReadRepository showDetailReadRepository;
+    private final ShowLikeQuery showLikeQuery;
 
     public record Input(Long showId) {
         public Input {
@@ -99,15 +101,17 @@ public class GetShowDetailUseCase {
     }
 
     public Output execute(final Input input) {
-        return showDetailReadRepository.findShowDetail(input.showId())
-                .map(view -> new Output(
-                        view.id(), view.title(), view.subTitle(), view.info(), view.startDate(), view.endDate(),
-                        view.runningMinutes(), view.viewCount(), view.likeCount(), view.bookingStatus(), view.saleType(),
-                        view.saleStartDate(), view.saleEndDate(), view.image(), view.venue(), view.performer(),
-                        view.genreNames(), view.priceSummary(), view.performanceDates()
-                ))
+        final ShowDetailView view = showDetailReadRepository.findShowDetail(input.showId())
                 .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + input.showId()));
+        final long likeCount = showLikeQuery.countByShowId(input.showId());
+
+        return new Output(
+                view.id(), view.title(), view.subTitle(), view.info(), view.startDate(), view.endDate(),
+                view.runningMinutes(), view.viewCount(), likeCount, view.bookingStatus(), view.saleType(),
+                view.saleStartDate(), view.saleEndDate(), view.image(), view.venue(), view.performer(),
+                view.genreNames(), view.priceSummary(), view.performanceDates()
+        );
     }
 
 }

@@ -29,9 +29,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * ticket-domain-module-redesign Phase 2 Task 3(ADR 0005): {@code show} module이 {@code __root} +
- * 자신의 migration(V1 cross-module FK 제거, V3 Seat-Venue 관계 추가, V4 Grade/PerformanceGrade 추가)만으로
+ * 자신의 migration(V3 Seat-Venue 관계 추가, V4 Grade/PerformanceGrade 추가)만으로
  * (booking·member 등 다른 module의 migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는
- * schema를 만들고, Venue별 좌석 주소 unique 제약이 실제로 동작하는지 검증한다.
+ * schema를 만들고, Venue별 좌석 주소 unique 제약이 실제로 동작하는지 검증한다. 옛 catalog V1(SHOW_LIKES
+ * member FK 제거)은 찜이 favorite module로 분리되며 {@code favorite}의 migration으로 옮겨갔다 —
+ * {@code FavoriteModuleMigrationTest}가 검증한다.
  *
  * <p>{@code BookingModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로
  * {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다. {@code SEATS}/{@code VENUES}는
