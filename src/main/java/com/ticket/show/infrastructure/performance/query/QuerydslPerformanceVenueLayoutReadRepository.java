@@ -1,9 +1,14 @@
 package com.ticket.show.infrastructure.performance.query;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.application.performance.query.PerformanceVenueLayoutReadRepository;
 import com.ticket.show.domain.performance.query.PerformanceVenueLayoutContext;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSeatLayout;
+import com.ticket.venue.VenueSeatLookup;
+import com.ticket.venue.VenueSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -13,52 +18,50 @@ import java.util.Optional;
 import static com.ticket.show.domain.grade.QGrade.grade;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
-import static com.ticket.show.domain.seat.QSeat.seat;
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.domain.show.QVenue.venue;
 
 /**
- * {@link PerformanceVenueLayoutReadRepository}의 show 소유 구현이다. booking data를 참조하지 않는다.
+ * {@link PerformanceVenueLayoutReadRepository}의 show 소유 구현이다. booking data를 참조하지
+ * 않는다. 좌석 배치 좌표는 venue module의 {@link VenueSeatLookup}에서 조회한다.
  */
 @Repository
 @RequiredArgsConstructor
 public class QuerydslPerformanceVenueLayoutReadRepository implements PerformanceVenueLayoutReadRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final VenueLookup venueLookup;
+    private final VenueSeatLookup venueSeatLookup;
 
     @Override
     public Optional<PerformanceVenueLayoutContext> findVenueLayoutContext(final long performanceId) {
-        return Optional.ofNullable(queryFactory
-                .select(Projections.constructor(PerformanceVenueLayoutContext.class,
-                        performance.id,
-                        venue.id,
-                        venue.name,
-                        venue.viewBoxWidth,
-                        venue.viewBoxHeight,
-                        venue.seatDiameter
-                ))
+        final Tuple row = queryFactory
+                .select(performance.id, show.venueId)
                 .from(performance)
                 .join(show).on(show.eq(performance.show))
-                .leftJoin(venue).on(venue.eq(show.venue))
                 .where(performance.id.eq(performanceId))
-                .fetchOne());
+                .fetchOne();
+        if (row == null) {
+            return Optional.empty();
+        }
+
+        final Long venueId = row.get(show.venueId);
+        final VenueSummary venue = venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
+
+        return Optional.of(new PerformanceVenueLayoutContext(
+                row.get(performance.id),
+                venueId,
+                venue == null ? null : venue.name(),
+                venue == null ? null : venue.seatMapLayout().viewBoxWidth(),
+                venue == null ? null : venue.seatMapLayout().viewBoxHeight(),
+                venue == null ? null : venue.seatMapLayout().seatDiameter()
+        ));
     }
 
     @Override
     public List<SeatLayoutRow> findAllSeatLayouts(final long venueId) {
-        return queryFactory
-                .select(Projections.constructor(SeatLayoutRow.class,
-                        seat.id,
-                        seat.floor,
-                        seat.section,
-                        seat.rowNo,
-                        seat.seatNo,
-                        seat.x,
-                        seat.y
-                ))
-                .from(seat)
-                .where(seat.venue.id.eq(venueId))
-                .fetch();
+        return venueSeatLookup.findAllSeatLayouts(venueId).stream()
+                .map(this::toSeatLayoutRow)
+                .toList();
     }
 
     @Override
@@ -74,5 +77,12 @@ public class QuerydslPerformanceVenueLayoutReadRepository implements Performance
                 .join(grade).on(grade.eq(performanceGrade.grade))
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .fetch();
+    }
+
+    private SeatLayoutRow toSeatLayoutRow(final VenueSeatLayout layout) {
+        return new SeatLayoutRow(
+                layout.seatId(), layout.floor(), layout.section(), layout.rowNo(), layout.seatNo(),
+                layout.x(), layout.y()
+        );
     }
 }

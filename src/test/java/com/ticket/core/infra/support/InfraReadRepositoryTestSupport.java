@@ -5,12 +5,20 @@ import com.ticket.show.infrastructure.show.query.QuerydslShowConditionBuilder;
 import com.ticket.show.infrastructure.show.query.QuerydslShowCursorConditionBuilder;
 import com.ticket.show.infrastructure.show.query.QuerydslShowPredicates;
 import com.ticket.show.infrastructure.show.query.QuerydslShowSortResolver;
+import com.ticket.venue.application.publicapi.VenueLookupService;
+import com.ticket.venue.application.publicapi.VenueSeatLookupService;
+import com.ticket.venue.infrastructure.seat.query.QuerydslVenueSeatReadRepository;
+import com.ticket.venue.infrastructure.venue.query.QuerydslVenueSummaryReadRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼를 빈으로 올린다.
+ *
+ * <p>{@code QuerydslShowConditionBuilder}가 Region 검색 조건을 venueId로 바꾸기 위해
+ * {@code VenueLookup}을 주입받으므로, venue module의 공개 계약 구현 4개도 여기서 함께 올린다 —
+ * 없으면 이 베이스를 쓰는 booking 테스트까지 컨텍스트 기동에 실패한다(observed-failures 참고).
  */
 @Import({
         QuerydslShowPredicates.class,
@@ -18,6 +26,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         QuerydslShowConditionBuilder.class,
         QuerydslShowSortResolver.class,
         QuerydslShowCursorConditionBuilder.class,
+        VenueLookupService.class,
+        QuerydslVenueSummaryReadRepository.class,
+        VenueSeatLookupService.class,
+        QuerydslVenueSeatReadRepository.class,
         InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {

@@ -1,9 +1,9 @@
 package com.ticket.show.domain.show;
 
 import com.ticket.show.domain.show.Category;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.show.domain.show.Performer;
-import com.ticket.show.domain.show.Venue;
+import com.ticket.venue.domain.venue.Venue;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

@@ -1,6 +1,6 @@
 package com.ticket.show.application.performance.query.model;
 
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 
 import java.time.LocalDateTime;
 

@@ -1,6 +1,6 @@
 package com.ticket.show.application.show.query;
 
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.show.application.show.query.model.SaleOpeningSoonSearchParam;
 import com.ticket.show.application.show.query.model.ShowOpeningSoonDetailView;
 import com.ticket.show.application.show.query.model.ShowCursor;

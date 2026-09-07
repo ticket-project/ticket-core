@@ -2,6 +2,7 @@ package com.ticket.show.infrastructure.show.query;
 
 import com.ticket.show.application.show.query.ShowListReadRepository;
 import com.ticket.show.application.show.query.ShowSort;
+import com.ticket.show.application.support.VenueDisplays;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
@@ -19,6 +20,7 @@ import com.ticket.show.application.show.query.model.ShowSearchItemView;
 import com.ticket.show.application.show.query.model.ShowSummaryView;
 import com.ticket.show.application.show.query.model.ShowCursor;
 import com.ticket.shared.CursorPage;
+import com.ticket.venue.VenueLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -33,7 +35,6 @@ import static com.ticket.show.domain.show.QShowGenre.showGenre;
 import static com.ticket.show.domain.show.QCategory.category;
 import static com.ticket.show.domain.show.QGenre.genre;
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.domain.show.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor
@@ -45,6 +46,7 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
     private final QuerydslShowSortResolver sortSupport;
     private final QuerydslShowCursorConditionBuilder showCursorPolicy;
     private final ShowCardImagePathConverter showCardImagePathConverter;
+    private final VenueLookup venueLookup;
 
     @Override
     public CursorPage<ShowListItemView, ShowCursor> findAllBySearch(final ShowParam param, final int size, final ShowSort sort) {
@@ -63,40 +65,38 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
 
     @Override
     public List<ShowSummaryView> findLatestShows(final String categoryCode, final int limit) {
-        return queryFactory
-                .select(show.id, show.title, show.image, show.startDate, show.endDate, venue.name, show.createdAt)
+        final List<Tuple> rows = queryFactory
+                .select(show.id, show.title, show.image, show.startDate, show.endDate, show.venueId, show.createdAt)
                 .distinct()
                 .from(show)
-                .leftJoin(show.venue, venue)
                 .leftJoin(showGenre).on(showGenre.show.eq(show))
                 .leftJoin(genre).on(showGenre.genre.eq(genre))
                 .leftJoin(category).on(genre.category.eq(category))
                 .where(queryHelper.categoryCodeEq(categoryCode))
                 .orderBy(show.createdAt.desc())
                 .limit(limit)
-                .fetch()
-                .stream()
-                .map(this::toShowSummaryResponse)
-                .toList();
+                .fetch();
+
+        final VenueDisplays venues = VenueDisplays.load(venueLookup, rows.stream().map(t -> t.get(show.venueId)).toList());
+        return rows.stream().map(row -> toShowSummaryResponse(row, venues)).toList();
     }
 
     @Override
     public List<ShowOpeningSoonSummaryView> findShowsSaleOpeningSoon(final String categoryCode, final int limit) {
-        return queryFactory
-                .select(show.id, show.title, show.image, venue.name, show.saleStartDate)
+        final List<Tuple> rows = queryFactory
+                .select(show.id, show.title, show.image, show.venueId, show.saleStartDate)
                 .distinct()
                 .from(show)
-                .leftJoin(show.venue, venue)
                 .leftJoin(showGenre).on(showGenre.show.eq(show))
                 .leftJoin(genre).on(showGenre.genre.eq(genre))
                 .leftJoin(category).on(genre.category.eq(category))
                 .where(showConditionFactory.buildSaleOpeningSoonSummaryCondition(categoryCode))
                 .orderBy(show.saleStartDate.asc())
                 .limit(limit)
-                .fetch()
-                .stream()
-                .map(this::toShowOpeningSoonSummaryResponse)
-                .toList();
+                .fetch();
+
+        final VenueDisplays venues = VenueDisplays.load(venueLookup, rows.stream().map(t -> t.get(show.venueId)).toList());
+        return rows.stream().map(row -> toShowOpeningSoonSummaryResponse(row, venues)).toList();
     }
 
     @Override
@@ -208,10 +208,11 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
         final Map<Long, List<String>> genreMap = fetchGenreMap(ids);
         final List<Show> shows = queryFactory
                 .selectFrom(show)
-                .leftJoin(show.venue, venue).fetchJoin()
                 .where(show.id.in(ids))
                 .orderBy(primaryOrder, tieBreakerOrder)
                 .fetch();
+
+        final VenueDisplays venues = VenueDisplays.load(venueLookup, shows.stream().map(Show::getVenueId).toList());
 
         return new ArrayList<>(shows.stream()
                 .map(s -> new ShowListItemView(
@@ -227,8 +228,8 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
                         s.getSaleStartDate(),
                         s.getSaleEndDate(),
                         s.getCreatedAt(),
-                        s.getVenue() != null ? s.getVenue().getRegion() : null,
-                        s.getVenue() != null ? s.getVenue().getName() : null
+                        venues.regionOf(s.getVenueId()),
+                        venues.nameOf(s.getVenueId())
                 ))
                 .toList());
     }
@@ -238,17 +239,16 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
             final OrderSpecifier<?> primaryOrder,
             final OrderSpecifier<Long> tieBreakerOrder
     ) {
-        return queryFactory
-                .select(show.id, show.title, show.subTitle, show.image, venue.name, venue.region,
+        final List<Tuple> rows = queryFactory
+                .select(show.id, show.title, show.subTitle, show.image, show.venueId,
                         show.startDate, show.endDate, show.saleStartDate, show.saleEndDate, show.viewCount)
                 .from(show)
-                .leftJoin(show.venue, venue)
                 .where(show.id.in(ids))
                 .orderBy(primaryOrder, tieBreakerOrder)
-                .fetch()
-                .stream()
-                .map(this::toShowOpeningSoonDetailResponse)
-                .toList();
+                .fetch();
+
+        final VenueDisplays venues = VenueDisplays.load(venueLookup, rows.stream().map(t -> t.get(show.venueId)).toList());
+        return rows.stream().map(row -> toShowOpeningSoonDetailResponse(row, venues)).toList();
     }
 
     private List<ShowSearchItemView> fetchSearchResponses(
@@ -256,53 +256,55 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
             final OrderSpecifier<?> primaryOrder,
             final OrderSpecifier<Long> tieBreakerOrder
     ) {
-        return queryFactory
-                .select(show.id, show.title, show.image, venue.name,
-                        show.startDate, show.endDate, venue.region, show.viewCount)
+        final List<Tuple> rows = queryFactory
+                .select(show.id, show.title, show.image, show.venueId,
+                        show.startDate, show.endDate, show.viewCount)
                 .from(show)
-                .leftJoin(show.venue, venue)
                 .where(show.id.in(ids))
                 .orderBy(primaryOrder, tieBreakerOrder)
-                .fetch()
-                .stream()
-                .map(this::toShowSearchResponse)
-                .toList();
+                .fetch();
+
+        final VenueDisplays venues = VenueDisplays.load(venueLookup, rows.stream().map(t -> t.get(show.venueId)).toList());
+        return rows.stream().map(row -> toShowSearchResponse(row, venues)).toList();
     }
 
     private List<Long> extractIds(final List<Tuple> rows) {
         return rows.stream().map(t -> t.get(show.id)).toList();
     }
 
-    private ShowSummaryView toShowSummaryResponse(final Tuple tuple) {
+    private ShowSummaryView toShowSummaryResponse(final Tuple tuple, final VenueDisplays venues) {
+        final Long venueId = tuple.get(show.venueId);
         return new ShowSummaryView(
                 tuple.get(show.id),
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
-                tuple.get(venue.name),
+                venues.nameOf(venueId),
                 tuple.get(show.createdAt)
         );
     }
 
-    private ShowOpeningSoonSummaryView toShowOpeningSoonSummaryResponse(final Tuple tuple) {
+    private ShowOpeningSoonSummaryView toShowOpeningSoonSummaryResponse(final Tuple tuple, final VenueDisplays venues) {
+        final Long venueId = tuple.get(show.venueId);
         return new ShowOpeningSoonSummaryView(
                 tuple.get(show.id),
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(venue.name),
+                venues.nameOf(venueId),
                 tuple.get(show.saleStartDate)
         );
     }
 
-    private ShowOpeningSoonDetailView toShowOpeningSoonDetailResponse(final Tuple tuple) {
+    private ShowOpeningSoonDetailView toShowOpeningSoonDetailResponse(final Tuple tuple, final VenueDisplays venues) {
+        final Long venueId = tuple.get(show.venueId);
         return new ShowOpeningSoonDetailView(
                 tuple.get(show.id),
                 tuple.get(show.title),
                 tuple.get(show.subTitle),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(venue.name),
-                tuple.get(venue.region),
+                venues.nameOf(venueId),
+                venues.regionOf(venueId),
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
                 tuple.get(show.saleStartDate),
@@ -311,15 +313,16 @@ public class QuerydslShowListReadRepository implements ShowListReadRepository {
         );
     }
 
-    private ShowSearchItemView toShowSearchResponse(final Tuple tuple) {
+    private ShowSearchItemView toShowSearchResponse(final Tuple tuple, final VenueDisplays venues) {
+        final Long venueId = tuple.get(show.venueId);
         return new ShowSearchItemView(
                 tuple.get(show.id),
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(venue.name),
+                venues.nameOf(venueId),
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
-                tuple.get(venue.region),
+                venues.regionOf(venueId),
                 tuple.get(show.viewCount)
         );
     }

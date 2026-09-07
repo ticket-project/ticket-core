@@ -44,15 +44,20 @@ public class Show extends ShowAuditedEntity {
 
     private String image;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Venue venue;
+    /**
+     * venue module이 소유한 Venue의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로
+     * {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR 0003 §4). 컬럼명은 옛 {@code @ManyToOne
+     * Venue venue} 암묵 매핑과 같은 {@code venue_id}를 그대로 써서 스키마가 바뀌지 않는다.
+     */
+    @Column(name = "venue_id")
+    private Long venueId;
 
     private Integer runningMinutes;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Performer performer;
 
-    public Show(final String title, final String subTitle, final String info, final LocalDate startDate, final LocalDate endDate, final long viewCount, final SaleType saleType, final LocalDateTime saleStartDate, final LocalDateTime saleEndDate, final String image, final Venue venue, final Performer performer, final Integer runningMinutes) {
+    public Show(final String title, final String subTitle, final String info, final LocalDate startDate, final LocalDate endDate, final long viewCount, final SaleType saleType, final LocalDateTime saleStartDate, final LocalDateTime saleEndDate, final String image, final Long venueId, final Performer performer, final Integer runningMinutes) {
         this.title = title;
         this.subTitle = subTitle;
         this.info = info;
@@ -63,7 +68,7 @@ public class Show extends ShowAuditedEntity {
         this.saleStartDate = saleStartDate;
         this.saleEndDate = saleEndDate;
         this.image = image;
-        this.venue = venue;
+        this.venueId = venueId;
         this.performer = performer;
         this.runningMinutes = runningMinutes;
     }

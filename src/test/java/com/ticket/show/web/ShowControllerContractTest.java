@@ -3,7 +3,7 @@ package com.ticket.show.web;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.show.domain.performance.policy.BookingEntryResolver;
 import com.ticket.show.domain.show.BookingStatus;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.application.show.query.CountSearchShowsUseCase;
 import com.ticket.show.application.show.query.GetLatestShowsUseCase;

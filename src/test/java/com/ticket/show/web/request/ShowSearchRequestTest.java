@@ -5,7 +5,7 @@ import com.ticket.show.application.show.query.model.ShowCursor;
 import com.ticket.show.application.show.query.model.ShowSearchCriteria;
 import com.ticket.show.application.show.query.ShowSort;
 import com.ticket.show.domain.show.BookingStatus;
-import com.ticket.show.domain.show.Region;
+import com.ticket.venue.Region;
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;

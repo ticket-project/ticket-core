@@ -4,7 +4,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.BookingPolicyLookup;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceVenueLayoutCatalog;
-import com.ticket.show.VenueLayoutLookup;
 import com.ticket.member.AccessTokenAuthenticator;
 import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
@@ -24,8 +23,8 @@ import java.time.Clock;
  * 검증에서 빠지는 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.booking} package tree만 component-scan한다.
- * show {@code BookingPolicyLookup}·{@code PerformanceSaleCatalog}·{@code PerformanceVenueLayoutCatalog}·
- * {@code VenueLayoutLookup}, member {@code MemberLookup}·
+ * show {@code BookingPolicyLookup}·{@code PerformanceSaleCatalog}·{@code PerformanceVenueLayoutCatalog},
+ * member {@code MemberLookup}·
  * {@code AccessTokenAuthenticator}(WebSocket 인증이 참조)는 그
  * 필터 밖이라 {@code @MockitoBean}으로 대체한다. {@code JPAQueryFactory}도
  * {@code @MockitoBean}으로 대체한다 — 이 테스트는 booking bean들이 module 경계 안에서 서로 정상
@@ -51,9 +50,6 @@ class BookingModuleTests {
 
     @MockitoBean
     private PerformanceVenueLayoutCatalog performanceVenueLayoutCatalog;
-
-    @MockitoBean
-    private VenueLayoutLookup venueLayoutLookup;
 
     @MockitoBean
     private MemberLookup memberLookup;
