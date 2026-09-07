@@ -43,15 +43,15 @@ Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
 검사하는 본체다. 새 코드의 위치가 의심스러우면 이것부터 돌린다. 무엇을 막는지는
 [architecture.md](../../../docs/architecture.md#아키텍처-규칙)를 본다.
 
-각 모듈의 `<Module>ModuleTests`(`AdmissionModuleTests`, `CatalogModuleTests`,
-`MemberModuleTests`, `BookingModuleTests`, `PaymentModuleTests`)는
+각 모듈의 `<Module>ModuleTests`(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
+`FavoriteModuleTests`, `MemberModuleTests`, `PaymentModuleTests`)는
 `@ApplicationModuleTest(verifyAutomatically = false)`로 그 모듈이 STANDALONE으로
 부트스트랩되는지만 본다. 전체 구조 검증은 여기서 하지 않는다 — `ModularityTests`의 몫이다.
+`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)는 show.domain이 favorite(다른 BC)를
+참조하지 않는지 별도로 고정한다.
 
-`com.ticket.core` 아래에는 아직 legacy 계층형 ArchUnit 테스트(`CoreLayerArchitectureTest`,
-`CoreApiArchitectureTest`, `CoreDomainArchitectureTest`, `CoreInfraArchitectureTest`)도 남아
-있다. legacy 코드를 건드렸으면 이것도 함께 돌린다. `com.ticket.bootstrap`은 지금 class가 없어
-`BootstrapArchitectureTest`는 지웠다(검사 대상 없는 rule이 실패하는 것을 실측 확인) — 그
+`com.ticket.bootstrap`은 지금 class가 없어 `BootstrapArchitectureTest`는 지웠다(검사 대상
+없는 rule이 실패하는 것을 실측 확인) — 그
 패키지에 새 class가 생기면 그때 필요한 규칙을 다시 만든다.
 
 ## 통합 테스트와 E2E

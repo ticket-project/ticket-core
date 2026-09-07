@@ -136,13 +136,16 @@ src/main/resources/db/migration-vendor/oracle/{module}         # module 소유 �
 이력은 `__root` 이력(기존 `flyway_schema_history`에 대응)으로 그대로 유지되고, 버전 번호도
 바꾸지 않았다. 모듈이 소유하는 새 schema 변경(cross-module FK 제거, scalar column 전환,
 신규 module의 첫 schema 등)은 module별 폴더에 **1부터 새로 버전을 매겨** 추가한다 — `__root`의
-V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `catalog`, `booking`, `payment` 셋이다(ADR 0005).
-`payment`는 이번 entity-only 단계 첫 schema라 `V1__create_payments.sql`부터 시작하고,
-`catalog`/`booking`은 기존 이력 위에 이어서 버전을 매긴다. `TICKETS`는 원래 `ticketing` module의 V1이었으나
-ticketing이 booking으로 흡수되며 booking V5(`V5__create_tickets.sql`)로 옮겼다 —
+V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `show`, `venue`, `favorite`, `booking`,
+`payment`다(ADR 0005, ADR 0006). `payment`는 이번 entity-only 단계 첫 schema라
+`V1__create_payments.sql`부터 시작하고, `show`/`booking`은 기존 이력 위에 이어서 버전을 매긴다.
+`venue`/`favorite`는 ADR 0006의 BC 재편으로 `catalog`(→`show`)에서 분리된 신설 module 이름이라,
+그 이름으로는 이력이 없어 각자 V1부터 새로 시작한다 — 그래서 옮겨온 migration은 멱등화가
+필요하다(ADR 0006 "Flyway 이력 재시작과 멱등화 예외" 참고). `TICKETS`는 원래 `ticketing` module의
+V1이었으나 ticketing이 booking으로 흡수되며 booking V5(`V5__create_tickets.sql`)로 옮겼다 —
 `flyway_schema_history_ticketing`이 이미 있는 로컬 H2 파일 DB는 초기화가 필요하다. 공통 SQL은 `db/migration/{module}`, DB별 문법 차이가 있는
 SQL은 `db/migration-vendor/{h2,oracle}/{module}`에 같은 버전으로 각각 둔다 — 모듈에 DB별
-차이만 있고 공통 SQL이 없으면(현재 `catalog`, `payment`) `db/migration/{module}`
+차이만 있고 공통 SQL이 없으면(현재 `show`, `venue`, `favorite`, `payment`) `db/migration/{module}`
 폴더 자체를 만들지 않는다. `db/migration`에는 현재 `__root`와 `booking`만 있다.
 
 공통 migration은 `db/migration/__root`(또는 `{module}`)에 두고, Oracle과 H2의 문법이 다른
@@ -172,6 +175,15 @@ db/migration/__root/V9__...sql           # 어떤 module에도 속하지 않는 
 이미 운영에 적용된 migration 파일은 수정하지 않는다. 변경이 더 필요하면 다음 버전 파일을 새로
 만든다.
 
+**예외(module 개명·분리로 이력이 재시작될 때만)**: `catalog` → `show` 개명, `venue`/`favorite`
+신설처럼 module 식별자 자체가 바뀌면 그 폴더는 새 `flyway_schema_history_{module}` 이력으로
+처음부터 다시 실행된다 — 이미 적용됐던 내용이라도 이 새 이력 기준으로는 "아직 적용 전"이다. 이
+경우에 한해 **새 이력으로 옮겨가는 파일에** 존재 확인 가드(멱등화)를 추가하는 것을 허용한다.
+이미 적용이 끝나 그대로 남는 이력의 파일(예: 그대로 유지되는 `__root`, 이름이 바뀌지 않은
+`booking`)은 이 예외 대상이 아니며 여전히 수정하지 않는다. 상세 배경은
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md#flyway-이력-재시작과-멱등화-예외)을
+본다.
+
 ### 완료된 module 경계 정리
 
 `db/migration-vendor/{h2,oracle}/booking/V1__drop_performance_seat_cross_module_fk.sql`이
@@ -185,14 +197,17 @@ outbox 테이블은 이 시점에 별도 booking migration으로 제거됐다). 
 중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
 대표 행을 결정한 뒤 정리한다. migration에서 중복 행을 임의 삭제하지 않는다.
 
-ADR 0005의 가격 재설계는 `catalog`(V4~V7)와 `booking`(V3~V4) migration으로 이미 반영됐다.
-`catalog` V4가 `GRADES`/`PERFORMANCE_GRADES`를 만들고, V5~V6가 기존 `SHOW_GRADES`/`SHOW_SEATS`
+ADR 0005의 가격 재설계는 `show`(옛 `catalog`, V4~V7)와 `booking`(V3~V4) migration으로 이미
+반영됐다. `show` V4가 `GRADES`/`PERFORMANCE_GRADES`를 만들고, V5~V6가 기존 `SHOW_GRADES`/`SHOW_SEATS`
 데이터를 각각 `PERFORMANCE_GRADES`, `PERFORMANCE_SEATS.performance_grade_id`/`unit_price`로
 backfill하며, V7이 이관이 끝난 `SHOW_GRADES`/`SHOW_SEATS`를 drop한다(expand -> migrate ->
-contract). `booking` V3는 `PERFORMANCE_SEATS`에 같은 컬럼을 NOT NULL로 조이고, V4는
-`ORDERS`/`ORDER_SEATS`에 주문 시점 snapshot 컬럼을 추가하면서 `payment_failed_at`을 제거한다
-(`Order.PAYMENT_FAILED` 상태 폐기). `payment`(`PAYMENTS`)는 이번 entity-only 단계의 신규 schema라 `V1__create_payments.sql`로
-시작하고, `TICKETS`는 booking V5(`V5__create_tickets.sql`)가 만든다. 위 migration들은 `SHOW_GRADES`/`SHOW_SEATS`/`ORDERS`/`ORDER_SEATS` 등 pre-Flyway
+contract). ADR 0006의 BC 재편으로 `show` V8이 옛 `@ManyToOne Venue` 매핑이 남겼을 수 있는
+`SHOWS.venue_id` FK를 제거한다(존재 여부 동적 확인, 없으면 no-op) — Venue/Seat 자체는 `venue`
+module로 분리됐다(`venue` V1, 옛 `catalog`/`show` V3). `booking` V3는 `PERFORMANCE_SEATS`에 같은
+컬럼을 NOT NULL로 조이고, V4는 `ORDERS`/`ORDER_SEATS`에 주문 시점 snapshot 컬럼을 추가하면서
+`payment_failed_at`을 제거한다(`Order.PAYMENT_FAILED` 상태 폐기). `payment`(`PAYMENTS`)는 이번
+entity-only 단계의 신규 schema라 `V1__create_payments.sql`로 시작하고, `TICKETS`는 booking
+V5(`V5__create_tickets.sql`)가 만든다. 위 migration들은 `SHOW_GRADES`/`SHOW_SEATS`/`ORDERS`/`ORDER_SEATS` 등 pre-Flyway
 baseline table이 존재하지 않는 검증 환경(`OracleMigrationCompatibilityTest` 등)에서는 no-op이
 되도록 존재 여부를 먼저 확인한다.
 
@@ -200,6 +215,20 @@ Oracle DDL은 실행 시 암묵적으로 커밋된다. 인덱스처럼 실패 �
 migration으로 분리하고, 각 migration은 같은 목적의 기존 인덱스가 있으면 건너뛴다. 실패 후
 재시도하기 전에는 `USER_IND_COLUMNS`와 `flyway_schema_history`(module 소유라면
 `flyway_schema_history_{module}`)를 함께 확인한다.
+
+### dangling venue_id 점검 (ADR 0006)
+
+`show` V8이 `SHOWS.venue_id`의 옛 cross-module FK를 제거하므로, DB 수준에서는 더 이상 존재하지
+않는 Venue를 가리키는 `venue_id`를 막지 않는다. `Show.venueId`는 그런 경우 애플리케이션 쪽에서
+"venue 없는 show"와 같은 결과(표시값 null, 좌석 빈 목록)로 통일해 처리하지만, 배포 후 다음
+쿼리로 실제로 그런 row가 생기지 않았는지 주기적으로 확인한다.
+
+```sql
+SELECT id FROM SHOWS WHERE venue_id IS NOT NULL AND venue_id NOT IN (SELECT id FROM VENUES);
+```
+
+결과가 있으면 애플리케이션 오류가 아니라 데이터 정합성 문제다 — 해당 Show의 `venue_id`를 바로잡거나
+Venue 데이터를 복구한다.
 
 local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create`와 seed loader로
 초기화한다. dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동 DDL과 seed loader를 끄고

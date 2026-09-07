@@ -5,6 +5,25 @@
 
 모듈 경계와 코드 배치 기준은 `docs/architecture.md`에 있다. 이 문서는 용어만 다룬다.
 
+## 컨텍스트 맵
+
+Application Module(기술 모듈 제외)은 곧 Bounded Context(BC)다([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md)).
+여섯 개 BC와 그 의존 방향:
+
+```text
+Show -> Venue, Favorite, Member
+Booking -> Show, Member
+Payment -> (없음, 후속에서 Booking을 참조 예정)
+Venue / Favorite / Member -> (없음, leaf)
+```
+
+- **Venue**: Venue, Seat. 물리 시설.
+- **Show**: Show, Category, Genre, Performer, Performance, Grade, PerformanceGrade. 작품·회차.
+- **Booking**: Selection, Hold, Order, OrderSeat, Ticket. 좌석 선점부터 주문·발권까지.
+- **Payment**: Payment. 결제 시도.
+- **Favorite**: ShowLike. 찜.
+- **Member**: Member. 회원과 인증.
+
 ## Language
 
 ### 상품
@@ -34,8 +53,11 @@ Category에 속한다. Show는 여러 Genre를 가질 수 있고 Genre도 여러
 _Avoid_: 태그, Tag
 
 **Performance**:
-Show의 특정 상영 회차다. 회차 번호와 시작 시각을 가지며, 좌석 편성·등급·가격·예매 정책은 이
-단위로 붙는다.
+Show의 특정 상영 회차다. 회차 번호와 시작 시각을 가지며, 좌석 편성·등급·가격·예매 정책·대기열
+정책은 이 단위로 붙는다. 예매 정책(orderOpenTime/orderCloseTime/maxCanHoldCount/holdTime)과
+대기열 정책은 지금은 회차 속성으로 Show BC가 소유하지만, 실제 소비자는 거의 전부
+Booking이다(admission 검사, hold 시간 계산) — 이 혼재는 해결하지 않고 사실만 기록해 두었다
+([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md) "결정하지 않는 것" 참고).
 _Avoid_: 회차 공연, Schedule, Session
 
 **Seat**:
@@ -70,8 +92,11 @@ _Avoid_: 회차석, SeatInstance, `ShowSeat`(제거됨 — Show 단위 좌석 �
 회원이 좌석을 고르고 결제 화면으로 넘어갈 때 만들어지는 예매 건이다. **결제 전에 생성되며**,
 정해진 시간 안에 결제되지 않으면 만료된다. Member 1명은 Order 여러 건을 가지며(`1:0..N`), 하나의
 Order는 OrderSeat 1개 이상을 가진다(`1:1..N`, 빈 주문은 없다). show/performance/venue 표시값과
-좌석·등급·가격 표시값은 OrderSeat가 주문 시점 snapshot으로 보존하므로, catalog 쪽 표시 이름이나
-가격이 나중에 바뀌어도 이미 만들어진 Order/OrderSeat 상세는 바뀌지 않는다.
+좌석·등급·가격 표시값은 OrderSeat가 주문 시점 snapshot으로 보존하므로, Show 쪽 표시 이름이나
+가격이 나중에 바뀌어도 이미 만들어진 Order/OrderSeat 상세는 바뀌지 않는다. Order와 Ticket을 별도
+BC로 나눌 명확한 이유가 아직 없어 Ticket과 함께 Booking BC에 둔다 — 미래에 경계가 갈라진다면 그
+선은 Order/Ticket 사이보다 좌석 재고(PerformanceSeat/Hold/Selection)와 주문 사이일 가능성이 더
+높다는 관측만 남긴다([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md)).
 _Avoid_: 예약, 구매, Reservation, Purchase, Booking
 
 **OrderSeat**:
@@ -82,9 +107,9 @@ PerformanceSeat의 상태 전이가 보장하지, OrderSeat row 존재만으로�
 _Avoid_: TicketInfo(결제 전 좌석을 이 이름으로 부르지 않는다)
 
 **Selection**:
-회원이 좌석을 살펴보며 임시로 찜해 둔 표시다. 짧은 시간만 유지되고 다른 회원 화면에는 점유로
+회원이 좌석을 살펴보며 임시로 골라 둔 표시다. 짧은 시간만 유지되고 다른 회원 화면에는 점유로
 보이지만, **예매를 보장하지 않는다.** Hold와 독립이며 Selection 없이도 Order를 만들 수 있다.
-_Avoid_: 선점, 임시 예약, Reservation
+_Avoid_: 선점, 임시 예약, Reservation, 찜(Favorite BC의 ShowLike와 혼동)
 
 **Hold**:
 진행 중인 Order가 좌석을 붙잡아 둔 상태다. 판매 정합성을 지키는 쪽은 Selection이 아니라 이것이다.
@@ -112,6 +137,16 @@ _Avoid_: 결제(Payment 자체가 결제 완료가 아니라 시도라는 사실
 Ticket은 `booking` module이 소유한다(ADR 0005가 신설한 별도 `ticketing` module은 booking으로 흡수됐다).
 이번 구현 범위는 entity/schema/repository까지다 — 자동 발급 listener, QR, 입장, 사용, 취소, 양도는 아직 없다.
 _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
+
+### 찜
+
+**ShowLike**:
+회원이 특정 Show를 찜한 기록이다. `(memberId, showId)` 쌍이 유일하며, 같은 회원이 같은 Show를 두
+번 찜할 수 없다. 좋아요 개수·찜 추가/해제·내 찜 목록 전부 Favorite BC(`favorite` module)가
+소유하고, Show 존재 확인이나 표시값(제목·이미지 등) 조립은 하지 않는다 — 그 조합은 Show BC의
+조회 서비스가 Favorite의 공개 API를 호출해 한다([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md)).
+찜 HTTP endpoint(`/api/v1/likes`, `/api/v1/members/me/likes`)는 Show BC에 그대로 있다.
+_Avoid_: 좋아요(API 필드명 `likeCount`와는 별개로 도메인 용어는 찜으로 통일), Selection과 혼동
 
 ### 회원
 

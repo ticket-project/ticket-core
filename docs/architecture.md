@@ -7,12 +7,15 @@
 [development.md](development.md), 실행과 검증은 [operations.md](operations.md)를 함께 본다.
 
 **ADR 0005 반영 완료**: Venue/Seat/Grade/PerformanceGrade/PerformanceSeat 도메인 재설계와
-`payment` module 신설은 구현이 끝났다. `ShowGrade`/`ShowSeat`는 entity·schema 모두 제거됐고, 아래
-모듈 목록·DAG는 이 시점의 실제 코드(`ModularityTests`) 기준이다. `payment`는 이번 범위에서
-entity/schema/repository만 있는 entity-only 모듈이며, PG 연동 흐름은 후속 ADR/계획으로 별도 승인한다
-(ADR 0005 §3, §4). ADR 0005가 별도 module로 신설했던 `ticketing`은 2026-09-06에 booking으로 흡수됐다 —
-`Ticket` entity/repository는 `booking.{domain,infrastructure}.ticket`에 있고 `TICKETS` migration은
-booking V5다.
+`payment` module 신설은 구현이 끝났다. `ShowGrade`/`ShowSeat`는 entity·schema 모두 제거됐다.
+`payment`는 이번 범위에서 entity/schema/repository만 있는 entity-only 모듈이며, PG 연동 흐름은
+후속 ADR/계획으로 별도 승인한다(ADR 0005 §3, §4). ADR 0005가 별도 module로 신설했던 `ticketing`은
+2026-09-06에 booking으로 흡수됐다 — `Ticket` entity/repository는
+`booking.{domain,infrastructure}.ticket`에 있고 `TICKETS` migration은 booking V5다.
+
+**ADR 0006 반영 완료(BC 재편)**: Application Module(기술 모듈 제외)이 곧 Bounded Context(BC)가
+됐다. `catalog`는 `show`로 개명됐고, 물리 공연장·좌석(Venue/Seat)은 `venue`로, 찜(ShowLike)은
+`favorite`로 분리됐다. 아래 모듈 목록·DAG는 이 시점의 실제 코드(`ModularityTests`) 기준이다.
 
 ## 프로젝트 구조
 
@@ -31,7 +34,9 @@ Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. `bootstrap`/`core:
 src/main/java/com/ticket
 ├── TicketApplication.java   # @Modulith root, main
 ├── booking/                 # 좌석 판매 상태(PerformanceSeat)·Selection·Hold·Order/OrderSeat·Ticket(entity-only), 공개: OrderStarted/OrderTerminated. admission token 검증(원래 admission module)도 소유
-├── catalog/                 # Venue·Seat·Show·Performance·Grade/PerformanceGrade·대기열 정책·찜(showlike), 공개: BookingPolicyLookup, ShowLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
+├── show/                    # Show·Category·Genre·Performer·Performance·Grade/PerformanceGrade·대기열 정책(`catalog` 개명), 공개: BookingPolicyLookup, PerformanceSaleCatalog, PerformanceVenueLayoutCatalog
+├── venue/                   # Venue·Seat·Region(물리 시설, show에서 분리), 공개: VenueLookup, VenueSeatLookup
+├── favorite/                # ShowLike(찜, show에서 분리), 공개: ShowLikeQuery, ShowLikeCommand
 ├── member/                # 회원·인증·소셜 로그인·전역 SecurityFilterChain, 공개: AuthenticatedMember, MemberLookup
 ├── shared/                   # 다른 모듈이 호출하는 공유 계약만(UuidSupplier, CorsProperties, CursorPage)
 ├── web/                      # 이 앱이 HTTP로 말하는 방식(ApiResponse·ErrorMessage·ResultType·SliceResponse)
@@ -41,9 +46,12 @@ src/main/java/com/ticket
 └── payment/                  # Payment(결제 시도) entity/schema/repository만 갖는 entity-only 모듈
 ```
 
-`com.ticket`의 직접 하위 패키지는 9개다(`booking`, `catalog`, `member`,
-`shared`, `web`, `config`, `error`, `seed`, `payment`) — `showlike`는 없다(찜을 catalog가
-흡수했다. [찜(showlike)은 catalog가 흡수한다](#찜showlike은-catalog가-흡수한다) 참고).
+`com.ticket`의 직접 하위 패키지는 11개다(`booking`, `show`, `venue`, `favorite`, `member`,
+`shared`, `web`, `config`, `error`, `seed`, `payment`). Application Module(기술 모듈 제외)은
+Bounded Context와 일치한다 — BC 목록과 매핑, 재편 배경은
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md)을 본다. `showlike`는 독립 module로는
+없다 — 찜은 `favorite`가 소유하고, show가 그 공개 API로 조합한다([Favorite BC와 조합 규칙](#favorite-bc와-조합-규칙)
+참고).
 
 `payment`는 ADR 0005로 신설됐다. **이번 구현 범위는 entity/schema/repository와 구조·schema 검증
 테스트까지다** — controller, PG client, 결제 승인/실패/취소 API, callback/webhook은 만들지 않았다. 그래서
@@ -58,7 +66,7 @@ booking으로 흡수됐다. entity-only 상태에서 module 하나를 더 유지
 member에 대한 scalar 컬럼이고, `orderSeatId`는 같은 module의 OrderSeat를 가리키지만 기존 schema 관례대로
 scalar 컬럼으로 둔다. 자동 발급 listener, QR/입장/사용/양도는 여전히 미구현이다.
 
-`com.ticket.core`는 완전히 비었다 — 남았던 찜(showlike) 관련 코드가 모두 catalog로 옮겨졌다.
+`com.ticket.core`는 완전히 비었다 — 남았던 찜(showlike) 관련 코드가 모두 정식 module로 옮겨졌다.
 `com.ticket.bootstrap`은 legacy가 아니라 영구 composition-root 예외 자리이며 지금 production
 class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스트가 함께 쓰는 test-support
 기반 클래스(`ReadRepositoryTestSupport`/`InfraReadRepositoryTestSupport`)는 아직
@@ -76,8 +84,10 @@ class가 없다. `com.ticket.storage`도 없다. 다만 여러 module의 테스�
 포함해 각 모듈이 실제로 참조하는 모듈 전부를 담는다).
 
 ```text
-booking   -> catalog, member, shared, web, error
-catalog   -> member, shared, web, error
+booking  -> show, member, shared, web, error
+show     -> venue, favorite, member, shared, web, error
+venue    -> (없음)
+favorite -> shared, web, error
 member  -> shared, web, error
 shared    -> (없음)
 web       -> (없음)
@@ -89,19 +99,24 @@ payment   -> (없음)
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수 있다.
 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만** 적는다
-(`catalog`/`member`는 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
+(`venue`/`member`는 상한이 비어 있다 — 업무 모듈 의존이 없다는 뜻이고,
 `sharedModules`인 shared·error·web은 상한과 무관하게 항상 허용된다). 대신 어느 모듈이 실제로 이
 셋을 참조하는지는 `ModularityTests.APPROVED_DEPENDENCY_DAG`가 모듈별로 고정하므로, HTTP를
 노출하지 않던 모듈에 응답 봉투가 새로 들어오면 그 테스트가 실패한다.
 
 `member`는 다른 업무 모듈에 의존하지 않는 기반 모듈이다(`error`/`web`은 예외). admission token 검증은
 원래 별도 `admission` module이었으나 booking만 쓰는 능력이라 booking으로 흡수됐다
-(`booking.{application,infrastructure}.admission`, E8xxx 오류 코드 유지). `catalog`는
-찜(showlike) 흡수로 회원 존재 확인을 위해 member를 참조한다(`MemberLookup`) — booking이
-`Order.memberId`를 위해 member를 참조하는 것과 같은 패턴이다. `booking`이 그 위에 얹힌다. `shared`와
-`web`은 어떤 모듈도 참조하지 않는 leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과
-shared(`UuidSupplier`)를 참조하지만 `config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을
-raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
+(`booking.{application,infrastructure}.admission`, E8xxx 오류 코드 유지). `show`는 찜 use case의
+회원 활성 확인을 위해 member를 참조한다(`MemberLookup`) — booking이 `Order.memberId`를 위해
+member를 참조하는 것과 같은 패턴이다. `show`는 공연장 표시값 조립·region 검색 조건 해석·좌석
+주소 조회를 위해 venue를 참조하고(`VenueLookup`/`VenueSeatLookup`), 공연 상세의 찜 개수 조회와
+찜 use case의 위임을 위해 favorite를 참조한다(`ShowLikeQuery`/`ShowLikeCommand`) — 두 방향 모두
+반대 참조는 없다(`venue`/`favorite`의 `allowedDependencies`가 비어 있다). `booking`이 그 위에
+얹힌다. booking이 쓰는 `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`는 show가 façade로
+유지하므로 `booking -> venue` edge는 생기지 않는다. `shared`와 `web`은 어떤 모듈도 참조하지 않는
+leaf고, `config`는 member의 공개 계약(`AuthenticatedMember`)과 shared(`UuidSupplier`)를 참조하지만
+`config`를 참조하는 모듈은 없다. `seed`는 여러 모듈의 테이블을 raw SQL로 적재하고, 부하 테스트
+회원만 member가 좁혀 연 `@NamedInterface("seed")`를 통해 만든다.
 
 `payment`는 **이번 entity-only 단계에서 완전한 leaf다** — 업무 모듈은 물론 `shared`/`web`/`error`도
 참조하지 않는다. controller가 없어 응답 봉투(`web`)가 필요 없고, 자기 오류 타입을 아직 던지지 않아
@@ -121,23 +136,24 @@ raw SQL로 적재하고, 부하 테스트 회원만 member가 좁혀 연 `@Named
 
 - **cross-module JPA 연관관계와 DB FK는 금지한다.** 다른 모듈의 aggregate를 참조해야 하면
   `long` 같은 scalar ID 컬럼만 갖는다. 예: booking이 소유한 `PerformanceSeat`는
-  `performanceId`/`seatId`를 scalar 컬럼으로 갖고 catalog의 `Performance`/`Seat` 엔티티를 JPA로
-  참조하지 않는다.
+  `performanceId`/`seatId`를 scalar 컬럼으로 갖고 show의 `Performance`/venue의 `Seat` 엔티티를
+  JPA로 참조하지 않는다. show의 `Show`도 `venueId`를 scalar 컬럼으로만 갖는다.
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 하위 패키지,
   Repository, JPA entity를 직접 import하지 않는다. 공개 API는 작은 단위 interface(예:
-  `catalog.BookingPolicyLookup`, `member.MemberLookup`)와 그
-  반환값인 불변 `record` snapshot(`BookingPolicySnapshot`, `MemberStatus` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에
-  두지 않는다. 컬렉션은 defensive copy한다.
+  `show.BookingPolicyLookup`, `venue.VenueLookup`, `favorite.ShowLikeQuery`,
+  `member.MemberLookup`)와 그 반환값인 불변 `record` snapshot(`BookingPolicySnapshot`,
+  `VenueSummary`, `MemberStatus` 등)만 노출한다. JPA entity, Redis/JWT/Spring Web 타입은 공개
+  계약에 두지 않는다. 컬렉션은 defensive copy한다.
 - **모듈 후속 처리는 커밋 이후 이벤트로 한다.** booking이 발행하는 `OrderStarted`/
   `OrderTerminated`가 그 예다. 자세한 내용은 아래 [이벤트와 후속 처리](#이벤트와-후속-처리)를
   본다.
 
-### Show/Performance/Grade/PerformanceGrade/PerformanceSeat와 catalog-booking 공개 계약
+### Show/Performance/Grade/PerformanceGrade/PerformanceSeat와 show-booking 공개 계약
 
-`Grade`(catalog)는 `VIP`/`R`/`S`/`A` 같은 재사용 가능한 코드·이름만 갖고 가격을 갖지 않는다.
-`PerformanceGrade`(catalog, `Grade N:M Performance`의 연결 entity)가 특정 Performance에서 쓸 Grade
+`Grade`(show)는 `VIP`/`R`/`S`/`A` 같은 재사용 가능한 코드·이름만 갖고 가격을 갖지 않는다.
+`PerformanceGrade`(show, `Grade N:M Performance`의 연결 entity)가 특정 Performance에서 쓸 Grade
 선택·회차별 가격·표시 순서를 갖는다 — 가격의 원본은 여기다. `PerformanceSeat`(booking)는
-`performanceId`/`seatId`/`performanceGradeId`를 scalar 컬럼으로만 갖고 catalog entity를 JPA로
+`performanceId`/`seatId`/`performanceGradeId`를 scalar 컬럼으로만 갖고 show entity를 JPA로
 참조하지 않으며, 판매 좌석 생성 시 `PerformanceGrade.price`를 `unitPrice`로 snapshot하고
 `@Version`으로 동시 확정을 방어한다. 가격은 세 시점의 사실로 나뉜다.
 
@@ -147,41 +163,54 @@ PerformanceGrade.price   운영자가 구성한 회차 등급 가격 (판매 오
     -> OrderSeat.unitPrice       주문 생성 시 snapshot (생성 후 불변)
 ```
 
-booking이 이 판매 편성·주문 표시 snapshot을 만들 때 쓰는 catalog 공개 계약은 두 개다. JPA entity는
+booking이 이 판매 편성·주문 표시 snapshot을 만들 때 쓰는 show 공개 계약은 두 개다. JPA entity는
 어느 쪽도 노출하지 않는다.
 
-- `catalog.PerformanceSaleCatalog#getSaleSnapshot(performanceId, seatIds)` — `PerformanceSaleSnapshot`
+- `show.PerformanceSaleCatalog#getSaleSnapshot(performanceId, seatIds)` — `PerformanceSaleSnapshot`
   (요청 seat 중 그 회차 Venue에 실제로 속한 좌석의 표시값 + 그 회차에 배정된 모든
   PerformanceGrade 표시값·가격)을 반환한다. `PerformanceSeat` 생성과 `GetSeatAvailabilityUseCase`
-  (등급별 잔여석)가 쓴다.
-- `catalog.PerformanceVenueLayoutCatalog#getVenueLayout(performanceId)` — `PerformanceVenueLayout`
+  (등급별 잔여석)가 쓴다. show 내부 구현은 venue의 `VenueLookup`/`VenueSeatLookup`을 호출해
+  조립하지만, 이 façade 시그니처가 그대로라 booking은 venue 분리의 영향을 받지 않는다.
+- `show.PerformanceVenueLayoutCatalog#getVenueLayout(performanceId)` — `PerformanceVenueLayout`
   (Venue 배치·그 Venue의 모든 물리 Seat 좌표 + 그 회차에 배정된 PerformanceGrade 표시값, 가격은
   담지 않음)을 반환한다. 정적 seat-map API(`GetPerformanceSeatMapUseCase`)가 쓰고, 판매 편성되지
   않은 물리 Seat는 booking local 조회로 걸러낸다.
 
 **`ShowGrade`/`ShowSeat`는 폐기됐다 — entity·schema 모두 제거됐고 참조하지 않는다.** Show 단위
 공통 가격표가 필요하면 `PerformanceGrade`에서 `minPrice`/`maxPrice`를 파생한다
-(`catalog.GetShowDetailUseCase.PriceSummary`). Show 전체 회차에 적용할 좌석 템플릿이 실제로
+(`show.GetShowDetailUseCase.PriceSummary`). Show 전체 회차에 적용할 좌석 템플릿이 실제로
 필요해지면 그때 별도 개념(`ShowSeatTemplate` 등)을 추가한다 — 지금 이름만 바꿔 남기지 않는다.
-`booking.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
-Venue 배치만 반환하는 별개의 show 기준 API이고,
-회차 기준 `/api/v1/performances/{performanceId}/seat-map`과는 다른 용도다(둘 다 참고
+`show.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리 Venue 배치만
+반환하는 별개의 show 기준 API이고(원래 booking에 있었으나 booking 데이터를 전혀 쓰지 않는
+passthrough라 ADR 0006으로 show로 옮겼다 — URL·응답은 불변), 회차 기준
+`/api/v1/performances/{performanceId}/seat-map`과는 다른 용도다(둘 다 참고
 [개발 기준](development.md#쇼회차좌석-조회)).
 
-### 찜(showlike)은 catalog가 흡수한다
+### Favorite BC와 조합 규칙
 
-찜 개수·추가·삭제·내 찜 목록은 모두 catalog가 소유한다. 원래는 별도 module
-(`com.ticket.showlike`)이었지만, catalog의 공연 상세가 좋아요 개수를 얻으려면 찜 데이터를
-참조해야 하고(catalog → showlike) showlike의 write 경로는 공연 존재 확인을 위해 catalog를
-참조해야 해서(showlike → catalog) 두 module 사이에 순환이 생겼다. "내 찜 목록"
-(`/api/v1/members/me/likes`)까지 member에 남기면 회원 관점 조회 때문에 member와 같은
-순환이 재발하므로, 찜에 관한 모든 것을 catalog 하나로 흡수해 순환의 여지 자체를 없앴다.
+찜 개수·추가·삭제·내 찜 목록의 **데이터와 불변식**은 `favorite`가 소유한다. 찜 **HTTP endpoint와
+use case는 show에 남는다** — URL·JSON 계약은 바뀌지 않는다. 이 배치가 지키는 규칙은 하나다:
+**`show.domain`은 favorite를 모른다.** `Show`가 `List<ShowLike>`를 필드로 갖거나 show의 도메인
+서비스가 `ShowLikeRepository`를 주입받는 것은 금지한다. 대신 `show.application`의 조회
+서비스(`GetShowDetailUseCase`, `GetMyShowLikesUseCase` 등)가 favorite의 공개 API(`ShowLikeQuery`/
+`ShowLikeCommand`)를 주입받아 응답을 조합한다. 이 규칙은
+`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)가 강제한다.
 
-개수는 `Show.viewCount`와 같은 성격의 파생 지표이지 독자적인 업무가 아니라는 판단이 근거다.
-`ShowLike.member`는 member Member에 대한 `@ManyToOne` 대신 scalar `memberId` column이고
-(module을 넘나드는 JPA 연관관계는 금지), `ShowLike.show`는 같은 module 안이라 `@ManyToOne` 그대로
-쓴다. catalog는 회원 존재 확인을 위해 member의 `MemberLookup`을 참조한다(단방향, 순환 없음).
-URL·JSON 계약(`/api/v1/likes/**`, `/api/v1/members/me/likes`)은 흡수 전과 동일하다.
+원래는 이 모든 것(찜 개수·추가·삭제·내 찜 목록)을 catalog(현 show)가 흡수해서 소유했다 — catalog의
+공연 상세가 찜 개수를 얻으려면 찜 데이터를 참조해야 하고(catalog → showlike), showlike의 write
+경로는 공연 존재 확인을 위해 catalog를 참조해야 해서(showlike → catalog) 두 module 사이에 순환이
+생겼기 때문이다. ADR 0006은 흡수 대신 **순환의 두 방향 중 하나만 없애는 쪽**을 택했다: 찜
+use case가 공연 존재 확인을 favorite에 위임하는 대신 show 자신의 `ShowRepository`로 직접
+확인하고, 내 찜 목록도 favorite가 준 showId 목록을 show가 자기 read repository로 다시 조회해
+표시값을 채운다. 남는 것은 `show -> favorite`(찜 개수 조회, use case 위임) 한 방향뿐이라 순환이
+없다 — 그 결과 `favorite`는 업무 module 의존이 하나도 없는 leaf가 됐다.
+
+`ShowLike.member`는 member Member에 대한 `@ManyToOne` 대신 scalar `memberId` column이고,
+`ShowLike.show`도 show의 `Show`에 대한 `@ManyToOne` 대신 scalar `showId` column이다(module을
+넘나드는 JPA 연관관계는 금지). 회원 활성 확인은 여전히 show의 use case가 member의 `MemberLookup`을
+직접 호출한다 — `favorite -> member` edge는 생기지 않는다. URL·JSON 계약(`/api/v1/likes/**`,
+`/api/v1/members/me/likes`)은 이 재편 전후로 동일하다. 배경은
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md)을 본다.
 
 ## 이벤트와 후속 처리
 
