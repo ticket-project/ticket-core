@@ -26,7 +26,7 @@ public class QuerydslVenueSeatReadRepository implements VenueSeatReadRepository 
                         seat.id, seat.floor, seat.section, seat.rowNo, seat.seatNo))
                 .from(seat)
                 .where(
-                        seat.venue.id.eq(venueId),
+                        seat.venueId.eq(venueId),
                         seat.id.in(seatIds)
                 )
                 .fetch();
@@ -38,7 +38,7 @@ public class QuerydslVenueSeatReadRepository implements VenueSeatReadRepository 
                 .select(Projections.constructor(VenueSeatLayout.class,
                         seat.id, seat.floor, seat.section, seat.rowNo, seat.seatNo, seat.x, seat.y))
                 .from(seat)
-                .where(seat.venue.id.eq(venueId))
+                .where(seat.venueId.eq(venueId))
                 .fetch();
     }
 }

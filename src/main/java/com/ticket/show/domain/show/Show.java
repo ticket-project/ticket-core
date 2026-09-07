@@ -54,10 +54,15 @@ public class Show extends ShowAuditedEntity {
 
     private Integer runningMinutes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Performer performer;
+    /**
+     * Performer는 Show와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를
+     * 넘는 참조는 ID로 한다 — {@code docs/architecture.md}의 참조 규칙). 컬럼명은 옛
+     * {@code @ManyToOne Performer performer} 암묵 매핑과 같은 {@code performer_id}를 그대로 쓴다.
+     */
+    @Column(name = "performer_id")
+    private Long performerId;
 
-    public Show(final String title, final String subTitle, final String info, final LocalDate startDate, final LocalDate endDate, final long viewCount, final SaleType saleType, final LocalDateTime saleStartDate, final LocalDateTime saleEndDate, final String image, final Long venueId, final Performer performer, final Integer runningMinutes) {
+    public Show(final String title, final String subTitle, final String info, final LocalDate startDate, final LocalDate endDate, final long viewCount, final SaleType saleType, final LocalDateTime saleStartDate, final LocalDateTime saleEndDate, final String image, final Long venueId, final Long performerId, final Integer runningMinutes) {
         this.title = title;
         this.subTitle = subTitle;
         this.info = info;
@@ -69,7 +74,7 @@ public class Show extends ShowAuditedEntity {
         this.saleEndDate = saleEndDate;
         this.image = image;
         this.venueId = venueId;
-        this.performer = performer;
+        this.performerId = performerId;
         this.runningMinutes = runningMinutes;
     }
 

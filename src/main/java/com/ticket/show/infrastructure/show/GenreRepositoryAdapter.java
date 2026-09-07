@@ -18,11 +18,11 @@ public class GenreRepositoryAdapter implements GenreRepository {
 
     @Override
     public List<Genre> findAllOrderByCategoryAndName() {
-        return jpaRepository.findAllByOrderByCategory_IdAscNameAsc();
+        return jpaRepository.findAllByOrderByCategoryIdAscNameAsc();
     }
 
     @Override
     public List<Genre> findAllByCategoryCodeOrderByName(final String categoryCode) {
-        return jpaRepository.findAllByCategory_CodeOrderByName(categoryCode);
+        return jpaRepository.findAllByCategoryCodeOrderByName(categoryCode);
     }
 }

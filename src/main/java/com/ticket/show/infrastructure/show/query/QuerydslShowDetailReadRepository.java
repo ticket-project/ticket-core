@@ -51,15 +51,30 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         final VenueSummary venue = showEntity.getVenueId() == null
                 ? null
                 : venueLookup.findSummary(showEntity.getVenueId()).orElse(null);
+        final Performer performerEntity = fetchPerformer(showEntity.getPerformerId());
 
-        return Optional.of(toShowDetail(showEntity, venue, genreNames, priceSummary, performanceDates));
+        return Optional.of(toShowDetail(showEntity, venue, performerEntity, genreNames, priceSummary, performanceDates));
     }
 
     private Show fetchShow(final Long showId) {
         return queryFactory
                 .selectFrom(show)
-                .leftJoin(show.performer, performer).fetchJoin()
                 .where(show.id.eq(showId))
+                .fetchOne();
+    }
+
+    /**
+     * Performer는 Show와 다른 aggregate라 {@code performerId} scalar로만 연결된다 — 옛
+     * {@code fetchJoin()} 대신 식별자로 따로 조회한다. venue 표시값을 {@code VenueLookup}으로 따로
+     * 채우는 것과 같은 형태다.
+     */
+    private Performer fetchPerformer(final Long performerId) {
+        if (performerId == null) {
+            return null;
+        }
+        return queryFactory
+                .selectFrom(performer)
+                .where(performer.id.eq(performerId))
                 .fetchOne();
     }
 
@@ -67,8 +82,8 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
         return queryFactory
                 .select(genre.name)
                 .from(showGenre)
-                .join(showGenre.genre, genre)
-                .where(showGenre.show.id.eq(showId))
+                .join(genre).on(genre.id.eq(showGenre.genreId))
+                .where(showGenre.showId.eq(showId))
                 .fetch();
     }
 
@@ -81,7 +96,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
                 .select(performanceGrade.price.min(), performanceGrade.price.max())
                 .from(performanceGrade)
                 .join(performanceGrade.performance, performance)
-                .where(performance.show.id.eq(showId))
+                .where(performance.showId.eq(showId))
                 .fetchOne();
         if (result == null) {
             return null;
@@ -113,7 +128,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     private List<Performance> fetchPerformances(final Long showId) {
         return queryFactory
                 .selectFrom(performance)
-                .where(performance.show.id.eq(showId))
+                .where(performance.showId.eq(showId))
                 .orderBy(performance.startTime.asc(), performance.performanceNo.asc())
                 .fetch();
     }
@@ -130,6 +145,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
     private ShowDetailView toShowDetail(
             final Show showEntity,
             final VenueSummary venue,
+            final Performer performerEntity,
             final List<String> genreNames,
             final GetShowDetailUseCase.PriceSummary priceSummary,
             final List<GetShowDetailUseCase.PerformanceDateInfo> performanceDates
@@ -151,7 +167,7 @@ public class QuerydslShowDetailReadRepository implements ShowDetailReadRepositor
                 showEntity.getSaleEndDate(),
                 showCardImagePathConverter.toCardImage(showEntity.getImage()),
                 toVenueInfo(venue),
-                toPerformerInfo(showEntity.getPerformer()),
+                toPerformerInfo(performerEntity),
                 genreNames,
                 priceSummary,
                 performanceDates

@@ -2,7 +2,6 @@ package com.ticket.show.application.performance.query;
 
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.repository.PerformanceRepository;
-import com.ticket.show.domain.show.Show;
 import com.ticket.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,14 +31,12 @@ class GetPerformanceScheduleListUseCaseTest {
     @Test
     void 같은_공연의_회차_목록을_반환한다() {
         //given
-        Show show = mock(Show.class);
         Performance selected = mock(Performance.class);
         Performance another = mock(Performance.class);
         LocalDateTime now = LocalDateTime.of(2026, 3, 15, 18, 0);
 
-        when(show.getId()).thenReturn(100L);
         when(selected.getId()).thenReturn(10L);
-        when(selected.getShow()).thenReturn(show);
+        when(selected.getShowId()).thenReturn(100L);
         when(selected.getPerformanceNo()).thenReturn(1L);
         when(selected.getStartTime()).thenReturn(now);
         when(another.getId()).thenReturn(11L);
@@ -59,11 +56,9 @@ class GetPerformanceScheduleListUseCaseTest {
     }
 
     @Test
-    void 공연이_연결되지_않은_회차면_예외를_던진다() {
+    void 존재하지_않는_회차면_예외를_던진다() {
         //given
-        Performance performance = mock(Performance.class);
-        when(performance.getShow()).thenReturn(null);
-        when(performanceRepository.findById(10L)).thenReturn(Optional.of(performance));
+        when(performanceRepository.findById(10L)).thenReturn(Optional.empty());
 
         //when
         //then
@@ -74,11 +69,9 @@ class GetPerformanceScheduleListUseCaseTest {
     @Test
     void 같은_공연의_회차가_없으면_빈_목록을_반환한다() {
         //given
-        Show show = mock(Show.class);
         Performance selected = mock(Performance.class);
-        when(show.getId()).thenReturn(100L);
         when(selected.getId()).thenReturn(10L);
-        when(selected.getShow()).thenReturn(show);
+        when(selected.getShowId()).thenReturn(100L);
         when(performanceRepository.findById(10L)).thenReturn(Optional.of(selected));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(100L)).thenReturn(List.of());
 

@@ -46,15 +46,10 @@ public class GetPerformanceScheduleListUseCase {
                 .orElseThrow(() -> new NotFoundException(
                         "공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
-        final Show show = findPerformance.getShow();
-        if (show == null) {
-            throw new NotFoundException(
-                                        "회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()
-            );
-        }
+        final Long showId = findPerformance.getShowId();
 
         final List<PerformanceScheduleItem> scheduleItems = performanceRepository
-                .findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(show.getId())
+                .findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId)
                 .stream()
                 .map(performance -> new PerformanceScheduleItem(
                         performance.getId(),
@@ -63,6 +58,6 @@ public class GetPerformanceScheduleListUseCase {
                 ))
                 .toList();
 
-        return new Output(show.getId(), findPerformance.getId(), scheduleItems);
+        return new Output(showId, findPerformance.getId(), scheduleItems);
     }
 }

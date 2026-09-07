@@ -116,20 +116,20 @@ class VenueModuleSlicingSchemaTest {
             persist(session, venueA);
             persist(session, venueB);
 
-            final Seat seatInVenueA = new Seat(venueA, "가", "A", "1", 1, 10.0, 20.0);
+            final Seat seatInVenueA = new Seat(venueA.getId(), "가", "A", "1", 1, 10.0, 20.0);
             persist(session, seatInVenueA);
 
             session.clear();
             final Seat found = session.find(Seat.class, seatInVenueA.getId());
             assertThat(found).isNotNull();
-            assertThat(found.getVenue().getId()).isEqualTo(venueA.getId());
+            assertThat(found.getVenueId()).isEqualTo(venueA.getId());
 
             // 다른 Venue의 동일 좌석 주소는 성공한다.
-            final Seat seatInVenueB = new Seat(venueB, "가", "A", "1", 1, 10.0, 20.0);
+            final Seat seatInVenueB = new Seat(venueB.getId(), "가", "A", "1", 1, 10.0, 20.0);
             persist(session, seatInVenueB);
 
             // 같은 Venue 안 동일 좌석 주소는 unique 제약 위반이다.
-            final Seat duplicateInVenueA = new Seat(venueA, "가", "A", "1", 1, 99.0, 99.0);
+            final Seat duplicateInVenueA = new Seat(venueA.getId(), "가", "A", "1", 1, 99.0, 99.0);
             assertThatThrownBy(() -> persist(session, duplicateInVenueA))
                     .isInstanceOf(ConstraintViolationException.class);
         } finally {
