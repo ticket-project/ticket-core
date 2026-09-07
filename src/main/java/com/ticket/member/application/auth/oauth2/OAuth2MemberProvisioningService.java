@@ -4,7 +4,6 @@ import com.ticket.member.domain.auth.oauth2.OAuth2UserInfo;
 import com.ticket.member.domain.member.model.Member;
 import com.ticket.member.domain.member.repository.MemberRepository;
 import com.ticket.member.domain.member.model.MemberSocialAccount;
-import com.ticket.member.domain.member.repository.MemberSocialAccountRepository;
 import com.ticket.member.domain.member.model.Email;
 import com.ticket.member.domain.member.model.Role;
 import com.ticket.member.exception.DuplicateEmailException;
@@ -13,20 +12,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+/**
+ * 소셜 계정은 회원 aggregate의 자식이므로 별도 Repository를 거치지 않는다. 소셜 ID로 회원을 찾는
+ * 조회만 {@link MemberRepository}가 맡고, 연결 여부 확인과 연결 추가는 {@code Member}가 자기
+ * 컬렉션으로 처리한다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OAuth2MemberProvisioningService {
 
     private final MemberRepository memberRepository;
-    private final MemberSocialAccountRepository memberSocialAccountRepository;
 
     public Member getOrCreateMember(final OAuth2UserInfo userInfo) {
-        return memberSocialAccountRepository.findActiveBySocialProviderAndSocialId(
-                        userInfo.provider(),
-                        userInfo.providerId()
-                )
-                .map(MemberSocialAccount::getMember)
+        return memberRepository.findActiveBySocialAccount(userInfo.provider(), userInfo.providerId())
                 .orElseGet(() -> createOrLinkMember(userInfo));
     }
 
@@ -39,25 +38,25 @@ public class OAuth2MemberProvisioningService {
     }
 
     private Member linkSocialAccount(final Member existingMember, final OAuth2UserInfo userInfo) {
-        return memberSocialAccountRepository.findActiveByMemberAndProvider(existingMember, userInfo.provider())
-                .map(linkedAccount -> validateSameSocialAccount(linkedAccount, userInfo))
+        return existingMember.findActiveSocialAccount(userInfo.provider())
+                .map(linkedAccount -> validateSameSocialAccount(existingMember, linkedAccount, userInfo))
                 .orElseGet(() -> addSocialAccount(existingMember, userInfo));
     }
 
-    private Member validateSameSocialAccount(final MemberSocialAccount linkedAccount, final OAuth2UserInfo userInfo) {
+    private Member validateSameSocialAccount(
+            final Member existingMember,
+            final MemberSocialAccount linkedAccount,
+            final OAuth2UserInfo userInfo
+    ) {
         if (!linkedAccount.isSameSocialId(userInfo.providerId())) {
             throw new DuplicateEmailException("Email is already linked to another social account.");
         }
-        return linkedAccount.getMember();
+        return existingMember;
     }
 
     private Member addSocialAccount(final Member existingMember, final OAuth2UserInfo userInfo) {
-        memberSocialAccountRepository.save(MemberSocialAccount.create(
-                existingMember,
-                userInfo.provider(),
-                userInfo.providerId()
-        ));
-        return existingMember;
+        existingMember.addSocialAccount(userInfo.provider(), userInfo.providerId());
+        return memberRepository.save(existingMember);
     }
 
     private Member createSocialMember(final OAuth2UserInfo userInfo, final String email) {
@@ -67,13 +66,8 @@ public class OAuth2MemberProvisioningService {
                 displayName,
                 Role.MEMBER
         );
-        final Member savedMember = memberRepository.save(member);
-        memberSocialAccountRepository.save(MemberSocialAccount.create(
-                savedMember,
-                userInfo.provider(),
-                userInfo.providerId()
-        ));
-        return savedMember;
+        member.addSocialAccount(userInfo.provider(), userInfo.providerId());
+        return memberRepository.save(member);
     }
 
     private String resolveEmail(final OAuth2UserInfo userInfo) {
