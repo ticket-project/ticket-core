@@ -1,4 +1,4 @@
-package com.ticket.booking.domain.order.command.create;
+package com.ticket.booking.application.order.command;
 
 import com.ticket.show.BookingPolicySnapshot;
 import com.ticket.show.PerformanceSaleSnapshot;

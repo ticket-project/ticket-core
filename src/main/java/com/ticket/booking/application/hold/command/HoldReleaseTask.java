@@ -1,4 +1,4 @@
-package com.ticket.booking.application.order.command;
+package com.ticket.booking.application.hold.command;
 
 import java.util.List;
 

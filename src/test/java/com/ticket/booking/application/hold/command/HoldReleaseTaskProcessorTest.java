@@ -1,6 +1,6 @@
-package com.ticket.booking.application.order.command;
+package com.ticket.booking.application.hold.command;
 
-import com.ticket.booking.application.event.HoldReleaseProgressRecorder;
+import com.ticket.booking.application.hold.event.HoldReleaseProgressRecorder;
 import com.ticket.booking.domain.hold.command.HoldManager;
 import com.ticket.booking.domain.performanceseat.command.SeatSelectionService;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;

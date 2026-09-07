@@ -5,7 +5,6 @@ import com.ticket.booking.application.lock.RecordingLockManager;
 import com.ticket.booking.application.order.command.CreateOrderUseCase;
 import com.ticket.booking.application.order.command.CreateOrderValidator;
 import com.ticket.booking.application.order.command.CreatePendingOrderTransactionService;
-import com.ticket.booking.domain.order.command.create.ValidatedOrderRequest;
 import com.ticket.booking.domain.order.command.create.RequestedSeatIds;
 import com.ticket.booking.domain.order.command.create.PendingOrderCreationResult;
 import com.ticket.booking.domain.order.command.create.HoldAllocator;

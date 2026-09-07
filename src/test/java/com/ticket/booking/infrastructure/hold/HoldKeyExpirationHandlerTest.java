@@ -1,7 +1,6 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.infrastructure.hold;
 
 import com.ticket.booking.application.order.command.ExpireOrderUseCase;
-import com.ticket.booking.infrastructure.performanceseat.store.SeatSelectionRedisKey;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,7 +28,7 @@ class HoldKeyExpirationHandlerTest {
     void hold_meta_키를_지원하고_주문_만료를_위임한다() {
         HoldKeyExpirationHandler handler = new HoldKeyExpirationHandler(expireOrderUseCase, fixedClock);
 
-        String expiredKey = SeatSelectionRedisKey.holdMeta("hold-key");
+        String expiredKey = HoldRedisKey.holdMeta("hold-key");
 
         assertThat(handler.supports(expiredKey)).isTrue();
 

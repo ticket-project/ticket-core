@@ -1,6 +1,6 @@
-package com.ticket.booking.infrastructure.order;
+package com.ticket.booking.infrastructure.hold;
 
-import com.ticket.booking.application.event.HoldReleaseProgressRecorder;
+import com.ticket.booking.application.hold.event.HoldReleaseProgressRecorder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;

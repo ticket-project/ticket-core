@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.order;
+package com.ticket.booking.infrastructure.hold;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
