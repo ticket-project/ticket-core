@@ -1,6 +1,7 @@
 package com.ticket.member.infrastructure.member;
 
 import com.ticket.member.domain.member.model.Member;
+import com.ticket.member.domain.member.model.SocialProvider;
 import com.ticket.member.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -34,5 +35,10 @@ public class MemberRepositoryAdapter implements MemberRepository {
     @Override
     public boolean existsActiveById(final Long id) {
         return jpaRepository.existsByIdAndDeletedAtIsNull(id);
+    }
+
+    @Override
+    public Optional<Member> findActiveBySocialAccount(final SocialProvider socialProvider, final String socialId) {
+        return jpaRepository.findActiveBySocialAccount(socialProvider, socialId);
     }
 }
