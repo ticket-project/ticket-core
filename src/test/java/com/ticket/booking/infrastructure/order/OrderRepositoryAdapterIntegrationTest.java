@@ -78,6 +78,31 @@ class OrderRepositoryAdapterIntegrationTest {
         inTransaction(() -> jpaRepository.deleteAll());
     }
 
+    /**
+     * OrderSeat는 Order aggregate의 자식이라 자기 Repository 없이 root 저장에 cascade로 함께
+     * 실린다. 정렬은 {@code @OrderBy("id ASC")}가 옛 {@code findAllByOrderIdOrderByIdAsc}의
+     * 순서를 그대로 유지한다 — hold 생성 후처리가 이 순서의 seatId 목록을 쓴다.
+     */
+    @Test
+    void 주문_좌석은_root_저장에_cascade되고_id_오름차순으로_복원된다() {
+        Order order = order("with-seats", LocalDateTime.now().plusMinutes(5));
+        order.addOrderSeat(501L, 42L, BigDecimal.valueOf(10_000), "R", "R석", "1F 가구역 A열 1번");
+        order.addOrderSeat(502L, 43L, BigDecimal.valueOf(12_000), "S", "S석", "1F 가구역 A열 2번");
+
+        inTransaction(() -> orderRepository.save(order));
+
+        Order reloaded = inTransactionWithResult(() -> {
+            Order found = jpaRepository.findById(order.getId()).orElseThrow();
+            found.getOrderSeats().size();
+            return found;
+        });
+        assertThat(reloaded.getOrderSeats())
+                .extracting(orderSeat -> orderSeat.getPerformanceSeatId())
+                .containsExactly(501L, 502L);
+        assertThat(reloaded.getOrderSeats())
+                .allSatisfy(orderSeat -> assertThat(orderSeat.getOrder().getId()).isEqualTo(order.getId()));
+    }
+
     @Test
     void expiration_query_includes_orders_due_exactly_now() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);

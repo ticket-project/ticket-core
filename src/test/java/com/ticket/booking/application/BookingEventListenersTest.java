@@ -8,9 +8,7 @@ import com.ticket.booking.application.hold.command.HoldReleaseTask;
 import com.ticket.booking.application.hold.command.HoldReleaseTaskProcessor;
 import com.ticket.booking.domain.hold.model.Hold;
 import com.ticket.booking.domain.order.model.Order;
-import com.ticket.booking.domain.order.model.OrderSeat;
 import com.ticket.booking.domain.order.repository.OrderRepository;
-import com.ticket.booking.domain.order.repository.OrderSeatRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,9 +51,6 @@ class BookingEventListenersTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private OrderSeatRepository orderSeatRepository;
-
-    @Mock
     private HoldCreationTaskProcessor holdCreationTaskProcessor;
 
     @Mock
@@ -70,7 +65,6 @@ class BookingEventListenersTest {
     void setUp() {
         listeners = new BookingEventListeners(
                 orderRepository,
-                orderSeatRepository,
                 holdCreationTaskProcessor,
                 holdReleaseTaskProcessor,
                 holdReleaseProgressRecorder,
@@ -92,10 +86,9 @@ class BookingEventListenersTest {
     void OrderStarted는_현재_DB_상태로_Hold를_재구성해_생성_프로세서에_넘긴다() {
         final OrderStarted event = orderStarted(10L, "hold-key");
         final Order order = order(10L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
-        final OrderSeat seatA = orderSeat(order, 501L, 42L);
-        final OrderSeat seatB = orderSeat(order, 502L, 43L);
+        addOrderSeat(order, 501L, 42L);
+        addOrderSeat(order, 502L, 43L);
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
-        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(10L)).thenReturn(List.of(seatA, seatB));
 
         listeners.on(event);
 
@@ -117,9 +110,8 @@ class BookingEventListenersTest {
     void OrderTerminated는_최초_전달이면_holdReleased_false로_해제_프로세서를_부른다() {
         final OrderTerminated event = orderTerminated(11L, "hold-key");
         final Order order = order(11L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
-        final OrderSeat seat = orderSeat(order, 501L, 42L);
+        addOrderSeat(order, 501L, 42L);
         when(orderRepository.findById(11L)).thenReturn(Optional.of(order));
-        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(11L)).thenReturn(List.of(seat));
         when(holdReleaseProgressRecorder.isReleased(event.eventId())).thenReturn(false);
 
         listeners.on(event);
@@ -140,9 +132,8 @@ class BookingEventListenersTest {
     void OrderTerminated_재전달이면_holdReleased_true로_넘겨_Redis_해제를_반복하지_않는다() {
         final OrderTerminated event = orderTerminated(11L, "hold-key");
         final Order order = order(11L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
-        final OrderSeat seat = orderSeat(order, 501L, 42L);
+        addOrderSeat(order, 501L, 42L);
         when(orderRepository.findById(11L)).thenReturn(Optional.of(order));
-        when(orderSeatRepository.findAllByOrderIdOrderByIdAsc(11L)).thenReturn(List.of(seat));
         when(holdReleaseProgressRecorder.isReleased(event.eventId())).thenReturn(true);
 
         listeners.on(event);
@@ -172,7 +163,7 @@ class BookingEventListenersTest {
         return order;
     }
 
-    private OrderSeat orderSeat(final Order order, final Long performanceSeatId, final Long seatId) {
-        return new OrderSeat(order, performanceSeatId, seatId, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
+    private void addOrderSeat(final Order order, final Long performanceSeatId, final Long seatId) {
+        order.addOrderSeat(performanceSeatId, seatId, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
     }
 }

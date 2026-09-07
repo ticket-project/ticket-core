@@ -10,7 +10,6 @@ import com.ticket.booking.domain.hold.model.Hold;
 import com.ticket.booking.domain.order.model.Order;
 import com.ticket.booking.domain.order.model.OrderSeat;
 import com.ticket.booking.domain.order.repository.OrderRepository;
-import com.ticket.booking.domain.order.repository.OrderSeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;
@@ -27,8 +26,9 @@ import java.util.List;
  * 실패를 catch-and-log로 삼키지 않고 그대로 던져 registry가 FAILED로 기록하게 하고,
  * {@code com.ticket.config.EventPublicationMaintenance}가 재시도한다.
  *
- * <p>event payload의 스냅샷을 그대로 믿지 않고 {@code orderId}로 현재 저장된 order·orderSeat를
- * 다시 읽어 처리한다. hold 생성 후처리({@link HoldCreationTaskProcessor})와 hold 해제 후처리
+ * <p>event payload의 스냅샷을 그대로 믿지 않고 {@code orderId}로 현재 저장된 order를 다시 읽어
+ * 처리한다 — 좌석은 Order aggregate가 직접 들고 있어 함께 따라온다. hold 생성
+ * 후처리({@link HoldCreationTaskProcessor})와 hold 해제 후처리
  * ({@link HoldReleaseTaskProcessor})는 Task 7 이전부터 있던 멱등 로직을 그대로 재사용한다.
  */
 @Slf4j
@@ -37,7 +37,6 @@ import java.util.List;
 class BookingEventListeners {
 
     private final OrderRepository orderRepository;
-    private final OrderSeatRepository orderSeatRepository;
     private final HoldCreationTaskProcessor holdCreationTaskProcessor;
     private final HoldReleaseTaskProcessor holdReleaseTaskProcessor;
     private final HoldReleaseProgressRecorder holdReleaseProgressRecorder;
@@ -50,7 +49,7 @@ class BookingEventListeners {
             log.debug("주문 생성 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        final List<Long> seatIds = seatIdsOf(event.orderId());
+        final List<Long> seatIds = seatIdsOf(order);
         final Hold hold = new Hold(event.holdKey(), event.memberId(), order.getPerformanceId(), seatIds, order.getExpiresAt());
         holdCreationTaskProcessor.process(hold);
     }
@@ -62,14 +61,14 @@ class BookingEventListeners {
             log.debug("hold 해제 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        final List<Long> seatIds = seatIdsOf(event.orderId());
+        final List<Long> seatIds = seatIdsOf(order);
         final boolean alreadyReleased = holdReleaseProgressRecorder.isReleased(event.eventId());
         final HoldReleaseTask task = new HoldReleaseTask(order.getPerformanceId(), event.holdKey(), seatIds, alreadyReleased);
         holdReleaseTaskProcessor.process(event.eventId(), task, LocalDateTime.now(clock));
     }
 
-    private List<Long> seatIdsOf(final Long orderId) {
-        return orderSeatRepository.findAllByOrderIdOrderByIdAsc(orderId).stream()
+    private List<Long> seatIdsOf(final Order order) {
+        return order.getOrderSeats().stream()
                 .map(OrderSeat::getSeatId)
                 .toList();
     }

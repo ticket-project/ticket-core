@@ -1,6 +1,7 @@
 package com.ticket.booking.domain.order.model;
 
 import com.ticket.booking.domain.BookingAuditedEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,6 +10,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -16,6 +19,9 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Entity
@@ -73,6 +79,18 @@ public class Order extends BookingAuditedEntity {
 
     private LocalDateTime canceledAt;
 
+    /**
+     * 이 주문이 포함한 좌석이다({@code 1:1..N}, 빈 주문은 없다). Order aggregate 안의 자식이라
+     * {@code cascade = ALL}로 root 저장에 함께 실리고, 별도 Repository를 두지 않는다.
+     *
+     * <p>{@code @OrderBy}는 옛 {@code findAllByOrderIdOrderByIdAsc}의 정렬을 그대로 유지한다 —
+     * hold 생성 후처리가 이 순서의 seatId 목록을 그대로 쓴다.
+     */
+    @Getter(AccessLevel.NONE)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<OrderSeat> orderSeats = new ArrayList<>();
+
     public Order(
             final Long memberId,
             final Long performanceId,
@@ -94,6 +112,39 @@ public class Order extends BookingAuditedEntity {
         this.showTitleSnapshot = showTitleSnapshot;
         this.performanceStartAtSnapshot = performanceStartAtSnapshot;
         this.venueNameSnapshot = venueNameSnapshot;
+    }
+
+    /**
+     * 주문 좌석을 aggregate root를 통해서만 만든다. 자식의 {@code order} 역참조를 여기서 채우므로
+     * 양방향이 어긋날 여지가 없다. 저장은 root 저장에 cascade로 함께 실린다.
+     */
+    public OrderSeat addOrderSeat(
+            final Long performanceSeatId,
+            final Long seatId,
+            final BigDecimal unitPrice,
+            final String gradeCodeSnapshot,
+            final String gradeNameSnapshot,
+            final String seatLabelSnapshot
+    ) {
+        final OrderSeat orderSeat = new OrderSeat(
+                this,
+                performanceSeatId,
+                seatId,
+                unitPrice,
+                gradeCodeSnapshot,
+                gradeNameSnapshot,
+                seatLabelSnapshot
+        );
+        orderSeats.add(orderSeat);
+        return orderSeat;
+    }
+
+    /**
+     * 밖에서 컬렉션을 직접 바꾸지 못하게 읽기 전용 view로 준다 — 좌석 추가는
+     * {@link #addOrderSeat}만 통한다.
+     */
+    public List<OrderSeat> getOrderSeats() {
+        return Collections.unmodifiableList(orderSeats);
     }
 
     public void confirm(final LocalDateTime now) {

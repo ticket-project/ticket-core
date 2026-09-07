@@ -4,14 +4,11 @@ import com.ticket.booking.domain.order.command.create.OrderKeyGenerator;
 import com.ticket.booking.domain.order.model.Order;
 import com.ticket.booking.domain.order.model.OrderSeat;
 import com.ticket.booking.domain.order.repository.OrderRepository;
-import com.ticket.booking.domain.order.repository.OrderSeatRepository;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
-import com.ticket.venue.domain.seat.Seat;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,7 +23,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -35,9 +31,6 @@ class OrderCreatorTest {
 
     @Mock
     private OrderRepository orderRepository;
-
-    @Mock
-    private OrderSeatRepository orderSeatRepository;
 
     @Mock
     private OrderKeyGenerator orderKeyGenerator;
@@ -81,10 +74,23 @@ class OrderCreatorTest {
         // then
         assertThat(order.getOrderKey()).isEqualTo("ORDER-KEY");
         assertThat(order.getTotalAmount()).isEqualByComparingTo("30");
-        final ArgumentCaptor<List<OrderSeat>> orderSeatCaptor = ArgumentCaptor.forClass(List.class);
-        verify(orderSeatRepository).saveAll(orderSeatCaptor.capture());
-        assertThat(orderSeatCaptor.getValue()).hasSize(2);
-        assertThat(orderSeatCaptor.getValue()).extracting(OrderSeat::getSeatId).containsExactly(201L, 202L);
+        // 좌석은 별도 Repository가 아니라 Order aggregate가 들고 있고, cascade로 함께 저장된다.
+        assertThat(order.getOrderSeats()).hasSize(2);
+        assertThat(order.getOrderSeats()).extracting(OrderSeat::getSeatId).containsExactly(201L, 202L);
+        assertThat(order.getOrderSeats()).allSatisfy(orderSeat ->
+                assertThat(orderSeat.getOrder()).isSameAs(order));
+    }
+
+    @Test
+    void 주문_좌석_컬렉션은_밖에서_직접_바꿀_수_없다() {
+        final Order order = new Order(
+                1L, 10L, "ORDER-KEY", "hold-key", BigDecimal.TEN,
+                LocalDateTime.of(2026, 3, 15, 12, 0), "show-title",
+                LocalDateTime.of(2026, 3, 20, 19, 0), "venue-name"
+        );
+
+        assertThatThrownBy(() -> order.getOrderSeats().add(null))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
