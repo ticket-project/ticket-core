@@ -21,6 +21,13 @@
 옮겼고, `AdmissionErrorCode`(E8xxx)와 `AdmissionExceptionHandler`는 booking의 `exception` 아래로
 옮겨 값은 유지했다. 아래 본문의 `admission` module 언급은 흡수 이전 기록이다.
 
+**2026-09-07 갱신(BC 재편)**: [ADR 0006](0006-bounded-context-module-boundaries.md)이 §3(승인된
+의존 DAG)의 module set과 §11(showlike 흡수)을 다시 supersede했다 — `catalog`가 `show`로 개명되고
+물리 공연장·좌석(Venue/Seat)이 `venue`로, 찜(ShowLike)이 다시 `favorite`로 분리됐다. §11이
+흡수의 근거로 들었던 순환은 이번에는 반대 방향(`favorite -> show`)을 없애 해소했다 — §11 본문은
+그 이전 결정의 기록으로 남긴다. 현재 module set·DAG의 원본은 ADR 0006과
+`com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`다.
+
 기존 `bootstrap`/`core-api`/`core-app`/`core-domain`/`core-infra`/`storage`/`support` Gradle
 멀티프로젝트를 단일 Gradle Spring Boot 프로젝트로 통합하고, `com.ticket`의 직접 하위 패키지를
 Spring Modulith의 닫힌 Application Module(`booking`, `catalog`, `member`, `admission`,
@@ -199,10 +206,10 @@ auditing이 채우는 감사자 id)는 member의 공개 계약 `AuthenticatedMem
 `WebSocketConfig`/`HttpServiceConfig`/`JwtConfig`는 애초에 특정 module의 `internal`을 직접 참조해
 domain-free하지도 않다. 이 여섯 개도 `com.ticket.config`가 소유한다(§9).
 
-**아직 이 기준을 만족하지 못하는 것**: §11에서 찜(showlike)이 catalog로 흡수되며 `CursorPage`를
-실제로 쓰는 곳이 `catalog` 하나만 남았다("둘 이상의 독립 module" 미달). `shared`에 남겨 둔 채
-`catalog`로 내리지 않았다 — 이 gap을 해결된 것으로 서술하지 않는다. `catalog`로
-내리는 작업은 별도로 결정한다.
+**해소됨(2026-09-07)**: §11에서 찜(showlike)이 catalog로 흡수됐을 때는 `CursorPage`를 실제로 쓰는
+곳이 `catalog` 하나만 남아 "둘 이상의 독립 module" 기준을 만족하지 못했다. ADR 0006의 BC 재편으로
+찜이 다시 `favorite`로 분리되며 `show`(목록·내 찜 조회)와 `favorite`(`findLikedShows` 반환) 둘이
+`CursorPage`를 쓰게 돼 이 gap은 해소됐다.
 
 `shared`에 두지 **않는** 것: business logic, 특정 module에만 의미 있는 동작, bean을 등록하는 코드,
 그리고 여러 module의 내부를 동시에 참조해야만 배선되는 설정(§9 `config` 참고) — 마지막 것을

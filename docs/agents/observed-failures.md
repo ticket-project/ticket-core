@@ -88,3 +88,19 @@ VENUES/SEATS 컬럼 추가, `CatalogModuleSlicingSchemaTest`, `CurrentSeatVenueS
 추가했다. 새 Application Module을 추가할 때는 그 module의 entity를 Hibernate가 인식하는지
 `ModularityTests`뿐 아니라 여러 module 테스트가 공유하는 `@EntityScan`/`@DataJpaTest` 기반 클래스
 목록도 함께 갱신해야 한다 — 새 module 자신의 테스트만 통과 확인하면 이 종류의 실패는 놓친다.
+
+## [관측 2026-09-07] `@EntityScan` 하드코딩이 한 곳이 아니라 두 곳이었다
+
+**무엇을**: ADR 0006의 venue module 분리 작업 중, `ReadRepositoryTestSupport`의 `@EntityScan`만
+고치고 끝냈다면 `QuerydslShowListReadRepositoryTest`가 실패했을 것이다 — 이 테스트는
+`InfraReadRepositoryTestSupport`를 상속하지 않고 자기 `@SpringBootTest(classes =
+QuerydslShowListReadRepositoryTest.TestApplication.class)`와 자체 `@EntityScan`을 갖는다.
+
+**왜**: 위 2026-09-04 항목이 고정한 교훈("여러 module 테스트가 공유하는 EntityScan 목록")은
+`ReadRepositoryTestSupport`/`InfraReadRepositoryTestSupport` 하나만 가리키는 것으로 오해하기
+쉽지만, 자체 Spring context를 갖는 개별 테스트가 또 있으면 그 테스트의 `@EntityScan`/`@Import`도
+별도로 갱신해야 한다.
+
+**막은 방법**: 새 module을 추가할 때 공유 test-support 클래스뿐 아니라
+`rg "@EntityScan" src/test`로 하드코딩된 위치 전부를 찾아 확인한다. 이번 세션에서는 이 검색으로
+두 번째 위치를 미리 찾아 갱신해 실패를 피했다.

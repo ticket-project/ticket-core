@@ -11,20 +11,22 @@
 
 ## 프로젝트 요약
 
-Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `catalog`,
-`member`, `payment`를 포함해 9개 Spring Modulith
-Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). 현재
-구현의 중심은 아래 흐름이다.
+Ticket은 공연/전시 티켓팅 백엔드다. 단일 Gradle Spring Boot 프로젝트이며 `booking`, `show`,
+`venue`, `favorite`, `member`, `payment`를 포함해 11개 Spring Modulith
+Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](architecture.md)가 원본). Application
+Module(기술 모듈 제외)은 Bounded Context와 일치한다([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
+현재 구현의 중심은 아래 흐름이다.
 
 - 인증/회원(`member`): 이메일 회원가입, 로그인, JWT 갱신, OAuth2 로그인 URL 조회 및 토큰 교환
-- 공연/전시 조회(`catalog`): 쇼, 장르, 회차별 Venue 배치·좌석·등급(Grade/PerformanceGrade) 조회,
-  대기열 필요 여부 정책
+- 공연/전시 조회(`show`): 쇼, 장르, 회차별 등급(Grade/PerformanceGrade) 조회, 대기열 필요 여부 정책
+- 물리 시설 조회(`venue`): Venue 배치·좌석 주소·좌표. `show`가 표시값을 조립할 때 호출한다
 - 좌석 선택(`booking`): Redis TTL 기반 임시 선택 상태와 WebSocket 전파
 - 좌석 선점과 주문(`booking`): Redis 기반 hold, `PENDING` 주문 생성, 조회, 취소, 만료 처리.
   판매 좌석(`PerformanceSeat`)은 회차 단위로 편성되고 판매 오픈 시점 가격을 snapshot한다
 - 입장 검증(`booking`의 admission 검증): `ticket-queue`가 발급한 admission token 검증
-- 좋아요(`showlike`): catalog가 흡수했다. 상세는
-  [architecture.md의 찜(showlike)은 catalog가 흡수한다](architecture.md#찜showlike은-catalog가-흡수한다)를 본다
+- 찜(`favorite`): 데이터·불변식은 favorite가 소유하고, HTTP endpoint·use case는 show에 남아 favorite의
+  공개 API로 조합한다. 상세는
+  [architecture.md의 Favorite BC와 조합 규칙](architecture.md#favorite-bc와-조합-규칙)을 본다
 - 결제 시도(`payment`), 발급 티켓(`booking`의 Ticket): 이번 범위는 entity/schema/repository까지다. PG
   연동, 결제 승인/실패/취소 API, 자동 티켓 발급, QR/입장/사용/양도는 없다
 - 대기열: Ticket Server가 회차별 DIRECT/QUEUE를 결정하고, `ticket-queue` 별도 서비스가
@@ -58,9 +60,10 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 - performance 기준 API 3종(`booking.web.PerformanceSeatQueryController`,
   `/api/v1/performances/{performanceId}/**`)은 각각 다른 것을 반환한다.
   - `GET .../seat-map`: 정적 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값·확정 가격
-    (`GetPerformanceSeatMapUseCase`). catalog `PerformanceVenueLayoutCatalog`와 booking local
-    `PerformanceSeat` 조회를 각각 한 번씩만 호출해 N+1 없이 고정된 query 수로 조합한다. Performance에
-    판매 편성되지 않은 물리 Seat는 응답에 아예 나타나지 않는다.
+    (`GetPerformanceSeatMapUseCase`). show `PerformanceVenueLayoutCatalog`(내부적으로 venue의
+    `VenueSeatLookup` 호출)와 booking local `PerformanceSeat` 조회를 각각 한 번씩만 호출해 N+1 없이
+    고정된 query 수로 조합한다. Performance에 판매 편성되지 않은 물리 Seat는 응답에 아예 나타나지
+    않는다.
   - `GET .../seats/status`: 동적 상태(`performanceSeatId` -> AVAILABLE/OCCUPIED). DB `RESERVED`와
     Redis `SELECTING`/`HOLDING`을 합친다(`GetSeatStatusUseCase`).
   - `GET .../seats/availability`: 등급별 잔여석(`GetSeatAvailabilityUseCase`). 그룹 key는 이름이
@@ -69,11 +72,12 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
     새 좌석·등급 조회 API를 추가할 때도 이 원칙을 지킨다 — 상태 누락을 판매 가능으로 조용히
     치환하지 않는다.
   - 새 조회를 추가할 때 회차당 고정된 query 수(요청 회차 크기와 무관)를 유지하는지 확인한다.
-    catalog 쪽 좌표·등급 표시값이 booking 쪽 판매 편성과 어긋나면(데이터 불일치) 예외를 던지지 않고
-    조용히 그 좌석만 제외한다 — 어떤 오류로 다룰지는 조합 시점에 판정하지 않는다.
-  - `booking.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
-    Venue 배치만 반환하는 별개의 레거시 show 기준 API다. 새 기능은 여기 추가하지 않고 performance
-    기준 API 3종에 추가한다.
+    show/venue 쪽 좌표·등급 표시값이 booking 쪽 판매 편성과 어긋나면(데이터 불일치) 예외를 던지지
+    않고 조용히 그 좌석만 제외한다 — 어떤 오류로 다룰지는 조합 시점에 판정하지 않는다.
+  - `show.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리
+    Venue 배치만 반환하는 별개의 show 기준 API다(ADR 0006으로 booking에서 옮겨왔다 — booking
+    데이터를 쓰지 않는 passthrough였다). 새 기능은 여기 추가하지 않고 performance 기준 API
+    3종에 추가한다.
 
 ### 좌석 선택
 
@@ -90,7 +94,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 실제 실행 순서(`CreateOrderValidator`/`CreateOrderUseCase` 기준):
 
 1. 같은 회원·같은 회차의 주문 시작을 분산락으로 직렬화한다(`LockScope.ORDER_START`)
-2. catalog `BookingPolicyLookup`으로 예매 정책·좌석 소속·가격 snapshot을 조회한다(booking DB
+2. show `BookingPolicyLookup`으로 예매 정책·좌석 소속·가격 snapshot을 조회한다(booking DB
    트랜잭션 밖)
 3. 정책상 대기열이 필요한 회차만 booking 안의 `AdmissionVerifier`로 token을 검증한다(밖)
 4. member `MemberLookup`으로 회원이 active인지 확인한다(밖)
@@ -124,7 +128,7 @@ Application Module로 나눈다(전체 목록과 DAG는 [architecture.md](archit
 ### 대기열
 
 대기열 런타임은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도, queue token
-저장소도, 만료 핸들러도 갖지 않는다. 대신 catalog의 `PerformanceQueuePolicy`로 공연 상세 응답의
+저장소도, 만료 핸들러도 갖지 않는다. 대신 show의 `PerformanceQueuePolicy`로 공연 상세 응답의
 회차별 `entryType`을 계산하고, 클라이언트가 예매 버튼에서 DIRECT/QUEUE를 분기한다.
 
 Queue Server hot path는 Core DB와 회차별 정책 snapshot을 조회하지 않는다. Queue Server는 모든
@@ -139,18 +143,18 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 
 ## 핵심 도메인 모델
 
-### 가격 원본과 snapshot 체인(catalog -> booking)
+### 가격 원본과 snapshot 체인(show -> booking)
 
 가격은 세 시점의 사실로 나뉘고, **뒤 단계는 앞 단계를 다시 조회하지 않는다.**
 
 ```text
-PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 — 판매 오픈 전에만 변경
+PerformanceGrade.price(show)   운영자가 구성한 회차 등급 가격 — 판매 오픈 전에만 변경
   -> PerformanceSeat.unitPrice(booking)   판매 좌석 생성 시 snapshot — 판매 오픈 후 불변
     -> OrderSeat.unitPrice(booking)       주문 생성 시 snapshot — 생성 후 불변
 ```
 
-- `Grade`(catalog)는 `VIP`/`R`/`S`/`A` 같은 코드·이름만 갖고 가격이 없다. 같은 Grade라도 회차마다
-  가격이 다를 수 있어 `PerformanceGrade`(`Grade N:M Performance` 연결 entity, catalog)가 회차별
+- `Grade`(show)는 `VIP`/`R`/`S`/`A` 같은 코드·이름만 갖고 가격이 없다. 같은 Grade라도 회차마다
+  가격이 다를 수 있어 `PerformanceGrade`(`Grade N:M Performance` 연결 entity, show)가 회차별
   가격·표시 순서를 갖는다 — **가격의 원본은 `PerformanceGrade.price`다.**
 - `PerformanceSeat`(booking)는 판매 좌석 생성 시 `PerformanceGrade.price`를 `unitPrice`로 복사하고,
   이후 이 값은 불변이다. `PerformanceGrade` 가격을 나중에 바꿔도 이미 생성된 `PerformanceSeat`는
@@ -159,12 +163,12 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
   `PerformanceSeat.unitPrice`만으로 계산하고, 클라이언트가 보낸 가격은 받지도 계산 근거로
   쓰지도 않는다.**
 - 과거 주문 조회는 현재 `PerformanceGrade`/`PerformanceSeat` 가격을 다시 조회하지 않는다.
-  `OrderSeat.unitPrice`가 그 시점의 계약을 이미 보존하므로, catalog 쪽 가격·표시 이름이 바뀌어도
+  `OrderSeat.unitPrice`가 그 시점의 계약을 이미 보존하므로, show 쪽 가격·표시 이름이 바뀌어도
   기존 주문 상세는 바뀌지 않아야 한다.
 - 새 가격 관련 기능을 추가할 때 이 체인 중간을 건너뛰어 상위 단계(`PerformanceGrade.price`)를 직접
   참조하지 않는다 — 그 순간 스냅샷을 보존하는 이유 자체가 무너진다.
 
-### Show/Performance/Grade/PerformanceGrade/PerformanceSeat(catalog + booking)
+### Show/Performance/Grade/PerformanceGrade/PerformanceSeat(show + booking)
 
 - `Show`는 `Performance`를 회차 단위로 갖는다(`Show 1 : 0..N Performance`).
 - `Grade N:M Performance`는 `PerformanceGrade`가 연결한다. `Performance N:M Seat`는
@@ -210,7 +214,7 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
 ### Queue
 
 - 대기열 상태는 `ticket-queue`가 관리한다.
-- Core(`catalog`)는 예매 API 진입 시 회차 정책을 먼저 확인하고, 대기열이 필요한 회차에서만
+- Core(`show`)는 예매 API 진입 시 회차 정책을 먼저 확인하고, 대기열이 필요한 회차에서만
   `booking`의 admission 검증이 `X-Admission-Token`의 서명, 만료, memberId와 performanceId 일치 여부를
   검증한다.
 - Core의 Redis는 좌석 선택, hold(`booking`), refresh token, OAuth2 one-time auth code(`member`)
@@ -224,9 +228,8 @@ PerformanceGrade.price(catalog)   운영자가 구성한 회차 등급 가격 �
   payment가 다른 모듈을 참조하지 않는다
 - 결제 성공 시 주문 확정과 최종 좌석 판매 확정(`payment`가 booking에 공개할 정산 계약 포함)
 - Ticket 자동 발급 listener, QR, 입장, 사용, 취소, 환불, 양도
-- `showlike` read 경로(`GetMyShowLikesUseCase` 등)의 모듈 이전 — 상세는
-  [architecture.md](architecture.md#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다)를
-  본다
+- Performance의 회차 일정/예매 정책/대기열 정책 책임 혼재 정리(A1/A2 중 선택) — 사실과 방안은
+  [ADR 0006](adr/0006-bounded-context-module-boundaries.md#performance의-책임-혼재)을 본다
 - Event Publication Registry의 `serialized_event` 컬럼 크기(`VARCHAR(255)`) 리스크 — 상세는
   [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)을
   본다
@@ -330,8 +333,9 @@ ADR 0005가 함께 신설했던 `ticketing`은 booking으로 흡수됐다 — `T
 - 변경한 흐름에 대응하는 테스트가 없다.
 - 같은 검증을 같은 목적으로 두 계층에서 중복 실행한다([validation.md](validation.md)).
 - 관측 지표나 로그만 보고 정합성을 확인했다고 판단했다.
-- `showlike`의 legacy read 경로 gap이나 event payload 크기 리스크를 해결된 것처럼 서술했다
-  ([architecture.md](architecture.md#showlike-모듈의-경계--완결되지-않은-상태를-그대로-기록한다)).
+- event payload 크기 리스크([ADR 0003 §5](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry))나
+  Performance 책임 혼재([ADR 0006](adr/0006-bounded-context-module-boundaries.md#performance의-책임-혼재))를
+  해결된 것처럼 서술했다.
 
 ## 개발 시 주의점
 

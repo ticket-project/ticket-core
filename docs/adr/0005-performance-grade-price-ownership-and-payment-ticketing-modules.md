@@ -13,6 +13,13 @@
 새 DAG를 고정한다. 이 ADR은 "무엇을 왜 바꿨는가"를 codify하고, architecture/development/testing/
 operations 문서가 이 결정에 맞춰 갱신될 때 참조할 근거로 남는다.
 
+**2026-09-07 갱신(BC 재편)**: [ADR 0006](0006-bounded-context-module-boundaries.md)이 §4(entity-only
+단계의 module DAG)를 다시 supersede했다 — `catalog`가 `show`로 개명되고 물리 공연장·좌석이
+`venue`로 분리됐다(`admission`은 이미 booking으로 흡수된 뒤라 아래 §4 DAG의 `admission` 행은 그
+갱신 이전 기록이다). `payment`/`ticketing`(booking에 흡수된) 관련 결정 자체는 이 재편과 무관하며
+그대로 유효하다. 현재 module set·DAG의 원본은 ADR 0006과
+`com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`다.
+
 ## 배경
 
 현재 모델은 세 가지 문제를 갖는다(재설계 스펙의 "왜 현재 모델을 바꿔야 하는가" 참고).

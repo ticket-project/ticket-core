@@ -20,12 +20,13 @@ Application Module이고, 계층(web/application/domain/infrastructure)은 각 �
 | 다루는 업무 | 모듈 |
 | --- | --- |
 | 좌석 판매 상태(`PerformanceSeat`), Selection, Hold, Order/OrderSeat, 주문 취소·만료, 좌석 분산락, WebSocket 좌석 발행 | `booking` |
-| Show, Performance, Venue, Seat, Grade(등급 코드·이름), PerformanceGrade(회차별 등급 가격·표시 순서), 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차·좌석 조회 | `catalog` |
+| Show, Category, Genre, Performer, Performance, Grade(등급 코드·이름), PerformanceGrade(회차별 등급 가격·표시 순서), 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차 조회, 찜 HTTP endpoint·use case(데이터는 favorite 소유) | `show`(옛 `catalog`) |
+| Venue, Seat, Region(물리 시설) | `venue` |
+| Show 좋아요(찜)의 데이터·불변식(개수·추가·삭제·내 찜 목록) | `favorite`("Favorite 분리와 조합 규칙" 참고) |
 | Order에 대한 결제 시도(Payment)의 생명주기 | `payment` |
 | 결제 확정으로 발급되는 Ticket(입장 권리)의 생명주기 | `booking`(entity-only, 원래 `ticketing` module이었다) |
 | Member, 소셜 로그인, OAuth2, 비밀번호, access/refresh token, 전역 `SecurityFilterChain` | `member` |
 | admission token 설정·decode·검증 | `booking`(원래 별도 `admission` module이었다) |
-| Show 좋아요(찜) 개수·추가·삭제·내 찜 목록 | `catalog`(Show의 부가 속성으로 취급, "showlike 흡수" 참고) |
 | 둘 이상 독립 모듈이 의미 동일하게 공유하고 프로토콜·프레임워크 결합이 없는 호출 대상 계약(`UuidSupplier`, `CorsProperties`, `CursorPage`) — **bean을 등록하는 코드는 두지 않는다** | `shared` |
 | REST 응답 표현 계약(응답 봉투 `ApiResponse`/`ErrorMessage`/`ResultType`, 무한스크롤 `SliceResponse`) — bean은 두지 않는다 | `web` |
 | 어느 모듈의 것도 아닌 공통 오류(E400·E404·E500), 예외 base 타입, 전역 handler | `error` |
@@ -55,7 +56,7 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | use case, 트랜잭션 경계, 여러 서비스 조립, 조회 포트와 결과 view | `<module>.application` |
 | 엔티티, 값 객체, 도메인 정책, `*Finder`, port 선언 | `<module>.domain` |
 | Querydsl, Redis, JWT, 암호화, 외부 HTTP, scheduler, AOP | `<module>.infrastructure` |
-| 다른 모듈이 쓸 공개 계약(작은 interface + 불변 record snapshot, 공개 이벤트) | 모듈 root(예: `catalog.ShowLookup`, `booking.OrderStarted`) |
+| 다른 모듈이 쓸 공개 계약(작은 interface + 불변 record snapshot, 공개 이벤트) | 모듈 root(예: `venue.VenueLookup`, `favorite.ShowLikeQuery`, `booking.OrderStarted`) |
 
 **모듈 root에는 공개 계약만 둔다.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
 어떤 모듈도 `Type.OPEN`이 아니다.
@@ -113,9 +114,9 @@ module이 자기 안에서 한다**(아래 3절). 둘 다로 감당할 수 없�
 | 요청 파라미터 Bean Validation 제약 | `web`의 `controller.docs` 인터페이스 |
 | `UseCase.Input` 필수 component 계약 | `application`의 UseCase record compact constructor(공통 유틸 없이 직접 판정) |
 | 도메인 규칙이 판단하는 오류 | 소유 모듈의 `exception`(`<Module>ErrorCode` + 예외 클래스) |
-| Grade(재사용 가능한 등급 코드·이름, 가격 없음) | `catalog.domain.grade` |
-| PerformanceGrade(회차별 등급 가격·표시 순서, 가격의 원본) | `catalog.domain.performance` |
-| PerformanceSeat의 `performanceGradeId`/`unitPrice`/`version`(catalog `PerformanceGrade.price`의 snapshot, 낙관적 락) | `booking.domain.performanceseat.model` |
+| Grade(재사용 가능한 등급 코드·이름, 가격 없음) | `show.domain.grade` |
+| PerformanceGrade(회차별 등급 가격·표시 순서, 가격의 원본) | `show.domain.performance` |
+| PerformanceSeat의 `performanceGradeId`/`unitPrice`/`version`(show `PerformanceGrade.price`의 snapshot, 낙관적 락) | `booking.domain.performanceseat.model` |
 | Payment entity·상태(`READY`/`PROCESSING`/`FAILED`), Order 참조는 scalar `orderId` | `payment.domain.payment` |
 | Ticket entity·상태, OrderSeat/Member 참조는 scalar `orderSeatId`/`ownerMemberId` | `booking.domain.ticket` |
 
@@ -165,14 +166,26 @@ Spring Data JPA 인터페이스)뿐이다. `application`(use case)과 `web`
 않는다. 배경은 `docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md`
 §3~4가 원본이다.
 
-### showlike 흡수
+### Favorite 분리와 조합 규칙
 
-찜(개수·추가/삭제·내 찜 목록)은 `showlike`라는 별도 module이 아니라 `catalog`에
-있다. `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/`GetShowLikeStatusUseCase`/
-`GetMyShowLikesUseCase`와 `ShowLike` entity 모두 catalog 소유다. 좋아요 개수는
-`Show.viewCount`와 같은 성격의 파생 지표라는 판단으로, catalog가 회원 존재 확인을 위해
-member의 `MemberLookup`을 참조한다(단방향). 상세 배경은
-`docs/adr/0003-spring-modulith-application-module-boundaries.md` §11을 본다.
+찜의 **데이터와 불변식**(개수·추가·삭제·내 찜 목록)은 `favorite`가 소유한다. `ShowLike` entity,
+`ShowLikeQuery`/`ShowLikeCommand`(공개 API)가 모두 favorite에 있다. 찜 **HTTP endpoint와 use
+case는 show에 남는다** — `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/`GetShowLikeStatusUseCase`/
+`GetMyShowLikesUseCase`와 그 controller는 `show`에 있고, favorite의 공개 API를 호출해 응답을
+조합한다.
+
+**판단 기준: `<module>.domain`은 다른 BC를 모른다. 조합은 `<module>.application`이 공개 API로
+한다.** 그래서 `show.domain`(`Show` entity, 도메인 서비스)이 `List<ShowLike>` 필드를 갖거나
+`ShowLikeRepository`를 직접 주입받는 것은 금지한다 — 이 규칙은
+`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)가 강제한다. `show.application`의 조회
+service(`GetShowDetailUseCase` 등)가 favorite의 `ShowLikeQuery`/`ShowLikeCommand`를 주입받아
+로컬 조회 결과와 합치는 것은 허용한다. 새 BC 사이의 데이터 조합이 필요할 때 이 판단 기준을
+그대로 쓴다.
+
+`show`는 찜 use case 안에서 회원 활성 확인을 위해 member의 `MemberLookup`을 참조한다(단방향).
+공연 존재 확인과 내 찜 목록의 표시값 조립은 favorite가 아니라 show 자신의 로컬 조회로
+한다 — 그래야 `favorite -> show` 방향이 생기지 않아 순환이 없다. 상세 배경은
+`docs/adr/0006-bounded-context-module-boundaries.md`를 본다.
 
 ## 4. 자주 틀리는 지점
 
@@ -199,9 +212,9 @@ member의 `MemberLookup`을 참조한다(단방향). 상세 배경은
   `@Transactional`은 흐름을 엮는 방법이다. 규칙은 `domain`에, 경계와 발행은
   `application`에.
 - **다른 모듈이 필요한 경우.** 상대 모듈의 내부 repository나 store를 직접 부르지 않고
-  공개 API(예: `catalog.BookingPolicyLookup`, `member.MemberLookup`)를 호출한다.
+  공개 API(예: `show.BookingPolicyLookup`, `venue.VenueLookup`, `member.MemberLookup`)를 호출한다.
 - **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별
-  `entryType` 계산(`catalog`)과 admission token 검증(`booking`)만 담당하며 queue token
+  `entryType` 계산(`show`)과 admission token 검증(`booking`)만 담당하며 queue token
   저장소나 만료 핸들러를 두지 않는다.
 - **Core Redis의 용도.** seat selection, seat hold(`booking`), refresh token, OAuth2
   one-time auth code(`member`)뿐이다. 대기열 상태를 Core Redis에 넣지 않는다.
@@ -213,7 +226,7 @@ member의 `MemberLookup`을 참조한다(단방향). 상세 배경은
 | `com.ticket.ModularityTests` | 모듈 경계 위반. 새 import가 다른 모듈의 하위 패키지를 향했는지, cross-module JPA 관계가 생겼는지 |
 | `<Module>ModuleTests`(예: `BookingModuleTests`) | 해당 모듈이 STANDALONE으로 부트스트랩되는지. 외부 모듈 빈을 mock 없이 요구하지 않는지 |
 | `ControllerParameterConstraintTest` | 파라미터 제약 선언 위치 |
-| `CoreLayerArchitectureTest` 등 legacy ArchUnit 테스트 | 아직 옮기지 않은 `com.ticket.core` 코드의 계층 방향. 이 테스트들은 legacy 정리가 끝나기 전까지 유효하다 |
+| `com.ticket.show.domain.ShowDomainPurityTest` | `show.domain`이 `favorite`(또는 다른 BC)를 참조하는지 — 조합은 `show.application`으로 옮긴다 |
 
 **테스트를 고쳐서 통과시키지 않는다.** 규칙이 틀렸다고 판단되면 먼저
 [architecture.md](../../../docs/architecture.md#아키텍처-규칙)의 근거를 읽고, 규칙을 바꿔야

@@ -1,10 +1,11 @@
 # 테스트 기준
 
 > [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)의
-> `payment` module 신설과 catalog/booking schema 재설계가 구현됐다(`ticketing`은 이후 booking으로 흡수)(entity-only 단계 —
-> PG 연동, 결제 승인 API, `OrderConfirmed` listener는 아직 없다). 아래 모듈 테스트·구조 테스트·
-> module별 migration slice 테스트 표는 이 구현을 반영한다. `ShowGrade`/`ShowSeat` 제거(계획 문서
-> Phase 3 Task 8)가 끝나면서 그 둘을 대상으로 하던 Phase 1 baseline 테스트
+> `payment` module 신설과 show(옛 catalog)/booking schema 재설계가 구현됐다(`ticketing`은 이후 booking으로
+> 흡수)(entity-only 단계 — PG 연동, 결제 승인 API, `OrderConfirmed` listener는 아직 없다). [ADR 0006](adr/0006-bounded-context-module-boundaries.md)의
+> BC 재편(`catalog` → `show` 개명, `venue`/`favorite` 신설)도 구현됐다. 아래 모듈 테스트·구조
+> 테스트·module별 migration slice 테스트 표는 이 구현을 반영한다. `ShowGrade`/`ShowSeat` 제거(계획
+> 문서 Phase 3 Task 8)가 끝나면서 그 둘을 대상으로 하던 Phase 1 baseline 테스트
 > (`CurrentSeatVenueShowGradeSchemaTest`, `ShowGradePerformanceSeatPriceMismatchQueryTest`)도 함께
 > 지워졌다 — 이 문서에서 더 이상 인용하지 않는다.
 
@@ -36,9 +37,10 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 ## 모듈 테스트
 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
-테스트를 최소 하나씩 둔다(`AdmissionModuleTests`, `CatalogModuleTests`, `MemberModuleTests`,
-`BookingModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). `showlike`는 별도 module이 아니라 catalog가 흡수했다(찜 기능은
-`catalog` STANDALONE 테스트 안에서 검증한다). `verifyAutomatically = false`인
+테스트를 최소 하나씩 둔다(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
+`FavoriteModuleTests`, `MemberModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). 찜은
+`favorite`가 데이터를 소유하고 `show`가 HTTP endpoint·use case를 갖는다(ADR 0006) — `ShowModuleTests`가
+favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다. `verifyAutomatically = false`인
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
 곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
 
@@ -54,18 +56,15 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | 테스트 | 고정하는 것 |
 | --- | --- |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()`). 아직 이동하지 않은 legacy 패키지는 명시 predicate로 검증 대상에서 뺀다 |
-| `com.ticket.*.*ModuleTests` (`AdmissionModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
+| `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `FavoriteModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
+| `com.ticket.show.domain.ShowDomainPurityTest` | `show.domain`이 `favorite`(다른 BC)를 참조하지 않는 것. 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 
-`com.ticket.core` 패키지에는 이 전환 이전에 만들어진 계층형 ArchUnit 테스트(`CoreLayerArchitectureTest`,
-`CoreApiArchitectureTest`, `CoreDomainArchitectureTest`, `CoreInfraArchitectureTest`)가 아직 남아
-있다. 이 테스트들은 아직 모듈로 옮기지 않은 legacy 코드의 계층 방향을 계속 강제하며, 어떤 것을
-정리하고 어떤 것을 유지할지는 진행 중인 별도 작업의 범위다 — 이 문서는 그 결과를 단정하지 않는다.
-legacy 코드를 다룰 때는 이 테스트들도 함께 돌아가는지 확인한다. `com.ticket.bootstrap`을 검사하던
-`BootstrapArchitectureTest`는 그 패키지가 완전히 비어(§ADR 0003 §8·§9, 전역 기술 설정이 `shared`/
-`config`로 옮겨져) ArchUnit이 검사 대상 없는 rule을 실패로 보는 것을 실측 확인해 지웠다 —
-`com.ticket.bootstrap`이 다시 class를 가지면 그때 필요한 규칙을 다시 만든다.
+`com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 그 패키지가 완전히 비어(ADR 0003
+§8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상 없는 rule을 실패로 보는
+것을 실측 확인해 지웠다 — `com.ticket.bootstrap`이 다시 class를 가지면 그때 필요한 규칙을 다시
+만든다.
 
 새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 무엇을 막는지는
 [architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙)에 정리돼 있다.
@@ -89,10 +88,11 @@ legacy 코드를 다룰 때는 이 테스트들도 함께 돌아가는지 확인
 
 각 모듈이 자신의 Flyway 이력(`db/migration/__root` + `db/migration/{module}`)만으로 schema가
 만들어지고 CRUD가 동작하는지 `@DataJpaTest`와 module slicing 조합으로 검증한다. 지금 존재하는
-네 개는 `BookingModuleSlicingSchemaTest`, `CatalogModuleSlicingSchemaTest`,
-`PaymentModuleSlicingSchemaTest`, `BookingTicketSlicingSchemaTest`(TICKETS는 booking V5)
-(`src/test/java/com/ticket/bootstrap/migration/`)다. 다른 모듈의 migration이 있어야만 통과하면
-실패로 간주한다.
+것은 `BookingModuleSlicingSchemaTest`, `ShowModuleSlicingSchemaTest`(SHOWS.venue_id scalar 매핑과
+그 FK 제거), `VenueModuleSlicingSchemaTest`(Venue/Seat 매핑, ADR 0006으로 show에서 분리),
+`FavoriteModuleMigrationTest`(SHOW_LIKES의 옛 member/show FK 제거), `PaymentModuleSlicingSchemaTest`,
+`BookingTicketSlicingSchemaTest`(TICKETS는 booking V5)(`src/test/java/com/ticket/bootstrap/migration/`)다.
+다른 모듈의 migration이 있어야만 통과하면 실패로 간주한다.
 
 `payment`는 ADR 0005의 entity-only 단계라 `PaymentModuleSlicingSchemaTest`가 검증하는 범위도 그만큼
 좁다 — payment migration만으로 `PAYMENTS` 테이블이 만들어지고 entity가 저장·조회되는지, 그리고 다른
@@ -114,16 +114,17 @@ ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId�
 - `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
 
 **N+1 회귀**는 `GetPerformanceSeatMapUseCaseTest`가 고정한다. `GetPerformanceSeatMapUseCase`는
-Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 catalog `PerformanceVenueLayoutCatalog`에서,
-판매 편성된 좌석과 확정 가격을 booking `PerformanceSeatMapReadRepository`에서 각각 정확히 한 번만
-조회해 조합한다(N+1 없이 고정된 query 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한
-번만 호출되는지 확인한다 — 회차 좌석 수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
+Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 show `PerformanceVenueLayoutCatalog`에서
+(내부적으로 venue의 `VenueSeatLookup`을 호출), 판매 편성된 좌석과 확정 가격을 booking
+`PerformanceSeatMapReadRepository`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된 query
+수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한 번만 호출되는지 확인한다 — 회차 좌석
+수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
 
 **가격 snapshot 불변성**은 두 단계로 고정된다. `OrderCreatorTest`는 주문 금액이 오직
-`PerformanceSeat.unitPrice` 합계로만 계산되고(`sumTotalAmount`), catalog snapshot
+`PerformanceSeat.unitPrice` 합계로만 계산되고(`sumTotalAmount`), show snapshot
 (`PerformanceSaleCatalog`)은 표시값(등급 코드/이름, 좌석 라벨, show/venue 이름)에만 쓰인다는 것을
 고정한다. `GetOrderDetailUseCaseTest`는 주문 상세 조회가 Order/OrderSeat에 생성 시점에 남긴
-snapshot만 쓰고 catalog를 다시 조회하지 않는다는 것을 고정한다 — catalog 쪽 가격·표시값이 나중에
+snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 — show 쪽 가격·표시값이 나중에
 바뀌어도 기존 주문 상세가 그대로임을 보장하는 지점이 이 테스트다.
 
 ## 통합 테스트와 E2E
