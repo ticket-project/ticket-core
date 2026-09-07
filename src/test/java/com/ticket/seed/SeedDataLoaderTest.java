@@ -306,6 +306,32 @@ class SeedDataLoaderTest {
         assertThat(rewritten).contains("'2026-03-05 20:00:00'");
     }
 
+    @Test
+    void split_performance_policy_statements_separates_schedule_and_sales_policy() throws Exception {
+        final SeedDataLoader loader = new SeedDataLoader(null, null, null);
+        final Method method = SeedDataLoader.class.getDeclaredMethod("splitPerformancePolicyStatements", List.class);
+        method.setAccessible(true);
+
+        final String combined = "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (1, 2, 3, '2026-03-01 19:00:00', '2026-03-01 21:00:00', '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, '2026-01-01 10:00:00', '시드')";
+        final String unrelated = "INSERT INTO SHOWS (id) VALUES (1)";
+
+        @SuppressWarnings("unchecked")
+        final List<String> split = (List<String>) method.invoke(loader, List.of(combined, unrelated));
+
+        assertThat(split).hasSize(3);
+        final String performanceStatement = split.get(0);
+        final String policyStatement = split.get(1);
+
+        assertThat(performanceStatement).startsWith("INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, created_at, created_by)");
+        assertThat(performanceStatement).doesNotContain("order_open_time");
+        assertThat(performanceStatement).contains("'2026-03-01 19:00:00'", "'2026-03-01 21:00:00'", "'2026-01-01 10:00:00'", "'시드'");
+
+        assertThat(policyStatement).startsWith("INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES");
+        assertThat(policyStatement).contains("(1, '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, 0, '2026-01-01 10:00:00', '시드')");
+
+        assertThat(split.get(2)).isEqualTo(unrelated);
+    }
+
 
 
     @Test

@@ -91,11 +91,13 @@ public class SeedDataLoader implements ApplicationRunner {
             return;
         }
 
+        final List<String> executableStatements = splitPerformancePolicyStatements(statements);
+
         transactionTemplate.executeWithoutResult(status -> {
-            executeInBatches(statements);
+            executeInBatches(executableStatements);
             seedLoadTestMembers();
         });
-        log.info("시드 적재를 완료했습니다. statements={}, batchSize={}", statements.size(), batchSize);
+        log.info("시드 적재를 완료했습니다. statements={}, batchSize={}", executableStatements.size(), batchSize);
     }
 
     void seedLoadTestMembers() {
@@ -367,6 +369,48 @@ public class SeedDataLoader implements ApplicationRunner {
             + matcher.group(12)
             + ", "
             + matcher.group(13)
+            + matcher.group(14);
+    }
+
+    /**
+     * ADR 0006 "Performance의 책임 혼재" A2: {@code seed/kopis-curated.sql}의 {@code INSERT INTO
+     * PERFORMANCES}는 여전히 (수정하지 않은 리소스 파일 안에서) 예매 정책 컬럼까지 함께 담고
+     * 있다 — 대량 curated 데이터라 리소스 파일 자체를 고치는 대신, 이미 파싱된
+     * {@link #PERFORMANCE_INSERT_PATTERN} group을 이용해 실행 직전에 PERFORMANCES(일정만)와
+     * BOOKING_PERFORMANCE_SALES_POLICIES(정책) 두 INSERT로 분리한다. 날짜 다변화
+     * ({@link #diversifyPerformanceDates})는 이 분리 이전, 기존 단일-statement 형태를 그대로 쓴다.
+     */
+    private List<String> splitPerformancePolicyStatements(final List<String> statements) {
+        final List<String> result = new ArrayList<>(statements.size());
+        for (String statement : statements) {
+            final Matcher matcher = PERFORMANCE_INSERT_PATTERN.matcher(statement);
+            if (!matcher.find()) {
+                result.add(statement);
+                continue;
+            }
+            result.add(toScheduleOnlyPerformanceStatement(matcher));
+            result.add(toSalesPolicyStatement(matcher));
+        }
+        return result;
+    }
+
+    private String toScheduleOnlyPerformanceStatement(final Matcher matcher) {
+        return "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, created_at, created_by) VALUES ("
+            + matcher.group(1) + ", "
+            + matcher.group(2) + ", "
+            + matcher.group(3) + ", '"
+            + matcher.group(4) + " " + matcher.group(5) + "', '"
+            + matcher.group(6) + " " + matcher.group(7) + "'"
+            + matcher.group(14);
+    }
+
+    private String toSalesPolicyStatement(final Matcher matcher) {
+        return "INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES (performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds, version, created_at, created_by) VALUES ("
+            + matcher.group(1) + ", '"
+            + matcher.group(8) + " " + matcher.group(9) + "', '"
+            + matcher.group(10) + " " + matcher.group(11) + "', "
+            + matcher.group(12) + ", "
+            + matcher.group(13) + ", 0"
             + matcher.group(14);
     }
 

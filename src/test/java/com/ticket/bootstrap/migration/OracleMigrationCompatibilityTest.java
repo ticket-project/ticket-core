@@ -52,6 +52,7 @@ class OracleMigrationCompatibilityTest {
     @Test
     void root_and_booking_oracle_migrations_apply_without_syntax_errors() throws Exception {
         createLegacyBaselineSchema();
+        applyRootOnlyForQueuePoliciesTable();
 
         final Flyway baseFlyway = Flyway.configure()
                 .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
@@ -72,13 +73,34 @@ class OracleMigrationCompatibilityTest {
             assertThat(tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX")).isFalse();
             assertThat(tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX")).isFalse();
             assertThat(importedKeyTables(connection, "PERFORMANCE_SEATS")).isEmpty();
+
+            // ADR 0006 "Performance의 책임 혼재" A2: booking V6가 실제 Oracle 방언에서도 정책
+            // 소유권 이관(backfill + drop)을 문법 오류 없이 수행하는지 확인한다.
+            assertThat(tableExists(connection, "BOOKING_PERFORMANCE_SALES_POLICIES")).isTrue();
+            assertThat(tableExists(connection, "PERFORMANCE_QUEUE_POLICIES")).isFalse();
+            assertThat(hasColumn(connection, "PERFORMANCES", "ORDER_OPEN_TIME")).isFalse();
+            try (Statement statement = connection.createStatement();
+                 ResultSet row = statement.executeQuery(
+                         "SELECT hold_duration_seconds, queue_mode FROM BOOKING_PERFORMANCE_SALES_POLICIES WHERE performance_id = 1")) {
+                assertThat(row.next()).isTrue();
+                assertThat(row.getLong("hold_duration_seconds")).isEqualTo(600);
+                assertThat(row.getString("queue_mode")).isEqualTo("FORCE_OFF");
+            }
         }
     }
 
     private void createLegacyBaselineSchema() throws SQLException {
         try (Connection connection = connect();
              Statement statement = connection.createStatement()) {
-            statement.execute("CREATE TABLE performances (id NUMBER(19,0) PRIMARY KEY)");
+            statement.execute("""
+                    CREATE TABLE performances (
+                      id NUMBER(19,0) PRIMARY KEY,
+                      order_open_time TIMESTAMP,
+                      order_close_time TIMESTAMP,
+                      max_can_hold_count NUMBER(10,0),
+                      hold_time NUMBER(10,0)
+                    )
+                    """);
             statement.execute("CREATE TABLE seats (id NUMBER(19,0) PRIMARY KEY)");
             statement.execute(
                     "CREATE TABLE performance_seats (" +
@@ -89,6 +111,25 @@ class OracleMigrationCompatibilityTest {
                     "  CONSTRAINT legacy_fk_seat FOREIGN KEY (seat_id) REFERENCES seats(id)" +
                     ")");
             statement.execute("CREATE TABLE order_seats (order_id NUMBER(19,0) NOT NULL)");
+            statement.execute(
+                    "INSERT INTO performances (id, order_open_time, order_close_time, max_can_hold_count, hold_time) "
+                    + "VALUES (1, TIMESTAMP '2026-05-01 10:00:00', TIMESTAMP '2026-06-01 10:00:00', 4, NULL)");
+        }
+    }
+
+    private void applyRootOnlyForQueuePoliciesTable() throws SQLException {
+        final Flyway rootOnlyFlyway = Flyway.configure()
+                .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
+                .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
+                .load();
+        new SpringModulithFlywayMigrationStrategy(ApplicationModuleIdentifiers.of(List.of()), MigrationFilter.USE_ALL)
+                .migrate(rootOnlyFlyway);
+
+        try (Connection connection = connect();
+             Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO performance_queue_policies (performance_id, queue_mode, queue_level, created_at, created_by) "
+                    + "VALUES (1, 'FORCE_OFF', 'LEVEL_1', SYSTIMESTAMP, 'test')");
         }
     }
 
@@ -99,6 +140,12 @@ class OracleMigrationCompatibilityTest {
     private boolean tableExists(final Connection connection, final String tableName) throws SQLException {
         try (ResultSet tables = connection.getMetaData().getTables(null, null, tableName, new String[]{"TABLE"})) {
             return tables.next();
+        }
+    }
+
+    private boolean hasColumn(final Connection connection, final String table, final String column) throws SQLException {
+        try (ResultSet columns = connection.getMetaData().getColumns(null, null, table, column)) {
+            return columns.next();
         }
     }
 

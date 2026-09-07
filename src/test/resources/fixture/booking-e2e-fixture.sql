@@ -40,18 +40,28 @@ INSERT INTO seats (id, venue_id, section, row_no, seat_no, floor, x, y, created_
   (920000003, 920000001, 'SEC-01', 'ROW-01', '03', 1, 38.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E'),
   (920000004, 920000001, 'SEC-01', 'ROW-01', '04', 1, 47.0, 20.0, CURRENT_TIMESTAMP, 'BOOKING_E2E');
 
--- order_open_time < now < order_close_time 이어야 주문이 열린다.
--- hold_time을 넉넉히 두어 스케줄러 만료가 테스트 중에 끼어들지 않게 한다.
 INSERT INTO performances (
   id, show_id, performance_no, start_time, end_time,
-  order_open_time, order_close_time, max_can_hold_count, hold_time,
   created_at, created_by
 ) VALUES (
   920000001, 920000001, 1,
   DATEADD('DAY', 61, CURRENT_TIMESTAMP), DATEADD('DAY', 61, CURRENT_TIMESTAMP),
+  CURRENT_TIMESTAMP, 'BOOKING_E2E'
+);
+
+-- order_opens_at < now < order_closes_at 이어야 주문이 열린다.
+-- hold_duration_seconds를 넉넉히 두어 스케줄러 만료가 테스트 중에 끼어들지 않게 한다.
+-- FORCE_OFF: 대기열 없이 Core를 직접 호출하는 회차. admission token 검증 경로를 타지 않는다.
+INSERT INTO booking_performance_sales_policies (
+  performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds,
+  queue_mode, queue_level, preopen_queue_starts_at, waiting_room_message, queue_policy_reason,
+  version, created_at, created_by
+) VALUES (
+  920000001,
   DATEADD('DAY', -1, CURRENT_TIMESTAMP), DATEADD('DAY', 30, CURRENT_TIMESTAMP),
   2, 600,
-  CURRENT_TIMESTAMP, 'BOOKING_E2E'
+  'FORCE_OFF', 'LEVEL_1', NULL, '통합 테스트 전용', '대기열 없이 Core를 직접 검증하는 회차',
+  0, CURRENT_TIMESTAMP, 'BOOKING_E2E'
 );
 
 -- ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): PerformanceSeat.unitPrice의 원본은
@@ -68,14 +78,6 @@ VALUES (
   CURRENT_TIMESTAMP, 'BOOKING_E2E'
 );
 
--- FORCE_OFF: 대기열 없이 Core를 직접 호출하는 회차. admission token 검증 경로를 타지 않는다.
-INSERT INTO performance_queue_policies (
-  performance_id, queue_mode, queue_level, preopen_queue_start_at,
-  waiting_room_message, reason, created_at, created_by
-) VALUES (
-  920000001, 'FORCE_OFF', 'LEVEL_1', NULL,
-  '통합 테스트 전용', '대기열 없이 Core를 직접 검증하는 회차', CURRENT_TIMESTAMP, 'BOOKING_E2E'
-);
 
 INSERT INTO performance_seats (
   id, performance_id, seat_id, state, performance_grade_id, unit_price, version, created_at, created_by
