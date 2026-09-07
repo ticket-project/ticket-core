@@ -1,8 +1,8 @@
 package com.ticket.booking.application.performanceseat.query;
 
 import com.ticket.booking.application.performanceseat.query.PerformanceSeatMapReadRepository.PerformanceSeatMapRow;
-import com.ticket.catalog.PerformanceVenueLayout;
-import com.ticket.catalog.PerformanceVenueLayoutCatalog;
+import com.ticket.show.PerformanceVenueLayout;
+import com.ticket.show.PerformanceVenueLayoutCatalog;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 회차 정적 seat-map을 조합한다. Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값은 catalog
+ * 회차 정적 seat-map을 조합한다. Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값은 show
  * {@link PerformanceVenueLayoutCatalog}에서, 이 회차에 실제로 판매 편성된 좌석(PerformanceSeat)과
  * 확정 가격은 booking local에서 각각 한 번씩만 조회해 N+1 없이 고정된 query 수로 조합한다.
  *
@@ -88,7 +88,7 @@ public class GetPerformanceSeatMapUseCase {
     }
 
     /**
-     * catalog 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤
+     * show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤
      * 오류로 다룰지는 이 조합 시점에서 판정하지 않는다.
      */
     private SeatMapEntry toSeatMapEntry(final PerformanceSeatMapRow row, final PerformanceVenueLayout layout) {

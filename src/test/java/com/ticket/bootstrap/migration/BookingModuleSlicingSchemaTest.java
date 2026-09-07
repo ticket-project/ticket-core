@@ -25,7 +25,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Task 11 Step 6: {@code booking} module이 {@code __root} + 자신의 migration만으로(catalog·member
+ * Task 11 Step 6: {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member
  * 등 다른 module의 migration 없이) 실제 schema를 만들고, {@code booking}의 JPA 매핑({@link
  * PerformanceSeat})이 그 schema에 대해 {@code ddl-auto=validate}를 통과하며, CRUD가 동작하는지
  * 검증한다.
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 우회했는데, 이후 리뷰에서 그 진단이 부정확했다는 게 밝혀졌다 — 실제 원인은 프레임워크 비호환이
  * 아니라 {@code @ModuleSlicing}의 기본값 {@code verifyAutomatically = true}가
  * {@code com.ticket.ModularityTests}의 legacy package 제외 predicate 없이 전체 구조를 검증하며
- * "catalog → core → catalog" 같은 (이미 알려진) legacy 오탐 순환을 잡아내는 것이었다.
+ * "show → core → show" 같은 (이미 알려진) legacy 오탐 순환을 잡아내는 것이었다.
  * {@code BookingModuleTests}가 이미 같은 이유로 {@code verifyAutomatically = false}를 쓰고
  * 있으므로, {@code @DataJpaTest @ModuleSlicing(module = "booking", verifyAutomatically = false)}
  * 조합도 실제로 context가 뜨고 module-scoped entity/repository scan이 동작하는 것까지는 리뷰에서
@@ -55,7 +55,7 @@ class BookingModuleSlicingSchemaTest {
     @Test
     void root_and_booking_migrations_alone_produce_a_schema_the_booking_mapping_can_use() throws Exception {
         createLegacyBaselineSchema();
-        // catalog/member/showlike 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
+        // show/member/showlike 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
         // __root와 booking뿐이다.
         ModulithFlywayTestSupport.migrate(URL, List.of("booking"));
 

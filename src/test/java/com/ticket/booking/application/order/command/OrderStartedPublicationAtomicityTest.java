@@ -163,17 +163,17 @@ class OrderStartedPublicationAtomicityTest {
         return new HoldAllocation(hold, List.of(seat));
     }
 
-    private com.ticket.catalog.PerformanceSaleSnapshot saleSnapshotFor(final HoldAllocation allocation) {
-        final java.util.Map<Long, com.ticket.catalog.PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
+    private com.ticket.show.PerformanceSaleSnapshot saleSnapshotFor(final HoldAllocation allocation) {
+        final java.util.Map<Long, com.ticket.show.PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
                 new java.util.HashMap<>();
         for (final PerformanceSeat seat : allocation.performanceSeats()) {
             seatInfoBySeatId.put(seat.getSeatId(),
-                    new com.ticket.catalog.PerformanceSaleSnapshot.SeatInfo(seat.getSeatId(), 1, "가", "A", "1"));
+                    new com.ticket.show.PerformanceSaleSnapshot.SeatInfo(seat.getSeatId(), 1, "가", "A", "1"));
         }
-        return new com.ticket.catalog.PerformanceSaleSnapshot(
+        return new com.ticket.show.PerformanceSaleSnapshot(
                 PERFORMANCE_ID, 1L, "show-title", 1L, "venue-name", LocalDateTime.now().plusDays(1),
                 seatInfoBySeatId,
-                java.util.Map.of(1L, new com.ticket.catalog.PerformanceSaleSnapshot.GradeInfo(
+                java.util.Map.of(1L, new com.ticket.show.PerformanceSaleSnapshot.GradeInfo(
                         1L, "R", "R석", 1, BigDecimal.valueOf(10_000)))
         );
     }

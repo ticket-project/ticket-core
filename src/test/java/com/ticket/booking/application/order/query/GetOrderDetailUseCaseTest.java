@@ -67,8 +67,8 @@ class GetOrderDetailUseCaseTest {
     }
 
     @Test
-    void catalog_값이_바뀌어도_이미_만든_주문_상세는_바뀌지_않는다() {
-        // Order/OrderSeat가 생성 시점에 남긴 snapshot만 쓰므로 catalog를 다시 조회하지 않는다.
+    void show_값이_바뀌어도_이미_만든_주문_상세는_바뀌지_않는다() {
+        // Order/OrderSeat가 생성 시점에 남긴 snapshot만 쓰므로 show를 다시 조회하지 않는다.
         when(orderReadRepository.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
         when(memberLookup.getProfile(1L)).thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
 

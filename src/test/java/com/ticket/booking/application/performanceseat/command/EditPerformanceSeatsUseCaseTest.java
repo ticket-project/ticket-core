@@ -5,8 +5,8 @@ import com.ticket.booking.domain.performanceseat.repository.PerformanceSeatRepos
 import com.ticket.booking.exception.PerformanceGradeMismatchException;
 import com.ticket.booking.exception.PerformanceSeatAlreadyEditionedException;
 import com.ticket.booking.exception.SeatVenueMismatchException;
-import com.ticket.catalog.PerformanceSaleCatalog;
-import com.ticket.catalog.PerformanceSaleSnapshot;
+import com.ticket.show.PerformanceSaleCatalog;
+import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +54,7 @@ class EditPerformanceSeatsUseCaseTest {
     }
 
     @Test
-    void 이미_편성된_좌석이면_예외를_던지고_catalog를_조회하지_않는다() {
+    void 이미_편성된_좌석이면_예외를_던지고_show를_조회하지_않는다() {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of(mock(PerformanceSeat.class)));
 

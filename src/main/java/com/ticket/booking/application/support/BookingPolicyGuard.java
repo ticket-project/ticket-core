@@ -3,13 +3,13 @@ package com.ticket.booking.application.support;
 import com.ticket.booking.exception.ExceedHoldLimitException;
 import com.ticket.booking.exception.NotYetReserveTimeException;
 import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.catalog.BookingPolicySnapshot;
+import com.ticket.show.BookingPolicySnapshot;
 
 import java.time.LocalDateTime;
 
 /**
- * catalog의 {@link BookingPolicySnapshot}으로 booking이 스스로 판정해야 하는 예매 가능 여부를
- * 확인한다. catalog 내부 {@code BookingPolicyValidator}는 module 경계 밖이라 쓸 수 없고,
+ * show의 {@link BookingPolicySnapshot}으로 booking이 스스로 판정해야 하는 예매 가능 여부를
+ * 확인한다. show 내부 {@code BookingPolicyValidator}는 module 경계 밖이라 쓸 수 없고,
  * {@link BookingPolicySnapshot#bookingOpen()}은 오픈 전/마감 후 두 사유를 구분하지 않으므로
  * 판정 자체는 공개된 {@code orderOpenTime}/{@code orderCloseTime} 필드로 다시 계산한다.
  */

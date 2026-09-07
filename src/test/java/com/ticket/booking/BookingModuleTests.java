@@ -1,10 +1,10 @@
 package com.ticket.booking;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.catalog.BookingPolicyLookup;
-import com.ticket.catalog.PerformanceSaleCatalog;
-import com.ticket.catalog.PerformanceVenueLayoutCatalog;
-import com.ticket.catalog.ShowLookup;
+import com.ticket.show.BookingPolicyLookup;
+import com.ticket.show.PerformanceSaleCatalog;
+import com.ticket.show.PerformanceVenueLayoutCatalog;
+import com.ticket.show.ShowLookup;
 import com.ticket.member.AccessTokenAuthenticator;
 import com.ticket.member.MemberLookup;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import java.time.Clock;
  * 검증에서 빠지는 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.booking} package tree만 component-scan한다.
- * catalog {@code BookingPolicyLookup}·{@code PerformanceSaleCatalog}·{@code PerformanceVenueLayoutCatalog}·
+ * show {@code BookingPolicyLookup}·{@code PerformanceSaleCatalog}·{@code PerformanceVenueLayoutCatalog}·
  * {@code ShowLookup}, member {@code MemberLookup}·
  * {@code AccessTokenAuthenticator}(WebSocket 인증이 참조)는 그
  * 필터 밖이라 {@code @MockitoBean}으로 대체한다. {@code JPAQueryFactory}도

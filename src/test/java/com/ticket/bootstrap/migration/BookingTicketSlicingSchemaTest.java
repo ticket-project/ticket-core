@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * {@code booking} module이 {@code __root} + 자신의 migration만으로(catalog·member 등 다른 module의
+ * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의
  * migration 없이) {@link Ticket} 매핑과 실제로 맞는 schema를 만들고, {@code ticket_key}/
  * {@code order_seat_id} unique 제약이 실제로 동작하는지 검증한다. Ticket은 원래 별도 {@code ticketing}
  * module(ADR 0005)이었지만 booking으로 흡수됐고, {@code TICKETS} 생성 migration은 booking의 V5다.

@@ -15,8 +15,8 @@ import java.math.BigDecimal;
  * {@code unitPrice}는 바꾸지 않는다 — 설계 배경은
  * {@code docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md}를 본다.
  *
- * <p>{@code performanceId}/{@code seatId}/{@code performanceGradeId}는 모두 catalog aggregate를
- * 가리키는 cross-module scalar ID다. JPA 연관관계로 catalog entity를 참조하지 않는다.
+ * <p>{@code performanceId}/{@code seatId}/{@code performanceGradeId}는 모두 show aggregate를
+ * 가리키는 cross-module scalar ID다. JPA 연관관계로 show entity를 참조하지 않는다.
  */
 @Getter
 @Entity

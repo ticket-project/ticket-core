@@ -7,7 +7,7 @@ import com.ticket.booking.domain.order.command.create.HoldAllocation;
 import com.ticket.booking.domain.hold.command.HoldHistoryRecorder;
 import com.ticket.booking.domain.order.model.Order;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.catalog.PerformanceSaleSnapshot;
+import com.ticket.show.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

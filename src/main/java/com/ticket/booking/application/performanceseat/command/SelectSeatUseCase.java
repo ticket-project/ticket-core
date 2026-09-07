@@ -5,8 +5,8 @@ import com.ticket.booking.application.performanceseat.event.SeatStatusEvent.Seat
 import com.ticket.booking.application.performanceseat.event.SeatStatusEventPublisher;
 import com.ticket.booking.domain.performanceseat.support.SeatSelectionAvailabilityValidator;
 import com.ticket.booking.application.admission.AdmissionVerifier;
-import com.ticket.catalog.BookingPolicyLookup;
-import com.ticket.catalog.BookingPolicySnapshot;
+import com.ticket.show.BookingPolicyLookup;
+import com.ticket.show.BookingPolicySnapshot;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

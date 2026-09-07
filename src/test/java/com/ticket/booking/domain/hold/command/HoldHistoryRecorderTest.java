@@ -4,7 +4,7 @@ import com.ticket.booking.domain.hold.model.HoldHistory;
 import com.ticket.booking.domain.hold.repository.HoldHistoryRepository;
 import com.ticket.booking.domain.order.model.OrderSeat;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.catalog.domain.seat.Seat;
+import com.ticket.show.domain.seat.Seat;
 import com.ticket.booking.domain.hold.model.HoldHistoryEventType;
 import com.ticket.booking.domain.hold.model.HoldReleaseReason;
 import org.junit.jupiter.api.Test;

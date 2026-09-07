@@ -6,7 +6,7 @@ import com.ticket.error.ErrorCode;
  * booking module이 소유하는 오류 코드다.
  *
  * <p>E3xxx(회차 예매 정책)·E4xxx(회차 좌석)·E5xxx(주문)·E6xxx(선점)를 모두 이 module이 갖는다.
- * E3xxx는 회차 정책이라 catalog 같아 보이지만, 그 정책으로 예매 가능 여부를 판정하는 것은
+ * E3xxx는 회차 정책이라 show 같아 보이지만, 그 정책으로 예매 가능 여부를 판정하는 것은
  * {@code BookingPolicyGuard}이므로 booking의 오류다. 코드 값은 외부 계약이라 재번호하지 않는다.
  */
 public enum BookingErrorCode implements ErrorCode {

@@ -2,11 +2,11 @@ package com.ticket.booking.infrastructure.performanceseat.query;
 
 import com.ticket.booking.application.performanceseat.query.SeatAvailabilityReadRepository;
 import com.ticket.booking.application.performanceseat.query.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
-import com.ticket.catalog.domain.performance.Performance;
-import com.ticket.catalog.domain.seat.Seat;
-import com.ticket.catalog.domain.show.Show;
-import com.ticket.catalog.domain.show.Region;
-import com.ticket.catalog.domain.show.Venue;
+import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.seat.Seat;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.Region;
+import com.ticket.show.domain.show.Venue;
 import com.ticket.core.infra.support.ReadRepositoryTestSupport;
 import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * booking local 조회만 검증한다. 등급·가격 조합은 catalog {@code QuerydslShowSeatMapReadRepository}가
+ * booking local 조회만 검증한다. 등급·가격 조합은 show {@code QuerydslShowSeatMapReadRepository}가
  * 소유하고 별도로 검증한다.
  */
 @Import(QuerydslSeatAvailabilityReadRepository.class)

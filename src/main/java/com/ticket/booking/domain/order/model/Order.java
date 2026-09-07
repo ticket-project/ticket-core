@@ -55,7 +55,7 @@ public class Order extends BookingAuditedEntity {
     private LocalDateTime expiresAt;
 
     /**
-     * 주문 생성 시점의 표시 snapshot이다(ADR 0005). catalog의 Show/Performance/Venue 표시값이 나중에
+     * 주문 생성 시점의 표시 snapshot이다(ADR 0005). show의 Show/Performance/Venue 표시값이 나중에
      * 바뀌어도 이미 만든 주문 상세는 바뀌지 않아야 하므로 다시 조회하지 않고 이 값을 그대로 쓴다.
      */
     @Column(name = "show_title_snapshot", nullable = false, length = 1000)
