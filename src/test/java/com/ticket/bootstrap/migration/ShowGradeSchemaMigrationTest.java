@@ -19,14 +19,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * GRADES/PERFORMANCE_GRADES table과 그 제약(가격 CHECK, {@code (performance_id, grade_id)} UNIQUE,
  * FK)이 기대한 대로 동작하는지 실제 INSERT로 확인한다.
  *
- * <p>PERFORMANCE_GRADES는 show 안에서 Performance를 JPA {@code @ManyToOne}으로 참조하므로,
+ * <p>PERFORMANCE_GRADES는 show 안에서 Performance를 JPA {@code @ManyToOne}으로 참조하므로
+ * (같은 aggregate 안이라 객체 참조를 유지한다 — Grade는 다른 aggregate라 {@code gradeId} scalar다),
  * {@link BookingModuleSlicingSchemaTest}처럼 Hibernate SchemaValidator 단독으로 검증하려면
- * Performance에 딸린 Show/Venue/Performer/PerformanceQueuePolicy 전체 mapping을 함께 올려야 한다.
+ * Performance에 딸린 Show/Venue/Performer 전체 mapping을 함께 올려야 한다.
  * 그 전체 그래프를 흉내 낸 legacy baseline을 새로 만드는 대신, 실제 migration이 만든 schema에 직접
  * INSERT해 제약이 동작하는지 확인하는 쪽을 택했다 — 목적(제약이 실제로 걸리는지 확인)에는 이 쪽이
- * 더 직접적이다. Grade/PerformanceGrade 엔티티 매핑 자체는
- * {@code GradeRepositoryAdapterTest}/{@code PerformanceGradeRepositoryAdapterTest}가
- * {@code ddl-auto=create-drop}로 이미 검증한다.
+ * 더 직접적이다. Grade 엔티티 매핑 자체는 {@code GradeRepositoryAdapterTest}가
+ * {@code ddl-auto=create-drop}로 검증한다({@code PerformanceGradeRepositoryAdapter}는 소비자가 없어
+ * 제거됐고, 회차 등급 조회는 {@code QuerydslPerformanceGradeReadRepository}가 담당한다).
  */
 class ShowGradeSchemaMigrationTest {
 
