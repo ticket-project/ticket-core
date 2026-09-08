@@ -1,3 +1,6 @@
+> ⚠️ **완료·폐기된 기록이다. 현행 기준이 아니다.**
+> Spring Modulith 전환은 완료됐다. 현재 아키텍처는 docs/architecture.md, 결정 배경은 docs/adr/0003·0005·0006을 본다.
+
 # Ticket Core Spring Modulith-first 전환 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
