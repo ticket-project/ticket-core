@@ -47,8 +47,9 @@ Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
 `FavoriteModuleTests`, `MemberModuleTests`, `PaymentModuleTests`)는
 `@ApplicationModuleTest(verifyAutomatically = false)`로 그 모듈이 STANDALONE으로
 부트스트랩되는지만 본다. 전체 구조 검증은 여기서 하지 않는다 — `ModularityTests`의 몫이다.
-`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)는 show.domain이 favorite(다른 BC)를
-참조하지 않는지 별도로 고정한다.
+`com.ticket.DomainPurityTest`(ArchUnit)는 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지
+않는지 고정하고, `com.ticket.AggregateAssociationTest`는 같은 module 안에서 다른 aggregate를
+객체 연관관계로 묶지 않았는지 고정한다.
 
 `com.ticket.bootstrap`은 지금 class가 없어 `BootstrapArchitectureTest`는 지웠다(검사 대상
 없는 rule이 실패하는 것을 실측 확인) — 그

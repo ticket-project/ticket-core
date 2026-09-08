@@ -182,8 +182,8 @@ case는 show에 남는다** — `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/`Ge
 
 **판단 기준: `<module>.domain`은 다른 BC를 모른다. 조합은 `<module>.application`이 공개 API로
 한다.** 그래서 `show.domain`(`Show` entity, 도메인 서비스)이 `List<ShowLike>` 필드를 갖거나
-`ShowLikeRepository`를 직접 주입받는 것은 금지한다 — 이 규칙은
-`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)가 강제한다. `show.application`의 조회
+`ShowLikeRepository`를 직접 주입받는 것은 금지한다 — 이 규칙은 `com.ticket.DomainPurityTest`
+(ArchUnit, 6개 BC 전체를 검사)가 강제한다. `show.application`의 조회
 service(`GetShowDetailUseCase` 등)가 favorite의 `ShowLikeQuery`/`ShowLikeCommand`를 주입받아
 로컬 조회 결과와 합치는 것은 허용한다. 새 BC 사이의 데이터 조합이 필요할 때 이 판단 기준을
 그대로 쓴다.
@@ -233,7 +233,8 @@ service(`GetShowDetailUseCase` 등)가 favorite의 `ShowLikeQuery`/`ShowLikeComm
 | `com.ticket.ModularityTests` | 모듈 경계 위반. 새 import가 다른 모듈의 하위 패키지를 향했는지, cross-module JPA 관계가 생겼는지 |
 | `<Module>ModuleTests`(예: `BookingModuleTests`) | 해당 모듈이 STANDALONE으로 부트스트랩되는지. 외부 모듈 빈을 mock 없이 요구하지 않는지 |
 | `ControllerParameterConstraintTest` | 파라미터 제약 선언 위치 |
-| `com.ticket.show.domain.ShowDomainPurityTest` | `show.domain`이 `favorite`(또는 다른 BC)를 참조하는지 — 조합은 `show.application`으로 옮긴다 |
+| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToMany` 등 객체 연관관계로 새로 묶었는지 |
+| `com.ticket.DomainPurityTest` | `<bc>.domain`이 다른 BC를 참조하는지 — 조합은 `<bc>.application`으로 옮긴다 |
 
 **테스트를 고쳐서 통과시키지 않는다.** 규칙이 틀렸다고 판단되면 먼저
 [architecture.md](../../../docs/architecture.md#아키텍처-규칙)의 근거를 읽고, 규칙을 바꿔야

@@ -42,9 +42,9 @@
  * 표시값도 favorite가 준 showId 집합으로 show가 직접 다시 조회해 조립한다
  * ({@link com.ticket.show.application.showlike.query.GetMyShowLikesUseCase}). 그래서 favorite는
  * 업무 module 의존이 하나도 없는 leaf가 됐다. {@code show.domain}이 favorite를 참조하지 않는지는
- * {@code com.ticket.show.domain.ShowDomainPurityTest}가 강제한다. 같은 원칙으로 show.domain은
- * venue module도 참조하지 않는다 — venue 표시값 조합은 항상 application 층(infra의 read
- * repository)이 한다. 자세한 배경은 {@code docs/adr/0006-bounded-context-module-boundaries.md}를
+ * {@code com.ticket.DomainPurityTest}가 강제한다(6개 BC 전체에 같은 규칙을 적용). 같은 원칙으로
+ * show.domain은 venue module도 참조하지 않는다 — venue 표시값 조합은 항상 application 층(infra의
+ * read repository)이 한다. 자세한 배경은 {@code docs/adr/0006-bounded-context-module-boundaries.md}를
  * 본다.
  *
  * <p>{@code /api/v1/shows/{showId}/venue-layout}({@link com.ticket.show.application.show.query.GetVenueLayoutUseCase})은

@@ -70,13 +70,17 @@ class GetShowDetailUseCase {
 
 `show -> favorite` 의존은 허용한다. 사용자의 표현을 그대로 옮기면: "이 정도 의존성은 괜찮다.
 중요한 건 어디에서 의존하느냐다." 별도 `composition` module이나 별도 count API로 우회하는
-안은 검토했으나 철회했다 — 계약이 늘어나는 비용에 비해 얻는 것이 없다. 이 규칙은
-`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)가 강제한다:
+안은 검토했으나 철회했다 — 계약이 늘어나는 비용에 비해 얻는 것이 없다. 이 규칙은 당시
+`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)가 강제했다:
 
 ```java
 noClasses().that().resideInAPackage("com.ticket.show.domain..")
     .should().dependOnClassesThat().resideInAPackage("com.ticket.favorite..")
 ```
+
+> **2026-09-08 갱신**: 이 원칙을 6개 BC 전체로 일반화한 `com.ticket.DomainPurityTest`가
+> `ShowDomainPurityTest`를 대체했다 — `show.domain`뿐 아니라 `booking`/`venue`/`favorite`/
+> `member`/`payment`의 domain도 같은 규칙을 받는다.
 
 ### 2. 순환은 흡수가 아니라 한 방향을 없애 해소한다
 
