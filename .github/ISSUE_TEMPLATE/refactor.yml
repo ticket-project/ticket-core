@@ -149,8 +149,8 @@ body:
       label: 검증 계획
       description: 어떤 테스트/검증으로 안전성을 확인할지 적어 주세요.
       placeholder: |
-        - `:core:core-api:compileJava`
-        - `:core:core-domain:test`
+        - `./gradlew compileJava`
+        - `./gradlew test --tests "com.ticket.<module>.*"`
         - 관련 도메인 단위 테스트/통합 테스트
         - Redis expiration / scheduler 시나리오 재현
     validations:

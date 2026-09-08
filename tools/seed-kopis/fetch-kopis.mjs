@@ -1,5 +1,4 @@
 // KOPIS 신규 공연 수집 → kopis-curated.sql 누적 병합
-// 설계: docs/superpowers/specs/2026-06-06-kopis-data-refresh-design.md
 // 실행: KOPIS_SERVICE_KEY=xxxx node tools/seed-kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 [--dry-run]
 
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';

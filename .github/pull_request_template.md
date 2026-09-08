@@ -19,8 +19,8 @@ PR 제목 형식: <type>(<scope>): <한국어 설명>
 
 ## 영향 범위
 
-- [ ] `core/core-api` 진입점 또는 응답 형식 변경
-- [ ] `core/core-domain` 비즈니스 규칙 변경
+- [ ] API/응답 형식 변경
+- [ ] 도메인 규칙 변경 (예: booking, payment, show, venue)
 - [ ] Redis key, TTL, expiration listener 변경
 - [ ] 분산 락 또는 동시성 제어 변경
 - [ ] DB 스키마 또는 쿼리 영향 있음
@@ -28,8 +28,8 @@ PR 제목 형식: <type>(<scope>): <한국어 설명>
 
 ## 테스트
 
-- [ ] `./gradlew :core:core-api:compileJava`
-- [ ] `./gradlew :core:core-domain:test`
+- [ ] `./gradlew compileJava`
+- [ ] `./gradlew test --tests "com.ticket.<module>.*"`
 - [ ] 로컬 실행 또는 수동 검증 수행
 
 ### 테스트 결과

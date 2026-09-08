@@ -1,5 +1,4 @@
 // KOPIS 데이터 → 앱 스키마 매핑/파서 유틸
-// 설계: docs/superpowers/specs/2026-06-06-kopis-data-refresh-design.md §5,§6
 
 /**
  * KOPIS genrenm(+제목)을 앱 GENRES(1~15) id로 매핑한다.
