@@ -37,8 +37,8 @@ production/test 소스를 루트 `src/main`, `src/test`로 합쳤다. `settings.
 구현(web/application/domain/infrastructure 전부)은 `<module>` 아래에 둔다. 어떤 모듈도
 `Type.OPEN`으로 선언하지 않는다. 모듈 루트 아래에 `internal` 계층을 따로 두지 않는다 — Spring
 Modulith는 module root의 타입만 공개로, 하위 패키지는 이름과 무관하게 모두 내부로 취급하므로
-`internal`은 정보량 없는 폴더 한 층만 반복됐다. 무엇을 어디에 두는지의 실무 판단표는
-`/place-code` 스킬이 원본이다.
+`internal`은 정보량 없는 폴더 한 층만 반복됐다. 무엇을 어디에 두는지는 `docs/architecture.md`의
+"Module Structure"가 원본이고, 판단이 애매한 새 코드는 `/codebase-design` 스킬을 함께 본다.
 
 ### 3. 의존 DAG
 
