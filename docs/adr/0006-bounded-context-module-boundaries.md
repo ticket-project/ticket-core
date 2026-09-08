@@ -133,14 +133,10 @@ Order/Ticket 사이보다 **좌석 재고(PerformanceSeat/Hold/Selection)와 주
 
 ### 5. `ShowLookup`은 사라진다
 
-이 재편으로 `ShowLookup`의 네 메서드가 모두 없어진다.
-
-| 메서드 | 소비자 | 결과 |
-| --- | --- | --- |
-| `requireExisting` | 찜 use case | show 내부 `ShowRepository.existsById` 호출로 대체(§2) |
-| `getSummaries` | 내 찜 목록 | show 내부 read repository 조회로 대체(§2) |
-| `getVenueLayout` | booking의 `ShowVenueLayoutController` | 컨트롤러가 show로 이동하며 소멸(§3) |
-| `getPerformanceSummaries` | 없음 | 소비자 0으로 확인돼 `PerformanceSummary`와 함께 삭제 |
+이 재편으로 `ShowLookup`의 네 메서드가 모두 없어진다 — 찜 use case의 `requireExisting`/
+`getSummaries`는 각각 show 내부 `ShowRepository.existsById`/read repository 조회로 대체됐고
+(§2), `getVenueLayout`은 그 컨트롤러(`ShowVenueLayoutController`)가 show로 이동하며 소멸했으며
+(§3), `getPerformanceSummaries`는 소비자가 없어 `PerformanceSummary`와 함께 삭제됐다.
 
 ### 6. Member BC는 지금 분리하지 않는다
 
@@ -153,21 +149,8 @@ filter chain)다. `Member` entity 자체도 신원(email, name) + 자격증명(e
 
 ## 승인된 의존 DAG (2026-09-07)
 
-```text
-booking  -> show, member, shared, web, error
-show     -> venue, favorite, member, shared, web, error
-favorite -> shared, web, error          # 업무 module 의존 0
-venue    -> (없음)                       # controller·예외가 없는 leaf. payment와 같은 형태
-member   -> shared, web, error
-payment  -> (없음)
-config   -> member, shared
-error    -> web
-seed     -> member
-shared / web -> (없음)
-```
-
-순환 없음: `venue`·`favorite`가 leaf, `show`가 둘을 참조, `booking`이 그 위에 얹힌다. 원본은
-`com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`다.
+순환 없음: `venue`·`favorite`가 leaf, `show`가 둘을 참조, `booking`이 그 위에 얹힌다. 의존 DAG의
+원본은 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`와 `docs/architecture.md`다.
 
 ## 되돌린 것 (ADR 0003·0005와의 관계)
 
@@ -205,52 +188,10 @@ module-aware Flyway(`SpringModulithFlywayMigrationStrategy`)는 module 식별자
 
 ## 결정하지 않는 것 (별도 결정으로 미룸)
 
-> **"Performance의 책임 혼재" 항목은 2026-09-07 이후 A2로 후속 결정·구현됐다** — 이 문서 상단의
-> "2026-09-07 갱신" 문단을 본다. 아래 본문은 그 결정 이전 시점의 관측 기록이다.
-
-### Performance의 책임 혼재
-
-`Performance`(`show.domain.performance`) 한 entity가 세 관심사를 겸한다: 회차 일정(startTime,
-endTime) / 예매 정책(orderOpenTime, orderCloseTime, maxCanHoldCount, holdTime) / 대기열
-정책(`PerformanceQueuePolicy`). `requiresQueueAt`이 예매 마감을 대기열 판정에 넘겨 둘이 결합돼
-있다.
-
-**실측한 사실**:
-- 예매 정책의 유일한 소비자는 booking이다(`CreateOrderValidator`·`SelectSeatUseCase`·
-  `GetSeatStatusUseCase`·`CreateOrderUseCase`의 holdTime, `BookingPolicyGuard`). show 안에서는
-  상세 응답의 orderOpenTime/orderCloseTime(FE 사용)과 `/performances/{id}/summary`의
-  maxCanHoldCount(FE 미사용)만 노출한다.
-- 대기열 정책의 소비자는 `BookingPolicySnapshot.queueRequired`(booking의 admission 검사)와 상세
-  응답의 entryType/queueEnterUrl(FE 미사용)뿐이다. **ticket-queue는 Core DB도 HTTP도 읽지 않고
-  자기 전역 설정만 쓴다.** `PERFORMANCE_QUEUE_POLICIES`의 용량 컬럼 4개는 어느 코드도 읽지
-  않고, `QueueLevel`은 저장만 되고 분기에 쓰이지 않으며, `Performance.updateQueuePolicy`는
-  프로덕션 호출자가 없다.
-- `BookingPolicySnapshot`(11 필드) 중 booking이 실제로 읽는 것은 6개(performanceId,
-  orderOpenTime, orderCloseTime, maxCanHoldCount, holdTime, queueRequired)뿐이다.
-- "예매 가능 여부"가 두 entity로 갈려 있다 — `BookingStatus`(BEFORE_OPEN/ON_SALE/CLOSED)는
-  **Show**의 saleStartDate/saleEndDate로, `bookingOpen`/`entryType`은 **Performance** 정책으로
-  계산한다.
-- `BookingEntryResolver`(show domain)에 FE 라우트와 ticket-queue HTTP 경로가 하드코딩돼 있다.
-
-**두 방안(어느 쪽도 이번에 실행하지 않는다)**:
-
-| | A1. Show BC 안에서 관심사 분리 | A2. 판매·대기열 정책을 Booking BC로 이관 |
-| --- | --- | --- |
-| 무엇 | `Performance`는 일정만 남기고, 예매 정책을 `@Embeddable BookingWindow`로 묶는다. `BookingPolicySnapshot`을 booking이 읽는 6필드로 좁히고 파생 판정을 없앤다. `BookingEntryResolver`의 하드코딩 URL을 설정으로 뺀다 | booking에 `PerformanceSalesPolicy`(scalar PK) aggregate를 신설해 정책 컬럼 전부를 이관한다. `BookingPolicyLookup` 계약은 소멸하고, show의 조회 서비스가 booking의 공개 API로 상세 응답을 조합한다(찜과 같은 패턴) |
-| 장점 | 스키마·seed·API 불변. 죽은 코드가 함께 정리된다 | 규칙을 실제 소비자(booking)가 소유한다 — 가장 DDD에 맞는 자리 |
-| 단점 | 소유 BC는 그대로 Show라 근본 문제("판매 규칙이 상품 BC에 있다")는 남는다 | PERFORMANCES 컬럼 이관 migration, seed 재작성, `show -> booking` 엣지가 지금의 `booking -> show`와 만나 **순환**이 된다(먼저 풀어야 할 별도 설계 필요) |
-
-이번 재편과 함께 하지 않는 이유: 코드를 고치면 `PerformanceRepositoryAdapter`/
-`QuerydslShowDetailReadRepository`/`QuerydslPerformanceReadRepository`가 §3(venue 분리)의
-Q-path와 겹쳐 병렬 작업이 어려워진다. BC 경계 재편과 독립적으로 언제든 할 수 있는 작업이라 별도
-결정으로 미룬다.
-
-**함께 발견한 죽은 코드**(삭제하지 않는다 — 컬럼 drop은 운영 migration이라 A2와 묶어야 한다):
-`PERFORMANCE_QUEUE_POLICIES`의 용량 컬럼 4개, `QueueLevel`, `Performance.updateQueuePolicy`,
-`GetPerformanceScheduleListUseCase`의 쓰지 않는 queuePolicy fetch join과 중복 import,
-`PerformanceSummaryView.maxCanHoldCount`(API 계약이라 유지), `Show.viewCount`를 증가시키는 코드가
-없는데 `POPULAR` 정렬 키로 쓰이는 것, `Venue.gapX/gapY`(소비자 0), `BookingStatus` 판정이
-`Show.getBookingStatus`와 `BookingStatusPredicateFactory` 두 곳에 따로 구현된 것.
+Performance 책임 혼재("Show가 예매·대기열 정책까지 겸한다")는 **A2로 결정·구현됐다** — 판매·
+대기열 정책의 소유권을 Booking BC의 `PerformanceSalesPolicy`로 이관했다(이 문서 상단의
+"2026-09-07 갱신" 문단 참고). 현재 배포된 조회 endpoint는
+`GET /api/v1/booking/performances/{id}/booking-mode`다.
 
 ### 그 밖의 후속
 
