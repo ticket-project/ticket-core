@@ -201,7 +201,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   섞지 않는다.
 - 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `web`,
   `UseCase.Input` 계약은 `application`, 업무 불변식은 `domain` 테스트다. 같은
-  규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [validation.md](validation.md)를 본다.
+  규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [architecture.md의 계층별 검증 책임](architecture.md#계층별-검증-책임)을 본다.
 - 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 이벤트 재시도, 순서 역전**을
   함께 고정한다.
 - 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로

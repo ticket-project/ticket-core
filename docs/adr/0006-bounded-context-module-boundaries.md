@@ -16,7 +16,7 @@
 예외, `docs/architecture.md`/`docs/operations.md`의 "DB 마이그레이션" 절 참고). 아래 "결정하지 않는
 것" 절의 본문은 그 이전 결정 시점의 기록으로 남긴다.
 
-`docs/agents/domain.md`는 "Application Module은 업무 기능 경계이지 BC(Bounded Context)가 아니다"를
+이전까지는 "Application Module은 업무 기능 경계이지 BC(Bounded Context)가 아니다"를
 전제로 삼아 왔다. 이 ADR은 그 전제를 뒤집는다 — **지금부터 Application Module(기술 모듈 제외)은 곧
 BC다.** `catalog` 하나가 물리 시설(Venue/Seat), 작품·회차(Show/Performance/Grade), 찜(ShowLike)을
 모두 소유하던 구조를 여섯 개 BC로 나눈다.
@@ -160,8 +160,7 @@ filter chain)다. `Member` entity 자체도 신원(email, name) + 자격증명(e
 - **ADR 0003 §3 / ADR 0005 §4의 module set·DAG**를 이 ADR의 "승인된 의존 DAG"가 다시 supersede한다.
 - **ADR 0003 §6**이 남겼던 gap("`CursorPage`를 `catalog` 하나만 쓴다")은 해소됐다 — 지금은
   `show`(목록·내 찜)와 `favorite`(`findLikedShows` 반환) 둘이 쓴다.
-- `docs/agents/domain.md`의 "module ≠ BC" 전제를 "module = BC(기술 모듈 제외), 단일 CONTEXT.md
-  유지"로 바꾼다.
+- 기존의 "module ≠ BC" 전제를 "module = BC(기술 모듈 제외), 단일 CONTEXT.md 유지"로 바꾼다.
 
 ## 비용
 
