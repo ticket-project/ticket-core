@@ -45,27 +45,27 @@
     },
     {
       "quality_gates": "clean_code_collective",
-      "quality_gates_doc": "핵심 도메인 로직은 가장 강한 품질 게이트로 검증합니다.",
-      "matching_content_path": "core/core-domain/**",
-      "matching_content_path_doc": "도메인 모듈 경로입니다."
+      "quality_gates_doc": "핵심 도메인 로직은 가장 강한 품질 게이트로 검증합니다. (옛 core/core-domain 모듈 — 현재는 각 BC의 domain 패키지로 흡수됨)",
+      "matching_content_path": "src/main/java/com/ticket/*/domain/**",
+      "matching_content_path_doc": "각 BC 모듈의 domain 패키지 경로입니다."
     },
     {
       "quality_gates": "pay_down_tech_debt",
-      "quality_gates_doc": "API 진입점과 설정도 강한 품질 게이트로 검증합니다.",
-      "matching_content_path": "core/core-api/**",
-      "matching_content_path_doc": "API 모듈 경로입니다."
+      "quality_gates_doc": "API 진입점과 설정도 강한 품질 게이트로 검증합니다. (옛 core/core-api 모듈 — 현재는 각 BC의 web 패키지로 흡수됨)",
+      "matching_content_path": "src/main/java/com/ticket/*/web/**",
+      "matching_content_path_doc": "각 BC 모듈의 web(controller) 패키지 경로입니다."
     },
     {
       "quality_gates": "pay_down_tech_debt",
-      "quality_gates_doc": "Redis 공통 모듈도 강한 품질 게이트로 검증합니다.",
-      "matching_content_path": "storage/redis-core/**",
-      "matching_content_path_doc": "Redis 공통 모듈 경로입니다."
+      "quality_gates_doc": "Redis 공통 모듈도 강한 품질 게이트로 검증합니다. (옛 storage/redis-core 모듈 — 현재는 각 BC의 infrastructure 패키지로 흡수됨)",
+      "matching_content_path": "src/main/java/com/ticket/*/infrastructure/**",
+      "matching_content_path_doc": "각 BC 모듈의 infrastructure 패키지 경로입니다."
     },
     {
       "quality_gates": "clean_code_collective",
-      "quality_gates_doc": "공통 로깅 모듈도 엄격하게 검증합니다.",
-      "matching_content_path": "support/logging/**",
-      "matching_content_path_doc": "로깅 모듈 경로입니다."
+      "quality_gates_doc": "공통 로깅 설정도 엄격하게 검증합니다. (옛 support/logging 모듈 — 현재는 리소스 설정으로 흡수됨)",
+      "matching_content_path": "src/main/resources/logback/**",
+      "matching_content_path_doc": "logback 설정 경로입니다."
     },
     {
       "quality_gates": "clean_code_collective",

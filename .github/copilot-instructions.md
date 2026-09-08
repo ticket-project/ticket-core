@@ -8,12 +8,13 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 
 | 알아야 하는 것 | 읽을 곳 |
 | --- | --- |
-| 작업별로 먼저 읽을 문서 | `AGENTS.md` 의 "작업별로 먼저 읽을 문서" |
+| 작업별로 먼저 읽을 문서 | `AGENTS.md` 의 "먼저 읽을 문서" |
 | 리뷰 기준 전체 | `AGENTS.md` 의 "코드 리뷰" |
 | 모듈 경계와 강제되는 규칙 | `docs/architecture.md` |
 | 완료 판정 조건 | `/verify` 스킬 |
 | 주문·hold 후처리 흐름 | `docs/core-booking-lifecycle.md` |
-| 검증 명령과 테스트 관례 | `docs/testing.md` |
+| 검증 명령 | `/verify` 스킬 |
+| 테스트 관례(작성 방식·명명) | `docs/testing.md` |
 
 ## 문서를 열 수 없는 경우에도 적용할 최소 기준
 
@@ -28,3 +29,5 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 
 모듈 경계와 강제되는 세부 규칙은 반드시 `docs/architecture.md`를 따른다. `AGENTS.md`를 읽을 수
 없을 때 최소한으로 참고할 실제 모듈은 `booking`, `show`, `venue`, `favorite`, `member`, `payment`다.
+현재 전체 모듈 목록은 `docs/architecture.md`를 따른다 — 위 목록은 문서를 읽을 수 없을 때의 최소
+fallback일 뿐 단일 원본이 아니다.
