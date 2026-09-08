@@ -2,7 +2,7 @@
 name: 기능 제안 (자유 서술)
 about: 구조화 폼보다 자유로운 설명이 필요한 기능 제안을 남깁니다.
 title: "[Feature] "
-labels: enhancement, needs-review
+labels: enhancement, needs-triage
 assignees: ""
 ---
 

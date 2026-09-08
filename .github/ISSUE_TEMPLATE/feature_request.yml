@@ -1,7 +1,7 @@
 name: 기능 제안 (구조화 폼)
 description: 신규 기능, 사용자 흐름 개선, API/운영 기능 제안을 구조화해서 남깁니다.
 title: "[Feature] "
-labels: ["enhancement", "needs-review"]
+labels: ["enhancement", "needs-triage"]
 assignees: []
 
 body:

@@ -2,7 +2,7 @@
 name: 리팩터링 / 구조 개선 제안 (자유 서술)
 about: 기능 추가가 아닌 구조 개선, 경계 정리, 기술 부채 상환 아이디어를 자유 형식으로 남깁니다.
 title: "[Improvement] "
-labels: refactoring, needs-review
+labels: refactoring, needs-triage
 assignees: ""
 ---
 
