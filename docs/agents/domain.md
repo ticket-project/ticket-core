@@ -4,8 +4,9 @@
 
 ## 탐색 전에 읽을 것
 
-- **`CONTEXT.md`**(저장소 루트): 도메인 용어집. 이 저장소는 **단일 컨텍스트**라
-  `CONTEXT-MAP.md`가 없다 — 없는 것이 정상이고, 없다는 사실 자체가 단일 컨텍스트라는 뜻이다.
+- **`CONTEXT.md`**(저장소 루트): 도메인 용어집. 시스템에는 여러 **Bounded Context**가 존재하고,
+  현재 BC와 dependency/context map은 `docs/architecture.md`가 관리한다. 용어집은 이 BC 구성과
+  별개로 `CONTEXT.md` 하나만 쓴다 — 별도의 `CONTEXT-MAP.md` 파일은 현재 두지 않는다.
 - **`docs/adr/`**: 지금 손대는 영역에 걸리는 ADR을 읽는다. 언제 ADR을 쓰는지와 번호 규칙은
   `docs/adr/README.md`가 원본이다.
 
@@ -20,8 +21,9 @@
 
 ```
 /
-├── CONTEXT.md          ← 용어집 (단일 컨텍스트)
-├── docs/adr/           ← 되돌리기 어려운 결정
+├── CONTEXT.md              ← 용어집 (파일 하나, CONTEXT-MAP.md 없음)
+├── docs/architecture.md    ← BC·Aggregate·Module 구조, dependency/context map
+├── docs/adr/               ← 되돌리기 어려운 결정
 └── src/
 ```
 
@@ -35,7 +37,7 @@
 있거나(다시 생각한다), 진짜 빈틈이거나(`/domain-modeling`으로 넘긴다).
 
 Bounded Context·Aggregate 경계와 모듈 배치는 용어집이 아니라 구조의 문제다 —
-`CONTEXT.md`가 그 자리를 알려준다.
+`CONTEXT.md`가 아니라 `docs/architecture.md`가 담당한다.
 
 ## ADR과 어긋나면 드러낸다
 

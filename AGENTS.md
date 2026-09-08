@@ -33,7 +33,7 @@
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 | `docs/operations.md` |
 | 부하 테스트 | **`/loadtest` 스킬** |
 | 새 개념의 BC·Aggregate 경계 판단 | `docs/architecture.md`의 Aggregate Rules |
-| 미결 설계·제품 정책 결정 | `docs/open-questions.md` |
+| 기술 부채·미결 제품 결정 | `docs/technical-debt.md` |
 | 미구현 기능 | GitHub Issues |
 | 반복해 틀리는 지점 | `docs/agents/observed-failures.md`(임시 inbox — 반영되면 지운다) |
 
@@ -74,4 +74,4 @@ Matt Pocock 엔지니어링 스킬(`.agents/skills/`)이 이 저장소에서 쓸
 - **이슈 트래커**: `ticket-project/ticket-core`의 GitHub Issues, `gh` CLI.
   `docs/agents/issue-tracker.md`
 - **트리아지 라벨**: 표준 다섯 개를 기본 이름 그대로. `docs/agents/triage-labels.md`
-- **도메인 문서**: 단일 컨텍스트(`CONTEXT.md` + `docs/adr/`). `docs/agents/domain.md`
+- **도메인 문서**: 용어집은 `CONTEXT.md` 하나, 결정은 `docs/adr/`. `docs/agents/domain.md`
