@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 질문 / 논의 / 사용 문의
-    url: https://github.com/ticket-project/ticket-be/discussions
+    url: https://github.com/ticket-project/ticket-core/discussions
     about: 버그 리포트나 기능 요청이 아니라면 먼저 Discussions에서 논의해 주세요.
   - name: 아키텍처 문서
-    url: https://github.com/ticket-project/ticket-be/blob/main/docs/architecture.md
+    url: https://github.com/ticket-project/ticket-core/blob/master/docs/architecture.md
     about: 모듈 경계와 현재 구조를 먼저 확인해 주세요.
   - name: 작업 가이드
-    url: https://github.com/ticket-project/ticket-be/blob/main/docs/development.md
+    url: https://github.com/ticket-project/ticket-core/blob/master/docs/development.md
     about: 도메인별 위치, 검증 명령, 작업 원칙을 먼저 확인해 주세요.

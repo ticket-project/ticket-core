@@ -32,8 +32,8 @@ assignees: ""
 - Small / Medium / Large 중 어느 정도인가요?
 
 ## 검증 계획
-- 예: `:core:core-api:compileJava`
-- 예: `:core:core-domain:test`
+- 예: `./gradlew compileJava`
+- 예: `./gradlew test --tests "com.ticket.<module>.*"`
 - 예: 관련 단위/통합 테스트
 
 ## 참고 자료

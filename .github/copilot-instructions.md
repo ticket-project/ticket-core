@@ -26,12 +26,5 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 
 ## 우선 검토 영역
 
-- `auth`: JWT, refresh token, OAuth2, security filter chain, 공개 API 노출
-- `hold`, `order`: 주문 시작·만료·취소와 hold 해제의 일관성, 부분 상태 전이
-- `performanceseat`: 좌석 상태 계산, selection/hold 충돌, 실시간 브로드캐스트
-- `queue`: admission token 검증과 회차별 진입 정책
-- `core-api`는 진입점과 설정만, `core-domain`은 업무 규칙, `core-infra`는 기술 구현이다. 경계 위반을 먼저 본다.
-- Redis key naming, TTL, expiration listener, scheduler, 분산락 범위
-- **DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드는 항상 지적한다.**
-- `core-domain`에 `@Scheduled`, `@TransactionalEventListener`, Redisson, Spring Data Redis, Swagger가
-  들어오면 구조 위반이다.
+모듈 경계와 강제되는 세부 규칙은 반드시 `docs/architecture.md`를 따른다. `AGENTS.md`를 읽을 수
+없을 때 최소한으로 참고할 실제 모듈은 `booking`, `show`, `venue`, `favorite`, `member`, `payment`다.
