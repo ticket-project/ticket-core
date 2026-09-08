@@ -1,3 +1,6 @@
+> ⚠️ **완료·폐기된 기록이다. 현행 기준이 아니다.**
+> 이 설계는 구현·반영됐다. 현재 아키텍처는 docs/architecture.md, 검토한 대안은 docs/adr/0003을 본다.
+
 # Ticket Core Spring Modulith-first 전환 설계
 
 ## 문서 상태
