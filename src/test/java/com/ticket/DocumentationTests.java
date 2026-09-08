@@ -1,7 +1,5 @@
 package com.ticket;
 
-import com.tngtech.archunit.base.DescribedPredicate;
-import com.tngtech.archunit.core.domain.JavaClass;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModules;
 import org.springframework.modulith.docs.Documenter;
@@ -17,9 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>{@code spring-modulith-docs}는 {@code spring-modulith-starter-test}가 test classpath로 이미
  * 끌어오므로 {@code build.gradle}에 별도 의존을 추가하지 않는다.
  *
- * <p>{@code com.ticket.ModularityTests}와 같은 legacy 제외 predicate로 만든
- * {@link ApplicationModules}를 {@link Documenter}에 넘긴다 — 문서화 대상도 구조 검증 대상과
- * 같아야 하기 때문이다.
+ * <p>{@link ApplicationModules}를 만드는 방식이 {@code com.ticket.ModularityTests}와 같아야 한다 —
+ * 문서화 대상도 구조 검증 대상과 같아야 하기 때문이다. legacy package 제외 predicate는 두지 않는다
+ * ({@code com.ticket.ModularityTests}의 클래스 javadoc 참고 — {@code core}/{@code bootstrap}/
+ * {@code storage}/{@code support}는 {@code src/main/java}에 더 이상 존재하지 않는다).
  *
  * <p>결과물은 {@code build/spring-modulith-docs} 아래에 생성되는 CI artifact다. {@code build/}는
  * {@code .gitignore} 대상이라 source로 commit되지 않는다 — 매 실행마다 코드로부터 다시 만든다.
@@ -28,15 +27,9 @@ class DocumentationTests {
 
     private static final String OUTPUT_FOLDER = "build/spring-modulith-docs";
 
-    /** com.ticket.ModularityTests의 LEGACY_PACKAGES와 같은 predicate다. 어긋나면 두 테스트가 따로 깨진다. */
-    private static final DescribedPredicate<JavaClass> LEGACY_PACKAGES = DescribedPredicate.describe(
-            "com.ticket.core, com.ticket.storage, com.ticket.support 아래의 아직 이동하지 않은 legacy "
-                    + "코드, 그리고 com.ticket.bootstrap의 영구 composition-root 코드",
-            DocumentationTests::isLegacy);
-
     @Test
     void 전체_dependency_diagram과_module_canvas_exposed_beans_events를_생성한다() throws java.io.IOException {
-        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class, LEGACY_PACKAGES);
+        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class);
 
         new Documenter(modules, Documenter.Options.defaults().withOutputFolder(OUTPUT_FOLDER))
                 .writeDocumentation();
@@ -71,13 +64,5 @@ class DocumentationTests {
                 .contains("MemberLookup")
                 .contains("Events listened to")
                 .contains("OrderStarted");
-    }
-
-    private static boolean isLegacy(final JavaClass javaClass) {
-        final String packageName = javaClass.getPackageName();
-        return packageName.equals("com.ticket.core") || packageName.startsWith("com.ticket.core.")
-                || packageName.equals("com.ticket.bootstrap") || packageName.startsWith("com.ticket.bootstrap.")
-                || packageName.equals("com.ticket.storage") || packageName.startsWith("com.ticket.storage.")
-                || packageName.equals("com.ticket.support") || packageName.startsWith("com.ticket.support.");
     }
 }

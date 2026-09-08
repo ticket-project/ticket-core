@@ -1,7 +1,5 @@
 package com.ticket;
 
-import com.tngtech.archunit.base.DescribedPredicate;
-import com.tngtech.archunit.core.domain.JavaClass;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModule;
 import org.springframework.modulith.core.ApplicationModules;
@@ -20,25 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Modulith 구조 검증이다.
  *
- * <p>이 클래스는 세 가지를 확인한다: (1) 모든 Application Module이 CLOSED(하위 package 캡슐화)
- * 상태인지, (2) {@code com.ticket} 직속 module package 목록이 선언된 목록과 일치하는지,
- * (3) module 간 실제 의존이 승인된 DAG와 일치하는지. module 구성과 역사(BC 재편, module 신설·흡수·
- * 제거 이력)는 {@code docs/architecture.md}와 {@code docs/adr/0003-spring-modulith-application-module-boundaries.md}
+ * <p>이 클래스는 두 가지를 확인한다: (1) actual dependency == {@link #APPROVED_DEPENDENCY_DAG}
+ * (architecture drift detection — 의존이 늘 때도 줄 때도 실패한다. 줄었으면 이 스냅샷도 함께
+ * 줄여 "지금 무엇이 실제 edge인가"를 코드 한 곳에서 읽을 수 있게 유지한다), (2) 모든
+ * Application Module이 CLOSED(하위 package 캡슐화) 상태인지. {@code verifiesModuleStructure()}는
+ * 이와 별개로 Modulith {@code verify()}의 {@code actual ⊆ allowedDependencies} 검사
+ * (architectural safety — 각 module의 {@code @ApplicationModule(allowedDependencies = ...)}가
+ * 정한 상한 위반만 잡는다)를 돌린다. 두 검사는 서로 다른 것을 보장하므로 하나로 합치지 않는다.
+ * 모듈 구성과 역사(BC 재편, module 신설·흡수·제거 이력)는 {@code docs/architecture.md}와
+ * {@code docs/adr/0003-spring-modulith-application-module-boundaries.md}
  * / {@code docs/adr/0006-bounded-context-module-boundaries.md} / {@code docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md}가
  * 원본이다.
  *
  * <p>{@code shared}의 {@code package-info.java}가 class가 없던 시점부터 {@code @ApplicationModule}을
  * 명시 선언해 온 이유는 {@code shared} package-info의 javadoc 참고(javac가 애노테이션 없는
  * {@code package-info.java}는 class 파일을 만들지 않아 Modulith가 존재 자체를 못 본다).
+ *
+ * <p><b>legacy package 제외 predicate는 두지 않는다.</b> {@code com.ticket.core}/{@code bootstrap}/
+ * {@code storage}/{@code support}는 {@code src/main/java}에 더 이상 존재하지 않는다(이동 완료). 미래에
+ * 실수로 그런 이름의 package가 다시 생겨도 이 테스트가 곧바로 잡게 두는 편이, 조용히 제외돼 숨는
+ * 것보다 안전하다. {@code ApplicationModules.of(TicketApplication.class)}는 기본값으로
+ * {@code ImportOption.DoNotIncludeTests}를 적용해 test class는 애초에 이 분석 대상이 아니다 —
+ * {@code src/test/java/com/ticket/core}, {@code com/ticket/bootstrap} 아래 test 지원 클래스가
+ * 여전히 있는 것과 무관하다.
  */
 class ModularityTests {
-
-    private static final DescribedPredicate<JavaClass> LEGACY_PACKAGES = DescribedPredicate.describe(
-            "현재 com.ticket 아래에 남아 있지 않은 legacy/composition-root 예외 목록(현재는 매치 없음)",
-            ModularityTests::isLegacy);
-
-    /** 검증에서 빠지는 package 이름. core/storage/support/bootstrap은 모두 이동이 끝나 현재 존재하지 않는다. */
-    private static final Set<String> LEGACY_PACKAGE_NAMES = Set.of("core", "bootstrap", "storage", "support");
 
     /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
@@ -69,7 +73,7 @@ class ModularityTests {
 
     @Test
     void verifiesModuleStructure() {
-        ApplicationModules.of(TicketApplication.class, LEGACY_PACKAGES).verify();
+        ApplicationModules.of(TicketApplication.class).verify();
     }
 
     @Test
@@ -81,7 +85,6 @@ class ModularityTests {
                     .filter(Files::isDirectory)
                     .filter(dir -> Files.exists(dir.resolve("package-info.java")))
                     .map(dir -> dir.getFileName().toString())
-                    .filter(name -> !LEGACY_PACKAGE_NAMES.contains(name))
                     .collect(Collectors.toSet());
 
             assertThat(declaredModulePackages).containsExactlyInAnyOrderElementsOf(DECLARED_MODULE_PACKAGES);
@@ -92,13 +95,13 @@ class ModularityTests {
 
     @Test
     void module_dependency는_승인된_DAG와_일치한다() {
-        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class, LEGACY_PACKAGES);
+        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class);
 
         final Set<String> moduleNames = modules.stream()
                 .map(module -> module.getIdentifier().toString())
                 .collect(Collectors.toSet());
         assertThat(moduleNames)
-                .as("legacy를 뺀 뒤 Modulith가 실제로 찾아낸 module 집합 (shared는 클래스 javadoc 참고)")
+                .as("Modulith가 실제로 찾아낸 module 집합 (shared는 클래스 javadoc 참고)")
                 .containsExactlyInAnyOrderElementsOf(APPROVED_DEPENDENCY_DAG.keySet());
 
         for (final ApplicationModule module : modules) {
@@ -115,18 +118,10 @@ class ModularityTests {
 
     @Test
     void open_module은_하나도_없다() {
-        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class, LEGACY_PACKAGES);
+        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class);
 
         assertThat(modules.stream().filter(ApplicationModule::isOpen))
                 .as("모든 module은 CLOSED(하위 package 캡슐화)여야 한다")
                 .isEmpty();
-    }
-
-    private static boolean isLegacy(final JavaClass javaClass) {
-        final String packageName = javaClass.getPackageName();
-        return packageName.equals("com.ticket.core") || packageName.startsWith("com.ticket.core.")
-                || packageName.equals("com.ticket.bootstrap") || packageName.startsWith("com.ticket.bootstrap.")
-                || packageName.equals("com.ticket.storage") || packageName.startsWith("com.ticket.storage.")
-                || packageName.equals("com.ticket.support") || packageName.startsWith("com.ticket.support.");
     }
 }
