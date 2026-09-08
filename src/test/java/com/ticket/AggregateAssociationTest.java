@@ -24,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>{@code com.ticket.ModularityTests}는 module(BC) 경계를 넘는 결합만 잡는다 — 같은 module
  * 안에서 {@code Show}가 {@code @OneToMany List<Performance>}를 새로 얻어도 그 테스트는 통과한다.
- * 이 테스트가 그 사각지대를 메운다. Aggregate 목록과 "같은 aggregate 안에서만 entity 연관관계를
- * 허용한다"는 규칙은 {@code docs/architecture.md}의 "Bounded Context와 Aggregate" 절과
- * "경계별 참조와 Repository 소유" 절이 원본이다.
+ * 이 테스트가 그 사각지대를 메운다. Aggregate 목록은 {@code docs/architecture.md}의 "Aggregates"
+ * 절이, "같은 aggregate 안에서만 entity 연관관계를 허용한다"는 규칙과 경계별 참조 표는
+ * "Aggregate Rules" 절이 원본이다.
  *
  * <p>{@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG}와 같은 방식을 쓴다 — 허용
  * 상한이 아니라 실제로 관측된 연관관계를 고정해서, 새 연관관계가 조용히 늘면 이 테스트가 잡는다.

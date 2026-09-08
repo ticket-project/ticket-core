@@ -23,6 +23,12 @@
  * <p><b>{@code @ApplicationModule}을 선언하는 이유</b>: package-info에 annotation이 없으면
  * javac가 {@code package-info.class}를 만들지 않아 Spring Modulith의 {@code direct-sub-packages}
  * 감지가 이 package를 아예 module로 보지 못한다.
+ *
+ * <p><b>{@code allowedDependencies = {}}를 명시하는 이유</b>: 이 module은 {@code sharedModules}로
+ * 선언돼 있어 속성을 아예 생략해도 컴파일된다. 하지만 생략하면 Modulith {@code verify()}가 이
+ * module의 나가는 의존에 아무 제약도 걸지 않는다 — "leaf여야 한다"는 위 문장이 실행 검증 없이
+ * {@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG} 스냅샷에만 기대게 된다. 빈 값을
+ * 명시하면 leaf 위반이 스냅샷이 아니라 {@code verify()} 자체에서 잡힌다.
  */
-@org.springframework.modulith.ApplicationModule(displayName = "Shared")
+@org.springframework.modulith.ApplicationModule(displayName = "Shared", allowedDependencies = {})
 package com.ticket.shared;
