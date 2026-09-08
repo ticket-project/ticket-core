@@ -11,6 +11,7 @@ on:
       - '**/*.md'
       - 'docs/**'
       - '.claude/**'
+      - '.agents/**'
       - '.codex/**'
       - '.codescene/**'
       - '.github/ISSUE_TEMPLATE/**'
