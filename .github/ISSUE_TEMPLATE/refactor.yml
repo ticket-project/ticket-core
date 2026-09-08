@@ -162,7 +162,6 @@ body:
       label: 참고 자료
       description: 관련 이슈, PR, 클래스, 문서가 있으면 적어 주세요.
       placeholder: |
-        - docs/development.md
         - CoreDomainArchitectureTest
         - 관련 PR / 운영 장애 기록
     validations:

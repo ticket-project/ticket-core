@@ -10,8 +10,8 @@
 > 지워졌다 — 이 문서에서 더 이상 인용하지 않는다.
 
 이 문서는 **새 테스트를 쓸 때의 관례와 각 테스트가 무엇을 고정하는지**를 정리한다. 모듈 경계는
-[architecture.md](architecture.md), 구현 흐름은 [development.md](development.md), 실행 환경은
-[operations.md](operations.md)를 함께 본다.
+[architecture.md](architecture.md), 예매 흐름은 [core-booking-lifecycle.md](core-booking-lifecycle.md),
+실행 환경은 [operations.md](operations.md)를 함께 본다.
 
 **무엇을 돌릴지 고르는 기준과 실행 명령, 결과 보고 규칙은 `/verify` 스킬이 원본이다**
 (`.claude/skills/verify/SKILL.md`). 핵심 규칙 하나 — 전체를 돌리는 것은 기본값이 아니다.

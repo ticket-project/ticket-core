@@ -11,7 +11,7 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 | 작업별로 먼저 읽을 문서 | `AGENTS.md` 의 "작업별로 먼저 읽을 문서" |
 | 리뷰 기준 전체 | `AGENTS.md` 의 "코드 리뷰" |
 | 모듈 경계와 강제되는 규칙 | `docs/architecture.md` |
-| 구현 절차와 완료 조건 | `docs/development.md` |
+| 완료 판정 조건 | `/verify` 스킬 |
 | 주문·hold 후처리 흐름 | `docs/core-booking-lifecycle.md` |
 | 검증 명령과 테스트 관례 | `docs/testing.md` |
 

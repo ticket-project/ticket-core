@@ -1,7 +1,7 @@
 <!--
 PR 제목 형식: <type>(<scope>): <한국어 설명>
 예: perf(core): 좌석 조회 병목 완화
-상세 기준: docs/development.md의 "커밋과 PR 컨벤션"
+상세 기준: AGENTS.md의 "커밋 및 PR"
 -->
 
 ## 변경 목적
