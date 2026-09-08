@@ -286,8 +286,8 @@ use case는 show에 남는다** — URL·JSON 계약은 바뀌지 않는다. 이
 **`show.domain`은 favorite를 모른다.** `Show`가 `List<ShowLike>`를 필드로 갖거나 show의 도메인
 서비스가 `ShowLikeRepository`를 주입받는 것은 금지한다. 대신 `show.application`의 조회
 서비스(`GetShowDetailUseCase`, `GetMyShowLikesUseCase` 등)가 favorite의 공개 API(`ShowLikeQuery`/
-`ShowLikeCommand`)를 주입받아 응답을 조합한다. 이 규칙은
-`com.ticket.show.domain.ShowDomainPurityTest`(ArchUnit)가 강제한다.
+`ShowLikeCommand`)를 주입받아 응답을 조합한다. 이 규칙은 `com.ticket.DomainPurityTest`
+(ArchUnit, 6개 BC 전체에 같은 원칙을 적용)가 강제한다.
 
 원래는 이 모든 것(찜 개수·추가·삭제·내 찜 목록)을 catalog(현 show)가 흡수해서 소유했다 — catalog의
 공연 상세가 찜 개수를 얻으려면 찜 데이터를 참조해야 하고(catalog → showlike), showlike의 write

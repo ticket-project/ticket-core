@@ -58,7 +58,8 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()`). 아직 이동하지 않은 legacy 패키지는 명시 predicate로 검증 대상에서 뺀다 |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `FavoriteModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
-| `com.ticket.show.domain.ShowDomainPurityTest` | `show.domain`이 `favorite`(다른 BC)를 참조하지 않는 것. 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
+| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것. 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
+| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Bounded Context와 Aggregate") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 
 `com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 그 패키지가 완전히 비어(ADR 0003
