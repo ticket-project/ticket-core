@@ -3,7 +3,7 @@ name: verify
 description: >
   ticket 저장소에서 변경 범위에 맞는 최소 검증을 골라 실행하고 결과를 정확히 보고한다.
   테스트 실행, 빌드 확인, 커밋 전 검증, "이거 돌려봐 / 검증해줘" 요청을 받았을 때 쓴다.
-allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git diff:*)
+allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git diff:*) Bash(find:*)
 ---
 
 # 검증
@@ -11,32 +11,47 @@ allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git
 **전체를 돌리는 것은 기본값이 아니다.** 바꾼 것에 닿는 검증부터 좁게 실행하고, 전체는 push
 직전이나 원인을 모를 때 돌린다.
 
-단일 Gradle Spring Boot 프로젝트다. `:core:core-api:test` 같은 subproject 명령은 없다 —
-`--tests`로 범위를 좁힌다.
-
-## 무엇을 돌릴지
-
-| 상황 | 실행 |
-| --- | --- |
-| 컴파일 여부만 빠르게 보고 싶다 | `./gradlew compileJava` |
-| 특정 모듈(엔티티, use case, controller, adapter 등)을 고쳤다 | `./gradlew test --tests "com.ticket.<module>.*"` (예: `com.ticket.booking.*`) |
-| 모듈 경계, 패키지 위치, `package-info.java`를 건드렸다 | 구조 테스트(아래) |
-| Redis adapter, key, TTL, expiration listener를 고쳤다 | `./gradlew test --tests "com.ticket.core.infra.redis.CoreRedisIntegrationTest"` (Docker 필요) |
-| 주문·hold·좌석 상태 흐름이나 모듈 간 조립을 고쳤다 | `./gradlew test --tests "com.ticket.bootstrap.*"` (Docker 필요, 전체 컨텍스트·E2E) |
-| Modulith 이벤트(발행·리스너·재시도)를 고쳤다 | `./gradlew test --tests "*EventPublication*" --tests "*ScenarioTest"` |
-| 특정 테스트만 보고 싶다 | `./gradlew test --tests "com.ticket.booking.application.order.command.*"` |
-| 배포 산출물까지 확인한다 | `./gradlew clean bootJar -x test` |
-| push·PR 직전 | `./gradlew clean test bootJar`(CI와 같은 명령) |
-| 문서만 바꿨다 | `rg -n "찾을_문구"` 와 `git diff --check` |
+단일 Gradle Spring Boot 프로젝트다(`settings.gradle`에 `rootProject.name` 한 줄뿐). `:core:core-api:test`
+같은 subproject 명령은 없다 — `--tests`로 범위를 좁힌다.
 
 Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
+
+## 변경 범위별 전략
+
+| 변경 범위 | 무엇을 돌리는가 |
+| --- | --- |
+| 컴파일만 빠르게 확인 | `./gradlew compileJava` |
+| 특정 BC/모듈 코드(entity, use case, controller, adapter 등) | 그 package test: `./gradlew test --tests "com.ticket.<module>.*"` (예: `com.ticket.booking.*`) |
+| 모듈 경계, 패키지 위치, `package-info.java`, aggregate 연관관계 | 구조 테스트 — [아래](#구조를-건드렸으면-이것부터), 전체 목록은 [testing.md의 "구조 테스트" 표](../../../docs/testing.md#구조-테스트)가 원본 |
+| Redis adapter, key, TTL, expiration listener | 그 BC의 Redis integration test(Docker/Testcontainers 필요) |
+| Modulith 이벤트(발행·리스너·재시도) | `EventPublicationMaintenance` 관련 scenario test — [아래](#modulith-이벤트-검증) |
+| 주문·hold·좌석 상태 흐름이나 모듈 간 조립 | `com.ticket.bootstrap.*`의 관련 E2E(Docker 필요, 전체 컨텍스트) |
+| 배포 산출물까지 확인 | `./gradlew clean bootJar -x test` |
+| push·PR 직전 | `./gradlew clean test bootJar`(CI의 `.github/workflows/ci.yml`과 같은 명령) |
+| 문서만 바꿨다 | `rg -n "찾을_문구"`와 `git diff --check` |
+
+**실제 테스트 클래스는 소스에서 탐색해 고른다 — 위 표는 카테고리이지 클래스 이름이 아니다.**
+하드코딩된 FQCN을 그대로 믿지 않는다. 찾는 방법:
+
+```bash
+# 특정 BC의 모듈 STANDALONE 테스트
+find src/test -iname "*ModuleTests*"
+
+# 구조 테스트(경계·순수성·연관관계)
+find src/test -iname "*ArchitectureTest*" -o -iname "*PurityTest*" -o -iname "*AssociationTest*"
+
+# 특정 이름을 아는 클래스의 실제 패키지(패키지를 착각하면 --tests가 조용히 0건 통과한다)
+find src/test -iname "<클래스이름>*"
+
+# 통합/E2E 테스트
+find src/test -path "*bootstrap*" -iname "*.java"
+```
 
 ## 구조를 건드렸으면 이것부터
 
 ```bash
 ./gradlew test --tests "com.ticket.ModularityTests"
 ./gradlew test --tests "com.ticket.*.*ModuleTests"
-./gradlew test --tests "com.ticket.core.CoreLayerArchitectureTest"
 ```
 
 `ModularityTests`가 Application Module 경계 전체(닫힌 모듈, 승인된 DAG, cross-module 참조)를
@@ -52,8 +67,8 @@ Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
 객체 연관관계로 묶지 않았는지 고정한다.
 
 `com.ticket.bootstrap`은 지금 class가 없어 `BootstrapArchitectureTest`는 지웠다(검사 대상
-없는 rule이 실패하는 것을 실측 확인) — 그
-패키지에 새 class가 생기면 그때 필요한 규칙을 다시 만든다.
+없는 rule이 실패하는 것을 실측 확인) — 그 패키지에 새 class가 생기면 그때 필요한 규칙을
+다시 만든다.
 
 ## 통합 테스트와 E2E
 
@@ -74,6 +89,22 @@ Redis key, TTL, expiration listener, Redisson 변경은 단위 테스트만으�
 [testing.md의 Modulith 이벤트 테스트](../../../docs/testing.md#modulith-이벤트-테스트)를 본다.
 `EventPublicationMaintenance`(purge·재제출 주기)를 고쳤으면 정책 값(1분 재제출, batch 100,
 동시 4, 재시도 상한 10회, 30일 purge)이 바뀌지 않았는지 함께 확인한다.
+
+## 완료 판정 체크리스트
+
+아래 중 하나라도 해당하면 아직 완료가 아니다. 검증을 실행하기 전에도, 결과를 보고하기 전에도
+확인한다.
+
+- `com.ticket.ModularityTests`나 관련 구조 테스트가 실패한다.
+- 변경한 흐름에 대응하는 테스트가 없다(새로 필요한 테스트를 작업 범위에서 뺐다).
+- Docker 미실행, Gradle 캐시, 작업 디렉터리처럼 **환경 문제를 코드 결함으로 착각**하고 있다 —
+  반대로 환경 문제를 이유로 검증 자체를 건너뛰지도 않는다.
+- 테스트를 스킵하거나(`@Disabled` 방치, `--tests` 범위를 좁혀 실패를 피함) `--no-verify`로
+  훅을 우회했다.
+- 실패가 이번 변경 때문인지 기존 상태(pre-existing)인지 구분하지 않고 넘어갔다.
+- 이미 적용된 Flyway 파일을 수정해 마이그레이션 테스트를 우회했다.
+- 관측 지표나 로그만 보고 정합성을 확인했다고 판단했다(실제 검증 실행 없이).
+- 검증에 실패한 상태로 커밋했다.
 
 ## 결과를 보고할 때
 
