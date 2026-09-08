@@ -61,6 +61,7 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 | `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것. 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Bounded Context와 Aggregate") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
+| `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것(`build/spring-modulith-docs`, `ModularityTests`와 같은 legacy 제외 predicate 사용) |
 
 `com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 그 패키지가 완전히 비어(ADR 0003
 §8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상 없는 rule을 실패로 보는
@@ -140,8 +141,8 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 실제 인프라나 전체 컨텍스트가 필요한 검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를
 본다.
 
-- `com.ticket.core.infra.redis.CoreRedisIntegrationTest`: Redis key·TTL·expiration listener·
-  분산락(Testcontainers, legacy 위치)
+- `com.ticket.booking.infrastructure.redis.CoreRedisIntegrationTest`: Redis key·TTL·expiration
+  listener·분산락(Testcontainers)
 - `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
   HTTP로 관통
@@ -206,6 +207,10 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로
   `execute는_DB_트랜잭션을_직접_시작하지_않는다`, `주문_저장_메서드는_트랜잭션으로_실행된다`가
   있다.
+
+## 무엇을 돌릴지
+
+이 결정은 `/verify` 스킬이 원본이다.
 
 ## 결과를 보고할 때
 
