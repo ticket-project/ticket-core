@@ -43,7 +43,7 @@ if [ "$SCOPE" = "changed" ]; then
     exit 0
   fi
 else
-  DOCS=$( { git ls-files '*.md'; find .claude/skills -name '*.md' 2>/dev/null; } \
+  DOCS=$( { git ls-files '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
           | grep -v '^docs/archive/' | sort -u )
 fi
 
@@ -95,7 +95,7 @@ fi
 
 # 4 ─ 스킬 프론트매터
 if [ -d .claude/skills ]; then
-  skills=$(find .claude/skills -name 'SKILL.md')
+  skills=$(find -L .claude/skills -name 'SKILL.md')
   skillcount=$(printf '%s\n' "$skills" | grep -c . )
   # 파일마다 head/sed/grep을 부르는 대신 awk 한 번으로 프론트매터를 본다.
   fmbad=$(printf '%s\n' "$skills" | xargs awk '

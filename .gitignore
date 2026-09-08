@@ -46,4 +46,7 @@ docker-compose.yml
 
 # Claude Code 개인 설정 (공유 설정은 .claude/settings.json)
 .claude/settings.local.json
-.agents/
+
+# 스킬 본문은 .agents/skills/에 커밋한다. .claude/skills는 scripts/link-agent-skills가
+# 만드는 로컬 생성 링크(Windows Junction / POSIX symlink)이므로 추적하지 않는다.
+/.claude/skills

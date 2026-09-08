@@ -7,6 +7,8 @@
 강제되는 규칙은 테스트와 훅이 원본이다. 규칙 본문을 여기 옮겨 적지 않는다 — 옮겨 적는 순간
 원본과 어긋나고, 어긋난 쪽을 사람이 먼저 믿는다.
 
+**클론 직후 한 번**: `bash scripts/link-agent-skills.sh`(Windows는 `scripts\link-agent-skills.cmd`)를 실행한다. 스킬 본문은 `.agents/skills/`에 있고 `.claude/skills`는 그걸 가리키는 로컬 링크라 git이 복원하지 못한다.
+
 ## 기본 원칙
 
 - 설계 질문에는 여러 방안과 각각의 장단점, 추천을 함께 준다. 고르는 것은 사용자다.
