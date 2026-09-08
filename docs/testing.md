@@ -14,7 +14,7 @@
 실행 환경은 [operations.md](operations.md)를 함께 본다.
 
 **무엇을 돌릴지 고르는 기준과 실행 명령, 결과 보고 규칙은 `/verify` 스킬이 원본이다**
-(`.claude/skills/verify/SKILL.md`). 핵심 규칙 하나 — 전체를 돌리는 것은 기본값이 아니다.
+(`.agents/skills/verify/SKILL.md`). 핵심 규칙 하나 — 전체를 돌리는 것은 기본값이 아니다.
 
 ## 단일 source set
 

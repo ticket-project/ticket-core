@@ -48,11 +48,11 @@ else
   # 저장소가 고칠 대상이 아니다 -- 그 디렉터리의 .md는 링크 검사에서 뺀다.
   VENDORED=$(node -e 'try{console.log(Object.keys(JSON.parse(require("fs").readFileSync("skills-lock.json","utf8")).skills).join("|"))}catch(e){}' 2>/dev/null)
   if [ -n "${VENDORED:-}" ]; then
-    DOCS=$( { git ls-files '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
+    DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
             | grep -v '^docs/archive/' \
             | grep -vE "^\.(claude|agents)/skills/(${VENDORED})/" | sort -u )
   else
-    DOCS=$( { git ls-files '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
+    DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
             | grep -v '^docs/archive/' | sort -u )
   fi
 fi
@@ -104,8 +104,8 @@ if [ "$SCOPE" = "all" ] && [ -d docs/archive ]; then
 fi
 
 # 4 ─ 스킬 프론트매터
-if [ -d .claude/skills ]; then
-  skills=$(find -L .claude/skills -name 'SKILL.md')
+if [ -d .agents/skills ]; then
+  skills=$(find -L .agents/skills -name 'SKILL.md')
   skillcount=$(printf '%s\n' "$skills" | grep -c . )
   # 파일마다 head/sed/grep을 부르는 대신 awk 한 번으로 프론트매터를 본다.
   fmbad=$(printf '%s\n' "$skills" | xargs awk '
