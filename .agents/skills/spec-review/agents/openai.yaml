@@ -1,0 +1,5 @@
+interface:
+  display_name: "Spec Review (별칭)"
+  short_description: "code-review 스킬의 Claude Code용 별칭"
+policy:
+  allow_implicit_invocation: false
