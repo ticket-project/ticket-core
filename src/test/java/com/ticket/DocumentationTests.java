@@ -17,12 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>{@code spring-modulith-docs}는 {@code spring-modulith-starter-test}가 test classpath로 이미
  * 끌어오므로 {@code build.gradle}에 별도 의존을 추가하지 않는다.
  *
- * <p>{@link ApplicationModules#of(Class)}(predicate 없는 기본 overload)를 그대로 쓰면
- * {@code com.ticket.core}/{@code bootstrap}/{@code storage}/{@code support} legacy 코드가 서로 얽힌
- * 참조 때문에 module 구성 자체에서 막힌다 — {@code Documenter}는 생성자로 받은
- * {@link ApplicationModules} 인스턴스를 그대로 문서화할 뿐이므로, {@code com.ticket.ModularityTests}가
- * 쓰는 것과 같은 legacy 제외 predicate로 만든 {@link ApplicationModules}를 넘기면 legacy 코드는
- * 애초에 분석 대상에서 빠져 문제가 되지 않는다.
+ * <p>{@code com.ticket.ModularityTests}와 같은 legacy 제외 predicate로 만든
+ * {@link ApplicationModules}를 {@link Documenter}에 넘긴다 — 문서화 대상도 구조 검증 대상과
+ * 같아야 하기 때문이다.
  *
  * <p>결과물은 {@code build/spring-modulith-docs} 아래에 생성되는 CI artifact다. {@code build/}는
  * {@code .gitignore} 대상이라 source로 commit되지 않는다 — 매 실행마다 코드로부터 다시 만든다.
@@ -31,11 +28,7 @@ class DocumentationTests {
 
     private static final String OUTPUT_FOLDER = "build/spring-modulith-docs";
 
-    /**
-     * com.ticket.ModularityTests와 같은 legacy 제외 predicate다. 어긋나면 두 테스트가 따로 깨진다.
-     * {@code bootstrap}이 "아직 이동하지 않은 legacy"가 아니라 영구 composition-root 예외인 이유는
-     * {@code ModularityTests}의 클래스 javadoc 참고.
-     */
+    /** com.ticket.ModularityTests의 LEGACY_PACKAGES와 같은 predicate다. 어긋나면 두 테스트가 따로 깨진다. */
     private static final DescribedPredicate<JavaClass> LEGACY_PACKAGES = DescribedPredicate.describe(
             "com.ticket.core, com.ticket.storage, com.ticket.support 아래의 아직 이동하지 않은 legacy "
                     + "코드, 그리고 com.ticket.bootstrap의 영구 composition-root 코드",
@@ -55,10 +48,7 @@ class DocumentationTests {
         assertThat(outputDir.resolve("components.puml")).exists();
 
         // module별 canvas(공개 API·의존·발행 이벤트를 표로 정리한 AsciiDoc)와 개별 diagram.
-        // 파일명은 Documenter가 module identifier(소문자)로 만든다 — legacy를 뺀 6개 각각
-        // (ticketing은 booking으로 흡수돼 더 이상 없다. payment는 ticket-domain-module-redesign
-        // Phase 5에서 신설된 entity-only module이다. catalog는 BC 재편으로 show로 개명됐고, 찜은
-        // show에서 다시 별도 module favorite로, 물리 공연장·좌석은 venue로 분리됐다).
+        // 파일명은 Documenter가 module identifier(소문자)로 만든다 — 대표로 아래 6개만 확인한다.
         for (final String moduleName : new String[] {
                 "booking", "show", "venue", "favorite", "member", "payment"
         }) {

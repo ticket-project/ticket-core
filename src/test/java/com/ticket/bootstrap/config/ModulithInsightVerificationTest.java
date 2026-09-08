@@ -20,10 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * runtime insight/actuator 가시성을 확인한다.
  *
- * <p>{@code spring-modulith-actuator}·{@code spring-modulith-observability-core}는
- * {@code spring-modulith-starter-insight}가 runtime scope로 이미 끌어온다.
- * {@code build.gradle}에 {@code testCompileOnly}로 추가한 것은 컴파일 시점 타입 확인을 위해서다 —
- * {@code spring-modulith-runtime}에 붙인 Task 11의 같은 패턴이다.
+ * <p>{@code build.gradle}이 {@code testCompileOnly}로 관련 Modulith 아티팩트를 추가하는 이유(컴파일
+ * 시점 타입 확인용이고 런타임 의존은 이미 {@code spring-modulith-starter-insight}가 끌어온다)는
+ * {@code build.gradle} 주석 참고.
  *
  * <p>이 테스트가 확인하는 것은 두 가지다.
  * <ul>
