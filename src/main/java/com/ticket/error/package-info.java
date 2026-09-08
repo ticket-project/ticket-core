@@ -7,9 +7,7 @@
  * 오류는 그 업무를 소유한 module의 {@code exception}에 둔다.
  *
  * <p>이 module은 {@code web}(REST 응답 봉투)만 참조한다. 반대로 {@code web}이 이 module을
- * 참조하면 순환이 되어 {@code com.ticket.ModularityTests}가 실패한다 —
- * {@code com.ticket.web.ApiResponse}가 오류 타입을 모른 채 완성된 code·message·data 문자열만
- * 받는 이유다.
+ * 참조하면 순환이 되어 {@code com.ticket.ModularityTests}가 실패한다.
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Error")
 package com.ticket.error;
