@@ -104,3 +104,25 @@ QuerydslShowListReadRepositoryTest.TestApplication.class)`와 자체 `@EntitySca
 **막은 방법**: 새 module을 추가할 때 공유 test-support 클래스뿐 아니라
 `rg "@EntityScan" src/test`로 하드코딩된 위치 전부를 찾아 확인한다. 이번 세션에서는 이 검색으로
 두 번째 위치를 미리 찾아 갱신해 실패를 피했다.
+
+## [관측 2026-09-08] ADR 결정 이후 스킬 서술이 stale해진 채로 계속 안내됐다
+
+**무엇을**: ADR 0006의 2026-09-07 A2 후속 결정(예매 접수 기간·Hold 한도·대기열 진입 정책을
+Booking BC의 `PerformanceSalesPolicy`로 이관)이 `.claude/skills/place-code/SKILL.md`에는
+반영되지 않아, 그 스킬이 하루 넘게 제거된 클래스(`PerformanceQueuePolicy`, 제거된
+`show.BookingPolicyLookup`)를 공개 계약 예시로 계속 안내하고 `entryType` 계산 주체를 이미 옮겨진
+`show`로 계속 지목했다. 같은 파일이 이미 main 소스에서 비워진 `com.ticket.core`/`storage`/
+`support` legacy 패키지를 "아직 옮겨야 할 코드"로도 계속 안내했다.
+
+**왜**: 도메인 결정(ADR)과 코드 배치 절차(스킬)가 서로 다른 파일에 나뉘어 있고, 결정이 바뀔 때
+그 결정을 참조하는 다른 문서·스킬을 갱신하는 절차가 없었다. `docs/architecture.md`나 ADR
+자체는 결정 시점에 갱신됐지만, 그 결정을 소비하는 `/place-code`는 별도 갱신 대상으로 인식되지
+않았다.
+
+**막은 방법**: `/place-code`의 stale한 서술 네 곳(모듈 소유권 표, 공개 계약 예시, entryType
+계산 주체, legacy 패키지 언급)을 정정하고, 경계 판단 자체를 다루는 새 `/domain-driven-development`
+스킬을 만들어 "완료 조건"에 관련 문서·스킬 갱신을 체크리스트로 못박았다(`docs/architecture.md`,
+해당 ADR, `package-info.java`, `CONTEXT.md`, 구조 테스트 허용 목록). 경계를 바꾸는 결정은 이제
+그 스킬을 거치므로, 다음에 같은 종류의 결정이 나면 소비하는 문서·스킬 갱신이 완료 조건에
+포함된다.
+
