@@ -13,14 +13,19 @@ allowed-tools: Bash(rg:*) Bash(./gradlew:*)
 단일 Gradle Spring Boot 프로젝트다. `com.ticket`의 직접 하위 패키지가 Spring Modulith의 닫힌
 Application Module이고, 계층(web/application/domain/infrastructure)은 각 모듈 안의
 모듈 root 아래 패키지일 뿐이다. 결정 배경은
-`docs/adr/0003-spring-modulith-application-module-boundaries.md`가 원본이다.
+`docs/adr/0003-spring-modulith-application-module-boundaries.md`(모듈 분리)와
+`docs/adr/0006-bounded-context-module-boundaries.md`(모듈 = Bounded Context)가 원본이다.
+
+**이 스킬은 모듈이 이미 정해졌다고 가정한다.** 새 도메인 개념의 소유 BC를 정하거나,
+Aggregate 경계를 판단하거나, 기존 책임을 다른 BC로 옮기는 결정 자체는 **`/domain-driven-development`
+스킬**이 원본이다. 그 판단이 끝난 뒤에 이 스킬로 코드를 어디에 둘지 고른다.
 
 ## 0. 먼저 모듈을 고른다
 
 | 다루는 업무 | 모듈 |
 | --- | --- |
-| 좌석 판매 상태(`PerformanceSeat`), Selection, Hold, Order/OrderSeat, 주문 취소·만료, 좌석 분산락, WebSocket 좌석 발행 | `booking` |
-| Show, Category, Genre, Performer, Performance, Grade(등급 코드·이름), PerformanceGrade(회차별 등급 가격·표시 순서), 예매 가능 시간, Hold 한도, 대기열 정책(`PerformanceQueuePolicy`), 공연·회차 조회, 찜 HTTP endpoint·use case(데이터는 favorite 소유) | `show`(옛 `catalog`) |
+| 좌석 판매 상태(`PerformanceSeat`), Selection, Hold, Order/OrderSeat, 주문 취소·만료, 좌석 분산락, WebSocket 좌석 발행, 회차 예매 접수 기간·Hold 한도·대기열 진입 정책(`PerformanceSalesPolicy`) | `booking` |
+| Show, Category, Genre, Performer, Performance(회차 일정만), Grade(등급 코드·이름), PerformanceGrade(회차별 등급 가격·표시 순서), 공연·회차 조회, 찜 HTTP endpoint·use case(데이터는 favorite 소유) | `show`(옛 `catalog`) |
 | Venue, Seat, Region(물리 시설) | `venue` |
 | Show 좋아요(찜)의 데이터·불변식(개수·추가·삭제·내 찜 목록) | `favorite`("Favorite 분리와 조합 규칙" 참고) |
 | Order에 대한 결제 시도(Payment)의 생명주기 | `payment` |
@@ -212,10 +217,11 @@ service(`GetShowDetailUseCase` 등)가 favorite의 `ShowLikeQuery`/`ShowLikeComm
   `@Transactional`은 흐름을 엮는 방법이다. 규칙은 `domain`에, 경계와 발행은
   `application`에.
 - **다른 모듈이 필요한 경우.** 상대 모듈의 내부 repository나 store를 직접 부르지 않고
-  공개 API(예: `show.BookingPolicyLookup`, `venue.VenueLookup`, `member.MemberLookup`)를 호출한다.
+  공개 API(예: `show.PerformanceSaleCatalog`, `venue.VenueLookup`, `member.MemberLookup`)를 호출한다.
 - **대기열.** 대기열 런타임은 형제 저장소 `../ticket-queue`가 소유한다. Core는 회차별
-  `entryType` 계산(`show`)과 admission token 검증(`booking`)만 담당하며 queue token
-  저장소나 만료 핸들러를 두지 않는다.
+  `entryType`/예매 방식 계산(`booking`의 `PerformanceSalesPolicy`,
+  `GetPerformanceBookingModeUseCase`)과 admission token 검증(`booking`)만 담당하며 queue
+  token 저장소나 만료 핸들러를 두지 않는다.
 - **Core Redis의 용도.** seat selection, seat hold(`booking`), refresh token, OAuth2
   one-time auth code(`member`)뿐이다. 대기열 상태를 Core Redis에 넣지 않는다.
 
