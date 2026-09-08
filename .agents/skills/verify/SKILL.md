@@ -56,7 +56,7 @@ find src/test -path "*bootstrap*" -iname "*.java"
 
 `ModularityTests`가 Application Module 경계 전체(닫힌 모듈, 승인된 DAG, cross-module 참조)를
 검사하는 본체다. 새 코드의 위치가 의심스러우면 이것부터 돌린다. 무엇을 막는지는
-[architecture.md](../../../docs/architecture.md#아키텍처-규칙)를 본다.
+[architecture.md](../../../docs/architecture.md#enforcement)를 본다.
 
 각 모듈의 `<Module>ModuleTests`(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
 `FavoriteModuleTests`, `MemberModuleTests`, `PaymentModuleTests`)는
