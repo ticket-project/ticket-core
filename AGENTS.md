@@ -73,5 +73,5 @@ Matt Pocock 엔지니어링 스킬(`.agents/skills/`)이 이 저장소에서 쓸
 
 - **이슈 트래커**: `ticket-project/ticket-core`의 GitHub Issues, `gh` CLI.
   `docs/agents/issue-tracker.md`
-- **트리아지 라벨**: 표준 다섯 개를 기본 이름 그대로.
-- **도메인 문서**: 단일 컨텍스트. `CONTEXT.md`와 `docs/adr/`.
+- **트리아지 라벨**: 표준 다섯 개를 기본 이름 그대로. `docs/agents/triage-labels.md`
+- **도메인 문서**: 단일 컨텍스트(`CONTEXT.md` + `docs/adr/`). `docs/agents/domain.md`
