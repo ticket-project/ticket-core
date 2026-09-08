@@ -170,7 +170,7 @@ spring:
    payload가 잘려 있을 수 있다 — 이 경우 `orderId`만으로도 booking 테이블에서 실제 주문/좌석
    상태를 다시 조회할 수 있다(리스너 자체도 payload를 신뢰하지 않고 재조회한다).
 3. 근본 원인을 판단한다: listener 예외(코드 결함), 외부 의존성 장애(Redis 연결 등), 또는
-   `serialized_event` 크기 초과([architecture.md의 이벤트와 후속 처리](architecture.md#이벤트와-후속-처리)
+   `serialized_event` 크기 초과([ADR 0003 §5](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)
    참고, 다중 좌석 주문에서 발생 가능)로 나눈다.
 4. 원인이 해소됐다면 해당 publication의 `completion_attempts`를 초기화하거나 애플리케이션의
    `FailedEventPublications` API를 관리 스크립트/actuator 경로로 다시 호출해 재제출 대상에

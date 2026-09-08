@@ -69,7 +69,7 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 만든다.
 
 새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 무엇을 막는지는
-[architecture.md의 아키텍처 규칙](architecture.md#아키텍처-규칙)에 정리돼 있다.
+[architecture.md의 아키텍처 규칙](architecture.md#enforcement)에 정리돼 있다.
 
 ## Modulith 이벤트 테스트
 
