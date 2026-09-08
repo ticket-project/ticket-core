@@ -41,9 +41,10 @@ Aggregate 경계를 판단하거나, 기존 책임을 다른 BC로 옮기는 결
 모듈을 잘못 고르면 그 다음 판단이 전부 무의미하다. 애매하면 "이 코드가 사라지면 무엇이 먼저
 깨지는가"를 먼저 모듈 단위로 묻는다.
 
-**아직 모듈로 옮기지 않은 legacy 코드**(`com.ticket.core`/`storage`(그리고 `core` 아래 nested된
-`core.support`))가 있다. 새 코드를 여기 추가하지 않는다 — 새 기능은 해당하는 모듈로 바로 만든다.
-legacy 코드를 옮기는 작업 자체는 범위가 크므로 먼저 사용자와 범위를 정한다.
+**`com.ticket.core`/`storage`/`support` legacy 패키지는 main 소스에서 모두 비워지거나 제거됐다** —
+새 코드를 여기 추가할 일이 없다. `src/test/java/com/ticket/core/infra/support/`의 공유 테스트
+지원 클래스만 예외로 남아 있고, 이건 옮길 legacy가 아니라 별도 결정할 test 인프라 소유권 문제다
+(`docs/architecture.md`의 "프로젝트 구조" 참고).
 
 `com.ticket.bootstrap`은 legacy가 아니다 — 여러 module의 내부를 동시에 참조해야만 배선할 수
 있는 코드를 위한 영구 composition-root 예외 자리이고, 지금은 production class가 하나도 없다.
