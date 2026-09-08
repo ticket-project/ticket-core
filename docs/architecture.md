@@ -358,7 +358,7 @@ one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈�
 | E-code 전역 유일성 / handler 스코프 | `ErrorCodeUniquenessTest` / `ExceptionHandlerScopeTest` |
 
 무엇을 검증하는지 자세한 목록은 [testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은
-`/verify`, 실패했을 때 볼 곳은 `/place-code`가 원본이다. **규칙 본문은 테스트 코드가 원본이고
+`/verify`가 원본이다. **규칙 본문은 테스트 코드가 원본이고
 여기 옮겨 적지 않는다.** 규칙을 바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이
 틀렸다는 사실을 먼저 밝힌다.
 
