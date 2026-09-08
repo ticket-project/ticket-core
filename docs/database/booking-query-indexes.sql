@@ -1,4 +1,4 @@
--- Core API 조회 최적화 인덱스 운영 사전·사후 점검용 Oracle SQL
+-- booking의 PERFORMANCE_SEATS/ORDER_SEATS 조회 최적화 인덱스 운영 사전·사후 점검용 Oracle SQL
 -- 실제 인덱스 DDL은 Flyway V3, V4 migration이 적용한다.
 
 -- 1. 아래 결과가 0건인지 먼저 확인한다.

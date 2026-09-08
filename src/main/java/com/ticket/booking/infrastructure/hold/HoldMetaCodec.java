@@ -8,7 +8,8 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * hold 메타를 Redis에 저장하기 위한 기술 직렬화다.
  *
- * <p>직렬화 형식은 저장 기술의 관심사이므로 core-infra가 소유한다.
+ * <p>직렬화 형식은 저장 기술의 관심사이므로 이 클래스가 속한 {@code booking.infrastructure.hold}가
+ * 소유한다.
  */
 @Component
 @RequiredArgsConstructor
