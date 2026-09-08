@@ -1,5 +1,5 @@
 /**
- * Web BC: 이 앱이 <b>HTTP로 말하는 방식</b>을 소유한다.
+ * Web 기술 모듈: 이 앱이 <b>HTTP로 말하는 방식</b>을 소유한다. Bounded Context가 아니다.
  *
  * <p>모든 REST 응답을 감싸는 공통 봉투({@link com.ticket.web.ApiResponse}/
  * {@link com.ticket.web.ErrorMessage}/{@link com.ticket.web.ResultType})와 무한스크롤 응답
@@ -18,6 +18,10 @@
  * <p>그 대신 <b>이 module에도 bean을 등록하는 코드를 두지 않는다</b> — {@code sharedModules}는
  * 모든 {@code @ApplicationModuleTest}에 이 module을 포함시키므로, 배선이 있으면 모든 module의
  * STANDALONE 테스트가 그것을 함께 띄운다({@code com.ticket.shared}와 같은 이유다).
+ *
+ * <p><b>{@code allowedDependencies = {}}를 명시하는 이유</b>: 속성을 생략해도 컴파일은 되지만,
+ * 그러면 위 "leaf여야 한다"는 약속이 {@code APPROVED_DEPENDENCY_DAG} 스냅샷에만 기대게 된다.
+ * 빈 값을 명시해 Modulith {@code verify()} 자체가 leaf 위반을 잡게 한다.
  */
-@org.springframework.modulith.ApplicationModule(displayName = "Web")
+@org.springframework.modulith.ApplicationModule(displayName = "Web", allowedDependencies = {})
 package com.ticket.web;

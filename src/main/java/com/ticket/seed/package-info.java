@@ -1,5 +1,6 @@
 /**
- * Seed BC: 로컬·운영 기동 시 초기 데이터를 적재하는 시드 러너를 소유한다.
+ * Seed 기술 모듈: 로컬·운영 기동 시 초기 데이터를 적재하는 시드 러너를 소유한다. Bounded Context가
+ * 아니다.
  *
  * <p>{@code SeedDataLoader}는 {@code seed/kopis-curated.sql}을 파싱해 여러 module의 테이블(카테고리,
  * 공연, 회차 등)에 raw SQL로 적재하고, 부하 테스트 회원만 member의

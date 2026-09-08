@@ -28,6 +28,14 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * 아니라 {@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG}가 막는다. 이 테스트는 그
  * 의존이 domain 계층으로 새는 것만 막는다 — application이 참조하는 것은 허용된다.
  *
+ * <p><b>이 테스트가 보장하지 않는 것</b>: domain의 기술 의존이다. 실제로 6개 BC 전부의 domain이
+ * {@code jakarta.persistence}(JPA entity)와 {@code org.springframework.data.*}(auditing)를
+ * 참조하고, {@code booking}/{@code show}의 domain 클래스 일부는 {@code @Component}/
+ * {@code @Service}를 갖는다. domain이 참조하는 {@code com.ticket.error.InvalidRequestException}은
+ * {@code TicketException}을 통해 {@code org.springframework.http.HttpStatus}로 이어진다 — 이
+ * 기술 결합은 ADR 0002가 대안을 검토해 고른 설계이며 이 테스트의 대상이 아니다. "purity"는 여기서
+ * BC 격리만 뜻한다.
+ *
  * <p>배경은 {@code docs/adr/0006-bounded-context-module-boundaries.md} §1이 원본이다.
  */
 @AnalyzeClasses(
@@ -37,7 +45,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 @SuppressWarnings("NonAsciiCharacters")
 class DomainPurityTest {
 
-    /** 기술 모듈을 제외한 6개 BC다. {@code docs/architecture.md}의 "Bounded Context와 Aggregate" 절이 원본이다. */
+    /** 기술 모듈을 제외한 6개 BC다. {@code docs/architecture.md}의 "Bounded Context" 절이 원본이다. */
     private static final Set<String> BOUNDED_CONTEXTS = Set.of(
             "booking", "show", "venue", "favorite", "member", "payment");
 

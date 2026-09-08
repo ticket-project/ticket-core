@@ -1,5 +1,5 @@
 /**
- * Config BC: <b>앱에 적용되는 전역 배선</b>을 모은다.
+ * Config 기술 모듈: <b>앱에 적용되는 전역 배선</b>을 모은다. Bounded Context가 아니다.
  *
  * <p>어떤 business module도 참조하지 않는 domain-free 전역 기술 설정이 여기 있다 —
  * {@code SwaggerConfig}, {@code P6SpyConfig}, {@code QuerydslConfig}, {@code RedissonConfig},
