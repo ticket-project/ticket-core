@@ -32,7 +32,7 @@
 | 새 테스트를 어디에 어떻게 쓰는지 | `docs/testing.md` |
 | 로컬 실행, 프로파일, Flyway, 배포, 관측 | `docs/operations.md` |
 | 부하 테스트 | **`/loadtest` 스킬** |
-| 새 개념의 BC·Aggregate 경계 판단 | **`/domain-modeling`**, **`/codebase-design`** 스킬 |
+| 새 개념의 BC·Aggregate 경계 판단 | `docs/architecture.md`의 Aggregate Rules |
 | 미결 설계·제품 정책 결정 | `docs/open-questions.md` |
 | 미구현 기능 | GitHub Issues |
 | 반복해 틀리는 지점 | `docs/agents/observed-failures.md`(임시 inbox — 반영되면 지운다) |
@@ -69,8 +69,7 @@
 
 ## Agent skills
 
-엔지니어링 스킬(`/triage`, `/to-tickets`, `/to-spec`, `/wayfinder`, `/domain-modeling` 등)이
-이 저장소에서 쓸 설정이다.
+Matt Pocock 엔지니어링 스킬(`.agents/skills/`)이 이 저장소에서 쓸 설정이다.
 
 - **이슈 트래커**: `ticket-project/ticket-core`의 GitHub Issues, `gh` CLI.
   `docs/agents/issue-tracker.md`

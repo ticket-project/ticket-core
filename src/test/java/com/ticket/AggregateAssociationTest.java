@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 상한이 아니라 실제로 관측된 연관관계를 고정해서, 새 연관관계가 조용히 늘면 이 테스트가 잡는다.
  * 새 연관관계가 정말 같은 aggregate 안(자식이 부모 없이 존재할 수 없는 관계)이면
  * {@link #APPROVED_ASSOCIATIONS}에 추가하고, 아니라면 scalar ID 참조로 바꾼다 — 판단 절차는
- * {@code /domain-modeling}·{@code /codebase-design} 스킬과 docs/architecture.md의 Aggregate Rules가 원본이다.
+ * docs/architecture.md의 Aggregate Rules가 원본이다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class AggregateAssociationTest {
