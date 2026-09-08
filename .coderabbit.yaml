@@ -66,7 +66,7 @@ reviews:
           구현체를 둔다. 업무 판단이나 상태 전이 결정이 섞였는지 확인하세요.
         - Redis 명령과 key 조립, TTL 설정, expiration listener, WebSocket 발행, scheduler, 분산락 AOP를 우선 확인하세요.
         - DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드, background executor 한도를 늘리는 변경은 특히 엄격하게 보세요.
-        - Redis key·TTL·전환 절차의 세부 규칙은 docs/architecture.md의 "저장소와 동시성" > Redis 작업 규칙이 원본입니다.
+        - Redis key·TTL·전환 절차의 세부 규칙은 docs/operations.md의 "분산락과 Redis 작업 규칙"이 원본입니다.
     - path: ".github/**"
       instructions: |
         - workflow, review 설정, 배포 설정 변경은 CI 실패, 보안 노출, 잘못된 자동화 동작을 중심으로 확인하세요.

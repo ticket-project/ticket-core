@@ -13,8 +13,16 @@
 의존은 추가되지 않았다(순환 없음 유지). booking이 `GET /api/v1/booking/performances/{id}/booking-mode`로
 회차 예매 방식을 인증 없이 공개한다. DB는 booking V6 migration이 옛 show/`__root` 소유
 `PERFORMANCE_QUEUE_POLICIES`/`PERFORMANCES` 정책 컬럼 4개를 backfill 후 제거했다(정책 소유권 이관
-예외, `docs/architecture.md`/`docs/operations.md`의 "DB 마이그레이션" 절 참고). 아래 "결정하지 않는
-것" 절의 본문은 그 이전 결정 시점의 기록으로 남긴다.
+예외, `docs/operations.md`의 "DB 마이그레이션" 절 참고 — 그 절은 `docs/architecture.md`가 아니라
+`docs/operations.md`에만 있다). 아래 "결정하지 않는 것" 절의 본문은 그 이전 결정 시점의 기록으로
+남긴다.
+
+**2026-09-08 갱신(원칙 완화)**: 아래 "Application Module(기술 모듈 제외)은 곧 BC다"라는 원칙을
+`docs/architecture.md`에서 "Business Application Module은 Bounded Context 또는 독립적으로
+캡슐화할 가치가 있는 supporting business capability와 정렬한다"로 다듬었다. Favorite와 Payment는
+독립 ubiquitous language를 갖지 않는 supporting capability라는 점에서 나머지 4개 BC와 성격이
+다르다는 관측을 반영한다 — module을 합치거나 새로 쪼개는 결정은 아니다. 이 문단 아래의 BC
+표·결정 본문은 당시 기록으로 그대로 둔다.
 
 이전까지는 "Application Module은 업무 기능 경계이지 BC(Bounded Context)가 아니다"를
 전제로 삼아 왔다. 이 ADR은 그 전제를 뒤집는다 — **지금부터 Application Module(기술 모듈 제외)은 곧

@@ -1,13 +1,7 @@
 # 테스트 기준
 
-> [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)의
-> `payment` module 신설과 show(옛 catalog)/booking schema 재설계가 구현됐다(`ticketing`은 이후 booking으로
-> 흡수)(entity-only 단계 — PG 연동, 결제 승인 API, `OrderConfirmed` listener는 아직 없다). [ADR 0006](adr/0006-bounded-context-module-boundaries.md)의
-> BC 재편(`catalog` → `show` 개명, `venue`/`favorite` 신설)도 구현됐다. 아래 모듈 테스트·구조
-> 테스트·module별 migration slice 테스트 표는 이 구현을 반영한다. `ShowGrade`/`ShowSeat` 제거(계획
-> 문서 Phase 3 Task 8)가 끝나면서 그 둘을 대상으로 하던 Phase 1 baseline 테스트
-> (`CurrentSeatVenueShowGradeSchemaTest`, `ShowGradePerformanceSeatPriceMismatchQueryTest`)도 함께
-> 지워졌다 — 이 문서에서 더 이상 인용하지 않는다.
+> 아래 모듈 테스트·구조 테스트·module별 migration slice 테스트 표는 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
+> [ADR 0006](adr/0006-bounded-context-module-boundaries.md)이 구현된 현재 구조를 반영한다.
 
 이 문서는 **새 테스트를 쓸 때의 관례와 각 테스트가 무엇을 고정하는지**를 정리한다. 모듈 경계는
 [architecture.md](architecture.md), 예매 흐름은 [core-booking-lifecycle.md](core-booking-lifecycle.md),
@@ -55,21 +49,21 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 
 | 테스트 | 고정하는 것 |
 | --- | --- |
-| `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()`). 아직 이동하지 않은 legacy 패키지는 명시 predicate로 검증 대상에서 뺀다 |
+| `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `FavoriteModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
-| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것. 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
-| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Bounded Context와 Aggregate") |
+| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
+| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
-| `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것(`build/spring-modulith-docs`, `ModularityTests`와 같은 legacy 제외 predicate 사용) |
+| `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것(`build/spring-modulith-docs`) |
 
 `com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 그 패키지가 완전히 비어(ADR 0003
 §8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상 없는 rule을 실패로 보는
 것을 실측 확인해 지웠다 — `com.ticket.bootstrap`이 다시 class를 가지면 그때 필요한 규칙을 다시
 만든다.
 
-새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 무엇을 막는지는
-[architecture.md의 아키텍처 규칙](architecture.md#enforcement)에 정리돼 있다.
+새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 규칙 전체 목록은
+[architecture.md의 Enforcement](architecture.md#enforcement)에 정리돼 있다.
 
 ## Modulith 이벤트 테스트
 

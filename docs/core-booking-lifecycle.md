@@ -219,6 +219,11 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 - background 트리거: `booking.infrastructure.worker.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.infrastructure.redis.RedisExpirationListenerConfig`
 - event publication 운영: `config.EventPublicationMaintenance`
+- 분산락 포트: `booking.application.lock.LockManager`(잠글 대상은 `LockKey`/`LockScope` — 업무
+  의미만 담고 key 문자열은 담지 않는다, 획득 방식은 `LockOptions` — 대기 시간·임대 시간·실패 로그
+  수준), 구현: `booking.infrastructure.lock.RedissonLockManager`(key 형식은
+  `RedissonLockKeyFormatter`). 적용 예: 동일 회원/공연 조합의 중복 주문 시작 방지
+  (`LockScope.ORDER_START`), 동일 좌석 동시 점유 방지(`LockScope.SEAT`)
 
 ## 운영 확인
 

@@ -97,9 +97,35 @@ ADMISSION_TOKEN_ENFORCEMENT_ENABLED=false
 
 Queue Server와 클라이언트의 admission token 전달이 모두 준비된 뒤에만 `true`로 전환한다. 비활성 상태에서는 회차의 Queue 정책과 admission token을 조회하거나 검증하지 않는다.
 
+admission token의 서명 secret, issuer, audience는 Core와 `ticket-queue` 두 저장소 설정이 일치해야
+한다. 한쪽만 바꾸면 검증 실패가 부하 문제가 아니라 설정 불일치로 발생한다.
+
 ### Queue shopping session 만료
 
 현재 Core는 주문 생성·취소·만료 시 Queue Server에 session 완료 요청을 보내지 않는다. Queue 입장 후 shopping session은 Queue Server의 TTL로 만료된다. 따라서 운영 시에는 Queue의 entered marker 수와 TTL 만료 추이를 관측해야 하며, 조기 반환이나 동시 active session 상한은 별도 프로토콜 설계 후 도입한다.
+
+## 분산락과 Redis 작업 규칙
+
+**Redis 작업 규칙**
+
+- key 조립과 물리 TTL은 소유 모듈의 `infrastructure` adapter가 소유한다. `application`/`domain`은
+  Redis 타입이나 key가 아니라 저장 기술 중립 계약만 본다.
+- 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
+- key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차를 함께 설계한다.
+- TTL, expiration listener, scheduler 보정 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을
+  함께 지킨다.
+
+**분산락 작업 규칙**
+
+분산락은 `com.ticket.booking.application.lock.LockManager` 같은 명시적 포트 호출로 처리한다.
+포트·구현 클래스는 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)를
+본다.
+
+- 락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다. 좌석 락은 Redis
+  hold를 만드는 구간에만 건다 — DB 트랜잭션 동안 좌석 락을 쥐고 있으면 connection 경합이 좌석
+  경합으로 번진다.
+- 락 범위 안에서 외부 I/O를 늘리지 않는다. 임계 구역은 짧게 유지한다.
+- 락 키를 바꾸면 보호 대상이 그대로인지 테스트로 고정한다.
 
 ## 좌석 선택 Redis 인덱스 전환
 
