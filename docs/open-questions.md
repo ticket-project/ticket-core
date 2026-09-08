@@ -41,7 +41,7 @@ favorite 분리 이후에도 show에 남는다). `core.api.support`는 이제 �
 `QueueActivation`/`BookingPolicyValidator`/`BookingEntryResolver`는 제거됐고, booking이
 `GET /api/v1/booking/performances/{id}/booking-mode`로 회차 예매 방식을 공개한다. 기존 정책 데이터는 booking
 V6 migration이 손실 없이 backfill했다. FE 후속(`ticket-fe`가 이 새 API로 DIRECT/QUEUE를 분기하는
-작업)은 이 항목의 범위가 아니다 — `development.md`의 "미구현 또는 후속 범위"를 본다.
+작업)은 이 항목의 범위가 아니다 — GitHub Issue #223을 본다.
 
 ## 제품 정책 결정 대기
 

@@ -4,9 +4,8 @@
 다르면 현재 위치를 선례로 삼지 말고 미완료된 구조 이전으로 판단한다. 결정 배경은
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)·
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
-[ADR 0006](adr/0006-bounded-context-module-boundaries.md), 개발 흐름은
-[development.md](development.md), 실행과 검증은 [operations.md](operations.md), 코드를 어디에 둘지는
-`/place-code` 스킬을 함께 본다.
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md)을 함께 본다. 실행과 검증은
+[operations.md](operations.md)를 본다.
 
 ## 원칙
 
@@ -246,6 +245,58 @@ final Member member = memberRepository.findActiveById(input.memberId())
 강제한다.
 
 배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)가 원본이다.
+
+## 주요 흐름
+
+코드만 봐서는 알기 어려운 정책·순서만 다룬다. 엔드포인트 목록은 Swagger(`/api/api-docs`)가
+원본이다.
+
+### 인증
+
+API 인증은 JWT 기반 stateless 방식이다. OAuth2 인가 흐름은 별도 filter chain에서 처리하고
+전역 `SecurityFilterChain`은 `member`가 제공한다. Refresh token과 OAuth2 1회용 코드는
+Redis를 쓴다. 다른 모듈의 controller는 `member.AuthenticatedMember`만 parameter로 받고
+JWT나 `member` 내부의 `Member`를 보지 않는다.
+
+### 쇼·회차·좌석 조회
+
+좌석 상태는 DB 상태와 Redis 점유 상태를 합쳐 계산하며, 합치는 규칙의 소유자는 `booking`
+한 곳이다. 좌석·등급·가격 조회의 기준 식별자는 `performanceId`/`performanceSeatId`/
+`performanceGradeId`다 — 같은 Show라도 회차마다 편성과 가격이 다를 수 있어 `showId` 기준
+조회 API는 만들지 않는다.
+
+performance 기준 API 3종(`booking.web.PerformanceSeatQueryController`)은 각각 다른 것을
+반환하며 회차당 고정된 query 수를 유지한다(N+1 없음):
+
+- `GET .../seat-map`: 정적 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값·확정 가격
+- `GET .../seats/status`: 동적 상태(DB `RESERVED` + Redis `SELECTING`/`HOLDING` 합산)
+- `GET .../seats/availability`: 등급별 잔여석(그룹 key는 `gradeName`이 아니라
+  `performanceGradeId`)
+
+**정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
+않는다.** 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
+
+`show.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리 Venue
+배치만 반환하는 별개의 show 기준 API다(ADR 0006으로 booking에서 옮겨왔다). 새 기능은 여기
+추가하지 않고 performance 기준 API 3종에 추가한다.
+
+### 대기열
+
+대기열 런타임은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도, queue
+token 저장소도, 만료 핸들러도 갖지 않는다. 대기열 진입 정책(`PerformanceSalesPolicy`의
+`BookingEntryPolicy`)은 Booking BC가 소유하며, 인증 없이 조회하는
+`GET /api/v1/booking/performances/{performanceId}/booking-mode`가 회차의 접수
+상태(`acceptanceStatus`)와 예매 방식(`bookingMode`: DIRECT/QUEUE/UNAVAILABLE)을 계산해
+반환한다. 이 조회는 안내용이라 실제 좌석 선택·상태·주문 API는 실행 시점에 정책을 다시
+검사한다.
+
+Queue Server hot path는 Core DB와 회차별 정책 snapshot을 조회하지 않는다 — `join`에서 받은
+`shardId`/`localSeq`를 public `/state` 응답의 `serving[shardId]`와 비교해 판단한다.
+Core(`booking`의 admission 검증)는 Queue가 발급한 admission token의 서명·issuer·audience·
+scope·만료 시각과 `memberId`/`performanceId` 일치 여부를 검증한다. **주문 생성 후 Queue
+Server에 session 완료 요청을 보내지 않는다.**
+
+secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽만 바꾸지 않는다.
 
 ## 저장소와 동시성
 

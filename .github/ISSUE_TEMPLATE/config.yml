@@ -7,5 +7,5 @@ contact_links:
     url: https://github.com/ticket-project/ticket-core/blob/master/docs/architecture.md
     about: 모듈 경계와 현재 구조를 먼저 확인해 주세요.
   - name: 작업 가이드
-    url: https://github.com/ticket-project/ticket-core/blob/master/docs/development.md
+    url: https://github.com/ticket-project/ticket-core/blob/master/AGENTS.md
     about: 도메인별 위치, 검증 명령, 작업 원칙을 먼저 확인해 주세요.
