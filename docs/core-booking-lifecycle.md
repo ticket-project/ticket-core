@@ -23,12 +23,12 @@
 - 주문 저장 또는 상태 변경과 그에 대응하는 이벤트 발행은 같은 DB 트랜잭션에서 처리한다.
 - 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고
   throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
-- 다른 모듈 API 호출(catalog 정책 조회, member 회원 확인)과 admission token 검증은 booking DB
-  트랜잭션 밖에서 끝낸다.
+- 예매 정책 조회(booking-local `PerformanceSalesPolicy`), show 표시값 조회, member 회원 확인,
+  admission token 검증은 booking DB 트랜잭션 밖에서 끝낸다.
 - 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다(ADR 0005). 클라이언트가 보낸 가격도,
-  catalog가 다시 계산한 가격도 금액 계산 근거로 쓰지 않는다.
+  show가 다시 계산한 가격도 금액 계산 근거로 쓰지 않는다.
 - Order/OrderSeat에 남긴 표시 snapshot(show/performance/venue 이름, 등급 코드·이름, 좌석 라벨,
-  가격)은 생성 이후 다시 조회하지 않는다. catalog 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
+  가격)은 생성 이후 다시 조회하지 않는다. show 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
   주문 상세는 바뀌지 않는다.
 
 ## 주문 생성
@@ -41,7 +41,7 @@ CreateOrderUseCase
        -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
        -> member MemberLookup: active member 확인 (밖)
        -> booking local read: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
-       -> catalog PerformanceSaleCatalog: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
+       -> show PerformanceSaleCatalog: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
           show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 Redis에 좌석 hold 생성 (밖)
   -> CreatePendingOrderTransactionService
@@ -195,12 +195,8 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 `@Scheduled` 트리거(`OrderExpirationTrigger`)는 `booking`이 소유한다. `worker.enabled=false`면
 이 트리거 자체가 등록되지 않는다.
 
-**주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 과거 outbox worker 같은 명시적
-동시성 상한이 설정돼 있지 않다.** `@ApplicationModuleListener`는 기본적으로 비동기 실행되며,
-전용 `ThreadPoolTaskExecutor`를 따로 구성하지 않았으므로 Spring Boot의 기본 비동기 task
-executor를 쓴다. Redis 만료 처리(`redisExpirationTaskExecutor`)처럼 명시적으로 2개로 제한된
-경로와 달리, 이벤트 리스너 동시 실행 수는 운영 중 관측(아래 참고)으로 확인해야 한다. 이 상한이
-필요하다고 판단되면 전용 executor 도입을 별도로 결정한다.
+**주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 이름이 붙은 전용 executor가 없다.**
+상세(어떤 executor를 쓰는지, 관측 지표)는 [operations.md의 Core 용량 관측](operations.md#core-용량-관측)를 본다.
 
 ## 주요 코드
 
