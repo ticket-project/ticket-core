@@ -12,12 +12,9 @@ import org.testcontainers.utility.DockerImageName;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Task 1 platform smoke test다.
- *
- * <p>Spring Boot 4.1.1과 Spring Modulith 2.1.1 조합이 기존 security/JPA/Redis 설정으로 컨텍스트를
- * 기동할 수 있는지만 확인한다. 아직 멀티프로젝트 구조이고 패키지 이동은 하지 않았으므로 여기서는
- * Modulith 구조 검증({@code ApplicationModules.verify()})을 다루지 않는다. 그 검증은 단일 Gradle
- * 프로젝트로 합치는 후속 Task에서 추가한다.
+ * H2(Oracle 모드)와 Testcontainers Redis로 실제에 가까운 인프라 위에서 애플리케이션 컨텍스트가
+ * 정상 기동하는지 확인하는 platform smoke test다. Modulith 구조 검증은 {@code
+ * com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
  */
 @SpringBootTest(
         classes = TicketApplication.class,
