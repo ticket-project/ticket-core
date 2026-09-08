@@ -24,9 +24,10 @@
 | 작업 성격 | 먼저 읽을 문서 |
 | --- | --- |
 | 도메인 개념을 이름으로 부를 때(이슈 제목, 테스트 이름, 제안) | `CONTEXT.md` |
+| 새 개념의 소유 BC를 정하거나 Aggregate 경계를 판단·변경할 때 | `/domain-driven-development` 스킬 |
 | Selection·Hold, 주문 생명주기처럼 "왜 이렇게 했는지"가 걸리는 변경 | `docs/adr/` |
 | 새 코드의 모듈·패키지 위치, 경계 위반 진단, 구조 테스트 실패 | `/place-code` 스킬 |
-| 모듈이 왜 그렇게 나뉘었는지, 저장소·동시성 구조 | `docs/architecture.md` |
+| 모듈이 왜 그렇게 나뉘었는지, BC·Aggregate 경계, 저장소·동시성 구조 | `docs/architecture.md` |
 | 기능·API·도메인 규칙 구현, Redis·분산락 작업 규칙 | `docs/development.md` |
 | 요청·입력 검증을 어느 계층에 둘지, 중복 검증 판단 | `docs/validation.md` |
 | 주문·hold 생성·취소·만료와 event 후속 처리 | `docs/core-booking-lifecycle.md` |
@@ -40,9 +41,8 @@
 전체 맥락은 `README.md`, 실제 경계는 `settings.gradle`과 각 모듈 `build.gradle`, 강제되는 규칙은
 관련 테스트 코드가 최종 기준이다.
 
-`CONTEXT.md`는 도메인 용어집이다. 출력에서 도메인 개념을 부를 때 여기 정의된 말을 쓰고
-`_Avoid_`의 동의어로 흘러가지 않는다. 필요한 개념이 용어집에 없으면 그 자체가 신호다.
-`docs/adr/`의 결정과 어긋나는 제안을 할 때는 조용히 덮지 않고 어긋난다는 사실을 먼저 밝힌다.
+`CONTEXT.md`는 도메인 용어집이다. 도메인 개념을 부를 때 여기 정의된 말을 쓰고 `_Avoid_`의
+동의어로 흘러가지 않는다. `docs/adr/`의 결정과 어긋나는 제안은 조용히 덮지 않고 밝힌다.
 
 `docs/archive/`는 완료·폐기된 기록이다. **요청받지 않는 한 읽지 않고**, 검색 결과에 걸리더라도
 현재 구조의 근거로 인용하지 않는다. 아직 반영되지 않은 설계는 `docs/superpowers/`에 있다.
