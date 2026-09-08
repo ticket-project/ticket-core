@@ -12,7 +12,10 @@
 - Ticket Core는 **단일 Gradle Spring Boot 프로젝트**다. 모듈 경계는 Gradle subproject가 아니라
   **Spring Modulith의 Application Module**이 강제한다. `com.ticket`의 직접 하위 패키지가 닫힌
   모듈이고, `com.ticket.ModularityTests`가 경계 위반을 잡는다.
-- Application Module(기술 모듈 제외)은 곧 **Bounded Context(BC)**다([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
+- **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
+  business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
+  `shared`/`web`/`error`/`config`/`seed` 5개는 BC도 supporting capability도 아닌 기술 모듈이다 —
+  앱 전역 배선이거나 여러 module이 공유하는 기술 계약일 뿐 업무 언어를 갖지 않는다.
 - 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
   두고, 실제 구현은 모듈 root 바로 아래의 `web`/`application`/`domain`/`infrastructure`/`exception`
   패키지에 둔다. 별도 `internal` 계층은 두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과
@@ -36,10 +39,9 @@
 | Favorite | ShowLike | 찜 데이터·불변식. HTTP endpoint는 show가 조합 |
 | Member | Member, MemberSocialAccount | 회원·인증·전역 SecurityFilterChain |
 
-`Ticket`(입장 권리)은 ADR 0005가 별도 `ticketing` module로 신설했지만 2026-09-06 booking으로
-흡수됐다 — entity-only 상태에서 module 하나를 더 유지할 이유가 없었다. admission token 검증도
-원래 별도 `admission` module이었으나 booking만 쓰는 능력이라 booking으로 흡수됐다
-(`booking.{application,infrastructure}.admission`).
+`Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
+[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md)을 본다.
 
 ## Context Dependencies
 
@@ -62,12 +64,13 @@ seed     -> member
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수
 있다. 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만**
-적는다 — `venue`/`member`/`favorite`/`payment` 4개는 상한이 비어 있다(업무 모듈 의존이 없는 leaf).
-`show`는 찜 use case의 회원 확인을 위해 member를, 표시값 조립을 위해 venue를, 찜 조회 위임을 위해
-favorite를 참조한다. `booking`이 쓰는 `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`는
-show가 façade로 유지하므로 `booking -> venue` edge는 생기지 않는다. `payment`는 이번 entity-only
-단계에서 `shared`/`web`/`error`도 참조하지 않는 완전한 leaf다 — controller가 없어 응답 봉투가,
-자기 오류 타입을 던지지 않아 `error`도 필요 없다. 순환은 없다.
+적는다 — `venue`/`member`/`favorite`/`payment`와 기술 모듈 `shared`/`web`/`error`는 상한을 `{}`로
+명시한다(업무 모듈 의존이 없는 leaf). `show`는 찜 use case의 회원 확인을 위해 member를, 표시값
+조립을 위해 venue를, 찜 조회 위임을 위해 favorite를 참조한다. `booking`이 쓰는
+`PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`는 show가 façade로 유지하므로
+`booking -> venue` edge는 생기지 않는다. `payment`는 이번 entity-only 단계에서 `shared`/`web`/
+`error`도 참조하지 않는 완전한 leaf다 — controller가 없어 응답 봉투가, 자기 오류 타입을 던지지
+않아 `error`도 필요 없다. 순환은 없다.
 
 ## Aggregates
 
@@ -105,9 +108,14 @@ show가 façade로 유지하므로 `booking -> venue` edge는 생기지 않는�
 | 경계 | 참조 | Repository |
 | --- | --- | --- |
 | 같은 Aggregate 내부 | Entity 연관관계 가능(`@ManyToOne(LAZY, optional=false)`) | Root만 Repository |
-| 같은 BC, 다른 Aggregate | scalar ID 참조 | 각 Root별 Repository |
-| 다른 BC | scalar ID 참조(강제) | 각 BC가 자기 Repository 소유 |
-| 조회 전용 | 자유롭게 JOIN 가능(`*ReadRepository`) | QueryRepository 별도 가능 |
+| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*ReadRepository`) | 각 Root별 Repository |
+| 다른 BC | scalar ID 참조(강제). 상대 모듈이 공개한 query API를 쓴다 | 각 BC가 자기 Repository 소유 |
+| cross-BC DB JOIN | reporting/integration read model처럼 명시적으로 허용된 경우만. 현재 유일한 예외는 기술 모듈 `seed`의 raw SQL 적재다 | — |
+
+Querydsl `Q`-type이 각 BC의 `<bc>.domain`에 생성되므로, 다른 BC의 `Q`-type을 import하는 순간
+`ModularityTests`가 이미 그 위반을 잡는다 — cross-BC JOIN은 구조 테스트가 구조적으로 막는
+경로다. `seed`는 `JdbcTemplate`으로 여러 모듈의 테이블을 raw SQL로 함께 적재하는 기술 모듈이라
+이 검사망 밖에 있다(`seed/package-info.java` 참고).
 
 부모 쪽 `@OneToMany` 컬렉션은 자식 수가 적고 lifecycle이 완전히 묶일 때만 둔다 — `Venue`→`Seat`,
 `Performance`→`PerformanceSeat`처럼 자식이 수천 개인 관계는 컬렉션으로 두지 않는다. soft delete를
@@ -181,20 +189,17 @@ projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서
 | `domain` | 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도 | 소유 모듈 `exception`의 업무 예외 |
 | `infrastructure` | Redis·JWT·외부 API payload decode, DB constraint 번역 | 기술 예외를 상위 계층이 이해할 실패로 번역 |
 
-**Bean Validation은 `web`만 쓴다.** 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다.
-Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하면
-`ConstraintDeclarationException`(HV000151)을 던지고 해당 Controller의 method validation 전체가
-500으로 무너진다. Controller는 문서 인터페이스를 구현하므로 선언 위치는 한 곳뿐이다. `@Validated`를
-Controller에 붙이지 않는다 — 붙이면 AOP 프록시 경로가 켜져 같은 위반을 되살린다.
-`ControllerParameterConstraintTest`가 이 규칙을 고정한다.
+**Bean Validation은 `web`만 쓴다.** 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다 —
+상위 타입과 구현체 양쪽에 선언하면 Jakarta Bean Validation이 `ConstraintDeclarationException`
+(HV000151)을 던져 method validation 전체가 500으로 무너진다. 왜 그런지와 `@Validated`를
+Controller에 붙이지 않는 이유는 `ControllerParameterConstraintTest`의 JavaDoc이 원본이다.
 
-`application`은 필수 component를 record compact constructor 한곳에서 판정한다(문구는 네 형태로
-고정: `<name>는 필수입니다`/`양수여야 합니다`/`1 이상이어야 합니다`/`1 이상 <max> 이하여야
-합니다`, `InvalidRequestMessageContractTest`가 강제). `execute(null)`은 사용자 입력 오류가 아니라
-호출부 프로그래머 오류이므로 `NullPointerException`으로 드러낸다. **자기 모듈 Repository는 "없다"는
-사실만 알려주고 오류는 유스케이스가 고른다** — 도메인 Repository는 `Optional`/`boolean`만 노출하고
-예외를 던지는 `getXxx`/`requireXxx` 편의 메서드를 두지 않는다. 다른 모듈의 공개 API도 같은
-원칙을 따른다 — 다른 모듈의 내부 예외 타입을 직접 잡지 않는다.
+`application`은 필수 component를 record compact constructor 한곳에서 판정한다. 승인된 문구
+형태는 `InvalidRequestMessageContractTest`가 원본이다. `execute(null)`은 사용자 입력 오류가
+아니라 호출부 프로그래머 오류이므로 `NullPointerException`으로 드러낸다. **자기 모듈
+Repository는 "없다"는 사실만 알려주고 오류는 유스케이스가 고른다** — 도메인 Repository는
+`Optional`/`boolean`만 노출하고 예외를 던지는 `getXxx`/`requireXxx` 편의 메서드를 두지 않는다.
+다른 모듈의 공개 API도 같은 원칙을 따른다 — 다른 모듈의 내부 예외 타입을 직접 잡지 않는다.
 
 중복 허용/금지 기준:
 
@@ -206,8 +211,7 @@ Controller에 붙이지 않는다 — 붙이면 AOP 프록시 경로가 켜져 �
 
 ## 오류 처리
 
-**오류는 그 업무를 소유한 모듈이 갖는다.** 각 모듈의 `<module>/exception/`에 아래 4파일 골격을
-둔다.
+각 모듈의 `<module>/exception/`에 아래 4파일 골격을 둔다.
 
 ```text
 com/ticket/<module>/exception/
@@ -217,90 +221,40 @@ com/ticket/<module>/exception/
   handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡는다
 ```
 
-어느 모듈의 것도 아닌 오류만 `com.ticket.error`에 있다 — `InvalidRequestException`(E400),
-`NotFoundException`(E404), `InternalErrorException`(E500), 예외 base 타입 `TicketException`,
-`ErrorCode` interface, 프레임워크 예외와 fallback을 맡는 `com.ticket.error.handler.GlobalExceptionHandler`
-(`@Order(LOWEST_PRECEDENCE)`)다.
-
-응답 봉투(`ApiResponse`/`ErrorMessage`/`ResultType`/`SliceResponse`)는 `com.ticket.web`에 있다.
-`error`가 봉투를 만들어 반환하므로 `error -> web` 단방향이며, `web`이 `error`를 참조하면 순환이 돼
-`ModularityTests`가 실패한다.
-
-```java
-// 금지 — Repository가 오류까지 정한다
-default Member getActiveById(Long id) {
-    return findActiveById(id)
-            .orElseThrow(() -> new NotFoundException(CommonErrorCode.NOT_FOUND_DATA));
-}
-
-// 권장 — 호출하는 유스케이스가 맥락에 맞는 오류를 고른다
-final Member member = memberRepository.findActiveById(input.memberId())
-        .orElseThrow(() -> new NotFoundException(CommonErrorCode.NOT_FOUND_DATA));
-```
-
-**자주 틀리는 것**: 모듈 handler가 `RuntimeException` 같은 넓은 타입을 잡으면 다른 모듈의 오류까지
-삼킨다(Spring은 order 순으로 매칭되는 첫 advice에서 멈춘다). E-code 값은 외부 계약이라
-`gatling-test`가 하드코딩하므로 모듈이 바뀌어도 재번호하지 않는다. 전역 유일성은
-`com.ticket.error.ErrorCodeUniquenessTest`가, 모듈 handler 스코프는 `ExceptionHandlerScopeTest`가
-강제한다.
-
-배경은 [ADR 0002](adr/0002-module-owned-error-contracts.md)가 원본이다.
+오류 계약 소유 기준(모듈별 오류 vs `com.ticket.error`의 공통 오류), 응답 봉투가 `web`에 있는
+이유, `ProblemDetail`을 채택하지 않은 이유는 [ADR 0002](adr/0002-module-owned-error-contracts.md)가
+원본이다. module handler가 다른 module의 오류까지 삼키지 않는지는 `ExceptionHandlerScopeTest`가,
+E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `ErrorCodeUniquenessTest`가 강제한다.
 
 ## 주요 흐름
 
-코드만 봐서는 알기 어려운 정책·순서만 다룬다. 엔드포인트 목록은 Swagger(`/api/api-docs`)가
-원본이다.
+코드만 봐서는 알기 어려운 정책·설계 결정만 다룬다. 엔드포인트 목록은 Swagger(`/api/api-docs`)가,
+예매 실행 순서는 [core-booking-lifecycle.md](core-booking-lifecycle.md)가 원본이다.
 
-### 인증
+**인증**: JWT 기반 stateless 방식이다. OAuth2 인가 흐름은 별도 filter chain에서 처리하고 전역
+`SecurityFilterChain`은 `member`가 제공한다. 다른 모듈의 controller는 `member.AuthenticatedMember`만
+parameter로 받고 JWT나 `member` 내부의 `Member`를 보지 않는다.
 
-API 인증은 JWT 기반 stateless 방식이다. OAuth2 인가 흐름은 별도 filter chain에서 처리하고
-전역 `SecurityFilterChain`은 `member`가 제공한다. Refresh token과 OAuth2 1회용 코드는
-Redis를 쓴다. 다른 모듈의 controller는 `member.AuthenticatedMember`만 parameter로 받고
-JWT나 `member` 내부의 `Member`를 보지 않는다.
+**좌석 조회는 performanceId 기준이다** — 같은 Show라도 회차마다 편성·가격이 다를 수 있어 `showId`
+기준 조회 API는 만들지 않는다. `booking.web.PerformanceSeatQueryController`가 공개하는 3개 API
+(정적 seat-map / 동적 상태 / 등급별 잔여석)는 회차당 고정된 query 수를 유지한다 — 무엇을 어떻게
+고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
+원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
+않는다** — 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
+`show.web.ShowVenueLayoutController`(물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
+별개의 show 기준 API다 — 새 기능은 여기 추가하지 않고 performance 기준 API 쪽에 추가한다.
 
-### 쇼·회차·좌석 조회
-
-좌석 상태는 DB 상태와 Redis 점유 상태를 합쳐 계산하며, 합치는 규칙의 소유자는 `booking`
-한 곳이다. 좌석·등급·가격 조회의 기준 식별자는 `performanceId`/`performanceSeatId`/
-`performanceGradeId`다 — 같은 Show라도 회차마다 편성과 가격이 다를 수 있어 `showId` 기준
-조회 API는 만들지 않는다.
-
-performance 기준 API 3종(`booking.web.PerformanceSeatQueryController`)은 각각 다른 것을
-반환하며 회차당 고정된 query 수를 유지한다(N+1 없음):
-
-- `GET .../seat-map`: 정적 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값·확정 가격
-- `GET .../seats/status`: 동적 상태(DB `RESERVED` + Redis `SELECTING`/`HOLDING` 합산)
-- `GET .../seats/availability`: 등급별 잔여석(그룹 key는 `gradeName`이 아니라
-  `performanceGradeId`)
-
-**정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
-않는다.** 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
-
-`show.web.ShowVenueLayoutController`(`/api/v1/shows/{showId}/venue-layout`)는 물리 Venue
-배치만 반환하는 별개의 show 기준 API다(ADR 0006으로 booking에서 옮겨왔다). 새 기능은 여기
-추가하지 않고 performance 기준 API 3종에 추가한다.
-
-### 대기열
-
-대기열 런타임은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도, queue
-token 저장소도, 만료 핸들러도 갖지 않는다. 대기열 진입 정책(`PerformanceSalesPolicy`의
-`BookingEntryPolicy`)은 Booking BC가 소유하며, 인증 없이 조회하는
-`GET /api/v1/booking/performances/{performanceId}/booking-mode`가 회차의 접수
-상태(`acceptanceStatus`)와 예매 방식(`bookingMode`: DIRECT/QUEUE/UNAVAILABLE)을 계산해
-반환한다. 이 조회는 안내용이라 실제 좌석 선택·상태·주문 API는 실행 시점에 정책을 다시
-검사한다.
-
-Queue Server hot path는 Core DB와 회차별 정책 snapshot을 조회하지 않는다 — `join`에서 받은
-`shardId`/`localSeq`를 public `/state` 응답의 `serving[shardId]`와 비교해 판단한다.
-Core(`booking`의 admission 검증)는 Queue가 발급한 admission token의 서명·issuer·audience·
-scope·만료 시각과 `memberId`/`performanceId` 일치 여부를 검증한다. **주문 생성 후 Queue
-Server에 session 완료 요청을 보내지 않는다.**
-
-secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽만 바꾸지 않는다.
+**대기열**은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도 token 저장소도
+갖지 않는다. 대기열 진입 정책(`PerformanceSalesPolicy`의 `BookingEntryPolicy`)은 Booking BC가
+소유하며, 인증 없이 조회하는 `GET /api/v1/booking/performances/{performanceId}/booking-mode`가
+접수 상태와 예매 방식(DIRECT/QUEUE/UNAVAILABLE)을 계산해 반환한다 — 안내용이라 실제 좌석
+선택·주문 API는 실행 시점에 정책을 다시 검사한다. Queue Server hot path는 Core DB를 조회하지
+않고 `join` 응답의 `shardId`/`localSeq`를 `/state`의 `serving[shardId]`와 비교해 판단하며,
+Core는 Queue가 발급한 admission token의 서명·claim만 검증한다(**주문 생성 후 Queue Server에
+session 완료 요청을 보내지 않는다**). 두 저장소가 공유하는 secret/issuer/audience 설정 값과
+운영 절차는 [operations.md의 Admission token 검증](operations.md#admission-token-검증)을 본다.
 
 ## 저장소와 동시성
-
-### RDB / Redis 소유
 
 주 영속 저장소는 RDB다. 업무 상태 JPA entity는 각 모듈 `domain`, Spring Data/JPQL/Querydsl/
 `EntityManager`/Repository adapter는 `infrastructure`에 둔다. Flyway는 module 소유권을 따른다
@@ -309,36 +263,13 @@ secret, issuer, audience는 두 저장소 설정이 일치해야 한다. 한쪽�
 Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장에 쓴다. 대기열 상태는 `ticket-queue`가 별도
 Redis에서 관리하고, Core Redis는 seat selection·seat hold(`booking`), refresh token·OAuth2
 one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈의 `infrastructure`에 둔다.
+key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가
+원본이다.
 
-**Redis 작업 규칙**
-
-- key 조립과 물리 TTL은 소유 모듈의 `infrastructure` adapter가 소유한다. `application`/`domain`은
-  Redis 타입이나 key가 아니라 저장 기술 중립 계약만 본다.
-- 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
-- key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차를 함께 설계한다.
-- TTL, expiration listener, scheduler 보정 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을
-  함께 지킨다.
-
-### LockManager
-
-분산락은 명시적인 포트 호출로 처리한다. 어노테이션과 SpEL로 감추지 않는다.
-
-- 포트: `com.ticket.booking.application.lock.LockManager`
-- 잠글 대상: `LockKey`, `LockScope` — 업무 의미만 담고 key 문자열은 담지 않는다
-- 획득 방식: `LockOptions` — 대기 시간, 임대 시간, 실패 로그 수준
-- 구현: `com.ticket.booking.infrastructure.lock.RedissonLockManager`, key 형식은
-  `RedissonLockKeyFormatter`
-
-적용 예: 동일 회원/공연 조합의 중복 주문 시작 방지(`LockScope.ORDER_START`), 동일 좌석 동시 점유
-방지(`LockScope.SEAT`).
-
-**분산락 작업 규칙**
-
-- 락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다. 좌석 락은 Redis
-  hold를 만드는 구간에만 건다 — DB 트랜잭션 동안 좌석 락을 쥐고 있으면 connection 경합이 좌석
-  경합으로 번진다.
-- 락 범위 안에서 외부 I/O를 늘리지 않는다. 임계 구역은 짧게 유지한다.
-- 락 키를 바꾸면 보호 대상이 그대로인지 테스트로 고정한다.
+분산락은 `com.ticket.booking.application.lock.LockManager` 같은 명시적 포트 호출로 처리한다.
+어노테이션과 SpEL로 감추지 않는다. 포트·구현 클래스 목록은
+[core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)가, 락 순서·임계
+구역 같은 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가 원본이다.
 
 `payment`는 entity-only 단계다: controller, PG 연동, 결제 승인/실패/취소 API는 없다(ADR 0005
 §3~4). 배경 전체는 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를
@@ -356,15 +287,29 @@ one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈�
 | 파라미터 제약 선언 위치 | `ControllerParameterConstraintTest` |
 | 필수 입력 오류 문구 | `com.ticket.error.InvalidRequestMessageContractTest` |
 | E-code 전역 유일성 / handler 스코프 | `ErrorCodeUniquenessTest` / `ExceptionHandlerScopeTest` |
+| module 구조 문서 생성 | `com.ticket.DocumentationTests` |
 
 무엇을 검증하는지 자세한 목록은 [testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은
-`/verify`가 원본이다. **규칙 본문은 테스트 코드가 원본이고
-여기 옮겨 적지 않는다.** 규칙을 바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이
-틀렸다는 사실을 먼저 밝힌다.
+`/verify`가 원본이다. **규칙 본문은 테스트 코드가 원본이고 여기 옮겨 적지 않는다.** 규칙을
+바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이 틀렸다는 사실을 먼저 밝힌다.
 
-`src/test/java/com/ticket/core/infra/support/{ReadRepositoryTestSupport,InfraReadRepositoryTestSupport}.java`
-2개 파일만 legacy 패키지 아래 남아 있다 — 옮길 legacy가 아니라 별도 결정할 test 인프라 소유권
-문제라 이번 범위에서 건드리지 않았다.
+## Source of Truth
+
+| 물음 | 원본 |
+| --- | --- |
+| 현재 실제 실행 상태 | code / `application*.yml` |
+| 현재 module graph, 강제되는 규칙 | executable architecture test(위 Enforcement 표) |
+| 원하는 architecture 원칙 | 이 문서 |
+| 왜 그렇게 결정했는가 | `docs/adr/` |
+| 예매·hold 실행 lifecycle | `docs/core-booking-lifecycle.md` |
+| test 작성 관례 | `docs/testing.md` |
+| 무엇을 돌리고 어떻게 보고할지 | `/verify` 스킬 |
+| 운영·Flyway·배포 | `docs/operations.md` |
+| 미결 기술 부채·제품 결정 | `docs/technical-debt.md` |
+| agent workflow | `AGENTS.md` + `.agents/skills/` |
+
+같은 사실을 여러 문서에 반복해 적지 않는다 — 이 표가 가리키는 문서 하나에만 적고 나머지는
+링크한다.
 
 ## 아키텍처 리뷰 질문
 
