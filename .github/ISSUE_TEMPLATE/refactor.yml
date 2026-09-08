@@ -1,7 +1,7 @@
 name: 리팩터링 / 구조 개선 제안 (구조화 폼)
 description: 기능 추가가 아닌 코드 구조, 경계, 중복, 테스트성, 유지보수성을 개선하는 작업을 제안합니다.
 title: "[Improvement] "
-labels: ["refactoring", "needs-review"]
+labels: ["refactoring", "needs-triage"]
 assignees: []
 
 body:
