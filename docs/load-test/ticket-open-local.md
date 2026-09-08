@@ -1,22 +1,14 @@
 # 예매 오픈 로컬 부하 테스트
 
-기준일: 2026-07-30
-
-이 문서는 Gateway 제거 후 구조 기준이다. 부하 테스트는 목적에 따라 Ticket Server와 Queue Server를 직접 호출한다. Queue 흐름은 `join -> public state polling -> enter -> admission token -> Ticket Server 보호 API` 순서다.
+이 문서는 Ticket Server + Queue Server를 로컬에서 함께 기동해 재현하는 절차다(Gateway는 없다). Queue 흐름은 `join -> public state polling -> enter -> admission token -> Ticket Server 보호 API` 순서다.
 
 현재 Gatling 소스와 상세 옵션의 기준은 형제 저장소의 `../../../gatling-test/README.md`와
 `../../../gatling-test/console/README.md`다.
 
 ## 목적
 
-로컬 환경에서 예매 오픈 시간의 핵심 위험을 재현한다.
-
-- Ticket Server의 admission token 기반 좌석/주문 처리량
-- Queue Server의 join/enter 처리량
-- Queue public state polling과 shard별 serving sequence 기준 입장
-- 같은 좌석 hold/order 경합
-
-운영 환경에 직접 부하를 주지 않는다. 운영과 가까운 처리량은 별도 스테이징 환경에서 같은 시나리오로 확인한다.
+재현할 위험은 [load-test.md의 목적](../load-test.md#목적)과 같다. 이 문서는 그 시나리오를
+**Ticket Server + Queue Server를 로컬에서 함께 기동해** 재현하는 절차만 다룬다.
 
 ## 전제
 
