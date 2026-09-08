@@ -427,7 +427,9 @@ class SeedDataLoaderTest {
     }
 
     private Path resolveStaticRoot() {
-        // 정적 이미지는 HTTP로 서빙하므로 core-api가 소유한다. 시드 SQL은 그 경로를 참조한다.
+        // 정적 이미지는 Spring Boot 관례 경로(src/main/resources/static)로 HTTP 서빙한다. 시드
+        // SQL은 그 경로를 참조한다. 앞의 두 후보는 계층형 멀티모듈 시절 경로라 더는 존재하지
+        // 않지만, 존재 여부로 거르므로 세 번째 후보로 안전하게 넘어간다.
         final List<Path> candidates = List.of(
             Path.of("..", "core-api", "src", "main", "resources", "static"),
             Path.of("core", "core-api", "src", "main", "resources", "static"),
