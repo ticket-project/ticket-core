@@ -17,7 +17,7 @@ import {
 } from './genre-map.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SQL_PATH = resolve(__dirname, '../../core/core-api/src/main/resources/seed/kopis-curated.sql');
+const SQL_PATH = resolve(__dirname, '../../src/main/resources/seed/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
 const SPLICE_MARKER = 'INSERT INTO SHOW_GRADES';
 

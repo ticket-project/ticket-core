@@ -14,7 +14,7 @@
 | 왜 그렇게 결정했는지 | `docs/adr/` |
 | 도메인 용어 | `CONTEXT.md` |
 | 작업 규칙 | `AGENTS.md` |
-| 커밋·검증 절차 | `/commit-pr`, `/verify` 스킬 |
+| 커밋·검증 절차 | `AGENTS.md`의 "커밋 및 PR", `/verify` 스킬 |
 
 ## 진행 중인 설계는 여기 없다
 

@@ -19,7 +19,8 @@ import static com.ticket.show.domain.show.QShow.show;
 /**
  * 커서 위치를 SQL 조건으로 바꾸고, 마지막 행에서 다음 커서 위치를 만든다.
  *
- * <p>커서의 wire 표현(Base64 문자열)은 core-api가 소유한다. 여기서는 타입 값만 다룬다.
+ * <p>커서의 wire 표현(Base64 문자열)은 {@code show.web.support.cursor.ShowCursorCodec}이 소유한다.
+ * 여기서는 타입 값만 다룬다.
  */
 @Component
 public class QuerydslShowCursorConditionBuilder {

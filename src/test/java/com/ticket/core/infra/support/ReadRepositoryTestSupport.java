@@ -77,8 +77,9 @@ import java.time.ZoneId;
 /**
  * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다.
  *
- * <p>Spring 컨텍스트와 EntityManager가 필요하므로 core-infra의 integrationTest에 둔다.
- * 도메인 단위 테스트는 이 클래스를 쓰지 않는다.
+ * <p>실제 JPA/Querydsl 조회를 검증하려면 Spring 컨텍스트와 EntityManager가 필요해서 이 클래스는
+ * {@code src/test}에 {@code @DataJpaTest} 스타일(H2 + Hibernate 생성 스키마)로 둔다. 별도
+ * {@code integrationTest} source set은 없다(ADR 0003 §1). 도메인 단위 테스트는 이 클래스를 쓰지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class ReadRepositoryTestSupport {

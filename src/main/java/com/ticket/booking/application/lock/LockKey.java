@@ -6,7 +6,8 @@ import java.util.Objects;
 /**
  * 잠글 대상을 업무 의미로 표현한 값이다.
  *
- * <p>key 문자열은 담지 않는다. 저장소 key 형식은 core-infra의 구현이 결정한다.
+ * <p>key 문자열은 담지 않는다. 저장소 key 형식은 {@code booking.infrastructure.lock}의
+ * {@code RedissonLockKeyFormatter}가 결정한다.
  */
 public record LockKey(LockScope scope, List<String> identifiers) {
 

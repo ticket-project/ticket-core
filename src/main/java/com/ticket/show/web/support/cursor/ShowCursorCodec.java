@@ -12,8 +12,8 @@ import java.util.Base64;
 /**
  * 공연 목록 커서의 wire 표현을 담당한다.
  *
- * <p>커서 문자열은 HTTP 계약이므로 core-api가 소유한다. core-app과 core-infra는 타입 값인
- * {@link ShowCursor}만 주고받는다. 인코딩 형식은 기존과 같은 URL-safe Base64(JSON)이다.
+ * <p>커서 문자열은 HTTP 계약이므로 이 클래스(web 계층)가 소유한다. application과 infrastructure는
+ * 타입 값인 {@link ShowCursor}만 주고받는다. 인코딩 형식은 기존과 같은 URL-safe Base64(JSON)이다.
  */
 @Component
 @RequiredArgsConstructor

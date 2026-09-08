@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code .../seats/availability}, {@code .../seats/status}는 회차별 판매 상태(PerformanceSeat)와
  * Redis selection/hold를 함께 읽는다.
  *
- * <p>{@code PerformanceSeat}는 이번 show 이동(Task 5) 범위 밖이고 booking 소유로 Task 7에서 옮겨간다.
- * 그래서 순수 show 엔드포인트(요약/회차 목록)만 {@code com.ticket.show.web.PerformanceController}로
- * 옮기고, 이 세 엔드포인트는 legacy {@code com.ticket.core.api.controller}에 남겨 show가 아직 legacy인
- * performanceseat 유스케이스를 참조하지 않게 한다. URL·JSON 계약은 기존과 동일하다.
+ * <p>{@code PerformanceSeat}와 Redis selection/hold 상태는 booking이 소유하는 데이터라, 이 세
+ * 엔드포인트는 순수 show/공연 요약 데이터만 다루는 {@code com.ticket.show.web.PerformanceController}가
+ * 아니라 booking 소유인 이 {@code booking.web.PerformanceSeatQueryController}에 둔다. URL·JSON
+ * 계약은 기존과 동일하다.
  */
 @RestController
 @RequestMapping("/api/v1/performances")

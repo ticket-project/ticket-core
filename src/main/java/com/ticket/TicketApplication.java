@@ -6,8 +6,8 @@ import org.springframework.modulith.Modulith;
 /**
  * Ticket Core 실행 진입점이다.
  *
- * <p>이 모듈이 composition root로서 core-api/core-app/core-infra를 한 프로세스로 조립한다.
- * API와 background worker를 함께 실행하며, worker는 {@code worker.enabled}로 끌 수 있다.
+ * <p>단일 Spring Boot 애플리케이션으로 API와 background worker를 한 프로세스에서 함께 실행하며,
+ * worker는 {@code worker.enabled}로 끌 수 있다.
  *
  * <p>{@code sharedModules}에는 <b>업무 의미가 없고 거의 모든 module이 참조하는 leaf 계약
  * module</b>만 넣는다 — {@code shared}(호출 대상 계약), {@code error}(오류 계약과 전역 handler),

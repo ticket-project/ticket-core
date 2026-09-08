@@ -1,7 +1,7 @@
 -- 예매 흐름 E2E 테스트용 최소 데이터. 좌석 4개짜리 회차 하나.
 --
 -- ID 대역: 920000001~ 을 쓴다. LoadTestFixtureSeeder(910000000~)와 겹치지 않는다.
--- 컬럼 목록은 core-infra의 LoadTestFixtureSeeder를 따른다. 그쪽 INSERT문이 같은 H2 + Hibernate
+-- 컬럼 목록은 com.ticket.seed.LoadTestFixtureSeeder를 따른다. 그쪽 INSERT문이 같은 H2 + Hibernate
 -- 생성 스키마에서 실제로 도는 참조 구현이다.
 --
 -- 시각은 CURRENT_TIMESTAMP 기준 상대값으로 쓴다. 고정 날짜를 박으면 언젠가 판매 기간을 벗어나

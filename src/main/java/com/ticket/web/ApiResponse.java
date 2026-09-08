@@ -5,8 +5,8 @@ package com.ticket.web;
  * {@code data}와 {@code error} 중 한쪽에 들어간다.
  *
  * <p><b>이 클래스는 오류 타입을 알지 않는다.</b> 오류 계약은 {@code com.ticket.error} module이 소유하고
- * 그 module이 봉투를 만들기 위해 {@code shared}를 참조한다. 봉투가 거꾸로 오류 타입을 참조하면
- * {@code shared -> error -> shared} 순환이 되어 {@code ModularityTests}가 실패한다. 그래서
+ * 그 module이 봉투를 만들기 위해 {@code web}을 참조한다. 봉투가 거꾸로 오류 타입을 참조하면
+ * {@code error <-> web} 순환이 되어 {@code ModularityTests}가 실패한다. 그래서
  * {@link #error} 는 code/message/data를 완성된 값으로 받기만 한다.
  */
 public class ApiResponse<T> {

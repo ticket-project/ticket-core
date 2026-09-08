@@ -1,6 +1,6 @@
 # seed-kopis — KOPIS 공연 시드 최신화 도구
 
-KOPIS OpenAPI에서 신규 공연을 가져와 `core/core-api/src/main/resources/seed/kopis-curated.sql`에 **누적 추가**한다.
+KOPIS OpenAPI에서 신규 공연을 가져와 `src/main/resources/seed/kopis-curated.sql`에 **누적 추가**한다.
 기존 시드(SHOWS 1~292 등)는 건드리지 않고, 다음 id부터 이어 붙인다.
 
 
@@ -50,11 +50,19 @@ $env:KOPIS_SERVICE_KEY="xxxx"; node tools/seed-kopis/fetch-kopis.mjs --target 10
 ticket 저장소 루트에서 적재 무결성 테스트를 실행한다.
 
 ```powershell
-.\gradlew.bat :core:core-api:test
+.\gradlew.bat test --tests "com.ticket.seed.*"
 ```
 
 ```bash
-./gradlew :core:core-api:test
+./gradlew test --tests "com.ticket.seed.*"
 ```
 
 문제가 있으면 `kopis-curated.sql.bak`으로 복원한다.
+
+## 알려진 문제
+
+`fetch-kopis.mjs`의 `SPLICE_MARKER`(`'INSERT INTO SHOW_GRADES'`)가 현재 `kopis-curated.sql`
+어디에도 매치되지 않는다 — `SHOW_GRADES` 테이블이 `PERFORMANCE_GRADES`로 대체되며 폐지됐다(ADR
+0005 §2). 병합 지점을 찾지 못하면 스크립트가 중단되지만, 지금 이 도구를 다시 실행하기 전에는
+마커를 먼저 고쳐야 한다(어떤 지점에 이어 붙일지는 제품/데이터 판단이 필요해 이 문서 정리로는
+고치지 않았다).

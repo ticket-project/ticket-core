@@ -193,7 +193,7 @@ db/migration/__root/V9__...sql           # 어떤 module에도 속하지 않는 
 outbox 테이블은 이 시점에 별도 booking migration으로 제거됐다). 기존 V3(`add_performance_seat_unique_index`)~V4(`add_order_seat_order_index`)의 조회 인덱스는 그대로 `__root`
 이력에 남아 있다.
 
-배포 전에는 `docs/database/core-api-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
+배포 전에는 `docs/database/booking-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
 중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
 대표 행을 결정한 뒤 정리한다. migration에서 중복 행을 임의 삭제하지 않는다.
 
