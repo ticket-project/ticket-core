@@ -1,9 +1,8 @@
 # Ticket Backend
 
 공연/전시 티켓 예매 백엔드다. 인증, 공연 조회, 좌석 선택, 좌석 선점, 주문 시작/취소/만료를
-단일 Gradle Spring Boot 프로젝트와 Spring Modulith Application Module(`booking`, `show`,
-`venue`, `favorite`, `member`, `payment`)로 다룬다. Application Module(기술 모듈 제외)은 각각
-하나의 Bounded Context와 일치한다([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md)).
+단일 Gradle Spring Boot 프로젝트와 11개 Spring Modulith Application Module로 다룬다.
+Application Module(기술 모듈 제외)은 각각 하나의 Bounded Context와 일치한다([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md)).
 대기열 처리는 `ticket-queue` 별도 서버가 담당하고, 이 서버는 Queue Server가 발급한 admission
 token을 검증해 예매 API 진입을 제어한다.
 
@@ -19,23 +18,7 @@ token을 검증해 예매 API 진입을 제어한다.
 
 ## 문서
 
-이 README는 처음 저장소를 여는 사람을 위한 안내다. 규칙과 상세는 아래가 원본이며,
-내용이 갈리면 아래를 따른다.
-
-| 알고 싶은 것 | 문서 |
-| --- | --- |
-| 작업 규칙, 모듈 판단 기준 요약 | [`AGENTS.md`](AGENTS.md) |
-| 모듈 경계, 의존 방향, 새 코드를 어디에 둘지 | [`docs/architecture.md`](docs/architecture.md) |
-| 왜 이 구조로 결정했는지(ADR) | [`docs/adr/`](docs/adr/), Modulith 전환은 [ADR 0003](docs/adr/0003-spring-modulith-application-module-boundaries.md) |
-| 기능과 API 흐름, 도메인 모델 | [`docs/development.md`](docs/development.md) |
-| 주문·hold 트랜잭션과 후처리 | [`docs/core-booking-lifecycle.md`](docs/core-booking-lifecycle.md) |
-| 무엇을 검증할지 | [`docs/testing.md`](docs/testing.md) |
-| 실행, 프로파일, 마이그레이션, 배포 | [`docs/operations.md`](docs/operations.md) |
-| 부하 테스트 | [`docs/load-test.md`](docs/load-test.md), 형제 저장소 `../gatling-test` |
-
-Gradle 프로젝트는 루트 하나뿐이다(`settings.gradle`). 모듈 경계는 Spring Modulith Application
-Module이 강제하며, 확정 목록과 허용 의존은 각 모듈 `package-info.java`가 최종 기준이고
-`com.ticket.ModularityTests`가 위반을 잡는다.
+작업 규칙과 어떤 문서를 먼저 읽을지는 **[`AGENTS.md`](AGENTS.md)** 하나가 원본이다.
 
 ## 로컬 실행
 

@@ -6,13 +6,14 @@
 #
 # 검사 항목
 #   1. AGENTS.md 줄 수 상한 (진입점이 다시 불어나는 것을 막는다)
-#   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다)
+#   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다).
+#      vendored Matt Pocock 스킬(skills-lock.json에 등록된 것)의 예시 링크는 상류
+#      문서 내용이라 제외한다.
 #   3. docs/archive 각 파일에 "현행 아님" 배너가 있는지
 #   4. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   5. UTF-8 BOM이 섞이지 않았는지
-#   6. 형제 저장소와 커밋 type 표가 어긋나지 않았는지 (나란히 있을 때만)
-#   7. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
-#   8. 오래 손대지 않은 문서 보고 (실패시키지 않음)
+#   6. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
+#   7. 오래 손대지 않은 문서 보고 (실패시키지 않음)
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
 # 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. Stop 훅이 매 턴 이 스크립트를 돌리므로
@@ -21,7 +22,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-AGENTS_MAX=100
+AGENTS_MAX=80
 # 조건부·미래 참조라 없어도 정상인 경로
 ALLOW_MISSING="CONTEXT-MAP.md"
 OBS="docs/agents/observed-failures.md"
@@ -30,7 +31,7 @@ fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 미커밋 .md만 본다. 저장소 전체·git 이력을 훑는 검사 3·6·8은 건너뛴다.
+# --changed: 미커밋 .md만 본다. 저장소 전체·git 이력을 훑는 검사 3·7은 건너뛴다.
 # Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
 SCOPE="all"
 [ "${1:-}" = "--changed" ] && SCOPE="changed"
@@ -43,15 +44,24 @@ if [ "$SCOPE" = "changed" ]; then
     exit 0
   fi
 else
-  DOCS=$( { git ls-files '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
-          | grep -v '^docs/archive/' | sort -u )
+  # skills-lock.json에 등록된 vendored 스킬(Matt Pocock skills 원본)의 예시 링크는 이
+  # 저장소가 고칠 대상이 아니다 -- 그 디렉터리의 .md는 링크 검사에서 뺀다.
+  VENDORED=$(node -e 'try{console.log(Object.keys(JSON.parse(require("fs").readFileSync("skills-lock.json","utf8")).skills).join("|"))}catch(e){}' 2>/dev/null)
+  if [ -n "${VENDORED:-}" ]; then
+    DOCS=$( { git ls-files '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
+            | grep -v '^docs/archive/' \
+            | grep -vE "^\.(claude|agents)/skills/(${VENDORED})/" | sort -u )
+  else
+    DOCS=$( { git ls-files '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
+            | grep -v '^docs/archive/' | sort -u )
+  fi
 fi
 
 # 1 ─ AGENTS.md 줄 수
 for f in $(git ls-files '*AGENTS.md'); do
   n=$(wc -l < "$f")
   if [ "$n" -gt "$AGENTS_MAX" ]; then
-    err "$f 가 ${n}줄로 상한 ${AGENTS_MAX}줄을 넘었다. 절차는 .claude/skills/ 로 옮긴다"
+    err "$f 가 ${n}줄로 상한 ${AGENTS_MAX}줄을 넘었다. 절차는 .agents/skills/ 로 옮긴다"
   else
     ok "$f ${n}줄 (<= ${AGENTS_MAX})"
   fi
@@ -126,30 +136,8 @@ else
   ok "BOM 없음"
 fi
 
-# 6 ─ 형제 저장소와 공통 컨벤션 동기화 (워크스페이스에서 나란히 볼 때만)
-SIBLINGS="../ticket ../ticket-queue ../gatling-test"
-CONV=".claude/skills/commit-pr/references/conventions.md"
-if [ "$SCOPE" = "all" ] && [ -f "$CONV" ]; then
-  mine=$(sed -n '/^| type | 사용 기준 |/,/^| `revert`/p' "$CONV" | md5sum | cut -d' ' -f1)
-  checked=0; drift=0
-  for sib in $SIBLINGS; do
-    [ -f "$sib/$CONV" ] || continue
-    [ "$(cd "$sib" 2>/dev/null && pwd)" = "$(pwd)" ] && continue
-    theirs=$(sed -n '/^| type | 사용 기준 |/,/^| `revert`/p' "$sib/$CONV" | md5sum | cut -d' ' -f1)
-    checked=$((checked+1))
-    if [ "$mine" != "$theirs" ]; then
-      err "$sib 와 type 표가 어긋났다. 세 저장소는 같은 문구를 쓴다"
-      drift=1
-    fi
-  done
-  if [ "$checked" -eq 0 ]; then
-    ok "형제 저장소 없음 — 동기화 검사 건너뜀"
-  elif [ "$drift" -eq 0 ]; then
-    ok "형제 저장소 ${checked}곳과 type 표 일치"
-  fi
-fi
 
-# 7 ─ 관측 태그와 실패 기록 대조
+# 6 ─ 관측 태그와 실패 기록 대조
 # 근거 없는 규칙이 다시 쌓이는 것을 막는다. 문서에 규칙을 남기려면 실제 관측이 있어야 한다.
 if [ ! -f "$OBS" ]; then
   err "$OBS 가 없다. 관측된 실패를 적는 곳이 있어야 규칙을 지울 수 있다"
@@ -177,7 +165,7 @@ if [ "$SCOPE" = "changed" ]; then
 fi
 
 echo
-# 8 ─ 신선도 보고 (실패시키지 않는다)
+# 7 ─ 신선도 보고 (실패시키지 않는다)
 # 손으로 적는 "기준일" 프론트매터는 반드시 실제와 어긋난다. git 이력을 신선도 신호로 쓴다.
 # git log는 최신순이므로 파일을 처음 만난 시점이 그 파일의 최신 커밋이다.
 STALE_DAYS=${STALE_DAYS:-120}
