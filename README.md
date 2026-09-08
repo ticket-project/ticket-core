@@ -41,6 +41,8 @@ Module이 강제하며, 확정 목록과 허용 의존은 각 모듈 `package-in
 
 전제: JDK 25, Redis 7, Gradle wrapper.
 
+클론 직후 `bash scripts/link-agent-skills.sh`(Windows는 `scripts\link-agent-skills.cmd`)를 한 번 실행한다.
+
 ```powershell
 docker run --name ticket-redis -p 6379:6379 -d redis:7
 ```
