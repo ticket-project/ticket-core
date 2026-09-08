@@ -79,25 +79,16 @@ QR/입장/사용/양도는 이번 범위가 아니다(계획 문서의 "이번 �
 ### 4. entity-only 단계의 module DAG — ADR 0003을 이 범위에서 supersede
 
 ADR 0003 §3이 승인한 DAG는 `payment`/`ticketing`을 몰랐다. 이 ADR은 module set에 그 둘을
-추가하고, 이번 entity-only 단계의 목표 DAG를 다음과 같이 확정한다.
+추가한다. 의존 DAG의 원본은 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`와
+`docs/architecture.md`다.
 
-```text
-payment   -> 없음
-ticketing -> 없음
-booking   -> catalog, member, admission
-catalog   -> member
-member  -> 없음
-admission -> 없음
-metadata  -> catalog, booking, member 그리고 필요 시 payment/ticketing의 공개 metadata
-```
-
-**2026-09-06 갱신(metadata)**: 위 DAG의 `metadata` 행은 제거 이전 기록이다. `metadata` module은 호출자가
-없는 순수 leaf였음이 확인돼 삭제됐다(배경은 ADR 0003의 같은 날짜 갱신 노트를 본다, 커밋 848b9ddb).
+**2026-09-06 갱신(metadata)**: `metadata` module은 호출자가 없는 순수 leaf였음이 확인돼
+삭제됐다(배경은 ADR 0003의 같은 날짜 갱신 노트를 본다, 커밋 848b9ddb).
 
 **2026-09-06 갱신(ticketing)**: 결정 3이 신설한 `ticketing` module은 booking으로 흡수됐다. entity-only 상태에서
 module 하나를 더 유지할 이유가 없고, 발급 트리거인 `OrderConfirmed`가 booking 안의 사건이라 같은 module에
 두는 편이 단순하다는 판단이다. `Ticket`은 `booking.domain.ticket`, `TICKETS` migration은 booking V5로
-옮겼다. 위 DAG의 `ticketing` 행과 §3의 방안 C 서술 중 ticketing 부분은 그 이전 기록이다. payment 분리는 그대로다.
+옮겼다. `ticketing`을 별도 module로 다루던 위 서술과 §3의 방안 C 서술 중 ticketing 부분은 그 이전 기록이다. payment 분리는 그대로다.
 
 `payment`와 `ticketing`은 다른 업무 모듈을 import하지 않는다. 미래 의존 edge(`payment -> booking`,
 `ticketing -> booking`)는 실제 공개 계약(결제 정산, `OrderConfirmed` 구독)을 구현하는 후속
