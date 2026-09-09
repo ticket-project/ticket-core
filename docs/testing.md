@@ -120,7 +120,7 @@ ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId�
 **N+1 회귀**는 `GetPerformanceSeatMapUseCaseTest`가 고정한다. `GetPerformanceSeatMapUseCase`는
 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 show `PerformanceVenueLayoutCatalog`에서
 (내부적으로 venue의 `VenueSeatLookup`을 호출), 판매 편성된 좌석과 확정 가격을 booking
-`PerformanceSeatMapReadRepository`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된 query
+`PerformanceSeatMapQueryPort`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된 query
 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한 번만 호출되는지 확인한다 — 회차 좌석
 수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
 

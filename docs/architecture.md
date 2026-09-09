@@ -108,7 +108,7 @@ seed     -> member
 | 경계 | 참조 | Repository |
 | --- | --- | --- |
 | 같은 Aggregate 내부 | Entity 연관관계 가능(`@ManyToOne(LAZY, optional=false)`) | Root만 Repository |
-| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*ReadRepository`) | 각 Root별 Repository |
+| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*QueryPort`) | 각 Root별 Repository |
 | 다른 BC | scalar ID 참조(강제). 상대 모듈이 공개한 query API를 쓴다 | 각 BC가 자기 Repository 소유 |
 | cross-BC DB JOIN | reporting/integration read model처럼 명시적으로 허용된 경우만. 현재 유일한 예외는 기술 모듈 `seed`의 raw SQL 적재다 | — |
 
@@ -131,13 +131,19 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 생성 시 snapshot, 생성 후 불변). booking은 이 조립에 show의 공개 계약
 `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`만 쓰고 show entity를 JPA로 참조하지 않는다.
 
-**Like 조합 규칙**: 찜의 데이터·불변식은 `like`(옛 `favorite`)가 소유하고, HTTP endpoint·use case는
-show에 남는다. `show.domain`은 like를 모른다 — `show.application`의 조회 service가 like의
-공개 API(`LikeQuery`/`LikeCommand`)를 주입받아 조합한다(직접 데이터 JOIN 아님). 사실의 소유자
-기준으로 나눈 경계다 — 공연이 존재하는가는 show가 아는 사실이고, 찜(좋아요)이 중복인가는 like가
-아는 사실이다. 이 규칙은 `com.ticket.DomainPurityTest`(ArchUnit, 6개 BC 전체)가 강제한다. 왜
-catalog 흡수 대신 이 형태가 됐는지는 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을,
-찜 모듈 개명과 대상 일반화는 [ADR 0008](adr/0008-like-target-generalization.md)을 본다.
+**Like 조합 규칙**: 찜의 데이터·불변식은 `like`(옛 `favorite`)가 소유한다. HTTP endpoint·use
+case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니오(존재)만 있으면 되는 것**(찜하기·
+찜 해제·찜 상태 조회)은 like가 소유하고, **다른 BC의 실제 표시 데이터**가 필요한 것("내 찜
+목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain`은
+like를 모른다 — `show.application`의 조회 service가 like의 공개 API(`LikeQuery`/`LikeCommand`)를
+주입받아 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
+않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
+순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
+`MemberLookup.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainPurityTest`(ArchUnit,
+6개 BC 전체)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md)을, 찜 모듈 개명과 대상 일반화는
+[ADR 0008](adr/0008-like-target-generalization.md)을, use case 소유권을 존재/표시 기준으로
+나눈 결정은 [ADR 0009](adr/0009-like-owns-write-and-status-usecases.md)를 본다.
 
 ## Module Structure
 
@@ -157,10 +163,16 @@ catalog 흡수 대신 이 형태가 됐는지는 [ADR 0006](adr/0006-bounded-con
 
 **패키지 구조는 모듈 → 계층 → 클래스다.** `domain`/`application`/`infrastructure` 아래에
 기능별(`order`, `show` 등) 하위 패키지를 두지 않는다 — 예를 들어 `show.domain.Show`,
-`booking.infrastructure.QuerydslOrderReadRepository`처럼 계층 바로 아래에 클래스가 온다. 예외는
-`web`의 `request`/`docs`/`support`와 `exception`의 `handler`뿐이다. 클래스 이름 자체가 이미
-기능을 드러내므로(`ShowRepository`, `PerformanceSalesPolicy` 등) 같은 계층 안에서 이름이
+`booking.infrastructure.QuerydslOrderQueryPort`처럼 계층 바로 아래에 클래스가 온다. 예외는
+넷뿐이다: `web`의 `request`/`docs`/`support`, `exception`의 `handler`, `application`의
+`port`(아래 "Repository와 Query Port" 절 참고), `application`의 `usecase`. 클래스 이름 자체가
+이미 기능을 드러내므로(`ShowRepository`, `PerformanceSalesPolicy` 등) 같은 계층 안에서 이름이
 충돌하지 않는다.
+
+**`application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.** use case가 조립에 쓰는
+서비스·헬퍼·view·port는 여기 두지 않고 `application` 바로 아래(또는 port는 `application.port`)에
+둔다 — use case가 진입점이라는 것만 폴더로 드러내고, 그 진입점이 무엇을 조립해 쓰는지는 여전히
+`application` 평평한 목록에서 바로 보이게 하기 위해서다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
@@ -173,18 +185,83 @@ catalog 흡수 대신 이 형태가 됐는지는 [ADR 0006](adr/0006-bounded-con
 | JPA, Querydsl, Redis, Redisson, JWT 구현 | `infrastructure` |
 
 기능은 클래스 이름 접두사로 드러낸다(`ShowRepository`, `PerformanceGrade`, `OrderCreator` 등).
-`model`/`repository`/`store`/`query`/`command`는 더 이상 하위 패키지가 아니라 **명명 관용**이다 —
-Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계약(옛 `store`), 도메인 read
-model·조회 use case·포트·view(옛 `query`), 상태 변경 use case(옛 `command`)가 어떤 성격인지는
-클래스 이름과 위 "계약의 성격" 표로 판단한다.
+`model`/`repository`/`store`/`command`는 더 이상 하위 패키지가 아니라 **명명 관용**이다 —
+Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계약(옛 `store`), 상태 변경
+use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회
+포트(옛 `query`)는 아래 "Repository와 Query Port" 절이 별도로 다룬다.
 
-Querydsl 조회 구현은 `Querydsl` 접두사(`QuerydslShowListReadRepository implements
-ShowListReadRepository`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는 Spring
+Querydsl 조회 구현은 `Querydsl` 접두사(`QuerydslShowListQueryPort implements
+ShowListQueryPort`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는 Spring
 Data 인터페이스는 `SpringData*JpaRepository`로 구분한다. `View`는 조회 경계의 화면/응답용
 projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서는 cross-module 스냅샷), `Row`는
 저장소 조회 한 행, `Output`은 use case 반환값, `Param`/`Criteria`/`Event`/`Request`는 각각 조회
 조건 구성값/검색 조건/발생한 사실/외부 입력이다. **조회 전용 `...View` 타입에 비즈니스 로직을
 두지 않는다** — 판정은 별도 validator/policy가 맡는다.
+
+## Repository와 Query Port
+
+조회 기능이라고 해서 모두 같은 조회 계약을 쓰지 않는다. **Aggregate를 저장·복원하기 위한 Domain
+Repository**와 **화면/검색/목록 조회를 위한 Application Query Port**를 구분한다.
+
+판단 기준은 쿼리의 복잡도가 아니다. **행동시키기 위해 Aggregate를 가져오면 Domain Repository를
+쓰고, 보여주기 위해 데이터를 가져오면 Application Query Port를 쓴다.**
+
+### Domain Repository
+
+Aggregate를 저장·복원하는 인터페이스다. 조회한 Aggregate로 업무 규칙을 수행한 뒤 다시 저장하는
+흐름(조회 → 행동 → 저장)에 쓴다.
+
+```java
+Show show = showRepository.findById(showId)
+        .orElseThrow(ShowNotFoundException::new);
+show.changeTitle(newTitle);
+showRepository.save(show);
+```
+
+`domain`에 두고 이름은 `*Repository`를 쓴다(`ShowRepository`, `OrderRepository`,
+`MemberRepository`). Aggregate·Entity를 반환하며, `existsByEmail(Email)`처럼 업무 규칙 판단에
+필요한 조회도 포함할 수 있다. 내부적으로 여러 테이블을 조인해야 해도(예: `Order`가
+`ORDER_SEAT`까지 복원) Aggregate 복원이 목적이면 여전히 Domain Repository다 — **쿼리가
+복잡한지는 판단 기준이 아니다.**
+
+### Application Query Port
+
+화면·API·검색·목록·집계에 필요한 데이터를 조회하는 인터페이스다. Aggregate를 복원하는 게
+목적이 아니라 **use case가 필요로 하는 조회 결과를 만드는 것**이 목적이다.
+
+```java
+ShowDetailView detail = showDetailQueryPort.findShowDetail(showId)
+        .orElseThrow(() -> new NotFoundException(...));
+```
+
+`application`의 `port` 하위 패키지에 두고(위 "패키지 구조는 모듈 → 계층 → 클래스다" 절의 세
+번째 예외) 이름은 `*QueryPort`를 쓴다(`ShowDetailQueryPort`, `ShowListQueryPort`). 구현은
+`infrastructure`에 `Querydsl*QueryPort`로 둔다. Aggregate를 여러 개 복원해 Java에서 조합하기
+보다, Querydsl로 필요한 read model을 직접 만든다 — 반환 타입은 Aggregate가 아니라 `View`/`Row`
+(위 "패키지 구조" 절의 명명 규칙)다.
+
+**Aggregate 경계와 API 응답 경계는 같을 필요가 없다.** 공연 상세는 Show/Performance/Grade/
+Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까지 한 응답에 담는다 — 그 조합은
+Query Port 자신이 아니라 그 Query Port를 부르는 use case가 한다(`GetShowDetailUseCase`가
+`ShowDetailQueryPort`로 show 자기 데이터를 얻고, `VenueLookup`/`LikeQuery`로 다른 BC의 표시값을
+더한다). Query Port 구현(`Querydsl*QueryPort`)이 다른 module의 공개 계약을 직접 호출하지
+않는다 — persistence adapter의 역할은 자기 module DB를 읽는 것까지다.
+
+**같은 id로 두 계약이 동시에 존재해도 된다.**
+
+```java
+// Domain Repository — Aggregate 복원 → 업무 행동
+Optional<Show> ShowRepository.findById(Long showId);
+
+// Application Query Port — 화면 표시값 → API 응답
+Optional<ShowDetailView> ShowDetailQueryPort.findShowDetail(Long showId);
+```
+
+둘 다 같은 `SHOWS` 테이블을 볼 수 있지만 목적이 다르다. Read model(`View`/`Row`)은 Aggregate가
+아니고, 상태 변경을 하지 않으며, 핵심 업무 불변식을 갖지 않는다 — "구매 가능한가" 같은 판정은
+그 값을 정하는 domain(`PerformanceSalesPolicy` 등)이 하고, Read model은 이미 정해진 값을
+전달하는 역할에 머문다(`docs/architecture.md`의 "조회 전용 `...View` 타입에 비즈니스 로직을
+두지 않는다" 규칙과 같다).
 
 ## 계층별 검증 책임
 
