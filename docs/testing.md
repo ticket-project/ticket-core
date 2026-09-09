@@ -32,9 +32,10 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
 테스트를 최소 하나씩 둔다(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
-`FavoriteModuleTests`, `MemberModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). 찜은
-`favorite`가 데이터를 소유하고 `show`가 HTTP endpoint·use case를 갖는다(ADR 0006) — `ShowModuleTests`가
-favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다. `verifyAutomatically = false`인
+`LikeModuleTests`, `MemberModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). 찜은
+`like`(옛 `favorite`)가 데이터를 소유하고 `show`가 HTTP endpoint·use case를 갖는다(ADR 0006,
+ADR 0008) — `ShowModuleTests`가 like의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다.
+`verifyAutomatically = false`인
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
 곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
 
@@ -50,9 +51,9 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 | 테스트 | 고정하는 것 |
 | --- | --- |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
-| `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `FavoriteModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
+| `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
-| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). 찜 데이터 조합은 `show.application`이 favorite의 공개 API로 한다(ADR 0006) |
+| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). 찜 데이터 조합은 `show.application`이 like(옛 favorite)의 공개 API로 한다(ADR 0006, ADR 0008) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 | `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것(`build/spring-modulith-docs`) |
@@ -86,7 +87,7 @@ favorite의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한
 만들어지고 CRUD가 동작하는지 `@DataJpaTest`와 module slicing 조합으로 검증한다. 지금 존재하는
 것은 `BookingModuleSlicingSchemaTest`, `ShowModuleSlicingSchemaTest`(SHOWS.venue_id scalar 매핑과
 그 FK 제거), `VenueModuleSlicingSchemaTest`(Venue/Seat 매핑, ADR 0006으로 show에서 분리),
-`FavoriteModuleMigrationTest`(SHOW_LIKES의 옛 member/show FK 제거), `PaymentModuleSlicingSchemaTest`,
+`LikeModuleMigrationTest`(SHOW_LIKES의 옛 member/show FK 제거, LIKES로의 대상 일반화), `PaymentModuleSlicingSchemaTest`,
 `BookingTicketSlicingSchemaTest`(TICKETS는 booking V5)(`src/test/java/com/ticket/bootstrap/migration/`)다.
 다른 모듈의 migration이 있어야만 통과하면 실패로 간주한다.
 

@@ -59,7 +59,7 @@ find src/test -path "*bootstrap*" -iname "*.java"
 [architecture.md](../../../docs/architecture.md#enforcement)를 본다.
 
 각 모듈의 `<Module>ModuleTests`(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
-`FavoriteModuleTests`, `MemberModuleTests`, `PaymentModuleTests`)는
+`LikeModuleTests`, `MemberModuleTests`, `PaymentModuleTests`)는
 `@ApplicationModuleTest(verifyAutomatically = false)`로 그 모듈이 STANDALONE으로
 부트스트랩되는지만 본다. 전체 구조 검증은 여기서 하지 않는다 — `ModularityTests`의 몫이다.
 `com.ticket.DomainPurityTest`(ArchUnit)는 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지
