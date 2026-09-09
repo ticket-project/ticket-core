@@ -2,6 +2,11 @@
 
 ## 상태(2026-09-09): 채택·구현됨. ADR 0006 §1·§2를 module 이름 범위에서만 supersede
 
+**2026-09-09 갱신**: 아래 §4("show 쪽 배치는 바꾸지 않는다")는
+[ADR 0009](0009-like-owns-write-and-status-usecases.md)가 supersede했다 — 찜하기·찜
+해제·찜 상태 조회는 like로 옮겼고, "내 찜 목록"만 show에 남는다. 이 문서의 나머지 결정
+(module 개명, 대상 일반화, 스키마)은 그대로 유효하다.
+
 ## 배경
 
 ADR 0006 §1·§2가 찜(당시 `ShowLike`) 데이터를 `favorite` module로 분리했다. 그 결정 자체(찜

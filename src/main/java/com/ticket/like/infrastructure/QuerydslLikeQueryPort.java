@@ -1,7 +1,9 @@
 package com.ticket.like.infrastructure;
 
+import com.ticket.like.application.port.LikeQueryPort;
+
 import com.ticket.like.LikeType;
-import com.ticket.like.application.LikeReadRepository;
+import com.ticket.like.application.port.LikeQueryPort;
 import com.ticket.like.application.LikeRow;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -16,7 +18,7 @@ import static com.ticket.like.domain.QLike.like;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslLikeReadRepository implements LikeReadRepository {
+public class QuerydslLikeQueryPort implements LikeQueryPort {
 
     private final JPAQueryFactory queryFactory;
 
