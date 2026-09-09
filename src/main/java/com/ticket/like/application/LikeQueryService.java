@@ -1,5 +1,7 @@
 package com.ticket.like.application;
 
+import com.ticket.like.application.port.LikeQueryPort;
+
 import com.ticket.like.LikeEntry;
 import com.ticket.like.LikeInfo;
 import com.ticket.like.LikeQuery;
@@ -21,7 +23,7 @@ import java.util.List;
 public class LikeQueryService implements LikeQuery {
 
     private final LikeRepository likeRepository;
-    private final LikeReadRepository likeReadRepository;
+    private final LikeQueryPort likeQueryPort;
 
     @Override
     public LikeInfo get(final LikeType likeType, final long targetId, final long memberId) {
@@ -38,7 +40,7 @@ public class LikeQueryService implements LikeQuery {
     @Override
     public CursorPage<LikeEntry, Long> findLiked(
             final LikeType likeType, final long memberId, final Long cursorLikeId, final int size) {
-        final CursorPage<LikeRow, Long> page = likeReadRepository.findLiked(likeType, memberId, cursorLikeId, size);
+        final CursorPage<LikeRow, Long> page = likeQueryPort.findLiked(likeType, memberId, cursorLikeId, size);
         final List<LikeEntry> entries = page.items().stream()
                 .map(row -> new LikeEntry(row.likeId(), row.targetId(), row.likedAt()))
                 .toList();

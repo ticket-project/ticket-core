@@ -61,7 +61,7 @@ class ModularityTests {
             Map.entry("booking", Set.of("show", "member", "shared", "web", "error")),
             Map.entry("show", Set.of("venue", "like", "member", "shared", "web", "error")),
             Map.entry("venue", Set.of()),
-            Map.entry("like", Set.of("shared", "web", "error")),
+            Map.entry("like", Set.of("member", "shared", "web", "error")),
             Map.entry("member", Set.of("shared", "web", "error")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),

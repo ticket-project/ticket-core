@@ -1,6 +1,7 @@
-package com.ticket.like.application;
+package com.ticket.like.application.port;
 
 import com.ticket.like.LikeType;
+import com.ticket.like.application.LikeRow;
 import com.ticket.shared.CursorPage;
 
 /**
@@ -8,7 +9,7 @@ import com.ticket.shared.CursorPage;
  *
  * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 호출하는 module의 {@code web}이 한다.
  */
-public interface LikeReadRepository {
+public interface LikeQueryPort {
 
     CursorPage<LikeRow, Long> findLiked(
             LikeType likeType,
