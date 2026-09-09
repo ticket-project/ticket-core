@@ -396,7 +396,7 @@ async function main() {
   lines.push('-- ===== 추가 공연 =====');
   for (const s of shows) {
     lines.push(
-      `INSERT INTO SHOWS (id, title, sub_title, info, start_date, end_date, view_count, sale_type, sale_start_date, sale_end_date, image, venue_id, running_minutes, performer_id, created_at, created_by) VALUES (${s.id}, ${sqlStr(s.title)}, ${sqlStr(s.subTitle)}, ${sqlStr(s.info)}, '${s.startDate}', '${s.endDate}', ${s.viewCount}, 'GENERAL', '${s.saleStart} 10:00:00', '${s.saleEnd}', ${sqlStr(s.image)}, ${s.venueId}, ${s.runningMinutes}, ${s.performerId}, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
+      `INSERT INTO SHOWS (id, title, sub_title, info, start_date, end_date, view_count, display_sale_type, display_sale_starts_at, display_sale_ends_at, image, venue_id, running_minutes, performer_id, created_at, created_by) VALUES (${s.id}, ${sqlStr(s.title)}, ${sqlStr(s.subTitle)}, ${sqlStr(s.info)}, '${s.startDate}', '${s.endDate}', ${s.viewCount}, 'GENERAL', '${s.saleStart} 10:00:00', '${s.saleEnd}', ${sqlStr(s.image)}, ${s.venueId}, ${s.runningMinutes}, ${s.performerId}, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
     );
   }
 
