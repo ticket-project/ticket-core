@@ -1,14 +1,14 @@
 package com.ticket.core.infra.support;
 
-import com.ticket.show.infrastructure.show.query.BookingStatusPredicateFactory;
-import com.ticket.show.infrastructure.show.query.QuerydslShowConditionBuilder;
-import com.ticket.show.infrastructure.show.query.QuerydslShowCursorConditionBuilder;
-import com.ticket.show.infrastructure.show.query.QuerydslShowPredicates;
-import com.ticket.show.infrastructure.show.query.QuerydslShowSortResolver;
-import com.ticket.venue.application.publicapi.VenueLookupService;
-import com.ticket.venue.application.publicapi.VenueSeatLookupService;
-import com.ticket.venue.infrastructure.seat.query.QuerydslVenueSeatReadRepository;
-import com.ticket.venue.infrastructure.venue.query.QuerydslVenueSummaryReadRepository;
+import com.ticket.show.infrastructure.SaleDisplayStatusPredicateFactory;
+import com.ticket.show.infrastructure.QuerydslShowConditionBuilder;
+import com.ticket.show.infrastructure.QuerydslShowCursorConditionBuilder;
+import com.ticket.show.infrastructure.QuerydslShowPredicates;
+import com.ticket.show.infrastructure.QuerydslShowSortResolver;
+import com.ticket.venue.application.VenueLookupService;
+import com.ticket.venue.application.VenueSeatLookupService;
+import com.ticket.venue.infrastructure.QuerydslVenueSeatReadRepository;
+import com.ticket.venue.infrastructure.QuerydslVenueSummaryReadRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -22,7 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  */
 @Import({
         QuerydslShowPredicates.class,
-        BookingStatusPredicateFactory.class,
+        SaleDisplayStatusPredicateFactory.class,
         QuerydslShowConditionBuilder.class,
         QuerydslShowSortResolver.class,
         QuerydslShowCursorConditionBuilder.class,

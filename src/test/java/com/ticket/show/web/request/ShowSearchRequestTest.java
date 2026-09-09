@@ -1,10 +1,10 @@
 package com.ticket.show.web.request;
 
 import com.ticket.show.web.support.cursor.ShowCursorCodec;
-import com.ticket.show.application.show.query.model.ShowCursor;
-import com.ticket.show.application.show.query.model.ShowSearchCriteria;
-import com.ticket.show.application.show.query.ShowSort;
-import com.ticket.show.domain.show.BookingStatus;
+import com.ticket.show.application.ShowCursor;
+import com.ticket.show.application.ShowSearchCriteria;
+import com.ticket.show.application.ShowSort;
+import com.ticket.show.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ class ShowSearchRequestTest {
 
         assertThat(criteria.getKeyword()).isEqualTo("뮤지컬");
         assertThat(criteria.getCategory()).isEqualTo("MUSICAL");
-        assertThat(criteria.getBookingStatus()).isEqualTo(BookingStatus.ON_SALE);
+        assertThat(criteria.getSaleDisplayStatus()).isEqualTo(SaleDisplayStatus.ON_SALE);
         assertThat(criteria.getStartDateFrom()).isEqualTo(LocalDate.of(2026, 4, 1));
         assertThat(criteria.getStartDateTo()).isEqualTo(LocalDate.of(2026, 4, 30));
         assertThat(criteria.getRegion()).isEqualTo(Region.SEOUL);

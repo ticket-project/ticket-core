@@ -1,18 +1,18 @@
 package com.ticket.show.web;
 
 import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.show.domain.show.BookingStatus;
+import com.ticket.show.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
-import com.ticket.show.domain.show.SaleType;
-import com.ticket.show.application.show.query.CountSearchShowsUseCase;
-import com.ticket.show.application.show.query.GetLatestShowsUseCase;
-import com.ticket.show.application.show.query.GetSaleStartApproachingShowsPageUseCase;
-import com.ticket.show.application.show.query.GetSaleStartApproachingShowsUseCase;
-import com.ticket.show.application.show.query.GetShowDetailUseCase;
-import com.ticket.show.application.show.query.GetShowsUseCase;
-import com.ticket.show.application.show.query.SearchShowsUseCase;
-import com.ticket.show.application.show.query.model.ShowListItemView;
-import com.ticket.show.application.show.query.model.ShowSearchItemView;
+import com.ticket.show.domain.SaleType;
+import com.ticket.show.application.CountSearchShowsUseCase;
+import com.ticket.show.application.GetLatestShowsUseCase;
+import com.ticket.show.application.GetSaleStartApproachingShowsPageUseCase;
+import com.ticket.show.application.GetSaleStartApproachingShowsUseCase;
+import com.ticket.show.application.GetShowDetailUseCase;
+import com.ticket.show.application.GetShowsUseCase;
+import com.ticket.show.application.SearchShowsUseCase;
+import com.ticket.show.application.ShowListItemView;
+import com.ticket.show.application.ShowSearchItemView;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -20,8 +20,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.ticket.show.web.support.cursor.ShowCursorCodec;
-import com.ticket.show.application.show.query.model.ShowCursor;
-import com.ticket.show.application.show.query.ShowSort;
+import com.ticket.show.application.ShowCursor;
+import com.ticket.show.application.ShowSort;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
@@ -47,7 +47,6 @@ class ShowControllerContractTest {
             .encodeToString(
                     JsonMapper.builder().build().writeValueAsString(NEXT_POSITION)
                             .getBytes(StandardCharsets.UTF_8));
-
 
     @Test
     void 공연_목록_api는_슬라이스_응답_계약을_유지한다() throws Exception {
@@ -160,7 +159,7 @@ class ShowControllerContractTest {
                 120,
                 10L,
                 2L,
-                BookingStatus.ON_SALE,
+                SaleDisplayStatus.ON_SALE,
                 SaleType.GENERAL,
                 LocalDateTime.of(2026, 3, 10, 10, 0),
                 LocalDateTime.of(2026, 3, 20, 20, 0),
@@ -179,6 +178,13 @@ class ShowControllerContractTest {
 
         mockMvc.perform(get("/api/v1/shows/1"))
                 .andExpect(status().isOk())
+                // ADR 0007: 내부 컴포넌트 이름은 display 어휘로 바꼈지만 공개 JSON 이름은 그대로다.
+                .andExpect(jsonPath("$.data.bookingStatus").value("ON_SALE"))
+                .andExpect(jsonPath("$.data.saleType").value("GENERAL"))
+                .andExpect(jsonPath("$.data.saleStartDate").exists())
+                .andExpect(jsonPath("$.data.saleEndDate").exists())
+                .andExpect(jsonPath("$.data.saleDisplayStatus").doesNotExist())
+                .andExpect(jsonPath("$.data.displaySaleType").doesNotExist())
                 .andExpect(jsonPath("$.data.performanceDates[0].performances[0].id").value(10))
                 .andExpect(jsonPath("$.data.performanceDates[0].performances[0].performanceNo").value(1))
                 .andExpect(jsonPath("$.data.performanceDates[0].performances[0].orderOpenTime").doesNotExist())
