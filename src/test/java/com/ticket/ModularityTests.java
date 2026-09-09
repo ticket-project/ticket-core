@@ -46,22 +46,22 @@ class ModularityTests {
 
     /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "show", "venue", "favorite", "member", "shared", "web", "config",
+            "booking", "show", "venue", "like", "member", "shared", "web", "config",
             "error", "seed", "payment");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 실제로 직접 참조하는 module 이름 집합이며,
      * {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라 관측되는 edge를
-     * 여기 고정해 결합이 조용히 늘어나는 것을 잡는다(venue/member/favorite/payment는
+     * 여기 고정해 결합이 조용히 늘어나는 것을 잡는다(venue/member/like/payment는
      * {@code allowedDependencies}가 비어 있다 — {@code sharedModules}인 shared·error·web은
      * 비워 두어도 항상 허용된다). 각 edge의 근거는 참조하는 module의 package-info와
-     * ADR 0006을 원본으로 본다.
+     * ADR 0006·ADR 0008(like 개명·일반화)을 원본으로 본다.
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
             Map.entry("booking", Set.of("show", "member", "shared", "web", "error")),
-            Map.entry("show", Set.of("venue", "favorite", "member", "shared", "web", "error")),
+            Map.entry("show", Set.of("venue", "like", "member", "shared", "web", "error")),
             Map.entry("venue", Set.of()),
-            Map.entry("favorite", Set.of("shared", "web", "error")),
+            Map.entry("like", Set.of("shared", "web", "error")),
             Map.entry("member", Set.of("shared", "web", "error")),
             Map.entry("shared", Set.of()),
             Map.entry("web", Set.of()),

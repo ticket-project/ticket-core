@@ -1,0 +1,71 @@
+-- ADR 0008: 찜 대상을 값(LikeType)으로 일반화한다. SHOW_LIKES(show_id 전용) -> LIKES(대상 종류
+-- like_type + target_id). 지금은 공연만 찜 대상이라 기존 행 전부에 'SHOW'를 backfill한다.
+--
+-- SHOWS/SHOW_LIKES는 어떤 Flyway migration도 만들지 않은 pre-Flyway baseline table이다
+-- (docs/operations.md 참고). local(ddl-auto=create) 환경에서는 Hibernate가 이미
+-- LIKES(target_id, like_type 포함)를 만들어 두므로 이 migration은 그 환경에서 no-op이어야
+-- 한다 — 매 단계마다 "아직 옛 상태인가"를 확인하고 아니면 손대지 않는다.
+
+-- 1) table rename: SHOW_LIKES가 있고 LIKES가 아직 없을 때만.
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE SHOW_LIKES RENAME TO LIKES'
+    FROM DUAL
+    WHERE EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SHOW_LIKES')
+      AND NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'LIKES')
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+-- 2) column rename: LIKES.SHOW_ID가 남아있을 때만(위 rename 직후이거나, 이전에 이미 rename만
+-- 되고 컬럼은 안 바뀐 중간 상태를 대비).
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE LIKES RENAME COLUMN SHOW_ID TO TARGET_ID'
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'LIKES' AND COLUMN_NAME = 'SHOW_ID'
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+-- 3) like_type 컬럼 신설 + backfill + NOT NULL. 컬럼이 이미 있으면(Hibernate가 만들었거나 이전
+-- 실행에서 이미 추가됐으면) 전부 no-op이다.
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE LIKES ADD COLUMN LIKE_TYPE VARCHAR(20)'
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_NAME = 'LIKES'
+      AND NOT EXISTS (
+          SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+          WHERE TABLE_NAME = 'LIKES' AND COLUMN_NAME = 'LIKE_TYPE'
+      )
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'UPDATE LIKES SET LIKE_TYPE = ''SHOW'' WHERE LIKE_TYPE IS NULL'
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'LIKES' AND COLUMN_NAME = 'LIKE_TYPE'
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE LIKES ALTER COLUMN LIKE_TYPE SET NOT NULL'
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'LIKES' AND COLUMN_NAME = 'LIKE_TYPE' AND IS_NULLABLE = 'YES'
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+-- 4) UK 재설정: UK_SHOW_LIKES_MEMBER_SHOW(member_id, show_id) -> UK_LIKES_MEMBER_TARGET(member_id,
+-- like_type, target_id). 옛 이름 제약이 남아있을 때만 지우고, 새 이름 제약이 아직 없을 때만 만든다.
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE LIKES DROP CONSTRAINT "UK_SHOW_LIKES_MEMBER_SHOW"'
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE TABLE_NAME = 'LIKES' AND CONSTRAINT_NAME = 'UK_SHOW_LIKES_MEMBER_SHOW'
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');
+
+EXECUTE IMMEDIATE COALESCE((
+    SELECT 'ALTER TABLE LIKES ADD CONSTRAINT UK_LIKES_MEMBER_TARGET UNIQUE (member_id, like_type, target_id)'
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_NAME = 'LIKES'
+      AND NOT EXISTS (
+          SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+          WHERE TABLE_NAME = 'LIKES' AND CONSTRAINT_NAME = 'UK_LIKES_MEMBER_TARGET'
+      )
+    FETCH FIRST 1 ROWS ONLY
+), 'DROP TABLE IF EXISTS __noop_migration_marker__');

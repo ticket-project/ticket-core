@@ -13,10 +13,11 @@
  * - {@link com.ticket.member.AccessTokenAuthenticator} (booking의 WebSocket 인증이 원본 access
  *   token 문자열을 검증할 때 쓴다)
  *
- * <p>찜(showlike)의 데이터는 이 module이 아니라 favorite module이 소유한다. 찜하기/찜 해제 시
- * 회원 활성 확인({@link com.ticket.member.MemberLookup#requireActive})은 favorite가 아니라 show의
+ * <p>찜(Like)의 데이터는 이 module이 아니라 like module(옛 favorite)이 소유한다. 찜하기/찜 해제 시
+ * 회원 활성 확인({@link com.ticket.member.MemberLookup#requireActive})은 like가 아니라 show의
  * use case(예: {@code AddShowLikeUseCase}, {@code RemoveShowLikeUseCase})가 이 module의 공개
- * 계약을 호출해 수행한다 — favorite는 업무 module 의존이 없는 leaf다(ADR 0006 §2).
+ * 계약을 호출해 수행한다 — like는 업무 module 의존이 없는 leaf다(ADR 0006 §2, ADR 0008).
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Member", allowedDependencies = {})
 package com.ticket.member;
+

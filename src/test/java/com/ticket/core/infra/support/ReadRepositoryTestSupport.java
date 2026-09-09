@@ -1,24 +1,25 @@
 package com.ticket.core.infra.support;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.member.domain.member.model.Member;
-import com.ticket.member.domain.member.model.Email;
-import com.ticket.show.domain.performance.Performance;
-import com.ticket.show.domain.performance.PerformanceGrade;
-import com.ticket.show.domain.grade.Grade;
-import com.ticket.booking.domain.performanceseat.model.PerformanceSeat;
-import com.ticket.venue.domain.seat.Seat;
-import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.Category;
-import com.ticket.show.domain.show.Genre;
-import com.ticket.show.domain.show.ShowGenre;
+import com.ticket.member.domain.Member;
+import com.ticket.member.domain.Email;
+import com.ticket.show.domain.Performance;
+import com.ticket.show.domain.PerformanceGrade;
+import com.ticket.show.domain.Grade;
+import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.venue.domain.Seat;
+import com.ticket.show.domain.Show;
+import com.ticket.show.domain.Category;
+import com.ticket.show.domain.Genre;
+import com.ticket.show.domain.ShowGenre;
 import com.ticket.venue.Region;
-import com.ticket.show.domain.show.SaleType;
-import com.ticket.show.domain.show.Performer;
-import com.ticket.venue.domain.venue.Venue;
-import com.ticket.favorite.domain.showlike.model.ShowLike;
-import com.ticket.booking.domain.performanceseat.model.PerformanceSeatState;
-import com.ticket.member.domain.member.model.Role;
+import com.ticket.show.domain.SaleType;
+import com.ticket.show.domain.Performer;
+import com.ticket.venue.domain.Venue;
+import com.ticket.like.LikeType;
+import com.ticket.like.domain.Like;
+import com.ticket.booking.domain.PerformanceSeatState;
+import com.ticket.member.domain.Role;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -213,10 +214,10 @@ public abstract class ReadRepositoryTestSupport {
         return member;
     }
 
-    protected ShowLike persistShowLike(final Member member, final Show show) {
-        ShowLike showLike = new ShowLike(member.getId(), show.getId());
-        entityManager.persist(showLike);
-        return showLike;
+    protected Like persistLike(final Member member, final Show show) {
+        Like like = new Like(member.getId(), LikeType.SHOW, show.getId());
+        entityManager.persist(like);
+        return like;
     }
 
     protected void flushAndClear() {
@@ -261,7 +262,7 @@ public abstract class ReadRepositoryTestSupport {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.venue.domain", "com.ticket.favorite.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
+    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.venue.domain", "com.ticket.like.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure", "com.ticket.payment.domain"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }
