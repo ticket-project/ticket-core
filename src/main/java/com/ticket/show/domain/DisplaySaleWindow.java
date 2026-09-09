@@ -23,10 +23,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DisplaySaleWindow {
 
-    @Column(name = "sale_start_date")
+    @Column(name = "display_sale_starts_at")
     private LocalDateTime startsAt;
 
-    @Column(name = "sale_end_date")
+    @Column(name = "display_sale_ends_at")
     private LocalDateTime endsAt;
 
     public DisplaySaleWindow(final LocalDateTime startsAt, final LocalDateTime endsAt) {

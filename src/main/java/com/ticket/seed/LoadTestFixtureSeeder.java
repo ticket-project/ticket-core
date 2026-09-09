@@ -129,8 +129,8 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
         jdbcTemplate.update("""
                         INSERT INTO shows (
                           id, title, sub_title, info,
-                          start_date, end_date, view_count, sale_type,
-                          sale_start_date, sale_end_date, image,
+                          start_date, end_date, view_count, display_sale_type,
+                          display_sale_starts_at, display_sale_ends_at, image,
                           venue_id, running_minutes, performer_id,
                           created_at, created_by
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

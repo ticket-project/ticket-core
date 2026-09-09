@@ -37,8 +37,8 @@ class LoadTestFixtureSeederTest {
         jdbcTemplate.execute("""
                 CREATE TABLE shows (
                   id BIGINT PRIMARY KEY, title VARCHAR(255), sub_title VARCHAR(255), info VARCHAR(1000),
-                  start_date DATE, end_date DATE, view_count BIGINT NOT NULL, sale_type VARCHAR(50),
-                  sale_start_date TIMESTAMP, sale_end_date TIMESTAMP, image VARCHAR(500),
+                  start_date DATE, end_date DATE, view_count BIGINT NOT NULL, display_sale_type VARCHAR(50),
+                  display_sale_starts_at TIMESTAMP, display_sale_ends_at TIMESTAMP, image VARCHAR(500),
                   venue_id BIGINT, running_minutes INT, performer_id BIGINT,
                   created_at TIMESTAMP NOT NULL, created_by VARCHAR(255) NOT NULL)
                 """);

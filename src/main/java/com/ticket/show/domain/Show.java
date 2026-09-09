@@ -38,7 +38,7 @@ public class Show extends ShowAuditedEntity {
      * 별개다. 컬럼명은 옛 {@code sale_type}을 그대로 써서 스키마가 바뀌지 않는다(ADR 0007).
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "sale_type")
+    @Column(name = "display_sale_type")
     private SaleType displaySaleType;
 
     /**

@@ -8,13 +8,14 @@ seed/kopis-curated.sql 의 공연일이 특정 시즌(예: 2026 봄)에 고정�
 이 스크립트는 SHOWS/PERFORMANCES 의 날짜 컬럼만 재계산해서,
 기준일 시점에 대다수 공연이 '예매중(ON_SALE)' 이 되도록 만든다.
 
-상태 판정(도메인 규칙, Show.getBookingStatus)
-  - now <  sale_start            -> BEFORE_OPEN (오픈 예정)
-  - sale_start <= now <= sale_end -> ON_SALE    (예매중, 좌석 선택 가능)
-  - now >  sale_end             -> CLOSED      (예매 종료)
+표시 상태 판정(도메인 규칙, DisplaySaleWindow.statusAt — ADR 0007). 이건 화면 표시일 뿐
+실제 주문 접수 가능 여부는 booking의 PerformanceSalesPolicy가 회차 단위로 따로 판단한다:
+  - now <  display_sale_starts_at              -> BEFORE_OPEN (오픈 예정)
+  - display_sale_starts_at <= now <= display_sale_ends_at -> ON_SALE (예매중, 좌석 선택 가능)
+  - now >  display_sale_ends_at               -> CLOSED      (예매 종료)
 그리고 SeedDataLoader/테스트가 강제하는 불변식:
-  - show.sale_start_date == min(performance.order_open_time)
-  - show.sale_end_date   == max(performance.order_close_time)
+  - show.display_sale_starts_at == min(performance 회차들의 접수 시작 시각)
+  - show.display_sale_ends_at   == max(performance 회차들의 접수 종료 시각)
   - 회차가 2개 이상이면 날짜가 2개 이상으로 분산
   - 모든 회차일은 [show.start_date, show.end_date] 안
 
@@ -37,10 +38,10 @@ SHOW_RE = re.compile(
     r"'(\d{4}-\d{2}-\d{2})'"                          # 4 start_date
     r"(, )"                                            # 5
     r"'(\d{4}-\d{2}-\d{2})'"                          # 6 end_date
-    r"(, \d+, '[A-Z_]+', )"                           # 7 view_count + sale_type
-    r"'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"        # 8 sale_start
+    r"(, \d+, '[A-Z_]+', )"                           # 7 view_count + display_sale_type
+    r"'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"        # 8 display_sale_starts_at
     r"(, )"                                            # 9
-    r"'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"        # 10 sale_end
+    r"'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"        # 10 display_sale_ends_at
     r"(.*)$",                                          # 11 rest
     re.DOTALL,
 )
