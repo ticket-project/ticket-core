@@ -162,16 +162,19 @@ src/main/resources/db/migration-vendor/oracle/{module}         # module 소유 �
 이력은 `__root` 이력(기존 `flyway_schema_history`에 대응)으로 그대로 유지되고, 버전 번호도
 바꾸지 않았다. 모듈이 소유하는 새 schema 변경(cross-module FK 제거, scalar column 전환,
 신규 module의 첫 schema 등)은 module별 폴더에 **1부터 새로 버전을 매겨** 추가한다 — `__root`의
-V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `show`, `venue`, `favorite`, `booking`,
-`payment`다(ADR 0005, ADR 0006). `payment`는 이번 entity-only 단계 첫 schema라
+V 번호와 독립적이다. 현재 독립 migration 이력을 가진 모듈은 `show`, `venue`, `like`, `booking`,
+`payment`다(ADR 0005, ADR 0006, ADR 0008). `payment`는 이번 entity-only 단계 첫 schema라
 `V1__create_payments.sql`부터 시작하고, `show`/`booking`은 기존 이력 위에 이어서 버전을 매긴다.
-`venue`/`favorite`는 ADR 0006의 BC 재편으로 `catalog`(→`show`)에서 분리된 신설 module 이름이라,
+`venue`/`like`는 ADR 0006의 BC 재편으로 `catalog`(→`show`)에서 분리된 신설 module 이름이라,
 그 이름으로는 이력이 없어 각자 V1부터 새로 시작한다 — 그래서 옮겨온 migration은 멱등화가
-필요하다(ADR 0006 "Flyway 이력 재시작과 멱등화 예외" 참고). `TICKETS`는 원래 `ticketing` module의
+필요하다(ADR 0006 "Flyway 이력 재시작과 멱등화 예외" 참고). `like`는 ADR 0006 시점에는 `favorite`로
+신설됐다가 ADR 0008로 다시 `favorite` → `like` 개명을 거쳤다 — 개명 자체도 module 식별자가
+바뀌는 사건이라 `flyway_schema_history_favorite`를 버리고 `flyway_schema_history_like`로 한 번 더
+처음부터 시작한다(V1·V2는 그래서 내용 변경 없이 폴더만 옮겼다). `TICKETS`는 원래 `ticketing` module의
 V1이었으나 ticketing이 booking으로 흡수되며 booking V5(`V5__create_tickets.sql`)로 옮겼다 —
 `flyway_schema_history_ticketing`이 이미 있는 로컬 H2 파일 DB는 초기화가 필요하다. 공통 SQL은 `db/migration/{module}`, DB별 문법 차이가 있는
 SQL은 `db/migration-vendor/{h2,oracle}/{module}`에 같은 버전으로 각각 둔다 — 모듈에 DB별
-차이만 있고 공통 SQL이 없으면(현재 `show`, `venue`, `favorite`, `payment`) `db/migration/{module}`
+차이만 있고 공통 SQL이 없으면(현재 `show`, `venue`, `like`, `payment`) `db/migration/{module}`
 폴더 자체를 만들지 않는다. `db/migration`에는 현재 `__root`와 `booking`만 있다.
 
 공통 migration은 `db/migration/__root`(또는 `{module}`)에 두고, Oracle과 H2의 문법이 다른
@@ -202,7 +205,8 @@ db/migration/__root/V9__...sql           # 어떤 module에도 속하지 않는 
 만든다.
 
 **예외(module 개명·분리로 이력이 재시작될 때만)**: `catalog` → `show` 개명, `venue`/`favorite`
-신설처럼 module 식별자 자체가 바뀌면 그 폴더는 새 `flyway_schema_history_{module}` 이력으로
+신설, `favorite` → `like` 개명(ADR 0008)처럼 module 식별자 자체가 바뀌면 그 폴더는 새
+`flyway_schema_history_{module}` 이력으로
 처음부터 다시 실행된다 — 이미 적용됐던 내용이라도 이 새 이력 기준으로는 "아직 적용 전"이다. 이
 경우에 한해 **새 이력으로 옮겨가는 파일에** 존재 확인 가드(멱등화)를 추가하는 것을 허용한다.
 이미 적용이 끝나 그대로 남는 이력의 파일(예: 그대로 유지되는 `__root`, 이름이 바뀌지 않은

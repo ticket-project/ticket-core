@@ -19,8 +19,13 @@ _Avoid_: 공연장(Show를 가리키는 말과 혼동), 복합 시설 전체를 
 판매 단위가 되는 작품이다. 공연 기간과 Venue, 여러 Genre를 가진다. Show 1개는 Performance
 여러 개를 가지며(`1:0..N`), Performance는 정확히 하나의 Show에 속한다. 좌석 편성·등급·가격은
 회차(Performance)마다 다를 수 있어 Show가 아니라 그 단위로 붙는다.
+
+Show는 `displaySaleType`/`displaySaleWindow`(옛 `saleType`/`saleStartDate`/`saleEndDate`)로
+판매 상태를 **화면에 표시**하지만, 실제 주문 접수 가능 여부를 판단하지는 않는다 — 그건
+`PerformanceSalesPolicy`가 회차 단위로 한다(ADR 0007). 이 둘은 정합성 검증 없이 독립적인
+데이터라 서로 어긋날 수 있고, 그건 버그가 아니라 허용된 결과다.
 _Avoid_: 공연물, Event, Product, `ShowGrade`(쓰지 않는다 — Show 단위 가격이라는 개념 자체를
-쓰지 않는다)
+쓰지 않는다), Show가 판매 가능 여부를 판단한다는 서술(표시와 판단은 다르다 — ADR 0007)
 
 **Category / Genre**:
 장르 분류 체계다. Category 1개는 Genre 여러 개를 가지며(`1:0..N`), Genre는 정확히 하나의
@@ -75,7 +80,7 @@ _Avoid_: TicketInfo(결제 전 좌석을 이 이름으로 부르지 않는다)
 **Selection**:
 회원이 좌석을 살펴보며 임시로 골라 둔 표시다. 짧은 시간만 유지되고 다른 회원 화면에는 점유로
 보이지만, 예매를 보장하지 않는다. Hold와 독립이며 Selection 없이도 Order를 만들 수 있다.
-_Avoid_: 선점, 임시 예약, Reservation, 찜(ShowLike와 혼동)
+_Avoid_: 선점, 임시 예약, Reservation, 찜(Like와 혼동)
 
 **Hold**:
 진행 중인 Order가 좌석을 붙잡아 둔 상태다. 판매 정합성을 지키는 쪽은 Selection이 아니라 이것이다.
@@ -106,10 +111,13 @@ _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
 
 ### 찜
 
-**ShowLike**:
-회원이 특정 Show를 찜한 기록이다. `(memberId, showId)` 쌍이 유일하며, 같은 회원이 같은 Show를
-두 번 찜할 수 없다.
-_Avoid_: 좋아요(도메인 용어는 찜으로 통일), Selection과 혼동
+**Like**:
+회원이 어떤 대상을 찜한 기록이다. `(memberId, likeType, targetId)` 조합이 유일하며, 같은 회원이
+같은 대상을 두 번 찜할 수 없다. 대상 종류는 `LikeType`으로 값화돼 있고 지금은 SHOW(공연) 하나뿐
+이다 — 옛 이름 `ShowLike`가 가리키던 것과 같은 개념이며, 대상을 값으로 일반화하며 개명했다
+(ADR 0008). 개명은 영어 식별자 어휘일 뿐이다 — 한국어 도메인 용어 "찜"과 아래 `_Avoid_`는 이
+개명으로 뒤집히지 않는다.
+_Avoid_: 좋아요(도메인 용어는 찜으로 통일), Selection과 혼동, ShowLike(개명 전 이름)
 
 ### 회원
 

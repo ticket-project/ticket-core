@@ -28,6 +28,6 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 ## 우선 검토 영역
 
 모듈 경계와 강제되는 세부 규칙은 반드시 `docs/architecture.md`를 따른다. `AGENTS.md`를 읽을 수
-없을 때 최소한으로 참고할 실제 모듈은 `booking`, `show`, `venue`, `favorite`, `member`, `payment`다.
+없을 때 최소한으로 참고할 실제 모듈은 `booking`, `show`, `venue`, `like`, `member`, `payment`다.
 현재 전체 모듈 목록은 `docs/architecture.md`를 따른다 — 위 목록은 문서를 읽을 수 없을 때의 최소
 fallback일 뿐 단일 원본이 아니다.

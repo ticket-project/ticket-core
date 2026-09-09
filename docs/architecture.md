@@ -32,11 +32,11 @@
 
 | BC | 소유 | 비고 |
 | --- | --- | --- |
-| Show | Show, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 옛 `catalog`. 가격 원본은 `PerformanceGrade.price` |
+| Show | Show, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 옛 `catalog`. 가격 원본은 `PerformanceGrade.price`. Show의 판매 필드(`displaySaleType`/`displaySaleWindow`)는 화면 표시 전용이고 실제 판단은 Booking의 `PerformanceSalesPolicy`가 한다(ADR 0007) |
 | Venue | Venue, Seat, Region | 물리 시설. show에서 분리됨 |
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
-| Favorite | ShowLike | 찜 데이터·불변식. HTTP endpoint는 show가 조합 |
+| Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). HTTP endpoint는 show가 조합 |
 | Member | Member, MemberSocialAccount | 회원·인증·전역 SecurityFilterChain |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
@@ -50,9 +50,9 @@
 
 ```text
 booking  -> show, member, shared, web, error
-show     -> venue, favorite, member, shared, web, error
+show     -> venue, like, member, shared, web, error
 venue    -> (없음)
-favorite -> shared, web, error
+like     -> shared, web, error
 member   -> shared, web, error
 payment  -> (없음)
 shared   -> (없음)
@@ -64,9 +64,9 @@ seed     -> member
 
 `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수
 있다. 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만**
-적는다 — `venue`/`member`/`favorite`/`payment`와 기술 모듈 `shared`/`web`/`error`는 상한을 `{}`로
+적는다 — `venue`/`member`/`like`/`payment`와 기술 모듈 `shared`/`web`/`error`는 상한을 `{}`로
 명시한다(업무 모듈 의존이 없는 leaf). `show`는 찜 use case의 회원 확인을 위해 member를, 표시값
-조립을 위해 venue를, 찜 조회 위임을 위해 favorite를 참조한다. `booking`이 쓰는
+조립을 위해 venue를, 찜 조회 위임을 위해 like를 참조한다. `booking`이 쓰는
 `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`는 show가 façade로 유지하므로
 `booking -> venue` edge는 생기지 않는다. `payment`는 이번 entity-only 단계에서 `shared`/`web`/
 `error`도 참조하지 않는 완전한 leaf다 — controller가 없어 응답 봉투가, 자기 오류 타입을 던지지
@@ -86,7 +86,7 @@ seed     -> member
 | Order | OrderSeat | Booking |
 | Ticket | — | Booking |
 | Payment | — | Payment |
-| ShowLike | — | Favorite |
+| Like | — | Like |
 | Member | MemberSocialAccount | Member |
 
 **Hold와 Selection은 DB aggregate가 아니다.** 둘 다 Redis에만 있는 짧은 수명 상태다. DB에 남는
@@ -131,11 +131,13 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 생성 시 snapshot, 생성 후 불변). booking은 이 조립에 show의 공개 계약
 `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`만 쓰고 show entity를 JPA로 참조하지 않는다.
 
-**Favorite 조합 규칙**: 찜의 데이터·불변식은 `favorite`가 소유하고, HTTP endpoint·use case는
-show에 남는다. `show.domain`은 favorite를 모른다 — `show.application`의 조회 service가 favorite의
-공개 API(`ShowLikeQuery`/`ShowLikeCommand`)를 주입받아 조합한다(직접 데이터 JOIN 아님). 이 규칙은
-`com.ticket.DomainPurityTest`(ArchUnit, 6개 BC 전체)가 강제한다. 왜 catalog 흡수 대신 이 형태가
-됐는지는 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을 본다.
+**Like 조합 규칙**: 찜의 데이터·불변식은 `like`(옛 `favorite`)가 소유하고, HTTP endpoint·use case는
+show에 남는다. `show.domain`은 like를 모른다 — `show.application`의 조회 service가 like의
+공개 API(`LikeQuery`/`LikeCommand`)를 주입받아 조합한다(직접 데이터 JOIN 아님). 사실의 소유자
+기준으로 나눈 경계다 — 공연이 존재하는가는 show가 아는 사실이고, 찜(좋아요)이 중복인가는 like가
+아는 사실이다. 이 규칙은 `com.ticket.DomainPurityTest`(ArchUnit, 6개 BC 전체)가 강제한다. 왜
+catalog 흡수 대신 이 형태가 됐는지는 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을,
+찜 모듈 개명과 대상 일반화는 [ADR 0008](adr/0008-like-target-generalization.md)을 본다.
 
 ## Module Structure
 
@@ -153,6 +155,13 @@ show에 남는다. `show.domain`은 favorite를 모른다 — `show.application`
 작은 모듈은 이 하위 패키지를 모두 갖지 않고 root 바로 아래에 평평하게 둘 수 있다(`payment`가 그
 예다).
 
+**패키지 구조는 모듈 → 계층 → 클래스다.** `domain`/`application`/`infrastructure` 아래에
+기능별(`order`, `show` 등) 하위 패키지를 두지 않는다 — 예를 들어 `show.domain.Show`,
+`booking.infrastructure.QuerydslOrderReadRepository`처럼 계층 바로 아래에 클래스가 온다. 예외는
+`web`의 `request`/`docs`/`support`와 `exception`의 `handler`뿐이다. 클래스 이름 자체가 이미
+기능을 드러내므로(`ShowRepository`, `PerformanceSalesPolicy` 등) 같은 계층 안에서 이름이
+충돌하지 않는다.
+
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
 | 계약의 성격 | 소유 위치 |
@@ -163,10 +172,11 @@ show에 남는다. `show.domain`은 favorite를 모른다 — `show.application`
 | HTTP 입력·출력 계약 | `web` |
 | JPA, Querydsl, Redis, Redisson, JWT 구현 | `infrastructure` |
 
-기능별 패키지를 기본 축으로 잡는다(`order`, `hold`, `show`, `performanceseat` 등). 하위 패키지는
-`model`(엔티티·값 객체) / `repository`(Aggregate Repository 계약) / `store`(저장 기술 중립 상태
-계약) / `query`(도메인 read model 또는 조회 use case·포트·view) / `command`(상태 변경 use case)
-패턴을 쓴다.
+기능은 클래스 이름 접두사로 드러낸다(`ShowRepository`, `PerformanceGrade`, `OrderCreator` 등).
+`model`/`repository`/`store`/`query`/`command`는 더 이상 하위 패키지가 아니라 **명명 관용**이다 —
+Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계약(옛 `store`), 도메인 read
+model·조회 use case·포트·view(옛 `query`), 상태 변경 use case(옛 `command`)가 어떤 성격인지는
+클래스 이름과 위 "계약의 성격" 표로 판단한다.
 
 Querydsl 조회 구현은 `Querydsl` 접두사(`QuerydslShowListReadRepository implements
 ShowListReadRepository`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는 Spring

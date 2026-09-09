@@ -10,7 +10,7 @@ body:
       value: |
         하나의 이슈에는 하나의 버그만 작성해 주세요.
 
-        이 저장소는 여러 business module(booking, show, venue, favorite, member, payment) 경계, Redis/락, WebSocket 실시간 처리, 주문/홀드/좌석 흐름이 강하게 연결되어 있습니다.
+        이 저장소는 여러 business module(booking, show, venue, like, member, payment) 경계, Redis/락, WebSocket 실시간 처리, 주문/홀드/좌석 흐름이 강하게 연결되어 있습니다.
         아래 항목을 구체적으로 적어 주시면 재현과 원인 추적 속도가 크게 올라갑니다.
 
         특히 아래 정보가 있으면 함께 남겨 주세요.
