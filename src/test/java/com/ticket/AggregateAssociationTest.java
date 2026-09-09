@@ -46,11 +46,11 @@ class AggregateAssociationTest {
      * aggregate 안의 관계다 — {@code docs/architecture.md}의 나누는 기준을 본다.
      */
     private static final Set<Association> APPROVED_ASSOCIATIONS = Set.of(
-            new Association("com.ticket.booking.domain.order.model.Order", "com.ticket.booking.domain.order.model.OrderSeat"),
-            new Association("com.ticket.booking.domain.order.model.OrderSeat", "com.ticket.booking.domain.order.model.Order"),
-            new Association("com.ticket.member.domain.member.model.Member", "com.ticket.member.domain.member.model.MemberSocialAccount"),
-            new Association("com.ticket.member.domain.member.model.MemberSocialAccount", "com.ticket.member.domain.member.model.Member"),
-            new Association("com.ticket.show.domain.performance.PerformanceGrade", "com.ticket.show.domain.performance.Performance")
+            new Association("com.ticket.booking.domain.Order", "com.ticket.booking.domain.OrderSeat"),
+            new Association("com.ticket.booking.domain.OrderSeat", "com.ticket.booking.domain.Order"),
+            new Association("com.ticket.member.domain.Member", "com.ticket.member.domain.MemberSocialAccount"),
+            new Association("com.ticket.member.domain.MemberSocialAccount", "com.ticket.member.domain.Member"),
+            new Association("com.ticket.show.domain.PerformanceGrade", "com.ticket.show.domain.Performance")
     );
 
     @Test

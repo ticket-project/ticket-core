@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.booking.application.performancepolicy.query.GetPerformanceBookingModeUseCase;
-import com.ticket.booking.domain.performancepolicy.model.OrderAcceptanceStatus;
+import com.ticket.booking.application.GetPerformanceBookingModeUseCase;
+import com.ticket.booking.domain.OrderAcceptanceStatus;
 import com.ticket.error.NotFoundException;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import java.time.LocalDateTime;

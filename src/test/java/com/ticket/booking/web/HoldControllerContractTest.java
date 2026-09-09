@@ -1,8 +1,8 @@
 package com.ticket.booking.web;
 
-import com.ticket.member.infrastructure.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.booking.application.order.command.CreateOrderUseCase;
-import com.ticket.booking.domain.order.model.OrderState;
+import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.booking.application.CreateOrderUseCase;
+import com.ticket.booking.domain.OrderState;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;

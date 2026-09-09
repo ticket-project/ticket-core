@@ -2,13 +2,10 @@ package com.ticket.booking.application;
 
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.application.hold.event.HoldReleaseProgressRecorder;
-import com.ticket.booking.application.hold.command.HoldCreationTaskProcessor;
-import com.ticket.booking.application.hold.command.HoldReleaseTask;
-import com.ticket.booking.application.hold.command.HoldReleaseTaskProcessor;
-import com.ticket.booking.domain.hold.model.Hold;
-import com.ticket.booking.domain.order.model.Order;
-import com.ticket.booking.domain.order.repository.OrderRepository;
+
+import com.ticket.booking.domain.Hold;
+import com.ticket.booking.domain.Order;
+import com.ticket.booking.domain.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

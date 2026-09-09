@@ -1,6 +1,6 @@
 package com.ticket.seed;
 
-import com.ticket.member.application.member.command.SeedLoadTestMembersUseCase;
+import com.ticket.member.application.SeedLoadTestMembersUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

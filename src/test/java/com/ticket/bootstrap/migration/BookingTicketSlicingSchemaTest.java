@@ -1,6 +1,6 @@
 package com.ticket.bootstrap.migration;
 
-import com.ticket.booking.domain.ticket.model.Ticket;
+import com.ticket.booking.domain.Ticket;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;

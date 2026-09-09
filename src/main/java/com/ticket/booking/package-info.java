@@ -14,3 +14,4 @@
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Booking", allowedDependencies = {"show", "member"})
 package com.ticket.booking;
+

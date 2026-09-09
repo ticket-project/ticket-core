@@ -1,8 +1,8 @@
 package com.ticket.show.web;
 
-import com.ticket.show.application.showlike.command.AddShowLikeUseCase;
-import com.ticket.show.application.showlike.command.RemoveShowLikeUseCase;
-import com.ticket.show.application.showlike.query.GetShowLikeStatusUseCase;
+import com.ticket.show.application.AddShowLikeUseCase;
+import com.ticket.show.application.RemoveShowLikeUseCase;
+import com.ticket.show.application.GetShowLikeStatusUseCase;
 import com.ticket.show.web.docs.ShowLikeControllerDocs;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.web.ApiResponse;

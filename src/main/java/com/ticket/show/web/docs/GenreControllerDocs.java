@@ -1,6 +1,6 @@
 package com.ticket.show.web.docs;
 
-import com.ticket.show.application.show.query.GetGenresByCategoryUseCase;
+import com.ticket.show.application.GetGenresByCategoryUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -1,8 +1,8 @@
 package com.ticket.member.web.docs;
 
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.application.member.query.GetCurrentMemberUseCase;
-import com.ticket.member.application.member.command.WithdrawCurrentMemberUseCase;
+import com.ticket.member.application.GetCurrentMemberUseCase;
+import com.ticket.member.application.WithdrawCurrentMemberUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

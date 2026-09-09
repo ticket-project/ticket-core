@@ -1,6 +1,6 @@
 package com.ticket.booking.web.docs;
 
-import com.ticket.booking.application.performancepolicy.query.GetPerformanceBookingModeUseCase;
+import com.ticket.booking.application.GetPerformanceBookingModeUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

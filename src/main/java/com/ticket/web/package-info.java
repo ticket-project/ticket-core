@@ -25,3 +25,4 @@
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Web", allowedDependencies = {})
 package com.ticket.web;
+

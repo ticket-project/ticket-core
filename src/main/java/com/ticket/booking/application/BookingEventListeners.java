@@ -2,14 +2,11 @@ package com.ticket.booking.application;
 
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.application.hold.event.HoldReleaseProgressRecorder;
-import com.ticket.booking.application.hold.command.HoldCreationTaskProcessor;
-import com.ticket.booking.application.hold.command.HoldReleaseTask;
-import com.ticket.booking.application.hold.command.HoldReleaseTaskProcessor;
-import com.ticket.booking.domain.hold.model.Hold;
-import com.ticket.booking.domain.order.model.Order;
-import com.ticket.booking.domain.order.model.OrderSeat;
-import com.ticket.booking.domain.order.repository.OrderRepository;
+
+import com.ticket.booking.domain.Hold;
+import com.ticket.booking.domain.Order;
+import com.ticket.booking.domain.OrderSeat;
+import com.ticket.booking.domain.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;

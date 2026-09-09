@@ -1,7 +1,7 @@
 package com.ticket.show.web;
 
 import com.ticket.show.web.docs.ShowVenueLayoutControllerDocs;
-import com.ticket.show.application.show.query.GetVenueLayoutUseCase;
+import com.ticket.show.application.GetVenueLayoutUseCase;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
