@@ -1,8 +1,8 @@
 package com.ticket.bootstrap.migration;
 
-import com.ticket.venue.domain.seat.Seat;
+import com.ticket.venue.domain.Seat;
 import com.ticket.venue.Region;
-import com.ticket.venue.domain.venue.Venue;
+import com.ticket.venue.domain.Venue;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -34,8 +34,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * (booking·member·show 등 다른 module의 migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는
  * schema를 만들고, Venue별 좌석 주소 unique 제약이 실제로 동작하는지 검증한다. Show가 소유한
  * {@code SHOWS.venue_id} scalar 컬럼 매핑과 그 FK 제거는 {@code ShowModuleSlicingSchemaTest}가
- * 검증한다. 옛 catalog V1(SHOW_LIKES member FK 제거)은 찜이 favorite module로 분리되며
- * {@code favorite}의 migration으로 옮겨갔다 — {@code FavoriteModuleMigrationTest}가 검증한다.
+ * 검증한다. 옛 catalog V1(SHOW_LIKES member FK 제거)은 찜이 like module(옛 favorite)로 분리되며
+ * {@code like}의 migration으로 옮겨갔다 — {@code LikeModuleMigrationTest}가 검증한다.
  *
  * <p>{@code BookingModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로
  * {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다. {@code SEATS}/{@code VENUES}는
@@ -180,7 +180,7 @@ class VenueModuleSlicingSchemaTest {
      *
      * <p>SHOWS/SHOW_GRADES/SHOW_SEATS/PERFORMANCES/PERFORMANCE_SEATS/ORDER_SEATS는 venue의
      * migration이 직접 참조하지는 않지만, {@code __root}의 migration(다른 어떤 module을 지정해도
-     * 항상 함께 실행된다)이 참조하므로 최소 baseline으로 필요하다({@code FavoriteModuleMigrationTest}의
+     * 항상 함께 실행된다)이 참조하므로 최소 baseline으로 필요하다({@code LikeModuleMigrationTest}의
      * baseline과 같은 이유).
      */
     private void createLegacyBaselineSchema() throws Exception {

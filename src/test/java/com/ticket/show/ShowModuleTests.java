@@ -1,8 +1,8 @@
 package com.ticket.show;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.favorite.ShowLikeCommand;
-import com.ticket.favorite.ShowLikeQuery;
+import com.ticket.like.LikeCommand;
+import com.ticket.like.LikeQuery;
 import com.ticket.member.MemberLookup;
 import com.ticket.venue.VenueLookup;
 import com.ticket.venue.VenueSeatLookup;
@@ -27,7 +27,7 @@ import java.time.Clock;
  * 통합 테스트와 use case 테스트가 담당한다.
  *
  * <p>show는 회원 존재 확인을 위해 member의 {@link MemberLookup}을 참조하고, 찜의 데이터·불변식을
- * 소유하는 favorite의 {@link ShowLikeQuery}/{@link ShowLikeCommand}를 참조한다(공연 상세의 찜
+ * 소유하는 like(옛 favorite)의 {@link LikeQuery}/{@link LikeCommand}를 참조한다(공연 상세의 찜
  * 개수 조회, 찜 use case의 위임). 물리 공연장·좌석을 소유하는 venue의 {@link VenueLookup}/
  * {@link VenueSeatLookup}도 참조한다(목록·상세의 공연장 표시값 조립, region 검색 조건 해석,
  * 좌석 주소·좌석 배치 조회). 전부 이 STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로 대체한다.
@@ -45,10 +45,10 @@ class ShowModuleTests {
     private MemberLookup memberLookup;
 
     @MockitoBean
-    private ShowLikeQuery showLikeQuery;
+    private LikeQuery likeQuery;
 
     @MockitoBean
-    private ShowLikeCommand showLikeCommand;
+    private LikeCommand likeCommand;
 
     @MockitoBean
     private VenueLookup venueLookup;

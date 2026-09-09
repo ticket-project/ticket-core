@@ -14,8 +14,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * 6개 Bounded Context(BC) 전부에서 {@code <bc>.domain}이 다른 BC를 모르게 한다.
  *
  * <p>{@code com.ticket.show.domain.ShowDomainPurityTest}를 대체한다 — 그 테스트는
- * {@code show.domain -> favorite} 한 방향만 막았고, {@code booking}/{@code member}/
- * {@code payment}/{@code venue}/{@code favorite}의 domain에는 대응 규칙이 없었다. 도메인
+ * {@code show.domain -> like}(옛 favorite) 한 방향만 막았고, {@code booking}/{@code member}/
+ * {@code payment}/{@code venue}/{@code like}의 domain에는 대응 규칙이 없었다. 도메인
  * 계층이 다른 BC를 알면 조합이 domain 안으로 새어 들어와 BC 사이 결합이 생긴다 — 조합은 항상
  * {@code <bc>.application}이 상대 BC의 공개 계약(작은 interface + 불변 record)을 호출해서
  * 한다.
@@ -47,7 +47,7 @@ class DomainPurityTest {
 
     /** 기술 모듈을 제외한 6개 BC다. {@code docs/architecture.md}의 "Bounded Context" 절이 원본이다. */
     private static final Set<String> BOUNDED_CONTEXTS = Set.of(
-            "booking", "show", "venue", "favorite", "member", "payment");
+            "booking", "show", "venue", "like", "member", "payment");
 
     @ArchTest
     static final ArchRule booking_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("booking");
@@ -59,7 +59,7 @@ class DomainPurityTest {
     static final ArchRule venue_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("venue");
 
     @ArchTest
-    static final ArchRule favorite_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("favorite");
+    static final ArchRule like_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("like");
 
     @ArchTest
     static final ArchRule member_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("member");
