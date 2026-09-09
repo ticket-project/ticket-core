@@ -1,6 +1,6 @@
 package com.ticket.booking.infrastructure;
 
-import com.ticket.booking.application.ExpirePendingOrdersUseCase;
+import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;

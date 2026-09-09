@@ -1,5 +1,7 @@
 package com.ticket.booking.application;
 
+import com.ticket.booking.application.usecase.CreateOrderUseCase;
+
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 

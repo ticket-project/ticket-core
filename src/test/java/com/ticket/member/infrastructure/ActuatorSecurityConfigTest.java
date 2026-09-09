@@ -1,5 +1,6 @@
 package com.ticket.member.infrastructure;
 
+import com.ticket.TicketApplication;
 import com.ticket.member.application.AccessTokenReader;
 import com.ticket.member.application.AccessTokenReadResult;
 import com.ticket.member.AuthenticatedMember;
@@ -14,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,7 +26,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가
+ * 없으면 같은 package에서 가장 가까운 {@code @SpringBootConfiguration}을 자동 탐색한다. 이 package에
+ * {@link MemberSocialAccountPersistenceTest.TestApplication}(자기 테스트 전용 JPA 설정)이 있어
+ * 자동 탐색이 그걸 잘못 집어간다 — 그래서 진짜 애플리케이션 진입점을 명시로 고정한다.
+ */
 @WebMvcTest(controllers = ActuatorSecurityConfigTest.TestController.class)
+@ContextConfiguration(classes = TicketApplication.class)
 @Import({SecurityConfig.class, ActuatorSecurityConfigTest.TestController.class})
 @TestPropertySource(properties = {
         "spring.profiles.active=test",

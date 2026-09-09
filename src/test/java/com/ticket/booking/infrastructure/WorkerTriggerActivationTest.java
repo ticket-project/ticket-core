@@ -1,6 +1,6 @@
 package com.ticket.booking.infrastructure;
 
-import com.ticket.booking.application.ExpirePendingOrdersUseCase;
+import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;

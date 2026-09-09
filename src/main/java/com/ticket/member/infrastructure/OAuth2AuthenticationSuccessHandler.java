@@ -1,6 +1,6 @@
 package com.ticket.member.infrastructure;
 
-import com.ticket.member.application.IssueOAuth2AuthCodeUseCase;
+import com.ticket.member.application.usecase.IssueOAuth2AuthCodeUseCase;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

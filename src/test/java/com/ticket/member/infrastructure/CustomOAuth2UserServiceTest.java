@@ -2,7 +2,7 @@ package com.ticket.member.infrastructure;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
-import com.ticket.member.application.ProvisionOAuth2MemberUseCase;
+import com.ticket.member.application.usecase.ProvisionOAuth2MemberUseCase;
 import com.ticket.member.application.ProvisionedMember;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

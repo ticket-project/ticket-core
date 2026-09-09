@@ -1,5 +1,7 @@
 package com.ticket.booking.application;
 
+import com.ticket.booking.application.port.SeatMapQueryPort;
+
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStatus;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,7 @@ import static org.mockito.Mockito.when;
 class SeatStateSnapshotReaderTest {
 
     @Mock
-    private SeatMapReadRepository seatMapReadRepository;
+    private SeatMapQueryPort seatMapQueryPort;
 
     @InjectMocks
     private SeatStateSnapshotReader reader;
@@ -26,7 +28,7 @@ class SeatStateSnapshotReaderTest {
     @Test
     void DB_좌석_스냅샷만_트랜잭션_경계_안에서_읽는다() {
         List<SeatStateSnapshotRow> states = List.of(new SeatStateSnapshotRow(1L, 1L, SeatStatus.AVAILABLE));
-        when(seatMapReadRepository.findSeatStatuses(10L)).thenReturn(states);
+        when(seatMapQueryPort.findSeatStatuses(10L)).thenReturn(states);
 
         assertThat(reader.read(10L)).isSameAs(states);
     }

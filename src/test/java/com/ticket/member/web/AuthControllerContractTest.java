@@ -2,12 +2,12 @@ package com.ticket.member.web;
 
 import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
-import com.ticket.member.application.ExchangeOAuth2TokenUseCase;
-import com.ticket.member.application.LoginUseCase;
-import com.ticket.member.application.LogoutUseCase;
-import com.ticket.member.application.RefreshAuthTokenUseCase;
-import com.ticket.member.application.RegisterMemberUseCase;
-import com.ticket.member.application.GetSocialLoginUrlsUseCase;
+import com.ticket.member.application.usecase.ExchangeOAuth2TokenUseCase;
+import com.ticket.member.application.usecase.LoginUseCase;
+import com.ticket.member.application.usecase.LogoutUseCase;
+import com.ticket.member.application.usecase.RefreshAuthTokenUseCase;
+import com.ticket.member.application.usecase.RegisterMemberUseCase;
+import com.ticket.member.application.usecase.GetSocialLoginUrlsUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;

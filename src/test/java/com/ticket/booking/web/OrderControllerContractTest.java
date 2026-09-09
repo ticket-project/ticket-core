@@ -2,11 +2,11 @@ package com.ticket.booking.web;
 
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
-import com.ticket.booking.application.CancelOrderUseCase;
-import com.ticket.booking.application.CreateOrderUseCase;
+import com.ticket.booking.application.usecase.CancelOrderUseCase;
+import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.domain.OrderState;
-import com.ticket.booking.application.GetOrderDetailUseCase;
-import com.ticket.booking.application.GetOrderStatusUseCase;
+import com.ticket.booking.application.usecase.GetOrderDetailUseCase;
+import com.ticket.booking.application.usecase.GetOrderStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

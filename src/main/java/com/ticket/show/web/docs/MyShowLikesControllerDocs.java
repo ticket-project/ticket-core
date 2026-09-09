@@ -1,6 +1,6 @@
 package com.ticket.show.web.docs;
 
-import com.ticket.show.application.GetMyShowLikesUseCase;
+import com.ticket.show.application.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.application.ShowLikeSummaryView;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.web.ApiResponse;

@@ -1,9 +1,11 @@
 package com.ticket.venue.application;
 
+import com.ticket.venue.application.port.VenueSummaryQueryPort;
+
 import com.ticket.venue.Region;
 import com.ticket.venue.VenueLookup;
 import com.ticket.venue.VenueSummary;
-import com.ticket.venue.application.VenueSummaryReadRepository;
+import com.ticket.venue.application.port.VenueSummaryQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,21 +23,21 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class VenueLookupService implements VenueLookup {
 
-    private final VenueSummaryReadRepository venueSummaryReadRepository;
+    private final VenueSummaryQueryPort venueSummaryQueryPort;
 
     @Override
     public Optional<VenueSummary> findSummary(final long venueId) {
-        return venueSummaryReadRepository.findSummary(venueId);
+        return venueSummaryQueryPort.findSummary(venueId);
     }
 
     @Override
     public Map<Long, VenueSummary> getSummaries(final Set<Long> venueIds) {
-        return venueSummaryReadRepository.findSummaries(venueIds);
+        return venueSummaryQueryPort.findSummaries(venueIds);
     }
 
     @Override
     public Set<Long> findIdsByRegion(final Region region) {
         Objects.requireNonNull(region, "region must not be null");
-        return venueSummaryReadRepository.findIdsByRegion(region);
+        return venueSummaryQueryPort.findIdsByRegion(region);
     }
 }

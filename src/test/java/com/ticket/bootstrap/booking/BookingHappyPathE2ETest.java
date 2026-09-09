@@ -1,5 +1,7 @@
 package com.ticket.bootstrap.booking;
 
+import com.ticket.booking.application.usecase.GetSeatStatusUseCase;
+
 import tools.jackson.databind.JsonNode;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.ticket.show.web;
 
-import com.ticket.show.application.GetMyShowLikesUseCase;
+import com.ticket.show.application.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.web.support.cursor.ShowLikeCursorCodec;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;

@@ -1,7 +1,7 @@
 package com.ticket.member.web.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.ticket.member.application.RegisterMemberUseCase;
+import com.ticket.member.application.usecase.RegisterMemberUseCase;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
