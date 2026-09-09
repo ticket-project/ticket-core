@@ -1,7 +1,7 @@
 package com.ticket.member.web.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticket.member.application.auth.command.LoginUseCase;
+import com.ticket.member.application.LoginUseCase;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

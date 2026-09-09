@@ -5,7 +5,7 @@
  * <p>{@code SeedDataLoader}는 {@code seed/kopis-curated.sql}을 파싱해 여러 module의 테이블(카테고리,
  * 공연, 회차 등)에 raw SQL로 적재하고, 부하 테스트 회원만 member의
  * {@code member.application.member.command} package가 연 {@code @NamedInterface("seed")}
- * 를 통해 {@link com.ticket.member.application.member.command.SeedLoadTestMembersUseCase}
+ * 를 통해 {@link com.ticket.member.application.SeedLoadTestMembersUseCase}
  * 를 호출해 만든다(member의 해당 package-info 참고). {@code LoadTestFixtureSeeder}는 로컬 부하
  * 테스트 전용 고정 ID 대역 데이터를 마찬가지로 raw SQL로 적재한다.
  *
@@ -14,3 +14,4 @@
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Seed", allowedDependencies = {"member :: seed"})
 package com.ticket.seed;
+

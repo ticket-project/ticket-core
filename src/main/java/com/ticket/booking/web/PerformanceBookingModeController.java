@@ -1,6 +1,6 @@
 package com.ticket.booking.web;
 
-import com.ticket.booking.application.performancepolicy.query.GetPerformanceBookingModeUseCase;
+import com.ticket.booking.application.GetPerformanceBookingModeUseCase;
 import com.ticket.booking.web.docs.PerformanceBookingModeControllerDocs;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;

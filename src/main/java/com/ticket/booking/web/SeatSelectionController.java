@@ -2,9 +2,9 @@ package com.ticket.booking.web;
 
 import com.ticket.booking.web.docs.SeatSelectionControllerDocs;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.booking.application.performanceseat.command.DeselectAllSeatsUseCase;
-import com.ticket.booking.application.performanceseat.command.DeselectSeatUseCase;
-import com.ticket.booking.application.performanceseat.command.SelectSeatUseCase;
+import com.ticket.booking.application.DeselectAllSeatsUseCase;
+import com.ticket.booking.application.DeselectSeatUseCase;
+import com.ticket.booking.application.SelectSeatUseCase;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

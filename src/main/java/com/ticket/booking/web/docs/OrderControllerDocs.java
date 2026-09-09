@@ -2,9 +2,9 @@ package com.ticket.booking.web.docs;
 
 import com.ticket.booking.web.request.CreateOrderRequest;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.booking.application.order.command.CreateOrderUseCase;
-import com.ticket.booking.application.order.query.GetOrderDetailUseCase;
-import com.ticket.booking.application.order.query.GetOrderStatusUseCase;
+import com.ticket.booking.application.CreateOrderUseCase;
+import com.ticket.booking.application.GetOrderDetailUseCase;
+import com.ticket.booking.application.GetOrderStatusUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

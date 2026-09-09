@@ -22,3 +22,4 @@
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Config", allowedDependencies = {"member"})
 package com.ticket.config;
+

@@ -1,8 +1,8 @@
 package com.ticket.seed;
 
-import com.ticket.member.domain.member.model.Member;
-import com.ticket.member.domain.member.model.Role;
-import com.ticket.member.domain.member.repository.MemberRepository;
+import com.ticket.member.domain.Member;
+import com.ticket.member.domain.Role;
+import com.ticket.member.domain.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -331,8 +331,6 @@ class SeedDataLoaderTest {
 
         assertThat(split.get(2)).isEqualTo(unrelated);
     }
-
-
 
     @Test
     void local_show_images_have_original_and_card_assets() throws Exception {

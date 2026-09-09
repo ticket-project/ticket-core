@@ -1,8 +1,8 @@
 package com.ticket.member.web;
 
-import com.ticket.member.infrastructure.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.member.application.member.query.GetCurrentMemberUseCase;
-import com.ticket.member.application.member.command.WithdrawCurrentMemberUseCase;
+import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.member.application.GetCurrentMemberUseCase;
+import com.ticket.member.application.WithdrawCurrentMemberUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;

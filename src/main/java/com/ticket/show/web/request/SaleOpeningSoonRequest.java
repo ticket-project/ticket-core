@@ -1,7 +1,7 @@
 package com.ticket.show.web.request;
 
 import com.ticket.show.web.support.cursor.ShowCursorCodec;
-import com.ticket.show.application.show.query.model.SaleOpeningSoonSearchParam;
+import com.ticket.show.application.SaleOpeningSoonSearchParam;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

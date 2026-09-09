@@ -1,9 +1,9 @@
 package com.ticket.show.web.docs;
 
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.show.application.showlike.command.AddShowLikeUseCase;
-import com.ticket.show.application.showlike.command.RemoveShowLikeUseCase;
-import com.ticket.show.application.showlike.query.GetShowLikeStatusUseCase;
+import com.ticket.show.application.AddShowLikeUseCase;
+import com.ticket.show.application.RemoveShowLikeUseCase;
+import com.ticket.show.application.GetShowLikeStatusUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

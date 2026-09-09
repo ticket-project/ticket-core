@@ -32,3 +32,4 @@
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Shared", allowedDependencies = {})
 package com.ticket.shared;
+

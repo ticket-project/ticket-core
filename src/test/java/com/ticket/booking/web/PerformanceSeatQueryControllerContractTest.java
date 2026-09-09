@@ -5,10 +5,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.member.infrastructure.security.AuthenticatedMemberArgumentResolver;
-import com.ticket.booking.application.performanceseat.query.GetPerformanceSeatMapUseCase;
-import com.ticket.booking.application.performanceseat.query.GetSeatAvailabilityUseCase;
-import com.ticket.booking.application.performanceseat.query.GetSeatStatusUseCase;
+import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.booking.application.GetPerformanceSeatMapUseCase;
+import com.ticket.booking.application.GetSeatAvailabilityUseCase;
+import com.ticket.booking.application.GetSeatStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import java.util.List;

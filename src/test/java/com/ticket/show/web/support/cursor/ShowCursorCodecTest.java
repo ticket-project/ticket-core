@@ -1,7 +1,7 @@
 package com.ticket.show.web.support.cursor;
 
-import com.ticket.show.application.show.query.model.ShowCursor;
-import com.ticket.show.application.show.query.ShowSort;
+import com.ticket.show.application.ShowCursor;
+import com.ticket.show.application.ShowSort;
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

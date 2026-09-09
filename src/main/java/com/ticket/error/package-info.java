@@ -11,3 +11,4 @@
  */
 @org.springframework.modulith.ApplicationModule(displayName = "Error", allowedDependencies = {})
 package com.ticket.error;
+

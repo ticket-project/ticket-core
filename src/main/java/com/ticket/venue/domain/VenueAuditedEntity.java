@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * venue module이 소유하는 entity의 감사(auditing) 공통 필드다.
  *
  * <p>module 간 JPA 상속을 피하려고 다른 module의 {@code XxxAuditedEntity}(예:
- * {@code ShowAuditedEntity}, {@code FavoriteAuditedEntity})를 그대로 쓰지 않고 module-local로
+ * {@code ShowAuditedEntity}, {@code LikeAuditedEntity})를 그대로 쓰지 않고 module-local로
  * 복제했다. 필드와 동작은 동일하다.
  */
 @MappedSuperclass

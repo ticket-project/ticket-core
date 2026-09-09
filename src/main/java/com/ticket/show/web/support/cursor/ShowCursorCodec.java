@@ -1,6 +1,6 @@
 package com.ticket.show.web.support.cursor;
 
-import com.ticket.show.application.show.query.model.ShowCursor;
+import com.ticket.show.application.ShowCursor;
 import com.ticket.error.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

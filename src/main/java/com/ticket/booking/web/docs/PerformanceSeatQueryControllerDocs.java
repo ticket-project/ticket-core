@@ -1,9 +1,9 @@
 package com.ticket.booking.web.docs;
 
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.booking.application.performanceseat.query.GetPerformanceSeatMapUseCase;
-import com.ticket.booking.application.performanceseat.query.GetSeatAvailabilityUseCase;
-import com.ticket.booking.application.performanceseat.query.GetSeatStatusUseCase;
+import com.ticket.booking.application.GetPerformanceSeatMapUseCase;
+import com.ticket.booking.application.GetSeatAvailabilityUseCase;
+import com.ticket.booking.application.GetSeatStatusUseCase;
 import com.ticket.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
