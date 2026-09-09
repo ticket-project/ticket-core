@@ -4,13 +4,16 @@ import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.show.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
 import com.ticket.show.domain.SaleType;
-import com.ticket.show.application.CountSearchShowsUseCase;
-import com.ticket.show.application.GetLatestShowsUseCase;
-import com.ticket.show.application.GetSaleStartApproachingShowsPageUseCase;
-import com.ticket.show.application.GetSaleStartApproachingShowsUseCase;
-import com.ticket.show.application.GetShowDetailUseCase;
-import com.ticket.show.application.GetShowsUseCase;
-import com.ticket.show.application.SearchShowsUseCase;
+import com.ticket.show.application.usecase.CountSearchShowsUseCase;
+import com.ticket.show.application.usecase.GetLatestShowsUseCase;
+import com.ticket.show.application.usecase.GetSaleStartApproachingShowsPageUseCase;
+import com.ticket.show.application.usecase.GetSaleStartApproachingShowsUseCase;
+import com.ticket.show.application.usecase.GetShowDetailUseCase;
+import com.ticket.show.application.usecase.GetShowsUseCase;
+import com.ticket.show.application.PerformanceDateInfo;
+import com.ticket.show.application.PerformanceInfo;
+import com.ticket.show.application.PriceSummary;
+import com.ticket.show.application.usecase.SearchShowsUseCase;
 import com.ticket.show.application.ShowListItemView;
 import com.ticket.show.application.ShowSearchItemView;
 import org.junit.jupiter.api.Test;
@@ -143,7 +146,7 @@ class ShowControllerContractTest {
         );
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        GetShowDetailUseCase.PerformanceInfo performance = new GetShowDetailUseCase.PerformanceInfo(
+        PerformanceInfo performance = new PerformanceInfo(
                 10L,
                 1L,
                 LocalDateTime.of(2026, 3, 20, 19, 0),
@@ -167,8 +170,8 @@ class ShowControllerContractTest {
                 null,
                 null,
                 List.of("콘서트"),
-                new GetShowDetailUseCase.PriceSummary(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
-                List.of(new GetShowDetailUseCase.PerformanceDateInfo(
+                new PriceSummary(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
+                List.of(new PerformanceDateInfo(
                         LocalDate.of(2026, 3, 20),
                         List.of(performance)
                 ))

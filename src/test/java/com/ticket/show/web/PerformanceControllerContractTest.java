@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.show.application.GetPerformanceScheduleListUseCase;
-import com.ticket.show.application.GetPerformanceSummaryUseCase;
+import com.ticket.show.application.usecase.GetPerformanceScheduleListUseCase;
+import com.ticket.show.application.usecase.GetPerformanceSummaryUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

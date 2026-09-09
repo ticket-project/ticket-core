@@ -1,12 +1,14 @@
 package com.ticket.show.application;
 
+import com.ticket.show.application.port.ShowListQueryPort;
+
 import com.ticket.show.exception.UnsupportedShowSortException;
 
 /**
  * Show 목록/검색 정렬 기준의 단일 typed contract다.
  *
  * <p>HTTP sort 문자열은 API/app 경계에서 {@link #from(String)}으로 한 번만 파싱한다. 이후
- * {@code ShowListReadRepository}와 infra Querydsl 구현은 이 타입만 주고받고, 문자열로 다시
+ * {@code ShowListQueryPort}와 infra Querydsl 구현은 이 타입만 주고받고, 문자열로 다시
  * 되돌아가지 않는다.
  */
 public enum ShowSort {

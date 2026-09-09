@@ -3,7 +3,7 @@ package com.ticket.booking.web;
 import com.ticket.booking.web.docs.HoldControllerDocs;
 import com.ticket.booking.web.request.CreateHoldRequest;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.booking.application.CreateOrderUseCase;
+import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

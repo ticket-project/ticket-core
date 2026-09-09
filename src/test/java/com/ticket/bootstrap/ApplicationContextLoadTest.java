@@ -2,8 +2,8 @@ package com.ticket.bootstrap;
 
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.CreateOrderUseCase;
-import com.ticket.booking.application.ExpirePendingOrdersUseCase;
+import com.ticket.booking.application.usecase.CreateOrderUseCase;
+import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.infrastructure.OrderExpirationTrigger;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

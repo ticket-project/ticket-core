@@ -1,5 +1,7 @@
 package com.ticket.booking.application;
 
+import com.ticket.booking.application.usecase.CancelOrderUseCase;
+
 import com.ticket.booking.domain.Order;
 import com.ticket.booking.domain.OrderState;
 import com.ticket.booking.domain.OrderRepository;
@@ -23,14 +25,14 @@ import java.time.LocalDateTime;
  */
 @Component
 @RequiredArgsConstructor
-class CancelOrderTransactionService {
+public class CancelOrderTransactionService {
 
     private final OrderRepository orderRepository;
     private final OrderTerminationService orderTerminationService;
     private final Clock clock;
 
     @Transactional
-    void cancel(final String orderKey, final Long memberId) {
+    public void cancel(final String orderKey, final Long memberId) {
         final Order order = getPendingOwnedOrder(orderKey, memberId);
         orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }

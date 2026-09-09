@@ -1,6 +1,8 @@
 package com.ticket.booking.application;
 
-import com.ticket.booking.application.SeatAvailabilityReadRepository.PerformanceSeatStateRow;
+import com.ticket.booking.application.port.SeatAvailabilityQueryPort;
+
+import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
 import com.ticket.booking.domain.PerformanceSeatState;
 import org.springframework.stereotype.Component;
 

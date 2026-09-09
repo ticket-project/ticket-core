@@ -7,8 +7,8 @@ import com.ticket.show.infrastructure.QuerydslShowPredicates;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
-import com.ticket.venue.infrastructure.QuerydslVenueSeatReadRepository;
-import com.ticket.venue.infrastructure.QuerydslVenueSummaryReadRepository;
+import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryPort;
+import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -27,9 +27,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         QuerydslShowSortResolver.class,
         QuerydslShowCursorConditionBuilder.class,
         VenueLookupService.class,
-        QuerydslVenueSummaryReadRepository.class,
+        QuerydslVenueSummaryQueryPort.class,
         VenueSeatLookupService.class,
-        QuerydslVenueSeatReadRepository.class,
+        QuerydslVenueSeatQueryPort.class,
         InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {

@@ -1,9 +1,9 @@
 package com.ticket.booking.web;
 
 import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
-import com.ticket.booking.application.DeselectAllSeatsUseCase;
-import com.ticket.booking.application.DeselectSeatUseCase;
-import com.ticket.booking.application.SelectSeatUseCase;
+import com.ticket.booking.application.usecase.DeselectAllSeatsUseCase;
+import com.ticket.booking.application.usecase.DeselectSeatUseCase;
+import com.ticket.booking.application.usecase.SelectSeatUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;

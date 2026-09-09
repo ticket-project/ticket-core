@@ -1,11 +1,15 @@
 package com.ticket.show.application;
 
+import com.ticket.show.application.port.PerformanceSaleQueryPort;
+
 import com.ticket.show.PerformanceSaleSnapshot;
-import com.ticket.show.application.PerformanceSaleReadRepository;
-import com.ticket.show.application.PerformanceSaleReadRepository.PerformanceGradeRow;
-import com.ticket.show.application.PerformanceSaleReadRepository.SeatAddressRow;
+import com.ticket.show.application.port.PerformanceSaleQueryPort;
+import com.ticket.show.application.port.PerformanceSaleQueryPort.PerformanceGradeRow;
 import com.ticket.show.domain.PerformanceSaleContext;
 import com.ticket.error.NotFoundException;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSeatAddress;
+import com.ticket.venue.VenueSeatLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,14 +30,20 @@ import static org.mockito.Mockito.when;
 class PerformanceSaleCatalogServiceTest {
 
     @Mock
-    private PerformanceSaleReadRepository performanceSaleReadRepository;
+    private PerformanceSaleQueryPort performanceSaleQueryPort;
+
+    @Mock
+    private VenueLookup venueLookup;
+
+    @Mock
+    private VenueSeatLookup venueSeatLookup;
 
     @InjectMocks
     private PerformanceSaleCatalogService service;
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
-        when(performanceSaleReadRepository.findContext(1L)).thenReturn(Optional.empty());
+        when(performanceSaleQueryPort.findContext(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L)))
                 .isInstanceOf(NotFoundException.class);
@@ -41,9 +51,9 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue가_없는_show면_seatInfo가_빈_맵이다() {
-        when(performanceSaleReadRepository.findContext(1L)).thenReturn(Optional.of(
-                new PerformanceSaleContext(1L, 2L, "show", null, null, null)));
-        when(performanceSaleReadRepository.findPerformanceGrades(1L)).thenReturn(List.of());
+        when(performanceSaleQueryPort.findContext(1L)).thenReturn(Optional.of(
+                new PerformanceSaleContext(1L, 2L, "show", null, null)));
+        when(performanceSaleQueryPort.findPerformanceGrades(1L)).thenReturn(List.of());
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
 
@@ -52,11 +62,11 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
-        when(performanceSaleReadRepository.findContext(1L)).thenReturn(Optional.of(
-                new PerformanceSaleContext(1L, 2L, "show", 3L, "venue", null)));
-        when(performanceSaleReadRepository.findSeatAddresses(3L, Set.of(10L)))
-                .thenReturn(List.of(new SeatAddressRow(10L, 1, "가", "A", "1")));
-        when(performanceSaleReadRepository.findPerformanceGrades(1L))
+        when(performanceSaleQueryPort.findContext(1L)).thenReturn(Optional.of(
+                new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
+        when(venueSeatLookup.findSeatAddresses(3L, Set.of(10L)))
+                .thenReturn(List.of(new VenueSeatAddress(10L, 1, "가", "A", "1")));
+        when(performanceSaleQueryPort.findPerformanceGrades(1L))
                 .thenReturn(List.of(new PerformanceGradeRow(100L, "VIP", "VIP석", 1, new BigDecimal("170000"))));
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));

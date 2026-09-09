@@ -1,11 +1,16 @@
 package com.ticket.show.application;
 
+import com.ticket.show.application.port.PerformanceVenueLayoutQueryPort;
+
 import com.ticket.show.PerformanceVenueLayout;
-import com.ticket.show.application.PerformanceVenueLayoutReadRepository;
-import com.ticket.show.application.PerformanceVenueLayoutReadRepository.PerformanceGradeLayoutRow;
-import com.ticket.show.application.PerformanceVenueLayoutReadRepository.SeatLayoutRow;
+import com.ticket.show.application.port.PerformanceVenueLayoutQueryPort.PerformanceGradeLayoutRow;
 import com.ticket.show.domain.PerformanceVenueLayoutContext;
 import com.ticket.error.NotFoundException;
+import com.ticket.venue.Region;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSeatLayout;
+import com.ticket.venue.VenueSeatLookup;
+import com.ticket.venue.VenueSummary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,14 +29,20 @@ import static org.mockito.Mockito.when;
 class PerformanceVenueLayoutCatalogServiceTest {
 
     @Mock
-    private PerformanceVenueLayoutReadRepository performanceVenueLayoutReadRepository;
+    private PerformanceVenueLayoutQueryPort performanceVenueLayoutQueryPort;
+
+    @Mock
+    private VenueLookup venueLookup;
+
+    @Mock
+    private VenueSeatLookup venueSeatLookup;
 
     @InjectMocks
     private PerformanceVenueLayoutCatalogService service;
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
-        when(performanceVenueLayoutReadRepository.findVenueLayoutContext(1L)).thenReturn(Optional.empty());
+        when(performanceVenueLayoutQueryPort.findVenueLayoutContext(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getVenueLayout(1L))
                 .isInstanceOf(NotFoundException.class);
@@ -39,9 +50,9 @@ class PerformanceVenueLayoutCatalogServiceTest {
 
     @Test
     void venue가_없는_show면_seatLayout이_빈_맵이다() {
-        when(performanceVenueLayoutReadRepository.findVenueLayoutContext(1L)).thenReturn(Optional.of(
-                new PerformanceVenueLayoutContext(1L, null, null, null, null, null)));
-        when(performanceVenueLayoutReadRepository.findGradeLayouts(1L)).thenReturn(List.of());
+        when(performanceVenueLayoutQueryPort.findVenueLayoutContext(1L)).thenReturn(Optional.of(
+                new PerformanceVenueLayoutContext(1L, null)));
+        when(performanceVenueLayoutQueryPort.findGradeLayouts(1L)).thenReturn(List.of());
 
         final PerformanceVenueLayout layout = service.getVenueLayout(1L);
 
@@ -50,11 +61,15 @@ class PerformanceVenueLayoutCatalogServiceTest {
 
     @Test
     void venue의_좌석_좌표와_회차_grade를_조합한다() {
-        when(performanceVenueLayoutReadRepository.findVenueLayoutContext(1L)).thenReturn(Optional.of(
-                new PerformanceVenueLayoutContext(1L, 3L, "venue", 500, 356, 4.8)));
-        when(performanceVenueLayoutReadRepository.findAllSeatLayouts(3L))
-                .thenReturn(List.of(new SeatLayoutRow(10L, 1, "가", "A", "1", 129.0, 101.0)));
-        when(performanceVenueLayoutReadRepository.findGradeLayouts(1L))
+        when(performanceVenueLayoutQueryPort.findVenueLayoutContext(1L)).thenReturn(Optional.of(
+                new PerformanceVenueLayoutContext(1L, 3L)));
+        when(venueLookup.findSummary(3L)).thenReturn(Optional.of(new VenueSummary(
+                3L, "venue", "주소", Region.SEOUL, null, null, null, null,
+                new VenueSummary.SeatMapLayout(500, 356, 4.8)
+        )));
+        when(venueSeatLookup.findAllSeatLayouts(3L))
+                .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 129.0, 101.0)));
+        when(performanceVenueLayoutQueryPort.findGradeLayouts(1L))
                 .thenReturn(List.of(new PerformanceGradeLayoutRow(100L, "VIP", "VIP석", 1)));
 
         final PerformanceVenueLayout layout = service.getVenueLayout(1L);

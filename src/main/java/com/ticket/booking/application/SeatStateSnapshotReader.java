@@ -1,5 +1,7 @@
 package com.ticket.booking.application;
 
+import com.ticket.booking.application.port.SeatMapQueryPort;
+
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,10 +13,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SeatStateSnapshotReader {
 
-    private final SeatMapReadRepository seatMapReadRepository;
+    private final SeatMapQueryPort seatMapQueryPort;
 
     @Transactional(readOnly = true)
     public List<SeatStateSnapshotRow> read(final Long performanceId) {
-        return seatMapReadRepository.findSeatStatuses(performanceId);
+        return seatMapQueryPort.findSeatStatuses(performanceId);
     }
 }

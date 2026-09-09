@@ -6,7 +6,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.GrantedAuthority;
 import java.util.Map;
 import java.util.List;
-import com.ticket.member.application.IssueOAuth2AuthCodeUseCase;
+import com.ticket.member.application.usecase.IssueOAuth2AuthCodeUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

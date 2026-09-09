@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * 경계값·null 케이스가 {@link com.ticket.show.domain.DisplaySaleWindowTest}와 같은 결론을
- * 내는지는 실제 DB 조회 통합 테스트(QuerydslShowListReadRepositoryTest 등)가 고정한다. 여기서는
+ * 내는지는 실제 DB 조회 통합 테스트(QuerydslShowListQueryPortTest 등)가 고정한다. 여기서는
  * 각 상태가 만들어내는 조건식의 형태만 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")

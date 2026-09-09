@@ -1,6 +1,6 @@
 package com.ticket.member.infrastructure;
 
-import com.ticket.member.application.ProvisionOAuth2MemberUseCase;
+import com.ticket.member.application.usecase.ProvisionOAuth2MemberUseCase;
 import com.ticket.member.application.ProvisionedMember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
