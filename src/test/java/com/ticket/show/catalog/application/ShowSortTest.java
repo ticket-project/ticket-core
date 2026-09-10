@@ -18,8 +18,21 @@ class ShowSortTest {
     }
 
     @Test
-    void 지원하지_않는_sort면_예외를_던진다() {
+    void 공백이면_POPULAR를_사용한다() {
+        assertThat(ShowSort.from("  ")).isEqualTo(ShowSort.POPULAR);
+    }
+
+    @Test
+    void 지원하지_않는_sort면_원문을_담은_예외를_던진다() {
         assertThatThrownBy(() -> ShowSort.from("unknown"))
-                .isInstanceOf(UnsupportedShowSortException.class);
+                .isInstanceOf(UnsupportedShowSortException.class)
+                .hasFieldOrPropertyWithValue("sortValue", "unknown");
+    }
+
+    @Test
+    void 대소문자를_정규화하지_않고_원문_그대로_담는다() {
+        assertThatThrownBy(() -> ShowSort.from("UNKNOWN_SORT"))
+                .isInstanceOf(UnsupportedShowSortException.class)
+                .hasFieldOrPropertyWithValue("sortValue", "UNKNOWN_SORT");
     }
 }
