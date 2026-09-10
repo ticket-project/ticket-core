@@ -13,7 +13,11 @@ public class HoldBusyException extends BookingException {
         this(null);
     }
 
-    public HoldBusyException(final Object data) {
-        super(BookingErrorCode.E6003, MESSAGE, data);
+    /**
+     * @param detail 어떤 락 경합인지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로
+     *               나가고 고정 {@code MESSAGE}를 덮지 않는다 — 문구가 같아 보여도 역할이 다르다.
+     */
+    public HoldBusyException(final String detail) {
+        super(BookingErrorCode.E6003, MESSAGE, detail);
     }
 }

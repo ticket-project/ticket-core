@@ -14,7 +14,11 @@ public class NotFoundException extends TicketException {
         this(null);
     }
 
-    public NotFoundException(final Object data) {
-        super(CommonErrorCode.E404, MESSAGE, data);
+    /**
+     * @param detail 무엇을 찾지 못했는지 좁히는 <b>공개</b> 상세 문구다. 그대로
+     *               {@code error.data}로 나가고 고정 {@code message}를 덮지 않는다.
+     */
+    public NotFoundException(final String detail) {
+        super(CommonErrorCode.E404, MESSAGE, detail);
     }
 }
