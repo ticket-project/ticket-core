@@ -2,12 +2,12 @@ package com.ticket.booking.application.usecase;
 
 import com.ticket.booking.application.ValidatedOrderRequest;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.RecordingLockManager;
+import com.ticket.booking.support.application.LockKey;
+import com.ticket.booking.support.application.RecordingLockManager;
 import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.CreateOrderValidator;
 import com.ticket.booking.application.CreatePendingOrderTransactionService;
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.domain.PendingOrderCreationResult;
 import com.ticket.booking.domain.HoldAllocator;
 import com.ticket.booking.domain.HoldAllocation;

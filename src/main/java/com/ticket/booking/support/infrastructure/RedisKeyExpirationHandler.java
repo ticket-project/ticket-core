@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.support.infrastructure;
 
 public interface RedisKeyExpirationHandler {
 

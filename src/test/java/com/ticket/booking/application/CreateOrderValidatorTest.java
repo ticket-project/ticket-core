@@ -6,7 +6,7 @@ import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.ExceedHoldLimitException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.domain.BookingEntryPolicy;
 import com.ticket.booking.domain.HoldPolicy;
 import com.ticket.booking.domain.OrderAcceptanceWindow;

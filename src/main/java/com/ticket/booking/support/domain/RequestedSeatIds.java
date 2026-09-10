@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.support.domain;
 
 import com.ticket.error.InvalidRequestException;
 import java.util.HashSet;

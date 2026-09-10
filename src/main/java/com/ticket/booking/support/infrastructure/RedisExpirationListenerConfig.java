@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.support.infrastructure;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

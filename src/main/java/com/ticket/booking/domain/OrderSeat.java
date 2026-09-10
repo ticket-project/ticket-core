@@ -1,6 +1,6 @@
 package com.ticket.booking.domain;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.support.domain.BookingAuditedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

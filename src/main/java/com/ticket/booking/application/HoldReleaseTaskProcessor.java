@@ -7,9 +7,9 @@ import com.ticket.booking.domain.PerformanceSeatRepository;
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.SeatStatusEventPublisher;
 import com.ticket.booking.application.HoldReleaseProgressRecorder;
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.support.application.LockKey;
+import com.ticket.booking.support.application.LockManager;
+import com.ticket.booking.support.application.LockOptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

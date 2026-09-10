@@ -1,7 +1,7 @@
 package com.ticket.bootstrap;
 
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
-import com.ticket.booking.application.LockManager;
+import com.ticket.booking.support.application.LockManager;
 import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.infrastructure.OrderExpirationTrigger;

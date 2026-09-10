@@ -137,7 +137,7 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 실제 인프라나 전체 컨텍스트가 필요한 검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를
 본다.
 
-- `com.ticket.booking.infrastructure.CoreRedisIntegrationTest`: Redis key·TTL·expiration
+- `com.ticket.booking.support.infrastructure.CoreRedisIntegrationTest`: Redis key·TTL·expiration
   listener·분산락(Testcontainers)
 - `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
