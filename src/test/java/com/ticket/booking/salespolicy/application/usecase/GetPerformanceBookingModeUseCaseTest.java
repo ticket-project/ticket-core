@@ -1,12 +1,12 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.salespolicy.application.usecase;
 
-import com.ticket.booking.domain.BookingEntryPolicy;
-import com.ticket.booking.domain.HoldPolicy;
-import com.ticket.booking.domain.OrderAcceptanceStatus;
-import com.ticket.booking.domain.OrderAcceptanceWindow;
-import com.ticket.booking.domain.PerformanceSalesPolicy;
-import com.ticket.booking.domain.QueueMode;
-import com.ticket.booking.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
+import com.ticket.booking.salespolicy.domain.HoldPolicy;
+import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
+import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.QueueMode;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.error.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

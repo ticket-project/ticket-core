@@ -4,8 +4,8 @@ import com.ticket.booking.application.SeatStateSnapshotReader;
 
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.domain.HoldManager;
-import com.ticket.booking.domain.PerformanceSalesPolicy;
-import com.ticket.booking.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.SeatSelectionService;
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStateView;

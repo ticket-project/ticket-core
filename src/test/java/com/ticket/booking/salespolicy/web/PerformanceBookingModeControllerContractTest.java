@@ -1,12 +1,12 @@
-package com.ticket.booking.web;
+package com.ticket.booking.salespolicy.web;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.booking.application.usecase.GetPerformanceBookingModeUseCase;
-import com.ticket.booking.domain.OrderAcceptanceStatus;
+import com.ticket.booking.salespolicy.application.usecase.GetPerformanceBookingModeUseCase;
+import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
 import com.ticket.error.NotFoundException;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import java.time.LocalDateTime;

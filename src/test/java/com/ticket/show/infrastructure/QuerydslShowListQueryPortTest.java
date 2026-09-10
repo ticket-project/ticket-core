@@ -268,7 +268,7 @@ class QuerydslShowListQueryPortTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.venue.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure"})
+    @EntityScan(basePackages = {"com.ticket.show", "com.ticket.venue", "com.ticket.member", "com.ticket.booking"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {
     }

@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.salespolicy.domain;
 
 import com.ticket.booking.exception.ExceedHoldLimitException;
 import com.ticket.booking.exception.NotYetReserveTimeException;

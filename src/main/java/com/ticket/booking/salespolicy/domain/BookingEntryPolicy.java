@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.salespolicy.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

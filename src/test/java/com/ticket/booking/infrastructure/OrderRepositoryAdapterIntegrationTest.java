@@ -242,7 +242,7 @@ class OrderRepositoryAdapterIntegrationTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show.domain", "com.ticket.member.domain", "com.ticket.booking.domain", "com.ticket.booking.infrastructure"})
+    @EntityScan(basePackages = {"com.ticket.show", "com.ticket.member", "com.ticket.booking"})
     @EnableJpaRepositories(basePackageClasses = SpringDataOrderJpaRepository.class)
     @EnableJpaAuditing
     @Import(OrderRepositoryAdapter.class)

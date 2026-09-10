@@ -1,6 +1,6 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.salespolicy.domain;
 
-import com.ticket.booking.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 
 import java.util.Optional;
 
