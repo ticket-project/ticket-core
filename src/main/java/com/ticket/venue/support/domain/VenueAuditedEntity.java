@@ -1,4 +1,4 @@
-package com.ticket.venue.domain;
+package com.ticket.venue.support.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

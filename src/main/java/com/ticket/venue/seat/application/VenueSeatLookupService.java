@@ -1,11 +1,11 @@
-package com.ticket.venue.application;
+package com.ticket.venue.seat.application;
 
-import com.ticket.venue.application.port.VenueSeatQueryPort;
+import com.ticket.venue.seat.application.port.VenueSeatQueryPort;
 
 import com.ticket.venue.VenueSeatAddress;
 import com.ticket.venue.VenueSeatLayout;
 import com.ticket.venue.VenueSeatLookup;
-import com.ticket.venue.application.port.VenueSeatQueryPort;
+import com.ticket.venue.seat.application.port.VenueSeatQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

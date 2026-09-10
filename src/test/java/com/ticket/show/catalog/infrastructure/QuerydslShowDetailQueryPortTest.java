@@ -11,7 +11,7 @@ import com.ticket.show.classification.domain.Category;
 import com.ticket.show.classification.domain.Genre;
 import com.ticket.show.catalog.domain.Show;
 import com.ticket.show.performer.domain.Performer;
-import com.ticket.venue.domain.Venue;
+import com.ticket.venue.facility.domain.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import com.ticket.show.performance.domain.Grade;
 import com.ticket.show.performance.domain.Performance;

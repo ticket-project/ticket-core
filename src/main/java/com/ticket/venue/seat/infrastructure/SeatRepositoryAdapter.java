@@ -1,7 +1,7 @@
-package com.ticket.venue.infrastructure;
+package com.ticket.venue.seat.infrastructure;
 
-import com.ticket.venue.domain.Seat;
-import com.ticket.venue.domain.SeatRepository;
+import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.seat.domain.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

@@ -7,7 +7,7 @@ import com.ticket.show.performance.domain.Performance;
 import com.ticket.show.performance.application.PerformanceSummaryView;
 import com.ticket.venue.Region;
 import com.ticket.show.catalog.domain.Show;
-import com.ticket.venue.domain.Venue;
+import com.ticket.venue.facility.domain.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

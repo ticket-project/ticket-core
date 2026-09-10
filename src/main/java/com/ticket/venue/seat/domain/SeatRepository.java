@@ -1,6 +1,6 @@
-package com.ticket.venue.domain;
+package com.ticket.venue.seat.domain;
 
-import com.ticket.venue.domain.Seat;
+import com.ticket.venue.seat.domain.Seat;
 
 import java.util.List;
 

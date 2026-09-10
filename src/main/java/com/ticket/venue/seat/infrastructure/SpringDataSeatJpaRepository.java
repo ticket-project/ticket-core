@@ -1,6 +1,6 @@
-package com.ticket.venue.infrastructure;
+package com.ticket.venue.seat.infrastructure;
 
-import com.ticket.venue.domain.Seat;
+import com.ticket.venue.seat.domain.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

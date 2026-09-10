@@ -1,4 +1,4 @@
-package com.ticket.venue.domain;
+package com.ticket.venue.facility.domain;
 
 import com.ticket.venue.Region;
 import org.junit.jupiter.api.Test;

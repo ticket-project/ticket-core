@@ -1,19 +1,19 @@
-package com.ticket.venue.infrastructure;
+package com.ticket.venue.seat.infrastructure;
 
-import com.ticket.venue.application.port.VenueSeatQueryPort;
+import com.ticket.venue.seat.application.port.VenueSeatQueryPort;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.venue.VenueSeatAddress;
 import com.ticket.venue.VenueSeatLayout;
-import com.ticket.venue.application.port.VenueSeatQueryPort;
+import com.ticket.venue.seat.application.port.VenueSeatQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Set;
 
-import static com.ticket.venue.domain.QSeat.seat;
+import static com.ticket.venue.seat.domain.QSeat.seat;
 
 @Repository
 @RequiredArgsConstructor

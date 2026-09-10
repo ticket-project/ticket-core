@@ -1,4 +1,4 @@
-package com.ticket.venue.application.port;
+package com.ticket.venue.seat.application.port;
 
 import com.ticket.venue.VenueSeatAddress;
 import com.ticket.venue.VenueSeatLayout;

@@ -1,6 +1,6 @@
-package com.ticket.venue.domain;
+package com.ticket.venue.seat.domain;
 
-import com.ticket.venue.domain.VenueAuditedEntity;
+import com.ticket.venue.support.domain.VenueAuditedEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
