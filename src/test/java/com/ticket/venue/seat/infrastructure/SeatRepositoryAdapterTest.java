@@ -1,9 +1,9 @@
-package com.ticket.venue.infrastructure;
+package com.ticket.venue.seat.infrastructure;
 
-import com.ticket.venue.domain.Seat;
-import com.ticket.venue.domain.SeatRepository;
+import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.seat.domain.SeatRepository;
 import com.ticket.venue.Region;
-import com.ticket.venue.domain.Venue;
+import com.ticket.venue.facility.domain.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

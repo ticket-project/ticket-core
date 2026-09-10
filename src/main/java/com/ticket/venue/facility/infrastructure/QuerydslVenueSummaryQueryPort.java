@@ -1,12 +1,12 @@
-package com.ticket.venue.infrastructure;
+package com.ticket.venue.facility.infrastructure;
 
-import com.ticket.venue.application.port.VenueSummaryQueryPort;
+import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.venue.Region;
 import com.ticket.venue.VenueSummary;
-import com.ticket.venue.application.port.VenueSummaryQueryPort;
+import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.ticket.venue.domain.QVenue.venue;
+import static com.ticket.venue.facility.domain.QVenue.venue;
 
 @Repository
 @RequiredArgsConstructor

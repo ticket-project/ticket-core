@@ -1,4 +1,4 @@
-package com.ticket.venue.application.port;
+package com.ticket.venue.facility.application.port;
 
 import com.ticket.venue.Region;
 import com.ticket.venue.VenueSummary;
