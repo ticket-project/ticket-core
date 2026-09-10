@@ -1,7 +1,7 @@
 package com.ticket.member.security.infrastructure;
 
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.support.exception.UnauthenticatedException;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

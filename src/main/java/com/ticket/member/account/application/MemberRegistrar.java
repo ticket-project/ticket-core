@@ -6,7 +6,7 @@ import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.account.domain.Role;
-import com.ticket.member.exception.DuplicateEmailException;
+import com.ticket.member.support.exception.DuplicateEmailException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

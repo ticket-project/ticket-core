@@ -1,9 +1,9 @@
-package com.ticket.member.exception.handler;
+package com.ticket.member.support.exception.handler;
 
-import com.ticket.member.exception.AuthorizationException;
-import com.ticket.member.exception.DuplicateEmailException;
-import com.ticket.member.exception.MemberException;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.support.exception.AuthorizationException;
+import com.ticket.member.support.exception.DuplicateEmailException;
+import com.ticket.member.support.exception.MemberException;
+import com.ticket.member.support.exception.UnauthenticatedException;
 import com.ticket.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;

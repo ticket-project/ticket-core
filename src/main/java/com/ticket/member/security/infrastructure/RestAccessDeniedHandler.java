@@ -1,7 +1,7 @@
 package com.ticket.member.security.infrastructure;
 
 import tools.jackson.databind.json.JsonMapper;
-import com.ticket.member.exception.AuthorizationException;
+import com.ticket.member.support.exception.AuthorizationException;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
