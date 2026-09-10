@@ -69,7 +69,9 @@ class GetOrderStatusUseCaseTest {
         when(repository.findStatus("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("missing", 1L)))
-                .isInstanceOf(OrderNotOwnedException.class);
+                .isInstanceOf(OrderNotOwnedException.class)
+                .hasFieldOrPropertyWithValue("orderKey", "missing")
+                .hasFieldOrPropertyWithValue("memberId", 1L);
     }
 
     @Test
@@ -82,6 +84,8 @@ class GetOrderStatusUseCaseTest {
         doThrow(new NotFoundException()).when(memberLookup).requireActive(1L);
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))
-                .isInstanceOf(OrderNotOwnedException.class);
+                .isInstanceOf(OrderNotOwnedException.class)
+                .hasFieldOrPropertyWithValue("orderKey", "order-key")
+                .hasFieldOrPropertyWithValue("memberId", 1L);
     }
 }

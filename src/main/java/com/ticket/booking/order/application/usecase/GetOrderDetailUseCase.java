@@ -86,7 +86,7 @@ public class GetOrderDetailUseCase {
     public Output execute(final Input input) {
         final List<OrderDetailRow> rows = orderQueryPort.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
-            throw new OrderNotOwnedException();
+            throw new OrderNotOwnedException(input.orderKey(), input.memberId());
         }
 
         final OrderDetailRow first = rows.getFirst();

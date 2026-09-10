@@ -87,7 +87,9 @@ class GetOrderDetailUseCaseTest {
         when(orderQueryPort.findDetailRows("missing", 1L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("missing", 1L)))
-                .isInstanceOf(OrderNotOwnedException.class);
+                .isInstanceOf(OrderNotOwnedException.class)
+                .hasFieldOrPropertyWithValue("orderKey", "missing")
+                .hasFieldOrPropertyWithValue("memberId", 1L);
 
         verifyNoInteractions(memberLookup);
     }

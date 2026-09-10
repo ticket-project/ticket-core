@@ -137,7 +137,7 @@ class CreateOrderValidatorTest {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(1L, 2L));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(3)));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds))
-                .thenThrow(new PendingOrderAlreadyExistsException());
+                .thenThrow(new PendingOrderAlreadyExistsException(20L, 10L));
 
         assertError(seatIds, PendingOrderAlreadyExistsException.class);
     }

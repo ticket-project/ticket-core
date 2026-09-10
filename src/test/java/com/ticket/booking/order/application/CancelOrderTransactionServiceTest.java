@@ -2,7 +2,9 @@ package com.ticket.booking.order.application;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.exception.OrderNotOwnedException;
+import com.ticket.booking.order.exception.OrderNotPendingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,7 +71,22 @@ class CancelOrderTransactionServiceTest {
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.cancel("missing", 1L))
-                .isInstanceOf(OrderNotOwnedException.class);
+                .isInstanceOf(OrderNotOwnedException.class)
+                .hasFieldOrPropertyWithValue("orderKey", "missing")
+                .hasFieldOrPropertyWithValue("memberId", 1L);
+    }
+
+    @Test
+    void 결제_대기가_아닌_주문은_취소를_거절하고_실제_상태를_담는다() {
+        final Order order = createOrder(10L, 100L, "hold-key");
+        ReflectionTestUtils.setField(order, "status", OrderState.CANCELED);
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> service.cancel("order-key", 1L))
+                .isInstanceOf(OrderNotPendingException.class)
+                .hasFieldOrPropertyWithValue("currentStatus", OrderState.CANCELED);
+
+        verifyNoInteractions(orderTerminationService);
     }
 
     private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
