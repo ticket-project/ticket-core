@@ -1,4 +1,4 @@
-package com.ticket.show.exception;
+package com.ticket.show.support.exception;
 
 import com.ticket.error.ErrorCode;
 import com.ticket.error.TicketException;

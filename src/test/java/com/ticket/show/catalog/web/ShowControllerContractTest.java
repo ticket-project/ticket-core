@@ -1,7 +1,7 @@
 package com.ticket.show.catalog.web;
 
 import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.show.exception.handler.ShowExceptionHandler;
+import com.ticket.show.support.exception.handler.ShowExceptionHandler;
 import com.ticket.show.catalog.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
 import com.ticket.show.catalog.domain.SaleType;

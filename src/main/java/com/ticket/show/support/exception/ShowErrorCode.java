@@ -1,4 +1,4 @@
-package com.ticket.show.exception;
+package com.ticket.show.support.exception;
 
 import com.ticket.error.ErrorCode;
 
@@ -7,7 +7,7 @@ import com.ticket.error.ErrorCode;
  *
  * <p>E7xxx 대역은 "공연"으로 묶여 있다. 코드 값이 외부 계약이라 module 경계에 맞춰
  * 재번호하지 않는다. E7001(이미 찜한 대상)은 찜 업무가 like module(옛 favorite)로 분리되며
- * {@code com.ticket.like.exception.LikeErrorCode}로 옮겨갔다.
+ * {@code com.ticket.like.preference.exception.LikeErrorCode}로 옮겨갔다.
  */
 public enum ShowErrorCode implements ErrorCode {
 
