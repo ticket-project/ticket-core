@@ -36,7 +36,7 @@
 | Venue | Venue, Seat, Region | 물리 시설. show에서 분리됨 |
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
-| Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). HTTP endpoint는 show가 조합 |
+| Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
 | Member | Member, MemberSocialAccount | 회원·인증·전역 SecurityFilterChain |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
@@ -45,32 +45,28 @@
 
 ## Context Dependencies
 
-원본은 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`다. 아래는 **요약**이지 exhaustive한
-원본이 아니다.
+**이 문서는 의존 관계 목록을 복제하지 않는다.** 어떤 edge가 승인돼 있는지와 그 검증은
+`com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`가 원본이고, 지금 실제 구조가 어떤지는
+`com.ticket.DocumentationTests`가 `build/spring-modulith-docs`에 생성하는 diagram·canvas가
+원본이다(생성 방법은 아래 [생성 문서](#생성-문서) 절). 여기 표로 옮겨 적으면 코드가 바뀔 때
+조용히 어긋나고, 어긋난 쪽을 사람이 먼저 믿는다.
 
-```text
-booking  -> show, member, shared, web, error
-show     -> venue, like, member, shared, web, error
-venue    -> (없음)
-like     -> shared, web, error
-member   -> shared, web, error
-payment  -> (없음)
-shared   -> (없음)
-web      -> (없음)
-config   -> member, shared
-error    -> web
-seed     -> member
-```
+아래는 **왜 그 edge가 허용되는가**만 적는다.
 
-`shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수
-있다. 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존 상한만**
-적는다 — `venue`/`member`/`like`/`payment`와 기술 모듈 `shared`/`web`/`error`는 상한을 `{}`로
-명시한다(업무 모듈 의존이 없는 leaf). `show`는 찜 use case의 회원 확인을 위해 member를, 표시값
-조립을 위해 venue를, 찜 조회 위임을 위해 like를 참조한다. `booking`이 쓰는
-`PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`는 show가 façade로 유지하므로
-`booking -> venue` edge는 생기지 않는다. `payment`는 이번 entity-only 단계에서 `shared`/`web`/
-`error`도 참조하지 않는 완전한 leaf다 — controller가 없어 응답 봉투가, 자기 오류 타입을 던지지
-않아 `error`도 필요 없다. 순환은 없다.
+- `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수
+  있다. 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존
+  상한만** 적는다 — 업무 모듈 의존이 하나도 없는 모듈은 상한을 `{}`로 명시한다.
+- `show -> member`는 찜 use case의 회원 확인, `show -> venue`는 표시값 조립, `show -> like`는
+  공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
+- `like -> member`가 있다. 찜하기·찜 해제·찜 상태 조회를 like가 소유하면서(ADR 0009) 탈퇴 회원을
+  걸러내기 위해 `MemberLookup.requireActive`를 직접 부르기 때문이다. **like는 업무 모듈 의존이
+  없는 leaf가 아니다** — ADR 0006 시점의 설명(당시 `favorite`가 leaf였다)은 그 ADR의 역사적
+  기록이고 현재 구조가 아니다.
+- `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
+  `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`를 show가 façade로 유지하기 때문이다.
+- `payment`는 entity-only 단계라 `shared`/`web`/`error`도 참조하지 않는 완전한 leaf다 —
+  controller가 없어 응답 봉투가, 자기 오류 타입을 던지지 않아 `error`도 필요 없다.
+- 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
 
 ## Aggregates
 
@@ -353,7 +349,7 @@ one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈�
 key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가
 원본이다.
 
-분산락은 `com.ticket.booking.application.lock.LockManager` 같은 명시적 포트 호출로 처리한다.
+분산락은 `com.ticket.booking.application.LockManager` 같은 명시적 포트 호출로 처리한다.
 어노테이션과 SpEL로 감추지 않는다. 포트·구현 클래스 목록은
 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)가, 락 순서·임계
 구역 같은 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가 원본이다.
@@ -380,12 +376,38 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 `/verify`가 원본이다. **규칙 본문은 테스트 코드가 원본이고 여기 옮겨 적지 않는다.** 규칙을
 바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이 틀렸다는 사실을 먼저 밝힌다.
 
+## 생성 문서
+
+**현재 module 구조를 사람이 읽는 자료는 생성물이다.** `com.ticket.DocumentationTests`가 Spring
+Modulith `Documenter`로 만든다.
+
+```bash
+./gradlew test --tests "com.ticket.DocumentationTests"
+```
+
+결과는 `build/spring-modulith-docs/`에 나온다.
+
+| 파일 | 무엇인가 |
+| --- | --- |
+| `components.puml` | 전체 module dependency diagram(PlantUML) |
+| `module-<module>.puml` | module 하나의 diagram |
+| `module-<module>.adoc` | module canvas — 공개 API, 참조하는 bean, 발행·수신 이벤트 |
+| `all-docs.adoc` | 위를 묶은 종합 문서 |
+
+`build/`는 `.gitignore` 대상이라 commit되지 않는다. CI(`.github/workflows/ci.yml`)가
+`spring-modulith-docs` artifact로 게시하므로 PR에서 내려받아 본다.
+
+**생성된 diagram·목록을 이 문서(또는 다른 source 문서)에 다시 복사하지 않는다.** 복사본은
+코드가 바뀌는 순간 틀리고, 틀린 쪽이 먼저 읽힌다. source 문서는 책임·허용 원칙·이유를 적고,
+"지금 실제로 어떤가"는 생성물과 executable test를 가리킨다.
+
 ## Source of Truth
 
 | 물음 | 원본 |
 | --- | --- |
 | 현재 실제 실행 상태 | code / `application*.yml` |
 | 현재 module graph, 강제되는 규칙 | executable architecture test(위 Enforcement 표) |
+| 현재 module 구조를 눈으로 읽기 | `DocumentationTests` 생성물 `build/spring-modulith-docs`(위 [생성 문서](#생성-문서)) |
 | 원하는 architecture 원칙 | 이 문서 |
 | 왜 그렇게 결정했는가 | `docs/adr/` |
 | 예매·hold 실행 lifecycle | `docs/core-booking-lifecycle.md` |

@@ -117,7 +117,7 @@ admission token의 서명 secret, issuer, audience는 Core와 `ticket-queue` 두
 
 **분산락 작업 규칙**
 
-분산락은 `com.ticket.booking.application.lock.LockManager` 같은 명시적 포트 호출로 처리한다.
+분산락은 `com.ticket.booking.application.LockManager` 같은 명시적 포트 호출로 처리한다.
 포트·구현 클래스는 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)를
 본다.
 

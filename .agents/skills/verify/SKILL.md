@@ -66,9 +66,13 @@ find src/test -path "*bootstrap*" -iname "*.java"
 않는지 고정하고, `com.ticket.AggregateAssociationTest`는 같은 module 안에서 다른 aggregate를
 객체 연관관계로 묶지 않았는지 고정한다.
 
-`com.ticket.bootstrap`은 지금 class가 없어 `BootstrapArchitectureTest`는 지웠다(검사 대상
-없는 rule이 실패하는 것을 실측 확인) — 그 패키지에 새 class가 생기면 그때 필요한 규칙을
-다시 만든다.
+`src/main/java`에 `com.ticket.bootstrap`이 없어 `BootstrapArchitectureTest`는 지웠다(검사 대상
+없는 rule이 실패하는 것을 실측 확인) — `src/test/java/com/ticket/bootstrap`의 통합 테스트는
+그대로 있다. `src/main/java`에 그 패키지가 다시 생기면 그때 필요한 규칙을 다시 만든다.
+
+module 구조 생성 문서(`build/spring-modulith-docs`)가 필요하면
+`./gradlew test --tests "com.ticket.DocumentationTests"`를 돌린다 — 자세한 내용은
+[architecture.md의 생성 문서](../../../docs/architecture.md#생성-문서)를 본다.
 
 ## 통합 테스트와 E2E
 

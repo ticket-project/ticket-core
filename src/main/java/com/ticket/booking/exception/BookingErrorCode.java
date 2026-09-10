@@ -7,7 +7,7 @@ import com.ticket.error.ErrorCode;
  *
  * <p>E3xxx(회차 예매 정책)·E4xxx(회차 좌석)·E5xxx(주문)·E6xxx(선점)를 모두 이 module이 갖는다.
  * E3xxx는 회차 판매 정책 판정(예매 가능 여부)의 오류다 — 그 정책 데이터와 판정 모두
- * {@code booking.domain.performancepolicy.model.PerformanceSalesPolicy}가 소유하므로 booking의
+ * {@code booking.domain.PerformanceSalesPolicy}가 소유하므로 booking의
  * 오류다. 코드 값은 외부 계약이라 재번호하지 않는다.
  */
 public enum BookingErrorCode implements ErrorCode {
