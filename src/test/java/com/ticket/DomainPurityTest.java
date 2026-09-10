@@ -11,7 +11,11 @@ import java.util.Set;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
- * 6개 Bounded Context(BC) 전부에서 {@code <bc>.domain}이 다른 BC를 모르게 한다.
+ * 6개 Bounded Context(BC) 전부에서 {@code <bc>}의 모든 {@code domain} 계층이 다른 BC를 모르게 한다.
+ *
+ * <p>검사 대상 패턴은 {@code com.ticket.<bc>..domain..}이다 — capability 아래로 옮긴
+ * {@code booking.order.domain}과 아직 남아 있는 {@code booking.domain} 양쪽을 함께 잡는다.
+ * 이전 중 어느 한쪽만 검사하면 검사 대상이 비어 조용히 통과하는 구간이 생긴다.
  *
  * <p>{@code com.ticket.show.domain.ShowDomainPurityTest}를 대체한다 — 그 테스트는
  * {@code show.domain -> like}(옛 favorite) 한 방향만 막았고, {@code booking}/{@code member}/
@@ -76,7 +80,7 @@ class DomainPurityTest {
                 .toArray(String[]::new);
 
         return noClasses()
-                .that().resideInAPackage("com.ticket." + bc + ".domain..")
+                .that().resideInAPackage("com.ticket." + bc + "..domain..")
                 .should().dependOnClassesThat().resideInAnyPackage(otherBcPackages)
                 .because(bc + ".domain은 다른 Bounded Context를 몰라야 한다 — 조합은 "
                         + bc + ".application이 상대 BC의 공개 계약을 호출해서 한다");

@@ -136,7 +136,7 @@ like를 모른다 — `show.application`의 조회 service가 like의 공개 API
 않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
 순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
 `MemberLookup.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainPurityTest`(ArchUnit,
-6개 BC 전체)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
+6개 BC 전체의 모든 `domain` 계층)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을, 찜 모듈 개명과 대상 일반화는
 [ADR 0008](adr/0008-like-target-generalization.md)을, use case 소유권을 존재/표시 기준으로
 나눈 결정은 [ADR 0009](adr/0009-like-owns-write-and-status-usecases.md)를 본다.
@@ -154,21 +154,54 @@ like를 모른다 — `show.application`의 조회 service가 like의 공개 API
 | `exception` | `<Module>ErrorCode`, 예외 클래스, `handler` |
 
 **모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
-작은 모듈은 이 하위 패키지를 모두 갖지 않고 root 바로 아래에 평평하게 둘 수 있다(`payment`가 그
-예다).
 
-**패키지 구조는 모듈 → 계층 → 클래스다.** `domain`/`application`/`infrastructure` 아래에
-기능별(`order`, `show` 등) 하위 패키지를 두지 않는다 — 예를 들어 `show.domain.Show`,
-`booking.infrastructure.QuerydslOrderQueryPort`처럼 계층 바로 아래에 클래스가 온다. 예외는
-넷뿐이다: `web`의 `request`/`docs`/`support`, `exception`의 `handler`, `application`의
-`port`(아래 "Repository와 Query Port" 절 참고), `application`의 `usecase`. 클래스 이름 자체가
-이미 기능을 드러내므로(`ShowRepository`, `PerformanceSalesPolicy` 등) 같은 계층 안에서 이름이
-충돌하지 않는다.
+**패키지 구조는 모듈 → capability → 계층이다.** 업무 모듈 여섯(`booking`/`member`/`show`/
+`venue`/`like`/`payment`)은 모듈 root 바로 아래에 **capability** 패키지를 두고, 위 계층 표의
+`web`/`application`/`domain`/`infrastructure`는 그 capability 안에 온다 —
+`booking.order.domain.Order`, `show.catalog.infrastructure.QuerydslShowListQueryPort`처럼
+읽는다. capability가 하나뿐인 모듈(`like`, `payment`)도 같은 형태를 유지한다: 지금 하나뿐이라는
+사실이 앞으로도 하나라는 뜻은 아니고, 모듈마다 읽는 규칙이 갈리는 편이 더 비싸다.
+
+capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**이다. Application Module이 아니다 —
+`package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 모듈 집합과 경계는
+그대로 11개다(`com.ticket.ModularityTests`가 원본).
+
+| 모듈 | capability |
+| --- | --- |
+| `booking` | `order` · `seat` · `hold` · `salespolicy` · `selection` · `admission` · `ticket` |
+| `member` | `account` · `auth` · `oauth` · `security` |
+| `show` | `catalog` · `performance` · `classification` · `performer` |
+| `venue` | `facility` · `seat` |
+| `like` | `preference` |
+| `payment` | `attempt` |
+
+배치 규칙:
+
+- capability 아래에는 **실제로 필요한 계층만** 만든다. 빈 계층이나 미래 기능용 패키지는 두지
+  않는다.
+- `application.port`/`application.usecase`, `web`의 `request`/`docs`/`support`,
+  `exception`의 `handler`는 그대로 유효한 예외다. 다만 앞의 셋은 이제 capability 안에 있다.
+- **`exception`은 capability로 나누지 않는다.** 모듈 하나가 오류 코드·예외 상속·handler를 한
+  묶음으로 소유하는 것이 계약이므로 `<module>.exception`에 그대로 둔다(ADR 0002).
+- 여러 capability가 **실제로** 공유하는 코드만 `<module>.support.<layer>`에 둔다 — 공통 감사
+  base entity(`BookingAuditedEntity` 등), booking의 분산락 계약·구현, 공통 Redis 만료 배선이
+  그 예다. 업무 use case를 support로 모으지 않는다.
+- 여러 capability를 조립하는 코드는 **결과를 책임지는 capability**에 둔다. 주문 생성이 좌석·
+  hold·정책을 엮어도 그것은 `order`다.
+- Controller 하나가 여러 capability를 호출하는 것은 허용한다. 폴더를 맞추려고 endpoint나
+  Controller를 쪼개지 않는다.
+- capability마다 façade·interface·event를 의무적으로 만들지 않는다. 접근 제한이 걸리면 같은
+  모듈 안에서 최소한으로 넓히고, 그걸 풀려고 구현을 모듈 root에 공개하지 않는다.
+
+capability 안에서는 여전히 **계층 → 클래스**다. `domain`/`application`/`infrastructure` 아래에
+또 기능별 하위 패키지를 두지 않는다. 클래스 이름 자체가 이미 기능을 드러낸다
+(`ShowRepository`, `PerformanceSalesPolicy` 등).
 
 **`application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.** use case가 조립에 쓰는
 서비스·헬퍼·view·port는 여기 두지 않고 `application` 바로 아래(또는 port는 `application.port`)에
 둔다 — use case가 진입점이라는 것만 폴더로 드러내고, 그 진입점이 무엇을 조립해 쓰는지는 여전히
-`application` 평평한 목록에서 바로 보이게 하기 위해서다.
+`application` 평평한 목록에서 바로 보이게 하기 위해서다. capability가 그 목록을 다시 업무
+단위로 좁혀 준다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
@@ -365,7 +398,7 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 | 모듈 경계·의존 DAG 위반 | `com.ticket.ModularityTests` |
 | 모듈이 STANDALONE으로 부트스트랩되는지 | `<Module>ModuleTests` |
 | 같은 module 안 aggregate를 객체 연관관계로 묶었는지 | `com.ticket.AggregateAssociationTest` |
-| `<bc>.domain`이 다른 BC를 참조하는지 | `com.ticket.DomainPurityTest` |
+| `<bc>`의 어느 `domain` 계층이든 다른 BC를 참조하는지 | `com.ticket.DomainPurityTest` |
 | `shared`에 bean을 등록했는지 | `com.ticket.shared.SharedModulePurityTest` |
 | 파라미터 제약 선언 위치 | `ControllerParameterConstraintTest` |
 | 필수 입력 오류 문구 | `com.ticket.error.InvalidRequestMessageContractTest` |
@@ -427,6 +460,8 @@ Modulith `Documenter`로 만든다.
 - 다른 모듈의 하위 패키지, Repository, JPA entity를 직접 참조하지 않는가
 - 모듈을 넘는 JPA 연관관계나 DB FK가 새로 생기지 않았는가
 - 새 공개 계약이 JPA entity, Redis/JWT/Spring Web 타입을 노출하지 않는가
-- 새 패키지가 기능 중심 축(`command`/`query`/`model`/`repository`/`store`)을 따르는가
+- 새 클래스가 맞는 capability에 있는가 — 같은 업무 변경에 함께 고쳐질 코드 옆에 있는가
+- capability 안에 계층 아래 또 기능별 패키지를 만들지 않았는가
+- `support`에 둔 것이 실제로 여러 capability가 쓰는가, 아니면 갈 곳을 못 정한 것인가
 - DB 상태와 Redis 상태를 합치는 규칙의 소유자가 한 곳인가
 - 새 추상화가 실제 경계를 보호하는가, 사용하지 않는 계층을 늘리기만 하는가
