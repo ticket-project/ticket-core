@@ -6,7 +6,7 @@ import com.ticket.like.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.application.usecase.GetLikeStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

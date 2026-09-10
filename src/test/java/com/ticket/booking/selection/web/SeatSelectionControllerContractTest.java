@@ -1,6 +1,6 @@
 package com.ticket.booking.selection.web;
 
-import com.ticket.member.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import com.ticket.booking.selection.application.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.selection.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.selection.application.usecase.SelectSeatUseCase;
