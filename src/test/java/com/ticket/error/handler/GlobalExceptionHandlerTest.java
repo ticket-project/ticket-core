@@ -1,8 +1,7 @@
 package com.ticket.error.handler;
 
-import com.ticket.error.ErrorCode;
+import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
-import com.ticket.error.TicketException;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -27,10 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>RFC 9457 스타일의 공통 오류 표현 대신, 기존 {@code ApiResponse} 오류 envelope
  * ({@code result/data/error})와 E-code, HTTP 상태를 그대로 유지하는지 검증한다.
  *
- * <p><b>업무 오류는 이 파일이 소유한 fixture로 검증한다.</b> 예전에는 booking의 E6000과 member의
- * E1000/E1001을 빌려 와 "예외가 들고 있는 상태·code·message를 그대로 직렬화한다"는 한 가지 동작을
- * 세 번 확인했다. 그 code들은 이제 각 module의 계약이고 각 module의 handler 테스트와 controller
- * 계약 테스트가 고정하므로, 여기서는 어느 module에도 속하지 않는 {@link TestErrorCode}로 확인한다.
+ * <p>업무 오류의 HTTP 상태는 더 이상 예외 자신이 들고 있지 않고 그 오류를 잡는 handler(각 module
+ * handler, 그리고 여기 있는 공통 오류 셋)가 안다 — {@link TicketException}은 errorCode·message·
+ * data만 옮기는 그릇이다. {@code InvalidRequestException}으로 "예외의 data가 error.data로 나가고
+ * message를 덮지 않는다"는 공통 불변식을 확인한다. module 고유 오류(E6000 등)의 상태·코드·메시지는
+ * 각 module의 handler 테스트가 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class GlobalExceptionHandlerTest {
@@ -41,23 +41,23 @@ class GlobalExceptionHandlerTest {
             .build();
 
     @Test
-    void 업무_오류는_예외가_들고_있는_상태와_E_code와_message를_그대로_반환한다() throws Exception {
+    void 공통_오류는_예외가_들고_있는_code와_message를_그대로_반환하고_handler가_상태를_정한다() throws Exception {
         mockMvc.perform(get("/test/business-error"))
-                .andExpect(status().isConflict())
+                .andExpect(status().isBadRequest())
                 .andExpect(contentTypeIsJson())
                 .andExpect(jsonPath("$.result").value("ERROR"))
                 .andExpect(jsonPath("$.data").doesNotExist())
-                .andExpect(jsonPath("$.error.code").value("E9001"))
-                .andExpect(jsonPath("$.error.message").value("테스트 업무 충돌입니다."))
+                .andExpect(jsonPath("$.error.code").value("E400"))
+                .andExpect(jsonPath("$.error.message").value("요청이 올바르지 않습니다."))
                 .andExpect(jsonPath("$.error.data").doesNotExist());
     }
 
     @Test
     void 업무_오류의_data는_error_data로_나가고_message를_덮지_않는다() throws Exception {
         mockMvc.perform(get("/test/business-error-with-data"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("E9001"))
-                .andExpect(jsonPath("$.error.message").value("테스트 업무 충돌입니다."))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("E400"))
+                .andExpect(jsonPath("$.error.message").value("요청이 올바르지 않습니다."))
                 .andExpect(jsonPath("$.error.data").value("seatId=7"));
     }
 
@@ -119,12 +119,12 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/test/business-error")
         String businessError() {
-            throw new TestBusinessException(null);
+            throw new InvalidRequestException();
         }
 
         @GetMapping("/test/business-error-with-data")
         String businessErrorWithData() {
-            throw new TestBusinessException("seatId=7");
+            throw new InvalidRequestException("seatId=7");
         }
 
         @GetMapping("/test/not-found")
@@ -146,35 +146,6 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/test/unexpected-error")
         String unexpectedError() {
             throw new IllegalStateException("secret-internal-detail");
-        }
-    }
-
-    /** 어느 module에도 속하지 않는 test 전용 code다. 실제 카탈로그와 겹치지 않는 대역을 쓴다. */
-    private enum TestErrorCode implements ErrorCode {
-
-        E9001("테스트 업무 충돌");
-
-        private final String description;
-
-        TestErrorCode(final String description) {
-            this.description = description;
-        }
-
-        @Override
-        public String getCode() {
-            return name();
-        }
-
-        @Override
-        public String getDescription() {
-            return description;
-        }
-    }
-
-    private static final class TestBusinessException extends TicketException {
-
-        private TestBusinessException(final Object data) {
-            super(org.springframework.http.HttpStatus.CONFLICT, TestErrorCode.E9001, "테스트 업무 충돌입니다.", data);
         }
     }
 
