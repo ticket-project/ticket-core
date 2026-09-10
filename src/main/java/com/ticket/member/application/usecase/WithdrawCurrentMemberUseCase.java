@@ -3,7 +3,7 @@ package com.ticket.member.application.usecase;
 import com.ticket.member.application.MemberWithdrawalTransactionService;
 
 import com.ticket.error.InvalidRequestException;
-import com.ticket.member.application.KakaoUnlinkService;
+import com.ticket.member.oauth.application.KakaoUnlinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
