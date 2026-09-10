@@ -3,7 +3,7 @@ package com.ticket.booking.application;
 /**
  * 락이 보호하는 대상의 업무 의미다.
  *
- * <p>실제 Redis key 형식은 {@code booking.infrastructure.lock}의 {@code RedissonLockKeyFormatter}가
+ * <p>실제 Redis key 형식은 {@code booking.infrastructure}의 {@code RedissonLockKeyFormatter}가
  * 정한다. application 계층은 무엇을 잠그는지만 말한다.
  */
 public enum LockScope {

@@ -11,7 +11,7 @@ import java.util.Optional;
  * 주문 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
  *
  * <p>계약에는 도메인 타입과 Java 기본 타입만 노출한다. 비관적 락, JPQL, 페이징 같은 기술은
- * {@code booking.infrastructure.order}의 {@code OrderRepositoryAdapter}가 결정한다.
+ * {@code booking.infrastructure}의 {@code OrderRepositoryAdapter}가 결정한다.
  */
 public interface OrderRepository {
 

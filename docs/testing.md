@@ -33,8 +33,9 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
 테스트를 최소 하나씩 둔다(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
 `LikeModuleTests`, `MemberModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). 찜은
-`like`(옛 `favorite`)가 데이터를 소유하고 `show`가 HTTP endpoint·use case를 갖는다(ADR 0006,
-ADR 0008) — `ShowModuleTests`가 like의 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다.
+`like`가 데이터와 찜하기·찜 해제·찜 상태 조회 endpoint를 소유하고, 공연 표시값을 조합하는
+"내 찜 목록"만 `show`가 소유한다(ADR 0006, ADR 0008, ADR 0009) — `ShowModuleTests`가 like의
+공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다.
 `verifyAutomatically = false`인
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
 곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
@@ -53,15 +54,15 @@ ADR 0008) — `ShowModuleTests`가 like의 공개 API를 `@MockitoBean`으로 �
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
-| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). 찜 데이터 조합은 `show.application`이 like(옛 favorite)의 공개 API로 한다(ADR 0006, ADR 0008) |
+| `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.application`이 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
-| `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것(`build/spring-modulith-docs`) |
+| `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것. 생성물 목록과 CI artifact는 [architecture.md의 생성 문서](architecture.md#생성-문서)가 원본이다 |
 
-`com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 그 패키지가 완전히 비어(ADR 0003
-§8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상 없는 rule을 실패로 보는
-것을 실측 확인해 지웠다 — `com.ticket.bootstrap`이 다시 class를 가지면 그때 필요한 규칙을 다시
-만든다.
+`com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 `src/main/java`에 그 패키지가
+남지 않아(ADR 0003 §8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상
+없는 rule을 실패로 보는 것을 실측 확인해 지웠다 — `src/test/java/com/ticket/bootstrap`의 통합
+테스트는 그대로 있고, `src/main/java`에 다시 class가 생기면 그때 필요한 규칙을 다시 만든다.
 
 새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 규칙 전체 목록은
 [architecture.md의 Enforcement](architecture.md#enforcement)에 정리돼 있다.
@@ -136,7 +137,7 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 실제 인프라나 전체 컨텍스트가 필요한 검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를
 본다.
 
-- `com.ticket.booking.infrastructure.redis.CoreRedisIntegrationTest`: Redis key·TTL·expiration
+- `com.ticket.booking.infrastructure.CoreRedisIntegrationTest`: Redis key·TTL·expiration
   listener·분산락(Testcontainers)
 - `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
