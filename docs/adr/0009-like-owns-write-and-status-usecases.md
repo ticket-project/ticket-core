@@ -27,7 +27,7 @@ ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있�
    `RemoveShowLikeUseCase`/`GetShowLikeStatusUseCase`(show)를 각각
    `AddLikeUseCase`/`RemoveLikeUseCase`/`GetLikeStatusUseCase`(like)로 옮기고, `LikeType`을
    받는 일반 형태로 바꾼다(`Input(memberId, LikeType, targetId)`). `ShowLikeController`도
-   `like.web.LikeController`로 옮긴다. HTTP 계약(`/api/v1/likes/shows/{showId}`)과 오류
+   `like.preference.web.LikeController`로 옮긴다. HTTP 계약(`/api/v1/likes/shows/{showId}`)과 오류
    코드(`E7001`)는 바뀌지 않는다 — controller가 내부적으로 `LikeType.SHOW`를 고정해 넘긴다.
 2. **대상 존재 확인을 뺀다.** 옮겨간 세 use case는 더 이상 대상(show) 존재를 확인하지
    않는다 — 존재하지 않는 targetId를 찜해도 조용히 저장된다. `like` package-info의
