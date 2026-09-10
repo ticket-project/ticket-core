@@ -12,7 +12,7 @@ import com.ticket.booking.support.application.LockOptions;
 import com.ticket.booking.support.infrastructure.RedissonLockKeyFormatter;
 import com.ticket.booking.support.infrastructure.RedissonLockManager;
 import com.ticket.booking.selection.infrastructure.RedissonSeatSelectionStore;
-import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.support.exception.HoldBusyException;
 import com.ticket.shared.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;

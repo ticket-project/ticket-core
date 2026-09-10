@@ -4,9 +4,9 @@ import com.ticket.booking.seat.application.SeatStatusEvent;
 
 import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatAlreadyHoldException;
+import com.ticket.booking.admission.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.support.exception.PerformanceIsPastException;
+import com.ticket.booking.support.exception.SeatAlreadyHoldException;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;

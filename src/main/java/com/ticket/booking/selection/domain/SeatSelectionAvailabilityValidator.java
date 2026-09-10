@@ -4,9 +4,9 @@ import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.SeatAlreadyHoldException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.support.exception.NoAvailableSeatException;
+import com.ticket.booking.support.exception.SeatAlreadyHoldException;
+import com.ticket.booking.support.exception.SeatMismatchInPerformanceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

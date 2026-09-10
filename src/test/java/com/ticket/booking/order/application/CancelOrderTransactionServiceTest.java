@@ -2,7 +2,7 @@ package com.ticket.booking.order.application;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.order.exception.OrderNotOwnedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

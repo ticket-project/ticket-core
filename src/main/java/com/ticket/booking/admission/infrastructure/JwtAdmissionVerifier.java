@@ -2,9 +2,9 @@ package com.ticket.booking.admission.infrastructure;
 
 import com.ticket.booking.admission.application.AdmissionVerification;
 import com.ticket.booking.admission.application.AdmissionVerifier;
-import com.ticket.booking.exception.AdmissionTokenException;
-import com.ticket.booking.exception.AdmissionTokenExpiredException;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.admission.exception.AdmissionTokenException;
+import com.ticket.booking.admission.exception.AdmissionTokenExpiredException;
+import com.ticket.booking.admission.exception.AdmissionTokenRequiredException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
