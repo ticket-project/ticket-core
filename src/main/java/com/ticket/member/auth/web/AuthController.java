@@ -1,16 +1,16 @@
 package com.ticket.member.auth.web;
 
-import com.ticket.member.web.request.ExchangeOAuth2TokenRequest;
+import com.ticket.member.oauth.web.request.ExchangeOAuth2TokenRequest;
 import com.ticket.member.auth.web.request.LoginRequest;
 import com.ticket.member.web.request.RegisterMemberRequest;
 import com.ticket.member.auth.web.docs.AuthControllerDocs;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.application.usecase.ExchangeOAuth2TokenUseCase;
+import com.ticket.member.oauth.application.usecase.ExchangeOAuth2TokenUseCase;
 import com.ticket.member.auth.application.usecase.LoginUseCase;
 import com.ticket.member.auth.application.usecase.LogoutUseCase;
 import com.ticket.member.auth.application.usecase.RefreshAuthTokenUseCase;
 import com.ticket.member.application.usecase.RegisterMemberUseCase;
-import com.ticket.member.application.usecase.GetSocialLoginUrlsUseCase;
+import com.ticket.member.oauth.application.usecase.GetSocialLoginUrlsUseCase;
 import com.ticket.web.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

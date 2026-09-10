@@ -1,11 +1,11 @@
 package com.ticket.member.security.infrastructure;
 
-import com.ticket.member.infrastructure.CustomOAuth2UserService;
-import com.ticket.member.infrastructure.OAuth2AuthenticationFailureHandler;
-import com.ticket.member.infrastructure.OAuth2AuthenticationSuccessHandler;
-import com.ticket.member.infrastructure.OAuth2EndpointConstants;
-import com.ticket.member.infrastructure.OAuth2FrontendRedirectCaptureFilter;
-import com.ticket.member.infrastructure.OAuth2FrontendRedirectResolver;
+import com.ticket.member.oauth.infrastructure.CustomOAuth2UserService;
+import com.ticket.member.oauth.infrastructure.OAuth2AuthenticationFailureHandler;
+import com.ticket.member.oauth.infrastructure.OAuth2AuthenticationSuccessHandler;
+import com.ticket.member.oauth.infrastructure.OAuth2EndpointConstants;
+import com.ticket.member.oauth.infrastructure.OAuth2FrontendRedirectCaptureFilter;
+import com.ticket.member.oauth.infrastructure.OAuth2FrontendRedirectResolver;
 import com.ticket.shared.CorsProperties;
 import com.ticket.member.auth.application.AccessTokenReader;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

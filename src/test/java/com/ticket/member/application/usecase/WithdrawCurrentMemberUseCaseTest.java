@@ -1,6 +1,6 @@
 package com.ticket.member.application.usecase;
 
-import com.ticket.member.application.KakaoUnlinkService;
+import com.ticket.member.oauth.application.KakaoUnlinkService;
 import com.ticket.member.application.MemberWithdrawalTransactionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
