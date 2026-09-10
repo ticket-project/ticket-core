@@ -5,6 +5,7 @@ import com.ticket.booking.salespolicy.exception.ExceedHoldLimitException;
 import com.ticket.booking.support.exception.HoldBusyException;
 import com.ticket.booking.support.exception.NoAvailableSeatException;
 import com.ticket.booking.salespolicy.exception.NotYetReserveTimeException;
+import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.exception.OrderNotOwnedException;
 import com.ticket.booking.order.exception.OrderNotPendingException;
 import com.ticket.booking.order.exception.PendingOrderAlreadyExistsException;
@@ -60,11 +61,11 @@ class BookingExceptionHandlerTest {
                         "요청한 등급이 이 회차에 속하지 않습니다."),
                 Arguments.of(new PerformanceSeatAlreadyEditionedException(10L), HttpStatus.BAD_REQUEST, "E4005",
                         "이미 편성된 좌석입니다."),
-                Arguments.of(new OrderNotPendingException(), HttpStatus.CONFLICT, "E5002",
+                Arguments.of(new OrderNotPendingException(OrderState.CANCELED), HttpStatus.CONFLICT, "E5002",
                         "결제 대기 주문만 처리할 수 있습니다."),
-                Arguments.of(new OrderNotOwnedException(), HttpStatus.FORBIDDEN, "E5003",
+                Arguments.of(new OrderNotOwnedException("order-key", 30L), HttpStatus.FORBIDDEN, "E5003",
                         "본인 주문만 처리할 수 있습니다."),
-                Arguments.of(new PendingOrderAlreadyExistsException(), HttpStatus.CONFLICT, "E5004",
+                Arguments.of(new PendingOrderAlreadyExistsException(30L, 10L), HttpStatus.CONFLICT, "E5004",
                         "이미 진행 중인 결제 대기 주문이 있습니다."),
                 Arguments.of(new SeatAlreadyHoldException(10L, 20L), HttpStatus.CONFLICT, "E6000",
                         "좌석이 이미 선점되었습니다."),

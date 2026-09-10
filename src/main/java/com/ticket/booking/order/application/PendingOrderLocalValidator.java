@@ -37,6 +37,6 @@ class PendingOrderLocalValidator {
         if (!orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
             return;
         }
-        throw new PendingOrderAlreadyExistsException();
+        throw new PendingOrderAlreadyExistsException(memberId, performanceId);
     }
 }

@@ -49,10 +49,10 @@ public class GetOrderStatusUseCase {
 
     public Output execute(final Input input) {
         final OrderStatusView status = orderQueryPort.findStatus(input.orderKey(), input.memberId())
-                .orElseThrow(() -> new OrderNotOwnedException());
+                .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
         // 탈퇴한 회원은 자신의 주문 상태도 조회할 수 없다 — 기존에는 findStatus의 member join이
         // deletedAt으로 걸러냈다. member 조회가 booking 밖으로 빠졌으므로 여기서 같은 결과를 낸다.
-        requireActiveMember(input.memberId());
+        requireActiveMember(input.orderKey(), input.memberId());
 
         final long remainingSeconds = OrderRemainingTime.seconds(
                 status.status(),
@@ -63,11 +63,11 @@ public class GetOrderStatusUseCase {
         return new Output(status.orderKey(), status.status(), status.expiresAt(), remainingSeconds);
     }
 
-    private void requireActiveMember(final Long memberId) {
+    private void requireActiveMember(final String orderKey, final Long memberId) {
         try {
             memberLookup.requireActive(memberId);
         } catch (final NotFoundException e) {
-            throw new OrderNotOwnedException();
+            throw new OrderNotOwnedException(orderKey, memberId);
         }
     }
 }
