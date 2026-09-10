@@ -41,13 +41,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code ImportOption.DoNotIncludeTests}를 적용해 test class는 애초에 이 분석 대상이 아니다 —
  * {@code src/test/java/com/ticket/core}, {@code com/ticket/bootstrap} 아래 test 지원 클래스가
  * 여전히 있는 것과 무관하다.
+ *
+ * <p><b>{@code seed}는 더 이상 module이 아니다.</b> 초기 데이터 적재는 애플리케이션 밖의 독립
+ * 실행 프로그램({@code seed/src/main/java}, Gradle {@code seedLocal} 작업)으로 옮겼다. 그 source
+ * set 산출물은 {@code main}/{@code test} 어느 classpath에도 올라가지 않으므로 여기 분석 대상에
+ * 들어오지 않는다 — {@code com.ticket.seed} package가 다시 생기면 위 두 assertion이 곧바로
+ * 실패한다.
  */
 class ModularityTests {
 
-    /** 파일시스템 기준으로 선언된 11개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 10개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
             "booking", "show", "venue", "like", "member", "shared", "web", "config",
-            "error", "seed", "payment");
+            "error", "payment");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 실제로 직접 참조하는 module 이름 집합이며,
@@ -67,7 +73,6 @@ class ModularityTests {
             Map.entry("web", Set.of()),
             Map.entry("config", Set.of("member", "shared")),
             Map.entry("error", Set.of("web")),
-            Map.entry("seed", Set.of("member")),
             Map.entry("payment", Set.of())
     );
 

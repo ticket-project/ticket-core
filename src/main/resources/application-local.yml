@@ -22,16 +22,9 @@ spring:
       # 구조를 검증해 배포 전에 문제를 조기에 드러낸다. production에서는 끈다(application-prod.yml).
       verification-enabled: true
 
+# 초기 데이터는 기동 시 자동으로 들어가지 않는다. 서버 기동이 끝난 뒤
+# `.\gradlew.bat seedLocal`을 따로 실행한다 -- 자세한 내용은 seed/README.md.
 app:
-  seed:
-    enabled: true
-    load-test-members:
-      count: 2000
-    # 로컬 부하 테스트 전용 회차·좌석. 운영과 같은 고정 ID 대역(910000001~)을 쓴다.
-    # 회차 수를 올리면 회차당 좌석 2,000행이 늘어 기동이 느려진다.
-    load-test-fixture:
-      enabled: true
-      performance-count: 8
   auth:
     oauth2-success-redirect-uri: ${OAUTH2_SUCCESS_REDIRECT_URI:http://localhost:3000/auth/callback}
     oauth2-failure-redirect-uri: ${OAUTH2_FAILURE_REDIRECT_URI:http://localhost:3000/auth/callback}

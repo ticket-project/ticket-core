@@ -3896,7 +3896,7 @@ WHERE gr.code IN ('VIP', 'R', 'S', 'A')
         WHERE existing.performance_id = p.id AND existing.grade_id = gr.id
     );
 
-INSERT INTO PERFORMANCE_SEATS (performance_id, seat_id, state, performance_grade_id, unit_price, created_at, created_by)
+INSERT INTO PERFORMANCE_SEATS (performance_id, seat_id, state, performance_grade_id, unit_price, version, created_at, created_by)
 SELECT p.id, st.id,
     CASE
         WHEN MOD(
@@ -3951,6 +3951,7 @@ SELECT p.id, st.id,
         WHERE pg.performance_id = p.id AND gg.code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
     (SELECT pg.price FROM PERFORMANCE_GRADES pg JOIN GRADES gg ON gg.id = pg.grade_id
         WHERE pg.performance_id = p.id AND gg.code = CASE WHEN st.section = '나' THEN 'VIP' WHEN st.section IN ('가', '다') THEN 'R' WHEN st.section IN ('라', '바') THEN 'S' ELSE 'A' END),
+    0,
     '2026-01-01 10:00:00', '시드'
 FROM PERFORMANCES p
 JOIN SHOWS sh ON sh.id = p.show_id

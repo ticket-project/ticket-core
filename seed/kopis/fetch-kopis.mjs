@@ -17,7 +17,7 @@ import {
 } from './genre-map.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SQL_PATH = resolve(__dirname, '../../src/main/resources/seed/kopis-curated.sql');
+const SQL_PATH = resolve(__dirname, '../sql/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
 // 생성한 블록을 파일 끝의 집합 기반 INSERT(GRADES / PERFORMANCE_GRADES / PERFORMANCE_SEATS)
 // 바로 앞에 끼워 넣는다. 그래야 새 SHOWS/PERFORMANCES가 그 INSERT...SELECT의 대상에 포함된다.

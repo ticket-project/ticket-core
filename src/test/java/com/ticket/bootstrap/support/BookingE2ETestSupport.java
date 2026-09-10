@@ -48,8 +48,6 @@ import static org.assertj.core.api.Assertions.fail;
                 "spring.datasource.password=",
                 "spring.jpa.hibernate.ddl-auto=create-drop",
                 "spring.flyway.enabled=false",
-                "app.seed.enabled=false",
-                "app.seed.load-test-fixture.enabled=false",
                 "JWT_SECRET=0123456789abcdef0123456789abcdef",
                 "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
                 "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
@@ -70,7 +68,7 @@ public abstract class BookingE2ETestSupport {
 
     private static final int REDIS_PORT = 6379;
 
-    /** fixture SQL이 쓰는 고정 ID 대역. LoadTestFixtureSeeder(910000000)와 겹치지 않는다. */
+    /** fixture SQL이 쓰는 고정 ID 대역. seed/의 부하 테스트 전용 대역(910000000)과 겹치지 않는다. */
     protected static final long ID_BASE = 920000000L;
     protected static final long SHOW_ID = ID_BASE + 1;
     protected static final long PERFORMANCE_ID = ID_BASE + 1;

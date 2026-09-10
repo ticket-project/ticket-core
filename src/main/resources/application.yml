@@ -136,12 +136,6 @@ worker:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000}
-  seed:
-    enabled: false
-    batch-size: 500
-    load-test-fixture:
-      enabled: false
-      performance-count: 8
   auth:
     frontend:
       local-base-url: ${APP_AUTH_FRONTEND_LOCAL_BASE_URL:http://localhost:3000}

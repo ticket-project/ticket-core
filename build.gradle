@@ -18,6 +18,28 @@ java {
     }
 }
 
+// 시드는 서비스와 별개의 source set이다. 서비스 main에 섞으면 (1) bootJar에 시드 실행 코드와
+// 1MB가 넘는 시드 SQL이 들어가고 (2) Spring Modulith가 시드를 업무 모듈로 다시 탐지한다.
+// seedMain 산출물은 main/test 어느 classpath에도 올리지 않는다 -- 의존 방향은 seedTest -> main
+// 한쪽뿐이다(테스트가 실제 앱 entity로 스키마를 만들기 위해서다).
+sourceSets {
+    seedMain {
+        java.srcDirs = ['seed/src/main/java']
+        resources.srcDirs = []
+    }
+    seedTest {
+        java.srcDirs = ['seed/src/test/java']
+        resources.srcDirs = ['seed/src/test/resources']
+    }
+}
+
+configurations {
+    // 시드 테스트는 서비스의 의존성 집합을 그대로 물려받는다. 실제 앱 entity 매핑으로 스키마를
+    // 만들어 검증하기 때문이다(Hibernate/JPA가 필요하다). seedMain은 물려받지 않는다.
+    seedTestImplementation.extendsFrom seedMainImplementation, implementation
+    seedTestRuntimeOnly.extendsFrom seedMainRuntimeOnly, runtimeOnly
+}
+
 dependencyManagement {
     imports {
         mavenBom libs.spring.modulith.bom.get().toString()
@@ -110,8 +132,88 @@ dependencies {
 
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Seed (별도 source set) -- 실행에 필요한 최소한만 쓴다. 웹 서버, Redis, OAuth, JPA는 쓰지 않는다.
+    seedMainImplementation 'org.springframework:spring-jdbc'
+    seedMainImplementation 'org.springframework:spring-tx'
+    seedMainImplementation 'org.springframework.security:spring-security-crypto'
+    seedMainImplementation 'org.yaml:snakeyaml'
+    seedMainRuntimeOnly 'com.h2database:h2'
+
+    // 시드 테스트는 시드 코드와, 실제 앱 entity 매핑으로 스키마를 만들기 위한 서비스 classpath를
+    // 함께 본다. 반대 방향(main/test가 시드를 보는 것)은 만들지 않는다.
+    seedTestImplementation sourceSets.seedMain.output
+    seedTestImplementation sourceSets.main.output
+    seedTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    seedTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    // CI는 `clean test bootJar`만 돌린다. 시드 테스트가 누락되지 않게 test에 매단다.
+    // 좁은 범위만 확인할 때는 `-x seedTest`로 뺀다.
+    finalizedBy 'seedTest'
+}
+
+tasks.register('seedTest', Test) {
+    group = 'verification'
+    description = '시드 프로그램 테스트를 실행한다.'
+    testClassesDirs = sourceSets.seedTest.output.classesDirs
+    classpath = sourceSets.seedTest.runtimeClasspath
+    useJUnitPlatform()
+    // 공용 시드 전체 적재 테스트가 100만 행 가까이 만든다. 임시 H2 파일 DB를 쓰지만 여유를 둔다.
+    maxHeapSize = '2g'
+    // 시드 프로그램의 출력과 실패 메시지가 한국어다. 리포트가 깨지지 않게 고정한다.
+    defaultCharacterEncoding = 'UTF-8'
+    jvmArgs '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8'
+    systemProperty 'seed.project-dir', projectDir.absolutePath
+}
+
+/**
+ * 서비스 배포 산출물에 시드 실행 코드와 시드 데이터가 들어가지 않았는지 실제 jar를 열어 확인한다.
+ * source set 분리만으로 보장되지만, jar 구성이 바뀔 때 조용히 새는 것을 막는다.
+ */
+tasks.register('verifySeedNotInBootJar') {
+    group = 'verification'
+    description = 'bootJar에 시드 실행 코드와 시드 SQL이 없는지 확인한다.'
+    dependsOn tasks.named('bootJar')
+    def archive = tasks.named('bootJar').flatMap { it.archiveFile }
+    inputs.file(archive)
+    doLast {
+        def leaked = zipTree(archive.get().asFile).matching {
+            include '**/com/ticket/seed/**'
+            include '**/seed/*.sql'
+            include '**/kopis-curated.sql'
+        }.files
+        if (!leaked.isEmpty()) {
+            throw new GradleException(
+                    "bootJar에 시드 산출물이 포함됐다: " + leaked.collect { it.name }.join(', '))
+        }
+        logger.lifecycle('ok    bootJar에 시드 실행 코드와 시드 SQL이 없다')
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'seedTest'
+}
+
+/**
+ * 로컬 H2 DB에 초기 데이터를 적재하고 종료한다. 서버 기동과는 별개 명령이다.
+ *
+ *   .\gradlew.bat seedLocal
+ *
+ * 접속 설정의 원본은 src/main/resources/application-local.yml이다. 검증용으로 임시 DB를 쓸 때만
+ * -Dseed.jdbc-url로 덮어쓴다. seed.* 시스템 프로퍼티는 Gradle JVM에서 실행 JVM으로 넘긴다.
+ */
+tasks.register('seedLocal', JavaExec) {
+    group = 'application'
+    description = '로컬 H2 DB에 시드 데이터를 적재한다 (서버 기동 후 실행).'
+    mainClass = 'com.ticket.seed.SeedLocalMain'
+    classpath = sourceSets.seedMain.runtimeClasspath
+    systemProperty 'seed.project-dir', projectDir.absolutePath
+    System.properties.each { key, value ->
+        if (key.toString().startsWith('seed.')) {
+            systemProperty key.toString(), value
+        }
+    }
 }

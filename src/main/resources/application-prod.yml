@@ -30,8 +30,6 @@ decorator:
       enable-logging: false
 
 app:
-  seed:
-    enabled: false
   auth:
     oauth2-success-redirect-uri: ${OAUTH2_SUCCESS_REDIRECT_URI:https://oneticket.site/auth/callback}
     oauth2-failure-redirect-uri: ${OAUTH2_FAILURE_REDIRECT_URI:https://oneticket.site/auth/callback}

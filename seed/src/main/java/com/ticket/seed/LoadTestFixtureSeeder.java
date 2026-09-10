@@ -1,41 +1,31 @@
 package com.ticket.seed;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 로컬 부하 테스트 전용 회차·좌석 데이터를 만든다.
  *
- * <p>운영 Oracle의 {@code scripts/core-capacity/create-core-capacity-data.sql}과 같은 고정 ID 대역을 쓴다.
- * 그래야 Gatling Console이 고정해서 넘기는 좌석 시작 ID와 회차 배정표를 대상만 바꿔 그대로 쓸 수 있다.
+ * <p>운영 Oracle의 {@code scripts/core-capacity/create-core-capacity-data.sql}과 같은 고정 ID 대역을
+ * 쓴다. 그래야 Gatling Console이 고정해서 넘기는 좌석 시작 ID와 회차 배정표를 대상만 바꿔 그대로
+ * 쓸 수 있다.
  *
- * <p>공용 시드인 {@link SeedDataLoader}와 {@code seed/kopis-curated.sql}은 로컬과 운영 양쪽에 쓰이므로
- * 건드리지 않는다. 이 컴포넌트는 {@code app.seed.load-test-fixture.enabled}가 참일 때만 동작하며
- * 기본값이 거짓이라 운영에는 어떤 경로로도 적재되지 않는다.
+ * <p>공용 시드({@link CuratedSeedLoader})가 먼저 실행돼 GRADES에 VIP/R/S/A code를 만들어 두면 이
+ * 시더는 그 code를 재사용한다 — 같은 code로 GRADES row를 중복 생성하지 않는다.
+ *
+ * <p>트랜잭션은 {@link #run()} 전체를 감싼다. 중간에 실패하면 전부 되돌려야 다음 실행에서
+ * {@code alreadySeeded()}가 반쯤 적재된 데이터를 보고 건너뛰는 일이 없다.
  */
-@Slf4j
-@Component
-@Order(LoadTestFixtureSeeder.ORDER)
-public class LoadTestFixtureSeeder implements ApplicationRunner {
-
-    /**
-     * 반드시 {@link SeedDataLoader} 다음에 실행해야 한다. 공용 시드가 GRADES에 VIP/R/S/A code를
-     * 먼저 만들어 두면 이 시더는 그 code를 재사용한다(같은 code로 GRADES row를 중복 생성하지
-     * 않는다).
-     */
-    static final int ORDER = SeedDataLoader.ORDER + 100;
+final class LoadTestFixtureSeeder implements SeedTask {
 
     static final long ID_BASE = 910000000L;
     static final int SEAT_COUNT = 2000;
@@ -48,59 +38,63 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
     private static final int SEATS_PER_VIEW_ROW = 50;
     private static final int BATCH_SIZE = 1000;
 
+    /**
+     * 회차·좌석 등급 배정에 쓰는 공통 정의다. code, name, price, sortOrder 순서다. ADR 0005 이후
+     * 등급 가격은 회차(PerformanceGrade) 단위로만 존재하므로 show 단위 가격표(과거 ShowGrade)는
+     * 만들지 않는다.
+     */
+    private static final String[][] GRADE_DEFS = {
+            {"VIP", "VIP석", "150000", "1"},
+            {"R", "R석", "120000", "2"},
+            {"S", "S석", "90000", "3"},
+            {"A", "A석", "60000", "4"}
+    };
+
     private final JdbcTemplate jdbcTemplate;
-    private final boolean enabled;
+    private final TransactionTemplate transactionTemplate;
     private final int performanceCount;
 
-    public LoadTestFixtureSeeder(
+    LoadTestFixtureSeeder(
             final JdbcTemplate jdbcTemplate,
-            @Value("${app.seed.load-test-fixture.enabled:false}") final boolean enabled,
-            @Value("${app.seed.load-test-fixture.performance-count:8}") final int performanceCount
+            final TransactionTemplate transactionTemplate,
+            final int performanceCount
     ) {
         this.jdbcTemplate = jdbcTemplate;
-        this.enabled = enabled;
+        this.transactionTemplate = transactionTemplate;
         this.performanceCount = performanceCount;
     }
 
-    /**
-     * 트랜잭션 경계를 여기에 둔다. {@code seedLoadTestFixture()}에 붙이면 아래 자기 호출이
-     * 프록시를 지나지 않아 트랜잭션이 걸리지 않는다. 중간에 실패하면 전부 되돌려야
-     * 다음 기동에서 {@code alreadySeeded()}가 반쯤 적재된 데이터를 보고 건너뛰는 일이 없다.
-     */
     @Override
-    @Transactional
-    public void run(final ApplicationArguments args) {
-        seedLoadTestFixture();
+    public String name() {
+        return "부하 테스트 전용 회차·좌석 적재";
     }
 
-    public void seedLoadTestFixture() {
-        if (!enabled) {
-            log.info("부하 테스트 전용 데이터 시드를 건너뜁니다. app.seed.load-test-fixture.enabled=false");
-            return;
-        }
+    @Override
+    public Outcome run() {
         if (performanceCount <= 0) {
-            log.info("부하 테스트 전용 데이터 시드를 건너뜁니다. performance-count={}", performanceCount);
-            return;
+            return Outcome.skipped("performance-count=%d 이므로 적재하지 않습니다.".formatted(performanceCount));
         }
         if (alreadySeeded()) {
-            log.info("부하 테스트 전용 데이터가 이미 있습니다. 적재를 건너뜁니다. showId={}", SHOW_ID);
-            return;
+            return Outcome.skipped(
+                    "부하 테스트 전용 데이터가 이미 있습니다(showId=%d). 중복 적재하지 않습니다.".formatted(SHOW_ID));
         }
 
+        transactionTemplate.executeWithoutResult(status -> seedLoadTestFixture());
+
+        return Outcome.done("showId=%d, 회차 %d개, 물리 좌석 %d석, 회차좌석 %d행을 적재했습니다."
+                .formatted(SHOW_ID, performanceCount, SEAT_COUNT, performanceCount * SEAT_COUNT));
+    }
+
+    private void seedLoadTestFixture() {
         final LocalDateTime now = LocalDateTime.now();
         seedVenue(now);
         seedShow(now);
         seedSeats(now);
         seedPerformances(now);
         seedSalesPolicies(now);
-        final java.util.Map<String, Long> gradeIdsByCode = ensureGrades(now);
+        final Map<String, Long> gradeIdsByCode = ensureGrades(now);
         seedPerformanceGrades(now, gradeIdsByCode);
         seedPerformanceSeats(now);
-
-        log.info(
-                "부하 테스트 전용 데이터 시드를 완료했습니다. showId={}, 회차={}, 좌석={}, 회차좌석={}",
-                SHOW_ID, performanceCount, SEAT_COUNT, performanceCount * SEAT_COUNT
-        );
     }
 
     private boolean alreadySeeded() {
@@ -177,18 +171,6 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
         }
     }
 
-    /**
-     * 회차·좌석 등급 배정에 쓰는 공통 정의다. code, name, price, sortOrder 순서다. ADR 0005 이후
-     * 등급 가격은 회차(PerformanceGrade) 단위로만 존재하므로 show 단위 가격표(과거 ShowGrade)는
-     * 만들지 않는다.
-     */
-    private static final String[][] GRADE_DEFS = {
-            {"VIP", "VIP석", "150000", "1"},
-            {"R", "R석", "120000", "2"},
-            {"S", "S석", "90000", "3"},
-            {"A", "A석", "60000", "4"}
-    };
-
     /** 구역 1~2는 VIP, 3~4는 R, 5~7은 S, 나머지는 A로 나눈다. 운영 전용 데이터와 같은 비율이다. */
     private int gradeIndex(final int seatIndex) {
         final int section = (seatIndex - 1) / SEATS_PER_SECTION + 1;
@@ -225,7 +207,7 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
     }
 
     /**
-     * ADR 0006 "Performance의 책임 혼재" A2: 예매 접수 기간·Hold 한도·대기열 정책은 이제 Booking BC의
+     * ADR 0006 "Performance의 책임 혼재" A2: 예매 접수 기간·Hold 한도·대기열 정책은 Booking BC의
      * BOOKING_PERFORMANCE_SALES_POLICIES가 소유한다. FORCE_OFF는 이 부하 테스트 전용 회차가 Queue
      * 없이 Core를 직접 호출한다는 기존 의미를 그대로 보존한다.
      */
@@ -254,20 +236,18 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
     }
 
     /**
-     * ticket-domain-module-redesign Phase 3 Task 6(ADR 0005): GRADES는 재사용 가능한 등급 코드다.
-     * {@code SeedDataLoader}(공용 시드)가 먼저 돌아 VIP/R/S/A code를 이미 만들어 뒀을 수 있어(이
-     * 시더는 그 다음 순서로 실행된다), code당 하나만 있도록 존재하면 재사용하고 없으면 새로 만든다.
+     * GRADES는 재사용 가능한 등급 코드다(ADR 0005). 공용 시드가 먼저 돌아 VIP/R/S/A code를 이미
+     * 만들어 뒀을 수 있어, code당 하나만 있도록 존재하면 재사용하고 없으면 새로 만든다.
      */
-    private java.util.Map<String, Long> ensureGrades(final LocalDateTime now) {
+    private Map<String, Long> ensureGrades(final LocalDateTime now) {
         final Timestamp createdAt = Timestamp.valueOf(now);
-        final java.util.Map<String, Long> idsByCode = new java.util.LinkedHashMap<>();
-        for (String[] def : GRADE_DEFS) {
+        final Map<String, Long> idsByCode = new LinkedHashMap<>();
+        for (final String[] def : GRADE_DEFS) {
             final List<Long> existing = jdbcTemplate.queryForList(
                     "SELECT id FROM grades WHERE code = ?", Long.class, def[0]);
             if (existing.isEmpty()) {
-                jdbcTemplate.update("""
-                                INSERT INTO grades (code, name, created_at, created_by) VALUES (?, ?, ?, ?)
-                                """,
+                jdbcTemplate.update(
+                        "INSERT INTO grades (code, name, created_at, created_by) VALUES (?, ?, ?, ?)",
                         def[0], def[1], createdAt, CREATED_BY);
                 idsByCode.put(def[0], jdbcTemplate.queryForObject(
                         "SELECT id FROM grades WHERE code = ?", Long.class, def[0]));
@@ -279,15 +259,15 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
     }
 
     /**
-     * PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) -- 회차마다
+     * PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) — 회차마다
      * PERFORMANCE_GRADES를 만든다.
      */
-    private void seedPerformanceGrades(final LocalDateTime now, final java.util.Map<String, Long> gradeIdsByCode) {
+    private void seedPerformanceGrades(final LocalDateTime now, final Map<String, Long> gradeIdsByCode) {
         final Timestamp createdAt = Timestamp.valueOf(now);
         final List<Object[]> batch = new ArrayList<>(performanceCount * GRADE_DEFS.length);
         for (int performance = 1; performance <= performanceCount; performance++) {
             final long performanceId = ID_BASE + performance;
-            for (String[] grade : GRADE_DEFS) {
+            for (final String[] grade : GRADE_DEFS) {
                 batch.add(new Object[]{
                         performanceId, gradeIdsByCode.get(grade[0]), new BigDecimal(grade[2]),
                         Integer.parseInt(grade[3]), createdAt, CREATED_BY
@@ -303,7 +283,7 @@ public class LoadTestFixtureSeeder implements ApplicationRunner {
 
     private void seedPerformanceSeats(final LocalDateTime now) {
         final Timestamp createdAt = Timestamp.valueOf(now);
-        final List<BigDecimal> prices = java.util.Arrays.stream(GRADE_DEFS)
+        final List<BigDecimal> prices = Arrays.stream(GRADE_DEFS)
                 .map(def -> new BigDecimal(def[2]))
                 .toList();
         for (int performance = 1; performance <= performanceCount; performance++) {

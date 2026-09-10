@@ -57,8 +57,6 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "spring.datasource.password=",
                 "spring.jpa.hibernate.ddl-auto=create-drop",
                 "spring.flyway.enabled=false",
-                "app.seed.enabled=false",
-                "app.seed.load-test-fixture.enabled=false",
                 "JWT_SECRET=0123456789abcdef0123456789abcdef",
                 "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
                 "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",

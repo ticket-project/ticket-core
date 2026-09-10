@@ -26,8 +26,6 @@ spring:
       verification-enabled: true
 
 app:
-  seed:
-    enabled: false
   auth:
     oauth2-success-redirect-uri: ${OAUTH2_SUCCESS_REDIRECT_URI:http://localhost:3000/auth/callback}
     oauth2-failure-redirect-uri: ${OAUTH2_FAILURE_REDIRECT_URI:http://localhost:3000/auth/callback}

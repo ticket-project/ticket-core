@@ -1,6 +1,6 @@
 # seed-kopis — KOPIS 공연 시드 최신화 도구
 
-KOPIS OpenAPI에서 신규 공연을 가져와 `src/main/resources/seed/kopis-curated.sql`에 **누적 추가**한다.
+KOPIS OpenAPI에서 신규 공연을 가져와 `seed/sql/kopis-curated.sql`에 **누적 추가**한다.
 기존 시드(SHOWS 1~292 등)는 건드리지 않고, 다음 id부터 이어 붙인다.
 
 
@@ -47,14 +47,21 @@ $env:KOPIS_SERVICE_KEY="xxxx"; node seed/kopis/fetch-kopis.mjs --target 100 --fr
 
 ## 병합 후 검증
 
-ticket 저장소 루트에서 적재 무결성 테스트를 실행한다.
+ticket 저장소 루트에서 시드 테스트를 실행한다. 병합 결과 SQL을 실제 앱 스키마에 적재해 보고
+공연·회차·좌석·등급·가격·판매정책 관계까지 확인한다.
 
 ```powershell
-.\gradlew.bat test --tests "com.ticket.seed.*"
+.\gradlew.bat seedTest
 ```
 
 ```bash
-./gradlew test --tests "com.ticket.seed.*"
+./gradlew seedTest
+```
+
+id 연속성·중복·FK만 빠르게 보려면 검증 스크립트를 쓴다.
+
+```bash
+node seed/kopis/verify-seed.mjs seed/sql/kopis-curated.sql
 ```
 
 문제가 있으면 `kopis-curated.sql.bak`으로 복원한다.
