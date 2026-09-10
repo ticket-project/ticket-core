@@ -210,6 +210,10 @@ tasks.register('seedLocal', JavaExec) {
     description = '로컬 H2 DB에 시드 데이터를 적재한다 (서버 기동 후 실행).'
     mainClass = 'com.ticket.seed.SeedLocalMain'
     classpath = sourceSets.seedMain.runtimeClasspath
+    // Gradle이 자식 프로세스 출력을 UTF-8로 읽는다. 시드 프로그램의 한국어 출력이 Windows
+    // 콘솔 인코딩(cp949)으로 나가면 그 자리에서 깨진다.
+    systemProperty 'stdout.encoding', 'UTF-8'
+    systemProperty 'stderr.encoding', 'UTF-8'
     systemProperty 'seed.project-dir', projectDir.absolutePath
     System.properties.each { key, value ->
         if (key.toString().startsWith('seed.')) {
