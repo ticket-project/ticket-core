@@ -8,6 +8,7 @@ import com.ticket.booking.support.exception.BookingException;
 import com.ticket.booking.support.exception.NoAvailableSeatException;
 import com.ticket.booking.support.exception.SeatAlreadyHoldException;
 import com.ticket.booking.support.exception.SeatMismatchInPerformanceException;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -46,7 +47,8 @@ class SeatSelectionAvailabilityValidatorTest {
     void 회차에_없는_좌석이면_실패한다() {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.empty());
 
-        assertError(SeatMismatchInPerformanceException.class);
+        assertError(SeatMismatchInPerformanceException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L);
 
         verifyNoInteractions(holdManager);
     }
@@ -56,7 +58,8 @@ class SeatSelectionAvailabilityValidatorTest {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L))
                 .thenReturn(Optional.of(new SeatSelectionAvailabilitySnapshot(30L, PerformanceSeatState.RESERVED)));
 
-        assertError(NoAvailableSeatException.class);
+        assertError(NoAvailableSeatException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L);
 
         verifyNoInteractions(holdManager);
     }
@@ -66,11 +69,15 @@ class SeatSelectionAvailabilityValidatorTest {
         when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
-        assertError(SeatAlreadyHoldException.class);
+        assertError(SeatAlreadyHoldException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L)
+                .hasFieldOrPropertyWithValue("seatId", 20L);
     }
 
-    private void assertError(final Class<? extends BookingException> expected) {
-        assertThatThrownBy(() -> validator.validate(10L, 20L))
+    private AbstractThrowableAssert<?, ? extends Throwable> assertError(
+            final Class<? extends BookingException> expected
+    ) {
+        return assertThatThrownBy(() -> validator.validate(10L, 20L))
                 .isInstanceOf(expected);
     }
 

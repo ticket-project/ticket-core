@@ -27,13 +27,13 @@ public class SeatSelectionAvailabilityValidator {
     public Long validate(final Long performanceId, final Long seatId) {
         final SeatSelectionAvailabilitySnapshot seat = performanceSeatRepository
                 .findSelectableSeat(performanceId, seatId)
-                .orElseThrow(() -> new SeatMismatchInPerformanceException());
+                .orElseThrow(() -> new SeatMismatchInPerformanceException(performanceId));
 
         if (seat.state() != PerformanceSeatState.AVAILABLE) {
-            throw new NoAvailableSeatException();
+            throw new NoAvailableSeatException(performanceId);
         }
         if (holdManager.isHeld(performanceId, seatId)) {
-            throw new SeatAlreadyHoldException();
+            throw new SeatAlreadyHoldException(performanceId, seatId);
         }
         return seat.performanceSeatId();
     }

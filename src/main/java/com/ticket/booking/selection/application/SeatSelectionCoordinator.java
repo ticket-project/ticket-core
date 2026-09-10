@@ -34,10 +34,10 @@ public class SeatSelectionCoordinator {
     ) {
         lockManager.withLock(java.util.List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
-                throw new PerformanceIsPastException();
+                throw new PerformanceIsPastException(performanceId);
             }
             if (holdManager.isHeld(performanceId, seatId)) {
-                throw new SeatAlreadyHoldException();
+                throw new SeatAlreadyHoldException(performanceId, seatId);
             }
             seatSelectionService.select(performanceId, seatId, memberId);
         });
