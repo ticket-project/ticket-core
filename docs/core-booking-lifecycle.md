@@ -213,8 +213,8 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
   `OrderState`(PENDING/CONFIRMED/EXPIRED/CANCELED)
 - 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
 - 커밋 후 리스너: `booking.application.BookingEventListeners`
-- hold 생성/해제 후속 처리: `booking.application.HoldCreationTaskProcessor`,
-  `booking.application.HoldReleaseTaskProcessor`, `booking.application.HoldReleaseProgressRecorder`
+- hold 생성/해제 후속 처리: `booking.hold.application.HoldCreationTaskProcessor`,
+  `booking.hold.application.HoldReleaseTaskProcessor`, `booking.hold.application.HoldReleaseProgressRecorder`
 - 만료 보정: `booking.application.usecase.ExpirePendingOrdersUseCase`
 - background 트리거: `booking.infrastructure.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.support.infrastructure.RedisExpirationListenerConfig`

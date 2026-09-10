@@ -3,7 +3,7 @@ package com.ticket.booking.application.usecase;
 import com.ticket.booking.application.SeatStateSnapshotReader;
 
 import com.ticket.booking.admission.application.AdmissionVerifier;
-import com.ticket.booking.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.selection.domain.SeatSelectionService;

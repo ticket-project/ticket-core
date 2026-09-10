@@ -1,8 +1,8 @@
 package com.ticket.booking.application;
 
 import com.ticket.TicketApplication;
-import com.ticket.booking.domain.Hold;
-import com.ticket.booking.domain.HoldAllocation;
+import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.HoldAllocation;
 import com.ticket.booking.domain.PendingOrderCreationResult;
 import com.ticket.booking.domain.OrderState;
 import com.ticket.booking.domain.OrderRepository;

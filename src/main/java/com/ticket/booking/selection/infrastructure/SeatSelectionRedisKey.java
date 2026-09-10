@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
  * selection 관련 Redis key 규칙을 한 곳에서 관리한다.
  *
  * <p>hold 관련 key(hold, holdMeta, holdSeatIndex, tryParseHoldMetaKey)는
- * {@code com.ticket.booking.infrastructure.HoldRedisKey}로 옮겼다 — selection과 hold는
+ * {@code com.ticket.booking.hold.infrastructure.HoldRedisKey}로 옮겼다 — selection과 hold는
  * 독립 개념이라(ADR 0001) hold key 파싱이 selection 소유 클래스에 있을 이유가 없었다.
  */
 public final class SeatSelectionRedisKey {
