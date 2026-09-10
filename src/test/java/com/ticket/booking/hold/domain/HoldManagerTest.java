@@ -60,7 +60,9 @@ class HoldManagerTest {
         when(holdStore.isHeld(1L, 10L)).thenReturn(true);
 
         assertThatThrownBy(() -> holdManager.createHold(1L, 1L, RequestedSeatIds.from(List.of(10L)), Duration.ofMinutes(5), FIXED_NOW))
-                .isInstanceOf(SeatAlreadyHoldException.class);
+                .isInstanceOf(SeatAlreadyHoldException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 1L)
+                .hasFieldOrPropertyWithValue("seatId", 10L);
     }
 
     @Test

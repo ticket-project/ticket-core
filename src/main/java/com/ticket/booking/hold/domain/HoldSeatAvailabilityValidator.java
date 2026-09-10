@@ -21,13 +21,13 @@ public class HoldSeatAvailabilityValidator {
         final List<Long> seatIds = requestedSeatIds.toList();
         final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds);
         if (performanceSeats.size() != requestedSeatIds.size()) {
-            throw new SeatMismatchInPerformanceException();
+            throw new SeatMismatchInPerformanceException(performanceId);
         }
 
         final boolean hasUnavailableSeat = performanceSeats.stream()
                 .anyMatch(seat -> seat.getState() != PerformanceSeatState.AVAILABLE);
         if (hasUnavailableSeat) {
-            throw new NoAvailableSeatException();
+            throw new NoAvailableSeatException(performanceId);
         }
         return performanceSeats;
     }

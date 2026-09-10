@@ -25,7 +25,7 @@ public class SeatSelectionService {
         final boolean locked = seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL);
         if (!locked) {
             log.warn("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
-            throw new SeatAlreadySelectedException();
+            throw new SeatAlreadySelectedException(performanceId, seatId);
         }
         log.debug("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
     }
@@ -71,7 +71,7 @@ public class SeatSelectionService {
             return;
         }
         logNotOwned(performanceId, seatId, memberId, holder);
-        throw new SeatNotOwnedException();
+        throw new SeatNotOwnedException(performanceId, seatId, memberId);
     }
 
     private void releaseSeat(
@@ -96,7 +96,7 @@ public class SeatSelectionService {
             return;
         }
         logNotOwned(performanceId, seatId, memberId, currentHolder);
-        throw new SeatNotOwnedException();
+        throw new SeatNotOwnedException(performanceId, seatId, memberId);
     }
 
     private void logNotOwned(final Long performanceId, final Long seatId, final Long memberId, final String holder) {

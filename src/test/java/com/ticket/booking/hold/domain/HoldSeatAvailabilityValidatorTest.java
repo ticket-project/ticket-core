@@ -49,7 +49,8 @@ class HoldSeatAvailabilityValidatorTest {
                 .thenReturn(List.of(availableSeat));
 
         assertThatThrownBy(() -> validator.validate(1L, seatIds))
-                .isInstanceOf(SeatMismatchInPerformanceException.class);
+                .isInstanceOf(SeatMismatchInPerformanceException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 1L);
     }
 
     @Test
@@ -61,7 +62,8 @@ class HoldSeatAvailabilityValidatorTest {
                 .thenReturn(List.of(availableSeat, reservedSeat));
 
         assertThatThrownBy(() -> validator.validate(1L, seatIds))
-                .isInstanceOf(NoAvailableSeatException.class);
+                .isInstanceOf(NoAvailableSeatException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 1L);
     }
 
     @Test

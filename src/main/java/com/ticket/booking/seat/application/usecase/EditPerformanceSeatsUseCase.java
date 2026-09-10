@@ -71,7 +71,7 @@ public class EditPerformanceSeatsUseCase {
         if (performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds).isEmpty()) {
             return;
         }
-        throw new PerformanceSeatAlreadyEditionedException();
+        throw new PerformanceSeatAlreadyEditionedException(performanceId);
     }
 
     private PerformanceSeat toPerformanceSeat(
@@ -81,11 +81,11 @@ public class EditPerformanceSeatsUseCase {
             final PerformanceSaleSnapshot snapshot
     ) {
         if (!snapshot.seatInfoBySeatId().containsKey(seatId)) {
-            throw new SeatVenueMismatchException();
+            throw new SeatVenueMismatchException(performanceId, seatId);
         }
         final PerformanceSaleSnapshot.GradeInfo gradeInfo = snapshot.gradeInfoByPerformanceGradeId().get(performanceGradeId);
         if (gradeInfo == null) {
-            throw new PerformanceGradeMismatchException();
+            throw new PerformanceGradeMismatchException(performanceId, performanceGradeId);
         }
         return new PerformanceSeat(performanceId, seatId, performanceGradeId, PerformanceSeatState.AVAILABLE, gradeInfo.price());
     }

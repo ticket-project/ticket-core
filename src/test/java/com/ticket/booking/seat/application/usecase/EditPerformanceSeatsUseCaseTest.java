@@ -62,7 +62,8 @@ class EditPerformanceSeatsUseCaseTest {
                 new EditPerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
 
         assertThatThrownBy(() -> useCase.execute(input))
-                .isInstanceOf(PerformanceSeatAlreadyEditionedException.class);
+                .isInstanceOf(PerformanceSeatAlreadyEditionedException.class)
+                .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID);
         verify(performanceSaleCatalog, org.mockito.Mockito.never()).getSaleSnapshot(anyLong(), anySet());
     }
 
@@ -77,7 +78,9 @@ class EditPerformanceSeatsUseCaseTest {
                 new EditPerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
 
         assertThatThrownBy(() -> useCase.execute(input))
-                .isInstanceOf(SeatVenueMismatchException.class);
+                .isInstanceOf(SeatVenueMismatchException.class)
+                .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID)
+                .hasFieldOrPropertyWithValue("seatId", SEAT_ID);
     }
 
     @Test
@@ -91,7 +94,9 @@ class EditPerformanceSeatsUseCaseTest {
                 new EditPerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
 
         assertThatThrownBy(() -> useCase.execute(input))
-                .isInstanceOf(PerformanceGradeMismatchException.class);
+                .isInstanceOf(PerformanceGradeMismatchException.class)
+                .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID)
+                .hasFieldOrPropertyWithValue("performanceGradeId", PERFORMANCE_GRADE_ID);
     }
 
     @Test

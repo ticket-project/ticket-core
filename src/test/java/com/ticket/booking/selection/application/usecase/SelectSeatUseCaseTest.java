@@ -141,7 +141,7 @@ class SelectSeatUseCaseTest {
     @Test
     void 좌석_검증이_실패하면_선택하지_않는다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(false)));
-        doThrow(new SeatAlreadyHoldException())
+        doThrow(new SeatAlreadyHoldException(10L, 20L))
                 .when(seatSelectionAvailabilityValidator).validate(10L, 20L);
 
         assertThatThrownBy(() -> useCase.execute(INPUT))

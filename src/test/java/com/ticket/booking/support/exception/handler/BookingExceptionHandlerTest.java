@@ -42,23 +42,23 @@ class BookingExceptionHandlerTest {
 
     static Stream<Arguments> 오류_계약() {
         return Stream.of(
-                Arguments.of(new PerformanceIsPastException(), HttpStatus.BAD_REQUEST, "E3001",
+                Arguments.of(new PerformanceIsPastException(10L), HttpStatus.BAD_REQUEST, "E3001",
                         "과거 공연은 예매할 수 없습니다."),
-                Arguments.of(new NotYetReserveTimeException(), HttpStatus.BAD_REQUEST, "E3002",
+                Arguments.of(new NotYetReserveTimeException(10L), HttpStatus.BAD_REQUEST, "E3002",
                         "아직 예매가 오픈되지 않았습니다."),
-                Arguments.of(new NoAvailableSeatException(), HttpStatus.BAD_REQUEST, "E3003",
+                Arguments.of(new NoAvailableSeatException(10L), HttpStatus.BAD_REQUEST, "E3003",
                         "이용 가능한 좌석이 없습니다."),
-                Arguments.of(new SeatMismatchInPerformanceException(), HttpStatus.BAD_REQUEST, "E4000",
+                Arguments.of(new SeatMismatchInPerformanceException(10L), HttpStatus.BAD_REQUEST, "E4000",
                         "요청한 좌석 정보와 일치하지 않습니다."),
-                Arguments.of(new SeatAlreadySelectedException(), HttpStatus.CONFLICT, "E4001",
+                Arguments.of(new SeatAlreadySelectedException(10L, 20L), HttpStatus.CONFLICT, "E4001",
                         "이미 선택된 좌석입니다."),
-                Arguments.of(new SeatNotOwnedException(), HttpStatus.FORBIDDEN, "E4002",
+                Arguments.of(new SeatNotOwnedException(10L, 20L, 30L), HttpStatus.FORBIDDEN, "E4002",
                         "본인이 선택한 좌석만 해제할 수 있습니다."),
-                Arguments.of(new SeatVenueMismatchException(), HttpStatus.BAD_REQUEST, "E4003",
+                Arguments.of(new SeatVenueMismatchException(10L, 20L), HttpStatus.BAD_REQUEST, "E4003",
                         "요청한 좌석이 이 회차의 공연장에 속하지 않습니다."),
-                Arguments.of(new PerformanceGradeMismatchException(), HttpStatus.BAD_REQUEST, "E4004",
+                Arguments.of(new PerformanceGradeMismatchException(10L, 40L), HttpStatus.BAD_REQUEST, "E4004",
                         "요청한 등급이 이 회차에 속하지 않습니다."),
-                Arguments.of(new PerformanceSeatAlreadyEditionedException(), HttpStatus.BAD_REQUEST, "E4005",
+                Arguments.of(new PerformanceSeatAlreadyEditionedException(10L), HttpStatus.BAD_REQUEST, "E4005",
                         "이미 편성된 좌석입니다."),
                 Arguments.of(new OrderNotPendingException(), HttpStatus.CONFLICT, "E5002",
                         "결제 대기 주문만 처리할 수 있습니다."),
@@ -66,9 +66,9 @@ class BookingExceptionHandlerTest {
                         "본인 주문만 처리할 수 있습니다."),
                 Arguments.of(new PendingOrderAlreadyExistsException(), HttpStatus.CONFLICT, "E5004",
                         "이미 진행 중인 결제 대기 주문이 있습니다."),
-                Arguments.of(new SeatAlreadyHoldException(), HttpStatus.CONFLICT, "E6000",
+                Arguments.of(new SeatAlreadyHoldException(10L, 20L), HttpStatus.CONFLICT, "E6000",
                         "좌석이 이미 선점되었습니다."),
-                Arguments.of(new ExceedHoldLimitException(), HttpStatus.CONFLICT, "E6001",
+                Arguments.of(new ExceedHoldLimitException(5L, 4), HttpStatus.CONFLICT, "E6001",
                         "선점 가능한 좌석 수를 초과하였습니다."),
                 Arguments.of(new HoldBusyException(), HttpStatus.CONFLICT, "E6003",
                         "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
@@ -89,6 +89,9 @@ class BookingExceptionHandlerTest {
         assertThat(response.getBody().getError().getCode()).isEqualTo(expectedCode);
         assertThat(response.getBody().getError().getMessage()).isEqualTo(expectedMessage);
         assertThat(response.getBody().getData()).isNull();
+        // 새로 생긴 진단 필드(performanceId, seatId, memberId, 수량)가 error.data로 새어 나가지
+        // 않는지 여기서 본다 — 바깥 봉투의 getData()는 성공 data라 이것을 잡지 못한다.
+        assertThat(response.getBody().getError().getData()).isNull();
     }
 
     @Test

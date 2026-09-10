@@ -56,7 +56,7 @@ public class HoldManager {
     private void ensureSeatsNotHeld(final Long performanceId, final List<Long> seatIds) {
         for (final Long seatId : seatIds) {
             if (isHeld(performanceId, seatId)) {
-                throw new SeatAlreadyHoldException();
+                throw new SeatAlreadyHoldException(performanceId, seatId);
             }
         }
     }

@@ -47,7 +47,9 @@ class SeatSelectionServiceTest {
         //when
         //then
         assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L))
-                .isInstanceOf(SeatAlreadySelectedException.class);
+                .isInstanceOf(SeatAlreadySelectedException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L)
+                .hasFieldOrPropertyWithValue("seatId", 20L);
     }
 
     @Test
@@ -70,7 +72,10 @@ class SeatSelectionServiceTest {
         //when
         //then
         assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
-                .isInstanceOf(SeatNotOwnedException.class);
+                .isInstanceOf(SeatNotOwnedException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L)
+                .hasFieldOrPropertyWithValue("seatId", 20L)
+                .hasFieldOrPropertyWithValue("memberId", 3L);
     }
 
     @Test
@@ -105,7 +110,10 @@ class SeatSelectionServiceTest {
         //when
         //then
         assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
-                .isInstanceOf(SeatNotOwnedException.class);
+                .isInstanceOf(SeatNotOwnedException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L)
+                .hasFieldOrPropertyWithValue("seatId", 20L)
+                .hasFieldOrPropertyWithValue("memberId", 3L);
     }
 
     @Test

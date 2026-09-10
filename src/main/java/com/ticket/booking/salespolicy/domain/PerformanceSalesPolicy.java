@@ -71,10 +71,10 @@ public class PerformanceSalesPolicy extends BookingAuditedEntity {
     public void ensureAcceptingOrders(final LocalDateTime now) {
         final OrderAcceptanceStatus status = acceptanceStatus(now);
         if (status == OrderAcceptanceStatus.BEFORE_OPEN) {
-            throw new NotYetReserveTimeException();
+            throw new NotYetReserveTimeException(performanceId);
         }
         if (status == OrderAcceptanceStatus.CLOSED) {
-            throw new PerformanceIsPastException();
+            throw new PerformanceIsPastException(performanceId);
         }
     }
 
@@ -84,7 +84,7 @@ public class PerformanceSalesPolicy extends BookingAuditedEntity {
      */
     public void ensureWithinHoldLimit(final long requestedSeatCount) {
         if (holdPolicy.exceeds(requestedSeatCount)) {
-            throw new ExceedHoldLimitException();
+            throw new ExceedHoldLimitException(requestedSeatCount, holdPolicy.maxSeatCount());
         }
     }
 
