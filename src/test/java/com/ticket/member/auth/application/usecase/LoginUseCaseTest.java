@@ -1,10 +1,10 @@
 package com.ticket.member.auth.application.usecase;
 
-import com.ticket.member.domain.Role;
+import com.ticket.member.account.domain.Role;
 import com.ticket.member.auth.application.CredentialAuthenticator;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
-import com.ticket.member.domain.Member;
+import com.ticket.member.account.domain.Member;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

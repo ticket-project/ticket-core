@@ -1,11 +1,11 @@
 package com.ticket.member.oauth.application;
 
 import com.ticket.member.oauth.domain.OAuth2UserInfo;
-import com.ticket.member.domain.Member;
-import com.ticket.member.domain.MemberRepository;
-import com.ticket.member.domain.Email;
-import com.ticket.member.domain.Role;
-import com.ticket.member.domain.SocialProvider;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
+import com.ticket.member.account.domain.Email;
+import com.ticket.member.account.domain.Role;
+import com.ticket.member.account.domain.SocialProvider;
 import com.ticket.member.exception.DuplicateEmailException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

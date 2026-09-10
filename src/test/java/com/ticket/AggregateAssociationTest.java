@@ -48,8 +48,8 @@ class AggregateAssociationTest {
     private static final Set<Association> APPROVED_ASSOCIATIONS = Set.of(
             new Association("com.ticket.booking.order.domain.Order", "com.ticket.booking.order.domain.OrderSeat"),
             new Association("com.ticket.booking.order.domain.OrderSeat", "com.ticket.booking.order.domain.Order"),
-            new Association("com.ticket.member.domain.Member", "com.ticket.member.domain.MemberSocialAccount"),
-            new Association("com.ticket.member.domain.MemberSocialAccount", "com.ticket.member.domain.Member"),
+            new Association("com.ticket.member.account.domain.Member", "com.ticket.member.account.domain.MemberSocialAccount"),
+            new Association("com.ticket.member.account.domain.MemberSocialAccount", "com.ticket.member.account.domain.Member"),
             new Association("com.ticket.show.domain.PerformanceGrade", "com.ticket.show.domain.Performance")
     );
 

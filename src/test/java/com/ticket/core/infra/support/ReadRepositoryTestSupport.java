@@ -1,8 +1,8 @@
 package com.ticket.core.infra.support;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.member.domain.Member;
-import com.ticket.member.domain.Email;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.Email;
 import com.ticket.show.domain.Performance;
 import com.ticket.show.domain.PerformanceGrade;
 import com.ticket.show.domain.Grade;
@@ -19,7 +19,7 @@ import com.ticket.venue.domain.Venue;
 import com.ticket.like.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.member.domain.Role;
+import com.ticket.member.account.domain.Role;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;

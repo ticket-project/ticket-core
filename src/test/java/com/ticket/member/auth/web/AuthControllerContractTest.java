@@ -6,7 +6,7 @@ import com.ticket.member.oauth.application.usecase.ExchangeOAuth2TokenUseCase;
 import com.ticket.member.auth.application.usecase.LoginUseCase;
 import com.ticket.member.auth.application.usecase.LogoutUseCase;
 import com.ticket.member.auth.application.usecase.RefreshAuthTokenUseCase;
-import com.ticket.member.application.usecase.RegisterMemberUseCase;
+import com.ticket.member.account.application.usecase.RegisterMemberUseCase;
 import com.ticket.member.oauth.application.usecase.GetSocialLoginUrlsUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
 import com.ticket.member.AuthenticatedMember;

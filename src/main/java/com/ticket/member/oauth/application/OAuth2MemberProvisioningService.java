@@ -1,11 +1,11 @@
 package com.ticket.member.oauth.application;
 
 import com.ticket.member.oauth.domain.OAuth2UserInfo;
-import com.ticket.member.domain.Member;
-import com.ticket.member.domain.MemberRepository;
-import com.ticket.member.domain.MemberSocialAccount;
-import com.ticket.member.domain.Email;
-import com.ticket.member.domain.Role;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
+import com.ticket.member.account.domain.MemberSocialAccount;
+import com.ticket.member.account.domain.Email;
+import com.ticket.member.account.domain.Role;
 import com.ticket.member.exception.DuplicateEmailException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

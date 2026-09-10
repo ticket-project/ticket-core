@@ -1,7 +1,7 @@
 package com.ticket.member.auth.infrastructure;
 
 import com.ticket.member.auth.application.PasswordHasher;
-import com.ticket.member.domain.EncodedPassword;
+import com.ticket.member.account.domain.EncodedPassword;
 import com.ticket.member.auth.domain.RawPassword;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
