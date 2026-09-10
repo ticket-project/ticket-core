@@ -16,6 +16,9 @@ allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git
 
 Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
 
+`test`는 `seed/` 소스 집합의 `seedTest`를 함께 돌린다(`finalizedBy`). 서비스 테스트만 좁게 볼
+때는 `-x seedTest`를 붙인다.
+
 ## 변경 범위별 전략
 
 | 변경 범위 | 무엇을 돌리는가 |
@@ -26,8 +29,9 @@ Windows PowerShell에서는 `.\gradlew.bat`을 쓴다.
 | Redis adapter, key, TTL, expiration listener | 그 BC의 Redis integration test(Docker/Testcontainers 필요) |
 | Modulith 이벤트(발행·리스너·재시도) | `EventPublicationMaintenance` 관련 scenario test — [아래](#modulith-이벤트-검증) |
 | 주문·hold·좌석 상태 흐름이나 모듈 간 조립 | `com.ticket.bootstrap.*`의 관련 E2E(Docker 필요, 전체 컨텍스트) |
-| 배포 산출물까지 확인 | `./gradlew clean bootJar -x test` |
-| push·PR 직전 | `./gradlew clean test bootJar`(CI의 `.github/workflows/ci.yml`과 같은 명령) |
+| 시드 SQL·시드 실행 코드(`seed/`) | `./gradlew seedTest` — 무엇을 고정하는지는 [seed/README.md](../../../seed/README.md) |
+| 배포 산출물까지 확인 | `./gradlew clean bootJar -x test` + `./gradlew verifySeedNotInBootJar` |
+| push·PR 직전 | `./gradlew clean test bootJar verifySeedNotInBootJar`(CI의 `.github/workflows/ci.yml`과 같은 명령) |
 | 문서만 바꿨다 | `rg -n "찾을_문구"`와 `git diff --check` |
 
 **실제 테스트 클래스는 소스에서 탐색해 고른다 — 위 표는 카테고리이지 클래스 이름이 아니다.**

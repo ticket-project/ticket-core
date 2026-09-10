@@ -49,6 +49,15 @@ $env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 OAuth2 값은 로컬 기동용 예시다. 실제 소셜 로그인을 확인하려면 각 공급자에서 발급받은
 로컬 callback용 값으로 교체한다.
 
+기동이 끝나면 초기 데이터를 넣는다. **기동은 데이터를 넣지 않는다.**
+
+```powershell
+.\gradlew.bat seedLocal
+```
+
+local 프로파일은 `ddl-auto: create`라 서버를 재시작하면 다시 실행해야 한다. 적재 대상과
+조정할 수 있는 값은 [`seed/README.md`](seed/README.md)를 본다.
+
 프로파일별 설정과 환경 변수 상세는 [`docs/operations.md`](docs/operations.md)를 본다.
 
 Swagger UI: `/api/swagger-ui.html`, OpenAPI: `/api/api-docs`

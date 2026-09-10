@@ -33,10 +33,25 @@ Windows PowerShell:
 .\gradlew.bat bootRun --args='--spring.profiles.active=local'
 ```
 
+초기 데이터 적재(기동 완료 후):
+
+```powershell
+.\gradlew.bat seedLocal
+```
+
+```bash
+./gradlew seedLocal
+```
+
+**기동은 데이터를 넣지 않는다.** 순서는 `서버 기동 완료 → seedLocal → 개발·부하 테스트`이고,
+local 프로파일은 `ddl-auto: create`라 서버를 재시작하면 `seedLocal`을 다시 실행해야 한다.
+적재 대상·기본값·반복 실행 규칙은 [seed/README.md](../seed/README.md)가 원본이다.
+
 **단일 Gradle Spring Boot 프로젝트다.** `@SpringBootApplication`(`@Modulith`)과 `application*.yml`이
 루트 `src/main/resources`에 있으므로 `:core:core-api:bootRun` 같은 subproject 실행 명령은 없다.
 `application.yml`에 기본 프로파일이 없어 프로파일을 지정하지 않으면 datasource 설정이 비어
-기동에 실패한다.
+기동에 실패한다. 시드는 애플리케이션 밖의 별도 source set(`seed/`)이라 `bootJar`에 들어가지
+않는다.
 
 Swagger:
 
@@ -56,7 +71,8 @@ Swagger:
 - Redis
 - `ddl-auto: create`
 - Flyway: disabled
-- seed data: enabled
+- 초기 데이터: **기동 시 자동으로 넣지 않는다.** 기동이 끝난 뒤 `.\gradlew.bat seedLocal`을
+  따로 실행한다 — [seed/README.md](../seed/README.md)
 
 관련 설정:
 
@@ -69,7 +85,7 @@ Swagger:
 - Redis
 - `ddl-auto: validate`
 - Flyway: enabled, module-aware(`spring.modulith.runtime.flyway-enabled: true`)
-- seed data: disabled
+- 초기 데이터: 넣지 않는다(`seedLocal`은 local 프로파일 설정을 읽는 로컬 전용 명령이다)
 - local 프로파일이 생성한 H2 DB를 대상으로 Flyway baseline/migration을 검증
 
 관련 설정:
@@ -277,9 +293,10 @@ SELECT id FROM SHOWS WHERE venue_id IS NOT NULL AND venue_id NOT IN (SELECT id F
 결과가 있으면 애플리케이션 오류가 아니라 데이터 정합성 문제다 — 해당 Show의 `venue_id`를 바로잡거나
 Venue 데이터를 복구한다.
 
-local 프로파일은 H2 file DB(`~/ticket-local`)를 Hibernate `ddl-auto:create`와 seed loader로
-초기화한다. dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동 DDL과 seed loader를 끄고
-Flyway만 활성화한다. 기존 local DB를 dev에서 처음 Flyway에 편입할 때만
+local 프로파일은 H2 file DB(`~/ticket-local`)의 스키마를 Hibernate `ddl-auto:create`로 매
+기동마다 다시 만든다. 초기 데이터는 기동에 포함되지 않으므로 기동 후 `seedLocal`을 실행한다
+([seed/README.md](../seed/README.md)). dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동
+DDL을 끄고 Flyway만 활성화한다. 기존 local DB를 dev에서 처음 Flyway에 편입할 때만
 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 지정해 version `1` baseline을 만들고, 평소에는
 기본값(`false`)을 유지한다. 이후 변경은 `__root`의 `V2__...sql`부터, module 소유 변경은 해당
 module 폴더의 `V1__...sql`부터 검증한다.
@@ -291,10 +308,11 @@ H2 DB를 생성하거나, 별도 스키마 생성 migration 전략을 정해야 
 ## 배포 workflow
 
 GitHub Actions CI(`ci.yml`)는 root project 하나만 있는 단일 Gradle build로 전체 테스트를 통과한
-뒤 bootJar를 만든다.
+뒤 bootJar를 만든다. `test`는 `seed/` 소스 집합의 `seedTest`를 함께 돌리고,
+`verifySeedNotInBootJar`는 만들어진 jar에 시드 산출물이 섞이지 않았는지 확인한다.
 
 ```bash
-./gradlew clean test bootJar
+./gradlew clean test bootJar verifySeedNotInBootJar
 ```
 
 `.github/workflows/deploy.yml`은 `master` push에서 위 CI(`ci.yml`)를 호출해 통과한 jar를 받아

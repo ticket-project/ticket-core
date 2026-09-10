@@ -12,11 +12,18 @@
 
 ## 단일 source set
 
-별도 `integrationTest` Gradle source set과 subproject는 없다. 모든 테스트가 `src/test`에 있고,
-**source set이 아니라 실행 특성**으로 종류를 나눈다. Spring 컨텍스트, `EntityManager`, 실제
-DB/Redis가 필요하면 `@DataJpaTest`/`@SpringBootTest`/Testcontainers를 쓰고, 그렇지 않으면 순수
-단위 테스트로 둔다. 클래스 이름에 `Integration`이나 `E2E`가 붙어 있어도 판정 기준은 실행
-특성이다.
+별도 `integrationTest` Gradle source set과 subproject는 없다. 서비스 테스트는 모두 `src/test`에
+있고, **source set이 아니라 실행 특성**으로 종류를 나눈다.
+
+**예외는 시드다.** 애플리케이션 밖에서 도는 초기 데이터 적재 프로그램(`seed/`)은 별도 source
+set(`seedMain`/`seedTest`)이고 테스트도 `seed/src/test/java`에 둔다 — 시드 코드가 서비스
+classpath에 올라가면 `bootJar`에 섞이고 Modulith가 업무 모듈로 다시 탐지한다. 실행은
+`./gradlew seedTest`이며 `test`가 이를 함께 돌린다(좁게 볼 때는 `-x seedTest`). 무엇을 고정하는지는
+[seed/README.md](../seed/README.md)가 원본이다.
+
+Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면
+`@DataJpaTest`/`@SpringBootTest`/Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
+클래스 이름에 `Integration`이나 `E2E`가 붙어 있어도 판정 기준은 실행 특성이다.
 
 | 실행 특성 | 두는 것 | 두지 않는 것 |
 | --- | --- | --- |
@@ -58,6 +65,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 | `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것. 생성물 목록과 CI artifact는 [architecture.md의 생성 문서](architecture.md#생성-문서)가 원본이다 |
+| `com.ticket.seed.ServiceSourceSeparationTest`(`seedTest`) | 시드 실행 코드·시드 SQL이 서비스 소스로 다시 섞이지 않는 것. 실제 jar는 `verifySeedNotInBootJar`가 확인한다 |
 
 `com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 `src/main/java`에 그 패키지가
 남지 않아(ADR 0003 §8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상
@@ -198,6 +206,9 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `web`,
   `UseCase.Input` 계약은 `application`, 업무 불변식은 `domain` 테스트다. 같은
   규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [architecture.md의 계층별 검증 책임](architecture.md#계층별-검증-책임)을 본다.
+- 외부 오류 계약의 변경 영향을 분석할 때는 응답 구조·HTTP 상태·`error.code` 값에 대한 의존을
+  구분하고, 소비자 소스의 실제 사용 지점을 확인한다. 응답 봉투를 사용한다는 사실만으로 특정
+  오류 코드 값에 의존한다고 판단하지 않는다. [관측 2026-09-10]
 - 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 이벤트 재시도, 순서 역전**을
   함께 고정한다.
 - 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로

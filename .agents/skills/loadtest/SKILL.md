@@ -28,9 +28,12 @@ Gatling 소스와 실행 옵션의 원본은 형제 저장소 `../gatling-test`�
 
 1. Redis와 로컬 관측성 도구를 실행한다.
 2. API 서버를 local 프로파일로 실행한다.
-3. 테스트용 회원 JWT 또는 seed 회원 로그인을 준비한다.
-4. Simulation 또는 정합성 JUnit 테스트를 실행한다.
-5. 실패율, 응답 시간, admitted/waiting 비율, safe TPS, order 성공·거부 건수를 확인한다.
+3. **기동이 끝난 뒤 `./gradlew seedLocal`로 초기 데이터를 넣는다.** 기동은 데이터를 넣지 않고,
+   local 프로파일은 `ddl-auto: create`라 재시작할 때마다 다시 실행해야 한다. 전용 회차·좌석 ID
+   대역과 회원 규칙은 [seed/README.md](../../../seed/README.md)가 원본이다.
+4. 테스트용 회원 JWT 또는 seed 회원 로그인을 준비한다.
+5. Simulation 또는 정합성 JUnit 테스트를 실행한다.
+6. 실패율, 응답 시간, admitted/waiting 비율, safe TPS, order 성공·거부 건수를 확인한다.
 
 **정확한 옵션 이름과 명령은 [ticket-open-local.md](../../../docs/load-test/ticket-open-local.md)를
 그대로 쓰고 외워서 조립하지 않는다.**
