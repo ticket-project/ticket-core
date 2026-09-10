@@ -6,7 +6,7 @@ import com.ticket.booking.hold.domain.HoldAllocation;
 import com.ticket.booking.hold.domain.HoldHistoryRecorder;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.domain.Order;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

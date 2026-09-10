@@ -206,7 +206,7 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
   `OrderCreator`(금액 계산과 snapshot 조립)
 - 예매 정책 조회: `booking.salespolicy.domain.PerformanceSalesPolicy`(booking local
   aggregate) / 표시 snapshot 조회: `show.PerformanceSaleCatalog`
-- 판매 좌석과 가격 원본: `booking.domain.PerformanceSeat`
+- 판매 좌석과 가격 원본: `booking.seat.domain.PerformanceSeat`
   (`unitPrice`, `performanceGradeId`, `@Version`)
 - 주문 종료: `booking.application.OrderTerminationService`
 - 상태 전이 규칙: `booking.domain.Order`(confirm, expire, cancel),

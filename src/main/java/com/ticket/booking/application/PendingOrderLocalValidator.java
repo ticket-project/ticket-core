@@ -4,7 +4,7 @@ import com.ticket.booking.hold.domain.HoldSeatAvailabilityValidator;
 import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.domain.OrderState;
 import com.ticket.booking.domain.OrderRepository;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

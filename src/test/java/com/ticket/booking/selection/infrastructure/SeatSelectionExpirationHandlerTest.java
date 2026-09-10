@@ -1,11 +1,11 @@
 package com.ticket.booking.selection.infrastructure;
 
-import com.ticket.booking.domain.PerformanceSeat;
-import com.ticket.booking.domain.PerformanceSeatState;
-import com.ticket.booking.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
-import com.ticket.booking.application.SeatStatusEventPublisher;
-import com.ticket.booking.application.SeatStatusEvent;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.application.SeatStatusEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

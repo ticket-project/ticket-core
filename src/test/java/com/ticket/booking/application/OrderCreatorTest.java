@@ -4,7 +4,7 @@ import com.ticket.booking.domain.OrderKeyGenerator;
 import com.ticket.booking.domain.Order;
 import com.ticket.booking.domain.OrderSeat;
 import com.ticket.booking.domain.OrderRepository;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;

@@ -3,7 +3,7 @@ package com.ticket.booking.hold.domain;
 import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -3,7 +3,7 @@ package com.ticket.booking.application;
 import com.ticket.booking.domain.OrderKeyGenerator;
 import com.ticket.booking.domain.Order;
 import com.ticket.booking.domain.OrderRepository;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

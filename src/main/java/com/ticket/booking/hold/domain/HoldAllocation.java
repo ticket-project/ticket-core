@@ -1,7 +1,7 @@
 package com.ticket.booking.hold.domain;
 
 import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
