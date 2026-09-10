@@ -3,7 +3,7 @@ package com.ticket.booking.application.usecase;
 import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.application.SeatStatusEvent;
 
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.admission.application.AdmissionVerifier;
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.SeatStatusEventPublisher;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;

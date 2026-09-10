@@ -1,6 +1,6 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.admission.infrastructure;
 
-import com.ticket.booking.application.AdmissionVerification;
+import com.ticket.booking.admission.application.AdmissionVerification;
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.AdmissionTokenExpiredException;

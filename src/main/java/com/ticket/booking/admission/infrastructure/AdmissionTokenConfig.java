@@ -1,6 +1,6 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.admission.infrastructure;
 
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.admission.application.AdmissionVerifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
