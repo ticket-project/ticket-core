@@ -2,7 +2,7 @@ package com.ticket.member.application.usecase;
 
 import com.ticket.member.application.MemberRegistrar;
 import com.ticket.member.domain.Email;
-import com.ticket.member.domain.RawPassword;
+import com.ticket.member.auth.domain.RawPassword;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

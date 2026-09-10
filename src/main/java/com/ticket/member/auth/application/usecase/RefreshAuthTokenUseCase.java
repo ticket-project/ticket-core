@@ -1,10 +1,10 @@
-package com.ticket.member.application.usecase;
+package com.ticket.member.auth.application.usecase;
 
-import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
-import com.ticket.member.application.OAuth2AuthCodeStore;
+import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
+import com.ticket.member.auth.application.RefreshTokenStore;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.exception.UnauthenticatedException;
@@ -13,17 +13,20 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ExchangeOAuth2TokenUseCase {
+public class RefreshAuthTokenUseCase {
 
-    private final OAuth2AuthCodeStore oAuth2AuthCodeStore;
+    private final RefreshTokenStore refreshTokenStore;
     private final MemberRepository memberRepository;
     private final AuthTokenIssuer authTokenIssuer;
 
-    public record Input(String code) {
-        public Input {
-            if (code == null || code.isBlank()) {
-                throw new InvalidRequestException("code는 필수입니다.");
-            }
+    public record Input(AuthRefreshToken refreshToken) {
+
+        /**
+         * API 경계에서 받은 원문을 값 객체로 바꾼다. 컨트롤러가 도메인 타입을 알지 않아도 되고,
+         * 형식이 올바르지 않으면 이 지점에서 인증 오류로 걸린다.
+         */
+        public static Input of(final String rawRefreshToken) {
+            return new Input(AuthRefreshToken.from(rawRefreshToken));
         }
     }
 
@@ -56,11 +59,11 @@ public class ExchangeOAuth2TokenUseCase {
     }
 
     public Result execute(final Input input) {
-        final Long memberId = oAuth2AuthCodeStore.consumeCode(input.code())
-                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다."));
+        final Long memberId = refreshTokenStore.validate(input.refreshToken())
+                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
         final Member member = memberRepository.findActiveById(memberId)
                 .orElseThrow(() -> new NotFoundException());
-        final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.getId(), member.getRole().name());
+        final IssuedAuthTokens result = authTokenIssuer.rotateTokens(member.getId(), member.getRole().name(), input.refreshToken());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
                 result.refreshToken(),

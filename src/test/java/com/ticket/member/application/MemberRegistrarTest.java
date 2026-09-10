@@ -1,11 +1,11 @@
 package com.ticket.member.application;
 
-import com.ticket.member.application.PasswordHasher;
+import com.ticket.member.auth.application.PasswordHasher;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
-import com.ticket.member.domain.RawPassword;
+import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.domain.Role;
 import com.ticket.member.exception.DuplicateEmailException;
 import org.junit.jupiter.api.Test;
