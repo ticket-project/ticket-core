@@ -17,7 +17,12 @@ public class UnauthenticatedException extends MemberException {
         this(null);
     }
 
-    public UnauthenticatedException(final Object data) {
-        super(MemberErrorCode.E1000, MESSAGE, data);
+    /**
+     * @param detail 왜 실패했는지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로
+     *               나가고 고정 {@code MESSAGE}를 덮지 않는다. 자격 증명이 틀렸다는 사실 이상은
+     *               넣지 않는다.
+     */
+    public UnauthenticatedException(final String detail) {
+        super(MemberErrorCode.E1000, MESSAGE, detail);
     }
 }

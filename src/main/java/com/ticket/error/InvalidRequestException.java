@@ -15,7 +15,11 @@ public class InvalidRequestException extends TicketException {
         this(null);
     }
 
-    public InvalidRequestException(final Object data) {
-        super(CommonErrorCode.E400, MESSAGE, data);
+    /**
+     * @param detail 어디가 잘못됐는지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로
+     *               나가고 고정 {@code message}를 덮지 않는다. 내부 사정은 넣지 않는다.
+     */
+    public InvalidRequestException(final String detail) {
+        super(CommonErrorCode.E400, MESSAGE, detail);
     }
 }

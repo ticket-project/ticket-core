@@ -15,9 +15,10 @@ public class InternalErrorException extends TicketException {
     }
 
     /**
-     * {@code data}에 무엇이 실패했는지 좁히는 문구를 싣는다. 내부 예외 메시지나 스택은 넣지 않는다.
+     * @param detail 무엇이 실패했는지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로
+     *               나가고 고정 {@code message}를 덮지 않는다. 내부 예외 메시지나 스택은 넣지 않는다.
      */
-    public InternalErrorException(final Object data) {
-        super(CommonErrorCode.E500, MESSAGE, data);
+    public InternalErrorException(final String detail) {
+        super(CommonErrorCode.E500, MESSAGE, detail);
     }
 }
