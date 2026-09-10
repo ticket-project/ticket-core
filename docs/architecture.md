@@ -17,9 +17,11 @@
   `shared`/`web`/`error`/`config`/`seed` 5개는 BC도 supporting capability도 아닌 기술 모듈이다 —
   앱 전역 배선이거나 여러 module이 공유하는 기술 계약일 뿐 업무 언어를 갖지 않는다.
 - 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
-  두고, 실제 구현은 모듈 root 바로 아래의 `web`/`application`/`domain`/`infrastructure`/`exception`
-  패키지에 둔다. 별도 `internal` 계층은 두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과
-  무관하게 내부로 취급한다. 어떤 모듈도 `Type.OPEN`으로 선언하지 않는다.
+  두고, 실제 구현은 모듈 root 밖(업무 모듈은 capability 아래, 기술 모듈은 바로 아래)의
+  `web`/`application`/`domain`/`infrastructure`/`exception` 패키지에 둔다. 별도 `internal` 계층은
+  두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도
+  `Type.OPEN`으로 선언하지 않는다. 정확한 배치는 [Module Structure](#module-structure)와
+  [오류 처리](#오류-처리) 절을 본다.
 - **cross-module JPA 연관관계와 DB FK는 금지한다.** 다른 모듈의 aggregate를 참조해야 하면 `long`
   같은 scalar ID 컬럼만 갖는다.
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 하위 패키지, Repository,
@@ -181,8 +183,10 @@ capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**�
   않는다.
 - `application.port`/`application.usecase`, `web`의 `request`/`docs`/`support`,
   `exception`의 `handler`는 그대로 유효한 예외다. 다만 앞의 셋은 이제 capability 안에 있다.
-- **`exception`은 capability로 나누지 않는다.** 모듈 하나가 오류 코드·예외 상속·handler를 한
-  묶음으로 소유하는 것이 계약이므로 `<module>.exception`에 그대로 둔다(ADR 0002).
+- **`exception`은 그대로 capability 축을 따르지 않는다** — 다만 "모듈 바로 아래 하나의
+  평탄한 `<module>.exception`"도 아니다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
+  [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다(ADR 0002가 정한
+  "모듈이 자기 오류를 소유한다"는 원칙 자체는 그대로다).
 - 여러 capability가 **실제로** 공유하는 코드만 `<module>.support.<layer>`에 둔다 — 공통 감사
   base entity(`BookingAuditedEntity` 등), booking의 분산락 계약·구현, 공통 Redis 만료 배선이
   그 예다. 업무 use case를 support로 모으지 않는다.
@@ -327,15 +331,27 @@ Repository는 "없다"는 사실만 알려주고 오류는 유스케이스가 �
 
 ## 오류 처리
 
-각 모듈의 `<module>/exception/`에 아래 4파일 골격을 둔다.
+**업무 예외는 HTTP를 모른다.** `TicketException`은 `errorCode`·`message`·`data`만 옮기는
+그릇이고, `HttpStatus`도 Spring Web 타입 의존도 갖지 않는다. 어떤 상태 코드로 응답할지는
+그 오류를 처리하는 웹 계층(module handler, 공통 오류는 `GlobalExceptionHandler`)이 안다 —
+왜 이렇게 나눴는지는 [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다.
 
 ```text
-com/ticket/<module>/exception/
+com/ticket/<module>/<capability 또는 support>/exception/
   <Module>ErrorCode.java          enum implements com.ticket.error.ErrorCode
-  <Module>Exception.java          abstract extends com.ticket.error.TicketException
-  <구체 예외>.java                 상태·코드·메시지를 생성자에서 확정
-  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡는다
+  <Module>Exception.java          abstract extends com.ticket.error.TicketException(errorCode·message·data만)
+  <구체 예외>.java                 errorCode·메시지·data를 생성자에서 확정(상태는 없다)
+  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡고
+                                          구체 타입 -> HTTP 상태를 이 handler가 정한다
 ```
+
+**`exception` 패키지 자체는 capability로 나누지 않는다.** 한 capability에서만 쓰는 구체
+예외는 그 capability의 `exception`에 두고, 여러 capability가 실제로 던지는 예외와 module
+handler·base 타입·`<Module>ErrorCode`는 `<module>.support.exception`에 둔다(어느 쪽인지는
+grep으로 실제 throw 위치를 확인해서 정한다 — 이름만으로 추정하지 않는다). capability가
+하나뿐인 module(Like)은 그 capability의 `exception`에 전부 둔다. admission처럼 자기 완결적인
+capability는 `TicketException`을 직접 상속해 module base와 무관하게 자기 `exception`에 전부
+둔다.
 
 오류 계약 소유 기준(모듈별 오류 vs `com.ticket.error`의 공통 오류), 응답 봉투가 `web`에 있는
 이유, `ProblemDetail`을 채택하지 않은 이유는 [ADR 0002](adr/0002-module-owned-error-contracts.md)가
