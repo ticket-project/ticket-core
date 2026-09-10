@@ -4,7 +4,7 @@ import com.ticket.booking.application.SeatAvailabilityCalculator;
 
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort;
 
-import com.ticket.booking.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.selection.domain.SeatSelectionService;

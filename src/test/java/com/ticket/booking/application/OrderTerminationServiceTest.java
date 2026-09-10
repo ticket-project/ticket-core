@@ -1,7 +1,7 @@
 package com.ticket.booking.application;
 
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.domain.HoldHistoryRecorder;
+import com.ticket.booking.hold.domain.HoldHistoryRecorder;
 import com.ticket.booking.domain.Order;
 import com.ticket.booking.domain.OrderSeat;
 import com.ticket.booking.domain.OrderState;

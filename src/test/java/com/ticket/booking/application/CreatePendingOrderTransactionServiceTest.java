@@ -2,9 +2,9 @@ package com.ticket.booking.application;
 
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.domain.PendingOrderCreationResult;
-import com.ticket.booking.domain.HoldAllocation;
-import com.ticket.booking.domain.HoldHistoryRecorder;
-import com.ticket.booking.domain.Hold;
+import com.ticket.booking.hold.domain.HoldAllocation;
+import com.ticket.booking.hold.domain.HoldHistoryRecorder;
+import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.domain.Order;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;

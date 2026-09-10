@@ -1,7 +1,7 @@
 package com.ticket.booking.selection.domain;
 
 import com.ticket.booking.domain.PerformanceSeatRepository;
-import com.ticket.booking.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.domain.PerformanceSeatState;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
 import com.ticket.booking.exception.NoAvailableSeatException;
