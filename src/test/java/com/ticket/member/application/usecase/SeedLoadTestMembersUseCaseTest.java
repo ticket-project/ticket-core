@@ -1,9 +1,9 @@
 package com.ticket.member.application.usecase;
 
-import com.ticket.member.application.PasswordHasher;
+import com.ticket.member.auth.application.PasswordHasher;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;
-import com.ticket.member.domain.RawPassword;
+import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.domain.Role;
 import com.ticket.member.domain.MemberRepository;
 import org.junit.jupiter.api.Test;

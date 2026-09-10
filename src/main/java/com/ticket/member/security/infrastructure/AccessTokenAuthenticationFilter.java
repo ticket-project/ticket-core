@@ -1,8 +1,8 @@
 package com.ticket.member.security.infrastructure;
 
-import com.ticket.member.application.AccessTokenReadResult;
+import com.ticket.member.auth.application.AccessTokenReadResult;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.application.AccessTokenReader;
+import com.ticket.member.auth.application.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import jakarta.servlet.FilterChain;

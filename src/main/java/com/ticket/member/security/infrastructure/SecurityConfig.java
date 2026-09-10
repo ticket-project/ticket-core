@@ -7,7 +7,7 @@ import com.ticket.member.infrastructure.OAuth2EndpointConstants;
 import com.ticket.member.infrastructure.OAuth2FrontendRedirectCaptureFilter;
 import com.ticket.member.infrastructure.OAuth2FrontendRedirectResolver;
 import com.ticket.shared.CorsProperties;
-import com.ticket.member.application.AccessTokenReader;
+import com.ticket.member.auth.application.AccessTokenReader;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

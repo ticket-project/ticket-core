@@ -3,7 +3,7 @@ package com.ticket.member.application.usecase;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.member.application.MemberRegistrar;
 import com.ticket.member.domain.Email;
-import com.ticket.member.domain.RawPassword;
+import com.ticket.member.auth.domain.RawPassword;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

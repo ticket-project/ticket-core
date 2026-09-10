@@ -3,9 +3,9 @@ package com.ticket.booking.support.infrastructure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ticket.member.application.AuthRefreshToken;
+import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
-import com.ticket.member.infrastructure.RedisRefreshTokenStore;
+import com.ticket.member.auth.infrastructure.RedisRefreshTokenStore;
 import com.ticket.booking.support.application.LockKey;
 import com.ticket.booking.support.application.LockManager;
 import com.ticket.booking.support.application.LockOptions;
