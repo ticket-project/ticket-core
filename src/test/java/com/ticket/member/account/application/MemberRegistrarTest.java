@@ -7,7 +7,7 @@ import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.EncodedPassword;
 import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.account.domain.Role;
-import com.ticket.member.exception.DuplicateEmailException;
+import com.ticket.member.support.exception.DuplicateEmailException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

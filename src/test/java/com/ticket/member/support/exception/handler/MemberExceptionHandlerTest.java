@@ -1,9 +1,9 @@
-package com.ticket.member.exception.handler;
+package com.ticket.member.support.exception.handler;
 
-import com.ticket.member.exception.AuthorizationException;
-import com.ticket.member.exception.DuplicateEmailException;
-import com.ticket.member.exception.MemberException;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.support.exception.AuthorizationException;
+import com.ticket.member.support.exception.DuplicateEmailException;
+import com.ticket.member.support.exception.MemberException;
+import com.ticket.member.support.exception.UnauthenticatedException;
 import com.ticket.web.ApiResponse;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

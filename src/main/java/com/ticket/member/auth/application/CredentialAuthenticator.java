@@ -4,7 +4,7 @@ import com.ticket.member.auth.application.PasswordHasher;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.auth.domain.RawPassword;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.support.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

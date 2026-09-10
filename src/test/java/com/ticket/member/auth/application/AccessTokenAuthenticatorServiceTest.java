@@ -3,7 +3,7 @@ package com.ticket.member.auth.application;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.auth.application.AccessTokenReadResult;
 import com.ticket.member.auth.application.AccessTokenReader;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.support.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
