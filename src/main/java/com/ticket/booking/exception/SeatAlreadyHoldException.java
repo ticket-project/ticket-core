@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 다른 회원이 이미 선점(hold)한 좌석이다.
@@ -14,6 +13,6 @@ public class SeatAlreadyHoldException extends BookingException {
     }
 
     public SeatAlreadyHoldException(final Object data) {
-        super(HttpStatus.CONFLICT, BookingErrorCode.E6000, MESSAGE, data);
+        super(BookingErrorCode.E6000, MESSAGE, data);
     }
 }

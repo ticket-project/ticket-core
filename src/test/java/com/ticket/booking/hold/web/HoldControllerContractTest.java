@@ -4,6 +4,7 @@ import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentReso
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +40,7 @@ class HoldControllerContractTest {
         HoldController controller = new HoldController(createOrderUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())

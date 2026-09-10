@@ -3,6 +3,7 @@ package com.ticket.show.catalog.web;
 import com.ticket.show.catalog.application.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.catalog.web.support.cursor.ShowLikeCursorCodec;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.show.exception.handler.ShowExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +34,7 @@ class MyShowLikesControllerContractTest {
         MyShowLikesController controller = new MyShowLikesController(getMyShowLikesUseCase, new ShowLikeCursorCodec());
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())

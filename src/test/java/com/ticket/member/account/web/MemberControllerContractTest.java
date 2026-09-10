@@ -4,6 +4,7 @@ import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentReso
 import com.ticket.member.account.application.usecase.GetCurrentMemberUseCase;
 import com.ticket.member.account.application.usecase.WithdrawCurrentMemberUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.member.exception.handler.MemberExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,7 @@ class MemberControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new MemberExceptionHandler())
                 .build();
         AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext().setAuthentication(

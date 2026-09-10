@@ -5,6 +5,7 @@ import com.ticket.booking.selection.application.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.selection.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.selection.application.usecase.SelectSeatUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ class SeatSelectionControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())

@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 결제 대기 상태가 아닌 주문을 처리하려 했다.
@@ -14,6 +13,6 @@ public class OrderNotPendingException extends BookingException {
     }
 
     public OrderNotPendingException(final Object data) {
-        super(HttpStatus.CONFLICT, BookingErrorCode.E5002, MESSAGE, data);
+        super(BookingErrorCode.E5002, MESSAGE, data);
     }
 }

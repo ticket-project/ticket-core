@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 판매 좌석 편성 요청의 좌석이 그 회차의 Venue에 속하지 않는다.
@@ -14,6 +13,6 @@ public class SeatVenueMismatchException extends BookingException {
     }
 
     public SeatVenueMismatchException(final Object data) {
-        super(HttpStatus.BAD_REQUEST, BookingErrorCode.E4003, MESSAGE, data);
+        super(BookingErrorCode.E4003, MESSAGE, data);
     }
 }

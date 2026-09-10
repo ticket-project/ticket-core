@@ -9,6 +9,7 @@ import com.ticket.booking.salespolicy.application.usecase.GetPerformanceBookingM
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
 import com.ticket.error.NotFoundException;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class PerformanceBookingModeControllerContractTest {
         PerformanceBookingModeController controller =
                 new PerformanceBookingModeController(getPerformanceBookingModeUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
                 .build();
     }
 
