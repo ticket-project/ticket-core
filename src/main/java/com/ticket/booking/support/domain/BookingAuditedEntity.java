@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.support.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

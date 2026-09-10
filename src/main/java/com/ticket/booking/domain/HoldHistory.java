@@ -1,6 +1,6 @@
 package com.ticket.booking.domain;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.support.domain.BookingAuditedEntity;
 import com.ticket.booking.domain.HoldHistoryEventType;
 import com.ticket.booking.domain.HoldReleaseReason;
 import jakarta.persistence.Column;

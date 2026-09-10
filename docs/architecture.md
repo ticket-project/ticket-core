@@ -382,7 +382,7 @@ one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈�
 key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가
 원본이다.
 
-분산락은 `com.ticket.booking.application.LockManager` 같은 명시적 포트 호출로 처리한다.
+분산락은 `com.ticket.booking.support.application.LockManager` 같은 명시적 포트 호출로 처리한다.
 어노테이션과 SpEL로 감추지 않는다. 포트·구현 클래스 목록은
 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)가, 락 순서·임계
 구역 같은 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가 원본이다.

@@ -1,6 +1,6 @@
 package com.ticket.booking.domain;
 
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.domain.PerformanceSeatRepository;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;

@@ -1,6 +1,6 @@
 package com.ticket.booking.application;
 
-import com.ticket.booking.application.RecordingLockManager;
+import com.ticket.booking.support.application.RecordingLockManager;
 import com.ticket.booking.domain.Hold;
 import com.ticket.booking.domain.HoldStore;
 import com.ticket.booking.domain.SeatSelectionService;

@@ -1,7 +1,7 @@
 package com.ticket.booking.application;
 
 import com.ticket.booking.domain.HoldSeatAvailabilityValidator;
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.domain.OrderState;
 import com.ticket.booking.domain.OrderRepository;
 import com.ticket.booking.domain.PerformanceSeat;

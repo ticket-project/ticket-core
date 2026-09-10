@@ -1,5 +1,6 @@
 package com.ticket.booking.domain;
 
+import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.domain.Hold;
 import com.ticket.booking.domain.HoldManager;
 import com.ticket.booking.domain.PerformanceSeat;

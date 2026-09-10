@@ -1,6 +1,6 @@
 package com.ticket.booking.domain;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.support.domain.BookingAuditedEntity;
 import com.ticket.booking.exception.ExceedHoldLimitException;
 import com.ticket.booking.exception.NotYetReserveTimeException;
 import com.ticket.booking.exception.PerformanceIsPastException;

@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.support.application;
 
 import java.util.List;
 import java.util.Objects;

@@ -1,6 +1,6 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.support.infrastructure;
 
-import com.ticket.booking.application.LockKey;
+import com.ticket.booking.support.application.LockKey;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
