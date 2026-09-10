@@ -130,8 +130,8 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 **Like 조합 규칙**: 찜의 데이터·불변식은 `like`(옛 `favorite`)가 소유한다. HTTP endpoint·use
 case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니오(존재)만 있으면 되는 것**(찜하기·
 찜 해제·찜 상태 조회)은 like가 소유하고, **다른 BC의 실제 표시 데이터**가 필요한 것("내 찜
-목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain`은
-like를 모른다 — `show.application`의 조회 service가 like의 공개 API(`LikeQuery`/`LikeCommand`)를
+목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.catalog.domain`은
+like를 모른다 — `show.catalog.application`의 조회 service가 like의 공개 API(`LikeQuery`/`LikeCommand`)를
 주입받아 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
 않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
 순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
