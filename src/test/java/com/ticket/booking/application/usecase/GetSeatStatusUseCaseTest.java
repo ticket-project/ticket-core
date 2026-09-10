@@ -12,7 +12,7 @@ import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.booking.domain.SeatSelectionService;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.admission.application.AdmissionVerifier;
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStateView;

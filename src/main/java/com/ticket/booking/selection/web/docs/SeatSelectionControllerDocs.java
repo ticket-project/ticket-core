@@ -1,4 +1,4 @@
-package com.ticket.booking.web.docs;
+package com.ticket.booking.selection.web.docs;
 
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.web.ApiResponse;

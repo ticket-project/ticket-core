@@ -4,7 +4,7 @@ import com.ticket.booking.domain.PerformanceSeatRepository;
 import com.ticket.show.domain.Performance;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
-import com.ticket.booking.domain.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.Region;
 import com.ticket.show.domain.Show;

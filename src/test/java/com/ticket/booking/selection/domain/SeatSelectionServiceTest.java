@@ -1,6 +1,6 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.selection.domain;
 
-import com.ticket.booking.domain.SeatSelectionStore;
+import com.ticket.booking.selection.domain.SeatSelectionStore;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatNotOwnedException;
 import org.junit.jupiter.api.Test;

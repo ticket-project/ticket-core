@@ -1,10 +1,10 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.application.usecase;
 
 import com.ticket.booking.application.SeatStatusEvent;
 
 import com.ticket.member.MemberLookup;
-import com.ticket.booking.domain.SeatSelectionService;
-import com.ticket.booking.domain.DeselectedSeatIds;
+import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.booking.selection.domain.DeselectedSeatIds;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
 import com.ticket.booking.domain.PerformanceSeatRepository;

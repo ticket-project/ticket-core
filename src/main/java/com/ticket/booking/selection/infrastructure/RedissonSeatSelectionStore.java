@@ -1,6 +1,6 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.selection.infrastructure;
 
-import com.ticket.booking.domain.SeatSelectionStore;
+import com.ticket.booking.selection.domain.SeatSelectionStore;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RScript;
