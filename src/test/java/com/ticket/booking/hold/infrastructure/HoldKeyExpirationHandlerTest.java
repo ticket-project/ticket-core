@@ -1,6 +1,6 @@
 package com.ticket.booking.hold.infrastructure;
 
-import com.ticket.booking.application.usecase.ExpireOrderUseCase;
+import com.ticket.booking.order.application.usecase.ExpireOrderUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

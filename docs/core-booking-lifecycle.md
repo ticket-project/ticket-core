@@ -83,7 +83,7 @@ DB 저장이 실패하면 `CreateOrderUseCase`가 이미 만든 Redis hold를 �
 ## 결제 시도와 Order 상태
 
 `Order`의 상태 전이는 `PENDING -> CONFIRMED`, `PENDING -> EXPIRED`, `PENDING -> CANCELED` 세 가지뿐이다
-(`booking.domain.OrderState`). 과거 있었던 `PAYMENT_FAILED`는 ADR 0005로
+(`booking.order.domain.OrderState`). 과거 있었던 `PAYMENT_FAILED`는 ADR 0005로
 제거됐다 — `rg -n "PAYMENT_FAILED|failPayment" --type java`로 확인해도 `Order`/`OrderState`에는
 남아 있지 않다(`HoldReleaseReason.PAYMENT_FAILED`는 hold 해제 사유를 기록하는 별개의 enum이고
 Order 상태가 아니다).
@@ -188,7 +188,7 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 - `redisExpirationSubscriptionExecutor`: Redis 구독 전용 worker 1~2개
 - `redisExpirationTaskExecutor`: 만료 handler worker 2개, queue 256개, 공유 permit 2개
 - queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
-- `OrderExpirationTrigger`(`com.ticket.booking.infrastructure`) →
+- `OrderExpirationTrigger`(`com.ticket.booking.order.infrastructure`) →
   `ExpirePendingOrdersUseCase`: `worker.order-expiration.fixed-delay`(기본 5분)마다 만료 주문을
   보정한다.
 
@@ -200,23 +200,23 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 
 ## 주요 코드
 
-- 주문 생성: `booking.application.usecase.CreateOrderUseCase`,
-  `booking.application.CreateOrderValidator`
-- 주문 DB 저장: `booking.application.CreatePendingOrderTransactionService`,
+- 주문 생성: `booking.order.application.usecase.CreateOrderUseCase`,
+  `booking.order.application.CreateOrderValidator`
+- 주문 DB 저장: `booking.order.application.CreatePendingOrderTransactionService`,
   `OrderCreator`(금액 계산과 snapshot 조립)
 - 예매 정책 조회: `booking.salespolicy.domain.PerformanceSalesPolicy`(booking local
   aggregate) / 표시 snapshot 조회: `show.PerformanceSaleCatalog`
 - 판매 좌석과 가격 원본: `booking.seat.domain.PerformanceSeat`
   (`unitPrice`, `performanceGradeId`, `@Version`)
-- 주문 종료: `booking.application.OrderTerminationService`
-- 상태 전이 규칙: `booking.domain.Order`(confirm, expire, cancel),
+- 주문 종료: `booking.order.application.OrderTerminationService`
+- 상태 전이 규칙: `booking.order.domain.Order`(confirm, expire, cancel),
   `OrderState`(PENDING/CONFIRMED/EXPIRED/CANCELED)
 - 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
-- 커밋 후 리스너: `booking.application.BookingEventListeners`
+- 커밋 후 리스너: `booking.order.application.BookingEventListeners`
 - hold 생성/해제 후속 처리: `booking.hold.application.HoldCreationTaskProcessor`,
   `booking.hold.application.HoldReleaseTaskProcessor`, `booking.hold.application.HoldReleaseProgressRecorder`
-- 만료 보정: `booking.application.usecase.ExpirePendingOrdersUseCase`
-- background 트리거: `booking.infrastructure.OrderExpirationTrigger`
+- 만료 보정: `booking.order.application.usecase.ExpirePendingOrdersUseCase`
+- background 트리거: `booking.order.infrastructure.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.support.infrastructure.RedisExpirationListenerConfig`
 - event publication 운영: `config.EventPublicationMaintenance`
 - 분산락 포트: `booking.support.application.LockManager`(잠글 대상은 `LockKey`/`LockScope` — 업무

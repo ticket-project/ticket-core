@@ -2,7 +2,7 @@ package com.ticket.booking.hold.domain;
 
 import com.ticket.booking.hold.domain.HoldHistory;
 import com.ticket.booking.hold.domain.HoldHistoryRepository;
-import com.ticket.booking.domain.OrderSeat;
+import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.hold.domain.HoldReleaseReason;
 import lombok.RequiredArgsConstructor;
