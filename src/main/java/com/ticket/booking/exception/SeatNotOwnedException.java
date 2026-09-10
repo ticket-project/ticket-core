@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 본인이 선택하지 않은 좌석을 해제하려 했다.
@@ -14,6 +13,6 @@ public class SeatNotOwnedException extends BookingException {
     }
 
     public SeatNotOwnedException(final Object data) {
-        super(HttpStatus.FORBIDDEN, BookingErrorCode.E4002, MESSAGE, data);
+        super(BookingErrorCode.E4002, MESSAGE, data);
     }
 }

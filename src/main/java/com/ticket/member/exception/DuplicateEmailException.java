@@ -1,6 +1,5 @@
 package com.ticket.member.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 이미 사용 중인 이메일로 가입이나 소셜 연동을 시도했다.
@@ -14,6 +13,6 @@ public class DuplicateEmailException extends MemberException {
     }
 
     public DuplicateEmailException(final Object data) {
-        super(HttpStatus.CONFLICT, MemberErrorCode.E2000, MESSAGE, data);
+        super(MemberErrorCode.E2000, MESSAGE, data);
     }
 }

@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 다른 회원이 이미 선택 중인 좌석이다.
@@ -14,6 +13,6 @@ public class SeatAlreadySelectedException extends BookingException {
     }
 
     public SeatAlreadySelectedException(final Object data) {
-        super(HttpStatus.CONFLICT, BookingErrorCode.E4001, MESSAGE, data);
+        super(BookingErrorCode.E4001, MESSAGE, data);
     }
 }

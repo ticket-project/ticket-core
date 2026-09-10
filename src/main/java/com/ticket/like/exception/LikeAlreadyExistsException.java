@@ -1,7 +1,6 @@
 package com.ticket.like.exception;
 
 import com.ticket.like.LikeType;
-import org.springframework.http.HttpStatus;
 
 /**
  * 이미 찜한 대상을 다시 찜하려 했다(동시 요청 race).
@@ -15,7 +14,7 @@ public class LikeAlreadyExistsException extends LikeException {
     private static final String MESSAGE = "이미 찜한 대상입니다.";
 
     public LikeAlreadyExistsException(final long memberId, final LikeType likeType, final long targetId) {
-        super(HttpStatus.CONFLICT, LikeErrorCode.E7001, MESSAGE,
+        super(LikeErrorCode.E7001, MESSAGE,
                 MESSAGE + " memberId=" + memberId + ", likeType=" + likeType + ", targetId=" + targetId);
     }
 }

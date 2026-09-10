@@ -5,6 +5,7 @@ import com.ticket.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,6 +19,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  *
  * <p>base 예외 하나만 잡는다. 상위 타입을 잡으면 order가 높아 다른 module의 오류까지 삼킨다 —
  * 그 범위는 {@code com.ticket.error.ExceptionHandlerScopeTest}가 강제한다.
+ *
+ * <p>admission 예외 3종(required/expired/invalid)은 모두 403으로 응답한다 — 상태를 예외가 아니라
+ * 이 handler가 정한다.
  */
 @Slf4j
 @RestControllerAdvice
@@ -31,7 +35,7 @@ public class AdmissionExceptionHandler {
         log.info("admission.rejected: code={}, reason={}", exception.getErrorCode().getCode(), exception.getReason());
 
         return ResponseEntity
-                .status(exception.getStatus())
+                .status(HttpStatus.FORBIDDEN.value())
                 .body(ApiResponse.error(
                         exception.getErrorCode().getCode(), exception.getMessage(), exception.getData()));
     }

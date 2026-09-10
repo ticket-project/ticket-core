@@ -1,6 +1,5 @@
 package com.ticket.member.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 인증되지 않았거나 자격 증명이 유효하지 않다.
@@ -19,6 +18,6 @@ public class UnauthenticatedException extends MemberException {
     }
 
     public UnauthenticatedException(final Object data) {
-        super(HttpStatus.UNAUTHORIZED, MemberErrorCode.E1000, MESSAGE, data);
+        super(MemberErrorCode.E1000, MESSAGE, data);
     }
 }

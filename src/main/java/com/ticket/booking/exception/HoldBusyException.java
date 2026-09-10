@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 같은 좌석에 대한 선점 처리가 진행 중이어서 분산락을 얻지 못했다.
@@ -15,6 +14,6 @@ public class HoldBusyException extends BookingException {
     }
 
     public HoldBusyException(final Object data) {
-        super(HttpStatus.CONFLICT, BookingErrorCode.E6003, MESSAGE, data);
+        super(BookingErrorCode.E6003, MESSAGE, data);
     }
 }

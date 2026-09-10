@@ -9,6 +9,7 @@ import com.ticket.member.auth.application.usecase.RefreshAuthTokenUseCase;
 import com.ticket.member.account.application.usecase.RegisterMemberUseCase;
 import com.ticket.member.oauth.application.usecase.GetSocialLoginUrlsUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.member.exception.handler.MemberExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +51,7 @@ class AuthControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new MemberExceptionHandler())
                 .build();
     }
 

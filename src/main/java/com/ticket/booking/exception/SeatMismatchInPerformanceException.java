@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 요청한 좌석이 그 회차의 좌석이 아니다.
@@ -14,6 +13,6 @@ public class SeatMismatchInPerformanceException extends BookingException {
     }
 
     public SeatMismatchInPerformanceException(final Object data) {
-        super(HttpStatus.BAD_REQUEST, BookingErrorCode.E4000, MESSAGE, data);
+        super(BookingErrorCode.E4000, MESSAGE, data);
     }
 }

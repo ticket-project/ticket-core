@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 이미 판매 좌석으로 편성된 (performance, seat) 조합을 다시 편성하려 했다.
@@ -14,6 +13,6 @@ public class PerformanceSeatAlreadyEditionedException extends BookingException {
     }
 
     public PerformanceSeatAlreadyEditionedException(final Object data) {
-        super(HttpStatus.BAD_REQUEST, BookingErrorCode.E4005, MESSAGE, data);
+        super(BookingErrorCode.E4005, MESSAGE, data);
     }
 }

@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 아직 예매 오픈 시각 전이다.
@@ -14,6 +13,6 @@ public class NotYetReserveTimeException extends BookingException {
     }
 
     public NotYetReserveTimeException(final Object data) {
-        super(HttpStatus.BAD_REQUEST, BookingErrorCode.E3002, MESSAGE, data);
+        super(BookingErrorCode.E3002, MESSAGE, data);
     }
 }

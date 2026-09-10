@@ -5,6 +5,7 @@ import com.ticket.like.preference.application.usecase.AddLikeUseCase;
 import com.ticket.like.preference.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.preference.application.usecase.GetLikeStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.like.exception.handler.LikeExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import org.junit.jupiter.api.AfterEach;
@@ -43,7 +44,7 @@ class LikeControllerContractTest {
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new LikeExceptionHandler())
                 .build();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())

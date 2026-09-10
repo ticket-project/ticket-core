@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ticket.show.performance.application.usecase.GetPerformanceScheduleListUseCase;
 import com.ticket.show.performance.application.usecase.GetPerformanceSummaryUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
+import com.ticket.show.exception.handler.ShowExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,7 +25,7 @@ class PerformanceControllerContractTest {
                 Mockito.mock(GetPerformanceScheduleListUseCase.class)
         );
         return MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
                 .build();
     }
 

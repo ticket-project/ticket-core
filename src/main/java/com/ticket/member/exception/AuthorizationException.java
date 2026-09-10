@@ -1,6 +1,5 @@
 package com.ticket.member.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 인증은 됐지만 그 자원에 대한 권한이 없다.
@@ -14,6 +13,6 @@ public class AuthorizationException extends MemberException {
     }
 
     public AuthorizationException(final Object data) {
-        super(HttpStatus.FORBIDDEN, MemberErrorCode.E1001, MESSAGE, data);
+        super(MemberErrorCode.E1001, MESSAGE, data);
     }
 }

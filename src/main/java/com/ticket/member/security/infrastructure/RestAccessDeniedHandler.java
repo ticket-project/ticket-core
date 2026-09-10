@@ -4,6 +4,7 @@ import tools.jackson.databind.json.JsonMapper;
 import com.ticket.member.exception.AuthorizationException;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -29,7 +30,9 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
     ) throws IOException, ServletException {
         final AuthorizationException error = new AuthorizationException();
 
-        response.setStatus(error.getStatus().value());
+        // MemberExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
+        // 거치지 않으므로 여기서 다시 정한다.
+        response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         jsonMapper.writeValue(response.getWriter(), ApiResponse.error(

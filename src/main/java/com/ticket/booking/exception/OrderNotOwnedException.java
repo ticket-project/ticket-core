@@ -1,6 +1,5 @@
 package com.ticket.booking.exception;
 
-import org.springframework.http.HttpStatus;
 
 /**
  * 본인 주문이 아닌 주문에 접근했다.
@@ -14,6 +13,6 @@ public class OrderNotOwnedException extends BookingException {
     }
 
     public OrderNotOwnedException(final Object data) {
-        super(HttpStatus.FORBIDDEN, BookingErrorCode.E5003, MESSAGE, data);
+        super(BookingErrorCode.E5003, MESSAGE, data);
     }
 }

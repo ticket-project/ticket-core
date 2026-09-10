@@ -4,6 +4,7 @@ import tools.jackson.databind.json.JsonMapper;
 import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -31,7 +32,9 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
         final String jwtError = (String) request.getAttribute(JWT_ERROR_ATTRIBUTE);
         final UnauthenticatedException error = new UnauthenticatedException(resolveMessage(jwtError));
 
-        response.setStatus(error.getStatus().value());
+        // MemberExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
+        // 거치지 않으므로 여기서 다시 정한다.
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 

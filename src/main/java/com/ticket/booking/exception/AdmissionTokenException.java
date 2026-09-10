@@ -1,7 +1,6 @@
 package com.ticket.booking.exception;
 
 import com.ticket.error.TicketException;
-import org.springframework.http.HttpStatus;
 
 /**
  * admission token이 유효하지 않다. admission 검증 예외의 base이며 그 자체로 E8002 계약을 갖는다.
@@ -31,7 +30,7 @@ public class AdmissionTokenException extends TicketException {
             final String reason,
             final Throwable cause
     ) {
-        super(HttpStatus.FORBIDDEN, errorCode, message, null, cause);
+        super(errorCode, message, null, cause);
         this.reason = reason;
     }
 
