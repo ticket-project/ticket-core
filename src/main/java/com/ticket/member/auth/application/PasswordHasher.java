@@ -1,6 +1,6 @@
 package com.ticket.member.auth.application;
 
-import com.ticket.member.domain.EncodedPassword;
+import com.ticket.member.account.domain.EncodedPassword;
 import com.ticket.member.auth.domain.RawPassword;
 
 /**

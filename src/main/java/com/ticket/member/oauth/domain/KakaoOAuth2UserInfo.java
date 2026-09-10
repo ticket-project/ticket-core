@@ -1,6 +1,6 @@
 package com.ticket.member.oauth.domain;
 
-import com.ticket.member.domain.SocialProvider;
+import com.ticket.member.account.domain.SocialProvider;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;

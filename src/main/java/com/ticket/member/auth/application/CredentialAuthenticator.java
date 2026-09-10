@@ -1,8 +1,8 @@
 package com.ticket.member.auth.application;
 
 import com.ticket.member.auth.application.PasswordHasher;
-import com.ticket.member.domain.Member;
-import com.ticket.member.domain.MemberRepository;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;

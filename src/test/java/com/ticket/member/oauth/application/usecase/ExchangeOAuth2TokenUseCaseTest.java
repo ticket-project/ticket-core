@@ -1,11 +1,11 @@
 package com.ticket.member.oauth.application.usecase;
 
-import com.ticket.member.domain.Role;
+import com.ticket.member.account.domain.Role;
 import com.ticket.member.oauth.application.OAuth2AuthCodeStore;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
-import com.ticket.member.domain.Member;
-import com.ticket.member.domain.MemberRepository;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

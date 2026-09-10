@@ -1,6 +1,6 @@
 package com.ticket.member.auth.infrastructure;
 
-import com.ticket.member.domain.EncodedPassword;
+import com.ticket.member.account.domain.EncodedPassword;
 import com.ticket.member.auth.domain.RawPassword;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

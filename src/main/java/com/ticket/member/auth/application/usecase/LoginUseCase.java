@@ -4,7 +4,7 @@ import com.ticket.error.InvalidRequestException;
 import com.ticket.member.auth.application.CredentialAuthenticator;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
-import com.ticket.member.domain.Member;
+import com.ticket.member.account.domain.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

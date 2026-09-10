@@ -5,7 +5,7 @@ import com.ticket.member.oauth.application.ProvisionedMember;
 
 import com.ticket.member.oauth.domain.OAuth2UserInfo;
 import com.ticket.member.oauth.domain.OAuth2UserInfoFactory;
-import com.ticket.member.domain.Member;
+import com.ticket.member.account.domain.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
