@@ -8,11 +8,14 @@ import com.ticket.booking.exception.NotYetReserveTimeException;
 import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.exception.OrderNotPendingException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
+import com.ticket.booking.exception.PerformanceGradeMismatchException;
 import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.PerformanceSeatAlreadyEditionedException;
 import com.ticket.booking.exception.SeatAlreadyHoldException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.exception.SeatVenueMismatchException;
 import com.ticket.web.ApiResponse;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -51,6 +54,12 @@ class BookingExceptionHandlerTest {
                         "이미 선택된 좌석입니다."),
                 Arguments.of(new SeatNotOwnedException(), HttpStatus.FORBIDDEN, "E4002",
                         "본인이 선택한 좌석만 해제할 수 있습니다."),
+                Arguments.of(new SeatVenueMismatchException(), HttpStatus.BAD_REQUEST, "E4003",
+                        "요청한 좌석이 이 회차의 공연장에 속하지 않습니다."),
+                Arguments.of(new PerformanceGradeMismatchException(), HttpStatus.BAD_REQUEST, "E4004",
+                        "요청한 등급이 이 회차에 속하지 않습니다."),
+                Arguments.of(new PerformanceSeatAlreadyEditionedException(), HttpStatus.BAD_REQUEST, "E4005",
+                        "이미 편성된 좌석입니다."),
                 Arguments.of(new OrderNotPendingException(), HttpStatus.CONFLICT, "E5002",
                         "결제 대기 주문만 처리할 수 있습니다."),
                 Arguments.of(new OrderNotOwnedException(), HttpStatus.FORBIDDEN, "E5003",
