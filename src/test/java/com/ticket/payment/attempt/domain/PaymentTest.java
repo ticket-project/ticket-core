@@ -1,4 +1,4 @@
-package com.ticket.payment.domain;
+package com.ticket.payment.attempt.domain;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,6 +1,6 @@
-package com.ticket.payment.domain;
+package com.ticket.payment.attempt.domain;
 
-import com.ticket.payment.domain.Payment;
+import com.ticket.payment.attempt.domain.Payment;
 
 import java.util.List;
 import java.util.Optional;

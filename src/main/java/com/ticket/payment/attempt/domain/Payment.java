@@ -1,6 +1,6 @@
-package com.ticket.payment.domain;
+package com.ticket.payment.attempt.domain;
 
-import com.ticket.payment.domain.PaymentAuditedEntity;
+import com.ticket.payment.attempt.domain.PaymentAuditedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,4 +1,4 @@
-package com.ticket.payment.domain;
+package com.ticket.payment.attempt.domain;
 
 /**
  * Payment(결제 시도)의 상태다. PG별 세부 상태를 그대로 노출하지 않는다 — provider payload 변환은
