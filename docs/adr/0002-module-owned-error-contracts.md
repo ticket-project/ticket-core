@@ -8,6 +8,11 @@ HTTP 상태까지 스스로 갖는다"는 아래 서술을 수정했다** — �
 자체는 그대로다. `TicketException`은 이제 errorCode·message·data만 갖고, HTTP 상태는 각
 module handler가 정한다.
 
+> 2026-09-10 갱신: 공통 오류 계약과 응답 봉투의 현재 패키지 배치는
+> [ADR 0011](0011-shared-technical-package-layout.md)을 따른다. 아래의 이전
+> `com.ticket.error`·`com.ticket.web` 경로는 당시 결정의 기록이며, 현재 경로는
+> `com.ticket.shared.exception`·`com.ticket.shared.web`이다.
+
 ## Current Decision
 
 - 업무 오류는 소유 모듈이 갖는다 — `<Module>ErrorCode` enum과 예외 클래스, 그리고

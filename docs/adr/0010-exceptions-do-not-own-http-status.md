@@ -3,6 +3,10 @@
 ## 상태(2026-09-10): 채택·구현됨. ADR 0002를 수정(모듈 소유 원칙 자체는 유지, "예외가 완성된
 HTTP 응답 계약을 스스로 갖는다"는 서술만 대체)
 
+> 2026-09-10 갱신: 패키지 배치와 `support` 관련 서술은
+> [ADR 0011](0011-shared-technical-package-layout.md)으로 대체한다. 모듈이 자기 오류를
+> 소유하고 웹 계층이 HTTP 상태를 정한다는 원칙은 유지한다.
+
 ## 배경
 
 ADR 0002가 확정한 모듈 소유 오류 계약에서 `TicketException`은 `HttpStatus`/`ErrorCode`/
