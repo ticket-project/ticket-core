@@ -4,8 +4,8 @@ import com.ticket.booking.application.usecase.CreateOrderUseCase;
 
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.support.domain.RequestedSeatIds;
-import com.ticket.booking.domain.PerformanceSalesPolicy;
-import com.ticket.booking.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.error.NotFoundException;
 import com.ticket.show.PerformanceSaleCatalog;

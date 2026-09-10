@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.salespolicy.domain;
 
 import com.ticket.booking.support.domain.BookingAuditedEntity;
 import com.ticket.booking.exception.ExceedHoldLimitException;

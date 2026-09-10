@@ -1,7 +1,7 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.salespolicy.infrastructure;
 
-import com.ticket.booking.domain.PerformanceSalesPolicy;
-import com.ticket.booking.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

@@ -1,7 +1,7 @@
-package com.ticket.booking.web;
+package com.ticket.booking.salespolicy.web;
 
-import com.ticket.booking.application.usecase.GetPerformanceBookingModeUseCase;
-import com.ticket.booking.web.docs.PerformanceBookingModeControllerDocs;
+import com.ticket.booking.salespolicy.application.usecase.GetPerformanceBookingModeUseCase;
+import com.ticket.booking.salespolicy.web.docs.PerformanceBookingModeControllerDocs;
 import com.ticket.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

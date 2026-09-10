@@ -6,7 +6,7 @@ import com.ticket.booking.application.port.SeatAvailabilityQueryPort;
 
 import com.ticket.booking.domain.HoldManager;
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
-import com.ticket.booking.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.SeatSelectionService;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;

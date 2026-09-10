@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.salespolicy.domain;
 
 public enum OrderAcceptanceStatus {
     BEFORE_OPEN,

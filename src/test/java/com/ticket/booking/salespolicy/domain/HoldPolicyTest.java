@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.salespolicy.domain;
 
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.Test;

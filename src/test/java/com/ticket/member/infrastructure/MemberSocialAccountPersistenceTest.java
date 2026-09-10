@@ -180,8 +180,8 @@ class MemberSocialAccountPersistenceTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(basePackages = "com.ticket.member.domain")
-    @EnableJpaRepositories(basePackages = "com.ticket.member.infrastructure")
+    @EntityScan(basePackages = "com.ticket.member")
+    @EnableJpaRepositories(basePackages = "com.ticket.member")
     @EnableJpaAuditing
     @Import({MemberRepositoryAdapter.class, AuditingTestConfig.class})
     static class TestApplication {

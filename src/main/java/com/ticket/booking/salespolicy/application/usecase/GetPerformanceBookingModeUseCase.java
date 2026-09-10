@@ -1,8 +1,8 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.salespolicy.application.usecase;
 
-import com.ticket.booking.domain.OrderAcceptanceStatus;
-import com.ticket.booking.domain.PerformanceSalesPolicy;
-import com.ticket.booking.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
