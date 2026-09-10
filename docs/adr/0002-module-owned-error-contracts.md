@@ -3,12 +3,17 @@
 ## Status
 
 채택됨. 2026-09-02에 한 번 전역 카탈로그로 되돌려졌다가, Spring Modulith 이동 이후 모듈 소유로
-다시 확정됐다.
+다시 확정됐다. **2026-09-10, [ADR 0010](0010-exceptions-do-not-own-http-status.md)이 "예외가
+HTTP 상태까지 스스로 갖는다"는 아래 서술을 수정했다** — 모듈이 자기 오류를 소유한다는 원칙
+자체는 그대로다. `TicketException`은 이제 errorCode·message·data만 갖고, HTTP 상태는 각
+module handler가 정한다.
 
 ## Current Decision
 
-- 업무 오류는 소유 모듈의 `<module>.exception`에 있다 — `<Module>ErrorCode` enum과 예외 클래스,
-  그리고 `exception.handler`의 얇은 handler(`@Order(HIGHEST_PRECEDENCE)`).
+- 업무 오류는 소유 모듈이 갖는다 — `<Module>ErrorCode` enum과 예외 클래스, 그리고
+  `exception.handler`의 handler(`@Order(HIGHEST_PRECEDENCE)`). 정확한 패키지 위치(capability
+  아래인지 `<module>.support` 아래인지)는 [ADR 0010](0010-exceptions-do-not-own-http-status.md)
+  참고.
 - 어느 모듈의 것도 아닌 오류(E400·E404·E500)와 base 타입 `TicketException`, `ErrorCode`
   interface, 전역 `GlobalExceptionHandler`(`@Order(LOWEST_PRECEDENCE)`)는 `com.ticket.error`가
   소유한다.
@@ -16,7 +21,8 @@
   data}}`) envelope와 E-code·HTTP 상태를 그대로 쓴다. envelope(`ApiResponse`/`ErrorMessage`/
   `ResultType`/`SliceResponse`)는 `com.ticket.web`이 소유한다(ADR 0003 §10). `error -> web`
   단방향만 있고 반대로 `web`이 오류 타입을 알면 순환이 된다 — `ApiResponse`는 완성된
-  code·message·data만 받고 오류 타입을 모른다.
+  code·message·data만 받고 오류 타입을 모른다. **HTTP 상태는 `ApiResponse`가 아니라 각
+  handler가 결정해 `ResponseEntity`에 싣는다** — 예외 자신은 상태를 모른다(ADR 0010).
 - 강제 장치는 `com.ticket.error.ErrorCodeUniquenessTest`(E-code 전역 유일성)와
   `ExceptionHandlerScopeTest`(모듈 handler가 자기 오류만 잡는지)다.
 
