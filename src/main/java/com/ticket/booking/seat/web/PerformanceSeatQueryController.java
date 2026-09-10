@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Redis selection/hold를 함께 읽는다.
  *
  * <p>{@code PerformanceSeat}와 Redis selection/hold 상태는 booking이 소유하는 데이터라, 이 세
- * 엔드포인트는 순수 show/공연 요약 데이터만 다루는 {@code com.ticket.show.web.PerformanceController}가
+ * 엔드포인트는 순수 show/공연 요약 데이터만 다루는 {@code com.ticket.show.performance.web.PerformanceController}가
  * 아니라 booking 소유인 이 {@code booking.seat.web.PerformanceSeatQueryController}에 둔다. URL·JSON
  * 계약은 기존과 동일하다.
  */

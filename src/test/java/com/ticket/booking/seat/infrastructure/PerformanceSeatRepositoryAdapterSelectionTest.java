@@ -1,13 +1,13 @@
 package com.ticket.booking.seat.infrastructure;
 
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.show.domain.Performance;
+import com.ticket.show.performance.domain.Performance;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.Region;
-import com.ticket.show.domain.Show;
+import com.ticket.show.catalog.domain.Show;
 import com.ticket.venue.domain.Venue;
 import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;

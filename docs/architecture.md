@@ -357,7 +357,7 @@ parameter로 받고 JWT나 `member` 내부의 `Member`를 보지 않는다.
 고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
 원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
 않는다** — 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
-`show.web.ShowVenueLayoutController`(물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
+`show.performance.web.ShowVenueLayoutController`(물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
 별개의 show 기준 API다 — 새 기능은 여기 추가하지 않고 performance 기준 API 쪽에 추가한다.
 
 **대기열**은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도 token 저장소도
