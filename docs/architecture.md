@@ -14,8 +14,8 @@
   모듈이고, `com.ticket.ModularityTests`가 경계 위반을 잡는다.
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
-  `shared`/`web`/`error`/`config` 4개는 BC도 supporting capability도 아닌 기술 모듈이다 —
-  앱 전역 배선이거나 여러 module이 공유하는 기술 계약일 뿐 업무 언어를 갖지 않는다.
+  `shared`는 BC가 아닌 공통 기술 모듈이다. 공유 계약은 `shared.web`·`shared.exception`, 공통 실행
+  배선은 `shared.config`에 둔다.
 - 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
   두고, 실제 구현은 모듈 root 밖(업무 모듈은 capability 아래, 기술 모듈은 바로 아래)의
   `web`/`application`/`domain`/`infrastructure`/`exception` 패키지에 둔다. 별도 `internal` 계층은
@@ -55,9 +55,8 @@
 
 아래는 **왜 그 edge가 허용되는가**만 적는다.
 
-- `shared`·`error`·`web`은 `@Modulith(sharedModules = ...)`로 선언해 어느 모듈에서든 참조할 수
-  있다. 그래서 각 모듈 `@ApplicationModule(allowedDependencies = ...)`에는 **업무 모듈 의존
-  상한만** 적는다 — 업무 모듈 의존이 하나도 없는 모듈은 상한을 `{}`로 명시한다.
+- `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 공개 하위 계약을
+  `shared :: *`로 참조한다.
 - `show -> member`는 찜 use case의 회원 확인, `show -> venue`는 표시값 조립, `show -> like`는
   공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - `like -> member`가 있다. 찜하기·찜 해제·찜 상태 조회를 like가 소유하면서(ADR 0009) 탈퇴 회원을
@@ -66,7 +65,7 @@
   기록이고 현재 구조가 아니다.
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
   `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`를 show가 façade로 유지하기 때문이다.
-- `payment`는 entity-only 단계라 `shared`/`web`/`error`도 참조하지 않는 완전한 leaf다 —
+- `payment`는 entity-only 단계라 `shared`도 참조하지 않는 완전한 leaf다 —
   controller가 없어 응답 봉투가, 자기 오류 타입을 던지지 않아 `error`도 필요 없다.
 - 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
 
@@ -167,7 +166,7 @@ like를 모른다 — `show.catalog.application`의 조회 service가 like의 �
 
 capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**이다. Application Module이 아니다 —
 `package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 모듈 집합과 경계는
-그대로 10개다(`com.ticket.ModularityTests`가 원본).
+그대로 7개다(`com.ticket.ModularityTests`가 원본).
 
 | 모듈 | capability |
 | --- | --- |
@@ -182,15 +181,15 @@ capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**�
 
 - capability 아래에는 **실제로 필요한 계층만** 만든다. 빈 계층이나 미래 기능용 패키지는 두지
   않는다.
-- `application.port`/`application.usecase`, `web`의 `request`/`docs`/`support`,
+- `application.port`/`application.usecase`, `web`의 `request`/`docs`,
   `exception`의 `handler`는 그대로 유효한 예외다. 다만 앞의 셋은 이제 capability 안에 있다.
 - **`exception`은 그대로 capability 축을 따르지 않는다** — 다만 "모듈 바로 아래 하나의
   평탄한 `<module>.exception`"도 아니다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
   [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다(ADR 0002가 정한
   "모듈이 자기 오류를 소유한다"는 원칙 자체는 그대로다).
-- 여러 capability가 **실제로** 공유하는 코드만 `<module>.support.<layer>`에 둔다 — 공통 감사
-  base entity(`BookingAuditedEntity` 등), booking의 분산락 계약·구현, 공통 Redis 만료 배선이
-  그 예다. 업무 use case를 support로 모으지 않는다.
+- 여러 capability가 실제로 공유하는 구현은 역할별 모듈 패키지에 둔다. 공통 감사 base entity는
+  `<module>.domain`, 분산락 계약은 `booking.application`, Redis 만료 배선은
+  `booking.infrastructure`이 소유한다. `support` 패키지는 만들지 않는다.
 - 여러 capability를 조립하는 코드는 **결과를 책임지는 capability**에 둔다. 주문 생성이 좌석·
   hold·정책을 엮어도 그것은 `order`다.
 - Controller 하나가 여러 capability를 호출하는 것은 허용한다. 폴더를 맞추려고 endpoint나
@@ -338,23 +337,20 @@ Repository는 "없다"는 사실만 알려주고 오류는 유스케이스가 �
 왜 이렇게 나눴는지는 [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다.
 
 ```text
-com/ticket/<module>/<capability 또는 support>/exception/
-  <Module>ErrorCode.java          enum implements com.ticket.error.ErrorCode
-  <Module>Exception.java          abstract extends com.ticket.error.TicketException(errorCode·message·data만)
+com/ticket/<module>/exception/
+  <Module>ErrorCode.java          enum implements com.ticket.shared.exception.ErrorCode
+  <Module>Exception.java          abstract extends com.ticket.shared.exception.TicketException(errorCode·message·data만)
   <구체 예외>.java                 errorCode·메시지·data를 생성자에서 확정(상태는 없다)
   handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡고
                                           구체 타입 -> HTTP 상태를 이 handler가 정한다
 ```
 
-**`exception` 패키지 자체는 capability로 나누지 않는다.** 한 capability에서만 쓰는 구체
-예외는 그 capability의 `exception`에 두고, 여러 capability가 실제로 던지는 예외와 module
-handler·base 타입·`<Module>ErrorCode`는 `<module>.support.exception`에 둔다(어느 쪽인지는
-grep으로 실제 throw 위치를 확인해서 정한다 — 이름만으로 추정하지 않는다). capability가
-하나뿐인 module(Like)은 그 capability의 `exception`에 전부 둔다. admission처럼 자기 완결적인
-capability는 `TicketException`을 직접 상속해 module base와 무관하게 자기 `exception`에 전부
-둔다.
+**모듈 공통 예외는 `<module>.exception`에 둔다.** 여러 capability가 쓰는 base 타입,
+`<Module>ErrorCode`, module handler가 여기에 속한다. capability 전용 예외는 해당 capability의
+`exception`에 둔다. 공통 오류 계약은 `shared.exception`, 공통 HTTP 응답 봉투는 `shared.web`이
+소유한다.
 
-오류 계약 소유 기준(모듈별 오류 vs `com.ticket.error`의 공통 오류), 응답 봉투가 `web`에 있는
+오류 계약 소유 기준(모듈별 오류 vs `com.ticket.shared.exception`의 공통 오류), 응답 봉투가 `web`에 있는
 이유, `ProblemDetail`을 채택하지 않은 이유는 [ADR 0002](adr/0002-module-owned-error-contracts.md)가
 원본이다. module handler가 다른 module의 오류까지 삼키지 않는지는 `ExceptionHandlerScopeTest`가,
 E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `ErrorCodeUniquenessTest`가 강제한다.
@@ -399,7 +395,7 @@ one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈�
 key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가
 원본이다.
 
-분산락은 `com.ticket.booking.support.application.LockManager` 같은 명시적 포트 호출로 처리한다.
+분산락은 `com.ticket.booking.application.LockManager` 같은 명시적 포트 호출로 처리한다.
 어노테이션과 SpEL로 감추지 않는다. 포트·구현 클래스 목록은
 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)가, 락 순서·임계
 구역 같은 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가 원본이다.
@@ -418,7 +414,7 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 | `<bc>`의 어느 `domain` 계층이든 다른 BC를 참조하는지 | `com.ticket.DomainPurityTest` |
 | `shared`에 bean을 등록했는지 | `com.ticket.shared.SharedModulePurityTest` |
 | 파라미터 제약 선언 위치 | `ControllerParameterConstraintTest` |
-| 필수 입력 오류 문구 | `com.ticket.error.InvalidRequestMessageContractTest` |
+| 필수 입력 오류 문구 | `com.ticket.shared.exception.InvalidRequestMessageContractTest` |
 | E-code 전역 유일성 / handler 스코프 | `ErrorCodeUniquenessTest` / `ExceptionHandlerScopeTest` |
 | module 구조 문서 생성 | `com.ticket.DocumentationTests` |
 

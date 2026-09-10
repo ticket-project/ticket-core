@@ -14,7 +14,7 @@
 
 이 문서가 설명하는 코드는 대부분 `booking` Application Module 소유다(`com.ticket.booking.**`).
 커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 배선 module
-(`com.ticket.config`)에 있다.
+(`com.ticket.shared.config`)에 있다.
 
 ## 지켜야 할 원칙
 
@@ -150,7 +150,7 @@ spring:
         resubmitted: 10m
 ```
 
-`EventPublicationMaintenance`(`com.ticket.config`)가 두 가지 주기 작업을 한다.
+`EventPublicationMaintenance`(`com.ticket.shared.config`)가 두 가지 주기 작업을 한다.
 
 | 작업 | 주기 | 동작 |
 | --- | --- | --- |
@@ -217,11 +217,11 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
   `booking.hold.application.HoldReleaseTaskProcessor`, `booking.hold.application.HoldReleaseProgressRecorder`
 - 만료 보정: `booking.order.application.usecase.ExpirePendingOrdersUseCase`
 - background 트리거: `booking.order.infrastructure.OrderExpirationTrigger`
-- Redis TTL 진입 제한: `booking.support.infrastructure.RedisExpirationListenerConfig`
-- event publication 운영: `config.EventPublicationMaintenance`
-- 분산락 포트: `booking.support.application.LockManager`(잠글 대상은 `LockKey`/`LockScope` — 업무
+- Redis TTL 진입 제한: `booking.infrastructure.RedisExpirationListenerConfig`
+- event publication 운영: `shared.config.EventPublicationMaintenance`
+- 분산락 포트: `booking.application.LockManager`(잠글 대상은 `LockKey`/`LockScope` — 업무
   의미만 담고 key 문자열은 담지 않는다, 획득 방식은 `LockOptions` — 대기 시간·임대 시간·실패 로그
-  수준), 구현: `booking.support.infrastructure.RedissonLockManager`(key 형식은
+  수준), 구현: `booking.infrastructure.RedissonLockManager`(key 형식은
   `RedissonLockKeyFormatter`). 적용 예: 동일 회원/공연 조합의 중복 주문 시작 방지
   (`LockScope.ORDER_START`), 동일 좌석 동시 점유 방지(`LockScope.SEAT`)
 

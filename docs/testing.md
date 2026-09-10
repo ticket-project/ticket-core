@@ -60,7 +60,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | --- | --- |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
-| `com.ticket.shared.SharedModulePurityTest` | `com.ticket.shared`에 bean을 등록하는 코드(`@Configuration`/`@Component` 메타 애노테이션)를 두지 않는 것. `sharedModules`인 shared는 모든 모듈 테스트에 함께 뜨므로 여기 배선이 있으면 모든 STANDALONE 테스트가 그것을 띄운다 |
+| `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.config`와 `shared.exception.handler`에만 두는 것 |
 | `com.ticket.DomainPurityTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — capability 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.catalog.application`이 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules") |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
@@ -145,7 +145,7 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 실제 인프라나 전체 컨텍스트가 필요한 검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를
 본다.
 
-- `com.ticket.booking.support.infrastructure.CoreRedisIntegrationTest`: Redis key·TTL·expiration
+- `com.ticket.booking.infrastructure.CoreRedisIntegrationTest`: Redis key·TTL·expiration
   listener·분산락(Testcontainers)
 - `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
