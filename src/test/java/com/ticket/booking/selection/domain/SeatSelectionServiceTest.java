@@ -1,8 +1,8 @@
 package com.ticket.booking.selection.domain;
 
 import com.ticket.booking.selection.domain.SeatSelectionStore;
-import com.ticket.booking.exception.SeatAlreadySelectedException;
-import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.selection.exception.SeatAlreadySelectedException;
+import com.ticket.booking.selection.exception.SeatNotOwnedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

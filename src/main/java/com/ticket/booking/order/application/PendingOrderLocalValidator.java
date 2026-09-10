@@ -5,7 +5,7 @@ import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
+import com.ticket.booking.order.exception.PendingOrderAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

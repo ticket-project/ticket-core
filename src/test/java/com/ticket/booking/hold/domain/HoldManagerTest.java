@@ -3,7 +3,7 @@ package com.ticket.booking.hold.domain;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.support.domain.RequestedSeatIds;
-import com.ticket.booking.exception.SeatAlreadyHoldException;
+import com.ticket.booking.support.exception.SeatAlreadyHoldException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

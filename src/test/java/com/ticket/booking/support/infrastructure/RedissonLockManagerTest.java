@@ -2,7 +2,7 @@ package com.ticket.booking.support.infrastructure;
 
 import com.ticket.booking.support.application.LockKey;
 import com.ticket.booking.support.application.LockOptions;
-import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.support.exception.HoldBusyException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

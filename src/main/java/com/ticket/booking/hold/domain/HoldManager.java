@@ -3,7 +3,7 @@ package com.ticket.booking.hold.domain;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.support.domain.RequestedSeatIds;
-import com.ticket.booking.exception.SeatAlreadyHoldException;
+import com.ticket.booking.support.exception.SeatAlreadyHoldException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

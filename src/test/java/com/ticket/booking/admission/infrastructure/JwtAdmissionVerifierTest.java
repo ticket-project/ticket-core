@@ -1,10 +1,10 @@
 package com.ticket.booking.admission.infrastructure;
 
 import com.ticket.booking.admission.application.AdmissionVerification;
-import com.ticket.booking.exception.AdmissionErrorCode;
-import com.ticket.booking.exception.AdmissionTokenException;
-import com.ticket.booking.exception.AdmissionTokenExpiredException;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.admission.exception.AdmissionErrorCode;
+import com.ticket.booking.admission.exception.AdmissionTokenException;
+import com.ticket.booking.admission.exception.AdmissionTokenExpiredException;
+import com.ticket.booking.admission.exception.AdmissionTokenRequiredException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
