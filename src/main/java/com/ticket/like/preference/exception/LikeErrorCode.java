@@ -1,6 +1,6 @@
 package com.ticket.like.preference.exception;
 
-import com.ticket.error.ErrorCode;
+import com.ticket.shared.exception.ErrorCode;
 
 /**
  * like module이 소유하는 오류 코드다.

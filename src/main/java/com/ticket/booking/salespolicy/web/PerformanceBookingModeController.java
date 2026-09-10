@@ -2,7 +2,7 @@ package com.ticket.booking.salespolicy.web;
 
 import com.ticket.booking.salespolicy.application.usecase.GetPerformanceBookingModeUseCase;
 import com.ticket.booking.salespolicy.web.docs.PerformanceBookingModeControllerDocs;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,5 +1,7 @@
 package com.ticket.member;
 
+import java.security.Principal;
+
 /**
  * 인증된 회원을 나타내는 공개 계약이다. memberId와 인가에 꼭 필요한 role만 가진 불변 값으로,
  * JWT나 JPA {@code Member} entity를 다른 module에 노출하지 않는다. 다른 module의 controller는
@@ -10,7 +12,7 @@ package com.ticket.member;
  * 그 경로의 주체는 Spring이 제공하는 DefaultOAuth2User가 맡는다. 형제 저장소 ticket-queue의
  * 같은 이름 타입과 형태를 맞춘다.
  */
-public record AuthenticatedMember(Long memberId, String role) {
+public record AuthenticatedMember(Long memberId, String role) implements Principal {
 
     public AuthenticatedMember {
         if (memberId == null || memberId <= 0) {
@@ -19,5 +21,10 @@ public record AuthenticatedMember(Long memberId, String role) {
         if (role == null || role.isBlank()) {
             throw new IllegalArgumentException("role must not be blank");
         }
+    }
+
+    @Override
+    public String getName() {
+        return String.valueOf(memberId);
     }
 }

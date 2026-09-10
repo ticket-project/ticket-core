@@ -1,6 +1,6 @@
 package com.ticket.member.oauth.domain;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import java.util.Locale;
 import java.util.Map;
 

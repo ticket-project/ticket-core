@@ -13,8 +13,8 @@ import com.ticket.show.catalog.application.usecase.GetSaleStartApproachingShowsU
 import com.ticket.show.catalog.application.usecase.GetShowDetailUseCase;
 import com.ticket.show.catalog.application.usecase.GetShowsUseCase;
 import com.ticket.show.catalog.application.usecase.SearchShowsUseCase;
-import com.ticket.web.ApiResponse;
-import com.ticket.web.SliceResponse;
+import com.ticket.shared.web.ApiResponse;
+import com.ticket.shared.web.SliceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

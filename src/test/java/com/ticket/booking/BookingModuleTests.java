@@ -29,7 +29,7 @@ import java.time.Clock;
  * repository의 통합 테스트가 담당한다. {@code Clock}도 같은 이유로 {@code @MockitoBean}이다 —
  * {@code shared}는 {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에 포함되지만 이제 호출
  * 대상 계약만 갖고 bean을 등록하지 않고, {@code Clock}을 만드는 {@code SystemClockConfig}는
- * {@code com.ticket.config}가 소유해 STANDALONE 스캔 범위 밖이다. {@code SimpMessagingTemplate}은
+ * {@code com.ticket.shared.config}가 소유해 STANDALONE 스캔 범위 밖이다. {@code SimpMessagingTemplate}은
  * {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 한다. 이 bean을
  * 만드는 {@code @EnableWebSocketMessageBroker} 설정
  * ({@code booking.seat.infrastructure.WebSocketConfig})은 이제 booking 소유라 스캔

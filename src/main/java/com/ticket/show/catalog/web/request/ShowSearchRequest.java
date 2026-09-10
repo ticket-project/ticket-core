@@ -1,6 +1,6 @@
 package com.ticket.show.catalog.web.request;
 
-import com.ticket.show.catalog.web.support.cursor.ShowCursorCodec;
+import com.ticket.show.catalog.web.cursor.ShowCursorCodec;
 import com.ticket.show.catalog.application.ShowSearchCriteria;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

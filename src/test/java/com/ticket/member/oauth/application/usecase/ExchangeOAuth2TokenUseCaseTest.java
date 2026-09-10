@@ -6,7 +6,7 @@ import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
-import com.ticket.member.support.exception.UnauthenticatedException;
+import com.ticket.member.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

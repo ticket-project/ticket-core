@@ -2,7 +2,7 @@ package com.ticket.booking.order.application;
 
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

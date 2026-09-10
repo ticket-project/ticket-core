@@ -1,6 +1,6 @@
 package com.ticket.member.account.application.usecase;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.account.application.MemberRegistrar;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.auth.domain.RawPassword;

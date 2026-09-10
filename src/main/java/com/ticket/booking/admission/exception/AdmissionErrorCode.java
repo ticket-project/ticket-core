@@ -1,6 +1,6 @@
 package com.ticket.booking.admission.exception;
 
-import com.ticket.error.ErrorCode;
+import com.ticket.shared.exception.ErrorCode;
 
 /**
  * admission token 검증 오류 코드다(원래 별도 admission module이 소유했다).

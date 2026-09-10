@@ -1,7 +1,7 @@
 package com.ticket.booking.admission.exception.handler;
 
 import com.ticket.booking.admission.exception.AdmissionTokenException;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * 정책을 한 곳에서 강제하기 위해서다(원래 별도 admission module의 handler였다).
  *
  * <p>base 예외 하나만 잡는다. 상위 타입을 잡으면 order가 높아 다른 module의 오류까지 삼킨다 —
- * 그 범위는 {@code com.ticket.error.ExceptionHandlerScopeTest}가 강제한다.
+ * 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
  *
  * <p>admission 예외 3종(required/expired/invalid)은 모두 403으로 응답한다 — 상태를 예외가 아니라
  * 이 handler가 정한다.

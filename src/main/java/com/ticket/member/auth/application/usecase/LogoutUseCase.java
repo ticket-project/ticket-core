@@ -1,10 +1,10 @@
 package com.ticket.member.auth.application.usecase;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.member.auth.application.RefreshTokenStore;
-import com.ticket.member.support.exception.AuthorizationException;
-import com.ticket.member.support.exception.UnauthenticatedException;
+import com.ticket.member.exception.AuthorizationException;
+import com.ticket.member.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

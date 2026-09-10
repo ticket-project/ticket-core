@@ -4,7 +4,7 @@ import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.seat.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatStatusUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

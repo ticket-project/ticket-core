@@ -5,7 +5,7 @@ import com.querydsl.core.Tuple;
 import com.ticket.show.catalog.application.ShowSort;
 import com.ticket.show.catalog.application.ShowCursor;
 import com.ticket.show.catalog.domain.QShow;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 

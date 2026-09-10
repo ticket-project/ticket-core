@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
- * {@code com.ticket.shared}에는 다른 module이 호출하는 계약만 두고, bean을 등록하는 코드({@code
- * @Configuration}/{@code @Component})는 두지 않는다.
+ * shared의 공개 계약에는 bean을 등록하지 않고, 공통 실행 코드는 {@code shared.config}와
+ * {@code shared.exception.handler}에만 둔다.
  *
  * <p>배경은 {@code docs/adr/0003-spring-modulith-application-module-boundaries.md} §6이 원본이다.
  */
@@ -23,9 +23,12 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class SharedModulePurityTest {
 
     @ArchTest
-    static final ArchRule shared에는_bean을_등록하는_코드를_두지_않는다 = noClasses()
+    static final ArchRule shared의_공개_계약에는_bean을_등록하지_않는다 = noClasses()
+            .that().resideOutsideOfPackages(
+                    "com.ticket.shared.config..",
+                    "com.ticket.shared.exception.handler.."
+            )
             .should().beAnnotatedWith(Configuration.class)
             .orShould().beMetaAnnotatedWith(Component.class)
-            .because("shared는 호출 대상 계약만 갖는다. bean 등록은 com.ticket.config가 소유한다 "
-                    + "(sharedModules 선언 때문에 shared는 모든 module 테스트에 함께 뜬다)");
+            .because("공개 계약에는 상태 없는 타입만 두고, 공통 실행 코드는 정해진 내부 패키지에만 둔다");
 }

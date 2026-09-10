@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.ticket.booking.salespolicy.application.usecase.GetPerformanceBookingModeUseCase;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
-import com.ticket.error.NotFoundException;
-import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.booking.support.exception.handler.BookingExceptionHandler;
+import com.ticket.shared.exception.NotFoundException;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

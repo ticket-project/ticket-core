@@ -2,12 +2,12 @@ package com.ticket.booking.order.application.usecase;
 
 import com.ticket.booking.order.application.ValidatedOrderRequest;
 
-import com.ticket.booking.support.application.LockKey;
-import com.ticket.booking.support.application.RecordingLockManager;
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.RecordingLockManager;
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.order.application.CreateOrderValidator;
 import com.ticket.booking.order.application.CreatePendingOrderTransactionService;
-import com.ticket.booking.support.domain.RequestedSeatIds;
+import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.order.domain.PendingOrderCreationResult;
 import com.ticket.booking.hold.domain.HoldAllocator;
 import com.ticket.booking.hold.domain.HoldAllocation;
@@ -20,7 +20,7 @@ import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

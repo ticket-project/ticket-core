@@ -8,7 +8,7 @@ import com.ticket.booking.seat.exception.PerformanceSeatAlreadyEditionedExceptio
 import com.ticket.booking.seat.exception.SeatVenueMismatchException;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

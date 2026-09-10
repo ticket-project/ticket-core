@@ -14,6 +14,9 @@
  * - PerformanceSaleCatalog
  * - PerformanceVenueLayoutCatalog (booking이 좌석 판매 편성·seat-map 조합에 쓰는 snapshot)
  */
-@org.springframework.modulith.ApplicationModule(displayName = "Show", allowedDependencies = {"venue", "like", "member"})
+@org.springframework.modulith.ApplicationModule(
+        displayName = "Show",
+        allowedDependencies = {"venue", "like", "member", "shared :: *"}
+)
 package com.ticket.show;
 

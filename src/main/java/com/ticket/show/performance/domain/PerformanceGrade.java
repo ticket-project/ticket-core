@@ -1,7 +1,7 @@
 package com.ticket.show.performance.domain;
 
 import com.ticket.show.catalog.domain.ShowAuditedEntity;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

@@ -6,7 +6,7 @@ import com.ticket.show.performance.application.PerformanceSummaryView;
 import com.ticket.venue.Region;
 import com.ticket.venue.VenueLookup;
 import com.ticket.venue.VenueSummary;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

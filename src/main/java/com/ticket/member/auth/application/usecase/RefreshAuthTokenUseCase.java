@@ -1,13 +1,13 @@
 package com.ticket.member.auth.application.usecase;
 
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
 import com.ticket.member.auth.application.RefreshTokenStore;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
-import com.ticket.member.support.exception.UnauthenticatedException;
+import com.ticket.member.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

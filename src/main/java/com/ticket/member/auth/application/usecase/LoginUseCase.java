@@ -1,6 +1,6 @@
 package com.ticket.member.auth.application.usecase;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.auth.application.CredentialAuthenticator;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;

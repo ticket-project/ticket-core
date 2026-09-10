@@ -3,7 +3,7 @@ package com.ticket.booking.order.application.usecase;
 import com.ticket.booking.order.application.CancelOrderTransactionService;
 import com.ticket.booking.order.application.CreateOrderValidator;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.MemberLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

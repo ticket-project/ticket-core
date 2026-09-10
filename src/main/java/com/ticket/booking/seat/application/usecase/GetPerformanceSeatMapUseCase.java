@@ -5,7 +5,7 @@ import com.ticket.booking.seat.application.port.PerformanceSeatMapQueryPort;
 import com.ticket.booking.seat.application.port.PerformanceSeatMapQueryPort.PerformanceSeatMapRow;
 import com.ticket.show.PerformanceVenueLayout;
 import com.ticket.show.PerformanceVenueLayoutCatalog;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

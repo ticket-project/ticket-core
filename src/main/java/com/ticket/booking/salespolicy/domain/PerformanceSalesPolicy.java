@@ -1,9 +1,9 @@
 package com.ticket.booking.salespolicy.domain;
 
-import com.ticket.booking.support.domain.BookingAuditedEntity;
+import com.ticket.booking.domain.BookingAuditedEntity;
 import com.ticket.booking.salespolicy.exception.ExceedHoldLimitException;
 import com.ticket.booking.salespolicy.exception.NotYetReserveTimeException;
-import com.ticket.booking.support.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.PerformanceIsPastException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -23,8 +23,8 @@ import java.time.LocalDateTime;
  * scalar 식별자일 뿐 cross-module JPA 연관관계나 DB FK가 아니다.
  *
  * <p>정책 조회 실패("이 회차는 Booking 판매 정책이 구성되지 않음")는 이 aggregate가 아니라 그것을
- * 조회하는 use case가 {@link com.ticket.error.NotFoundException}으로 판단한다 — 이 도메인은
- * 존재 여부를 스스로 판단하지 않는다({@link com.ticket.error.NotFoundException} 계약 참고).
+ * 조회하는 use case가 {@link com.ticket.shared.exception.NotFoundException}으로 판단한다 — 이 도메인은
+ * 존재 여부를 스스로 판단하지 않는다({@link com.ticket.shared.exception.NotFoundException} 계약 참고).
  */
 @Getter
 @Entity

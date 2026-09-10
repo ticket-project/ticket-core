@@ -9,7 +9,7 @@ import com.ticket.show.catalog.application.port.ShowListQueryPort;
 import com.ticket.show.catalog.application.SaleOpeningSoonSearchParam;
 import com.ticket.show.catalog.application.ShowCursor;
 import com.ticket.show.catalog.application.ShowOpeningSoonDetailView;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.CursorPage;
 import com.ticket.venue.VenueLookup;
 import lombok.RequiredArgsConstructor;

@@ -2,7 +2,7 @@ package com.ticket.member.account.application.usecase;
 
 import com.ticket.member.account.application.MemberWithdrawalTransactionService;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.oauth.application.KakaoUnlinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -8,7 +8,7 @@ import java.util.function.Function;
  *
  * <p>HTTP 커서 문자열은 여기에 담지 않는다. {@code nextPosition}은 다음 페이지의 시작 위치를
  * 나타내는 타입 값이고, 이를 wire 문자열로 바꾸는 일은 각 module의 web 계층(예:
- * {@code show.catalog.web.support.cursor.ShowCursorCodec})이 한다.
+ * {@code show.catalog.web.cursor.ShowCursorCodec})이 한다.
  *
  * @param <T> 조회 결과 항목
  * @param <P> 다음 페이지 위치를 나타내는 타입

@@ -1,6 +1,6 @@
 package com.ticket.member.auth.domain;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import lombok.Getter;
 
 import java.util.Objects;

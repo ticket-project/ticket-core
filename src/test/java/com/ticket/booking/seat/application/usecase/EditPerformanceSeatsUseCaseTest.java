@@ -7,7 +7,7 @@ import com.ticket.booking.seat.exception.PerformanceSeatAlreadyEditionedExceptio
 import com.ticket.booking.seat.exception.SeatVenueMismatchException;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

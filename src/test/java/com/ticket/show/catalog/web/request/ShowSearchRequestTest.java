@@ -1,12 +1,12 @@
 package com.ticket.show.catalog.web.request;
 
-import com.ticket.show.catalog.web.support.cursor.ShowCursorCodec;
+import com.ticket.show.catalog.web.cursor.ShowCursorCodec;
 import com.ticket.show.catalog.application.ShowCursor;
 import com.ticket.show.catalog.application.ShowSearchCriteria;
 import com.ticket.show.catalog.application.ShowSort;
 import com.ticket.show.catalog.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 

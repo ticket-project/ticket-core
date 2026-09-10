@@ -4,7 +4,7 @@ import com.ticket.member.AuthenticatedMember;
 import com.ticket.like.preference.application.usecase.AddLikeUseCase;
 import com.ticket.like.preference.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.preference.application.usecase.GetLikeStatusUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

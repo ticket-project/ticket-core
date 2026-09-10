@@ -6,7 +6,7 @@ import com.ticket.show.PerformanceVenueLayout;
 import com.ticket.show.PerformanceVenueLayoutCatalog;
 import com.ticket.show.performance.application.port.PerformanceVenueLayoutQueryPort.PerformanceGradeLayoutRow;
 import com.ticket.show.performance.domain.PerformanceVenueLayoutContext;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.venue.VenueLookup;
 import com.ticket.venue.VenueSeatLayout;
 import com.ticket.venue.VenueSeatLookup;

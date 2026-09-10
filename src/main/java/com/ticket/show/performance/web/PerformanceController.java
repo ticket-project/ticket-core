@@ -3,7 +3,7 @@ package com.ticket.show.performance.web;
 import com.ticket.show.performance.web.docs.PerformanceControllerDocs;
 import com.ticket.show.performance.application.usecase.GetPerformanceScheduleListUseCase;
 import com.ticket.show.performance.application.usecase.GetPerformanceSummaryUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

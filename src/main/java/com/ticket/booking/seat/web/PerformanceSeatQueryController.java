@@ -5,7 +5,7 @@ import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.seat.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatStatusUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

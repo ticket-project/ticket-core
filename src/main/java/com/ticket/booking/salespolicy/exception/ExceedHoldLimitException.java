@@ -2,8 +2,8 @@ package com.ticket.booking.salespolicy.exception;
 
 
 
-import com.ticket.booking.support.exception.BookingErrorCode;
-import com.ticket.booking.support.exception.BookingException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
 /**
  * 회차가 정한 1인 선점 좌석 수 한도를 넘었다.

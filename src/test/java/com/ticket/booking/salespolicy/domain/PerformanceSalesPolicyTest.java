@@ -2,7 +2,7 @@ package com.ticket.booking.salespolicy.domain;
 
 import com.ticket.booking.salespolicy.exception.ExceedHoldLimitException;
 import com.ticket.booking.salespolicy.exception.NotYetReserveTimeException;
-import com.ticket.booking.support.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.PerformanceIsPastException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

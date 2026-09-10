@@ -5,7 +5,7 @@ import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.selection.application.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.selection.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.selection.application.usecase.SelectSeatUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

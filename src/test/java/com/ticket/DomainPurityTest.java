@@ -26,7 +26,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *
  * <p>{@code shared}/{@code web}/{@code error}는 {@code @Modulith(sharedModules = ...)}로 모든
  * module에 허용되는 기술 모듈이라 이 규칙의 대상이 아니다 — 실측상 각 BC의 domain이 참조하는
- * 유일한 cross-module 타입도 {@code com.ticket.error.InvalidRequestException}뿐이다.
+ * 유일한 cross-module 타입도 {@code com.ticket.shared.exception.InvalidRequestException}뿐이다.
  *
  * <p>module(BC) 사이 의존 자체(어떤 module이 어떤 module을 참조할 수 있는지)는 이 테스트가
  * 아니라 {@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG}가 막는다. 이 테스트는 그
@@ -35,7 +35,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  * <p><b>이 테스트가 보장하지 않는 것</b>: domain의 기술 의존이다. 실제로 6개 BC 전부의 domain이
  * {@code jakarta.persistence}(JPA entity)와 {@code org.springframework.data.*}(auditing)를
  * 참조하고, {@code booking}/{@code show}의 domain 클래스 일부는 {@code @Component}/
- * {@code @Service}를 갖는다. domain이 참조하는 {@code com.ticket.error.InvalidRequestException}은
+ * {@code @Service}를 갖는다. domain이 참조하는 {@code com.ticket.shared.exception.InvalidRequestException}은
  * {@code TicketException}을 통해 {@code org.springframework.http.HttpStatus}로 이어진다 — 이
  * 기술 결합은 ADR 0002가 대안을 검토해 고른 설계이며 이 테스트의 대상이 아니다. "purity"는 여기서
  * BC 격리만 뜻한다.

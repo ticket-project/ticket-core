@@ -2,7 +2,7 @@ package com.ticket.show.performance.web;
 
 import com.ticket.show.performance.web.docs.ShowVenueLayoutControllerDocs;
 import com.ticket.show.performance.application.usecase.GetVenueLayoutUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -28,5 +28,5 @@
  * 생기면 그때 옮길 후보다(아직 만들지 않는다 — 지금은 이 하나의 화면 때문에 새 BC를 만들
  * 근거가 부족하다).
  */
-@org.springframework.modulith.ApplicationModule(displayName = "Like", allowedDependencies = {"member"})
+@org.springframework.modulith.ApplicationModule(displayName = "Like", allowedDependencies = {"member", "shared :: *"})
 package com.ticket.like;

@@ -1,6 +1,6 @@
 package com.ticket.member.account.application;
 
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.member.MemberProfile;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.Member;

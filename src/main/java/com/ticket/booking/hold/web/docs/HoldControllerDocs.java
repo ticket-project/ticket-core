@@ -3,7 +3,7 @@ package com.ticket.booking.hold.web.docs;
 import com.ticket.booking.hold.web.request.CreateHoldRequest;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -56,7 +56,7 @@ public interface HoldControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
                     description = "이미 선점된 좌석 또는 진행 중인 PENDING 주문 존재",
-                    content = @Content(schema = @Schema(implementation = com.ticket.web.ApiResponse.class))
+                    content = @Content(schema = @Schema(implementation = com.ticket.shared.web.ApiResponse.class))
             )
     })
     ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(

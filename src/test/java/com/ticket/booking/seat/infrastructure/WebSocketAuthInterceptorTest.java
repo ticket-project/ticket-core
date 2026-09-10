@@ -2,7 +2,7 @@ package com.ticket.booking.seat.infrastructure;
 
 import com.ticket.member.AccessTokenAuthenticator;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.support.exception.UnauthenticatedException;
+import com.ticket.member.exception.UnauthenticatedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

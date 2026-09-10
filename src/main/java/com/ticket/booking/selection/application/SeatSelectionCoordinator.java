@@ -1,12 +1,12 @@
 package com.ticket.booking.selection.application;
 
-import com.ticket.booking.support.application.LockKey;
-import com.ticket.booking.support.application.LockManager;
-import com.ticket.booking.support.application.LockOptions;
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.LockManager;
+import com.ticket.booking.application.LockOptions;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.booking.support.exception.PerformanceIsPastException;
-import com.ticket.booking.support.exception.SeatAlreadyHoldException;
+import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.SeatAlreadyHoldException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

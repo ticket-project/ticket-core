@@ -1,7 +1,7 @@
 package com.ticket.show.catalog.web;
 
-import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.show.support.exception.handler.ShowExceptionHandler;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.show.exception.handler.ShowExceptionHandler;
 import com.ticket.show.catalog.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
 import com.ticket.show.catalog.domain.SaleType;
@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import com.ticket.show.catalog.web.support.cursor.ShowCursorCodec;
+import com.ticket.show.catalog.web.cursor.ShowCursorCodec;
 import com.ticket.show.catalog.application.ShowCursor;
 import com.ticket.show.catalog.application.ShowSort;
 import tools.jackson.databind.json.JsonMapper;

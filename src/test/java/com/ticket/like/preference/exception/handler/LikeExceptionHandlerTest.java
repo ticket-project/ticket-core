@@ -2,7 +2,7 @@ package com.ticket.like.preference.exception.handler;
 
 import com.ticket.like.LikeType;
 import com.ticket.like.preference.exception.LikeAlreadyExistsException;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

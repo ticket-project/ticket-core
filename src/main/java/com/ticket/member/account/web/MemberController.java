@@ -4,7 +4,7 @@ import com.ticket.member.account.web.docs.MemberControllerDocs;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.account.application.usecase.GetCurrentMemberUseCase;
 import com.ticket.member.account.application.usecase.WithdrawCurrentMemberUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;

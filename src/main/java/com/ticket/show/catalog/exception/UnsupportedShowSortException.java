@@ -2,8 +2,8 @@ package com.ticket.show.catalog.exception;
 
 
 
-import com.ticket.show.support.exception.ShowErrorCode;
-import com.ticket.show.support.exception.ShowException;
+import com.ticket.show.exception.ShowErrorCode;
+import com.ticket.show.exception.ShowException;
 import lombok.Getter;
 /**
  * 지원하지 않는 공연 정렬 조건이다.

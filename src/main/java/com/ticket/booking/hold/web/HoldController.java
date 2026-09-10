@@ -4,7 +4,7 @@ import com.ticket.booking.hold.web.docs.HoldControllerDocs;
 import com.ticket.booking.hold.web.request.CreateHoldRequest;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;

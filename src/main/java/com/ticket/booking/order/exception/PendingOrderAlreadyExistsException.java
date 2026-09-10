@@ -2,8 +2,8 @@ package com.ticket.booking.order.exception;
 
 
 
-import com.ticket.booking.support.exception.BookingErrorCode;
-import com.ticket.booking.support.exception.BookingException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
 /**
  * 같은 회원에게 이미 진행 중인 결제 대기 주문이 있다.
