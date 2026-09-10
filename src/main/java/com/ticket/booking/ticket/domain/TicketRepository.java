@@ -1,6 +1,6 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.ticket.domain;
 
-import com.ticket.booking.domain.Ticket;
+import com.ticket.booking.ticket.domain.Ticket;
 
 import java.util.Optional;
 
