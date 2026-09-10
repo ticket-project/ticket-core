@@ -1,13 +1,8 @@
 package com.ticket.member;
 
-import com.ticket.shared.UuidSupplier;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.modulith.test.ApplicationModuleTest;
-
-import java.util.UUID;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -16,25 +11,25 @@ import java.util.UUID;
  * 않은 미래 모듈이 조용히 검증에서 빠지는 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.member} package tree만 component-scan한다.
- * {@code UuidSupplier}(공개 계약은 {@code com.ticket.shared.UuidSupplier}) bean은
- * {@code com.ticket.config.UuidSupplierConfig}에 있어
- * 그 필터 밖이므로, {@code RedisOAuth2AuthCodeStore} 같은 member 어댑터가 필요로 하는 bean만 이
- * 테스트 안에서 직접 채운다.
+ * member 자체가 UUID 공급 빈을 제공하므로 Redis 기반 인증 어댑터도 같은 모듈 안에서 기동한다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
-@Import(MemberModuleTests.TestSupportConfig.class)
+@TestPropertySource(properties = {
+        "JWT_SECRET=0123456789abcdef0123456789abcdef",
+        "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
+        "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
+        "GOOGLE_CLIENT_ID=member-module-test",
+        "GOOGLE_CLIENT_SECRET=member-module-test",
+        "KAKAO_CLIENT_ID=member-module-test",
+        "KAKAO_CLIENT_SECRET=member-module-test",
+        "KAKAO_ADMIN_KEY=member-module-test",
+        "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
+        "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
+})
 class MemberModuleTests {
 
     @Test
     void bootstraps() {
     }
 
-    @Configuration
-    static class TestSupportConfig {
-
-        @Bean
-        UuidSupplier uuidSupplier() {
-            return UUID::randomUUID;
-        }
-    }
 }

@@ -5,7 +5,7 @@ import com.ticket.show.catalog.application.port.ShowSummaryBatchQueryPort;
 import com.ticket.show.catalog.application.port.ShowSummaryBatchQueryPort;
 import com.ticket.show.catalog.application.ShowSummaryRow;
 import com.ticket.show.catalog.application.ShowLikeSummaryView;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.like.LikeEntry;
 import com.ticket.like.LikeQuery;
 import com.ticket.like.LikeType;

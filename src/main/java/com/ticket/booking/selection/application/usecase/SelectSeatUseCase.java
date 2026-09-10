@@ -9,8 +9,8 @@ import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilityValidator;
-import com.ticket.error.InvalidRequestException;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

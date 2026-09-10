@@ -7,7 +7,7 @@ package com.ticket.show;
 public interface PerformanceVenueLayoutCatalog {
 
     /**
-     * 존재하지 않는 회차 ID는 공통 오류({@code com.ticket.error.NotFoundException})로 알린다. venue가
+     * 존재하지 않는 회차 ID는 공통 오류({@code com.ticket.shared.exception.NotFoundException})로 알린다. venue가
      * 없는 show는 {@link PerformanceVenueLayout#seatLayoutBySeatId()}가 빈 맵이다.
      */
     PerformanceVenueLayout getVenueLayout(long performanceId);

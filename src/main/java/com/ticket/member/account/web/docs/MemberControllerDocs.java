@@ -3,7 +3,7 @@ package com.ticket.member.account.web.docs;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.account.application.usecase.GetCurrentMemberUseCase;
 import com.ticket.member.account.application.usecase.WithdrawCurrentMemberUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

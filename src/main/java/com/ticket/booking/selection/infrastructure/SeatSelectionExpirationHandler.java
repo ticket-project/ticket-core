@@ -1,6 +1,6 @@
 package com.ticket.booking.selection.infrastructure;
 
-import com.ticket.booking.support.infrastructure.RedisKeyExpirationHandler;
+import com.ticket.booking.infrastructure.RedisKeyExpirationHandler;
 import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;

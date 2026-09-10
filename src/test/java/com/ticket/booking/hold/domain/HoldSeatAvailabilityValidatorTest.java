@@ -1,11 +1,11 @@
 package com.ticket.booking.hold.domain;
 
-import com.ticket.booking.support.domain.RequestedSeatIds;
+import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.support.exception.NoAvailableSeatException;
-import com.ticket.booking.support.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.exception.NoAvailableSeatException;
+import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -5,7 +5,7 @@ import com.ticket.booking.seat.application.SeatStateSnapshotReader;
 import com.ticket.booking.admission.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.exception.NotYetReserveTimeException;
-import com.ticket.booking.support.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;

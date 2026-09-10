@@ -1,7 +1,7 @@
 package com.ticket.member.oauth.application;
 
-import com.ticket.error.InternalErrorException;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InternalErrorException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.oauth.application.KakaoUnlinkClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

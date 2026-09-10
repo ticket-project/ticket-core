@@ -1,6 +1,6 @@
 package com.ticket.booking.admission.exception;
 
-import com.ticket.error.TicketException;
+import com.ticket.shared.exception.TicketException;
 
 /**
  * admission token이 유효하지 않다. admission 검증 예외의 base이며 그 자체로 E8002 계약을 갖는다.

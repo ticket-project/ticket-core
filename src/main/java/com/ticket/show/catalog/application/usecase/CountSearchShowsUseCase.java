@@ -4,7 +4,7 @@ import com.ticket.show.catalog.application.port.ShowListQueryPort;
 
 import com.ticket.show.catalog.application.port.ShowListQueryPort;
 import com.ticket.show.catalog.application.ShowSearchCriteria;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

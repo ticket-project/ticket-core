@@ -12,6 +12,9 @@
  * 공개 계약:
  * - OrderStarted / OrderTerminated (commit 이후 후속 처리를 위한 이벤트)
  */
-@org.springframework.modulith.ApplicationModule(displayName = "Booking", allowedDependencies = {"show", "member"})
+@org.springframework.modulith.ApplicationModule(
+        displayName = "Booking",
+        allowedDependencies = {"show", "member", "shared :: *"}
+)
 package com.ticket.booking;
 

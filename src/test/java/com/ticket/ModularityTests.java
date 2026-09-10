@@ -50,29 +50,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ModularityTests {
 
-    /** 파일시스템 기준으로 선언된 10개 module package다. {@code shared}가 왜 여기 있는지는 클래스 javadoc 참고. */
+    /** 파일시스템 기준으로 선언된 7개 module package다. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "show", "venue", "like", "member", "shared", "web", "config",
-            "error", "payment");
+            "booking", "show", "venue", "like", "member", "shared", "payment");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 실제로 직접 참조하는 module 이름 집합이며,
      * {@code @ApplicationModule(allowedDependencies = ...)}가 선언한 상한이 아니라 관측되는 edge를
-     * 여기 고정해 결합이 조용히 늘어나는 것을 잡는다(venue/member/like/payment는
-     * {@code allowedDependencies}가 비어 있다 — {@code sharedModules}인 shared·error·web은
-     * 비워 두어도 항상 허용된다). 각 edge의 근거는 참조하는 module의 package-info와
+     * 여기 고정해 결합이 조용히 늘어나는 것을 잡는다. shared의 공개 하위 패키지에 대한 참조는
+     * 모두 shared edge 하나로 기록한다. 각 edge의 근거는 참조하는 module의 package-info와
      * ADR 0006·ADR 0008(like 개명·일반화)을 원본으로 본다.
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG = Map.ofEntries(
-            Map.entry("booking", Set.of("show", "member", "shared", "web", "error")),
-            Map.entry("show", Set.of("venue", "like", "member", "shared", "web", "error")),
+            Map.entry("booking", Set.of("show", "member", "shared")),
+            Map.entry("show", Set.of("venue", "like", "member", "shared")),
             Map.entry("venue", Set.of()),
-            Map.entry("like", Set.of("member", "shared", "web", "error")),
-            Map.entry("member", Set.of("shared", "web", "error")),
+            Map.entry("like", Set.of("member", "shared")),
+            Map.entry("member", Set.of("shared")),
             Map.entry("shared", Set.of()),
-            Map.entry("web", Set.of()),
-            Map.entry("config", Set.of("member", "shared")),
-            Map.entry("error", Set.of("web")),
             Map.entry("payment", Set.of())
     );
 

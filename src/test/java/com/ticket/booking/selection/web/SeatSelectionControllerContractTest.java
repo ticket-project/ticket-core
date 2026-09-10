@@ -4,8 +4,8 @@ import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentReso
 import com.ticket.booking.selection.application.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.selection.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.selection.application.usecase.SelectSeatUseCase;
-import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.booking.support.exception.handler.BookingExceptionHandler;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,7 +1,7 @@
 package com.ticket.member.security.infrastructure;
 
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.support.exception.UnauthenticatedException;
+import com.ticket.member.exception.UnauthenticatedException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

@@ -1,6 +1,6 @@
 package com.ticket.booking.salespolicy.domain;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

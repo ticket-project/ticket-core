@@ -4,7 +4,7 @@ package com.ticket.member;
  * 다른 module이 member entity 대신 쓰는 회원 조회·검증 공개 계약이다.
  *
  * <p>존재하지 않거나 탈퇴한 회원은 member가 소유한
- * {@code com.ticket.error.NotFoundException}(404, E404)으로
+ * {@code com.ticket.shared.exception.NotFoundException}(404, E404)으로
  * 알린다. 어떤 오류로 다룰지는 이 계약이 아니라 전역 오류 계약을 그대로 따른다 — member가 별도
  * exception 타입을 만들지 않는다.
  */

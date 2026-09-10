@@ -7,7 +7,7 @@ import com.ticket.show.PerformanceSaleSnapshot;
 import com.ticket.show.performance.application.port.PerformanceSaleQueryPort;
 import com.ticket.show.performance.application.port.PerformanceSaleQueryPort.PerformanceGradeRow;
 import com.ticket.show.performance.domain.PerformanceSaleContext;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.venue.VenueLookup;
 import com.ticket.venue.VenueSeatAddress;
 import com.ticket.venue.VenueSeatLookup;

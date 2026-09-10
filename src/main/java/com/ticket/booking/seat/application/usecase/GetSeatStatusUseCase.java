@@ -10,8 +10,8 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.seat.application.SeatStateSnapshotRow;
 import com.ticket.booking.seat.application.SeatStateView;
 import com.ticket.booking.seat.application.SeatStatus;
-import com.ticket.error.InvalidRequestException;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

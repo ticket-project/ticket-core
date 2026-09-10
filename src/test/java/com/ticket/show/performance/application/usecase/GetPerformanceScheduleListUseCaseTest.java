@@ -2,7 +2,7 @@ package com.ticket.show.performance.application.usecase;
 
 import com.ticket.show.performance.domain.Performance;
 import com.ticket.show.performance.domain.PerformanceRepository;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

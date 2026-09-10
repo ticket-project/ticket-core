@@ -1,6 +1,6 @@
 package com.ticket.show.catalog.application;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;

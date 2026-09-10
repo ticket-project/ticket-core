@@ -6,7 +6,7 @@ import com.ticket.show.catalog.application.VenueDisplays;
 import com.ticket.show.catalog.application.port.ShowListQueryPort;
 
 import com.ticket.show.catalog.application.ShowOpeningSoonSummaryView;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.venue.VenueLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

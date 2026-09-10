@@ -2,7 +2,7 @@ package com.ticket.show.performance.application.usecase;
 
 import com.ticket.show.catalog.domain.Show;
 import com.ticket.show.catalog.domain.ShowRepository;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.venue.Region;
 import com.ticket.venue.VenueLookup;
 import com.ticket.venue.VenueSummary;

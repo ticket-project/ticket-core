@@ -1,6 +1,6 @@
 package com.ticket.booking.seat.domain;
 
-import com.ticket.booking.support.domain.BookingAuditedEntity;
+import com.ticket.booking.domain.BookingAuditedEntity;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

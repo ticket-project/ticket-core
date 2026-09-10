@@ -7,8 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.ticket.show.performance.application.usecase.GetPerformanceScheduleListUseCase;
 import com.ticket.show.performance.application.usecase.GetPerformanceSummaryUseCase;
-import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.show.support.exception.handler.ShowExceptionHandler;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.show.exception.handler.ShowExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.web.servlet.MockMvc;

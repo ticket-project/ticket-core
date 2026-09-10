@@ -2,8 +2,8 @@
  * Member BC: Member, MemberSocialAccount, 이메일·소셜 로그인, OAuth2 provider adapter, 비밀번호,
  * access/refresh token, 회원 상태와 탈퇴, 전역 Spring Security filter chain을 소유한다.
  *
- * <p>전역 {@code SecurityFilterChain}은 member가 제공한다({@code infrastructure.security.
- * SecurityConfig}) — 인증·인가 해석이 결국 member 소유이기 때문이다.
+ * <p>전역 {@code SecurityFilterChain}은 member가 제공한다({@code security.infrastructure.SecurityConfig})
+ * — 인증·인가 해석이 결국 member 소유이기 때문이다.
  *
  * 공개 계약:
  * - {@link com.ticket.member.AuthenticatedMember} (다른 module controller가 parameter로 받는
@@ -20,5 +20,5 @@
  * 탈퇴가 access token을 무효화하지 않는다). {@code like -> member}는 순환을 만들지 않는다 —
  * member는 어떤 업무 module도 참조하지 않는 leaf이기 때문이다(ADR 0006 §2, ADR 0008).
  */
-@org.springframework.modulith.ApplicationModule(displayName = "Member", allowedDependencies = {})
+@org.springframework.modulith.ApplicationModule(displayName = "Member", allowedDependencies = {"shared :: *"})
 package com.ticket.member;

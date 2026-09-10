@@ -2,7 +2,7 @@ package com.ticket.member.auth.infrastructure;
 
 import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.member.auth.application.RefreshTokenStore;
-import com.ticket.shared.UuidSupplier;
+import com.ticket.member.infrastructure.UuidSupplier;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;

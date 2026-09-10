@@ -3,8 +3,8 @@ package com.ticket.booking.order.exception;
 
 
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.support.exception.BookingErrorCode;
-import com.ticket.booking.support.exception.BookingException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
 /**
  * 결제 대기 상태가 아닌 주문을 처리하려 했다.

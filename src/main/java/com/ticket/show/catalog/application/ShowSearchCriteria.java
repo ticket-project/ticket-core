@@ -2,7 +2,7 @@ package com.ticket.show.catalog.application;
 
 import com.ticket.show.catalog.domain.SaleDisplayStatus;
 import com.ticket.venue.Region;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import lombok.Getter;
 
 import java.time.LocalDate;

@@ -6,7 +6,7 @@ import com.ticket.like.preference.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.preference.application.usecase.GetLikeStatusUseCase;
 import com.ticket.like.preference.web.docs.LikeControllerDocs;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

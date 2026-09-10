@@ -1,6 +1,6 @@
 package com.ticket.booking.seat.infrastructure;
 
-import com.ticket.error.TicketException;
+import com.ticket.shared.exception.TicketException;
 import com.ticket.member.AccessTokenAuthenticator;
 import com.ticket.member.AuthenticatedMember;
 import java.util.List;

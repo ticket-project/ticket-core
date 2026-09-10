@@ -9,8 +9,8 @@ import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentReso
 import com.ticket.booking.seat.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatStatusUseCase;
-import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.booking.support.exception.handler.BookingExceptionHandler;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;

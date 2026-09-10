@@ -6,7 +6,7 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.selection.domain.DeselectedSeatIds;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.member.MemberLookup;
 import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.application.SeatStatusEventPublisher;

@@ -2,8 +2,8 @@ package com.ticket.booking.selection.exception;
 
 
 
-import com.ticket.booking.support.exception.BookingErrorCode;
-import com.ticket.booking.support.exception.BookingException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
 /**
  * 본인이 선택하지 않은 좌석을 해제하려 했다.

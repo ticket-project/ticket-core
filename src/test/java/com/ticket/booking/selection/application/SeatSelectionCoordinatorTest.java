@@ -1,11 +1,11 @@
 package com.ticket.booking.selection.application;
 
-import com.ticket.booking.support.application.LockKey;
-import com.ticket.booking.support.application.RecordingLockManager;
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.RecordingLockManager;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.hold.domain.HoldManager;
-import com.ticket.booking.support.exception.PerformanceIsPastException;
-import com.ticket.booking.support.exception.SeatAlreadyHoldException;
+import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.SeatAlreadyHoldException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

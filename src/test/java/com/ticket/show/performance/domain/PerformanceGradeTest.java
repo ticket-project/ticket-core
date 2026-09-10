@@ -1,6 +1,6 @@
 package com.ticket.show.performance.domain;
 
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;

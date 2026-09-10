@@ -1,7 +1,7 @@
 package com.ticket.like.preference.application.usecase;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ticket.error.InvalidRequestException;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.like.LikeInfo;
 import com.ticket.like.LikeQuery;
 import com.ticket.like.LikeType;

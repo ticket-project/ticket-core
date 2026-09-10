@@ -1,9 +1,9 @@
 package com.ticket.show.catalog.web;
 
 import com.ticket.show.catalog.application.usecase.GetMyShowLikesUseCase;
-import com.ticket.show.catalog.web.support.cursor.ShowLikeCursorCodec;
-import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.show.support.exception.handler.ShowExceptionHandler;
+import com.ticket.show.catalog.web.cursor.ShowLikeCursorCodec;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.show.exception.handler.ShowExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import org.junit.jupiter.api.AfterEach;

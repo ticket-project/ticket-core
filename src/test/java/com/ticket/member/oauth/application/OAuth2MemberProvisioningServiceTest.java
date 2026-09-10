@@ -6,7 +6,7 @@ import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.Role;
 import com.ticket.member.account.domain.SocialProvider;
-import com.ticket.member.support.exception.DuplicateEmailException;
+import com.ticket.member.exception.DuplicateEmailException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

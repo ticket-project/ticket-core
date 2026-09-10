@@ -3,8 +3,8 @@ package com.ticket.show.performance.application.usecase;
 import com.ticket.show.performance.application.port.PerformanceQueryPort;
 
 import com.ticket.show.performance.application.PerformanceSummaryView;
-import com.ticket.error.InvalidRequestException;
-import com.ticket.error.NotFoundException;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.venue.VenueLookup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

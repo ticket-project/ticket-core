@@ -1,7 +1,7 @@
 package com.ticket.like.preference.exception;
 
-import com.ticket.error.ErrorCode;
-import com.ticket.error.TicketException;
+import com.ticket.shared.exception.ErrorCode;
+import com.ticket.shared.exception.TicketException;
 
 /**
  * like 업무 오류의 base 타입이다. 이 module의 handler는 이 타입 하나만 잡는다. HTTP 상태는

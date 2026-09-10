@@ -2,7 +2,7 @@ package com.ticket.show.performance.web.docs;
 
 import com.ticket.show.performance.application.usecase.GetPerformanceScheduleListUseCase;
 import com.ticket.show.performance.application.usecase.GetPerformanceSummaryUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

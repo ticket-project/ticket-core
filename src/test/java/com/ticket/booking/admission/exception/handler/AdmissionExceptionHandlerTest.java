@@ -3,7 +3,7 @@ package com.ticket.booking.admission.exception.handler;
 import com.ticket.booking.admission.exception.AdmissionTokenException;
 import com.ticket.booking.admission.exception.AdmissionTokenExpiredException;
 import com.ticket.booking.admission.exception.AdmissionTokenRequiredException;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

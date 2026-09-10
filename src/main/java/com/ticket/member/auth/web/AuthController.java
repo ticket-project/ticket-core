@@ -11,7 +11,7 @@ import com.ticket.member.auth.application.usecase.LogoutUseCase;
 import com.ticket.member.auth.application.usecase.RefreshAuthTokenUseCase;
 import com.ticket.member.account.application.usecase.RegisterMemberUseCase;
 import com.ticket.member.oauth.application.usecase.GetSocialLoginUrlsUseCase;
-import com.ticket.web.ApiResponse;
+import com.ticket.shared.web.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
