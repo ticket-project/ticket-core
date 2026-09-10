@@ -15,15 +15,15 @@ KOPIS OpenAPI에서 신규 공연을 가져와 `src/main/resources/seed/kopis-cu
 
 ```bash
 # 미리보기(파일 수정 없음)
-KOPIS_SERVICE_KEY=xxxx node tools/seed-kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 --dry-run
+KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 --dry-run
 
 # 실제 병합
-KOPIS_SERVICE_KEY=xxxx node tools/seed-kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906
+KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906
 ```
 
 Windows PowerShell:
 ```powershell
-$env:KOPIS_SERVICE_KEY="xxxx"; node tools/seed-kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 --dry-run
+$env:KOPIS_SERVICE_KEY="xxxx"; node seed/kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 --dry-run
 ```
 
 ### 옵션
@@ -43,7 +43,7 @@ $env:KOPIS_SERVICE_KEY="xxxx"; node tools/seed-kopis/fetch-kopis.mjs --target 10
 - **결정성**: `view_count`는 `mt20id` 해시 기반 → 재실행 시 diff 안정.
 - **백업**: 병합 전 `kopis-curated.sql.bak` 생성.
 - **장르 매핑**: `genre-map.mjs` 참고. 복합/기타 등 매핑 불가 장르는 스킵.
-- **좌석/등급**: SHOW_GRADES / SHOW_SEATS / PERFORMANCE_SEATS는 SQL 파일 끝 CROSS JOIN INSERT가 신규 SHOWS·PERFORMANCES에 자동 적용하므로 별도 생성하지 않는다.
+- **좌석/등급**: `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS`는 SQL 파일 끝 `INSERT ... SELECT`가 신규 SHOWS·PERFORMANCES에 자동 적용하므로 별도 생성하지 않는다. 자세한 위치는 아래 "병합 지점" 참고.
 
 ## 병합 후 검증
 
@@ -59,10 +59,16 @@ ticket 저장소 루트에서 적재 무결성 테스트를 실행한다.
 
 문제가 있으면 `kopis-curated.sql.bak`으로 복원한다.
 
-## 알려진 문제
+## 병합 지점
 
-`fetch-kopis.mjs`의 `SPLICE_MARKER`(`'INSERT INTO SHOW_GRADES'`)가 현재 `kopis-curated.sql`
-어디에도 매치되지 않는다 — `SHOW_GRADES` 테이블이 `PERFORMANCE_GRADES`로 대체되며 폐지됐다(ADR
-0005 §2). 병합 지점을 찾지 못하면 스크립트가 중단되지만, 지금 이 도구를 다시 실행하기 전에는
-마커를 먼저 고쳐야 한다(어떤 지점에 이어 붙일지는 제품/데이터 판단이 필요해 이 문서 정리로는
-고치지 않았다).
+생성한 블록은 SQL 파일 끝의 집합 기반 `INSERT INTO GRADES (` 바로 앞에 끼워 넣는다
+(`SPLICE_MARKER`). 그 뒤의 `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS`는
+`INSERT ... SELECT`라 실행 시점의 모든 `SHOWS` / `PERFORMANCES`를 대상으로 삼으므로, 이 지점에
+넣으면 신규 공연도 등급·가격·회차좌석을 자동으로 받는다.
+
+예전 마커였던 `INSERT INTO SHOW_GRADES`는 `SHOW_GRADES` 테이블이 `PERFORMANCE_GRADES`로
+대체되며 폐지돼(ADR 0005 §2) 파일에서 사라졌다. 지금 마커는 현재 파일에 정확히 한 번 나온다.
+
+주의: `SEATS`의 VENUE별 복제 `INSERT ... SELECT`는 파일 중간(리터럴 `SEATS` 템플릿 바로 뒤)에
+있다. 이 마커 위치에 새로 추가되는 `VENUES`는 좌석 복제 대상에 들어가지 않으므로, 그 공연장의
+공연에는 `PERFORMANCE_SEATS`가 생기지 않는다 — 기존 "추가 공연장" 블록도 같은 상태다.

@@ -19,7 +19,10 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SQL_PATH = resolve(__dirname, '../../src/main/resources/seed/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
-const SPLICE_MARKER = 'INSERT INTO SHOW_GRADES';
+// 생성한 블록을 파일 끝의 집합 기반 INSERT(GRADES / PERFORMANCE_GRADES / PERFORMANCE_SEATS)
+// 바로 앞에 끼워 넣는다. 그래야 새 SHOWS/PERFORMANCES가 그 INSERT...SELECT의 대상에 포함된다.
+// 예전 마커였던 SHOW_GRADES는 ADR 0005로 폐지된 테이블이라 더 이상 파일에 없다.
+const SPLICE_MARKER = 'INSERT INTO GRADES (';
 
 const KEY = process.env.KOPIS_SERVICE_KEY;
 
