@@ -1,6 +1,6 @@
 package com.ticket.booking.hold.infrastructure;
 
-import com.ticket.booking.application.usecase.ExpireOrderUseCase;
+import com.ticket.booking.order.application.usecase.ExpireOrderUseCase;
 import com.ticket.booking.support.infrastructure.RedisKeyExpirationHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

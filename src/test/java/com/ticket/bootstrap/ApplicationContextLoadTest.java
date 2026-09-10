@@ -2,9 +2,9 @@ package com.ticket.bootstrap;
 
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import com.ticket.booking.support.application.LockManager;
-import com.ticket.booking.application.usecase.CreateOrderUseCase;
-import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
-import com.ticket.booking.infrastructure.OrderExpirationTrigger;
+import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
+import com.ticket.booking.order.application.usecase.ExpirePendingOrdersUseCase;
+import com.ticket.booking.order.infrastructure.OrderExpirationTrigger;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -29,9 +29,9 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     @Test
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
         assertThat(context.getBean(CreateOrderUseCase.class)).isNotNull();
-        assertThat(beanOf("com.ticket.booking.domain.OrderRepository")).isNotNull();
+        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
-        assertThat(beanOf("com.ticket.booking.application.BookingEventListeners")).isNotNull();
+        assertThat(beanOf("com.ticket.booking.order.application.BookingEventListeners")).isNotNull();
         assertThat(beanOf("com.ticket.config.EventPublicationMaintenance")).isNotNull();
     }
 
@@ -40,12 +40,12 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
      */
     @Test
     void 도메인_Repository는_infra_어댑터로_구현된다() {
-        assertThat(beanOf("com.ticket.booking.domain.OrderRepository").getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository").getClass().getName())
+                .startsWith("com.ticket.booking.order.infrastructure.");
         assertThat(beanOf("com.ticket.booking.hold.domain.HoldStore").getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+                .startsWith("com.ticket.booking.hold.infrastructure.");
         assertThat(context.getBean(LockManager.class).getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+                .startsWith("com.ticket.booking.support.infrastructure.");
     }
 
     /**
