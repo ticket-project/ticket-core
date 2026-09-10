@@ -1,9 +1,9 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.selection.infrastructure;
 
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
 import com.ticket.booking.domain.PerformanceSeatRepository;
-import com.ticket.booking.infrastructure.SeatSelectionRedisKey;
+import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
 import com.ticket.booking.application.SeatStatusEventPublisher;
 import com.ticket.booking.application.SeatStatusEvent;
 import org.junit.jupiter.api.Test;

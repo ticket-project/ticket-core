@@ -4,7 +4,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
-import com.ticket.booking.domain.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
 import com.ticket.booking.domain.PerformanceSeatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

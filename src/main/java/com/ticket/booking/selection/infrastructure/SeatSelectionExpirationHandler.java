@@ -1,10 +1,10 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.selection.infrastructure;
 
 import com.ticket.booking.support.infrastructure.RedisKeyExpirationHandler;
 import com.ticket.booking.application.SeatStatusEventPublisher;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatRepository;
-import com.ticket.booking.infrastructure.SeatSelectionRedisKey;
+import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

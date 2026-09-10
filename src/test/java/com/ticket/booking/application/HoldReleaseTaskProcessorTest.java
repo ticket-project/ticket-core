@@ -2,7 +2,7 @@ package com.ticket.booking.application;
 
 import com.ticket.booking.application.HoldReleaseProgressRecorder;
 import com.ticket.booking.domain.HoldManager;
-import com.ticket.booking.domain.SeatSelectionService;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
 import com.ticket.booking.domain.PerformanceSeatRepository;

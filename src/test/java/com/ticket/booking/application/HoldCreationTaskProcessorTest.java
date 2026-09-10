@@ -3,7 +3,7 @@ package com.ticket.booking.application;
 import com.ticket.booking.support.application.RecordingLockManager;
 import com.ticket.booking.domain.Hold;
 import com.ticket.booking.domain.HoldStore;
-import com.ticket.booking.domain.SeatSelectionService;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
 import com.ticket.booking.domain.PerformanceSeatRepository;

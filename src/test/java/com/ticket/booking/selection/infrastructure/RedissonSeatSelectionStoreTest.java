@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.selection.infrastructure;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

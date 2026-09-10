@@ -2,7 +2,7 @@ package com.ticket.booking.domain;
 
 import com.ticket.booking.domain.PerformanceSeat;
 import com.ticket.booking.domain.PerformanceSeatState;
-import com.ticket.booking.domain.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
 
 import java.util.Collection;
 import java.util.List;

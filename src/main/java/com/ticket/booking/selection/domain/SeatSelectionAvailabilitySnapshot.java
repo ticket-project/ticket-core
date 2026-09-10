@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.selection.domain;
 
 import com.ticket.booking.domain.PerformanceSeatState;
 

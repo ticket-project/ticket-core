@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ticket.member.application.AuthRefreshToken;
-import com.ticket.booking.infrastructure.SeatSelectionRedisKey;
+import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
 import com.ticket.member.infrastructure.RedisRefreshTokenStore;
 import com.ticket.booking.support.application.LockKey;
 import com.ticket.booking.support.application.LockManager;
 import com.ticket.booking.support.application.LockOptions;
 import com.ticket.booking.support.infrastructure.RedissonLockKeyFormatter;
 import com.ticket.booking.support.infrastructure.RedissonLockManager;
-import com.ticket.booking.infrastructure.RedissonSeatSelectionStore;
+import com.ticket.booking.selection.infrastructure.RedissonSeatSelectionStore;
 import com.ticket.booking.exception.HoldBusyException;
 import com.ticket.shared.UuidSupplier;
 import java.time.Duration;

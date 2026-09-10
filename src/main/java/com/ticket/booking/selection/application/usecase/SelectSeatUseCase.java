@@ -1,6 +1,6 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.application.usecase;
 
-import com.ticket.booking.application.SeatSelectionCoordinator;
+import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 import com.ticket.booking.application.SeatStatusEvent;
 
 import com.ticket.booking.admission.application.AdmissionVerifier;
@@ -8,7 +8,7 @@ import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.SeatStatusEventPublisher;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.booking.domain.SeatSelectionAvailabilityValidator;
+import com.ticket.booking.selection.domain.SeatSelectionAvailabilityValidator;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.error.NotFoundException;
 import lombok.RequiredArgsConstructor;
