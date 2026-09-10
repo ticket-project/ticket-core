@@ -6,7 +6,7 @@ import com.ticket.booking.admission.application.AdmissionVerifier;
 import com.ticket.booking.support.domain.RequestedSeatIds;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.error.NotFoundException;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;

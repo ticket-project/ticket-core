@@ -19,7 +19,7 @@ import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.show.PerformanceSaleSnapshot;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.error.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

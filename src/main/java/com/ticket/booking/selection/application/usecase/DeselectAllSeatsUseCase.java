@@ -1,15 +1,15 @@
 package com.ticket.booking.selection.application.usecase;
 
-import com.ticket.booking.application.SeatStatusEvent;
+import com.ticket.booking.seat.application.SeatStatusEvent;
 
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.selection.domain.DeselectedSeatIds;
-import com.ticket.booking.domain.PerformanceSeat;
-import com.ticket.booking.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.error.InvalidRequestException;
 import com.ticket.member.MemberLookup;
-import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

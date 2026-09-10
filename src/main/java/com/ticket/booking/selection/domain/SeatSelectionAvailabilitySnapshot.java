@@ -1,6 +1,6 @@
 package com.ticket.booking.selection.domain;
 
-import com.ticket.booking.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 
 /**
  * 좌석 선택 가능 여부 판정에 필요한 좌석 정보.

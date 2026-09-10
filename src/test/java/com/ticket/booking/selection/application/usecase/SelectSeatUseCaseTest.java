@@ -1,6 +1,6 @@
 package com.ticket.booking.selection.application.usecase;
 
-import com.ticket.booking.application.SeatStatusEvent;
+import com.ticket.booking.seat.application.SeatStatusEvent;
 
 import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 
@@ -13,8 +13,8 @@ import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilityValidator;
 import com.ticket.booking.admission.application.AdmissionVerifier;
 import org.junit.jupiter.api.BeforeEach;

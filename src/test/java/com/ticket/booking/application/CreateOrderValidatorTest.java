@@ -13,7 +13,7 @@ import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.admission.application.AdmissionVerifier;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.show.PerformanceSaleCatalog;

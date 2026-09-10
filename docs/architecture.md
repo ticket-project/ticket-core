@@ -352,7 +352,7 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 parameter로 받고 JWT나 `member` 내부의 `Member`를 보지 않는다.
 
 **좌석 조회는 performanceId 기준이다** — 같은 Show라도 회차마다 편성·가격이 다를 수 있어 `showId`
-기준 조회 API는 만들지 않는다. `booking.web.PerformanceSeatQueryController`가 공개하는 3개 API
+기준 조회 API는 만들지 않는다. `booking.seat.web.PerformanceSeatQueryController`가 공개하는 3개 API
 (정적 seat-map / 동적 상태 / 등급별 잔여석)는 회차당 고정된 query 수를 유지한다 — 무엇을 어떻게
 고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
 원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지

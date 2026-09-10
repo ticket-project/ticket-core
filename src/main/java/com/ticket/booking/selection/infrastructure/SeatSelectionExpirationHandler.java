@@ -1,9 +1,9 @@
 package com.ticket.booking.selection.infrastructure;
 
 import com.ticket.booking.support.infrastructure.RedisKeyExpirationHandler;
-import com.ticket.booking.application.SeatStatusEventPublisher;
-import com.ticket.booking.domain.PerformanceSeat;
-import com.ticket.booking.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.ticket.booking.application.SeatStatusEvent.SeatStatusAction.DESELECTED;
+import static com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction.DESELECTED;
 
 @Slf4j
 @Component

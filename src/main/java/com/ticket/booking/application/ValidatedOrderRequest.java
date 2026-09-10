@@ -1,7 +1,7 @@
 package com.ticket.booking.application;
 
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
 
 import java.util.List;

@@ -6,7 +6,7 @@ import com.ticket.booking.application.OrderCreator;
 import com.ticket.booking.hold.domain.HoldAllocation;
 import com.ticket.booking.hold.domain.HoldHistoryRecorder;
 import com.ticket.booking.domain.Order;
-import com.ticket.booking.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
