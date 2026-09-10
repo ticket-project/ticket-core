@@ -1,4 +1,4 @@
-package com.ticket.member.infrastructure;
+package com.ticket.member.security.infrastructure;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;

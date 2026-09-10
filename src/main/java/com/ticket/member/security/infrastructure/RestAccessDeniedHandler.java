@@ -1,4 +1,4 @@
-package com.ticket.member.infrastructure;
+package com.ticket.member.security.infrastructure;
 
 import tools.jackson.databind.json.JsonMapper;
 import com.ticket.member.exception.AuthorizationException;
