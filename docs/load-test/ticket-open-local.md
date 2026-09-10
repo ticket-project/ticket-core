@@ -18,6 +18,9 @@
 - Ticket Server Redis와 Queue Redis는 분리한다.
 - Ticket Server와 Queue Server는 같은 access token 검증 secret을 사용한다.
 - Ticket Server와 Queue Server는 같은 admission token secret을 사용한다.
+- Ticket Server 기동이 끝난 뒤 `.\gradlew.bat seedLocal`로 초기 데이터를 넣었다. 기동은 데이터를
+  넣지 않고, local 프로파일은 `ddl-auto: create`라 재시작할 때마다 다시 실행해야 한다
+  ([seed/README.md](../../seed/README.md)).
 - `performanceId`, `seatIds`는 로컬 seed 데이터 기준으로 실제 존재하는 값을 사용한다.
 
 ## 로컬 실행

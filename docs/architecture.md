@@ -14,7 +14,7 @@
   모듈이고, `com.ticket.ModularityTests`가 경계 위반을 잡는다.
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
-  `shared`/`web`/`error`/`config`/`seed` 5개는 BC도 supporting capability도 아닌 기술 모듈이다 —
+  `shared`/`web`/`error`/`config` 4개는 BC도 supporting capability도 아닌 기술 모듈이다 —
   앱 전역 배선이거나 여러 module이 공유하는 기술 계약일 뿐 업무 언어를 갖지 않는다.
 - 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
   두고, 실제 구현은 모듈 root 밖(업무 모듈은 capability 아래, 기술 모듈은 바로 아래)의
@@ -108,12 +108,13 @@
 | 같은 Aggregate 내부 | Entity 연관관계 가능(`@ManyToOne(LAZY, optional=false)`) | Root만 Repository |
 | 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*QueryPort`) | 각 Root별 Repository |
 | 다른 BC | scalar ID 참조(강제). 상대 모듈이 공개한 query API를 쓴다 | 각 BC가 자기 Repository 소유 |
-| cross-BC DB JOIN | reporting/integration read model처럼 명시적으로 허용된 경우만. 현재 유일한 예외는 기술 모듈 `seed`의 raw SQL 적재다 | — |
+| cross-BC DB JOIN | reporting/integration read model처럼 명시적으로 허용된 경우만. 현재 애플리케이션 안에는 예외가 없다 | — |
 
 Querydsl `Q`-type이 각 BC의 `<bc>.domain`에 생성되므로, 다른 BC의 `Q`-type을 import하는 순간
 `ModularityTests`가 이미 그 위반을 잡는다 — cross-BC JOIN은 구조 테스트가 구조적으로 막는
-경로다. `seed`는 `JdbcTemplate`으로 여러 모듈의 테이블을 raw SQL로 함께 적재하는 기술 모듈이라
-이 검사망 밖에 있다(`seed/package-info.java` 참고).
+경로다. 여러 모듈의 테이블을 raw SQL로 함께 채우는 유일한 코드는 초기 데이터 적재이고, 그것은
+애플리케이션이 아니라 저장소 최상위 `seed/`의 독립 실행 프로그램이다([seed/README.md](../seed/README.md))
+— 서비스 `bootJar`에 들어가지 않고 module 탐지 대상도 아니므로 이 검사망 안에 둘 대상 자체가 없다.
 
 부모 쪽 `@OneToMany` 컬렉션은 자식 수가 적고 lifecycle이 완전히 묶일 때만 둔다 — `Venue`→`Seat`,
 `Performance`→`PerformanceSeat`처럼 자식이 수천 개인 관계는 컬렉션으로 두지 않는다. soft delete를
@@ -166,7 +167,7 @@ like를 모른다 — `show.catalog.application`의 조회 service가 like의 �
 
 capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**이다. Application Module이 아니다 —
 `package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 모듈 집합과 경계는
-그대로 11개다(`com.ticket.ModularityTests`가 원본).
+그대로 10개다(`com.ticket.ModularityTests`가 원본).
 
 | 모듈 | capability |
 | --- | --- |
@@ -462,6 +463,7 @@ Modulith `Documenter`로 만든다.
 | 예매·hold 실행 lifecycle | `docs/core-booking-lifecycle.md` |
 | test 작성 관례 | `docs/testing.md` |
 | 무엇을 돌리고 어떻게 보고할지 | `/verify` 스킬 |
+| 로컬 초기 데이터 적재 | [seed/README.md](../seed/README.md) |
 | 운영·Flyway·배포 | `docs/operations.md` |
 | 미결 기술 부채·제품 결정 | `docs/technical-debt.md` |
 | agent workflow | `AGENTS.md` + `.agents/skills/` |
