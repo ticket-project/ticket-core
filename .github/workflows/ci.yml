@@ -41,6 +41,14 @@ jobs:
           chmod +x ./gradlew
           ./gradlew clean test bootJar --no-daemon
 
+      - name: Upload Spring Modulith structure docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-modulith-docs
+          path: build/spring-modulith-docs/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload verified application jar
         uses: actions/upload-artifact@v4
         with:
