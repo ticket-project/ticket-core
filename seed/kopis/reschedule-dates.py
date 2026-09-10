@@ -3,7 +3,7 @@
 
 배경
 ----
-seed/kopis-curated.sql 의 공연일이 특정 시즌(예: 2026 봄)에 고정되어 있어,
+seed/sql/kopis-curated.sql 의 공연일이 특정 시즌(예: 2026 봄)에 고정되어 있어,
 시간이 지나면 대부분의 공연이 '예매 종료(CLOSED)' 상태가 되어 좌석 선택이 불가능해진다.
 이 스크립트는 SHOWS/PERFORMANCES 의 날짜 컬럼만 재계산해서,
 기준일 시점에 대다수 공연이 '예매중(ON_SALE)' 이 되도록 만든다.
@@ -13,7 +13,7 @@ seed/kopis-curated.sql 의 공연일이 특정 시즌(예: 2026 봄)에 고정�
   - now <  display_sale_starts_at              -> BEFORE_OPEN (오픈 예정)
   - display_sale_starts_at <= now <= display_sale_ends_at -> ON_SALE (예매중, 좌석 선택 가능)
   - now >  display_sale_ends_at               -> CLOSED      (예매 종료)
-그리고 SeedDataLoader/테스트가 강제하는 불변식:
+그리고 시드 로더(CuratedSeedLoader)/테스트가 강제하는 불변식:
   - show.display_sale_starts_at == min(performance 회차들의 접수 시작 시각)
   - show.display_sale_ends_at   == max(performance 회차들의 접수 종료 시각)
   - 회차가 2개 이상이면 날짜가 2개 이상으로 분산

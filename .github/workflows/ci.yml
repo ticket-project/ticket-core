@@ -36,10 +36,12 @@ jobs:
           java-version: "25"
           cache: gradle
 
+      # test는 seedTest(seed/ 소스 집합)를 finalizedBy로 함께 돌린다.
+      # verifySeedNotInBootJar는 실제 bootJar를 열어 시드 산출물이 섞이지 않았는지 확인한다.
       - name: Test and build
         run: |
           chmod +x ./gradlew
-          ./gradlew clean test bootJar --no-daemon
+          ./gradlew clean test bootJar verifySeedNotInBootJar --no-daemon
 
       - name: Upload Spring Modulith structure docs
         uses: actions/upload-artifact@v4
