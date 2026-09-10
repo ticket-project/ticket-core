@@ -5,7 +5,7 @@ import com.ticket.like.preference.application.usecase.AddLikeUseCase;
 import com.ticket.like.preference.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.preference.application.usecase.GetLikeStatusUseCase;
 import com.ticket.error.handler.GlobalExceptionHandler;
-import com.ticket.like.exception.handler.LikeExceptionHandler;
+import com.ticket.like.preference.exception.handler.LikeExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import org.junit.jupiter.api.AfterEach;

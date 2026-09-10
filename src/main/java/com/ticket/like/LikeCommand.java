@@ -11,7 +11,7 @@ public interface LikeCommand {
     /**
      * 이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시
      * 요청이 먼저 저장을 끝냈다면(unique 제약 위반)
-     * {@link com.ticket.like.exception.LikeAlreadyExistsException}(409, E7001)을 던진다.
+     * {@link com.ticket.like.preference.exception.LikeAlreadyExistsException}(409, E7001)을 던진다.
      */
     LikeInfo like(long memberId, LikeType likeType, long targetId);
 

@@ -1,6 +1,6 @@
 package com.ticket.show.catalog.application;
 
-import com.ticket.show.exception.UnsupportedShowSortException;
+import com.ticket.show.catalog.exception.UnsupportedShowSortException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

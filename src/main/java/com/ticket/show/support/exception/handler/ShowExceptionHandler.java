@@ -1,6 +1,6 @@
-package com.ticket.show.exception.handler;
+package com.ticket.show.support.exception.handler;
 
-import com.ticket.show.exception.ShowException;
+import com.ticket.show.support.exception.ShowException;
 import com.ticket.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;

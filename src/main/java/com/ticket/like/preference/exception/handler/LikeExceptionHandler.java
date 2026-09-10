@@ -1,6 +1,6 @@
-package com.ticket.like.exception.handler;
+package com.ticket.like.preference.exception.handler;
 
-import com.ticket.like.exception.LikeException;
+import com.ticket.like.preference.exception.LikeException;
 import com.ticket.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;

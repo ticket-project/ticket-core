@@ -1,6 +1,9 @@
-package com.ticket.show.exception;
+package com.ticket.show.catalog.exception;
 
 
+
+import com.ticket.show.support.exception.ShowErrorCode;
+import com.ticket.show.support.exception.ShowException;
 /**
  * 지원하지 않는 공연 정렬 조건이다. 어떤 값이 들어왔는지는 {@code data}에 실린다.
  */
