@@ -34,7 +34,7 @@ public enum ShowSort {
                 return sort;
             }
         }
-        throw new UnsupportedShowSortException("지원하지 않는 sort: " + apiValue);
+        throw new UnsupportedShowSortException(apiValue);
     }
 
     public String apiValue() {
