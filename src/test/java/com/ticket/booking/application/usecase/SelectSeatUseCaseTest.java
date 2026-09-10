@@ -16,7 +16,7 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.SeatStatusEventPublisher;
 import com.ticket.booking.domain.SeatSelectionAvailabilityValidator;
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.admission.application.AdmissionVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

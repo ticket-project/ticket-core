@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.admission.application;
 
 /**
  * {@link AdmissionVerifier#verify(long, long, String)}가 성공했을 때 돌려주는 불변 결과다.

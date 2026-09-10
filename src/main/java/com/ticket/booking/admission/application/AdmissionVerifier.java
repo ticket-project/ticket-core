@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.admission.application;
 
 /**
  * 대기열 입장 자격을 검증하는 booking의 출력 포트다(원래 별도 admission module의 공개 계약이었다).

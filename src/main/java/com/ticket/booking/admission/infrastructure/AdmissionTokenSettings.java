@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.admission.infrastructure;
 
 import java.nio.charset.StandardCharsets;
 
