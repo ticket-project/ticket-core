@@ -2,7 +2,7 @@ package com.ticket.show.catalog.application;
 
 import com.ticket.show.catalog.application.port.ShowListQueryPort;
 
-import com.ticket.show.catalog.exception.UnsupportedShowSortException;
+import com.ticket.show.exception.UnsupportedShowSortException;
 
 /**
  * Show 목록/검색 정렬 기준의 단일 typed contract다.

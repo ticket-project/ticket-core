@@ -4,7 +4,7 @@ import com.ticket.booking.order.application.port.OrderQueryPort;
 
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.application.OrderDetailRow;
-import com.ticket.booking.order.exception.OrderNotOwnedException;
+import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.member.MemberLookup;
 import com.ticket.member.MemberProfile;

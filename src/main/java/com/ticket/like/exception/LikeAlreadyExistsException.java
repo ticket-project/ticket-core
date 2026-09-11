@@ -1,4 +1,4 @@
-package com.ticket.like.preference.exception;
+package com.ticket.like.exception;
 
 import com.ticket.like.LikeType;
 

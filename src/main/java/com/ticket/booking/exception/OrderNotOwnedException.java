@@ -1,10 +1,7 @@
-package com.ticket.booking.order.exception;
+package com.ticket.booking.exception;
 
-
-
-import com.ticket.booking.exception.BookingErrorCode;
-import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
+
 /**
  * 본인 주문이 아닌 주문에 접근했다.
  *

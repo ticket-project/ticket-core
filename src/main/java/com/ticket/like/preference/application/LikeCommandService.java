@@ -4,7 +4,7 @@ import com.ticket.like.LikeCommand;
 import com.ticket.like.LikeInfo;
 import com.ticket.like.LikeType;
 import com.ticket.like.preference.domain.LikeRepository;
-import com.ticket.like.preference.exception.LikeAlreadyExistsException;
+import com.ticket.like.exception.LikeAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;

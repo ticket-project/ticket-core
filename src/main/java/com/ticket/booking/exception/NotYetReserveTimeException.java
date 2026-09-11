@@ -1,10 +1,7 @@
-package com.ticket.booking.salespolicy.exception;
+package com.ticket.booking.exception;
 
-
-
-import com.ticket.booking.exception.BookingErrorCode;
-import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
+
 /**
  * 아직 예매 오픈 시각 전이다.
  *

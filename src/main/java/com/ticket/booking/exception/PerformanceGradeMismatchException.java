@@ -1,10 +1,7 @@
-package com.ticket.booking.seat.exception;
+package com.ticket.booking.exception;
 
-
-
-import com.ticket.booking.exception.BookingErrorCode;
-import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
+
 /**
  * 판매 좌석 편성 요청의 PerformanceGrade가 그 회차에 속하지 않는다.
  *

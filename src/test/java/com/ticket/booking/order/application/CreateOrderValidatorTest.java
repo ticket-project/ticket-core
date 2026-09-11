@@ -2,10 +2,10 @@ package com.ticket.booking.order.application;
 
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
 
-import com.ticket.booking.admission.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.salespolicy.exception.ExceedHoldLimitException;
-import com.ticket.booking.order.exception.PendingOrderAlreadyExistsException;
+import com.ticket.booking.exception.ExceedHoldLimitException;
+import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;

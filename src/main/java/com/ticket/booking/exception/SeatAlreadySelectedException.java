@@ -1,10 +1,7 @@
-package com.ticket.booking.selection.exception;
+package com.ticket.booking.exception;
 
-
-
-import com.ticket.booking.exception.BookingErrorCode;
-import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
+
 /**
  * 다른 회원이 이미 선택 중인 좌석이다.
  *

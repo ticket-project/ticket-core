@@ -1,8 +1,8 @@
 package com.ticket.booking.salespolicy.domain;
 
 import com.ticket.booking.domain.BookingAuditedEntity;
-import com.ticket.booking.salespolicy.exception.ExceedHoldLimitException;
-import com.ticket.booking.salespolicy.exception.NotYetReserveTimeException;
+import com.ticket.booking.exception.ExceedHoldLimitException;
+import com.ticket.booking.exception.NotYetReserveTimeException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;

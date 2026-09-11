@@ -1,7 +1,7 @@
 package com.ticket.show.exception.handler;
 
 import com.ticket.show.catalog.application.ShowSort;
-import com.ticket.show.catalog.exception.UnsupportedShowSortException;
+import com.ticket.show.exception.UnsupportedShowSortException;
 import com.ticket.shared.web.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
