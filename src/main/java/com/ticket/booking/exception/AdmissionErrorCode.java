@@ -1,4 +1,4 @@
-package com.ticket.booking.admission.exception;
+package com.ticket.booking.exception;
 
 import com.ticket.shared.exception.ErrorCode;
 

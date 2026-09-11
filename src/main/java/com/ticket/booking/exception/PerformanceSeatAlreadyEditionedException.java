@@ -1,10 +1,7 @@
-package com.ticket.booking.seat.exception;
+package com.ticket.booking.exception;
 
-
-
-import com.ticket.booking.exception.BookingErrorCode;
-import com.ticket.booking.exception.BookingException;
 import lombok.Getter;
+
 /**
  * 이미 판매 좌석으로 편성된 (performance, seat) 조합을 다시 편성하려 했다.
  *
