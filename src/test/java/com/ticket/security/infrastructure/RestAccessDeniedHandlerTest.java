@@ -1,4 +1,4 @@
-package com.ticket.member.security.infrastructure;
+package com.ticket.security.infrastructure;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;

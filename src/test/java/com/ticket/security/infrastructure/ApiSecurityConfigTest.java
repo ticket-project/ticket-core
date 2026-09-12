@@ -1,12 +1,8 @@
-package com.ticket.member.security.infrastructure;
+package com.ticket.security.infrastructure;
 
-import com.ticket.member.oauth.infrastructure.CustomOAuth2UserService;
-import com.ticket.member.oauth.infrastructure.OAuth2AuthenticationFailureHandler;
-import com.ticket.member.oauth.infrastructure.OAuth2AuthenticationSuccessHandler;
-import com.ticket.member.oauth.infrastructure.OAuth2FrontendRedirectResolver;
 import com.ticket.TicketApplication;
-import com.ticket.member.auth.application.AccessTokenReader;
-import com.ticket.member.auth.application.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
+import com.ticket.member.AccessTokenReadResult;
 import com.ticket.member.AuthenticatedMember;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,60 +11,40 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가
- * 없으면 같은 package에서 가장 가까운 {@code @SpringBootConfiguration}을 자동 탐색한다. 이 package에
- * {@link MemberSocialAccountPersistenceTest.TestApplication}(자기 테스트 전용 JPA 설정)이 있어
- * 자동 탐색이 그걸 잘못 집어간다 — 그래서 진짜 애플리케이션 진입점을 명시로 고정한다.
+ * 없으면 같은 package에서 가장 가까운 {@code @SpringBootConfiguration}을 자동 탐색하므로,
+ * 진짜 애플리케이션 진입점을 명시로 고정한다.
  */
-@WebMvcTest(controllers = ActuatorSecurityConfigTest.TestController.class)
+@WebMvcTest(controllers = ApiSecurityConfigTest.TestController.class)
 @ContextConfiguration(classes = TicketApplication.class)
-@Import({SecurityConfig.class, ActuatorSecurityConfigTest.TestController.class})
+@Import({ApiSecurityConfig.class, SecurityWebMvcConfig.class, ApiSecurityConfigTest.TestController.class})
 @TestPropertySource(properties = {
         "spring.profiles.active=test",
-        "app.cors.allowed-origins=http://localhost:3000",
-        "security.jwt.secret-key=12345678901234567890123456789012",
-        "security.jwt.access-token-expiration-seconds=1800",
-        "security.jwt.refresh-token-expiration-seconds=1209600",
-        "spring.security.oauth2.client.registration.google.client-id=test-google-client-id",
-        "spring.security.oauth2.client.registration.google.client-secret=test-google-client-secret",
-        "spring.security.oauth2.client.registration.kakao.client-id=test-kakao-client-id",
-        "spring.security.oauth2.client.registration.kakao.client-secret=test-kakao-client-secret",
-        "app.auth.oauth2-success-redirect-uri=http://localhost:3000/auth/callback",
-        "app.auth.oauth2-failure-redirect-uri=http://localhost:3000/auth/callback"
+        "app.cors.allowed-origins=http://localhost:3000"
 })
 @SuppressWarnings("NonAsciiCharacters")
-class ActuatorSecurityConfigTest {
+class ApiSecurityConfigTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private CustomOAuth2UserService customOAuth2UserService;
-
-    @MockitoBean
-    private OAuth2FrontendRedirectResolver oAuth2FrontendRedirectResolver;
-
-    @MockitoBean
-    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-
-    @MockitoBean
-    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @MockitoBean
     private AccessTokenReader accessTokenReader;
@@ -78,12 +54,6 @@ class ActuatorSecurityConfigTest {
 
     @MockitoBean
     private RestAccessDeniedHandler restAccessDeniedHandler;
-
-    @MockitoBean
-    private ClientRegistrationRepository clientRegistrationRepository;
-
-    @MockitoBean
-    private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -136,17 +106,75 @@ class ActuatorSecurityConfigTest {
         mockMvc.perform(get("/api/v1/private-test")
                         .header("Authorization", "Bearer access-token"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("7:MEMBER"));
+                .andExpect(content().string("7:MEMBER"))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
+                        result.getRequest().getSession(false)).isNull());
     }
 
     @Test
     void 일반_api는_유효하지_않은_internal_auth_token이면_401을_반환한다() throws Exception {
         Mockito.when(accessTokenReader.read("not-a-valid-token"))
-                .thenThrow(new IllegalArgumentException("invalid"));
+                .thenReturn(AccessTokenReadResult.invalid());
 
         mockMvc.perform(get("/api/v1/private-test")
                         .header("Authorization", "Bearer not-a-valid-token"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 만료된_token이면_보호_api가_401을_반환한다() throws Exception {
+        Mockito.when(accessTokenReader.read("expired-token"))
+                .thenReturn(AccessTokenReadResult.expired());
+
+        mockMvc.perform(get("/api/v1/private-test")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer expired-token"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void Authorization_header_형식이_잘못되면_보호_api가_401을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/v1/private-test")
+                        .header(HttpHeaders.AUTHORIZATION, "Basic access-token"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 로그인과_공연_조회_api는_인증_없이_접근할_수_있다() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("login"));
+        mockMvc.perform(get("/api/v1/shows/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("show"));
+        mockMvc.perform(get("/api/v1/performances/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("performance"));
+    }
+
+    @Test
+    void 좌석상태_조회는_일반_공연조회보다_먼저_인증을_요구한다() throws Exception {
+        mockMvc.perform(get("/api/v1/performances/1/seats/status"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 공개_api에_유효하지_않은_token이_있어도_기존처럼_접근할_수_있다() throws Exception {
+        Mockito.when(accessTokenReader.read("invalid-token"))
+                .thenReturn(AccessTokenReadResult.invalid());
+
+        mockMvc.perform(get("/api/v1/shows/1")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("show"));
+    }
+
+    @Test
+    void 허용된_origin의_preflight는_인증_없이_처리한다() throws Exception {
+        mockMvc.perform(options("/api/v1/private-test")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:3000")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:3000"));
     }
 
     @RestController
@@ -168,8 +196,28 @@ class ActuatorSecurityConfigTest {
         }
 
         @GetMapping("/api/v1/private-test")
-        public String privateApi(@AuthenticationPrincipal final AuthenticatedMember memberPrincipal) {
+        public String privateApi(final AuthenticatedMember memberPrincipal) {
             return memberPrincipal.memberId() + ":" + memberPrincipal.role();
+        }
+
+        @PostMapping("/api/v1/auth/login")
+        public String login() {
+            return "login";
+        }
+
+        @GetMapping("/api/v1/shows/1")
+        public String show() {
+            return "show";
+        }
+
+        @GetMapping("/api/v1/performances/1")
+        public String performance() {
+            return "performance";
+        }
+
+        @GetMapping("/api/v1/performances/1/seats/status")
+        public String seatStatus() {
+            return "seat-status";
         }
     }
 }

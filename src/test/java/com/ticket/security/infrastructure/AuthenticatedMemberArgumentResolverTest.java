@@ -1,4 +1,4 @@
-package com.ticket.member.security.infrastructure;
+package com.ticket.security.infrastructure;
 
 import com.ticket.member.AuthenticatedMember;
 import com.ticket.member.exception.UnauthenticatedException;

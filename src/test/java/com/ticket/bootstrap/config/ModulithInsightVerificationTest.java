@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>{@code /actuator/modulith}({@link ApplicationModulesEndpoint}, endpoint id {@code modulith})는
  * {@code management.endpoints.web.exposure.include}(application.yml: {@code health,info,prometheus})에
- * 없어 HTTP로 노출되지 않는다 — {@code SecurityConfig}의 permitAll 목록에도 없어 나머지 API와 같은
+ * 없어 HTTP로 노출되지 않는다 — {@code ApiSecurityConfig}의 permitAll 목록에도 없어 나머지 API와 같은
  * {@code anyRequest().authenticated()}로 떨어진다. 그래서 인증 없이 호출하면 200이 아니라 401이다.
  * endpoint 빈 자체({@code @Endpoint} discovery 대상)는 노출 여부와 무관하게 여전히 만들어지므로
  * 그 존재도 함께 확인한다.

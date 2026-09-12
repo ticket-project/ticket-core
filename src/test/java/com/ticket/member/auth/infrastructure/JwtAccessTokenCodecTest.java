@@ -1,6 +1,6 @@
 package com.ticket.member.auth.infrastructure;
 
-import com.ticket.member.auth.application.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReadResult;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;

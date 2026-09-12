@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import com.ticket.booking.seat.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatStatusUseCase;

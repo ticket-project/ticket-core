@@ -1,7 +1,7 @@
 package com.ticket.member.auth.infrastructure;
 
-import com.ticket.member.auth.application.AccessTokenReadResult;
-import com.ticket.member.auth.application.AccessTokenReader;
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
 import com.ticket.member.AuthenticatedMember;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

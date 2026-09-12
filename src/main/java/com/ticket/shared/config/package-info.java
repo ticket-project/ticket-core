@@ -10,7 +10,7 @@
  * <p>JPA auditing은 여기서 활성화하고, 감사자 ID를 읽는 {@code AuditorAware} 빈은 인증 주체를 소유한
  * member 모듈이 제공한다. shared가 member를 참조하지 않아 순환 의존이 생기지 않는다.
  *
- * <p>{@link com.ticket.shared.CorsProperties}는 여기 없다 — member의 {@code SecurityConfig}와
+ * <p>{@link com.ticket.shared.CorsProperties}는 여기 없다 — security의 {@code ApiSecurityConfig}와
  * booking의 {@code WebSocketConfig}가 함께 쓰는 값이라 {@code shared}에 둔다.
  */
 package com.ticket.shared.config;

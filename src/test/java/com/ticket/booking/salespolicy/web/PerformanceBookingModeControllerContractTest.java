@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * 이 API는 인증 없이 조회된다({@code SecurityConfig}의 permitAll) — 이 계약 테스트는 controller
+ * 이 API는 인증 없이 조회된다({@code ApiSecurityConfig}의 permitAll) — 이 계약 테스트는 controller
  * 응답 형태만 고정하고 인증 필터는 검증 대상이 아니다.
  */
 class PerformanceBookingModeControllerContractTest {

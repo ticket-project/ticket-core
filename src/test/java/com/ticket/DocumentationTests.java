@@ -43,7 +43,7 @@ class DocumentationTests {
         // module별 canvas(공개 API·의존·발행 이벤트를 표로 정리한 AsciiDoc)와 개별 diagram.
         // 파일명은 Documenter가 module identifier(소문자)로 만든다 — 대표로 아래 6개만 확인한다.
         for (final String moduleName : new String[] {
-                "booking", "show", "venue", "like", "member", "payment"
+                "booking", "show", "venue", "like", "member", "security", "payment"
         }) {
             assertThat(outputDir.resolve("module-" + moduleName + ".adoc"))
                     .as("%s module canvas", moduleName)

@@ -1,9 +1,9 @@
 package com.ticket.member.auth.application;
 
 import com.ticket.member.AccessTokenAuthenticator;
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.auth.application.AccessTokenReadResult;
-import com.ticket.member.auth.application.AccessTokenReader;
 import com.ticket.member.exception.UnauthenticatedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
