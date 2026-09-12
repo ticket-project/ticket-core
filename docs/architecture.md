@@ -4,7 +4,8 @@
 다르면 현재 위치를 선례로 삼지 말고 미완료된 구조 이전으로 판단한다. 결정 배경은
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)·
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
-[ADR 0006](adr/0006-bounded-context-module-boundaries.md)을 함께 본다. 실행과 검증은
+[ADR 0006](adr/0006-bounded-context-module-boundaries.md)·
+[ADR 0012](adr/0012-separate-global-http-security-from-member.md)을 함께 본다. 실행과 검증은
 [operations.md](operations.md)를 본다.
 
 ## 원칙
@@ -14,8 +15,8 @@
   모듈이고, `com.ticket.ModularityTests`가 경계 위반을 잡는다.
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
-  `shared`는 BC가 아닌 공통 기술 모듈이다. 공유 계약은 `shared.web`·`shared.exception`, 공통 실행
-  배선은 `shared.config`에 둔다.
+  `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은 `shared.web`·`shared.exception`,
+  공통 실행 배선은 `shared.config`, 전역 HTTP 접근 정책은 `security`에 둔다.
 - 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
   두고, 실제 구현은 모듈 root 밖(업무 모듈은 capability 아래, 기술 모듈은 바로 아래)의
   `web`/`application`/`domain`/`infrastructure`/`exception` 패키지에 둔다. 별도 `internal` 계층은
@@ -39,7 +40,7 @@
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
-| Member | Member, MemberSocialAccount | 회원·인증·전역 SecurityFilterChain |
+| Member | Member, MemberSocialAccount | 회원·계정·인증·OAuth 업무. `account`/`auth`/`oauth`는 내부 capability |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
@@ -57,6 +58,9 @@
 
 - `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 공개 하위 계약을
   `shared :: *`로 참조한다.
+- `security -> member`는 Authorization header의 access token을 member의 공개 계약으로 검증하고
+  `AuthenticatedMember`를 SecurityContext에 넣기 위한 단방향 의존이다. security는 전역 API URL
+  접근 정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
 - `show -> member`는 찜 use case의 회원 확인, `show -> venue`는 표시값 조립, `show -> like`는
   공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - `like -> member`가 있다. 찜하기·찜 해제·찜 상태 조회를 like가 소유하면서(ADR 0009) 탈퇴 회원을
@@ -165,17 +169,21 @@ like를 모른다 — `show.catalog.application`의 조회 service가 like의 �
 사실이 앞으로도 하나라는 뜻은 아니고, 모듈마다 읽는 규칙이 갈리는 편이 더 비싸다.
 
 capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**이다. Application Module이 아니다 —
-`package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 모듈 집합과 경계는
-그대로 7개다(`com.ticket.ModularityTests`가 원본).
+`package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 업무 capability 경계는
+그대로 유지하며, 전역 HTTP 보안만 기술 Application Module로 분리해 전체 모듈은 8개다
+(`com.ticket.ModularityTests`가 원본).
 
 | 모듈 | capability |
 | --- | --- |
 | `booking` | `order` · `seat` · `hold` · `salespolicy` · `selection` · `admission` · `ticket` |
-| `member` | `account` · `auth` · `oauth` · `security` |
+| `member` | `account` · `auth` · `oauth` |
 | `show` | `catalog` · `performance` · `classification` · `performer` |
 | `venue` | `facility` · `seat` |
 | `like` | `preference` |
 | `payment` | `attempt` |
+
+기술 모듈 `security`는 업무 capability를 만들지 않고 `infrastructure`에 API filter chain,
+access token filter, 인증 주체 argument resolver와 401/403 handler를 둔다.
 
 배치 규칙:
 
@@ -350,6 +358,9 @@ com/ticket/<module>/exception/
 `exception`에 둔다. 공통 오류 계약은 `shared.exception`, 공통 HTTP 응답 봉투는 `shared.web`이
 소유한다.
 
+`member.exception`은 E1000/E1001 응답을 전역 security와 공유해야 하므로
+`member :: exception` named interface로 최소 공개한다. handler 하위 구현은 공개 계약이 아니다.
+
 오류 계약 소유 기준(모듈별 오류 vs `com.ticket.shared.exception`의 공통 오류), 응답 봉투가 `web`에 있는
 이유, `ProblemDetail`을 채택하지 않은 이유는 [ADR 0002](adr/0002-module-owned-error-contracts.md)가
 원본이다. module handler가 다른 module의 오류까지 삼키지 않는지는 `ExceptionHandlerScopeTest`가,
@@ -360,9 +371,16 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 코드만 봐서는 알기 어려운 정책·설계 결정만 다룬다. 엔드포인트 목록은 Swagger(`/api/api-docs`)가,
 예매 실행 순서는 [core-booking-lifecycle.md](core-booking-lifecycle.md)가 원본이다.
 
-**인증**: JWT 기반 stateless 방식이다. OAuth2 인가 흐름은 별도 filter chain에서 처리하고 전역
-`SecurityFilterChain`은 `member`가 제공한다. 다른 모듈의 controller는 `member.AuthenticatedMember`만
-parameter로 받고 JWT나 `member` 내부의 `Member`를 보지 않는다.
+**인증**: JWT 발급·검증과 로그인·logout·refresh는 `member.auth`, provider 응답 해석·OAuth2 로그인
+조립과 세션이 필요한 `@Order(1)` filter chain은 `member.oauth`가 소유한다. `security`는 stateless
+`@Order(2)` API filter chain, URL별 접근 정책, Authorization header 해석, SecurityContext와 MVC
+argument resolver를 소유한다. 의존 방향은 `security -> member -> shared`이며 member는 security를
+참조하지 않는다. 다른 모듈의 controller는 `member.AuthenticatedMember`만 parameter로 받고 JWT나
+`member` 내부의 `Member`를 보지 않는다.
+
+OAuth provider raw attribute는 `member.oauth.infrastructure.OAuth2UserInfoMapper`가 정규화한 뒤
+application으로 넘긴다. 기존 계정에 같은 이메일로 자동 연결하는 것은 provider가 이메일 검증을
+명시한 경우에만 허용하고, 검증되지 않은 이메일은 provider ID 기반 대체 주소로 격리한다.
 
 **좌석 조회는 performanceId 기준이다** — 같은 Show라도 회차마다 편성·가격이 다를 수 있어 `showId`
 기준 조회 API는 만들지 않는다. `booking.seat.web.PerformanceSeatQueryController`가 공개하는 3개 API

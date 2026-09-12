@@ -4,6 +4,11 @@
 
 채택됨 (2026-09-10)
 
+2026-09-13 후속 변경: `AuthenticatedMember`가 `java.security.Principal`을 구현하면 Spring MVC의
+기본 Principal argument resolver가 애플리케이션 resolver보다 먼저 선택되어 실제 controller 요청이
+500이 된다. shared가 member를 참조하지 않는 방향은 유지하되, 감사자 식별 계약을
+`shared.AuditorPrincipal`로 좁혔다(ADR 0012).
+
 ## 결정
 
 최상위 기술 모듈 `config`, `web`, `error`를 없애고 `shared` 하나로 통합한다.
@@ -19,9 +24,9 @@
 `shared`는 유일한 `sharedModules` Application Module이다. `shared.web`과 `shared.exception`은
 named interface로 공개하고, `shared.config`는 내부 실행 코드로 둔다.
 
-JPA 감사는 `shared.config.JpaAuditingConfig`가 활성화한다. 감사자 ID는 `SecurityContext`의 표준
-`Principal`에서 읽으므로 shared가 member 모듈을 참조하지 않는다. `AuthenticatedMember`는
-`Principal`을 구현해 회원 ID를 이름으로 제공한다.
+JPA 감사는 `shared.config.JpaAuditingConfig`가 활성화한다. 감사자 ID는 `SecurityContext` 주체가
+구현한 `shared.AuditorPrincipal`에서 읽으므로 shared가 member 모듈을 참조하지 않는다.
+`AuthenticatedMember`는 이 계약으로 회원 ID를 제공한다.
 
 ## 이유
 
