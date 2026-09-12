@@ -1,4 +1,4 @@
-package com.ticket.member.oauth.application;
+package com.ticket.member.oauth.infrastructure;
 
 import com.ticket.member.account.application.SocialAccountConnection;
 import com.ticket.member.account.application.SocialAccountUnlinker;
@@ -7,23 +7,23 @@ import com.ticket.shared.exception.InternalErrorException;
 import com.ticket.shared.exception.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Slf4j
-@Service
-public class SocialAccountUnlinkService implements SocialAccountUnlinker {
+@Component
+public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
 
     private static final String KAKAO_ADMIN_AUTH_PREFIX = "KakaoAK ";
 
-    private final KakaoUnlinkClient kakaoUnlinkClient;
+    private final KakaoUnlinkHttpClient kakaoUnlinkHttpClient;
     private final String adminKey;
 
-    public SocialAccountUnlinkService(
-            final KakaoUnlinkClient kakaoUnlinkClient,
+    public ProviderSocialAccountUnlinker(
+            final KakaoUnlinkHttpClient kakaoUnlinkHttpClient,
             @Value("${app.auth.kakao.admin-key:}") final String adminKey
     ) {
-        this.kakaoUnlinkClient = kakaoUnlinkClient;
+        this.kakaoUnlinkHttpClient = kakaoUnlinkHttpClient;
         this.adminKey = adminKey;
     }
 
@@ -44,7 +44,7 @@ public class SocialAccountUnlinkService implements SocialAccountUnlinker {
         }
 
         try {
-            kakaoUnlinkClient.unlink(KAKAO_ADMIN_AUTH_PREFIX + adminKey, kakaoUserId);
+            kakaoUnlinkHttpClient.unlink(KAKAO_ADMIN_AUTH_PREFIX + adminKey, kakaoUserId);
         } catch (Exception e) {
             log.error("카카오 unlink 호출 실패", e);
             throw new InternalErrorException("카카오 unlink 호출에 실패했습니다.");
