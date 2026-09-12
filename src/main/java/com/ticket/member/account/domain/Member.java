@@ -107,6 +107,8 @@ public class Member extends MemberAuditedEntity {
     }
 
     public void withdraw(final LocalDateTime deletedAt) {
+        // 소셜 계정은 aggregate child이므로 회원 탈퇴와 같은 명령에서 함께 상태를 바꾼다.
+        activeSocialAccounts().forEach(socialAccount -> socialAccount.withdraw(deletedAt));
         this.deletedAt = deletedAt;
         this.email = Email.create(buildWithdrawnEmail());
         this.encodedPassword = null;

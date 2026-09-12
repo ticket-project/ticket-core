@@ -48,9 +48,11 @@ class MemberWithdrawalTransactionServiceTest {
         ReflectionTestUtils.setField(google, "id", 2L);
         when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
 
-        List<String> kakaoIds = memberWithdrawalTransactionService.withdraw(3L);
+        List<SocialAccountConnection> connections = memberWithdrawalTransactionService.withdraw(3L);
 
-        assertThat(kakaoIds).containsExactly("kakao-123");
+        assertThat(connections).containsExactly(
+                new SocialAccountConnection(SocialProvider.KAKAO, "kakao-123"),
+                new SocialAccountConnection(SocialProvider.GOOGLE, "google-123"));
         assertThat(member.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(kakao.getDeletedAt()).isEqualTo(expectedNow);
         assertThat(google.getDeletedAt()).isEqualTo(expectedNow);
@@ -73,10 +75,11 @@ class MemberWithdrawalTransactionServiceTest {
         ReflectionTestUtils.setField(active, "id", 2L);
         when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
 
-        List<String> kakaoIds = memberWithdrawalTransactionService.withdraw(3L);
+        List<SocialAccountConnection> connections = memberWithdrawalTransactionService.withdraw(3L);
 
         // 이미 연결 해제된 kakao 계정은 unlink 대상이 아니다
-        assertThat(kakaoIds).isEmpty();
+        assertThat(connections).containsExactly(
+                new SocialAccountConnection(SocialProvider.GOOGLE, "google-123"));
         assertThat(alreadyWithdrawn.getDeletedAt()).isEqualTo(alreadyWithdrawnAt);
         assertThat(active.getDeletedAt()).isEqualTo(LocalDateTime.of(2026, 3, 15, 10, 0));
     }

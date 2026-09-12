@@ -1,7 +1,9 @@
 package com.ticket.member.account.application.usecase;
 
-import com.ticket.member.oauth.application.KakaoUnlinkService;
 import com.ticket.member.account.application.MemberWithdrawalTransactionService;
+import com.ticket.member.account.application.SocialAccountConnection;
+import com.ticket.member.account.application.SocialAccountUnlinker;
+import com.ticket.member.account.domain.SocialProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -10,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -24,7 +25,7 @@ class WithdrawCurrentMemberUseCaseTest {
     private MemberWithdrawalTransactionService memberWithdrawalTransactionService;
 
     @Mock
-    private KakaoUnlinkService kakaoUnlinkService;
+    private SocialAccountUnlinker socialAccountUnlinker;
 
     @InjectMocks
     private WithdrawCurrentMemberUseCase useCase;
@@ -32,29 +33,33 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 탈퇴_후_모든_카카오_계정을_연동해제한다() {
         //given
-        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of("100", "200"));
+        final SocialAccountConnection first = new SocialAccountConnection(SocialProvider.KAKAO, "100");
+        final SocialAccountConnection second = new SocialAccountConnection(SocialProvider.KAKAO, "200");
+        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of(first, second));
 
         //when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
 
         //then
         verify(memberWithdrawalTransactionService).withdraw(5L);
-        verify(kakaoUnlinkService).unlinkByUserId("100");
-        verify(kakaoUnlinkService).unlinkByUserId("200");
+        verify(socialAccountUnlinker).unlink(first);
+        verify(socialAccountUnlinker).unlink(second);
     }
 
     @Test
     void 카카오_연동해제_중_예외가_나도_탈퇴_흐름은_계속된다() {
         //given
-        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of("100", "200"));
-        doThrow(new IllegalStateException("boom")).when(kakaoUnlinkService).unlinkByUserId("100");
+        final SocialAccountConnection first = new SocialAccountConnection(SocialProvider.KAKAO, "100");
+        final SocialAccountConnection second = new SocialAccountConnection(SocialProvider.GOOGLE, "200");
+        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of(first, second));
+        doThrow(new IllegalStateException("boom")).when(socialAccountUnlinker).unlink(first);
 
         //when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
 
         //then
-        verify(kakaoUnlinkService).unlinkByUserId("100");
-        verify(kakaoUnlinkService).unlinkByUserId("200");
+        verify(socialAccountUnlinker).unlink(first);
+        verify(socialAccountUnlinker).unlink(second);
     }
 
     @Test
@@ -67,7 +72,7 @@ class WithdrawCurrentMemberUseCaseTest {
 
         //then
         verify(memberWithdrawalTransactionService).withdraw(5L);
-        verify(kakaoUnlinkService, never()).unlinkByUserId(anyString());
+        verify(socialAccountUnlinker, never()).unlink(org.mockito.ArgumentMatchers.any());
     }
 }
 

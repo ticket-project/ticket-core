@@ -15,7 +15,7 @@ import org.springframework.util.StringUtils;
 /**
  * 소셜 계정은 회원 aggregate의 자식이므로 별도 Repository를 거치지 않는다. 소셜 ID로 회원을 찾는
  * 조회만 {@link MemberRepository}가 맡고, 연결 여부 확인과 연결 추가는 {@code Member}가 자기
- * 컬렉션으로 처리한다.
+ * 컬렉션으로 처리한다. provider가 검증한 이메일만 기존 계정 자동 연결과 회원 이메일에 사용한다.
  */
 @Service
 @RequiredArgsConstructor
@@ -71,7 +71,7 @@ public class OAuth2MemberProvisioningService {
     }
 
     private String resolveEmail(final OAuth2UserInfo userInfo) {
-        if (StringUtils.hasText(userInfo.email())) {
+        if (userInfo.emailVerified() && StringUtils.hasText(userInfo.email())) {
             return userInfo.email().trim().toLowerCase();
         }
         return userInfo.provider().name().toLowerCase() + "_" + userInfo.providerId() + "@social.ticket";

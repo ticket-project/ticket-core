@@ -1,9 +1,10 @@
 package com.ticket.member.account.application.usecase;
 
 import com.ticket.member.account.application.MemberWithdrawalTransactionService;
+import com.ticket.member.account.application.SocialAccountConnection;
+import com.ticket.member.account.application.SocialAccountUnlinker;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.member.oauth.application.KakaoUnlinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ import java.util.List;
 public class WithdrawCurrentMemberUseCase {
 
     private final MemberWithdrawalTransactionService memberWithdrawalTransactionService;
-    private final KakaoUnlinkService kakaoUnlinkService;
+    private final SocialAccountUnlinker socialAccountUnlinker;
 
     public record Input(Long memberId) {
         public Input {
@@ -31,17 +32,21 @@ public class WithdrawCurrentMemberUseCase {
     public record Output() {}
 
     public Output execute(final Input input) {
-        final List<String> kakaoSocialIds = memberWithdrawalTransactionService.withdraw(input.memberId);
-        unlinkKakaoAccountsSafely(input.memberId(), kakaoSocialIds);
+        final List<SocialAccountConnection> socialAccounts = memberWithdrawalTransactionService.withdraw(input.memberId);
+        unlinkSocialAccountsSafely(input.memberId(), socialAccounts);
         return new Output();
     }
 
-    private void unlinkKakaoAccountsSafely(final Long memberId, final List<String> kakaoSocialIds) {
-        kakaoSocialIds.forEach(socialId -> {
+    private void unlinkSocialAccountsSafely(
+            final Long memberId,
+            final List<SocialAccountConnection> socialAccounts
+    ) {
+        socialAccounts.forEach(connection -> {
             try {
-                kakaoUnlinkService.unlinkByUserId(socialId);
+                socialAccountUnlinker.unlink(connection);
             } catch (Exception e) {
-                log.warn("회원 탈퇴 후 카카오 연동 해제에 실패했습니다. memberId={}, provider=kakao", memberId, e);
+                log.warn("회원 탈퇴 후 소셜 연동 해제에 실패했습니다. memberId={}, provider={}",
+                        memberId, connection.provider(), e);
             }
         });
     }

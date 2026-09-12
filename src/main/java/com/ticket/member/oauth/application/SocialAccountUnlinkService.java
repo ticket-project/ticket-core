@@ -1,8 +1,10 @@
 package com.ticket.member.oauth.application;
 
+import com.ticket.member.account.application.SocialAccountConnection;
+import com.ticket.member.account.application.SocialAccountUnlinker;
+import com.ticket.member.account.domain.SocialProvider;
 import com.ticket.shared.exception.InternalErrorException;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.member.oauth.application.KakaoUnlinkClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,14 +12,14 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
-public class KakaoUnlinkService {
+public class SocialAccountUnlinkService implements SocialAccountUnlinker {
 
     private static final String KAKAO_ADMIN_AUTH_PREFIX = "KakaoAK ";
 
     private final KakaoUnlinkClient kakaoUnlinkClient;
     private final String adminKey;
 
-    public KakaoUnlinkService(
+    public SocialAccountUnlinkService(
             final KakaoUnlinkClient kakaoUnlinkClient,
             @Value("${app.auth.kakao.admin-key:}") final String adminKey
     ) {
@@ -25,7 +27,14 @@ public class KakaoUnlinkService {
         this.adminKey = adminKey;
     }
 
-    public void unlinkByUserId(final String kakaoUserId) {
+    @Override
+    public void unlink(final SocialAccountConnection connection) {
+        if (connection.provider() == SocialProvider.KAKAO) {
+            unlinkKakao(connection.providerId());
+        }
+    }
+
+    private void unlinkKakao(final String kakaoUserId) {
         if (!StringUtils.hasText(kakaoUserId)) {
             throw new InvalidRequestException("카카오 사용자 ID가 비어 있습니다.");
         }
