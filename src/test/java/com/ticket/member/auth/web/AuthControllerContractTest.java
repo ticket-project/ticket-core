@@ -1,7 +1,7 @@
 package com.ticket.member.auth.web;
 
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import com.ticket.member.oauth.application.usecase.ExchangeOAuth2TokenUseCase;
 import com.ticket.member.auth.application.usecase.LoginUseCase;
 import com.ticket.member.auth.application.usecase.LogoutUseCase;

@@ -50,9 +50,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ModularityTests {
 
-    /** 파일시스템 기준으로 선언된 7개 module package다. */
+    /** 파일시스템 기준으로 선언된 8개 module package다. */
     private static final Set<String> DECLARED_MODULE_PACKAGES = Set.of(
-            "booking", "show", "venue", "like", "member", "shared", "payment");
+            "booking", "show", "venue", "like", "member", "security", "shared", "payment");
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 실제로 직접 참조하는 module 이름 집합이며,
@@ -67,6 +67,7 @@ class ModularityTests {
             Map.entry("venue", Set.of()),
             Map.entry("like", Set.of("member", "shared")),
             Map.entry("member", Set.of("shared")),
+            Map.entry("security", Set.of("member", "shared")),
             Map.entry("shared", Set.of()),
             Map.entry("payment", Set.of())
     );

@@ -1,9 +1,7 @@
 /**
  * Member BC: Member, MemberSocialAccount, 이메일·소셜 로그인, OAuth2 provider adapter, 비밀번호,
- * access/refresh token, 회원 상태와 탈퇴, 전역 Spring Security filter chain을 소유한다.
- *
- * <p>전역 {@code SecurityFilterChain}은 member가 제공한다({@code security.infrastructure.SecurityConfig})
- * — 인증·인가 해석이 결국 member 소유이기 때문이다.
+ * access/refresh token, 회원 상태와 탈퇴를 소유한다. 전역 HTTP 접근 정책과 SecurityContext 구성은
+ * 별도 security 기술 모듈이 소유한다.
  *
  * 공개 계약:
  * - {@link com.ticket.member.AuthenticatedMember} (다른 module controller가 parameter로 받는
@@ -12,6 +10,8 @@
  *   쓰는 회원 조회·활성 검증 계약)
  * - {@link com.ticket.member.AccessTokenAuthenticator} (booking의 WebSocket 인증이 원본 access
  *   token 문자열을 검증할 때 쓴다)
+ * - {@link com.ticket.member.AccessTokenReader} / {@link com.ticket.member.AccessTokenReadResult}
+ *   (security가 HTTP 인증 실패의 만료/무효 구분을 보존하며 access token을 검증할 때 쓴다)
  *
  * <p>찜(Like)의 데이터·HTTP endpoint·use case는 이 module이 아니라 like module(옛 favorite)이
  * 소유한다. 찜하기/찜 해제/찜 상태 조회 시 회원 활성 확인({@link

@@ -1,8 +1,8 @@
-package com.ticket.member.security.infrastructure;
+package com.ticket.security.infrastructure;
 
-import com.ticket.member.auth.application.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.auth.application.AccessTokenReader;
 import java.util.List;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import jakarta.servlet.FilterChain;
@@ -41,21 +41,22 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        AccessTokenReadResult readResult;
         try {
             final String token = extractBearerToken(authorizationHeader);
-            switch (accessTokenReader.read(token)) {
-                case AccessTokenReadResult.Authenticated authenticated -> {
-                    authenticate(authenticated.member());
-                    filterChain.doFilter(request, response);
-                }
-                case AccessTokenReadResult.Expired ignored ->
-                        deferFailure(request, filterChain, response, "expired");
-                case AccessTokenReadResult.Invalid ignored ->
-                        deferFailure(request, filterChain, response, "invalid");
-            }
+            readResult = accessTokenReader.read(token);
         } catch (final IllegalArgumentException exception) {
             // Bearer 형식 자체가 잘못된 경우다. 토큰 검증까지 가지 않는다.
-            deferFailure(request, filterChain, response, "invalid");
+            readResult = AccessTokenReadResult.invalid();
+        }
+
+        try {
+            switch (readResult) {
+                case AccessTokenReadResult.Authenticated authenticated -> authenticate(authenticated.member());
+                case AccessTokenReadResult.Expired ignored -> markFailure(request, "expired");
+                case AccessTokenReadResult.Invalid ignored -> markFailure(request, "invalid");
+            }
+            filterChain.doFilter(request, response);
         } finally {
             SecurityContextHolder.clearContext();
         }
@@ -81,14 +82,8 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
         return token;
     }
 
-    private void deferFailure(
-            final HttpServletRequest request,
-            final FilterChain filterChain,
-            final HttpServletResponse response,
-            final String reason
-    ) throws ServletException, IOException {
+    private void markFailure(final HttpServletRequest request, final String reason) {
         log.warn("access token verification failed. reason={}", reason);
         request.setAttribute(AUTH_ERROR_ATTRIBUTE, reason);
-        filterChain.doFilter(request, response);
     }
 }

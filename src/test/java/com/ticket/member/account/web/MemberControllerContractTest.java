@@ -1,6 +1,6 @@
 package com.ticket.member.account.web;
 
-import com.ticket.member.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
 import com.ticket.member.account.application.usecase.GetCurrentMemberUseCase;
 import com.ticket.member.account.application.usecase.WithdrawCurrentMemberUseCase;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;

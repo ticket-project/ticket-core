@@ -23,7 +23,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * {@link WebSocketMessageBrokerConfigurer} 구현은 Spring이 여러 개를 모아 순서대로 적용한다.
  *
  * <p>{@link CorsProperties}는 {@code shared}의 값 홀더이므로 이 module도 직접
- * {@code @EnableConfigurationProperties}로 등록한다(member의 {@code SecurityConfig}도 같은 값을
+ * {@code @EnableConfigurationProperties}로 등록한다(security의 {@code ApiSecurityConfig}도 같은 값을
  * 등록해 쓴다 — 같은 {@code @ConfigurationProperties} 타입을 두 곳에서 등록해도 bean은 하나다).
  * 그래야 booking이 STANDALONE으로 뜰 때 member 없이도 endpoint 허용 origin을 읽을 수 있다.
  */
