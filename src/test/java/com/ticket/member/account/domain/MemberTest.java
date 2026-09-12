@@ -38,4 +38,23 @@ class MemberTest {
         assertThat(member.getEmail().getEmail()).startsWith("deleted_7_").endsWith("@withdrawn.ticket");
         assertThat(member.getEncodedPassword()).isNull();
     }
+
+    @Test
+    void 회원이_탈퇴하면_활성_소셜계정도_같은_시각에_탈퇴한다() {
+        final Member member = new Member(
+                Email.create("user@example.com"),
+                EncodedPassword.create("encoded-password"),
+                "tester",
+                Role.MEMBER
+        );
+        final MemberSocialAccount kakao = member.addSocialAccount(SocialProvider.KAKAO, "kakao-123");
+        final MemberSocialAccount google = member.addSocialAccount(SocialProvider.GOOGLE, "google-123");
+        final LocalDateTime withdrawnAt = LocalDateTime.of(2026, 3, 15, 10, 0);
+
+        member.withdraw(withdrawnAt);
+
+        assertThat(kakao.getDeletedAt()).isEqualTo(withdrawnAt);
+        assertThat(google.getDeletedAt()).isEqualTo(withdrawnAt);
+        assertThat(member.activeSocialAccounts()).isEmpty();
+    }
 }

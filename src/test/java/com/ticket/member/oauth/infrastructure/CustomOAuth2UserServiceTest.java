@@ -4,6 +4,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 import com.ticket.member.oauth.application.usecase.ProvisionOAuth2MemberUseCase;
 import com.ticket.member.oauth.application.ProvisionedMember;
+import com.ticket.member.oauth.domain.OAuth2UserInfo;
+import com.ticket.member.account.domain.SocialProvider;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -34,13 +36,15 @@ class CustomOAuth2UserServiceTest {
         Map<String, Object> attributes = Map.of(
                 "sub", "google-user-1",
                 "email", "user@example.com",
+                "email_verified", true,
                 "name", "사용자"
         );
         OAuth2UserRequest userRequest = createUserRequest();
         OAuth2User oauth2User = new DefaultOAuth2User(java.util.List.of(), attributes, "sub");
         when(delegate.loadUser(userRequest)).thenReturn(oauth2User);
-        // 제공자 응답 해석은 use case가 맡으므로 registrationId와 원본 attributes를 그대로 넘긴다.
-        when(provisionUseCase.execute("google", attributes)).thenReturn(new ProvisionedMember(7L, "MEMBER"));
+        final OAuth2UserInfo userInfo = new OAuth2UserInfo(
+                SocialProvider.GOOGLE, "google-user-1", "user@example.com", true, "사용자");
+        when(provisionUseCase.execute(userInfo)).thenReturn(new ProvisionedMember(7L, "MEMBER"));
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
 
@@ -53,7 +57,7 @@ class CustomOAuth2UserServiceTest {
         // 제공자가 준 정보는 버리지 않는다.
         assertThat(result.getAttributes()).containsEntry("email", "user@example.com");
         verify(delegate).loadUser(userRequest);
-        verify(provisionUseCase).execute("google", attributes);
+        verify(provisionUseCase).execute(userInfo);
     }
 
     private OAuth2UserRequest createUserRequest() {

@@ -179,6 +179,22 @@ class OAuth2MemberProvisioningServiceTest {
         assertThat(result.getName()).isEqualTo("kakao_social-1");
     }
 
+    @Test
+    void 검증되지_않은_email은_기존계정_연결에_쓰지_않고_provider_대체값을_사용한다() {
+        final OAuth2UserInfo unverified = new OAuth2UserInfo(
+                SocialProvider.KAKAO, "social-1", "victim@example.com", false, "사용자");
+        when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
+                .thenReturn(Optional.empty());
+        when(memberRepository.findActiveByEmail("kakao_social-1@social.ticket"))
+                .thenReturn(Optional.empty());
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        final Member result = oauth2MemberProvisioningService.getOrCreateMember(unverified);
+
+        assertThat(result.getEmail()).isEqualTo(Email.create("kakao_social-1@social.ticket"));
+        verify(memberRepository, never()).findActiveByEmail("victim@example.com");
+    }
+
     private void socialProviderAndId(final String providerId) {
         when(userInfo.provider()).thenReturn(SocialProvider.KAKAO);
         when(userInfo.providerId()).thenReturn(providerId);
@@ -187,11 +203,13 @@ class OAuth2MemberProvisioningServiceTest {
     private void socialUserWithEmailAndName(final String providerId, final String email, final String name) {
         socialProviderAndId(providerId);
         when(userInfo.email()).thenReturn(email);
+        when(userInfo.emailVerified()).thenReturn(true);
         when(userInfo.name()).thenReturn(name);
     }
 
     private void socialUserWithEmail(final String providerId, final String email) {
         socialProviderAndId(providerId);
         when(userInfo.email()).thenReturn(email);
+        when(userInfo.emailVerified()).thenReturn(true);
     }
 }
