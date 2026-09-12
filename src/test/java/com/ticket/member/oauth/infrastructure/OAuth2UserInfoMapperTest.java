@@ -77,4 +77,3 @@ class OAuth2UserInfoMapperTest {
                 .isInstanceOf(InvalidRequestException.class);
     }
 }
-

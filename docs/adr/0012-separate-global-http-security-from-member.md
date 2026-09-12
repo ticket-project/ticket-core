@@ -69,9 +69,10 @@ Google도 email 대신 `sub`를 안정적인 식별자로 쓰라고 명시하며
 
 ### 회원 탈퇴
 
-`WithdrawCurrentMemberUseCase`는 Kakao 구현 대신 `SocialAccountUnlinker`를 의존한다. 현재 구현은
-Kakao만 외부 unlink를 호출하고 Google은 no-op다. DB 탈퇴 transaction이 완료된 뒤 외부 호출을
-수행하고 실패를 기록한 뒤 계속하는 기존 원칙은 유지한다.
+`WithdrawCurrentMemberUseCase`는 Kakao 구현 대신 `SocialAccountUnlinker`를 의존한다. 이 포트의
+infrastructure adapter인 `ProviderSocialAccountUnlinker`가 provider별 프로토콜과 설정을 소유한다.
+현재 구현은 Kakao만 외부 unlink를 호출하고 Google은 no-op다. DB 탈퇴 transaction이 완료된 뒤
+외부 호출을 수행하고 실패를 기록한 뒤 계속하는 기존 원칙은 유지한다.
 
 Member aggregate가 탈퇴하면 활성 MemberSocialAccount도 같은 시각에 탈퇴해야 하는 invariant는
 `Member.withdraw(now)`가 직접 보장한다. 외부 provider 호출은 aggregate에 넣지 않는다.

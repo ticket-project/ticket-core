@@ -7,8 +7,6 @@
 
 | ID | 성격 | 현재 위치 | 현재 구조 | 왜 기술 부채인가 | 권장 해결 방향 | 보류 이유 | 호환성 주의 | 완료 조건 | 관련 코드 |
 |---|---|---|---|---|---|---|---|---|---|
-| TD-01 | 설계 | `member.oauth.application` | OAuth provider 원본 attributes가 app 흐름으로 유입될 여지가 있다 | provider 변경이 유스케이스에 전파된다 | infra에서 중립 DTO로 변환 | 이번 범위는 포트/이름 이동 | OAuth 응답 계약 유지 | provider별 adapter DTO와 테스트 분리 | `OAuth2MemberProvisioningService` |
-| TD-02 | 설계 | `member.oauth.application` | `KakaoUnlinkService`가 provider protocol/config를 일부 안다 | 외부 API 세부사항이 app에 남는다 | Kakao unlink 전용 중립 포트로 캡슐화 | 동작 변경 위험 | unlink API 동작 유지 | app이 provider 타입을 참조하지 않음 | `KakaoUnlinkService` |
 | TD-03 | 설계 | `show.catalog.domain` | 도메인이 HTTP 이미지 경로를 만든다 | 표현 계층 규칙이 domain에 유입된다 | image URL 변환을 API/infra adapter로 이동 | 응답 호환성 영향 분석 필요 | 기존 image JSON 유지 | domain이 경로 문자열을 생성하지 않음 | `ShowCardImagePathConverter` |
 | TD-04 | 설계 | 각 module의 `web`[^td04] | app UseCase Output/View가 API 응답 타입으로 직접 노출된다 | API와 app 변경이 강하게 결합된다 | API response DTO로 변환 | 전 endpoint 계약 검토 필요 | JSON 필드/상태 유지 | controller 반환 타입이 API DTO | 각 `*Controller` |
 | TD-06 | 설계 | `booking.seat.domain` | `PerformanceSeatService` 사용 여부가 불명확하다 | 미사용 코드 제거 판단이 어렵다 | 호출 그래프 확인 후 제거 또는 명시적 역할 부여 | 삭제는 이번 범위 밖 | public class 삭제 금지 | 사용처/삭제 결정 문서화 | `PerformanceSeatService` |
@@ -19,9 +17,16 @@
 | TD-15 | 설계 | `show.performance.domain` | "판매 오픈 전에만 가격을 바꿀 수 있다"는 `PerformanceGrade`의 불변식인데, 그 판단 근거(접수 시각·좌석 편성 여부)가 Booking BC에 있다 | show가 혼자 판정할 수 없고 `show -> booking`은 순환이라 금지다. 지금은 가격 변경 메서드 자체가 없어 드러나지 않을 뿐 강제되는 규칙이 아니다 | (A) 잠금 기준을 "좌석 편성"으로 바꾸고 `EditPerformanceSeatsUseCase`가 show의 공개 command API로 잠금을 알린다(`booking -> show`라 순환 없고 snapshot 시점과 일치) / (B) booking이 편성 시 단가 불일치를 사후 감지 / (C) 문서 규칙으로만 유지 | 가격 변경 기능이 아직 없어 실제로 깨지지 않는다 — 관리자 CRUD 착수 시점에 결정한다 | 가격 snapshot 체인(`PerformanceGrade.price` -> `PerformanceSeat.unitPrice` -> `OrderSeat.unitPrice`) 의미 보존 | 잠금 주체·시점을 결정하고 테스트로 고정 | `PerformanceGrade`, `EditPerformanceSeatsUseCase`, `PerformanceSalesPolicy` |
 | TD-16 | 설계 | `src/test/java/com/ticket/core/infra/support` | `ReadRepositoryTestSupport`/`InfraReadRepositoryTestSupport` 2개 파일만 legacy 이름 패키지 아래 남아 있다 | 옮길 legacy 코드가 아니라 별도 결정할 test 인프라 소유권 문제다 — 어느 module의 test support로 볼지, 아니면 module-neutral 공용 test 유틸 자리를 새로 둘지 결정이 필요하다 | test 지원 클래스의 소유권 모델을 정하고 그에 맞는 패키지로 옮긴다 | 여러 module 테스트가 참조해 이동 범위가 넓다 | 테스트 클래스 위치만 바뀌고 동작 불변 | 소유권 결정 후 실제 이동 | `ReadRepositoryTestSupport`, `InfraReadRepositoryTestSupport` |
 
-**해소된 항목**: TD-10(`<module>.domain.**.command`에 정책·값 객체·서비스가 혼재)은 패키지를
-모듈 → 계층으로 평탄화하면서 `command`/`model`/`query`/`store` 하위 패키지 자체가 사라져 전제가
-없어졌다. ID는 재사용하지 않는다.
+**해소된 항목**:
+
+- TD-01(OAuth provider 원본 attributes의 application 유입)은 provider별 해석을
+  `OAuth2UserInfoMapper`로 격리하고 정규화된 `OAuth2UserInfo`만 application에 전달하도록 변경했다.
+- TD-02(회원 탈퇴 application의 Kakao 구현 직접 의존)는 `SocialAccountUnlinker` 포트를 도입하고
+  provider별 외부 API 처리를 infrastructure 쪽 구현으로 감쌌다.
+- TD-10(`<module>.domain.**.command`에 정책·값 객체·서비스가 혼재)은 패키지를 모듈 → 계층으로
+  평탄화하면서 `command`/`model`/`query`/`store` 하위 패키지 자체가 사라져 전제가 없어졌다.
+
+해소된 ID는 재사용하지 않는다.
 
 [^td04]: 컨트롤러가 booking/show/member 각 module의 `web`로 옮겨지며
 문제의 소재도 함께 옮겨졌다 — module 경계와는 무관하게 여전히 유효한 항목이다.

@@ -12,7 +12,8 @@
  *
  * <p><b>이 module은 아무 module도 참조하지 않는 leaf여야 한다.</b>
  *
- * <p>module root에는 {@link CursorPage}(커서 페이징 조회 결과)와 {@link CorsProperties}가 있다.
+ * <p>module root에는 {@link CursorPage}(커서 페이징 조회 결과), {@link CorsProperties},
+ * {@link AuditorPrincipal}(인증 주체의 기술 중립 감사 식별자 계약)이 있다.
  *
  * <p><b>{@code @ApplicationModule}을 선언하는 이유</b>: package-info에 annotation이 없으면
  * javac가 {@code package-info.class}를 만들지 않아 Spring Modulith의 {@code direct-sub-packages}
