@@ -39,7 +39,8 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
 테스트를 최소 하나씩 둔다(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
-`LikeModuleTests`, `MemberModuleTests`, 그리고 ADR 0005로 신설된 `PaymentModuleTests`). 찜은
+`LikeModuleTests`, `MemberModuleTests`, `SecurityModuleTests`, 그리고 ADR 0005로 신설된
+`PaymentModuleTests`). 찜은
 `like`가 데이터와 찜하기·찜 해제·찜 상태 조회 endpoint를 소유하고, 공연 표시값을 조합하는
 "내 찜 목록"만 `show`가 소유한다(ADR 0006, ADR 0008, ADR 0009) — `ShowModuleTests`가 like의
 공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다.

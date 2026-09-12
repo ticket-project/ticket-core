@@ -2,6 +2,10 @@
 
 ## 상태(2026-09-07): 채택·구현됨. ADR 0003 §3·§11, ADR 0005 §4를 module set·DAG 범위에서 다시 supersede
 
+**2026-09-13 후속 결정**: 아래 §6의 관측 중 전역 HTTP security 소유권은 ADR 0012가 대체한다.
+`account`/`auth`/`oauth`는 member 내부 capability로 유지하고, BC가 아닌 기술 Application Module
+`security`만 신설했다. 따라서 member 자체를 여러 BC로 분해하지 않는 결정은 유지된다.
+
 **2026-09-07 갱신(Performance 책임 혼재 후속 결정)**: 아래 "결정하지 않는 것"이 미루었던 A1/A2
 선택은 **A2(예매·대기열 정책을 Booking BC의 `PerformanceSalesPolicy`로 이관)로 확정·구현됐다.**
 `Performance`(show)는 이제 회차 일정(startTime/endTime)만 소유하고,
