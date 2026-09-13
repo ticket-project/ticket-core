@@ -1,48 +1,29 @@
 package com.ticket.booking.selection.application.usecase;
 
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.util.List;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class DeselectSeatUseCaseTest {
-    @Mock private SeatSelectionService seatSelectionService;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
-    @Mock private SeatStatusEventPublisher seatEventPublisher;
+    @Mock private SeatSelectionCoordinator seatSelectionCoordinator;
     @InjectMocks private DeselectSeatUseCase useCase;
 
+    /**
+     * 해제 여부 판단과 발행은 coordinator가 좌석 락 안에서 한다. 이 use case는 입력 검증과 위임만 한다 — 실제 해제 여부와 무관하게 여기서 발행하던 옛
+     * 경로는 {@code SeatSelectionCoordinatorTest}가 고정한다.
+     */
     @Test
-    void deselect_then_publish_deselected_event_with_performanceSeatId() {
-        DeselectSeatUseCase.Input input = new DeselectSeatUseCase.Input(10L, 20L, 1L);
-        PerformanceSeat performanceSeat =
-                new PerformanceSeat(10L, 20L, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
-        ReflectionTestUtils.setField(performanceSeat, "id", 501L);
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L)))
-                .thenReturn(List.of(performanceSeat));
+    void 좌석_락_안에서_해제하도록_coordinator에_위임한다() {
+        useCase.execute(new DeselectSeatUseCase.Input(10L, 20L, 1L));
 
-        useCase.execute(input);
-
-        InOrder inOrder = inOrder(seatSelectionService, seatEventPublisher);
-        inOrder.verify(seatSelectionService).deselect(10L, 20L, 1L);
-        // 새 계약의 performanceSeatId와 기존 프론트 계약의 물리 seatId를 함께 발행한다.
-        inOrder.verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
+        verify(seatSelectionCoordinator).deselect(10L, 20L, 1L);
     }
 }

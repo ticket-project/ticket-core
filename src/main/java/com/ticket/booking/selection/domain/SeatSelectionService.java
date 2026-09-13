@@ -38,7 +38,11 @@ public class SeatSelectionService {
                 memberId);
     }
 
-    public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
+    /**
+     * @return 이 호출이 실제로 선택을 해제했으면 {@code true}. 이미 만료됐거나 선택 정보가 없으면 {@code false}다 — 호출자가 아무 일도
+     *     일어나지 않은 해제를 좌석 상태 알림으로 내보내지 않게 하려고 결과를 돌려준다.
+     */
+    public boolean deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final String memberKey = memberKeyOf(memberId);
         final String holder = seatSelectionStore.getHolder(performanceId, seatId);
         if (holder == null) {
@@ -46,10 +50,15 @@ public class SeatSelectionService {
                     "좌석 선택 해제를 건너뜁니다. 이미 선택 정보가 없습니다. performanceId={}, seatId={}",
                     performanceId,
                     seatId);
-            return;
+            return false;
         }
         validateOwner(performanceId, seatId, memberId, memberKey, holder);
-        releaseSeat(performanceId, seatId, memberId, memberKey);
+        return releaseSeat(performanceId, seatId, memberId, memberKey);
+    }
+
+    /** 지금 이 좌석을 누군가 선택하고 있는지. 만료 알림 전에 락 안에서 다시 확인하는 용도다. */
+    public boolean isSelected(final Long performanceId, final Long seatId) {
+        return seatSelectionStore.getHolder(performanceId, seatId) != null;
     }
 
     public DeselectedSeatIds deselectAll(final Long performanceId, final Long memberId) {
@@ -86,7 +95,7 @@ public class SeatSelectionService {
         throw new SeatNotOwnedException(performanceId, seatId, memberId);
     }
 
-    private void releaseSeat(
+    private boolean releaseSeat(
             final Long performanceId,
             final Long seatId,
             final Long memberId,
@@ -99,9 +108,10 @@ public class SeatSelectionService {
                     performanceId,
                     seatId,
                     memberId);
-            return;
+            return true;
         }
         handleReleaseFailure(performanceId, seatId, memberId);
+        return false;
     }
 
     private void handleReleaseFailure(

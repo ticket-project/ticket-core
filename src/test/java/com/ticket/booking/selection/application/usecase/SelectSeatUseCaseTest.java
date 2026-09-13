@@ -32,8 +32,6 @@ import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilityValidator;
 
@@ -49,7 +47,6 @@ class SelectSeatUseCaseTest {
     @Mock private SeatSelectionCoordinator seatSelectionCoordinator;
     @Mock private SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
     @Mock private AdmissionVerifier admissionVerifier;
-    @Mock private SeatStatusEventPublisher seatEventPublisher;
     private SelectSeatUseCase useCase;
 
     @BeforeEach
@@ -60,12 +57,11 @@ class SelectSeatUseCaseTest {
                         seatSelectionCoordinator,
                         seatSelectionAvailabilityValidator,
                         admissionVerifier,
-                        seatEventPublisher,
                         CLOCK);
     }
 
     @Test
-    void 정책_판정_좌석_검증_선택_발행_순서로_수행한다() {
+    void 정책_판정_좌석_검증_선택_순서로_수행한다() {
         PerformanceSalesPolicy policy = openPolicy(false);
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
         when(seatSelectionAvailabilityValidator.validate(10L, 20L)).thenReturn(501L);
@@ -76,14 +72,13 @@ class SelectSeatUseCaseTest {
                 inOrder(
                         performanceSalesPolicyRepository,
                         seatSelectionAvailabilityValidator,
-                        seatSelectionCoordinator,
-                        seatEventPublisher);
+                        seatSelectionCoordinator);
         inOrder.verify(performanceSalesPolicyRepository).findById(10L);
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
+        // 검증에서 얻은 performanceSeatId를 그대로 넘긴다. SELECTED 발행은 coordinator가 좌석 락
+        // 안에서 하므로 여기서 다시 발행하지 않는다.
         inOrder.verify(seatSelectionCoordinator)
-                .select(10L, 20L, 1L, policy.getOrderAcceptanceWindow().getClosesAt());
-        // 새 계약의 performanceSeatId와 기존 프론트 계약의 물리 seatId를 함께 발행한다.
-        inOrder.verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.SELECTED);
+                .select(10L, 20L, 1L, 501L, policy.getOrderAcceptanceWindow().getClosesAt());
     }
 
     @Test
@@ -107,8 +102,7 @@ class SelectSeatUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(
-                seatSelectionAvailabilityValidator, seatSelectionCoordinator, seatEventPublisher);
+        verifyNoInteractions(seatSelectionAvailabilityValidator, seatSelectionCoordinator);
     }
 
     @Test
@@ -120,10 +114,7 @@ class SelectSeatUseCaseTest {
                 .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(
-                seatSelectionAvailabilityValidator,
-                seatSelectionCoordinator,
-                seatEventPublisher,
-                admissionVerifier);
+                seatSelectionAvailabilityValidator, seatSelectionCoordinator, admissionVerifier);
     }
 
     @Test
@@ -137,7 +128,7 @@ class SelectSeatUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(SeatAlreadyHeldException.class);
 
-        verifyNoInteractions(seatSelectionCoordinator, seatEventPublisher);
+        verifyNoInteractions(seatSelectionCoordinator);
     }
 
     private PerformanceSalesPolicy openPolicy(final boolean queueRequired) {
