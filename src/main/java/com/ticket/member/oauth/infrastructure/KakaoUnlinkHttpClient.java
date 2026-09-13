@@ -1,16 +1,15 @@
 package com.ticket.member.oauth.infrastructure;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
 @RequiredArgsConstructor
 public class KakaoUnlinkHttpClient {
-
     private static final String TARGET_ID_TYPE = "user_id";
-
     private final KakaoUnlinkApiClient kakaoUnlinkApiClient;
 
     public void unlink(final String adminAuthorization, final String kakaoUserId) {

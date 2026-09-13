@@ -3,7 +3,6 @@ package com.ticket.member.auth.application;
 import java.util.Optional;
 
 public interface RefreshTokenStore {
-
     String createRefreshToken(Long memberId, long expirationSeconds);
 
     Optional<Long> validate(AuthRefreshToken refreshToken);

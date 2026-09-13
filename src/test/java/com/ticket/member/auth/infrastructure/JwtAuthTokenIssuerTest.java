@@ -1,34 +1,27 @@
 package com.ticket.member.auth.infrastructure;
 
-import com.ticket.member.auth.application.AuthRefreshToken;
-import com.ticket.member.auth.application.IssuedAuthTokens;
-import com.ticket.member.auth.application.RefreshTokenStore;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.ticket.member.auth.application.AuthRefreshToken;
+import com.ticket.member.auth.application.IssuedAuthTokens;
+import com.ticket.member.auth.application.RefreshTokenStore;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class JwtAuthTokenIssuerTest {
-
-    @Mock
-    private JwtAccessTokenCodec jwtAccessTokenCodec;
-
-    @Mock
-    private JwtProperties jwtProperties;
-
-    @Mock
-    private RefreshTokenStore refreshTokenStore;
-
-    @InjectMocks
-    private JwtAuthTokenIssuer jwtAuthTokenIssuer;
+    @Mock private JwtAccessTokenCodec jwtAccessTokenCodec;
+    @Mock private JwtProperties jwtProperties;
+    @Mock private RefreshTokenStore refreshTokenStore;
+    @InjectMocks private JwtAuthTokenIssuer jwtAuthTokenIssuer;
 
     @Test
     void issue_tokens_returns_access_and_refresh_tokens() {
@@ -61,5 +54,4 @@ class JwtAuthTokenIssuerTest {
         assertThat(result.refreshToken()).isEqualTo("new-refresh");
         assertThat(result.memberId()).isEqualTo(7L);
     }
-
 }

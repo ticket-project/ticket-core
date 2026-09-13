@@ -1,31 +1,27 @@
 package com.ticket.member.account.domain;
 
-import com.ticket.member.account.domain.EncodedPassword;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("NonAsciiCharacters")
 class EncodedPasswordTest {
-
     @Test
     void 인코딩된_비밀번호를_그대로_보관한다() {
-        //given
-        //when
+        // given
+        // when
         EncodedPassword encodedPassword = EncodedPassword.create("encoded-value");
-
-        //then
+        // then
         assertThat(encodedPassword.getPassword()).isEqualTo("encoded-value");
     }
 
     @Test
     void 같은_인코딩값이면_동등하다() {
-        //given
-        //when
+        // given
+        // when
         EncodedPassword first = EncodedPassword.create("encoded-value");
         EncodedPassword second = EncodedPassword.create("encoded-value");
-
-        //then
+        // then
         assertThat(first).isEqualTo(second);
         assertThat(first.hashCode()).isEqualTo(second.hashCode());
     }

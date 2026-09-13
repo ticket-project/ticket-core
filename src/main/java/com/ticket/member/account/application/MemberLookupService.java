@@ -1,23 +1,22 @@
 package com.ticket.member.account.application;
 
-import com.ticket.shared.exception.NotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.ticket.member.MemberLookup;
 import com.ticket.member.MemberProfile;
 import com.ticket.member.MemberStatus;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.ticket.shared.exception.NotFoundException;
 
-/**
- * {@link MemberLookup}의 member 소유 구현이다.
- */
+import lombok.RequiredArgsConstructor;
+
+/** {@link MemberLookup}의 member 소유 구현이다. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberLookupService implements MemberLookup {
-
     private final MemberRepository memberRepository;
 
     @Override
@@ -40,7 +39,8 @@ public class MemberLookupService implements MemberLookup {
     }
 
     private Member findActiveOrThrow(final long memberId) {
-        return memberRepository.findActiveById(memberId)
+        return memberRepository
+                .findActiveById(memberId)
                 .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다. id=" + memberId));
     }
 }

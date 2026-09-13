@@ -1,9 +1,9 @@
 package com.ticket.member.oauth.infrastructure;
 
-import com.ticket.member.oauth.application.usecase.ProvisionOAuth2MemberUseCase;
-import com.ticket.member.oauth.application.ProvisionedMember;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -13,17 +13,18 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.ticket.member.oauth.application.ProvisionedMember;
+import com.ticket.member.oauth.application.usecase.ProvisionOAuth2MemberUseCase;
+import com.ticket.member.oauth.domain.OAuth2UserInfo;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
-
     /**
-     * 회원 식별자를 담는 attribute 이름이다. DefaultOAuth2User의 nameAttributeKey로 지정해
-     * Authentication.getName()이 회원 식별자를 돌려주게 한다.
+     * 회원 식별자를 담는 attribute 이름이다. DefaultOAuth2User의 nameAttributeKey로 지정해 Authentication.getName()이
+     * 회원 식별자를 돌려주게 한다.
      */
     static final String MEMBER_ID_ATTRIBUTE = "memberId";
 
@@ -31,11 +32,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private final ProvisionOAuth2MemberUseCase provisionOAuth2MemberUseCase;
 
     @Override
-    public OAuth2User loadUser(final OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+    public OAuth2User loadUser(final OAuth2UserRequest userRequest)
+            throws OAuth2AuthenticationException {
         final OAuth2User oauth2User = delegate.loadUser(userRequest);
         final String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        final OAuth2UserInfo userInfo = OAuth2UserInfoMapper.map(registrationId, oauth2User.getAttributes());
+        final OAuth2UserInfo userInfo =
+                OAuth2UserInfoMapper.map(registrationId, oauth2User.getAttributes());
         final ProvisionedMember member = provisionOAuth2MemberUseCase.execute(userInfo);
 
         final Map<String, Object> attributes = new HashMap<>(oauth2User.getAttributes());
@@ -44,7 +47,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return new DefaultOAuth2User(
                 List.of(new SimpleGrantedAuthority("ROLE_" + member.role())),
                 attributes,
-                MEMBER_ID_ATTRIBUTE
-        );
+                MEMBER_ID_ATTRIBUTE);
     }
 }

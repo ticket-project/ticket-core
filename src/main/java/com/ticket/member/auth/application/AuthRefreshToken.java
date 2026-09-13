@@ -1,11 +1,11 @@
 package com.ticket.member.auth.application;
 
 import com.ticket.member.exception.UnauthenticatedException;
+
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
 public final class AuthRefreshToken {
-
     private final String value;
 
     private AuthRefreshToken(final String value) {

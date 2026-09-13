@@ -1,12 +1,12 @@
 package com.ticket.member.oauth.web.request;
 
-import com.ticket.member.oauth.application.usecase.ExchangeOAuth2TokenUseCase;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ExchangeOAuth2TokenRequestTest {
+import org.junit.jupiter.api.Test;
 
+import com.ticket.member.oauth.application.usecase.ExchangeOAuth2TokenUseCase;
+
+class ExchangeOAuth2TokenRequestTest {
     @Test
     void mapsToUseCaseInput() {
         ExchangeOAuth2TokenRequest request = new ExchangeOAuth2TokenRequest("oauth-code");

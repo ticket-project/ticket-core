@@ -1,33 +1,31 @@
 package com.ticket.member.auth.application;
 
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.AccessTokenReadResult;
-import com.ticket.member.AccessTokenReader;
-import com.ticket.member.exception.UnauthenticatedException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.exception.UnauthenticatedException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class AccessTokenAuthenticatorServiceTest {
-
-    @Mock
-    private AccessTokenReader accessTokenReader;
-
-    @InjectMocks
-    private AccessTokenAuthenticatorService service;
+    @Mock private AccessTokenReader accessTokenReader;
+    @InjectMocks private AccessTokenAuthenticatorService service;
 
     @Test
     void 유효한_토큰이면_인증된_회원을_반환한다() {
         AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
-        when(accessTokenReader.read("valid-token")).thenReturn(AccessTokenReadResult.authenticated(member));
+        when(accessTokenReader.read("valid-token"))
+                .thenReturn(AccessTokenReadResult.authenticated(member));
 
         AuthenticatedMember result = service.authenticate("valid-token");
 

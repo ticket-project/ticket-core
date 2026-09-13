@@ -1,14 +1,14 @@
 package com.ticket.member.account.domain;
 
-import jakarta.persistence.Embeddable;
-import lombok.Getter;
-
 import java.util.Objects;
+
+import jakarta.persistence.Embeddable;
+
+import lombok.Getter;
 
 @Getter
 @Embeddable
 public class EncodedPassword {
-
     private String password;
 
     protected EncodedPassword() {}
@@ -23,7 +23,9 @@ public class EncodedPassword {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final EncodedPassword rawPassword = (EncodedPassword) o;
         return Objects.equals(this.password, rawPassword.password);
     }

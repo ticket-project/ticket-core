@@ -1,19 +1,18 @@
 package com.ticket.member.oauth.infrastructure;
 
+import java.net.URI;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-
 @Component
 public class OAuth2FrontendRedirectResolver {
-
     static final String SESSION_ATTRIBUTE = "oauth2.frontend-base-url";
     private static final String LOCALHOST = "localhost";
     private static final String LOOPBACK = "127.0.0.1";
-
     private final String localFrontendBaseUrl;
     private final String prodFrontendBaseUrl;
     private final String successRedirectPath;
@@ -22,13 +21,18 @@ public class OAuth2FrontendRedirectResolver {
     private final String defaultFailureRedirectUri;
 
     public OAuth2FrontendRedirectResolver(
-            @Value("${app.auth.frontend.local-base-url:http://localhost:3000}") final String localFrontendBaseUrl,
-            @Value("${app.auth.frontend.prod-base-url:https://oneticket.site}") final String prodFrontendBaseUrl,
-            @Value("${app.auth.oauth2-success-redirect-path:/auth/callback}") final String successRedirectPath,
-            @Value("${app.auth.oauth2-failure-redirect-path:/auth/callback}") final String failureRedirectPath,
-            @Value("${app.auth.oauth2-success-redirect-uri}") final String defaultSuccessRedirectUri,
-            @Value("${app.auth.oauth2-failure-redirect-uri}") final String defaultFailureRedirectUri
-    ) {
+            @Value("${app.auth.frontend.local-base-url:http://localhost:3000}")
+                    final String localFrontendBaseUrl,
+            @Value("${app.auth.frontend.prod-base-url:https://oneticket.site}")
+                    final String prodFrontendBaseUrl,
+            @Value("${app.auth.oauth2-success-redirect-path:/auth/callback}")
+                    final String successRedirectPath,
+            @Value("${app.auth.oauth2-failure-redirect-path:/auth/callback}")
+                    final String failureRedirectPath,
+            @Value("${app.auth.oauth2-success-redirect-uri}")
+                    final String defaultSuccessRedirectUri,
+            @Value("${app.auth.oauth2-failure-redirect-uri}")
+                    final String defaultFailureRedirectUri) {
         this.localFrontendBaseUrl = normalizeBaseUrl(localFrontendBaseUrl);
         this.prodFrontendBaseUrl = normalizeBaseUrl(prodFrontendBaseUrl);
         this.successRedirectPath = normalizePath(successRedirectPath);
@@ -62,10 +66,7 @@ public class OAuth2FrontendRedirectResolver {
     }
 
     private String resolveRedirectUri(
-            final HttpServletRequest request,
-            final String path,
-            final String fallbackRedirectUri
-    ) {
+            final HttpServletRequest request, final String path, final String fallbackRedirectUri) {
         final HttpSession session = request.getSession(false);
         if (session == null) {
             return fallbackRedirectUri;

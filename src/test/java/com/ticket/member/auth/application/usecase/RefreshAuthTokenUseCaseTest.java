@@ -1,49 +1,49 @@
 package com.ticket.member.auth.application.usecase;
 
-import com.ticket.member.account.domain.Role;
-import com.ticket.member.auth.application.AuthRefreshToken;
-import com.ticket.member.auth.application.AuthTokenIssuer;
-import com.ticket.member.auth.application.IssuedAuthTokens;
-import com.ticket.member.auth.application.RefreshTokenStore;
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.account.domain.MemberRepository;
-import com.ticket.member.exception.UnauthenticatedException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
+import com.ticket.member.account.domain.Role;
+import com.ticket.member.auth.application.AuthRefreshToken;
+import com.ticket.member.auth.application.AuthTokenIssuer;
+import com.ticket.member.auth.application.IssuedAuthTokens;
+import com.ticket.member.auth.application.RefreshTokenStore;
+import com.ticket.member.exception.UnauthenticatedException;
+
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class RefreshAuthTokenUseCaseTest {
-
-    @Mock
-    private RefreshTokenStore refreshTokenStore;
-
-    @Mock
-    private MemberRepository memberRepository;
-
-    @Mock
-    private AuthTokenIssuer authTokenIssuer;
-
-    @InjectMocks
-    private RefreshAuthTokenUseCase useCase;
+    @Mock private RefreshTokenStore refreshTokenStore;
+    @Mock private MemberRepository memberRepository;
+    @Mock private AuthTokenIssuer authTokenIssuer;
+    @InjectMocks private RefreshAuthTokenUseCase useCase;
 
     @Test
     void valid_refresh_token_rotates_tokens() {
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(1L);
         when(member.getRole()).thenReturn(Role.MEMBER);
-        IssuedAuthTokens response = new IssuedAuthTokens("access-token-value", "new-refresh-token-value", "Bearer", 1800L, 1209600L, 3L);
+        IssuedAuthTokens response =
+                new IssuedAuthTokens(
+                        "access-token-value",
+                        "new-refresh-token-value",
+                        "Bearer",
+                        1800L,
+                        1209600L,
+                        3L);
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));

@@ -1,12 +1,11 @@
 package com.ticket.member.account.domain;
 
-import jakarta.persistence.Embeddable;
-
 import java.util.Objects;
+
+import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class Email {
-
     private String email;
 
     protected Email() {}
@@ -32,7 +31,9 @@ public class Email {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Email email = (Email) o;
         return Objects.equals(this.email, email.email);
     }

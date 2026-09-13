@@ -1,18 +1,18 @@
 package com.ticket.member.auth.infrastructure;
 
+import org.springframework.stereotype.Service;
+
 import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
 import com.ticket.member.auth.application.RefreshTokenStore;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class JwtAuthTokenIssuer implements AuthTokenIssuer {
-
     private static final String TOKEN_TYPE_BEARER = "Bearer";
-
     private final JwtAccessTokenCodec jwtAccessTokenCodec;
     private final JwtProperties jwtProperties;
     private final RefreshTokenStore refreshTokenStore;
@@ -21,7 +21,8 @@ public class JwtAuthTokenIssuer implements AuthTokenIssuer {
     public IssuedAuthTokens issueTokens(final Long memberId, final String role) {
         final long refreshTokenExpiresIn = jwtProperties.getRefreshTokenExpirationSeconds();
         final String accessToken = jwtAccessTokenCodec.createAccessToken(memberId, role);
-        final String refreshToken = refreshTokenStore.createRefreshToken(memberId, refreshTokenExpiresIn);
+        final String refreshToken =
+                refreshTokenStore.createRefreshToken(memberId, refreshTokenExpiresIn);
 
         return new IssuedAuthTokens(
                 accessToken,
@@ -29,18 +30,15 @@ public class JwtAuthTokenIssuer implements AuthTokenIssuer {
                 TOKEN_TYPE_BEARER,
                 jwtAccessTokenCodec.getAccessTokenExpirationSeconds(),
                 refreshTokenExpiresIn,
-                memberId
-        );
+                memberId);
     }
 
     @Override
     public IssuedAuthTokens rotateTokens(
-            final Long memberId,
-            final String role,
-            final AuthRefreshToken refreshToken
-    ) {
+            final Long memberId, final String role, final AuthRefreshToken refreshToken) {
         final long refreshTokenExpiresIn = jwtProperties.getRefreshTokenExpirationSeconds();
-        final String newRefreshToken = refreshTokenStore.rotate(refreshToken, memberId, refreshTokenExpiresIn);
+        final String newRefreshToken =
+                refreshTokenStore.rotate(refreshToken, memberId, refreshTokenExpiresIn);
         final String newAccessToken = jwtAccessTokenCodec.createAccessToken(memberId, role);
 
         return new IssuedAuthTokens(
@@ -49,7 +47,6 @@ public class JwtAuthTokenIssuer implements AuthTokenIssuer {
                 TOKEN_TYPE_BEARER,
                 jwtAccessTokenCodec.getAccessTokenExpirationSeconds(),
                 refreshTokenExpiresIn,
-                memberId
-        );
+                memberId);
     }
 }
