@@ -1,7 +1,5 @@
 package com.ticket.security.infrastructure;
 
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.exception.UnauthenticatedException;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,8 +8,10 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.exception.UnauthenticatedException;
 
+public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public boolean supportsParameter(final MethodParameter parameter) {
         return AuthenticatedMember.class.isAssignableFrom(parameter.getParameterType());
@@ -22,8 +22,7 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
             final MethodParameter parameter,
             final ModelAndViewContainer mavContainer,
             final NativeWebRequest webRequest,
-            final WebDataBinderFactory binderFactory
-    ) {
+            final WebDataBinderFactory binderFactory) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw unauthorized();

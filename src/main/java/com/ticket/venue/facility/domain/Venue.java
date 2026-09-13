@@ -1,13 +1,22 @@
 package com.ticket.venue.facility.domain;
 
+import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 import com.ticket.venue.Region;
 import com.ticket.venue.domain.VenueAuditedEntity;
-import jakarta.persistence.*;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -35,13 +44,14 @@ public class Venue extends VenueAuditedEntity {
 
     private String phone;
     private String imageUrl;
-
     // --- 좌석 맵 SVG 레이아웃 ---
     private int viewBoxWidth;
     private int viewBoxHeight;
     private double seatDiameter;
+
     @Column(name = "GAP_X")
     private double gapX;
+
     @Column(name = "GAP_Y")
     private double gapY;
 
@@ -59,8 +69,7 @@ public class Venue extends VenueAuditedEntity {
             final int viewBoxHeight,
             final double seatDiameter,
             final double gapX,
-            final double gapY
-    ) {
+            final double gapY) {
         this.name = name;
         this.address = address;
         this.region = region;
@@ -91,8 +100,7 @@ public class Venue extends VenueAuditedEntity {
             final int viewBoxHeight,
             final double seatDiameter,
             final double gapX,
-            final double gapY
-    ) {
+            final double gapY) {
         return new Venue(
                 name,
                 address,
@@ -107,7 +115,6 @@ public class Venue extends VenueAuditedEntity {
                 viewBoxHeight,
                 seatDiameter,
                 gapX,
-                gapY
-        );
+                gapY);
     }
 }

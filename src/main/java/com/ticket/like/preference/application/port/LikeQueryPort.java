@@ -10,11 +10,6 @@ import com.ticket.shared.CursorPage;
  * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 호출하는 module의 {@code web}이 한다.
  */
 public interface LikeQueryPort {
-
     CursorPage<LikeRow, Long> findLiked(
-            LikeType likeType,
-            Long memberId,
-            Long cursorLikeId,
-            int size
-    );
+            LikeType likeType, Long memberId, Long cursorLikeId, int size);
 }

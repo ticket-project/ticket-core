@@ -2,9 +2,7 @@ package com.ticket.shared.web;
 
 public enum ResultType {
     SUCCESS("성공"),
-    ERROR("오류"),
-    ;
-
+    ERROR("오류");
     private final String description;
 
     ResultType(final String description) {

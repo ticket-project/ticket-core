@@ -1,20 +1,19 @@
 package com.ticket.payment.attempt.infrastructure;
 
-import com.ticket.payment.attempt.domain.Payment;
-import com.ticket.payment.attempt.domain.PaymentRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
-/**
- * {@link PaymentRepository}의 JPA 구현이다.
- */
+import org.springframework.stereotype.Repository;
+
+import com.ticket.payment.attempt.domain.Payment;
+import com.ticket.payment.attempt.domain.PaymentRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link PaymentRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class PaymentRepositoryAdapter implements PaymentRepository {
-
     private final SpringDataPaymentJpaRepository jpaRepository;
 
     @Override

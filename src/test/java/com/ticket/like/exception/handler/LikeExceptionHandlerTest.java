@@ -1,20 +1,18 @@
 package com.ticket.like.exception.handler;
 
-import com.ticket.like.LikeType;
-import com.ticket.like.exception.LikeAlreadyExistsException;
-import com.ticket.shared.web.ApiResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.ticket.like.LikeType;
+import com.ticket.like.exception.LikeAlreadyExistsException;
+import com.ticket.shared.web.ApiResponse;
 
-/**
- * like 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다.
- */
+/** like 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다. */
 @SuppressWarnings("NonAsciiCharacters")
 class LikeExceptionHandlerTest {
-
     private final LikeExceptionHandler handler = new LikeExceptionHandler();
 
     @Test

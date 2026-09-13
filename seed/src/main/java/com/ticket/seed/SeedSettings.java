@@ -1,7 +1,5 @@
 package com.ticket.seed;
 
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -9,18 +7,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.yaml.snakeyaml.Yaml;
+
 /**
  * 시드 실행 설정이다.
  *
- * <p><b>접속 설정의 원본은 {@code src/main/resources/application-local.yml} 하나다.</b> 앱과 시드가
- * 같은 로컬 H2 DB를 보게 하려면 URL을 두 곳에 적어 둘 수 없다 — 여기서는 그 파일의
- * {@code spring.datasource.*}를 직접 읽는다. 검증용으로 임시 H2를 쓸 때만
- * {@code -Dseed.jdbc-url}(그리고 필요하면 {@code -Dseed.jdbc-username} /
- * {@code -Dseed.jdbc-password})로 덮어쓴다.
+ * <p><b>접속 설정의 원본은 {@code src/main/resources/application-local.yml} 하나다.</b> 앱과 시드가 같은 로컬 H2 DB를 보게
+ * 하려면 URL을 두 곳에 적어 둘 수 없다 — 여기서는 그 파일의 {@code spring.datasource.*}를 직접 읽는다. 검증용으로 임시 H2를 쓸 때만
+ * {@code -Dseed.jdbc-url}(그리고 필요하면 {@code -Dseed.jdbc-username} / {@code -Dseed.jdbc-password})로
+ * 덮어쓴다.
  *
- * <p>회원 비밀번호는 {@code SEED_LOAD_TEST_MEMBER_PASSWORD} 환경변수로 넘긴다. 기본값
- * {@code password1234}는 형제 저장소 {@code gatling-test}의 {@code loginPassword} 기본값과 같은
- * 로컬 전용 값이며, 운영 자격증명이 아니다.
+ * <p>회원 비밀번호는 {@code SEED_LOAD_TEST_MEMBER_PASSWORD} 환경변수로 넘긴다. 기본값 {@code password1234}는 형제 저장소
+ * {@code gatling-test}의 {@code loginPassword} 기본값과 같은 로컬 전용 값이며, 운영 자격증명이 아니다.
  */
 record SeedSettings(
         String jdbcUrl,
@@ -30,15 +28,13 @@ record SeedSettings(
         int batchSize,
         int loadTestMemberCount,
         String loadTestMemberPassword,
-        int loadTestPerformanceCount
-) {
-
+        int loadTestPerformanceCount) {
     /** 로컬 프로파일의 회원 2,000명·부하 테스트 회차 8개를 기본 동작으로 삼는다. */
     static final int DEFAULT_LOAD_TEST_MEMBER_COUNT = 2000;
+
     static final int DEFAULT_LOAD_TEST_PERFORMANCE_COUNT = 8;
     static final int DEFAULT_BATCH_SIZE = 500;
     static final String DEFAULT_LOAD_TEST_MEMBER_PASSWORD = "password1234";
-
     private static final String LOCAL_PROFILE_YAML = "src/main/resources/application-local.yml";
     private static final String SEED_SQL_RELATIVE_PATH = "seed/sql/kopis-curated.sql";
 
@@ -54,8 +50,9 @@ record SeedSettings(
                 intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
                 intProperty("seed.load-test-members.count", DEFAULT_LOAD_TEST_MEMBER_COUNT),
                 memberPassword(),
-                intProperty("seed.load-test-fixture.performance-count", DEFAULT_LOAD_TEST_PERFORMANCE_COUNT)
-        );
+                intProperty(
+                        "seed.load-test-fixture.performance-count",
+                        DEFAULT_LOAD_TEST_PERFORMANCE_COUNT));
     }
 
     private static Path projectDir() {
@@ -80,8 +77,7 @@ record SeedSettings(
             return new Datasource(
                     overriddenUrl,
                     System.getProperty("seed.jdbc-username", "sa"),
-                    System.getProperty("seed.jdbc-password", "")
-            );
+                    System.getProperty("seed.jdbc-password", ""));
         }
         return readLocalProfileDatasource(projectDir.resolve(LOCAL_PROFILE_YAML));
     }
@@ -89,7 +85,8 @@ record SeedSettings(
     private static Datasource readLocalProfileDatasource(final Path yamlPath) {
         if (!Files.isRegularFile(yamlPath)) {
             throw new SeedFailure(
-                    "로컬 접속 설정을 읽을 수 없습니다. 파일이 없습니다: " + yamlPath
+                    "로컬 접속 설정을 읽을 수 없습니다. 파일이 없습니다: "
+                            + yamlPath
                             + System.lineSeparator()
                             + "  -> ticket 저장소 루트에서 실행했는지 확인하거나 -Dseed.jdbc-url로 직접 지정하세요.");
         }
@@ -97,8 +94,7 @@ record SeedSettings(
         final Map<String, Object> yaml = loadYaml(yamlPath);
         final Object url = nested(yaml, "spring", "datasource", "url");
         if (url == null) {
-            throw new SeedFailure(
-                    "로컬 접속 설정에 spring.datasource.url이 없습니다: " + yamlPath);
+            throw new SeedFailure("로컬 접속 설정에 spring.datasource.url이 없습니다: " + yamlPath);
         }
 
         final Object username = nested(yaml, "spring", "datasource", "username");
@@ -106,14 +102,14 @@ record SeedSettings(
         return new Datasource(
                 url.toString(),
                 username == null ? "sa" : username.toString(),
-                password == null ? "" : password.toString()
-        );
+                password == null ? "" : password.toString());
     }
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> loadYaml(final Path yamlPath) {
         try (InputStream input = Files.newInputStream(yamlPath)) {
-            final Object loaded = new Yaml().load(new String(input.readAllBytes(), StandardCharsets.UTF_8));
+            final Object loaded =
+                    new Yaml().load(new String(input.readAllBytes(), StandardCharsets.UTF_8));
             if (loaded instanceof Map<?, ?> map) {
                 return (Map<String, Object>) map;
             }
@@ -154,6 +150,5 @@ record SeedSettings(
         }
     }
 
-    private record Datasource(String url, String username, String password) {
-    }
+    private record Datasource(String url, String username, String password) {}
 }

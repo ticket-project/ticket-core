@@ -1,14 +1,6 @@
 package com.ticket.venue.facility.infrastructure;
 
-import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
-
-import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueSummary;
-import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import static com.ticket.venue.facility.domain.QVenue.venue;
 
 import java.util.List;
 import java.util.Map;
@@ -16,21 +8,29 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.ticket.venue.facility.domain.QVenue.venue;
+import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.venue.Region;
+import com.ticket.venue.VenueSummary;
+import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
 public class QuerydslVenueSummaryQueryPort implements VenueSummaryQueryPort {
-
     private final JPAQueryFactory queryFactory;
 
     @Override
     public Optional<VenueSummary> findSummary(final long venueId) {
-        return Optional.ofNullable(queryFactory
-                .select(row())
-                .from(venue)
-                .where(venue.id.eq(venueId))
-                .fetchOne())
+        return Optional.ofNullable(
+                        queryFactory
+                                .select(row())
+                                .from(venue)
+                                .where(venue.id.eq(venueId))
+                                .fetchOne())
                 .map(this::toSummary);
     }
 
@@ -39,11 +39,8 @@ public class QuerydslVenueSummaryQueryPort implements VenueSummaryQueryPort {
         if (venueIds.isEmpty()) {
             return Map.of();
         }
-        final List<Tuple> rows = queryFactory
-                .select(row())
-                .from(venue)
-                .where(venue.id.in(venueIds))
-                .fetch();
+        final List<Tuple> rows =
+                queryFactory.select(row()).from(venue).where(venue.id.in(venueIds)).fetch();
         return rows.stream()
                 .map(this::toSummary)
                 .collect(Collectors.toMap(VenueSummary::venueId, s -> s));
@@ -51,17 +48,23 @@ public class QuerydslVenueSummaryQueryPort implements VenueSummaryQueryPort {
 
     @Override
     public Set<Long> findIdsByRegion(final Region region) {
-        return Set.copyOf(queryFactory
-                .select(venue.id)
-                .from(venue)
-                .where(venue.region.eq(region))
-                .fetch());
+        return Set.copyOf(
+                queryFactory.select(venue.id).from(venue).where(venue.region.eq(region)).fetch());
     }
 
     private com.querydsl.core.types.Expression<?>[] row() {
         return new com.querydsl.core.types.Expression<?>[] {
-                venue.id, venue.name, venue.address, venue.region, venue.latitude, venue.longitude,
-                venue.phone, venue.imageUrl, venue.viewBoxWidth, venue.viewBoxHeight, venue.seatDiameter
+            venue.id,
+            venue.name,
+            venue.address,
+            venue.region,
+            venue.latitude,
+            venue.longitude,
+            venue.phone,
+            venue.imageUrl,
+            venue.viewBoxWidth,
+            venue.viewBoxHeight,
+            venue.seatDiameter
         };
     }
 
@@ -78,8 +81,6 @@ public class QuerydslVenueSummaryQueryPort implements VenueSummaryQueryPort {
                 new VenueSummary.SeatMapLayout(
                         tuple.get(venue.viewBoxWidth),
                         tuple.get(venue.viewBoxHeight),
-                        tuple.get(venue.seatDiameter)
-                )
-        );
+                        tuple.get(venue.seatDiameter)));
     }
 }

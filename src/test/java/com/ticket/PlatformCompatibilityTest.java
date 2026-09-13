@@ -1,5 +1,7 @@
 package com.ticket;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,43 +11,39 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
- * H2(Oracle 모드)와 Testcontainers Redis로 실제에 가까운 인프라 위에서 애플리케이션 컨텍스트가
- * 정상 기동하는지 확인하는 platform smoke test다. Modulith 구조 검증은 {@code
- * com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
+ * H2(Oracle 모드)와 Testcontainers Redis로 실제에 가까운 인프라 위에서 애플리케이션 컨텍스트가 정상 기동하는지 확인하는 platform smoke
+ * test다. Modulith 구조 검증은 {@code com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
  */
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:platform-compat;MODE=Oracle;DB_CLOSE_DELAY=-1",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.jpa.hibernate.ddl-auto=create-drop",
-                "spring.flyway.enabled=false",
-                "JWT_SECRET=0123456789abcdef0123456789abcdef",
-                "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
-                "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
-                "GOOGLE_CLIENT_ID=platform-compat",
-                "GOOGLE_CLIENT_SECRET=platform-compat",
-                "KAKAO_CLIENT_ID=platform-compat",
-                "KAKAO_CLIENT_SECRET=platform-compat",
-                "KAKAO_ADMIN_KEY=platform-compat",
-                "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
-                "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
-        }
-)
+            "spring.datasource.url=jdbc:h2:mem:platform-compat;MODE=Oracle;DB_CLOSE_DELAY=-1",
+            "spring.datasource.driver-class-name=org.h2.Driver",
+            "spring.datasource.username=sa",
+            "spring.datasource.password=",
+            "spring.jpa.hibernate.ddl-auto=create-drop",
+            "spring.flyway.enabled=false",
+            "JWT_SECRET=0123456789abcdef0123456789abcdef",
+            "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
+            "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
+            "GOOGLE_CLIENT_ID=platform-compat",
+            "GOOGLE_CLIENT_SECRET=platform-compat",
+            "KAKAO_CLIENT_ID=platform-compat",
+            "KAKAO_CLIENT_SECRET=platform-compat",
+            "KAKAO_ADMIN_KEY=platform-compat",
+            "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
+            "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
+        })
 @SuppressWarnings({"NonAsciiCharacters", "resource"})
 class PlatformCompatibilityTest {
-
     private static final int REDIS_PORT = 6379;
 
     /** RedissonConfig가 기동 시점에 연결을 맺으므로 실제 Redis 없이는 컨텍스트가 뜨지 않는다. */
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
+                    .withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();
@@ -57,8 +55,7 @@ class PlatformCompatibilityTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired
-    private ApplicationContext context;
+    @Autowired private ApplicationContext context;
 
     @Test
     void boot_4_1_1과_modulith_2_1_1_조합으로_컨텍스트가_기동한다() {

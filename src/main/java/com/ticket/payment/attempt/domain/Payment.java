@@ -1,6 +1,8 @@
 package com.ticket.payment.attempt.domain;
 
-import com.ticket.payment.attempt.domain.PaymentAuditedEntity;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,40 +13,37 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 /**
  * Order에 대한 한 번의 결제 시도다(CONTEXT.md의 Payment, ADR 0005).
  *
- * <p>Order 하나에는 여러 Payment가 있을 수 있고(`1:0..N`), Payment 한 건이 실패해도 Order는 만료
- * 전까지 다시 결제를 시도할 수 있다. {@code orderId}는 booking {@code Order}에 대한 scalar 참조일
- * 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다(ADR 0003, ADR 0005 §4).
+ * <p>Order 하나에는 여러 Payment가 있을 수 있고(`1:0..N`), Payment 한 건이 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있다.
+ * {@code orderId}는 booking {@code Order}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리
+ * FK는 만들지 않는다(ADR 0003, ADR 0005 §4).
  *
- * <p>이번 entity-only 단계는 PG client, 승인/실패/취소 API, callback/webhook을 구현하지 않는다.
- * 아래 상태 전이 메서드는 그 자체가 PG 연동이 아니라, Payment aggregate가 자신의 상태 불변식을
- * 스스로 지키게 하는 도메인 규칙이다(추후 후속 작업이 이 메서드를 호출한다).
+ * <p>이번 entity-only 단계는 PG client, 승인/실패/취소 API, callback/webhook을 구현하지 않는다. 아래 상태 전이 메서드는 그 자체가 PG
+ * 연동이 아니라, Payment aggregate가 자신의 상태 불변식을 스스로 지키게 하는 도메인 규칙이다(추후 후속 작업이 이 메서드를 호출한다).
  */
 @Getter
 @Entity
 @Table(
         name = "PAYMENTS",
         uniqueConstraints = {
-                @UniqueConstraint(name = "UK_PAYMENTS_PAYMENT_KEY", columnNames = "payment_key"),
-                @UniqueConstraint(name = "UK_PAYMENTS_ORDER_ATTEMPT", columnNames = {"order_id", "attempt_no"}),
-                @UniqueConstraint(name = "UK_PAYMENTS_PROVIDER_PAYMENT_KEY", columnNames = "provider_payment_key")
+            @UniqueConstraint(name = "UK_PAYMENTS_PAYMENT_KEY", columnNames = "payment_key"),
+            @UniqueConstraint(
+                    name = "UK_PAYMENTS_ORDER_ATTEMPT",
+                    columnNames = {"order_id", "attempt_no"}),
+            @UniqueConstraint(
+                    name = "UK_PAYMENTS_PROVIDER_PAYMENT_KEY",
+                    columnNames = "provider_payment_key")
         },
-        indexes = {
-                @Index(name = "IDX_PAYMENTS_ORDER_STATUS", columnList = "order_id,status")
-        }
-)
+        indexes = {@Index(name = "IDX_PAYMENTS_ORDER_STATUS", columnList = "order_id,status")})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment extends PaymentAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -99,8 +98,7 @@ public class Payment extends PaymentAuditedEntity {
             final String provider,
             final String method,
             final BigDecimal amount,
-            final LocalDateTime requestedAt
-    ) {
+            final LocalDateTime requestedAt) {
         this.orderId = orderId;
         this.paymentKey = paymentKey;
         this.attemptNo = attemptNo;
@@ -118,14 +116,14 @@ public class Payment extends PaymentAuditedEntity {
             final String provider,
             final String method,
             final BigDecimal amount,
-            final LocalDateTime requestedAt
-    ) {
+            final LocalDateTime requestedAt) {
         return new Payment(orderId, paymentKey, attemptNo, provider, method, amount, requestedAt);
     }
 
     public void process() {
         if (status != PaymentStatus.READY) {
-            throw new IllegalStateException("READY 상태의 Payment만 process 할 수 있습니다. currentStatus=" + status);
+            throw new IllegalStateException(
+                    "READY 상태의 Payment만 process 할 수 있습니다. currentStatus=" + status);
         }
         this.status = PaymentStatus.PROCESSING;
     }
@@ -137,7 +135,8 @@ public class Payment extends PaymentAuditedEntity {
         this.approvedAt = approvedAt;
     }
 
-    public void fail(final String failureCode, final String failureMessage, final LocalDateTime failedAt) {
+    public void fail(
+            final String failureCode, final String failureMessage, final LocalDateTime failedAt) {
         validateRetryableTransition("fail");
         this.status = PaymentStatus.FAILED;
         this.failureCode = failureCode;
@@ -152,13 +151,18 @@ public class Payment extends PaymentAuditedEntity {
     }
 
     public boolean isTerminal() {
-        return status == PaymentStatus.SUCCEEDED || status == PaymentStatus.FAILED || status == PaymentStatus.CANCELED;
+        return status == PaymentStatus.SUCCEEDED
+                || status == PaymentStatus.FAILED
+                || status == PaymentStatus.CANCELED;
     }
 
     private void validateRetryableTransition(final String action) {
         if (status != PaymentStatus.READY && status != PaymentStatus.PROCESSING) {
             throw new IllegalStateException(
-                    "READY/PROCESSING 상태의 Payment만 " + action + " 할 수 있습니다. currentStatus=" + status);
+                    "READY/PROCESSING 상태의 Payment만 "
+                            + action
+                            + " 할 수 있습니다. currentStatus="
+                            + status);
         }
     }
 }

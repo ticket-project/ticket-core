@@ -1,28 +1,25 @@
 package com.ticket.venue.facility.application;
 
-import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
-
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
-import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * {@link VenueLookup}의 venue 소유 구현이다.
- */
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ticket.venue.Region;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSummary;
+import com.ticket.venue.facility.application.port.VenueSummaryQueryPort;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link VenueLookup}의 venue 소유 구현이다. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class VenueLookupService implements VenueLookup {
-
     private final VenueSummaryQueryPort venueSummaryQueryPort;
 
     @Override

@@ -1,28 +1,28 @@
 package com.ticket.security.infrastructure;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.AuthenticationException;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * 인증 실패 응답 계약을 고정한다.
  *
- * <p>이 핸들러는 Spring MVC 메시지 컨버터를 거치지 않고 {@code response.getWriter()}에 직접 쓰므로
- * {@code GlobalExceptionHandler}를 검증하는 테스트가 이 경로를 대신 지켜주지 못한다. 특히 {@code jwt.error}
- * request attribute로 갈라지는 문구가 {@code error.message}가 아니라 <b>{@code error.data}</b>에 실린다는
- * 점이 계약이다 — {@code error.message}에는 {@code UnauthenticatedException}의 고정 문구가 들어간다.
+ * <p>이 핸들러는 Spring MVC 메시지 컨버터를 거치지 않고 {@code response.getWriter()}에 직접 쓰므로 {@code
+ * GlobalExceptionHandler}를 검증하는 테스트가 이 경로를 대신 지켜주지 못한다. 특히 {@code jwt.error} request attribute로
+ * 갈라지는 문구가 {@code error.message}가 아니라 <b>{@code error.data}</b>에 실린다는 점이 계약이다 — {@code
+ * error.message}에는 {@code UnauthenticatedException}의 고정 문구가 들어간다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class RestAuthenticationEntryPointTest {
-
     private static final JsonMapper JSON_MAPPER = JsonMapper.builder().build();
-
-    private final RestAuthenticationEntryPoint entryPoint = new RestAuthenticationEntryPoint(JSON_MAPPER);
+    private final RestAuthenticationEntryPoint entryPoint =
+            new RestAuthenticationEntryPoint(JSON_MAPPER);
 
     @Test
     void 인증_실패는_401과_E1000_봉투로_응답한다() throws Exception {

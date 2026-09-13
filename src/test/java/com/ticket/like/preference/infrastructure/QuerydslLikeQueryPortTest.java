@@ -1,27 +1,23 @@
 package com.ticket.like.preference.infrastructure;
 
-import com.ticket.like.preference.application.port.LikeQueryPort;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ticket.like.LikeType;
-import com.ticket.like.preference.application.port.LikeQueryPort;
-import com.ticket.like.preference.application.LikeRow;
-import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
-import com.ticket.member.account.domain.Member;
-import com.ticket.shared.CursorPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.ticket.like.LikeType;
+import com.ticket.like.preference.application.LikeRow;
+import com.ticket.like.preference.application.port.LikeQueryPort;
+import com.ticket.member.account.domain.Member;
+import com.ticket.shared.CursorPage;
+import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
 @Import(QuerydslLikeQueryPort.class)
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslLikeQueryPortTest extends InfraReadRepositoryTestSupport {
-
-    @Autowired
-    private LikeQueryPort likeQueryPort;
-
+    @Autowired private LikeQueryPort likeQueryPort;
     private Long memberId;
     private Long showId1;
     private Long showId2;
@@ -40,25 +36,32 @@ class QuerydslLikeQueryPortTest extends InfraReadRepositoryTestSupport {
 
     private Long persistShowLikeFixture(final Member member, final String title) throws Exception {
         var venue = persistVenue(title + " 공연장", com.ticket.venue.Region.SEOUL);
-        var show = persistShow(title, venue, null, 0L,
-                java.time.LocalDateTime.now().minusDays(5), java.time.LocalDateTime.now().plusDays(5));
+        var show =
+                persistShow(
+                        title,
+                        venue,
+                        null,
+                        0L,
+                        java.time.LocalDateTime.now().minusDays(5),
+                        java.time.LocalDateTime.now().plusDays(5));
         persistLike(member, show);
         return show.getId();
     }
 
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
-        CursorPage<LikeRow, Long> result = likeQueryPort.findLiked(LikeType.SHOW, memberId, null, 2);
+        CursorPage<LikeRow, Long> result =
+                likeQueryPort.findLiked(LikeType.SHOW, memberId, null, 2);
 
-        assertThat(result.items()).extracting(LikeRow::targetId)
-                .containsExactly(showId3, showId2);
+        assertThat(result.items()).extracting(LikeRow::targetId).containsExactly(showId3, showId2);
         assertThat(result.nextPosition()).isNotNull();
         assertThat(result.hasNext()).isTrue();
     }
 
     @Test
     void 커서_이후의_찜한_대상을_조회한다() {
-        CursorPage<LikeRow, Long> firstPage = likeQueryPort.findLiked(LikeType.SHOW, memberId, null, 1);
+        CursorPage<LikeRow, Long> firstPage =
+                likeQueryPort.findLiked(LikeType.SHOW, memberId, null, 1);
         CursorPage<LikeRow, Long> secondPage =
                 likeQueryPort.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
 

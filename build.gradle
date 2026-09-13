@@ -1,7 +1,29 @@
 plugins {
     id 'java'
+    id 'com.diffplug.spotless' version '8.9.0'
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
+}
+
+spotless {
+    java {
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'seed/src/**/*.java'
+        googleJavaFormat('1.30.0').aosp()
+        removeUnusedImports()
+        importOrder('java', 'javax', 'jakarta', 'org', 'com', '')
+        forbidWildcardImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format 'misc', {
+        target '*.gradle', '*.md', '*.toml', '*.yaml', '*.yml', '.editorconfig',
+                'docs/**/*.md', '.github/**/*.md', '.github/**/*.yaml', '.github/**/*.yml',
+                'scripts/**/*.sh', 'scripts/**/*.cmd'
+        targetExclude 'docs/plans/**'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 group = "${property('projectGroup')}"
@@ -153,6 +175,12 @@ tasks.named('test') {
     // CI는 `clean test bootJar`만 돌린다. 시드 테스트가 누락되지 않게 test에 매단다.
     // 좁은 범위만 확인할 때는 `-x seedTest`로 뺀다.
     finalizedBy 'seedTest'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.docEncoding = 'UTF-8'
 }
 
 tasks.register('seedTest', Test) {
