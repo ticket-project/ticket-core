@@ -47,7 +47,6 @@ class OrderSeatTest {
                 10L,
                 "order-key",
                 "hold-key",
-                BigDecimal.valueOf(12000),
                 LocalDateTime.of(2026, 3, 15, 12, 30),
                 "show-title",
                 LocalDateTime.of(2026, 3, 15, 19, 0),

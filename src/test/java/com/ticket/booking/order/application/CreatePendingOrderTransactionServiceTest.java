@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,7 +70,6 @@ class CreatePendingOrderTransactionServiceTest {
                         10L,
                         "order-key",
                         "hold-key",
-                        BigDecimal.valueOf(120000),
                         hold.expiresAt(),
                         "show-title",
                         hold.expiresAt().plusDays(1),
@@ -149,7 +147,6 @@ class CreatePendingOrderTransactionServiceTest {
                         10L,
                         "order-key",
                         "hold-key",
-                        BigDecimal.valueOf(120000),
                         hold.expiresAt(),
                         "show-title",
                         hold.expiresAt().plusDays(1),

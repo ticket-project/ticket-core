@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -98,7 +97,6 @@ class CancelOrderTransactionServiceTest {
                         performanceId,
                         "order-key",
                         holdKey,
-                        BigDecimal.TEN,
                         LocalDateTime.now().plusMinutes(5),
                         "show-title",
                         LocalDateTime.now().plusDays(1),

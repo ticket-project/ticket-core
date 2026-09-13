@@ -85,7 +85,6 @@ class OrderCreatorTest {
                         10L,
                         "ORDER-KEY",
                         "hold-key",
-                        BigDecimal.TEN,
                         LocalDateTime.of(2026, 3, 15, 12, 0),
                         "show-title",
                         LocalDateTime.of(2026, 3, 20, 19, 0),
@@ -133,8 +132,8 @@ class OrderCreatorTest {
             final BigDecimal price) {
         final PerformanceSeat performanceSeat = org.mockito.Mockito.mock(PerformanceSeat.class);
         org.mockito.Mockito.lenient().when(performanceSeat.getId()).thenReturn(performanceSeatId);
-        when(performanceSeat.getUnitPrice()).thenReturn(price);
-        when(performanceSeat.getSeatId()).thenReturn(seatId);
+        org.mockito.Mockito.lenient().when(performanceSeat.getUnitPrice()).thenReturn(price);
+        org.mockito.Mockito.lenient().when(performanceSeat.getSeatId()).thenReturn(seatId);
         org.mockito.Mockito.lenient()
                 .when(performanceSeat.getPerformanceGradeId())
                 .thenReturn(performanceGradeId);

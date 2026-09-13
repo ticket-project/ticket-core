@@ -54,7 +54,8 @@ class OrderTerminationServiceTest {
 
     @Test
     void expire_changes_state_records_history_and_publishes_order_terminated() {
-        final Order order = order(10L, "hold-key");
+        // 만료는 만료 시각이 지난 뒤에만 가능하다. 이 주문은 FIXED_NOW에 이미 만료 시각을 지났다.
+        final Order order = expiredOrder(10L, "hold-key");
         final OrderSeat orderSeat =
                 order.addOrderSeat(501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
 
@@ -93,6 +94,22 @@ class OrderTerminationServiceTest {
         return new OrderTerminationService(orderHoldHistoryRecorder, eventPublisher, FIXED_CLOCK);
     }
 
+    /** 이미 만료 시각이 지난 PENDING 주문이다. */
+    private Order expiredOrder(final Long id, final String holdKey) {
+        final Order order =
+                new Order(
+                        1L,
+                        100L,
+                        "order-" + id,
+                        holdKey,
+                        FIXED_NOW.minusMinutes(5),
+                        "show-title",
+                        FIXED_NOW.plusDays(1),
+                        "venue-name");
+        ReflectionTestUtils.setField(order, "id", id);
+        return order;
+    }
+
     private Order order(final Long id, final String holdKey) {
         final Order order =
                 new Order(
@@ -100,7 +117,6 @@ class OrderTerminationServiceTest {
                         100L,
                         "order-" + id,
                         holdKey,
-                        BigDecimal.TEN,
                         FIXED_NOW.plusMinutes(5),
                         "show-title",
                         FIXED_NOW.plusDays(1),

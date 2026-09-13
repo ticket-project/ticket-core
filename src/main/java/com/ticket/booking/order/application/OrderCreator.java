@@ -1,6 +1,5 @@
 package com.ticket.booking.order.application;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,7 +18,8 @@ import lombok.RequiredArgsConstructor;
  * 흩어진다.
  *
  * <p>주문 생성 시점의 show 표시값을 Order/OrderSeat에 snapshot으로 남긴다(ADR 0005). 금액은 show 값이 아니라 오직 {@link
- * PerformanceSeat#getUnitPrice()}로만 계산한다 — 클라이언트가 보낸 가격도, show가 다시 계산한 가격도 받지 않는다.
+ * PerformanceSeat#getUnitPrice()}로만 계산한다 — 클라이언트가 보낸 가격도, show가 다시 계산한 가격도 받지 않는다. 총액은 여기서 따로 더하지
+ * 않고 {@code Order.addOrderSeat}가 좌석 단가를 누적한다 — 총액과 좌석 합계가 어긋날 경로를 두지 않는다.
  *
  * <p>좌석은 Order aggregate 안의 자식이라 별도 Repository 없이 root에 담고, root를 저장할 때 {@code cascade = ALL}로 함께
  * 저장된다.
@@ -42,19 +42,12 @@ public class OrderCreator {
                         performanceId,
                         orderKeyGenerator.generate(),
                         holdKey,
-                        sumTotalAmount(performanceSeats),
                         expiresAt,
                         saleSnapshot.showTitle(),
                         saleSnapshot.performanceStartTime(),
                         saleSnapshot.venueName());
         performanceSeats.forEach(seat -> addOrderSeat(order, seat, saleSnapshot));
         return order;
-    }
-
-    private BigDecimal sumTotalAmount(final List<PerformanceSeat> performanceSeats) {
-        return performanceSeats.stream()
-                .map(PerformanceSeat::getUnitPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private void addOrderSeat(
