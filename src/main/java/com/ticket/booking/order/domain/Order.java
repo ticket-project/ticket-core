@@ -19,7 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.common.BookingAuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;

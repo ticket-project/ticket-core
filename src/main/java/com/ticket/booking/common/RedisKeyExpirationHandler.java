@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.common;
 
 public interface RedisKeyExpirationHandler {
     boolean supports(String expiredKey);

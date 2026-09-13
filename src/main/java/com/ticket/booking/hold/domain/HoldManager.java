@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 
 import lombok.RequiredArgsConstructor;

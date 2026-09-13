@@ -7,10 +7,10 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.common.LockKey;
+import com.ticket.booking.common.LockManager;
+import com.ticket.booking.common.LockOptions;
+import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.hold.domain.HoldAllocation;
 import com.ticket.booking.hold.domain.HoldAllocator;
 import com.ticket.booking.order.application.CreateOrderValidator;

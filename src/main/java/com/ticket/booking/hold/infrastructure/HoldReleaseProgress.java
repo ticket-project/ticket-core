@@ -8,7 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.common.BookingAuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;

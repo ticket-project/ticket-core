@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.common;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;

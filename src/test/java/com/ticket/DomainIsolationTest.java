@@ -14,8 +14,13 @@ import com.tngtech.archunit.lang.ArchRule;
  * 6개 Bounded Context(BC) 전부에서 {@code <bc>}의 모든 {@code domain} 계층이 다른 BC를 모르게 한다.
  *
  * <p>검사 대상 패턴은 {@code com.ticket.<bc>..domain..}이다 — capability 아래로 옮긴 {@code
- * booking.order.domain}과 아직 남아 있는 {@code booking.domain} 양쪽을 함께 잡는다. 이전 중 어느 한쪽만 검사하면 검사 대상이 비어 조용히
- * 통과하는 구간이 생긴다.
+ * booking.order.domain}처럼 어느 깊이에 있든 함께 잡는다. 어느 한쪽만 검사하면 검사 대상이 비어 조용히 통과하는 구간이 생긴다.
+ *
+ * <p><b>{@code booking.common}은 이 패턴에 걸리지 않는다.</b> 옛 {@code booking.domain}에 있던 {@code
+ * BookingAuditedEntity}와 {@code RequestedSeatIds}가 평탄화로 {@code booking.common}에 왔고, 그 package에는
+ * Redis 구현도 함께 있어 {@code domain}으로 취급할 수 없다. 같은 보장(다른 BC를 참조하지 않는다)은 {@code
+ * com.ticket.booking.common.BookingCommonDependencyTest}가 이어받는다 — 여기에 {@code booking.common}을 끼워 넣지
+ * 않는다.
  *
  * <p>도메인 계층이 다른 BC를 알면 조합이 domain 안으로 새어 들어와 BC 사이 결합이 생긴다. 조합은 {@code <bc>.application}이 상대 BC의 공개
  * 계약을 호출해서 수행한다.

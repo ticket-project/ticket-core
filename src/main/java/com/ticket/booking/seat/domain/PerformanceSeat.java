@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.common.BookingAuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;

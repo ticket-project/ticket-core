@@ -10,7 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.booking.common.BookingAuditedEntity;
 import com.ticket.booking.exception.BookingNotOpenYetException;
 import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.PerformanceIsPastException;
