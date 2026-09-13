@@ -56,11 +56,15 @@ public class OrderRepositoryAdapter implements OrderRepository {
 
     @Override
     public List<Order> findExpirable(
-            final OrderState status, final LocalDateTime expiresAt, final int limit) {
+            final OrderState status,
+            final LocalDateTime expiresAt,
+            final Long afterOrderId,
+            final int limit) {
         return jpaRepository
-                .findAllByStatusAndExpiresAtLessThanEqual(
+                .findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(
                         status,
                         expiresAt,
+                        afterOrderId == null ? Long.MIN_VALUE : afterOrderId,
                         PageRequest.of(0, limit, Sort.by(Sort.Direction.ASC, "id")))
                 .getContent();
     }

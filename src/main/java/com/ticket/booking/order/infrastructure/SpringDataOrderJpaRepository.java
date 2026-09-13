@@ -52,6 +52,6 @@ interface SpringDataOrderJpaRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByIdAndStatusForUpdate(
             @Param("orderId") Long orderId, @Param("status") OrderState status);
 
-    Slice<Order> findAllByStatusAndExpiresAtLessThanEqual(
-            OrderState status, LocalDateTime expiresAt, Pageable pageable);
+    Slice<Order> findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(
+            OrderState status, LocalDateTime expiresAt, Long afterOrderId, Pageable pageable);
 }

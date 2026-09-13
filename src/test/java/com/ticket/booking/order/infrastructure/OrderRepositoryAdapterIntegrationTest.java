@@ -114,7 +114,8 @@ class OrderRepositoryAdapterIntegrationTest {
         inTransaction(
                 () -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
 
-        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, BATCH_SIZE);
+        List<Order> result =
+                orderRepository.findExpirable(OrderState.PENDING, now, null, BATCH_SIZE);
 
         assertThat(result)
                 .extracting(Order::getOrderKey)
@@ -132,11 +133,28 @@ class OrderRepositoryAdapterIntegrationTest {
                                         order("second", now.minusMinutes(2)),
                                         order("third", now.minusMinutes(1)))));
 
-        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, 2);
+        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, null, 2);
 
         assertThat(result)
                 .extracting(Order::getOrderKey)
                 .containsExactly("order-first", "order-second");
+    }
+
+    /** 커서 뒤의 대상만 돌려줘야 만료 배치가 실패 항목을 넘어 앞으로 나아갈 수 있다. */
+    @Test
+    void expiration_query_returns_only_orders_after_the_cursor() {
+        LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
+        Order first = order("cursor-first", now.minusMinutes(3));
+        Order second = order("cursor-second", now.minusMinutes(2));
+        Order third = order("cursor-third", now.minusMinutes(1));
+        inTransaction(() -> jpaRepository.saveAll(List.of(first, second, third)));
+
+        List<Order> result =
+                orderRepository.findExpirable(OrderState.PENDING, now, first.getId(), BATCH_SIZE);
+
+        assertThat(result)
+                .extracting(Order::getOrderKey)
+                .containsExactly("order-cursor-second", "order-cursor-third");
     }
 
     @Test
@@ -224,7 +242,6 @@ class OrderRepositoryAdapterIntegrationTest {
                 PERFORMANCE_ID,
                 "order-" + suffix,
                 "hold-" + suffix,
-                BigDecimal.valueOf(10_000),
                 expiresAt,
                 "show-title",
                 expiresAt.plusDays(1),
