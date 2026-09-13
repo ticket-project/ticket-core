@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Import;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 import com.ticket.show.catalog.domain.Show;
 import com.ticket.show.performance.domain.Performance;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
@@ -55,8 +55,8 @@ class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryT
 
     @Test
     void 회차의_좌석_상태를_단건으로_조회한다() {
-        SeatSelectionAvailabilitySnapshot result =
-                performanceSeatRepository.findSelectableSeat(performanceId, seatId).orElseThrow();
+        PerformanceSeatStateSnapshot result =
+                performanceSeatRepository.findSeatState(performanceId, seatId).orElseThrow();
 
         assertThat(result.performanceSeatId()).isNotNull();
         assertThat(result.state()).isEqualTo(PerformanceSeatState.AVAILABLE);
@@ -64,6 +64,6 @@ class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryT
 
     @Test
     void 회차에_없는_좌석이면_비어있다() {
-        assertThat(performanceSeatRepository.findSelectableSeat(performanceId, 999999L)).isEmpty();
+        assertThat(performanceSeatRepository.findSeatState(performanceId, 999999L)).isEmpty();
     }
 }

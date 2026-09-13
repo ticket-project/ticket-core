@@ -21,6 +21,7 @@ import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -31,7 +32,7 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 선택_가능한_좌석이면_performanceSeatId를_반환한다() {
-        when(performanceSeatRepository.findSelectableSeat(10L, 20L))
+        when(performanceSeatRepository.findSeatState(10L, 20L))
                 .thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(false);
 
@@ -40,7 +41,7 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 회차에_없는_좌석이면_실패한다() {
-        when(performanceSeatRepository.findSelectableSeat(10L, 20L)).thenReturn(Optional.empty());
+        when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.empty());
 
         assertError(SeatMismatchInPerformanceException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 10L);
@@ -50,10 +51,10 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 이미_예약된_좌석이면_실패한다() {
-        when(performanceSeatRepository.findSelectableSeat(10L, 20L))
+        when(performanceSeatRepository.findSeatState(10L, 20L))
                 .thenReturn(
                         Optional.of(
-                                new SeatSelectionAvailabilitySnapshot(
+                                new PerformanceSeatStateSnapshot(
                                         30L, PerformanceSeatState.RESERVED)));
 
         assertError(NoAvailableSeatException.class)
@@ -64,7 +65,7 @@ class SeatSelectionAvailabilityValidatorTest {
 
     @Test
     void 이미_hold된_좌석이면_실패한다() {
-        when(performanceSeatRepository.findSelectableSeat(10L, 20L))
+        when(performanceSeatRepository.findSeatState(10L, 20L))
                 .thenReturn(Optional.of(available()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
@@ -78,7 +79,7 @@ class SeatSelectionAvailabilityValidatorTest {
         return assertThatThrownBy(() -> validator.validate(10L, 20L)).isInstanceOf(expected);
     }
 
-    private SeatSelectionAvailabilitySnapshot available() {
-        return new SeatSelectionAvailabilitySnapshot(30L, PerformanceSeatState.AVAILABLE);
+    private PerformanceSeatStateSnapshot available() {
+        return new PerformanceSeatStateSnapshot(30L, PerformanceSeatState.AVAILABLE);
     }
 }
