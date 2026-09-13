@@ -1,28 +1,27 @@
 package com.ticket.member.oauth.infrastructure;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
 import com.ticket.member.account.application.SocialAccountConnection;
 import com.ticket.member.account.application.SocialAccountUnlinker;
 import com.ticket.member.account.domain.SocialProvider;
 import com.ticket.shared.exception.InternalErrorException;
 import com.ticket.shared.exception.InvalidRequestException;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 @Slf4j
 @Component
 public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
-
     private static final String KAKAO_ADMIN_AUTH_PREFIX = "KakaoAK ";
-
     private final KakaoUnlinkHttpClient kakaoUnlinkHttpClient;
     private final String adminKey;
 
     public ProviderSocialAccountUnlinker(
             final KakaoUnlinkHttpClient kakaoUnlinkHttpClient,
-            @Value("${app.auth.kakao.admin-key:}") final String adminKey
-    ) {
+            @Value("${app.auth.kakao.admin-key:}") final String adminKey) {
         this.kakaoUnlinkHttpClient = kakaoUnlinkHttpClient;
         this.adminKey = adminKey;
     }

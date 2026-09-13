@@ -8,6 +8,4 @@ public record OAuth2UserInfo(
         String providerId,
         String email,
         boolean emailVerified,
-        String name
-) {
-}
+        String name) {}

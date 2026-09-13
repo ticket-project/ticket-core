@@ -1,18 +1,19 @@
 package com.ticket.member.account.web.request;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticket.member.account.application.usecase.RegisterMemberUseCase;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-class RegisterMemberRequestTest {
+import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticket.member.account.application.usecase.RegisterMemberUseCase;
+
+class RegisterMemberRequestTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void mapsToUseCaseInput() {
-        RegisterMemberRequest request = new RegisterMemberRequest("user@example.com", "password123!", "tester");
+        RegisterMemberRequest request =
+                new RegisterMemberRequest("user@example.com", "password123!", "tester");
 
         RegisterMemberUseCase.Input input = request.toInput();
 
@@ -23,16 +24,16 @@ class RegisterMemberRequestTest {
 
     @Test
     void supportsLoginIdAlias() throws Exception {
-        RegisterMemberRequest request = objectMapper.readValue(
-                """
+        RegisterMemberRequest request =
+                objectMapper.readValue(
+                        """
                         {
                           "loginId": "user@example.com",
                           "password": "password123!",
                           "name": "tester"
                         }
                         """,
-                RegisterMemberRequest.class
-        );
+                        RegisterMemberRequest.class);
 
         assertThat(request.getEmail()).isEqualTo("user@example.com");
     }

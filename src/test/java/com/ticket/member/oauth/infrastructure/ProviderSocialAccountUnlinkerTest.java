@@ -1,26 +1,25 @@
 package com.ticket.member.oauth.infrastructure;
 
-import com.ticket.member.account.application.SocialAccountConnection;
-import com.ticket.member.account.domain.SocialProvider;
-import com.ticket.shared.exception.InternalErrorException;
-import com.ticket.shared.exception.InvalidRequestException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.member.account.application.SocialAccountConnection;
+import com.ticket.member.account.domain.SocialProvider;
+import com.ticket.shared.exception.InternalErrorException;
+import com.ticket.shared.exception.InvalidRequestException;
+
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class ProviderSocialAccountUnlinkerTest {
-
-    @Mock
-    private KakaoUnlinkHttpClient kakaoUnlinkHttpClient;
+    @Mock private KakaoUnlinkHttpClient kakaoUnlinkHttpClient;
 
     @Test
     void 사용자아이디가_비어있으면_예외를_던진다() {

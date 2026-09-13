@@ -3,7 +3,6 @@ package com.ticket.member.account.domain;
 public enum SocialProvider {
     GOOGLE("구글"),
     KAKAO("카카오");
-
     private final String description;
 
     SocialProvider(final String description) {

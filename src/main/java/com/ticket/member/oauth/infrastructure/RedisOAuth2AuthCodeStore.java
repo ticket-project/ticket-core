@@ -1,22 +1,22 @@
 package com.ticket.member.oauth.infrastructure;
 
-import com.ticket.member.oauth.application.OAuth2AuthCodeStore;
-import com.ticket.member.infrastructure.UuidSupplier;
-import lombok.RequiredArgsConstructor;
+import java.time.Duration;
+import java.util.Optional;
+
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.Optional;
+import com.ticket.member.infrastructure.UuidSupplier;
+import com.ticket.member.oauth.application.OAuth2AuthCodeStore;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class RedisOAuth2AuthCodeStore implements OAuth2AuthCodeStore {
-
     private static final String KEY_PREFIX = "oauth2_auth_code:";
     private static final Duration CODE_TTL = Duration.ofSeconds(30);
-
     private final RedissonClient redissonClient;
     private final UuidSupplier uuidSupplier;
 

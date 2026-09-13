@@ -1,20 +1,19 @@
 package com.ticket.member.account.infrastructure;
 
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.account.domain.SocialProvider;
-import com.ticket.member.account.domain.MemberRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.Optional;
 
-/**
- * {@link MemberRepository}의 JPA 구현이다.
- */
+import org.springframework.stereotype.Repository;
+
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
+import com.ticket.member.account.domain.SocialProvider;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link MemberRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class MemberRepositoryAdapter implements MemberRepository {
-
     private final SpringDataMemberJpaRepository jpaRepository;
 
     @Override
@@ -38,7 +37,8 @@ public class MemberRepositoryAdapter implements MemberRepository {
     }
 
     @Override
-    public Optional<Member> findActiveBySocialAccount(final SocialProvider socialProvider, final String socialId) {
+    public Optional<Member> findActiveBySocialAccount(
+            final SocialProvider socialProvider, final String socialId) {
         return jpaRepository.findActiveBySocialAccount(socialProvider, socialId);
     }
 }

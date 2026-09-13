@@ -1,39 +1,36 @@
 package com.ticket.member.account.application;
 
-import com.ticket.member.auth.application.PasswordHasher;
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.account.domain.MemberRepository;
-import com.ticket.member.account.domain.Email;
-import com.ticket.member.auth.domain.RawPassword;
-import com.ticket.member.account.domain.Role;
-import com.ticket.member.exception.DuplicateEmailException;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.member.account.domain.Email;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
+import com.ticket.member.account.domain.Role;
+import com.ticket.member.auth.application.CredentialAuthenticator;
+import com.ticket.member.auth.application.PasswordHasher;
+import com.ticket.member.auth.domain.RawPassword;
+import com.ticket.member.exception.DuplicateEmailException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * 회원가입 하나의 책임만 진다. 비밀번호 해싱과 이메일 중복 등록 판단을 맡고,
- * 로그인 자격 증명 인증은 {@link CredentialAuthenticator}가 별도로 맡는다.
+ * 회원가입 하나의 책임만 진다. 비밀번호 해싱과 이메일 중복 등록 판단을 맡고, 로그인 자격 증명 인증은 {@link CredentialAuthenticator}가 별도로
+ * 맡는다.
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberRegistrar {
-
-    private static final Logger log = LoggerFactory.getLogger(MemberRegistrar.class);
     private final MemberRepository memberRepository;
     private final PasswordHasher passwordHasher;
 
     @Transactional
     public Long register(final Email email, final RawPassword rawPassword, final String name) {
-        final Member member = new Member(
-                email,
-                passwordHasher.hash(rawPassword),
-                name,
-                Role.MEMBER
-        );
+        final Member member =
+                new Member(email, passwordHasher.hash(rawPassword), name, Role.MEMBER);
 
         try {
             return memberRepository.save(member).getId();

@@ -1,7 +1,9 @@
 package com.ticket.member.auth.infrastructure;
 
-import com.ticket.member.account.domain.EncodedPassword;
-import com.ticket.member.auth.domain.RawPassword;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,19 +11,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.ticket.member.account.domain.EncodedPassword;
+import com.ticket.member.auth.domain.RawPassword;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class SpringSecurityPasswordHasherTest {
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @InjectMocks
-    private SpringSecurityPasswordHasher passwordHasher;
+    @Mock private PasswordEncoder passwordEncoder;
+    @InjectMocks private SpringSecurityPasswordHasher passwordHasher;
 
     @Test
     void 비밀번호_해싱을_위임한다() {

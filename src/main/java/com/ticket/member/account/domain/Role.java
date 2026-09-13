@@ -3,7 +3,6 @@ package com.ticket.member.account.domain;
 public enum Role {
     ADMIN("관리자"),
     MEMBER("일반회원");
-
     private final String description;
 
     Role(final String description) {

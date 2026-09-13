@@ -1,31 +1,27 @@
 package com.ticket.member.auth.application.usecase;
 
-import com.ticket.member.auth.application.AuthRefreshToken;
-import com.ticket.member.auth.application.RefreshTokenStore;
-import com.ticket.member.exception.AuthorizationException;
-import com.ticket.member.exception.UnauthenticatedException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.ticket.member.auth.application.AuthRefreshToken;
+import com.ticket.member.auth.application.RefreshTokenStore;
+import com.ticket.member.exception.AuthorizationException;
+import com.ticket.member.exception.UnauthenticatedException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class LogoutUseCaseTest {
-
-    @Mock
-    private RefreshTokenStore refreshTokenStore;
-
-    @InjectMocks
-    private LogoutUseCase useCase;
+    @Mock private RefreshTokenStore refreshTokenStore;
+    @InjectMocks private LogoutUseCase useCase;
 
     @Test
     void owned_token_is_revoked() {

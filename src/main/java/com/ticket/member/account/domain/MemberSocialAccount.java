@@ -1,7 +1,9 @@
 package com.ticket.member.account.domain;
 
-import com.ticket.member.account.domain.MemberAuditedEntity;
-import com.ticket.member.account.domain.SocialProvider;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,23 +16,21 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.UUID;
-
 @Getter
 @Entity
-@Table(name = "MEMBER_SOCIAL_ACCOUNTS", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"social_provider", "social_id"}),
-        @UniqueConstraint(columnNames = {"member_id", "social_provider"})
-})
+@Table(
+        name = "MEMBER_SOCIAL_ACCOUNTS",
+        uniqueConstraints = {
+            @UniqueConstraint(columnNames = {"social_provider", "social_id"}),
+            @UniqueConstraint(columnNames = {"member_id", "social_provider"})
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberSocialAccount extends MemberAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -46,24 +46,18 @@ public class MemberSocialAccount extends MemberAuditedEntity {
     @Column(name = "social_id", nullable = false)
     private String socialId;
 
-    @Column
-    private LocalDateTime deletedAt;
+    @Column private LocalDateTime deletedAt;
 
     private MemberSocialAccount(
-            final Member member,
-            final SocialProvider socialProvider,
-            final String socialId
-    ) {
+            final Member member, final SocialProvider socialProvider, final String socialId) {
         this.member = Objects.requireNonNull(member, "member must not be null");
-        this.socialProvider = Objects.requireNonNull(socialProvider, "socialProvider must not be null");
+        this.socialProvider =
+                Objects.requireNonNull(socialProvider, "socialProvider must not be null");
         this.socialId = Objects.requireNonNull(socialId, "socialId must not be null");
     }
 
     public static MemberSocialAccount create(
-            final Member member,
-            final SocialProvider socialProvider,
-            final String socialId
-    ) {
+            final Member member, final SocialProvider socialProvider, final String socialId) {
         return new MemberSocialAccount(member, socialProvider, socialId);
     }
 

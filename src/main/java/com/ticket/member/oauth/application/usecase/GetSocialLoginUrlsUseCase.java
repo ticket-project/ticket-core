@@ -1,27 +1,30 @@
 package com.ticket.member.oauth.application.usecase;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class GetSocialLoginUrlsUseCase {
-
     private static final String AUTHORIZATION_BASE_URI = "/api/v1/auth/oauth2/authorize";
     private static final String GOOGLE_REGISTRATION_ID = "google";
     private static final String KAKAO_REGISTRATION_ID = "kakao";
 
     public record Input(String baseUrl) {}
+
     public record Output(Map<String, String> urls) {}
 
     public Output execute(final Input input) {
         final String normalizedBaseUrl = normalizeBaseUrl(input.baseUrl());
-        return new Output(Map.of(
-                GOOGLE_REGISTRATION_ID, buildSocialLoginUrl(normalizedBaseUrl, GOOGLE_REGISTRATION_ID),
-                KAKAO_REGISTRATION_ID, buildSocialLoginUrl(normalizedBaseUrl, KAKAO_REGISTRATION_ID)
-        ));
+        return new Output(
+                Map.of(
+                        GOOGLE_REGISTRATION_ID,
+                        buildSocialLoginUrl(normalizedBaseUrl, GOOGLE_REGISTRATION_ID),
+                        KAKAO_REGISTRATION_ID,
+                        buildSocialLoginUrl(normalizedBaseUrl, KAKAO_REGISTRATION_ID)));
     }
 
     private String buildSocialLoginUrl(final String baseUrl, final String registrationId) {

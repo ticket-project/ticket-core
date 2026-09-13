@@ -1,13 +1,15 @@
 package com.ticket.member.account.application.usecase;
 
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.account.domain.MemberRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import com.ticket.member.account.domain.Member;
+import com.ticket.member.account.domain.MemberRepository;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -15,14 +17,17 @@ public class GetCurrentMemberUseCase {
     private final MemberRepository memberRepository;
 
     public Output execute(final Input input) {
-        final Member findMember = memberRepository.findActiveById(input.memberId())
-                .orElseThrow(() -> new NotFoundException());
+        final Member findMember =
+                memberRepository
+                        .findActiveById(input.memberId())
+                        .orElseThrow(() -> new NotFoundException());
         return new Output(
                 findMember.getId(),
-                Optional.ofNullable(findMember.getEmail()).map(email -> email.getEmail()).orElse(""),
+                Optional.ofNullable(findMember.getEmail())
+                        .map(email -> email.getEmail())
+                        .orElse(""),
                 findMember.getName(),
-                findMember.getRole().name()
-        );
+                findMember.getRole().name());
     }
 
     public record Input(Long memberId) {
@@ -36,6 +41,5 @@ public class GetCurrentMemberUseCase {
         }
     }
 
-    public record Output(Long memberId, String email, String name, String role) {
-    }
+    public record Output(Long memberId, String email, String name, String role) {}
 }

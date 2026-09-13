@@ -1,13 +1,13 @@
 package com.ticket.member.auth.web.request;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticket.member.auth.application.usecase.LoginUseCase;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-class LoginRequestTest {
+import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticket.member.auth.application.usecase.LoginUseCase;
+
+class LoginRequestTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -22,15 +22,15 @@ class LoginRequestTest {
 
     @Test
     void supportsLoginIdAlias() throws Exception {
-        LoginRequest request = objectMapper.readValue(
-                """
+        LoginRequest request =
+                objectMapper.readValue(
+                        """
                         {
                           "id": "user@example.com",
                           "password": "password123!"
                         }
                         """,
-                LoginRequest.class
-        );
+                        LoginRequest.class);
 
         assertThat(request.getEmail()).isEqualTo("user@example.com");
     }
