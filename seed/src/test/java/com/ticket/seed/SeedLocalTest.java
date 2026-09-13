@@ -163,6 +163,57 @@ class SeedLocalTest {
         assertThat(count("GRADES", "code IN ('VIP', 'R', 'S', 'A')"))
                 .as("등급 코드는 code당 하나만 있어야 한다")
                 .isEqualTo(4);
+
+        final Long showGradePriceDifferences =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*) FROM (
+                          SELECT p.show_id, pg.grade_id
+                          FROM PERFORMANCE_GRADES pg
+                          JOIN PERFORMANCES p ON p.id = pg.performance_id
+                          GROUP BY p.show_id, pg.grade_id
+                          HAVING COUNT(DISTINCT pg.price) > 1
+                        ) differing_grade_prices
+                        """,
+                        Long.class);
+        assertThat(showGradePriceDifferences)
+                .as("기존 프론트 호환 기간에는 같은 공연의 회차별 등급 가격이 같아야 한다")
+                .isZero();
+
+        final Long showSeatPriceDifferences =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*) FROM (
+                          SELECT p.show_id, ps.seat_id
+                          FROM PERFORMANCE_SEATS ps
+                          JOIN PERFORMANCES p ON p.id = ps.performance_id
+                          GROUP BY p.show_id, ps.seat_id
+                          HAVING COUNT(DISTINCT ps.unit_price) > 1
+                        ) differing_seat_prices
+                        """,
+                        Long.class);
+        assertThat(showSeatPriceDifferences).as("기존 공연별 좌석 배치도에 표시할 가격은 모든 회차에서 같아야 한다").isZero();
+
+        final Long showSeatLayoutDifferences =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COUNT(*) FROM (
+                          SELECT p.show_id, ps.seat_id
+                          FROM PERFORMANCE_SEATS ps
+                          JOIN PERFORMANCES p ON p.id = ps.performance_id
+                          JOIN PERFORMANCE_GRADES pg ON pg.id = ps.performance_grade_id
+                          GROUP BY p.show_id, ps.seat_id
+                          HAVING COUNT(*) <> (
+                            SELECT COUNT(*) FROM PERFORMANCES compared
+                            WHERE compared.show_id = p.show_id
+                          )
+                          OR COUNT(DISTINCT pg.grade_id) > 1
+                        ) differing_seat_layouts
+                        """,
+                        Long.class);
+        assertThat(showSeatLayoutDifferences)
+                .as("기존 프론트 호환 기간에는 같은 공연의 회차별 좌석 구성과 등급 배정이 같아야 한다")
+                .isZero();
         // 부하 테스트 전용 데이터의 등급별 가격(구역 1~2 VIP 150000, 마지막 구역 A 60000).
         assertThat(
                         count(

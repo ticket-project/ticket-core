@@ -57,6 +57,7 @@ class GetShowDetailUseCaseTest {
                         5L,
                         null,
                         List.of("장르"),
+                        List.of(),
                         new PriceSummary(
                                 java.math.BigDecimal.valueOf(100000),
                                 java.math.BigDecimal.valueOf(200000)),
@@ -109,6 +110,7 @@ class GetShowDetailUseCaseTest {
                         "image",
                         null,
                         null,
+                        List.of(),
                         List.of(),
                         null,
                         List.of());

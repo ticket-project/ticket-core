@@ -33,6 +33,14 @@ class PerformanceVenueLayoutCatalogServiceTest {
     @InjectMocks private PerformanceVenueLayoutCatalogService service;
 
     @Test
+    void 공연의_첫_회차_ID를_조회한다() {
+        when(performanceVenueLayoutQueryPort.findRepresentativePerformanceIdByShowId(10L))
+                .thenReturn(Optional.of(20L));
+
+        assertThat(service.findRepresentativePerformanceId(10L)).contains(20L);
+    }
+
+    @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
         when(performanceVenueLayoutQueryPort.findVenueLayoutContext(1L))
                 .thenReturn(Optional.empty());

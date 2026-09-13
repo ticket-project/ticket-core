@@ -128,6 +128,7 @@ ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId�
 (`src/test/java/com/ticket/booking/seat/web/`) 하나에 있다.
 
 - `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
+- `GET /api/v1/shows/{id}/seats` — 기존 프론트 호환용 대표 회차 좌석 배치·등급·가격
 - `GET /api/v1/performances/{id}/seats/status` — 동적 판매 상태(`performanceSeatId` 기준)
 - `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
 

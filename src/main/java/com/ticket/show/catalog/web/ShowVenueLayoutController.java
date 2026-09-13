@@ -17,9 +17,8 @@ import lombok.RequiredArgsConstructor;
  * <p>원래 booking 소유였다 — booking 데이터를 전혀 참조하지 않는 passthrough였고(venue 표시값만 조합), Venue BC 재편으로 show가
  * venue module의 공개 계약을 직접 호출하도록 옮겨왔다. URL·응답 계약은 그대로다.
  *
- * <p>{@code /api/v1/shows/{showId}/seats}(show 기준 좌석·등급 조회)는 ADR 0005(ShowGrade/ShowSeat 폐기)로 제거했다.
- * 등급·가격은 이제 회차(Performance) 단위로만 존재하므로 show 기준 등급 조회 자체가 표현할 수 없는 개념이다. 회차 기준 seat-map API는
- * booking의 {@code PerformanceSeatQueryController}가 제공한다.
+ * <p>{@code /api/v1/shows/{showId}/seats}는 기존 프론트 호환을 위해 booking이 대표 회차의 좌석·가격으로 제공한다. 회차 기준
+ * seat-map API는 booking의 {@code PerformanceSeatQueryController}가 제공한다.
  */
 @RestController
 @RequestMapping("/api/v1/shows")

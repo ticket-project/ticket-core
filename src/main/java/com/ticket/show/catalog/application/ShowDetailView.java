@@ -37,5 +37,6 @@ public record ShowDetailView(
         Long venueId,
         PerformerInfo performer,
         List<String> genreNames,
+        List<ShowGradeView> grades,
         PriceSummary priceSummary,
         List<PerformanceDateInfo> performanceDates) {}

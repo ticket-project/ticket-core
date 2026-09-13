@@ -1,6 +1,7 @@
 package com.ticket.show.performance.application;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.PerformanceVenueLayout;
 import com.ticket.show.PerformanceVenueLayoutCatalog;
+import com.ticket.show.ShowPerformanceLookup;
 import com.ticket.show.performance.application.port.PerformanceVenueLayoutQueryPort;
 import com.ticket.show.performance.application.port.PerformanceVenueLayoutQueryPort.PerformanceGradeLayoutRow;
 import com.ticket.show.performance.domain.PerformanceVenueLayoutContext;
@@ -28,7 +30,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLayoutCatalog {
+public class PerformanceVenueLayoutCatalogService
+        implements PerformanceVenueLayoutCatalog, ShowPerformanceLookup {
     private final PerformanceVenueLayoutQueryPort performanceVenueLayoutQueryPort;
     private final VenueLookup venueLookup;
     private final VenueSeatLookup venueSeatLookup;
@@ -71,6 +74,12 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
                 venue == null ? 0.0 : venue.seatMapLayout().seatDiameter(),
                 seatLayoutBySeatId,
                 gradeLayoutByPerformanceGradeId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Long> findRepresentativePerformanceId(final long showId) {
+        return performanceVenueLayoutQueryPort.findRepresentativePerformanceIdByShowId(showId);
     }
 
     private PerformanceVenueLayout.SeatLayout toSeatLayout(final VenueSeatLayout layout) {

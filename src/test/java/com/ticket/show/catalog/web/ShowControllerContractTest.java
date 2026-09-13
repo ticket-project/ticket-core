@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 import com.ticket.show.catalog.application.PriceSummary;
 import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.application.ShowGradeView;
 import com.ticket.show.catalog.application.ShowListItemView;
 import com.ticket.show.catalog.application.ShowSearchItemView;
 import com.ticket.show.catalog.application.ShowSort;
@@ -177,6 +178,9 @@ class ShowControllerContractTest {
                         null,
                         null,
                         List.of("콘서트"),
+                        List.of(
+                                new ShowGradeView(
+                                        1L, "VIP석", java.math.BigDecimal.valueOf(170000))),
                         new PriceSummary(
                                 java.math.BigDecimal.valueOf(100000),
                                 java.math.BigDecimal.valueOf(200000)),
@@ -195,6 +199,9 @@ class ShowControllerContractTest {
                 .andExpect(jsonPath("$.data.saleEndDate").exists())
                 .andExpect(jsonPath("$.data.saleDisplayStatus").doesNotExist())
                 .andExpect(jsonPath("$.data.displaySaleType").doesNotExist())
+                .andExpect(jsonPath("$.data.grades[0].id").value(1))
+                .andExpect(jsonPath("$.data.grades[0].gradeName").value("VIP석"))
+                .andExpect(jsonPath("$.data.grades[0].price").value(170000))
                 .andExpect(jsonPath("$.data.performanceDates[0].performances[0].id").value(10))
                 .andExpect(
                         jsonPath("$.data.performanceDates[0].performances[0].performanceNo")

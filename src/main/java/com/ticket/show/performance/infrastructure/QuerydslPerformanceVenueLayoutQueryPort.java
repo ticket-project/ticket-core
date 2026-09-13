@@ -48,6 +48,17 @@ public class QuerydslPerformanceVenueLayoutQueryPort implements PerformanceVenue
     }
 
     @Override
+    public Optional<Long> findRepresentativePerformanceIdByShowId(final long showId) {
+        return Optional.ofNullable(
+                queryFactory
+                        .select(performance.id)
+                        .from(performance)
+                        .where(performance.showId.eq(showId))
+                        .orderBy(performance.id.asc())
+                        .fetchFirst());
+    }
+
+    @Override
     public List<PerformanceGradeLayoutRow> findGradeLayouts(final long performanceId) {
         return queryFactory
                 .select(
