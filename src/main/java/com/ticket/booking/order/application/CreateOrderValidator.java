@@ -7,7 +7,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.admission.application.AdmissionVerifier;
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;

@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.common;
 
 import java.time.LocalDateTime;
 

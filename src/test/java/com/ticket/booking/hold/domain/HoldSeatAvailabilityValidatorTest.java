@@ -14,7 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.seat.domain.PerformanceSeat;

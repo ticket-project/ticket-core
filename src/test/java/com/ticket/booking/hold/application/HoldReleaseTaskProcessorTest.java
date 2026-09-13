@@ -25,8 +25,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.RecordingLockManager;
+import com.ticket.booking.common.LockKey;
+import com.ticket.booking.common.RecordingLockManager;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.application.SeatStatusEventPublisher;

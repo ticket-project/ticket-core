@@ -1,10 +1,8 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-
-import com.ticket.booking.application.LockKey;
 
 /** Redis 락 key 형식을 고정한다. 형식이 바뀌면 배포 중 기존 락과 겹치지 않아 같은 좌석을 두 인스턴스가 동시에 잡을 수 있다. */
 @SuppressWarnings("NonAsciiCharacters")

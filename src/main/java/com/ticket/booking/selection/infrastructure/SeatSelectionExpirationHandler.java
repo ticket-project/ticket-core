@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.infrastructure.RedisKeyExpirationHandler;
+import com.ticket.booking.common.RedisKeyExpirationHandler;
 import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;

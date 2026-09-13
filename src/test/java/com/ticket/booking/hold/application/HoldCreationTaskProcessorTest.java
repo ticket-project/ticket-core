@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.application.RecordingLockManager;
+import com.ticket.booking.common.RecordingLockManager;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;

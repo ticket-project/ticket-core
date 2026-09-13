@@ -17,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 
 @SuppressWarnings("NonAsciiCharacters")

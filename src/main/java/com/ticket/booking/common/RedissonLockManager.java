@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.common;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -8,9 +8,6 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
 
 import lombok.RequiredArgsConstructor;

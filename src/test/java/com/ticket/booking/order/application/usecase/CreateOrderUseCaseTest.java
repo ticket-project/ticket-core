@@ -25,8 +25,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.application.RecordingLockManager;
-import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.common.RecordingLockManager;
+import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldAllocation;
 import com.ticket.booking.hold.domain.HoldAllocator;

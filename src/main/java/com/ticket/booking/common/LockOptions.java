@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.common;
 
 import java.time.Duration;
 

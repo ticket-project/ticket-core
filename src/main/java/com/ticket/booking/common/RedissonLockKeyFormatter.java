@@ -1,8 +1,6 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.common;
 
 import org.springframework.stereotype.Component;
-
-import com.ticket.booking.application.LockKey;
 
 /**
  * 업무 의미의 락 대상을 Redis key 문자열로 바꾼다.

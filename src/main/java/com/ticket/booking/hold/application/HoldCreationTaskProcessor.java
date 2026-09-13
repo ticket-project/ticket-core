@@ -5,9 +5,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.common.LockKey;
+import com.ticket.booking.common.LockManager;
+import com.ticket.booking.common.LockOptions;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;

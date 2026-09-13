@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure;
+package com.ticket.booking.common;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;

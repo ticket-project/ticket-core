@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-import com.ticket.booking.application.LockManager;
+import com.ticket.booking.common.LockManager;
 import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.order.application.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.order.infrastructure.OrderExpirationTrigger;
@@ -42,7 +42,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(beanOf("com.ticket.booking.hold.domain.HoldStore").getClass().getName())
                 .startsWith("com.ticket.booking.hold.infrastructure.");
         assertThat(context.getBean(LockManager.class).getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+                .startsWith("com.ticket.booking.common.");
     }
 
     /** bootstrap은 도메인을 컴파일 타임에 보지 않는다. 런타임 클래스패스에만 있으므로 이름으로 찾는다. */
