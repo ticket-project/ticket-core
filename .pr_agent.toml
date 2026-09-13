@@ -2,7 +2,6 @@
 response_language = "ko-KR"
 ignore_pr_title = ["^WIP", "^\\[WIP\\]", "^\\[skip qodo\\]"]
 ignore_pr_labels = ["skip-qodo", "skip-ai-review"]
-allow_only_specific_folders = ["src", "docs", ".github"]
 patch_extra_lines_before = 8
 patch_extra_lines_after = 5
 

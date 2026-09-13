@@ -26,6 +26,7 @@
 | --- | --- |
 | 도메인 용어의 의미 | `CONTEXT.md` |
 | 현재 BC·Aggregate·Module 구조, 의존 DAG | `docs/architecture.md` |
+| Java 이름·패키지·포맷·테스트 관례 | `docs/code-conventions.md` |
 | 중요한 결정을 왜 내렸는가 | `docs/adr/` |
 | 예매·hold 생명주기와 event 후속 처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지, 결과 보고 규칙 | **`/verify` 스킬** |
@@ -38,7 +39,7 @@
 | 반복해 틀리는 지점 | `docs/agents/observed-failures.md`(임시 inbox — 반영되면 지운다) |
 
 **현재 사실은 문서보다 코드와 executable test가 우선이다** — `com.ticket.ModularityTests`,
-`DomainPurityTest`, `AggregateAssociationTest`가 모듈 경계·aggregate 규칙을 강제한다.
+`DomainIsolationTest`, `AggregateAssociationTest`가 모듈 경계·aggregate 규칙을 강제한다.
 `docs/archive/`는 완료·폐기된 기록이다. **요청받지 않는 한 읽지 않고**, 현재 구조의 근거로
 인용하지 않는다.
 
