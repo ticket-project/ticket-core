@@ -13,7 +13,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.selection.domain.SeatSelectionAvailabilitySnapshot;
+import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,13 +45,13 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
      * 유니크 인덱스를 그대로 탄다.
      */
     @Override
-    public Optional<SeatSelectionAvailabilitySnapshot> findSelectableSeat(
+    public Optional<PerformanceSeatStateSnapshot> findSeatState(
             final Long performanceId, final Long seatId) {
         return Optional.ofNullable(
                 queryFactory
                         .select(
                                 Projections.constructor(
-                                        SeatSelectionAvailabilitySnapshot.class,
+                                        PerformanceSeatStateSnapshot.class,
                                         performanceSeat.id,
                                         performanceSeat.state))
                         .from(performanceSeat)

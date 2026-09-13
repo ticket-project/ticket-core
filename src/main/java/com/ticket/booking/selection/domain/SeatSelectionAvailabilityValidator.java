@@ -8,6 +8,7 @@ import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,9 +25,9 @@ public class SeatSelectionAvailabilityValidator {
      *     조회에서 로드했으므로 추가 조회가 필요 없다.
      */
     public Long validate(final Long performanceId, final Long seatId) {
-        final SeatSelectionAvailabilitySnapshot seat =
+        final PerformanceSeatStateSnapshot seat =
                 performanceSeatRepository
-                        .findSelectableSeat(performanceId, seatId)
+                        .findSeatState(performanceId, seatId)
                         .orElseThrow(() -> new SeatMismatchInPerformanceException(performanceId));
 
         if (seat.state() != PerformanceSeatState.AVAILABLE) {
