@@ -91,12 +91,15 @@ public class Order extends BookingAuditedEntity {
     @OrderBy("id ASC")
     private List<OrderSeat> orderSeats = new ArrayList<>();
 
+    /**
+     * PENDING 주문을 만든다. 총액은 인자로 받지 않는다 — {@link #addOrderSeat}가 더한 좌석 단가의 합이 곧 총액이다. 바깥에서 계산한 값을 받으면
+     * 좌석 합계와 어긋난 총액을 저장할 수 있다.
+     */
     public Order(
             final Long memberId,
             final Long performanceId,
             final String orderKey,
             final String holdKey,
-            final BigDecimal totalAmount,
             final LocalDateTime expiresAt,
             final String showTitleSnapshot,
             final LocalDateTime performanceStartAtSnapshot,
@@ -106,7 +109,7 @@ public class Order extends BookingAuditedEntity {
         this.orderKey = orderKey;
         this.holdKey = holdKey;
         this.status = OrderState.PENDING;
-        this.totalAmount = totalAmount;
+        this.totalAmount = BigDecimal.ZERO;
         this.expiresAt = expiresAt;
         this.showTitleSnapshot = showTitleSnapshot;
         this.performanceStartAtSnapshot = performanceStartAtSnapshot;
@@ -114,8 +117,10 @@ public class Order extends BookingAuditedEntity {
     }
 
     /**
-     * 주문 좌석을 aggregate root를 통해서만 만든다. 자식의 {@code order} 역참조를 여기서 채우므로 양방향이 어긋날 여지가 없다. 저장은 root
-     * 저장에 cascade로 함께 실린다.
+     * 주문 좌석을 aggregate root를 통해서만 만든다. 자식의 {@code order} 역참조를 여기서 채우므로 양방향이 어긋날 여지가 없고, 총액도 여기서만
+     * 늘어나므로 좌석 합계와 어긋날 수 없다. 저장은 root 저장에 cascade로 함께 실린다.
+     *
+     * <p>PENDING일 때만 좌석을 추가할 수 있다 — 종료된 주문의 좌석과 금액은 바뀌지 않는다.
      */
     public OrderSeat addOrderSeat(
             final Long performanceSeatId,
@@ -124,6 +129,7 @@ public class Order extends BookingAuditedEntity {
             final String gradeCodeSnapshot,
             final String gradeNameSnapshot,
             final String seatLabelSnapshot) {
+        validatePending("좌석을 추가");
         final OrderSeat orderSeat =
                 new OrderSeat(
                         this,
@@ -134,6 +140,7 @@ public class Order extends BookingAuditedEntity {
                         gradeNameSnapshot,
                         seatLabelSnapshot);
         orderSeats.add(orderSeat);
+        this.totalAmount = this.totalAmount.add(unitPrice);
         return orderSeat;
     }
 
@@ -143,19 +150,27 @@ public class Order extends BookingAuditedEntity {
     }
 
     public void confirm(final LocalDateTime now) {
-        validatePendingTransition("confirm");
+        validatePending("confirm");
         this.status = OrderState.CONFIRMED;
         this.confirmedAt = now;
     }
 
+    /**
+     * 만료로 종료한다. <b>만료 시각이 지나기 전에는 만료시킬 수 없다.</b> 옛 구현은 시각을 보지 않아, 아직 유효한 주문도 만료 경로로 들어오면 그대로
+     * EXPIRED가 됐다 — 사용자가 보고 있는 잔여 시간과 실제 상태가 어긋나는 지점이었다.
+     */
     public void expire(final LocalDateTime now) {
-        validatePendingTransition("expire");
+        validatePending("expire");
+        if (now.isBefore(expiresAt)) {
+            throw new IllegalStateException(
+                    "만료 시각 전에는 만료할 수 없습니다. expiresAt=" + expiresAt + ", now=" + now);
+        }
         this.status = OrderState.EXPIRED;
         this.expiredAt = now;
     }
 
     public void cancel(final LocalDateTime now) {
-        validatePendingTransition("cancel");
+        validatePending("cancel");
         this.status = OrderState.CANCELED;
         this.canceledAt = now;
     }
@@ -164,11 +179,15 @@ public class Order extends BookingAuditedEntity {
         return status == OrderState.PENDING;
     }
 
-    public boolean isExpired(final LocalDateTime now) {
-        return isPending() && (expiresAt.isBefore(now) || expiresAt.isEqual(now));
+    /**
+     * 지금 만료 처리 대상인가. "이미 만료됐는가"가 아니다 — 상태는 아직 PENDING이고, 만료 시각이 지나 {@link #expire}를 부를 수 있다는 뜻이다. 옛
+     * 이름 {@code isExpired}는 EXPIRED 상태 여부로 읽혔다.
+     */
+    public boolean isExpirable(final LocalDateTime now) {
+        return isPending() && !now.isBefore(expiresAt);
     }
 
-    private void validatePendingTransition(final String action) {
+    private void validatePending(final String action) {
         if (!isPending()) {
             throw new IllegalStateException(
                     "PENDING 주문만 " + action + " 할 수 있습니다. currentStatus=" + status);

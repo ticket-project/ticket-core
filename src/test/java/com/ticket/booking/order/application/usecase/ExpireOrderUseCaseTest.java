@@ -5,7 +5,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -83,7 +82,6 @@ class ExpireOrderUseCaseTest {
                         performanceId,
                         "order-key",
                         holdKey,
-                        BigDecimal.TEN,
                         LocalDateTime.now().plusMinutes(5),
                         "show-title",
                         LocalDateTime.now().plusDays(1),

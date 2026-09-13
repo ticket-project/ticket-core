@@ -208,7 +208,6 @@ class BookingEventListenersTest {
                         performanceId,
                         "order-" + id,
                         holdKey,
-                        BigDecimal.TEN,
                         expiresAt,
                         "show-title",
                         expiresAt.minusDays(1),

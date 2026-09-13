@@ -41,7 +41,6 @@ class QuerydslOrderQueryPortTest extends ReadRepositoryTestSupport {
                         performanceId,
                         "order-key",
                         "hold-key",
-                        BigDecimal.valueOf(120000),
                         LocalDateTime.now(clock).plusMinutes(10),
                         "show-title",
                         LocalDateTime.now(clock).plusDays(1),

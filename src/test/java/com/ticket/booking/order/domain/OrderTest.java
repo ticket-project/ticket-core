@@ -22,7 +22,8 @@ class OrderTest {
         assertThat(order.getOrderKey()).isEqualTo("order-key");
         assertThat(order.getHoldKey()).isEqualTo("hold-key");
         assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
-        assertThat(order.getTotalAmount()).isEqualByComparingTo("15000");
+        // 총액은 좌석을 추가하면서 누적된다. 좌석이 없는 시점의 주문은 0원이다.
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("0");
         assertThat(order.getExpiresAt()).isEqualTo(expiresAt);
     }
 
@@ -39,10 +40,11 @@ class OrderTest {
     }
 
     @Test
-    void pending_주문은_만료할_수_있다() {
+    void pending_주문은_만료시각이_지나면_만료할_수_있다() {
         // given
-        LocalDateTime now = LocalDateTime.of(2026, 3, 15, 12, 0);
-        Order order = createOrder(now.plusMinutes(10));
+        LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 0);
+        LocalDateTime now = expiresAt.plusMinutes(1);
+        Order order = createOrder(expiresAt);
         // when
         order.expire(now);
         // then
@@ -75,26 +77,82 @@ class OrderTest {
     }
 
     @Test
-    void 만료시각과_같거나_지난_pending_주문은_만료된_것으로_본다() {
+    void 만료시각과_같거나_지나면_만료_처리_대상이다() {
         // given
         // when
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         Order order = createOrder(expiresAt);
         // then
-        assertThat(order.isExpired(expiresAt.minusSeconds(1))).isFalse();
-        assertThat(order.isExpired(expiresAt)).isTrue();
-        assertThat(order.isExpired(expiresAt.plusSeconds(1))).isTrue();
+        assertThat(order.isExpirable(expiresAt.minusSeconds(1))).isFalse();
+        assertThat(order.isExpirable(expiresAt)).isTrue();
+        assertThat(order.isExpirable(expiresAt.plusSeconds(1))).isTrue();
     }
 
     @Test
-    void pending이_아닌_주문은_만료시각이_지나도_isExpired가_false다() {
+    void pending이_아니면_만료시각이_지나도_만료_처리_대상이_아니다() {
         // given
         // when
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         Order order = createOrder(expiresAt);
         order.confirm(expiresAt.minusMinutes(1));
         // then
-        assertThat(order.isExpired(expiresAt.plusMinutes(1))).isFalse();
+        assertThat(order.isExpirable(expiresAt.plusMinutes(1))).isFalse();
+    }
+
+    /** 옛 구현은 시각을 보지 않아 아직 유효한 주문도 만료 경로로 들어오면 EXPIRED가 됐다. 사용자가 보고 있는 잔여 시간과 실제 상태가 어긋나는 지점이었다. */
+    @Test
+    void 만료시각_전에는_만료할_수_없다() {
+        LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
+        Order order = createOrder(expiresAt);
+
+        assertThatThrownBy(() -> order.expire(expiresAt.minusSeconds(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("만료 시각 전에는");
+        assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
+    }
+
+    @Test
+    void 만료시각과_같은_순간부터_만료할_수_있다() {
+        LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
+        Order order = createOrder(expiresAt);
+
+        order.expire(expiresAt);
+
+        assertThat(order.getStatus()).isEqualTo(OrderState.EXPIRED);
+        assertThat(order.getExpiredAt()).isEqualTo(expiresAt);
+    }
+
+    /** 총액은 좌석 단가의 합으로만 정의된다 — 바깥에서 계산한 값을 받지 않으므로 어긋날 경로가 없다. */
+    @Test
+    void 총액은_추가한_좌석_단가의_합이다() {
+        Order order = createOrder(LocalDateTime.of(2026, 3, 15, 12, 30));
+
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("0");
+
+        order.addOrderSeat(501L, 42L, new BigDecimal("12000"), "R", "R석", "1F 가구역 A열 1번");
+        order.addOrderSeat(502L, 43L, new BigDecimal("15000"), "S", "S석", "1F 가구역 A열 2번");
+
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("27000");
+    }
+
+    @Test
+    void 종료된_주문에는_좌석을_추가할_수_없다() {
+        LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
+        Order order = createOrder(expiresAt);
+        order.cancel(expiresAt.minusMinutes(1));
+
+        assertThatThrownBy(
+                        () ->
+                                order.addOrderSeat(
+                                        501L,
+                                        42L,
+                                        new BigDecimal("12000"),
+                                        "R",
+                                        "R석",
+                                        "1F 가구역 A열 1번"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("currentStatus=CANCELED");
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("0");
     }
 
     private Order createOrder(final LocalDateTime expiresAt) {
@@ -103,7 +161,6 @@ class OrderTest {
                 10L,
                 "order-key",
                 "hold-key",
-                BigDecimal.valueOf(15000),
                 expiresAt,
                 "show-title",
                 expiresAt.minusDays(1),
