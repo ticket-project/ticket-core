@@ -40,14 +40,14 @@ import com.ticket.show.PerformanceSaleCatalog;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class CreateOrderValidatorTest {
+class CreateOrderPreparerTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
     @Mock private MemberLookup memberLookup;
     @Mock private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     @Mock private PerformanceSaleCatalog performanceSaleCatalog;
     @Mock private AdmissionVerifier admissionVerifier;
     @Mock private PendingOrderLocalValidator pendingOrderLocalValidator;
-    @InjectMocks private CreateOrderValidator validator;
+    @InjectMocks private CreateOrderPreparer preparer;
 
     @Test
     void booking_local_읽기는_별도_component의_읽기_전용_트랜잭션에서_수행한다() throws NoSuchMethodException {
@@ -62,11 +62,11 @@ class CreateOrderValidatorTest {
     }
 
     @Test
-    void validate는_트랜잭션_없이_다른_module_공개_API를_호출한다() throws NoSuchMethodException {
+    void prepare는_트랜잭션_없이_다른_module_공개_API를_호출한다() throws NoSuchMethodException {
         Transactional transactional =
-                CreateOrderValidator.class
+                CreateOrderPreparer.class
                         .getDeclaredMethod(
-                                "validate",
+                                "prepare",
                                 CreateOrderUseCase.Input.class,
                                 RequestedSeatIds.class,
                                 LocalDateTime.class)
@@ -108,7 +108,7 @@ class CreateOrderValidatorTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(3)));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(List.of());
 
-        validator.validate(input(seatIds), seatIds, FIXED_NOW);
+        preparer.prepare(input(seatIds), seatIds, FIXED_NOW);
 
         verify(admissionVerifier, never()).verify(10L, 20L, "admission-token");
     }
@@ -122,7 +122,7 @@ class CreateOrderValidatorTest {
                                 policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true)));
         doThrowAdmissionRequired();
 
-        assertThatThrownBy(() -> validator.validate(input(seatIds), seatIds, FIXED_NOW))
+        assertThatThrownBy(() -> preparer.prepare(input(seatIds), seatIds, FIXED_NOW))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
         verifyNoInteractions(memberLookup, pendingOrderLocalValidator);
@@ -148,7 +148,7 @@ class CreateOrderValidatorTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(seats);
 
-        ValidatedOrderContext result = validator.validate(input(seatIds), seatIds, FIXED_NOW);
+        ValidatedOrderContext result = preparer.prepare(input(seatIds), seatIds, FIXED_NOW);
 
         assertThat(result.policy()).isSameAs(policy);
         assertThat(result.performanceSeats()).isSameAs(seats);
@@ -163,7 +163,7 @@ class CreateOrderValidatorTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
         when(pendingOrderLocalValidator.validate(20L, 10L, seatIds)).thenReturn(List.of());
 
-        ValidatedOrderContext result = validator.validate(input(seatIds), seatIds, FIXED_NOW);
+        ValidatedOrderContext result = preparer.prepare(input(seatIds), seatIds, FIXED_NOW);
 
         assertThat(result.policy()).isSameAs(policy);
     }
@@ -180,7 +180,7 @@ class CreateOrderValidatorTest {
 
     private void assertError(
             final RequestedSeatIds seatIds, final Class<? extends BookingException> expected) {
-        assertThatThrownBy(() -> validator.validate(input(seatIds), seatIds, FIXED_NOW))
+        assertThatThrownBy(() -> preparer.prepare(input(seatIds), seatIds, FIXED_NOW))
                 .isInstanceOf(expected);
     }
 

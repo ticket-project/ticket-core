@@ -11,14 +11,13 @@ import com.ticket.booking.common.LockKey;
 import com.ticket.booking.common.LockManager;
 import com.ticket.booking.common.LockOptions;
 import com.ticket.booking.common.RequestedSeatIds;
-import com.ticket.booking.hold.domain.HoldAllocation;
-import com.ticket.booking.hold.domain.HoldAllocator;
-import com.ticket.booking.order.application.CreateOrderValidator;
+import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.order.application.CreateOrderPreparer;
 import com.ticket.booking.order.application.CreatePendingOrderTransactionService;
 import com.ticket.booking.order.application.ValidatedOrderContext;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.domain.PendingOrderCreationResult;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -31,8 +30,8 @@ public class CreateOrderUseCase {
     private static final LockOptions START_ORDER_LOCK =
             LockOptions.defaults().withFailureMessage("주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요.");
     private final LockManager lockManager;
-    private final CreateOrderValidator validator;
-    private final HoldAllocator holdAllocator;
+    private final CreateOrderPreparer preparer;
+    private final HoldManager holdManager;
     private final CreatePendingOrderTransactionService createPendingOrderTransactionService;
     private final Clock clock;
 
@@ -62,6 +61,9 @@ public class CreateOrderUseCase {
      * 같은 회원과 회차의 주문 시작을 직렬화한 뒤 좌석을 선점하고 PENDING 주문을 만든다.
      *
      * <p>좌석 락은 Redis hold를 만드는 구간에만 건다. DB 트랜잭션 동안 좌석 락을 쥐고 있으면 connection 경합이 좌석 경합으로 번진다.
+     *
+     * <p>조립은 이 use case가 직접 한다 — {@link HoldManager}를 그대로 호출하고 이미 확보한 좌석 목록을 함께 넘긴다. 호출 한 번을 감싸 결과를
+     * 다시 포장하기만 하는 중간 계층을 두지 않는다.
      */
     public Output execute(final Input input) {
         return lockManager.withLock(
@@ -73,55 +75,60 @@ public class CreateOrderUseCase {
     private Output createOrder(final Input input) {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
-        final ValidatedOrderContext validated = validator.validate(input, requestedSeatIds, now);
-        final Duration holdDuration = validated.policy().holdDuration();
+        final ValidatedOrderContext prepared = preparer.prepare(input, requestedSeatIds, now);
+        final Duration holdDuration = prepared.policy().holdDuration();
         final List<LockKey> seatLocks =
                 LockKey.seats(input.performanceId(), requestedSeatIds.toList());
 
-        final HoldAllocation allocation =
+        final Hold hold =
                 lockManager.withLock(
                         seatLocks,
                         LockOptions.defaults(),
                         () ->
-                                holdAllocator.allocate(
+                                holdManager.createHold(
                                         input.memberId(),
                                         input.performanceId(),
                                         requestedSeatIds,
-                                        validated.performanceSeats(),
                                         holdDuration,
                                         now));
 
-        final PendingOrderCreationResult creationResult;
+        final String orderKey;
         try {
-            creationResult =
+            orderKey =
                     createPendingOrderTransactionService.create(
                             input.memberId(),
                             input.performanceId(),
                             holdDuration,
-                            allocation,
-                            validated.saleSnapshot());
+                            hold,
+                            prepared.performanceSeats(),
+                            prepared.saleSnapshot());
         } catch (final RuntimeException e) {
-            releaseHold(seatLocks, allocation, e);
+            releaseHold(seatLocks, hold, e);
             throw e;
         }
         return new Output(
-                creationResult.order().getOrderKey(),
+                orderKey,
                 OrderState.PENDING,
-                allocation.expiresAt(),
+                hold.expiresAt(),
                 OrderRemainingTime.seconds(
-                        OrderState.PENDING, allocation.expiresAt(), LocalDateTime.now(clock)));
+                        OrderState.PENDING, hold.expiresAt(), LocalDateTime.now(clock)));
     }
 
+    /** 보상 실패가 원래 주문 생성 실패를 가리지 않도록, 해제 예외는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다. */
     private void releaseHold(
             final List<LockKey> seatLocks,
-            final HoldAllocation allocation,
+            final Hold hold,
             final RuntimeException originalException) {
         try {
             lockManager.withLock(
-                    seatLocks, LockOptions.defaults(), () -> holdAllocator.release(allocation));
+                    seatLocks,
+                    LockOptions.defaults(),
+                    () ->
+                            holdManager.release(
+                                    hold.performanceId(), hold.holdKey(), hold.seatIds()));
         } catch (final RuntimeException releaseException) {
             originalException.addSuppressed(releaseException);
-            log.warn("hold 해제에 실패했습니다. holdKey={}", allocation.holdKey(), releaseException);
+            log.warn("hold 해제에 실패했습니다. holdKey={}", hold.holdKey(), releaseException);
         }
     }
 }

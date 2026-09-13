@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -28,14 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.common.RecordingLockManager;
 import com.ticket.booking.common.RequestedSeatIds;
 import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.hold.domain.HoldAllocation;
-import com.ticket.booking.hold.domain.HoldAllocator;
-import com.ticket.booking.order.application.CreateOrderValidator;
+import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.order.application.CreateOrderPreparer;
 import com.ticket.booking.order.application.CreatePendingOrderTransactionService;
 import com.ticket.booking.order.application.ValidatedOrderContext;
-import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.domain.PendingOrderCreationResult;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
@@ -47,22 +43,23 @@ import com.ticket.show.PerformanceSaleSnapshot;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CreateOrderUseCaseTest {
-    @Mock private CreateOrderValidator validator;
-    @Mock private HoldAllocator holdAllocator;
+    private static final Duration HOLD_DURATION = Duration.ofSeconds(600);
+    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
+    @Mock private CreateOrderPreparer preparer;
+    @Mock private HoldManager holdManager;
     @Mock private CreatePendingOrderTransactionService createPendingOrderTransactionService;
     private final RecordingLockManager lockManager = new RecordingLockManager();
-    private CreateOrderUseCase createOrderUseCase;
     private final Clock fixedClock =
             Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
-    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
+    private CreateOrderUseCase createOrderUseCase;
 
     @BeforeEach
     void setUp() {
         createOrderUseCase =
                 new CreateOrderUseCase(
                         lockManager,
-                        validator,
-                        holdAllocator,
+                        preparer,
+                        holdManager,
                         createPendingOrderTransactionService,
                         fixedClock);
     }
@@ -75,7 +72,7 @@ class CreateOrderUseCaseTest {
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(InvalidRequestException.class);
 
-        verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
+        verifyNoInteractions(preparer, holdManager, createPendingOrderTransactionService);
     }
 
     @Test
@@ -86,7 +83,7 @@ class CreateOrderUseCaseTest {
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(InvalidRequestException.class);
 
-        verifyNoInteractions(validator, holdAllocator, createPendingOrderTransactionService);
+        verifyNoInteractions(preparer, holdManager, createPendingOrderTransactionService);
     }
 
     @Test
@@ -94,29 +91,17 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input =
                 new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceSalesPolicy performance = createPerformance(5, 600);
         final List<PerformanceSeat> seats =
                 List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
-        final HoldAllocation allocation = new HoldAllocation(hold, seats);
-        final Order order = order(hold);
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
 
-        when(validator.validate(input, seatIds, FIXED_NOW))
-                .thenReturn(
-                        new ValidatedOrderContext(
-                                performance, allocation.performanceSeats(), saleSnapshot));
-        when(holdAllocator.allocate(
-                        20L,
-                        10L,
-                        seatIds,
-                        allocation.performanceSeats(),
-                        Duration.ofSeconds(600),
-                        FIXED_NOW))
-                .thenReturn(allocation);
+        when(preparer.prepare(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderContext(policy(), seats, saleSnapshot));
+        when(holdManager.createHold(20L, 10L, seatIds, HOLD_DURATION, FIXED_NOW)).thenReturn(hold);
         when(createPendingOrderTransactionService.create(
-                        20L, 10L, Duration.ofSeconds(600), allocation, saleSnapshot))
-                .thenReturn(new PendingOrderCreationResult(order));
+                        20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot))
+                .thenReturn("order-key");
 
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
 
@@ -126,18 +111,11 @@ class CreateOrderUseCaseTest {
         assertThat(output.remainingSeconds()).isEqualTo(600L);
 
         final InOrder inOrder =
-                inOrder(validator, holdAllocator, createPendingOrderTransactionService);
-        inOrder.verify(validator).validate(input, seatIds, FIXED_NOW);
-        inOrder.verify(holdAllocator)
-                .allocate(
-                        20L,
-                        10L,
-                        seatIds,
-                        allocation.performanceSeats(),
-                        Duration.ofSeconds(600),
-                        FIXED_NOW);
+                inOrder(preparer, holdManager, createPendingOrderTransactionService);
+        inOrder.verify(preparer).prepare(input, seatIds, FIXED_NOW);
+        inOrder.verify(holdManager).createHold(20L, 10L, seatIds, HOLD_DURATION, FIXED_NOW);
         inOrder.verify(createPendingOrderTransactionService)
-                .create(20L, 10L, Duration.ofSeconds(600), allocation, saleSnapshot);
+                .create(20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot);
     }
 
     @Test
@@ -145,32 +123,22 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input =
                 new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceSalesPolicy performance = createPerformance(5, 600);
-        final HoldAllocation allocation =
-                new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
+        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
+        final Hold hold = hold(seatIds.toList());
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
 
-        when(validator.validate(input, seatIds, FIXED_NOW))
-                .thenReturn(
-                        new ValidatedOrderContext(
-                                performance, allocation.performanceSeats(), saleSnapshot));
-        when(holdAllocator.allocate(
-                        20L,
-                        10L,
-                        seatIds,
-                        allocation.performanceSeats(),
-                        Duration.ofSeconds(600),
-                        FIXED_NOW))
-                .thenReturn(allocation);
+        when(preparer.prepare(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderContext(policy(), seats, saleSnapshot));
+        when(holdManager.createHold(20L, 10L, seatIds, HOLD_DURATION, FIXED_NOW)).thenReturn(hold);
         when(createPendingOrderTransactionService.create(
-                        20L, 10L, Duration.ofSeconds(600), allocation, saleSnapshot))
+                        20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot))
                 .thenThrow(new RuntimeException("order failed"));
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed");
 
-        verify(holdAllocator).release(allocation);
+        verify(holdManager).release(10L, "hold-key", seatIds.toList());
     }
 
     @Test
@@ -178,28 +146,20 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input =
                 new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 20L, "admission-token");
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final PerformanceSalesPolicy performance = createPerformance(5, 600);
-        final HoldAllocation allocation =
-                new HoldAllocation(hold(seatIds.toList()), List.of(mock(PerformanceSeat.class)));
+        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
+        final Hold hold = hold(seatIds.toList());
         final RuntimeException originalException = new RuntimeException("order failed");
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
 
-        when(validator.validate(input, seatIds, FIXED_NOW))
-                .thenReturn(
-                        new ValidatedOrderContext(
-                                performance, allocation.performanceSeats(), saleSnapshot));
-        when(holdAllocator.allocate(
-                        20L,
-                        10L,
-                        seatIds,
-                        allocation.performanceSeats(),
-                        Duration.ofSeconds(600),
-                        FIXED_NOW))
-                .thenReturn(allocation);
+        when(preparer.prepare(input, seatIds, FIXED_NOW))
+                .thenReturn(new ValidatedOrderContext(policy(), seats, saleSnapshot));
+        when(holdManager.createHold(20L, 10L, seatIds, HOLD_DURATION, FIXED_NOW)).thenReturn(hold);
         when(createPendingOrderTransactionService.create(
-                        20L, 10L, Duration.ofSeconds(600), allocation, saleSnapshot))
+                        20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot))
                 .thenThrow(originalException);
-        doThrow(new RuntimeException("release failed")).when(holdAllocator).release(allocation);
+        doThrow(new RuntimeException("release failed"))
+                .when(holdManager)
+                .release(10L, "hold-key", seatIds.toList());
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(RuntimeException.class)
@@ -225,26 +185,12 @@ class CreateOrderUseCaseTest {
         return new Hold("hold-key", 20L, 10L, seatIds, FIXED_NOW.plusMinutes(10));
     }
 
-    private Order order(final Hold hold) {
-        return new Order(
-                20L,
-                10L,
-                "order-key",
-                "hold-key",
-                BigDecimal.valueOf(120000),
-                hold.expiresAt(),
-                "show-title",
-                hold.expiresAt().plusDays(1),
-                "venue-name");
-    }
-
-    private PerformanceSalesPolicy createPerformance(
-            final int maxCanHoldCount, final int holdTimeSeconds) {
+    private PerformanceSalesPolicy policy() {
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
         return new PerformanceSalesPolicy(
                 10L,
                 new OrderAcceptanceWindow(now.minusHours(1), now.plusHours(3)),
-                new HoldPolicy(maxCanHoldCount, Duration.ofSeconds(holdTimeSeconds)),
+                new HoldPolicy(5, HOLD_DURATION),
                 BookingEntryPolicy.none());
     }
 

@@ -15,7 +15,7 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 주문 생성 검증의 booking local DB 읽기만 담당한다. {@link CreateOrderValidator}가 다른 module 공개 API를 트랜잭션 밖에서 호출한
+ * 주문 생성 검증의 booking local DB 읽기만 담당한다. {@link CreateOrderPreparer}가 다른 module 공개 API를 트랜잭션 밖에서 호출한
  * 뒤, 이 component가 짧은 읽기 트랜잭션 안에서 pending 주문 중복과 좌석 판매 상태만 확인한다.
  *
  * <p>package-private component로 분리한 이유는 self-invocation을 피하기 위해서다. 같은 클래스 안에서 이 method를 호출하면
