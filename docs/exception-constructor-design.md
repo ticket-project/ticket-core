@@ -48,19 +48,19 @@
 | 예외 | 공개 생성자 인수 | 값의 출처 / 이유 |
 | --- | --- | --- |
 | `PerformanceIsPastException` | `Long performanceId` | `PerformanceSalesPolicy`, `SeatSelectionCoordinator`가 가진 회차. 서로 다른 시각 판정 로직은 그대로 둔다 |
-| `NotYetReserveTimeException` | `Long performanceId` | `PerformanceSalesPolicy`가 가진 회차 |
+| `BookingNotOpenYetException` | `Long performanceId` | `PerformanceSalesPolicy`가 가진 회차 |
 | `NoAvailableSeatException` | `Long performanceId` | `HoldSeatAvailabilityValidator`, `SeatSelectionAvailabilityValidator`의 검증 대상 회차 |
 | `SeatMismatchInPerformanceException` | `Long performanceId` | 위 두 validator의 검증 대상 회차. 없는 좌석을 찾기 위한 추가 조회 없음 |
 | `SeatAlreadySelectedException` | `Long performanceId, Long seatId` | `SeatSelectionService.select`가 이미 가진 경합 대상 |
 | `SeatNotOwnedException` | `Long performanceId, Long seatId, Long memberId` | `SeatSelectionService`의 두 실패 경로. `memberId`는 해제를 요청한 회원 |
-| `SeatVenueMismatchException` | `Long performanceId, Long seatId` | `EditPerformanceSeatsUseCase.toPerformanceSeat`의 편성 대상 |
+| `SeatVenueMismatchException` | `Long performanceId, Long seatId` | `CreatePerformanceSeatsUseCase.toPerformanceSeat`의 편성 대상 |
 | `PerformanceGradeMismatchException` | `Long performanceId, Long performanceGradeId` | 같은 메서드의 등급 배정 값. nullable 배정 값 때문에 예외 생성에서 unboxing하지 않는다 |
-| `PerformanceSeatAlreadyEditionedException` | `Long performanceId` | `EditPerformanceSeatsUseCase.ensureNotAlreadyEditioned`의 회차 |
+| `PerformanceSeatAlreadyExistsException` | `Long performanceId` | `CreatePerformanceSeatsUseCase.ensureSeatsNotAlreadyCreated`의 회차 |
 | `OrderNotPendingException` | `OrderState currentStatus` | `CancelOrderTransactionService`가 조회한 주문 상태 |
 | `OrderNotOwnedException` | `String orderKey, Long memberId` | 취소·상세·상태 조회의 요청 값. 실제 주문 소유자 정보는 요구하지 않는다 |
 | `PendingOrderAlreadyExistsException` | `Long memberId, Long performanceId` | `PendingOrderLocalValidator`가 기존 exists 조회에 사용하는 값 |
-| `SeatAlreadyHoldException` | `Long performanceId, Long seatId` | `HoldManager`, `SeatSelectionCoordinator`, `SeatSelectionAvailabilityValidator`의 대상 |
-| `ExceedHoldLimitException` | `long requestedSeatCount, int maxSeatCount` | `PerformanceSalesPolicy.ensureWithinHoldLimit`의 수량과 정책 한도 |
+| `SeatAlreadyHeldException` | `Long performanceId, Long seatId` | `HoldManager`, `SeatSelectionCoordinator`, `SeatSelectionAvailabilityValidator`의 대상 |
+| `HoldLimitExceededException` | `long requestedSeatCount, int maxSeatCount` | `PerformanceSalesPolicy.ensureWithinHoldLimit`의 수량과 정책 한도 |
 
 `GetOrderStatusUseCase.requireActiveMember`는 현재 `memberId`만 받는다. 요청의 `orderKey`를 함께
 전달해 그 안의 `NotFoundException` → `OrderNotOwnedException` 변환에도 같은 사실을 넣는다.
@@ -192,7 +192,7 @@ JavaDoc에 인수가 공개 상세 정보라는 사실을 명시하고, 고정 �
 5. `ErrorCodeUniquenessTest`, `ExceptionHandlerScopeTest`, `InvalidRequestMessageContractTest`와
    영향받은 module의 handler/호출부 테스트를 실행한다. 기존 검사 대상을 줄여 통과시키지 않는다.
 6. 바뀐 생성자를 참조하는 테스트는 fixture 인수를 실제 값으로 갱신하고 테스트 컴파일까지 확인한다.
-   module 내부 enum 의존 등이 구조 규칙을 지키는지 `ModularityTests`·`DomainPurityTest`로 확인한다.
+   module 내부 enum 의존 등이 구조 규칙을 지키는지 `ModularityTests`·`DomainIsolationTest`로 확인한다.
    통합 검증 필요 여부는 실제 변경 파일과 verify 기준으로 정한다.
 7. 완료 시 A~D 그룹마다 변경·유지 결과를 설명하고 테스트 결과 및 미실행 범위를 보고한다.
    새 공개 `Object` 생성자나 가짜 값으로 이전 호출 형태를 유지하는 경로가 없어야 한다.
@@ -200,7 +200,7 @@ JavaDoc에 인수가 공개 상세 정보라는 사실을 명시하고, 고정 �
 **실행 결과(2026-09-10)**: `./gradlew test` 전체 213개 클래스 715개 테스트 통과, 실패·오류 0,
 스킵 0. Docker가 떠 있어 Testcontainers 기반 Redis 통합 테스트와 예매 E2E도 함께 돌았다.
 `ErrorCodeUniquenessTest`·`ExceptionHandlerScopeTest`·`InvalidRequestMessageContractTest`와
-`ModularityTests`·`DomainPurityTest`·`AggregateAssociationTest`가 그 안에 포함된다. 부하 테스트와
+`ModularityTests`·`DomainIsolationTest`·`AggregateAssociationTest`가 그 안에 포함된다. 부하 테스트와
 실제 배포 환경 확인은 이 작업의 범위가 아니라 실행하지 않았다.
 
 ## 검토한 대안

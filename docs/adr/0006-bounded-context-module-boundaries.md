@@ -90,7 +90,7 @@ noClasses().that().resideInAPackage("com.ticket.show.domain..")
     .should().dependOnClassesThat().resideInAPackage("com.ticket.favorite..")
 ```
 
-> **2026-09-08 갱신**: 이 원칙을 6개 BC 전체로 일반화한 `com.ticket.DomainPurityTest`가
+> **2026-09-08 갱신**: 이 원칙을 6개 BC 전체로 일반화한 `com.ticket.DomainIsolationTest`가
 > `ShowDomainPurityTest`를 대체했다 — `show.domain`뿐 아니라 `booking`/`venue`/`favorite`/
 > `member`/`payment`의 domain도 같은 규칙을 받는다.
 

@@ -141,7 +141,7 @@ like를 모른다 — `show.catalog.application`의 조회 service가 like의 �
 주입받아 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
 않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
 순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
-`MemberLookup.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainPurityTest`(ArchUnit,
+`MemberLookup.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainIsolationTest`(ArchUnit,
 6개 BC 전체의 모든 `domain` 계층)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을, 찜 모듈 개명과 대상 일반화는
 [ADR 0008](adr/0008-like-target-generalization.md)을, use case 소유권을 존재/표시 기준으로
@@ -167,6 +167,10 @@ like를 모른다 — `show.catalog.application`의 조회 service가 like의 �
 `booking.order.domain.Order`, `show.catalog.infrastructure.QuerydslShowListQueryPort`처럼
 읽는다. capability가 하나뿐인 모듈(`like`, `payment`)도 같은 형태를 유지한다: 지금 하나뿐이라는
 사실이 앞으로도 하나라는 뜻은 아니고, 모듈마다 읽는 규칙이 갈리는 편이 더 비싸다.
+
+같은 모듈의 여러 capability가 함께 쓰는 기반 타입은 module-level 계층에 둔다. 예를 들어
+`show.domain.ShowAuditedEntity`는 catalog·performance·classification·performer entity가 함께 쓰지만
+다른 BC와 공유하지 않는다. 이를 이유로 모든 BC의 감사 기반 타입을 `shared`로 합치지 않는다.
 
 capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**이다. Application Module이 아니다 —
 `package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 업무 capability 경계는
@@ -388,7 +392,7 @@ application으로 넘긴다. 기존 계정에 같은 이메일로 자동 연결�
 고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
 원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
 않는다** — 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
-`show.performance.web.ShowVenueLayoutController`(물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
+`show.catalog.web.ShowVenueLayoutController`(showId 기반 물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
 별개의 show 기준 API다 — 새 기능은 여기 추가하지 않고 performance 기준 API 쪽에 추가한다.
 
 **대기열**은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도 token 저장소도
@@ -429,7 +433,7 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 | 모듈 경계·의존 DAG 위반 | `com.ticket.ModularityTests` |
 | 모듈이 STANDALONE으로 부트스트랩되는지 | `<Module>ModuleTests` |
 | 같은 module 안 aggregate를 객체 연관관계로 묶었는지 | `com.ticket.AggregateAssociationTest` |
-| `<bc>`의 어느 `domain` 계층이든 다른 BC를 참조하는지 | `com.ticket.DomainPurityTest` |
+| `<bc>`의 어느 `domain` 계층이든 다른 BC를 참조하는지 | `com.ticket.DomainIsolationTest` |
 | `shared`에 bean을 등록했는지 | `com.ticket.shared.SharedModulePurityTest` |
 | 파라미터 제약 선언 위치 | `ControllerParameterConstraintTest` |
 | 필수 입력 오류 문구 | `com.ticket.shared.exception.InvalidRequestMessageContractTest` |
