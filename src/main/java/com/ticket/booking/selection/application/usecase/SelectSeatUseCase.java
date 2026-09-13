@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import com.ticket.booking.admission.application.AdmissionVerifier;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilityValidator;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -24,7 +22,6 @@ public class SelectSeatUseCase {
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
     private final AdmissionVerifier admissionVerifier;
-    private final SeatStatusEventPublisher seatEventPublisher;
     private final Clock clock;
 
     public record Input(Long performanceId, Long seatId, Long memberId, String admissionToken) {
@@ -60,16 +57,14 @@ public class SelectSeatUseCase {
         final Long performanceSeatId =
                 seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
 
+        // SELECTED 발행은 coordinator가 좌석 락 안에서 한다 — 발행을 락 밖으로 빼면 뒤늦은 만료 알림이
+        // 이 SELECTED 뒤에 끼어들 수 있다.
         seatSelectionCoordinator.select(
                 input.performanceId(),
                 input.seatId(),
                 input.memberId(),
-                policy.getOrderAcceptanceWindow().getClosesAt());
-        seatEventPublisher.publish(
-                input.performanceId(),
                 performanceSeatId,
-                input.seatId(),
-                SeatStatusAction.SELECTED);
+                policy.getOrderAcceptanceWindow().getClosesAt());
     }
 
     private PerformanceSalesPolicy findPolicy(final Long performanceId) {

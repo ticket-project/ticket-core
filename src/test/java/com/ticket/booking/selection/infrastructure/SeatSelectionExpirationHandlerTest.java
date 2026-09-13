@@ -3,54 +3,38 @@ package com.ticket.booking.selection.infrastructure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.seat.application.SeatStatusEvent;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 
+/**
+ * 이 핸들러는 Redis key 해석과 호출만 한다. 현재 상태 확인과 알림 필요 여부 판단은 {@code SeatSelectionCoordinatorTest}가 고정한다.
+ */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionExpirationHandlerTest {
-    @Mock private SeatStatusEventPublisher seatEventPublisher;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
+    @Mock private SeatSelectionCoordinator seatSelectionCoordinator;
+    @InjectMocks private SeatSelectionExpirationHandler handler;
 
     @Test
-    void 좌석_select_키를_지원하고_performanceSeatId로_deselected_이벤트를_발행한다() {
-        SeatSelectionExpirationHandler handler =
-                new SeatSelectionExpirationHandler(seatEventPublisher, performanceSeatRepository);
+    void 좌석_select_키를_해석해_application에_넘긴다() {
         String expiredKey = SeatSelectionRedisKey.select(10L, 20L);
-        PerformanceSeat performanceSeat =
-                new PerformanceSeat(10L, 20L, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
-        ReflectionTestUtils.setField(performanceSeat, "id", 501L);
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L)))
-                .thenReturn(List.of(performanceSeat));
 
         assertThat(handler.supports(expiredKey)).isTrue();
 
         handler.handle(expiredKey);
 
-        verify(seatEventPublisher)
-                .publish(10L, 501L, 20L, SeatStatusEvent.SeatStatusAction.DESELECTED);
+        verify(seatSelectionCoordinator).notifyReleasedIfFree(10L, 20L);
     }
 
     @Test
     void 좌석_select_키가_아니면_지원하지_않는다() {
-        SeatSelectionExpirationHandler handler =
-                new SeatSelectionExpirationHandler(seatEventPublisher, performanceSeatRepository);
-
         assertThat(handler.supports("unknown:key")).isFalse();
-        verifyNoInteractions(seatEventPublisher, performanceSeatRepository);
+        verifyNoInteractions(seatSelectionCoordinator);
     }
 }
