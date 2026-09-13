@@ -11,7 +11,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.hold.domain.HoldHistoryRecorder;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 
@@ -25,23 +24,21 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class OrderTerminationService {
-    private final HoldHistoryRecorder holdHistoryRecorder;
+    private final OrderHoldHistoryRecorder orderHoldHistoryRecorder;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     public void cancel(final Order order, final LocalDateTime now) {
         final List<OrderSeat> orderSeats = order.getOrderSeats();
         order.cancel(now);
-        holdHistoryRecorder.recordCanceled(
-                order.getMemberId(), order.getPerformanceId(), order.getHoldKey(), now, orderSeats);
+        orderHoldHistoryRecorder.recordCanceled(order, now);
         publishTerminated(order, orderSeats, now);
     }
 
     public void expire(final Order order, final LocalDateTime now) {
         final List<OrderSeat> orderSeats = order.getOrderSeats();
         order.expire(now);
-        holdHistoryRecorder.recordExpired(
-                order.getMemberId(), order.getPerformanceId(), order.getHoldKey(), now, orderSeats);
+        orderHoldHistoryRecorder.recordExpired(order, now);
         publishTerminated(order, orderSeats, now);
     }
 

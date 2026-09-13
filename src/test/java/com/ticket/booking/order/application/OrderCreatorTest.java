@@ -2,22 +2,19 @@ package com.ticket.booking.order.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderKeyGenerator;
@@ -29,24 +26,16 @@ import com.ticket.show.PerformanceSaleSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class OrderCreatorTest {
-    @Mock private OrderRepository orderRepository;
     @Mock private OrderKeyGenerator orderKeyGenerator;
     @InjectMocks private OrderCreator orderCreator;
 
     @Test
-    void 좌석_가격_합계로_pending_주문과_orderSeat를_생성한다() {
+    void 좌석_가격_합계로_pending_주문과_orderSeat를_조립한다() {
         // given
         final PerformanceSeat firstSeat = createPerformanceSeat(101L, 201L, 1L, BigDecimal.TEN);
         final PerformanceSeat secondSeat =
                 createPerformanceSeat(102L, 202L, 2L, BigDecimal.valueOf(20));
         when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
-        when(orderRepository.save(any(Order.class)))
-                .thenAnswer(
-                        invocation -> {
-                            final Order order = invocation.getArgument(0);
-                            ReflectionTestUtils.setField(order, "id", 99L);
-                            return order;
-                        });
         final PerformanceSaleSnapshot saleSnapshot =
                 new PerformanceSaleSnapshot(
                         10L,
@@ -106,51 +95,35 @@ class OrderCreatorTest {
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
+    /**
+     * 조립과 저장을 분리한 결과를 고정한다. 저장과 트랜잭션 경계는 {@link CreatePendingOrderTransactionService}의 것이라, 이 클래스는
+     * Repository를 알지도 {@code @Transactional}을 갖지도 않는다.
+     */
     @Test
-    void pending_주문_저장_예외는_그대로_DataIntegrityViolationException_으로_전파한다() {
-        // given
-        when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
-        final DataIntegrityViolationException exception =
-                new DataIntegrityViolationException(
-                        "duplicate",
-                        new ConstraintViolationException(
-                                "duplicate",
-                                new SQLException("duplicate"),
-                                "",
-                                "UK_ORDERS_PENDING_MEMBER_PERF"));
-        when(orderRepository.save(any(Order.class))).thenThrow(exception);
-        // when
-        // then
-        assertThatThrownBy(
-                        () ->
-                                orderCreator.createPendingOrder(
-                                        1L,
-                                        10L,
-                                        "hold-key",
-                                        LocalDateTime.now(),
-                                        List.of(priceOnlyPerformanceSeat(BigDecimal.TEN)),
-                                        emptySaleSnapshot()))
-                .isInstanceOf(DataIntegrityViolationException.class);
+    void 조립만_하고_저장하지_않는다() {
+        assertThat(Arrays.stream(OrderCreator.class.getDeclaredFields()))
+                .noneSatisfy(field -> assertThat(field.getType()).isEqualTo(OrderRepository.class));
+        assertThat(Arrays.stream(OrderCreator.class.getDeclaredMethods()))
+                .noneMatch(method -> method.isAnnotationPresent(Transactional.class));
+        assertThat(OrderCreator.class.isAnnotationPresent(Transactional.class)).isFalse();
     }
 
     @Test
-    void 다른_데이터_무결성_예외도_그대로_전파한다() {
-        // given
+    void 좌석_표시값이_없으면_조립에_실패한다() {
         when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
-        when(orderRepository.save(any(Order.class)))
-                .thenThrow(new DataIntegrityViolationException("other"));
-        // when
-        // then
+        final PerformanceSeat seat = createPerformanceSeat(101L, 201L, 1L, BigDecimal.TEN);
+
         assertThatThrownBy(
                         () ->
                                 orderCreator.createPendingOrder(
                                         1L,
                                         10L,
                                         "hold-key",
-                                        LocalDateTime.now(),
-                                        List.of(priceOnlyPerformanceSeat(BigDecimal.TEN)),
+                                        LocalDateTime.of(2026, 3, 15, 12, 0),
+                                        List.of(seat),
                                         emptySaleSnapshot()))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("좌석 표시값");
     }
 
     private PerformanceSeat createPerformanceSeat(
@@ -159,16 +132,12 @@ class OrderCreatorTest {
             final Long performanceGradeId,
             final BigDecimal price) {
         final PerformanceSeat performanceSeat = org.mockito.Mockito.mock(PerformanceSeat.class);
-        when(performanceSeat.getId()).thenReturn(performanceSeatId);
+        org.mockito.Mockito.lenient().when(performanceSeat.getId()).thenReturn(performanceSeatId);
         when(performanceSeat.getUnitPrice()).thenReturn(price);
         when(performanceSeat.getSeatId()).thenReturn(seatId);
-        when(performanceSeat.getPerformanceGradeId()).thenReturn(performanceGradeId);
-        return performanceSeat;
-    }
-
-    private PerformanceSeat priceOnlyPerformanceSeat(final BigDecimal price) {
-        final PerformanceSeat performanceSeat = org.mockito.Mockito.mock(PerformanceSeat.class);
-        when(performanceSeat.getUnitPrice()).thenReturn(price);
+        org.mockito.Mockito.lenient()
+                .when(performanceSeat.getPerformanceGradeId())
+                .thenReturn(performanceGradeId);
         return performanceSeat;
     }
 

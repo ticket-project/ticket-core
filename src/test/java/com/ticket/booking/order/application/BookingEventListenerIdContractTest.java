@@ -25,8 +25,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
 import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.hold.domain.HoldAllocation;
-import com.ticket.booking.order.domain.PendingOrderCreationResult;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 
@@ -198,24 +196,25 @@ class BookingEventListenerIdContractTest {
                         PERFORMANCE_ID,
                         List.of(seat.getSeatId()),
                         LocalDateTime.now().plus(HOLD_DURATION));
-        final HoldAllocation allocation = new HoldAllocation(hold, List.of(seat));
+        final List<PerformanceSeat> performanceSeats = List.of(seat);
 
-        final PendingOrderCreationResult result =
+        final String orderKey =
                 createPendingOrderTransactionService.create(
                         MEMBER_ID,
                         PERFORMANCE_ID,
                         HOLD_DURATION,
-                        allocation,
-                        saleSnapshotFor(allocation));
+                        hold,
+                        performanceSeats,
+                        saleSnapshotFor(performanceSeats));
 
-        assertThat(result.order().getId()).isNotNull();
+        assertThat(orderKey).isNotBlank();
     }
 
     private com.ticket.show.PerformanceSaleSnapshot saleSnapshotFor(
-            final HoldAllocation allocation) {
+            final List<PerformanceSeat> performanceSeats) {
         final java.util.Map<Long, com.ticket.show.PerformanceSaleSnapshot.SeatInfo>
                 seatInfoBySeatId = new java.util.HashMap<>();
-        for (final PerformanceSeat seat : allocation.performanceSeats()) {
+        for (final PerformanceSeat seat : performanceSeats) {
             seatInfoBySeatId.put(
                     seat.getSeatId(),
                     new com.ticket.show.PerformanceSaleSnapshot.SeatInfo(

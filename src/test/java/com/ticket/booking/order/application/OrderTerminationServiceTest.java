@@ -8,7 +8,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.hold.domain.HoldHistoryRecorder;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
@@ -30,7 +28,7 @@ class OrderTerminationServiceTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 10, 0);
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private HoldHistoryRecorder holdHistoryRecorder;
+    @Mock private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
     @Mock private ApplicationEventPublisher eventPublisher;
 
     @Test
@@ -42,8 +40,8 @@ class OrderTerminationServiceTest {
         service().cancel(order, FIXED_NOW);
 
         assertThat(order.getStatus()).isEqualTo(OrderState.CANCELED);
-        verify(holdHistoryRecorder)
-                .recordCanceled(1L, 100L, "hold-key", FIXED_NOW, List.of(orderSeat));
+        verify(orderHoldHistoryRecorder).recordCanceled(order, FIXED_NOW);
+        assertThat(order.getOrderSeats()).containsExactly(orderSeat);
         final OrderTerminated event = capturedEvent();
         assertThat(event.orderId()).isEqualTo(10L);
         assertThat(event.memberId()).isEqualTo(1L);
@@ -63,8 +61,8 @@ class OrderTerminationServiceTest {
         service().expire(order, FIXED_NOW);
 
         assertThat(order.getStatus()).isEqualTo(OrderState.EXPIRED);
-        verify(holdHistoryRecorder)
-                .recordExpired(1L, 100L, "hold-key", FIXED_NOW, List.of(orderSeat));
+        verify(orderHoldHistoryRecorder).recordExpired(order, FIXED_NOW);
+        assertThat(order.getOrderSeats()).containsExactly(orderSeat);
         final OrderTerminated event = capturedEvent();
         assertThat(event.reason()).isEqualTo("EXPIRED");
     }
@@ -79,8 +77,8 @@ class OrderTerminationServiceTest {
 
         service().cancel(order, FIXED_NOW);
 
-        verify(holdHistoryRecorder)
-                .recordCanceled(1L, 100L, "hold-key", FIXED_NOW, List.of(first, second));
+        verify(orderHoldHistoryRecorder).recordCanceled(order, FIXED_NOW);
+        assertThat(order.getOrderSeats()).containsExactly(first, second);
         assertThat(capturedEvent().performanceSeatIds()).isEqualTo(Set.of(501L, 502L));
     }
 
@@ -92,7 +90,7 @@ class OrderTerminationServiceTest {
     }
 
     private OrderTerminationService service() {
-        return new OrderTerminationService(holdHistoryRecorder, eventPublisher, FIXED_CLOCK);
+        return new OrderTerminationService(orderHoldHistoryRecorder, eventPublisher, FIXED_CLOCK);
     }
 
     private Order order(final Long id, final String holdKey) {

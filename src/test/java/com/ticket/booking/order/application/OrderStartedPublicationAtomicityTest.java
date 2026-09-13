@@ -3,7 +3,6 @@ package com.ticket.booking.order.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.lang.reflect.RecordComponent;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -23,10 +22,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
 import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.hold.domain.HoldAllocation;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.domain.PendingOrderCreationResult;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 
@@ -88,17 +85,28 @@ class OrderStartedPublicationAtomicityTest {
     @Test
     void 성공하면_주문과_OrderStarted_publication이_함께_저장된다() {
         final String holdKey = "atomicity-success-" + System.nanoTime();
-        final HoldAllocation allocation = allocationWithPersistedSeat(holdKey);
+        final Hold hold = holdWithPersistedSeat(holdKey);
+        final List<PerformanceSeat> performanceSeats = persistedSeats(holdKey);
 
-        final PendingOrderCreationResult result =
+        final String orderKey =
                 createPendingOrderTransactionService.create(
                         MEMBER_ID,
                         PERFORMANCE_ID,
                         HOLD_DURATION,
-                        allocation,
-                        saleSnapshotFor(allocation));
+                        hold,
+                        performanceSeats,
+                        saleSnapshotFor(performanceSeats));
 
-        assertThat(orderRepository.findById(result.order().getId())).isPresent();
+        assertThat(orderKey).isNotBlank();
+        final Boolean savedOrderExists =
+                new TransactionTemplate(transactionManager)
+                        .execute(
+                                status ->
+                                        orderRepository
+                                                .findByHoldKeyAndStatusForUpdate(
+                                                        holdKey, OrderState.PENDING)
+                                                .isPresent());
+        assertThat(savedOrderExists).isTrue();
         // listener가 비동기로 매우 빨리 완료돼 event_publication -> event_publication_archive로
         // 옮겨갈 수 있으므로, 두 테이블 합산이 안정적으로 1이 될 때까지 짧게 기다린다.
         org.awaitility.Awaitility.await()
@@ -109,7 +117,8 @@ class OrderStartedPublicationAtomicityTest {
     @Test
     void 롤백되면_주문과_publication이_모두_없다() {
         final String holdKey = "atomicity-rollback-" + System.nanoTime();
-        final HoldAllocation allocation = allocationWithPersistedSeat(holdKey);
+        final Hold hold = holdWithPersistedSeat(holdKey);
+        final List<PerformanceSeat> performanceSeats = persistedSeats(holdKey);
 
         assertThatThrownBy(
                         () ->
@@ -120,8 +129,9 @@ class OrderStartedPublicationAtomicityTest {
                                                             MEMBER_ID,
                                                             PERFORMANCE_ID,
                                                             HOLD_DURATION,
-                                                            allocation,
-                                                            saleSnapshotFor(allocation));
+                                                            hold,
+                                                            performanceSeats,
+                                                            saleSnapshotFor(performanceSeats));
                                                     throw new IllegalStateException("의도적인 롤백");
                                                 }))
                 .isInstanceOf(IllegalStateException.class);
@@ -138,11 +148,24 @@ class OrderStartedPublicationAtomicityTest {
         assertThat(countPublicationsFor(holdKey)).isEqualTo(0L);
     }
 
+    /**
+     * 주문 생성 트랜잭션은 entity가 아니라 orderKey만 돌려준다. 트랜잭션 밖에서 lazy 연관을 다시 읽는 경로를 만들지 않기 위해서다 — 옛 {@code
+     * PendingOrderCreationResult}는 Order 하나만 감싸는 래퍼라 없앴다.
+     */
     @Test
-    void PendingOrderCreationResult는_order_하나만_담고_outbox_id를_담지_않는다() {
-        final RecordComponent[] components = PendingOrderCreationResult.class.getRecordComponents();
-
-        assertThat(components).extracting(RecordComponent::getName).containsExactly("order");
+    void 주문_생성_트랜잭션은_orderKey만_반환한다() throws NoSuchMethodException {
+        assertThat(
+                        CreatePendingOrderTransactionService.class
+                                .getDeclaredMethod(
+                                        "create",
+                                        Long.class,
+                                        Long.class,
+                                        Duration.class,
+                                        Hold.class,
+                                        List.class,
+                                        com.ticket.show.PerformanceSaleSnapshot.class)
+                                .getReturnType())
+                .isEqualTo(String.class);
     }
 
     /**
@@ -169,19 +192,29 @@ class OrderStartedPublicationAtomicityTest {
         return count.longValue();
     }
 
-    private HoldAllocation allocationWithPersistedSeat(final String holdKey) {
+    private final java.util.Map<String, List<PerformanceSeat>> seatsByHoldKey =
+            new java.util.HashMap<>();
+
+    private Hold holdWithPersistedSeat(final String holdKey) {
         final PerformanceSeat seat = persistSeat();
-        final LocalDateTime expiresAt = LocalDateTime.now().plus(HOLD_DURATION);
-        final Hold hold =
-                new Hold(holdKey, MEMBER_ID, PERFORMANCE_ID, List.of(seat.getSeatId()), expiresAt);
-        return new HoldAllocation(hold, List.of(seat));
+        seatsByHoldKey.put(holdKey, List.of(seat));
+        return new Hold(
+                holdKey,
+                MEMBER_ID,
+                PERFORMANCE_ID,
+                List.of(seat.getSeatId()),
+                LocalDateTime.now().plus(HOLD_DURATION));
+    }
+
+    private List<PerformanceSeat> persistedSeats(final String holdKey) {
+        return seatsByHoldKey.get(holdKey);
     }
 
     private com.ticket.show.PerformanceSaleSnapshot saleSnapshotFor(
-            final HoldAllocation allocation) {
+            final List<PerformanceSeat> performanceSeats) {
         final java.util.Map<Long, com.ticket.show.PerformanceSaleSnapshot.SeatInfo>
                 seatInfoBySeatId = new java.util.HashMap<>();
-        for (final PerformanceSeat seat : allocation.performanceSeats()) {
+        for (final PerformanceSeat seat : performanceSeats) {
             seatInfoBySeatId.put(
                     seat.getSeatId(),
                     new com.ticket.show.PerformanceSaleSnapshot.SeatInfo(

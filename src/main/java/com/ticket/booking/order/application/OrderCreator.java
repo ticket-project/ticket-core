@@ -4,31 +4,31 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Component;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderKeyGenerator;
-import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+/**
+ * PENDING 주문 aggregate를 조립한다. <b>저장하지 않는다</b> — 저장과 트랜잭션 경계는 {@link
+ * CreatePendingOrderTransactionService}가 소유한다. 조립과 저장을 한 클래스가 함께 들고 있으면 "어디까지가 한 트랜잭션인가"가 두 곳에
+ * 흩어진다.
+ *
+ * <p>주문 생성 시점의 show 표시값을 Order/OrderSeat에 snapshot으로 남긴다(ADR 0005). 금액은 show 값이 아니라 오직 {@link
+ * PerformanceSeat#getUnitPrice()}로만 계산한다 — 클라이언트가 보낸 가격도, show가 다시 계산한 가격도 받지 않는다.
+ *
+ * <p>좌석은 Order aggregate 안의 자식이라 별도 Repository 없이 root에 담고, root를 저장할 때 {@code cascade = ALL}로 함께
+ * 저장된다.
+ */
+@Component
 @RequiredArgsConstructor
 public class OrderCreator {
-    private final OrderRepository orderRepository;
     private final OrderKeyGenerator orderKeyGenerator;
 
-    /**
-     * 주문 생성 시점의 show 표시값을 Order/OrderSeat에 snapshot으로 남긴다(ADR 0005). 금액은 show 값이 아니라 오직 {@link
-     * PerformanceSeat#unitPrice}로만 계산한다 — 클라이언트가 보낸 가격도, show가 다시 계산한 가격도 받지 않는다.
-     *
-     * <p>좌석은 Order aggregate 안의 자식이라 별도 Repository 없이 root에 담고, 같은 트랜잭션의 flush에서 {@code cascade =
-     * ALL}로 함께 저장된다.
-     */
-    @Transactional
     public Order createPendingOrder(
             final Long memberId,
             final Long performanceId,
@@ -36,30 +36,17 @@ public class OrderCreator {
             final LocalDateTime expiresAt,
             final List<PerformanceSeat> performanceSeats,
             final PerformanceSaleSnapshot saleSnapshot) {
-        return create(memberId, performanceId, holdKey, expiresAt, performanceSeats, saleSnapshot);
-    }
-
-    private Order create(
-            final Long memberId,
-            final Long performanceId,
-            final String holdKey,
-            final LocalDateTime expiresAt,
-            final List<PerformanceSeat> performanceSeats,
-            final PerformanceSaleSnapshot saleSnapshot) {
-        final BigDecimal totalAmount = sumTotalAmount(performanceSeats);
-        final String orderKey = orderKeyGenerator.generate();
         final Order order =
-                orderRepository.save(
-                        new Order(
-                                memberId,
-                                performanceId,
-                                orderKey,
-                                holdKey,
-                                totalAmount,
-                                expiresAt,
-                                saleSnapshot.showTitle(),
-                                saleSnapshot.performanceStartTime(),
-                                saleSnapshot.venueName()));
+                new Order(
+                        memberId,
+                        performanceId,
+                        orderKeyGenerator.generate(),
+                        holdKey,
+                        sumTotalAmount(performanceSeats),
+                        expiresAt,
+                        saleSnapshot.showTitle(),
+                        saleSnapshot.performanceStartTime(),
+                        saleSnapshot.venueName());
         performanceSeats.forEach(seat -> addOrderSeat(order, seat, saleSnapshot));
         return order;
     }

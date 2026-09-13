@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class CreateOrderValidator {
+public class CreateOrderPreparer {
     private final MemberLookup memberLookup;
     private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private final PerformanceSaleCatalog performanceSaleCatalog;
@@ -29,7 +29,10 @@ public class CreateOrderValidator {
     private final PendingOrderLocalValidator pendingOrderLocalValidator;
 
     /**
-     * 주문 생성 전 검증을 비용 순서로 수행한다.
+     * 주문 생성 전 검증을 비용 순서로 수행하고, 이후 단계가 쓸 값(판매 정책, 좌석, show 표시 snapshot)을 함께 준비한다.
+     *
+     * <p>이름이 {@code Validator}가 아닌 이유가 여기 있다 — 통과·실패만 판정하지 않고 뒤 단계가 다시 조회하지 않도록 필요한 값을 모아 {@link
+     * ValidatedOrderContext}로 넘긴다.
      *
      * <p>회원 활성 확인(member), 판매 정책 조회(booking local)·주문 표시 snapshot 조회(show), 필요 시 입장 검사(admission)는
      * 모두 booking DB 트랜잭션 밖에서 호출한다. 판매 정책이 local DB 조회라는 이유로 show/member 호출까지 하나의 긴 트랜잭션에 넣지 않는다.
@@ -40,7 +43,7 @@ public class CreateOrderValidator {
      * PerformanceSaleCatalog} snapshot은 Order/OrderSeat에 남길 표시값 (show/venue 이름, 등급 코드/이름, 좌석 라벨)만
      * 제공한다.
      */
-    public ValidatedOrderContext validate(
+    public ValidatedOrderContext prepare(
             final CreateOrderUseCase.Input input,
             final RequestedSeatIds requestedSeatIds,
             final LocalDateTime now) {

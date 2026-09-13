@@ -1,4 +1,4 @@
-package com.ticket.booking.hold.domain;
+package com.ticket.booking.order.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -15,14 +15,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.booking.hold.domain.HoldHistory;
+import com.ticket.booking.hold.domain.HoldHistoryEventType;
+import com.ticket.booking.hold.domain.HoldHistoryRepository;
+import com.ticket.booking.hold.domain.HoldReleaseReason;
+import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class HoldHistoryRecorderTest {
+class OrderHoldHistoryRecorderTest {
     @Mock private HoldHistoryRepository holdHistoryRepository;
-    @InjectMocks private HoldHistoryRecorder holdHistoryRecorder;
+    @InjectMocks private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
 
     @Test
     void 선택한_좌석마다_created_hold_history를_기록한다() {
@@ -32,7 +37,7 @@ class HoldHistoryRecorderTest {
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         // when
-        holdHistoryRecorder.recordCreated(
+        orderHoldHistoryRecorder.recordCreated(
                 1L, 2L, "hold-key", occurredAt, expiresAt, List.of(first, second));
         // then
         List<HoldHistory> histories = captureHistories();
@@ -48,10 +53,9 @@ class HoldHistoryRecorderTest {
     void 주문취소시_좌석마다_canceled_hold_history를_기록한다() {
         // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 10);
-        OrderSeat first = createOrderSeat(100L, 10L);
-        OrderSeat second = createOrderSeat(101L, 20L);
+        Order order = createOrder(createOrderSeat(100L, 10L), createOrderSeat(101L, 20L));
         // when
-        holdHistoryRecorder.recordCanceled(1L, 2L, "hold-key", occurredAt, List.of(first, second));
+        orderHoldHistoryRecorder.recordCanceled(order, occurredAt);
         // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(2);
@@ -64,9 +68,9 @@ class HoldHistoryRecorderTest {
     void 주문만료시_좌석마다_expired_hold_history를_기록한다() {
         // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 30);
-        OrderSeat first = createOrderSeat(100L, 10L);
+        Order order = createOrder(createOrderSeat(100L, 10L));
         // when
-        holdHistoryRecorder.recordExpired(1L, 2L, "hold-key", occurredAt, List.of(first));
+        orderHoldHistoryRecorder.recordExpired(order, occurredAt);
         // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(1);
@@ -87,6 +91,15 @@ class HoldHistoryRecorderTest {
         when(performanceSeat.getId()).thenReturn(performanceSeatId);
         when(performanceSeat.getSeatId()).thenReturn(seatId);
         return performanceSeat;
+    }
+
+    private Order createOrder(final OrderSeat... orderSeats) {
+        Order order = mock(Order.class);
+        when(order.getOrderSeats()).thenReturn(List.of(orderSeats));
+        when(order.getHoldKey()).thenReturn("hold-key");
+        when(order.getMemberId()).thenReturn(1L);
+        when(order.getPerformanceId()).thenReturn(2L);
+        return order;
     }
 
     private OrderSeat createOrderSeat(final Long performanceSeatId, final Long seatId) {
