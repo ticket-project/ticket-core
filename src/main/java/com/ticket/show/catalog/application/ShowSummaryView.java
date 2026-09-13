@@ -10,6 +10,4 @@ public record ShowSummaryView(
         LocalDate startDate,
         LocalDate endDate,
         String venue,
-        LocalDateTime createdAt
-) {
-}
+        LocalDateTime createdAt) {}

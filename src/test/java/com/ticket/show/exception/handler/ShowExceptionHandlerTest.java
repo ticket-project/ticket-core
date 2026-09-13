@@ -1,31 +1,30 @@
 package com.ticket.show.exception.handler;
 
-import com.ticket.show.catalog.application.ShowSort;
-import com.ticket.show.exception.UnsupportedShowSortException;
-import com.ticket.shared.web.ApiResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import com.ticket.shared.web.ApiResponse;
+import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.exception.UnsupportedShowSortException;
 
-/**
- * show 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다.
- */
+/** show 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다. */
 @SuppressWarnings("NonAsciiCharacters")
 class ShowExceptionHandlerTest {
-
     private final ShowExceptionHandler handler = new ShowExceptionHandler();
 
     /**
-     * 예외를 직접 만들지 않고 실제 파싱 경로에서 받는다. 상세 문구를 만드는 곳이 예외 안으로
-     * 옮겨졌으므로, 접두어가 정확히 한 번만 붙는지는 이 경로로만 확인할 수 있다.
+     * 예외를 직접 만들지 않고 실제 파싱 경로에서 받는다. 상세 문구를 만드는 곳이 예외 안으로 옮겨졌으므로, 접두어가 정확히 한 번만 붙는지는 이 경로로만 확인할 수
+     * 있다.
      */
     @Test
     void 미지원_정렬_조건은_400과_E7002로_응답하고_원문에_접두어를_한_번_붙여_data에_싣는다() {
-        final UnsupportedShowSortException exception = catchThrowableOfType(
-                () -> ShowSort.from("UNKNOWN_SORT"), UnsupportedShowSortException.class);
+        final UnsupportedShowSortException exception =
+                catchThrowableOfType(
+                        () -> ShowSort.from("UNKNOWN_SORT"), UnsupportedShowSortException.class);
 
         final ResponseEntity<ApiResponse<Object>> response = handler.handleShowException(exception);
 

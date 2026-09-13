@@ -1,53 +1,53 @@
 package com.ticket.show.performance.application.usecase;
 
-import com.ticket.show.performance.application.port.PerformanceQueryPort;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
-import com.ticket.show.performance.application.PerformanceSummaryView;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
-import com.ticket.shared.exception.NotFoundException;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.performance.application.PerformanceSummaryView;
+import com.ticket.show.performance.application.port.PerformanceQueryPort;
+import com.ticket.venue.Region;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSummary;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetPerformanceSummaryUseCaseTest {
-
-    @Mock
-    private PerformanceQueryPort performanceQueryPort;
-
-    @Mock
-    private VenueLookup venueLookup;
-
-    @InjectMocks
-    private GetPerformanceSummaryUseCase useCase;
+    @Mock private PerformanceQueryPort performanceQueryPort;
+    @Mock private VenueLookup venueLookup;
+    @InjectMocks private GetPerformanceSummaryUseCase useCase;
 
     @Test
     void 공연_요약정보를_반환한다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
         when(performanceQueryPort.findByPerformanceId(1L))
-                .thenReturn(Optional.of(new PerformanceSummaryView(
-                        "싱어게인", 5L, startTime
-                )));
-        when(venueLookup.findSummary(5L)).thenReturn(Optional.of(new VenueSummary(
-                5L, "venue", "주소", Region.CHUNGCHEONG, null, null, null, null,
-                new VenueSummary.SeatMapLayout(0, 0, 0.0)
-        )));
+                .thenReturn(Optional.of(new PerformanceSummaryView("싱어게인", 5L, startTime)));
+        when(venueLookup.findSummary(5L))
+                .thenReturn(
+                        Optional.of(
+                                new VenueSummary(
+                                        5L,
+                                        "venue",
+                                        "주소",
+                                        Region.CHUNGCHEONG,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        new VenueSummary.SeatMapLayout(0, 0, 0.0))));
 
-        GetPerformanceSummaryUseCase.Output output = useCase.execute(
-                new GetPerformanceSummaryUseCase.Input(1L)
-        );
+        GetPerformanceSummaryUseCase.Output output =
+                useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
 
         assertThat(output.title()).isEqualTo("싱어게인");
         assertThat(output.region()).isEqualTo("충청");
@@ -66,13 +66,10 @@ class GetPerformanceSummaryUseCaseTest {
     void 공연장이_없어도_지역은_null로_반환한다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
         when(performanceQueryPort.findByPerformanceId(1L))
-                .thenReturn(Optional.of(new PerformanceSummaryView(
-                        "싱어게인", null, startTime
-                )));
+                .thenReturn(Optional.of(new PerformanceSummaryView("싱어게인", null, startTime)));
 
-        GetPerformanceSummaryUseCase.Output output = useCase.execute(
-                new GetPerformanceSummaryUseCase.Input(1L)
-        );
+        GetPerformanceSummaryUseCase.Output output =
+                useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
 
         assertThat(output.region()).isNull();
     }

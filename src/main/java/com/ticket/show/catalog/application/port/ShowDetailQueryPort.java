@@ -1,9 +1,9 @@
 package com.ticket.show.catalog.application.port;
 
-import com.ticket.show.catalog.application.ShowDetailView;
 import java.util.Optional;
 
-public interface ShowDetailQueryPort {
+import com.ticket.show.catalog.application.ShowDetailView;
 
+public interface ShowDetailQueryPort {
     Optional<ShowDetailView> findShowDetail(Long showId);
 }

@@ -1,23 +1,23 @@
 package com.ticket.show.catalog.application.usecase;
 
-import com.ticket.show.catalog.application.SaleOpeningSoonSummaryRow;
-import com.ticket.show.catalog.application.VenueDisplays;
+import java.util.List;
 
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-
-import com.ticket.show.catalog.application.ShowOpeningSoonSummaryView;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.venue.VenueLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.catalog.application.SaleOpeningSoonSummaryRow;
+import com.ticket.show.catalog.application.SaleOpeningSoonSummaryView;
+import com.ticket.show.catalog.application.VenueDisplays;
+import com.ticket.show.catalog.application.port.ShowListQueryPort;
+import com.ticket.venue.VenueLookup;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class GetSaleStartApproachingShowsUseCase {
+public class GetSaleOpeningSoonShowsUseCase {
     private final ShowListQueryPort showListQueryPort;
     private final VenueLookup venueLookup;
 
@@ -29,23 +29,25 @@ public class GetSaleStartApproachingShowsUseCase {
         }
     }
 
-    public record Output(List<ShowOpeningSoonSummaryView> shows) {
-    }
+    public record Output(List<SaleOpeningSoonSummaryView> shows) {}
 
     public Output execute(final Input input) {
         final List<SaleOpeningSoonSummaryRow> rows =
-                showListQueryPort.findShowsSaleOpeningSoon(input.category(), input.size());
-        final VenueDisplays venues = VenueDisplays.load(venueLookup, rows.stream().map(SaleOpeningSoonSummaryRow::venueId).toList());
+                showListQueryPort.findSaleOpeningSoonSummaries(input.category(), input.size());
+        final VenueDisplays venues =
+                VenueDisplays.load(
+                        venueLookup,
+                        rows.stream().map(SaleOpeningSoonSummaryRow::venueId).toList());
         return new Output(rows.stream().map(row -> toView(row, venues)).toList());
     }
 
-    private ShowOpeningSoonSummaryView toView(final SaleOpeningSoonSummaryRow row, final VenueDisplays venues) {
-        return new ShowOpeningSoonSummaryView(
+    private SaleOpeningSoonSummaryView toView(
+            final SaleOpeningSoonSummaryRow row, final VenueDisplays venues) {
+        return new SaleOpeningSoonSummaryView(
                 row.id(),
                 row.title(),
                 row.image(),
                 venues.nameOf(row.venueId()),
-                row.displaySaleStartsAt()
-        );
+                row.displaySaleStartsAt());
     }
 }

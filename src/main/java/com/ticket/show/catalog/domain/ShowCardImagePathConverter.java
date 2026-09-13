@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ShowCardImagePathConverter {
-
     private static final String SHOW_IMAGE_PREFIX = "/api/images/shows/";
     private static final String CARD_IMAGE_PREFIX = "/api/images/shows/card/";
 

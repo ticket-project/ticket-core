@@ -1,8 +1,8 @@
 package com.ticket.show.catalog.application;
 
-import com.ticket.venue.Region;
-
 import java.time.LocalDate;
+
+import com.ticket.venue.Region;
 
 public record ShowSearchItemView(
         Long id,
@@ -12,6 +12,4 @@ public record ShowSearchItemView(
         LocalDate startDate,
         LocalDate endDate,
         Region region,
-        long viewCount
-) {
-}
+        long viewCount) {}

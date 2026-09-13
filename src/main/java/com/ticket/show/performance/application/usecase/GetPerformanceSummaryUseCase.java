@@ -1,22 +1,22 @@
 package com.ticket.show.performance.application.usecase;
 
-import com.ticket.show.performance.application.port.PerformanceQueryPort;
+import java.time.LocalDateTime;
 
-import com.ticket.show.performance.application.PerformanceSummaryView;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
-import com.ticket.venue.VenueLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.performance.application.PerformanceSummaryView;
+import com.ticket.show.performance.application.port.PerformanceQueryPort;
+import com.ticket.venue.VenueLookup;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSummaryUseCase {
-
     private final PerformanceQueryPort performanceQueryPort;
     private final VenueLookup venueLookup;
 
@@ -31,29 +31,26 @@ public class GetPerformanceSummaryUseCase {
         }
     }
 
-    public record Output(
-            String title,
-            String region,
-            LocalDateTime startTime
-    ) {}
+    public record Output(String title, String region, LocalDateTime startTime) {}
 
     public Output execute(final Input input) {
-        final PerformanceSummaryView summary = performanceQueryPort
-                .findByPerformanceId(input.performanceId())
-                .orElseThrow(() -> new NotFoundException(
-                                                "회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()
-                ));
+        final PerformanceSummaryView summary =
+                performanceQueryPort
+                        .findByPerformanceId(input.performanceId())
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "회차에 연결된 공연을 찾을 수 없습니다. id="
+                                                        + input.performanceId()));
 
-        final String region = summary.venueId() == null
-                ? null
-                : venueLookup.findSummary(summary.venueId())
-                        .map(v -> v.region().getDescription())
-                        .orElse(null);
+        final String region =
+                summary.venueId() == null
+                        ? null
+                        : venueLookup
+                                .findSummary(summary.venueId())
+                                .map(v -> v.region().getDescription())
+                                .orElse(null);
 
-        return new Output(
-                summary.title(),
-                region,
-                summary.startTime()
-        );
+        return new Output(summary.title(), region, summary.startTime());
     }
 }
