@@ -1,24 +1,21 @@
 package com.ticket.booking.ticket.domain;
 
-import org.junit.jupiter.api.Test;
-
-import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.Test;
+
 @SuppressWarnings("NonAsciiCharacters")
 class TicketTest {
-
     @Test
     void 티켓을_발급하면_issued_상태로_초기화된다() {
-        //given
+        // given
         LocalDateTime issuedAt = LocalDateTime.of(2026, 3, 15, 12, 0);
-
-        //when
+        // when
         Ticket ticket = createTicket(issuedAt);
-
-        //then
+        // then
         assertThat(ticket.getTicketKey()).isEqualTo("ticket-key");
         assertThat(ticket.getOrderSeatId()).isEqualTo(1L);
         assertThat(ticket.getOwnerMemberId()).isEqualTo(10L);
@@ -29,14 +26,12 @@ class TicketTest {
 
     @Test
     void issued_상태는_사용_처리할_수_있다() {
-        //given
+        // given
         LocalDateTime usedAt = LocalDateTime.of(2026, 3, 15, 18, 0);
         Ticket ticket = createTicket(LocalDateTime.of(2026, 3, 15, 12, 0));
-
-        //when
+        // when
         ticket.use(usedAt);
-
-        //then
+        // then
         assertThat(ticket.getStatus()).isEqualTo(TicketStatus.USED);
         assertThat(ticket.getUsedAt()).isEqualTo(usedAt);
         assertThat(ticket.isTerminal()).isTrue();
@@ -44,14 +39,12 @@ class TicketTest {
 
     @Test
     void issued_상태는_취소할_수_있다() {
-        //given
+        // given
         LocalDateTime canceledAt = LocalDateTime.of(2026, 3, 15, 13, 0);
         Ticket ticket = createTicket(LocalDateTime.of(2026, 3, 15, 12, 0));
-
-        //when
+        // when
         ticket.cancel(canceledAt);
-
-        //then
+        // then
         assertThat(ticket.getStatus()).isEqualTo(TicketStatus.CANCELED);
         assertThat(ticket.getCanceledAt()).isEqualTo(canceledAt);
         assertThat(ticket.isTerminal()).isTrue();
@@ -59,12 +52,11 @@ class TicketTest {
 
     @Test
     void 종결_상태의_티켓은_다시_전이할_수_없다() {
-        //given
+        // given
         Ticket ticket = createTicket(LocalDateTime.of(2026, 3, 15, 12, 0));
         ticket.use(LocalDateTime.of(2026, 3, 15, 18, 0));
-
-        //when
-        //then
+        // when
+        // then
         assertThatThrownBy(() -> ticket.use(LocalDateTime.of(2026, 3, 15, 19, 0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("currentStatus=USED");

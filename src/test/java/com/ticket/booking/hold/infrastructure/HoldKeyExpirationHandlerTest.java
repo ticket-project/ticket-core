@@ -1,32 +1,32 @@
 package com.ticket.booking.hold.infrastructure;
 
-import com.ticket.booking.order.application.usecase.ExpireOrderUseCase;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.booking.order.application.usecase.ExpireOrderUseCase;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class HoldKeyExpirationHandlerTest {
-
-    @Mock
-    private ExpireOrderUseCase expireOrderUseCase;
-
-    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    @Mock private ExpireOrderUseCase expireOrderUseCase;
+    private final Clock fixedClock =
+            Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Test
     void hold_meta_키를_지원하고_주문_만료를_위임한다() {
-        HoldKeyExpirationHandler handler = new HoldKeyExpirationHandler(expireOrderUseCase, fixedClock);
+        HoldKeyExpirationHandler handler =
+                new HoldKeyExpirationHandler(expireOrderUseCase, fixedClock);
 
         String expiredKey = HoldRedisKey.holdMeta("hold-key");
 
@@ -34,12 +34,14 @@ class HoldKeyExpirationHandlerTest {
 
         handler.handle(expiredKey);
 
-        verify(expireOrderUseCase).expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
+        verify(expireOrderUseCase)
+                .expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
     }
 
     @Test
     void hold_meta_키가_아니면_지원하지_않는다() {
-        HoldKeyExpirationHandler handler = new HoldKeyExpirationHandler(expireOrderUseCase, fixedClock);
+        HoldKeyExpirationHandler handler =
+                new HoldKeyExpirationHandler(expireOrderUseCase, fixedClock);
 
         assertThat(handler.supports("unknown:key")).isFalse();
         verifyNoInteractions(expireOrderUseCase);

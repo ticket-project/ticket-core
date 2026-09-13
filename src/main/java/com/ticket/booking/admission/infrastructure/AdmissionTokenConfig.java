@@ -1,24 +1,22 @@
 package com.ticket.booking.admission.infrastructure;
 
-import com.ticket.booking.admission.application.AdmissionVerifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
-@EnableConfigurationProperties(AdmissionTokenConfigurationProperties.class)
-public class AdmissionTokenConfig {
+import com.ticket.booking.admission.application.AdmissionVerifier;
 
+@Configuration
+@EnableConfigurationProperties(AdmissionTokenProperties.class)
+public class AdmissionTokenConfig {
     @Bean
-    public AdmissionVerifier admissionVerifier(final AdmissionTokenConfigurationProperties properties) {
+    public AdmissionVerifier admissionVerifier(final AdmissionTokenProperties properties) {
         return new JwtAdmissionVerifier(
                 new AdmissionTokenSettings(
                         properties.getIssuer(),
                         properties.getAudience(),
                         properties.getSecretKey(),
-                        properties.getExpirationSeconds()
-                ),
-                properties.isEnforcementEnabled()
-        );
+                        properties.getExpirationSeconds()),
+                properties.isEnforcementEnabled());
     }
 }

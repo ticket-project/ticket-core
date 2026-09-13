@@ -1,18 +1,9 @@
 package com.ticket.booking.order.application.usecase;
 
-import com.ticket.booking.order.application.port.OrderQueryPort;
-
-import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.application.OrderDetailRow;
-import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.shared.exception.NotFoundException;
-import com.ticket.member.MemberLookup;
-import com.ticket.member.MemberProfile;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -21,26 +12,27 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.order.application.OrderDetailRow;
+import com.ticket.booking.order.application.port.OrderQueryPort;
+import com.ticket.booking.order.domain.OrderState;
+import com.ticket.member.MemberLookup;
+import com.ticket.member.MemberProfile;
+import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetOrderDetailUseCaseTest {
-
-    private static final Clock FIXED_CLOCK = Clock.fixed(
-            Instant.parse("2026-03-15T10:00:00Z"),
-            ZoneId.of("Asia/Seoul")
-    );
-
-    @Mock
-    private OrderQueryPort orderQueryPort;
-
-    @Mock
-    private MemberLookup memberLookup;
-
+    private static final Clock FIXED_CLOCK =
+            Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
+    @Mock private OrderQueryPort orderQueryPort;
+    @Mock private MemberLookup memberLookup;
     private GetOrderDetailUseCase useCase;
 
     @BeforeEach
@@ -51,11 +43,11 @@ class GetOrderDetailUseCaseTest {
     @Test
     void 단일_조회결과를_주문상세로_조합한다() {
         when(orderQueryPort.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
-        when(memberLookup.getProfile(1L)).thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
+        when(memberLookup.getProfile(1L))
+                .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
 
-        GetOrderDetailUseCase.Output output = useCase.execute(
-                new GetOrderDetailUseCase.Input("order-key", 1L)
-        );
+        GetOrderDetailUseCase.Output output =
+                useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
 
         assertThat(output.orderKey()).isEqualTo("order-key");
         assertThat(output.show().title()).isEqualTo("뮤지컬");
@@ -72,11 +64,11 @@ class GetOrderDetailUseCaseTest {
     void show_값이_바뀌어도_이미_만든_주문_상세는_바뀌지_않는다() {
         // Order/OrderSeat가 생성 시점에 남긴 snapshot만 쓰므로 show를 다시 조회하지 않는다.
         when(orderQueryPort.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
-        when(memberLookup.getProfile(1L)).thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
+        when(memberLookup.getProfile(1L))
+                .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
 
-        GetOrderDetailUseCase.Output output = useCase.execute(
-                new GetOrderDetailUseCase.Input("order-key", 1L)
-        );
+        GetOrderDetailUseCase.Output output =
+                useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
 
         assertThat(output.show().title()).isEqualTo("뮤지컬");
         assertThat(output.tickets().seats().getFirst().price()).isEqualByComparingTo("120000");
@@ -118,7 +110,6 @@ class GetOrderDetailUseCaseTest {
                 BigDecimal.valueOf(120000),
                 "VIP",
                 "VIP",
-                "1F A구역 10열 7번"
-        );
+                "1F A구역 10열 7번");
     }
 }

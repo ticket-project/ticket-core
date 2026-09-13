@@ -1,8 +1,10 @@
 package com.ticket.booking.seat.infrastructure;
 
-import com.ticket.member.AccessTokenAuthenticator;
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.exception.UnauthenticatedException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,21 +18,15 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.ticket.member.AccessTokenAuthenticator;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.exception.UnauthenticatedException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WebSocketAuthInterceptorTest {
-
-    @Mock
-    private AccessTokenAuthenticator accessTokenAuthenticator;
-
-    @InjectMocks
-    private WebSocketAuthInterceptor interceptor;
-
+    @Mock private AccessTokenAuthenticator accessTokenAuthenticator;
+    @InjectMocks private WebSocketAuthInterceptor interceptor;
     private final MessageChannel channel = mock(MessageChannel.class);
 
     @Test
@@ -43,7 +39,8 @@ class WebSocketAuthInterceptorTest {
 
         final StompHeaderAccessor result = StompHeaderAccessor.wrap(message);
         assertThat(result.getUser()).isInstanceOf(UsernamePasswordAuthenticationToken.class);
-        assertThat(((UsernamePasswordAuthenticationToken) result.getUser()).getPrincipal()).isEqualTo(member);
+        assertThat(((UsernamePasswordAuthenticationToken) result.getUser()).getPrincipal())
+                .isEqualTo(member);
     }
 
     @Test

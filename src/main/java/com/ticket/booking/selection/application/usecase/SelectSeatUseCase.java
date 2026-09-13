@@ -1,26 +1,25 @@
 package com.ticket.booking.selection.application.usecase;
 
-import com.ticket.booking.selection.application.SeatSelectionCoordinator;
-import com.ticket.booking.seat.application.SeatStatusEvent;
+import java.time.Clock;
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
 
 import com.ticket.booking.admission.application.AdmissionVerifier;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.selection.application.SeatSelectionCoordinator;
 import com.ticket.booking.selection.domain.SeatSelectionAvailabilityValidator;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class SelectSeatUseCase {
-
     private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
@@ -58,28 +57,27 @@ public class SelectSeatUseCase {
         policy.ensureAcceptingOrders(now);
         ensureAdmitted(policy, input, now);
 
-        final Long performanceSeatId = seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
+        final Long performanceSeatId =
+                seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
 
         seatSelectionCoordinator.select(
                 input.performanceId(),
                 input.seatId(),
                 input.memberId(),
-                policy.getOrderAcceptanceWindow().getClosesAt()
-        );
-        seatEventPublisher.publish(input.performanceId(), performanceSeatId, SeatStatusAction.SELECTED);
+                policy.getOrderAcceptanceWindow().getClosesAt());
+        seatEventPublisher.publish(
+                input.performanceId(), performanceSeatId, SeatStatusAction.SELECTED);
     }
 
     private PerformanceSalesPolicy findPolicy(final Long performanceId) {
-        return performanceSalesPolicyRepository.findById(performanceId)
-                .orElseThrow(() -> new NotFoundException(
-                        "회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
+        return performanceSalesPolicyRepository
+                .findById(performanceId)
+                .orElseThrow(
+                        () -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
     }
 
     private void ensureAdmitted(
-            final PerformanceSalesPolicy policy,
-            final Input input,
-            final LocalDateTime now
-    ) {
+            final PerformanceSalesPolicy policy, final Input input, final LocalDateTime now) {
         if (!policy.isQueueRequired(now)) {
             return;
         }

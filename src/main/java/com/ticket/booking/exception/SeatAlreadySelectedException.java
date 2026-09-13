@@ -9,9 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public class SeatAlreadySelectedException extends BookingException {
-
     private static final String MESSAGE = "이미 선택된 좌석입니다.";
-
     private final Long performanceId;
     private final Long seatId;
 

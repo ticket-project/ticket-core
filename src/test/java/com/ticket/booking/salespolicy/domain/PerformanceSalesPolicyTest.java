@@ -1,29 +1,29 @@
 package com.ticket.booking.salespolicy.domain;
 
-import com.ticket.booking.exception.ExceedHoldLimitException;
-import com.ticket.booking.exception.NotYetReserveTimeException;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.Test;
+
+import com.ticket.booking.exception.BookingNotOpenYetException;
+import com.ticket.booking.exception.HoldLimitExceededException;
+import com.ticket.booking.exception.PerformanceIsPastException;
+
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceSalesPolicyTest {
-
     private static final LocalDateTime OPENS_AT = LocalDateTime.of(2026, 5, 1, 10, 0);
     private static final LocalDateTime CLOSES_AT = LocalDateTime.of(2026, 6, 1, 10, 0);
 
     @Test
-    void 시작_전이면_NotYetReserveTimeException을_던진다() {
+    void 시작_전이면_BookingNotOpenYetException을_던진다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
         assertThatThrownBy(() -> policy.ensureAcceptingOrders(OPENS_AT.minusMinutes(1)))
-                .isInstanceOf(NotYetReserveTimeException.class)
+                .isInstanceOf(BookingNotOpenYetException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 1L);
     }
 
@@ -40,15 +40,16 @@ class PerformanceSalesPolicyTest {
     void 접수_기간_안이면_예외를_던지지_않는다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
-        assertThatCode(() -> policy.ensureAcceptingOrders(OPENS_AT.plusDays(1))).doesNotThrowAnyException();
+        assertThatCode(() -> policy.ensureAcceptingOrders(OPENS_AT.plusDays(1)))
+                .doesNotThrowAnyException();
     }
 
     @Test
-    void 한도를_초과하면_ExceedHoldLimitException을_던진다() {
+    void 한도를_초과하면_HoldLimitExceededException을_던진다() {
         PerformanceSalesPolicy policy = policy(2, 600, null);
 
         assertThatThrownBy(() -> policy.ensureWithinHoldLimit(3))
-                .isInstanceOf(ExceedHoldLimitException.class)
+                .isInstanceOf(HoldLimitExceededException.class)
                 .hasFieldOrPropertyWithValue("requestedSeatCount", 3L)
                 .hasFieldOrPropertyWithValue("maxSeatCount", 2);
     }
@@ -84,12 +85,14 @@ class PerformanceSalesPolicyTest {
         assertThat(policy.maxSeatCount()).isEqualTo(4);
     }
 
-    private PerformanceSalesPolicy policy(final Integer maxSeatCount, final int holdSeconds, final QueueMode queueMode) {
+    private PerformanceSalesPolicy policy(
+            final Integer maxSeatCount, final int holdSeconds, final QueueMode queueMode) {
         return new PerformanceSalesPolicy(
                 1L,
                 new OrderAcceptanceWindow(OPENS_AT, CLOSES_AT),
                 new HoldPolicy(maxSeatCount, Duration.ofSeconds(holdSeconds)),
-                queueMode == null ? BookingEntryPolicy.none() : new BookingEntryPolicy(queueMode, null, null, null, null)
-        );
+                queueMode == null
+                        ? BookingEntryPolicy.none()
+                        : new BookingEntryPolicy(queueMode, null, null, null, null));
     }
 }

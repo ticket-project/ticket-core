@@ -10,15 +10,14 @@ import java.util.function.Supplier;
  * <p>락 획득 실패를 흉내 내려면 {@link #failWith(RuntimeException)}로 던질 예외를 지정한다.
  */
 public class RecordingLockManager implements LockManager {
-
     private final List<Acquisition> acquisitions = new ArrayList<>();
     private RuntimeException failure;
 
-    public record Acquisition(List<LockKey> keys, LockOptions options) {
-    }
+    public record Acquisition(List<LockKey> keys, LockOptions options) {}
 
     @Override
-    public <T> T withLock(final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
+    public <T> T withLock(
+            final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
         acquisitions.add(new Acquisition(List.copyOf(keys), options));
         if (failure != null) {
             throw failure;

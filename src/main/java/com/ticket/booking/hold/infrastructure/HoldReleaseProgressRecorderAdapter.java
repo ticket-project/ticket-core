@@ -1,22 +1,23 @@
 package com.ticket.booking.hold.infrastructure;
 
-import com.ticket.booking.hold.application.HoldReleaseProgressRecorder;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import com.ticket.booking.hold.application.HoldReleaseProgressRecorder;
+
+import lombok.RequiredArgsConstructor;
 
 /**
- * {@link HoldReleaseProgressRecorder}의 JPA 구현이다. {@code eventId} 기본키가 동시 재시도에서도
- * 같은 row가 하나만 만들어짐을 보장한다.
+ * {@link HoldReleaseProgressRecorder}의 JPA 구현이다. {@code eventId} 기본키가 동시 재시도에서도 같은 row가 하나만 만들어짐을
+ * 보장한다.
  */
 @Component
 @RequiredArgsConstructor
 public class HoldReleaseProgressRecorderAdapter implements HoldReleaseProgressRecorder {
-
     private final SpringDataHoldReleaseProgressJpaRepository repository;
 
     @Override

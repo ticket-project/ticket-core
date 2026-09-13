@@ -1,30 +1,5 @@
 package com.ticket.booking.hold.application;
 
-import com.ticket.booking.hold.application.HoldReleaseProgressRecorder;
-import com.ticket.booking.hold.domain.HoldManager;
-import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.RecordingLockManager;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
@@ -35,32 +10,42 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.RecordingLockManager;
+import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.selection.domain.SeatSelectionService;
+
 @ExtendWith(MockitoExtension.class)
 class HoldReleaseTaskProcessorTest {
-
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 25, 12, 0);
     private static final UUID EVENT_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
-
-    @Mock
-    private HoldManager holdManager;
-
-    @Spy
-    private RecordingLockManager lockManager = new RecordingLockManager();
-
-    @Mock
-    private SeatSelectionService seatSelectionService;
-
-    @Mock
-    private PerformanceSeatRepository performanceSeatRepository;
-
-    @Mock
-    private SeatStatusEventPublisher seatStatusEventPublisher;
-
-    @Mock
-    private HoldReleaseProgressRecorder progressRecorder;
-
-    @InjectMocks
-    private HoldReleaseTaskProcessor taskProcessor;
+    @Mock private HoldManager holdManager;
+    @Spy private RecordingLockManager lockManager = new RecordingLockManager();
+    @Mock private SeatSelectionService seatSelectionService;
+    @Mock private PerformanceSeatRepository performanceSeatRepository;
+    @Mock private SeatStatusEventPublisher seatStatusEventPublisher;
+    @Mock private HoldReleaseProgressRecorder progressRecorder;
+    @InjectMocks private HoldReleaseTaskProcessor taskProcessor;
 
     @Test
     void recordsHoldReleaseBeforePublishingCurrentlyAvailableSeats() {
@@ -117,7 +102,8 @@ class HoldReleaseTaskProcessorTest {
         stubPerformanceSeats();
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
-                .when(seatStatusEventPublisher).publish(1L, 910L, SeatStatusAction.RELEASED);
+                .when(seatStatusEventPublisher)
+                .publish(1L, 910L, SeatStatusAction.RELEASED);
 
         assertThatThrownBy(() -> taskProcessor.process(EVENT_ID, firstAttempt, FIXED_NOW))
                 .hasMessage("publish failed");
@@ -135,7 +121,9 @@ class HoldReleaseTaskProcessorTest {
     }
 
     private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {
-        PerformanceSeat seat = new PerformanceSeat(1L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
+        PerformanceSeat seat =
+                new PerformanceSeat(
+                        1L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
         ReflectionTestUtils.setField(seat, "id", performanceSeatId);
         return seat;
     }

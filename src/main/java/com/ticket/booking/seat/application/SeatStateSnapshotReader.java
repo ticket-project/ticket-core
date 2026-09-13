@@ -1,22 +1,21 @@
 package com.ticket.booking.seat.application;
 
-import com.ticket.booking.seat.application.port.SeatMapQueryPort;
+import java.util.List;
 
-import com.ticket.booking.seat.application.SeatStateSnapshotRow;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.booking.seat.application.port.SeatStateQueryPort;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class SeatStateSnapshotReader {
-
-    private final SeatMapQueryPort seatMapQueryPort;
+    private final SeatStateQueryPort seatStateQueryPort;
 
     @Transactional(readOnly = true)
     public List<SeatStateSnapshotRow> read(final Long performanceId) {
-        return seatMapQueryPort.findSeatStatuses(performanceId);
+        return seatStateQueryPort.findSeatStates(performanceId);
     }
 }

@@ -1,34 +1,35 @@
 package com.ticket.booking.admission.infrastructure;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.util.Date;
+import java.util.Objects;
+
+import javax.crypto.SecretKey;
+
 import com.ticket.booking.admission.application.AdmissionVerification;
 import com.ticket.booking.admission.application.AdmissionVerifier;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.AdmissionTokenExpiredException;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
-import java.time.Clock;
-import java.util.Date;
-import java.util.Objects;
-import javax.crypto.SecretKey;
 
 public class JwtAdmissionVerifier implements AdmissionVerifier {
-
     public static final String SCOPE = "ticket-admission";
-
     private static final String PERFORMANCE_ID_CLAIM = "performanceId";
     private static final String SCOPE_CLAIM = "scope";
-
     private final AdmissionTokenSettings settings;
     private final Clock clock;
     private final SecretKey secretKey;
     private final boolean enforcementEnabled;
 
-    public JwtAdmissionVerifier(final AdmissionTokenSettings settings, final boolean enforcementEnabled) {
+    public JwtAdmissionVerifier(
+            final AdmissionTokenSettings settings, final boolean enforcementEnabled) {
         this(settings, Clock.systemUTC(), enforcementEnabled);
     }
 
@@ -39,8 +40,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     JwtAdmissionVerifier(
             final AdmissionTokenSettings settings,
             final Clock clock,
-            final boolean enforcementEnabled
-    ) {
+            final boolean enforcementEnabled) {
         this.settings = Objects.requireNonNull(settings, "settings must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.secretKey = Keys.hmacShaKeyFor(settings.secretKey().getBytes(StandardCharsets.UTF_8));
@@ -48,12 +48,12 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     }
 
     /**
-     * 공개 진입점. 검증 실패는 admission 예외로 그대로 나간다 — 예외가 HTTP 상태와 E-code를
-     * 스스로 들고 있으므로 여기서 다시 번역하지 않는다.
-     * 대기열이 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
+     * 공개 진입점. 검증 실패는 admission 예외로 그대로 나간다 — 예외가 HTTP 상태와 E-code를 스스로 들고 있으므로 여기서 다시 번역하지 않는다. 대기열이
+     * 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
      */
     @Override
-    public AdmissionVerification verify(final long performanceId, final long memberId, final String admissionToken) {
+    public AdmissionVerification verify(
+            final long performanceId, final long memberId, final String admissionToken) {
         if (!enforcementEnabled) {
             return new AdmissionVerification(performanceId, memberId);
         }
@@ -77,8 +77,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
                 claims.getIssuedAt().toInstant(),
                 claims.getExpiration().toInstant(),
                 claims.getId(),
-                claims.get(SCOPE_CLAIM, String.class)
-        );
+                claims.get(SCOPE_CLAIM, String.class));
     }
 
     AdmissionClaims verifyFor(final String token, final long memberId, final long performanceId) {
@@ -147,7 +146,8 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
             try {
                 return Long.parseLong(stringValue);
             } catch (NumberFormatException exception) {
-                throw new AdmissionTokenException("admission token invalid " + claimName, exception);
+                throw new AdmissionTokenException(
+                        "admission token invalid " + claimName, exception);
             }
         }
         throw new AdmissionTokenException("admission token invalid " + claimName);

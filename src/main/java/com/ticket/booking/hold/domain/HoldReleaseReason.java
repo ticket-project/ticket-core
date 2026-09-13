@@ -6,7 +6,6 @@ public enum HoldReleaseReason {
     USER_CANCELED("사용자 취소"),
     ORDER_EXPIRED("주문 만료"),
     PAYMENT_FAILED("결제 실패");
-
     private final String description;
 
     HoldReleaseReason(final String description) {

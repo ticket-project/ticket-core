@@ -9,9 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public class SeatVenueMismatchException extends BookingException {
-
     private static final String MESSAGE = "요청한 좌석이 이 회차의 공연장에 속하지 않습니다.";
-
     private final Long performanceId;
     private final Long seatId;
 

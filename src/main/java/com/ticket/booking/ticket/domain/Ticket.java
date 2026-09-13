@@ -1,6 +1,7 @@
 package com.ticket.booking.ticket.domain;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,42 +12,39 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
+import com.ticket.booking.domain.BookingAuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
  * 결제 성공으로 확정된 OrderSeat에 대해 발급되는 입장 권리다(CONTEXT.md의 Ticket, ADR 0005).
  *
- * <p>OrderSeat는 결제 전에는 Ticket이 없고, 발급 후에는 최대 하나만 가진다(`1:0..1`). {@code
- * ownerMemberId}는 member {@code Member}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module
- * JPA 관계와 물리 FK는 만들지 않는다(ADR 0003). {@code orderSeatId}는 같은 booking module의
- * {@code OrderSeat}를 가리키지만 기존 schema 관례대로 scalar 컬럼으로 둔다. Ticket은 원래 별도
- * {@code ticketing} module(ADR 0005)이었으나 booking으로 흡수됐다. {@code ownerMemberId}는 최초 발급 시 주문 구매자로 고정되고, 양도 모델은
- * 존재하지 않는다.
+ * <p>OrderSeat는 결제 전에는 Ticket이 없고, 발급 후에는 최대 하나만 가진다(`1:0..1`). {@code ownerMemberId}는 member
+ * {@code Member}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다(ADR 0003).
+ * {@code orderSeatId}는 같은 booking module의 {@code OrderSeat}를 가리키지만 기존 schema 관례대로 scalar 컬럼으로 둔다.
+ * Ticket은 원래 별도 {@code ticketing} module(ADR 0005)이었으나 booking으로 흡수됐다. {@code ownerMemberId}는 최초 발급
+ * 시 주문 구매자로 고정되고, 양도 모델은 존재하지 않는다.
  *
- * <p>이번 entity-only 단계는 {@code OrderConfirmed} listener, 자동 발급, QR, 입장, 사용, 취소,
- * 환불, 양도 API를 구현하지 않는다. 아래 상태 전이 메서드는 그 자체가 그 흐름의 구현이 아니라,
- * Ticket aggregate가 자신의 상태 불변식을 스스로 지키게 하는 도메인 규칙이다(추후 후속 작업이 이
- * 메서드를 호출한다).
+ * <p>이번 entity-only 단계는 {@code OrderConfirmed} listener, 자동 발급, QR, 입장, 사용, 취소, 환불, 양도 API를 구현하지
+ * 않는다. 아래 상태 전이 메서드는 그 자체가 그 흐름의 구현이 아니라, Ticket aggregate가 자신의 상태 불변식을 스스로 지키게 하는 도메인 규칙이다(추후 후속
+ * 작업이 이 메서드를 호출한다).
  */
 @Getter
 @Entity
 @Table(
         name = "TICKETS",
         uniqueConstraints = {
-                @UniqueConstraint(name = "UK_TICKETS_TICKET_KEY", columnNames = "ticket_key"),
-                @UniqueConstraint(name = "UK_TICKETS_ORDER_SEAT_ID", columnNames = "order_seat_id")
+            @UniqueConstraint(name = "UK_TICKETS_TICKET_KEY", columnNames = "ticket_key"),
+            @UniqueConstraint(name = "UK_TICKETS_ORDER_SEAT_ID", columnNames = "order_seat_id")
         },
         indexes = {
-                @Index(name = "IDX_TICKETS_OWNER_MEMBER_STATUS", columnList = "owner_member_id,status")
-        }
-)
+            @Index(name = "IDX_TICKETS_OWNER_MEMBER_STATUS", columnList = "owner_member_id,status")
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Ticket extends BookingAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -77,8 +75,7 @@ public class Ticket extends BookingAuditedEntity {
             final String ticketKey,
             final Long orderSeatId,
             final Long ownerMemberId,
-            final LocalDateTime issuedAt
-    ) {
+            final LocalDateTime issuedAt) {
         this.ticketKey = ticketKey;
         this.orderSeatId = orderSeatId;
         this.ownerMemberId = ownerMemberId;
@@ -90,8 +87,7 @@ public class Ticket extends BookingAuditedEntity {
             final String ticketKey,
             final Long orderSeatId,
             final Long ownerMemberId,
-            final LocalDateTime issuedAt
-    ) {
+            final LocalDateTime issuedAt) {
         return new Ticket(ticketKey, orderSeatId, ownerMemberId, issuedAt);
     }
 

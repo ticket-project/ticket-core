@@ -1,27 +1,27 @@
 package com.ticket.booking.salespolicy.application.usecase;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 인증 없이 회차의 예매 방식을 조회하는 booking 소유 use case다. 안내용 조회이므로 실제 좌석
- * 선택·상태·주문 API는 이 결과와 무관하게 실행 시점에 정책을 다시 검사한다. FE 라우트나
- * ticket-queue HTTP 경로는 담지 않는다 — {@code bookingMode}는 업무 의미만 전달한다.
+ * 인증 없이 회차의 예매 방식을 조회하는 booking 소유 use case다. 안내용 조회이므로 실제 좌석 선택·상태·주문 API는 이 결과와 무관하게 실행 시점에 정책을
+ * 다시 검사한다. FE 라우트나 ticket-queue HTTP 경로는 담지 않는다 — {@code bookingMode}는 업무 의미만 전달한다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceBookingModeUseCase {
-
     private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private final Clock clock;
 
@@ -49,14 +49,17 @@ public class GetPerformanceBookingModeUseCase {
             LocalDateTime opensAt,
             LocalDateTime closesAt,
             Integer maxSeatCount,
-            long holdDurationSeconds
-    ) {
-    }
+            long holdDurationSeconds) {}
 
     public Output execute(final Input input) {
-        final PerformanceSalesPolicy policy = performanceSalesPolicyRepository.findById(input.performanceId())
-                .orElseThrow(() -> new NotFoundException(
-                        "회차 판매 정책을 찾을 수 없습니다. id=" + input.performanceId()));
+        final PerformanceSalesPolicy policy =
+                performanceSalesPolicyRepository
+                        .findById(input.performanceId())
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "회차 판매 정책을 찾을 수 없습니다. id="
+                                                        + input.performanceId()));
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final OrderAcceptanceStatus status = policy.acceptanceStatus(now);
@@ -69,15 +72,13 @@ public class GetPerformanceBookingModeUseCase {
                 policy.getOrderAcceptanceWindow().getOpensAt(),
                 policy.getOrderAcceptanceWindow().getClosesAt(),
                 policy.maxSeatCount(),
-                policy.holdDuration().getSeconds()
-        );
+                policy.holdDuration().getSeconds());
     }
 
     private BookingMode toBookingMode(
             final PerformanceSalesPolicy policy,
             final OrderAcceptanceStatus status,
-            final LocalDateTime now
-    ) {
+            final LocalDateTime now) {
         if (status != OrderAcceptanceStatus.OPEN) {
             return BookingMode.UNAVAILABLE;
         }

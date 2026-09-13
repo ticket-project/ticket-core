@@ -1,39 +1,39 @@
 package com.ticket.booking.order.domain;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
+import com.ticket.booking.domain.BookingAuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Getter
 @Entity
 @Table(
         name = "ORDER_SEATS",
-        uniqueConstraints = @UniqueConstraint(
-                name = "UK_ORDER_SEATS_ORDER_PERFORMANCE_SEAT",
-                columnNames = {"order_id", "performance_seat_id"}
-        ),
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "UK_ORDER_SEATS_ORDER_PERFORMANCE_SEAT",
+                        columnNames = {"order_id", "performance_seat_id"}),
         indexes = {
-                @Index(name = "IDX_ORDER_SEATS_ORDER_ID", columnList = "order_id"),
-                @Index(name = "IDX_ORDER_SEATS_PERFORMANCE_SEAT_ID", columnList = "performance_seat_id")
-        }
-)
+            @Index(name = "IDX_ORDER_SEATS_ORDER_ID", columnList = "order_id"),
+            @Index(name = "IDX_ORDER_SEATS_PERFORMANCE_SEAT_ID", columnList = "performance_seat_id")
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderSeat extends BookingAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -52,8 +52,8 @@ public class OrderSeat extends BookingAuditedEntity {
     private BigDecimal unitPrice;
 
     /**
-     * 주문 생성 시점의 표시 snapshot이다(ADR 0005). show의 등급·좌석 표시값이 나중에 바뀌어도
-     * 이미 만든 주문의 좌석 표시는 바뀌지 않아야 하므로 이 값을 그대로 쓴다.
+     * 주문 생성 시점의 표시 snapshot이다(ADR 0005). show의 등급·좌석 표시값이 나중에 바뀌어도 이미 만든 주문의 좌석 표시는 바뀌지 않아야 하므로 이
+     * 값을 그대로 쓴다.
      */
     @Column(name = "grade_code_snapshot", nullable = false)
     private String gradeCodeSnapshot;
@@ -71,8 +71,7 @@ public class OrderSeat extends BookingAuditedEntity {
             final BigDecimal unitPrice,
             final String gradeCodeSnapshot,
             final String gradeNameSnapshot,
-            final String seatLabelSnapshot
-    ) {
+            final String seatLabelSnapshot) {
         this.order = order;
         this.performanceSeatId = performanceSeatId;
         this.seatId = seatId;

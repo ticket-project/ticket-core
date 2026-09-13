@@ -9,9 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public class PerformanceIsPastException extends BookingException {
-
     private static final String MESSAGE = "과거 공연은 예매할 수 없습니다.";
-
     private final Long performanceId;
 
     public PerformanceIsPastException(final Long performanceId) {

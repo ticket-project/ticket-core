@@ -1,32 +1,32 @@
 package com.ticket.booking.seat.application.usecase;
 
-import com.ticket.booking.seat.application.port.PerformanceSeatMapQueryPort;
-
-import com.ticket.booking.seat.application.port.PerformanceSeatMapQueryPort.PerformanceSeatMapRow;
-import com.ticket.show.PerformanceVenueLayout;
-import com.ticket.show.PerformanceVenueLayoutCatalog;
-import com.ticket.shared.exception.InvalidRequestException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ticket.booking.seat.application.port.PerformanceSeatMapQueryPort;
+import com.ticket.booking.seat.application.port.PerformanceSeatMapQueryPort.PerformanceSeatMapRow;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.PerformanceVenueLayout;
+import com.ticket.show.PerformanceVenueLayoutCatalog;
+
+import lombok.RequiredArgsConstructor;
+
 /**
- * 회차 정적 seat-map을 조합한다. Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값은 show
- * {@link PerformanceVenueLayoutCatalog}에서, 이 회차에 실제로 판매 편성된 좌석(PerformanceSeat)과
- * 확정 가격은 booking local에서 각각 한 번씩만 조회해 N+1 없이 고정된 query 수로 조합한다.
+ * 회차 정적 seat-map을 조합한다. Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값은 show {@link
+ * PerformanceVenueLayoutCatalog}에서, 이 회차에 실제로 판매 편성된 좌석(PerformanceSeat)과 확정 가격은 booking local에서 각각
+ * 한 번씩만 조회해 N+1 없이 고정된 query 수로 조합한다.
  *
- * <p>Performance에 판매 편성되지 않은 물리 Seat는 {@link PerformanceSeatMapQueryPort}에 아예
- * 나타나지 않으므로 응답에도 포함되지 않는다.
+ * <p>Performance에 판매 편성되지 않은 물리 Seat는 {@link PerformanceSeatMapQueryPort}에 아예 나타나지 않으므로 응답에도 포함되지
+ * 않는다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSeatMapUseCase {
-
     private final PerformanceVenueLayoutCatalog performanceVenueLayoutCatalog;
     private final PerformanceSeatMapQueryPort performanceSeatMapQueryPort;
 
@@ -48,8 +48,7 @@ public class GetPerformanceSeatMapUseCase {
             String venueName,
             int viewBoxWidth,
             int viewBoxHeight,
-            double seatDiameter
-    ) {}
+            double seatDiameter) {}
 
     public record SeatMapEntry(
             Long performanceSeatId,
@@ -63,18 +62,19 @@ public class GetPerformanceSeatMapUseCase {
             Long performanceGradeId,
             String gradeCode,
             String gradeName,
-            BigDecimal price
-    ) {}
+            BigDecimal price) {}
 
     public Output execute(final Input input) {
-        final PerformanceVenueLayout layout = performanceVenueLayoutCatalog.getVenueLayout(input.performanceId());
+        final PerformanceVenueLayout layout =
+                performanceVenueLayoutCatalog.getVenueLayout(input.performanceId());
         final List<PerformanceSeatMapRow> rows =
                 performanceSeatMapQueryPort.findAllByPerformanceId(input.performanceId());
 
-        final List<SeatMapEntry> seats = rows.stream()
-                .map(row -> toSeatMapEntry(row, layout))
-                .filter(Objects::nonNull)
-                .toList();
+        final List<SeatMapEntry> seats =
+                rows.stream()
+                        .map(row -> toSeatMapEntry(row, layout))
+                        .filter(Objects::nonNull)
+                        .toList();
 
         return new Output(toVenueView(layout), seats);
     }
@@ -85,16 +85,14 @@ public class GetPerformanceSeatMapUseCase {
                 layout.venueName(),
                 layout.viewBoxWidth(),
                 layout.viewBoxHeight(),
-                layout.seatDiameter()
-        );
+                layout.seatDiameter());
     }
 
-    /**
-     * show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤
-     * 오류로 다룰지는 이 조합 시점에서 판정하지 않는다.
-     */
-    private SeatMapEntry toSeatMapEntry(final PerformanceSeatMapRow row, final PerformanceVenueLayout layout) {
-        final PerformanceVenueLayout.SeatLayout seatLayout = layout.seatLayoutBySeatId().get(row.seatId());
+    /** show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤 오류로 다룰지는 이 조합 시점에서 판정하지 않는다. */
+    private SeatMapEntry toSeatMapEntry(
+            final PerformanceSeatMapRow row, final PerformanceVenueLayout layout) {
+        final PerformanceVenueLayout.SeatLayout seatLayout =
+                layout.seatLayoutBySeatId().get(row.seatId());
         final PerformanceVenueLayout.GradeLayout gradeLayout =
                 layout.gradeLayoutByPerformanceGradeId().get(row.performanceGradeId());
         if (seatLayout == null || gradeLayout == null) {
@@ -112,7 +110,6 @@ public class GetPerformanceSeatMapUseCase {
                 row.performanceGradeId(),
                 gradeLayout.gradeCode(),
                 gradeLayout.gradeName(),
-                row.unitPrice()
-        );
+                row.unitPrice());
     }
 }

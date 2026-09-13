@@ -1,12 +1,13 @@
 package com.ticket.booking.hold.domain;
 
-import com.ticket.booking.hold.domain.HoldHistory;
-import com.ticket.booking.hold.domain.HoldHistoryRepository;
-import com.ticket.booking.order.domain.OrderSeat;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.venue.seat.domain.Seat;
-import com.ticket.booking.hold.domain.HoldHistoryEventType;
-import com.ticket.booking.hold.domain.HoldReleaseReason;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -14,43 +15,26 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.ticket.booking.order.domain.OrderSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class HoldHistoryRecorderTest {
-
-    @Mock
-    private HoldHistoryRepository holdHistoryRepository;
-
-    @InjectMocks
-    private HoldHistoryRecorder holdHistoryRecorder;
+    @Mock private HoldHistoryRepository holdHistoryRepository;
+    @InjectMocks private HoldHistoryRecorder holdHistoryRecorder;
 
     @Test
     void 선택한_좌석마다_created_hold_history를_기록한다() {
-        //given
+        // given
         PerformanceSeat first = createPerformanceSeat(100L, 10L);
         PerformanceSeat second = createPerformanceSeat(101L, 20L);
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
-
-        //when
+        // when
         holdHistoryRecorder.recordCreated(
-                1L,
-                2L,
-                "hold-key",
-                occurredAt,
-                expiresAt,
-                List.of(first, second)
-        );
-
-        //then
+                1L, 2L, "hold-key", occurredAt, expiresAt, List.of(first, second));
+        // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(2);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.CREATED);
@@ -62,21 +46,13 @@ class HoldHistoryRecorderTest {
 
     @Test
     void 주문취소시_좌석마다_canceled_hold_history를_기록한다() {
-        //given
+        // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 10);
         OrderSeat first = createOrderSeat(100L, 10L);
         OrderSeat second = createOrderSeat(101L, 20L);
-
-        //when
-        holdHistoryRecorder.recordCanceled(
-                1L,
-                2L,
-                "hold-key",
-                occurredAt,
-                List.of(first, second)
-        );
-
-        //then
+        // when
+        holdHistoryRecorder.recordCanceled(1L, 2L, "hold-key", occurredAt, List.of(first, second));
+        // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(2);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.CANCELED);
@@ -86,20 +62,12 @@ class HoldHistoryRecorderTest {
 
     @Test
     void 주문만료시_좌석마다_expired_hold_history를_기록한다() {
-        //given
+        // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         OrderSeat first = createOrderSeat(100L, 10L);
-
-        //when
-        holdHistoryRecorder.recordExpired(
-                1L,
-                2L,
-                "hold-key",
-                occurredAt,
-                List.of(first)
-        );
-
-        //then
+        // when
+        holdHistoryRecorder.recordExpired(1L, 2L, "hold-key", occurredAt, List.of(first));
+        // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(1);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.EXPIRED);

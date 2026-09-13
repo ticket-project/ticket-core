@@ -9,9 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public class SeatMismatchInPerformanceException extends BookingException {
-
     private static final String MESSAGE = "요청한 좌석 정보와 일치하지 않습니다.";
-
     private final Long performanceId;
 
     public SeatMismatchInPerformanceException(final Long performanceId) {

@@ -1,18 +1,18 @@
 package com.ticket.booking.domain;
 
-import com.ticket.shared.exception.InvalidRequestException;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
+
+import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 class RequestedSeatIdsTest {
-
     @Test
     void 빈_좌석_id_목록이면_예외를_던진다() {
         assertThatThrownBy(() -> RequestedSeatIds.from(List.of()))

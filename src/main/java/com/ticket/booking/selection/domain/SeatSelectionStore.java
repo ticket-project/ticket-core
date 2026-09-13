@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 public interface SeatSelectionStore {
-
     boolean selectIfAbsent(Long performanceId, Long seatId, String memberId, Duration ttl);
 
     String getHolder(Long performanceId, Long seatId);

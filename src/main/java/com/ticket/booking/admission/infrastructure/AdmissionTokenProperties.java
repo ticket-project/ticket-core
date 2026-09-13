@@ -1,14 +1,14 @@
 package com.ticket.booking.admission.infrastructure;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "security.admission")
-public class AdmissionTokenConfigurationProperties {
-
+public class AdmissionTokenProperties {
     private boolean enforcementEnabled = false;
     private String issuer = "ticket-queue";
     private String audience = "ticket-api";

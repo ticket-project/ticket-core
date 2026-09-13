@@ -1,8 +1,5 @@
 package com.ticket.booking.order.domain;
 
-import com.ticket.booking.order.domain.Order;
-import com.ticket.booking.order.domain.OrderState;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -10,24 +7,20 @@ import java.util.Optional;
 /**
  * 주문 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
  *
- * <p>계약에는 도메인 타입과 Java 기본 타입만 노출한다. 비관적 락, JPQL, 페이징 같은 기술은
- * {@code booking.infrastructure}의 {@code OrderRepositoryAdapter}가 결정한다.
+ * <p>계약에는 도메인 타입과 Java 기본 타입만 노출한다. 비관적 락, JPQL, 페이징 같은 기술은 {@code booking.infrastructure}의 {@code
+ * OrderRepositoryAdapter}가 결정한다.
  */
 public interface OrderRepository {
-
     Order save(Order order);
 
-    /**
-     * 잠금 없이 주문을 조회한다. 커밋 뒤 이벤트 listener가 현재 상태를 읽기 전용으로 다시 확인할 때 쓴다.
-     */
+    /** 잠금 없이 주문을 조회한다. 커밋 뒤 이벤트 listener가 현재 상태를 읽기 전용으로 다시 확인할 때 쓴다. */
     Optional<Order> findById(Long orderId);
 
-    /**
-     * 주문을 잠근 뒤 반환한다. 상태 전이 전에 동시 갱신을 막기 위해 쓴다.
-     */
+    /** 주문을 잠근 뒤 반환한다. 상태 전이 전에 동시 갱신을 막기 위해 쓴다. */
     Optional<Order> findByOrderKeyAndMemberIdForUpdate(String orderKey, Long memberId);
 
-    boolean existsByMemberIdAndPerformanceIdAndStatus(Long memberId, Long performanceId, OrderState status);
+    boolean existsByMemberIdAndPerformanceIdAndStatus(
+            Long memberId, Long performanceId, OrderState status);
 
     Optional<Order> findByHoldKeyAndStatusForUpdate(String holdKey, OrderState status);
 

@@ -1,20 +1,13 @@
 package com.ticket.booking.hold.domain;
 
-import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 생성된 hold와 그 hold가 잡은 좌석이다.
- */
-public record HoldAllocation(
-        Hold hold,
-        List<PerformanceSeat> performanceSeats
-) {
+import com.ticket.booking.seat.domain.PerformanceSeat;
 
+/** 생성된 hold와 그 hold가 잡은 좌석이다. */
+public record HoldAllocation(Hold hold, List<PerformanceSeat> performanceSeats) {
     public String holdKey() {
         return hold.holdKey();
     }

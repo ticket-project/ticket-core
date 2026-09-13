@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class DeselectedSeatIds {
-
     private final List<Long> values;
 
     private DeselectedSeatIds(final List<Long> values) {

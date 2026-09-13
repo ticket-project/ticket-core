@@ -9,6 +9,4 @@ public record AdmissionClaims(
         Instant issuedAt,
         Instant expiresAt,
         String tokenId,
-        String scope
-) {
-}
+        String scope) {}
