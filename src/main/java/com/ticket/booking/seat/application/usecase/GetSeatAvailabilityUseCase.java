@@ -9,28 +9,30 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.hold.domain.HoldManager;
-import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.seat.application.SeatAvailabilityCalculator;
-import com.ticket.booking.seat.application.port.SeatAvailabilityQueryPort;
+import com.ticket.booking.seat.application.SeatAvailabilitySnapshotReader;
 import com.ticket.booking.seat.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 회차의 등급별 잔여석을 조회한다.
+ *
+ * <p><b>DB 트랜잭션을 끌고 외부 작업을 하지 않는다.</b> 예전에는 클래스 전체가 {@code @Transactional(readOnly = true)}라 Redis
+ * 점유 조회와 show 모듈 호출이 booking DB connection을 쥔 채로 실행됐다 — Redis나 show가 느려지면 그만큼 connection pool이 묶인다.
+ * booking local 읽기는 {@link SeatAvailabilitySnapshotReader}의 짧은 트랜잭션에서 끝내고, 그 뒤에 Redis와 show를 호출한다.
+ */
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetSeatAvailabilityUseCase {
-    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+    private final SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
     private final PerformanceSaleCatalog performanceSaleCatalog;
-    private final SeatAvailabilityQueryPort seatAvailabilityQueryPort;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
     private final SeatAvailabilityCalculator seatAvailabilityCalculator;
@@ -60,20 +62,14 @@ public class GetSeatAvailabilityUseCase {
             long availableSeats) {}
 
     public Output execute(Input input) {
-        // 회차 판매 정책 조회는 회차 존재 확인을 겸한다. 접수 기간 차단은 기존과 같이 여기서 새로
-        // 추가하지 않는다 — 잔여석 조회는 접수 종료 후에도 조회 가능해야 한다.
-        performanceSalesPolicyRepository
-                .findById(input.performanceId())
-                .orElseThrow(
-                        () ->
-                                new NotFoundException(
-                                        "회차 판매 정책을 찾을 수 없습니다. id=" + input.performanceId()));
-
+        // 회차 존재 확인과 좌석 상태 조회를 짧은 읽기 트랜잭션에서 함께 끝낸다.
         final List<PerformanceSeatStateRow> stateRows =
-                seatAvailabilityQueryPort.findSeatStates(input.performanceId());
+                seatAvailabilitySnapshotReader.read(input.performanceId());
         if (stateRows.isEmpty()) {
             return new Output(List.of());
         }
+
+        // 여기부터는 DB 트랜잭션 밖이다 — Redis 점유 조회와 show 표시값 조회가 connection을 쥐지 않는다.
 
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleCatalog.getSaleSnapshot(input.performanceId(), Set.of());

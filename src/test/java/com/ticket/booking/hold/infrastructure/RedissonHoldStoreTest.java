@@ -102,6 +102,9 @@ class RedissonHoldStoreTest {
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
         doThrow(new RuntimeException("boom")).when(seat20).set("hold-key", ttl);
+        // 보상은 소유 키를 확인하고 지운다.
+        when(seat10.get()).thenReturn("hold-key");
+        when(seat20.get()).thenReturn(null);
 
         // when
         // then
@@ -110,6 +113,9 @@ class RedissonHoldStoreTest {
                 .hasMessageContaining("hold Redis");
 
         verify(seat10).delete();
+        verify(holdSeatIndex).remove(10L);
+        // 좌석 키를 쓰기 전에 정리 대상으로 기록하므로, 인덱스에만 남은 유령 점유도 함께 지운다.
+        verify(holdSeatIndex).remove(20L);
         verify(meta).delete();
     }
 
