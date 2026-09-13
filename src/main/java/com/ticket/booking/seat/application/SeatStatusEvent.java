@@ -3,12 +3,13 @@ package com.ticket.booking.seat.application;
 import java.time.LocalDateTime;
 
 /**
- * 좌석 상태 WebSocket payload다. 외부 판매 좌석 식별자는 물리 {@code seatId}가 아니라 {@code performanceSeatId}다 — 좌석
- * 상태·잔여석 API와 같은 식별자를 쓴다.
+ * 좌석 상태 WebSocket payload다. {@code seatId}는 기존 프론트가 좌석 배치와 상태를 연결하는 물리 좌석 식별자이고, {@code
+ * performanceSeatId}는 회차 판매 좌석 식별자다.
  */
 public record SeatStatusEvent(
         Long performanceId,
         Long performanceSeatId,
+        Long seatId,
         SeatStatusAction action,
         LocalDateTime timestamp) {
     public enum SeatStatusAction {
@@ -22,8 +23,9 @@ public record SeatStatusEvent(
     public static SeatStatusEvent of(
             final Long performanceId,
             final Long performanceSeatId,
+            final Long seatId,
             final SeatStatusAction action,
             final LocalDateTime timestamp) {
-        return new SeatStatusEvent(performanceId, performanceSeatId, action, timestamp);
+        return new SeatStatusEvent(performanceId, performanceSeatId, seatId, action, timestamp);
     }
 }

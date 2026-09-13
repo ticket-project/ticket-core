@@ -36,7 +36,8 @@ public class SeatSelectionExpirationHandler implements RedisKeyExpirationHandler
                                                 "지원하지 않는 좌석 선택 만료 키입니다: " + expiredKey));
 
         final Long performanceSeatId = resolvePerformanceSeatId(selectKey);
-        seatEventPublisher.publish(selectKey.performanceId(), performanceSeatId, DESELECTED);
+        seatEventPublisher.publish(
+                selectKey.performanceId(), performanceSeatId, selectKey.seatId(), DESELECTED);
         log.info(
                 "좌석 선택 만료 이벤트 처리: performanceId={}, seatId={}, performanceSeatId={}",
                 selectKey.performanceId(),

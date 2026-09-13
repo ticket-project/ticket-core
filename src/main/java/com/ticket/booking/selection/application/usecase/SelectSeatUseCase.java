@@ -66,7 +66,10 @@ public class SelectSeatUseCase {
                 input.memberId(),
                 policy.getOrderAcceptanceWindow().getClosesAt());
         seatEventPublisher.publish(
-                input.performanceId(), performanceSeatId, SeatStatusAction.SELECTED);
+                input.performanceId(),
+                performanceSeatId,
+                input.seatId(),
+                SeatStatusAction.SELECTED);
     }
 
     private PerformanceSalesPolicy findPolicy(final Long performanceId) {

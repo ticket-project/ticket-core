@@ -41,7 +41,8 @@ class SeatSelectionExpirationHandlerTest {
 
         handler.handle(expiredKey);
 
-        verify(seatEventPublisher).publish(10L, 501L, SeatStatusEvent.SeatStatusAction.DESELECTED);
+        verify(seatEventPublisher)
+                .publish(10L, 501L, 20L, SeatStatusEvent.SeatStatusAction.DESELECTED);
     }
 
     @Test

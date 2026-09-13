@@ -82,8 +82,8 @@ class SelectSeatUseCaseTest {
         inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
         inOrder.verify(seatSelectionCoordinator)
                 .select(10L, 20L, 1L, policy.getOrderAcceptanceWindow().getClosesAt());
-        // 외부 판매 좌석 식별자는 seatId가 아니라 이미 검증에서 얻은 performanceSeatId다.
-        inOrder.verify(seatEventPublisher).publish(10L, 501L, SeatStatusAction.SELECTED);
+        // 새 계약의 performanceSeatId와 기존 프론트 계약의 물리 seatId를 함께 발행한다.
+        inOrder.verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.SELECTED);
     }
 
     @Test

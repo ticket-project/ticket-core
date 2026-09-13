@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
+import com.ticket.booking.seat.application.SeatStateView;
+import com.ticket.booking.seat.application.SeatStatus;
 import com.ticket.booking.seat.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.application.usecase.GetSeatStatusUseCase;
@@ -87,12 +89,17 @@ class PerformanceSeatQueryControllerContractTest {
     void seat_status는_admission_token_validator를_거친다() throws Exception {
         when(getSeatStatusUseCase.execute(
                         new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .thenReturn(new GetSeatStatusUseCase.Output(List.of()));
+                .thenReturn(
+                        new GetSeatStatusUseCase.Output(
+                                List.of(new SeatStateView(1001L, 101L, SeatStatus.OCCUPIED))));
 
         mockMvc.perform(
                         get("/api/v1/performances/10/seats/status")
                                 .header("X-Admission-Token", "admission-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result").value("SUCCESS"));
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.seats[0].performanceSeatId").value(1001))
+                .andExpect(jsonPath("$.data.seats[0].seatId").value(101))
+                .andExpect(jsonPath("$.data.seats[0].status").value("OCCUPIED"));
     }
 }

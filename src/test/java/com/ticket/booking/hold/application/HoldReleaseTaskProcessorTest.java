@@ -60,8 +60,8 @@ class HoldReleaseTaskProcessorTest {
         final InOrder inOrder = inOrder(holdManager, progressRecorder, seatStatusEventPublisher);
         inOrder.verify(holdManager).release(1L, "old-hold", List.of(10L, 20L));
         inOrder.verify(progressRecorder).recordHoldReleased(EVENT_ID, FIXED_NOW);
-        inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, SeatStatusAction.RELEASED);
-        inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, SeatStatusAction.RELEASED);
+        inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
+        inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test
@@ -76,8 +76,8 @@ class HoldReleaseTaskProcessorTest {
 
         verify(holdManager, never()).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, never()).recordHoldReleased(EVENT_ID, FIXED_NOW.plusSeconds(30));
-        verify(seatStatusEventPublisher).publish(1L, 910L, SeatStatusAction.RELEASED);
-        verify(seatStatusEventPublisher).publish(1L, 920L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test
@@ -103,7 +103,7 @@ class HoldReleaseTaskProcessorTest {
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
                 .when(seatStatusEventPublisher)
-                .publish(1L, 910L, SeatStatusAction.RELEASED);
+                .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
 
         assertThatThrownBy(() -> taskProcessor.process(EVENT_ID, firstAttempt, FIXED_NOW))
                 .hasMessage("publish failed");
@@ -111,8 +111,10 @@ class HoldReleaseTaskProcessorTest {
 
         verify(holdManager, times(1)).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, times(1)).recordHoldReleased(EVENT_ID, FIXED_NOW);
-        verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, SeatStatusAction.RELEASED);
-        verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(2))
+                .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(1))
+                .publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
 
     private void stubPerformanceSeats() {

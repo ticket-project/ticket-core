@@ -31,11 +31,13 @@ class WebSocketSeatStatusEventPublisherTest {
                 new WebSocketSeatStatusEventPublisher(messagingTemplate, fixedClock);
         ArgumentCaptor<SeatStatusEvent> captor = ArgumentCaptor.forClass(SeatStatusEvent.class);
 
-        publisher.publish(10L, 20L, SeatStatusEvent.SeatStatusAction.HELD);
+        publisher.publish(10L, 20L, 30L, SeatStatusEvent.SeatStatusAction.HELD);
 
         verify(messagingTemplate)
                 .convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
         assertThat(captor.getValue().timestamp()).isEqualTo(LocalDateTime.of(2026, 3, 15, 10, 0));
         assertThat(captor.getValue().action()).isEqualTo(SeatStatusEvent.SeatStatusAction.HELD);
+        assertThat(captor.getValue().performanceSeatId()).isEqualTo(20L);
+        assertThat(captor.getValue().seatId()).isEqualTo(30L);
     }
 }
