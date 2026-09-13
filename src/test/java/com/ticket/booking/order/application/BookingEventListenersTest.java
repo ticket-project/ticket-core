@@ -21,7 +21,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Propagation;
 
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.OrderTerminated;
@@ -31,7 +33,7 @@ import com.ticket.booking.hold.application.HoldReleaseTask;
 import com.ticket.booking.hold.application.HoldReleaseTaskProcessor;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
-import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderSeat;
 
 /**
  * Task 8 Step 5: listener 멱등성과 stale-event 방어를 고정한다.
@@ -46,7 +48,7 @@ import com.ticket.booking.order.domain.OrderRepository;
 class BookingEventListenersTest {
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderRepository orderRepository;
+    @Mock private OrderHoldSnapshotReader orderHoldSnapshotReader;
     @Mock private HoldCreationTaskProcessor holdCreationTaskProcessor;
     @Mock private HoldReleaseTaskProcessor holdReleaseTaskProcessor;
     @Mock private HoldReleaseProgressRecorder holdReleaseProgressRecorder;
@@ -56,17 +58,34 @@ class BookingEventListenersTest {
     void setUp() {
         listeners =
                 new BookingEventListeners(
-                        orderRepository,
+                        orderHoldSnapshotReader,
                         holdCreationTaskProcessor,
                         holdReleaseTaskProcessor,
                         holdReleaseProgressRecorder,
                         FIXED_CLOCK);
     }
 
+    /** listener 자체가 DB 트랜잭션을 열면 Redis·WebSocket 작업이 booking connection을 쥔 채로 실행된다. */
+    @Test
+    void listener는_자기_DB_트랜잭션을_열지_않는다() throws NoSuchMethodException {
+        assertThat(
+                        BookingEventListeners.class
+                                .getDeclaredMethod("on", OrderStarted.class)
+                                .getAnnotation(ApplicationModuleListener.class)
+                                .propagation())
+                .isEqualTo(Propagation.NOT_SUPPORTED);
+        assertThat(
+                        BookingEventListeners.class
+                                .getDeclaredMethod("on", OrderTerminated.class)
+                                .getAnnotation(ApplicationModuleListener.class)
+                                .propagation())
+                .isEqualTo(Propagation.NOT_SUPPORTED);
+    }
+
     @Test
     void OrderStarted_주문이_없으면_아무_후처리도_하지_않는다() {
         final OrderStarted event = orderStarted(10L, "hold-key");
-        when(orderRepository.findById(10L)).thenReturn(Optional.empty());
+        when(orderHoldSnapshotReader.read(10L)).thenReturn(Optional.empty());
 
         listeners.on(event);
 
@@ -79,7 +98,7 @@ class BookingEventListenersTest {
         final Order order = order(10L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
         addOrderSeat(order, 501L, 42L);
         addOrderSeat(order, 502L, 43L);
-        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        when(orderHoldSnapshotReader.read(10L)).thenReturn(Optional.of(snapshotOf(order)));
 
         listeners.on(event);
 
@@ -91,7 +110,7 @@ class BookingEventListenersTest {
     @Test
     void OrderTerminated_주문이_없으면_아무_후처리도_하지_않는다() {
         final OrderTerminated event = orderTerminated(11L, "hold-key");
-        when(orderRepository.findById(11L)).thenReturn(Optional.empty());
+        when(orderHoldSnapshotReader.read(11L)).thenReturn(Optional.empty());
 
         listeners.on(event);
 
@@ -103,7 +122,7 @@ class BookingEventListenersTest {
         final OrderTerminated event = orderTerminated(11L, "hold-key");
         final Order order = order(11L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
         addOrderSeat(order, 501L, 42L);
-        when(orderRepository.findById(11L)).thenReturn(Optional.of(order));
+        when(orderHoldSnapshotReader.read(11L)).thenReturn(Optional.of(snapshotOf(order)));
         when(holdReleaseProgressRecorder.isReleased(event.eventId())).thenReturn(false);
 
         listeners.on(event);
@@ -130,7 +149,7 @@ class BookingEventListenersTest {
         final OrderTerminated event = orderTerminated(11L, "hold-key");
         final Order order = order(11L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
         addOrderSeat(order, 501L, 42L);
-        when(orderRepository.findById(11L)).thenReturn(Optional.of(order));
+        when(orderHoldSnapshotReader.read(11L)).thenReturn(Optional.of(snapshotOf(order)));
         when(holdReleaseProgressRecorder.isReleased(event.eventId())).thenReturn(true);
 
         listeners.on(event);
@@ -145,6 +164,14 @@ class BookingEventListenersTest {
                         org.mockito.ArgumentMatchers.any());
         assertThat(captor.getAllValues())
                 .allSatisfy(task -> assertThat(task.holdReleased()).isTrue());
+    }
+
+    /** listener는 entity가 아니라 짧은 읽기 트랜잭션에서 완성된 값을 받는다. */
+    private OrderHoldSnapshot snapshotOf(final Order order) {
+        return new OrderHoldSnapshot(
+                order.getPerformanceId(),
+                order.getOrderSeats().stream().map(OrderSeat::getSeatId).toList(),
+                order.getExpiresAt());
     }
 
     private OrderStarted orderStarted(final long orderId, final String holdKey) {
