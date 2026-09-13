@@ -1,42 +1,37 @@
 package com.ticket.booking.hold.domain;
 
-import com.ticket.booking.domain.RequestedSeatIds;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.lang.reflect.Method;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Method;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.exception.NoAvailableSeatException;
+import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class HoldSeatAvailabilityValidatorTest {
-
-    @Mock
-    private PerformanceSeatRepository performanceSeatRepository;
-
-    @InjectMocks
-    private HoldSeatAvailabilityValidator validator;
+    @Mock private PerformanceSeatRepository performanceSeatRepository;
+    @InjectMocks private HoldSeatAvailabilityValidator validator;
 
     @Test
     void validate는_requestedSeatIds를_직접_받는다() throws NoSuchMethodException {
-        Method method = HoldSeatAvailabilityValidator.class.getDeclaredMethod(
-                "validate",
-                Long.class,
-                RequestedSeatIds.class
-        );
+        Method method =
+                HoldSeatAvailabilityValidator.class.getDeclaredMethod(
+                        "validate", Long.class, RequestedSeatIds.class);
 
         assertThat(method.getParameterTypes()[1]).isEqualTo(RequestedSeatIds.class);
     }
@@ -69,11 +64,12 @@ class HoldSeatAvailabilityValidatorTest {
     @Test
     void 모두_예매가능_좌석이면_그대로_반환한다() {
         RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(10L, 20L));
-        List<PerformanceSeat> seats = List.of(
-                createPerformanceSeat(PerformanceSeatState.AVAILABLE),
-                createPerformanceSeat(PerformanceSeatState.AVAILABLE)
-        );
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(1L, List.of(10L, 20L))).thenReturn(seats);
+        List<PerformanceSeat> seats =
+                List.of(
+                        createPerformanceSeat(PerformanceSeatState.AVAILABLE),
+                        createPerformanceSeat(PerformanceSeatState.AVAILABLE));
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(1L, List.of(10L, 20L)))
+                .thenReturn(seats);
 
         List<PerformanceSeat> result = validator.validate(1L, seatIds);
 

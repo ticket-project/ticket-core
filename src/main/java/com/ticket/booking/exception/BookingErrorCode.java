@@ -5,13 +5,11 @@ import com.ticket.shared.exception.ErrorCode;
 /**
  * booking module이 소유하는 오류 코드다.
  *
- * <p>E3xxx(회차 예매 정책)·E4xxx(회차 좌석)·E5xxx(주문)·E6xxx(선점)를 모두 이 module이 갖는다.
- * E3xxx는 회차 판매 정책 판정(예매 가능 여부)의 오류다 — 그 정책 데이터와 판정 모두
- * {@code booking.salespolicy.domain.PerformanceSalesPolicy}가 소유하므로 booking의
- * 오류다. 코드 값은 외부 계약이라 재번호하지 않는다.
+ * <p>E3xxx(회차 예매 정책)·E4xxx(회차 좌석)·E5xxx(주문)·E6xxx(선점)를 모두 이 module이 갖는다. E3xxx는 회차 판매 정책 판정(예매 가능
+ * 여부)의 오류다 — 그 정책 데이터와 판정 모두 {@code booking.salespolicy.domain.PerformanceSalesPolicy}가 소유하므로
+ * booking의 오류다. 코드 값은 외부 계약이라 재번호하지 않는다.
  */
 public enum BookingErrorCode implements ErrorCode {
-
     E3001("지난 회차"),
     E3002("예매 시작 전"),
     E3003("예매 가능한 좌석 없음"),
@@ -27,7 +25,6 @@ public enum BookingErrorCode implements ErrorCode {
     E6000("이미 선점된 좌석"),
     E6001("선점 가능한 좌석 수 초과"),
     E6003("선점 처리 중");
-
     private final String description;
 
     BookingErrorCode(final String description) {

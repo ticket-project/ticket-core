@@ -1,23 +1,22 @@
 package com.ticket.booking.order.application.usecase;
 
-import com.ticket.booking.order.application.CancelOrderTransactionService;
-import com.ticket.booking.order.application.CreateOrderValidator;
-
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.member.MemberLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.ticket.booking.order.application.CancelOrderTransactionService;
+import com.ticket.booking.order.application.CreateOrderValidator;
+import com.ticket.member.MemberLookup;
+import com.ticket.shared.exception.InvalidRequestException;
+
+import lombok.RequiredArgsConstructor;
+
 /**
- * 회원 활성 확인(member 공개 API)은 booking 쓰기 트랜잭션 밖에서 먼저 수행한다. 다른 module
- * 호출이 booking 트랜잭션 안에 있으면 그 module의 지연이나 실패가 booking connection을 붙잡는다
- * ({@link CreateOrderValidator}와 같은 이유). booking local 취소 처리는 {@link CancelOrderTransactionService}의
- * 짧은 쓰기 트랜잭션에서 수행한다.
+ * 회원 활성 확인(member 공개 API)은 booking 쓰기 트랜잭션 밖에서 먼저 수행한다. 다른 module 호출이 booking 트랜잭션 안에 있으면 그 module의
+ * 지연이나 실패가 booking connection을 붙잡는다 ({@link CreateOrderValidator}와 같은 이유). booking local 취소 처리는
+ * {@link CancelOrderTransactionService}의 짧은 쓰기 트랜잭션에서 수행한다.
  */
 @Service
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
-
     private final MemberLookup memberLookup;
     private final CancelOrderTransactionService cancelOrderTransactionService;
 

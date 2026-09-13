@@ -3,17 +3,6 @@ package com.ticket.booking.infrastructure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ticket.member.auth.application.AuthRefreshToken;
-import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
-import com.ticket.member.auth.infrastructure.RedisRefreshTokenStore;
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
-import com.ticket.booking.infrastructure.RedissonLockKeyFormatter;
-import com.ticket.booking.infrastructure.RedissonLockManager;
-import com.ticket.booking.selection.infrastructure.RedissonSeatSelectionStore;
-import com.ticket.booking.exception.HoldBusyException;
-import com.ticket.member.infrastructure.UuidSupplier;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,17 +28,27 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.LockManager;
+import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.selection.infrastructure.RedissonSeatSelectionStore;
+import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
+import com.ticket.member.auth.application.AuthRefreshToken;
+import com.ticket.member.auth.infrastructure.RedisRefreshTokenStore;
+import com.ticket.member.infrastructure.UuidSupplier;
+
 @Testcontainers
 class CoreRedisIntegrationTest {
-
     private static final int REDIS_PORT = 6379;
     private static final LockKey SAME_KEY = LockKey.seat(9_000L, 1L);
     private static final LockKey LEFT_KEY = LockKey.seat(9_000L, 2L);
     private static final LockKey RIGHT_KEY = LockKey.seat(9_000L, 3L);
 
     @Container
-    private static final GenericContainer<?> REDIS = new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
-            .withExposedPorts(REDIS_PORT);
+    private static final GenericContainer<?> REDIS =
+            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
+                    .withExposedPorts(REDIS_PORT);
 
     private static RedissonClient redissonClient;
 
@@ -77,10 +77,12 @@ class CoreRedisIntegrationTest {
     void concurrent_seat_selection_has_exactly_one_owner_and_expires_by_ttl() throws Exception {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
 
-        List<Boolean> acquired = runConcurrently(
-                32,
-                index -> store.selectIfAbsent(1L, 10L, "member-" + index, Duration.ofSeconds(5))
-        );
+        List<Boolean> acquired =
+                runConcurrently(
+                        32,
+                        index ->
+                                store.selectIfAbsent(
+                                        1L, 10L, "member-" + index, Duration.ofSeconds(5)));
 
         assertThat(acquired.stream().filter(Boolean::booleanValue)).hasSize(1);
         String owner = store.getHolder(1L, 10L);
@@ -92,7 +94,8 @@ class CoreRedisIntegrationTest {
         assertThat(store.getHolder(1L, 10L)).isNull();
         assertThat(store.getSelectingSeatIds(1L)).isEmpty();
 
-        assertThat(store.selectIfAbsent(1L, 10L, "expiring-owner", Duration.ofMillis(150))).isTrue();
+        assertThat(store.selectIfAbsent(1L, 10L, "expiring-owner", Duration.ofMillis(150)))
+                .isTrue();
         awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
         assertThat(store.getSelectingSeatIds(1L)).isEmpty();
         assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1))).isTrue();
@@ -113,8 +116,7 @@ class CoreRedisIntegrationTest {
 
         awaitCondition(
                 () -> redissonClient.getKeys().countExists(indexKey) == 0L,
-                "seat selection index did not expire"
-        );
+                "seat selection index did not expire");
     }
 
     @Test
@@ -125,7 +127,8 @@ class CoreRedisIntegrationTest {
         String token = store.createRefreshToken(7L, 60L);
         AuthRefreshToken refreshToken = AuthRefreshToken.from(token);
 
-        List<Optional<Long>> validated = runConcurrently(16, ignored -> store.validate(refreshToken));
+        List<Optional<Long>> validated =
+                runConcurrently(16, ignored -> store.validate(refreshToken));
 
         assertThat(validated.stream().flatMap(Optional::stream)).containsExactly(7L);
         assertThat(store.validateWithoutConsume(refreshToken)).isEmpty();
@@ -138,22 +141,25 @@ class CoreRedisIntegrationTest {
         CountDownLatch firstEntered = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         try {
-            Future<?> first = executor.submit(() -> proxy.execute(SAME_KEY, firstEntered, releaseFirst));
+            Future<?> first =
+                    executor.submit(() -> proxy.execute(SAME_KEY, firstEntered, releaseFirst));
             assertThat(firstEntered.await(2, TimeUnit.SECONDS)).isTrue();
 
-            assertThatThrownBy(() -> proxy.execute(
-                    SAME_KEY,
-                    new CountDownLatch(1),
-                    new CountDownLatch(0)
-            )).isInstanceOf(HoldBusyException.class);
+            assertThatThrownBy(
+                            () ->
+                                    proxy.execute(
+                                            SAME_KEY, new CountDownLatch(1), new CountDownLatch(0)))
+                    .isInstanceOf(HoldBusyException.class);
 
             releaseFirst.countDown();
             first.get(5, TimeUnit.SECONDS);
 
             CountDownLatch bothEntered = new CountDownLatch(2);
             CountDownLatch releaseBoth = new CountDownLatch(1);
-            Future<?> left = executor.submit(() -> proxy.execute(LEFT_KEY, bothEntered, releaseBoth));
-            Future<?> right = executor.submit(() -> proxy.execute(RIGHT_KEY, bothEntered, releaseBoth));
+            Future<?> left =
+                    executor.submit(() -> proxy.execute(LEFT_KEY, bothEntered, releaseBoth));
+            Future<?> right =
+                    executor.submit(() -> proxy.execute(RIGHT_KEY, bothEntered, releaseBoth));
             assertThat(bothEntered.await(2, TimeUnit.SECONDS)).isTrue();
             releaseBoth.countDown();
             left.get(5, TimeUnit.SECONDS);
@@ -166,13 +172,12 @@ class CoreRedisIntegrationTest {
     }
 
     private LockedService lockedService() {
-        return new LockedService(new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
+        return new LockedService(
+                new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
     }
 
-    private void awaitCondition(
-            final CheckedBooleanSupplier condition,
-            final String failureMessage
-    ) throws Exception {
+    private void awaitCondition(final CheckedBooleanSupplier condition, final String failureMessage)
+            throws Exception {
         long deadlineNanos = System.nanoTime() + Duration.ofSeconds(5).toNanos();
         while (!condition.getAsBoolean()) {
             if (System.nanoTime() >= deadlineNanos) {
@@ -182,10 +187,8 @@ class CoreRedisIntegrationTest {
         }
     }
 
-    private <T> List<T> runConcurrently(
-            final int taskCount,
-            final IntFunction<T> action
-    ) throws Exception {
+    private <T> List<T> runConcurrently(final int taskCount, final IntFunction<T> action)
+            throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(taskCount);
         CountDownLatch ready = new CountDownLatch(taskCount);
         CountDownLatch start = new CountDownLatch(1);
@@ -193,13 +196,16 @@ class CoreRedisIntegrationTest {
         try {
             for (int index = 0; index < taskCount; index++) {
                 int taskIndex = index;
-                futures.add(executor.submit(() -> {
-                    ready.countDown();
-                    if (!start.await(5, TimeUnit.SECONDS)) {
-                        throw new AssertionError("concurrent test did not start in time");
-                    }
-                    return action.apply(taskIndex);
-                }));
+                futures.add(
+                        executor.submit(
+                                () -> {
+                                    ready.countDown();
+                                    if (!start.await(5, TimeUnit.SECONDS)) {
+                                        throw new AssertionError(
+                                                "concurrent test did not start in time");
+                                    }
+                                    return action.apply(taskIndex);
+                                }));
             }
             assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
             start.countDown();
@@ -220,19 +226,13 @@ class CoreRedisIntegrationTest {
         boolean getAsBoolean() throws Exception;
     }
 
-    /**
-     * 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다.
-     */
+    /** 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다. */
     record LockedService(LockManager lockManager) {
-
-        private static final LockOptions OPTIONS = LockOptions.waiting(Duration.ofMillis(100))
-                .withLeaseTime(Duration.ofSeconds(5));
+        private static final LockOptions OPTIONS =
+                LockOptions.waiting(Duration.ofMillis(100)).withLeaseTime(Duration.ofSeconds(5));
 
         void execute(
-                final LockKey key,
-                final CountDownLatch entered,
-                final CountDownLatch release
-        ) {
+                final LockKey key, final CountDownLatch entered, final CountDownLatch release) {
             lockManager.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));
         }
 

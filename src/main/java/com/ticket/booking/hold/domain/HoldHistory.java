@@ -1,8 +1,7 @@
 package com.ticket.booking.hold.domain;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
-import com.ticket.booking.hold.domain.HoldHistoryEventType;
-import com.ticket.booking.hold.domain.HoldReleaseReason;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,23 +11,20 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+
+import com.ticket.booking.domain.BookingAuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Entity
 @Table(
         name = "HOLD_HISTORY",
-        indexes = {
-                @Index(name = "IDX_HOLD_HISTORY_HOLD_KEY", columnList = "hold_key")
-        }
-)
+        indexes = {@Index(name = "IDX_HOLD_HISTORY_HOLD_KEY", columnList = "hold_key")})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HoldHistory extends BookingAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -70,8 +66,7 @@ public class HoldHistory extends BookingAuditedEntity {
             final HoldHistoryEventType eventType,
             final LocalDateTime occurredAt,
             final LocalDateTime expiresAt,
-            final HoldReleaseReason releaseReason
-    ) {
+            final HoldReleaseReason releaseReason) {
         this.holdKey = holdKey;
         this.memberId = memberId;
         this.performanceId = performanceId;
@@ -90,10 +85,17 @@ public class HoldHistory extends BookingAuditedEntity {
             final Long performanceSeatId,
             final Long seatId,
             final LocalDateTime occurredAt,
-            final LocalDateTime expiresAt
-    ) {
-        return new HoldHistory(holdKey, memberId, performanceId, performanceSeatId, seatId,
-                HoldHistoryEventType.CREATED, occurredAt, expiresAt, null);
+            final LocalDateTime expiresAt) {
+        return new HoldHistory(
+                holdKey,
+                memberId,
+                performanceId,
+                performanceSeatId,
+                seatId,
+                HoldHistoryEventType.CREATED,
+                occurredAt,
+                expiresAt,
+                null);
     }
 
     public static HoldHistory expired(
@@ -103,10 +105,17 @@ public class HoldHistory extends BookingAuditedEntity {
             final Long performanceSeatId,
             final Long seatId,
             final LocalDateTime occurredAt,
-            final HoldReleaseReason releaseReason
-    ) {
-        return new HoldHistory(holdKey, memberId, performanceId, performanceSeatId, seatId,
-                HoldHistoryEventType.EXPIRED, occurredAt, null, releaseReason);
+            final HoldReleaseReason releaseReason) {
+        return new HoldHistory(
+                holdKey,
+                memberId,
+                performanceId,
+                performanceSeatId,
+                seatId,
+                HoldHistoryEventType.EXPIRED,
+                occurredAt,
+                null,
+                releaseReason);
     }
 
     public static HoldHistory canceled(
@@ -116,9 +125,16 @@ public class HoldHistory extends BookingAuditedEntity {
             final Long performanceSeatId,
             final Long seatId,
             final LocalDateTime occurredAt,
-            final HoldReleaseReason releaseReason
-    ) {
-        return new HoldHistory(holdKey, memberId, performanceId, performanceSeatId, seatId,
-                HoldHistoryEventType.CANCELED, occurredAt, null, releaseReason);
+            final HoldReleaseReason releaseReason) {
+        return new HoldHistory(
+                holdKey,
+                memberId,
+                performanceId,
+                performanceSeatId,
+                seatId,
+                HoldHistoryEventType.CANCELED,
+                occurredAt,
+                null,
+                releaseReason);
     }
 }

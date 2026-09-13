@@ -1,22 +1,21 @@
 package com.ticket.booking.selection.application.usecase;
 
-import com.ticket.booking.seat.application.SeatStatusEvent;
+import java.util.List;
 
-import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import com.ticket.shared.exception.InvalidRequestException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.shared.exception.InvalidRequestException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class DeselectSeatUseCase {
-
     private final SeatSelectionService seatSelectionService;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatEventPublisher;
@@ -46,12 +45,15 @@ public class DeselectSeatUseCase {
 
     public void execute(final Input input) {
         seatSelectionService.deselect(input.performanceId(), input.seatId(), input.memberId());
-        final Long performanceSeatId = resolvePerformanceSeatId(input.performanceId(), input.seatId());
-        seatEventPublisher.publish(input.performanceId(), performanceSeatId, SeatStatusAction.DESELECTED);
+        final Long performanceSeatId =
+                resolvePerformanceSeatId(input.performanceId(), input.seatId());
+        seatEventPublisher.publish(
+                input.performanceId(), performanceSeatId, SeatStatusAction.DESELECTED);
     }
 
     private Long resolvePerformanceSeatId(final Long performanceId, final Long seatId) {
-        return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, List.of(seatId))
+        return performanceSeatRepository
+                .findAllByPerformanceIdAndSeatIdIn(performanceId, List.of(seatId))
                 .stream()
                 .findFirst()
                 .map(PerformanceSeat::getId)

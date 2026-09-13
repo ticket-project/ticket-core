@@ -3,12 +3,7 @@ package com.ticket.booking.admission.infrastructure;
 import java.nio.charset.StandardCharsets;
 
 public record AdmissionTokenSettings(
-        String issuer,
-        String audience,
-        String secretKey,
-        long expirationSeconds
-) {
-
+        String issuer, String audience, String secretKey, long expirationSeconds) {
     public AdmissionTokenSettings {
         if (isBlank(issuer)) {
             throw new IllegalArgumentException("admission token issuer must not be blank");
@@ -20,10 +15,12 @@ public record AdmissionTokenSettings(
             throw new IllegalArgumentException("admission token secret key must not be blank");
         }
         if (secretKey.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalArgumentException("admission token secret key must be at least 32 bytes for HS256");
+            throw new IllegalArgumentException(
+                    "admission token secret key must be at least 32 bytes for HS256");
         }
         if (expirationSeconds <= 0) {
-            throw new IllegalArgumentException("admission token expiration seconds must be positive");
+            throw new IllegalArgumentException(
+                    "admission token expiration seconds must be positive");
         }
     }
 

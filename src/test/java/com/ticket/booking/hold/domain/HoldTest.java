@@ -1,16 +1,15 @@
 package com.ticket.booking.hold.domain;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("NonAsciiCharacters")
 class HoldTest {
-
     @Test
     void hold는_생성값을_그대로_보관한다() {
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
@@ -35,7 +34,8 @@ class HoldTest {
 
     @Test
     void 시작시각은_만료시각에서_유효시간을_뺀_값이다() {
-        Hold hold = new Hold("hold-key", 1L, 10L, List.of(100L), LocalDateTime.of(2026, 3, 15, 12, 30));
+        Hold hold =
+                new Hold("hold-key", 1L, 10L, List.of(100L), LocalDateTime.of(2026, 3, 15, 12, 30));
 
         assertThat(hold.startedAt(Duration.ofMinutes(5)))
                 .isEqualTo(LocalDateTime.of(2026, 3, 15, 12, 25));

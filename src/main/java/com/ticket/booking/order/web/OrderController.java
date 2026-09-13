@@ -1,31 +1,32 @@
 package com.ticket.booking.order.web;
 
-import com.ticket.booking.order.web.docs.OrderControllerDocs;
-import com.ticket.booking.order.web.request.CreateOrderRequest;
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.booking.order.application.usecase.CancelOrderUseCase;
-import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
-import com.ticket.booking.order.application.usecase.GetOrderDetailUseCase;
-import com.ticket.booking.order.application.usecase.GetOrderStatusUseCase;
-import com.ticket.shared.web.ApiResponse;
-import lombok.RequiredArgsConstructor;
+import java.net.URI;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
+import com.ticket.booking.order.application.usecase.CancelOrderUseCase;
+import com.ticket.booking.order.application.usecase.CreateOrderUseCase;
+import com.ticket.booking.order.application.usecase.GetOrderDetailUseCase;
+import com.ticket.booking.order.application.usecase.GetOrderStatusUseCase;
+import com.ticket.booking.order.web.docs.OrderControllerDocs;
+import com.ticket.booking.order.web.request.CreateOrderRequest;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.shared.web.ApiResponse;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController implements OrderControllerDocs {
-
     private final CreateOrderUseCase createOrderUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
@@ -36,15 +37,15 @@ public class OrderController implements OrderControllerDocs {
     public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @RequestBody final CreateOrderRequest request,
             // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
-            @RequestHeader(value = "X-Admission-Token", required = false) final String admissionToken,
-            final AuthenticatedMember member
-    ) {
-        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
-                request.getPerformanceId(),
-                request.getSeatIds(),
-                member.memberId(),
-                admissionToken
-        );
+            @RequestHeader(value = "X-Admission-Token", required = false)
+                    final String admissionToken,
+            final AuthenticatedMember member) {
+        final CreateOrderUseCase.Input input =
+                new CreateOrderUseCase.Input(
+                        request.getPerformanceId(),
+                        request.getSeatIds(),
+                        member.memberId(),
+                        admissionToken);
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
                 .header("X-Order-Key", output.orderKey())
@@ -54,10 +55,9 @@ public class OrderController implements OrderControllerDocs {
     @Override
     @GetMapping("/{orderKey}")
     public ApiResponse<GetOrderDetailUseCase.Output> getOrder(
-            @PathVariable final String orderKey,
-            final AuthenticatedMember member
-    ) {
-        final GetOrderDetailUseCase.Input input = new GetOrderDetailUseCase.Input(orderKey, member.memberId());
+            @PathVariable final String orderKey, final AuthenticatedMember member) {
+        final GetOrderDetailUseCase.Input input =
+                new GetOrderDetailUseCase.Input(orderKey, member.memberId());
         final GetOrderDetailUseCase.Output output = getOrderDetailUseCase.execute(input);
         return ApiResponse.success(output);
     }
@@ -65,10 +65,9 @@ public class OrderController implements OrderControllerDocs {
     @Override
     @GetMapping("/{orderKey}/status")
     public ApiResponse<GetOrderStatusUseCase.Output> getOrderStatus(
-            @PathVariable final String orderKey,
-            final AuthenticatedMember member
-    ) {
-        final GetOrderStatusUseCase.Input input = new GetOrderStatusUseCase.Input(orderKey, member.memberId());
+            @PathVariable final String orderKey, final AuthenticatedMember member) {
+        final GetOrderStatusUseCase.Input input =
+                new GetOrderStatusUseCase.Input(orderKey, member.memberId());
         final GetOrderStatusUseCase.Output output = getOrderStatusUseCase.execute(input);
         return ApiResponse.success(output);
     }
@@ -76,9 +75,7 @@ public class OrderController implements OrderControllerDocs {
     @Override
     @DeleteMapping("/{orderKey}")
     public ApiResponse<Void> cancelOrder(
-            @PathVariable final String orderKey,
-            final AuthenticatedMember member
-    ) {
+            @PathVariable final String orderKey, final AuthenticatedMember member) {
         cancelOrderUseCase.execute(new CancelOrderUseCase.Input(orderKey, member.memberId()));
         return ApiResponse.success();
     }

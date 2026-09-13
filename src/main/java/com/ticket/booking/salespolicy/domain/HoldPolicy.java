@@ -1,22 +1,22 @@
 package com.ticket.booking.salespolicy.domain;
 
-import com.ticket.shared.exception.InvalidRequestException;
+import java.time.Duration;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+
+import com.ticket.shared.exception.InvalidRequestException;
+
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.time.Duration;
-
 /**
- * 회차 하나가 허용하는 Hold 정책이다. DB에는 {@code holdDurationSeconds}로 단위를 명시해 저장하고,
- * 도메인에서는 {@link Duration}으로 다룬다 — {@code Integer holdTime}처럼 단위를 숨기는 이름은
- * 두지 않는다.
+ * 회차 하나가 허용하는 Hold 정책이다. DB에는 {@code holdDurationSeconds}로 단위를 명시해 저장하고, 도메인에서는 {@link Duration}으로
+ * 다룬다 — {@code Integer holdTime}처럼 단위를 숨기는 이름은 두지 않는다.
  */
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HoldPolicy {
-
     @Column(name = "max_hold_seat_count")
     private Integer maxSeatCount;
 

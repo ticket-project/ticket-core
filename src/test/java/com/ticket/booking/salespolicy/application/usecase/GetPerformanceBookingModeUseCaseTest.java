@@ -1,18 +1,8 @@
 package com.ticket.booking.salespolicy.application.usecase;
 
-import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
-import com.ticket.booking.salespolicy.domain.HoldPolicy;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
-import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.salespolicy.domain.QueueMode;
-import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
-import com.ticket.shared.exception.NotFoundException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -21,23 +11,28 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
+import com.ticket.booking.salespolicy.domain.HoldPolicy;
+import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
+import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
+import com.ticket.booking.salespolicy.domain.QueueMode;
+import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetPerformanceBookingModeUseCaseTest {
-
-    private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-08-04T01:00:00Z"),
-            ZoneId.of("Asia/Seoul")
-    );
+    private static final Clock CLOCK =
+            Clock.fixed(Instant.parse("2026-08-04T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
-
-    @Mock
-    private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-
+    @Mock private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     private GetPerformanceBookingModeUseCase useCase;
 
     @BeforeEach
@@ -54,7 +49,8 @@ class GetPerformanceBookingModeUseCaseTest {
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
         assertThat(output.acceptanceStatus()).isEqualTo(OrderAcceptanceStatus.OPEN);
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.DIRECT);
+        assertThat(output.bookingMode())
+                .isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.DIRECT);
     }
 
     @Test
@@ -65,7 +61,8 @@ class GetPerformanceBookingModeUseCaseTest {
         GetPerformanceBookingModeUseCase.Output output =
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.QUEUE);
+        assertThat(output.bookingMode())
+                .isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.QUEUE);
     }
 
     @Test
@@ -77,7 +74,8 @@ class GetPerformanceBookingModeUseCaseTest {
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
         assertThat(output.acceptanceStatus()).isEqualTo(OrderAcceptanceStatus.BEFORE_OPEN);
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
+        assertThat(output.bookingMode())
+                .isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
     }
 
     @Test
@@ -89,7 +87,8 @@ class GetPerformanceBookingModeUseCaseTest {
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
         assertThat(output.acceptanceStatus()).isEqualTo(OrderAcceptanceStatus.CLOSED);
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
+        assertThat(output.bookingMode())
+                .isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
     }
 
     @Test
@@ -103,15 +102,13 @@ class GetPerformanceBookingModeUseCaseTest {
     private PerformanceSalesPolicy policy(
             final LocalDateTime orderOpenTime,
             final LocalDateTime orderCloseTime,
-            final boolean queueRequired
-    ) {
+            final boolean queueRequired) {
         return new PerformanceSalesPolicy(
                 10L,
                 new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(4, Duration.ofSeconds(300)),
                 queueRequired
                         ? new BookingEntryPolicy(QueueMode.FORCE_ON, null, null, null, null)
-                        : BookingEntryPolicy.none()
-        );
+                        : BookingEntryPolicy.none());
     }
 }

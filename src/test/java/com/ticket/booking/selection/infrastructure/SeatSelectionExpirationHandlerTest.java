@@ -1,41 +1,38 @@
 package com.ticket.booking.selection.infrastructure;
 
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.selection.infrastructure.SeatSelectionRedisKey;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import com.ticket.booking.seat.application.SeatStatusEvent;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import com.ticket.booking.seat.application.SeatStatusEvent;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionExpirationHandlerTest {
-
-    @Mock
-    private SeatStatusEventPublisher seatEventPublisher;
-
-    @Mock
-    private PerformanceSeatRepository performanceSeatRepository;
+    @Mock private SeatStatusEventPublisher seatEventPublisher;
+    @Mock private PerformanceSeatRepository performanceSeatRepository;
 
     @Test
     void 좌석_select_키를_지원하고_performanceSeatId로_deselected_이벤트를_발행한다() {
         SeatSelectionExpirationHandler handler =
                 new SeatSelectionExpirationHandler(seatEventPublisher, performanceSeatRepository);
         String expiredKey = SeatSelectionRedisKey.select(10L, 20L);
-        PerformanceSeat performanceSeat = new PerformanceSeat(10L, 20L, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
+        PerformanceSeat performanceSeat =
+                new PerformanceSeat(10L, 20L, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
         ReflectionTestUtils.setField(performanceSeat, "id", 501L);
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L)))
                 .thenReturn(List.of(performanceSeat));

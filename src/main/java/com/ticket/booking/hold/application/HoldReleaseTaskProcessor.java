@@ -1,18 +1,5 @@
 package com.ticket.booking.hold.application;
 
-import com.ticket.booking.hold.domain.HoldManager;
-import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import com.ticket.booking.hold.application.HoldReleaseProgressRecorder;
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +7,23 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.LockManager;
+import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.selection.domain.SeatSelectionService;
+
+import lombok.RequiredArgsConstructor;
+
 @Component
 @RequiredArgsConstructor
 public class HoldReleaseTaskProcessor {
-
     private final LockManager lockManager;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
@@ -35,33 +35,36 @@ public class HoldReleaseTaskProcessor {
         lockManager.withLock(
                 LockKey.seats(task.performanceId(), task.seatIds()),
                 LockOptions.defaults(),
-                () -> releaseAndPublish(eventId, task, now)
-        );
+                () -> releaseAndPublish(eventId, task, now));
     }
 
-    private void releaseAndPublish(final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
+    private void releaseAndPublish(
+            final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
         releaseHoldOnce(eventId, task, now);
         final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(task);
         if (publishableSeatIds.isEmpty()) {
             return;
         }
-        final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(task, publishableSeatIds);
+        final Map<Long, Long> performanceSeatIdBySeatId =
+                resolvePerformanceSeatIds(task, publishableSeatIds);
         for (final Long seatId : publishableSeatIds) {
             seatStatusEventPublisher.publish(
-                    task.performanceId(), performanceSeatIdBySeatId.get(seatId), SeatStatusAction.RELEASED);
+                    task.performanceId(),
+                    performanceSeatIdBySeatId.get(seatId),
+                    SeatStatusAction.RELEASED);
         }
     }
 
-    private Map<Long, Long> resolvePerformanceSeatIds(final HoldReleaseTask task, final List<Long> seatIds) {
-        return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(task.performanceId(), seatIds).stream()
+    private Map<Long, Long> resolvePerformanceSeatIds(
+            final HoldReleaseTask task, final List<Long> seatIds) {
+        return performanceSeatRepository
+                .findAllByPerformanceIdAndSeatIdIn(task.performanceId(), seatIds)
+                .stream()
                 .collect(Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
     }
 
     private void releaseHoldOnce(
-            final UUID eventId,
-            final HoldReleaseTask task,
-            final LocalDateTime now
-    ) {
+            final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
         if (task.holdReleased()) {
             return;
         }
@@ -70,7 +73,8 @@ public class HoldReleaseTaskProcessor {
     }
 
     private List<Long> findCurrentlyAvailableSeats(final HoldReleaseTask task) {
-        final Set<Long> selectedSeatIds = seatSelectionService.getSelectingSeatIds(task.performanceId());
+        final Set<Long> selectedSeatIds =
+                seatSelectionService.getSelectingSeatIds(task.performanceId());
         return task.seatIds().stream()
                 .filter(seatId -> !holdManager.isHeld(task.performanceId(), seatId))
                 .filter(seatId -> !selectedSeatIds.contains(seatId))

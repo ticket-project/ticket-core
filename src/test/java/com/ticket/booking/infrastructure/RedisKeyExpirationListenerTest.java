@@ -1,33 +1,30 @@
 package com.ticket.booking.infrastructure;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.connection.Message;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.connection.Message;
+
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class RedisKeyExpirationListenerTest {
-
-    @Mock
-    private RedisKeyExpirationHandler firstHandler;
-
-    @Mock
-    private RedisKeyExpirationHandler secondHandler;
+    @Mock private RedisKeyExpirationHandler firstHandler;
+    @Mock private RedisKeyExpirationHandler secondHandler;
 
     @Test
     void 만료_키를_처리할_수_있는_첫번째_핸들러에만_위임한다() {
-        RedisKeyExpirationListener listener = new RedisKeyExpirationListener(List.of(firstHandler, secondHandler));
+        RedisKeyExpirationListener listener =
+                new RedisKeyExpirationListener(List.of(firstHandler, secondHandler));
 
         when(firstHandler.supports("seat:select:10:20")).thenReturn(true);
 
@@ -41,7 +38,8 @@ class RedisKeyExpirationListenerTest {
 
     @Test
     void 지원하는_핸들러가_없으면_아무_처리도_하지_않는다() {
-        RedisKeyExpirationListener listener = new RedisKeyExpirationListener(List.of(firstHandler, secondHandler));
+        RedisKeyExpirationListener listener =
+                new RedisKeyExpirationListener(List.of(firstHandler, secondHandler));
 
         when(firstHandler.supports("unknown:key")).thenReturn(false);
         when(secondHandler.supports("unknown:key")).thenReturn(false);

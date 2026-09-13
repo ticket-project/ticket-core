@@ -1,14 +1,9 @@
 package com.ticket.booking.hold.domain;
 
-import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.hold.domain.HoldStore;
-import com.ticket.booking.domain.RequestedSeatIds;
-import com.ticket.booking.exception.SeatAlreadyHoldException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -16,23 +11,21 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.booking.domain.RequestedSeatIds;
+import com.ticket.booking.exception.SeatAlreadyHeldException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class HoldManagerTest {
-
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
-
-    @Mock
-    private HoldStore holdStore;
-
-    @Mock
-    private HoldKeyGenerator holdKeyGenerator;
-
+    @Mock private HoldStore holdStore;
+    @Mock private HoldKeyGenerator holdKeyGenerator;
     private HoldManager holdManager;
 
     @BeforeEach
@@ -42,14 +35,14 @@ class HoldManagerTest {
 
     @Test
     void createHold는_requestedSeatIds를_직접_받는다() throws NoSuchMethodException {
-        Method method = HoldManager.class.getDeclaredMethod(
-                "createHold",
-                Long.class,
-                Long.class,
-                RequestedSeatIds.class,
-                Duration.class,
-                LocalDateTime.class
-        );
+        Method method =
+                HoldManager.class.getDeclaredMethod(
+                        "createHold",
+                        Long.class,
+                        Long.class,
+                        RequestedSeatIds.class,
+                        Duration.class,
+                        LocalDateTime.class);
 
         assertThat(method.getParameterTypes()[2]).isEqualTo(RequestedSeatIds.class);
     }
@@ -59,8 +52,15 @@ class HoldManagerTest {
         when(holdKeyGenerator.generate()).thenReturn("hold-key");
         when(holdStore.isHeld(1L, 10L)).thenReturn(true);
 
-        assertThatThrownBy(() -> holdManager.createHold(1L, 1L, RequestedSeatIds.from(List.of(10L)), Duration.ofMinutes(5), FIXED_NOW))
-                .isInstanceOf(SeatAlreadyHoldException.class)
+        assertThatThrownBy(
+                        () ->
+                                holdManager.createHold(
+                                        1L,
+                                        1L,
+                                        RequestedSeatIds.from(List.of(10L)),
+                                        Duration.ofMinutes(5),
+                                        FIXED_NOW))
+                .isInstanceOf(SeatAlreadyHeldException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 1L)
                 .hasFieldOrPropertyWithValue("seatId", 10L);
     }
@@ -71,7 +71,9 @@ class HoldManagerTest {
 
         when(holdKeyGenerator.generate()).thenReturn("hold-key");
 
-        Hold hold = holdManager.createHold(7L, 1L, RequestedSeatIds.from(List.of(10L, 20L)), ttl, FIXED_NOW);
+        Hold hold =
+                holdManager.createHold(
+                        7L, 1L, RequestedSeatIds.from(List.of(10L, 20L)), ttl, FIXED_NOW);
 
         assertThat(hold.holdKey()).isEqualTo("hold-key");
         assertThat(hold.memberId()).isEqualTo(7L);

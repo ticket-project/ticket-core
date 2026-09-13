@@ -1,16 +1,16 @@
 package com.ticket.booking.salespolicy.domain;
 
-import com.ticket.shared.exception.InvalidRequestException;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+
+import org.junit.jupiter.api.Test;
+
+import com.ticket.shared.exception.InvalidRequestException;
+
 @SuppressWarnings("NonAsciiCharacters")
 class HoldPolicyTest {
-
     @Test
     void maxSeatCount가_null이면_무제한이다() {
         HoldPolicy policy = new HoldPolicy(null, Duration.ofSeconds(600));

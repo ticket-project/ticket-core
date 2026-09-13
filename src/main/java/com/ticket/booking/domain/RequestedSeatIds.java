@@ -1,12 +1,12 @@
 package com.ticket.booking.domain;
 
-import com.ticket.shared.exception.InvalidRequestException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
-public final class RequestedSeatIds {
+import com.ticket.shared.exception.InvalidRequestException;
 
+public final class RequestedSeatIds {
     private final List<Long> values;
 
     private RequestedSeatIds(final List<Long> values) {
@@ -42,9 +42,7 @@ public final class RequestedSeatIds {
     }
 
     private static List<Long> normalize(final List<Long> requestedSeatIds) {
-        final List<Long> seatIds = requestedSeatIds.stream()
-                .sorted()
-                .toList();
+        final List<Long> seatIds = requestedSeatIds.stream().sorted().toList();
         validateEmpty(seatIds);
         return seatIds;
     }

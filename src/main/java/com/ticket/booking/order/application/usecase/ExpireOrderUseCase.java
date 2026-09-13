@@ -1,19 +1,20 @@
 package com.ticket.booking.order.application.usecase;
 
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.ticket.booking.order.application.OrderTerminationService;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class ExpireOrderUseCase {
-
     private final OrderRepository orderRepository;
     private final OrderTerminationService orderTerminationService;
 
@@ -35,12 +36,12 @@ public class ExpireOrderUseCase {
     }
 
     private Order findPendingOrder(final Long orderId) {
-        return orderRepository.findByIdAndStatusForUpdate(orderId, OrderState.PENDING)
-                .orElse(null);
+        return orderRepository.findByIdAndStatusForUpdate(orderId, OrderState.PENDING).orElse(null);
     }
 
     private Order findPendingOrder(final String holdKey) {
-        return orderRepository.findByHoldKeyAndStatusForUpdate(holdKey, OrderState.PENDING)
+        return orderRepository
+                .findByHoldKeyAndStatusForUpdate(holdKey, OrderState.PENDING)
                 .orElse(null);
     }
 }

@@ -1,19 +1,18 @@
 package com.ticket.booking.ticket.infrastructure;
 
-import com.ticket.booking.ticket.domain.Ticket;
-import com.ticket.booking.ticket.domain.TicketRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.Optional;
 
-/**
- * {@link TicketRepository}의 JPA 구현이다.
- */
+import org.springframework.stereotype.Repository;
+
+import com.ticket.booking.ticket.domain.Ticket;
+import com.ticket.booking.ticket.domain.TicketRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link TicketRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class TicketRepositoryAdapter implements TicketRepository {
-
     private final SpringDataTicketJpaRepository jpaRepository;
 
     @Override

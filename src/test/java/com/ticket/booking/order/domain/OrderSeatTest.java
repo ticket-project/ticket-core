@@ -1,22 +1,22 @@
 package com.ticket.booking.order.domain;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("NonAsciiCharacters")
 class OrderSeatTest {
-
     @Test
     void 주문좌석을_생성하면_좌석_스냅샷_정보만_보관한다() {
         Order order = createOrder();
 
-        OrderSeat orderSeat = new OrderSeat(
-                order, 100L, 200L, BigDecimal.valueOf(12000), "R", "R석", "1F 가구역 A열 1번");
+        OrderSeat orderSeat =
+                new OrderSeat(
+                        order, 100L, 200L, BigDecimal.valueOf(12000), "R", "R석", "1F 가구역 A열 1번");
 
         assertThat(orderSeat.getOrder()).isSameAs(order);
         assertThat(orderSeat.getPerformanceSeatId()).isEqualTo(100L);
@@ -29,15 +29,15 @@ class OrderSeatTest {
 
     @Test
     void orderSeat는_상태_필드를_가지지_않는다() {
-        assertThat(Arrays.stream(OrderSeat.class.getDeclaredFields())
-                .map(field -> field.getName()))
+        assertThat(Arrays.stream(OrderSeat.class.getDeclaredFields()).map(field -> field.getName()))
                 .doesNotContain("status");
     }
 
     @Test
     void orderSeat는_상태_전이_메서드를_가지지_않는다() {
-        assertThat(Arrays.stream(OrderSeat.class.getDeclaredMethods())
-                .map(method -> method.getName()))
+        assertThat(
+                        Arrays.stream(OrderSeat.class.getDeclaredMethods())
+                                .map(method -> method.getName()))
                 .doesNotContain("confirm", "expire", "cancel");
     }
 
@@ -51,7 +51,6 @@ class OrderSeatTest {
                 LocalDateTime.of(2026, 3, 15, 12, 30),
                 "show-title",
                 LocalDateTime.of(2026, 3, 15, 19, 0),
-                "venue-name"
-        );
+                "venue-name");
     }
 }

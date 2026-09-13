@@ -1,21 +1,20 @@
 package com.ticket.booking.seat.infrastructure;
 
-import com.ticket.shared.CorsProperties;
-import org.junit.jupiter.api.Test;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-class WebSocketConfigTest {
+import org.junit.jupiter.api.Test;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 
+import com.ticket.shared.CorsProperties;
+
+class WebSocketConfigTest {
     @Test
     void server_events_are_published_to_each_session_in_order() {
         final MessageBrokerRegistry registry = mock(MessageBrokerRegistry.class);
-        final WebSocketConfig config = new WebSocketConfig(
-                mock(WebSocketAuthInterceptor.class),
-                mock(CorsProperties.class)
-        );
+        final WebSocketConfig config =
+                new WebSocketConfig(
+                        mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class));
 
         config.configureMessageBroker(registry);
 

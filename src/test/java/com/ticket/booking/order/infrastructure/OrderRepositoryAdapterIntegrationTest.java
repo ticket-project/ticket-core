@@ -1,8 +1,19 @@
 package com.ticket.booking.order.infrastructure;
 
-import com.ticket.booking.order.domain.Order;
-import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.domain.OrderRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,58 +31,41 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.ticket.booking.order.domain.Order;
+import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderState;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        classes = OrderRepositoryAdapterIntegrationTest.TestApplication.class
-)
-@TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:h2:mem:order-repository-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.username=sa",
-        "spring.datasource.password=",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.jpa.show-sql=false",
-        // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
-        // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication
-        // main class가 없어 그 런타임을 만들 수 없으므로 tracing 관측 자체를 끈다.
-        "management.tracing.enabled=false",
-        "spring.autoconfigure.exclude="
-                + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
-                + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
-                + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
-                + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
-                + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
-})
+        classes = OrderRepositoryAdapterIntegrationTest.TestApplication.class)
+@TestPropertySource(
+        properties = {
+            "spring.datasource.url=jdbc:h2:mem:order-repository-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+            "spring.datasource.driver-class-name=org.h2.Driver",
+            "spring.datasource.username=sa",
+            "spring.datasource.password=",
+            "spring.jpa.hibernate.ddl-auto=create-drop",
+            "spring.jpa.show-sql=false",
+            // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
+            // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication
+            // main class가 없어 그 런타임을 만들 수 없으므로 tracing 관측 자체를 끈다.
+            "management.tracing.enabled=false",
+            "spring.autoconfigure.exclude="
+                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
+                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
+                    + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
+                    + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
+                    + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
+                    + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
+        })
 @SuppressWarnings("NonAsciiCharacters")
 class OrderRepositoryAdapterIntegrationTest {
-
     private static final long MEMBER_ID = 100L;
     private static final long PERFORMANCE_ID = 200L;
     private static final int BATCH_SIZE = 100;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private SpringDataOrderJpaRepository jpaRepository;
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private SpringDataOrderJpaRepository jpaRepository;
+    @Autowired private PlatformTransactionManager transactionManager;
 
     @AfterEach
     void cleanUp() {
@@ -79,9 +73,9 @@ class OrderRepositoryAdapterIntegrationTest {
     }
 
     /**
-     * OrderSeat는 Order aggregate의 자식이라 자기 Repository 없이 root 저장에 cascade로 함께
-     * 실린다. 정렬은 {@code @OrderBy("id ASC")}가 옛 {@code findAllByOrderIdOrderByIdAsc}의
-     * 순서를 그대로 유지한다 — hold 생성 후처리가 이 순서의 seatId 목록을 쓴다.
+     * OrderSeat는 Order aggregate의 자식이라 자기 Repository 없이 root 저장에 cascade로 함께 실린다. 정렬은
+     * {@code @OrderBy("id ASC")}가 옛 {@code findAllByOrderIdOrderByIdAsc}의 순서를 그대로 유지한다 — hold 생성
+     * 후처리가 이 순서의 seatId 목록을 쓴다.
      */
     @Test
     void 주문_좌석은_root_저장에_cascade되고_id_오름차순으로_복원된다() {
@@ -91,16 +85,20 @@ class OrderRepositoryAdapterIntegrationTest {
 
         inTransaction(() -> orderRepository.save(order));
 
-        Order reloaded = inTransactionWithResult(() -> {
-            Order found = jpaRepository.findById(order.getId()).orElseThrow();
-            found.getOrderSeats().size();
-            return found;
-        });
+        Order reloaded =
+                inTransactionWithResult(
+                        () -> {
+                            Order found = jpaRepository.findById(order.getId()).orElseThrow();
+                            found.getOrderSeats().size();
+                            return found;
+                        });
         assertThat(reloaded.getOrderSeats())
                 .extracting(orderSeat -> orderSeat.getPerformanceSeatId())
                 .containsExactly(501L, 502L);
         assertThat(reloaded.getOrderSeats())
-                .allSatisfy(orderSeat -> assertThat(orderSeat.getOrder().getId()).isEqualTo(order.getId()));
+                .allSatisfy(
+                        orderSeat ->
+                                assertThat(orderSeat.getOrder().getId()).isEqualTo(order.getId()));
     }
 
     @Test
@@ -113,7 +111,8 @@ class OrderRepositoryAdapterIntegrationTest {
         Order alreadyConfirmed = order("confirmed", now.minusMinutes(1));
         alreadyConfirmed.confirm(now.minusSeconds(1));
 
-        inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
+        inTransaction(
+                () -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
 
         List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, BATCH_SIZE);
 
@@ -125,11 +124,13 @@ class OrderRepositoryAdapterIntegrationTest {
     @Test
     void expiration_query_respects_the_requested_limit() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-        inTransaction(() -> jpaRepository.saveAll(List.of(
-                order("first", now.minusMinutes(3)),
-                order("second", now.minusMinutes(2)),
-                order("third", now.minusMinutes(1))
-        )));
+        inTransaction(
+                () ->
+                        jpaRepository.saveAll(
+                                List.of(
+                                        order("first", now.minusMinutes(3)),
+                                        order("second", now.minusMinutes(2)),
+                                        order("third", now.minusMinutes(1)))));
 
         List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, 2);
 
@@ -143,47 +144,65 @@ class OrderRepositoryAdapterIntegrationTest {
         Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
         inTransaction(() -> jpaRepository.save(pending));
 
-        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                MEMBER_ID,
-                PERFORMANCE_ID,
-                OrderState.PENDING
-        )).isTrue();
-        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                MEMBER_ID + 1,
-                PERFORMANCE_ID,
-                OrderState.PENDING
-        )).isFalse();
-        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                MEMBER_ID,
-                PERFORMANCE_ID,
-                OrderState.CONFIRMED
-        )).isFalse();
+        assertThat(
+                        orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                                MEMBER_ID, PERFORMANCE_ID, OrderState.PENDING))
+                .isTrue();
+        assertThat(
+                        orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                                MEMBER_ID + 1, PERFORMANCE_ID, OrderState.PENDING))
+                .isFalse();
+        assertThat(
+                        orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                                MEMBER_ID, PERFORMANCE_ID, OrderState.CONFIRMED))
+                .isFalse();
     }
 
     @Test
     void pessimistic_write_lock_blocks_a_second_transaction_for_the_same_order() throws Exception {
-        Order saved = inTransactionWithResult(() -> orderRepository.save(order("lock", LocalDateTime.now().plusMinutes(5))));
+        Order saved =
+                inTransactionWithResult(
+                        () ->
+                                orderRepository.save(
+                                        order("lock", LocalDateTime.now().plusMinutes(5))));
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch firstLockAcquired = new CountDownLatch(1);
         CountDownLatch secondTransactionStarted = new CountDownLatch(1);
         CountDownLatch releaseFirstLock = new CountDownLatch(1);
 
-        Future<Boolean> first = executor.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
-            boolean found = orderRepository.findByOrderKeyAndMemberIdForUpdate(saved.getOrderKey(), MEMBER_ID).isPresent();
-            firstLockAcquired.countDown();
-            await(releaseFirstLock);
-            return found;
-        }));
+        Future<Boolean> first =
+                executor.submit(
+                        () ->
+                                new TransactionTemplate(transactionManager)
+                                        .execute(
+                                                status -> {
+                                                    boolean found =
+                                                            orderRepository
+                                                                    .findByOrderKeyAndMemberIdForUpdate(
+                                                                            saved.getOrderKey(),
+                                                                            MEMBER_ID)
+                                                                    .isPresent();
+                                                    firstLockAcquired.countDown();
+                                                    await(releaseFirstLock);
+                                                    return found;
+                                                }));
 
         try {
             assertThat(firstLockAcquired.await(3, TimeUnit.SECONDS)).isTrue();
 
-            Future<Boolean> second = executor.submit(() -> {
-                secondTransactionStarted.countDown();
-                return new TransactionTemplate(transactionManager).execute(status ->
-                        orderRepository.findByOrderKeyAndMemberIdForUpdate(saved.getOrderKey(), MEMBER_ID).isPresent()
-                );
-            });
+            Future<Boolean> second =
+                    executor.submit(
+                            () -> {
+                                secondTransactionStarted.countDown();
+                                return new TransactionTemplate(transactionManager)
+                                        .execute(
+                                                status ->
+                                                        orderRepository
+                                                                .findByOrderKeyAndMemberIdForUpdate(
+                                                                        saved.getOrderKey(),
+                                                                        MEMBER_ID)
+                                                                .isPresent());
+                            });
 
             assertThat(secondTransactionStarted.await(3, TimeUnit.SECONDS)).isTrue();
             assertThatThrownBy(() -> second.get(300, TimeUnit.MILLISECONDS))
@@ -209,8 +228,7 @@ class OrderRepositoryAdapterIntegrationTest {
                 expiresAt,
                 "show-title",
                 expiresAt.plusDays(1),
-                "venue-name"
-        );
+                "venue-name");
     }
 
     private void inTransaction(final Runnable action) {
@@ -247,7 +265,6 @@ class OrderRepositoryAdapterIntegrationTest {
     @EnableJpaAuditing
     @Import(OrderRepositoryAdapter.class)
     static class TestApplication {
-
         @Bean
         AuditorAware<String> auditorAware() {
             return () -> Optional.of("integration-test");

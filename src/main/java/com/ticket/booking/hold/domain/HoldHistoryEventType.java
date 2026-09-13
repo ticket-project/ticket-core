@@ -5,7 +5,6 @@ public enum HoldHistoryEventType {
     CONFIRMED("주문 확정"),
     EXPIRED("선점 만료"),
     CANCELED("선점 취소");
-
     private final String description;
 
     HoldHistoryEventType(final String description) {

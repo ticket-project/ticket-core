@@ -1,34 +1,33 @@
 package com.ticket.booking.order.application.usecase;
 
-import com.ticket.booking.order.application.port.OrderQueryPort;
-
-import com.ticket.booking.order.domain.OrderRemainingTime;
-import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.application.OrderDetailRow;
-import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.member.MemberLookup;
-import com.ticket.member.MemberProfile;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.order.application.OrderDetailRow;
+import com.ticket.booking.order.application.port.OrderQueryPort;
+import com.ticket.booking.order.domain.OrderRemainingTime;
+import com.ticket.booking.order.domain.OrderState;
+import com.ticket.member.MemberLookup;
+import com.ticket.member.MemberProfile;
+import com.ticket.shared.exception.InvalidRequestException;
+
+import lombok.RequiredArgsConstructor;
+
 /**
- * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 show를 다시 조회하지 않고
- * Order/OrderSeat가 주문 생성 시점에 이미 남긴 snapshot을 그대로 쓴다 — show의 표시값이나
- * 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 member의 공개 API로
- * 추가 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
+ * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 show를 다시 조회하지 않고 Order/OrderSeat가 주문 생성 시점에 이미 남긴
+ * snapshot을 그대로 쓴다 — show의 표시값이나 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 member의 공개 API로 추가
+ * 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
-
     private final OrderQueryPort orderQueryPort;
     private final MemberLookup memberLookup;
     private final Clock clock;
@@ -46,6 +45,7 @@ public class GetOrderDetailUseCase {
             }
         }
     }
+
     public record Output(
             String orderKey,
             OrderState status,
@@ -55,8 +55,7 @@ public class GetOrderDetailUseCase {
             PerformanceInfo performance,
             BookerInfo booker,
             PriceInfo price,
-            TicketInfo tickets
-    ) {}
+            TicketInfo tickets) {}
 
     public record ShowInfo(String title) {}
 
@@ -69,8 +68,7 @@ public class GetOrderDetailUseCase {
             BigDecimal bookingFee,
             BigDecimal deliveryFee,
             BigDecimal discountAmount,
-            BigDecimal totalAmount
-    ) {}
+            BigDecimal totalAmount) {}
 
     public record TicketInfo(int count, List<TicketSeat> seats) {}
 
@@ -80,11 +78,11 @@ public class GetOrderDetailUseCase {
             String gradeCode,
             String gradeName,
             String label,
-            BigDecimal price
-    ) {}
+            BigDecimal price) {}
 
     public Output execute(final Input input) {
-        final List<OrderDetailRow> rows = orderQueryPort.findDetailRows(input.orderKey(), input.memberId());
+        final List<OrderDetailRow> rows =
+                orderQueryPort.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
             throw new OrderNotOwnedException(input.orderKey(), input.memberId());
         }
@@ -95,13 +93,13 @@ public class GetOrderDetailUseCase {
         final MemberProfile member = memberLookup.getProfile(first.memberId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
-        final List<TicketSeat> seats = rows.stream()
-                .map(this::toTicketSeat)
-                .toList();
-        final BigDecimal ticketAmount = rows.stream()
-                .map(OrderDetailRow::unitPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        final long remainingSeconds = OrderRemainingTime.seconds(first.status(), first.expiresAt(), now);
+        final List<TicketSeat> seats = rows.stream().map(this::toTicketSeat).toList();
+        final BigDecimal ticketAmount =
+                rows.stream()
+                        .map(OrderDetailRow::unitPrice)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        final long remainingSeconds =
+                OrderRemainingTime.seconds(first.status(), first.expiresAt(), now);
 
         return new Output(
                 first.orderKey(),
@@ -112,18 +110,15 @@ public class GetOrderDetailUseCase {
                 new PerformanceInfo(
                         first.performanceId(),
                         first.performanceStartAtSnapshot(),
-                        first.venueNameSnapshot()
-                ),
+                        first.venueNameSnapshot()),
                 new BookerInfo(member.memberId(), member.name(), member.email()),
                 new PriceInfo(
                         ticketAmount,
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
-                        ticketAmount
-                ),
-                new TicketInfo(seats.size(), seats)
-        );
+                        ticketAmount),
+                new TicketInfo(seats.size(), seats));
     }
 
     private TicketSeat toTicketSeat(final OrderDetailRow row) {
@@ -133,7 +128,6 @@ public class GetOrderDetailUseCase {
                 row.gradeCodeSnapshot(),
                 row.gradeNameSnapshot(),
                 row.seatLabelSnapshot(),
-                row.unitPrice()
-        );
+                row.unitPrice());
     }
 }

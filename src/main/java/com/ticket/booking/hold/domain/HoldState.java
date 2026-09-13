@@ -5,7 +5,6 @@ public enum HoldState {
     CONFIRMED("주문 확정으로 종료"),
     EXPIRED("만료로 종료"),
     CANCELED("사용자 취소로 종료");
-
     private final String description;
 
     HoldState(final String description) {

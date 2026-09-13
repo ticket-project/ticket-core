@@ -1,39 +1,32 @@
 package com.ticket.booking.order.infrastructure;
 
-import com.ticket.booking.order.application.usecase.GetOrderDetailUseCase;
-import com.ticket.booking.order.application.usecase.GetOrderStatusUseCase;
-
-import com.ticket.booking.order.application.port.OrderQueryPort;
-
-import com.ticket.booking.order.application.port.OrderQueryPort;
-import com.ticket.booking.order.domain.Order;
-import com.ticket.booking.order.domain.OrderSeat;
-import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.application.OrderDetailRow;
-import com.ticket.booking.order.application.OrderStatusView;
-import com.ticket.core.infra.support.ReadRepositoryTestSupport;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+
+import com.ticket.booking.order.application.OrderDetailRow;
+import com.ticket.booking.order.application.OrderStatusView;
+import com.ticket.booking.order.application.port.OrderQueryPort;
+import com.ticket.booking.order.domain.Order;
+import com.ticket.booking.order.domain.OrderSeat;
+import com.ticket.booking.order.domain.OrderState;
+import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 
 /**
- * booking이 소유한 order/orderSeat 테이블만으로 조회하는지 확인한다. show/member 표시값
- * 합성은 {@code GetOrderDetailUseCase}/{@code GetOrderStatusUseCase} 단위 테스트가 담당한다.
+ * booking이 소유한 order/orderSeat 테이블만으로 조회하는지 확인한다. show/member 표시값 합성은 {@code
+ * GetOrderDetailUseCase}/{@code GetOrderStatusUseCase} 단위 테스트가 담당한다.
  */
 @Import(QuerydslOrderQueryPort.class)
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslOrderQueryPortTest extends ReadRepositoryTestSupport {
-
-    @Autowired
-    private OrderQueryPort repository;
-
+    @Autowired private OrderQueryPort repository;
     private Long memberId;
     private Long performanceId;
     private String orderKey;
@@ -42,27 +35,21 @@ class QuerydslOrderQueryPortTest extends ReadRepositoryTestSupport {
     void setUp() {
         memberId = 1L;
         performanceId = 10L;
-        Order order = new Order(
-                memberId,
-                performanceId,
-                "order-key",
-                "hold-key",
-                BigDecimal.valueOf(120000),
-                LocalDateTime.now(clock).plusMinutes(10),
-                "show-title",
-                LocalDateTime.now(clock).plusDays(1),
-                "venue-name"
-        );
+        Order order =
+                new Order(
+                        memberId,
+                        performanceId,
+                        "order-key",
+                        "hold-key",
+                        BigDecimal.valueOf(120000),
+                        LocalDateTime.now(clock).plusMinutes(10),
+                        "show-title",
+                        LocalDateTime.now(clock).plusDays(1),
+                        "venue-name");
         entityManager.persist(order);
-        entityManager.persist(new OrderSeat(
-                order,
-                501L,
-                42L,
-                BigDecimal.valueOf(120000),
-                "R",
-                "R석",
-                "1F 가구역 A열 1번"
-        ));
+        entityManager.persist(
+                new OrderSeat(
+                        order, 501L, 42L, BigDecimal.valueOf(120000), "R", "R석", "1F 가구역 A열 1번"));
         orderKey = order.getOrderKey();
         flushAndClear();
     }

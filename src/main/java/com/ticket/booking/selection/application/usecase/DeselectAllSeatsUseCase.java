@@ -1,25 +1,24 @@
 package com.ticket.booking.selection.application.usecase;
 
-import com.ticket.booking.seat.application.SeatStatusEvent;
-
-import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.booking.selection.domain.DeselectedSeatIds;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.member.MemberLookup;
-import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.application.SeatStatusEventPublisher;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.ticket.booking.seat.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.application.SeatStatusEventPublisher;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.selection.domain.DeselectedSeatIds;
+import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.member.MemberLookup;
+import com.ticket.shared.exception.InvalidRequestException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class DeselectAllSeatsUseCase {
-
     private final MemberLookup memberLookup;
     private final SeatSelectionService seatSelectionService;
     private final PerformanceSeatRepository performanceSeatRepository;
@@ -44,18 +43,29 @@ public class DeselectAllSeatsUseCase {
 
     public void execute(final Input input) {
         memberLookup.requireActive(input.memberId());
-        final DeselectedSeatIds seatIds = seatSelectionService.deselectAll(input.performanceId(), input.memberId());
-        final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(input.performanceId(), seatIds);
-        seatIds.forEach(seatId -> seatEventPublisher.publish(
-                input.performanceId(), performanceSeatIdBySeatId.get(seatId), SeatStatusAction.DESELECTED));
+        final DeselectedSeatIds seatIds =
+                seatSelectionService.deselectAll(input.performanceId(), input.memberId());
+        final Map<Long, Long> performanceSeatIdBySeatId =
+                resolvePerformanceSeatIds(input.performanceId(), seatIds);
+        seatIds.forEach(
+                seatId ->
+                        seatEventPublisher.publish(
+                                input.performanceId(),
+                                performanceSeatIdBySeatId.get(seatId),
+                                SeatStatusAction.DESELECTED));
     }
 
-    private Map<Long, Long> resolvePerformanceSeatIds(final Long performanceId, final DeselectedSeatIds seatIds) {
+    private Map<Long, Long> resolvePerformanceSeatIds(
+            final Long performanceId, final DeselectedSeatIds seatIds) {
         final List<Long> ids = seatIds.values();
         if (ids.isEmpty()) {
             return Map.of();
         }
-        return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, ids).stream()
-                .collect(java.util.stream.Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
+        return performanceSeatRepository
+                .findAllByPerformanceIdAndSeatIdIn(performanceId, ids)
+                .stream()
+                .collect(
+                        java.util.stream.Collectors.toMap(
+                                PerformanceSeat::getSeatId, PerformanceSeat::getId));
     }
 }

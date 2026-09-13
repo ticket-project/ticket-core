@@ -1,17 +1,17 @@
 package com.ticket.booking.infrastructure;
 
-import lombok.RequiredArgsConstructor;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class RedisKeyExpirationListener implements MessageListener {
-
     private final List<RedisKeyExpirationHandler> handlers;
 
     @Override

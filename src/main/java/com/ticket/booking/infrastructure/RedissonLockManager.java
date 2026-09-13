@@ -1,40 +1,38 @@
 package com.ticket.booking.infrastructure;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
-import com.ticket.booking.exception.HoldBusyException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.stereotype.Component;
+
+import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.LockManager;
+import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.exception.HoldBusyException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * {@link LockManager}의 Redisson 구현이다.
  *
- * <p>여러 key를 잠글 때는 정렬한 뒤 multi lock으로 한 번에 잡아 데드락을 피한다.
- * 획득에 실패하면 {@code action}을 실행하지 않고 예외를 던진다.
+ * <p>여러 key를 잠글 때는 정렬한 뒤 multi lock으로 한 번에 잡아 데드락을 피한다. 획득에 실패하면 {@code action}을 실행하지 않고 예외를 던진다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RedissonLockManager implements LockManager {
-
     private final RedissonClient redissonClient;
     private final RedissonLockKeyFormatter keyFormatter;
 
     @Override
-    public <T> T withLock(final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
-        final List<String> lockNames = keys.stream()
-                .map(keyFormatter::format)
-                .distinct()
-                .sorted()
-                .toList();
+    public <T> T withLock(
+            final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
+        final List<String> lockNames =
+                keys.stream().map(keyFormatter::format).distinct().sorted().toList();
         if (lockNames.isEmpty()) {
             throw new IllegalArgumentException("잠글 대상이 없습니다.");
         }
@@ -55,15 +53,15 @@ public class RedissonLockManager implements LockManager {
         }
     }
 
-    private boolean tryLock(final RLock lock, final LockOptions options) throws InterruptedException {
+    private boolean tryLock(final RLock lock, final LockOptions options)
+            throws InterruptedException {
         if (options.autoExtends()) {
             return lock.tryLock(options.waitTime().toMillis(), TimeUnit.MILLISECONDS);
         }
         return lock.tryLock(
                 options.waitTime().toMillis(),
                 options.leaseTime().toMillis(),
-                TimeUnit.MILLISECONDS
-        );
+                TimeUnit.MILLISECONDS);
     }
 
     private String resolveMessage(final LockOptions options) {
@@ -84,9 +82,7 @@ public class RedissonLockManager implements LockManager {
         if (lockNames.size() == 1) {
             return redissonClient.getLock(lockNames.getFirst());
         }
-        final RLock[] locks = lockNames.stream()
-                .map(redissonClient::getLock)
-                .toArray(RLock[]::new);
+        final RLock[] locks = lockNames.stream().map(redissonClient::getLock).toArray(RLock[]::new);
         return redissonClient.getMultiLock(locks);
     }
 
