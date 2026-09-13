@@ -78,6 +78,11 @@ while IFS= read -r hit; do
   p=${p%%#*}
   [ -n "$p" ] || continue
   case " $ALLOW_MISSING " in *" $p "*) continue ;; esac
+  # 형제 저장소 문서는 통합 workspace에서는 확인할 수 있지만, 이 저장소만 checkout하는 CI에는 없다.
+  case "$p" in
+    ../gatling-test/*|../../gatling-test/*|../../../gatling-test/*) continue ;;
+    ../ticket-queue/*|../../ticket-queue/*|../../../ticket-queue/*) continue ;;
+  esac
   # dirname을 부르지 않는다. 히트 102개 기준으로 프로세스 생성만 22초가 든다.
   if [ "${f#*/}" = "$f" ]; then d="."; else d="${f%/*}"; fi
   if [ ! -e "$d/$p" ] && [ ! -e "$p" ]; then
