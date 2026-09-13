@@ -2,6 +2,11 @@
 
 ## 상태(2026-09-04): 채택·구현됨. ADR 0003을 module set/DAG 범위에서 부분적으로 supersede한다.
 
+**2026-09-13 호환성 보완**: 가격 원본은 계속 PerformanceGrade이고 ShowGrade/ShowSeat도 복원하지 않는다.
+기존 프론트가 소비하는 공연 상세 `grades`와 `GET /api/v1/shows/{showId}/seats`는 현재 시드에서 모든
+회차의 등급·가격·좌석 배치가 같다는 조건 아래 가장 이른 회차의 snapshot으로 제공한다. 정확한 회차별
+계약인 `GET /api/v1/performances/{performanceId}/seat-map`은 그대로 유지한다.
+
 이 ADR은 이미 대화로 승인된 설계(설계 원본, 이하 "재설계 스펙")를 도메인 문서 체계(ADR/CONTEXT.md)에
 반영한다. 원본 스펙·실행 계획 문서(`docs/superpowers/specs/`, `docs/superpowers/plans/`)는 반영이 끝난 뒤
 정리돼 저장소에 남아 있지 않다. 이 ADR 자체가 새로 논의를 여는 것이 아니라, 이미 승인된 설계를 실행

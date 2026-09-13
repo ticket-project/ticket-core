@@ -3,6 +3,7 @@ package com.ticket.show.catalog.infrastructure;
 import static com.ticket.show.catalog.domain.QShow.show;
 import static com.ticket.show.catalog.domain.QShowGenre.showGenre;
 import static com.ticket.show.classification.domain.QGenre.genre;
+import static com.ticket.show.performance.domain.QGrade.grade;
 import static com.ticket.show.performance.domain.QPerformance.performance;
 import static com.ticket.show.performance.domain.QPerformanceGrade.performanceGrade;
 import static com.ticket.show.performer.domain.QPerformer.performer;
@@ -16,10 +17,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.catalog.application.PerformerInfo;
 import com.ticket.show.catalog.application.PriceSummary;
 import com.ticket.show.catalog.application.ShowDetailView;
+import com.ticket.show.catalog.application.ShowGradeView;
 import com.ticket.show.catalog.application.port.ShowDetailQueryPort;
 import com.ticket.show.catalog.domain.SaleDisplayStatus;
 import com.ticket.show.catalog.domain.Show;
@@ -51,13 +55,19 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
         }
 
         final List<String> genreNames = fetchGenreNames(showId);
+        final List<ShowGradeView> grades = fetchGrades(showId);
         final PriceSummary priceSummary = fetchPriceSummary(showId);
         final List<PerformanceDateInfo> performanceDates = fetchPerformanceDates(showId);
         final Performer performerEntity = fetchPerformer(showEntity.getPerformerId());
 
         return Optional.of(
                 toShowDetail(
-                        showEntity, performerEntity, genreNames, priceSummary, performanceDates));
+                        showEntity,
+                        performerEntity,
+                        genreNames,
+                        grades,
+                        priceSummary,
+                        performanceDates));
     }
 
     private Show fetchShow(final Long showId) {
@@ -108,6 +118,27 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
         return new PriceSummary(minPrice, maxPrice);
     }
 
+    /** 기존 프론트 계약에는 공연 가격표가 필요하므로 가장 이른 회차의 등급과 가격을 대표값으로 제공한다. */
+    private List<ShowGradeView> fetchGrades(final Long showId) {
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                ShowGradeView.class,
+                                performanceGrade.gradeId,
+                                grade.name,
+                                performanceGrade.price))
+                .from(performanceGrade)
+                .join(grade)
+                .on(grade.id.eq(performanceGrade.gradeId))
+                .where(
+                        performanceGrade.performance.id.eq(
+                                JPAExpressions.select(performance.id.min())
+                                        .from(performance)
+                                        .where(performance.showId.eq(showId))))
+                .orderBy(performanceGrade.sortOrder.asc())
+                .fetch();
+    }
+
     private List<PerformanceDateInfo> fetchPerformanceDates(final Long showId) {
         final List<PerformanceInfo> performances =
                 fetchPerformances(showId).stream().map(this::toPerformanceInfo).toList();
@@ -144,6 +175,7 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
             final Show showEntity,
             final Performer performerEntity,
             final List<String> genreNames,
+            final List<ShowGradeView> grades,
             final PriceSummary priceSummary,
             final List<PerformanceDateInfo> performanceDates) {
         final SaleDisplayStatus saleDisplayStatus =
@@ -166,6 +198,7 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
                 showEntity.getVenueId(),
                 toPerformerInfo(performerEntity),
                 genreNames,
+                grades,
                 priceSummary,
                 performanceDates);
     }

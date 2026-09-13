@@ -15,6 +15,7 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.catalog.application.PerformerInfo;
 import com.ticket.show.catalog.application.PriceSummary;
 import com.ticket.show.catalog.application.ShowDetailView;
+import com.ticket.show.catalog.application.ShowGradeView;
 import com.ticket.show.catalog.application.VenueInfo;
 import com.ticket.show.catalog.application.port.ShowDetailQueryPort;
 import com.ticket.show.catalog.domain.SaleDisplayStatus;
@@ -72,6 +73,7 @@ public class GetShowDetailUseCase {
             VenueInfo venue,
             PerformerInfo performer,
             List<String> genreNames,
+            List<ShowGradeView> grades,
             PriceSummary priceSummary,
             List<PerformanceDateInfo> performanceDates) {}
 
@@ -102,6 +104,7 @@ public class GetShowDetailUseCase {
                 venue,
                 view.performer(),
                 view.genreNames(),
+                view.grades(),
                 view.priceSummary(),
                 view.performanceDates());
     }

@@ -13,6 +13,8 @@ import com.ticket.show.performance.domain.PerformanceVenueLayoutContext;
 public interface PerformanceVenueLayoutQueryPort {
     Optional<PerformanceVenueLayoutContext> findVenueLayoutContext(long performanceId);
 
+    Optional<Long> findRepresentativePerformanceIdByShowId(long showId);
+
     /** 이 회차에 배정된 모든 PerformanceGrade의 표시값을 반환한다. 가격은 담지 않는다. */
     List<PerformanceGradeLayoutRow> findGradeLayouts(long performanceId);
 

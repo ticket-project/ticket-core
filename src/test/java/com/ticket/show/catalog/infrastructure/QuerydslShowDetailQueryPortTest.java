@@ -79,6 +79,9 @@ class QuerydslShowDetailQueryPortTest extends InfraReadRepositoryTestSupport {
         assertThat(detail.genreNames()).contains("케이팝");
         assertThat(detail.priceSummary().minPrice()).isEqualByComparingTo("100000");
         assertThat(detail.priceSummary().maxPrice()).isEqualByComparingTo("180000");
+        assertThat(detail.grades())
+                .extracting(grade -> grade.gradeName() + ":" + grade.price())
+                .containsExactly("VIP석:150000", "R석:100000");
         assertThat(detail.performanceDates()).hasSize(1);
         assertThat(detail.performanceDates().getFirst().performances()).hasSize(2);
         assertThat(detail.performanceDates().getFirst().performances().getFirst().performanceNo())

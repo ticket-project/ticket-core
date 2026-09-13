@@ -24,6 +24,24 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
     private static final Duration ASYNC_TIMEOUT = Duration.ofSeconds(10);
 
     @Test
+    void 기존_프론트가_공연_가격과_좌석_배치도를_조회할_수_있다() {
+        final ResponseEntity<JsonNode> show =
+                restTemplate.getForEntity("/api/v1/shows/" + SHOW_ID, JsonNode.class);
+        assertThat(show.getStatusCode()).isEqualTo(HttpStatus.OK);
+        final JsonNode showData = requireData(show.getBody(), "공연 상세");
+        assertThat(showData.get("grades").isArray()).isTrue();
+        assertThat(showData.get("grades").isEmpty()).isFalse();
+
+        final ResponseEntity<JsonNode> seatMap =
+                restTemplate.getForEntity("/api/v1/shows/" + SHOW_ID + "/seats", JsonNode.class);
+        assertThat(seatMap.getStatusCode()).isEqualTo(HttpStatus.OK);
+        final JsonNode firstSeat = requireData(seatMap.getBody(), "공연별 좌석 배치도").get("seats").get(0);
+        assertThat(firstSeat.get("seatId").asLong()).isIn(SEAT_IDS);
+        assertThat(firstSeat.get("price").asInt()).isEqualTo(SEAT_PRICE);
+        assertThat(firstSeat.get("gradeName").asText()).isNotBlank();
+    }
+
+    @Test
     void 좌석을_고르고_주문했다가_취소하면_좌석이_돌아온다() {
         final String token = signUpAndLogin("happy-path@e2e.test");
         final long seatId = SEAT_IDS.get(0);
