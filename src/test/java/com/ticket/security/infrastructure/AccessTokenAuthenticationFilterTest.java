@@ -1,17 +1,5 @@
 package com.ticket.security.infrastructure;
 
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.member.AccessTokenReadResult;
-import com.ticket.member.AccessTokenReader;
-import jakarta.servlet.FilterChain;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -19,9 +7,23 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import jakarta.servlet.FilterChain;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
+import com.ticket.member.AuthenticatedMember;
+
 @SuppressWarnings("NonAsciiCharacters")
 class AccessTokenAuthenticationFilterTest {
-
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
@@ -30,18 +32,21 @@ class AccessTokenAuthenticationFilterTest {
     @Test
     void downstream의_IllegalArgumentException을_토큰_오류로_오인해_filter_chain을_다시_실행하지_않는다() {
         final AccessTokenReader accessTokenReader = mock(AccessTokenReader.class);
-        final AccessTokenAuthenticationFilter filter = new AccessTokenAuthenticationFilter(accessTokenReader);
+        final AccessTokenAuthenticationFilter filter =
+                new AccessTokenAuthenticationFilter(accessTokenReader);
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final MockHttpServletResponse response = new MockHttpServletResponse();
         final AtomicInteger invocations = new AtomicInteger();
-        final FilterChain downstream = (ignoredRequest, ignoredResponse) -> {
-            invocations.incrementAndGet();
-            throw new IllegalArgumentException("downstream failure");
-        };
+        final FilterChain downstream =
+                (ignoredRequest, ignoredResponse) -> {
+                    invocations.incrementAndGet();
+                    throw new IllegalArgumentException("downstream failure");
+                };
 
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer access-token");
         when(accessTokenReader.read("access-token"))
-                .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
+                .thenReturn(
+                        AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
 
         assertThatThrownBy(() -> filter.doFilter(request, response, downstream))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -53,11 +58,14 @@ class AccessTokenAuthenticationFilterTest {
     @Test
     void Authorization_header가_없으면_토큰을_읽지_않고_chain을_한_번_실행한다() throws Exception {
         final AccessTokenReader accessTokenReader = mock(AccessTokenReader.class);
-        final AccessTokenAuthenticationFilter filter = new AccessTokenAuthenticationFilter(accessTokenReader);
+        final AccessTokenAuthenticationFilter filter =
+                new AccessTokenAuthenticationFilter(accessTokenReader);
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final AtomicInteger invocations = new AtomicInteger();
 
-        filter.doFilter(request, new MockHttpServletResponse(),
+        filter.doFilter(
+                request,
+                new MockHttpServletResponse(),
                 (ignoredRequest, ignoredResponse) -> invocations.incrementAndGet());
 
         assertThat(invocations).hasValue(1);
@@ -67,12 +75,15 @@ class AccessTokenAuthenticationFilterTest {
     @Test
     void Bearer_형식이_아니면_invalid를_기록하고_chain을_한_번_실행한다() throws Exception {
         final AccessTokenReader accessTokenReader = mock(AccessTokenReader.class);
-        final AccessTokenAuthenticationFilter filter = new AccessTokenAuthenticationFilter(accessTokenReader);
+        final AccessTokenAuthenticationFilter filter =
+                new AccessTokenAuthenticationFilter(accessTokenReader);
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final AtomicInteger invocations = new AtomicInteger();
         request.addHeader(HttpHeaders.AUTHORIZATION, "Basic access-token");
 
-        filter.doFilter(request, new MockHttpServletResponse(),
+        filter.doFilter(
+                request,
+                new MockHttpServletResponse(),
                 (ignoredRequest, ignoredResponse) -> invocations.incrementAndGet());
 
         assertThat(invocations).hasValue(1);
@@ -83,13 +94,16 @@ class AccessTokenAuthenticationFilterTest {
     @Test
     void 만료된_토큰이면_expired를_기록하고_chain을_한_번_실행한다() throws Exception {
         final AccessTokenReader accessTokenReader = mock(AccessTokenReader.class);
-        final AccessTokenAuthenticationFilter filter = new AccessTokenAuthenticationFilter(accessTokenReader);
+        final AccessTokenAuthenticationFilter filter =
+                new AccessTokenAuthenticationFilter(accessTokenReader);
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final AtomicInteger invocations = new AtomicInteger();
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer expired-token");
         when(accessTokenReader.read("expired-token")).thenReturn(AccessTokenReadResult.expired());
 
-        filter.doFilter(request, new MockHttpServletResponse(),
+        filter.doFilter(
+                request,
+                new MockHttpServletResponse(),
                 (ignoredRequest, ignoredResponse) -> invocations.incrementAndGet());
 
         assertThat(invocations).hasValue(1);
@@ -99,14 +113,23 @@ class AccessTokenAuthenticationFilterTest {
     @Test
     void 유효한_토큰이면_chain에서_인증주체를_볼_수_있고_완료후_context를_비운다() throws Exception {
         final AccessTokenReader accessTokenReader = mock(AccessTokenReader.class);
-        final AccessTokenAuthenticationFilter filter = new AccessTokenAuthenticationFilter(accessTokenReader);
+        final AccessTokenAuthenticationFilter filter =
+                new AccessTokenAuthenticationFilter(accessTokenReader);
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final AuthenticatedMember member = new AuthenticatedMember(7L, "MEMBER");
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer access-token");
-        when(accessTokenReader.read("access-token")).thenReturn(AccessTokenReadResult.authenticated(member));
+        when(accessTokenReader.read("access-token"))
+                .thenReturn(AccessTokenReadResult.authenticated(member));
 
-        filter.doFilter(request, new MockHttpServletResponse(), (ignoredRequest, ignoredResponse) ->
-                assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isSameAs(member));
+        filter.doFilter(
+                request,
+                new MockHttpServletResponse(),
+                (ignoredRequest, ignoredResponse) ->
+                        assertThat(
+                                        SecurityContextHolder.getContext()
+                                                .getAuthentication()
+                                                .getPrincipal())
+                                .isSameAs(member));
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }

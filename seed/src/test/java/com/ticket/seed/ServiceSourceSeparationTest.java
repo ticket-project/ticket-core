@@ -1,6 +1,6 @@
 package com.ticket.seed;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -8,18 +8,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 /**
  * 시드가 서비스 소스로 다시 섞여 들어가지 않는지 확인한다.
  *
- * <p>시드 코드가 {@code src/main}에 있으면 (1) {@code bootJar}에 실행 코드와 1MB가 넘는 시드 SQL이
- * 들어가고 (2) Spring Modulith가 {@code seed}를 업무 모듈로 다시 탐지한다. 실제 jar 안에 없는지는
- * Gradle {@code verifySeedNotInBootJar} 작업이 {@code bootJar} 산출물을 열어 확인한다.
+ * <p>시드 코드가 {@code src/main}에 있으면 (1) {@code bootJar}에 실행 코드와 1MB가 넘는 시드 SQL이 들어가고 (2) Spring
+ * Modulith가 {@code seed}를 업무 모듈로 다시 탐지한다. 실제 jar 안에 없는지는 Gradle {@code verifySeedNotInBootJar} 작업이
+ * {@code bootJar} 산출물을 열어 확인한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class ServiceSourceSeparationTest {
-
     @Test
     void 시드_코드와_시드_SQL은_서비스_소스에_없다() {
         final Path projectDir = SeedTestPaths.projectDir();
@@ -46,8 +45,12 @@ class ServiceSourceSeparationTest {
     void 기동_시_자동_적재_설정은_어느_프로파일에도_없다() {
         final Path resources = SeedTestPaths.projectDir().resolve("src/main/resources");
 
-        for (final String profile : List.of("application.yml", "application-local.yml",
-                "application-dev.yml", "application-prod.yml")) {
+        for (final String profile :
+                List.of(
+                        "application.yml",
+                        "application-local.yml",
+                        "application-dev.yml",
+                        "application-prod.yml")) {
             final String content = read(resources.resolve(profile));
 
             assertThat(content)

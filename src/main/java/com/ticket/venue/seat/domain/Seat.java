@@ -1,7 +1,15 @@
 package com.ticket.venue.seat.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
 import com.ticket.venue.domain.VenueAuditedEntity;
-import jakarta.persistence.*;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,21 +18,20 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "SEATS",
-        uniqueConstraints = @UniqueConstraint(
-                name = "UK_SEATS_VENUE_SEAT_ADDRESS",
-                columnNames = {"venue_id", "floor", "section", "row_no", "seat_no"}
-        )
-)
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "UK_SEATS_VENUE_SEAT_ADDRESS",
+                        columnNames = {"venue_id", "floor", "section", "row_no", "seat_no"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Seat extends VenueAuditedEntity {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**
-     * Venue는 Seat와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는
-     * 참조는 ID로 한다 — {@code docs/architecture.md}의 참조 규칙). 컬럼명은 옛 {@code @ManyToOne
-     * Venue venue} 매핑과 같은 {@code venue_id}를 그대로 써서 스키마가 바뀌지 않는다.
+     * Venue는 Seat와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 — {@code
+     * docs/architecture.md}의 참조 규칙). 컬럼명은 옛 {@code @ManyToOne Venue venue} 매핑과 같은 {@code venue_id}를
+     * 그대로 써서 스키마가 바뀌지 않는다.
      */
     @Column(name = "venue_id", nullable = false)
     private Long venueId;
@@ -39,12 +46,17 @@ public class Seat extends VenueAuditedEntity {
     private String seatNo;
 
     private int floor;
-
     private double x;
-
     private double y;
 
-    public Seat(final Long venueId, final String section, final String rowNo, final String seatNo, final int floor, final double x, final double y) {
+    public Seat(
+            final Long venueId,
+            final String section,
+            final String rowNo,
+            final String seatNo,
+            final int floor,
+            final double x,
+            final double y) {
         this.venueId = venueId;
         this.section = section;
         this.rowNo = rowNo;
@@ -53,5 +65,4 @@ public class Seat extends VenueAuditedEntity {
         this.x = x;
         this.y = y;
     }
-
 }

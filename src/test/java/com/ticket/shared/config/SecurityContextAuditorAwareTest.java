@@ -1,16 +1,16 @@
 package com.ticket.shared.config;
 
-import com.ticket.member.AuthenticatedMember;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.ticket.member.AuthenticatedMember;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SecurityContextAuditorAwareTest {
-
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
@@ -19,9 +19,10 @@ class SecurityContextAuditorAwareTest {
     @Test
     void 인증된_AuthenticatedMember가_있으면_memberId를_감사자로_반환한다() {
         AuthenticatedMember principal = new AuthenticatedMember(7L, "MEMBER");
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of())
-        );
+        SecurityContextHolder.getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                                principal, null, java.util.List.of()));
 
         SecurityContextAuditorAware auditorAware = new SecurityContextAuditorAware();
 
@@ -37,9 +38,8 @@ class SecurityContextAuditorAwareTest {
 
     @Test
     void AuthenticatedMember가_아니면_system_감사자를_반환한다() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("anonymousUser", null)
-        );
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken("anonymousUser", null));
 
         SecurityContextAuditorAware auditorAware = new SecurityContextAuditorAware();
 

@@ -1,40 +1,43 @@
 package com.ticket.security.infrastructure;
 
-import com.ticket.member.AccessTokenReadResult;
-import com.ticket.member.AccessTokenReader;
-import com.ticket.member.AuthenticatedMember;
+import java.io.IOException;
 import java.util.List;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.Objects;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Objects;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
+import com.ticket.member.AuthenticatedMember;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
-
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTH_ERROR_ATTRIBUTE = "jwt.error";
-
     private final AccessTokenReader accessTokenReader;
 
     public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
-        this.accessTokenReader = Objects.requireNonNull(accessTokenReader, "accessTokenReader must not be null");
+        this.accessTokenReader =
+                Objects.requireNonNull(accessTokenReader, "accessTokenReader must not be null");
     }
 
     @Override
     protected void doFilterInternal(
             final HttpServletRequest request,
             final HttpServletResponse response,
-            final FilterChain filterChain
-    ) throws ServletException, IOException {
+            final FilterChain filterChain)
+            throws ServletException, IOException {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
             filterChain.doFilter(request, response);
@@ -52,7 +55,8 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             switch (readResult) {
-                case AccessTokenReadResult.Authenticated authenticated -> authenticate(authenticated.member());
+                case AccessTokenReadResult.Authenticated authenticated ->
+                        authenticate(authenticated.member());
                 case AccessTokenReadResult.Expired ignored -> markFailure(request, "expired");
                 case AccessTokenReadResult.Invalid ignored -> markFailure(request, "invalid");
             }
@@ -63,11 +67,9 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void authenticate(final AuthenticatedMember member) {
-        final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                member,
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))
-        );
+        final UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        member, null, List.of(new SimpleGrantedAuthority("ROLE_" + member.role())));
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

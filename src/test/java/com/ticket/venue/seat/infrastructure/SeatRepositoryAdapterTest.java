@@ -1,24 +1,23 @@
 package com.ticket.venue.seat.infrastructure;
 
-import com.ticket.venue.seat.domain.Seat;
-import com.ticket.venue.seat.domain.SeatRepository;
-import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
+import com.ticket.venue.Region;
+import com.ticket.venue.facility.domain.Venue;
+import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.seat.domain.SeatRepository;
 
 @Import(SeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
-
-    @Autowired
-    private SeatRepository seatRepository;
+    @Autowired private SeatRepository seatRepository;
 
     @Test
     void venue_id로_그_venue의_좌석만_조회한다() throws Exception {
@@ -31,7 +30,8 @@ class SeatRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
 
         List<Seat> result = seatRepository.findAllByVenueId(venueA.getId());
 
-        assertThat(result).extracting(Seat::getId)
+        assertThat(result)
+                .extracting(Seat::getId)
                 .containsExactlyInAnyOrder(seatInA1.getId(), seatInA2.getId());
     }
 

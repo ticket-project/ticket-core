@@ -1,15 +1,8 @@
 package com.ticket.seed;
 
-import com.ticket.seed.support.AppSchema;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.transaction.support.TransactionTemplate;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,31 +12,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import javax.sql.DataSource;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import com.ticket.seed.support.AppSchema;
 
 /**
- * 실제 앱 스키마 위에서 시드 실행 경로를 빠르게 확인한다. 데이터 양과 무관한 것 — 실행 순서,
- * 완전성 판정, 트랜잭션 롤백, 동시 접속, 실패 보고 — 만 본다.
+ * 실제 앱 스키마 위에서 시드 실행 경로를 빠르게 확인한다. 데이터 양과 무관한 것 — 실행 순서, 완전성 판정, 트랜잭션 롤백, 동시 접속, 실패 보고 — 만 본다.
  *
- * <p>공용 시드 SQL은 {@code -Dseed.sql-path}로 테스트용 최소 파일을 지정한다. 100만 행에 가까운
- * 실제 시드 파일로 같은 것을 반복 확인하면 테스트가 몇 분 단위로 늘어난다 — 실제 파일 전체
- * 적재는 {@link SeedLocalTest}가 한 번 담당한다.
+ * <p>공용 시드 SQL은 {@code -Dseed.sql-path}로 테스트용 최소 파일을 지정한다. 100만 행에 가까운 실제 시드 파일로 같은 것을 반복 확인하면 테스트가
+ * 몇 분 단위로 늘어난다 — 실제 파일 전체 적재는 {@link SeedLocalTest}가 한 번 담당한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeedFastRunTest {
 
     private static final long FIXTURE_ID_BASE = 910000000L;
 
-    @TempDir
-    Path tempDir;
+    @TempDir Path tempDir;
 
     private String jdbcUrl;
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void prepareSchema() {
-        jdbcUrl = AppSchema.createIn(tempDir, "fast-" + UUID.randomUUID().toString().substring(0, 8));
+        jdbcUrl =
+                AppSchema.createIn(tempDir, "fast-" + UUID.randomUUID().toString().substring(0, 8));
         jdbcTemplate = new JdbcTemplate(dataSource(jdbcUrl));
     }
 
@@ -55,7 +55,10 @@ class SeedFastRunTest {
                 .as("스키마가 없으면 적재를 시작하지 않고 0이 아닌 종료 코드로 끝난다")
                 .isEqualTo(1);
 
-        assertThatThrownBy(() -> SeedPreconditions.verify(dataSource(emptyDatabaseUrl), emptyDatabaseUrl))
+        assertThatThrownBy(
+                        () ->
+                                SeedPreconditions.verify(
+                                        dataSource(emptyDatabaseUrl), emptyDatabaseUrl))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining("시드에 필요한 테이블이 없습니다")
                 .hasMessageContaining("CATEGORIES")
@@ -65,10 +68,13 @@ class SeedFastRunTest {
 
     @Test
     void 접속할_수_없는_DB는_원인과_함께_실패한다() {
-        final String unreachableUrl = "jdbc:h2:file:" + tempDir.resolve("nope").toAbsolutePath()
-                .toString().replace('\\', '/') + ";IFEXISTS=TRUE";
+        final String unreachableUrl =
+                "jdbc:h2:file:"
+                        + tempDir.resolve("nope").toAbsolutePath().toString().replace('\\', '/')
+                        + ";IFEXISTS=TRUE";
 
-        assertThatThrownBy(() -> SeedPreconditions.verify(dataSource(unreachableUrl), unreachableUrl))
+        assertThatThrownBy(
+                        () -> SeedPreconditions.verify(dataSource(unreachableUrl), unreachableUrl))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining("DB에 접속할 수 없습니다");
     }
@@ -88,7 +94,7 @@ class SeedFastRunTest {
 
             // 앱 쪽 연결에서도 방금 적재한 데이터가 보인다.
             try (var statement = applicationConnection.createStatement();
-                 var resultSet = statement.executeQuery("SELECT COUNT(*) FROM CATEGORIES")) {
+                    var resultSet = statement.executeQuery("SELECT COUNT(*) FROM CATEGORIES")) {
                 assertThat(resultSet.next()).isTrue();
                 assertThat(resultSet.getInt(1)).isPositive();
             }
@@ -105,9 +111,7 @@ class SeedFastRunTest {
         assertThat(afterFirstRun.get("GRADES")).isEqualTo(4L);
         assertThat(afterFirstRun.get("MEMBERS")).isEqualTo(3L);
 
-        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl)))
-                .as("이미 적재된 상태에서도 정상 종료")
-                .isZero();
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).as("이미 적재된 상태에서도 정상 종료").isZero();
         assertThat(snapshot()).isEqualTo(afterFirstRun);
     }
 
@@ -117,22 +121,20 @@ class SeedFastRunTest {
 
         // 뒤쪽 테이블만 비운다. 예전 판정(CATEGORIES에 행이 있는지)은 이 상태를 "이미 적재됨"으로
         // 읽고 조용히 넘어갔다.
-        jdbcTemplate.update("DELETE FROM PERFORMANCE_SEATS WHERE performance_id < " + FIXTURE_ID_BASE);
+        jdbcTemplate.update(
+                "DELETE FROM PERFORMANCE_SEATS WHERE performance_id < " + FIXTURE_ID_BASE);
 
-        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl)))
-                .as("부분 적재는 실패로 알린다")
-                .isEqualTo(1);
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).as("부분 적재는 실패로 알린다").isEqualTo(1);
 
-        assertThat(count("SHOWS"))
-                .as("자동으로 지우거나 복구하지 않는다")
-                .isPositive();
+        assertThat(count("SHOWS")).as("자동으로 지우거나 복구하지 않는다").isPositive();
     }
 
     @Test
     void 적재_실패는_해당_트랜잭션을_롤백한다() {
         // PERFORMANCE_SEATS를 미리 채워 두면 마지막 INSERT ... SELECT가 PK 중복으로 실패한다.
         // 앞에서 실행된 CATEGORIES 등 같은 트랜잭션의 INSERT가 함께 되돌아가야 한다.
-        jdbcTemplate.update("""
+        jdbcTemplate.update(
+                """
                 INSERT INTO PERFORMANCE_SEATS
                   (performance_id, seat_id, state, performance_grade_id, unit_price, version, created_at, created_by)
                 VALUES (1, 1, 'AVAILABLE', 1, 1000, 0, CURRENT_TIMESTAMP, 'test')
@@ -142,54 +144,57 @@ class SeedFastRunTest {
         final DataSource dataSource = dataSource(jdbcUrl);
         final TransactionTemplate transactionTemplate =
                 new TransactionTemplate(new DataSourceTransactionManager(dataSource));
-        final SeedTask curatedSeed = SeedLocalMain
-                .tasks(new JdbcTemplate(dataSource), transactionTemplate, settings)
-                .getFirst();
+        final SeedTask curatedSeed =
+                SeedLocalMain.tasks(new JdbcTemplate(dataSource), transactionTemplate, settings)
+                        .getFirst();
 
         assertThatThrownBy(curatedSeed::run).isInstanceOf(RuntimeException.class);
 
-        assertThat(count("CATEGORIES"))
-                .as("실패한 트랜잭션의 INSERT는 하나도 남지 않아야 한다")
-                .isZero();
+        assertThat(count("CATEGORIES")).as("실패한 트랜잭션의 INSERT는 하나도 남지 않아야 한다").isZero();
         assertThat(count("SHOWS")).isZero();
-        assertThat(count("PERFORMANCE_SEATS"))
-                .as("테스트가 미리 넣은 한 행만 남는다")
-                .isEqualTo(1L);
+        assertThat(count("PERFORMANCE_SEATS")).as("테스트가 미리 넣은 한 행만 남는다").isEqualTo(1L);
     }
 
     @Test
     void 작업_순서는_공용_시드_다음에_부하_픽스처_그다음_회원이다() {
         final DataSource dataSource = dataSource(jdbcUrl);
-        final List<SeedTask> tasks = SeedLocalMain.tasks(
-                new JdbcTemplate(dataSource),
-                new TransactionTemplate(new DataSourceTransactionManager(dataSource)),
-                settings(Map.of("seed.jdbc-url", jdbcUrl)));
+        final List<SeedTask> tasks =
+                SeedLocalMain.tasks(
+                        new JdbcTemplate(dataSource),
+                        new TransactionTemplate(new DataSourceTransactionManager(dataSource)),
+                        settings(Map.of("seed.jdbc-url", jdbcUrl)));
 
-        assertThat(tasks).hasExactlyElementsOfTypes(
-                CuratedSeedLoader.class, LoadTestFixtureSeeder.class, LoadTestMemberSeeder.class);
+        assertThat(tasks)
+                .hasExactlyElementsOfTypes(
+                        CuratedSeedLoader.class,
+                        LoadTestFixtureSeeder.class,
+                        LoadTestMemberSeeder.class);
     }
 
     @Test
     void 부하_픽스처와_회원은_0으로_지정하면_적재하지_않는다() {
-        assertThat(runSeed(Map.of(
-                "seed.jdbc-url", jdbcUrl,
-                "seed.load-test-fixture.performance-count", "0",
-                "seed.load-test-members.count", "0"))).isZero();
+        assertThat(
+                        runSeed(
+                                Map.of(
+                                        "seed.jdbc-url", jdbcUrl,
+                                        "seed.load-test-fixture.performance-count", "0",
+                                        "seed.load-test-members.count", "0")))
+                .isZero();
 
         assertThat(count("PERFORMANCES", "id >= " + FIXTURE_ID_BASE)).isZero();
         assertThat(count("MEMBERS")).isZero();
-        assertThat(count("CATEGORIES"))
-                .as("공용 시드는 그대로 적재된다")
-                .isEqualTo(1L);
+        assertThat(count("CATEGORIES")).as("공용 시드는 그대로 적재된다").isEqualTo(1L);
     }
 
     @Test
     void 이미_있는_회원_이메일은_건너뛴다() {
-        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.load-test-members.count", "2"))).isZero();
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.load-test-members.count", "2")))
+                .isZero();
         assertThat(count("MEMBERS")).isEqualTo(2L);
 
         // 요청 수를 늘리면 없는 것만 새로 만든다.
-        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.load-test-members.count", "4"))).isZero();
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.load-test-members.count", "4")))
+                .isZero();
         assertThat(count("MEMBERS")).isEqualTo(4L);
         assertThat(count("MEMBERS", "email = 'loadtest1@test.com'")).isEqualTo(1L);
     }
@@ -238,8 +243,7 @@ class SeedFastRunTest {
                 "PERFORMANCE_SEATS", count("PERFORMANCE_SEATS"),
                 "BOOKING_PERFORMANCE_SALES_POLICIES", count("BOOKING_PERFORMANCE_SALES_POLICIES"),
                 "GRADES", count("GRADES"),
-                "MEMBERS", count("MEMBERS")
-        );
+                "MEMBERS", count("MEMBERS"));
     }
 
     private long count(final String table) {
@@ -247,8 +251,10 @@ class SeedFastRunTest {
     }
 
     private long count(final String table, final String where) {
-        final Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM " + table + (where == null ? "" : " WHERE " + where), Long.class);
+        final Long count =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM " + table + (where == null ? "" : " WHERE " + where),
+                        Long.class);
         return count == null ? 0L : count;
     }
 }

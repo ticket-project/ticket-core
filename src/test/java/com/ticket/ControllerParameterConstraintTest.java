@@ -1,9 +1,6 @@
 package com.ticket;
 
-import jakarta.validation.Constraint;
-import jakarta.validation.Valid;
-import org.junit.jupiter.api.Test;
-import org.springframework.web.bind.annotation.RestController;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -15,19 +12,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import jakarta.validation.Constraint;
+import jakarta.validation.Valid;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 요청 파라미터 제약은 문서 인터페이스 한곳에만 선언한다는 규칙을 고정한다.
  *
  * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하면
- * ConstraintDeclarationException(HV000151)을 던진다. Controller가 문서 인터페이스를 구현하므로
- * 같은 제약을 두 곳에 두면 method validation 자체가 깨진다.
+ * ConstraintDeclarationException(HV000151)을 던진다. Controller가 문서 인터페이스를 구현하므로 같은 제약을 두 곳에 두면 method
+ * validation 자체가 깨진다.
  *
- * <p>Spring Modulith 전환으로 controller/docs 인터페이스가 legacy 단일 패키지가 아니라
- * 각 module의 {@code <module>.web}·{@code <module>.web.docs}에 흩어져
- * 있다. 그래서 고정 디렉터리 하나 대신 {@code src/main/java/com/ticket} 전체에서 이 두 패턴에
- * 맞는 디렉터리를 재귀적으로 찾는다.
+ * <p>Spring Modulith 전환으로 controller/docs 인터페이스가 legacy 단일 패키지가 아니라 각 module의 {@code
+ * <module>.web}·{@code <module>.web.docs}에 흩어져 있다. 그래서 고정 디렉터리 하나 대신 {@code
+ * src/main/java/com/ticket} 전체에서 이 두 패턴에 맞는 디렉터리를 재귀적으로 찾는다.
  *
  * <p>상대 경로로 소스 디렉터리를 읽으므로 Gradle이 정해 주는 작업 디렉터리에서만 통과한다.
  */
@@ -53,9 +53,7 @@ class ControllerParameterConstraintTest {
             }
         }
 
-        assertThat(violations)
-                .as("제약과 @Valid는 controller.docs 인터페이스에만 선언한다")
-                .isEmpty();
+        assertThat(violations).as("제약과 @Valid는 controller.docs 인터페이스에만 선언한다").isEmpty();
     }
 
     @Test
@@ -110,20 +108,21 @@ class ControllerParameterConstraintTest {
     }
 
     /**
-     * {@code SOURCE_ROOT} 아래에서 마지막 디렉터리 이름이 {@code leafDirName}인 모든 디렉터리를
-     * 찾아 그 바로 아래(하위 디렉터리 제외) {@code .java} 파일을 class로 읽는다. {@code web}은
-     * 각 module의 controller 패키지, {@code docs}는 각 module의 문서 인터페이스 패키지를 가리킨다.
+     * {@code SOURCE_ROOT} 아래에서 마지막 디렉터리 이름이 {@code leafDirName}인 모든 디렉터리를 찾아 그 바로 아래(하위 디렉터리 제외)
+     * {@code .java} 파일을 class로 읽는다. {@code web}은 각 module의 controller 패키지, {@code docs}는 각 module의
+     * 문서 인터페이스 패키지를 가리킨다.
      */
-    private List<Class<?>> classesUnderDirectoriesNamed(final String leafDirName) throws IOException {
+    private List<Class<?>> classesUnderDirectoriesNamed(final String leafDirName)
+            throws IOException {
         if (!Files.isDirectory(SOURCE_ROOT)) {
             throw new IllegalStateException(SOURCE_ROOT + "가 있어야 한다");
         }
         final List<Class<?>> classes = new ArrayList<>();
         try (Stream<Path> allDirs = Files.walk(SOURCE_ROOT)) {
-            final List<Path> matchingDirs = allDirs
-                    .filter(Files::isDirectory)
-                    .filter(path -> path.getFileName().toString().equals(leafDirName))
-                    .toList();
+            final List<Path> matchingDirs =
+                    allDirs.filter(Files::isDirectory)
+                            .filter(path -> path.getFileName().toString().equals(leafDirName))
+                            .toList();
             for (final Path directory : matchingDirs) {
                 classes.addAll(classesDirectlyIn(directory));
             }
@@ -132,13 +131,14 @@ class ControllerParameterConstraintTest {
     }
 
     private List<Class<?>> classesDirectlyIn(final Path directory) throws IOException {
-        final String packageName = Path.of("src/main/java").relativize(directory)
-                .toString()
-                .replace('\\', '.')
-                .replace('/', '.');
+        final String packageName =
+                Path.of("src/main/java")
+                        .relativize(directory)
+                        .toString()
+                        .replace('\\', '.')
+                        .replace('/', '.');
         try (Stream<Path> paths = Files.list(directory)) {
-            return paths
-                    .filter(path -> path.toString().endsWith(".java"))
+            return paths.filter(path -> path.toString().endsWith(".java"))
                     .map(path -> path.getFileName().toString().replace(".java", ""))
                     .<Class<?>>map(name -> loadClass(packageName + "." + name))
                     .toList();

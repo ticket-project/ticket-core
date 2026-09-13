@@ -1,10 +1,14 @@
 package com.ticket.security.infrastructure;
 
-import com.ticket.TicketApplication;
-import com.ticket.member.AccessTokenReader;
-import com.ticket.member.AccessTokenReadResult;
-import com.ticket.member.AuthenticatedMember;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,53 +25,53 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.ticket.TicketApplication;
+import com.ticket.member.AccessTokenReadResult;
+import com.ticket.member.AccessTokenReader;
+import com.ticket.member.AuthenticatedMember;
 
 /**
- * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가
- * 없으면 같은 package에서 가장 가까운 {@code @SpringBootConfiguration}을 자동 탐색하므로,
- * 진짜 애플리케이션 진입점을 명시로 고정한다.
+ * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가 없으면 같은
+ * package에서 가장 가까운 {@code @SpringBootConfiguration}을 자동 탐색하므로, 진짜 애플리케이션 진입점을 명시로 고정한다.
  */
 @WebMvcTest(controllers = ApiSecurityConfigTest.TestController.class)
 @ContextConfiguration(classes = TicketApplication.class)
-@Import({ApiSecurityConfig.class, SecurityWebMvcConfig.class, ApiSecurityConfigTest.TestController.class})
-@TestPropertySource(properties = {
-        "spring.profiles.active=test",
-        "app.cors.allowed-origins=http://localhost:3000"
+@Import({
+    ApiSecurityConfig.class,
+    SecurityWebMvcConfig.class,
+    ApiSecurityConfigTest.TestController.class
 })
+@TestPropertySource(
+        properties = {
+            "spring.profiles.active=test",
+            "app.cors.allowed-origins=http://localhost:3000"
+        })
 @SuppressWarnings("NonAsciiCharacters")
 class ApiSecurityConfigTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private AccessTokenReader accessTokenReader;
-
-    @MockitoBean
-    private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-
-    @MockitoBean
-    private RestAccessDeniedHandler restAccessDeniedHandler;
+    @Autowired private MockMvc mockMvc;
+    @MockitoBean private AccessTokenReader accessTokenReader;
+    @MockitoBean private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    @MockitoBean private RestAccessDeniedHandler restAccessDeniedHandler;
 
     @BeforeEach
     void setUp() throws Exception {
-        Mockito.doAnswer(invocation -> {
-            HttpServletResponse response = invocation.getArgument(1);
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return null;
-        }).when(restAuthenticationEntryPoint).commence(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.doAnswer(
+                        invocation -> {
+                            HttpServletResponse response = invocation.getArgument(1);
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            return null;
+                        })
+                .when(restAuthenticationEntryPoint)
+                .commence(Mockito.any(), Mockito.any(), Mockito.any());
 
-        Mockito.doAnswer(invocation -> {
-            HttpServletResponse response = invocation.getArgument(1);
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return null;
-        }).when(restAccessDeniedHandler).handle(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.doAnswer(
+                        invocation -> {
+                            HttpServletResponse response = invocation.getArgument(1);
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            return null;
+                        })
+                .when(restAccessDeniedHandler)
+                .handle(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -94,21 +98,23 @@ class ApiSecurityConfigTest {
 
     @Test
     void 일반_api는_인증_없이_접근할_수_없다() throws Exception {
-        mockMvc.perform(get("/api/v1/private-test"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/private-test")).andExpect(status().isUnauthorized());
     }
 
     @Test
     void 일반_api는_유효한_internal_auth_token으로_접근할_수_있다() throws Exception {
         Mockito.when(accessTokenReader.read("access-token"))
-                .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
+                .thenReturn(
+                        AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
 
-        mockMvc.perform(get("/api/v1/private-test")
-                        .header("Authorization", "Bearer access-token"))
+        mockMvc.perform(get("/api/v1/private-test").header("Authorization", "Bearer access-token"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("7:MEMBER"))
-                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
-                        result.getRequest().getSession(false)).isNull());
+                .andExpect(
+                        result ->
+                                org.assertj.core.api.Assertions.assertThat(
+                                                result.getRequest().getSession(false))
+                                        .isNull());
     }
 
     @Test
@@ -116,8 +122,9 @@ class ApiSecurityConfigTest {
         Mockito.when(accessTokenReader.read("not-a-valid-token"))
                 .thenReturn(AccessTokenReadResult.invalid());
 
-        mockMvc.perform(get("/api/v1/private-test")
-                        .header("Authorization", "Bearer not-a-valid-token"))
+        mockMvc.perform(
+                        get("/api/v1/private-test")
+                                .header("Authorization", "Bearer not-a-valid-token"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -126,15 +133,17 @@ class ApiSecurityConfigTest {
         Mockito.when(accessTokenReader.read("expired-token"))
                 .thenReturn(AccessTokenReadResult.expired());
 
-        mockMvc.perform(get("/api/v1/private-test")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer expired-token"))
+        mockMvc.perform(
+                        get("/api/v1/private-test")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer expired-token"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void Authorization_header_형식이_잘못되면_보호_api가_401을_반환한다() throws Exception {
-        mockMvc.perform(get("/api/v1/private-test")
-                        .header(HttpHeaders.AUTHORIZATION, "Basic access-token"))
+        mockMvc.perform(
+                        get("/api/v1/private-test")
+                                .header(HttpHeaders.AUTHORIZATION, "Basic access-token"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -162,24 +171,28 @@ class ApiSecurityConfigTest {
         Mockito.when(accessTokenReader.read("invalid-token"))
                 .thenReturn(AccessTokenReadResult.invalid());
 
-        mockMvc.perform(get("/api/v1/shows/1")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
+        mockMvc.perform(
+                        get("/api/v1/shows/1")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("show"));
     }
 
     @Test
     void 허용된_origin의_preflight는_인증_없이_처리한다() throws Exception {
-        mockMvc.perform(options("/api/v1/private-test")
-                        .header(HttpHeaders.ORIGIN, "http://localhost:3000")
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+        mockMvc.perform(
+                        options("/api/v1/private-test")
+                                .header(HttpHeaders.ORIGIN, "http://localhost:3000")
+                                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:3000"));
+                .andExpect(
+                        header().string(
+                                        HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+                                        "http://localhost:3000"));
     }
 
     @RestController
     public static class TestController {
-
         @GetMapping(value = "/actuator/prometheus", produces = MediaType.TEXT_PLAIN_VALUE)
         public String prometheus() {
             return "prometheus";

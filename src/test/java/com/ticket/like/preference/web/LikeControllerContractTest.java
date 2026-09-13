@@ -1,13 +1,12 @@
 package com.ticket.like.preference.web;
 
-import com.ticket.like.LikeType;
-import com.ticket.like.preference.application.usecase.AddLikeUseCase;
-import com.ticket.like.preference.application.usecase.RemoveLikeUseCase;
-import com.ticket.like.preference.application.usecase.GetLikeStatusUseCase;
-import com.ticket.shared.exception.handler.GlobalExceptionHandler;
-import com.ticket.like.exception.handler.LikeExceptionHandler;
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,38 +16,39 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.ticket.like.LikeType;
+import com.ticket.like.exception.handler.LikeExceptionHandler;
+import com.ticket.like.preference.application.usecase.AddLikeUseCase;
+import com.ticket.like.preference.application.usecase.GetLikeStatusUseCase;
+import com.ticket.like.preference.application.usecase.RemoveLikeUseCase;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
 @SuppressWarnings("NonAsciiCharacters")
 class LikeControllerContractTest {
-
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
-
     private final AddLikeUseCase addLikeUseCase = Mockito.mock(AddLikeUseCase.class);
     private final GetLikeStatusUseCase getLikeStatusUseCase =
             Mockito.mock(GetLikeStatusUseCase.class);
-
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        LikeController controller = new LikeController(
-                addLikeUseCase,
-                Mockito.mock(RemoveLikeUseCase.class),
-                getLikeStatusUseCase
-        );
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new LikeExceptionHandler())
-                .build();
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())
-        );
+        LikeController controller =
+                new LikeController(
+                        addLikeUseCase,
+                        Mockito.mock(RemoveLikeUseCase.class),
+                        getLikeStatusUseCase);
+        mockMvc =
+                MockMvcBuilders.standaloneSetup(controller)
+                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                        .setControllerAdvice(
+                                new GlobalExceptionHandler(), new LikeExceptionHandler())
+                        .build();
+        SecurityContextHolder.getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
     }
 
     @AfterEach

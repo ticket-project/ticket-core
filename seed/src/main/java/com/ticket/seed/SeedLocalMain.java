@@ -1,13 +1,14 @@
 package com.ticket.seed;
 
+import java.sql.Driver;
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import javax.sql.DataSource;
-import java.sql.Driver;
-import java.util.List;
 
 /**
  * 로컬 H2 DB에 초기 데이터를 적재하고 종료하는 독립 실행 프로그램이다.
@@ -16,16 +17,13 @@ import java.util.List;
  *   .\gradlew.bat seedLocal
  * </pre>
  *
- * <p>{@code TicketApplication}을 띄우지 않는다. 웹 서버·Redis·OAuth 설정 없이 DB 접속과 적재에
- * 필요한 것만 쓴다. 실행 순서와 사전 조건은 {@code seed/README.md}가 원본이다.
+ * <p>{@code TicketApplication}을 띄우지 않는다. 웹 서버·Redis·OAuth 설정 없이 DB 접속과 적재에 필요한 것만 쓴다. 실행 순서와 사전 조건은
+ * {@code seed/README.md}가 원본이다.
  *
- * <p>성공하면 작업별 결과를 출력하고 종료 코드 0으로 끝난다. 실패하면 원인을 요약하고 0이 아닌
- * 종료 코드로 끝난다. 접속 비밀번호는 어떤 경로로도 출력하지 않는다.
+ * <p>성공하면 작업별 결과를 출력하고 종료 코드 0으로 끝난다. 실패하면 원인을 요약하고 0이 아닌 종료 코드로 끝난다. 접속 비밀번호는 어떤 경로로도 출력하지 않는다.
  */
 public final class SeedLocalMain {
-
-    private SeedLocalMain() {
-    }
+    private SeedLocalMain() {}
 
     public static void main(final String[] args) {
         System.exit(execute());
@@ -63,24 +61,26 @@ public final class SeedLocalMain {
     }
 
     /**
-     * 실행 순서가 곧 계약이다. 공용 시드가 먼저 GRADES에 VIP/R/S/A code를 만들고, 부하 테스트
-     * 픽스처가 그 code를 재사용한다 — 순서가 바뀌면 같은 code가 중복 생성돼 실패한다. 회원은
-     * 다른 두 작업과 독립이지만 마지막에 둔다(가장 빠르게 다시 만들 수 있는 데이터다).
+     * 실행 순서가 곧 계약이다. 공용 시드가 먼저 GRADES에 VIP/R/S/A code를 만들고, 부하 테스트 픽스처가 그 code를 재사용한다 — 순서가 바뀌면 같은
+     * code가 중복 생성돼 실패한다. 회원은 다른 두 작업과 독립이지만 마지막에 둔다(가장 빠르게 다시 만들 수 있는 데이터다).
      */
     static List<SeedTask> tasks(
             final JdbcTemplate jdbcTemplate,
             final TransactionTemplate transactionTemplate,
-            final SeedSettings settings
-    ) {
+            final SeedSettings settings) {
         return List.of(
                 new CuratedSeedLoader(
-                        jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
+                        jdbcTemplate,
+                        transactionTemplate,
+                        settings.sqlPath(),
+                        settings.batchSize()),
                 new LoadTestFixtureSeeder(
                         jdbcTemplate, transactionTemplate, settings.loadTestPerformanceCount()),
                 new LoadTestMemberSeeder(
-                        jdbcTemplate, transactionTemplate,
-                        settings.loadTestMemberCount(), settings.loadTestMemberPassword())
-        );
+                        jdbcTemplate,
+                        transactionTemplate,
+                        settings.loadTestMemberCount(),
+                        settings.loadTestMemberPassword()));
     }
 
     private static int report(final List<SeedRunner.Report> reports) {
@@ -91,9 +91,10 @@ public final class SeedLocalMain {
             SeedConsole.info("      " + report.summary());
         }
 
-        final List<SeedRunner.Report> failures = reports.stream()
-                .filter(report -> report.status() == SeedRunner.Status.FAILED)
-                .toList();
+        final List<SeedRunner.Report> failures =
+                reports.stream()
+                        .filter(report -> report.status() == SeedRunner.Status.FAILED)
+                        .toList();
 
         if (failures.isEmpty()) {
             SeedConsole.info("");
@@ -126,17 +127,20 @@ public final class SeedLocalMain {
     }
 
     private static String indent(final String message) {
-        return message.lines().map(line -> "  " + line).reduce((a, b) -> a + System.lineSeparator() + b).orElse("");
+        return message.lines()
+                .map(line -> "  " + line)
+                .reduce((a, b) -> a + System.lineSeparator() + b)
+                .orElse("");
     }
 
     /**
-     * H2 드라이버를 직접 넘긴다. {@code DriverManagerDataSource}의 이름 기반 로딩과 달리 드라이버가
-     * classpath에 없으면 여기서 곧바로 드러난다.
+     * H2 드라이버를 직접 넘긴다. {@code DriverManagerDataSource}의 이름 기반 로딩과 달리 드라이버가 classpath에 없으면 여기서 곧바로
+     * 드러난다.
      */
     private static DataSource createDataSource(final SeedSettings settings) {
         try {
-            final Driver driver = (Driver) Class.forName("org.h2.Driver")
-                    .getDeclaredConstructor().newInstance();
+            final Driver driver =
+                    (Driver) Class.forName("org.h2.Driver").getDeclaredConstructor().newInstance();
             return new SimpleDriverDataSource(
                     driver, settings.jdbcUrl(), settings.jdbcUsername(), settings.jdbcPassword());
         } catch (final ReflectiveOperationException exception) {
