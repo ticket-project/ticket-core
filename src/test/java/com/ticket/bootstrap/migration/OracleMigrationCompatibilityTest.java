@@ -66,6 +66,11 @@ class OracleMigrationCompatibilityTest {
         try (Connection connection = connect()) {
             assertThat(tableExists(connection, "EVENT_PUBLICATION")).isTrue();
             assertThat(tableExists(connection, "EVENT_PUBLICATION_ARCHIVE")).isTrue();
+            // root V9: OrderTerminated 직렬화 결과가 옛 VARCHAR2(255 CHAR)를 넘어 저장에 실패하던
+            // 문제를 실제 Oracle 방언에서 확인한다. CLOB이 아니라 VARCHAR2로 넓혔으므로 Modulith가
+            // 완료 처리에 쓰는 serialized_event 동등 비교도 그대로 성립해야 한다.
+            assertSerializedEventHoldsLongPayload(connection, "EVENT_PUBLICATION");
+            assertSerializedEventHoldsLongPayload(connection, "EVENT_PUBLICATION_ARCHIVE");
             assertThat(tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX")).isFalse();
             assertThat(tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX")).isFalse();
             assertThat(importedKeyTables(connection, "PERFORMANCE_SEATS")).isEmpty();
@@ -82,6 +87,32 @@ class OracleMigrationCompatibilityTest {
                 assertThat(row.getLong("hold_duration_seconds")).isEqualTo(600);
                 assertThat(row.getString("queue_mode")).isEqualTo("FORCE_OFF");
             }
+        }
+    }
+
+    private void assertSerializedEventHoldsLongPayload(
+            final Connection connection, final String table) throws SQLException {
+        final String payload = "x".repeat(1000);
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO "
+                            + table
+                            + " (id, publication_date, listener_id, serialized_event, event_type,"
+                            + " completion_attempts, status) VALUES (SYS_GUID(), SYSTIMESTAMP,"
+                            + " 'listener', '"
+                            + payload
+                            + "', 'com.ticket.booking.OrderTerminated', 0, 'PUBLISHED')");
+        }
+        try (Statement statement = connection.createStatement();
+                ResultSet row =
+                        statement.executeQuery(
+                                "SELECT COUNT(*) FROM "
+                                        + table
+                                        + " WHERE serialized_event = '"
+                                        + payload
+                                        + "'")) {
+            assertThat(row.next()).isTrue();
+            assertThat(row.getInt(1)).isEqualTo(1);
         }
     }
 
