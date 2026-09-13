@@ -81,8 +81,8 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats())
                 .containsExactly(
-                        new SeatStateView(101L, SeatStatus.OCCUPIED),
-                        new SeatStateView(102L, SeatStatus.OCCUPIED));
+                        new SeatStateView(101L, 1L, SeatStatus.OCCUPIED),
+                        new SeatStateView(102L, 2L, SeatStatus.OCCUPIED));
         verify(performanceSalesPolicyRepository).findById(10L);
     }
 
@@ -102,8 +102,8 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats())
                 .containsExactly(
-                        new SeatStateView(101L, SeatStatus.AVAILABLE),
-                        new SeatStateView(102L, SeatStatus.OCCUPIED));
+                        new SeatStateView(101L, 1L, SeatStatus.AVAILABLE),
+                        new SeatStateView(102L, 2L, SeatStatus.OCCUPIED));
         verify(seatStatusDbReader).read(10L);
     }
 
@@ -128,6 +128,7 @@ class GetSeatStatusUseCaseTest {
         assertThat(output.seats())
                 .extracting(SeatStateView::performanceSeatId)
                 .containsExactly(101L, 102L, 103L);
+        assertThat(output.seats()).extracting(SeatStateView::seatId).containsExactly(1L, 2L, 3L);
     }
 
     @Test

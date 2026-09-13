@@ -51,6 +51,7 @@ public class HoldReleaseTaskProcessor {
             seatStatusEventPublisher.publish(
                     task.performanceId(),
                     performanceSeatIdBySeatId.get(seatId),
+                    seatId,
                     SeatStatusAction.RELEASED);
         }
     }

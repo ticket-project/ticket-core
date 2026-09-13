@@ -42,7 +42,7 @@ class DeselectSeatUseCaseTest {
 
         InOrder inOrder = inOrder(seatSelectionService, seatEventPublisher);
         inOrder.verify(seatSelectionService).deselect(10L, 20L, 1L);
-        // 외부 판매 좌석 식별자는 seatId가 아니라 performanceSeatId다.
-        inOrder.verify(seatEventPublisher).publish(10L, 501L, SeatStatusAction.DESELECTED);
+        // 새 계약의 performanceSeatId와 기존 프론트 계약의 물리 seatId를 함께 발행한다.
+        inOrder.verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
     }
 }

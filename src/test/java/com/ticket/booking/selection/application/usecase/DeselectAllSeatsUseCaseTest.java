@@ -43,11 +43,12 @@ class DeselectAllSeatsUseCaseTest {
 
         verify(memberLookup).requireActive(1L);
         verify(seatSelectionService).deselectAll(10L, 1L);
-        verify(seatEventPublisher).publish(10L, 501L, SeatStatusAction.DESELECTED);
-        verify(seatEventPublisher).publish(10L, 502L, SeatStatusAction.DESELECTED);
+        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
+        verify(seatEventPublisher).publish(10L, 502L, 21L, SeatStatusAction.DESELECTED);
         verify(seatEventPublisher, times(2))
                 .publish(
                         org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.any());
     }

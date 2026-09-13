@@ -48,7 +48,10 @@ public class DeselectSeatUseCase {
         final Long performanceSeatId =
                 resolvePerformanceSeatId(input.performanceId(), input.seatId());
         seatEventPublisher.publish(
-                input.performanceId(), performanceSeatId, SeatStatusAction.DESELECTED);
+                input.performanceId(),
+                performanceSeatId,
+                input.seatId(),
+                SeatStatusAction.DESELECTED);
     }
 
     private Long resolvePerformanceSeatId(final Long performanceId, final Long seatId) {

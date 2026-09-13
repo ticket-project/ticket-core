@@ -50,6 +50,7 @@ public class HoldCreationTaskProcessor {
             seatStatusEventPublisher.publish(
                     hold.performanceId(),
                     performanceSeatIdBySeatId.get(seatId),
+                    seatId,
                     SeatStatusAction.HELD);
         }
     }

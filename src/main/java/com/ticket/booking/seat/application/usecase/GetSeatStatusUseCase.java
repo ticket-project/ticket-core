@@ -80,7 +80,7 @@ public class GetSeatStatusUseCase {
             final SeatStateSnapshotRow row, final Set<Long> redisOccupiedIds) {
         final SeatStatus status =
                 redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : row.status();
-        return new SeatStateView(row.performanceSeatId(), status);
+        return new SeatStateView(row.performanceSeatId(), row.seatId(), status);
     }
 
     private void ensureAdmitted(

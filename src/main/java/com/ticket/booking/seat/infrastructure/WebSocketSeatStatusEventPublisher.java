@@ -23,10 +23,13 @@ public class WebSocketSeatStatusEventPublisher implements SeatStatusEventPublish
 
     @Override
     public void publish(
-            final Long performanceId, final Long performanceSeatId, final SeatStatusAction action) {
+            final Long performanceId,
+            final Long performanceSeatId,
+            final Long seatId,
+            final SeatStatusAction action) {
         final SeatStatusEvent event =
                 SeatStatusEvent.of(
-                        performanceId, performanceSeatId, action, LocalDateTime.now(clock));
+                        performanceId, performanceSeatId, seatId, action, LocalDateTime.now(clock));
         final String destination = String.format(SEAT_TOPIC_FORMAT, event.performanceId());
         messagingTemplate.convertAndSend(destination, event);
         log.debug(

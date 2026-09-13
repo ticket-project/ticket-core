@@ -49,8 +49,8 @@ class HoldCreationTaskProcessorTest {
         inOrder.verify(holdStore).isHeldBy(10L, 200L, "hold-key");
         inOrder.verify(seatSelectionService).deselectIfOwned(10L, 100L, 20L);
         inOrder.verify(seatSelectionService).deselectIfOwned(10L, 200L, 20L);
-        inOrder.verify(seatStatusEventPublisher).publish(10L, 901L, SeatStatusAction.HELD);
-        inOrder.verify(seatStatusEventPublisher).publish(10L, 902L, SeatStatusAction.HELD);
+        inOrder.verify(seatStatusEventPublisher).publish(10L, 901L, 100L, SeatStatusAction.HELD);
+        inOrder.verify(seatStatusEventPublisher).publish(10L, 902L, 200L, SeatStatusAction.HELD);
     }
 
     @Test

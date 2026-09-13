@@ -52,6 +52,7 @@ public class DeselectAllSeatsUseCase {
                         seatEventPublisher.publish(
                                 input.performanceId(),
                                 performanceSeatIdBySeatId.get(seatId),
+                                seatId,
                                 SeatStatusAction.DESELECTED));
     }
 
