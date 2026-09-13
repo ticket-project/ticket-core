@@ -1,25 +1,26 @@
 package com.ticket.show.catalog.infrastructure;
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.Tuple;
-import com.ticket.show.catalog.application.ShowSort;
-import com.ticket.show.catalog.application.ShowCursor;
-import com.ticket.show.catalog.domain.QShow;
-import com.ticket.shared.exception.InvalidRequestException;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Sort;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
+
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.catalog.domain.QShow;
+
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowCursorConditionBuilderTest {
-
-    private final QuerydslShowCursorConditionBuilder showCursorPolicy = new QuerydslShowCursorConditionBuilder();
+    private final QuerydslShowCursorConditionBuilder showCursorPolicy =
+            new QuerydslShowCursorConditionBuilder();
 
     @Test
     void cursor가_없으면_where절을_건드리지_않는다() {
@@ -34,7 +35,10 @@ class QuerydslShowCursorConditionBuilderTest {
     void cursor의_sort가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor = new ShowCursor(ShowSort.LATEST, "DESC", "2026-03-15T10:00:00", 1L);
 
-        assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
+        assertThatThrownBy(
+                        () ->
+                                showCursorPolicy.applyCursor(
+                                        new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(InvalidRequestException.class);
     }
 
@@ -42,7 +46,10 @@ class QuerydslShowCursorConditionBuilderTest {
     void cursor의_dir가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "ASC", "10", 1L);
 
-        assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
+        assertThatThrownBy(
+                        () ->
+                                showCursorPolicy.applyCursor(
+                                        new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(InvalidRequestException.class);
     }
 
@@ -50,7 +57,10 @@ class QuerydslShowCursorConditionBuilderTest {
     void cursor의_lastId가_없으면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", "10", null);
 
-        assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
+        assertThatThrownBy(
+                        () ->
+                                showCursorPolicy.applyCursor(
+                                        new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(InvalidRequestException.class);
     }
 
@@ -58,7 +68,10 @@ class QuerydslShowCursorConditionBuilderTest {
     void cursor의_lastValue가_없으면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", " ", 1L);
 
-        assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, popularDesc()))
+        assertThatThrownBy(
+                        () ->
+                                showCursorPolicy.applyCursor(
+                                        new BooleanBuilder(), cursor, popularDesc()))
                 .isInstanceOf(InvalidRequestException.class);
     }
 
@@ -66,7 +79,10 @@ class QuerydslShowCursorConditionBuilderTest {
     void cursor의_lastValue가_정렬형식과_맞지_않으면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor = new ShowCursor(ShowSort.LATEST, "DESC", "not-a-date", 1L);
 
-        assertThatThrownBy(() -> showCursorPolicy.applyCursor(new BooleanBuilder(), cursor, latestDesc()))
+        assertThatThrownBy(
+                        () ->
+                                showCursorPolicy.applyCursor(
+                                        new BooleanBuilder(), cursor, latestDesc()))
                 .isInstanceOf(InvalidRequestException.class);
     }
 
@@ -86,7 +102,8 @@ class QuerydslShowCursorConditionBuilderTest {
         when(tuple.get(QShow.show.id)).thenReturn(1L);
         when(tuple.get(QShow.show.viewCount)).thenReturn(10L);
 
-        ShowCursor nextPosition = showCursorPolicy.buildNextPosition(List.of(tuple), 1, popularDesc());
+        ShowCursor nextPosition =
+                showCursorPolicy.buildNextPosition(List.of(tuple), 1, popularDesc());
 
         assertThat(nextPosition).isEqualTo(new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L));
     }

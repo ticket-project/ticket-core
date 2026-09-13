@@ -1,18 +1,18 @@
 package com.ticket.show.catalog.application;
 
-import com.ticket.venue.Region;
-import com.ticket.shared.exception.InvalidRequestException;
-import org.junit.jupiter.api.Test;
-
-import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.Test;
+
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.venue.Region;
+
 @SuppressWarnings("NonAsciiCharacters")
 class SaleOpeningSoonSearchParamTest {
-
     private static final LocalDateTime EARLY = LocalDateTime.of(2026, 4, 1, 0, 0);
     private static final LocalDateTime LATE = LocalDateTime.of(2026, 4, 30, 0, 0);
 
@@ -36,26 +36,19 @@ class SaleOpeningSoonSearchParamTest {
     @Test
     void 지역_문자열은_목록_조회와_같은_규칙으로_변환한다() {
         assertThat(param(null, null, null, null).getRegion()).isNull();
-        assertThat(SaleOpeningSoonSearchParam
-                .of(null, null, " SEOUL ", null, null, null, null, null)
-                .getRegion()).isEqualTo(Region.SEOUL);
+        assertThat(
+                        SaleOpeningSoonSearchParam.of(
+                                        null, null, " SEOUL ", null, null, null, null, null)
+                                .getRegion())
+                .isEqualTo(Region.SEOUL);
     }
 
     private SaleOpeningSoonSearchParam param(
             final LocalDateTime saleStartFrom,
             final LocalDateTime saleStartTo,
             final LocalDateTime saleEndFrom,
-            final LocalDateTime saleEndTo
-    ) {
+            final LocalDateTime saleEndTo) {
         return SaleOpeningSoonSearchParam.of(
-                "CONCERT",
-                null,
-                null,
-                saleStartFrom,
-                saleStartTo,
-                saleEndFrom,
-                saleEndTo,
-                null
-        );
+                "CONCERT", null, null, saleStartFrom, saleStartTo, saleEndFrom, saleEndTo, null);
     }
 }

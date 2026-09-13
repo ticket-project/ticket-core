@@ -1,28 +1,9 @@
 package com.ticket.show.catalog.infrastructure;
 
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-import com.ticket.show.catalog.application.ShowSort;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.Tuple;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.catalog.domain.ShowCardImagePathConverter;
-import com.ticket.show.catalog.domain.Show;
-import com.ticket.show.catalog.infrastructure.QuerydslShowSortResolver.SortOrder;
-import com.ticket.show.catalog.application.LatestShowRow;
-import com.ticket.show.catalog.application.SaleOpeningSoonDetailRow;
-import com.ticket.show.catalog.application.SaleOpeningSoonSearchParam;
-import com.ticket.show.catalog.application.SaleOpeningSoonSummaryRow;
-import com.ticket.show.catalog.application.ShowListItemRow;
-import com.ticket.show.catalog.application.ShowParam;
-import com.ticket.show.catalog.application.ShowSearchCriteria;
-import com.ticket.show.catalog.application.ShowSearchItemRow;
-import com.ticket.show.catalog.application.ShowCursor;
-import com.ticket.shared.CursorPage;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import static com.ticket.show.catalog.domain.QShow.show;
+import static com.ticket.show.catalog.domain.QShowGenre.showGenre;
+import static com.ticket.show.classification.domain.QCategory.category;
+import static com.ticket.show.classification.domain.QGenre.genre;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,20 +12,37 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.ticket.show.catalog.domain.QShowGenre.showGenre;
-import static com.ticket.show.classification.domain.QCategory.category;
-import static com.ticket.show.classification.domain.QGenre.genre;
-import static com.ticket.show.catalog.domain.QShow.show;
+import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.shared.CursorPage;
+import com.ticket.show.catalog.application.LatestShowRow;
+import com.ticket.show.catalog.application.SaleOpeningSoonDetailRow;
+import com.ticket.show.catalog.application.SaleOpeningSoonSearchParam;
+import com.ticket.show.catalog.application.SaleOpeningSoonSummaryRow;
+import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.application.ShowListItemRow;
+import com.ticket.show.catalog.application.ShowListParam;
+import com.ticket.show.catalog.application.ShowSearchCriteria;
+import com.ticket.show.catalog.application.ShowSearchItemRow;
+import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.catalog.application.port.ShowListQueryPort;
+import com.ticket.show.catalog.domain.Show;
+import com.ticket.show.catalog.domain.ShowCardImagePathConverter;
+import com.ticket.show.catalog.infrastructure.QuerydslShowSortResolver.SortOrder;
+
+import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB에서 공연 목록·검색 데이터를 읽는 persistence adapter다. venue 표시값 조합은
- * 여기서 하지 않는다 — {@code venueId} scalar만 담은 raw row를 돌려주고, 실제 venue 조회·조합은
- * 이 포트를 부르는 use case(application)가 한다.
+ * show 자기 DB에서 공연 목록·검색 데이터를 읽는 persistence adapter다. venue 표시값 조합은 여기서 하지 않는다 — {@code venueId}
+ * scalar만 담은 raw row를 돌려주고, 실제 venue 조회·조합은 이 포트를 부르는 use case(application)가 한다.
  */
 @Repository
 @RequiredArgsConstructor
 public class QuerydslShowListQueryPort implements ShowListQueryPort {
-
     private final JPAQueryFactory queryFactory;
     private final QuerydslShowPredicates queryHelper;
     private final QuerydslShowConditionBuilder showConditionFactory;
@@ -53,7 +51,8 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
     @Override
-    public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(final ShowParam param, final int size, final ShowSort sort) {
+    public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
+            final ShowListParam param, final int size, final ShowSort sort) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
         final BooleanBuilder where = showConditionFactory.buildMainListCondition(param, sortOrder);
 
@@ -63,52 +62,73 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 where,
                 sortOrder,
                 this::fetchShowPageRows,
-                (context, ids) -> fetchMainShowResponses(ids, context.primaryOrder(), context.tieBreakerOrder())
-        );
+                (context, ids) ->
+                        fetchMainShowResponses(
+                                ids, context.primaryOrder(), context.tieBreakerOrder()));
     }
 
     @Override
     public List<LatestShowRow> findLatestShows(final String categoryCode, final int limit) {
-        final List<Tuple> rows = queryFactory
-                .select(show.id, show.title, show.image, show.startDate, show.endDate, show.venueId, show.createdAt)
-                .distinct()
-                .from(show)
-                .leftJoin(showGenre).on(showGenre.showId.eq(show.id))
-                .leftJoin(genre).on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category).on(genre.categoryId.eq(category.id))
-                .where(queryHelper.categoryCodeEq(categoryCode))
-                .orderBy(show.createdAt.desc())
-                .limit(limit)
-                .fetch();
+        final List<Tuple> rows =
+                queryFactory
+                        .select(
+                                show.id,
+                                show.title,
+                                show.image,
+                                show.startDate,
+                                show.endDate,
+                                show.venueId,
+                                show.createdAt)
+                        .distinct()
+                        .from(show)
+                        .leftJoin(showGenre)
+                        .on(showGenre.showId.eq(show.id))
+                        .leftJoin(genre)
+                        .on(showGenre.genreId.eq(genre.id))
+                        .leftJoin(category)
+                        .on(genre.categoryId.eq(category.id))
+                        .where(queryHelper.categoryCodeEq(categoryCode))
+                        .orderBy(show.createdAt.desc())
+                        .limit(limit)
+                        .fetch();
 
         return rows.stream().map(this::toLatestShowRow).toList();
     }
 
     @Override
-    public List<SaleOpeningSoonSummaryRow> findShowsSaleOpeningSoon(final String categoryCode, final int limit) {
-        final List<Tuple> rows = queryFactory
-                .select(show.id, show.title, show.image, show.venueId, show.displaySaleWindow.startsAt)
-                .distinct()
-                .from(show)
-                .leftJoin(showGenre).on(showGenre.showId.eq(show.id))
-                .leftJoin(genre).on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category).on(genre.categoryId.eq(category.id))
-                .where(showConditionFactory.buildSaleOpeningSoonSummaryCondition(categoryCode))
-                .orderBy(show.displaySaleWindow.startsAt.asc())
-                .limit(limit)
-                .fetch();
+    public List<SaleOpeningSoonSummaryRow> findSaleOpeningSoonSummaries(
+            final String categoryCode, final int limit) {
+        final List<Tuple> rows =
+                queryFactory
+                        .select(
+                                show.id,
+                                show.title,
+                                show.image,
+                                show.venueId,
+                                show.displaySaleWindow.startsAt)
+                        .distinct()
+                        .from(show)
+                        .leftJoin(showGenre)
+                        .on(showGenre.showId.eq(show.id))
+                        .leftJoin(genre)
+                        .on(showGenre.genreId.eq(genre.id))
+                        .leftJoin(category)
+                        .on(genre.categoryId.eq(category.id))
+                        .where(
+                                showConditionFactory.buildSaleOpeningSoonSummaryCondition(
+                                        categoryCode))
+                        .orderBy(show.displaySaleWindow.startsAt.asc())
+                        .limit(limit)
+                        .fetch();
 
         return rows.stream().map(this::toSaleOpeningSoonSummaryRow).toList();
     }
 
     @Override
     public CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
-            final SaleOpeningSoonSearchParam param,
-            final int size,
-            final ShowSort sort
-    ) {
+            final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
-        final BooleanBuilder where = showConditionFactory.buildSaleOpeningCondition(param);
+        final BooleanBuilder where = showConditionFactory.buildSaleOpeningSoonCondition(param);
 
         return findCursorPage(
                 size,
@@ -116,40 +136,43 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 where,
                 sortOrder,
                 this::fetchShowPageRows,
-                (context, ids) -> fetchSaleOpeningResponses(ids, context.primaryOrder(), context.tieBreakerOrder())
-        );
+                (context, ids) ->
+                        fetchSaleOpeningSoonResponses(
+                                ids, context.primaryOrder(), context.tieBreakerOrder()));
     }
 
     @Override
     public CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
-            final ShowSearchCriteria request,
-            final int size,
-            final ShowSort sort
-    ) {
+            final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
         final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
-        final BooleanBuilder where = showConditionFactory.buildSearchCondition(request, sortOrder);
+        final BooleanBuilder where = showConditionFactory.buildSearchCondition(criteria, sortOrder);
 
         return findCursorPage(
                 size,
-                request.getCursor(),
+                criteria.getCursor(),
                 where,
                 sortOrder,
                 this::fetchShowPageRows,
-                (context, ids) -> fetchSearchResponses(ids, context.primaryOrder(), context.tieBreakerOrder())
-        );
+                (context, ids) ->
+                        fetchSearchResponses(
+                                ids, context.primaryOrder(), context.tieBreakerOrder()));
     }
 
     @Override
-    public long countSearchShows(final ShowSearchCriteria request) {
-        final BooleanBuilder where = showConditionFactory.buildSearchCondition(request, null);
-        final Long count = queryFactory
-                .select(show.id.countDistinct())
-                .from(show)
-                .leftJoin(showGenre).on(showGenre.showId.eq(show.id))
-                .leftJoin(genre).on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category).on(genre.categoryId.eq(category.id))
-                .where(where)
-                .fetchOne();
+    public long countSearchShows(final ShowSearchCriteria criteria) {
+        final BooleanBuilder where = showConditionFactory.buildSearchCondition(criteria, null);
+        final Long count =
+                queryFactory
+                        .select(show.id.countDistinct())
+                        .from(show)
+                        .leftJoin(showGenre)
+                        .on(showGenre.showId.eq(show.id))
+                        .leftJoin(genre)
+                        .on(showGenre.genreId.eq(genre.id))
+                        .leftJoin(category)
+                        .on(genre.categoryId.eq(category.id))
+                        .where(where)
+                        .fetchOne();
         return count != null ? count : 0L;
     }
 
@@ -159,17 +182,16 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
             final BooleanBuilder where,
             final SortOrder sortOrder,
             final Function<QueryPageContext, List<Tuple>> rowFetcher,
-            final BiFunction<QueryPageContext, List<Long>, List<T>> resultFetcher
-    ) {
+            final BiFunction<QueryPageContext, List<Long>, List<T>> resultFetcher) {
         showCursorPolicy.applyCursor(where, cursor, sortOrder);
 
-        final QueryPageContext context = new QueryPageContext(
-                size,
-                where,
-                sortOrder,
-                sortSupport.primaryOrderSpecifier(sortOrder),
-                sortSupport.tieBreakerOrder(sortOrder)
-        );
+        final QueryPageContext context =
+                new QueryPageContext(
+                        size,
+                        where,
+                        sortOrder,
+                        sortSupport.primaryOrderSpecifier(sortOrder),
+                        sortSupport.tieBreakerOrder(sortOrder));
 
         final List<Tuple> rows = rowFetcher.apply(context);
         final List<Long> ids = extractIds(rows);
@@ -181,21 +203,28 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         final boolean hasNext = results.size() > size;
         final List<T> pageResults = hasNext ? results.subList(0, size) : results;
 
-        final ShowCursor nextPosition = hasNext
-                ? showCursorPolicy.buildNextPosition(rows, size, sortOrder)
-                : null;
+        final ShowCursor nextPosition =
+                hasNext ? showCursorPolicy.buildNextPosition(rows, size, sortOrder) : null;
 
         return new CursorPage<>(List.copyOf(pageResults), hasNext, nextPosition);
     }
 
     private List<Tuple> fetchShowPageRows(final QueryPageContext context) {
         return queryFactory
-                .select(show.id, show.startDate, show.createdAt, show.displaySaleWindow.startsAt, show.viewCount)
+                .select(
+                        show.id,
+                        show.startDate,
+                        show.createdAt,
+                        show.displaySaleWindow.startsAt,
+                        show.viewCount)
                 .distinct()
                 .from(show)
-                .leftJoin(showGenre).on(showGenre.showId.eq(show.id))
-                .leftJoin(genre).on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category).on(genre.categoryId.eq(category.id))
+                .leftJoin(showGenre)
+                .on(showGenre.showId.eq(show.id))
+                .leftJoin(genre)
+                .on(showGenre.genreId.eq(genre.id))
+                .leftJoin(category)
+                .on(genre.categoryId.eq(category.id))
                 .where(context.where())
                 .orderBy(context.primaryOrder(), context.tieBreakerOrder())
                 .limit(context.size() + 1L)
@@ -205,46 +234,58 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     private List<ShowListItemRow> fetchMainShowResponses(
             final List<Long> ids,
             final OrderSpecifier<?> primaryOrder,
-            final OrderSpecifier<Long> tieBreakerOrder
-    ) {
+            final OrderSpecifier<Long> tieBreakerOrder) {
         final Map<Long, List<String>> genreMap = fetchGenreMap(ids);
-        final List<Show> shows = queryFactory
-                .selectFrom(show)
-                .where(show.id.in(ids))
-                .orderBy(primaryOrder, tieBreakerOrder)
-                .fetch();
+        final List<Show> shows =
+                queryFactory
+                        .selectFrom(show)
+                        .where(show.id.in(ids))
+                        .orderBy(primaryOrder, tieBreakerOrder)
+                        .fetch();
 
-        return new ArrayList<>(shows.stream()
-                .map(s -> new ShowListItemRow(
-                        s.getId(),
-                        s.getTitle(),
-                        s.getSubTitle(),
-                        showCardImagePathConverter.toCardImage(s.getImage()),
-                        genreMap.getOrDefault(s.getId(), List.of()),
-                        s.getStartDate(),
-                        s.getEndDate(),
-                        s.getViewCount(),
-                        s.getDisplaySaleType(),
-                        s.getDisplaySaleStartsAt(),
-                        s.getDisplaySaleEndsAt(),
-                        s.getCreatedAt(),
-                        s.getVenueId()
-                ))
-                .toList());
+        return new ArrayList<>(
+                shows.stream()
+                        .map(
+                                s ->
+                                        new ShowListItemRow(
+                                                s.getId(),
+                                                s.getTitle(),
+                                                s.getSubTitle(),
+                                                showCardImagePathConverter.toCardImage(
+                                                        s.getImage()),
+                                                genreMap.getOrDefault(s.getId(), List.of()),
+                                                s.getStartDate(),
+                                                s.getEndDate(),
+                                                s.getViewCount(),
+                                                s.getDisplaySaleType(),
+                                                s.getDisplaySaleStartsAt(),
+                                                s.getDisplaySaleEndsAt(),
+                                                s.getCreatedAt(),
+                                                s.getVenueId()))
+                        .toList());
     }
 
-    private List<SaleOpeningSoonDetailRow> fetchSaleOpeningResponses(
+    private List<SaleOpeningSoonDetailRow> fetchSaleOpeningSoonResponses(
             final List<Long> ids,
             final OrderSpecifier<?> primaryOrder,
-            final OrderSpecifier<Long> tieBreakerOrder
-    ) {
-        final List<Tuple> rows = queryFactory
-                .select(show.id, show.title, show.subTitle, show.image, show.venueId,
-                        show.startDate, show.endDate, show.displaySaleWindow.startsAt, show.displaySaleWindow.endsAt, show.viewCount)
-                .from(show)
-                .where(show.id.in(ids))
-                .orderBy(primaryOrder, tieBreakerOrder)
-                .fetch();
+            final OrderSpecifier<Long> tieBreakerOrder) {
+        final List<Tuple> rows =
+                queryFactory
+                        .select(
+                                show.id,
+                                show.title,
+                                show.subTitle,
+                                show.image,
+                                show.venueId,
+                                show.startDate,
+                                show.endDate,
+                                show.displaySaleWindow.startsAt,
+                                show.displaySaleWindow.endsAt,
+                                show.viewCount)
+                        .from(show)
+                        .where(show.id.in(ids))
+                        .orderBy(primaryOrder, tieBreakerOrder)
+                        .fetch();
 
         return rows.stream().map(this::toSaleOpeningSoonDetailRow).toList();
     }
@@ -252,15 +293,21 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     private List<ShowSearchItemRow> fetchSearchResponses(
             final List<Long> ids,
             final OrderSpecifier<?> primaryOrder,
-            final OrderSpecifier<Long> tieBreakerOrder
-    ) {
-        final List<Tuple> rows = queryFactory
-                .select(show.id, show.title, show.image, show.venueId,
-                        show.startDate, show.endDate, show.viewCount)
-                .from(show)
-                .where(show.id.in(ids))
-                .orderBy(primaryOrder, tieBreakerOrder)
-                .fetch();
+            final OrderSpecifier<Long> tieBreakerOrder) {
+        final List<Tuple> rows =
+                queryFactory
+                        .select(
+                                show.id,
+                                show.title,
+                                show.image,
+                                show.venueId,
+                                show.startDate,
+                                show.endDate,
+                                show.viewCount)
+                        .from(show)
+                        .where(show.id.in(ids))
+                        .orderBy(primaryOrder, tieBreakerOrder)
+                        .fetch();
 
         return rows.stream().map(this::toShowSearchItemRow).toList();
     }
@@ -277,8 +324,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
                 tuple.get(show.venueId),
-                tuple.get(show.createdAt)
-        );
+                tuple.get(show.createdAt));
     }
 
     private SaleOpeningSoonSummaryRow toSaleOpeningSoonSummaryRow(final Tuple tuple) {
@@ -287,8 +333,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
                 tuple.get(show.venueId),
-                tuple.get(show.displaySaleWindow.startsAt)
-        );
+                tuple.get(show.displaySaleWindow.startsAt));
     }
 
     private SaleOpeningSoonDetailRow toSaleOpeningSoonDetailRow(final Tuple tuple) {
@@ -302,8 +347,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 tuple.get(show.displaySaleWindow.startsAt),
                 tuple.get(show.displaySaleWindow.endsAt),
                 tuple.get(show.viewCount),
-                tuple.get(show.venueId)
-        );
+                tuple.get(show.venueId));
     }
 
     private ShowSearchItemRow toShowSearchItemRow(final Tuple tuple) {
@@ -314,18 +358,20 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
                 tuple.get(show.viewCount),
-                tuple.get(show.venueId)
-        );
+                tuple.get(show.venueId));
     }
 
     private Map<Long, List<String>> fetchGenreMap(final List<Long> ids) {
-        final List<Tuple> genreTuples = queryFactory
-                .select(show.id, genre.name)
-                .from(show)
-                .leftJoin(showGenre).on(showGenre.showId.eq(show.id))
-                .leftJoin(genre).on(showGenre.genreId.eq(genre.id))
-                .where(show.id.in(ids))
-                .fetch();
+        final List<Tuple> genreTuples =
+                queryFactory
+                        .select(show.id, genre.name)
+                        .from(show)
+                        .leftJoin(showGenre)
+                        .on(showGenre.showId.eq(show.id))
+                        .leftJoin(genre)
+                        .on(showGenre.genreId.eq(genre.id))
+                        .where(show.id.in(ids))
+                        .fetch();
 
         final Map<Long, List<String>> genreMap = new LinkedHashMap<>();
         for (Tuple tuple : genreTuples) {
@@ -343,7 +389,5 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
             BooleanBuilder where,
             SortOrder sortOrder,
             OrderSpecifier<?> primaryOrder,
-            OrderSpecifier<Long> tieBreakerOrder
-    ) {
-    }
+            OrderSpecifier<Long> tieBreakerOrder) {}
 }

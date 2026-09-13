@@ -1,19 +1,18 @@
 package com.ticket.show.classification.infrastructure;
 
-import com.ticket.show.classification.domain.Genre;
-import com.ticket.show.classification.domain.GenreRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 
-/**
- * {@link GenreRepository}의 JPA 구현이다.
- */
+import org.springframework.stereotype.Repository;
+
+import com.ticket.show.classification.domain.Genre;
+import com.ticket.show.classification.domain.GenreRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link GenreRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class GenreRepositoryAdapter implements GenreRepository {
-
     private final SpringDataGenreJpaRepository jpaRepository;
 
     @Override

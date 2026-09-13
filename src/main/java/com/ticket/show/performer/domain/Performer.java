@@ -1,7 +1,13 @@
 package com.ticket.show.performer.domain;
 
-import com.ticket.show.catalog.domain.ShowAuditedEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import com.ticket.show.domain.ShowAuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,13 +17,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "PERFORMERS")
 public class Performer extends ShowAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-
     private String profileImageUrl;
 
     private Performer(final String name, final String profileImageUrl) {
@@ -28,5 +32,4 @@ public class Performer extends ShowAuditedEntity {
     public static Performer create(final String name, final String profileImageUrl) {
         return new Performer(name, profileImageUrl);
     }
-
 }

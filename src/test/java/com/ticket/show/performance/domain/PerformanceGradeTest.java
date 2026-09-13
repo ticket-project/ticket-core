@@ -1,24 +1,25 @@
 package com.ticket.show.performance.domain;
 
-import com.ticket.shared.exception.InvalidRequestException;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
+
+import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceGradeTest {
-
     private static final Long VIP_GRADE_ID = 1L;
 
     @Test
     void 가격이_0_이상이면_생성된다() throws Exception {
         Performance performance = newPerformance();
 
-        PerformanceGrade performanceGrade = PerformanceGrade.assign(performance, VIP_GRADE_ID, BigDecimal.ZERO, 1);
+        PerformanceGrade performanceGrade =
+                PerformanceGrade.assign(performance, VIP_GRADE_ID, BigDecimal.ZERO, 1);
 
         assertThat(performanceGrade.getPrice()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(performanceGrade.getSortOrder()).isEqualTo(1);
@@ -30,7 +31,10 @@ class PerformanceGradeTest {
     void 가격이_음수이면_거부한다() throws Exception {
         Performance performance = newPerformance();
 
-        assertThatThrownBy(() -> PerformanceGrade.assign(performance, VIP_GRADE_ID, BigDecimal.valueOf(-1), 1))
+        assertThatThrownBy(
+                        () ->
+                                PerformanceGrade.assign(
+                                        performance, VIP_GRADE_ID, BigDecimal.valueOf(-1), 1))
                 .isInstanceOf(InvalidRequestException.class);
     }
 
@@ -47,11 +51,14 @@ class PerformanceGradeTest {
         Performance performanceA = newPerformance();
         Performance performanceB = newPerformance();
 
-        PerformanceGrade performanceGradeA = PerformanceGrade.assign(performanceA, VIP_GRADE_ID, BigDecimal.valueOf(100_000), 1);
-        PerformanceGrade performanceGradeB = PerformanceGrade.assign(performanceB, VIP_GRADE_ID, BigDecimal.valueOf(120_000), 1);
+        PerformanceGrade performanceGradeA =
+                PerformanceGrade.assign(performanceA, VIP_GRADE_ID, BigDecimal.valueOf(100_000), 1);
+        PerformanceGrade performanceGradeB =
+                PerformanceGrade.assign(performanceB, VIP_GRADE_ID, BigDecimal.valueOf(120_000), 1);
 
         assertThat(performanceGradeA.getGradeId()).isEqualTo(performanceGradeB.getGradeId());
-        assertThat(performanceGradeA.getPrice()).isNotEqualByComparingTo(performanceGradeB.getPrice());
+        assertThat(performanceGradeA.getPrice())
+                .isNotEqualByComparingTo(performanceGradeB.getPrice());
     }
 
     private Performance newPerformance() throws Exception {

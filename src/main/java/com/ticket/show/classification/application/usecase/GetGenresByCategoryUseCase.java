@@ -1,28 +1,26 @@
 package com.ticket.show.classification.application.usecase;
 
-import com.ticket.show.classification.domain.Genre;
-import com.ticket.show.classification.domain.GenreRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.show.classification.domain.Genre;
+import com.ticket.show.classification.domain.GenreRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetGenresByCategoryUseCase {
-
     private final GenreRepository genreRepository;
 
-    public record Input(String categoryCode) {
-    }
+    public record Input(String categoryCode) {}
 
-    public record GenreItem(Long id, String code, String name) {
-    }
+    public record GenreItem(Long id, String code, String name) {}
 
-    public record Output(List<GenreItem> genres) {
-    }
+    public record Output(List<GenreItem> genres) {}
 
     public Output execute(final Input input) {
         final List<Genre> genres;
@@ -33,9 +31,13 @@ public class GetGenresByCategoryUseCase {
             genres = genreRepository.findAllByCategoryCodeOrderByName(input.categoryCode);
         }
 
-        final List<GenreItem> items = genres.stream()
-                .map(genre -> new GenreItem(genre.getId(), genre.getCode(), genre.getName()))
-                .toList();
+        final List<GenreItem> items =
+                genres.stream()
+                        .map(
+                                genre ->
+                                        new GenreItem(
+                                                genre.getId(), genre.getCode(), genre.getName()))
+                        .toList();
 
         return new Output(items);
     }

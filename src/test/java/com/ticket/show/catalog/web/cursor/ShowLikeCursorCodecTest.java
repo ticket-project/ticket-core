@@ -1,17 +1,17 @@
 package com.ticket.show.catalog.web.cursor;
 
-import com.ticket.shared.exception.InvalidRequestException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowLikeCursorCodecTest {
-
     private final ShowLikeCursorCodec codec = new ShowLikeCursorCodec();
 
     @Test
@@ -35,7 +35,6 @@ class ShowLikeCursorCodecTest {
     @ParameterizedTest
     @ValueSource(strings = {"abc", "1.5", "9999999999999999999999"})
     void 숫자가_아니면_400으로_끊는다(final String cursor) {
-        assertThatThrownBy(() -> codec.decode(cursor))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> codec.decode(cursor)).isInstanceOf(InvalidRequestException.class);
     }
 }

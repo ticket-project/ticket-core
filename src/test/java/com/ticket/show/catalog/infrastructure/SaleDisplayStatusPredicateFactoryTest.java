@@ -1,22 +1,22 @@
 package com.ticket.show.catalog.infrastructure;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.show.catalog.domain.SaleDisplayStatus;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.ticket.show.catalog.domain.SaleDisplayStatus;
 
 /**
- * 경계값·null 케이스가 {@link com.ticket.show.catalog.domain.DisplaySaleWindowTest}와 같은 결론을
- * 내는지는 실제 DB 조회 통합 테스트(QuerydslShowListQueryPortTest 등)가 고정한다. 여기서는
- * 각 상태가 만들어내는 조건식의 형태만 고정한다.
+ * 경계값·null 케이스가 {@link com.ticket.show.catalog.domain.DisplaySaleWindowTest}와 같은 결론을 내는지는 실제 DB 조회
+ * 통합 테스트(QuerydslShowListQueryPortTest 등)가 고정한다. 여기서는 각 상태가 만들어내는 조건식의 형태만 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SaleDisplayStatusPredicateFactoryTest {
-
-    private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicateFactory = new SaleDisplayStatusPredicateFactory();
+    private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicateFactory =
+            new SaleDisplayStatusPredicateFactory();
     private final LocalDateTime fixedNow = LocalDateTime.of(2026, 3, 15, 19, 0);
 
     @Test
@@ -26,9 +26,13 @@ class SaleDisplayStatusPredicateFactoryTest {
 
     @Test
     void saleDisplayStatus별로_고정시각_기준_조건식을_반환한다() {
-        BooleanExpression beforeOpen = saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.BEFORE_OPEN, fixedNow);
-        BooleanExpression onSale = saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.ON_SALE, fixedNow);
-        BooleanExpression closed = saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.CLOSED, fixedNow);
+        BooleanExpression beforeOpen =
+                saleDisplayStatusPredicateFactory.condition(
+                        SaleDisplayStatus.BEFORE_OPEN, fixedNow);
+        BooleanExpression onSale =
+                saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.ON_SALE, fixedNow);
+        BooleanExpression closed =
+                saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.CLOSED, fixedNow);
 
         assertThat(beforeOpen).isNotNull();
         assertThat(onSale).isNotNull();
@@ -40,7 +44,8 @@ class SaleDisplayStatusPredicateFactoryTest {
 
     @Test
     void CLOSED_조건식은_null_창도_포함한다() {
-        BooleanExpression closed = saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.CLOSED, fixedNow);
+        BooleanExpression closed =
+                saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.CLOSED, fixedNow);
 
         assertThat(closed.toString()).contains("is null");
     }

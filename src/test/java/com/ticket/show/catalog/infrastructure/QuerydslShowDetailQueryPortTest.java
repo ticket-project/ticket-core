@@ -1,42 +1,35 @@
 package com.ticket.show.catalog.infrastructure;
 
-import com.ticket.show.catalog.application.port.ShowDetailQueryPort;
-
-import com.ticket.show.catalog.application.port.ShowDetailQueryPort;
-import com.ticket.show.catalog.application.ShowDetailView;
-import com.ticket.show.catalog.domain.SaleDisplayStatus;
-import com.ticket.show.catalog.domain.ShowCardImagePathConverter;
-import com.ticket.venue.Region;
-import com.ticket.show.classification.domain.Category;
-import com.ticket.show.classification.domain.Genre;
-import com.ticket.show.catalog.domain.Show;
-import com.ticket.show.performer.domain.Performer;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
-import com.ticket.show.performance.domain.Grade;
-import com.ticket.show.performance.domain.Performance;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
-@Import({
-        QuerydslShowDetailQueryPort.class,
-        ShowCardImagePathConverter.class
-})
+import com.ticket.show.catalog.application.ShowDetailView;
+import com.ticket.show.catalog.application.port.ShowDetailQueryPort;
+import com.ticket.show.catalog.domain.SaleDisplayStatus;
+import com.ticket.show.catalog.domain.Show;
+import com.ticket.show.catalog.domain.ShowCardImagePathConverter;
+import com.ticket.show.classification.domain.Category;
+import com.ticket.show.classification.domain.Genre;
+import com.ticket.show.performance.domain.Grade;
+import com.ticket.show.performance.domain.Performance;
+import com.ticket.show.performer.domain.Performer;
+import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
+import com.ticket.venue.Region;
+import com.ticket.venue.facility.domain.Venue;
+
+@Import({QuerydslShowDetailQueryPort.class, ShowCardImagePathConverter.class})
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowDetailQueryPortTest extends InfraReadRepositoryTestSupport {
-
-    @Autowired
-    private ShowDetailQueryPort showDetailQueryPort;
-
+    @Autowired private ShowDetailQueryPort showDetailQueryPort;
     private Long showId;
     private Long venueId;
 
@@ -47,22 +40,25 @@ class QuerydslShowDetailQueryPortTest extends InfraReadRepositoryTestSupport {
         Performer performer = persistPerformer("홍길동");
         Category category = persistCategory("CONCERT", "콘서트");
         Genre genre = persistGenre("KPOP", "케이팝", category);
-        Show show = persistShow(
-                "단독 공연",
-                venue,
-                performer,
-                321L,
-                LocalDateTime.of(2026, 3, 10, 0, 0),
-                LocalDateTime.of(2026, 3, 20, 23, 59)
-        );
+        Show show =
+                persistShow(
+                        "단독 공연",
+                        venue,
+                        performer,
+                        321L,
+                        LocalDateTime.of(2026, 3, 10, 0, 0),
+                        LocalDateTime.of(2026, 3, 20, 23, 59));
         showId = show.getId();
-        entityManager.createNativeQuery("update shows set image = :image where id = :id")
+        entityManager
+                .createNativeQuery("update shows set image = :image where id = :id")
                 .setParameter("image", "/api/images/shows/" + showId + ".png")
                 .setParameter("id", showId)
                 .executeUpdate();
         persistShowGenre(show, genre);
-        Performance firstPerformance = persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
-        Performance secondPerformance = persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
+        Performance firstPerformance =
+                persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
+        Performance secondPerformance =
+                persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
         // ADR 0005: 가격은 회차(Performance) 단위로만 존재한다. 두 회차에 서로 다른 가격 범위를 둬
         // show 상세의 priceSummary가 회차 전체의 min/max를 파생하는지 확인한다.
         Grade vip = persistGrade("VIP", "VIP석");
@@ -85,8 +81,10 @@ class QuerydslShowDetailQueryPortTest extends InfraReadRepositoryTestSupport {
         assertThat(detail.priceSummary().maxPrice()).isEqualByComparingTo("180000");
         assertThat(detail.performanceDates()).hasSize(1);
         assertThat(detail.performanceDates().getFirst().performances()).hasSize(2);
-        assertThat(detail.performanceDates().getFirst().performances().getFirst().performanceNo()).isEqualTo(1L);
-        assertThat(detail.performanceDates().getFirst().performances().get(1).performanceNo()).isEqualTo(2L);
+        assertThat(detail.performanceDates().getFirst().performances().getFirst().performanceNo())
+                .isEqualTo(1L);
+        assertThat(detail.performanceDates().getFirst().performances().get(1).performanceNo())
+                .isEqualTo(2L);
         assertThat(detail.image()).isEqualTo("/api/images/shows/card/" + showId + ".jpg");
         assertThat(detail.venueId()).isEqualTo(venueId);
         assertThat(detail.performer().name()).isEqualTo("홍길동");

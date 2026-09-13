@@ -1,17 +1,17 @@
 package com.ticket.show.catalog.application.usecase;
 
-import com.ticket.show.catalog.application.LatestShowRow;
-import com.ticket.show.catalog.application.VenueDisplays;
+import java.util.List;
 
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-
-import com.ticket.show.catalog.application.ShowSummaryView;
-import com.ticket.venue.VenueLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.show.catalog.application.LatestShowRow;
+import com.ticket.show.catalog.application.ShowSummaryView;
+import com.ticket.show.catalog.application.VenueDisplays;
+import com.ticket.show.catalog.application.port.ShowListQueryPort;
+import com.ticket.venue.VenueLookup;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
@@ -21,15 +21,15 @@ public class GetLatestShowsUseCase {
     private final ShowListQueryPort showListQueryPort;
     private final VenueLookup venueLookup;
 
-    public record Input(String category) {
-    }
+    public record Input(String category) {}
 
-    public record Output(List<ShowSummaryView> shows) {
-    }
+    public record Output(List<ShowSummaryView> shows) {}
 
     public Output execute(final Input input) {
-        final List<LatestShowRow> rows = showListQueryPort.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
-        final VenueDisplays venues = VenueDisplays.load(venueLookup, rows.stream().map(LatestShowRow::venueId).toList());
+        final List<LatestShowRow> rows =
+                showListQueryPort.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
+        final VenueDisplays venues =
+                VenueDisplays.load(venueLookup, rows.stream().map(LatestShowRow::venueId).toList());
         return new Output(rows.stream().map(row -> toView(row, venues)).toList());
     }
 
@@ -41,7 +41,6 @@ public class GetLatestShowsUseCase {
                 row.startDate(),
                 row.endDate(),
                 venues.nameOf(row.venueId()),
-                row.createdAt()
-        );
+                row.createdAt());
     }
 }

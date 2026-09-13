@@ -1,28 +1,27 @@
 package com.ticket.show.catalog.application.usecase;
 
-import com.ticket.show.catalog.application.SaleOpeningSoonDetailRow;
-import com.ticket.show.catalog.application.ShowSort;
-import com.ticket.show.catalog.application.VenueDisplays;
+import java.util.List;
 
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-
-import com.ticket.show.catalog.application.SaleOpeningSoonSearchParam;
-import com.ticket.show.catalog.application.ShowCursor;
-import com.ticket.show.catalog.application.ShowOpeningSoonDetailView;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.CursorPage;
-import com.ticket.venue.VenueLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.shared.CursorPage;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.catalog.application.SaleOpeningSoonDetailRow;
+import com.ticket.show.catalog.application.SaleOpeningSoonDetailView;
+import com.ticket.show.catalog.application.SaleOpeningSoonSearchParam;
+import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.catalog.application.VenueDisplays;
+import com.ticket.show.catalog.application.port.ShowListQueryPort;
+import com.ticket.venue.VenueLookup;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class GetSaleStartApproachingShowsPageUseCase {
-
+public class GetSaleOpeningSoonShowsPageUseCase {
     private final ShowListQueryPort showListQueryPort;
     private final VenueLookup venueLookup;
 
@@ -40,23 +39,25 @@ public class GetSaleStartApproachingShowsPageUseCase {
         }
     }
 
-    public record Output(List<ShowOpeningSoonDetailView> items, boolean hasNext, ShowCursor nextPosition) {
-    }
+    public record Output(
+            List<SaleOpeningSoonDetailView> items, boolean hasNext, ShowCursor nextPosition) {}
 
     public Output execute(final Input input) {
         final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> page =
                 showListQueryPort.findSaleOpeningSoonPage(
-                        input.param(),
-                        input.size(),
-                        input.sort()
-                );
-        final VenueDisplays venues = VenueDisplays.load(venueLookup, page.items().stream().map(SaleOpeningSoonDetailRow::venueId).toList());
-        final CursorPage<ShowOpeningSoonDetailView, ShowCursor> view = page.map(row -> toView(row, venues));
+                        input.param(), input.size(), input.sort());
+        final VenueDisplays venues =
+                VenueDisplays.load(
+                        venueLookup,
+                        page.items().stream().map(SaleOpeningSoonDetailRow::venueId).toList());
+        final CursorPage<SaleOpeningSoonDetailView, ShowCursor> view =
+                page.map(row -> toView(row, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
-    private ShowOpeningSoonDetailView toView(final SaleOpeningSoonDetailRow row, final VenueDisplays venues) {
-        return new ShowOpeningSoonDetailView(
+    private SaleOpeningSoonDetailView toView(
+            final SaleOpeningSoonDetailRow row, final VenueDisplays venues) {
+        return new SaleOpeningSoonDetailView(
                 row.id(),
                 row.title(),
                 row.subTitle(),
@@ -67,7 +68,6 @@ public class GetSaleStartApproachingShowsPageUseCase {
                 row.endDate(),
                 row.displaySaleStartsAt(),
                 row.displaySaleEndsAt(),
-                row.viewCount()
-        );
+                row.viewCount());
     }
 }

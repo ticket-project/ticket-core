@@ -1,45 +1,36 @@
 package com.ticket.show.performance.application;
 
-import com.ticket.show.performance.application.port.PerformanceSaleQueryPort;
-
-import com.ticket.show.PerformanceSaleSnapshot;
-import com.ticket.show.performance.application.port.PerformanceSaleQueryPort;
-import com.ticket.show.performance.application.port.PerformanceSaleQueryPort.PerformanceGradeRow;
-import com.ticket.show.performance.domain.PerformanceSaleContext;
-import com.ticket.shared.exception.NotFoundException;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSeatAddress;
-import com.ticket.venue.VenueSeatLookup;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.performance.application.port.PerformanceSaleQueryPort;
+import com.ticket.show.performance.application.port.PerformanceSaleQueryPort.PerformanceGradeRow;
+import com.ticket.show.performance.domain.PerformanceSaleContext;
+import com.ticket.venue.VenueLookup;
+import com.ticket.venue.VenueSeatAddress;
+import com.ticket.venue.VenueSeatLookup;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class PerformanceSaleCatalogServiceTest {
-
-    @Mock
-    private PerformanceSaleQueryPort performanceSaleQueryPort;
-
-    @Mock
-    private VenueLookup venueLookup;
-
-    @Mock
-    private VenueSeatLookup venueSeatLookup;
-
-    @InjectMocks
-    private PerformanceSaleCatalogService service;
+    @Mock private PerformanceSaleQueryPort performanceSaleQueryPort;
+    @Mock private VenueLookup venueLookup;
+    @Mock private VenueSeatLookup venueSeatLookup;
+    @InjectMocks private PerformanceSaleCatalogService service;
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
@@ -51,8 +42,8 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue가_없는_show면_seatInfo가_빈_맵이다() {
-        when(performanceSaleQueryPort.findContext(1L)).thenReturn(Optional.of(
-                new PerformanceSaleContext(1L, 2L, "show", null, null)));
+        when(performanceSaleQueryPort.findContext(1L))
+                .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", null, null)));
         when(performanceSaleQueryPort.findPerformanceGrades(1L)).thenReturn(List.of());
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
@@ -62,12 +53,15 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
-        when(performanceSaleQueryPort.findContext(1L)).thenReturn(Optional.of(
-                new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
+        when(performanceSaleQueryPort.findContext(1L))
+                .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
         when(venueSeatLookup.findSeatAddresses(3L, Set.of(10L)))
                 .thenReturn(List.of(new VenueSeatAddress(10L, 1, "가", "A", "1")));
         when(performanceSaleQueryPort.findPerformanceGrades(1L))
-                .thenReturn(List.of(new PerformanceGradeRow(100L, "VIP", "VIP석", 1, new BigDecimal("170000"))));
+                .thenReturn(
+                        List.of(
+                                new PerformanceGradeRow(
+                                        100L, "VIP", "VIP석", 1, new BigDecimal("170000"))));
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
 

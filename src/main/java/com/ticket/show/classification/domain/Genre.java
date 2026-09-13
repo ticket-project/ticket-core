@@ -1,22 +1,24 @@
 package com.ticket.show.classification.domain;
 
-import com.ticket.show.catalog.domain.ShowAuditedEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import com.ticket.show.domain.ShowAuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 장르 엔티티
- * - 카테고리에 속하는 세부 분류
- * - 예: 콘서트(카테고리) -> 힙합, R&B, K-POP(장르)
- */
+/** 장르 엔티티 - 카테고리에 속하는 세부 분류 - 예: 콘서트(카테고리) -&gt; 힙합, R&amp;B, K-POP(장르) */
 @Getter
 @Entity
 @Table(name = "GENRES")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Genre extends ShowAuditedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,9 +30,9 @@ public class Genre extends ShowAuditedEntity {
     private String name;
 
     /**
-     * Category는 Genre와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를
-     * 넘는 참조는 ID로 한다 — {@code docs/architecture.md}의 참조 규칙). 컬럼명은 옛
-     * {@code @ManyToOne Category category} 매핑과 같은 {@code category_id}를 그대로 쓴다.
+     * Category는 Genre와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 — {@code
+     * docs/architecture.md}의 참조 규칙). 컬럼명은 옛 {@code @ManyToOne Category category} 매핑과 같은 {@code
+     * category_id}를 그대로 쓴다.
      */
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
@@ -40,5 +42,4 @@ public class Genre extends ShowAuditedEntity {
         this.name = name;
         this.categoryId = categoryId;
     }
-
 }

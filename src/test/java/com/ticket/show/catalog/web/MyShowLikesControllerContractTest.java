@@ -1,11 +1,10 @@
 package com.ticket.show.catalog.web;
 
-import com.ticket.show.catalog.application.usecase.GetMyShowLikesUseCase;
-import com.ticket.show.catalog.web.cursor.ShowLikeCursorCodec;
-import com.ticket.shared.exception.handler.GlobalExceptionHandler;
-import com.ticket.show.exception.handler.ShowExceptionHandler;
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,30 +14,33 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.show.catalog.application.usecase.GetMyShowLikesUseCase;
+import com.ticket.show.catalog.web.cursor.ShowLikeCursorCodec;
+import com.ticket.show.exception.handler.ShowExceptionHandler;
 
 @SuppressWarnings("NonAsciiCharacters")
 class MyShowLikesControllerContractTest {
-
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(1L, "MEMBER");
-
-    private final GetMyShowLikesUseCase getMyShowLikesUseCase = Mockito.mock(GetMyShowLikesUseCase.class);
-
+    private final GetMyShowLikesUseCase getMyShowLikesUseCase =
+            Mockito.mock(GetMyShowLikesUseCase.class);
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        MyShowLikesController controller = new MyShowLikesController(getMyShowLikesUseCase, new ShowLikeCursorCodec());
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
-                .build();
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of())
-        );
+        MyShowLikesController controller =
+                new MyShowLikesController(getMyShowLikesUseCase, new ShowLikeCursorCodec());
+        mockMvc =
+                MockMvcBuilders.standaloneSetup(controller)
+                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                        .setControllerAdvice(
+                                new GlobalExceptionHandler(), new ShowExceptionHandler())
+                        .build();
+        SecurityContextHolder.getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
     }
 
     @AfterEach

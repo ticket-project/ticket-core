@@ -1,20 +1,19 @@
 package com.ticket.show.performance.infrastructure;
 
-import com.ticket.show.performance.domain.Performance;
-import com.ticket.show.performance.domain.PerformanceRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
-/**
- * {@link PerformanceRepository}의 JPA 구현이다.
- */
+import org.springframework.stereotype.Repository;
+
+import com.ticket.show.performance.domain.Performance;
+import com.ticket.show.performance.domain.PerformanceRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link PerformanceRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class PerformanceRepositoryAdapter implements PerformanceRepository {
-
     private final SpringDataPerformanceJpaRepository jpaRepository;
 
     @Override

@@ -1,22 +1,22 @@
 package com.ticket.show.catalog.application.usecase;
 
-import com.ticket.show.catalog.application.ShowSearchItemRow;
-import com.ticket.show.catalog.application.ShowSort;
-import com.ticket.show.catalog.application.VenueDisplays;
+import java.util.List;
 
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-
-import com.ticket.show.catalog.application.ShowCursor;
-import com.ticket.show.catalog.application.ShowSearchCriteria;
-import com.ticket.show.catalog.application.ShowSearchItemView;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.CursorPage;
-import com.ticket.venue.VenueLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.shared.CursorPage;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.application.ShowSearchCriteria;
+import com.ticket.show.catalog.application.ShowSearchItemRow;
+import com.ticket.show.catalog.application.ShowSearchItemView;
+import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.catalog.application.VenueDisplays;
+import com.ticket.show.catalog.application.port.ShowListQueryPort;
+import com.ticket.venue.VenueLookup;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
@@ -25,9 +25,9 @@ public class SearchShowsUseCase {
     private final ShowListQueryPort showListQueryPort;
     private final VenueLookup venueLookup;
 
-    public record Input(ShowSearchCriteria request, int size, ShowSort sort) {
+    public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
         public Input {
-            if (request == null) {
+            if (criteria == null) {
                 throw new InvalidRequestException("request는 필수입니다.");
             }
             if (sort == null) {
@@ -39,14 +39,18 @@ public class SearchShowsUseCase {
         }
     }
 
-    public record Output(List<ShowSearchItemView> items, boolean hasNext, ShowCursor nextPosition) {
-    }
+    public record Output(
+            List<ShowSearchItemView> items, boolean hasNext, ShowCursor nextPosition) {}
 
     public Output execute(final Input input) {
-        final CursorPage<ShowSearchItemRow, ShowCursor> page = showListQueryPort.searchShows(
-                input.request(), input.size(), input.sort());
-        final VenueDisplays venues = VenueDisplays.load(venueLookup, page.items().stream().map(ShowSearchItemRow::venueId).toList());
-        final CursorPage<ShowSearchItemView, ShowCursor> view = page.map(row -> toView(row, venues));
+        final CursorPage<ShowSearchItemRow, ShowCursor> page =
+                showListQueryPort.searchShows(input.criteria(), input.size(), input.sort());
+        final VenueDisplays venues =
+                VenueDisplays.load(
+                        venueLookup,
+                        page.items().stream().map(ShowSearchItemRow::venueId).toList());
+        final CursorPage<ShowSearchItemView, ShowCursor> view =
+                page.map(row -> toView(row, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -59,7 +63,6 @@ public class SearchShowsUseCase {
                 row.startDate(),
                 row.endDate(),
                 venues.regionOf(row.venueId()),
-                row.viewCount()
-        );
+                row.viewCount());
     }
 }

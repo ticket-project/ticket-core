@@ -1,38 +1,34 @@
 package com.ticket.show.catalog.application.usecase;
 
-import com.ticket.show.catalog.application.ShowListItemRow;
-import com.ticket.show.catalog.application.ShowSort;
-import com.ticket.show.catalog.application.VenueDisplays;
+import java.util.List;
 
-import com.ticket.show.catalog.application.port.ShowListQueryPort;
-
-import com.ticket.show.catalog.application.ShowCursor;
-import com.ticket.show.catalog.application.ShowListItemView;
-import com.ticket.show.catalog.application.ShowParam;
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.CursorPage;
-import com.ticket.venue.VenueLookup;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ticket.shared.CursorPage;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.application.ShowListItemRow;
+import com.ticket.show.catalog.application.ShowListItemView;
+import com.ticket.show.catalog.application.ShowListParam;
+import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.catalog.application.VenueDisplays;
+import com.ticket.show.catalog.application.port.ShowListQueryPort;
+import com.ticket.venue.VenueLookup;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowsUseCase {
-
-    /**
-     * API 문서가 공개한 상한이다(`한 번에 조회할 개수 (기본값: 5, 최대: 100)`).
-     * 상한은 유스케이스 조건이므로 API가 아니라 여기가 소유한다.
-     */
+    /** API 문서가 공개한 상한이다(`한 번에 조회할 개수 (기본값: 5, 최대: 100)`). 상한은 유스케이스 조건이므로 API가 아니라 여기가 소유한다. */
     public static final int MAX_SIZE = 100;
 
     private final ShowListQueryPort showListQueryPort;
     private final VenueLookup venueLookup;
 
-    public record Input(ShowParam param, int size, ShowSort sort) {
+    public record Input(ShowListParam param, int size, ShowSort sort) {
         public Input {
             if (param == null) {
                 throw new InvalidRequestException("param는 필수입니다.");
@@ -46,13 +42,14 @@ public class GetShowsUseCase {
         }
     }
 
-    public record Output(List<ShowListItemView> items, boolean hasNext, ShowCursor nextPosition) {
-    }
+    public record Output(List<ShowListItemView> items, boolean hasNext, ShowCursor nextPosition) {}
 
     public Output execute(final Input input) {
-        final CursorPage<ShowListItemRow, ShowCursor> page = showListQueryPort.findAllBySearch(
-                input.param(), input.size(), input.sort());
-        final VenueDisplays venues = VenueDisplays.load(venueLookup, page.items().stream().map(ShowListItemRow::venueId).toList());
+        final CursorPage<ShowListItemRow, ShowCursor> page =
+                showListQueryPort.findAllBySearch(input.param(), input.size(), input.sort());
+        final VenueDisplays venues =
+                VenueDisplays.load(
+                        venueLookup, page.items().stream().map(ShowListItemRow::venueId).toList());
         final CursorPage<ShowListItemView, ShowCursor> view = page.map(row -> toView(row, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
@@ -72,7 +69,6 @@ public class GetShowsUseCase {
                 row.displaySaleEndsAt(),
                 row.createdAt(),
                 venues.regionOf(row.venueId()),
-                venues.nameOf(row.venueId())
-        );
+                venues.nameOf(row.venueId()));
     }
 }

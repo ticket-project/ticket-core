@@ -1,31 +1,32 @@
 package com.ticket.show.catalog.infrastructure;
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.Tuple;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.ticket.show.catalog.application.ShowCursor;
-import com.ticket.show.catalog.infrastructure.QuerydslShowSortResolver.SortOrder;
-import com.ticket.shared.exception.InvalidRequestException;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import static com.ticket.show.catalog.domain.QShow.show;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-import static com.ticket.show.catalog.domain.QShow.show;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.catalog.application.ShowCursor;
+import com.ticket.show.catalog.infrastructure.QuerydslShowSortResolver.SortOrder;
 
 /**
  * 커서 위치를 SQL 조건으로 바꾸고, 마지막 행에서 다음 커서 위치를 만든다.
  *
- * <p>커서의 wire 표현(Base64 문자열)은 {@code show.catalog.web.cursor.ShowCursorCodec}이 소유한다.
- * 여기서는 타입 값만 다룬다.
+ * <p>커서의 wire 표현(Base64 문자열)은 {@code show.catalog.web.cursor.ShowCursorCodec}이 소유한다. 여기서는 타입 값만
+ * 다룬다.
  */
 @Component
 public class QuerydslShowCursorConditionBuilder {
-
-    public void applyCursor(final BooleanBuilder where, final ShowCursor cursor, final SortOrder sortOrder) {
+    public void applyCursor(
+            final BooleanBuilder where, final ShowCursor cursor, final SortOrder sortOrder) {
         if (cursor == null) {
             return;
         }
@@ -37,7 +38,8 @@ public class QuerydslShowCursorConditionBuilder {
         }
     }
 
-    public ShowCursor buildNextPosition(final List<Tuple> rows, final int size, final SortOrder sortOrder) {
+    public ShowCursor buildNextPosition(
+            final List<Tuple> rows, final int size, final SortOrder sortOrder) {
         final Tuple lastRow = rows.get(size - 1);
         final Long lastId = lastRow.get(show.id);
         final String lastValue = resolveLastValue(lastRow, sortOrder);
@@ -76,7 +78,10 @@ public class QuerydslShowCursorConditionBuilder {
             }
             case SALE_START_APPROACHING -> {
                 final LocalDateTime last = LocalDateTime.parse(cursor.lastValue());
-                yield show.displaySaleWindow.startsAt.gt(last).or(show.displaySaleWindow.startsAt.eq(last).and(show.id.gt(lastId)));
+                yield show.displaySaleWindow
+                        .startsAt
+                        .gt(last)
+                        .or(show.displaySaleWindow.startsAt.eq(last).and(show.id.gt(lastId)));
             }
         };
     }

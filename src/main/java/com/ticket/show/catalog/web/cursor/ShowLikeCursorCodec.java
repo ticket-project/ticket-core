@@ -1,7 +1,8 @@
 package com.ticket.show.catalog.web.cursor;
 
-import com.ticket.shared.exception.InvalidRequestException;
 import org.springframework.stereotype.Component;
+
+import com.ticket.shared.exception.InvalidRequestException;
 
 /**
  * 찜 목록 커서의 wire 표현을 담당한다.
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ShowLikeCursorCodec {
-
     public String encode(final Long lastLikeId) {
         return lastLikeId == null ? null : String.valueOf(lastLikeId);
     }

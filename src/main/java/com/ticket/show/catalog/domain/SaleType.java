@@ -6,7 +6,6 @@ import lombok.Getter;
 public enum SaleType {
     GENERAL("일반판매"),
     EXCLUSIVE("단독판매");
-
     private final String description;
 
     SaleType(String description) {
@@ -16,5 +15,4 @@ public enum SaleType {
     public String getCode() {
         return name();
     }
-
 }

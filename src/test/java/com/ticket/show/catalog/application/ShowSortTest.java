@@ -1,14 +1,14 @@
 package com.ticket.show.catalog.application;
 
-import com.ticket.show.exception.UnsupportedShowSortException;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.junit.jupiter.api.Test;
+
+import com.ticket.show.exception.UnsupportedShowSortException;
+
 @SuppressWarnings("NonAsciiCharacters")
 class ShowSortTest {
-
     @Test
     void 기본값이면_POPULAR를_사용한다() {
         ShowSort showSort = ShowSort.from(null);

@@ -1,22 +1,21 @@
 package com.ticket.show.performance.infrastructure;
 
-import com.ticket.show.performance.domain.Grade;
-import com.ticket.show.performance.domain.GradeRepository;
-import com.ticket.core.infra.support.InfraReadRepositoryTestSupport;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.ticket.show.performance.domain.Grade;
+import com.ticket.show.performance.domain.GradeRepository;
+import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
 @Import(GradeRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GradeRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
-
-    @Autowired
-    private GradeRepository repository;
+    @Autowired private GradeRepository repository;
 
     @Test
     void code_오름차순으로_전체_Grade를_반환한다() throws Exception {
@@ -27,8 +26,7 @@ class GradeRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
 
         List<Grade> result = repository.findAllOrderByCodeAsc();
 
-        assertThat(result).extracting(Grade::getCode)
-                .containsExactly("A", "R", "VIP");
+        assertThat(result).extracting(Grade::getCode).containsExactly("A", "R", "VIP");
     }
 
     @Test
