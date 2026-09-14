@@ -9,7 +9,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.application.PerformanceSummaryView;
 import com.ticket.show.application.port.PerformanceQueryPort;
-import com.ticket.venue.VenueLookup;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetPerformanceSummaryUseCase {
     private final PerformanceQueryPort performanceQueryPort;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
 
     public record Input(Long performanceId) {
         public Input {

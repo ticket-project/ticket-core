@@ -11,7 +11,7 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.token.AccessTokenReadResult;
 import com.ticket.security.token.AccessTokenReader;
 

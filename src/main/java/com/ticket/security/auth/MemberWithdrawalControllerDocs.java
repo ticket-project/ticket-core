@@ -1,6 +1,6 @@
 package com.ticket.security.auth;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;

@@ -8,30 +8,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.PerformanceSaleCatalog;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.application.port.PerformanceSaleQueryPort;
 import com.ticket.show.application.port.PerformanceSaleQueryPort.PerformanceGradeRow;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSeatAddress;
-import com.ticket.venue.VenueSeatLookup;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSeatAddress;
+import com.ticket.venue.api.VenueSeatLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link PerformanceSaleCatalog}의 show 소유 구현이다. 판매 좌석 편성과 주문 표시 snapshot에 필요한 회차·venue·좌석·등급 표시값을 한
- * 번에 조회해 booking에게 scalar snapshot만 넘긴다.
+ * {@link PerformanceSaleCatalogApi}의 show 소유 구현이다. 판매 좌석 편성과 주문 표시 snapshot에 필요한 회차·venue·좌석·등급
+ * 표시값을 한 번에 조회해 booking에게 scalar snapshot만 넘긴다.
  *
  * <p>venue 조합(venue 이름, 좌석 주소)은 이 application 계층이 한다 — persistence adapter ({@code
  * PerformanceSaleQueryPort}의 구현)는 show 자기 DB만 본다.
  */
 @Service
 @RequiredArgsConstructor
-public class PerformanceSaleCatalogService implements PerformanceSaleCatalog {
+public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi {
     private final PerformanceSaleQueryPort performanceSaleQueryPort;
-    private final VenueLookup venueLookup;
-    private final VenueSeatLookup venueSeatLookup;
+    private final VenueLookupApi venueLookup;
+    private final VenueSeatLookupApi venueSeatLookup;
 
     @Override
     @Transactional(readOnly = true)

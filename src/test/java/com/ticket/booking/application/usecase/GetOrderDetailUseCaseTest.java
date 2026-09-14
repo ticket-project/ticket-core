@@ -22,8 +22,8 @@ import com.ticket.booking.application.OrderDetailRow;
 import com.ticket.booking.application.port.OrderQueryPort;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.member.MemberLookup;
-import com.ticket.member.MemberProfile;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.member.api.MemberProfile;
 import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,7 +32,7 @@ class GetOrderDetailUseCaseTest {
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     @Mock private OrderQueryPort orderQueryPort;
-    @Mock private MemberLookup memberLookup;
+    @Mock private MemberLookupApi memberLookup;
     private GetOrderDetailUseCase useCase;
 
     @BeforeEach

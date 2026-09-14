@@ -6,7 +6,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.ticket.shared.AuditorPrincipal;
+import com.ticket.shared.api.AuditorPrincipal;
 
 /** SecurityContext의 기술 중립 감사 주체 식별자를 JPA 감사자 ID로 사용한다. */
 public class SecurityContextAuditorAware implements AuditorAware<String> {

@@ -18,9 +18,9 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.security.AccessTokenAuthenticator;
+import com.ticket.security.api.AccessTokenAuthenticator;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

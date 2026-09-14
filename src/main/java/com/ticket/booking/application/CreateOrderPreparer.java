@@ -11,19 +11,19 @@ import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.seat.PerformanceSeat;
-import com.ticket.member.MemberLookup;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.PerformanceSaleCatalog;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class CreateOrderPreparer {
-    private final MemberLookup memberLookup;
+    private final MemberLookupApi memberLookup;
     private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-    private final PerformanceSaleCatalog performanceSaleCatalog;
+    private final PerformanceSaleCatalogApi performanceSaleCatalog;
     private final AdmissionVerifier admissionVerifier;
     private final PendingOrderLocalValidator pendingOrderLocalValidator;
 
@@ -39,8 +39,8 @@ public class CreateOrderPreparer {
      * 트랜잭션에서 수행한다. Redis hold 생성은 이 모든 검증이 끝난 뒤에 수행한다.
      *
      * <p>주문 금액은 여기서 조회한 show 표시값이 아니라 오직 {@code PerformanceSeat.unitPrice}로만 계산한다(ADR 0005). {@link
-     * PerformanceSaleCatalog} snapshot은 Order/OrderSeat에 남길 표시값 (show/venue 이름, 등급 코드/이름, 좌석 라벨)만
-     * 제공한다.
+     * PerformanceSaleCatalogApi} snapshot은 Order/OrderSeat에 남길 표시값 (show/venue 이름, 등급 코드/이름, 좌석
+     * 라벨)만 제공한다.
      */
     public ValidatedOrderContext prepare(
             final CreateOrderUseCase.Input input,

@@ -13,12 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.show.ShowPerformanceLookup;
+import com.ticket.show.api.ShowPerformanceLookupApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowSeatMapUseCaseTest {
-    @Mock private ShowPerformanceLookup showPerformanceLookup;
+    @Mock private ShowPerformanceLookupApi showPerformanceLookup;
     @Mock private GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase;
     @InjectMocks private GetShowSeatMapUseCase useCase;
 

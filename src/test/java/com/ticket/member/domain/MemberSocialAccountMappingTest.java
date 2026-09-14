@@ -11,7 +11,7 @@ import jakarta.persistence.OneToMany;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialProvider;
 
 /**
  * {@code Member.socialAccounts} 매핑이 soft delete 규칙을 깨지 않는지 고정한다.

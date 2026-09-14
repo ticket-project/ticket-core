@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.application.usecase.GetCurrentMemberUseCase;
 import com.ticket.member.web.docs.MemberControllerDocs;
 import com.ticket.shared.web.ApiResponse;

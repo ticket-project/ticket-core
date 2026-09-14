@@ -5,21 +5,21 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.like.LikeEntry;
-import com.ticket.like.LikeInfo;
-import com.ticket.like.LikeQuery;
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeEntry;
+import com.ticket.like.api.LikeInfo;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.application.port.LikeQueryPort;
 import com.ticket.like.domain.LikeRepository;
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link LikeQuery}의 like 소유 구현이다. */
+/** {@link LikeQueryApi}의 like 소유 구현이다. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class LikeQueryService implements LikeQuery {
+public class LikeQueryService implements LikeQueryApi {
     private final LikeRepository likeRepository;
     private final LikeQueryPort likeQueryPort;
 

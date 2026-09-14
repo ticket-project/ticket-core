@@ -12,8 +12,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueSummary;
 import com.ticket.venue.application.port.VenueSummaryQueryPort;
 
 import lombok.RequiredArgsConstructor;

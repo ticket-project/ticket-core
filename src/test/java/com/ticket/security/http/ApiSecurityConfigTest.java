@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.TicketApplication;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.token.AccessTokenReadResult;
 import com.ticket.security.token.AccessTokenReader;
 

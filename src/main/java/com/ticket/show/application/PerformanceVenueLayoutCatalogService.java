@@ -8,22 +8,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.PerformanceVenueLayout;
-import com.ticket.show.PerformanceVenueLayoutCatalog;
-import com.ticket.show.ShowPerformanceLookup;
+import com.ticket.show.api.PerformanceVenueLayout;
+import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
+import com.ticket.show.api.ShowPerformanceLookupApi;
 import com.ticket.show.application.port.PerformanceVenueLayoutQueryPort;
 import com.ticket.show.application.port.PerformanceVenueLayoutQueryPort.PerformanceGradeLayoutRow;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSeatLayout;
-import com.ticket.venue.VenueSeatLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSeatLayout;
+import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link PerformanceVenueLayoutCatalog}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한 번에
- * 조회해 booking에게 scalar snapshot만 넘긴다.
+ * {@link PerformanceVenueLayoutCatalogApi}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한
+ * 번에 조회해 booking에게 scalar snapshot만 넘긴다.
  *
  * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — persistence adapter({@code
  * PerformanceVenueLayoutQueryPort}의 구현)는 show 자기 DB만 본다.
@@ -31,10 +31,10 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class PerformanceVenueLayoutCatalogService
-        implements PerformanceVenueLayoutCatalog, ShowPerformanceLookup {
+        implements PerformanceVenueLayoutCatalogApi, ShowPerformanceLookupApi {
     private final PerformanceVenueLayoutQueryPort performanceVenueLayoutQueryPort;
-    private final VenueLookup venueLookup;
-    private final VenueSeatLookup venueSeatLookup;
+    private final VenueLookupApi venueLookup;
+    private final VenueSeatLookupApi venueSeatLookup;
 
     @Override
     @Transactional(readOnly = true)

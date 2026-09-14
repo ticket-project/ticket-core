@@ -17,13 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.application.port.PerformanceSeatMapQueryPort;
 import com.ticket.booking.application.port.PerformanceSeatMapQueryPort.PerformanceSeatMapRow;
-import com.ticket.show.PerformanceVenueLayout;
-import com.ticket.show.PerformanceVenueLayoutCatalog;
+import com.ticket.show.api.PerformanceVenueLayout;
+import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetPerformanceSeatMapUseCaseTest {
-    @Mock private PerformanceVenueLayoutCatalog performanceVenueLayoutCatalog;
+    @Mock private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
     @Mock private PerformanceSeatMapQueryPort performanceSeatMapQueryPort;
     @InjectMocks private GetPerformanceSeatMapUseCase useCase;
 

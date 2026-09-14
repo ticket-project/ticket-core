@@ -13,15 +13,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.SocialAccountConnection;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.security.oauth.SocialAccountUnlinker;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WithdrawCurrentMemberUseCaseTest {
-    @Mock private MemberAccountOperations memberAccountOperations;
+    @Mock private MemberAccountApi memberAccountOperations;
     @Mock private SocialAccountUnlinker socialAccountUnlinker;
     @InjectMocks private WithdrawCurrentMemberUseCase useCase;
 

@@ -9,7 +9,7 @@ import com.ticket.show.application.LatestShowRow;
 import com.ticket.show.application.ShowSummaryView;
 import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowListQueryPort;
-import com.ticket.venue.VenueLookup;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class GetLatestShowsUseCase {
     public static final int LATEST_SHOWS_MAX_COUNT = 10;
     private final ShowListQueryPort showListQueryPort;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
 
     public record Input(String category) {}
 

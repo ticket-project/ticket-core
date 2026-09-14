@@ -19,8 +19,8 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.SocialIdentity;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialIdentity;
+import com.ticket.member.api.SocialProvider;
 
 @SuppressWarnings("NonAsciiCharacters")
 class CustomOAuth2UserServiceTest {

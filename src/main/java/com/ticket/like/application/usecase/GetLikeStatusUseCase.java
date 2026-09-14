@@ -4,10 +4,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ticket.like.LikeInfo;
-import com.ticket.like.LikeQuery;
-import com.ticket.like.LikeType;
-import com.ticket.member.MemberLookup;
+import com.ticket.like.api.LikeInfo;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeType;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetLikeStatusUseCase {
-    private final MemberLookup memberLookup;
-    private final LikeQuery likeQuery;
+    private final MemberLookupApi memberLookup;
+    private final LikeQueryApi likeQuery;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
         public Input {

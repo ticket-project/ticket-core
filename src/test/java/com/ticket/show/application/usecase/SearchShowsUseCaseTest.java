@@ -15,16 +15,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.show.application.ShowCursor;
 import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.ShowSearchItemRow;
 import com.ticket.show.application.ShowSearchItemView;
 import com.ticket.show.application.ShowSort;
 import com.ticket.show.application.port.ShowListQueryPort;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -32,7 +32,7 @@ class SearchShowsUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
     @Mock private ShowListQueryPort showListQueryPort;
-    @Mock private VenueLookup venueLookup;
+    @Mock private VenueLookupApi venueLookup;
     @InjectMocks private SearchShowsUseCase useCase;
 
     @Test

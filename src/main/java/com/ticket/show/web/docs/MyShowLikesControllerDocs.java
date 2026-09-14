@@ -2,7 +2,7 @@ package com.ticket.show.web.docs;
 
 import jakarta.validation.constraints.Positive;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
 import com.ticket.show.application.ShowLikeSummaryView;

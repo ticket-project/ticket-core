@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.member.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.shared.exception.NotFoundException;

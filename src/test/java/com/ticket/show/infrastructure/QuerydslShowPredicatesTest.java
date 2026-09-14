@@ -60,7 +60,7 @@ class QuerydslShowPredicatesTest {
 
     /**
      * region 검색 조건은 Region이 아니라 이미 해석된 venueId 집합을 받는다 ({@code QuerydslShowConditionBuilder}가
-     * {@code VenueLookup.findIdsByRegion}으로 해석한다). 빈 집합이어도 {@code show.venueId.in(빈 집합)}은 항상 유효한
+     * {@code VenueLookupApi.findIdsByRegion}으로 해석한다). 빈 집합이어도 {@code show.venueId.in(빈 집합)}은 항상 유효한
      * 술어를 반환한다(Querydsl이 {@code 1 = 2}로 직렬화한다) — {@code regionEq}와 달리 null을 반환하지 않는다.
      */
     @Test

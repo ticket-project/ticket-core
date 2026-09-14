@@ -21,7 +21,7 @@ import com.ticket.booking.domain.order.OrderKeyGenerator;
 import com.ticket.booking.domain.order.OrderRepository;
 import com.ticket.booking.domain.order.OrderSeat;
 import com.ticket.booking.domain.seat.PerformanceSeat;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)

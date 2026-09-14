@@ -7,11 +7,11 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.like.LikeCommand;
-import com.ticket.like.LikeQuery;
-import com.ticket.member.MemberLookup;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSeatLookup;
+import com.ticket.like.api.LikeCommandApi;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSeatLookupApi;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은 {@code
@@ -25,20 +25,20 @@ import com.ticket.venue.VenueSeatLookup;
  * 서로 정상 배선되는지만 확인하는 wiring smoke test이지 실제 DB 접근이나 시간 계산을 검증하지 않는다. 그 검증은 각 Querydsl repository의 통합
  * 테스트와 use case 테스트가 담당한다.
  *
- * <p>show는 회원 존재 확인을 위해 member의 {@link MemberLookup}을 참조하고, 찜의 데이터·불변식을 소유하는 like(옛 favorite)의
- * {@link LikeQuery}/{@link LikeCommand}를 참조한다(공연 상세의 찜 개수 조회, 찜 use case의 위임). 물리 공연장·좌석을 소유하는
- * venue의 {@link VenueLookup}/ {@link VenueSeatLookup}도 참조한다(목록·상세의 공연장 표시값 조립, region 검색 조건 해석, 좌석
- * 주소·좌석 배치 조회). 전부 이 STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로 대체한다.
+ * <p>show는 회원 존재 확인을 위해 member의 {@link MemberLookupApi}을 참조하고, 찜의 데이터·불변식을 소유하는 like(옛 favorite)의
+ * {@link LikeQueryApi}/{@link LikeCommandApi}를 참조한다(공연 상세의 찜 개수 조회, 찜 use case의 위임). 물리 공연장·좌석을
+ * 소유하는 venue의 {@link VenueLookupApi}/ {@link VenueSeatLookupApi}도 참조한다(목록·상세의 공연장 표시값 조립, region 검색
+ * 조건 해석, 좌석 주소·좌석 배치 조회). 전부 이 STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로 대체한다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class ShowModuleTests {
     @MockitoBean private JPAQueryFactory jpaQueryFactory;
     @MockitoBean private Clock clock;
-    @MockitoBean private MemberLookup memberLookup;
-    @MockitoBean private LikeQuery likeQuery;
-    @MockitoBean private LikeCommand likeCommand;
-    @MockitoBean private VenueLookup venueLookup;
-    @MockitoBean private VenueSeatLookup venueSeatLookup;
+    @MockitoBean private MemberLookupApi memberLookup;
+    @MockitoBean private LikeQueryApi likeQuery;
+    @MockitoBean private LikeCommandApi likeCommand;
+    @MockitoBean private VenueLookupApi venueLookup;
+    @MockitoBean private VenueSeatLookupApi venueSeatLookup;
 
     @Test
     void bootstraps() {}

@@ -4,10 +4,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueSummary;
 
-/** {@link com.ticket.venue.VenueLookup}이 쓰는 venue 표시값 조회 포트다. */
+/** {@link com.ticket.venue.api.VenueLookupApi}이 쓰는 venue 표시값 조회 포트다. */
 public interface VenueSummaryQueryPort {
     Optional<VenueSummary> findSummary(long venueId);
 

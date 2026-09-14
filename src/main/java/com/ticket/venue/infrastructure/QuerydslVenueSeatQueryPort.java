@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.venue.VenueSeatAddress;
-import com.ticket.venue.VenueSeatLayout;
+import com.ticket.venue.api.VenueSeatAddress;
+import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.application.port.VenueSeatQueryPort;
 
 import lombok.RequiredArgsConstructor;

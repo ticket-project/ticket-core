@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.application.usecase.AddLikeUseCase;
 import com.ticket.like.application.usecase.GetLikeStatusUseCase;
 import com.ticket.like.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.web.docs.LikeControllerDocs;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;

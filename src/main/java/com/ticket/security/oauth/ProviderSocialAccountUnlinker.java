@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import com.ticket.member.SocialAccountConnection;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.shared.exception.InternalErrorException;
 import com.ticket.shared.exception.InvalidRequestException;
 

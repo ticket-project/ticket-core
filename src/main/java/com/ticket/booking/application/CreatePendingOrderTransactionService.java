@@ -17,7 +17,7 @@ import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.order.Order;
 import com.ticket.booking.domain.order.OrderRepository;
 import com.ticket.booking.domain.seat.PerformanceSeat;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 

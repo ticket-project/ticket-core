@@ -8,11 +8,11 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.member.MemberLookup;
-import com.ticket.security.AccessTokenAuthenticator;
-import com.ticket.show.PerformanceSaleCatalog;
-import com.ticket.show.PerformanceVenueLayoutCatalog;
-import com.ticket.show.ShowPerformanceLookup;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.security.api.AccessTokenAuthenticator;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
+import com.ticket.show.api.ShowPerformanceLookupApi;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은 {@code
@@ -20,8 +20,8 @@ import com.ticket.show.ShowPerformanceLookup;
  * 테스트에서만 자동 검증을 꺼서, 아직 {@code @ApplicationModule}을 붙이지 않은 미래 모듈이 조용히 검증에서 빠지는 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.booking} package tree만 component-scan한다. show
- * {@code PerformanceSaleCatalog}·{@code PerformanceVenueLayoutCatalog}(booking local {@code
- * PerformanceSalesPolicy}가 예매 정책을 소유하므로 show의 정책 공개 계약은 더 이상 없다), member {@code MemberLookup}·
+ * {@code PerformanceSaleCatalogApi}·{@code PerformanceVenueLayoutCatalogApi}(booking local {@code
+ * PerformanceSalesPolicy}가 예매 정책을 소유하므로 show의 정책 공개 계약은 더 이상 없다), member {@code MemberLookupApi}·
  * {@code AccessTokenAuthenticator}(WebSocket 인증이 참조)는 그 필터 밖이라 {@code @MockitoBean}으로 대체한다. {@code
  * JPAQueryFactory}도 {@code @MockitoBean}으로 대체한다 — 이 테스트는 booking bean들이 module 경계 안에서 서로 정상 배선되는지만
  * 확인하는 wiring smoke test이지 실제 DB 접근을 검증하지 않는다. 그 검증은 각 Querydsl repository의 통합 테스트가 담당한다. {@code
@@ -36,10 +36,10 @@ import com.ticket.show.ShowPerformanceLookup;
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class BookingModuleTests {
-    @MockitoBean private PerformanceSaleCatalog performanceSaleCatalog;
-    @MockitoBean private PerformanceVenueLayoutCatalog performanceVenueLayoutCatalog;
-    @MockitoBean private ShowPerformanceLookup showPerformanceLookup;
-    @MockitoBean private MemberLookup memberLookup;
+    @MockitoBean private PerformanceSaleCatalogApi performanceSaleCatalog;
+    @MockitoBean private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
+    @MockitoBean private ShowPerformanceLookupApi showPerformanceLookup;
+    @MockitoBean private MemberLookupApi memberLookup;
     @MockitoBean private AccessTokenAuthenticator accessTokenAuthenticator;
     @MockitoBean private JPAQueryFactory jpaQueryFactory;
     @MockitoBean private SimpMessagingTemplate simpMessagingTemplate;

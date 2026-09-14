@@ -10,7 +10,7 @@ import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.selection.DeselectedSeatIds;
 import com.ticket.booking.domain.selection.SeatSelectionService;
-import com.ticket.member.MemberLookup;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class DeselectAllSeatsUseCase {
-    private final MemberLookup memberLookup;
+    private final MemberLookupApi memberLookup;
     private final SeatSelectionService seatSelectionService;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatSelectionCoordinator seatSelectionCoordinator;

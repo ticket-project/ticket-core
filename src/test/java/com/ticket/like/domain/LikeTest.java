@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 
 @SuppressWarnings("NonAsciiCharacters")
 class LikeTest {

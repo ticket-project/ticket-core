@@ -28,8 +28,8 @@ import com.ticket.booking.exception.PerformanceGradeMismatchException;
 import com.ticket.booking.exception.PerformanceSeatAlreadyExistsException;
 import com.ticket.booking.exception.SeatVenueMismatchException;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.PerformanceSaleCatalog;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +37,7 @@ class CreatePerformanceSeatsUseCaseTest {
     private static final long PERFORMANCE_ID = 1L;
     private static final long SEAT_ID = 10L;
     private static final long PERFORMANCE_GRADE_ID = 100L;
-    @Mock private PerformanceSaleCatalog performanceSaleCatalog;
+    @Mock private PerformanceSaleCatalogApi performanceSaleCatalog;
     @Mock private PerformanceSeatRepository performanceSeatRepository;
     @InjectMocks private CreatePerformanceSeatsUseCase useCase;
 

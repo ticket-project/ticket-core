@@ -3,7 +3,7 @@ package com.ticket.member.infrastructure;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.ticket.member.RawPassword;
+import com.ticket.member.api.RawPassword;
 import com.ticket.member.application.PasswordHasher;
 import com.ticket.member.domain.EncodedPassword;
 

@@ -21,25 +21,25 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.LikeEntry;
-import com.ticket.like.LikeQuery;
-import com.ticket.like.LikeType;
-import com.ticket.member.MemberLookup;
-import com.ticket.shared.CursorPage;
+import com.ticket.like.api.LikeEntry;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeType;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.application.ShowLikeSummaryView;
 import com.ticket.show.application.ShowSummaryRow;
 import com.ticket.show.application.port.ShowSummaryBatchQueryPort;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetMyShowLikesUseCaseTest {
-    @Mock private MemberLookup memberLookup;
-    @Mock private LikeQuery likeQuery;
+    @Mock private MemberLookupApi memberLookup;
+    @Mock private LikeQueryApi likeQuery;
     @Mock private ShowSummaryBatchQueryPort showSummaryBatchQueryPort;
-    @Mock private VenueLookup venueLookup;
+    @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetMyShowLikesUseCase useCase;
 
     @Test

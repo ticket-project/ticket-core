@@ -19,7 +19,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.ticket.security.token.AccessTokenReader;
-import com.ticket.shared.CorsProperties;
+import com.ticket.shared.api.CorsProperties;
 
 @Configuration
 @EnableConfigurationProperties(CorsProperties.class)

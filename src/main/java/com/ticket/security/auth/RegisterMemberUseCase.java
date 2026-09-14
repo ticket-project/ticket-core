@@ -2,8 +2,8 @@ package com.ticket.security.auth;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.RawPassword;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.RawPassword;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class RegisterMemberUseCase {
-    private final MemberAccountOperations memberAccountOperations;
+    private final MemberAccountApi memberAccountOperations;
 
     /**
      * Email과 RawPassword의 형식 정책은 도메인 값 객체가 소유한다. 여기서는 어느 adapter에서 호출해도 성립해야 하는 "필수 값이 왔는가"만 판정한다.

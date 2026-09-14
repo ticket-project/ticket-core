@@ -18,7 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.member.exception.handler.MemberExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;

@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
@@ -39,7 +39,7 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowGenre;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 

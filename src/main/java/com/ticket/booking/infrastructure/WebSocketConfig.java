@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-import com.ticket.shared.CorsProperties;
+import com.ticket.shared.api.CorsProperties;
 
 import lombok.RequiredArgsConstructor;
 

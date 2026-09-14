@@ -24,7 +24,7 @@ import org.hibernate.tool.schema.spi.SchemaManagementTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 

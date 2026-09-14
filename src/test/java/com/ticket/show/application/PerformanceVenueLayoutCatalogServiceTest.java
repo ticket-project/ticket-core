@@ -14,22 +14,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.PerformanceVenueLayout;
+import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.application.port.PerformanceVenueLayoutQueryPort;
 import com.ticket.show.application.port.PerformanceVenueLayoutQueryPort.PerformanceGradeLayoutRow;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSeatLayout;
-import com.ticket.venue.VenueSeatLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSeatLayout;
+import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class PerformanceVenueLayoutCatalogServiceTest {
     @Mock private PerformanceVenueLayoutQueryPort performanceVenueLayoutQueryPort;
-    @Mock private VenueLookup venueLookup;
-    @Mock private VenueSeatLookup venueSeatLookup;
+    @Mock private VenueLookupApi venueLookup;
+    @Mock private VenueSeatLookupApi venueSeatLookup;
     @InjectMocks private PerformanceVenueLayoutCatalogService service;
 
     @Test

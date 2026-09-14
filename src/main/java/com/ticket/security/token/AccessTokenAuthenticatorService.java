@@ -2,9 +2,9 @@ package com.ticket.security.token;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.security.AccessTokenAuthenticator;
+import com.ticket.security.api.AccessTokenAuthenticator;
 
 import lombok.RequiredArgsConstructor;
 

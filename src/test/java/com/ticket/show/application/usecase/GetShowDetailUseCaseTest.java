@@ -16,8 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.LikeQuery;
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.application.PriceSummary;
@@ -25,16 +25,16 @@ import com.ticket.show.application.ShowDetailView;
 import com.ticket.show.application.port.ShowDetailQueryPort;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowDetailUseCaseTest {
     @Mock private ShowDetailQueryPort showDetailQueryPort;
-    @Mock private LikeQuery likeQuery;
-    @Mock private VenueLookup venueLookup;
+    @Mock private LikeQueryApi likeQuery;
+    @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetShowDetailUseCase useCase;
 
     @Test

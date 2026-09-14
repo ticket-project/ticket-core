@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.ticket.member.RawPassword;
+import com.ticket.member.api.RawPassword;
 import com.ticket.member.domain.EncodedPassword;
 
 @SuppressWarnings("NonAsciiCharacters")

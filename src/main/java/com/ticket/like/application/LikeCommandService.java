@@ -4,19 +4,19 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.like.LikeCommand;
-import com.ticket.like.LikeInfo;
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeCommandApi;
+import com.ticket.like.api.LikeInfo;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.exception.LikeAlreadyExistsException;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link LikeCommand}의 like 소유 구현이다. */
+/** {@link LikeCommandApi}의 like 소유 구현이다. */
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class LikeCommandService implements LikeCommand {
+public class LikeCommandService implements LikeCommandApi {
     private final LikeRepository likeRepository;
 
     @Override

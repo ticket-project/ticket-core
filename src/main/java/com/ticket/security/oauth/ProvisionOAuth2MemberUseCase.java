@@ -2,9 +2,9 @@ package com.ticket.security.oauth;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
-import com.ticket.member.SocialIdentity;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.SocialIdentity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProvisionOAuth2MemberUseCase {
-    private final MemberAccountOperations memberAccountOperations;
+    private final MemberAccountApi memberAccountOperations;
 
     public ProvisionedMember execute(final SocialIdentity userInfo) {
         final MemberStatus member = memberAccountOperations.resolveSocialAccount(userInfo);

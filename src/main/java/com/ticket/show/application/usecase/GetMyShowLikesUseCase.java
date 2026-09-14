@@ -8,17 +8,17 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.like.LikeEntry;
-import com.ticket.like.LikeQuery;
-import com.ticket.like.LikeType;
-import com.ticket.member.MemberLookup;
-import com.ticket.shared.CursorPage;
+import com.ticket.like.api.LikeEntry;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeType;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.application.ShowLikeSummaryView;
 import com.ticket.show.application.ShowSummaryRow;
 import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowSummaryBatchQueryPort;
-import com.ticket.venue.VenueLookup;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,10 +34,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetMyShowLikesUseCase {
     private static final int MAX_SIZE = 100;
-    private final MemberLookup memberLookup;
-    private final LikeQuery likeQuery;
+    private final MemberLookupApi memberLookup;
+    private final LikeQueryApi likeQuery;
     private final ShowSummaryBatchQueryPort showSummaryBatchQueryPort;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
 
     /**
      * @param cursorLikeId 이전 페이지 마지막 찜 id. 첫 페이지면 null이다.
