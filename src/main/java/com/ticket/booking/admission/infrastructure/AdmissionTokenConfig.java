@@ -15,8 +15,7 @@ public class AdmissionTokenConfig {
                 new AdmissionTokenSettings(
                         properties.getIssuer(),
                         properties.getAudience(),
-                        properties.getSecretKey(),
-                        properties.getExpirationSeconds()),
+                        properties.getSecretKey()),
                 properties.isEnforcementEnabled());
     }
 }

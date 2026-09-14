@@ -12,7 +12,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 import lombok.RequiredArgsConstructor;
@@ -33,11 +32,6 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
     public List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(
             final Long performanceId, final Collection<Long> seatIds) {
         return jpaRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds);
-    }
-
-    @Override
-    public List<PerformanceSeat> findAllByStateEquals(final PerformanceSeatState state) {
-        return jpaRepository.findAllByStateEquals(state);
     }
 
     /**

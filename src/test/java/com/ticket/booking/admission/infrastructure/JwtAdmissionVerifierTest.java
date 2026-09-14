@@ -2,6 +2,7 @@ package com.ticket.booking.admission.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
@@ -15,7 +16,6 @@ import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.booking.admission.application.AdmissionVerification;
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.AdmissionTokenExpiredException;
@@ -162,12 +162,14 @@ class JwtAdmissionVerifierTest {
                                         .isEqualTo("admission token expired"));
     }
 
+    /** 통과하면 아무것도 돌려주지 않는다 — 호출자가 전부 반환값을 버리고 있어 검증 계약을 void로 단순화했다. */
     @Test
-    void verify는_유효한_token에_대해_공개_불변_result를_돌려준다() {
-        AdmissionVerification result =
-                jwtAdmissionVerifier().verify(20L, 10L, admissionToken(true, true, true, "10"));
-
-        assertThat(result).isEqualTo(new AdmissionVerification(20L, 10L));
+    void verify는_유효한_token이면_예외_없이_통과한다() {
+        assertThatNoException()
+                .isThrownBy(
+                        () ->
+                                jwtAdmissionVerifier()
+                                        .verify(20L, 10L, admissionToken(true, true, true, "10")));
     }
 
     @Test
@@ -221,7 +223,7 @@ class JwtAdmissionVerifierTest {
     void enforcement가_꺼져있으면_token_없이도_통과시킨다() {
         JwtAdmissionVerifier disabled =
                 new JwtAdmissionVerifier(
-                        new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY, 300),
+                        new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY),
                         Clock.fixed(NOW, ZoneOffset.UTC),
                         false);
 
@@ -246,7 +248,7 @@ class JwtAdmissionVerifierTest {
 
     private JwtAdmissionVerifier jwtAdmissionVerifier() {
         return new JwtAdmissionVerifier(
-                new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY, 300),
+                new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 

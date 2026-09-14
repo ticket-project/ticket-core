@@ -15,8 +15,6 @@ public interface PerformanceSeatRepository {
     List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(
             Long performanceId, Collection<Long> seatIds);
 
-    List<PerformanceSeat> findAllByStateEquals(PerformanceSeatState state);
-
     /**
      * 좌석 선택 판정에 필요한 좌석 한 건의 상태만 반환한다.
      *
