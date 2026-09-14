@@ -16,8 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.SocialIdentity;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialIdentity;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;

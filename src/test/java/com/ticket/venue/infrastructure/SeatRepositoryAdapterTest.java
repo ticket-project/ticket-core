@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.SeatRepository;
 import com.ticket.venue.domain.Venue;

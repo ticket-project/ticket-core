@@ -11,7 +11,7 @@ import com.ticket.booking.application.port.OrderQueryPort;
 import com.ticket.booking.domain.order.OrderRemainingTime;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.member.MemberLookup;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 
@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class GetOrderStatusUseCase {
     private final OrderQueryPort orderQueryPort;
-    private final MemberLookup memberLookup;
+    private final MemberLookupApi memberLookup;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {

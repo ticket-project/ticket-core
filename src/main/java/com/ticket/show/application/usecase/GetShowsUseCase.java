@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.application.ShowCursor;
 import com.ticket.show.application.ShowListItemRow;
@@ -14,7 +14,7 @@ import com.ticket.show.application.ShowListParam;
 import com.ticket.show.application.ShowSort;
 import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowListQueryPort;
-import com.ticket.venue.VenueLookup;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +26,7 @@ public class GetShowsUseCase {
     public static final int MAX_SIZE = 100;
 
     private final ShowListQueryPort showListQueryPort;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
 
     public record Input(ShowListParam param, int size, ShowSort sort) {
         public Input {

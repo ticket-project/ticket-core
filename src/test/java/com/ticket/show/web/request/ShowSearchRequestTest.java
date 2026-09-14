@@ -13,7 +13,7 @@ import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.ShowSort;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.web.cursor.ShowCursorCodec;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 
 import tools.jackson.databind.json.JsonMapper;
 

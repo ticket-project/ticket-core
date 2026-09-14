@@ -1,8 +1,8 @@
 package com.ticket.like.application.port;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.application.LikeRow;
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 
 /**
  * 찜 목록 읽기 전용 조회 포트다.

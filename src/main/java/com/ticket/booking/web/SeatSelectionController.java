@@ -11,7 +11,7 @@ import com.ticket.booking.application.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.application.usecase.SelectSeatUseCase;
 import com.ticket.booking.web.docs.SeatSelectionControllerDocs;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;

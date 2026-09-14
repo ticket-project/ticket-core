@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Member;
 
 interface SpringDataMemberJpaRepository extends JpaRepository<Member, Long> {

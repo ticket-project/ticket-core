@@ -2,7 +2,7 @@ package com.ticket.member.domain;
 
 import java.util.Optional;
 
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialProvider;
 
 /**
  * 회원 aggregate의 저장과 복원을 담당하는 도메인 Repository다.

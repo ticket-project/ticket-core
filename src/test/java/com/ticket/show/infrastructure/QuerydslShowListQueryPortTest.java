@@ -28,7 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.show.application.LatestShowRow;
 import com.ticket.show.application.ShowCursor;
 import com.ticket.show.application.ShowListItemRow;
@@ -41,7 +41,7 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
 import com.ticket.venue.domain.Venue;

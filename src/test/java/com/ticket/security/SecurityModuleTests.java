@@ -6,7 +6,7 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.api.MemberAccountApi;
 
 /**
  * security가 STANDALONE으로 부트스트랩되는지만 본다. member의 공개 계약은 {@code @MockitoBean}으로 대체한다 — 인증 조립이 member
@@ -31,7 +31,7 @@ import com.ticket.member.MemberAccountOperations;
             "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
         })
 class SecurityModuleTests {
-    @MockitoBean private MemberAccountOperations memberAccountOperations;
+    @MockitoBean private MemberAccountApi memberAccountOperations;
     @MockitoBean private RedissonClient redissonClient;
 
     @Test

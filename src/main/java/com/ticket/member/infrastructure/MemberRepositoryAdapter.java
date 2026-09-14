@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 

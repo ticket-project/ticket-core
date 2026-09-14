@@ -2,8 +2,8 @@ package com.ticket.security.auth;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
 import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.AuthTokenIssuer;
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RefreshAuthTokenUseCase {
     private final RefreshTokenStore refreshTokenStore;
-    private final MemberAccountOperations memberAccountOperations;
+    private final MemberAccountApi memberAccountOperations;
     private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(AuthRefreshToken refreshToken) {

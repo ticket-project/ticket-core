@@ -19,14 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.show.application.LatestShowRow;
 import com.ticket.show.application.ShowSummaryView;
 import com.ticket.show.application.port.ShowListQueryPort;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetLatestShowsUseCaseTest {
     @Mock private ShowListQueryPort showListQueryPort;
-    @Mock private VenueLookup venueLookup;
+    @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetLatestShowsUseCase useCase;
 
     @Test

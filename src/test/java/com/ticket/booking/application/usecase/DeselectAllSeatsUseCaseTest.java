@@ -21,12 +21,12 @@ import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.selection.DeselectedSeatIds;
 import com.ticket.booking.domain.selection.SeatSelectionService;
-import com.ticket.member.MemberLookup;
+import com.ticket.member.api.MemberLookupApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class DeselectAllSeatsUseCaseTest {
-    @Mock private MemberLookup memberLookup;
+    @Mock private MemberLookupApi memberLookup;
     @Mock private SeatSelectionService seatSelectionService;
     @Mock private PerformanceSeatRepository performanceSeatRepository;
     @Mock private SeatSelectionCoordinator seatSelectionCoordinator;

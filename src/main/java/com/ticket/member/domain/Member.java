@@ -19,7 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialProvider;
 
 import lombok.AccessLevel;
 import lombok.Getter;

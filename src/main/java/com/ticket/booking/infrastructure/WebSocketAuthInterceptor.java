@@ -15,8 +15,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.AccessTokenAuthenticator;
+import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.api.AccessTokenAuthenticator;
 import com.ticket.shared.exception.TicketException;
 
 import lombok.RequiredArgsConstructor;

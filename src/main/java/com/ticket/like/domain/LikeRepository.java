@@ -2,7 +2,7 @@ package com.ticket.like.domain;
 
 import java.util.Optional;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 
 /**
  * 찜 aggregate의 저장과 복원을 담당하는 도메인 Repository다.

@@ -16,8 +16,8 @@ import com.ticket.booking.application.port.SeatAvailabilityQueryPort.Performance
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.PerformanceSaleCatalog;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSeatAvailabilityUseCase {
     private final SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
-    private final PerformanceSaleCatalog performanceSaleCatalog;
+    private final PerformanceSaleCatalogApi performanceSaleCatalog;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
     private final SeatAvailabilityCalculator seatAvailabilityCalculator;

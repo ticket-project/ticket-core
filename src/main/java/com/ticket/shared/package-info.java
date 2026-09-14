@@ -4,16 +4,16 @@
  * <p>여기에 두는 class는 특정 Entity나 기술 adapter가 아니고 업무 vocabulary를 전혀 담지 않는, 둘 이상의 독립 module이 의미 그대로 공유하는
  * 타입이어야 한다.
  *
- * <p>공개 계약은 {@code shared.web}과 {@code shared.exception}에 둔다. 공통 실행 설정은 {@code
- * shared.infrastructure}, 전역 예외 처리는 {@code shared.exception.handler}가 소유한다. 이 모듈은 {@code
- * sharedModules}로 모든 모듈 기동 테스트에 포함되므로, bean은 이 두 내부 패키지에만 둔다. {@link CorsProperties}가 예외처럼 보이지만 아니다
- * — {@code @ConfigurationProperties} 값 홀더는 스스로 bean을 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이
- * 한다.
+ * <p>공개 계약은 성격별로 세 named interface에 나눠 둔다 — 기술 중립 공유 계약은 {@code shared.api}, HTTP 응답 형식은 {@code
+ * shared.web}, 공통 오류 계약은 {@code shared.exception}이다. 공통 실행 설정은 {@code shared.infrastructure}, 전역 예외
+ * 처리는 {@code shared.exception.handler}가 소유한다. 이 모듈은 {@code sharedModules}로 모든 모듈 기동 테스트에 포함되므로,
+ * bean은 이 두 내부 패키지에만 둔다. {@link com.ticket.shared.api.CorsProperties}가 예외처럼 보이지만 아니다 —
+ * {@code @ConfigurationProperties} 값 홀더는 스스로 bean을 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이 한다.
  *
  * <p><b>이 module은 아무 module도 참조하지 않는 leaf여야 한다.</b>
  *
- * <p>module root에는 {@link CursorPage}(커서 페이징 조회 결과), {@link CorsProperties}, {@link
- * AuditorPrincipal}(인증 주체의 기술 중립 감사 식별자 계약)이 있다.
+ * <p><b>module root에는 {@code package-info.java}만 있다.</b> 공개 계약을 root가 아니라 이름 붙인 package에 두면 무엇이
+ * 공개면이고 무엇이 구현인지가 import 문에서 바로 읽히고, 참조하는 module이 {@code shared :: api}처럼 필요한 표면만 열 수 있다.
  *
  * <p><b>{@code @ApplicationModule}을 선언하는 이유</b>: package-info에 annotation이 없으면 javac가 {@code
  * package-info.class}를 만들지 않아 Spring Modulith의 {@code direct-sub-packages} 감지가 이 package를 아예

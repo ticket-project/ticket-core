@@ -1,6 +1,6 @@
 package com.ticket.security.token;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 
 /**
  * 액세스 토큰을 읽은 결과다.

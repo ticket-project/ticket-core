@@ -7,10 +7,17 @@
  * {@code GetMyShowLikesUseCase}뿐이다 — 둘 다 공연 표시값(제목·이미지 등)을 채워야 해서 show가 like의 공개 API를 부르는 쪽이다. 여러
  * BC의 "내 것"을 모으는 module(가칭 mypage)이 생기면 {@code GetMyShowLikesUseCase}는 그쪽으로 옮길 후보다(ADR 0008).
  *
- * <p>공개 계약: - PerformanceSaleCatalog - PerformanceVenueLayoutCatalog (booking이 좌석 판매 편성·seat-map
- * 조합에 쓰는 snapshot)
+ * <p>공개 계약: - PerformanceSaleCatalogApi - PerformanceVenueLayoutCatalogApi (booking이 좌석 판매
+ * 편성·seat-map 조합에 쓰는 snapshot)
  */
 @org.springframework.modulith.ApplicationModule(
         displayName = "Show",
-        allowedDependencies = {"venue", "like", "member", "shared :: *"})
+        allowedDependencies = {
+            "venue :: api",
+            "like :: api",
+            "member :: api",
+            "shared :: api",
+            "shared :: web",
+            "shared :: exception"
+        })
 package com.ticket.show;

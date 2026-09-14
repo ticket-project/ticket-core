@@ -13,8 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
 import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
@@ -23,7 +23,7 @@ import com.ticket.security.token.IssuedAuthTokens;
 @SuppressWarnings("NonAsciiCharacters")
 class ExchangeOAuth2TokenUseCaseTest {
     @Mock private OAuth2AuthCodeStore oauth2AuthCodeStore;
-    @Mock private MemberAccountOperations memberAccountOperations;
+    @Mock private MemberAccountApi memberAccountOperations;
     @Mock private AuthTokenIssuer authTokenIssuer;
     @InjectMocks private ExchangeOAuth2TokenUseCase useCase;
 

@@ -3,20 +3,20 @@ package com.ticket.member.application;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.member.MemberLookup;
-import com.ticket.member.MemberProfile;
-import com.ticket.member.MemberStatus;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.member.api.MemberProfile;
+import com.ticket.member.api.MemberStatus;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link MemberLookup}의 member 소유 구현이다. */
+/** {@link MemberLookupApi}의 member 소유 구현이다. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MemberLookupService implements MemberLookup {
+public class MemberLookupService implements MemberLookupApi {
     private final MemberRepository memberRepository;
 
     @Override

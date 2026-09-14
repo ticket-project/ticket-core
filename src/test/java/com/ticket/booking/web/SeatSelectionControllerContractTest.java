@@ -20,7 +20,7 @@ import com.ticket.booking.application.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.application.usecase.SelectSeatUseCase;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 

@@ -163,7 +163,7 @@ class OrderStartedPublicationAtomicityTest {
                                         Duration.class,
                                         Hold.class,
                                         List.class,
-                                        com.ticket.show.PerformanceSaleSnapshot.class)
+                                        com.ticket.show.api.PerformanceSaleSnapshot.class)
                                 .getReturnType())
                 .isEqualTo(String.class);
     }
@@ -210,17 +210,17 @@ class OrderStartedPublicationAtomicityTest {
         return seatsByHoldKey.get(holdKey);
     }
 
-    private com.ticket.show.PerformanceSaleSnapshot saleSnapshotFor(
+    private com.ticket.show.api.PerformanceSaleSnapshot saleSnapshotFor(
             final List<PerformanceSeat> performanceSeats) {
-        final java.util.Map<Long, com.ticket.show.PerformanceSaleSnapshot.SeatInfo>
+        final java.util.Map<Long, com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo>
                 seatInfoBySeatId = new java.util.HashMap<>();
         for (final PerformanceSeat seat : performanceSeats) {
             seatInfoBySeatId.put(
                     seat.getSeatId(),
-                    new com.ticket.show.PerformanceSaleSnapshot.SeatInfo(
+                    new com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo(
                             seat.getSeatId(), 1, "가", "A", "1"));
         }
-        return new com.ticket.show.PerformanceSaleSnapshot(
+        return new com.ticket.show.api.PerformanceSaleSnapshot(
                 PERFORMANCE_ID,
                 1L,
                 "show-title",
@@ -230,7 +230,7 @@ class OrderStartedPublicationAtomicityTest {
                 seatInfoBySeatId,
                 java.util.Map.of(
                         1L,
-                        new com.ticket.show.PerformanceSaleSnapshot.GradeInfo(
+                        new com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo(
                                 1L, "R", "R석", 1, BigDecimal.valueOf(10_000))));
     }
 

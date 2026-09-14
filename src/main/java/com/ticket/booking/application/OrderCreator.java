@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import com.ticket.booking.domain.order.Order;
 import com.ticket.booking.domain.order.OrderKeyGenerator;
 import com.ticket.booking.domain.seat.PerformanceSeat;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 

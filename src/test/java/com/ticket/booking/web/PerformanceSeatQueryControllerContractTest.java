@@ -22,7 +22,7 @@ import com.ticket.booking.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.application.usecase.GetSeatStatusUseCase;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 

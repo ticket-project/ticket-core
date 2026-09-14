@@ -7,21 +7,21 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show에 연결된 공연장의 좌석 맵 배치를 조회한다. venue 표시값은 venue module의 {@link VenueLookup}에서 조회한다 — show는 물리 공연장
- * entity를 참조하지 않는다.
+ * show에 연결된 공연장의 좌석 맵 배치를 조회한다. venue 표시값은 venue module의 {@link VenueLookupApi}에서 조회한다 — show는 물리
+ * 공연장 entity를 참조하지 않는다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowVenueLayoutUseCase {
     private final ShowRepository showRepository;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
 
     public record Input(Long showId) {
         public Input {

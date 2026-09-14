@@ -1,6 +1,6 @@
 package com.ticket.member.web.docs;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.application.usecase.GetCurrentMemberUseCase;
 import com.ticket.shared.web.ApiResponse;
 

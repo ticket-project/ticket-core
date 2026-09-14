@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.web.request.CreateHoldRequest;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;

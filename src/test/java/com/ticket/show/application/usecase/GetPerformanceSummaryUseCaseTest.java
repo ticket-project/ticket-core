@@ -16,15 +16,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.application.PerformanceSummaryView;
 import com.ticket.show.application.port.PerformanceQueryPort;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetPerformanceSummaryUseCaseTest {
     @Mock private PerformanceQueryPort performanceQueryPort;
-    @Mock private VenueLookup venueLookup;
+    @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetPerformanceSummaryUseCase useCase;
 
     @Test

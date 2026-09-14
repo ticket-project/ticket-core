@@ -2,9 +2,9 @@ package com.ticket.security.auth;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
-import com.ticket.member.RawPassword;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.RawPassword;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LoginUseCase {
-    private final MemberAccountOperations memberAccountOperations;
+    private final MemberAccountApi memberAccountOperations;
     private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(String email, String password) {

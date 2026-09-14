@@ -8,18 +8,18 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 import com.ticket.venue.application.port.VenueSummaryQueryPort;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link VenueLookup}의 venue 소유 구현이다. */
+/** {@link VenueLookupApi}의 venue 소유 구현이다. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class VenueLookupService implements VenueLookup {
+public class VenueLookupService implements VenueLookupApi {
     private final VenueSummaryQueryPort venueSummaryQueryPort;
 
     @Override

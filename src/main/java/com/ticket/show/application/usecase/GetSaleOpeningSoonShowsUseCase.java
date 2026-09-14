@@ -10,7 +10,7 @@ import com.ticket.show.application.SaleOpeningSoonSummaryRow;
 import com.ticket.show.application.SaleOpeningSoonSummaryView;
 import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowListQueryPort;
-import com.ticket.venue.VenueLookup;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSaleOpeningSoonShowsUseCase {
     private final ShowListQueryPort showListQueryPort;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
 
     public record Input(String category, int size) {
         public Input {

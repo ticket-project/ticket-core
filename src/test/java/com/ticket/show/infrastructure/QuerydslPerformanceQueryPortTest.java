@@ -13,7 +13,7 @@ import com.ticket.show.application.port.PerformanceQueryPort;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
 @Import(QuerydslPerformanceQueryPort.class)

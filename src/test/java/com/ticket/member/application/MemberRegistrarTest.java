@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.RawPassword;
+import com.ticket.member.api.RawPassword;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;

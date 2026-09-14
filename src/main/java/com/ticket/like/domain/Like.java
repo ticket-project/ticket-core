@@ -13,7 +13,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 
 import lombok.Getter;
 

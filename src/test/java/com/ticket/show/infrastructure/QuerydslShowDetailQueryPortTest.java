@@ -23,7 +23,7 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
 @Import({QuerydslShowDetailQueryPort.class, ShowCardImagePathConverter.class})

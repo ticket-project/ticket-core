@@ -17,8 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.SocialAccountConnection;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;

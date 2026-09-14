@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.member.SocialIdentity;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialIdentity;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")

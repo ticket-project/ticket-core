@@ -12,7 +12,7 @@ import com.ticket.show.domain.show.SaleType;
 /**
  * {@code likeCount}는 담지 않는다 — 찜 개수는 like module 소유라 {@link GetShowDetailUseCase}가 별도로 조회해 응답에 합친다.
  *
- * <p>{@code venueId}는 scalar 참조만 담는다 — venue 표시값 조합(VenueLookup 호출)은 infrastructure가 아니라 {@link
+ * <p>{@code venueId}는 scalar 참조만 담는다 — venue 표시값 조합(VenueLookupApi 호출)은 infrastructure가 아니라 {@link
  * GetShowDetailUseCase}가 한다. persistence adapter의 역할은 show 자기 DB를 읽는 것까지다.
  *
  * <p>컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름 {@code bookingStatus}/{@code

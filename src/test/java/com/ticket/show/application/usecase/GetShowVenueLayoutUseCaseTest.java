@@ -17,15 +17,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.venue.Region;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowVenueLayoutUseCaseTest {
     @Mock private ShowRepository showRepository;
-    @Mock private VenueLookup venueLookup;
+    @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetShowVenueLayoutUseCase useCase;
 
     @Test

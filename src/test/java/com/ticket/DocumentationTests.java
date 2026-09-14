@@ -59,7 +59,7 @@ class DocumentationTests {
         assertThat(bookingCanvas)
                 .as("booking module canvas")
                 .contains("Bean references")
-                .contains("MemberLookup")
+                .contains("MemberLookupApi")
                 .contains("Events listened to")
                 .contains("OrderStarted");
     }

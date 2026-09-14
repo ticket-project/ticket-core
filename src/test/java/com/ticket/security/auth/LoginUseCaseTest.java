@@ -10,16 +10,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
-import com.ticket.member.RawPassword;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.RawPassword;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class LoginUseCaseTest {
-    @Mock private MemberAccountOperations memberAccountOperations;
+    @Mock private MemberAccountApi memberAccountOperations;
     @Mock private AuthTokenIssuer authTokenIssuer;
     @InjectMocks private LoginUseCase useCase;
 

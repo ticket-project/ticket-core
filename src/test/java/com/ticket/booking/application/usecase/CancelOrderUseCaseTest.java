@@ -12,12 +12,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.application.CancelOrderTransactionService;
-import com.ticket.member.MemberLookup;
+import com.ticket.member.api.MemberLookupApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CancelOrderUseCaseTest {
-    @Mock private MemberLookup memberLookup;
+    @Mock private MemberLookupApi memberLookup;
     @Mock private CancelOrderTransactionService cancelOrderTransactionService;
 
     @Test

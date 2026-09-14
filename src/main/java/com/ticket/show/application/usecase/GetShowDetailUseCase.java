@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ticket.like.LikeQuery;
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.application.PerformanceDateInfo;
@@ -21,8 +21,8 @@ import com.ticket.show.application.VenueInfo;
 import com.ticket.show.application.port.ShowDetailQueryPort;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
-import com.ticket.venue.VenueLookup;
-import com.ticket.venue.VenueSummary;
+import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSummary;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,8 +36,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetShowDetailUseCase {
     private final ShowDetailQueryPort showDetailQueryPort;
-    private final LikeQuery likeQuery;
-    private final VenueLookup venueLookup;
+    private final LikeQueryApi likeQuery;
+    private final VenueLookupApi venueLookup;
 
     public record Input(Long showId) {
         public Input {

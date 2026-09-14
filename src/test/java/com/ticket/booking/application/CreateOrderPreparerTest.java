@@ -34,16 +34,16 @@ import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.member.MemberLookup;
-import com.ticket.show.PerformanceSaleCatalog;
+import com.ticket.member.api.MemberLookupApi;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CreateOrderPreparerTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
-    @Mock private MemberLookup memberLookup;
+    @Mock private MemberLookupApi memberLookup;
     @Mock private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-    @Mock private PerformanceSaleCatalog performanceSaleCatalog;
+    @Mock private PerformanceSaleCatalogApi performanceSaleCatalog;
     @Mock private AdmissionVerifier admissionVerifier;
     @Mock private PendingOrderLocalValidator pendingOrderLocalValidator;
     @InjectMocks private CreateOrderPreparer preparer;

@@ -2,7 +2,7 @@ package com.ticket.show.application;
 
 import java.time.LocalDate;
 
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 
 public record ShowSearchItemView(
         Long id,

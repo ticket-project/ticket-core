@@ -9,10 +9,10 @@ import org.springframework.stereotype.Repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.application.LikeRow;
 import com.ticket.like.application.port.LikeQueryPort;
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
 

@@ -11,7 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 
 import lombok.AccessLevel;
 import lombok.Getter;

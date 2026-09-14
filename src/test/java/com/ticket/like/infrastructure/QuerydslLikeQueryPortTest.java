@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.application.LikeRow;
 import com.ticket.like.application.port.LikeQueryPort;
 import com.ticket.member.domain.Member;
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
 @Import(QuerydslLikeQueryPort.class)
@@ -35,7 +35,7 @@ class QuerydslLikeQueryPortTest extends InfraReadRepositoryTestSupport {
     }
 
     private Long persistShowLikeFixture(final Member member, final String title) throws Exception {
-        var venue = persistVenue(title + " 공연장", com.ticket.venue.Region.SEOUL);
+        var venue = persistVenue(title + " 공연장", com.ticket.venue.api.Region.SEOUL);
         var show =
                 persistShow(
                         title,

@@ -2,7 +2,7 @@ package com.ticket.booking.web.docs;
 
 import jakarta.validation.constraints.Positive;
 
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;

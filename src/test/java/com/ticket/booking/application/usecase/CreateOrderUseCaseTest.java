@@ -38,7 +38,7 @@ import com.ticket.booking.domain.salespolicy.OrderAcceptanceWindow;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

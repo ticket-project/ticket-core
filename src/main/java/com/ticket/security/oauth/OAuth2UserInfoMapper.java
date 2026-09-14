@@ -4,8 +4,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import com.ticket.member.SocialIdentity;
-import com.ticket.member.SocialProvider;
+import com.ticket.member.api.SocialIdentity;
+import com.ticket.member.api.SocialProvider;
 import com.ticket.shared.exception.InvalidRequestException;
 
 public final class OAuth2UserInfoMapper {

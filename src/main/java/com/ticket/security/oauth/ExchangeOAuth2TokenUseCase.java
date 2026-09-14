@@ -2,8 +2,8 @@ package com.ticket.security.oauth;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
 import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ExchangeOAuth2TokenUseCase {
     private final OAuth2AuthCodeStore oauth2AuthCodeStore;
-    private final MemberAccountOperations memberAccountOperations;
+    private final MemberAccountApi memberAccountOperations;
     private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(String code) {

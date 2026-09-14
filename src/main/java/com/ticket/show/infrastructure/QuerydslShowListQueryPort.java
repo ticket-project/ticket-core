@@ -19,7 +19,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.shared.CursorPage;
+import com.ticket.shared.api.CursorPage;
 import com.ticket.show.application.LatestShowRow;
 import com.ticket.show.application.SaleOpeningSoonDetailRow;
 import com.ticket.show.application.SaleOpeningSoonSearchParam;

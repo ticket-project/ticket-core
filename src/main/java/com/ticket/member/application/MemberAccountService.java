@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.MemberStatus;
-import com.ticket.member.RawPassword;
-import com.ticket.member.SocialAccountConnection;
-import com.ticket.member.SocialIdentity;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.RawPassword;
+import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
@@ -18,7 +18,7 @@ import com.ticket.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link MemberAccountOperations}의 member 소유 구현이다.
+ * {@link MemberAccountApi}의 member 소유 구현이다.
  *
  * <p>업무 규칙을 여기서 새로 쓰지 않는다 — 등록은 {@link MemberRegistrar}, 자격 증명 확인은 {@link CredentialAuthenticator},
  * 소셜 연결은 {@link OAuth2MemberProvisioningService}, 탈퇴는 {@link MemberWithdrawalTransactionService}가
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class MemberAccountService implements MemberAccountOperations {
+public class MemberAccountService implements MemberAccountApi {
     private final MemberRegistrar memberRegistrar;
     private final CredentialAuthenticator credentialAuthenticator;
     private final OAuth2MemberProvisioningService oauth2MemberProvisioningService;

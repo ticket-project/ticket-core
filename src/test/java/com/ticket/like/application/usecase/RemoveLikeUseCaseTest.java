@@ -16,17 +16,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.LikeCommand;
-import com.ticket.like.LikeInfo;
-import com.ticket.like.LikeType;
-import com.ticket.member.MemberLookup;
+import com.ticket.like.api.LikeCommandApi;
+import com.ticket.like.api.LikeInfo;
+import com.ticket.like.api.LikeType;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RemoveLikeUseCaseTest {
-    @Mock private MemberLookup memberLookup;
-    @Mock private LikeCommand likeCommand;
+    @Mock private MemberLookupApi memberLookup;
+    @Mock private LikeCommandApi likeCommand;
     @InjectMocks private RemoveLikeUseCase useCase;
 
     @Test

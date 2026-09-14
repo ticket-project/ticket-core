@@ -2,7 +2,7 @@ package com.ticket.show.application;
 
 import java.math.BigDecimal;
 
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 
 /**
  * show 상세에 쓰는 venue 표시값 조합 결과다. venue module의 {@code VenueSummary}를 이 use case의 응답 모양(좌석 배치 등 여기서

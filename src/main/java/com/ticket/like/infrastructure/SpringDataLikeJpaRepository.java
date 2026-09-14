@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.ticket.like.LikeType;
+import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 
 interface SpringDataLikeJpaRepository extends JpaRepository<Like, Long> {

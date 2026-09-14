@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.ShowPerformanceLookup;
+import com.ticket.show.api.ShowPerformanceLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowSeatMapUseCase {
-    private final ShowPerformanceLookup showPerformanceLookup;
+    private final ShowPerformanceLookupApi showPerformanceLookup;
     private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase;
 
     public record Input(Long showId) {

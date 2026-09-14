@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.CancelOrderTransactionService;
 import com.ticket.booking.application.CreateOrderPreparer;
-import com.ticket.member.MemberLookup;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
-    private final MemberLookup memberLookup;
+    private final MemberLookupApi memberLookup;
     private final CancelOrderTransactionService cancelOrderTransactionService;
 
     public record Input(String orderKey, Long memberId) {

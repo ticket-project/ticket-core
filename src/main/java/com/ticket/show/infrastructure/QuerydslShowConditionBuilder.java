@@ -14,7 +14,7 @@ import com.ticket.show.application.ShowListParam;
 import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.ShowSort;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver.SortOrder;
-import com.ticket.venue.VenueLookup;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class QuerydslShowConditionBuilder {
     private final QuerydslShowPredicates showPredicates;
     private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicateFactory;
-    private final VenueLookup venueLookup;
+    private final VenueLookupApi venueLookup;
     private final Clock clock;
 
     public BooleanBuilder buildMainListCondition(
@@ -77,10 +77,10 @@ public class QuerydslShowConditionBuilder {
 
     /**
      * region 검색 조건을 venueId 집합으로 해석해 붙인다. show는 venue module의 Region entity를 직접 참조하지 않는다 — {@code
-     * VenueLookup.findIdsByRegion}로 얻은 venueId 집합에 대해서만 {@code show.venueId.in(...)}을 건다.
+     * VenueLookupApi.findIdsByRegion}로 얻은 venueId 집합에 대해서만 {@code show.venueId.in(...)}을 건다.
      */
     private void appendRegionCondition(
-            final BooleanBuilder where, final com.ticket.venue.Region region) {
+            final BooleanBuilder where, final com.ticket.venue.api.Region region) {
         if (region != null) {
             where.and(showPredicates.venueIdIn(venueLookup.findIdsByRegion(region)));
         }

@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.SaleDisplayStatus;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 
 import lombok.Getter;
 

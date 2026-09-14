@@ -21,14 +21,14 @@ import com.ticket.booking.application.port.SeatAvailabilityQueryPort.Performance
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.selection.SeatSelectionService;
-import com.ticket.show.PerformanceSaleCatalog;
-import com.ticket.show.PerformanceSaleSnapshot;
+import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetSeatAvailabilityUseCaseTest {
     @Mock private SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
-    @Mock private PerformanceSaleCatalog performanceSaleCatalog;
+    @Mock private PerformanceSaleCatalogApi performanceSaleCatalog;
     @Mock private HoldManager holdManager;
     @Mock private SeatSelectionService seatSelectionService;
     @Mock private SeatAvailabilityCalculator seatAvailabilityCalculator;

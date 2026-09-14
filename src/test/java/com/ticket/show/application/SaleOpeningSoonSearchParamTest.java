@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.venue.Region;
+import com.ticket.venue.api.Region;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SaleOpeningSoonSearchParamTest {

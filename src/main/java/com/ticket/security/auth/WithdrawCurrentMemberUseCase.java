@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.MemberAccountOperations;
-import com.ticket.member.SocialAccountConnection;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.security.oauth.SocialAccountUnlinker;
 import com.ticket.shared.exception.InvalidRequestException;
 
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class WithdrawCurrentMemberUseCase {
-    private final MemberAccountOperations memberAccountOperations;
+    private final MemberAccountApi memberAccountOperations;
     private final SocialAccountUnlinker socialAccountUnlinker;
 
     public record Input(Long memberId) {

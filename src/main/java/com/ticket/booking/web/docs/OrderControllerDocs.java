@@ -9,7 +9,7 @@ import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.application.usecase.GetOrderStatusUseCase;
 import com.ticket.booking.web.request.CreateOrderRequest;
-import com.ticket.member.AuthenticatedMember;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;

@@ -6,9 +6,9 @@ import java.util.Optional;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 
 /**
- * {@link com.ticket.show.PerformanceVenueLayoutCatalog}이 조회하는 회차 정적 seat-map 표시값 포트다. show 자기 DB만
- * 본다 — venue 좌석 배치·seat-map 좌표는 여기 없다 ({@code PerformanceVenueLayoutCatalogService}가 venue module의
- * {@code VenueSeatLookup}을 직접 부른다).
+ * {@link com.ticket.show.api.PerformanceVenueLayoutCatalogApi}이 조회하는 회차 정적 seat-map 표시값 포트다. show
+ * 자기 DB만 본다 — venue 좌석 배치·seat-map 좌표는 여기 없다 ({@code PerformanceVenueLayoutCatalogService}가 venue
+ * module의 {@code VenueSeatLookupApi}을 직접 부른다).
  */
 public interface PerformanceVenueLayoutQueryPort {
     Optional<PerformanceVenueLayoutContext> findVenueLayoutContext(long performanceId);
