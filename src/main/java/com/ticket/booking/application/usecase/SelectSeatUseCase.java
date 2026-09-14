@@ -1,0 +1,84 @@
+package com.ticket.booking.application.usecase;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+
+import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.application.SeatSelectionCoordinator;
+import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
+import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
+import com.ticket.booking.domain.selection.SeatSelectionAvailabilityValidator;
+import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class SelectSeatUseCase {
+    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+    private final SeatSelectionCoordinator seatSelectionCoordinator;
+    private final SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
+    private final AdmissionVerifier admissionVerifier;
+    private final Clock clock;
+
+    public record Input(Long performanceId, Long seatId, Long memberId, String admissionToken) {
+        public Input {
+            if (performanceId == null) {
+                throw new InvalidRequestException("performanceId는 필수입니다.");
+            }
+            if (performanceId <= 0) {
+                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
+            }
+            if (seatId == null) {
+                throw new InvalidRequestException("seatId는 필수입니다.");
+            }
+            if (seatId <= 0) {
+                throw new InvalidRequestException("seatId는 양수여야 합니다.");
+            }
+            if (memberId == null) {
+                throw new InvalidRequestException("memberId는 필수입니다.");
+            }
+            if (memberId <= 0) {
+                throw new InvalidRequestException("memberId는 양수여야 합니다.");
+            }
+        }
+    }
+
+    public void execute(final Input input) {
+        final LocalDateTime now = LocalDateTime.now(clock);
+
+        final PerformanceSalesPolicy policy = findPolicy(input.performanceId());
+        policy.ensureAcceptingOrders(now);
+        ensureAdmitted(policy, input, now);
+
+        final Long performanceSeatId =
+                seatSelectionAvailabilityValidator.validate(input.performanceId(), input.seatId());
+
+        // SELECTED 발행은 coordinator가 좌석 락 안에서 한다 — 발행을 락 밖으로 빼면 뒤늦은 만료 알림이
+        // 이 SELECTED 뒤에 끼어들 수 있다.
+        seatSelectionCoordinator.select(
+                input.performanceId(),
+                input.seatId(),
+                input.memberId(),
+                performanceSeatId,
+                policy.getOrderAcceptanceWindow().getClosesAt());
+    }
+
+    private PerformanceSalesPolicy findPolicy(final Long performanceId) {
+        return performanceSalesPolicyRepository
+                .findById(performanceId)
+                .orElseThrow(
+                        () -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
+    }
+
+    private void ensureAdmitted(
+            final PerformanceSalesPolicy policy, final Input input, final LocalDateTime now) {
+        if (!policy.isQueueRequired(now)) {
+            return;
+        }
+        admissionVerifier.verify(input.performanceId(), input.memberId(), input.admissionToken());
+    }
+}
