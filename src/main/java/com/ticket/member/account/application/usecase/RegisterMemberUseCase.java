@@ -2,9 +2,8 @@ package com.ticket.member.account.application.usecase;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.account.application.MemberRegistrar;
-import com.ticket.member.account.domain.Email;
-import com.ticket.member.auth.domain.RawPassword;
+import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.RawPassword;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class RegisterMemberUseCase {
-    private final MemberRegistrar memberRegistrar;
+    private final MemberAccountOperations memberAccountOperations;
 
     /**
      * Email과 RawPassword의 형식 정책은 도메인 값 객체가 소유한다. 여기서는 어느 adapter에서 호출해도 성립해야 하는 "필수 값이 왔는가"만 판정한다.
@@ -35,9 +34,7 @@ public class RegisterMemberUseCase {
 
     public Output execute(final Input input) {
         return new Output(
-                memberRegistrar.register(
-                        Email.create(input.email()),
-                        RawPassword.create(input.password()),
-                        input.name()));
+                memberAccountOperations.register(
+                        input.email(), RawPassword.create(input.password()), input.name()));
     }
 }

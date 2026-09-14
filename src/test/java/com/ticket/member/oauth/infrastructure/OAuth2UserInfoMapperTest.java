@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.member.account.domain.SocialProvider;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
+import com.ticket.member.SocialIdentity;
+import com.ticket.member.SocialProvider;
 import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -17,7 +17,7 @@ class OAuth2UserInfoMapperTest {
     void google_raw_attribute를_정규화한다() {
         // given
         // when
-        OAuth2UserInfo result =
+        SocialIdentity result =
                 OAuth2UserInfoMapper.map(
                         "google",
                         Map.of(
@@ -41,7 +41,7 @@ class OAuth2UserInfoMapperTest {
     void kakao_raw_attribute를_정규화한다() {
         // given
         // when
-        OAuth2UserInfo result =
+        SocialIdentity result =
                 OAuth2UserInfoMapper.map(
                         "kakao",
                         Map.of(
@@ -67,7 +67,7 @@ class OAuth2UserInfoMapperTest {
 
     @Test
     void kakao_email은_유효성과_검증이_모두_true일_때만_검증된_것으로_본다() {
-        final OAuth2UserInfo result =
+        final SocialIdentity result =
                 OAuth2UserInfoMapper.map(
                         "kakao",
                         Map.of(

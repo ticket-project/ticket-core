@@ -17,13 +17,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.ticket.member.SocialAccountConnection;
+import com.ticket.member.SocialProvider;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.EncodedPassword;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.account.domain.MemberSocialAccount;
 import com.ticket.member.account.domain.Role;
-import com.ticket.member.account.domain.SocialProvider;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)

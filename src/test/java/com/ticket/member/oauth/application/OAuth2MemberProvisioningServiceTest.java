@@ -16,19 +16,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.member.SocialIdentity;
+import com.ticket.member.SocialProvider;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.account.domain.Role;
-import com.ticket.member.account.domain.SocialProvider;
 import com.ticket.member.exception.DuplicateEmailException;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class OAuth2MemberProvisioningServiceTest {
     @Mock private MemberRepository memberRepository;
-    @Mock private OAuth2UserInfo userInfo;
+    @Mock private SocialIdentity userInfo;
     @InjectMocks private OAuth2MemberProvisioningService oauth2MemberProvisioningService;
 
     @Test
@@ -179,8 +179,8 @@ class OAuth2MemberProvisioningServiceTest {
 
     @Test
     void 검증되지_않은_email은_기존계정_연결에_쓰지_않고_provider_대체값을_사용한다() {
-        final OAuth2UserInfo unverified =
-                new OAuth2UserInfo(
+        final SocialIdentity unverified =
+                new SocialIdentity(
                         SocialProvider.KAKAO, "social-1", "victim@example.com", false, "사용자");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());

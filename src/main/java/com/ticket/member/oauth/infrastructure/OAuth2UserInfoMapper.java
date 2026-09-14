@@ -4,14 +4,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import com.ticket.member.account.domain.SocialProvider;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
+import com.ticket.member.SocialIdentity;
+import com.ticket.member.SocialProvider;
 import com.ticket.shared.exception.InvalidRequestException;
 
 public final class OAuth2UserInfoMapper {
     private OAuth2UserInfoMapper() {}
 
-    public static OAuth2UserInfo map(
+    public static SocialIdentity map(
             final String registrationId, final Map<String, Object> attributes) {
         final String normalizedRegistrationId = registrationId.toLowerCase(Locale.ROOT);
 
@@ -24,8 +24,8 @@ public final class OAuth2UserInfoMapper {
         };
     }
 
-    private static OAuth2UserInfo mapGoogle(final Map<String, Object> attributes) {
-        return new OAuth2UserInfo(
+    private static SocialIdentity mapGoogle(final Map<String, Object> attributes) {
+        return new SocialIdentity(
                 SocialProvider.GOOGLE,
                 String.valueOf(attributes.get("sub")),
                 (String) attributes.get("email"),
@@ -33,7 +33,7 @@ public final class OAuth2UserInfoMapper {
                 (String) attributes.get("name"));
     }
 
-    private static OAuth2UserInfo mapKakao(final Map<String, Object> attributes) {
+    private static SocialIdentity mapKakao(final Map<String, Object> attributes) {
         final Map<String, Object> account = getMap(attributes, "kakao_account");
         final Map<String, Object> profile = account == null ? null : getMap(account, "profile");
         final boolean emailVerified =
@@ -41,7 +41,7 @@ public final class OAuth2UserInfoMapper {
                         && Boolean.TRUE.equals(account.get("is_email_valid"))
                         && Boolean.TRUE.equals(account.get("is_email_verified"));
 
-        return new OAuth2UserInfo(
+        return new SocialIdentity(
                 SocialProvider.KAKAO,
                 String.valueOf(attributes.get("id")),
                 account == null ? null : (String) account.get("email"),

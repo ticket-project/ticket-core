@@ -2,7 +2,6 @@ package com.ticket.member.auth.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,9 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.account.domain.MemberRepository;
-import com.ticket.member.account.domain.Role;
+import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.MemberStatus;
 import com.ticket.member.auth.application.AuthRefreshToken;
 import com.ticket.member.auth.application.AuthTokenIssuer;
 import com.ticket.member.auth.application.IssuedAuthTokens;
@@ -27,15 +25,13 @@ import com.ticket.member.exception.UnauthenticatedException;
 @SuppressWarnings("NonAsciiCharacters")
 class RefreshAuthTokenUseCaseTest {
     @Mock private RefreshTokenStore refreshTokenStore;
-    @Mock private MemberRepository memberRepository;
+    @Mock private MemberAccountOperations memberAccountOperations;
     @Mock private AuthTokenIssuer authTokenIssuer;
     @InjectMocks private RefreshAuthTokenUseCase useCase;
 
     @Test
     void valid_refresh_token_rotates_tokens() {
-        Member member = mock(Member.class);
-        when(member.getId()).thenReturn(1L);
-        when(member.getRole()).thenReturn(Role.MEMBER);
+        MemberStatus member = new MemberStatus(1L, true, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens(
                         "access-token-value",
@@ -47,7 +43,7 @@ class RefreshAuthTokenUseCaseTest {
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
-        when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
+        when(memberAccountOperations.requireActiveIdentity(3L)).thenReturn(member);
         when(authTokenIssuer.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result =
@@ -63,7 +59,7 @@ class RefreshAuthTokenUseCaseTest {
                 .doesNotContain("access-token-value")
                 .doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
-        verify(memberRepository).findActiveById(3L);
+        verify(memberAccountOperations).requireActiveIdentity(3L);
         verify(authTokenIssuer).rotateTokens(1L, "MEMBER", refreshToken);
     }
 

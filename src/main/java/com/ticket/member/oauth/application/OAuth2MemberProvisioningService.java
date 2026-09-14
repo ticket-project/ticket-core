@@ -4,13 +4,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.ticket.member.SocialIdentity;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.account.domain.MemberSocialAccount;
 import com.ticket.member.account.domain.Role;
 import com.ticket.member.exception.DuplicateEmailException;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,13 +24,13 @@ import lombok.RequiredArgsConstructor;
 public class OAuth2MemberProvisioningService {
     private final MemberRepository memberRepository;
 
-    public Member getOrCreateMember(final OAuth2UserInfo userInfo) {
+    public Member getOrCreateMember(final SocialIdentity userInfo) {
         return memberRepository
                 .findActiveBySocialAccount(userInfo.provider(), userInfo.providerId())
                 .orElseGet(() -> createOrLinkMember(userInfo));
     }
 
-    private Member createOrLinkMember(final OAuth2UserInfo userInfo) {
+    private Member createOrLinkMember(final SocialIdentity userInfo) {
         final String email = resolveEmail(userInfo);
 
         return memberRepository
@@ -39,7 +39,7 @@ public class OAuth2MemberProvisioningService {
                 .orElseGet(() -> createSocialMember(userInfo, email));
     }
 
-    private Member linkSocialAccount(final Member existingMember, final OAuth2UserInfo userInfo) {
+    private Member linkSocialAccount(final Member existingMember, final SocialIdentity userInfo) {
         return existingMember
                 .findActiveSocialAccount(userInfo.provider())
                 .map(
@@ -51,19 +51,19 @@ public class OAuth2MemberProvisioningService {
     private Member validateSameSocialAccount(
             final Member existingMember,
             final MemberSocialAccount linkedAccount,
-            final OAuth2UserInfo userInfo) {
+            final SocialIdentity userInfo) {
         if (!linkedAccount.isSameSocialId(userInfo.providerId())) {
             throw new DuplicateEmailException("Email is already linked to another social account.");
         }
         return existingMember;
     }
 
-    private Member addSocialAccount(final Member existingMember, final OAuth2UserInfo userInfo) {
+    private Member addSocialAccount(final Member existingMember, final SocialIdentity userInfo) {
         existingMember.addSocialAccount(userInfo.provider(), userInfo.providerId());
         return memberRepository.save(existingMember);
     }
 
-    private Member createSocialMember(final OAuth2UserInfo userInfo, final String email) {
+    private Member createSocialMember(final SocialIdentity userInfo, final String email) {
         final String displayName = resolveName(userInfo);
         final Member member =
                 Member.createSocialMember(Email.create(email), displayName, Role.MEMBER);
@@ -71,7 +71,7 @@ public class OAuth2MemberProvisioningService {
         return memberRepository.save(member);
     }
 
-    private String resolveEmail(final OAuth2UserInfo userInfo) {
+    private String resolveEmail(final SocialIdentity userInfo) {
         if (userInfo.emailVerified() && StringUtils.hasText(userInfo.email())) {
             return userInfo.email().trim().toLowerCase();
         }
@@ -81,7 +81,7 @@ public class OAuth2MemberProvisioningService {
                 + "@social.ticket";
     }
 
-    private String resolveName(final OAuth2UserInfo userInfo) {
+    private String resolveName(final SocialIdentity userInfo) {
         if (StringUtils.hasText(userInfo.name())) {
             return userInfo.name().trim();
         }

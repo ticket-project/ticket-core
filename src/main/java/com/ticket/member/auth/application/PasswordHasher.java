@@ -1,7 +1,7 @@
 package com.ticket.member.auth.application;
 
+import com.ticket.member.RawPassword;
 import com.ticket.member.account.domain.EncodedPassword;
-import com.ticket.member.auth.domain.RawPassword;
 
 /**
  * 비밀번호를 해싱하고 일치 여부를 검증한다. use case를 실행하기 위한 외부 능력이므로 이 인터페이스가 속한 {@code member.application}이 소유하고,

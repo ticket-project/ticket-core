@@ -13,12 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.member.RawPassword;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.EncodedPassword;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
 import com.ticket.member.account.domain.Role;
-import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.exception.UnauthenticatedException;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -38,7 +38,7 @@ class CredentialAuthenticatorTest {
         assertThatThrownBy(
                         () ->
                                 credentialAuthenticator.authenticate(
-                                        "missing@example.com", "password123!"))
+                                        "missing@example.com", RawPassword.create("password123!")))
                 .isInstanceOf(UnauthenticatedException.class);
 
         verify(passwordHasher).hash(RawPassword.create("timing-guard-dummy-password"));
@@ -56,7 +56,7 @@ class CredentialAuthenticatorTest {
         assertThatThrownBy(
                         () ->
                                 credentialAuthenticator.authenticate(
-                                        "social@example.com", "password123!"))
+                                        "social@example.com", RawPassword.create("password123!")))
                 .isInstanceOf(UnauthenticatedException.class);
     }
 
@@ -79,7 +79,7 @@ class CredentialAuthenticatorTest {
         assertThatThrownBy(
                         () ->
                                 credentialAuthenticator.authenticate(
-                                        "user@example.com", "wrong-password"))
+                                        "user@example.com", RawPassword.create("wrong-password")))
                 .isInstanceOf(UnauthenticatedException.class);
     }
 
@@ -98,7 +98,9 @@ class CredentialAuthenticatorTest {
                         RawPassword.create("password123!"), EncodedPassword.create("encoded")))
                 .thenReturn(true);
         // when
-        Member result = credentialAuthenticator.authenticate("user@example.com", "password123!");
+        Member result =
+                credentialAuthenticator.authenticate(
+                        "user@example.com", RawPassword.create("password123!"));
         // then
         assertThat(result).isSameAs(member);
     }

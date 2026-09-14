@@ -13,15 +13,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.account.application.MemberWithdrawalTransactionService;
-import com.ticket.member.account.application.SocialAccountConnection;
+import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.SocialAccountConnection;
+import com.ticket.member.SocialProvider;
 import com.ticket.member.account.application.SocialAccountUnlinker;
-import com.ticket.member.account.domain.SocialProvider;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WithdrawCurrentMemberUseCaseTest {
-    @Mock private MemberWithdrawalTransactionService memberWithdrawalTransactionService;
+    @Mock private MemberAccountOperations memberAccountOperations;
     @Mock private SocialAccountUnlinker socialAccountUnlinker;
     @InjectMocks private WithdrawCurrentMemberUseCase useCase;
 
@@ -32,11 +32,11 @@ class WithdrawCurrentMemberUseCaseTest {
                 new SocialAccountConnection(SocialProvider.KAKAO, "100");
         final SocialAccountConnection second =
                 new SocialAccountConnection(SocialProvider.KAKAO, "200");
-        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of(first, second));
+        when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
         // then
-        verify(memberWithdrawalTransactionService).withdraw(5L);
+        verify(memberAccountOperations).withdraw(5L);
         verify(socialAccountUnlinker).unlink(first);
         verify(socialAccountUnlinker).unlink(second);
     }
@@ -48,7 +48,7 @@ class WithdrawCurrentMemberUseCaseTest {
                 new SocialAccountConnection(SocialProvider.KAKAO, "100");
         final SocialAccountConnection second =
                 new SocialAccountConnection(SocialProvider.GOOGLE, "200");
-        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of(first, second));
+        when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
         doThrow(new IllegalStateException("boom")).when(socialAccountUnlinker).unlink(first);
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
@@ -60,11 +60,11 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 연동해제할_카카오계정이_없으면_unlink를_호출하지_않는다() {
         // given
-        when(memberWithdrawalTransactionService.withdraw(5L)).thenReturn(List.of());
+        when(memberAccountOperations.withdraw(5L)).thenReturn(List.of());
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
         // then
-        verify(memberWithdrawalTransactionService).withdraw(5L);
+        verify(memberAccountOperations).withdraw(5L);
         verify(socialAccountUnlinker, never()).unlink(org.mockito.ArgumentMatchers.any());
     }
 }

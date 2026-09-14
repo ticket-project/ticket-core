@@ -2,9 +2,10 @@ package com.ticket.member.auth.application.usecase;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.account.domain.Member;
+import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.MemberStatus;
+import com.ticket.member.RawPassword;
 import com.ticket.member.auth.application.AuthTokenIssuer;
-import com.ticket.member.auth.application.CredentialAuthenticator;
 import com.ticket.member.auth.application.IssuedAuthTokens;
 import com.ticket.shared.exception.InvalidRequestException;
 
@@ -13,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LoginUseCase {
-    private final CredentialAuthenticator credentialAuthenticator;
+    private final MemberAccountOperations memberAccountOperations;
     private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(String email, String password) {
@@ -58,9 +59,11 @@ public class LoginUseCase {
     }
 
     public Result execute(final Input input) {
-        final Member member = credentialAuthenticator.authenticate(input.email(), input.password());
+        final MemberStatus member =
+                memberAccountOperations.authenticate(
+                        input.email(), RawPassword.create(input.password()));
         final IssuedAuthTokens result =
-                authTokenIssuer.issueTokens(member.getId(), member.getRole().name());
+                authTokenIssuer.issueTokens(member.memberId(), member.role());
         return new Result(
                 new Output(
                         result.accessToken(),

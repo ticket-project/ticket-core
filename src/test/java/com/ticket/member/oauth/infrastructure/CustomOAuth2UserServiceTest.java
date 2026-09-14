@@ -19,10 +19,10 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.account.domain.SocialProvider;
+import com.ticket.member.SocialIdentity;
+import com.ticket.member.SocialProvider;
 import com.ticket.member.oauth.application.ProvisionedMember;
 import com.ticket.member.oauth.application.usecase.ProvisionOAuth2MemberUseCase;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
 
 @SuppressWarnings("NonAsciiCharacters")
 class CustomOAuth2UserServiceTest {
@@ -48,8 +48,8 @@ class CustomOAuth2UserServiceTest {
         OAuth2UserRequest userRequest = createUserRequest();
         OAuth2User oauth2User = new DefaultOAuth2User(java.util.List.of(), attributes, "sub");
         when(delegate.loadUser(userRequest)).thenReturn(oauth2User);
-        final OAuth2UserInfo userInfo =
-                new OAuth2UserInfo(
+        final SocialIdentity userInfo =
+                new SocialIdentity(
                         SocialProvider.GOOGLE, "google-user-1", "user@example.com", true, "사용자");
         when(provisionUseCase.execute(userInfo)).thenReturn(new ProvisionedMember(7L, "MEMBER"));
 

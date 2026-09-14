@@ -1,4 +1,4 @@
-package com.ticket.member.account.domain;
+package com.ticket.member;
 
 public enum SocialProvider {
     GOOGLE("구글"),
