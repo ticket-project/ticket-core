@@ -1,7 +1,6 @@
 package com.ticket.member.auth.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,29 +10,28 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.account.domain.Role;
+import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.MemberStatus;
+import com.ticket.member.RawPassword;
 import com.ticket.member.auth.application.AuthTokenIssuer;
-import com.ticket.member.auth.application.CredentialAuthenticator;
 import com.ticket.member.auth.application.IssuedAuthTokens;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class LoginUseCaseTest {
-    @Mock private CredentialAuthenticator credentialAuthenticator;
+    @Mock private MemberAccountOperations memberAccountOperations;
     @Mock private AuthTokenIssuer authTokenIssuer;
     @InjectMocks private LoginUseCase useCase;
 
     @Test
     void successful_login_issues_tokens() {
-        Member member = mock(Member.class);
-        when(member.getId()).thenReturn(1L);
-        when(member.getRole()).thenReturn(Role.MEMBER);
+        MemberStatus member = new MemberStatus(1L, true, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens(
                         "access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 1L);
 
-        when(credentialAuthenticator.authenticate("user@example.com", "password"))
+        when(memberAccountOperations.authenticate(
+                        "user@example.com", RawPassword.create("password")))
                 .thenReturn(member);
         when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
@@ -49,7 +47,8 @@ class LoginUseCaseTest {
         assertThat(result.toString())
                 .doesNotContain("access-token-value")
                 .doesNotContain("refresh-token-value");
-        verify(credentialAuthenticator).authenticate("user@example.com", "password");
+        verify(memberAccountOperations)
+                .authenticate("user@example.com", RawPassword.create("password"));
         verify(authTokenIssuer).issueTokens(1L, "MEMBER");
     }
 }

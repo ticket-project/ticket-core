@@ -5,10 +5,10 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.member.RawPassword;
 import com.ticket.member.account.application.MemberRegistrar;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.MemberRepository;
-import com.ticket.member.auth.domain.RawPassword;
 import com.ticket.member.exception.UnauthenticatedException;
 
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class CredentialAuthenticator {
     private final MemberRepository memberRepository;
     private final PasswordHasher passwordHasher;
 
-    public Member authenticate(final String email, final String password) {
+    public Member authenticate(final String email, final RawPassword password) {
         final Optional<Member> activeMember = memberRepository.findActiveByEmail(email);
 
         if (activeMember.isEmpty()) {
@@ -33,8 +33,7 @@ public class CredentialAuthenticator {
 
         final Member member = activeMember.get();
         if (member.getEncodedPassword() == null
-                || !passwordHasher.matches(
-                        RawPassword.create(password), member.getEncodedPassword())) {
+                || !passwordHasher.matches(password, member.getEncodedPassword())) {
             throw new UnauthenticatedException();
         }
         return member;

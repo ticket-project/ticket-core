@@ -2,10 +2,10 @@ package com.ticket.member.oauth.application.usecase;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.member.account.domain.Member;
-import com.ticket.member.oauth.application.OAuth2MemberProvisioningService;
+import com.ticket.member.MemberAccountOperations;
+import com.ticket.member.MemberStatus;
+import com.ticket.member.SocialIdentity;
 import com.ticket.member.oauth.application.ProvisionedMember;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,10 +17,10 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProvisionOAuth2MemberUseCase {
-    private final OAuth2MemberProvisioningService oauth2MemberProvisioningService;
+    private final MemberAccountOperations memberAccountOperations;
 
-    public ProvisionedMember execute(final OAuth2UserInfo userInfo) {
-        final Member member = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
-        return new ProvisionedMember(member.getId(), member.getRole().name());
+    public ProvisionedMember execute(final SocialIdentity userInfo) {
+        final MemberStatus member = memberAccountOperations.resolveSocialAccount(userInfo);
+        return new ProvisionedMember(member.memberId(), member.role());
     }
 }

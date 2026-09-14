@@ -1,4 +1,4 @@
-package com.ticket.member.auth.domain;
+package com.ticket.member;
 
 import java.util.Objects;
 

@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.ticket.member.SocialProvider;
+
 @SuppressWarnings("NonAsciiCharacters")
 class MemberTest {
     @Test

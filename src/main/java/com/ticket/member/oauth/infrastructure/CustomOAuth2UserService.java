@@ -13,9 +13,9 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import com.ticket.member.SocialIdentity;
 import com.ticket.member.oauth.application.ProvisionedMember;
 import com.ticket.member.oauth.application.usecase.ProvisionOAuth2MemberUseCase;
-import com.ticket.member.oauth.domain.OAuth2UserInfo;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,7 +37,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         final OAuth2User oauth2User = delegate.loadUser(userRequest);
         final String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        final OAuth2UserInfo userInfo =
+        final SocialIdentity userInfo =
                 OAuth2UserInfoMapper.map(registrationId, oauth2User.getAttributes());
         final ProvisionedMember member = provisionOAuth2MemberUseCase.execute(userInfo);
 
