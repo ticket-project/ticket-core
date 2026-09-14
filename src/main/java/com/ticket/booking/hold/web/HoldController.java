@@ -18,6 +18,15 @@ import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 기존 프론트가 쓰던 주문 생성 호환 API다. {@code POST /api/v1/performances/{performanceId}/holds}로 들어온 요청을 그대로
+ * {@link CreateOrderUseCase}에 넘긴다 — 별도의 hold 생성 유스케이스는 없고, 만들지도 않는다. "hold"라는 URL은 선점과 주문 생성을 같은
+ * 것으로 보던 시절의 이름이며, 지금 이 endpoint가 만드는 것은 PENDING 주문이다.
+ *
+ * <p>URL·요청 본문·응답(201, {@code Location}, {@code X-Order-Key}, {@code CreateOrderUseCase.Output})은
+ * 모두 {@code POST /api/v1/orders}와 같은 계약이라 바꾸지 않는다. 새 클라이언트는 {@code OrderController}를 쓴다. 이 클래스가
+ * hold 패키지에 있는 이유도 URL이 hold이기 때문일 뿐, 소유 업무는 주문이다.
+ */
 @Deprecated
 @RestController
 @RequestMapping("/api/v1/performances/{performanceId}/holds")

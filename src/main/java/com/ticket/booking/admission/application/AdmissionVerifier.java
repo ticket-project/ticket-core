@@ -8,7 +8,7 @@ package com.ticket.booking.admission.application;
  */
 public interface AdmissionVerifier {
     /**
-     * 입장 자격을 검증한다. 유효하면 검증 결과를 반환하고, 그렇지 않으면 admission이 소유한 예외를 던진다 — 토큰이 없으면 {@code
+     * 입장 자격을 검증한다. 통과하면 아무것도 반환하지 않고, 그렇지 않으면 admission이 소유한 예외를 던진다 — 토큰이 없으면 {@code
      * AdmissionTokenRequiredException}(E8000), 만료면 {@code AdmissionTokenExpiredException}(E8001), 그
      * 밖의 검증 실패는 {@code AdmissionTokenException}(E8002)이다. 셋 다 HTTP 403이다.
      *
@@ -16,5 +16,5 @@ public interface AdmissionVerifier {
      * @param memberId 요청한 회원 id
      * @param admissionToken 요청이 전달한 입장 토큰. null 또는 빈 문자열일 수 있다
      */
-    AdmissionVerification verify(long performanceId, long memberId, String admissionToken);
+    void verify(long performanceId, long memberId, String admissionToken);
 }
