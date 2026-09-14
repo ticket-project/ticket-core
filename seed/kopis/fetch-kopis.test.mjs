@@ -12,7 +12,7 @@ import {
   splitIntoWindows,
   toCompact,
 } from './fetch-kopis.mjs';
-import { normalizePosterUrl } from './genre-map.mjs';
+import { featuredViewCount, normalizePosterUrl } from './genre-map.mjs';
 
 const KOPIS_MAX_WINDOW_DAYS = 31;
 
@@ -165,6 +165,43 @@ test('한 칸만 있어도 순서를 유지한 채 전부 돌려준다', () => {
     interleaveBalanced(candidates).map((c) => c.mt20id),
     ['a1', 'a2'],
   );
+});
+
+test('신규 공연 조회수는 기존 시드 최대치보다 높은 대역에 들어간다', () => {
+  // 기존 시드 view_count는 12,000~125,000이다. 신규는 그보다 위여야 인기순 상단에 온다.
+  for (const id of ['PF300611', 'PF299999', 'PF123456', 'PF000001']) {
+    const v = featuredViewCount(id);
+    assert.ok(v >= 130000 && v <= 220000, `${id} -> ${v}`);
+  }
+});
+
+test('같은 공연은 항상 같은 조회수를 받는다', () => {
+  // 재실행 시 diff가 흔들리지 않아야 한다.
+  assert.equal(featuredViewCount('PF300611'), featuredViewCount('PF300611'));
+  assert.notEqual(featuredViewCount('PF300611'), featuredViewCount('PF300612'));
+});
+
+test('포스터 URL을 프론트가 허용하는 https://kopis.or.kr 형태로 맞춘다', () => {
+  // ticket-fe의 next/image remotePatterns는 'https://kopis.or.kr/upload/**'만 허용한다.
+  // KOPIS 원본(http://www...)을 그대로 넣으면 목록 페이지 전체가 렌더 오류로 죽는다.
+  assert.equal(
+    normalizePosterUrl('http://www.kopis.or.kr/upload/pfmPoster/PF_1.jpg'),
+    'https://kopis.or.kr/upload/pfmPoster/PF_1.jpg',
+  );
+  assert.equal(
+    normalizePosterUrl('https://www.kopis.or.kr/upload/pfmPoster/PF_2.gif'),
+    'https://kopis.or.kr/upload/pfmPoster/PF_2.gif',
+  );
+  assert.equal(
+    normalizePosterUrl('https://kopis.or.kr/upload/pfmPoster/PF_3.png'),
+    'https://kopis.or.kr/upload/pfmPoster/PF_3.png',
+  );
+});
+
+test('kopis.or.kr이 아닌 포스터 URL은 건드리지 않는다', () => {
+  assert.equal(normalizePosterUrl('https://example.com/a.jpg'), 'https://example.com/a.jpg');
+  assert.equal(normalizePosterUrl(''), '');
+  assert.equal(normalizePosterUrl(undefined), '');
 });
 
 test('등록일은 앱이 읽는 타임스탬프 형식이고 고정값이 아니다', () => {
