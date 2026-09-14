@@ -17,7 +17,7 @@ import com.ticket.show.performance.domain.Grade;
 import com.ticket.show.performance.domain.Performance;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
+import com.ticket.venue.domain.Venue;
 
 @Import(QuerydslPerformanceGradeQueryPort.class)
 @SuppressWarnings("NonAsciiCharacters")

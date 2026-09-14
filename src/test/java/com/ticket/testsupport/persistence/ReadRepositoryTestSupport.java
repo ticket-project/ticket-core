@@ -26,7 +26,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.like.LikeType;
-import com.ticket.like.preference.domain.Like;
+import com.ticket.like.domain.Like;
 import com.ticket.member.account.domain.Email;
 import com.ticket.member.account.domain.Member;
 import com.ticket.member.account.domain.Role;
@@ -40,8 +40,8 @@ import com.ticket.show.performance.domain.Performance;
 import com.ticket.show.performance.domain.PerformanceGrade;
 import com.ticket.show.performer.domain.Performer;
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.domain.Seat;
+import com.ticket.venue.domain.Venue;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,

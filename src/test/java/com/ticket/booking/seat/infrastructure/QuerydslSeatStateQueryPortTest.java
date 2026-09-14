@@ -20,8 +20,8 @@ import com.ticket.show.catalog.domain.Show;
 import com.ticket.show.performance.domain.Performance;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.domain.Seat;
+import com.ticket.venue.domain.Venue;
 
 /**
  * booking local 조회(회차 좌석 판매 상태)만 검증한다. 물리 좌석·등급 조합은 show {@code
