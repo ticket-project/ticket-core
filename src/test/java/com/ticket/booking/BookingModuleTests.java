@@ -8,8 +8,8 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.member.AccessTokenAuthenticator;
 import com.ticket.member.MemberLookup;
+import com.ticket.security.AccessTokenAuthenticator;
 import com.ticket.show.PerformanceSaleCatalog;
 import com.ticket.show.PerformanceVenueLayoutCatalog;
 import com.ticket.show.ShowPerformanceLookup;

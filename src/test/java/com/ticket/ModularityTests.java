@@ -57,7 +57,7 @@ class ModularityTests {
      */
     private static final Map<String, Set<String>> APPROVED_DEPENDENCY_DAG =
             Map.ofEntries(
-                    Map.entry("booking", Set.of("show", "member", "shared")),
+                    Map.entry("booking", Set.of("show", "member", "security", "shared")),
                     Map.entry("show", Set.of("venue", "like", "member", "shared")),
                     Map.entry("venue", Set.of()),
                     Map.entry("like", Set.of("member", "shared")),

@@ -32,9 +32,9 @@ import com.ticket.booking.application.LockKey;
 import com.ticket.booking.application.LockManager;
 import com.ticket.booking.application.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
-import com.ticket.member.auth.application.AuthRefreshToken;
-import com.ticket.member.auth.infrastructure.RedisRefreshTokenStore;
-import com.ticket.member.infrastructure.UuidSupplier;
+import com.ticket.security.token.AuthRefreshToken;
+import com.ticket.security.token.RedisRefreshTokenStore;
+import com.ticket.security.token.UuidSupplier;
 
 @Testcontainers
 class CoreRedisIntegrationTest {
