@@ -60,8 +60,8 @@ class AggregateAssociationTest {
                             "com.ticket.member.account.domain.MemberSocialAccount",
                             "com.ticket.member.account.domain.Member"),
                     new Association(
-                            "com.ticket.show.performance.domain.PerformanceGrade",
-                            "com.ticket.show.performance.domain.Performance"));
+                            "com.ticket.show.domain.performance.PerformanceGrade",
+                            "com.ticket.show.domain.performance.Performance"));
 
     @Test
     void JPA_연관관계는_승인된_목록과_일치한다() {

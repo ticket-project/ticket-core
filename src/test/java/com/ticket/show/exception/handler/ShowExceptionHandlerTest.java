@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.ticket.shared.web.ApiResponse;
-import com.ticket.show.catalog.application.ShowSort;
+import com.ticket.show.application.ShowSort;
 import com.ticket.show.exception.UnsupportedShowSortException;
 
 /** show 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다. */
