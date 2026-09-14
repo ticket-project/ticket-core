@@ -26,8 +26,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * 커서 위치를 SQL 조건으로 바꾸고, 마지막 행에서 다음 커서 위치를 만든다.
  *
- * <p>커서의 wire 표현(Base64 문자열)은 {@code show.catalog.web.cursor.ShowCursorCodec}이 소유한다. 여기서는 타입 값만
- * 다룬다.
+ * <p>커서의 wire 표현(Base64 문자열)은 {@code com.ticket.show.endpoint.cursor.ShowCursorCodec}이 소유한다. 여기서는
+ * 타입 값만 다룬다.
  *
  * <p>{@link ShowSort#LATEST}는 정렬 키가 셋이라 조건도 셋이 겹친다. 조건은 ORDER BY와 <b>같은 순서·같은 방향</b>이어야 페이지 사이에
  * 중복·누락이 생기지 않는다.
