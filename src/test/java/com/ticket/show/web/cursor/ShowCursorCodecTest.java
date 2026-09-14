@@ -36,6 +36,32 @@ class ShowCursorCodecTest {
     }
 
     @Test
+    void 최신순_커서에는_마감여부와_판정_시각이_함께_담긴다() {
+        ShowCursor position =
+                new ShowCursor(
+                        ShowSort.LATEST, "DESC", "2026-09-14T09:00", 7L, 0, "2026-09-14T10:00");
+
+        String json =
+                new String(
+                        Base64.getUrlDecoder().decode(codec.encode(position)),
+                        StandardCharsets.UTF_8);
+
+        assertThat(json)
+                .isEqualTo(
+                        "{\"sort\":\"LATEST\",\"dir\":\"DESC\",\"lastValue\":\"2026-09-14T09:00\","
+                                + "\"lastId\":7,\"saleClosedRank\":0,\"evaluatedAt\":\"2026-09-14T10:00\"}");
+    }
+
+    @Test
+    void 최신순_커서도_그대로_되읽는다() {
+        ShowCursor position =
+                new ShowCursor(
+                        ShowSort.LATEST, "DESC", "2026-09-14T09:00", 7L, 1, "2026-09-14T10:00");
+
+        assertThat(codec.decode(codec.encode(position))).isEqualTo(position);
+    }
+
+    @Test
     void 인코딩한_커서를_그대로_되읽는다() {
         ShowCursor position =
                 new ShowCursor(ShowSort.SALE_START_APPROACHING, "ASC", "2026-03-15T10:00", 42L);

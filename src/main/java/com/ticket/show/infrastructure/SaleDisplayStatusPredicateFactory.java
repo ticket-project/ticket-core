@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 
 /**
@@ -16,6 +18,20 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
  */
 @Component
 public class SaleDisplayStatusPredicateFactory {
+    /**
+     * 마감(={@code CLOSED})이면 1, 아니면 0. 최신순 정렬에서 마감된 공연을 뒤로 보내는 데 쓴다 (ORDER BY 이 값 ASC -> 마감되지 않은 공연이
+     * 먼저).
+     *
+     * <p>판정은 {@link #condition}의 {@code CLOSED}와 같은 식이다 — 마감 여부를 정렬이 따로 판단하면 필터 결과와 정렬 결과가
+     * 어긋난다(TD-12가 남긴 교훈).
+     */
+    public NumberExpression<Integer> saleClosedRank(final LocalDateTime now) {
+        return new CaseBuilder()
+                .when(condition(SaleDisplayStatus.CLOSED, now))
+                .then(1)
+                .otherwise(0);
+    }
+
     public BooleanExpression condition(
             final SaleDisplayStatus saleDisplayStatus, final LocalDateTime now) {
         if (saleDisplayStatus == null) {

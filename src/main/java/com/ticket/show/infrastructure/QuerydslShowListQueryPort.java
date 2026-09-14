@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.CursorPage;
@@ -53,7 +54,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     @Override
     public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
+        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort, param.getCursor());
         final BooleanBuilder where = showConditionFactory.buildMainListCondition(param, sortOrder);
 
         return findCursorPage(
@@ -62,13 +63,16 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 where,
                 sortOrder,
                 this::fetchShowPageRows,
-                (context, ids) ->
-                        fetchMainShowResponses(
-                                ids, context.primaryOrder(), context.tieBreakerOrder()));
+                (context, ids) -> fetchMainShowResponses(ids, context.orders()));
     }
 
+    /**
+     * 상단 최신 공연 배너다. 전체 목록의 최신순과 같은 순서를 쓴다 — <b>마감되지 않은 공연 먼저, 등록일 내림차순, 등록일이 같으면 id 내림차순</b>. 배너와
+     * 목록이 다른 순서를 쓰면 같은 화면에서 "최신"의 의미가 둘이 된다.
+     */
     @Override
     public List<LatestShowRow> findLatestShows(final String categoryCode, final int limit) {
+        final SortOrder sortOrder = sortSupport.resolveSortOrder(ShowSort.LATEST);
         final List<Tuple> rows =
                 queryFactory
                         .select(
@@ -79,7 +83,6 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                                 show.endDate,
                                 show.venueId,
                                 show.createdAt)
-                        .distinct()
                         .from(show)
                         .leftJoin(showGenre)
                         .on(showGenre.showId.eq(show.id))
@@ -88,7 +91,16 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                         .leftJoin(category)
                         .on(genre.categoryId.eq(category.id))
                         .where(queryHelper.categoryCodeEq(categoryCode))
-                        .orderBy(show.createdAt.desc())
+                        // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다.
+                        .groupBy(
+                                show.id,
+                                show.title,
+                                show.image,
+                                show.startDate,
+                                show.endDate,
+                                show.venueId,
+                                show.createdAt)
+                        .orderBy(sortSupport.orderSpecifiers(sortOrder))
                         .limit(limit)
                         .fetch();
 
@@ -127,7 +139,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     @Override
     public CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
+        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort, param.getCursor());
         final BooleanBuilder where = showConditionFactory.buildSaleOpeningSoonCondition(param);
 
         return findCursorPage(
@@ -136,15 +148,13 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 where,
                 sortOrder,
                 this::fetchShowPageRows,
-                (context, ids) ->
-                        fetchSaleOpeningSoonResponses(
-                                ids, context.primaryOrder(), context.tieBreakerOrder()));
+                (context, ids) -> fetchSaleOpeningSoonResponses(ids, context.orders()));
     }
 
     @Override
     public CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort);
+        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort, criteria.getCursor());
         final BooleanBuilder where = showConditionFactory.buildSearchCondition(criteria, sortOrder);
 
         return findCursorPage(
@@ -153,9 +163,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 where,
                 sortOrder,
                 this::fetchShowPageRows,
-                (context, ids) ->
-                        fetchSearchResponses(
-                                ids, context.primaryOrder(), context.tieBreakerOrder()));
+                (context, ids) -> fetchSearchResponses(ids, context.orders()));
     }
 
     @Override
@@ -187,11 +195,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
         final QueryPageContext context =
                 new QueryPageContext(
-                        size,
-                        where,
-                        sortOrder,
-                        sortSupport.primaryOrderSpecifier(sortOrder),
-                        sortSupport.tieBreakerOrder(sortOrder));
+                        size, where, sortOrder, sortSupport.orderSpecifiers(sortOrder));
 
         final List<Tuple> rows = rowFetcher.apply(context);
         final List<Long> ids = extractIds(rows);
@@ -211,13 +215,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     private List<Tuple> fetchShowPageRows(final QueryPageContext context) {
         return queryFactory
-                .select(
-                        show.id,
-                        show.startDate,
-                        show.createdAt,
-                        show.displaySaleWindow.startsAt,
-                        show.viewCount)
-                .distinct()
+                .select(pageRowColumns())
                 .from(show)
                 .leftJoin(showGenre)
                 .on(showGenre.showId.eq(show.id))
@@ -226,22 +224,34 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 .leftJoin(category)
                 .on(genre.categoryId.eq(category.id))
                 .where(context.where())
-                .orderBy(context.primaryOrder(), context.tieBreakerOrder())
+                // DISTINCT가 아니라 GROUP BY로 장르 조인의 행 중복을 없앤다. SELECT DISTINCT는
+                // ORDER BY에 쓴 식이 select 목록에 "그대로" 있어야 하는데(H2 / Oracle ORA-01791),
+                // 최신순의 마감 여부 CASE는 바인딩 파라미터를 써서 두 자리가 같은 식으로 인정되지
+                // 않는다. GROUP BY는 그 제약을 받지 않는다.
+                .groupBy(pageRowColumns())
+                .orderBy(context.orders())
                 .limit(context.size() + 1L)
                 .fetch();
     }
 
+    /** select와 GROUP BY가 같아야 조인으로 늘어난 행이 정확히 하나로 접힌다. */
+    private static Expression<?>[] pageRowColumns() {
+        return new Expression<?>[] {
+            show.id,
+            show.startDate,
+            show.createdAt,
+            show.displaySaleWindow.startsAt,
+            // 다음 커서의 마감 여부 판정에 쓴다(QuerydslShowCursorConditionBuilder).
+            show.displaySaleWindow.endsAt,
+            show.viewCount
+        };
+    }
+
     private List<ShowListItemRow> fetchMainShowResponses(
-            final List<Long> ids,
-            final OrderSpecifier<?> primaryOrder,
-            final OrderSpecifier<Long> tieBreakerOrder) {
+            final List<Long> ids, final OrderSpecifier<?>[] orders) {
         final Map<Long, List<String>> genreMap = fetchGenreMap(ids);
         final List<Show> shows =
-                queryFactory
-                        .selectFrom(show)
-                        .where(show.id.in(ids))
-                        .orderBy(primaryOrder, tieBreakerOrder)
-                        .fetch();
+                queryFactory.selectFrom(show).where(show.id.in(ids)).orderBy(orders).fetch();
 
         return new ArrayList<>(
                 shows.stream()
@@ -266,9 +276,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     }
 
     private List<SaleOpeningSoonDetailRow> fetchSaleOpeningSoonResponses(
-            final List<Long> ids,
-            final OrderSpecifier<?> primaryOrder,
-            final OrderSpecifier<Long> tieBreakerOrder) {
+            final List<Long> ids, final OrderSpecifier<?>[] orders) {
         final List<Tuple> rows =
                 queryFactory
                         .select(
@@ -284,16 +292,14 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                                 show.viewCount)
                         .from(show)
                         .where(show.id.in(ids))
-                        .orderBy(primaryOrder, tieBreakerOrder)
+                        .orderBy(orders)
                         .fetch();
 
         return rows.stream().map(this::toSaleOpeningSoonDetailRow).toList();
     }
 
     private List<ShowSearchItemRow> fetchSearchResponses(
-            final List<Long> ids,
-            final OrderSpecifier<?> primaryOrder,
-            final OrderSpecifier<Long> tieBreakerOrder) {
+            final List<Long> ids, final OrderSpecifier<?>[] orders) {
         final List<Tuple> rows =
                 queryFactory
                         .select(
@@ -306,7 +312,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                                 show.viewCount)
                         .from(show)
                         .where(show.id.in(ids))
-                        .orderBy(primaryOrder, tieBreakerOrder)
+                        .orderBy(orders)
                         .fetch();
 
         return rows.stream().map(this::toShowSearchItemRow).toList();
@@ -385,9 +391,5 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     }
 
     private record QueryPageContext(
-            int size,
-            BooleanBuilder where,
-            SortOrder sortOrder,
-            OrderSpecifier<?> primaryOrder,
-            OrderSpecifier<Long> tieBreakerOrder) {}
+            int size, BooleanBuilder where, SortOrder sortOrder, OrderSpecifier<?>[] orders) {}
 }

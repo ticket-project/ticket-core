@@ -13,18 +13,30 @@ import org.springframework.util.StringUtils;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.application.ShowCursor;
+import com.ticket.show.application.ShowSort;
+import com.ticket.show.domain.show.DisplaySaleWindow;
+import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver.SortOrder;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 커서 위치를 SQL 조건으로 바꾸고, 마지막 행에서 다음 커서 위치를 만든다.
  *
  * <p>커서의 wire 표현(Base64 문자열)은 {@code show.catalog.web.cursor.ShowCursorCodec}이 소유한다. 여기서는 타입 값만
  * 다룬다.
+ *
+ * <p>{@link ShowSort#LATEST}는 정렬 키가 셋이라 조건도 셋이 겹친다. 조건은 ORDER BY와 <b>같은 순서·같은 방향</b>이어야 페이지 사이에
+ * 중복·누락이 생기지 않는다.
  */
 @Component
+@RequiredArgsConstructor
 public class QuerydslShowCursorConditionBuilder {
+    private final QuerydslShowSortResolver sortResolver;
+
     public void applyCursor(
             final BooleanBuilder where, final ShowCursor cursor, final SortOrder sortOrder) {
         if (cursor == null) {
@@ -43,7 +55,29 @@ public class QuerydslShowCursorConditionBuilder {
         final Tuple lastRow = rows.get(size - 1);
         final Long lastId = lastRow.get(show.id);
         final String lastValue = resolveLastValue(lastRow, sortOrder);
-        return new ShowCursor(sortOrder.key(), sortOrder.direction().name(), lastValue, lastId);
+        if (!ShowSort.LATEST.equals(sortOrder.key())) {
+            return new ShowCursor(sortOrder.key(), sortOrder.direction().name(), lastValue, lastId);
+        }
+        final LocalDateTime evaluatedAt = sortOrder.saleClosedEvaluatedAt();
+        return new ShowCursor(
+                sortOrder.key(),
+                sortOrder.direction().name(),
+                lastValue,
+                lastId,
+                saleClosedRankOf(lastRow, evaluatedAt),
+                evaluatedAt.toString());
+    }
+
+    /**
+     * 마지막 행의 마감 여부다. 판정은 {@link DisplaySaleWindow#statusAt}이 한다 — SQL 쪽 {@code CASE}와 같은 규칙이어야 커서
+     * 경계가 정렬과 어긋나지 않는다.
+     */
+    private int saleClosedRankOf(final Tuple lastRow, final LocalDateTime evaluatedAt) {
+        final DisplaySaleWindow window =
+                new DisplaySaleWindow(
+                        lastRow.get(show.displaySaleWindow.startsAt),
+                        lastRow.get(show.displaySaleWindow.endsAt));
+        return SaleDisplayStatus.CLOSED.equals(window.statusAt(evaluatedAt)) ? 1 : 0;
     }
 
     private void validateCursorMatchesRequest(final ShowCursor cursor, final SortOrder sortOrder) {
@@ -59,6 +93,11 @@ public class QuerydslShowCursorConditionBuilder {
         if (!StringUtils.hasText(cursor.lastValue())) {
             throw new IllegalArgumentException("cursor.lastValue가 없습니다.");
         }
+        if (ShowSort.LATEST.equals(sortOrder.key()) && cursor.saleClosedRank() == null) {
+            // 최신순 정렬이 마감 여부를 먼저 보기 전에 발급된 커서다. 그 커서로 이어 읽으면
+            // 마감 그룹 경계를 무시하고 등록일만으로 잘라 중복·누락이 생긴다.
+            throw new IllegalArgumentException("cursor.saleClosedRank가 없습니다.");
+        }
     }
 
     private BooleanExpression cursorCondition(final ShowCursor cursor, final SortOrder sortOrder) {
@@ -70,7 +109,12 @@ public class QuerydslShowCursorConditionBuilder {
             }
             case LATEST -> {
                 final LocalDateTime last = LocalDateTime.parse(cursor.lastValue());
-                yield show.createdAt.lt(last).or(show.createdAt.eq(last).and(show.id.lt(lastId)));
+                final NumberExpression<Integer> rank = sortResolver.saleClosedRank(sortOrder);
+                final int lastRank = cursor.saleClosedRank();
+                final BooleanExpression afterWithinSameRank =
+                        show.createdAt.lt(last).or(show.createdAt.eq(last).and(show.id.lt(lastId)));
+                // ORDER BY: 마감 여부 ASC -> 등록일 DESC -> id DESC. 조건도 같은 순서로 겹친다.
+                yield rank.gt(lastRank).or(rank.eq(lastRank).and(afterWithinSameRank));
             }
             case SHOW_START_APPROACHING -> {
                 final LocalDate last = LocalDate.parse(cursor.lastValue());

@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.EntityManager;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.CursorPage;
+import com.ticket.show.application.LatestShowRow;
 import com.ticket.show.application.ShowCursor;
 import com.ticket.show.application.ShowListItemRow;
 import com.ticket.show.application.ShowListParam;
@@ -193,6 +195,127 @@ class QuerydslShowListQueryPortTest {
     }
 
     @Test
+    void 최신순은_마감된_공연을_아무리_최근에_등록해도_뒤로_보낸다() {
+        // 가장 최근에 등록된 공연이 마감된 공연이다. 그래도 예매 가능한 공연이 먼저 나와야 한다.
+        setCreatedAt("Closed Show", LocalDateTime.now());
+        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
+
+        CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
+
+        assertThat(result.items())
+                .extracting(ShowListItemRow::title)
+                .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
+    }
+
+    @Test
+    void 최신순은_마감되지_않은_그룹_안에서_등록일_내림차순이다() {
+        setCreatedAt("Seoul Normal", LocalDateTime.now());
+        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Closed Show", LocalDateTime.now().minusDays(5));
+
+        CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
+
+        assertThat(result.items())
+                .extracting(ShowListItemRow::title)
+                .containsExactly("Seoul Normal", "Seoul Popular", "Closed Show");
+    }
+
+    @Test
+    void 최신순은_등록일이_같으면_id_내림차순으로_안정적이다() {
+        LocalDateTime sameInstant = LocalDateTime.now().minusHours(1);
+        setCreatedAt("Seoul Popular", sameInstant);
+        setCreatedAt("Seoul Normal", sameInstant);
+        setCreatedAt("Closed Show", sameInstant);
+
+        List<String> first =
+                titlesOf(
+                        showListQueryPort.findAllBySearch(
+                                new ShowListParam(null, null, Region.SEOUL, null),
+                                10,
+                                ShowSort.LATEST));
+        List<String> second =
+                titlesOf(
+                        showListQueryPort.findAllBySearch(
+                                new ShowListParam(null, null, Region.SEOUL, null),
+                                10,
+                                ShowSort.LATEST));
+
+        assertThat(first).as("같은 등록일이어도 순서가 흔들리지 않는다").isEqualTo(second);
+        assertThat(first).endsWith("Closed Show");
+        assertThat(idOf(first.get(0))).isGreaterThan(idOf(first.get(1)));
+    }
+
+    @Test
+    void 최신순을_여러_페이지로_나눠_읽어도_중복이나_누락이_없다() {
+        setCreatedAt("Closed Show", LocalDateTime.now());
+        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
+
+        List<String> paged = new ArrayList<>();
+        ShowCursor cursor = null;
+        for (int page = 0; page < 5; page++) {
+            CursorPage<ShowListItemRow, ShowCursor> result =
+                    showListQueryPort.findAllBySearch(
+                            new ShowListParam(null, null, Region.SEOUL, cursor),
+                            1,
+                            ShowSort.LATEST);
+            paged.addAll(titlesOf(result));
+            cursor = result.nextPosition();
+            if (cursor == null) {
+                break;
+            }
+        }
+
+        assertThat(paged)
+                .as("한 장에 다 담아 읽은 결과와 같아야 한다")
+                .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
+        assertThat(paged).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void 상단_최신_공연_배너도_마감된_공연을_뒤로_보낸다() {
+        setCreatedAt("Closed Show", LocalDateTime.now());
+        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+
+        List<LatestShowRow> rows = showListQueryPort.findLatestShows(null, 10);
+
+        assertThat(rows).extracting(LatestShowRow::title).endsWith("Closed Show");
+    }
+
+    @Test
+    void 인기순은_마감_여부를_정렬에_넣지_않는다() {
+        // 사용자가 명시적으로 고른 정렬의 의미는 바꾸지 않는다.
+        setCreatedAt("Closed Show", LocalDateTime.now());
+
+        CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
+
+        assertThat(result.items())
+                .extracting(ShowListItemRow::title)
+                .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
+    }
+
+    @Test
+    void 최신순도_지역_필터와_함께_동작한다() {
+        setCreatedAt("Busan Hit", LocalDateTime.now());
+        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+
+        CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.GYEONGSANG, null),
+                        10,
+                        ShowSort.LATEST);
+
+        assertThat(result.items()).extracting(ShowListItemRow::title).containsExactly("Busan Hit");
+    }
+
+    @Test
     void 조건에_맞는_공연이_없으면_빈_슬라이스를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, Region.JEOLLA, null);
 
@@ -202,6 +325,28 @@ class QuerydslShowListQueryPortTest {
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
         assertThat(result.nextPosition()).isNull();
+    }
+
+    /** 등록일은 JPA auditing이 넣으므로 테스트에서 직접 못 정한다. 최신순 정렬은 이 값이 기준이라 네이티브 UPDATE로 고정한다. */
+    private void setCreatedAt(final String title, final LocalDateTime createdAt) {
+        entityManager
+                .createNativeQuery("UPDATE SHOWS SET created_at = ?1 WHERE title = ?2")
+                .setParameter(1, createdAt)
+                .setParameter(2, title)
+                .executeUpdate();
+        entityManager.flush();
+        entityManager.clear();
+    }
+
+    private Long idOf(final String title) {
+        return entityManager
+                .createQuery("select s.id from Show s where s.title = :title", Long.class)
+                .setParameter("title", title)
+                .getSingleResult();
+    }
+
+    private static List<String> titlesOf(final CursorPage<ShowListItemRow, ShowCursor> page) {
+        return page.items().stream().map(ShowListItemRow::title).toList();
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {
