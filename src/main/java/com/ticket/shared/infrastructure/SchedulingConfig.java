@@ -1,4 +1,4 @@
-package com.ticket.shared.config;
+package com.ticket.shared.infrastructure;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;

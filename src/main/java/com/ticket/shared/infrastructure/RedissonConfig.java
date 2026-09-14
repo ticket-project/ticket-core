@@ -1,4 +1,4 @@
-package com.ticket.shared.config;
+package com.ticket.shared.infrastructure;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

@@ -1,4 +1,4 @@
-package com.ticket.shared.config;
+package com.ticket.shared.infrastructure;
 
 import java.time.Clock;
 import java.time.ZoneId;

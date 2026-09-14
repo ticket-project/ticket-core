@@ -1,4 +1,4 @@
-package com.ticket.shared.config;
+package com.ticket.shared.infrastructure;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -12,4 +12,4 @@
  * <p>{@link com.ticket.shared.CorsProperties}는 여기 없다 — security의 {@code ApiSecurityConfig}와
  * booking의 {@code WebSocketConfig}가 함께 쓰는 값이라 {@code shared}에 둔다.
  */
-package com.ticket.shared.config;
+package com.ticket.shared.infrastructure;
