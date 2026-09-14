@@ -8,7 +8,7 @@ import lombok.Getter;
  * <p>{@code performanceId}는 진단 정보다. 공개 {@code error.data}에는 싣지 않는다.
  */
 @Getter
-public class BookingNotOpenYetException extends BookingException {
+public final class BookingNotOpenYetException extends BookingException {
     private static final String MESSAGE = "아직 예매가 오픈되지 않았습니다.";
     private final Long performanceId;
 

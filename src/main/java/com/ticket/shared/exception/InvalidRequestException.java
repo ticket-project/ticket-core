@@ -7,7 +7,7 @@ package com.ticket.shared.exception;
  * message에 넣지 않는다. HTTP 400 매핑은 {@code com.ticket.shared.exception.handler.GlobalExceptionHandler}가
  * 안다.
  */
-public class InvalidRequestException extends TicketException {
+public final class InvalidRequestException extends TicketException {
     private static final String MESSAGE = "요청이 올바르지 않습니다.";
 
     public InvalidRequestException() {

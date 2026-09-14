@@ -10,7 +10,7 @@ import lombok.Getter;
  * <p>{@code currentStatus}는 거절 시점에 조회한 실제 주문 상태다. 진단 정보이고 공개 {@code error.data}에는 싣지 않는다.
  */
 @Getter
-public class OrderNotPendingException extends BookingException {
+public final class OrderNotPendingException extends BookingException {
     private static final String MESSAGE = "결제 대기 주문만 처리할 수 있습니다.";
     private final OrderState currentStatus;
 

@@ -90,9 +90,6 @@ public class BookingExceptionHandler {
             case SeatAlreadyHeldException e -> HttpStatus.CONFLICT;
             case HoldLimitExceededException e -> HttpStatus.CONFLICT;
             case HoldBusyException e -> HttpStatus.CONFLICT;
-            default ->
-                    throw new IllegalStateException(
-                            "알 수 없는 BookingException 하위 타입입니다: " + exception.getClass().getName());
         };
     }
 }

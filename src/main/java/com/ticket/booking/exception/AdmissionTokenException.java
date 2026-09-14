@@ -9,7 +9,8 @@ import com.ticket.shared.exception.TicketException;
  * 알려줄 정보가 아니므로, 공개 메시지는 사유와 무관하게 하나로 고정하고 진단 문구는 handler의 로그로만 나간다. 토큰 검증 실패를 세분화해 응답에 담지 않는 것이 기존
  * 동작이기도 하다.
  */
-public class AdmissionTokenException extends TicketException {
+public sealed class AdmissionTokenException extends TicketException
+        permits AdmissionTokenExpiredException, AdmissionTokenRequiredException {
     private static final String MESSAGE = "대기열 입장 토큰이 올바르지 않습니다.";
     private final String reason;
 

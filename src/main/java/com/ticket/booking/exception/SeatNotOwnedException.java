@@ -9,7 +9,7 @@ import lombok.Getter;
  * 응답에 흘리지도 않는다. 세 값 모두 진단 정보이고 공개 {@code error.data}에는 싣지 않는다.
  */
 @Getter
-public class SeatNotOwnedException extends BookingException {
+public final class SeatNotOwnedException extends BookingException {
     private static final String MESSAGE = "본인이 선택한 좌석만 해제할 수 있습니다.";
     private final Long performanceId;
     private final Long seatId;

@@ -9,7 +9,7 @@ import lombok.Getter;
  * 대소문자·공백을 정규화하지 않고 그대로 {@code error.data}에 실린다(기존 응답 계약).
  */
 @Getter
-public class UnsupportedShowSortException extends ShowException {
+public final class UnsupportedShowSortException extends ShowException {
     private static final String MESSAGE = "지원하지 않는 정렬 조건입니다.";
     private final String sortValue;
 

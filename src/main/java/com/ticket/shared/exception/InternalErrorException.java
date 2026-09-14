@@ -6,7 +6,7 @@ package com.ticket.shared.exception;
  * <p>공개 메시지에 내부 사정을 담지 않는다 — 원인은 로그에만 남긴다. HTTP 500 매핑은 {@code
  * com.ticket.shared.exception.handler.GlobalExceptionHandler}가 안다.
  */
-public class InternalErrorException extends TicketException {
+public final class InternalErrorException extends TicketException {
     private static final String MESSAGE = "일시적인 오류가 발생했습니다.";
 
     public InternalErrorException() {

@@ -8,7 +8,7 @@ import lombok.Getter;
  * <p>{@code performanceId}는 진단 정보다. 이미 편성된 좌석이 무엇인지 찾기 위한 추가 조회는 하지 않는다.
  */
 @Getter
-public class PerformanceSeatAlreadyExistsException extends BookingException {
+public final class PerformanceSeatAlreadyExistsException extends BookingException {
     private static final String MESSAGE = "이미 편성된 좌석입니다.";
     private final Long performanceId;
 

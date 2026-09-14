@@ -9,7 +9,7 @@ import lombok.Getter;
  * 목록은 담지 않는다.
  */
 @Getter
-public class NoAvailableSeatException extends BookingException {
+public final class NoAvailableSeatException extends BookingException {
     private static final String MESSAGE = "이용 가능한 좌석이 없습니다.";
     private final Long performanceId;
 

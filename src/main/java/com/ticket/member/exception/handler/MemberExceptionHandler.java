@@ -47,9 +47,6 @@ public class MemberExceptionHandler {
             case UnauthenticatedException e -> HttpStatus.UNAUTHORIZED;
             case AuthorizationException e -> HttpStatus.FORBIDDEN;
             case DuplicateEmailException e -> HttpStatus.CONFLICT;
-            default ->
-                    throw new IllegalStateException(
-                            "알 수 없는 MemberException 하위 타입입니다: " + exception.getClass().getName());
         };
     }
 }

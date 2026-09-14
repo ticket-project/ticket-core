@@ -9,7 +9,7 @@ import lombok.Getter;
  * 않는다. 진단 정보이고 공개 {@code error.data}에는 싣지 않는다.
  */
 @Getter
-public class OrderNotOwnedException extends BookingException {
+public final class OrderNotOwnedException extends BookingException {
     private static final String MESSAGE = "본인 주문만 처리할 수 있습니다.";
     private final String orderKey;
     private final Long memberId;
