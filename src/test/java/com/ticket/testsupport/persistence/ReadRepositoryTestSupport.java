@@ -23,8 +23,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.domain.seat.PerformanceSeat;
+import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.like.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.member.account.domain.Email;

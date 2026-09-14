@@ -22,8 +22,8 @@ import org.hibernate.tool.schema.spi.SchemaManagementTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.domain.seat.PerformanceSeat;
+import com.ticket.booking.domain.seat.PerformanceSeatState;
 
 /**
  * Task 11 Step 6: {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른

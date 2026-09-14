@@ -1,6 +1,6 @@
 package com.ticket.booking.exception;
 
-import com.ticket.booking.order.domain.OrderState;
+import com.ticket.booking.domain.order.OrderState;
 
 import lombok.Getter;
 
