@@ -7,25 +7,33 @@
 
 | ID | 성격 | 현재 위치 | 현재 구조 | 왜 기술 부채인가 | 권장 해결 방향 | 보류 이유 | 호환성 주의 | 완료 조건 | 관련 코드 |
 |---|---|---|---|---|---|---|---|---|---|
-| TD-03 | 설계 | `show.catalog.domain` | 도메인이 HTTP 이미지 경로를 만든다 | 표현 계층 규칙이 domain에 유입된다 | image URL 변환을 API/infra adapter로 이동 | 응답 호환성 영향 분석 필요 | 기존 image JSON 유지 | domain이 경로 문자열을 생성하지 않음 | `ShowCardImagePathConverter` |
+| TD-03 | 설계 | `show.domain.show` | 도메인이 HTTP 이미지 경로를 만든다 | 표현 계층 규칙이 domain에 유입된다 | image URL 변환을 API/infra adapter로 이동 | 응답 호환성 영향 분석 필요 | 기존 image JSON 유지 | domain이 경로 문자열을 생성하지 않음 | `ShowCardImagePathConverter` |
 | TD-04 | 설계 | 각 module의 `web`[^td04] | app UseCase Output/View가 API 응답 타입으로 직접 노출된다 | API와 app 변경이 강하게 결합된다 | API response DTO로 변환 | 전 endpoint 계약 검토 필요 | JSON 필드/상태 유지 | controller 반환 타입이 API DTO | 각 `*Controller` |
-| TD-06 | 설계 | `booking.seat.domain` | `AvailablePerformanceSeatReader` 사용 여부가 불명확하다 | 미사용 코드 제거 판단이 어렵다 | 호출 그래프 확인 후 제거 또는 명시적 역할 부여 | 삭제는 이번 범위 밖 | public class 삭제 금지 | 사용처/삭제 결정 문서화 | `AvailablePerformanceSeatReader` |
-| TD-08 | 설계 | `booking.salespolicy.domain` | `QueueMode`, `QueueLevel` 명명이 책임을 충분히 설명하지 않는다 | 정책 의미와 실행 단계가 혼동될 수 있다 | 정책/단계 용어를 ADR로 확정 후 rename | API/claim 영향 검토 필요 | token claim 유지 | 의미와 wire mapping 고정 | `QueueMode`, `QueueLevel` |
-| TD-09 | 설계 | `booking.admission.infrastructure` | admission token 책임을 설정/검증 관점으로 함께 표현한다 | 설정과 검증 책임이 분리되지 않는다 | token settings와 guard의 경계를 문서화 | 기존 구성키 유지 필요 | JWT claim/TTL 유지 | 책임별 테스트와 문서 일치 | `AdmissionTokenSettings`, `JwtAdmissionVerifier`(구 `JwtAdmissionGuard`) |
-| TD-13 | 제품 결정 | `show.catalog.domain` | `Show.viewCount`를 증가시키는 코드가 없는데 `POPULAR` 정렬·커서 키로 쓰인다 | 제품 결정이 필요한 사안(비동기 증가 도입 or 정렬 폐기) | 상세 조회 시 비동기 증가, 또는 `POPULAR` 정렬 폐기 | 제품 결정 사안, 코드 문제 아님 | 정렬 API 계약 영향 분석 필요 | 결정 후 반영 | `Show.viewCount`, `ShowSort.POPULAR` |
-| TD-14 | 설계 | `venue.facility.domain` | `Venue.gapX`/`gapY`(좌석 간격)를 읽는 코드가 없다 | 죽은 컬럼일 가능성 | 소비자 없음을 재확인 후 컬럼 제거 여부 결정 | 컬럼 drop은 운영 migration이라 신중히 별도 결정 | 응답 영향 없음(비노출 필드) | 컬럼 제거 또는 실제 소비자 확인 | `Venue`, `VenueSummary.SeatMapLayout` |
-| TD-15 | 설계 | `show.performance.domain` | "판매 오픈 전에만 가격을 바꿀 수 있다"는 `PerformanceGrade`의 불변식인데, 그 판단 근거(접수 시각·좌석 편성 여부)가 Booking BC에 있다 | show가 혼자 판정할 수 없고 `show -> booking`은 순환이라 금지다. 지금은 가격 변경 메서드 자체가 없어 드러나지 않을 뿐 강제되는 규칙이 아니다 | (A) 잠금 기준을 "좌석 편성"으로 바꾸고 `CreatePerformanceSeatsUseCase`가 show의 공개 command API로 잠금을 알린다(`booking -> show`라 순환 없고 snapshot 시점과 일치) / (B) booking이 편성 시 단가 불일치를 사후 감지 / (C) 문서 규칙으로만 유지 | 가격 변경 기능이 아직 없어 실제로 깨지지 않는다 — 관리자 CRUD 착수 시점에 결정한다 | 가격 snapshot 체인(`PerformanceGrade.price` -> `PerformanceSeat.unitPrice` -> `OrderSeat.unitPrice`) 의미 보존 | 잠금 주체·시점을 결정하고 테스트로 고정 | `PerformanceGrade`, `CreatePerformanceSeatsUseCase`, `PerformanceSalesPolicy` |
+| TD-08 | 설계 | `booking.domain.salespolicy` | `QueueMode`, `QueueLevel` 명명이 책임을 충분히 설명하지 않는다 | 정책 의미와 실행 단계가 혼동될 수 있다 | 정책/단계 용어를 ADR로 확정 후 rename | API/claim 영향 검토 필요 | token claim 유지 | 의미와 wire mapping 고정 | `QueueMode`, `QueueLevel` |
+| TD-09 | 설계 | `booking.infrastructure` | admission token 책임을 설정/검증 관점으로 함께 표현한다 | 설정과 검증 책임이 분리되지 않는다 | token settings와 guard의 경계를 문서화 | 기존 구성키 유지 필요 | JWT claim/TTL 유지 | 책임별 테스트와 문서 일치 | `AdmissionTokenSettings`, `JwtAdmissionVerifier`(구 `JwtAdmissionGuard`) |
+| TD-13 | 제품 결정 | `show.domain.show` | `Show.viewCount`를 증가시키는 코드가 없는데 `POPULAR` 정렬·커서 키로 쓰인다 | 제품 결정이 필요한 사안(비동기 증가 도입 or 정렬 폐기) | 상세 조회 시 비동기 증가, 또는 `POPULAR` 정렬 폐기 | 제품 결정 사안, 코드 문제 아님 | 정렬 API 계약 영향 분석 필요 | 결정 후 반영 | `Show.viewCount`, `ShowSort.POPULAR` |
+| TD-14 | 설계 | `venue.domain` | `Venue.gapX`/`gapY`(좌석 간격)를 읽는 코드가 없다 | 죽은 컬럼일 가능성 | 소비자 없음을 재확인 후 컬럼 제거 여부 결정 | 컬럼 drop은 운영 migration이라 신중히 별도 결정 | 응답 영향 없음(비노출 필드) | 컬럼 제거 또는 실제 소비자 확인 | `Venue`, `VenueSummary.SeatMapLayout` |
+| TD-15 | 설계 | `show.domain.performance` | "판매 오픈 전에만 가격을 바꿀 수 있다"는 `PerformanceGrade`의 불변식인데, 그 판단 근거(접수 시각·좌석 편성 여부)가 Booking BC에 있다 | show가 혼자 판정할 수 없고 `show -> booking`은 순환이라 금지다. 지금은 가격 변경 메서드 자체가 없어 드러나지 않을 뿐 강제되는 규칙이 아니다 | (A) 잠금 기준을 "좌석 편성"으로 바꾸고 `CreatePerformanceSeatsUseCase`가 show의 공개 command API로 잠금을 알린다(`booking -> show`라 순환 없고 snapshot 시점과 일치) / (B) booking이 편성 시 단가 불일치를 사후 감지 / (C) 문서 규칙으로만 유지 | 가격 변경 기능이 아직 없어 실제로 깨지지 않는다 — 관리자 CRUD 착수 시점에 결정한다 | 가격 snapshot 체인(`PerformanceGrade.price` -> `PerformanceSeat.unitPrice` -> `OrderSeat.unitPrice`) 의미 보존 | 잠금 주체·시점을 결정하고 테스트로 고정 | `PerformanceGrade`, `CreatePerformanceSeatsUseCase`, `PerformanceSalesPolicy` |
+| TD-17 | 설계 | `booking.application` | 회원의 전체 선택 해제가 회차 전체 선택 목록을 읽고 좌석마다 Redis를 호출한다 | 좌석 수에 비례한 Redis 왕복과 좌석 락이 생긴다 | 회원별 선택 인덱스 도입 또는 배치 해제 | **측정하지 않았다.** 대표 규모(회차 600석, 한 회원의 동시 선택은 회차 Hold 한도 이하)에서는 한 자릿수 좌석이라 인덱스를 추가하지 않았다. 인덱스를 두면 선택·해제·TTL 만료 세 경로에서 인덱스와 좌석 키의 정합성을 따로 맞춰야 한다 | Redis key·TTL 의미 유지 | `/loadtest`로 요청 수와 지연을 측정한 뒤 도입 여부 결정 | `DeselectAllSeatsUseCase`, `RedissonSeatSelectionStore.releaseAllByMember` |
 
 **해소된 항목**:
 
 - TD-01(OAuth provider 원본 attributes의 application 유입)은 provider별 해석을
-  `OAuth2UserInfoMapper`로 격리하고 정규화된 `OAuth2UserInfo`만 application에 전달하도록 변경했다.
+  `OAuth2UserInfoMapper`로 격리하고 정규화된 소셜 신원만 application에 전달하도록 변경했다(그 값 타입은 지금 `member.SocialIdentity`다).
 - TD-02(회원 탈퇴 application의 Kakao 구현 직접 의존)는 `SocialAccountUnlinker` 포트를 도입하고
-  provider별 외부 API 처리를 infrastructure 쪽 구현으로 감쌌다.
+  provider별 외부 API 처리를 구현으로 감쌌다. 지금 그 포트와 구현은 `security.oauth`에 있다.
 - TD-10(`<module>.domain.**.command`에 정책·값 객체·서비스가 혼재)은 패키지를 모듈 → 계층으로
   평탄화하면서 `command`/`model`/`query`/`store` 하위 패키지 자체가 사라져 전제가 없어졌다.
+- 다음은 이번 재편·결함 수정으로 함께 해소됐다. 이벤트 publication `serialized_event` 길이 초과
+  (root V9), 커밋 후 리스너가 Redis·WebSocket 작업 중 DB 트랜잭션을 쥐고 있던 문제, 선점 해제
+  완료 기록이 발행 실패로 롤백되던 문제, hold 생성 부분 실패의 유령 점유, 오래된 선택 해제 알림,
+  만료 배치가 실패 항목 앞에서 멈추던 문제, `HoldPolicy`의 1초 미만 절삭. 근거와 회귀 테스트는
+  각 커밋 본문과 `docs/core-booking-lifecycle.md`에 있다.
 - TD-16(legacy `core.infra.support` 테스트 패키지)은 여러 모듈이 공유하는 실제 사용처에 맞춰
   `com.ticket.testsupport.persistence`로 이동했다.
+- TD-06(`AvailablePerformanceSeatReader` 사용 여부 불명확)은 main·test·seed·SQL·설정과 빈 이름
+  문자열까지 확인해 자기 테스트 외 사용처가 없음을 확정하고 제거했다. 이 클래스만 쓰던
+  `PerformanceSeatRepository.findAllByStateEquals`와 그 adapter·Spring Data 구현도 함께 지웠다.
 
 해소된 ID는 재사용하지 않는다.
 

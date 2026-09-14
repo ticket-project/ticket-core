@@ -6,11 +6,33 @@
 
 ## 패키지와 역할
 
-업무 코드는 `com.ticket.<module>.<capability>.<layer>` 순서로 둔다. 예를 들어
-`booking.order.application`, `show.catalog.domain`, `member.auth.web`처럼 읽는다.
-`web`은 HTTP 계약, `application`은 use case와 조합, `domain`은 상태와 업무 규칙,
-`infrastructure`는 DB·Redis·외부 client 구현을 소유한다. 같은 모듈의 여러 capability가 함께 쓰는
-도메인 기반 타입은 `show.domain.ShowAuditedEntity`처럼 module-level `domain`에 둘 수 있다.
+업무 코드는 `com.ticket.<module>.<layer>` 순서로 둔다. 예를 들어
+`booking.application.usecase.CreateOrderUseCase`, `show.infrastructure.ShowRepositoryAdapter`,
+`member.web.MemberController`처럼 읽는다. `web`은 HTTP 계약, `application`은 use case와 조합,
+`domain`은 상태와 업무 규칙, `infrastructure`는 DB·Redis·외부 client 구현을 소유한다.
+
+**업무별 폴더는 `domain` 아래에만 둔다.** `application.order`, `infrastructure.seat`,
+`web.selection` 같은 분류를 만들지 않는다. 그 계층에서 "무엇에 관한 코드인가"는 폴더가 아니라
+클래스 이름이 말한다. `domain` 아래 묶음은 함께 읽히는 도메인 모델의 묶음이며 Aggregate와
+일대일이 아니다 — 실제 경계는 `AggregateAssociationTest`가 강제한다.
+
+허용된 역할별 하위 폴더는 `application.usecase`, `application.port`, `web.request`, `web.docs`,
+`exception.handler` 넷뿐이다. 이것들은 업무가 아니라 역할을 말한다. `application.usecase`에는
+`*UseCase`로 끝나는 클래스만 둔다.
+
+**모듈 안에 `common`·`support` 같은 패키지를 만들지 않는다.** 여러 업무가 함께 쓰는 기반도 그
+역할의 계층이 받는다 — 계약은 `application`, 도메인 기반 타입과 값은 `domain`
+(`show.domain.ShowAuditedEntity`, `booking.domain.BookingAuditedEntity`), 기술 구현은
+`infrastructure`다. 계층을 정하기 어렵다는 이유로 중립적인 이름의 폴더에 모으면, 시간이 지나며
+그 폴더가 무엇이든 받는다.
+
+**`security`만 예외로 계층 대신 기능으로 나눈다** — `auth`/`jwt`/`oauth`/`token`/`http`이고 각
+폴더 안에 계층 폴더를 다시 만들지 않는다. 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더
+나은 탐색 단위이기 때문이다. `shared`는 공개 계약을 root와 `web`/`exception`에, 실행 배선을
+`shared.infrastructure`에 둔다.
+
+배치의 단일 기준은 [architecture.md](architecture.md#module-structure)이고 배경은
+[ADR 0013](adr/0013-layer-first-package-layout-and-security-owns-authentication.md)이다.
 
 ## Application 계약
 
@@ -29,7 +51,10 @@
 - Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 계약은 `QueryPort`, 그 구현은 기술을
   드러내는 이름(`QuerydslSeatStateQueryPort`)을 쓴다.
 - `Reader`/`Writer`는 읽기·쓰기 한쪽 책임, `Validator`는 검증, `Registrar`는 등록,
-  `Authenticator`는 자격 증명 확인을 뜻한다. 책임이 더 좁으면 `Service`보다 이 이름을 우선한다.
+  `Authenticator`는 자격 증명 확인, `Preparer`는 검증을 마치고 뒤 단계가 쓸 값까지 함께 준비하는
+  것을 뜻한다(`CreateOrderPreparer`). 책임이 더 좁으면 `Service`보다 이 이름을 우선한다.
+- `Coordinator`는 락·순서처럼 실행 조율이 본체인 것에 쓴다(`SeatSelectionCoordinator`). 상태
+  변경과 그 결과 알림을 같은 경계 안에서 함께 책임진다는 뜻이다.
 - `find...`는 없을 수 있는 조회, `findAll...`은 빈 컬렉션이 가능한 복수 조회, `exists...`는 존재
   여부, `require...`는 실패 가능한 필수 조건에 쓴다. boolean 판단은 `is`/`has`/`can`을 쓴다.
 - 새 객체·리소스 생성은 `create`, 다른 표현에서 변환은 `from`, 단순 값 조립은 `of`, 반대 방향
@@ -44,6 +69,23 @@
 - 도메인 lifecycle은 `State`를 기본으로 하고, 외부 조회/응답에 단순화한 표현은 `Status`를 허용한다.
   JSON 필드나 DB 저장값에 영향을 주는 일괄 rename은 하지 않는다.
 - acronym은 변수에서 `oauth2`, `jwt`, `url`, `uri`처럼 일반 camelCase로 쓴다.
+
+## 커밋 본문
+
+**변경 이력의 기본 기록은 커밋 본문이다.** 제목 다음 본문에 아래 내용을 남겨, 코드와 함께
+당시의 판단과 검증 근거를 읽을 수 있게 한다. 별도 작업 일지 파일은 만들지 않는다.
+
+- **배경·이유:** 해결하려던 문제와 이 방법을 선택한 이유. 실제로 검토한 중요한 대안이나
+  감수한 비용이 있으면 함께 설명한다.
+- **변경:** 무엇을 어떻게 바꿨는지, 책임·동작·계약의 변화를 중심으로 쓴다. 파일 목록이나
+  diff를 그대로 반복하지 않는다.
+- **검증:** 실제 실행한 검사와 결과, 실행하지 않은 범위와 이유를 쓴다. 과거 검증이나
+  실행할 예정인 검사를 이번 결과로 기록하지 않는다.
+
+작은 변경은 짧은 문장으로 충분하며 고정된 제목·양식을 강제하지 않는다. 중요한 결정은
+[ADR 기준](adr/README.md)에 따라 별도로 남기고 본문에서 연결한다. 현재 구조·운영이 바뀌면
+해당 원본 문서도 갱신한다. 기록을 위해 커밋을 자동 생성하지 않고, 커밋 전 인계는 대화에서
+변경 이유·검증·남은 작업을 전달한다. 커밋 작성 권한은 `AGENTS.md`의 기존 규칙을 따른다.
 
 ## 테스트와 형식
 

@@ -4,6 +4,11 @@
 
 채택됨 (2026-09-10)
 
+> 2026-09-14 갱신: `shared.config`라는 이름은
+> [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이
+> `shared.infrastructure`로 바꿨다. 아래 본문의 `shared.config`는 그 패키지를 가리킨다. 무엇을
+> 담고 무엇을 담지 않는지에 대한 결정 자체는 그대로다.
+
 2026-09-13 후속 변경: `AuthenticatedMember`가 `java.security.Principal`을 구현하면 Spring MVC의
 기본 Principal argument resolver가 애플리케이션 resolver보다 먼저 선택되어 실제 controller 요청이
 500이 된다. shared가 member를 참조하지 않는 방향은 유지하되, 감사자 식별 계약을
