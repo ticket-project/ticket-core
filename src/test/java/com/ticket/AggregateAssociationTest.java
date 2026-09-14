@@ -54,11 +54,11 @@ class AggregateAssociationTest {
                             "com.ticket.booking.domain.order.OrderSeat",
                             "com.ticket.booking.domain.order.Order"),
                     new Association(
-                            "com.ticket.member.account.domain.Member",
-                            "com.ticket.member.account.domain.MemberSocialAccount"),
+                            "com.ticket.member.domain.Member",
+                            "com.ticket.member.domain.MemberSocialAccount"),
                     new Association(
-                            "com.ticket.member.account.domain.MemberSocialAccount",
-                            "com.ticket.member.account.domain.Member"),
+                            "com.ticket.member.domain.MemberSocialAccount",
+                            "com.ticket.member.domain.Member"),
                     new Association(
                             "com.ticket.show.domain.performance.PerformanceGrade",
                             "com.ticket.show.domain.performance.Performance"));

@@ -1,0 +1,91 @@
+package com.ticket.security.http;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.ticket.member.AuthenticatedMember;
+import com.ticket.security.token.AccessTokenReadResult;
+import com.ticket.security.token.AccessTokenReader;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String AUTH_ERROR_ATTRIBUTE = "jwt.error";
+    private final AccessTokenReader accessTokenReader;
+
+    public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
+        this.accessTokenReader =
+                Objects.requireNonNull(accessTokenReader, "accessTokenReader must not be null");
+    }
+
+    @Override
+    protected void doFilterInternal(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            final FilterChain filterChain)
+            throws ServletException, IOException {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        AccessTokenReadResult readResult;
+        try {
+            final String token = extractBearerToken(authorizationHeader);
+            readResult = accessTokenReader.read(token);
+        } catch (final IllegalArgumentException exception) {
+            // Bearer 형식 자체가 잘못된 경우다. 토큰 검증까지 가지 않는다.
+            readResult = AccessTokenReadResult.invalid();
+        }
+
+        try {
+            switch (readResult) {
+                case AccessTokenReadResult.Authenticated authenticated ->
+                        authenticate(authenticated.member());
+                case AccessTokenReadResult.Expired ignored -> markFailure(request, "expired");
+                case AccessTokenReadResult.Invalid ignored -> markFailure(request, "invalid");
+            }
+            filterChain.doFilter(request, response);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    private void authenticate(final AuthenticatedMember member) {
+        final UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        member, null, List.of(new SimpleGrantedAuthority("ROLE_" + member.role())));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private String extractBearerToken(final String authorizationHeader) {
+        if (!authorizationHeader.startsWith(BEARER_PREFIX)) {
+            throw new IllegalArgumentException("invalid bearer token");
+        }
+        String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
+        if (token.isBlank()) {
+            throw new IllegalArgumentException("invalid bearer token");
+        }
+        return token;
+    }
+
+    private void markFailure(final HttpServletRequest request, final String reason) {
+        log.warn("access token verification failed. reason={}", reason);
+        request.setAttribute(AUTH_ERROR_ATTRIBUTE, reason);
+    }
+}

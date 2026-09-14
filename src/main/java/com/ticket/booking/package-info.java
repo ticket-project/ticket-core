@@ -9,8 +9,11 @@
  * GET /api/v1/booking/performances/{performanceId}/booking-mode}도 이 module이 공개한다.
  *
  * <p>공개 계약: - OrderStarted / OrderTerminated (commit 이후 후속 처리를 위한 이벤트)
+ *
+ * <p>{@code security} 의존은 WebSocket 인증 하나뿐이다 — STOMP CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독
+ * 인터셉터가 {@code AccessTokenAuthenticator}로 토큰을 직접 검증한다.
  */
 @org.springframework.modulith.ApplicationModule(
         displayName = "Booking",
-        allowedDependencies = {"show", "member", "shared :: *"})
+        allowedDependencies = {"show", "member", "security", "shared :: *"})
 package com.ticket.booking;

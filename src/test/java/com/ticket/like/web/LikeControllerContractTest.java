@@ -22,7 +22,7 @@ import com.ticket.like.application.usecase.GetLikeStatusUseCase;
 import com.ticket.like.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.exception.handler.LikeExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
 @SuppressWarnings("NonAsciiCharacters")

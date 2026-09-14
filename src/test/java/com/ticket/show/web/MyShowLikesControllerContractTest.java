@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 import com.ticket.show.application.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.exception.handler.ShowExceptionHandler;

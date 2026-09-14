@@ -21,7 +21,7 @@ import com.ticket.booking.application.usecase.DeselectSeatUseCase;
 import com.ticket.booking.application.usecase.SelectSeatUseCase;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
 @SuppressWarnings("NonAsciiCharacters")

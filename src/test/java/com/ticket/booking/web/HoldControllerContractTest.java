@@ -24,7 +24,7 @@ import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.AuthenticatedMember;
-import com.ticket.security.infrastructure.AuthenticatedMemberArgumentResolver;
+import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
 @SuppressWarnings("NonAsciiCharacters")

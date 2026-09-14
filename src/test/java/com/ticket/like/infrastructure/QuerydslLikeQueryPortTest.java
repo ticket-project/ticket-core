@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Import;
 import com.ticket.like.LikeType;
 import com.ticket.like.application.LikeRow;
 import com.ticket.like.application.port.LikeQueryPort;
-import com.ticket.member.account.domain.Member;
+import com.ticket.member.domain.Member;
 import com.ticket.shared.CursorPage;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
