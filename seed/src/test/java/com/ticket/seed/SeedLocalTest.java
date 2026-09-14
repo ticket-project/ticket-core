@@ -17,10 +17,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 
-import com.ticket.member.account.domain.EncodedPassword;
-import com.ticket.member.auth.application.PasswordHasher;
-import com.ticket.member.auth.domain.RawPassword;
-import com.ticket.member.auth.infrastructure.SpringSecurityPasswordHasher;
+import com.ticket.member.RawPassword;
+import com.ticket.member.application.PasswordHasher;
+import com.ticket.member.domain.EncodedPassword;
+import com.ticket.member.infrastructure.SpringSecurityPasswordHasher;
 import com.ticket.seed.support.AppSchema;
 
 /**
@@ -287,12 +287,11 @@ class SeedLocalTest {
                         entityManager
                                 .createQuery(
                                         "select m from Member m where m.email.email = :email",
-                                        com.ticket.member.account.domain.Member.class)
+                                        com.ticket.member.domain.Member.class)
                                 .setParameter("email", "loadtest1@test.com")
                                 .getSingleResult();
 
-                assertThat(member.getRole())
-                        .isEqualTo(com.ticket.member.account.domain.Role.MEMBER);
+                assertThat(member.getRole()).isEqualTo(com.ticket.member.domain.Role.MEMBER);
                 assertThat(member.isDeleted()).isFalse();
                 assertThat(member.getEncodedPassword().getPassword()).startsWith("{bcrypt}$2");
                 assertThat(member.getCreatedAt()).isNotNull();

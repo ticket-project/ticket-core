@@ -54,6 +54,20 @@ public final class AppSchema {
         }
     }
 
+    /**
+     * 임의의 DB(운영 검증용 Oracle Testcontainer 등)에 앱 entity 매핑으로 스키마를 만든다.
+     *
+     * <p><b>테스트 소스에만 둔다.</b> 이 기능을 시드 프로그램에 노출하면 "운영 DB 초기화" 명령이 되어 버린다 — 테이블 생성·삭제는 이 도구의 범위가 아니고,
+     * {@code seedProd}는 이미 준비된 테이블에 데이터만 넣는다.
+     */
+    public static void createOn(
+            final String jdbcUrl, final String username, final String password) {
+        try (ConfigurableApplicationContext context =
+                context(jdbcUrl, username, password, "create")) {
+            context.getBeanFactory();
+        }
+    }
+
     /** 이미 만들어진 스키마에 붙는 JPA 컨텍스트를 연다. 시드가 넣은 row를 실제 entity 매핑으로 읽어 볼 때 쓴다. 호출자가 닫는다. */
     public static ConfigurableApplicationContext openContext(final String jdbcUrl) {
         return context(jdbcUrl, "none");
@@ -61,18 +75,30 @@ public final class AppSchema {
 
     private static ConfigurableApplicationContext context(
             final String jdbcUrl, final String ddlAuto) {
+        return context(jdbcUrl, "sa", "", ddlAuto);
+    }
+
+    private static ConfigurableApplicationContext context(
+            final String jdbcUrl,
+            final String username,
+            final String password,
+            final String ddlAuto) {
         return new SpringApplicationBuilder(SchemaConfiguration.class)
                 .web(WebApplicationType.NONE)
                 .bannerMode(Banner.Mode.OFF)
                 .properties(
                         "spring.datasource.url=" + jdbcUrl,
-                        "spring.datasource.driver-class-name=org.h2.Driver",
-                        "spring.datasource.username=sa",
-                        "spring.datasource.password=",
+                        "spring.datasource.driver-class-name=" + driverClassName(jdbcUrl),
+                        "spring.datasource.username=" + username,
+                        "spring.datasource.password=" + password,
                         "spring.jpa.hibernate.ddl-auto=" + ddlAuto,
                         "spring.jpa.open-in-view=false",
                         "logging.level.root=WARN")
                 .run();
+    }
+
+    private static String driverClassName(final String jdbcUrl) {
+        return jdbcUrl.startsWith("jdbc:oracle:") ? "oracle.jdbc.OracleDriver" : "org.h2.Driver";
     }
 
     @Configuration(proxyBeanMethods = false)
