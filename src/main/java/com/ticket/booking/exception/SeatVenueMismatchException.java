@@ -8,7 +8,7 @@ import lombok.Getter;
  * <p>{@code performanceId}·{@code seatId}는 진단 정보다. 공개 {@code error.data}에는 싣지 않는다.
  */
 @Getter
-public class SeatVenueMismatchException extends BookingException {
+public final class SeatVenueMismatchException extends BookingException {
     private static final String MESSAGE = "요청한 좌석이 이 회차의 공연장에 속하지 않습니다.";
     private final Long performanceId;
     private final Long seatId;

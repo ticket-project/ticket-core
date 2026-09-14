@@ -9,7 +9,7 @@ import lombok.Getter;
  * 이 생성자는 다시 검증하지 않는다. 한도가 없는 회차(무제한)는 애초에 이 예외를 만들지 않으므로 {@code maxSeatCount}는 여기서 non-null이다.
  */
 @Getter
-public class HoldLimitExceededException extends BookingException {
+public final class HoldLimitExceededException extends BookingException {
     private static final String MESSAGE = "선점 가능한 좌석 수를 초과하였습니다.";
     private final long requestedSeatCount;
     private final int maxSeatCount;

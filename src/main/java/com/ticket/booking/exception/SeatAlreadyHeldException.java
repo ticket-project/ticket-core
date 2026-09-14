@@ -8,7 +8,7 @@ import lombok.Getter;
  * <p>{@code performanceId}·{@code seatId}는 진단 정보다. 공개 {@code error.data}에는 싣지 않는다.
  */
 @Getter
-public class SeatAlreadyHeldException extends BookingException {
+public final class SeatAlreadyHeldException extends BookingException {
     private static final String MESSAGE = "좌석이 이미 선점되었습니다.";
     private final Long performanceId;
     private final Long seatId;
