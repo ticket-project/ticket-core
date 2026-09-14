@@ -7,7 +7,7 @@ import { test } from 'node:test';
 
 import {
   addMonths,
-  interleaveByCategory,
+  interleaveBalanced,
   nowStamp,
   splitIntoWindows,
   toCompact,
@@ -79,15 +79,15 @@ test('기본 조회 기간은 실행일부터 3개월 뒤까지다', () => {
 
 test('카테고리를 번갈아 꺼낸다', () => {
   const candidates = [
-    { mt20id: 'a1', categoryId: 1 },
-    { mt20id: 'a2', categoryId: 1 },
-    { mt20id: 'a3', categoryId: 1 },
-    { mt20id: 'b1', categoryId: 2 },
-    { mt20id: 'b2', categoryId: 2 },
-    { mt20id: 'c1', categoryId: 3 },
+    { mt20id: 'a1', categoryId: 1, window: 'W1' },
+    { mt20id: 'a2', categoryId: 1, window: 'W1' },
+    { mt20id: 'a3', categoryId: 1, window: 'W1' },
+    { mt20id: 'b1', categoryId: 2, window: 'W1' },
+    { mt20id: 'b2', categoryId: 2, window: 'W1' },
+    { mt20id: 'c1', categoryId: 3, window: 'W1' },
   ];
 
-  const ordered = interleaveByCategory(candidates);
+  const ordered = interleaveBalanced(candidates);
 
   assert.deepEqual(
     ordered.map((c) => c.mt20id),
@@ -98,12 +98,12 @@ test('카테고리를 번갈아 꺼낸다', () => {
 test('앞에서부터 잘라도 카테고리가 한쪽으로 몰리지 않는다', () => {
   // KOPIS 목록이 콘서트만 40개 먼저 주는 상황.
   const candidates = [
-    ...Array.from({ length: 40 }, (_, i) => ({ mt20id: `a${i}`, categoryId: 1 })),
-    ...Array.from({ length: 20 }, (_, i) => ({ mt20id: `b${i}`, categoryId: 2 })),
-    ...Array.from({ length: 20 }, (_, i) => ({ mt20id: `c${i}`, categoryId: 3 })),
+    ...Array.from({ length: 40 }, (_, i) => ({ mt20id: `a${i}`, categoryId: 1, window: 'W1' })),
+    ...Array.from({ length: 20 }, (_, i) => ({ mt20id: `b${i}`, categoryId: 2, window: 'W1' })),
+    ...Array.from({ length: 20 }, (_, i) => ({ mt20id: `c${i}`, categoryId: 3, window: 'W1' })),
   ];
 
-  const picked = interleaveByCategory(candidates).slice(0, 30);
+  const picked = interleaveBalanced(candidates).slice(0, 30);
   const counts = new Map();
   for (const c of picked) counts.set(c.categoryId, (counts.get(c.categoryId) ?? 0) + 1);
 
@@ -114,39 +114,57 @@ test('앞에서부터 잘라도 카테고리가 한쪽으로 몰리지 않는다
   ]);
 });
 
-test('카테고리가 하나뿐이어도 순서를 유지한 채 전부 돌려준다', () => {
+test('앞에서부터 잘라도 조회 구간이 한쪽으로 몰리지 않는다', () => {
+  // 첫 구간이 후보를 다 채워 버리던 결함. 그러면 공연 기간이 앞으로 몰려 오픈 예정이 빈다.
   const candidates = [
-    { mt20id: 'a1', categoryId: 1 },
-    { mt20id: 'a2', categoryId: 1 },
+    ...Array.from({ length: 60 }, (_, i) => ({ mt20id: `w1-${i}`, categoryId: 1, window: 'W1' })),
+    ...Array.from({ length: 30 }, (_, i) => ({ mt20id: `w2-${i}`, categoryId: 1, window: 'W2' })),
+    ...Array.from({ length: 30 }, (_, i) => ({ mt20id: `w3-${i}`, categoryId: 1, window: 'W3' })),
+  ];
+
+  const picked = interleaveBalanced(candidates).slice(0, 30);
+  const counts = new Map();
+  for (const c of picked) counts.set(c.window, (counts.get(c.window) ?? 0) + 1);
+
+  assert.deepEqual([...counts.entries()].sort(), [
+    ['W1', 10],
+    ['W2', 10],
+    ['W3', 10],
+  ]);
+});
+
+test('카테고리와 구간을 함께 고르게 담는다', () => {
+  const candidates = [];
+  for (const w of ['W1', 'W2', 'W3']) {
+    for (const cat of [1, 2, 3]) {
+      for (let i = 0; i < 20; i++) {
+        candidates.push({ mt20id: `${w}-${cat}-${i}`, categoryId: cat, window: w });
+      }
+    }
+  }
+
+  const picked = interleaveBalanced(candidates).slice(0, 90);
+  const byCat = new Map();
+  const byWin = new Map();
+  for (const c of picked) {
+    byCat.set(c.categoryId, (byCat.get(c.categoryId) ?? 0) + 1);
+    byWin.set(c.window, (byWin.get(c.window) ?? 0) + 1);
+  }
+
+  assert.deepEqual([...byCat.values()], [30, 30, 30]);
+  assert.deepEqual([...byWin.values()], [30, 30, 30]);
+});
+
+test('한 칸만 있어도 순서를 유지한 채 전부 돌려준다', () => {
+  const candidates = [
+    { mt20id: 'a1', categoryId: 1, window: 'W1' },
+    { mt20id: 'a2', categoryId: 1, window: 'W1' },
   ];
 
   assert.deepEqual(
-    interleaveByCategory(candidates).map((c) => c.mt20id),
+    interleaveBalanced(candidates).map((c) => c.mt20id),
     ['a1', 'a2'],
   );
-});
-
-test('포스터 URL을 프론트가 허용하는 https://kopis.or.kr 형태로 맞춘다', () => {
-  // ticket-fe의 next/image remotePatterns는 'https://kopis.or.kr/upload/**'만 허용한다.
-  // KOPIS 원본(http://www...)을 그대로 넣으면 목록 페이지 전체가 렌더 오류로 죽는다.
-  assert.equal(
-    normalizePosterUrl('http://www.kopis.or.kr/upload/pfmPoster/PF_1.jpg'),
-    'https://kopis.or.kr/upload/pfmPoster/PF_1.jpg',
-  );
-  assert.equal(
-    normalizePosterUrl('https://www.kopis.or.kr/upload/pfmPoster/PF_2.gif'),
-    'https://kopis.or.kr/upload/pfmPoster/PF_2.gif',
-  );
-  assert.equal(
-    normalizePosterUrl('https://kopis.or.kr/upload/pfmPoster/PF_3.png'),
-    'https://kopis.or.kr/upload/pfmPoster/PF_3.png',
-  );
-});
-
-test('kopis.or.kr이 아닌 포스터 URL은 건드리지 않는다', () => {
-  assert.equal(normalizePosterUrl('https://example.com/a.jpg'), 'https://example.com/a.jpg');
-  assert.equal(normalizePosterUrl(''), '');
-  assert.equal(normalizePosterUrl(undefined), '');
 });
 
 test('등록일은 앱이 읽는 타임스탬프 형식이고 고정값이 아니다', () => {

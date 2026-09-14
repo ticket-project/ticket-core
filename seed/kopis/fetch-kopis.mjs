@@ -266,20 +266,28 @@ function buildPerformances(show, startPerfId) {
   });
 }
 
-// ---------- 카테고리 균형 ----------
+// ---------- 카테고리·기간 균형 ----------
 /**
- * 후보를 카테고리별로 나눠 번갈아 꺼낸다(콘서트 -> 연극 -> 뮤지컬 -> 콘서트 ...).
- * 앞에서부터 target개를 잘라도 카테고리가 고르게 담긴다. 어느 카테고리가 모자라면 남은 것끼리
- * 계속 번갈아 나온다 — 억지로 채우지 않는다.
+ * 후보를 (카테고리 x 조회 구간)별로 나눠 번갈아 꺼낸다.
+ *
+ * 앞에서부터 target개를 잘라도 두 가지가 함께 고르게 담긴다.
+ *
+ *   - 카테고리: KOPIS 목록은 장르가 몰려 나오는 구간이 있어, 그대로 자르면 한 카테고리가 다 먹는다.
+ *   - 조회 구간: 앞 구간만 담기면 공연 기간이 몰리고 판매 시작일이 전부 과거가 되어
+ *     "오픈 예정" 목록이 비어 버린다.
+ *
+ * 어느 칸이 모자라면 남은 것끼리 계속 번갈아 나온다 — 억지로 채우지 않는다.
  */
-export function interleaveByCategory(candidates) {
+export function interleaveBalanced(candidates) {
   const buckets = new Map();
   for (const candidate of candidates) {
-    const key = candidate.categoryId ?? 0;
+    const key = `${candidate.categoryId ?? 0}|${candidate.window ?? ''}`;
     if (!buckets.has(key)) buckets.set(key, []);
     buckets.get(key).push(candidate);
   }
-  const lists = [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([, list]) => list);
+  const lists = [...buckets.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, list]) => list);
   const ordered = [];
   for (let index = 0; lists.some((list) => index < list.length); index++) {
     for (const list of lists) {
@@ -349,9 +357,16 @@ async function main() {
   const candidates = [];
   // 카테고리를 고르게 담으려면 target보다 넉넉한 풀이 필요하다(상세 조회 실패 버퍼 겸용).
   const want = Math.max(opts.target * 3, opts.target + 20);
-  for (const window of windows) {
-    if (candidates.length >= want) break;
-    for (let page = 1; page <= opts.maxPages && candidates.length < want; page++) {
+
+  // 구간마다 몫을 정해 돌아가며 채운다. 예전에는 전체 상한 하나만 두고 앞 구간부터 채웠는데,
+  // 첫 구간에서 상한에 도달해 나머지 구간을 아예 조회하지 않았다. 그래서 "향후 3개월"을 요청해도
+  // 실제로는 첫 31일치만 수집됐고, 공연 기간이 앞으로 몰려 판매 시작이 전부 과거가 됐다
+  // (= 오픈 예정 목록이 비었다).
+  const quotaPerWindow = Math.ceil(want / windows.length);
+
+  async function collectWindow(window, limit) {
+    const before = candidates.length;
+    for (let page = 1; page <= opts.maxPages && candidates.length - before < limit; page++) {
       const url = `${BASE}/pblprfr?service=${KEY}&stdate=${window.from}&eddate=${window.to}&cpage=${page}&rows=${opts.rows}`;
       const xml = await fetchText(url);
       const blocks = dbBlocks(xml);
@@ -381,19 +396,38 @@ async function main() {
           poster,
           genreId,
           categoryId: categoryOfGenre(genreId),
+          window: `${window.from}~${window.to}`,
           from: tag(b, 'prfpdfrom'),
           to: tag(b, 'prfpdto'),
         });
       }
-      process.stdout.write(`\r[목록] ${window.from}~${window.to} page ${page}, 후보 ${candidates.length}개`);
+      process.stdout.write(
+        `\r[목록] ${window.from}~${window.to} page ${page}, 이 구간 ${candidates.length - before}개 / 누적 ${candidates.length}개`,
+      );
       await sleep(150);
     }
+    return candidates.length - before;
+  }
+
+  // 1차: 구간마다 몫만큼
+  for (const window of windows) {
+    await collectWindow(window, quotaPerWindow);
+  }
+  // 2차: 몫을 못 채운 구간이 있으면 남은 구간에서 보충한다(공연이 적은 달이 있을 수 있다).
+  for (const window of windows) {
+    if (candidates.length >= want) break;
+    await collectWindow(window, want - candidates.length);
   }
   console.log(`\n[목록] 최종 후보 ${candidates.length}개`);
+  const perWindow = new Map();
+  for (const c of candidates) perWindow.set(c.window, (perWindow.get(c.window) ?? 0) + 1);
+  console.log(
+    '[목록] 구간별 후보: ' +
+      [...perWindow.entries()].map(([w, n]) => `${w} ${n}개`).join(', '),
+  );
 
-  // 콘서트·연극·뮤지컬을 번갈아 고른다. KOPIS 목록은 장르가 몰려 나오는 구간이 있어서 앞에서부터
-  // 그대로 자르면 한 카테고리가 target을 다 먹는다.
-  const ordered = interleaveByCategory(candidates);
+  // 카테고리와 조회 구간을 함께 번갈아 고른다(interleaveBalanced 주석 참고).
+  const ordered = interleaveBalanced(candidates);
 
   // 2) 상세 + 시설 수집, row 생성
   const performerMap = new Map(); // name -> id
