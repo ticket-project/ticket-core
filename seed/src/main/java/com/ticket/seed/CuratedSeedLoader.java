@@ -13,7 +13,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 그대로 옮긴 것이다. 파싱·날짜 다변화·회차/판매정책 분리는 {@link CuratedSeedStatements}가, 이미 적재됐는지 판정은 {@link
  * CuratedSeedInventory}가 맡는다.
  *
- * <p>적재 전체를 하나의 트랜잭션으로 감싼다. 중간에 실패하면 전부 되돌려야 다음 실행이 반쯤 적재된 상태를 만나지 않는다.
+ * <p>적재 전체를 하나의 트랜잭션으로 감싼다. 중간에 실패하면 전부 되돌려야 다음 실행이 반쯤 적재된 상태를 만나지 않는다. 같은 트랜잭션 안에서 {@link
+ * CuratedSeedVerifier}가 커밋 직전에 관계를 검증한다 — 좌석이 없는 공연장·회차가 남은 채로 "정상 완료"가 되지 않게 한다.
  */
 final class CuratedSeedLoader implements SeedTask {
     private final JdbcTemplate jdbcTemplate;
@@ -68,7 +69,12 @@ final class CuratedSeedLoader implements SeedTask {
             throw new SeedFailure("시드 SQL에서 실행할 문장을 찾지 못했습니다: " + sqlPath);
         }
 
-        transactionTemplate.executeWithoutResult(status -> executeInBatches(executable));
+        transactionTemplate.executeWithoutResult(
+                status -> {
+                    executeInBatches(executable);
+                    // 커밋 전에 관계를 확인한다. 누락된 상태가 "정상 적재"로 끝나면 안 된다.
+                    CuratedSeedVerifier.verify(jdbcTemplate);
+                });
 
         return Outcome.done(
                 "SQL 문 %d개를 적재했습니다(batchSize=%d)."

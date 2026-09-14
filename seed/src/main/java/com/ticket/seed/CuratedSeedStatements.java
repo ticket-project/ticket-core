@@ -32,7 +32,12 @@ import java.util.regex.Pattern;
  *
  * <p><b>문장 순서는 파일 그대로 유지한다.</b> 파일 중간의 {@code SEATS} VENUE별 복제와 끝의 {@code GRADES} / {@code
  * PERFORMANCE_GRADES} / {@code PERFORMANCE_SEATS}는 {@code INSERT ... SELECT}라 실행 시점에 존재하는 행만 대상으로
- * 삼는다. 순서를 바꾸면 적재 결과 자체가 달라진다.
+ * 삼는다. 순서를 바꾸면 적재 결과 자체가 달라진다. 그래서 {@link #verifyStatementOrder()}가 파싱 직후에 순서를 검사한다 — 좌석 복제 뒤에 선언된
+ * 공연장은 좌석을 하나도 받지 못하고, 회차좌석 생성 뒤에 선언된 회차는 등급·가격·좌석을 하나도 받지 못한다.
+ *
+ * <p>실행 문장에는 한 가지 변환이 더 붙는다({@link #withExplicitDateLiterals}). 날짜·시각 리터럴을 {@code DATE '...'} /
+ * {@code TIMESTAMP '...'}로 감싸 세션 기본 날짜 형식({@code NLS_DATE_FORMAT})에 의존하지 않게 한다. Oracle은 그 설정이 다르면
+ * 같은 문자열을 다르게 읽거나 아예 실패한다.
  */
 final class CuratedSeedStatements {
 
@@ -51,6 +56,14 @@ final class CuratedSeedStatements {
     private static final Pattern LITERAL_INSERT_PATTERN =
             Pattern.compile("^INSERT INTO ([A-Z_]+) \\([^)]*\\) VALUES \\(", Pattern.DOTALL);
 
+    /** {@code 'YYYY-MM-DD'} 리터럴. 뒤에 시각이 붙지 않은 순수 날짜만 잡는다. */
+    private static final Pattern DATE_LITERAL_PATTERN =
+            Pattern.compile("'([0-9]{4}-[0-9]{2}-[0-9]{2})'");
+
+    /** {@code 'YYYY-MM-DD HH:MM:SS'} 리터럴. */
+    private static final Pattern TIMESTAMP_LITERAL_PATTERN =
+            Pattern.compile("'([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})'");
+
     private final List<String> statements;
 
     private CuratedSeedStatements(final List<String> statements) {
@@ -58,17 +71,58 @@ final class CuratedSeedStatements {
     }
 
     static CuratedSeedStatements from(final Path sqlPath) {
-        return new CuratedSeedStatements(diversifyPerformanceDates(parse(readLines(sqlPath))));
+        final CuratedSeedStatements parsed =
+                new CuratedSeedStatements(diversifyPerformanceDates(parse(readLines(sqlPath))));
+        parsed.verifyStatementOrder();
+        return parsed;
     }
 
-    /** 날짜 다변화까지 끝난 문장 목록이다. 회차/판매정책 분리는 아직 하지 않은 상태다. */
+    /** 날짜 다변화까지 끝난 문장 목록이다. 회차/판매정책 분리와 날짜 리터럴 변환은 아직 하지 않은 상태다. */
     List<String> statements() {
         return statements;
     }
 
     /** 실제로 DB에 던지는 문장 목록이다. */
     List<String> executableStatements() {
-        return splitPerformancePolicyStatements(statements);
+        return withExplicitDateLiterals(splitPerformancePolicyStatements(statements));
+    }
+
+    /**
+     * 집합 기반 {@code INSERT ... SELECT}보다 뒤에 선언돼 그 대상에서 빠지는 리터럴 INSERT가 없는지 확인한다.
+     *
+     * <p>파일 끝에 새 수집분을 이어 붙이면 이 순서가 조용히 깨진다. 실제로 그렇게 추가된 공연장 179개가 좌석을 하나도 받지 못했고, 그 공연장의 공연 198개·회차
+     * 662개에 회차좌석이 생성되지 않았다. 적재가 끝난 뒤 개수로 알아채는 것보다 여기서 먼저 막는 것이 낫다.
+     */
+    void verifyStatementOrder() {
+        final int seatReplicationIndex = indexOfSeatReplication();
+        final List<String> lateVenueTables = new ArrayList<>();
+        for (final String table : List.of("VENUES", "SHOWS")) {
+            if (lastLiteralInsertIndex(table) > seatReplicationIndex) {
+                lateVenueTables.add(table);
+            }
+        }
+        if (!lateVenueTables.isEmpty()) {
+            throw new SeedFailure(
+                    """
+                    시드 SQL의 문장 순서가 어긋났습니다. 좌석 복제(CROSS JOIN VENUES) 뒤에 선언된 리터럴 INSERT가 있습니다.
+                      늦게 선언된 테이블: %s
+                      -> 좌석 복제는 실행 시점에 존재하는 VENUES만 대상으로 합니다. 뒤에 선언된 공연장은
+                         물리 좌석을 하나도 받지 못합니다. 해당 INSERT를 '-- @seed-splice: venues'
+                         마커 앞으로 옮기세요.
+                    """
+                            .formatted(String.join(", ", lateVenueTables)));
+        }
+
+        final int performanceSeatIndex = indexOfPerformanceSeatGeneration();
+        if (lastLiteralInsertIndex("PERFORMANCES") > performanceSeatIndex) {
+            throw new SeedFailure(
+                    """
+                    시드 SQL의 문장 순서가 어긋났습니다. 회차좌석 생성(INSERT INTO PERFORMANCE_SEATS ... SELECT) 뒤에
+                    선언된 PERFORMANCES 리터럴 INSERT가 있습니다.
+                      -> 그 회차는 등급·가격·회차좌석을 하나도 받지 못합니다. 해당 INSERT를
+                         '-- @seed-splice: performances' 마커 앞으로 옮기세요.
+                    """);
+        }
     }
 
     /** 리터럴 한 행 INSERT 개수다. 적재 완전성 판정의 기대값 원본이다. */
@@ -80,24 +134,76 @@ final class CuratedSeedStatements {
 
     /**
      * {@code SEATS} VENUE별 복제 {@code INSERT ... SELECT}보다 앞에 선언된 {@code VENUES} 행 수다. 복제는 그 시점에
-     * 존재하는 VENUES만 대상으로 하므로, 적재 후 SEATS 행 수는 {@code 좌석 템플릿 수 x 이 값}이 된다. 파일 뒤쪽에 추가된 VENUES는 좌석을 받지
-     * 못한다 — 현재 파일의 실제 상태이며 이 클래스는 그것을 바꾸지 않고 그대로 계산한다.
+     * 존재하는 VENUES만 대상으로 하므로, 적재 후 SEATS 행 수는 {@code 좌석 템플릿 수 x 이 값}이 된다.
+     *
+     * <p>{@link #verifyStatementOrder()}가 통과했다면 이 값은 파일 전체의 {@code VENUES} 리터럴 수와 같다 — 좌석을 받지 못하는
+     * 공연장이 없다는 뜻이다.
      */
     long venueCountBeforeSeatReplication() {
+        final int seatReplicationIndex = indexOfSeatReplication();
         long venues = 0;
-        for (final String statement : statements) {
-            if (isSeatReplicationStatement(statement)) {
-                return venues;
-            }
-            if (isLiteralInsertInto(statement, "VENUES")) {
+        for (int index = 0; index < seatReplicationIndex; index++) {
+            if (isLiteralInsertInto(statements.get(index), "VENUES")) {
                 venues++;
+            }
+        }
+        return venues;
+    }
+
+    private int indexOfSeatReplication() {
+        for (int index = 0; index < statements.size(); index++) {
+            if (isSeatReplicationStatement(statements.get(index))) {
+                return index;
             }
         }
         throw new SeedFailure("시드 SQL에서 SEATS VENUE별 복제 INSERT(CROSS JOIN VENUES)를 찾지 못했습니다.");
     }
 
+    private int indexOfPerformanceSeatGeneration() {
+        for (int index = 0; index < statements.size(); index++) {
+            final String statement = statements.get(index);
+            if (statement.startsWith("INSERT INTO PERFORMANCE_SEATS")
+                    && !isLiteralInsertInto(statement, "PERFORMANCE_SEATS")) {
+                return index;
+            }
+        }
+        throw new SeedFailure(
+                "시드 SQL에서 회차좌석 생성 INSERT(INSERT INTO PERFORMANCE_SEATS ... SELECT)를 찾지 못했습니다.");
+    }
+
+    private int lastLiteralInsertIndex(final String table) {
+        for (int index = statements.size() - 1; index >= 0; index--) {
+            if (isLiteralInsertInto(statements.get(index), table)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
     private static boolean isSeatReplicationStatement(final String statement) {
         return statement.startsWith("INSERT INTO SEATS") && statement.contains("CROSS JOIN VENUES");
+    }
+
+    // ------------------------------------------------- 명시적 날짜·시각 리터럴
+
+    /**
+     * {@code '2026-06-01'} / {@code '2026-06-01 14:00:00'} 문자열 리터럴을 {@code DATE '...'} / {@code
+     * TIMESTAMP '...'}로 바꾼다.
+     *
+     * <p>Oracle은 문자열을 날짜로 바꿀 때 세션의 {@code NLS_DATE_FORMAT}을 쓴다. 기본 형식이 {@code DD-MON-RR}인 세션에서 이
+     * 시드를 그대로 실행하면 같은 파일이 다른 결과를 내거나 {@code ORA-01861}로 실패한다. 명시적 리터럴은 그 설정과 무관하게 ISO 형식으로 해석된다.
+     *
+     * <p>대상은 <b>따옴표 안이 날짜·시각 형식 전체와 정확히 일치하는</b> 리터럴뿐이다. 현재 파일에서 그런 리터럴은 전부 날짜·시각 컬럼 값이다(순수 날짜 784개
+     * = {@code SHOWS} 392행의 {@code start_date}/{@code end_date}).
+     */
+    static List<String> withExplicitDateLiterals(final List<String> parsed) {
+        final List<String> result = new ArrayList<>(parsed.size());
+        for (final String statement : parsed) {
+            final String withTimestamps =
+                    TIMESTAMP_LITERAL_PATTERN.matcher(statement).replaceAll("TIMESTAMP '$1'");
+            result.add(DATE_LITERAL_PATTERN.matcher(withTimestamps).replaceAll("DATE '$1'"));
+        }
+        return result;
     }
 
     private static boolean isLiteralInsertInto(final String statement, final String table) {

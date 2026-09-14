@@ -19,10 +19,16 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SQL_PATH = resolve(__dirname, '../sql/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
-// 생성한 블록을 파일 끝의 집합 기반 INSERT(GRADES / PERFORMANCE_GRADES / PERFORMANCE_SEATS)
-// 바로 앞에 끼워 넣는다. 그래야 새 SHOWS/PERFORMANCES가 그 INSERT...SELECT의 대상에 포함된다.
-// 예전 마커였던 SHOW_GRADES는 ADR 0005로 폐지된 테이블이라 더 이상 파일에 없다.
-const SPLICE_MARKER = 'INSERT INTO GRADES (';
+// 생성한 블록은 한 덩어리로 끼워 넣을 수 없다. 시드 SQL에는 "실행 시점에 존재하는 행"만
+// 대상으로 삼는 집합 기반 INSERT...SELECT가 둘 있고, 새 데이터는 각각 그 앞에 놓여야 한다.
+//
+//   1) 공연장·공연은 좌석 복제(CROSS JOIN VENUES) 앞    -> @seed-splice: venues
+//   2) 회차는 PERFORMANCE_GRADES / PERFORMANCE_SEATS 앞 -> @seed-splice: performances
+//
+// 예전에는 블록 전체를 GRADES INSERT 앞에 넣었다. 그래서 그렇게 추가된 공연장 179개가 좌석을
+// 하나도 받지 못했고, 그 공연장의 공연 198개·회차 662개에 회차좌석이 생성되지 않았다.
+const VENUE_SPLICE_MARKER = '-- @seed-splice: venues';
+const PERFORMANCE_SPLICE_MARKER = '-- @seed-splice: performances';
 
 const KEY = process.env.KOPIS_SERVICE_KEY;
 
@@ -375,11 +381,11 @@ async function main() {
     process.exit(1);
   }
 
-  // 3) SQL 조각 생성
+  // 3) SQL 조각 생성 — 공연장 블록과 회차 블록을 따로 만든다(끼워 넣는 지점이 다르다).
   const lines = [];
   lines.push('');
   lines.push('-- ============================================================');
-  lines.push(`-- 신규 KOPIS 시드 추가분 (생성: tools/seed-kopis/fetch-kopis.mjs, 기간 ${opts.from}~${opts.to})`);
+  lines.push(`-- 신규 KOPIS 시드 추가분 (생성: seed/kopis/fetch-kopis.mjs, 기간 ${opts.from}~${opts.to})`);
   lines.push('-- ============================================================');
 
   lines.push('-- ===== 추가 공연자 =====');
@@ -410,32 +416,56 @@ async function main() {
     );
   }
 
-  lines.push('-- ===== 추가 공연 회차 =====');
+  lines.push('');
+
+  const performanceLines = [];
+  performanceLines.push('');
+  performanceLines.push(`-- ===== 추가 공연 회차 (기간 ${opts.from}~${opts.to}) =====`);
   for (const p of performances) {
-    lines.push(
+    performanceLines.push(
       `INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (${p.id}, ${p.showId}, ${p.no}, '${p.start}', '${p.end}', '${p.open}', '${p.close}', 4, 600, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
     );
   }
-  lines.push('');
+  performanceLines.push('');
 
-  const block = lines.join('\n');
+  const venueBlock = lines.join('\n');
+  const performanceBlock = performanceLines.join('\n');
 
   if (opts.dryRun) {
-    console.log('\n===== DRY-RUN: 미리보기(처음 25줄) =====');
-    console.log(block.split('\n').slice(0, 25).join('\n'));
+    console.log('\n===== DRY-RUN: 공연장 블록 미리보기(처음 15줄) =====');
+    console.log(venueBlock.split('\n').slice(0, 15).join('\n'));
     console.log('...');
-    console.log(`\n[DRY-RUN] 파일을 수정하지 않았습니다. 생성될 INSERT 라인 수: ${lines.filter((l) => l.startsWith('INSERT')).length}`);
+    console.log('\n===== DRY-RUN: 회차 블록 미리보기(처음 5줄) =====');
+    console.log(performanceBlock.split('\n').slice(0, 5).join('\n'));
+    console.log('...');
+    const insertCount = [...lines, ...performanceLines].filter((l) => l.startsWith('INSERT')).length;
+    console.log(`\n[DRY-RUN] 파일을 수정하지 않았습니다. 생성될 INSERT 라인 수: ${insertCount}`);
     return;
   }
 
-  // 4) 병합
-  const idx = sql.indexOf(SPLICE_MARKER);
-  if (idx < 0) {
-    console.error(`병합 지점(${SPLICE_MARKER})을 찾지 못했습니다. 중단합니다.`);
+  // 4) 병합 — 뒤쪽 지점부터 끼워 넣어야 앞쪽 지점의 인덱스가 밀리지 않는다.
+  const venueIdx = sql.indexOf(VENUE_SPLICE_MARKER);
+  const performanceIdx = sql.indexOf(PERFORMANCE_SPLICE_MARKER);
+  if (venueIdx < 0 || performanceIdx < 0) {
+    console.error(
+      `병합 지점을 찾지 못했습니다(venues=${venueIdx}, performances=${performanceIdx}). 중단합니다.\n` +
+        `kopis-curated.sql에 '${VENUE_SPLICE_MARKER}' / '${PERFORMANCE_SPLICE_MARKER}' 마커 주석이 있어야 합니다.`,
+    );
+    process.exit(1);
+  }
+  if (performanceIdx < venueIdx) {
+    console.error('병합 지점 순서가 어긋났습니다(회차 마커가 공연장 마커보다 앞에 있습니다). 중단합니다.');
     process.exit(1);
   }
   copyFileSync(SQL_PATH, `${SQL_PATH}.bak`);
-  const merged = sql.slice(0, idx) + block + '\n' + sql.slice(idx);
+  const merged =
+    sql.slice(0, venueIdx) +
+    venueBlock +
+    '\n' +
+    sql.slice(venueIdx, performanceIdx) +
+    performanceBlock +
+    '\n' +
+    sql.slice(performanceIdx);
   writeFileSync(SQL_PATH, merged, 'utf8');
   console.log(`\n[병합 완료] 백업: ${SQL_PATH}.bak`);
   console.log(`[병합 완료] 신규 SHOWS ${shows.length}개 (id ${shows[0].id}~${shows[shows.length - 1].id}) 추가됨.`);
