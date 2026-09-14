@@ -25,8 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.domain.Seat;
+import com.ticket.venue.domain.Venue;
 
 /**
  * BC(Bounded Context) 재편으로 물리 공연장·좌석(Venue/Seat)이 show(옛 catalog)에서 venue module로 분리됐다. 이 테스트는

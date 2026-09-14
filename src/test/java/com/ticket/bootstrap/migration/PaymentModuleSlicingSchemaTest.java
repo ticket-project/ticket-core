@@ -24,7 +24,7 @@ import org.hibernate.tool.schema.spi.SchemaManagementTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.payment.attempt.domain.Payment;
+import com.ticket.payment.domain.Payment;
 
 /**
  * ticket-domain-module-redesign Phase 5 Task 11(ADR 0005): {@code payment} module이 {@code __root} +

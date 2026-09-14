@@ -18,8 +18,8 @@ import com.ticket.show.catalog.domain.Show;
 import com.ticket.show.performance.domain.Performance;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.venue.seat.domain.Seat;
+import com.ticket.venue.domain.Seat;
+import com.ticket.venue.domain.Venue;
 
 /** booking local 조회만 검증한다. 등급·가격 조합은 show {@code QuerydslShowSeatMapQueryPort}가 소유하고 별도로 검증한다. */
 @Import(QuerydslSeatAvailabilityQueryPort.class)

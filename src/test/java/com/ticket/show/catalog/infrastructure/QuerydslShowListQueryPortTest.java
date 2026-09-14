@@ -40,11 +40,11 @@ import com.ticket.show.catalog.domain.SaleType;
 import com.ticket.show.catalog.domain.Show;
 import com.ticket.show.catalog.domain.ShowCardImagePathConverter;
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.application.VenueLookupService;
-import com.ticket.venue.facility.domain.Venue;
-import com.ticket.venue.facility.infrastructure.QuerydslVenueSummaryQueryPort;
-import com.ticket.venue.seat.application.VenueSeatLookupService;
-import com.ticket.venue.seat.infrastructure.QuerydslVenueSeatQueryPort;
+import com.ticket.venue.application.VenueLookupService;
+import com.ticket.venue.application.VenueSeatLookupService;
+import com.ticket.venue.domain.Venue;
+import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryPort;
+import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
 
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,

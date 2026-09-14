@@ -13,9 +13,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * BC(Bounded Context) 재편 전에는 이 클래스가 {@code show} module의 {@link com.ticket.venue.seat.domain.Seat}/
- * {@link com.ticket.venue.facility.domain.Venue} Hibernate 매핑을 검증했다(옛 catalog V3). 물리 공연장·좌석이 venue
- * module로 분리되며 그 검증은 {@code VenueModuleSlicingSchemaTest}로 옮겨갔고, 이 클래스는 show가 그 뒤에도 계속 소유하는 {@code
+ * BC(Bounded Context) 재편 전에는 이 클래스가 {@code show} module의 {@link com.ticket.venue.domain.Seat}/
+ * {@link com.ticket.venue.domain.Venue} Hibernate 매핑을 검증했다(옛 catalog V3). 물리 공연장·좌석이 venue module로
+ * 분리되며 그 검증은 {@code VenueModuleSlicingSchemaTest}로 옮겨갔고, 이 클래스는 show가 그 뒤에도 계속 소유하는 {@code
  * SHOWS.venue_id} scalar 컬럼(옛 {@code @ManyToOne Venue venue} 매핑이 남긴 컬럼)에 대해 재목적화됐다.
  *
  * <p>{@code show}의 {@code Show} entity는 {@code venue_id}를 값으로만 갖고(ADR 0003 §4, 모듈을 넘나드는 JPA 연관관계

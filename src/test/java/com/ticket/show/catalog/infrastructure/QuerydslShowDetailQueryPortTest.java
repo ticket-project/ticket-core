@@ -24,7 +24,7 @@ import com.ticket.show.performance.domain.Performance;
 import com.ticket.show.performer.domain.Performer;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.Region;
-import com.ticket.venue.facility.domain.Venue;
+import com.ticket.venue.domain.Venue;
 
 @Import({QuerydslShowDetailQueryPort.class, ShowCardImagePathConverter.class})
 @SuppressWarnings("NonAsciiCharacters")
