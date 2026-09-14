@@ -1,7 +1,7 @@
 # seed-kopis — KOPIS 공연 시드 최신화 도구
 
 KOPIS OpenAPI에서 신규 공연을 가져와 `seed/sql/kopis-curated.sql`에 **누적 추가**한다.
-기존 시드(SHOWS 1~292 등)는 건드리지 않고, 다음 id부터 이어 붙인다.
+기존 시드는 건드리지 않고, 실행 시점의 max id 다음부터 이어 붙인다.
 
 
 ## 사전 준비
@@ -15,15 +15,15 @@ KOPIS OpenAPI에서 신규 공연을 가져와 `seed/sql/kopis-curated.sql`에 *
 
 ```bash
 # 미리보기(파일 수정 없음)
-KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 --dry-run
+KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100 --dry-run
 
 # 실제 병합
-KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906
+KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100
 ```
 
 Windows PowerShell:
 ```powershell
-$env:KOPIS_SERVICE_KEY="xxxx"; node seed/kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 --dry-run
+$env:KOPIS_SERVICE_KEY="xxxx"; node seed/kopis/fetch-kopis.mjs --target 100 --dry-run
 ```
 
 ### 옵션
@@ -31,16 +31,25 @@ $env:KOPIS_SERVICE_KEY="xxxx"; node seed/kopis/fetch-kopis.mjs --target 100 --fr
 | 옵션 | 기본값 | 설명 |
 |---|---|---|
 | `--target` | 100 | 추가할 신규 공연 수 |
-| `--from` | 20260606 | 조회 시작일 (YYYYMMDD) |
-| `--to` | 20260906 | 조회 종료일 (YYYYMMDD) |
+| `--from` | **실행일** | 조회 시작일 (YYYYMMDD) |
+| `--to` | **실행일 + 3개월** | 조회 종료일 (YYYYMMDD) |
 | `--rows` | 100 | 목록 API 페이지당 행 수 |
 | `--max-pages` | 50 | 목록 페이징 상한 |
 | `--dry-run` | - | 파일을 수정하지 않고 요약/미리보기만 출력 |
+
+기간 기본값은 **실행일 기준**이다. 예전처럼 고정 날짜를 기본값으로 두면 몇 달 뒤 같은 명령이
+조용히 과거 기간만 조회한다.
+
+KOPIS 공연목록 조회(`pblprfr`)는 개발가이드 기준 기간이 **최대 31일**이다. 도구가 요청 기간을
+31일 이하 구간으로 나눠 순서대로 조회하고, 구간에 걸쳐 다시 나오는 공연은 기존 시드 중복 판정과
+같은 기준으로 함께 거른다.
 
 ## 동작 / 안전장치
 
 - **멱등성**: 실행 시마다 SQL에서 현재 max id와 기존 공연(제목+공연장 정규화 키, 포스터 PF id)을 다시 읽어 중복을 거른다. 재실행해도 동일 공연은 다시 추가되지 않는다.
 - **결정성**: `view_count`는 `mt20id` 해시 기반 → 재실행 시 diff 안정.
+- **등록일**: 새로 넣는 행의 `created_at`은 **실제 수집·등록 시각**이다. 최신순 정렬의 기준이 이 값이라, 고정값을 쓰면 새 공연이 최신순 상단에 올라오지 못한다. **기존 행의 등록일은 건드리지 않는다.**
+- **카테고리 균형**: 후보를 콘서트·연극·뮤지컬로 나눠 번갈아 고른다. KOPIS 목록은 장르가 몰려 나오는 구간이 있어 앞에서부터 자르면 한 카테고리가 `--target`을 다 먹는다.
 - **백업**: 병합 전 `kopis-curated.sql.bak` 생성.
 - **장르 매핑**: `genre-map.mjs` 참고. 복합/기타 등 매핑 불가 장르는 스킵.
 - **좌석/등급**: `SEATS` 복제와 `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS`는 SQL 파일 안의 `INSERT ... SELECT`가 신규 VENUES·SHOWS·PERFORMANCES에 자동 적용하므로 별도 생성하지 않는다. **다만 끼워 넣는 지점이 둘로 나뉜다** — 아래 "병합 지점" 참고.
@@ -56,6 +65,13 @@ ticket 저장소 루트에서 시드 테스트를 실행한다. 병합 결과 SQ
 
 ```bash
 ./gradlew seedTest
+```
+
+수집 도구 자체의 회귀 테스트는 Node 기본 러너로 돌린다. 네트워크를 타지 않으며, 병합 지점 검증은
+축소 SQL이 아니라 **실제 `kopis-curated.sql`**을 대상으로 한다.
+
+```bash
+node --test "seed/kopis/*.test.mjs"
 ```
 
 id 연속성·중복·FK만 빠르게 보려면 검증 스크립트를 쓴다.
@@ -77,7 +93,11 @@ node seed/kopis/verify-seed.mjs seed/sql/kopis-curated.sql
 | `-- @seed-splice: venues` | `PERFORMERS` / `VENUES` / `SHOWS` / `SHOW_GENRES` | `SEATS`의 VENUE별 복제 (`CROSS JOIN VENUES`) |
 | `-- @seed-splice: performances` | `PERFORMANCES` | `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS` |
 
-마커가 하나라도 없으면 도구는 파일을 고치지 않고 중단한다.
+마커 해석은 `splice-markers.mjs`가 소유한다. **줄의 시작이 곧 마커인 줄만** 실제 마커로 본다 —
+이 파일 상단 설명 주석과 `kopis-curated.sql` 머리말이 같은 문구를 따옴표로 인용하기 때문이다.
+예전 구현(`indexOf`)은 그 인용문을 먼저 만나 파일 머리말 한가운데를 병합 지점으로 골랐다. 마커가
+없거나, 중복되거나, 순서가 뒤집혀 있으면 도구는 파일을 고치지 않고 중단한다. `--dry-run`도 같은
+검증을 거친다.
 
 ### 왜 나눠야 하는가
 
