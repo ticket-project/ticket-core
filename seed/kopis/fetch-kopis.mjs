@@ -1,5 +1,8 @@
 // KOPIS 신규 공연 수집 → kopis-curated.sql 누적 병합
-// 실행: KOPIS_SERVICE_KEY=xxxx node tools/seed-kopis/fetch-kopis.mjs --target 100 --from 20260606 --to 20260906 [--dry-run]
+// 실행: KOPIS_SERVICE_KEY=xxxx node seed/kopis/fetch-kopis.mjs --target 100 [--from 20260914 --to 20261214] [--dry-run]
+//
+// --from/--to를 주지 않으면 실행일부터 3개월 뒤까지를 본다. 고정 기본값을 두면 다시 실행할 때
+// 조용히 과거 기간만 조회한다.
 
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +25,12 @@ const SQL_PATH = resolve(__dirname, '../sql/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
 // 병합 지점(마커) 해석과 그 계약 검증은 splice-markers.mjs가 소유한다.
 
+/** KOPIS 공연목록 조회(pblprfr)의 기간 상한. 개발가이드 기준 최대 31일이다. */
+const KOPIS_MAX_WINDOW_DAYS = 31;
+
+/** --from/--to를 주지 않았을 때 보는 기간(실행일 ~ 실행일 + 이 개월 수). */
+const DEFAULT_WINDOW_MONTHS = 3;
+
 const KEY = process.env.KOPIS_SERVICE_KEY;
 
 // ---------- args ----------
@@ -31,10 +40,25 @@ function parseArgs() {
     const i = a.indexOf(`--${name}`);
     return i >= 0 && a[i + 1] ? a[i + 1] : def;
   };
+  // 기본 기간은 실행일 기준이다. 고정 기본값을 두면 몇 달 뒤 같은 명령이 조용히 과거만 조회한다.
+  const today = new Date();
+  const from = get('from', toCompact(today));
+  const to = get('to', toCompact(addMonths(today, DEFAULT_WINDOW_MONTHS)));
+  for (const [name, value] of [
+    ['from', from],
+    ['to', to],
+  ]) {
+    if (!/^\d{8}$/.test(value)) {
+      throw new Error(`--${name} 형식이 올바르지 않습니다(YYYYMMDD): ${value}`);
+    }
+  }
+  if (compactToMillis(from) > compactToMillis(to)) {
+    throw new Error(`--from(${from})이 --to(${to})보다 뒤입니다.`);
+  }
   return {
     target: parseInt(get('target', '100'), 10),
-    from: get('from', '20260606'),
-    to: get('to', '20260906'),
+    from,
+    to,
     rows: parseInt(get('rows', '100'), 10),
     maxPages: parseInt(get('max-pages', '50'), 10),
     dryRun: a.includes('--dry-run'),
@@ -80,6 +104,46 @@ function tag(xml, name) {
 
 // ---------- date utils ----------
 const pad = (n) => String(n).padStart(2, '0');
+
+/** Date -> 'YYYYMMDD' (KOPIS 조회 파라미터 형식). 달력 날짜라 로컬 시간대로 읽는다. */
+export function toCompact(date) {
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+}
+
+export function addMonths(date, months) {
+  const shifted = new Date(date.getTime());
+  shifted.setMonth(shifted.getMonth() + months);
+  return shifted;
+}
+
+/** 'YYYYMMDD' -> UTC epoch millis. 날짜 산술 전용이라 시간대 보정은 하지 않는다. */
+function compactToMillis(compact) {
+  const year = Number(compact.slice(0, 4));
+  const month = Number(compact.slice(4, 6));
+  const day = Number(compact.slice(6, 8));
+  return Date.UTC(year, month - 1, day);
+}
+
+function millisToCompact(millis) {
+  const d = new Date(millis);
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+}
+
+/**
+ * 조회 기간을 maxDays 이하의 구간으로 나눈다. KOPIS 공연목록 조회는 기간이 31일을 넘으면
+ * 결과를 주지 않는다(개발가이드). 경계는 양끝 포함이라 31일 구간의 간격은 +30일이다.
+ */
+export function splitIntoWindows(from, to, maxDays) {
+  const start = compactToMillis(from);
+  const end = compactToMillis(to);
+  const day = 86400000;
+  const span = (maxDays - 1) * day;
+  const windows = [];
+  for (let cursor = start; cursor <= end; cursor += span + day) {
+    windows.push({ from: millisToCompact(cursor), to: millisToCompact(Math.min(cursor + span, end)) });
+  }
+  return windows;
+}
 
 function dateRange(startStr, endStr) {
   const out = [];
@@ -240,32 +304,43 @@ async function main() {
   const seenKeys = existingShowKeys(sql);
   const seenPf = existingPfIds(sql);
 
-  // 1) 목록 수집 (필터 + dedupe)
+  // 1) 목록 수집 (기간 분할 + 필터 + dedupe)
+  const windows = splitIntoWindows(opts.from, opts.to, KOPIS_MAX_WINDOW_DAYS);
+  console.log(
+    `[목록] 조회 기간을 ${windows.length}개 구간으로 나눈다(공연목록 조회 상한 ${KOPIS_MAX_WINDOW_DAYS}일): ` +
+      windows.map((w) => `${w.from}~${w.to}`).join(', '),
+  );
+
   const candidates = [];
   const want = opts.target + 20; // 상세 실패 대비 버퍼
-  for (let page = 1; page <= opts.maxPages && candidates.length < want; page++) {
-    const url = `${BASE}/pblprfr?service=${KEY}&stdate=${opts.from}&eddate=${opts.to}&cpage=${page}&rows=${opts.rows}`;
-    const xml = await fetchText(url);
-    const blocks = dbBlocks(xml);
-    if (blocks.length === 0) break;
-    for (const b of blocks) {
-      const mt20id = tag(b, 'mt20id');
-      const prfnm = tag(b, 'prfnm');
-      const genrenm = tag(b, 'genrenm');
-      const fcltynm = tag(b, 'fcltynm');
-      const poster = tag(b, 'poster');
-      const prfstate = tag(b, 'prfstate');
-      if (!mt20id || !prfnm || !poster) continue;
-      if (!['공연예정', '공연중'].includes(prfstate)) continue;
-      if (mapGenre(genrenm, prfnm) === null) continue;
-      if (seenPf.has(mt20id)) continue;
-      const key = normalizeKey(prfnm, fcltynm);
-      if (seenKeys.has(key)) continue;
-      seenKeys.add(key);
-      seenPf.add(mt20id);
-      candidates.push({ mt20id, prfnm, genrenm, fcltynm, poster, from: tag(b, 'prfpdfrom'), to: tag(b, 'prfpdto') });
+  for (const window of windows) {
+    if (candidates.length >= want) break;
+    for (let page = 1; page <= opts.maxPages && candidates.length < want; page++) {
+      const url = `${BASE}/pblprfr?service=${KEY}&stdate=${window.from}&eddate=${window.to}&cpage=${page}&rows=${opts.rows}`;
+      const xml = await fetchText(url);
+      const blocks = dbBlocks(xml);
+      if (blocks.length === 0) break;
+      for (const b of blocks) {
+        const mt20id = tag(b, 'mt20id');
+        const prfnm = tag(b, 'prfnm');
+        const genrenm = tag(b, 'genrenm');
+        const fcltynm = tag(b, 'fcltynm');
+        const poster = tag(b, 'poster');
+        const prfstate = tag(b, 'prfstate');
+        if (!mt20id || !prfnm || !poster) continue;
+        if (!['공연예정', '공연중'].includes(prfstate)) continue;
+        if (mapGenre(genrenm, prfnm) === null) continue;
+        // 구간이 달라도 기간이 걸친 공연은 다시 나온다. 기존 시드와 같은 Set으로 함께 거른다.
+        if (seenPf.has(mt20id)) continue;
+        const key = normalizeKey(prfnm, fcltynm);
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        seenPf.add(mt20id);
+        candidates.push({ mt20id, prfnm, genrenm, fcltynm, poster, from: tag(b, 'prfpdfrom'), to: tag(b, 'prfpdto') });
+      }
+      process.stdout.write(`\r[목록] ${window.from}~${window.to} page ${page}, 후보 ${candidates.length}개`);
+      await sleep(150);
     }
-    process.stdout.write(`\r[목록] page ${page}, 후보 ${candidates.length}개`);
   }
   console.log(`\n[목록] 최종 후보 ${candidates.length}개`);
 
@@ -458,7 +533,10 @@ async function main() {
   console.log(`[병합 완료] 신규 SHOWS ${shows.length}개 (id ${shows[0].id}~${shows[shows.length - 1].id}) 추가됨.`);
 }
 
-main().catch((err) => {
-  console.error('실패:', err);
-  process.exit(1);
-});
+// 직접 실행할 때만 수집을 시작한다. 테스트는 위의 순수 함수만 import한다.
+if (import.meta.main) {
+  main().catch((err) => {
+    console.error('실패:', err);
+    process.exit(1);
+  });
+}
