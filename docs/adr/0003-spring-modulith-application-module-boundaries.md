@@ -2,6 +2,11 @@
 
 ## Status
 
+> 2026-09-14 갱신: 패키지 배치를 모듈 → capability → 계층으로 정한 부분은
+> [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이 모듈 → 계층으로
+> 대체한다. Application Module 경계와 이벤트·publication registry에 대한 결정은 그대로 유효하다.
+> 본문의 옛 패키지 경로 표기는 당시 기록으로 남긴다.
+
 > 2026-09-10 갱신: 최상위 `config`·`web`·`error` 모듈의 패키지 배치와 모듈 수는
 > [ADR 0011](0011-shared-technical-package-layout.md)으로 대체한다. 이 문서의 경계 도입
 > 배경과 나머지 결정은 유지한다.

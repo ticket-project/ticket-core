@@ -65,9 +65,10 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | --- | --- |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
-| `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.config`와 `shared.exception.handler`에만 두는 것 |
-| `com.ticket.DomainIsolationTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — capability 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.catalog.application`이 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
-| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules") |
+| `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.infrastructure`와 `shared.exception.handler`에만 두는 것 |
+| `com.ticket.DomainIsolationTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — `booking.domain.order`처럼 묶음 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.application`이 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
+| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules"). **`domain` 아래 묶음 폴더는 Aggregate 경계가 아니다** — 경계는 이 테스트가 FQCN으로 강제한다 |
+| `com.ticket.booking.BookingLayerDependencyTest` | booking의 계층 방향(`domain`은 application·infrastructure·web을 모른다, `application`은 infrastructure·web을 모른다)과 락 계약 넷이 Redis·web을 모르는 것. 옛 `booking.common`이 사라지며 그 의존 규칙을 이어받았다 |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `controller.docs` 인터페이스에만 두는 것 |
 | `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것. 생성물 목록과 CI artifact는 [architecture.md의 생성 문서](architecture.md#생성-문서)가 원본이다 |
 | `com.ticket.seed.ServiceSourceSeparationTest`(`seedTest`) | 시드 실행 코드·시드 SQL이 서비스 소스로 다시 섞이지 않는 것. 실제 jar는 `verifySeedNotInBootJar`가 확인한다 |
@@ -125,7 +126,7 @@ H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationC
 
 ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
 테스트는 모두 `PerformanceSeatQueryControllerContractTest`
-(`src/test/java/com/ticket/booking/seat/web/`) 하나에 있다.
+(`src/test/java/com/ticket/booking/web/`) 하나에 있다.
 
 - `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
 - `GET /api/v1/shows/{id}/seats` — 기존 프론트 호환용 대표 회차 좌석 배치·등급·가격
@@ -153,6 +154,10 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 
 - `com.ticket.booking.infrastructure.CoreRedisIntegrationTest`: Redis key·TTL·expiration
   listener·분산락(Testcontainers)
+- `com.ticket.booking.infrastructure.RedissonHoldStoreIntegrationTest`: hold 생성의 부분 실패
+  보상이 좌석 키·회차별 점유 인덱스·메타데이터를 실제로 어떤 상태로 남기는지(Testcontainers)
+- `com.ticket.booking.infrastructure.HoldReleaseProgressRecorderAdapterIntegrationTest`:
+  선점 해제 완료 기록의 커밋 경계와 멱등성(H2)
 - `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
   HTTP로 관통

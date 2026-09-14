@@ -16,10 +16,10 @@
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
   `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은 `shared.web`·`shared.exception`,
-  공통 실행 배선은 `shared.config`, 전역 HTTP 접근 정책은 `security`에 둔다.
+  공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은 `security`에 둔다.
 - 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
-  두고, 실제 구현은 모듈 root 밖(업무 모듈은 capability 아래, 기술 모듈은 바로 아래)의
-  `web`/`application`/`domain`/`infrastructure`/`exception` 패키지에 둔다. 별도 `internal` 계층은
+  두고, 실제 구현은 모듈 root 밖의 `web`/`application`/`domain`/`infrastructure`/`exception`
+  패키지(`security`는 기능별 패키지)에 둔다. 별도 `internal` 계층은
   두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도
   `Type.OPEN`으로 선언하지 않는다. 정확한 배치는 [Module Structure](#module-structure)와
   [오류 처리](#오류-처리) 절을 본다.
@@ -40,7 +40,7 @@
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
-| Member | Member, MemberSocialAccount | 회원·계정·인증·OAuth 업무. `account`/`auth`/`oauth`는 내부 capability |
+| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태). 인증 흐름의 **조립**(가입·로그인·갱신·로그아웃·탈퇴 절차, JWT, OAuth2 provider)은 `security`가 갖고, member는 `MemberAccountOperations` 공개 계약만 제공한다 |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
@@ -136,8 +136,8 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 **Like 조합 규칙**: 찜의 데이터·불변식은 `like`(옛 `favorite`)가 소유한다. HTTP endpoint·use
 case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니오(존재)만 있으면 되는 것**(찜하기·
 찜 해제·찜 상태 조회)은 like가 소유하고, **다른 BC의 실제 표시 데이터**가 필요한 것("내 찜
-목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.catalog.domain`은
-like를 모른다 — `show.catalog.application`의 조회 service가 like의 공개 API(`LikeQuery`/`LikeCommand`)를
+목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain.show`는
+like를 모른다 — `show.application`의 조회 service가 like의 공개 API(`LikeQuery`/`LikeCommand`)를
 주입받아 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
 않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
 순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
@@ -161,63 +161,71 @@ like를 모른다 — `show.catalog.application`의 조회 service가 like의 �
 
 **모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
 
-**패키지 구조는 모듈 → capability → 계층이다.** 업무 모듈 여섯(`booking`/`member`/`show`/
-`venue`/`like`/`payment`)은 모듈 root 바로 아래에 **capability** 패키지를 두고, 위 계층 표의
-`web`/`application`/`domain`/`infrastructure`는 그 capability 안에 온다 —
-`booking.order.domain.Order`, `show.catalog.infrastructure.QuerydslShowListQueryPort`처럼
-읽는다. capability가 하나뿐인 모듈(`like`, `payment`)도 같은 형태를 유지한다: 지금 하나뿐이라는
-사실이 앞으로도 하나라는 뜻은 아니고, 모듈마다 읽는 규칙이 갈리는 편이 더 비싸다.
+**패키지 구조는 모듈 → 계층이다.** 업무 모듈 여섯(`booking`/`member`/`show`/`venue`/`like`/
+`payment`)은 모듈 root 바로 아래에 위 계층 표의 `web`/`application`/`domain`/`infrastructure`를
+둔다 — `booking.application.usecase.CreateOrderUseCase`,
+`show.infrastructure.QuerydslShowListQueryPort`처럼 읽는다.
 
-같은 모듈의 여러 capability가 함께 쓰는 기반 타입은 module-level 계층에 둔다. 예를 들어
-`show.domain.ShowAuditedEntity`는 catalog·performance·classification·performer entity가 함께 쓰지만
-다른 BC와 공유하지 않는다. 이를 이유로 모든 BC의 감사 기반 타입을 `shared`로 합치지 않는다.
+**업무별 폴더는 `domain` 아래에만 둔다.** `application`/`infrastructure`/`web` 아래에는
+`application.order`, `infrastructure.seat` 같은 업무 분류를 다시 만들지 않는다. 그 계층에서
+"무엇에 관한 코드인가"는 폴더가 아니라 클래스 이름이 말한다(`CreateOrderUseCase`,
+`OrderRepositoryAdapter`, `SeatSelectionController`). 폴더를 둘 축(계층·업무)으로 나누면 파일
+하나를 찾는 데 두 번 판단해야 하고, 여러 업무를 조립하는 코드가 어느 폴더에도 맞지 않는다.
 
-capability는 **같은 업무 변경에 함께 고쳐지는 코드의 묶음**이다. Application Module이 아니다 —
-`package-info.java`를 두지 않고 `@ApplicationModule`로 선언하지 않는다. 업무 capability 경계는
-그대로 유지하며, 전역 HTTP 보안만 기술 Application Module로 분리해 전체 모듈은 8개다
-(`com.ticket.ModularityTests`가 원본).
-
-| 모듈 | capability |
+| 모듈 | `domain` 아래 묶음 |
 | --- | --- |
-| `booking` | `order` · `seat` · `hold` · `salespolicy` · `selection` · `admission` · `ticket` |
-| `member` | `account` · `auth` · `oauth` |
-| `show` | `catalog` · `performance` · `classification` · `performer` |
-| `venue` | `facility` · `seat` |
-| `like` | `preference` |
-| `payment` | `attempt` |
+| `booking` | `order`(Order와 자식 OrderSeat) · `hold` · `selection` · `seat` · `salespolicy` · `ticket` |
+| `show` | `show`(Show와 판매 표시 규칙) · `performance`(Performance와 허용된 PerformanceGrade 연관) · 나머지(Grade·Category·Genre·Performer와 저장 계약)는 `domain` 직속 |
+| `member` | 단일 Member Aggregate 중심이라 `domain` 직속 |
+| `venue` · `like` · `payment` | `domain` 직속 |
 
-기술 모듈 `security`는 업무 capability를 만들지 않고 `infrastructure`에 API filter chain,
-access token filter, 인증 주체 argument resolver와 401/403 handler를 둔다.
+`domain` 묶음은 **Aggregate와 일대일이 아니다.** `booking.domain.hold`와
+`booking.domain.selection`은 Redis 상태와 그 규칙의 묶음이고, hold 이력처럼 같은 묶음에 있는
+별도 영속 모델도 자기 Aggregate 경계를 그대로 유지한다. 작은 독립 모델마다 폴더를 더 만들지
+않는다 — 실제 Aggregate 경계는 `com.ticket.AggregateAssociationTest`가 강제한다.
+
+같은 모듈의 여러 도메인 모델이 함께 쓰는 기반 타입과 값은 모듈의 `domain` 바로 아래 둔다. 예를
+들어 `show.domain.ShowAuditedEntity`, `booking.domain.BookingAuditedEntity`,
+`booking.domain.RequestedSeatIds`가 그렇다. 이를 이유로 모든 BC의 감사 기반 타입을 `shared`로
+합치지 않는다.
+
+**모듈 안의 별도 `common` 패키지는 두지 않는다.** 여러 업무가 함께 쓰는 기반도 그 역할의 계층이
+받는다 — 락 계약은 `booking.application`, 감사 기반 타입과 요청 좌석 값은 `booking.domain`,
+Redisson 락 구현과 Redis 만료 수신 배선은 `booking.infrastructure`다. `common`이나 `support`
+같은 이름은 "계층을 정하기 어려운 것"을 모으는 자리가 되어, 시간이 지나면 무엇이든 들어간다.
+
+**`security`만 계층 대신 기능으로 나눈다.** 여기 있는 것은 업무가 아니라 인증 기술이라 "무엇에
+관한 코드인가"가 더 나은 탐색 단위다. `auth`(가입·로그인·갱신·로그아웃·탈퇴 조립과 인증
+Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain·handler·provider 통신·응답
+해석·인증 코드·외부 unlink), `token`(토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성
+기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이며, **각 폴더
+안에 계층 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
+하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
+
+`shared`는 공개 계약을 root와 `web`/`exception`에 두고, 실행 배선·설정 구현은
+`shared.infrastructure`에 둔다.
 
 배치 규칙:
 
-- capability 아래에는 **실제로 필요한 계층만** 만든다. 빈 계층이나 미래 기능용 패키지는 두지
-  않는다.
-- `application.port`/`application.usecase`, `web`의 `request`/`docs`,
-  `exception`의 `handler`는 그대로 유효한 예외다. 다만 앞의 셋은 이제 capability 안에 있다.
-- **`exception`은 그대로 capability 축을 따르지 않는다** — 다만 "모듈 바로 아래 하나의
-  평탄한 `<module>.exception`"도 아니다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
+- **실제로 필요한 계층만** 만든다. 코드가 없는 `web`/`application`은 미리 만들지 않는다
+  (`payment`에는 지금 `domain`과 `infrastructure`뿐이다).
+- `application.port`/`application.usecase`, `web`의 `request`/`docs`, `exception`의 `handler`는
+  그대로 유효한 역할별 하위 폴더다.
+- `exception`은 모듈 바로 아래 하나다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
   [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다(ADR 0002가 정한
   "모듈이 자기 오류를 소유한다"는 원칙 자체는 그대로다).
-- 여러 capability가 실제로 공유하는 구현은 역할별 모듈 패키지에 둔다. 공통 감사 base entity는
-  `<module>.domain`, 분산락 계약은 `booking.application`, Redis 만료 배선은
-  `booking.infrastructure`이 소유한다. `support` 패키지는 만들지 않는다.
-- 여러 capability를 조립하는 코드는 **결과를 책임지는 capability**에 둔다. 주문 생성이 좌석·
-  hold·정책을 엮어도 그것은 `order`다.
-- Controller 하나가 여러 capability를 호출하는 것은 허용한다. 폴더를 맞추려고 endpoint나
-  Controller를 쪼개지 않는다.
-- capability마다 façade·interface·event를 의무적으로 만들지 않는다. 접근 제한이 걸리면 같은
-  모듈 안에서 최소한으로 넓히고, 그걸 풀려고 구현을 모듈 root에 공개하지 않는다.
-
-capability 안에서는 여전히 **계층 → 클래스**다. `domain`/`application`/`infrastructure` 아래에
-또 기능별 하위 패키지를 두지 않는다. 클래스 이름 자체가 이미 기능을 드러낸다
-(`ShowRepository`, `PerformanceSalesPolicy` 등).
+- 여러 업무를 조립하는 코드는 **결과를 책임지는 계층**에 둔다. 주문이 좌석·hold·정책을 엮는
+  조립도, 주문 모델을 선점 이력으로 바꾸는 변환도 `application`이다 — `domain` 밖으로 나가야 할
+  조립을 `domain`에 남기지 않는다.
+- Controller 하나가 여러 업무를 호출하는 것은 허용한다. 폴더를 맞추려고 endpoint나 Controller를
+  쪼개지 않는다.
+- **모듈 root = cross-module 공개 계약**이라는 규칙은 그대로다. 구현 클래스, JPA entity,
+  Repository는 root에 두지 않는다.
 
 **`application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.** use case가 조립에 쓰는
 서비스·헬퍼·view·port는 여기 두지 않고 `application` 바로 아래(또는 port는 `application.port`)에
 둔다 — use case가 진입점이라는 것만 폴더로 드러내고, 그 진입점이 무엇을 조립해 쓰는지는 여전히
-`application` 평평한 목록에서 바로 보이게 하기 위해서다. capability가 그 목록을 다시 업무
-단위로 좁혀 준다.
+`application` 평평한 목록에서 바로 보이게 하기 위해서다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
@@ -357,10 +365,9 @@ com/ticket/<module>/exception/
                                           구체 타입 -> HTTP 상태를 이 handler가 정한다
 ```
 
-**모듈 공통 예외는 `<module>.exception`에 둔다.** 여러 capability가 쓰는 base 타입,
-`<Module>ErrorCode`, module handler가 여기에 속한다. capability 전용 예외는 해당 capability의
-`exception`에 둔다. 공통 오류 계약은 `shared.exception`, 공통 HTTP 응답 봉투는 `shared.web`이
-소유한다.
+**모듈의 예외는 `<module>.exception` 하나에 둔다.** base 타입, `<Module>ErrorCode`, 구체 예외,
+`handler`가 모두 여기에 속한다. 공통 오류 계약은 `shared.exception`, 공통 HTTP 응답 봉투는
+`shared.web`이 소유한다. 예외를 계층이나 업무별로 다시 쪼개지 않는다.
 
 `member.exception`은 E1000/E1001 응답을 전역 security와 공유해야 하므로
 `member :: exception` named interface로 최소 공개한다. handler 하위 구현은 공개 계약이 아니다.
@@ -375,24 +382,38 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 코드만 봐서는 알기 어려운 정책·설계 결정만 다룬다. 엔드포인트 목록은 Swagger(`/api/api-docs`)가,
 예매 실행 순서는 [core-booking-lifecycle.md](core-booking-lifecycle.md)가 원본이다.
 
-**인증**: JWT 발급·검증과 로그인·logout·refresh는 `member.auth`, provider 응답 해석·OAuth2 로그인
-조립과 세션이 필요한 `@Order(1)` filter chain은 `member.oauth`가 소유한다. `security`는 stateless
-`@Order(2)` API filter chain, URL별 접근 정책, Authorization header 해석, SecurityContext와 MVC
-argument resolver를 소유한다. 의존 방향은 `security -> member -> shared`이며 member는 security를
-참조하지 않는다. 다른 모듈의 controller는 `member.AuthenticatedMember`만 parameter로 받고 JWT나
-`member` 내부의 `Member`를 보지 않는다.
+**인증**: 인증·인가와 그 조립은 전부 `security`가 소유한다 — 가입·로그인·갱신·로그아웃·탈퇴
+절차(`security.auth`), JWT 발급·검증(`security.jwt`), provider 응답 해석과 세션이 필요한
+`@Order(1)` OAuth2 filter chain(`security.oauth`), 토큰 계약과 refresh token 저장
+(`security.token`), stateless `@Order(2)` API filter chain·URL별 접근 정책·Authorization header
+해석·SecurityContext·MVC argument resolver(`security.http`)가 그렇다.
 
-OAuth provider raw attribute는 `member.oauth.infrastructure.OAuth2UserInfoMapper`가 정규화한 뒤
-application으로 넘긴다. 기존 계정에 같은 이메일로 자동 연결하는 것은 provider가 이메일 검증을
-명시한 경우에만 허용하고, 검증되지 않은 이메일은 provider ID 기반 대체 주소로 격리한다.
+**회원 테이블과 인증 데이터의 소유권은 member에 있다.** security는 `MemberAccountOperations`
+공개 계약으로만 계정을 만진다 — 등록·자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴 다섯 가지이며,
+**비밀번호 해시는 member 밖으로 나가지 않는다.** 해싱과 일치 확인을 member가 직접 수행하므로
+`member -> security` 의존이 생기지 않는다. 의존 방향은 `security -> member -> shared`다.
+
+다른 모듈의 controller는 `member.AuthenticatedMember`만 parameter로 받고 JWT나 `member` 내부의
+`Member`를 보지 않는다. `booking`은 WebSocket 인증 하나 때문에 `security`를 참조한다 — STOMP
+CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독 인터셉터가
+`security.AccessTokenAuthenticator`로 토큰을 직접 검증한다.
+
+`GET /api/v1/members`는 member가, `DELETE /api/v1/members`는 security가 갖는다. 탈퇴는 DB
+처리로 끝나지 않고 커밋 뒤 외부 provider 연결 해제와 SecurityContext 정리가 이어지는 인증
+조립이기 때문이다. 같은 URL을 두 모듈이 메서드로 나눠 갖는다.
+
+OAuth provider raw attribute는 `security.oauth.OAuth2UserInfoMapper`가 `member.SocialIdentity`로
+정규화한 뒤 member의 공개 계약에 넘긴다. 기존 계정에 같은 이메일로 자동 연결하는 것은 provider가
+이메일 검증을 명시한 경우에만 허용하고, 검증되지 않은 이메일은 provider ID 기반 대체 주소로
+격리한다.
 
 **좌석 조회는 performanceId 기준이다** — 같은 Show라도 회차마다 편성·가격이 다를 수 있어 `showId`
-기준 조회 API는 만들지 않는다. `booking.seat.web.PerformanceSeatQueryController`가 공개하는 3개 API
+기준 조회 API는 만들지 않는다. `booking.web.PerformanceSeatQueryController`가 공개하는 3개 API
 (정적 seat-map / 동적 상태 / 등급별 잔여석)는 회차당 고정된 query 수를 유지한다 — 무엇을 어떻게
 고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
 원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
 않는다** — 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
-`show.catalog.web.ShowVenueLayoutController`(showId 기반 물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
+`show.web.ShowVenueLayoutController`(showId 기반 물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
 별개의 show 기준 API다 — 새 기능은 여기 추가하지 않고 performance 기준 API 쪽에 추가한다.
 
 **대기열**은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도 token 저장소도
@@ -496,8 +517,9 @@ Modulith `Documenter`로 만든다.
 - 다른 모듈의 하위 패키지, Repository, JPA entity를 직접 참조하지 않는가
 - 모듈을 넘는 JPA 연관관계나 DB FK가 새로 생기지 않았는가
 - 새 공개 계약이 JPA entity, Redis/JWT/Spring Web 타입을 노출하지 않는가
-- 새 클래스가 맞는 capability에 있는가 — 같은 업무 변경에 함께 고쳐질 코드 옆에 있는가
-- capability 안에 계층 아래 또 기능별 패키지를 만들지 않았는가
-- `support`에 둔 것이 실제로 여러 capability가 쓰는가, 아니면 갈 곳을 못 정한 것인가
+- 새 클래스가 맞는 계층에 있는가 — 클래스 이름이 이미 업무를 말하는데 폴더로 또 나누지 않았는가
+- `application`/`infrastructure`/`web` 아래에 업무별 폴더를 새로 만들지 않았는가
+- `domain` 아래 묶음이 실제 도메인 모델의 묶음인가, 폴더를 맞추려고 만든 것인가
+- 갈 곳을 못 정한 코드를 `common`/`support` 같은 이름에 모으지 않았는가
 - DB 상태와 Redis 상태를 합치는 규칙의 소유자가 한 곳인가
 - 새 추상화가 실제 경계를 보호하는가, 사용하지 않는 계층을 늘리기만 하는가

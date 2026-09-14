@@ -4,6 +4,13 @@
 
 채택됨 (2026-09-13)
 
+> 2026-09-14 갱신: "JWT 발급·검증, 로그인·로그아웃·refresh, OAuth2 provider 구현은 member가
+> 소유한다"는 부분은 [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이
+> 대체한다 — 인증 흐름의 조립은 모두 security가 소유하고, member는 회원 데이터와
+> `MemberAccountOperations` 공개 계약만 갖는다. 전역 HTTP 접근 정책을 member에서 떼어낸 이 ADR의
+> 핵심 결정과, `account`/`auth`/`oauth`를 각각 Application Module로 올리지 않은 판단은 그대로
+> 유효하다. 본문의 옛 패키지 경로 표기는 당시 기록으로 남긴다.
+
 ## 배경
 
 `member.security.infrastructure.SecurityConfig`가 회원·인증 업무와 무관한 공연·예매·Actuator·
