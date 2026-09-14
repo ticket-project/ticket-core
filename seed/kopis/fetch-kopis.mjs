@@ -15,20 +15,12 @@ import {
   normalizeKey,
   cleanPerformerName,
 } from './genre-map.mjs';
+import { resolveSpliceMarkers } from './splice-markers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SQL_PATH = resolve(__dirname, '../sql/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
-// 생성한 블록은 한 덩어리로 끼워 넣을 수 없다. 시드 SQL에는 "실행 시점에 존재하는 행"만
-// 대상으로 삼는 집합 기반 INSERT...SELECT가 둘 있고, 새 데이터는 각각 그 앞에 놓여야 한다.
-//
-//   1) 공연장·공연은 좌석 복제(CROSS JOIN VENUES) 앞    -> @seed-splice: venues
-//   2) 회차는 PERFORMANCE_GRADES / PERFORMANCE_SEATS 앞 -> @seed-splice: performances
-//
-// 예전에는 블록 전체를 GRADES INSERT 앞에 넣었다. 그래서 그렇게 추가된 공연장 179개가 좌석을
-// 하나도 받지 못했고, 그 공연장의 공연 198개·회차 662개에 회차좌석이 생성되지 않았다.
-const VENUE_SPLICE_MARKER = '-- @seed-splice: venues';
-const PERFORMANCE_SPLICE_MARKER = '-- @seed-splice: performances';
+// 병합 지점(마커) 해석과 그 계약 검증은 splice-markers.mjs가 소유한다.
 
 const KEY = process.env.KOPIS_SERVICE_KEY;
 
@@ -226,6 +218,10 @@ async function main() {
   console.log(`[설정] target=${opts.target}, 기간=${opts.from}~${opts.to}, rows=${opts.rows}, dryRun=${opts.dryRun}`);
 
   const sql = readFileSync(SQL_PATH, 'utf8');
+  // 병합 지점은 네트워크를 타기 전에 확정한다. dry-run도 같은 검증을 거쳐야 "미리보기는 됐는데
+  // 실제 병합에서 터진다"가 생기지 않는다.
+  const splice = resolveSpliceMarkers(sql);
+  console.log(`[병합 지점] 공연장 ${splice.venueLine}행, 회차 ${splice.performanceLine}행`);
   const next = {
     show: maxId(sql, 'SHOWS') + 1,
     performer: maxId(sql, 'PERFORMERS') + 1,
@@ -440,32 +436,23 @@ async function main() {
     console.log('...');
     const insertCount = [...lines, ...performanceLines].filter((l) => l.startsWith('INSERT')).length;
     console.log(`\n[DRY-RUN] 파일을 수정하지 않았습니다. 생성될 INSERT 라인 수: ${insertCount}`);
+    console.log(
+      `[DRY-RUN] 병합 지점: 공연장 블록 -> ${splice.venueLine}행 앞, 회차 블록 -> ${splice.performanceLine}행 앞`,
+    );
     return;
   }
 
-  // 4) 병합 — 뒤쪽 지점부터 끼워 넣어야 앞쪽 지점의 인덱스가 밀리지 않는다.
-  const venueIdx = sql.indexOf(VENUE_SPLICE_MARKER);
-  const performanceIdx = sql.indexOf(PERFORMANCE_SPLICE_MARKER);
-  if (venueIdx < 0 || performanceIdx < 0) {
-    console.error(
-      `병합 지점을 찾지 못했습니다(venues=${venueIdx}, performances=${performanceIdx}). 중단합니다.\n` +
-        `kopis-curated.sql에 '${VENUE_SPLICE_MARKER}' / '${PERFORMANCE_SPLICE_MARKER}' 마커 주석이 있어야 합니다.`,
-    );
-    process.exit(1);
-  }
-  if (performanceIdx < venueIdx) {
-    console.error('병합 지점 순서가 어긋났습니다(회차 마커가 공연장 마커보다 앞에 있습니다). 중단합니다.');
-    process.exit(1);
-  }
+  // 4) 병합 — 병합 지점은 이미 main 진입부에서 확정·검증했다(resolveSpliceMarkers).
+  const { venueIndex, performanceIndex } = splice;
   copyFileSync(SQL_PATH, `${SQL_PATH}.bak`);
   const merged =
-    sql.slice(0, venueIdx) +
+    sql.slice(0, venueIndex) +
     venueBlock +
     '\n' +
-    sql.slice(venueIdx, performanceIdx) +
+    sql.slice(venueIndex, performanceIndex) +
     performanceBlock +
     '\n' +
-    sql.slice(performanceIdx);
+    sql.slice(performanceIndex);
   writeFileSync(SQL_PATH, merged, 'utf8');
   console.log(`\n[병합 완료] 백업: ${SQL_PATH}.bak`);
   console.log(`[병합 완료] 신규 SHOWS ${shows.length}개 (id ${shows[0].id}~${shows[shows.length - 1].id}) 추가됨.`);
