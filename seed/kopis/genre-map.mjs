@@ -155,6 +155,22 @@ export function sqlStr(value) {
   return `'${cleaned}'`;
 }
 
+/**
+ * KOPIS 포스터 URL을 프론트가 허용하는 형태로 정규화한다.
+ *
+ * KOPIS는 포스터를 'http://www.kopis.or.kr/upload/...'로 준다. 그런데 ticket-fe의 next/image는
+ * remotePatterns에 'https://kopis.or.kr/upload/**'만 허용한다 — www 하위도메인도, http도 통과하지
+ * 못하고 페이지 전체가 렌더 오류로 죽는다. 기존 시드가 이미 https://kopis.or.kr 형태만 쓰고 있으므로
+ * 같은 형태로 맞춘다.
+ *
+ * kopis.or.kr이 아닌 호스트는 손대지 않는다 — 허용 목록을 여기서 추측하지 않는다.
+ */
+export function normalizePosterUrl(url) {
+  const raw = (url || '').trim();
+  if (!raw) return raw;
+  return raw.replace(/^https?:\/\/(?:www\.)?kopis\.or\.kr\//i, 'https://kopis.or.kr/');
+}
+
 /** 정규화 dedupe 키 (제목+공연장): 공백/대괄호/구두점 제거 후 소문자 */
 export function normalizeKey(title, venue) {
   const norm = (x) =>
