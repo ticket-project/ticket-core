@@ -134,6 +134,40 @@ export function parseKopisDate(s) {
   return d;
 }
 
+/**
+ * 새로 수집하는 공연의 view_count. 기존 시드(12,000~125,000)보다 확실히 높은 대역이라
+ * 인기순 목록 상단을 신규 공연이 차지한다.
+ *
+ * view_count는 실측 지표가 아니라 시드가 만드는 합성값이다. 그래서 이 값은 "얼마나 인기 있는가"가
+ * 아니라 "테스트 화면에서 어디에 노출할 것인가"를 정하는 손잡이다. 실제 조회수 집계가 들어오면
+ * 이 값은 덮여야 한다.
+ *
+ * 대역 안에서는 mt20id 해시로 흩어 놓는다 — 재실행해도 값이 같아 diff가 안정적이고, 배너(최신순)와
+ * 목록(인기순)의 상위 구성이 서로 달라져 같은 공연이 두 번 보이지 않는다.
+ */
+export function featuredViewCount(mt20id) {
+  return 130000 + (hash32(mt20id || '') % 90001); // 130,000~220,000
+}
+
+/**
+ * FNV-1a + fmix32 마무리. mt20id는 'PF300745'처럼 접두가 같고 끝자리만 다르다. 단순
+ * {@code h * 31 + c} 해시는 그런 입력에서 값이 서로 붙어 나와, 대역을 90,000이나 잡아도 실제로는
+ * 7,000 폭에만 몰렸다. 마무리 단계(avalanche)가 그 뭉침을 흩어 준다.
+ */
+function hash32(text) {
+  let hash = 2166136261 >>> 0;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 2246822507) >>> 0;
+  hash ^= hash >>> 13;
+  hash = Math.imul(hash, 3266489909) >>> 0;
+  hash ^= hash >>> 16;
+  return hash >>> 0;
+}
+
 /** mt20id 해시 기반 결정값 view_count (20000~80000) */
 export function deterministicViewCount(mt20id) {
   let hash = 0;
