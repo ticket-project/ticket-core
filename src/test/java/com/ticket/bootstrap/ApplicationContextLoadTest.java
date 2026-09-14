@@ -30,7 +30,8 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(beanOf("com.ticket.booking.domain.order.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.application.BookingEventListeners")).isNotNull();
-        assertThat(beanOf("com.ticket.shared.config.EventPublicationMaintenance")).isNotNull();
+        assertThat(beanOf("com.ticket.shared.infrastructure.EventPublicationMaintenance"))
+                .isNotNull();
     }
 
     /** 도메인 Repository는 포트이고 실제 빈은 infra 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */

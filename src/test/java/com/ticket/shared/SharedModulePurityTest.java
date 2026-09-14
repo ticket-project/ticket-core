@@ -11,7 +11,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * shared의 공개 계약에는 bean을 등록하지 않고, 공통 실행 코드는 {@code shared.config}와 {@code
+ * shared의 공개 계약에는 bean을 등록하지 않고, 공통 실행 코드는 {@code shared.infrastructure}와 {@code
  * shared.exception.handler}에만 둔다.
  *
  * <p>배경은 {@code docs/adr/0003-spring-modulith-application-module-boundaries.md} §6이 원본이다.
@@ -26,7 +26,8 @@ class SharedModulePurityTest {
             noClasses()
                     .that()
                     .resideOutsideOfPackages(
-                            "com.ticket.shared.config..", "com.ticket.shared.exception.handler..")
+                            "com.ticket.shared.infrastructure..",
+                            "com.ticket.shared.exception.handler..")
                     .should()
                     .beAnnotatedWith(Configuration.class)
                     .orShould()
