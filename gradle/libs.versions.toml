@@ -14,6 +14,8 @@ spring-dependency-management = "1.1.7"
 querydsl = "5.1.0"
 jjwt = "0.13.0"
 archunit = "1.4.1"
+error-prone = "2.50.0"
+nullaway = "0.14.1"
 p6spy = "2.0.0"
 redisson = "4.7.0"
 springdoc = "3.0.1"
@@ -35,6 +37,11 @@ jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
+# Error Prone은 javac plugin으로, NullAway는 그 위의 check로 붙는다. 둘은 같은 컴파일에서만 의미가
+# 있어 build.gradle의 errorprone configuration에만 올린다(런타임 classpath에 올리지 않는다).
+error-prone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "error-prone" }
+nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
+
 p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
@@ -44,5 +51,7 @@ oracle-security-oraclepki = { module = "com.oracle.database.security:oraclepki",
 oracle-security-osdt-core = { module = "com.oracle.database.security:osdt_core", version.ref = "oracle-security" }
 
 [plugins]
+errorprone = { id = "net.ltgt.errorprone", version = "5.1.1" }
+nullaway = { id = "net.ltgt.nullaway", version = "3.2.0" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
