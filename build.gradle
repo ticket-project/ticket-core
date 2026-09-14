@@ -161,12 +161,23 @@ dependencies {
     seedMainImplementation 'org.springframework.security:spring-security-crypto'
     seedMainImplementation 'org.yaml:snakeyaml'
     seedMainRuntimeOnly 'com.h2database:h2'
+    // seedProd는 운영 Oracle에 직접 붙는다. 서버(runtimeOnly)가 쓰는 것과 같은 좌표여야 Wallet 기반
+    // jdbc:oracle:thin:@<tns_alias> URL과 TNS_ADMIN 설정을 서버와 동일하게 쓸 수 있다.
+    seedMainRuntimeOnly 'com.oracle.database.jdbc:ojdbc8'
+    seedMainRuntimeOnly libs.oracle.security.osdt.cert
+    seedMainRuntimeOnly libs.oracle.security.oraclepki
+    seedMainRuntimeOnly libs.oracle.security.osdt.core
 
     // 시드 테스트는 시드 코드와, 실제 앱 entity 매핑으로 스키마를 만들기 위한 서비스 classpath를
     // 함께 본다. 반대 방향(main/test가 시드를 보는 것)은 만들지 않는다.
     seedTestImplementation sourceSets.seedMain.output
     seedTestImplementation sourceSets.main.output
     seedTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // 운영 적재 경로(seedProd)는 실제 Oracle에서만 검증할 수 있다. 서비스 테스트가 이미 쓰는
+    // gvenzl/oracle-free 컨테이너를 시드 테스트에서도 쓴다(Docker 없으면 자동으로 건너뛴다).
+    seedTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    seedTestImplementation 'org.testcontainers:testcontainers-oracle-free'
+    seedTestRuntimeOnly 'com.oracle.database.jdbc:ojdbc8'
     seedTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -238,14 +249,47 @@ tasks.register('seedLocal', JavaExec) {
     description = '로컬 H2 DB에 시드 데이터를 적재한다 (서버 기동 후 실행).'
     mainClass = 'com.ticket.seed.SeedLocalMain'
     classpath = sourceSets.seedMain.runtimeClasspath
+    configureSeedExecution(it, project)
+}
+
+/**
+ * 준비된 운영 Oracle 테이블에 초기 데이터를 적재하고 종료한다. 사용자가 자기 PC에서 직접 실행한다.
+ *
+ *   .\gradlew.bat seedProd
+ *
+ * 접속 설정의 원본은 SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
+ * 환경변수뿐이다. seedLocal과 달리 application-local.yml을 읽지 않는다 -- 운영 적재가 조용히 로컬
+ * H2로 흘러가는 경로를 만들지 않기 위해서다. 세 값 중 하나라도 없으면 적재 전에 실패한다.
+ *
+ * 기본값은 공연 데이터만 적재한다(테스트 회원 0명, 부하 테스트 회차 0개).
+ * 테이블 생성은 이 명령의 범위가 아니다 -- 이미 있는 테이블에 데이터만 넣는다.
+ */
+tasks.register('seedProd', JavaExec) {
+    group = 'application'
+    description = '준비된 운영 Oracle 테이블에 시드 데이터를 적재한다 (환경변수로 접속 설정을 넘긴다).'
+    mainClass = 'com.ticket.seed.SeedProdMain'
+    classpath = sourceSets.seedMain.runtimeClasspath
+    configureSeedExecution(it, project)
+    // Wallet(자율운영 DB)을 쓰면 ojdbc가 TNS_ADMIN을 본다. 서버와 같은 설정을 그대로 쓸 수 있게
+    // 환경변수를 시스템 프로퍼티로도 넘긴다(ojdbc는 둘 다 지원한다).
+    if (System.getenv('TNS_ADMIN')) {
+        systemProperty 'oracle.net.tns_admin', System.getenv('TNS_ADMIN')
+    }
+}
+
+/**
+ * seedLocal / seedProd 공통 실행 설정. seed.* 시스템 프로퍼티는 Gradle JVM에서 실행 JVM으로 넘긴다.
+ * 접속 자격증명은 프로퍼티로 넘기지 않는다 -- 환경변수는 JavaExec가 그대로 상속한다.
+ */
+static void configureSeedExecution(JavaExec task, Project project) {
     // Gradle이 자식 프로세스 출력을 UTF-8로 읽는다. 시드 프로그램의 한국어 출력이 Windows
     // 콘솔 인코딩(cp949)으로 나가면 그 자리에서 깨진다.
-    systemProperty 'stdout.encoding', 'UTF-8'
-    systemProperty 'stderr.encoding', 'UTF-8'
-    systemProperty 'seed.project-dir', projectDir.absolutePath
+    task.systemProperty 'stdout.encoding', 'UTF-8'
+    task.systemProperty 'stderr.encoding', 'UTF-8'
+    task.systemProperty 'seed.project-dir', project.projectDir.absolutePath
     System.properties.each { key, value ->
         if (key.toString().startsWith('seed.')) {
-            systemProperty key.toString(), value
+            task.systemProperty key.toString(), value
         }
     }
 }
