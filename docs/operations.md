@@ -47,6 +47,9 @@ Windows PowerShell:
 local 프로파일은 `ddl-auto: create`라 서버를 재시작하면 `seedLocal`을 다시 실행해야 한다.
 적재 대상·기본값·반복 실행 규칙은 [seed/README.md](../seed/README.md)가 원본이다.
 
+운영 Oracle에 같은 공용 시드를 넣는 명령은 `seedProd`다. 사람이 자기 PC에서 직접 실행하며
+접속 설정은 환경변수로만 넘긴다 — 사용법과 IntelliJ 실행 설정도 같은 문서가 원본이다.
+
 **단일 Gradle Spring Boot 프로젝트다.** `@SpringBootApplication`(`@Modulith`)과 `application*.yml`이
 루트 `src/main/resources`에 있으므로 `:core:core-api:bootRun` 같은 subproject 실행 명령은 없다.
 `application.yml`에 기본 프로파일이 없어 프로파일을 지정하지 않으면 datasource 설정이 비어
@@ -98,6 +101,14 @@ Swagger:
 - `ddl-auto: validate`
 - Flyway: enabled, module-aware
 - 기존 운영 스키마는 최초 도입 시 Flyway baseline으로 등록
+- 초기 데이터: 기동 시 넣지 않는다. **테이블 생성(배포/Flyway)과 데이터 적재(`seedProd`)는 별개
+  작업이다.** `seedProd`는 이미 준비된 테이블에 데이터를 넣기만 하고, 테이블을 만들거나 지우거나
+  초기화하지 않으며 기존의 불완전한 데이터를 자동으로 고치지도 않는다 —
+  [seed/README.md](../seed/README.md)
+- `seedProd`는 `SPRING_DATASOURCE_URL` / `SPRING_DATASOURCE_USERNAME` /
+  `SPRING_DATASOURCE_PASSWORD`를 쓴다(prod 프로파일이 쓰는 것과 같은 변수). Wallet을 쓰면
+  `TNS_ADMIN`도 서버와 같은 값이어야 한다. 하나라도 없으면 적재를 시작하기 전에 실패한다 —
+  로컬 DB로 대체하지 않는다.
 
 관련 설정:
 
