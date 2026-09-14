@@ -64,7 +64,7 @@ class BookingLayerDependencyTest {
                     .resideInAnyPackage(
                             "com.ticket.booking.application..",
                             "com.ticket.booking.infrastructure..",
-                            "com.ticket.booking.web..")
+                            "com.ticket.booking.endpoint..")
                     .because("업무 규칙과 상태는 조립·저장·HTTP를 모른다");
 
     @ArchTest
@@ -75,7 +75,7 @@ class BookingLayerDependencyTest {
                     .should()
                     .dependOnClassesThat()
                     .resideInAnyPackage(
-                            "com.ticket.booking.infrastructure..", "com.ticket.booking.web..")
+                            "com.ticket.booking.infrastructure..", "com.ticket.booking.endpoint..")
                     .because("application은 포트로만 밖을 부른다 — 구현 선택은 infrastructure가 갖는다");
 
     private static String namePattern(final String[] typeNames) {

@@ -25,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
  * ConstraintDeclarationException(HV000151)을 던진다. Controller가 문서 인터페이스를 구현하므로 같은 제약을 두 곳에 두면 method
  * validation 자체가 깨진다.
  *
- * <p>Spring Modulith 전환으로 controller/docs 인터페이스가 legacy 단일 패키지가 아니라 각 module의 {@code
- * <module>.web}·{@code <module>.web.docs}에 흩어져 있다. 그래서 고정 디렉터리 하나 대신 {@code
- * src/main/java/com/ticket} 전체에서 이 두 패턴에 맞는 디렉터리를 재귀적으로 찾는다.
+ * <p>controller와 문서 인터페이스는 한 곳에 모여 있지 않다 — 업무 module은 {@code <module>.endpoint}와 {@code
+ * <module>.endpoint.docs}에, security는 기능 폴더인 {@code security.auth}에 둔다. 그래서 {@code
+ * src/main/java/com/ticket} 전체를 훑되, <b>controller는 디렉터리 이름이 아니라 {@code @RestController} 애노테이션으로
+ * 찾는다.</b> 디렉터리 이름으로 찾으면 package 이름이 바뀔 때 검사 대상이 조용히 0개가 되어 테스트가 통과해 버린다 (실제로 {@code web} -> {@code
+ * endpoint} 개명에서 그럴 뻔했다). 문서 인터페이스는 애노테이션으로 구분되지 않아 {@code docs} 디렉터리 이름을 계속 쓴다.
  *
  * <p>상대 경로로 소스 디렉터리를 읽으므로 Gradle이 정해 주는 작업 디렉터리에서만 통과한다.
  */
@@ -53,6 +55,9 @@ class ControllerParameterConstraintTest {
             }
         }
 
+        assertThat(controllerClasses())
+                .as("검사 대상 controller가 0개면 이 테스트는 아무것도 보장하지 않는다")
+                .isNotEmpty();
         assertThat(violations).as("제약과 @Valid는 controller.docs 인터페이스에만 선언한다").isEmpty();
     }
 
@@ -98,7 +103,7 @@ class ControllerParameterConstraintTest {
     }
 
     private List<Class<?>> controllerClasses() throws IOException {
-        return classesUnderDirectoriesNamed("web").stream()
+        return allClassesUnder(SOURCE_ROOT).stream()
                 .filter(type -> type.isAnnotationPresent(RestController.class))
                 .toList();
     }
@@ -109,8 +114,7 @@ class ControllerParameterConstraintTest {
 
     /**
      * {@code SOURCE_ROOT} 아래에서 마지막 디렉터리 이름이 {@code leafDirName}인 모든 디렉터리를 찾아 그 바로 아래(하위 디렉터리 제외)
-     * {@code .java} 파일을 class로 읽는다. {@code web}은 각 module의 controller 패키지, {@code docs}는 각 module의
-     * 문서 인터페이스 패키지를 가리킨다.
+     * {@code .java} 파일을 class로 읽는다. {@code docs}는 각 module의 문서 인터페이스 패키지를 가리킨다.
      */
     private List<Class<?>> classesUnderDirectoriesNamed(final String leafDirName)
             throws IOException {
@@ -130,6 +134,20 @@ class ControllerParameterConstraintTest {
         return classes;
     }
 
+    /** {@code SOURCE_ROOT} 아래 모든 {@code .java}를 class로 읽는다. package 이름에 기대지 않는다. */
+    private List<Class<?>> allClassesUnder(final Path root) throws IOException {
+        if (!Files.isDirectory(root)) {
+            throw new IllegalStateException(root + "가 있어야 한다");
+        }
+        final List<Class<?>> classes = new ArrayList<>();
+        try (Stream<Path> allDirs = Files.walk(root)) {
+            for (final Path directory : allDirs.filter(Files::isDirectory).toList()) {
+                classes.addAll(classesDirectlyIn(directory));
+            }
+        }
+        return classes;
+    }
+
     private List<Class<?>> classesDirectlyIn(final Path directory) throws IOException {
         final String packageName =
                 Path.of("src/main/java")
@@ -140,6 +158,8 @@ class ControllerParameterConstraintTest {
         try (Stream<Path> paths = Files.list(directory)) {
             return paths.filter(path -> path.toString().endsWith(".java"))
                     .map(path -> path.getFileName().toString().replace(".java", ""))
+                    // package-info는 class 이름으로 로드할 수 없고, 애노테이션이 없으면 class 파일 자체가 없다.
+                    .filter(name -> !"package-info".equals(name))
                     .<Class<?>>map(name -> loadClass(packageName + "." + name))
                     .toList();
         }

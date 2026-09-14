@@ -10,8 +10,8 @@ import lombok.Getter;
 
 /**
  * {@code bookingStatus}는 HTTP query param 이름이라 {@link
- * com.ticket.show.web.request.ShowSearchRequest}의 필드명은 그대로 두고, 이 계층의 타입만 {@link SaleDisplayStatus}로
- * 바꿨다(ADR 0007).
+ * com.ticket.show.endpoint.request.ShowSearchRequest}의 필드명은 그대로 두고, 이 계층의 타입만 {@link
+ * SaleDisplayStatus}로 바꿨다(ADR 0007).
  */
 @Getter
 public class ShowSearchCriteria {
