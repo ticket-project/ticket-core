@@ -3,6 +3,10 @@ plugins {
     id 'com.diffplug.spotless' version '8.9.0'
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
+    // 정적 분석: Error Prone을 javac plugin으로 붙이고 그 위에서 NullAway를 돌린다.
+    // 실제 검사 범위와 강도는 아래 "정적 분석" 절이 정한다.
+    alias(libs.plugins.errorprone)
+    alias(libs.plugins.nullaway)
 }
 
 spotless {
@@ -123,6 +127,15 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Null 계약 표기. 버전은 Spring Boot BOM이 관리한다(4.1.1 -> jspecify 1.0.1) -- Spring
+    // Framework 7 자신이 JSpecify로 표기돼 있어 이미 compile classpath에 올라와 있지만,
+    // 우리 코드가 직접 import하므로 명시적 의존으로 선언한다.
+    implementation 'org.jspecify:jspecify'
+
+    // javac plugin으로만 쓰인다. 산출물이나 테스트 classpath에 올라가지 않는다.
+    errorprone libs.error.prone.core
+    errorprone libs.nullaway
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     // ActuatorSecurityConfigTest 등 @WebMvcTest + Import(SecurityConfig)가 실제 Security filter chain을
@@ -179,6 +192,58 @@ dependencies {
     seedTestImplementation 'org.testcontainers:testcontainers-oracle-free'
     seedTestRuntimeOnly 'com.oracle.database.jdbc:ojdbc8'
     seedTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+/**
+ * 정적 분석: Error Prone + NullAway.
+ *
+ * 이 저장소가 Error Prone에서 원하는 것은 <b>null 계약 검증</b> 하나다. Error Prone이 기본으로 켜는
+ * 수백 개의 rule을 한꺼번에 들이면 이번 작업과 무관한 지적이 빌드를 막는다. 그래서 Iced-Latte와 같은
+ * 방식으로 전체를 끈 뒤 필요한 것만 되켠다.
+ *
+ *   - NullAway            ERROR  -- 빌드를 막는다. null 계약 위반은 CI 실패다.
+ *   - 그 외 소수의 rule    WARN   -- 실수는 알려주되 막지 않는다.
+ *
+ * NullAway는 {@code onlyNullMarked = true}라서 {@code @NullMarked} package만 검사한다. test와 seed
+ * source set에는 {@code @NullMarked}가 없어 검사해도 아무 일이 없고 컴파일만 느려지므로 아예 끈다 --
+ * 검사 대상은 {@code src/main/java}의 production code다.
+ *
+ * {@code jspecifyMode = true}는 JSpecify의 generic/type-use 의미(예: {@code List<@Nullable String>})
+ * 까지 본다. JDK 25 + NullAway 0.14에서 실제로 켜고 빌드해 확인했다.
+ */
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.enabled = false
+}
+
+tasks.named('compileJava') {
+    options.errorprone {
+        // 기본 rule 전체를 끄고 아래에서 필요한 것만 되켠다.
+        disableAllChecks = true
+        error('NullAway')
+        // 실수하기 쉽고 오탐이 적은 것만 경고로 남긴다. 빌드를 막지 않는다.
+        warn('MissingOverride', 'EqualsHashCode', 'ReturnValueIgnored', 'UnusedVariable')
+        // Querydsl Q-type과 Lombok 산출물은 우리가 고칠 수 있는 코드가 아니다.
+        disableWarningsInGeneratedCode = true
+        excludedPaths = '.*/build/generated/.*'
+
+        nullaway {
+            // @NullMarked가 붙은 package만 검사한다. 표기 없는 코드는 판단하지 않는다.
+            onlyNullMarked = true
+            // JSpecify의 type-use/generic 의미까지 본다.
+            jspecifyMode = true
+            // 필드를 생성자가 아니라 프레임워크가 채우는 자리다. NullAway는 이를 알 수 없다.
+            //   @Autowired/@Value        -- Spring 주입
+            //   @DefaultValue            -- @ConfigurationProperties 바인딩
+            //   @Mock/@InjectMocks       -- (test에서만) Mockito 주입
+            excludedFieldAnnotations = [
+                    'org.springframework.beans.factory.annotation.Autowired',
+                    'org.springframework.beans.factory.annotation.Value',
+                    'org.springframework.boot.context.properties.bind.DefaultValue',
+            ]
+            // 클래스 전체를 검사 대상에서 빼는 유일한 경우: 도구가 만든 코드다.
+            excludedClassAnnotations = ['javax.annotation.processing.Generated']
+        }
+    }
 }
 
 tasks.named('test') {
