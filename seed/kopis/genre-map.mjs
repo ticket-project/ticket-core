@@ -36,6 +36,39 @@ export function mapGenre(genrenm, title = '') {
 }
 
 /**
+ * GENRES id -> CATEGORIES id. 시드 SQL의 GENRES 리터럴과 같은 사실이다
+ * (1~7 = 콘서트, 8/9/12/13 = 연극, 10/11/14/15 = 뮤지컬).
+ */
+const CATEGORY_OF_GENRE = {
+  1: 1,
+  2: 1,
+  3: 1,
+  4: 1,
+  5: 1,
+  6: 1,
+  7: 1,
+  8: 2,
+  9: 2,
+  12: 2,
+  13: 2,
+  10: 3,
+  11: 3,
+  14: 3,
+  15: 3,
+};
+
+/** 카테고리별 표시 이름. 수집 요약 출력용. */
+export const CATEGORY_LABEL = { 1: '콘서트', 2: '연극', 3: '뮤지컬' };
+
+/**
+ * 장르 id가 속한 카테고리 id. 매핑 불가는 null.
+ * @returns {number|null}
+ */
+export function categoryOfGenre(genreId) {
+  return CATEGORY_OF_GENRE[genreId] ?? null;
+}
+
+/**
  * 주소/지역명 접두에서 region enum을 결정한다.
  * enum: SEOUL, GYEONGGI, INCHEON, GANGWON, CHUNGCHEONG, JEOLLA, GYEONGSANG, JEJU
  */

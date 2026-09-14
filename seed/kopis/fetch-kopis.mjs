@@ -17,6 +17,8 @@ import {
   sqlStr,
   normalizeKey,
   cleanPerformerName,
+  categoryOfGenre,
+  CATEGORY_LABEL,
 } from './genre-map.mjs';
 import { resolveSpliceMarkers } from './splice-markers.mjs';
 
@@ -145,6 +147,14 @@ export function splitIntoWindows(from, to, maxDays) {
   return windows;
 }
 
+/** 'YYYY-MM-DD HH:MM:SS' 로컬 시각. 신규 행의 등록일(created_at)에 쓴다. */
+export function nowStamp(date = new Date()) {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  );
+}
+
 function dateRange(startStr, endStr) {
   const out = [];
   const [ys, ms, ds] = startStr.split('-').map(Number);
@@ -250,8 +260,32 @@ function buildPerformances(show, startPerfId) {
       end,
       open: `${show.saleStart} 10:00:00`,
       close,
+      createdAt: show.createdAt,
     };
   });
+}
+
+// ---------- 카테고리 균형 ----------
+/**
+ * 후보를 카테고리별로 나눠 번갈아 꺼낸다(콘서트 -> 연극 -> 뮤지컬 -> 콘서트 ...).
+ * 앞에서부터 target개를 잘라도 카테고리가 고르게 담긴다. 어느 카테고리가 모자라면 남은 것끼리
+ * 계속 번갈아 나온다 — 억지로 채우지 않는다.
+ */
+export function interleaveByCategory(candidates) {
+  const buckets = new Map();
+  for (const candidate of candidates) {
+    const key = candidate.categoryId ?? 0;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(candidate);
+  }
+  const lists = [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([, list]) => list);
+  const ordered = [];
+  for (let index = 0; lists.some((list) => index < list.length); index++) {
+    for (const list of lists) {
+      if (index < list.length) ordered.push(list[index]);
+    }
+  }
+  return ordered;
 }
 
 // ---------- info 문구 ----------
@@ -312,7 +346,8 @@ async function main() {
   );
 
   const candidates = [];
-  const want = opts.target + 20; // 상세 실패 대비 버퍼
+  // 카테고리를 고르게 담으려면 target보다 넉넉한 풀이 필요하다(상세 조회 실패 버퍼 겸용).
+  const want = Math.max(opts.target * 3, opts.target + 20);
   for (const window of windows) {
     if (candidates.length >= want) break;
     for (let page = 1; page <= opts.maxPages && candidates.length < want; page++) {
@@ -329,14 +364,25 @@ async function main() {
         const prfstate = tag(b, 'prfstate');
         if (!mt20id || !prfnm || !poster) continue;
         if (!['공연예정', '공연중'].includes(prfstate)) continue;
-        if (mapGenre(genrenm, prfnm) === null) continue;
+        const genreId = mapGenre(genrenm, prfnm);
+        if (genreId === null) continue;
         // 구간이 달라도 기간이 걸친 공연은 다시 나온다. 기존 시드와 같은 Set으로 함께 거른다.
         if (seenPf.has(mt20id)) continue;
         const key = normalizeKey(prfnm, fcltynm);
         if (seenKeys.has(key)) continue;
         seenKeys.add(key);
         seenPf.add(mt20id);
-        candidates.push({ mt20id, prfnm, genrenm, fcltynm, poster, from: tag(b, 'prfpdfrom'), to: tag(b, 'prfpdto') });
+        candidates.push({
+          mt20id,
+          prfnm,
+          genrenm,
+          fcltynm,
+          poster,
+          genreId,
+          categoryId: categoryOfGenre(genreId),
+          from: tag(b, 'prfpdfrom'),
+          to: tag(b, 'prfpdto'),
+        });
       }
       process.stdout.write(`\r[목록] ${window.from}~${window.to} page ${page}, 후보 ${candidates.length}개`);
       await sleep(150);
@@ -344,14 +390,19 @@ async function main() {
   }
   console.log(`\n[목록] 최종 후보 ${candidates.length}개`);
 
+  // 콘서트·연극·뮤지컬을 번갈아 고른다. KOPIS 목록은 장르가 몰려 나오는 구간이 있어서 앞에서부터
+  // 그대로 자르면 한 카테고리가 target을 다 먹는다.
+  const ordered = interleaveByCategory(candidates);
+
   // 2) 상세 + 시설 수집, row 생성
   const performerMap = new Map(); // name -> id
   const venueMap = new Map(); // name -> {id, ...}
   const shows = [];
   const performances = [];
   const showGenres = [];
+  const categoryCounts = new Map();
 
-  for (const c of candidates) {
+  for (const c of ordered) {
     if (shows.length >= opts.target) break;
     let detail;
     try {
@@ -378,11 +429,12 @@ async function main() {
 
     // 공연자(기획사) dedupe
     const performerName = cleanPerformerName(entrpsnm) || shortCast(prfcast).split(',')[0]?.trim() || 'KOPIS';
-    let performerId = performerMap.get(performerName);
-    if (!performerId) {
-      performerId = next.performer++;
-      performerMap.set(performerName, performerId);
+    let performer = performerMap.get(performerName);
+    if (!performer) {
+      performer = { id: next.performer++, name: performerName, createdAt: nowStamp() };
+      performerMap.set(performerName, performer);
     }
+    const performerId = performer.id;
 
     // 공연장 dedupe (+시설 상세)
     const venueKey = fcltynm.replace(/\s+/g, '');
@@ -415,6 +467,7 @@ async function main() {
         lat: la && !Number.isNaN(Number(la)) ? Number(la).toFixed(8) : 'NULL',
         lon: lo && !Number.isNaN(Number(lo)) ? Number(lo).toFixed(8) : 'NULL',
         phone: telno || '정보없음',
+        createdAt: nowStamp(),
       };
       venueMap.set(venueKey, venue);
     }
@@ -422,8 +475,12 @@ async function main() {
     const showId = next.show++;
     const saleStart = minusOneMonth(startDate);
     const cast = shortCast(prfcast);
+    // 등록일은 실제로 수집해 등록하는 이 시각이다. 고정값('2026-01-01 10:00:00')을 쓰면 새로
+    // 넣은 공연이 최신순에서 기존 공연 사이에 묻힌다. 기존 행의 등록일은 건드리지 않는다.
+    const createdAt = nowStamp();
     shows.push({
       id: showId,
+      createdAt,
       title: c.prfnm,
       subTitle: fcltynm,
       info: buildInfo(fcltynm, genrenm, minutes, prfage, cast),
@@ -437,15 +494,30 @@ async function main() {
       runningMinutes: minutes,
       performerId,
     });
-    showGenres.push({ id: next.showGenre++, showId, genreId: mapGenre(genrenm, c.prfnm) });
+    const genreId = mapGenre(genrenm, c.prfnm) ?? c.genreId;
+    showGenres.push({ id: next.showGenre++, showId, genreId, createdAt });
+    categoryCounts.set(
+      categoryOfGenre(genreId),
+      (categoryCounts.get(categoryOfGenre(genreId)) ?? 0) + 1,
+    );
 
-    const perfs = buildPerformances({ id: showId, startDate, endDate, runningMinutes: minutes, saleStart, dtguidance }, next.performance);
+    const perfs = buildPerformances({ id: showId, startDate, endDate, runningMinutes: minutes, saleStart, dtguidance, createdAt }, next.performance);
     next.performance += perfs.length;
     performances.push(...perfs);
 
     process.stdout.write(`\r[상세] 공연 ${shows.length}/${opts.target}`);
   }
   console.log(`\n[수집 완료] SHOWS=${shows.length}, VENUES=${venueMap.size}, PERFORMERS=${performerMap.size}, SHOW_GENRES=${showGenres.length}, PERFORMANCES=${performances.length}`);
+  console.log(
+    '[카테고리] ' +
+      [...categoryCounts.entries()]
+        .sort((a, b) => (a[0] ?? 0) - (b[0] ?? 0))
+        .map(([id, count]) => `${CATEGORY_LABEL[id] ?? '기타'} ${count}개`)
+        .join(', '),
+  );
+  if (shows.length > 0) {
+    console.log(`[등록일] ${shows[0].createdAt} ~ ${shows[shows.length - 1].createdAt} (실제 수집 시각)`);
+  }
 
   if (shows.length === 0) {
     console.error('수집된 신규 공연이 없습니다. 종료합니다.');
@@ -460,30 +532,30 @@ async function main() {
   lines.push('-- ============================================================');
 
   lines.push('-- ===== 추가 공연자 =====');
-  for (const [name, id] of performerMap) {
+  for (const performer of performerMap.values()) {
     lines.push(
-      `INSERT INTO PERFORMERS (id, name, profile_image_url, created_at, created_by) VALUES (${id}, ${sqlStr(name)}, '', '2026-01-01 10:00:00', 'KOPIS_SEED');`,
+      `INSERT INTO PERFORMERS (id, name, profile_image_url, created_at, created_by) VALUES (${performer.id}, ${sqlStr(performer.name)}, '', '${performer.createdAt}', 'KOPIS_SEED');`,
     );
   }
 
   lines.push('-- ===== 추가 공연장 =====');
   for (const v of venueMap.values()) {
     lines.push(
-      `INSERT INTO VENUES (id, name, address, region, address_detail, zip_code, latitude, longitude, phone, image_url, view_box_width, view_box_height, seat_diameter, gap_x, gap_y, created_at, created_by) VALUES (${v.id}, ${sqlStr(v.name)}, ${sqlStr(v.address)}, '${v.region}', ${sqlStr(v.addressDetail)}, '', ${v.lat}, ${v.lon}, ${sqlStr(v.phone)}, '', 500, 356, 4.8, 2.5, 2.5, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
+      `INSERT INTO VENUES (id, name, address, region, address_detail, zip_code, latitude, longitude, phone, image_url, view_box_width, view_box_height, seat_diameter, gap_x, gap_y, created_at, created_by) VALUES (${v.id}, ${sqlStr(v.name)}, ${sqlStr(v.address)}, '${v.region}', ${sqlStr(v.addressDetail)}, '', ${v.lat}, ${v.lon}, ${sqlStr(v.phone)}, '', 500, 356, 4.8, 2.5, 2.5, '${v.createdAt}', 'KOPIS_SEED');`,
     );
   }
 
   lines.push('-- ===== 추가 공연 =====');
   for (const s of shows) {
     lines.push(
-      `INSERT INTO SHOWS (id, title, sub_title, info, start_date, end_date, view_count, display_sale_type, display_sale_starts_at, display_sale_ends_at, image, venue_id, running_minutes, performer_id, created_at, created_by) VALUES (${s.id}, ${sqlStr(s.title)}, ${sqlStr(s.subTitle)}, ${sqlStr(s.info)}, '${s.startDate}', '${s.endDate}', ${s.viewCount}, 'GENERAL', '${s.saleStart} 10:00:00', '${s.saleEnd}', ${sqlStr(s.image)}, ${s.venueId}, ${s.runningMinutes}, ${s.performerId}, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
+      `INSERT INTO SHOWS (id, title, sub_title, info, start_date, end_date, view_count, display_sale_type, display_sale_starts_at, display_sale_ends_at, image, venue_id, running_minutes, performer_id, created_at, created_by) VALUES (${s.id}, ${sqlStr(s.title)}, ${sqlStr(s.subTitle)}, ${sqlStr(s.info)}, '${s.startDate}', '${s.endDate}', ${s.viewCount}, 'GENERAL', '${s.saleStart} 10:00:00', '${s.saleEnd}', ${sqlStr(s.image)}, ${s.venueId}, ${s.runningMinutes}, ${s.performerId}, '${s.createdAt}', 'KOPIS_SEED');`,
     );
   }
 
   lines.push('-- ===== 추가 공연-장르 매핑 =====');
   for (const sg of showGenres) {
     lines.push(
-      `INSERT INTO SHOW_GENRES (id, show_id, genre_id, created_at, created_by) VALUES (${sg.id}, ${sg.showId}, ${sg.genreId}, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
+      `INSERT INTO SHOW_GENRES (id, show_id, genre_id, created_at, created_by) VALUES (${sg.id}, ${sg.showId}, ${sg.genreId}, '${sg.createdAt}', 'KOPIS_SEED');`,
     );
   }
 
@@ -494,7 +566,7 @@ async function main() {
   performanceLines.push(`-- ===== 추가 공연 회차 (기간 ${opts.from}~${opts.to}) =====`);
   for (const p of performances) {
     performanceLines.push(
-      `INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (${p.id}, ${p.showId}, ${p.no}, '${p.start}', '${p.end}', '${p.open}', '${p.close}', 4, 600, '2026-01-01 10:00:00', 'KOPIS_SEED');`,
+      `INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (${p.id}, ${p.showId}, ${p.no}, '${p.start}', '${p.end}', '${p.open}', '${p.close}', 4, 600, '${p.createdAt}', 'KOPIS_SEED');`,
     );
   }
   performanceLines.push('');
