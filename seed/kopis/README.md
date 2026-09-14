@@ -43,7 +43,7 @@ $env:KOPIS_SERVICE_KEY="xxxx"; node seed/kopis/fetch-kopis.mjs --target 100 --fr
 - **결정성**: `view_count`는 `mt20id` 해시 기반 → 재실행 시 diff 안정.
 - **백업**: 병합 전 `kopis-curated.sql.bak` 생성.
 - **장르 매핑**: `genre-map.mjs` 참고. 복합/기타 등 매핑 불가 장르는 스킵.
-- **좌석/등급**: `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS`는 SQL 파일 끝 `INSERT ... SELECT`가 신규 SHOWS·PERFORMANCES에 자동 적용하므로 별도 생성하지 않는다. 자세한 위치는 아래 "병합 지점" 참고.
+- **좌석/등급**: `SEATS` 복제와 `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS`는 SQL 파일 안의 `INSERT ... SELECT`가 신규 VENUES·SHOWS·PERFORMANCES에 자동 적용하므로 별도 생성하지 않는다. **다만 끼워 넣는 지점이 둘로 나뉜다** — 아래 "병합 지점" 참고.
 
 ## 병합 후 검증
 
@@ -68,14 +68,27 @@ node seed/kopis/verify-seed.mjs seed/sql/kopis-curated.sql
 
 ## 병합 지점
 
-생성한 블록은 SQL 파일 끝의 집합 기반 `INSERT INTO GRADES (` 바로 앞에 끼워 넣는다
-(`SPLICE_MARKER`). 그 뒤의 `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS`는
-`INSERT ... SELECT`라 실행 시점의 모든 `SHOWS` / `PERFORMANCES`를 대상으로 삼으므로, 이 지점에
-넣으면 신규 공연도 등급·가격·회차좌석을 자동으로 받는다.
+생성한 블록은 **한 덩어리로 넣을 수 없다.** 시드 SQL에는 "실행 시점에 존재하는 행"만 대상으로
+삼는 집합 기반 `INSERT ... SELECT`가 둘 있고, 새 데이터는 각각 그 앞에 놓여야 한다. 그래서
+`kopis-curated.sql`에 마커 주석 두 개를 두고 도구가 블록을 나눠 끼워 넣는다.
 
-예전 마커였던 `INSERT INTO SHOW_GRADES`는 `SHOW_GRADES` 테이블이 `PERFORMANCE_GRADES`로
-대체되며 폐지돼(ADR 0005 §2) 파일에서 사라졌다. 지금 마커는 현재 파일에 정확히 한 번 나온다.
+| 마커 | 앞에 놓아야 하는 것 | 뒤에 오는 집합 기반 INSERT |
+| --- | --- | --- |
+| `-- @seed-splice: venues` | `PERFORMERS` / `VENUES` / `SHOWS` / `SHOW_GENRES` | `SEATS`의 VENUE별 복제 (`CROSS JOIN VENUES`) |
+| `-- @seed-splice: performances` | `PERFORMANCES` | `GRADES` / `PERFORMANCE_GRADES` / `PERFORMANCE_SEATS` |
 
-주의: `SEATS`의 VENUE별 복제 `INSERT ... SELECT`는 파일 중간(리터럴 `SEATS` 템플릿 바로 뒤)에
-있다. 이 마커 위치에 새로 추가되는 `VENUES`는 좌석 복제 대상에 들어가지 않으므로, 그 공연장의
-공연에는 `PERFORMANCE_SEATS`가 생기지 않는다 — 기존 "추가 공연장" 블록도 같은 상태다.
+마커가 하나라도 없으면 도구는 파일을 고치지 않고 중단한다.
+
+### 왜 나눠야 하는가
+
+예전에는 블록 전체를 `INSERT INTO GRADES (` 앞 한 곳에 넣었다. 그 지점은 좌석 복제보다
+**뒤**라서, 그렇게 추가된 공연장 179개가 물리 좌석을 하나도 받지 못했고 그 공연장의 공연
+198개·회차 662개에 `PERFORMANCE_SEATS`가 생기지 않았다. 화면에는 공연이 보이는데 좌석이 없는
+상태다.
+
+같은 실수가 반복되지 않도록 두 겹으로 막아 뒀다.
+
+- `CuratedSeedStatements.verifyStatementOrder()`가 마커 뒤에 선언된 `VENUES` / `SHOWS` /
+  `PERFORMANCES` 리터럴 INSERT를 적재 **전에** 실패로 만든다.
+- `CuratedSeedVerifier`가 적재 트랜잭션 **커밋 전에** "좌석 없는 공연장 0건, 회차좌석 없는 회차
+  0건"을 확인하고, 어긋나면 전부 되돌린다.

@@ -150,8 +150,11 @@ final class CuratedSeedInventory {
     }
 
     /**
-     * PERFORMANCE_SEATS는 회차마다 그 회차 공연장의 좌석 수만큼 생긴다. 공연장별 좌석 수가 일정하지 않으므로(파일 뒤쪽 VENUES는 좌석 복제 대상이
-     * 아니다) 적재문과 같은 JOIN으로 기대값을 직접 센다.
+     * PERFORMANCE_SEATS는 회차마다 그 회차 공연장의 좌석 수만큼 생긴다. 공연장별 좌석 수가 같다는 보장이 없으므로 적재문과 같은 JOIN으로 기대값을 직접
+     * 센다.
+     *
+     * <p><b>이 기대값만으로는 누락을 잡을 수 없다.</b> 좌석이 아예 없는 공연장은 이 JOIN에서도 빠져 기대값과 실제값이 함께 0이 된다. 관계 자체를 보는
+     * 검사는 {@link CuratedSeedVerifier}가 적재 트랜잭션 안에서 따로 한다.
      */
     private static TableInventory performanceSeats(final JdbcTemplate jdbcTemplate) {
         final long expected =

@@ -1,10 +1,14 @@
 -- ============================================================
 -- 시드 테스트용 최소 SQL. seed/sql/kopis-curated.sql과 같은 구조(리터럴 INSERT + 뒤쪽 집합 기반
--- INSERT ... SELECT)를 유지하되 행 수만 줄였다.
+-- INSERT ... SELECT)와 같은 문장 순서를 유지하되 행 수만 줄였다.
 --
 -- 100만 행에 가까운 실제 시드는 SeedLocalTest가 한 번만 돌린다. 여기 파일은 실행 경로·완전성
 -- 판정·동시 접속처럼 데이터 양과 무관한 것을 빠르게 확인할 때 -Dseed.sql-path로 지정한다.
 -- 컬럼 목록은 실제 시드와 같아야 한다 -- 회차/판매정책 분리 정규식이 그 형식을 본다.
+--
+-- 순서도 실제 시드와 같다: 모든 공연장 입력 -> 공연장별 좌석 복제 -> 회차 입력 -> 회차별
+-- 등급·가격·좌석 생성. 두 마커 주석(@seed-splice)도 실제 시드와 같은 자리에 둔다 -- 새
+-- 공연장·회차를 끼워 넣는 회귀 테스트가 이 마커를 기준으로 삼는다.
 -- ============================================================
 
 INSERT INTO CATEGORIES (id, name, code, created_at, created_by) VALUES (1, '콘서트', 'CONCERT', '2026-01-01 10:00:00', '시드');
@@ -22,6 +26,10 @@ INSERT INTO SHOWS (id, title, sub_title, info, start_date, end_date, view_count,
 INSERT INTO SHOW_GENRES (id, show_id, genre_id, created_at, created_by) VALUES (1, 1, 1, '2026-01-01 10:00:00', '시드');
 INSERT INTO SHOW_GENRES (id, show_id, genre_id, created_at, created_by) VALUES (2, 2, 1, '2026-01-01 10:00:00', '시드');
 
+-- ============================================================
+-- @seed-splice: venues — 새로 수집한 공연장·공연은 반드시 이 지점 앞에 넣는다.
+-- ============================================================
+
 -- VENUE 1의 좌석 템플릿
 INSERT INTO SEATS (id, venue_id, section, row_no, seat_no, floor, x, y, created_at, created_by) VALUES (1, 1, '나', 'A', '1', 1, 129, 101, '2026-01-01 10:00:00', '시드');
 INSERT INTO SEATS (id, venue_id, section, row_no, seat_no, floor, x, y, created_at, created_by) VALUES (2, 1, '가', 'B', '2', 1, 136, 109, '2026-01-01 10:00:00', '시드');
@@ -37,6 +45,10 @@ WHERE t.venue_id = 1 AND v.id <> 1;
 INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (1, 1, 1, '2026-06-01 14:00:00', '2026-06-01 15:30:00', '2026-05-12 10:00:00', '2026-06-01 13:00:00', 4, 600, '2026-01-01 10:00:00', '시드');
 INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (2, 1, 2, '2026-06-01 19:00:00', '2026-06-01 20:30:00', '2026-05-12 10:00:00', '2026-06-01 18:00:00', NULL, 600, '2026-01-01 10:00:00', '시드');
 INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (3, 2, 1, '2026-07-01 19:00:00', '2026-07-01 20:30:00', '2026-06-12 10:00:00', '2026-07-01 18:00:00', 4, 600, '2026-01-01 10:00:00', '시드');
+
+-- ============================================================
+-- @seed-splice: performances — 새로 수집한 회차는 반드시 이 지점 앞에 넣는다.
+-- ============================================================
 
 INSERT INTO GRADES (code, name, created_at, created_by)
 SELECT g.grade_code, g.grade_name, '2026-01-01 10:00:00', '시드'
