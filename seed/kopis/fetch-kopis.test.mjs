@@ -12,6 +12,7 @@ import {
   splitIntoWindows,
   toCompact,
 } from './fetch-kopis.mjs';
+import { normalizePosterUrl } from './genre-map.mjs';
 
 const KOPIS_MAX_WINDOW_DAYS = 31;
 
@@ -123,6 +124,29 @@ test('카테고리가 하나뿐이어도 순서를 유지한 채 전부 돌려�
     interleaveByCategory(candidates).map((c) => c.mt20id),
     ['a1', 'a2'],
   );
+});
+
+test('포스터 URL을 프론트가 허용하는 https://kopis.or.kr 형태로 맞춘다', () => {
+  // ticket-fe의 next/image remotePatterns는 'https://kopis.or.kr/upload/**'만 허용한다.
+  // KOPIS 원본(http://www...)을 그대로 넣으면 목록 페이지 전체가 렌더 오류로 죽는다.
+  assert.equal(
+    normalizePosterUrl('http://www.kopis.or.kr/upload/pfmPoster/PF_1.jpg'),
+    'https://kopis.or.kr/upload/pfmPoster/PF_1.jpg',
+  );
+  assert.equal(
+    normalizePosterUrl('https://www.kopis.or.kr/upload/pfmPoster/PF_2.gif'),
+    'https://kopis.or.kr/upload/pfmPoster/PF_2.gif',
+  );
+  assert.equal(
+    normalizePosterUrl('https://kopis.or.kr/upload/pfmPoster/PF_3.png'),
+    'https://kopis.or.kr/upload/pfmPoster/PF_3.png',
+  );
+});
+
+test('kopis.or.kr이 아닌 포스터 URL은 건드리지 않는다', () => {
+  assert.equal(normalizePosterUrl('https://example.com/a.jpg'), 'https://example.com/a.jpg');
+  assert.equal(normalizePosterUrl(''), '');
+  assert.equal(normalizePosterUrl(undefined), '');
 });
 
 test('등록일은 앱이 읽는 타임스탬프 형식이고 고정값이 아니다', () => {

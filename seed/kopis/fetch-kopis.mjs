@@ -19,6 +19,7 @@ import {
   cleanPerformerName,
   categoryOfGenre,
   CATEGORY_LABEL,
+  normalizePosterUrl,
 } from './genre-map.mjs';
 import { resolveSpliceMarkers } from './splice-markers.mjs';
 
@@ -418,7 +419,7 @@ async function main() {
     const prfcast = tag(detail, 'prfcast');
     const entrpsnm = tag(detail, 'entrpsnm');
     const dtguidance = tag(detail, 'dtguidance');
-    const poster = tag(detail, 'poster') || c.poster;
+    const poster = normalizePosterUrl(tag(detail, 'poster') || c.poster);
     const genrenm = tag(detail, 'genrenm') || c.genrenm;
     const fcltynm = tag(detail, 'fcltynm') || c.fcltynm;
 
