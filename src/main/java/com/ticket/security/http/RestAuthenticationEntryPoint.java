@@ -22,7 +22,6 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 @RequiredArgsConstructor
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
-    private static final String JWT_ERROR_ATTRIBUTE = "jwt.error";
     private final JsonMapper jsonMapper;
 
     @Override
@@ -31,7 +30,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             final HttpServletResponse response,
             final AuthenticationException authException)
             throws IOException, ServletException {
-        final String jwtError = (String) request.getAttribute(JWT_ERROR_ATTRIBUTE);
+        final String jwtError = (String) request.getAttribute(AccessTokenFailure.REQUEST_ATTRIBUTE);
         final UnauthenticatedException error =
                 new UnauthenticatedException(resolveMessage(jwtError));
         // MemberExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
@@ -51,8 +50,8 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             return UnauthenticatedException.MESSAGE;
         }
         return switch (jwtError) {
-            case "expired" -> "토큰이 만료되었습니다. 다시 로그인해주세요.";
-            case "invalid" -> "유효하지 않은 토큰입니다.";
+            case AccessTokenFailure.EXPIRED -> "토큰이 만료되었습니다. 다시 로그인해주세요.";
+            case AccessTokenFailure.INVALID -> "유효하지 않은 토큰입니다.";
             default -> UnauthenticatedException.MESSAGE;
         };
     }
