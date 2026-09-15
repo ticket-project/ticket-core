@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
@@ -28,7 +28,7 @@ public class SelectSeatUseCase {
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final HoldManager holdManager;
-    private final AdmissionVerifier admissionVerifier;
+    private final AdmissionGuard admissionGuard;
     private final Clock clock;
 
     public record Input(Long performanceId, Long seatId, Long memberId, String admissionToken) {
@@ -59,7 +59,8 @@ public class SelectSeatUseCase {
 
         final PerformanceSalesPolicy policy = findPolicy(input.performanceId());
         policy.ensureAcceptingOrders(now);
-        ensureAdmitted(policy, input, now);
+        admissionGuard.verifyIfRequired(
+                policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         final Long performanceSeatId = requireSelectableSeat(input.performanceId(), input.seatId());
 
@@ -103,13 +104,5 @@ public class SelectSeatUseCase {
                 .findById(performanceId)
                 .orElseThrow(
                         () -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
-    }
-
-    private void ensureAdmitted(
-            final PerformanceSalesPolicy policy, final Input input, final LocalDateTime now) {
-        if (!policy.isQueueRequired(now)) {
-            return;
-        }
-        admissionVerifier.verify(input.performanceId(), input.memberId(), input.admissionToken());
     }
 }

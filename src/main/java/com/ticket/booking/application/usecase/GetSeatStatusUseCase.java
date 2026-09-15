@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStateView;
 import com.ticket.booking.application.SeatStatus;
@@ -29,7 +29,7 @@ public class GetSeatStatusUseCase {
     private final SeatStateQueryPort seatStateQueryPort;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
-    private final AdmissionVerifier admissionVerifier;
+    private final AdmissionGuard admissionGuard;
     private final Clock clock;
 
     public record Input(Long performanceId, Long memberId, String admissionToken) {
@@ -57,7 +57,8 @@ public class GetSeatStatusUseCase {
 
         final PerformanceSalesPolicy policy = findPolicy(performanceId);
         policy.ensureAcceptingOrders(now);
-        ensureAdmitted(policy, input, now);
+        admissionGuard.verifyIfRequired(
+                policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         final List<SeatStateSnapshotRow> dbStates =
                 seatStateQueryPort.findSeatStates(performanceId);
@@ -82,14 +83,6 @@ public class GetSeatStatusUseCase {
         final SeatStatus status =
                 redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : row.status();
         return new SeatStateView(row.performanceSeatId(), row.seatId(), status);
-    }
-
-    private void ensureAdmitted(
-            final PerformanceSalesPolicy policy, final Input input, final LocalDateTime now) {
-        if (!policy.isQueueRequired(now)) {
-            return;
-        }
-        admissionVerifier.verify(input.performanceId(), input.memberId(), input.admissionToken());
     }
 
     /**

@@ -9,7 +9,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.BookingAvailabilityChecker;
 import com.ticket.booking.application.LockKey;
 import com.ticket.booking.application.LockManager;
@@ -60,7 +60,7 @@ public class StartBookingUseCase {
 
     private final LockManager lockManager;
     private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-    private final AdmissionVerifier admissionVerifier;
+    private final AdmissionGuard admissionGuard;
     private final MemberLookupApi memberLookup;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleCatalogApi performanceSaleCatalog;
@@ -109,7 +109,8 @@ public class StartBookingUseCase {
         final PerformanceSalesPolicy policy = findSalesPolicy(input.performanceId());
         policy.ensureAcceptingOrders(now);
         policy.ensureWithinHoldLimit(requestedSeatIds.size());
-        ensureAdmitted(policy, input, now);
+        admissionGuard.verifyIfRequired(
+                policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         // 2. 예매할 수 있는 회원인가. JWT는 서명·만료만 보므로 탈퇴 회원은 여기서 걸러진다.
         memberLookup.requireActive(input.memberId());
@@ -163,14 +164,6 @@ public class StartBookingUseCase {
     }
 
     /** 대기열을 요구하는 회차에서만 ticket-queue가 발급한 입장 토큰을 검증한다. */
-    private void ensureAdmitted(
-            final PerformanceSalesPolicy policy, final Input input, final LocalDateTime now) {
-        if (!policy.isQueueRequired(now)) {
-            return;
-        }
-        admissionVerifier.verify(input.performanceId(), input.memberId(), input.admissionToken());
-    }
-
     private Hold holdSeats(
             final List<LockKey> seatLocks,
             final Input input,
