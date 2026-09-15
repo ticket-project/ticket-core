@@ -14,13 +14,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 /** OAuth2 로그인 성공 시 1회성 auth code를 발급하고 프론트엔드로 리다이렉트합니다. */
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    private final IssueOAuth2AuthCodeUseCase issueOAuth2AuthCodeUseCase;
+    private final OAuth2AuthCodeStore oauth2AuthCodeStore;
     private final OAuth2FrontendRedirectResolver frontendRedirectResolver;
 
     public OAuth2AuthenticationSuccessHandler(
-            final IssueOAuth2AuthCodeUseCase issueOAuth2AuthCodeUseCase,
+            final OAuth2AuthCodeStore oauth2AuthCodeStore,
             final OAuth2FrontendRedirectResolver frontendRedirectResolver) {
-        this.issueOAuth2AuthCodeUseCase = issueOAuth2AuthCodeUseCase;
+        this.oauth2AuthCodeStore = oauth2AuthCodeStore;
         this.frontendRedirectResolver = frontendRedirectResolver;
     }
 
@@ -33,7 +33,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // CustomOAuth2UserService가 nameAttributeKey를 memberId로 지정하므로 getName()이 회원 식별자다.
         final Long memberId = parseMemberId(authentication);
         // 1회용 auth code 생성 (Redis, TTL 30초)
-        final String authCode = issueOAuth2AuthCodeUseCase.execute(memberId);
+        final String authCode = oauth2AuthCodeStore.createCode(memberId);
 
         final String targetUrl =
                 UriComponentsBuilder.fromUriString(

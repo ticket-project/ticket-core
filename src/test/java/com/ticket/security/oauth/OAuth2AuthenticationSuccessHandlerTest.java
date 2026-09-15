@@ -21,7 +21,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class OAuth2AuthenticationSuccessHandlerTest {
-    @Mock private IssueOAuth2AuthCodeUseCase issueAuthCodeUseCase;
+    @Mock private OAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Test
     void 로컬_프론트에서_시작한_로그인은_로컬_프론트로_리다이렉트한다() throws Exception {
@@ -34,7 +34,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
                         "https://oneticket.site/auth/callback",
                         "https://oneticket.site/auth/callback");
         OAuth2AuthenticationSuccessHandler handler =
-                new OAuth2AuthenticationSuccessHandler(issueAuthCodeUseCase, resolver);
+                new OAuth2AuthenticationSuccessHandler(oauth2AuthCodeStore, resolver);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.getSession(true)
@@ -45,7 +45,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 new DefaultOAuth2User(authorities, Map.of("memberId", 7L), "memberId");
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
-        when(issueAuthCodeUseCase.execute(7L)).thenReturn("oauth-code");
+        when(oauth2AuthCodeStore.createCode(7L)).thenReturn("oauth-code");
 
         handler.onAuthenticationSuccess(request, response, authentication);
 
