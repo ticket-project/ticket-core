@@ -84,9 +84,7 @@ import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
     QuerydslShowListQueryPortTest.TestConfig.class,
     QuerydslShowListQueryPortTest.AuditingTestConfig.class,
     QuerydslShowListQueryPort.class,
-    QuerydslShowPredicates.class,
     SaleDisplayStatusPredicateFactory.class,
-    QuerydslShowConditionBuilder.class,
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
     ShowCardImagePathConverter.class,
@@ -235,9 +233,8 @@ class QuerydslShowListQueryPortTest {
     /**
      * region에 해당하는 공연장이 하나도 없으면 결과가 없다.
      *
-     * <p>{@code QuerydslShowPredicates.venueIdIn}이 빈 집합에도 {@code null}(조건 없음)이 아니라 {@code 1 = 2}에
-     * 해당하는 조건을 돌려주기 때문이다. 이것을 "빈 집합이면 조건 없음"으로 바꾸면 필터가 통째로 사라져 <b>전체 목록이 나온다</b> — 조용히 틀리는 회귀라 목록과
-     * 집계 양쪽을 고정한다.
+     * <p>{@code venueId} 조건이 빈 집합에도 {@code null}(조건 없음)이 아니라 {@code 1 = 2}에 해당하는 조건을 돌려주기 때문이다. 이것을
+     * "빈 집합이면 조건 없음"으로 바꾸면 필터가 통째로 사라져 <b>전체 목록이 나온다</b> — 조용히 틀리는 회귀라 목록과 집계 양쪽을 고정한다.
      */
     @Test
     void 지역에_공연장이_하나도_없으면_목록과_집계가_모두_비어_있다() {
