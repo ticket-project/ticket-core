@@ -7,7 +7,6 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.like.api.LikeCommandApi;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.venue.api.VenueLookupApi;
@@ -26,9 +25,10 @@ import com.ticket.venue.api.VenueSeatLookupApi;
  * 테스트와 use case 테스트가 담당한다.
  *
  * <p>show는 회원 존재 확인을 위해 member의 {@link MemberLookupApi}을 참조하고, 찜의 데이터·불변식을 소유하는 like(옛 favorite)의
- * {@link LikeQueryApi}/{@link LikeCommandApi}를 참조한다(공연 상세의 찜 개수 조회, 찜 use case의 위임). 물리 공연장·좌석을
- * 소유하는 venue의 {@link VenueLookupApi}/ {@link VenueSeatLookupApi}도 참조한다(목록·상세의 공연장 표시값 조립, region 검색
- * 조건 해석, 좌석 주소·좌석 배치 조회). 전부 이 STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로 대체한다.
+ * {@link LikeQueryApi}를 참조한다(공연 상세의 찜 개수, 내 찜 목록 조회). 찜하기·찜 해제는 ADR 0009로 like가 소유하므로 show는 쓰기 계약을
+ * 참조하지 않는다. 물리 공연장·좌석을 소유하는 venue의 {@link VenueLookupApi}/ {@link VenueSeatLookupApi}도 참조한다(목록·상세의
+ * 공연장 표시값 조립, region 검색 조건 해석, 좌석 주소·좌석 배치 조회). 전부 이 STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로
+ * 대체한다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class ShowModuleTests {
@@ -36,7 +36,6 @@ class ShowModuleTests {
     @MockitoBean private Clock clock;
     @MockitoBean private MemberLookupApi memberLookup;
     @MockitoBean private LikeQueryApi likeQuery;
-    @MockitoBean private LikeCommandApi likeCommand;
     @MockitoBean private VenueLookupApi venueLookup;
     @MockitoBean private VenueSeatLookupApi venueSeatLookup;
 
