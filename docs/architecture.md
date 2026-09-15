@@ -15,14 +15,19 @@
   모듈이고, `com.ticket.ModularityTests`가 경계 위반을 잡는다.
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
-  `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은 `shared.web`·`shared.exception`,
-  공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은 `security`에 둔다.
-- 각 모듈 root에는 다른 모듈이 쓰는 공개 계약(작은 interface + 불변 `record` snapshot, 이벤트)만
-  두고, 실제 구현은 모듈 root 밖의 `web`/`application`/`domain`/`infrastructure`/`exception`
-  패키지(`security`는 기능별 패키지)에 둔다. 별도 `internal` 계층은
-  두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도
-  `Type.OPEN`으로 선언하지 않는다. 정확한 배치는 [Module Structure](#module-structure)와
-  [오류 처리](#오류-처리) 절을 본다.
+  `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은 `shared.api`·`shared.web`·
+  `shared.exception`, 공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은 `security`에 둔다.
+- **다른 모듈이 쓰는 공개 계약은 `<module>.api`에 두고 `@NamedInterface("api")`로 선언한다**
+  ([ADR 0014](adr/0014-module-public-contracts-live-in-api-packages.md)). 작은 interface와 불변
+  `record` snapshot, enum만 두고 구현은 `endpoint`/`application`/`domain`/`infrastructure`/
+  `exception` 패키지(`security`는 기능별 패키지)에 둔다. 별도 `internal` 계층은 두지 않는다 —
+  Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도 `Type.OPEN`으로
+  선언하지 않는다. `payment`처럼 공개할 계약이 없는 모듈에는 `api`를 만들지 않고, `booking`의
+  `OrderStarted`/`OrderTerminated`만 root에 남는다(FQCN이 `EVENT_PUBLICATION.event_type`에 저장된
+  값이라 옮기면 미완료 publication이 재처리되지 않는다). 정확한 배치는
+  [Module Structure](#module-structure)와 [오류 처리](#오류-처리) 절을 본다.
+- **`allowedDependencies`는 모듈 전체가 아니라 named interface 단위로 적는다**
+  (`"show :: api"`, `"shared :: web"`). 무엇을 실제로 여는지가 선언에 남는다.
 - **cross-module JPA 연관관계와 DB FK는 금지한다.** 다른 모듈의 aggregate를 참조해야 하면 `long`
   같은 scalar ID 컬럼만 갖는다.
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 하위 패키지, Repository,
@@ -40,7 +45,7 @@
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
-| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태). 인증 흐름의 **조립**(가입·로그인·갱신·로그아웃·탈퇴 절차, JWT, OAuth2 provider)은 `security`가 갖고, member는 `MemberAccountOperations` 공개 계약만 제공한다 |
+| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태). 인증 흐름의 **조립**(가입·로그인·갱신·로그아웃·탈퇴 절차, JWT, OAuth2 provider)은 `security`가 갖고, member는 `MemberAccountApi` 공개 계약만 제공한다 |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
@@ -56,19 +61,21 @@
 
 아래는 **왜 그 edge가 허용되는가**만 적는다.
 
-- `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 공개 하위 계약을
-  `shared :: *`로 참조한다.
+- `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 `shared :: api`,
+  `shared :: web`, `shared :: exception` 셋을 필요한 만큼 명시해 참조한다 — `shared :: *`
+  와일드카드는 쓰지 않는다.
 - `security -> member`는 Authorization header의 access token을 member의 공개 계약으로 검증하고
   `AuthenticatedMember`를 SecurityContext에 넣기 위한 단방향 의존이다. security는 전역 API URL
   접근 정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
 - `show -> member`는 찜 use case의 회원 확인, `show -> venue`는 표시값 조립, `show -> like`는
   공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - `like -> member`가 있다. 찜하기·찜 해제·찜 상태 조회를 like가 소유하면서(ADR 0009) 탈퇴 회원을
-  걸러내기 위해 `MemberLookup.requireActive`를 직접 부르기 때문이다. **like는 업무 모듈 의존이
+  걸러내기 위해 `MemberLookupApi.requireActive`를 직접 부르기 때문이다. **like는 업무 모듈 의존이
   없는 leaf가 아니다** — ADR 0006 시점의 설명(당시 `favorite`가 leaf였다)은 그 ADR의 역사적
   기록이고 현재 구조가 아니다.
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
-  `PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`를 show가 façade로 유지하기 때문이다.
+  `PerformanceSaleCatalogApi`/`PerformanceVenueLayoutCatalogApi`를 show가 façade로 유지하기
+  때문이다.
 - `payment`는 entity-only 단계라 `shared`도 참조하지 않는 완전한 leaf다 —
   controller가 없어 응답 봉투가, 자기 오류 타입을 던지지 않아 `error`도 필요 없다.
 - 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
@@ -131,17 +138,17 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 가격은 세 시점의 스냅샷 체인이다: `PerformanceGrade.price`(운영자 구성, 판매 오픈 전에만 변경) →
 `PerformanceSeat.unitPrice`(판매 좌석 생성 시 snapshot, 오픈 후 불변) → `OrderSeat.unitPrice`(주문
 생성 시 snapshot, 생성 후 불변). booking은 이 조립에 show의 공개 계약
-`PerformanceSaleCatalog`/`PerformanceVenueLayoutCatalog`만 쓰고 show entity를 JPA로 참조하지 않는다.
+`PerformanceSaleCatalogApi`/`PerformanceVenueLayoutCatalogApi`만 쓰고 show entity를 JPA로 참조하지 않는다.
 
 **Like 조합 규칙**: 찜의 데이터·불변식은 `like`(옛 `favorite`)가 소유한다. HTTP endpoint·use
 case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니오(존재)만 있으면 되는 것**(찜하기·
 찜 해제·찜 상태 조회)은 like가 소유하고, **다른 BC의 실제 표시 데이터**가 필요한 것("내 찜
 목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain.show`는
-like를 모른다 — `show.application`의 조회 service가 like의 공개 API(`LikeQuery`/`LikeCommand`)를
+like를 모른다 — `show.application`의 조회 service가 like의 공개 API(`LikeQueryApi`/`LikeCommandApi`)를
 주입받아 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
 않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
 순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
-`MemberLookup.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainIsolationTest`(ArchUnit,
+`MemberLookupApi.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainIsolationTest`(ArchUnit,
 6개 BC 전체의 모든 `domain` 계층)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을, 찜 모듈 개명과 대상 일반화는
 [ADR 0008](adr/0008-like-target-generalization.md)을, use case 소유권을 존재/표시 기준으로
@@ -153,7 +160,8 @@ like를 모른다 — `show.application`의 조회 service가 like의 공개 API
 
 | 하위 패키지 | 담는 것 |
 | --- | --- |
-| `web` | Controller, 요청/응답 DTO, HTTP 커서 문자열 |
+| `api` | 다른 module에 공개하는 계약(interface + record snapshot + enum). `@NamedInterface("api")` |
+| `endpoint` | Controller, 요청/응답 DTO, HTTP 커서 문자열 |
 | `application` | use case, 트랜잭션 경계, 조회 포트와 결과 view, 분산락·이벤트 발행·외부 provider 등 출력 포트 |
 | `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
 | `infrastructure` | Repository 어댑터, Querydsl 조회, Redis/Redisson, WebSocket publisher, 외부 HTTP client |
@@ -162,13 +170,13 @@ like를 모른다 — `show.application`의 조회 service가 like의 공개 API
 **모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
 
 **패키지 구조는 모듈 → 계층이다.** 업무 모듈 여섯(`booking`/`member`/`show`/`venue`/`like`/
-`payment`)은 모듈 root 바로 아래에 위 계층 표의 `web`/`application`/`domain`/`infrastructure`를
-둔다 — `booking.application.usecase.CreateOrderUseCase`,
+`payment`)은 모듈 root 바로 아래에 위 계층 표의 `api`/`endpoint`/`application`/`domain`/`infrastructure`를
+둔다 — `booking.application.usecase.StartBookingUseCase`,
 `show.infrastructure.QuerydslShowListQueryPort`처럼 읽는다.
 
-**업무별 폴더는 `domain` 아래에만 둔다.** `application`/`infrastructure`/`web` 아래에는
+**업무별 폴더는 `domain` 아래에만 둔다.** `application`/`infrastructure`/`endpoint` 아래에는
 `application.order`, `infrastructure.seat` 같은 업무 분류를 다시 만들지 않는다. 그 계층에서
-"무엇에 관한 코드인가"는 폴더가 아니라 클래스 이름이 말한다(`CreateOrderUseCase`,
+"무엇에 관한 코드인가"는 폴더가 아니라 클래스 이름이 말한다(`StartBookingUseCase`,
 `OrderRepositoryAdapter`, `SeatSelectionController`). 폴더를 둘 축(계층·업무)으로 나누면 파일
 하나를 찾는 데 두 번 판단해야 하고, 여러 업무를 조립하는 코드가 어느 폴더에도 맞지 않는다.
 
@@ -202,14 +210,14 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 안에 계층 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
 하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
 
-`shared`는 공개 계약을 root와 `web`/`exception`에 두고, 실행 배선·설정 구현은
+`shared`는 공개 계약을 `api`/`web`/`exception` 세 named interface에 나눠 두고, 실행 배선·설정 구현은
 `shared.infrastructure`에 둔다.
 
 배치 규칙:
 
-- **실제로 필요한 계층만** 만든다. 코드가 없는 `web`/`application`은 미리 만들지 않는다
+- **실제로 필요한 계층만** 만든다. 코드가 없는 `endpoint`/`application`은 미리 만들지 않는다
   (`payment`에는 지금 `domain`과 `infrastructure`뿐이다).
-- `application.port`/`application.usecase`, `web`의 `request`/`docs`, `exception`의 `handler`는
+- `application.port`/`application.usecase`, `endpoint`의 `request`/`docs`, `exception`의 `handler`는
   그대로 유효한 역할별 하위 폴더다.
 - `exception`은 모듈 바로 아래 하나다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
   [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다(ADR 0002가 정한
@@ -234,10 +242,10 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 | aggregate 저장·복원과 업무 명령에 필요한 조회 | `domain` |
 | 화면 조회·검색·집계 결과 | `application` |
 | 분산락, 토큰, 외부 provider, publisher/client | `application` |
-| HTTP 입력·출력 계약 | `web` |
+| HTTP 입력·출력 계약 | `endpoint` |
 | JPA, Querydsl, Redis, Redisson, JWT 구현 | `infrastructure` |
 
-기능은 클래스 이름 접두사로 드러낸다(`ShowRepository`, `PerformanceGrade`, `OrderCreator` 등).
+기능은 클래스 이름 접두사로 드러낸다(`ShowRepository`, `PerformanceGrade`, `PendingOrderCreator` 등).
 `model`/`repository`/`store`/`command`는 더 이상 하위 패키지가 아니라 **명명 관용**이다 —
 Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계약(옛 `store`), 상태 변경
 use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회
@@ -296,7 +304,7 @@ ShowDetailView detail = showDetailQueryPort.findShowDetail(showId)
 **Aggregate 경계와 API 응답 경계는 같을 필요가 없다.** 공연 상세는 Show/Performance/Grade/
 Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까지 한 응답에 담는다 — 그 조합은
 Query Port 자신이 아니라 그 Query Port를 부르는 use case가 한다(`GetShowDetailUseCase`가
-`ShowDetailQueryPort`로 show 자기 데이터를 얻고, `VenueLookup`/`LikeQuery`로 다른 BC의 표시값을
+`ShowDetailQueryPort`로 show 자기 데이터를 얻고, `VenueLookupApi`/`LikeQueryApi`로 다른 BC의 표시값을
 더한다). Query Port 구현(`Querydsl*QueryPort`)이 다른 module의 공개 계약을 직접 호출하지
 않는다 — persistence adapter의 역할은 자기 module DB를 읽는 것까지다.
 
@@ -319,17 +327,17 @@ Optional<ShowDetailView> ShowDetailQueryPort.findShowDetail(Long showId);
 ## 계층별 검증 책임
 
 판단 기준 한 문장 — **"이 검증이 사라지면 무엇이 먼저 깨지는가."** HTTP 응답 품질만 나빠지면
-`web`, 다른 adapter에서 호출해도 흐름이 깨지면 `application`, 어떤 호출 경로에서도 업무가 틀리면
+`endpoint`, 다른 adapter에서 호출해도 흐름이 깨지면 `application`, 어떤 호출 경로에서도 업무가 틀리면
 `domain`, 기술 경계에서만 성립하면 `infrastructure`다.
 
 | 계층 | 소유하는 검증 | 실패 표현 |
 | --- | --- | --- |
-| `web` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식 | Bean Validation → `InvalidRequestException`(400/`E400`) |
+| `endpoint` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식 | Bean Validation → `InvalidRequestException`(400/`E400`) |
 | `application` | adapter 공통 `UseCase.Input` 계약, 여러 입력 조합, 데이터 존재 여부, 요청 권한, 중복·멱등성, 다른 모듈 공개 API를 엮는 실행 선행조건 | 공통 예외 또는 소유 모듈 예외 |
 | `domain` | 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도 | 소유 모듈 `exception`의 업무 예외 |
 | `infrastructure` | Redis·JWT·외부 API payload decode, DB constraint 번역 | 기술 예외를 상위 계층이 이해할 실패로 번역 |
 
-**Bean Validation은 `web`만 쓴다.** 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다 —
+**Bean Validation은 `endpoint`만 쓴다.** 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다 —
 상위 타입과 구현체 양쪽에 선언하면 Jakarta Bean Validation이 `ConstraintDeclarationException`
 (HV000151)을 던져 method validation 전체가 500으로 무너진다. 왜 그런지와 `@Validated`를
 Controller에 붙이지 않는 이유는 `ControllerParameterConstraintTest`의 JavaDoc이 원본이다.
@@ -359,11 +367,19 @@ Repository는 "없다"는 사실만 알려주고 오류는 유스케이스가 �
 ```text
 com/ticket/<module>/exception/
   <Module>ErrorCode.java          enum implements com.ticket.shared.exception.ErrorCode
-  <Module>Exception.java          abstract extends com.ticket.shared.exception.TicketException(errorCode·message·data만)
-  <구체 예외>.java                 errorCode·메시지·data를 생성자에서 확정(상태는 없다)
+  <Module>Exception.java          abstract sealed extends com.ticket.shared.exception.TicketException
+                                  (errorCode·message·data만) -- permits로 하위 타입을 닫는다
+  <구체 예외>.java                 final. errorCode·메시지·data를 생성자에서 확정(상태는 없다)
   handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡고
-                                          구체 타입 -> HTTP 상태를 이 handler가 정한다
+                                          구체 타입 -> HTTP 상태를 exhaustive switch로 정한다
 ```
+
+**module base 예외는 sealed다.** `permits` 목록이 곧 handler switch가 덮어야 할 집합이라, 새 예외를
+추가하면서 HTTP 매핑을 빠뜨리면 runtime이 아니라 컴파일이 실패한다. 그래서 handler switch에
+`default` 분기를 두지 않는다. 하위 타입은 전부 같은 package에 있어야 한다(JPMS named module이
+아니므로). `TicketException` 자체는 sealed로 만들지 않는다 — 직접 하위 타입이 다섯 package에 흩어져
+있고, 억지로 맞추면 module별 오류 소유권이 깨진다. 배경은
+[ADR 0015](adr/0015-null-contracts-are-explicit-and-enforced.md)다.
 
 **모듈의 예외는 `<module>.exception` 하나에 둔다.** base 타입, `<Module>ErrorCode`, 구체 예외,
 `handler`가 모두 여기에 속한다. 공통 오류 계약은 `shared.exception`, 공통 HTTP 응답 봉투는
@@ -388,7 +404,7 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 (`security.token`), stateless `@Order(2)` API filter chain·URL별 접근 정책·Authorization header
 해석·SecurityContext·MVC argument resolver(`security.http`)가 그렇다.
 
-**회원 테이블과 인증 데이터의 소유권은 member에 있다.** security는 `MemberAccountOperations`
+**회원 테이블과 인증 데이터의 소유권은 member에 있다.** security는 `MemberAccountApi`
 공개 계약으로만 계정을 만진다 — 등록·자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴 다섯 가지이며,
 **비밀번호 해시는 member 밖으로 나가지 않는다.** 해싱과 일치 확인을 member가 직접 수행하므로
 `member -> security` 의존이 생기지 않는다. 의존 방향은 `security -> member -> shared`다.
@@ -408,12 +424,12 @@ OAuth provider raw attribute는 `security.oauth.OAuth2UserInfoMapper`가 `member
 격리한다.
 
 **좌석 조회는 performanceId 기준이다** — 같은 Show라도 회차마다 편성·가격이 다를 수 있어 `showId`
-기준 조회 API는 만들지 않는다. `booking.web.PerformanceSeatQueryController`가 공개하는 3개 API
+기준 조회 API는 만들지 않는다. `booking.endpoint.PerformanceSeatQueryController`가 공개하는 3개 API
 (정적 seat-map / 동적 상태 / 등급별 잔여석)는 회차당 고정된 query 수를 유지한다 — 무엇을 어떻게
 고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
 원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
 않는다** — 데이터 불일치는 예외를 던지지 않고 조용히 그 좌석만 제외한다.
-`show.web.ShowVenueLayoutController`(showId 기반 물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
+`show.endpoint.ShowVenueLayoutController`(showId 기반 물리 Venue 배치 전용, ADR 0006으로 booking에서 옮겨옴)는
 별개의 show 기준 API다 — 새 기능은 여기 추가하지 않고 performance 기준 API 쪽에 추가한다.
 
 **대기열**은 형제 저장소 `ticket-queue`가 담당한다. Core는 Queue Controller도 token 저장소도
@@ -459,10 +475,16 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 | 파라미터 제약 선언 위치 | `ControllerParameterConstraintTest` |
 | 필수 입력 오류 문구 | `com.ticket.shared.exception.InvalidRequestMessageContractTest` |
 | E-code 전역 유일성 / handler 스코프 | `ErrorCodeUniquenessTest` / `ExceptionHandlerScopeTest` |
+| 계층 방향, cross-module 구현 참조, `api` 공개면 오염 | `com.ticket.ArchitectureRulesTest` |
+| 공개된 `@NamedInterface` 목록이 늘거나 줄었는지 | `com.ticket.ArchitectureRulesTest` |
+| production package의 `@NullMarked` 선언 누락 | `com.ticket.ArchitectureRulesTest` |
+| null 계약 위반 | NullAway (`./gradlew compileJava`, 테스트가 아니라 컴파일에서 막힌다) |
+| booking 락 계약이 Redis·HTTP를 모르는지 | `com.ticket.booking.BookingLayerDependencyTest` |
 | module 구조 문서 생성 | `com.ticket.DocumentationTests` |
 
-무엇을 검증하는지 자세한 목록은 [testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은
-`/verify`가 원본이다. **규칙 본문은 테스트 코드가 원본이고 여기 옮겨 적지 않는다.** 규칙을
+구조 검사만 빠르게 돌리는 조합은 `.github/workflows/architecture.yml`이 원본이다 — DB도 Redis도
+쓰지 않아 전체 CI보다 먼저 끝난다. 무엇을 검증하는지 자세한 목록은
+[testing.md의 구조 테스트](testing.md#구조-테스트), 실행 명령은 `/verify`가 원본이다. **규칙 본문은 테스트 코드가 원본이고 여기 옮겨 적지 않는다.** 규칙을
 바꿔야 한다고 판단되면 테스트를 고쳐 통과시키지 말고, 규칙이 틀렸다는 사실을 먼저 밝힌다.
 
 ## 생성 문서
@@ -518,7 +540,7 @@ Modulith `Documenter`로 만든다.
 - 모듈을 넘는 JPA 연관관계나 DB FK가 새로 생기지 않았는가
 - 새 공개 계약이 JPA entity, Redis/JWT/Spring Web 타입을 노출하지 않는가
 - 새 클래스가 맞는 계층에 있는가 — 클래스 이름이 이미 업무를 말하는데 폴더로 또 나누지 않았는가
-- `application`/`infrastructure`/`web` 아래에 업무별 폴더를 새로 만들지 않았는가
+- `application`/`infrastructure`/`endpoint` 아래에 업무별 폴더를 새로 만들지 않았는가
 - `domain` 아래 묶음이 실제 도메인 모델의 묶음인가, 폴더를 맞추려고 만든 것인가
 - 갈 곳을 못 정한 코드를 `common`/`support` 같은 이름에 모으지 않았는가
 - DB 상태와 Redis 상태를 합치는 규칙의 소유자가 한 곳인가

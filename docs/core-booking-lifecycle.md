@@ -31,27 +31,28 @@
   가격)은 생성 이후 다시 조회하지 않는다. show 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
   주문 상세는 바뀌지 않는다.
 
-## 주문 생성
+## 주문 생성(예매 시작)
 
 ~~~text
-CreateOrderUseCase
+StartBookingUseCase          (POST /api/v1/orders)
   -> LockScope.ORDER_START 락(같은 회원·회차 직렬화)
-  -> CreateOrderPreparer (검증만 하지 않고 뒤 단계가 쓸 값도 함께 준비한다)
-       -> booking local PerformanceSalesPolicyRepository: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) 조회 (밖)
-       -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
-       -> member MemberLookup: active member 확인 (밖)
-       -> booking local read: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
-       -> show PerformanceSaleCatalog: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
-          show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
+  -> booking local PerformanceSalesPolicyRepository: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) 조회 (밖)
+  -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
+  -> member MemberLookupApi: active member 확인 (밖)
+  -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
+  -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
+     show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 HoldManager로 Redis 좌석 hold 생성 (밖)
-  -> CreatePendingOrderTransactionService
-       -> OrderCreator: 주문 aggregate 조립(저장하지 않는다). 총액은 Order.addOrderSeat가 좌석
+  -> PendingOrderCreator
+       -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
           단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (ADR 0005, 다른 값을 섞지 않는다)
        -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
             Order에는 show/performance/venue 표시 snapshot을, OrderSeat에는 등급·좌석 라벨·unitPrice
             snapshot을 함께 저장한다 — 둘 다 생성 후 불변이다.
        -> 같은 트랜잭션 안에서 OrderStarted 이벤트 발행
        -> 트랜잭션이 돌려주는 것은 orderKey뿐이다(entity를 트랜잭션 밖으로 내보내지 않는다)
+  -> (이 구간이 실패하면 StartBookingUseCase가 위에서 만든 Redis hold를 보상 해제한다.
+      해제 실패는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다)
   -> DB 커밋 및 connection 반환
   -> BookingEventListeners.on(OrderStarted)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
@@ -61,10 +62,10 @@ CreateOrderUseCase
             -> HELD 상태 발행             (WebSocket)
 ~~~
 
-DB 저장이 실패하면 `CreateOrderUseCase`가 이미 만든 Redis hold를 보상 해제한다(같은 스레드에서
+DB 저장이 실패하면 `StartBookingUseCase`가 이미 만든 Redis hold를 보상 해제한다(같은 스레드에서
 `LockScope.SEAT` 락을 다시 잡고 해제).
 
-이 시점의 동시성 방어는 여전히 `LockScope.SEAT` 분산락과 `PendingOrderLocalValidator`의 좌석 판매
+이 시점의 동시성 방어는 여전히 `LockScope.SEAT` 분산락과 `BookingAvailabilityChecker`의 좌석 판매
 상태 확인이다. `PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만, 현재
 주문 생성 경로 어디에서도 호출되지 않는다 — 결제 승인 시점에 `PerformanceSeat`를 `RESERVED`로
 전이하는 정산 흐름은 아직 구현되지 않은 후속 작업이다(ADR 0005 "이 ADR이 결정하지 않는 것" 참고).
@@ -239,14 +240,14 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 
 ## 주요 코드
 
-- 주문 생성: `booking.application.usecase.CreateOrderUseCase`,
-  `booking.application.CreateOrderPreparer`(정책·회원·입장 검사와 좌석·표시값 준비를 함께 한다)
-- 주문 DB 저장: `booking.application.CreatePendingOrderTransactionService`(저장과 트랜잭션
-  경계), `booking.application.OrderCreator`(조립만, 저장하지 않는다)
+- 예매 시작: `booking.application.usecase.StartBookingUseCase`(정책·입장·회원 확인부터 Redis
+  선점, 주문 생성, 실패 시 보상까지의 workflow를 조율한다. 검증 순서가 이 클래스에서 그대로 읽힌다)
+- 좌석 판매 가능 확인: `booking.application.BookingAvailabilityChecker`(짧은 읽기 트랜잭션)
+- 주문 DB 생성: `booking.application.PendingOrderCreator`(조립·저장·이력·이벤트가 한 트랜잭션)
 - 선점 이력 조립: `booking.application.OrderHoldHistoryRecorder`. `HoldHistory`와 저장 계약은
   `booking.domain.hold`가 그대로 소유한다
 - 예매 정책 조회: `booking.domain.salespolicy.PerformanceSalesPolicy`(booking local
-  aggregate) / 표시 snapshot 조회: `show.PerformanceSaleCatalog`
+  aggregate) / 표시 snapshot 조회: `show.PerformanceSaleCatalogApi`
 - 판매 좌석과 가격 원본: `booking.domain.seat.PerformanceSeat`
   (`unitPrice`, `performanceGradeId`, `@Version`)
 - 주문 종료: `booking.application.OrderTerminationService`

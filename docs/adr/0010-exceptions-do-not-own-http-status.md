@@ -1,5 +1,9 @@
 # 업무 예외는 HTTP 상태를 모른다 — 웹 계층이 상태를 정한다
 
+> 2026-09-15 갱신: [ADR 0015](0015-null-contracts-are-explicit-and-enforced.md)가 이 결정을 강화했다 —
+> module base 예외를 sealed로 만들어 handler switch를 exhaustive하게 하고 `default` 분기를 없앴다.
+> "예외는 HTTP를 모르고 웹 계층이 상태를 정한다"는 원칙 자체는 그대로다.
+
 ## 상태(2026-09-10): 채택·구현됨. ADR 0002를 수정(모듈 소유 원칙 자체는 유지, "예외가 완성된
 HTTP 응답 계약을 스스로 갖는다"는 서술만 대체)
 

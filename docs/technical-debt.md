@@ -8,7 +8,7 @@
 | ID | 성격 | 현재 위치 | 현재 구조 | 왜 기술 부채인가 | 권장 해결 방향 | 보류 이유 | 호환성 주의 | 완료 조건 | 관련 코드 |
 |---|---|---|---|---|---|---|---|---|---|
 | TD-03 | 설계 | `show.domain.show` | 도메인이 HTTP 이미지 경로를 만든다 | 표현 계층 규칙이 domain에 유입된다 | image URL 변환을 API/infra adapter로 이동 | 응답 호환성 영향 분석 필요 | 기존 image JSON 유지 | domain이 경로 문자열을 생성하지 않음 | `ShowCardImagePathConverter` |
-| TD-04 | 설계 | 각 module의 `web`[^td04] | app UseCase Output/View가 API 응답 타입으로 직접 노출된다 | API와 app 변경이 강하게 결합된다 | API response DTO로 변환 | 전 endpoint 계약 검토 필요 | JSON 필드/상태 유지 | controller 반환 타입이 API DTO | 각 `*Controller` |
+| TD-04 | 설계 | 각 module의 `endpoint`[^td04] | app UseCase Output/View가 API 응답 타입으로 직접 노출된다 | API와 app 변경이 강하게 결합된다 | API response DTO로 변환 | 전 endpoint 계약 검토 필요 | JSON 필드/상태 유지 | controller 반환 타입이 API DTO | 각 `*Controller` |
 | TD-08 | 설계 | `booking.domain.salespolicy` | `QueueMode`, `QueueLevel` 명명이 책임을 충분히 설명하지 않는다 | 정책 의미와 실행 단계가 혼동될 수 있다 | 정책/단계 용어를 ADR로 확정 후 rename | API/claim 영향 검토 필요 | token claim 유지 | 의미와 wire mapping 고정 | `QueueMode`, `QueueLevel` |
 | TD-09 | 설계 | `booking.infrastructure` | admission token 책임을 설정/검증 관점으로 함께 표현한다 | 설정과 검증 책임이 분리되지 않는다 | token settings와 guard의 경계를 문서화 | 기존 구성키 유지 필요 | JWT claim/TTL 유지 | 책임별 테스트와 문서 일치 | `AdmissionTokenSettings`, `JwtAdmissionVerifier`(구 `JwtAdmissionGuard`) |
 | TD-13 | 제품 결정 | `show.domain.show` | `Show.viewCount`를 증가시키는 코드가 없는데 `POPULAR` 정렬·커서 키로 쓰인다 | 제품 결정이 필요한 사안(비동기 증가 도입 or 정렬 폐기) | 상세 조회 시 비동기 증가, 또는 `POPULAR` 정렬 폐기 | 제품 결정 사안, 코드 문제 아님 | 정렬 API 계약 영향 분석 필요 | 결정 후 반영 | `Show.viewCount`, `ShowSort.POPULAR` |
@@ -37,7 +37,7 @@
 
 해소된 ID는 재사용하지 않는다.
 
-[^td04]: 컨트롤러가 booking/show/member 각 module의 `web`로 옮겨지며
+[^td04]: 컨트롤러가 booking/show/member 각 module의 `endpoint`로 옮겨지며
 문제의 소재도 함께 옮겨졌다 — module 경계와는 무관하게 여전히 유효한 항목이다.
 
 ## 제품 정책 결정 대기
