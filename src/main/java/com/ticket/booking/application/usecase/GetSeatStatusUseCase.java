@@ -92,6 +92,12 @@ public class GetSeatStatusUseCase {
         admissionVerifier.verify(input.performanceId(), input.memberId(), input.admissionToken());
     }
 
+    /**
+     * Redis가 점유로 보는 좌석을 합친다 -- 다른 회원이 고르는 중(selection)이거나 이미 선점(hold)한 좌석이다.
+     *
+     * <p>{@code GetSeatAvailabilityUseCase}에 같은 모양의 method가 있다. "무엇을 점유로 보는가"는 같아야 하므로 모양을 일부러 똑같이
+     * 맞춰 둔다 -- 한쪽에 조건이 붙으면 다른 쪽도 함께 본다.
+     */
     private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {
         final Set<Long> selectingSeatIds = seatSelectionService.getSelectingSeatIds(performanceId);
         final Set<Long> holdingSeatIds = holdManager.getHoldingSeatIds(performanceId);
