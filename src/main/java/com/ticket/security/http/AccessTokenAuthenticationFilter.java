@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final String AUTH_ERROR_ATTRIBUTE = "jwt.error";
     private final AccessTokenReader accessTokenReader;
 
     public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
@@ -57,8 +56,10 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
             switch (readResult) {
                 case AccessTokenReadResult.Authenticated authenticated ->
                         authenticate(authenticated.member());
-                case AccessTokenReadResult.Expired ignored -> markFailure(request, "expired");
-                case AccessTokenReadResult.Invalid ignored -> markFailure(request, "invalid");
+                case AccessTokenReadResult.Expired ignored ->
+                        markFailure(request, AccessTokenFailure.EXPIRED);
+                case AccessTokenReadResult.Invalid ignored ->
+                        markFailure(request, AccessTokenFailure.INVALID);
             }
             filterChain.doFilter(request, response);
         } finally {
@@ -86,6 +87,6 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
 
     private void markFailure(final HttpServletRequest request, final String reason) {
         log.warn("access token verification failed. reason={}", reason);
-        request.setAttribute(AUTH_ERROR_ATTRIBUTE, reason);
+        request.setAttribute(AccessTokenFailure.REQUEST_ATTRIBUTE, reason);
     }
 }
