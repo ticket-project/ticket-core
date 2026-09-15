@@ -49,7 +49,7 @@
 | --- | --- | --- |
 | `PerformanceIsPastException` | `Long performanceId` | `PerformanceSalesPolicy`, `SeatSelectionCoordinator`가 가진 회차. 서로 다른 시각 판정 로직은 그대로 둔다 |
 | `BookingNotOpenYetException` | `Long performanceId` | `PerformanceSalesPolicy`가 가진 회차 |
-| `NoAvailableSeatException` | `Long performanceId` | `BookingAvailabilityChecker`, `SeatSelectionAvailabilityValidator`의 검증 대상 회차 |
+| `NoAvailableSeatException` | `Long performanceId` | `BookingAvailabilityChecker`, `SelectSeatUseCase`의 검증 대상 회차 |
 | `SeatMismatchInPerformanceException` | `Long performanceId` | 위 두 validator의 검증 대상 회차. 없는 좌석을 찾기 위한 추가 조회 없음 |
 | `SeatAlreadySelectedException` | `Long performanceId, Long seatId` | `SeatSelectionService.select`가 이미 가진 경합 대상 |
 | `SeatNotOwnedException` | `Long performanceId, Long seatId, Long memberId` | `SeatSelectionService`의 두 실패 경로. `memberId`는 해제를 요청한 회원 |
@@ -59,7 +59,7 @@
 | `OrderNotPendingException` | `OrderState currentStatus` | `CancelOrderTransactionService`가 조회한 주문 상태 |
 | `OrderNotOwnedException` | `String orderKey, Long memberId` | 취소·상세·상태 조회의 요청 값. 실제 주문 소유자 정보는 요구하지 않는다 |
 | `PendingOrderAlreadyExistsException` | `Long memberId, Long performanceId` | `BookingAvailabilityChecker`가 기존 exists 조회에 사용하는 값 |
-| `SeatAlreadyHeldException` | `Long performanceId, Long seatId` | `HoldManager`, `SeatSelectionCoordinator`, `SeatSelectionAvailabilityValidator`의 대상 |
+| `SeatAlreadyHeldException` | `Long performanceId, Long seatId` | `HoldManager`, `SeatSelectionCoordinator`, `SelectSeatUseCase`의 대상 |
 | `HoldLimitExceededException` | `long requestedSeatCount, int maxSeatCount` | `PerformanceSalesPolicy.ensureWithinHoldLimit`의 수량과 정책 한도 |
 
 `GetOrderStatusUseCase.requireActiveMember`는 현재 `memberId`만 받는다. 요청의 `orderKey`를 함께

@@ -96,6 +96,28 @@ method를 먼저 검토한다. bean으로 만들 이유는 위 3의 목록에 �
 **오직 트랜잭션 경계 하나**다. 같은 클래스의 private method로 부르면 Spring proxy가 적용되지 않아
 `@Transactional`이 아예 걸리지 않는다. 그 이유를 각 클래스의 javadoc에 적는다.
 
+**다만 "경계를 지킨다"와 "경계를 감싼 클래스를 남긴다"는 다른 말이다.** 트랜잭션 경계는 유지해야
+하지만, **이미 있는 다른 public bean이나 adapter가 같은 경계를 안전하게 소유할 수 있다면 경계만
+감싸는 wrapper 클래스는 없앨 수 있다.** 옮길 곳이 Spring이 관리하는 다른 빈이면 proxy는 그대로
+적용되므로 경계가 사라지지 않는다.
+
+판단은 **그 경계 안에서 하는 일이 몇 개인가**로 한다.
+
+| 경계 안의 일 | 어디가 소유하는가 |
+| --- | --- |
+| DB 접근 하나 | 그 조회를 실행하는 query adapter가 직접 갖는다 |
+| DB 접근 둘 이상을 한 시점으로 묶어야 한다 | 별도 bean이 필요하다 — 묶는 것 자체가 그 bean의 일이다 |
+| 트랜잭션 없는 listener에서 lazy 연관을 읽어야 한다 | 별도 bean이 필요하다 — proxy가 없으면 초기화에 실패한다 |
+| 공개 계약 구현이 자기 연산마다 경계를 갖는다 | 그 구현이 직접 갖는다 — 밖에서 인터페이스로 부르므로 self-invocation이 아니다 |
+
+`SeatStateSnapshotReader`가 첫 줄에 해당해 사라졌고(`QuerydslSeatStateQueryPort`가 경계를 가져갔다),
+`SeatAvailabilitySnapshotReader`와 `OrderHoldSnapshotReader`는 둘째·셋째 줄에 해당해 남았다.
+`MemberAccountService`는 넷째 줄이라 협력자 셋을 흡수하면서 각 연산이 자기 `@Transactional`을 갖게 됐다.
+
+**옮기기 전에 경계가 실제로 적용되는지 테스트로 확인한다.** 결과 값은 경계가 무너져도 그대로라
+행동 테스트로는 드러나지 않는다 — 실제 컨텍스트에서 Spring의 `TransactionAttributeSource`에 물어
+"누가 무엇에 트랜잭션 advice를 적용하는가"를 고정한다(`SeatStatusTransactionBoundaryTest`).
+
 `HoldManager`, `LockManager`, Repository 계약, cross-module API도 합치지 않는다. Hold는 독립적인
 생명주기와 TTL, Redis 일관성 경계를 갖는다. UseCase가 알아야 하는 것은 "좌석을 선점한다"이지
 "Redis에 어떻게 저장하는가"가 아니다.
@@ -201,6 +223,12 @@ region -> VenueLookupApi.findIdsByRegion(...) -> venueIds -> ShowQueryPort.searc
 
 그러면 Querydsl 코드는 `show.venueId.in(venueIds)`라는 자기 DB query에 집중한다. 단 **module
 경계와 결과 semantics가 완전히 같을 때만** 옮긴다 — 빈 집합일 때의 동작까지 확인한다.
+
+**"조건 없음"과 "조건은 있는데 해당하는 것이 없음"을 같은 값으로 표현하지 않는다.** 위 예에서
+`region == null`(지역 필터 없음)과 `region`은 있는데 그 지역에 공연장이 없어 `venueIds`가 빈 집합인
+경우는 결과가 정반대다 — 앞은 전체, 뒤는 0건이다. 그래서 넘기는 타입이 `Set<Long>`이 아니라
+`@Nullable Set<Long>`이어야 한다. 둘을 뭉개면 "제주에 공연장이 없다"가 "전체 목록"으로 바뀌고,
+이 회귀는 조용하다. 옮기기 전에 두 경우를 각각 고정하는 테스트를 먼저 쓴다.
 
 ### 14. 리팩터링은 동작을 바꾸지 않는다
 
