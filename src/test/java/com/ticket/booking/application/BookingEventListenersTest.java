@@ -35,9 +35,9 @@ import com.ticket.booking.domain.order.OrderSeat;
  * Task 8 Step 5: listener 멱등성과 stale-event 방어를 고정한다.
  *
  * <p>{@link BookingEventListeners}는 event payload를 그대로 믿지 않고 {@code orderId}로 현재 저장된
- * order·orderSeat를 다시 읽는다. hold 생성·해제 자체의 멱등 로직은 {@code HoldCreationTaskProcessorTest}/{@code
- * HoldReleaseTaskProcessorTest}가 이미 고정하므로, 여기서는 listener가 그 로직에 올바른 입력(특히 {@code holdReleased}
- * 플래그)을 넘기는지와 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를 본다.
+ * order·orderSeat를 다시 읽는다. hold 생성·해제 자체의 멱등 로직은 {@code HoldCreationCoordinatorTest}/{@code
+ * HoldReleaseCoordinatorTest}가 이미 고정하므로, 여기서는 listener가 그 로직에 올바른 입력(특히 {@code holdReleased} 플래그)을
+ * 넘기는지와 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를 본다.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -45,8 +45,8 @@ class BookingEventListenersTest {
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     @Mock private OrderHoldSnapshotReader orderHoldSnapshotReader;
-    @Mock private HoldCreationTaskProcessor holdCreationTaskProcessor;
-    @Mock private HoldReleaseTaskProcessor holdReleaseTaskProcessor;
+    @Mock private HoldCreationCoordinator holdCreationCoordinator;
+    @Mock private HoldReleaseCoordinator holdReleaseCoordinator;
     @Mock private HoldReleaseProgressRecorder holdReleaseProgressRecorder;
     private BookingEventListeners listeners;
 
@@ -55,8 +55,8 @@ class BookingEventListenersTest {
         listeners =
                 new BookingEventListeners(
                         orderHoldSnapshotReader,
-                        holdCreationTaskProcessor,
-                        holdReleaseTaskProcessor,
+                        holdCreationCoordinator,
+                        holdReleaseCoordinator,
                         holdReleaseProgressRecorder,
                         FIXED_CLOCK);
     }
@@ -85,7 +85,7 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verifyNoInteractions(holdCreationTaskProcessor);
+        verifyNoInteractions(holdCreationCoordinator);
     }
 
     @Test
@@ -100,7 +100,7 @@ class BookingEventListenersTest {
 
         final Hold expectedHold =
                 new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
-        verify(holdCreationTaskProcessor).process(expectedHold);
+        verify(holdCreationCoordinator).process(expectedHold);
     }
 
     @Test
@@ -110,7 +110,7 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verifyNoInteractions(holdReleaseTaskProcessor, holdReleaseProgressRecorder);
+        verifyNoInteractions(holdReleaseCoordinator, holdReleaseProgressRecorder);
     }
 
     @Test
@@ -125,7 +125,7 @@ class BookingEventListenersTest {
 
         final ArgumentCaptor<HoldReleaseTask> captor =
                 ArgumentCaptor.forClass(HoldReleaseTask.class);
-        verify(holdReleaseTaskProcessor)
+        verify(holdReleaseCoordinator)
                 .process(
                         org.mockito.ArgumentMatchers.eq(event.eventId()),
                         captor.capture(),
@@ -137,7 +137,7 @@ class BookingEventListenersTest {
     /**
      * 같은 eventId가 재전달되면(at-least-once) listener는 매번 DB를 다시 읽지만, Redis 해제 자체는 {@link
      * HoldReleaseProgressRecorder}에 남은 진행 상태로 건너뛴다. 이 재확인이 바로 "예전 event가 새 hold/selection을 지우지 못하게"
-     * 하는 지점이다 — 재전달에서 {@code holdReleased=true}가 넘어가야 {@link HoldReleaseTaskProcessor}가 Redis
+     * 하는 지점이다 — 재전달에서 {@code holdReleased=true}가 넘어가야 {@link HoldReleaseCoordinator}가 Redis
      * release를 반복하지 않는다.
      */
     @Test
@@ -153,7 +153,7 @@ class BookingEventListenersTest {
 
         final ArgumentCaptor<HoldReleaseTask> captor =
                 ArgumentCaptor.forClass(HoldReleaseTask.class);
-        verify(holdReleaseTaskProcessor, org.mockito.Mockito.times(2))
+        verify(holdReleaseCoordinator, org.mockito.Mockito.times(2))
                 .process(
                         org.mockito.ArgumentMatchers.eq(event.eventId()),
                         captor.capture(),

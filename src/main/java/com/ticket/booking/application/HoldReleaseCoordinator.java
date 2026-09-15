@@ -17,9 +17,18 @@ import com.ticket.booking.domain.selection.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 주문이 끝난 뒤 좌석 선점을 풀고, 그 결과를 좌석 상태 이벤트로 알린다.
+ *
+ * <p><b>좌석 락 안에서 해제와 발행을 함께 한다</b> — {@link SeatSelectionCoordinator}와 같은 이유다. 락 밖에서 발행하면 뒤늦은 해제
+ * 알림이 다른 사용자의 선택 뒤에 끼어들어, 이미 잡힌 좌석이 비어 보인다.
+ *
+ * <p>해제는 {@link HoldReleaseProgressRecorder}로 한 번만 수행한다 — 이 후속 처리는 트랜잭션 없이 실행되는 listener에서 불리고 이벤트가
+ * 재전달될 수 있다. 발행 대상도 락 안에서 현재 상태를 다시 확인해 고른다.
+ */
 @Component
 @RequiredArgsConstructor
-public class HoldReleaseTaskProcessor {
+public class HoldReleaseCoordinator {
     private final LockManager lockManager;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;

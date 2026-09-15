@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
  * com.ticket.shared.infrastructure.EventPublicationMaintenance}가 재시도한다.
  *
  * <p>event payload의 스냅샷을 그대로 믿지 않고 {@code orderId}로 현재 저장된 order를 다시 읽어 처리한다 — 좌석은 Order aggregate가
- * 직접 들고 있어 함께 따라온다. hold 생성 후처리({@link HoldCreationTaskProcessor})와 hold 해제 후처리 ({@link
- * HoldReleaseTaskProcessor})는 기존 멱등 로직을 그대로 재사용한다.
+ * 직접 들고 있어 함께 따라온다. hold 생성 후처리({@link HoldCreationCoordinator})와 hold 해제 후처리 ({@link
+ * HoldReleaseCoordinator})는 기존 멱등 로직을 그대로 재사용한다.
  *
  * <p><b>listener 자체는 DB 트랜잭션을 열지 않는다({@code propagation = NOT_SUPPORTED}).</b> 기본값인 {@code
  * REQUIRES_NEW}에서는 Redis 락 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로
@@ -61,8 +61,8 @@ class BookingEventListeners {
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderTerminated)";
 
     private final OrderHoldSnapshotReader orderHoldSnapshotReader;
-    private final HoldCreationTaskProcessor holdCreationTaskProcessor;
-    private final HoldReleaseTaskProcessor holdReleaseTaskProcessor;
+    private final HoldCreationCoordinator holdCreationCoordinator;
+    private final HoldReleaseCoordinator holdReleaseCoordinator;
     private final HoldReleaseProgressRecorder holdReleaseProgressRecorder;
     private final Clock clock;
 
@@ -86,7 +86,7 @@ class BookingEventListeners {
                         snapshot.performanceId(),
                         snapshot.seatIds(),
                         snapshot.expiresAt());
-        holdCreationTaskProcessor.process(hold);
+        holdCreationCoordinator.process(hold);
     }
 
     /**
@@ -109,6 +109,6 @@ class BookingEventListeners {
                         event.holdKey(),
                         snapshot.seatIds(),
                         alreadyReleased);
-        holdReleaseTaskProcessor.process(event.eventId(), task, LocalDateTime.now(clock));
+        holdReleaseCoordinator.process(event.eventId(), task, LocalDateTime.now(clock));
     }
 }
