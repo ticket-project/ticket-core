@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.application.RegionVenueIds;
 import com.ticket.show.application.SaleOpeningSoonDetailRow;
 import com.ticket.show.application.SaleOpeningSoonDetailView;
 import com.ticket.show.application.SaleOpeningSoonSearchParam;
@@ -48,7 +49,10 @@ public class GetSaleOpeningSoonShowsPageUseCase {
     public Output execute(final Input input) {
         final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> page =
                 showListQueryPort.findSaleOpeningSoonPage(
-                        input.param(), input.size(), input.sort());
+                        input.param(),
+                        RegionVenueIds.resolve(venueLookup, input.param().getRegion()),
+                        input.size(),
+                        input.sort());
         final VenueDisplays venues =
                 VenueDisplays.load(
                         venueLookup,

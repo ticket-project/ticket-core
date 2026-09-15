@@ -59,7 +59,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                         7L);
         CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
                 new CursorPage<>(List.of(row), true, NEXT_POSITION);
-        when(showListQueryPort.findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR))
+        when(showListQueryPort.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -96,7 +96,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                                 100L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListQueryPort).findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR);
+        verify(showListQueryPort).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
@@ -105,7 +105,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
                 new CursorPage<>(List.of(), false, null);
-        when(showListQueryPort.findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR))
+        when(showListQueryPort.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
         GetSaleOpeningSoonShowsPageUseCase.Output output =
@@ -115,6 +115,6 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListQueryPort).findSaleOpeningSoonPage(param, 10, ShowSort.POPULAR);
+        verify(showListQueryPort).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 }
