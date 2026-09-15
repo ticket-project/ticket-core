@@ -1,7 +1,5 @@
 package com.ticket.member.application.usecase;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 
 import com.ticket.member.domain.Member;
@@ -23,9 +21,7 @@ public class GetCurrentMemberUseCase {
                         .orElseThrow(() -> new NotFoundException());
         return new Output(
                 findMember.getId(),
-                Optional.ofNullable(findMember.getEmail())
-                        .map(email -> email.getEmail())
-                        .orElse(""),
+                findMember.getEmail().getEmail(),
                 findMember.getName(),
                 findMember.getRole().name());
     }
