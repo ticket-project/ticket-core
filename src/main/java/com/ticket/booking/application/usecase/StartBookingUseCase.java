@@ -156,7 +156,7 @@ public class StartBookingUseCase {
                         OrderState.PENDING, hold.expiresAt(), LocalDateTime.now(clock)));
     }
 
-    /** 대기열을 요구하는 회차에서만 ticket-queue가 발급한 입장 토큰을 검증한다. */
+    /** 좌석 락을 건 구간 안에서만 Redis 선점을 만든다. 락은 이 구간을 벗어나지 않는다. */
     private Hold holdSeats(
             final List<LockKey> seatLocks,
             final Input input,
