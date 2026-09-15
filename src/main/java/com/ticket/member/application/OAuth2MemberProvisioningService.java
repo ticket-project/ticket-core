@@ -1,6 +1,7 @@
 package com.ticket.member.application;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,51 +27,47 @@ import lombok.RequiredArgsConstructor;
 public class OAuth2MemberProvisioningService {
     private final MemberRepository memberRepository;
 
+    /**
+     * 소셜 신원으로 회원을 찾거나 만든다. 판정 순서가 곧 정책이다.
+     *
+     * <ol>
+     *   <li>이미 이 provider 계정으로 연결된 회원이 있으면 그 회원이다 — 이메일은 보지 않는다.
+     *   <li>없으면 이메일로 기존 회원을 찾는다. <b>provider가 검증한 이메일만</b> 쓰고, 검증되지 않았으면 provider ID 기반 대체 주소로 격리해
+     *       남의 계정에 붙지 않게 한다.
+     *   <li>같은 이메일의 회원이 없으면 새로 만들어 연결한다.
+     *   <li>있는데 이 provider 연결이 없으면 그 회원에 연결을 더한다.
+     *   <li>있고 이미 다른 provider 계정 ID로 연결돼 있으면 충돌이다.
+     * </ol>
+     */
     public Member getOrCreateMember(final SocialIdentity userInfo) {
-        return memberRepository
-                .findActiveBySocialAccount(userInfo.provider(), userInfo.providerId())
-                .orElseGet(() -> createOrLinkMember(userInfo));
-    }
+        final Optional<Member> linkedMember =
+                memberRepository.findActiveBySocialAccount(
+                        userInfo.provider(), userInfo.providerId());
+        if (linkedMember.isPresent()) {
+            return linkedMember.get();
+        }
 
-    private Member createOrLinkMember(final SocialIdentity userInfo) {
         final String email = resolveEmail(userInfo);
+        final Optional<Member> memberWithSameEmail = memberRepository.findActiveByEmail(email);
+        if (memberWithSameEmail.isEmpty()) {
+            final Member member =
+                    Member.createSocialMember(
+                            Email.create(email), resolveName(userInfo), Role.MEMBER);
+            member.addSocialAccount(userInfo.provider(), userInfo.providerId());
+            return memberRepository.save(member);
+        }
 
-        return memberRepository
-                .findActiveByEmail(email)
-                .map(existingMember -> linkSocialAccount(existingMember, userInfo))
-                .orElseGet(() -> createSocialMember(userInfo, email));
-    }
-
-    private Member linkSocialAccount(final Member existingMember, final SocialIdentity userInfo) {
-        return existingMember
-                .findActiveSocialAccount(userInfo.provider())
-                .map(
-                        linkedAccount ->
-                                validateSameSocialAccount(existingMember, linkedAccount, userInfo))
-                .orElseGet(() -> addSocialAccount(existingMember, userInfo));
-    }
-
-    private Member validateSameSocialAccount(
-            final Member existingMember,
-            final MemberSocialAccount linkedAccount,
-            final SocialIdentity userInfo) {
-        if (!linkedAccount.isSameSocialId(userInfo.providerId())) {
+        final Member existingMember = memberWithSameEmail.get();
+        final Optional<MemberSocialAccount> linkedAccount =
+                existingMember.findActiveSocialAccount(userInfo.provider());
+        if (linkedAccount.isEmpty()) {
+            existingMember.addSocialAccount(userInfo.provider(), userInfo.providerId());
+            return memberRepository.save(existingMember);
+        }
+        if (!linkedAccount.get().isSameSocialId(userInfo.providerId())) {
             throw new DuplicateEmailException("Email is already linked to another social account.");
         }
         return existingMember;
-    }
-
-    private Member addSocialAccount(final Member existingMember, final SocialIdentity userInfo) {
-        existingMember.addSocialAccount(userInfo.provider(), userInfo.providerId());
-        return memberRepository.save(existingMember);
-    }
-
-    private Member createSocialMember(final SocialIdentity userInfo, final String email) {
-        final String displayName = resolveName(userInfo);
-        final Member member =
-                Member.createSocialMember(Email.create(email), displayName, Role.MEMBER);
-        member.addSocialAccount(userInfo.provider(), userInfo.providerId());
-        return memberRepository.save(member);
     }
 
     private String resolveEmail(final SocialIdentity userInfo) {
