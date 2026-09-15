@@ -2,6 +2,8 @@ package com.ticket.security.oauth;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import com.ticket.member.api.SocialAccountConnection;
@@ -15,13 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
     private static final String KAKAO_ADMIN_AUTH_PREFIX = "KakaoAK ";
-    private final KakaoUnlinkHttpClient kakaoUnlinkHttpClient;
+    private static final String KAKAO_TARGET_ID_TYPE = "user_id";
+    private final KakaoUnlinkApiClient kakaoUnlinkApiClient;
     private final String adminKey;
 
     public ProviderSocialAccountUnlinker(
-            final KakaoUnlinkHttpClient kakaoUnlinkHttpClient,
+            final KakaoUnlinkApiClient kakaoUnlinkApiClient,
             @Value("${app.auth.kakao.admin-key:}") final String adminKey) {
-        this.kakaoUnlinkHttpClient = kakaoUnlinkHttpClient;
+        this.kakaoUnlinkApiClient = kakaoUnlinkApiClient;
         this.adminKey = adminKey;
     }
 
@@ -41,8 +44,12 @@ public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
             throw new InvalidRequestException("KAKAO_ADMIN_KEY 설정이 필요합니다.");
         }
 
+        final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("target_id_type", KAKAO_TARGET_ID_TYPE);
+        formData.add("target_id", kakaoUserId);
+
         try {
-            kakaoUnlinkHttpClient.unlink(KAKAO_ADMIN_AUTH_PREFIX + adminKey, kakaoUserId);
+            kakaoUnlinkApiClient.unlink(KAKAO_ADMIN_AUTH_PREFIX + adminKey, formData);
         } catch (Exception e) {
             log.error("카카오 unlink 호출 실패", e);
             throw new InternalErrorException("카카오 unlink 호출에 실패했습니다.");
