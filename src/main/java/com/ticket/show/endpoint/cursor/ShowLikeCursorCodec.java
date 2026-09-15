@@ -1,5 +1,6 @@
 package com.ticket.show.endpoint.cursor;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import com.ticket.shared.exception.InvalidRequestException;
@@ -11,11 +12,11 @@ import com.ticket.shared.exception.InvalidRequestException;
  */
 @Component
 public class ShowLikeCursorCodec {
-    public String encode(final Long lastLikeId) {
+    public @Nullable String encode(final @Nullable Long lastLikeId) {
         return lastLikeId == null ? null : String.valueOf(lastLikeId);
     }
 
-    public Long decode(final String cursor) {
+    public @Nullable Long decode(final @Nullable String cursor) {
         if (cursor == null || cursor.isBlank()) {
             return null;
         }

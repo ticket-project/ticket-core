@@ -3,6 +3,8 @@ package com.ticket.show.application;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.port.ShowListQueryPort;
 
 /**
@@ -11,9 +13,9 @@ import com.ticket.show.application.port.ShowListQueryPort;
  */
 public record LatestShowRow(
         Long id,
-        String title,
-        String image,
-        LocalDate startDate,
-        LocalDate endDate,
-        Long venueId,
+        @Nullable String title,
+        @Nullable String image,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
+        @Nullable Long venueId,
         LocalDateTime createdAt) {}

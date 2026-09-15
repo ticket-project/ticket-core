@@ -2,6 +2,8 @@ package com.ticket.show.application;
 
 import java.time.LocalDate;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.port.ShowListQueryPort;
 
 /**
@@ -10,9 +12,9 @@ import com.ticket.show.application.port.ShowListQueryPort;
  */
 public record ShowSearchItemRow(
         Long id,
-        String title,
-        String image,
-        LocalDate startDate,
-        LocalDate endDate,
+        @Nullable String title,
+        @Nullable String image,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
         long viewCount,
-        Long venueId) {}
+        @Nullable Long venueId) {}

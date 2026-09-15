@@ -1,5 +1,7 @@
 package com.ticket.like.exception;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.shared.exception.ErrorCode;
 import com.ticket.shared.exception.TicketException;
 
@@ -9,7 +11,8 @@ import com.ticket.shared.exception.TicketException;
  */
 public abstract sealed class LikeException extends TicketException
         permits LikeAlreadyExistsException {
-    protected LikeException(final ErrorCode errorCode, final String message, final Object data) {
+    protected LikeException(
+            final ErrorCode errorCode, final String message, final @Nullable Object data) {
         super(errorCode, message, data);
     }
 }

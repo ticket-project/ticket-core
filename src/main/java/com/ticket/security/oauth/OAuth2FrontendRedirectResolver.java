@@ -5,6 +5,7 @@ import java.net.URI;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -78,7 +79,7 @@ public class OAuth2FrontendRedirectResolver {
         return normalizeBaseUrl(frontendBaseUrl) + path;
     }
 
-    private String resolveFrontendBaseUrl(final HttpServletRequest request) {
+    private @Nullable String resolveFrontendBaseUrl(final HttpServletRequest request) {
         final String origin = request.getHeader("Origin");
         final String referer = request.getHeader("Referer");
         if (isLocal(origin) || isLocal(referer)) {
@@ -90,16 +91,16 @@ public class OAuth2FrontendRedirectResolver {
         return null;
     }
 
-    private boolean isLocal(final String uri) {
+    private boolean isLocal(final @Nullable String uri) {
         final String host = host(uri);
         return LOCALHOST.equals(host) || LOOPBACK.equals(host);
     }
 
-    private boolean hasHost(final String uri) {
+    private boolean hasHost(final @Nullable String uri) {
         return host(uri) != null;
     }
 
-    private String host(final String uri) {
+    private @Nullable String host(final @Nullable String uri) {
         if (uri == null || uri.isBlank()) {
             return null;
         }

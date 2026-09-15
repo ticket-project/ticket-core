@@ -19,6 +19,7 @@
  * GetMyShowLikesUseCase}가 한다 — 대상 표시값 조립은 그 대상을 아는 module의 책임이라는 원칙 때문이다. 여러 BC를 넘나드는 "내 정보" 조합을
  * 전담하는 module(가칭 mypage)이 생기면 그때 옮길 후보다(아직 만들지 않는다 — 지금은 이 하나의 화면 때문에 새 BC를 만들 근거가 부족하다).
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Like",
         allowedDependencies = {
@@ -28,3 +29,5 @@
             "shared :: exception"
         })
 package com.ticket.like;
+
+import org.jspecify.annotations.NullMarked;

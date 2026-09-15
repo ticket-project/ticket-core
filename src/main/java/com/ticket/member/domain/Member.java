@@ -19,6 +19,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.member.api.SocialProvider;
 
 import lombok.AccessLevel;
@@ -37,13 +39,13 @@ public class Member extends MemberAuditedEntity {
     private Long id;
 
     @Embedded private Email email;
-    @Embedded private EncodedPassword encodedPassword;
+    @Embedded private @Nullable EncodedPassword encodedPassword;
     private String name;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column private LocalDateTime deletedAt;
+    @Column private @Nullable LocalDateTime deletedAt;
 
     /**
      * 소셜 계정은 회원 없이 존재할 수 없는 같은 aggregate의 자식이라 Root가 컬렉션으로 소유한다.
@@ -63,7 +65,7 @@ public class Member extends MemberAuditedEntity {
 
     public Member(
             final Email email,
-            final EncodedPassword encodedPassword,
+            final @Nullable EncodedPassword encodedPassword,
             final String name,
             final Role role) {
         this.email = email;

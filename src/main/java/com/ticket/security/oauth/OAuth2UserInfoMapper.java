@@ -4,6 +4,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -52,7 +54,8 @@ public final class OAuth2UserInfoMapper {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> getMap(final Map<String, Object> source, final String key) {
+    private static @Nullable Map<String, Object> getMap(
+            final Map<String, Object> source, final String key) {
         final Object value = source.get(key);
         if (value instanceof Map<?, ?> mapValue) {
             return (Map<String, Object>) mapValue;

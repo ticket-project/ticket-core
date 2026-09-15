@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
@@ -92,7 +93,7 @@ public class SeatSelectionCoordinator {
      * performanceSeatId를 이미 알고 있을 때 쓴다. 여러 좌석을 한꺼번에 알릴 때 좌석마다 DB를 다시 읽지 않도록 호출자가 한 번에 조회한 값을 넘긴다.
      */
     public void notifyReleasedIfFree(
-            final Long performanceId, final Long seatId, final Long performanceSeatId) {
+            final Long performanceId, final Long seatId, final @Nullable Long performanceSeatId) {
         lockManager.withLock(
                 List.of(LockKey.seat(performanceId, seatId)),
                 NOTIFY_LOCK,
@@ -109,14 +110,14 @@ public class SeatSelectionCoordinator {
 
     private void publish(
             final Long performanceId,
-            final Long performanceSeatId,
+            final @Nullable Long performanceSeatId,
             final Long seatId,
             final SeatStatusAction action) {
         seatEventPublisher.publish(performanceId, performanceSeatId, seatId, action);
     }
 
     /** 락 밖에서 미리 읽는다 — DB 조회를 좌석 락 안에 넣으면 고빈도 경로의 락 보유 시간이 DB 지연을 그대로 따라간다. */
-    private Long resolvePerformanceSeatId(final Long performanceId, final Long seatId) {
+    private @Nullable Long resolvePerformanceSeatId(final Long performanceId, final Long seatId) {
         return performanceSeatRepository
                 .findAllByPerformanceIdAndSeatIdIn(performanceId, List.of(seatId))
                 .stream()

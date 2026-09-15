@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.venue.api.Region;
@@ -14,16 +16,16 @@ import com.ticket.venue.api.Region;
  */
 public record ShowListItemView(
         Long id,
-        String title,
-        String subTitle,
-        String image,
+        @Nullable String title,
+        @Nullable String subTitle,
+        @Nullable String image,
         List<String> genreNames,
-        LocalDate startDate,
-        LocalDate endDate,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
         long viewCount,
         @JsonProperty("saleType") SaleType displaySaleType,
-        @JsonProperty("saleStartDate") LocalDateTime displaySaleStartsAt,
-        @JsonProperty("saleEndDate") LocalDateTime displaySaleEndsAt,
+        @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
+        @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
         LocalDateTime createdAt,
-        Region region,
-        String venue) {}
+        @Nullable Region region,
+        @Nullable String venue) {}

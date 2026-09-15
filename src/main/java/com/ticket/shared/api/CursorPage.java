@@ -3,6 +3,8 @@ package com.ticket.shared.api;
 import java.util.List;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 커서 페이징 조회 결과다.
  *
@@ -10,9 +12,9 @@ import java.util.function.Function;
  * 각 module의 endpoint 계층(예: {@code com.ticket.show.endpoint.cursor.ShowCursorCodec})이 한다.
  *
  * @param <T> 조회 결과 항목
- * @param <P> 다음 페이지 위치를 나타내는 타입
+ * @param <P> 다음 페이지 위치를 나타내는 타입. 마지막 페이지에서는 {@code nextPosition}이 없다
  */
-public record CursorPage<T, P>(List<T> items, boolean hasNext, P nextPosition) {
+public record CursorPage<T, P>(List<T> items, boolean hasNext, @Nullable P nextPosition) {
     public static <T, P> CursorPage<T, P> empty() {
         return new CursorPage<>(List.of(), false, null);
     }

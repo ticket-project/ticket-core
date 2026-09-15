@@ -2,6 +2,8 @@ package com.ticket.show.application;
 
 import java.math.BigDecimal;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.venue.api.Region;
 
 /**
@@ -11,10 +13,10 @@ import com.ticket.venue.api.Region;
  */
 public record VenueInfo(
         Long id,
-        String name,
-        String address,
-        Region region,
-        BigDecimal latitude,
-        BigDecimal longitude,
-        String phone,
-        String imageUrl) {}
+        @Nullable String name,
+        @Nullable String address,
+        @Nullable Region region,
+        @Nullable BigDecimal latitude,
+        @Nullable BigDecimal longitude,
+        @Nullable String phone,
+        @Nullable String imageUrl) {}

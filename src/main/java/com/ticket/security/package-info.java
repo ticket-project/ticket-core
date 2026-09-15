@@ -16,6 +16,7 @@
  * (booking의 WebSocket STOMP CONNECT)가 원본 access token 문자열을 검증할 때 쓴다. HTTP 경로의 만료/무효 구분은 {@code
  * security.token}의 읽기 계약이 보존하고, WebSocket은 그 구분이 필요 없어 하나의 인증 실패로 다룬다.
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Security",
         allowedDependencies = {
@@ -26,3 +27,5 @@
             "shared :: exception"
         })
 package com.ticket.security;
+
+import org.jspecify.annotations.NullMarked;

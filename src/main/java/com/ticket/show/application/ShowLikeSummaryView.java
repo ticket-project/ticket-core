@@ -3,11 +3,13 @@ package com.ticket.show.application;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 public record ShowLikeSummaryView(
         Long showId,
-        String title,
-        String image,
-        LocalDate startDate,
-        LocalDate endDate,
-        String venue,
+        @Nullable String title,
+        @Nullable String image,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
+        @Nullable String venue,
         LocalDateTime likedAt) {}

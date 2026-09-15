@@ -2,6 +2,7 @@ package com.ticket.show.application.usecase;
 
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +32,8 @@ public class GetPerformanceSummaryUseCase {
         }
     }
 
-    public record Output(String title, String region, LocalDateTime startTime) {}
+    public record Output(
+            @Nullable String title, @Nullable String region, @Nullable LocalDateTime startTime) {}
 
     public Output execute(final Input input) {
         final PerformanceSummaryView summary =
@@ -48,7 +50,7 @@ public class GetPerformanceSummaryUseCase {
                         ? null
                         : venueLookup
                                 .findSummary(summary.venueId())
-                                .map(v -> v.region().getDescription())
+                                .map(v -> v.region() == null ? null : v.region().getDescription())
                                 .orElse(null);
 
         return new Output(summary.title(), region, summary.startTime());

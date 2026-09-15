@@ -2,6 +2,8 @@ package com.ticket.booking.application;
 
 import java.time.Duration;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 락 획득 방식이다. 대기 시간과 임대 시간은 기술 설정이므로 호출부가 의도를 담아 지정한다.
  *
@@ -11,7 +13,10 @@ import java.time.Duration;
  * @param failureMessage 획득 실패 시 사용할 메시지. 비어 있으면 기본 메시지를 쓴다
  */
 public record LockOptions(
-        Duration waitTime, Duration leaseTime, boolean warnOnFailure, String failureMessage) {
+        Duration waitTime,
+        @Nullable Duration leaseTime,
+        boolean warnOnFailure,
+        String failureMessage) {
     private static final Duration DEFAULT_WAIT_TIME = Duration.ofSeconds(5);
 
     public static LockOptions defaults() {

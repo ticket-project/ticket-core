@@ -3,6 +3,8 @@ package com.ticket.show.application;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.venue.api.Region;
 
@@ -12,13 +14,13 @@ import com.ticket.venue.api.Region;
  */
 public record SaleOpeningSoonDetailView(
         Long id,
-        String title,
-        String subTitle,
-        String image,
-        String venue,
-        Region region,
-        LocalDate startDate,
-        LocalDate endDate,
-        @JsonProperty("saleStartDate") LocalDateTime displaySaleStartsAt,
-        @JsonProperty("saleEndDate") LocalDateTime displaySaleEndsAt,
+        @Nullable String title,
+        @Nullable String subTitle,
+        @Nullable String image,
+        @Nullable String venue,
+        @Nullable Region region,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
+        @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
+        @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
         long viewCount) {}

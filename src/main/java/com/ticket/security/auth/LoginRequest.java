@@ -1,6 +1,10 @@
 package com.ticket.security.auth;
 
+import java.util.Objects;
+
 import jakarta.validation.constraints.NotBlank;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
@@ -14,11 +18,14 @@ import lombok.NoArgsConstructor;
 public class LoginRequest {
     @JsonAlias({"id", "loginId"})
     @NotBlank
-    private String email;
+    private @Nullable String email;
 
-    @NotBlank private String password;
+    @NotBlank private @Nullable String password;
 
     public LoginUseCase.Input toInput() {
-        return new LoginUseCase.Input(email, password);
+        // @Valid가 @NotBlank를 먼저 통과시킨 뒤에만 호출되므로 두 값은 여기서 null일 수 없다.
+        return new LoginUseCase.Input(
+                Objects.requireNonNull(email, "email must not be null"),
+                Objects.requireNonNull(password, "password must not be null"));
     }
 }

@@ -1,5 +1,7 @@
 package com.ticket.like.application.port;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.like.api.LikeType;
 import com.ticket.like.application.LikeRow;
 import com.ticket.shared.api.CursorPage;
@@ -11,5 +13,5 @@ import com.ticket.shared.api.CursorPage;
  */
 public interface LikeQueryPort {
     CursorPage<LikeRow, Long> findLiked(
-            LikeType likeType, Long memberId, Long cursorLikeId, int size);
+            LikeType likeType, Long memberId, @Nullable Long cursorLikeId, int size);
 }

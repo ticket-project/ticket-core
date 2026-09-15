@@ -24,7 +24,10 @@
  * 위 문장이 실행 검증 없이 {@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG} 스냅샷에만 기대게 된다. 빈 값을 명시하면
  * leaf 위반이 스냅샷이 아니라 {@code verify()} 자체에서 잡힌다.
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Shared",
         allowedDependencies = {})
 package com.ticket.shared;
+
+import org.jspecify.annotations.NullMarked;

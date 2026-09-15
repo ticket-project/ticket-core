@@ -8,19 +8,25 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 
-/** Show 쿼리에서 공통으로 사용되는 Querydsl 술어(predicate) 조립기다. */
+/**
+ * Show 쿼리에서 공통으로 사용되는 Querydsl 술어(predicate) 조립기다.
+ *
+ * <p>값이 없는 조건은 {@code null}을 돌려준다 — Querydsl의 {@code where}/{@code and}가 {@code null}을 "조건 없음"으로
+ * 건너뛰므로, 호출부가 조건 유무를 따로 분기하지 않아도 된다.
+ */
 @Component
 public class QuerydslShowPredicates {
-    public BooleanExpression categoryCodeEq(final String categoryCode) {
+    public @Nullable BooleanExpression categoryCodeEq(final @Nullable String categoryCode) {
         return StringUtils.hasText(categoryCode) ? category.code.eq(categoryCode) : null;
     }
 
-    public BooleanExpression genreEq(final String genreCode) {
+    public @Nullable BooleanExpression genreEq(final @Nullable String genreCode) {
         return StringUtils.hasText(genreCode) ? genre.code.eq(genreCode) : null;
     }
 
@@ -34,35 +40,35 @@ public class QuerydslShowPredicates {
         return show.venueId.in(venueIds);
     }
 
-    public BooleanExpression titleContains(final String title) {
+    public @Nullable BooleanExpression titleContains(final @Nullable String title) {
         return StringUtils.hasText(title) ? show.title.containsIgnoreCase(title) : null;
     }
 
-    public BooleanExpression keywordContains(final String keyword) {
+    public @Nullable BooleanExpression keywordContains(final @Nullable String keyword) {
         return titleContains(keyword);
     }
 
-    public BooleanExpression displaySaleStartsAtGoe(final LocalDateTime from) {
+    public @Nullable BooleanExpression displaySaleStartsAtGoe(final @Nullable LocalDateTime from) {
         return from != null ? show.displaySaleWindow.startsAt.goe(from) : null;
     }
 
-    public BooleanExpression displaySaleStartsAtLoe(final LocalDateTime to) {
+    public @Nullable BooleanExpression displaySaleStartsAtLoe(final @Nullable LocalDateTime to) {
         return to != null ? show.displaySaleWindow.startsAt.loe(to) : null;
     }
 
-    public BooleanExpression displaySaleEndsAtGoe(final LocalDateTime from) {
+    public @Nullable BooleanExpression displaySaleEndsAtGoe(final @Nullable LocalDateTime from) {
         return from != null ? show.displaySaleWindow.endsAt.goe(from) : null;
     }
 
-    public BooleanExpression displaySaleEndsAtLoe(final LocalDateTime to) {
+    public @Nullable BooleanExpression displaySaleEndsAtLoe(final @Nullable LocalDateTime to) {
         return to != null ? show.displaySaleWindow.endsAt.loe(to) : null;
     }
 
-    public BooleanExpression startDateGoe(final LocalDate from) {
+    public @Nullable BooleanExpression startDateGoe(final @Nullable LocalDate from) {
         return from != null ? show.startDate.goe(from) : null;
     }
 
-    public BooleanExpression startDateLoe(final LocalDate to) {
+    public @Nullable BooleanExpression startDateLoe(final @Nullable LocalDate to) {
         return to != null ? show.startDate.loe(to) : null;
     }
 }

@@ -12,7 +12,10 @@
  * "공개 계약에는 interface + record만" 원칙에서 벗어난 enum이지만, show가 검색 조건·표시값으로 함께 쓰는 공용 어휘라 여기 복제하면 원본이 둘로
  * 갈린다. show는 이 enum을 그대로 참조한다.
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Venue",
         allowedDependencies = {})
 package com.ticket.venue;
+
+import org.jspecify.annotations.NullMarked;

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,7 @@ public class GetMyShowLikesUseCase {
     /**
      * @param cursorLikeId 이전 페이지 마지막 찜 id. 첫 페이지면 null이다.
      */
-    public record Input(Long memberId, Long cursorLikeId, int size) {
+    public record Input(Long memberId, @Nullable Long cursorLikeId, int size) {
         public Input {
             if (memberId == null) {
                 throw new InvalidRequestException("memberId는 필수입니다.");
@@ -56,7 +57,8 @@ public class GetMyShowLikesUseCase {
         }
     }
 
-    public record Output(List<ShowLikeSummaryView> items, boolean hasNext, Long nextPosition) {}
+    public record Output(
+            List<ShowLikeSummaryView> items, boolean hasNext, @Nullable Long nextPosition) {}
 
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
@@ -87,8 +89,10 @@ public class GetMyShowLikesUseCase {
         return new Output(items, page.hasNext(), page.nextPosition());
     }
 
-    private ShowLikeSummaryView toSummaryView(
-            final LikeEntry entry, final ShowSummaryRow summary, final VenueDisplays venues) {
+    private @Nullable ShowLikeSummaryView toSummaryView(
+            final LikeEntry entry,
+            final @Nullable ShowSummaryRow summary,
+            final VenueDisplays venues) {
         if (summary == null) {
             return null;
         }

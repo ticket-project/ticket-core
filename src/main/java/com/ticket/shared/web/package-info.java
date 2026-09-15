@@ -5,5 +5,8 @@
  * com.ticket.shared.web.ErrorMessage}/{@link com.ticket.shared.web.ResultType})와 무한스크롤 응답 형식({@link
  * com.ticket.shared.web.SliceResponse})이 여기 있다.
  */
+@NullMarked
 @org.springframework.modulith.NamedInterface("web")
 package com.ticket.shared.web;
+
+import org.jspecify.annotations.NullMarked;

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
+import org.jspecify.annotations.Nullable;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,12 +24,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DisplaySaleWindow {
     @Column(name = "display_sale_starts_at")
-    private LocalDateTime startsAt;
+    private @Nullable LocalDateTime startsAt;
 
     @Column(name = "display_sale_ends_at")
-    private LocalDateTime endsAt;
+    private @Nullable LocalDateTime endsAt;
 
-    public DisplaySaleWindow(final LocalDateTime startsAt, final LocalDateTime endsAt) {
+    public DisplaySaleWindow(
+            final @Nullable LocalDateTime startsAt, final @Nullable LocalDateTime endsAt) {
         this.startsAt = startsAt;
         this.endsAt = endsAt;
     }

@@ -1,6 +1,7 @@
 package com.ticket.booking.endpoint;
 
 import java.net.URI;
+import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,9 +44,13 @@ public class HoldController implements HoldControllerDocs {
             @RequestHeader(value = "X-Admission-Token", required = false)
                     final String admissionToken,
             final AuthenticatedMember member) {
+        // @Valid가 seatIds의 null·빈 목록을 이미 400으로 거른 뒤에야 여기에 닿는다.
         final CreateOrderUseCase.Input input =
                 new CreateOrderUseCase.Input(
-                        performanceId, request.getSeatIds(), member.memberId(), admissionToken);
+                        performanceId,
+                        Objects.requireNonNull(request.getSeatIds(), "seatIds"),
+                        member.memberId(),
+                        admissionToken);
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
                 .header("X-Order-Key", output.orderKey())

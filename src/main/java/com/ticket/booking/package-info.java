@@ -22,6 +22,7 @@
  * <p>{@code security} 의존은 WebSocket 인증 하나뿐이다 — STOMP CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독
  * 인터셉터가 {@code AccessTokenAuthenticator}로 토큰을 직접 검증한다.
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Booking",
         allowedDependencies = {
@@ -33,3 +34,5 @@
             "shared :: exception"
         })
 package com.ticket.booking;
+
+import org.jspecify.annotations.NullMarked;

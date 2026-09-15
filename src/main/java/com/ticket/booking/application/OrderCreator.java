@@ -2,6 +2,7 @@ package com.ticket.booking.application;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 
@@ -43,9 +44,14 @@ public class OrderCreator {
                         orderKeyGenerator.generate(),
                         holdKey,
                         expiresAt,
-                        saleSnapshot.showTitle(),
-                        saleSnapshot.performanceStartTime(),
-                        saleSnapshot.venueName());
+                        // ORDERS의 이 두 컬럼은 NOT NULL이다 -- 표시값이 없는 공연은 주문이 성립하지 않는다.
+                        Objects.requireNonNull(saleSnapshot.showTitle(), "showTitle"),
+                        Objects.requireNonNull(
+                                saleSnapshot.performanceStartTime(), "performanceStartTime"),
+                        // ORDERS.venue_name_snapshot은 NOT NULL이다 -- venue 없는 공연은 주문 자체가 성립하지
+                        // 않는다. 여기서 막지 않아도 insert에서 제약 위반으로 같은 500이 났다.
+                        Objects.requireNonNull(
+                                saleSnapshot.venueName(), "venueName must not be null"));
         performanceSeats.forEach(seat -> addOrderSeat(order, seat, saleSnapshot));
         return order;
     }

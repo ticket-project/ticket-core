@@ -10,6 +10,7 @@
  * <p>공개 계약: - PerformanceSaleCatalogApi - PerformanceVenueLayoutCatalogApi (booking이 좌석 판매
  * 편성·seat-map 조합에 쓰는 snapshot)
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Show",
         allowedDependencies = {
@@ -21,3 +22,5 @@
             "shared :: exception"
         })
 package com.ticket.show;
+
+import org.jspecify.annotations.NullMarked;

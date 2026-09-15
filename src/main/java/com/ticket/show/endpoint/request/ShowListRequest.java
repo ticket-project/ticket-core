@@ -1,5 +1,7 @@
 package com.ticket.show.endpoint.request;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.ShowListParam;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 
@@ -15,8 +17,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShowListRequest {
-    private String category;
-    private String genre;
+    private @Nullable String category;
+    private @Nullable String genre;
 
     @Schema(
             allowableValues = {
@@ -29,9 +31,9 @@ public class ShowListRequest {
                 "GYEONGSANG",
                 "JEJU"
             })
-    private String region;
+    private @Nullable String region;
 
-    private String cursor;
+    private @Nullable String cursor;
 
     public ShowListParam toParam(final ShowCursorCodec cursorCodec) {
         return ShowListParam.of(category, genre, region, cursorCodec.decode(cursor));

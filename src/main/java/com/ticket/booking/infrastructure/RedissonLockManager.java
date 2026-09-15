@@ -1,6 +1,7 @@
 package com.ticket.booking.infrastructure;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -58,9 +59,10 @@ public class RedissonLockManager implements LockManager {
         if (options.autoExtends()) {
             return lock.tryLock(options.waitTime().toMillis(), TimeUnit.MILLISECONDS);
         }
+        // autoExtends()가 false라는 것은 leaseTime이 지정됐다는 뜻이다(autoExtends는 leaseTime == null).
         return lock.tryLock(
                 options.waitTime().toMillis(),
-                options.leaseTime().toMillis(),
+                Objects.requireNonNull(options.leaseTime(), "leaseTime").toMillis(),
                 TimeUnit.MILLISECONDS);
     }
 

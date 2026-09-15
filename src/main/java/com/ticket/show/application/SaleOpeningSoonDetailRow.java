@@ -3,6 +3,8 @@ package com.ticket.show.application;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.port.ShowListQueryPort;
 
 /**
@@ -11,12 +13,12 @@ import com.ticket.show.application.port.ShowListQueryPort;
  */
 public record SaleOpeningSoonDetailRow(
         Long id,
-        String title,
-        String subTitle,
-        String image,
-        LocalDate startDate,
-        LocalDate endDate,
-        LocalDateTime displaySaleStartsAt,
-        LocalDateTime displaySaleEndsAt,
+        @Nullable String title,
+        @Nullable String subTitle,
+        @Nullable String image,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
+        @Nullable LocalDateTime displaySaleStartsAt,
+        @Nullable LocalDateTime displaySaleEndsAt,
         long viewCount,
-        Long venueId) {}
+        @Nullable Long venueId) {}

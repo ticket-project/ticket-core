@@ -2,6 +2,7 @@ package com.ticket.show.application.usecase;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +41,9 @@ public class GetSaleOpeningSoonShowsPageUseCase {
     }
 
     public record Output(
-            List<SaleOpeningSoonDetailView> items, boolean hasNext, ShowCursor nextPosition) {}
+            List<SaleOpeningSoonDetailView> items,
+            boolean hasNext,
+            @Nullable ShowCursor nextPosition) {}
 
     public Output execute(final Input input) {
         final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> page =

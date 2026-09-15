@@ -12,6 +12,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.booking.domain.BookingAuditedEntity;
 
 import lombok.AccessLevel;
@@ -51,11 +53,13 @@ public class HoldHistory extends BookingAuditedEntity {
     @Column(nullable = false)
     private LocalDateTime occurredAt;
 
-    private LocalDateTime expiresAt;
+    // CREATED만 만료 시각을 남긴다 — EXPIRED·CANCELED 기록은 null이다.
+    private @Nullable LocalDateTime expiresAt;
 
+    // 해제 사유는 EXPIRED·CANCELED 기록에만 있다 — CREATED 기록은 null이다.
     @Enumerated(EnumType.STRING)
     @Column(length = 32)
-    private HoldReleaseReason releaseReason;
+    private @Nullable HoldReleaseReason releaseReason;
 
     private HoldHistory(
             final String holdKey,
@@ -65,8 +69,8 @@ public class HoldHistory extends BookingAuditedEntity {
             final Long seatId,
             final HoldHistoryEventType eventType,
             final LocalDateTime occurredAt,
-            final LocalDateTime expiresAt,
-            final HoldReleaseReason releaseReason) {
+            final @Nullable LocalDateTime expiresAt,
+            final @Nullable HoldReleaseReason releaseReason) {
         this.holdKey = holdKey;
         this.memberId = memberId;
         this.performanceId = performanceId;

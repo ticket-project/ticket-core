@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,24 +58,24 @@ public class GetShowDetailUseCase {
      */
     public record Output(
             Long id,
-            String title,
-            String subTitle,
+            @Nullable String title,
+            @Nullable String subTitle,
             String info,
-            LocalDate startDate,
-            LocalDate endDate,
-            Integer runningMinutes,
+            @Nullable LocalDate startDate,
+            @Nullable LocalDate endDate,
+            @Nullable Integer runningMinutes,
             long viewCount,
             long likeCount,
             @JsonProperty("bookingStatus") SaleDisplayStatus saleDisplayStatus,
             @JsonProperty("saleType") SaleType displaySaleType,
-            @JsonProperty("saleStartDate") LocalDateTime displaySaleStartsAt,
-            @JsonProperty("saleEndDate") LocalDateTime displaySaleEndsAt,
-            String image,
-            VenueInfo venue,
-            PerformerInfo performer,
+            @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
+            @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
+            @Nullable String image,
+            @Nullable VenueInfo venue,
+            @Nullable PerformerInfo performer,
             List<String> genreNames,
             List<ShowGradeView> grades,
-            PriceSummary priceSummary,
+            @Nullable PriceSummary priceSummary,
             List<PerformanceDateInfo> performanceDates) {}
 
     public Output execute(final Input input) {
@@ -109,7 +110,7 @@ public class GetShowDetailUseCase {
                 view.performanceDates());
     }
 
-    private VenueInfo resolveVenue(final Long venueId) {
+    private @Nullable VenueInfo resolveVenue(final @Nullable Long venueId) {
         if (venueId == null) {
             return null;
         }

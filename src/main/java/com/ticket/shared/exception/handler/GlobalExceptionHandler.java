@@ -2,6 +2,7 @@ package com.ticket.shared.exception.handler;
 
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -128,7 +129,7 @@ public class GlobalExceptionHandler {
             final HttpStatus status,
             final ErrorCode errorCode,
             final String message,
-            final Object data) {
+            final @Nullable Object data) {
         return ResponseEntity.status(status.value())
                 .body(ApiResponse.error(errorCode.getCode(), message, data));
     }

@@ -2,6 +2,8 @@ package com.ticket.shared.exception;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 모든 업무 예외의 기반이다. 예외는 실패의 의미(errorCode)와 그것을 좁히는 부가 정보(data)를 전달하는 그릇일 뿐이다 — HTTP로 어떻게 응답할지는 모른다.
  *
@@ -15,13 +17,14 @@ import java.util.Objects;
  */
 public abstract class TicketException extends RuntimeException {
     private final ErrorCode errorCode;
-    private final transient Object data;
+    private final transient @Nullable Object data;
 
     protected TicketException(final ErrorCode errorCode, final String message) {
         this(errorCode, message, null);
     }
 
-    protected TicketException(final ErrorCode errorCode, final String message, final Object data) {
+    protected TicketException(
+            final ErrorCode errorCode, final String message, final @Nullable Object data) {
         this(errorCode, message, data, null);
     }
 
@@ -29,18 +32,29 @@ public abstract class TicketException extends RuntimeException {
     protected TicketException(
             final ErrorCode errorCode,
             final String message,
-            final Object data,
-            final Throwable cause) {
-        super(message, cause);
+            final @Nullable Object data,
+            final @Nullable Throwable cause) {
+        super(Objects.requireNonNull(message, "message must not be null"), cause);
         this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
         this.data = data;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>{@link Throwable#getMessage()}는 일반적으로 null일 수 있지만 이 계층은 아니다 — 생성자가 공개 문구를 반드시 받는다. 그 좁힌
+     * 계약을 한 곳에서 선언해, 이 예외를 직렬화하는 handler가 매번 null을 확인하지 않게 한다.
+     */
+    @Override
+    public String getMessage() {
+        return Objects.requireNonNull(super.getMessage());
     }
 
     public ErrorCode getErrorCode() {
         return errorCode;
     }
 
-    public Object getData() {
+    public @Nullable Object getData() {
         return data;
     }
 }

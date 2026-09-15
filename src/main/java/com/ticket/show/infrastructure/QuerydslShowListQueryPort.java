@@ -4,6 +4,7 @@ import static com.ticket.show.domain.QCategory.category;
 import static com.ticket.show.domain.QGenre.genre;
 import static com.ticket.show.domain.show.QShow.show;
 import static com.ticket.show.domain.show.QShowGenre.showGenre;
+import static com.ticket.show.infrastructure.QuerydslTupleColumns.required;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
@@ -186,7 +188,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     private <T> CursorPage<T, ShowCursor> findCursorPage(
             final int size,
-            final ShowCursor cursor,
+            final @Nullable ShowCursor cursor,
             final BooleanBuilder where,
             final SortOrder sortOrder,
             final Function<QueryPageContext, List<Tuple>> rowFetcher,
@@ -324,18 +326,18 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     private LatestShowRow toLatestShowRow(final Tuple tuple) {
         return new LatestShowRow(
-                tuple.get(show.id),
+                required(tuple, show.id),
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
                 tuple.get(show.venueId),
-                tuple.get(show.createdAt));
+                required(tuple, show.createdAt));
     }
 
     private SaleOpeningSoonSummaryRow toSaleOpeningSoonSummaryRow(final Tuple tuple) {
         return new SaleOpeningSoonSummaryRow(
-                tuple.get(show.id),
+                required(tuple, show.id),
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
                 tuple.get(show.venueId),
@@ -344,7 +346,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     private SaleOpeningSoonDetailRow toSaleOpeningSoonDetailRow(final Tuple tuple) {
         return new SaleOpeningSoonDetailRow(
-                tuple.get(show.id),
+                required(tuple, show.id),
                 tuple.get(show.title),
                 tuple.get(show.subTitle),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
@@ -352,18 +354,18 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 tuple.get(show.endDate),
                 tuple.get(show.displaySaleWindow.startsAt),
                 tuple.get(show.displaySaleWindow.endsAt),
-                tuple.get(show.viewCount),
+                required(tuple, show.viewCount),
                 tuple.get(show.venueId));
     }
 
     private ShowSearchItemRow toShowSearchItemRow(final Tuple tuple) {
         return new ShowSearchItemRow(
-                tuple.get(show.id),
+                required(tuple, show.id),
                 tuple.get(show.title),
                 showCardImagePathConverter.toCardImage(tuple.get(show.image)),
                 tuple.get(show.startDate),
                 tuple.get(show.endDate),
-                tuple.get(show.viewCount),
+                required(tuple, show.viewCount),
                 tuple.get(show.venueId));
     }
 
@@ -381,7 +383,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
         final Map<Long, List<String>> genreMap = new LinkedHashMap<>();
         for (Tuple tuple : genreTuples) {
-            final Long showId = tuple.get(show.id);
+            final Long showId = required(tuple, show.id);
             final String genreName = tuple.get(genre.name);
             if (genreName != null) {
                 genreMap.computeIfAbsent(showId, key -> new ArrayList<>()).add(genreName);

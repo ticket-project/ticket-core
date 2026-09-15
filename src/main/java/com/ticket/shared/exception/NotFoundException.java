@@ -1,5 +1,7 @@
 package com.ticket.shared.exception;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 요청한 데이터가 없다. 어느 module에서든 뜻이 같아 여기 있다.
  *
@@ -17,7 +19,7 @@ public final class NotFoundException extends TicketException {
      * @param detail 무엇을 찾지 못했는지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로 나가고 고정 {@code
      *     message}를 덮지 않는다.
      */
-    public NotFoundException(final String detail) {
+    public NotFoundException(final @Nullable String detail) {
         super(CommonErrorCode.E404, MESSAGE, detail);
     }
 }

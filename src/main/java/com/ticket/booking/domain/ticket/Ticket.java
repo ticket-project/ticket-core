@@ -13,6 +13,8 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.booking.domain.BookingAuditedEntity;
 
 import lombok.AccessLevel;
@@ -65,11 +67,12 @@ public class Ticket extends BookingAuditedEntity {
     @Column(name = "issued_at", nullable = false)
     private LocalDateTime issuedAt;
 
+    // 사용·취소 시각은 해당 전이가 일어난 뒤에만 채워진다 — ISSUED 상태에서는 둘 다 null이다.
     @Column(name = "used_at")
-    private LocalDateTime usedAt;
+    private @Nullable LocalDateTime usedAt;
 
     @Column(name = "canceled_at")
-    private LocalDateTime canceledAt;
+    private @Nullable LocalDateTime canceledAt;
 
     private Ticket(
             final String ticketKey,

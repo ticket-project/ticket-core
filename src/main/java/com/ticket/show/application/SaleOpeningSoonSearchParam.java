@@ -2,6 +2,8 @@ package com.ticket.show.application;
 
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.venue.api.Region;
 
@@ -16,24 +18,24 @@ import lombok.Getter;
  */
 @Getter
 public class SaleOpeningSoonSearchParam {
-    private final String category;
-    private final String title;
-    private final Region region;
-    private final LocalDateTime displaySaleStartsAtFrom;
-    private final LocalDateTime displaySaleStartsAtTo;
-    private final LocalDateTime displaySaleEndsAtFrom;
-    private final LocalDateTime displaySaleEndsAtTo;
-    private final ShowCursor cursor;
+    private final @Nullable String category;
+    private final @Nullable String title;
+    private final @Nullable Region region;
+    private final @Nullable LocalDateTime displaySaleStartsAtFrom;
+    private final @Nullable LocalDateTime displaySaleStartsAtTo;
+    private final @Nullable LocalDateTime displaySaleEndsAtFrom;
+    private final @Nullable LocalDateTime displaySaleEndsAtTo;
+    private final @Nullable ShowCursor cursor;
 
     public SaleOpeningSoonSearchParam(
-            final String category,
-            final String title,
-            final Region region,
-            final LocalDateTime displaySaleStartsAtFrom,
-            final LocalDateTime displaySaleStartsAtTo,
-            final LocalDateTime displaySaleEndsAtFrom,
-            final LocalDateTime displaySaleEndsAtTo,
-            final ShowCursor cursor) {
+            final @Nullable String category,
+            final @Nullable String title,
+            final @Nullable Region region,
+            final @Nullable LocalDateTime displaySaleStartsAtFrom,
+            final @Nullable LocalDateTime displaySaleStartsAtTo,
+            final @Nullable LocalDateTime displaySaleEndsAtFrom,
+            final @Nullable LocalDateTime displaySaleEndsAtTo,
+            final @Nullable ShowCursor cursor) {
         validateRange(displaySaleStartsAtFrom, displaySaleStartsAtTo, "displaySaleStartsAt");
         validateRange(displaySaleEndsAtFrom, displaySaleEndsAtTo, "displaySaleEndsAt");
         this.category = category;
@@ -47,14 +49,14 @@ public class SaleOpeningSoonSearchParam {
     }
 
     public static SaleOpeningSoonSearchParam of(
-            final String category,
-            final String title,
-            final String region,
-            final LocalDateTime displaySaleStartsAtFrom,
-            final LocalDateTime displaySaleStartsAtTo,
-            final LocalDateTime displaySaleEndsAtFrom,
-            final LocalDateTime displaySaleEndsAtTo,
-            final ShowCursor cursor) {
+            final @Nullable String category,
+            final @Nullable String title,
+            final @Nullable String region,
+            final @Nullable LocalDateTime displaySaleStartsAtFrom,
+            final @Nullable LocalDateTime displaySaleStartsAtTo,
+            final @Nullable LocalDateTime displaySaleEndsAtFrom,
+            final @Nullable LocalDateTime displaySaleEndsAtTo,
+            final @Nullable ShowCursor cursor) {
         return new SaleOpeningSoonSearchParam(
                 category,
                 title,
@@ -68,7 +70,9 @@ public class SaleOpeningSoonSearchParam {
 
     /** 한쪽만 주면 열린 구간이다. 둘 다 주면 from이 to보다 늦을 수 없다. ShowSearchCriteria의 startDate 범위 판정과 같은 규칙이다. */
     private static void validateRange(
-            final LocalDateTime from, final LocalDateTime to, final String field) {
+            final @Nullable LocalDateTime from,
+            final @Nullable LocalDateTime to,
+            final String field) {
         if (from == null || to == null) {
             return;
         }

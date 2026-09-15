@@ -1,5 +1,7 @@
 package com.ticket.show.application;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -21,8 +23,8 @@ public record ShowCursor(
         String dir,
         String lastValue,
         Long lastId,
-        Integer saleClosedRank,
-        String evaluatedAt) {
+        @Nullable Integer saleClosedRank,
+        @Nullable String evaluatedAt) {
     public ShowCursor(
             final ShowSort sort, final String dir, final String lastValue, final Long lastId) {
         this(sort, dir, lastValue, lastId, null, null);
