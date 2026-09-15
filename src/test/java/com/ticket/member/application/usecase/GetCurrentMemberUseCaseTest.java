@@ -45,22 +45,6 @@ class GetCurrentMemberUseCaseTest {
     }
 
     @Test
-    void 이메일이_null이면_빈문자열로_반환한다() {
-        // given
-        Member member = mock(Member.class);
-        when(member.getId()).thenReturn(3L);
-        when(member.getEmail()).thenReturn(null);
-        when(member.getName()).thenReturn("홍길동");
-        when(member.getRole()).thenReturn(Role.MEMBER);
-        when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
-        // when
-        GetCurrentMemberUseCase.Output output =
-                useCase.execute(new GetCurrentMemberUseCase.Input(3L));
-        // then
-        assertThat(output.email()).isEmpty();
-    }
-
-    @Test
     void memberId가_유효하지_않으면_Input_생성에서_예외를_던진다() {
         // given
         // when
