@@ -31,7 +31,7 @@ extra_instructions = """\
 - 리뷰 기준(패치 밖 관련 코드까지 확인, 스타일보다 결함·회귀·테스트 공백 우선, findings first·심각도 순, 근거 약한 코멘트 금지)은 AGENTS.md의 "코드 리뷰" 절과 같습니다.
 - 버그, 동시성 문제, 트랜잭션 경계, 보안, Redis TTL/만료 처리, 분산 락 누락, 회귀 위험, 테스트 공백을 우선 지적하세요.
 - DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드, background executor 한도를 늘리는 변경은 특히 엄격하게 보세요.
-- controller가 repository를 직접 다루는지, web 계층에 비즈니스 규칙이 들어갔는지, domain 경계를 깨는지 확인하세요.
+- controller가 repository를 직접 다루는지, endpoint 계층에 비즈니스 규칙이 들어갔는지, domain 경계를 깨는지 확인하세요.
 - booking(hold, order, performanceseat, admission token 검증), member(인증) 변경은 경쟁 상태와 만료 처리 누락을 집중적으로 보세요.
 - 점수, 테스트 공백, 보안 우려, 아키텍처 위반 가능성을 빠짐없이 평가하세요.
 """
@@ -49,7 +49,7 @@ compliance_user_guidelines = """\
 - 문서와 기본 응답은 한국어
 - 변경은 수술적으로, 요청 범위만 수정
 - 단순함 우선, 불필요한 추상화 금지
-- 계층별 책임과 포트 소유(web/application/domain/infrastructure 배치, domain 패키지 순수성 포함)는
+- 계층별 책임과 포트 소유(endpoint/application/domain/infrastructure 배치, domain 패키지 순수성 포함)는
   docs/architecture.md의 "Module Structure" 절을 따른다
 """
 

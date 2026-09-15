@@ -38,7 +38,7 @@ reviews:
     - "!.idea/**"
     - "!.backup/**"
   path_instructions:
-    - path: "src/main/java/com/ticket/**/web/**"
+    - path: "src/main/java/com/ticket/**/endpoint/**"
       instructions: |
         - Controller, config, security, websocket 계층에서 비즈니스 규칙이나 직접적인 저장소 접근이 섞였는지 집중 확인하세요.
         - 인증/인가 누락, 공개 API 노출, 요청 검증 누락, 응답 스키마 호환성 문제를 우선 찾으세요.
