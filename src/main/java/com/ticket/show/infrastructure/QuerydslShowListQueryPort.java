@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.jspecify.annotations.Nullable;
@@ -40,8 +41,6 @@ import com.ticket.show.application.port.ShowListQueryPort;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver.SortOrder;
-import com.ticket.venue.api.Region;
-import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -57,14 +56,16 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     private final QuerydslShowCursorConditionBuilder cursorConditionBuilder;
     private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicates;
     private final ShowCardImagePathConverter showCardImagePathConverter;
-    private final VenueLookupApi venueLookup;
     private final Clock clock;
 
     @Override
     public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
-            final ShowListParam param, final int size, final ShowSort sort) {
+            final ShowListParam param,
+            final @Nullable Set<Long> venueIds,
+            final int size,
+            final ShowSort sort) {
         final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, param.getCursor());
-        final BooleanBuilder where = mainListCondition(param, sortOrder);
+        final BooleanBuilder where = mainListCondition(param, venueIds, sortOrder);
 
         return findCursorPage(
                 size,
@@ -144,9 +145,12 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     @Override
     public CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
-            final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
+            final SaleOpeningSoonSearchParam param,
+            final @Nullable Set<Long> venueIds,
+            final int size,
+            final ShowSort sort) {
         final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, param.getCursor());
-        final BooleanBuilder where = saleOpeningSoonCondition(param);
+        final BooleanBuilder where = saleOpeningSoonCondition(param, venueIds);
 
         return findCursorPage(
                 size,
@@ -158,9 +162,12 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     @Override
     public CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
-            final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
+            final ShowSearchCriteria criteria,
+            final @Nullable Set<Long> venueIds,
+            final int size,
+            final ShowSort sort) {
         final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, criteria.getCursor());
-        final BooleanBuilder where = searchCondition(criteria, sortOrder);
+        final BooleanBuilder where = searchCondition(criteria, venueIds, sortOrder);
 
         return findCursorPage(
                 size,
@@ -171,8 +178,9 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     }
 
     @Override
-    public long countSearchShows(final ShowSearchCriteria criteria) {
-        final BooleanBuilder where = searchCondition(criteria, null);
+    public long countSearchShows(
+            final ShowSearchCriteria criteria, final @Nullable Set<Long> venueIds) {
+        final BooleanBuilder where = searchCondition(criteria, venueIds, null);
         final Long count =
                 queryFactory
                         .select(show.id.countDistinct())
@@ -195,10 +203,13 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     // 사라진다. 값이 없는 조건은 null을 돌려주고 BooleanBuilder가 그것을 "조건 없음"으로 건너뛴다.
 
     /** 메인 목록: 카테고리 · 지역 · 장르. 공연 임박순으로 정렬할 때만 이미 시작한 공연을 뺀다. */
-    private BooleanBuilder mainListCondition(final ShowListParam param, final SortOrder sortOrder) {
+    private BooleanBuilder mainListCondition(
+            final ShowListParam param,
+            final @Nullable Set<Long> venueIds,
+            final SortOrder sortOrder) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(categoryCodeEq(param.getCategory()));
-        appendRegionCondition(where, param.getRegion());
+        where.and(venueIdIn(venueIds));
         where.and(genreCodeEq(param.getGenre()));
         appendShowStartApproachingCondition(where, sortOrder, LocalDate.now(clock));
         return where;
@@ -213,11 +224,12 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     }
 
     /** 오픈 예정 목록: 아직 판매 전 · 카테고리 · 지역 · 제목 · 판매 시작/종료 기간(각각 열린 구간). */
-    private BooleanBuilder saleOpeningSoonCondition(final SaleOpeningSoonSearchParam param) {
+    private BooleanBuilder saleOpeningSoonCondition(
+            final SaleOpeningSoonSearchParam param, final @Nullable Set<Long> venueIds) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(show.displaySaleWindow.startsAt.goe(LocalDateTime.now(clock)));
         where.and(categoryCodeEq(param.getCategory()));
-        appendRegionCondition(where, param.getRegion());
+        where.and(venueIdIn(venueIds));
         where.and(titleContains(param.getTitle()));
 
         final LocalDateTime startsAtFrom = param.getDisplaySaleStartsAtFrom();
@@ -238,12 +250,14 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
      * 들어오고, 그러면 공연 임박순 조건이 붙지 않는다.
      */
     private BooleanBuilder searchCondition(
-            final ShowSearchCriteria criteria, final @Nullable SortOrder sortOrder) {
+            final ShowSearchCriteria criteria,
+            final @Nullable Set<Long> venueIds,
+            final @Nullable SortOrder sortOrder) {
         final BooleanBuilder where = new BooleanBuilder();
         final LocalDateTime now = LocalDateTime.now(clock);
         where.and(titleContains(criteria.getKeyword()));
         where.and(categoryCodeEq(criteria.getCategory()));
-        appendRegionCondition(where, criteria.getRegion());
+        where.and(venueIdIn(venueIds));
 
         final LocalDate startDateFrom = criteria.getStartDateFrom();
         where.and(startDateFrom != null ? show.startDate.goe(startDateFrom) : null);
@@ -256,16 +270,14 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     }
 
     /**
-     * region을 venueId 집합으로 해석해 붙인다. show는 venue module의 Region entity를 직접 참조하지 않는다.
+     * 지역 조건은 application이 이미 venueId로 해석해 넘긴다({@link com.ticket.show.application.RegionVenueIds}).
      *
-     * <p><b>"지역 없음"과 "지역은 있으나 그 지역에 공연장이 없음"은 다른 결과다.</b> region이 null이면 venue를 조회하지도 않고 조건도 걸지 않아
-     * 공연장이 없는 공연까지 전부 나온다. region이 있는데 venueId가 비어 있으면 Querydsl이 {@code in(빈 컬렉션)}을 거짓 조건으로 직렬화해
-     * 결과가 0건이 된다 — 여기서 "조건 없음"으로 되돌리면 "그 지역에 공연장이 없다"가 "전체 목록"으로 바뀐다.
+     * <p><b>{@code null}과 빈 집합을 같게 다루면 안 된다.</b> null은 지역 조건이 없다는 뜻이라 조건을 걸지 않고, 공연장이 없는 공연까지 전부
+     * 나온다. 빈 집합은 조건은 있는데 그 지역에 공연장이 없다는 뜻이고, Querydsl이 {@code in(빈 컬렉션)}을 거짓 조건으로 직렬화해 결과가 0건이 된다 —
+     * 이것을 "조건 없음"으로 되돌리면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다.
      */
-    private void appendRegionCondition(final BooleanBuilder where, final @Nullable Region region) {
-        if (region != null) {
-            where.and(show.venueId.in(venueLookup.findIdsByRegion(region)));
-        }
+    private static @Nullable BooleanExpression venueIdIn(final @Nullable Set<Long> venueIds) {
+        return venueIds == null ? null : show.venueId.in(venueIds);
     }
 
     private static void appendShowStartApproachingCondition(

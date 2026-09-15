@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.application.RegionVenueIds;
 import com.ticket.show.application.ShowCursor;
 import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.ShowSearchItemRow;
@@ -45,7 +46,11 @@ public class SearchShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<ShowSearchItemRow, ShowCursor> page =
-                showListQueryPort.searchShows(input.criteria(), input.size(), input.sort());
+                showListQueryPort.searchShows(
+                        input.criteria(),
+                        RegionVenueIds.resolve(venueLookup, input.criteria().getRegion()),
+                        input.size(),
+                        input.sort());
         final VenueDisplays venues =
                 VenueDisplays.load(
                         venueLookup,

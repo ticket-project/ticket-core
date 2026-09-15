@@ -4,8 +4,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.application.RegionVenueIds;
 import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CountSearchShowsUseCase {
     private final ShowListQueryPort showListQueryPort;
+    private final VenueLookupApi venueLookup;
 
     public record Input(ShowSearchCriteria criteria) {
         public Input {
@@ -27,6 +30,9 @@ public class CountSearchShowsUseCase {
     public record Output(long count) {}
 
     public Output execute(final Input input) {
-        return new Output(showListQueryPort.countSearchShows(input.criteria()));
+        return new Output(
+                showListQueryPort.countSearchShows(
+                        input.criteria(),
+                        RegionVenueIds.resolve(venueLookup, input.criteria().getRegion())));
     }
 }

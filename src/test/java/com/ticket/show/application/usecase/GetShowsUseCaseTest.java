@@ -61,7 +61,8 @@ class GetShowsUseCaseTest {
                         7L);
         CursorPage<ShowListItemRow, ShowCursor> result =
                 new CursorPage<>(List.of(row), true, NEXT_POSITION);
-        when(showListQueryPort.findAllBySearch(param, 10, ShowSort.POPULAR)).thenReturn(result);
+        when(showListQueryPort.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+                .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -85,14 +86,15 @@ class GetShowsUseCaseTest {
         assertThat(output.items().getFirst().venue()).isEqualTo("venue");
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListQueryPort).findAllBySearch(param, 10, ShowSort.POPULAR);
+        verify(showListQueryPort).findAllBySearch(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
     void 공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, null, null);
         CursorPage<ShowListItemRow, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showListQueryPort.findAllBySearch(param, 10, ShowSort.POPULAR)).thenReturn(result);
+        when(showListQueryPort.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+                .thenReturn(result);
 
         GetShowsUseCase.Output output =
                 useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));
@@ -100,6 +102,6 @@ class GetShowsUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListQueryPort).findAllBySearch(param, 10, ShowSort.POPULAR);
+        verify(showListQueryPort).findAllBySearch(param, null, 10, ShowSort.POPULAR);
     }
 }

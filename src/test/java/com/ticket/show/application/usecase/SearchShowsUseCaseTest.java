@@ -50,7 +50,7 @@ class SearchShowsUseCaseTest {
                         7L);
         CursorPage<ShowSearchItemRow, ShowCursor> result =
                 new CursorPage<>(List.of(row), true, NEXT_POSITION);
-        when(showListQueryPort.searchShows(request, 20, ShowSort.POPULAR)).thenReturn(result);
+        when(showListQueryPort.searchShows(request, null, 20, ShowSort.POPULAR)).thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -83,7 +83,7 @@ class SearchShowsUseCaseTest {
                                 10L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListQueryPort).searchShows(request, 20, ShowSort.POPULAR);
+        verify(showListQueryPort).searchShows(request, null, 20, ShowSort.POPULAR);
     }
 
     @Test
@@ -91,7 +91,7 @@ class SearchShowsUseCaseTest {
         ShowSearchCriteria request =
                 new ShowSearchCriteria("missing", null, null, null, null, null, null);
         CursorPage<ShowSearchItemRow, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showListQueryPort.searchShows(request, 20, ShowSort.POPULAR)).thenReturn(result);
+        when(showListQueryPort.searchShows(request, null, 20, ShowSort.POPULAR)).thenReturn(result);
 
         SearchShowsUseCase.Output output =
                 useCase.execute(
@@ -100,6 +100,6 @@ class SearchShowsUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListQueryPort).searchShows(request, 20, ShowSort.POPULAR);
+        verify(showListQueryPort).searchShows(request, null, 20, ShowSort.POPULAR);
     }
 }

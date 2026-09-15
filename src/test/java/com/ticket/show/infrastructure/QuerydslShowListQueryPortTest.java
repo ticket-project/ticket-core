@@ -8,9 +8,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.EntityManager;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.application.LatestShowRow;
+import com.ticket.show.application.RegionVenueIds;
 import com.ticket.show.application.SaleOpeningSoonDetailRow;
 import com.ticket.show.application.SaleOpeningSoonSearchParam;
 import com.ticket.show.application.SaleOpeningSoonSummaryRow;
@@ -48,6 +51,7 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowGenre;
 import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
 import com.ticket.venue.domain.Venue;
@@ -97,6 +101,7 @@ import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
 class QuerydslShowListQueryPortTest {
     @Autowired private EntityManager entityManager;
     @Autowired private ShowListQueryPort showListQueryPort;
+    @Autowired private VenueLookupApi venueLookup;
     private Venue seoulVenue;
     private Venue busanVenue;
 
@@ -155,7 +160,7 @@ class QuerydslShowListQueryPortTest {
         // 늘어난 행이 접히지 않으면 그 3건이 전부 "Seoul Popular" 한 공연으로 채워져 두 번째 공연이
         // 페이지에서 밀려난다. size를 크게 잡으면 2단계의 IN 조회가 중복을 흡수해 버려 이 회귀를 놓친다.
         final CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 2, ShowSort.POPULAR);
 
         assertThat(result.items())
@@ -175,7 +180,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         final long count =
-                showListQueryPort.countSearchShows(
+                countSearchShows(
                         ShowSearchCriteria.of(null, null, null, null, null, "SEOUL", null));
 
         assertThat(count).isEqualTo(3);
@@ -216,7 +221,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         final CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
@@ -239,11 +244,10 @@ class QuerydslShowListQueryPortTest {
     @Test
     void 지역에_공연장이_하나도_없으면_목록과_집계가_모두_비어_있다() {
         final CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.JEJU, null), 10, ShowSort.POPULAR);
         final long count =
-                showListQueryPort.countSearchShows(
-                        ShowSearchCriteria.of(null, null, null, null, null, "JEJU", null));
+                countSearchShows(ShowSearchCriteria.of(null, null, null, null, null, "JEJU", null));
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
@@ -263,7 +267,7 @@ class QuerydslShowListQueryPortTest {
         ShowListParam param = new ShowListParam(null, null, Region.SEOUL, null);
 
         CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(param, 10, ShowSort.POPULAR);
+                findAllBySearch(param, 10, ShowSort.POPULAR);
         List<ShowListItemRow> slice = result.items();
 
         assertThat(slice)
@@ -277,12 +281,12 @@ class QuerydslShowListQueryPortTest {
     void 커서를_전달하면_다음_페이지를_조회한다() {
         ShowListParam firstPageParam = new ShowListParam(null, null, Region.SEOUL, null);
         CursorPage<ShowListItemRow, ShowCursor> firstPage =
-                showListQueryPort.findAllBySearch(firstPageParam, 1, ShowSort.POPULAR);
+                findAllBySearch(firstPageParam, 1, ShowSort.POPULAR);
 
         ShowListParam secondPageParam =
                 new ShowListParam(null, null, Region.SEOUL, firstPage.nextPosition());
         CursorPage<ShowListItemRow, ShowCursor> secondPage =
-                showListQueryPort.findAllBySearch(secondPageParam, 1, ShowSort.POPULAR);
+                findAllBySearch(secondPageParam, 1, ShowSort.POPULAR);
 
         assertThat(firstPage.items())
                 .extracting(ShowListItemRow::title)
@@ -299,7 +303,7 @@ class QuerydslShowListQueryPortTest {
                 new ShowSearchCriteria(
                         "Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
 
-        long count = showListQueryPort.countSearchShows(request);
+        long count = countSearchShows(request);
 
         assertThat(count).isEqualTo(2L);
     }
@@ -311,7 +315,7 @@ class QuerydslShowListQueryPortTest {
                         "Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
 
         CursorPage<ShowSearchItemRow, ShowCursor> result =
-                showListQueryPort.searchShows(request, 10, ShowSort.POPULAR);
+                searchShows(request, 10, ShowSort.POPULAR);
 
         assertThat(result.items())
                 .extracting(ShowSearchItemRow::title)
@@ -326,7 +330,7 @@ class QuerydslShowListQueryPortTest {
         setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
 
         CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
 
         assertThat(result.items())
@@ -341,7 +345,7 @@ class QuerydslShowListQueryPortTest {
         setCreatedAt("Closed Show", LocalDateTime.now().minusDays(5));
 
         CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
 
         assertThat(result.items())
@@ -358,13 +362,13 @@ class QuerydslShowListQueryPortTest {
 
         List<String> first =
                 titlesOf(
-                        showListQueryPort.findAllBySearch(
+                        findAllBySearch(
                                 new ShowListParam(null, null, Region.SEOUL, null),
                                 10,
                                 ShowSort.LATEST));
         List<String> second =
                 titlesOf(
-                        showListQueryPort.findAllBySearch(
+                        findAllBySearch(
                                 new ShowListParam(null, null, Region.SEOUL, null),
                                 10,
                                 ShowSort.LATEST));
@@ -384,7 +388,7 @@ class QuerydslShowListQueryPortTest {
         ShowCursor cursor = null;
         for (int page = 0; page < 5; page++) {
             CursorPage<ShowListItemRow, ShowCursor> result =
-                    showListQueryPort.findAllBySearch(
+                    findAllBySearch(
                             new ShowListParam(null, null, Region.SEOUL, cursor),
                             1,
                             ShowSort.LATEST);
@@ -417,7 +421,7 @@ class QuerydslShowListQueryPortTest {
         setCreatedAt("Closed Show", LocalDateTime.now());
 
         CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
@@ -431,7 +435,7 @@ class QuerydslShowListQueryPortTest {
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
         CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(
+                findAllBySearch(
                         new ShowListParam(null, null, Region.GYEONGSANG, null),
                         10,
                         ShowSort.LATEST);
@@ -444,7 +448,7 @@ class QuerydslShowListQueryPortTest {
         ShowListParam param = new ShowListParam(null, null, Region.JEOLLA, null);
 
         CursorPage<ShowListItemRow, ShowCursor> result =
-                showListQueryPort.findAllBySearch(param, 10, ShowSort.POPULAR);
+                findAllBySearch(param, 10, ShowSort.POPULAR);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
@@ -499,7 +503,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
-                showListQueryPort.findSaleOpeningSoonPage(
+                findSaleOpeningSoonPage(
                         saleOpeningSoon(null, null, null), 10, ShowSort.SALE_START_APPROACHING);
 
         // 이미 판매가 시작된 setUp의 네 공연은 빠진다.
@@ -531,8 +535,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         assertThat(
-                        showListQueryPort
-                                .findSaleOpeningSoonPage(
+                        findSaleOpeningSoonPage(
                                         saleOpeningSoon(null, null, Region.SEOUL),
                                         10,
                                         ShowSort.SALE_START_APPROACHING)
@@ -541,8 +544,7 @@ class QuerydslShowListQueryPortTest {
                 .containsExactly("Soon Seoul");
 
         assertThat(
-                        showListQueryPort
-                                .findSaleOpeningSoonPage(
+                        findSaleOpeningSoonPage(
                                         saleOpeningSoon(null, "busan", null),
                                         10,
                                         ShowSort.SALE_START_APPROACHING)
@@ -572,7 +574,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
-                showListQueryPort.findSaleOpeningSoonPage(
+                findSaleOpeningSoonPage(
                         new SaleOpeningSoonSearchParam(
                                 null,
                                 null,
@@ -650,7 +652,7 @@ class QuerydslShowListQueryPortTest {
         ShowCursor cursor = null;
         for (int page = 0; page < 5; page++) {
             final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
-                    showListQueryPort.findSaleOpeningSoonPage(
+                    findSaleOpeningSoonPage(
                             new SaleOpeningSoonSearchParam(
                                     null, null, null, null, null, null, null, cursor),
                             1,
@@ -677,9 +679,9 @@ class QuerydslShowListQueryPortTest {
                 ShowSearchCriteria.of(null, null, null, null, null, null, null);
 
         final CursorPage<ShowSearchItemRow, ShowCursor> approaching =
-                showListQueryPort.searchShows(criteria, 10, ShowSort.SHOW_START_APPROACHING);
+                searchShows(criteria, 10, ShowSort.SHOW_START_APPROACHING);
         final CursorPage<ShowSearchItemRow, ShowCursor> popular =
-                showListQueryPort.searchShows(criteria, 10, ShowSort.POPULAR);
+                searchShows(criteria, 10, ShowSort.POPULAR);
 
         // "Closed Show"는 startDate가 어제라 임박순에서만 빠진다.
         assertThat(approaching.items())
@@ -688,7 +690,7 @@ class QuerydslShowListQueryPortTest {
         assertThat(popular.items()).extracting(ShowSearchItemRow::title).contains("Closed Show");
 
         assertThat(approaching.items()).hasSize(3);
-        assertThat(showListQueryPort.countSearchShows(criteria)).isEqualTo(4);
+        assertThat(countSearchShows(criteria)).isEqualTo(4);
     }
 
     // region 의미론 ------------------------------------------------------------
@@ -710,8 +712,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         assertThat(
-                        showListQueryPort
-                                .findAllBySearch(
+                        findAllBySearch(
                                         new ShowListParam(null, null, null, null),
                                         10,
                                         ShowSort.POPULAR)
@@ -734,8 +735,7 @@ class QuerydslShowListQueryPortTest {
         entityManager.clear();
 
         assertThat(
-                        showListQueryPort
-                                .findAllBySearch(
+                        findAllBySearch(
                                         new ShowListParam(null, null, Region.SEOUL, null),
                                         10,
                                         ShowSort.POPULAR)
@@ -748,6 +748,34 @@ class QuerydslShowListQueryPortTest {
             final String category, final String title, final Region region) {
         return new SaleOpeningSoonSearchParam(
                 category, title, region, null, null, null, null, null);
+    }
+
+    // 지역 조건 해석은 application의 몫이다(RegionVenueIds). 이 테스트도 use case와 같은 순서로 -- 지역을
+    // venueId로 먼저 해석한 뒤 port를 부른다 -- 조합해야 실제 동작과 같은 것을 검증한다.
+
+    private CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
+            final ShowListParam param, final int size, final ShowSort sort) {
+        return showListQueryPort.findAllBySearch(param, venueIdsOf(param.getRegion()), size, sort);
+    }
+
+    private CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
+            final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
+        return showListQueryPort.searchShows(
+                criteria, venueIdsOf(criteria.getRegion()), size, sort);
+    }
+
+    private long countSearchShows(final ShowSearchCriteria criteria) {
+        return showListQueryPort.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
+    }
+
+    private CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
+            final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
+        return showListQueryPort.findSaleOpeningSoonPage(
+                param, venueIdsOf(param.getRegion()), size, sort);
+    }
+
+    private @Nullable Set<Long> venueIdsOf(final @Nullable Region region) {
+        return RegionVenueIds.resolve(venueLookup, region);
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {
