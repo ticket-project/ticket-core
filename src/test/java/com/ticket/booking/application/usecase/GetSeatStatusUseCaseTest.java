@@ -24,10 +24,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.application.AdmissionVerifier;
-import com.ticket.booking.application.SeatStateSnapshotReader;
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStateView;
 import com.ticket.booking.application.SeatStatus;
+import com.ticket.booking.application.port.SeatStateQueryPort;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;
@@ -47,7 +47,7 @@ class GetSeatStatusUseCaseTest {
             Clock.fixed(Instant.parse("2026-08-04T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
     @Mock private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-    @Mock private SeatStateSnapshotReader seatStatusDbReader;
+    @Mock private SeatStateQueryPort seatStateQueryPort;
     @Mock private SeatSelectionService seatSelectionService;
     @Mock private HoldManager holdManager;
     @Mock private AdmissionVerifier admissionVerifier;
@@ -58,7 +58,7 @@ class GetSeatStatusUseCaseTest {
         useCase =
                 new GetSeatStatusUseCase(
                         performanceSalesPolicyRepository,
-                        seatStatusDbReader,
+                        seatStateQueryPort,
                         seatSelectionService,
                         holdManager,
                         admissionVerifier,
@@ -68,7 +68,7 @@ class GetSeatStatusUseCaseTest {
     @Test
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(seatStatusDbReader.read(10L))
+        when(seatStateQueryPort.findSeatStates(10L))
                 .thenReturn(
                         List.of(
                                 new SeatStateSnapshotRow(101L, 1L, SeatStatus.AVAILABLE),
@@ -93,7 +93,7 @@ class GetSeatStatusUseCaseTest {
                         new SeatStateSnapshotRow(101L, 1L, SeatStatus.AVAILABLE),
                         new SeatStateSnapshotRow(102L, 2L, SeatStatus.OCCUPIED));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
+        when(seatStateQueryPort.findSeatStates(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -104,7 +104,7 @@ class GetSeatStatusUseCaseTest {
                 .containsExactly(
                         new SeatStateView(101L, 1L, SeatStatus.AVAILABLE),
                         new SeatStateView(102L, 2L, SeatStatus.OCCUPIED));
-        verify(seatStatusDbReader).read(10L);
+        verify(seatStateQueryPort).findSeatStates(10L);
     }
 
     @Test
@@ -117,7 +117,7 @@ class GetSeatStatusUseCaseTest {
                         new SeatStateSnapshotRow(102L, 2L, SeatStatus.OCCUPIED),
                         new SeatStateSnapshotRow(103L, 3L, SeatStatus.AVAILABLE));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(seatStatusDbReader.read(10L)).thenReturn(dbStates);
+        when(seatStateQueryPort.findSeatStates(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -143,7 +143,7 @@ class GetSeatStatusUseCaseTest {
                                                 10L, 100L, "admission-token")))
                 .isInstanceOf(PerformanceIsPastException.class);
 
-        verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
+        verifyNoInteractions(seatStateQueryPort, seatSelectionService, holdManager);
     }
 
     @Test
@@ -158,13 +158,13 @@ class GetSeatStatusUseCaseTest {
                                                 10L, 100L, "admission-token")))
                 .isInstanceOf(BookingNotOpenYetException.class);
 
-        verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
+        verifyNoInteractions(seatStateQueryPort, seatSelectionService, holdManager);
     }
 
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(seatStatusDbReader.read(10L)).thenReturn(List.of());
+        when(seatStateQueryPort.findSeatStates(10L)).thenReturn(List.of());
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -187,7 +187,7 @@ class GetSeatStatusUseCaseTest {
                                                 10L, 100L, "admission-token")))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(seatStatusDbReader, seatSelectionService, holdManager);
+        verifyNoInteractions(seatStateQueryPort, seatSelectionService, holdManager);
     }
 
     private PerformanceSalesPolicy openPolicy() {

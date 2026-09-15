@@ -9,10 +9,10 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.AdmissionVerifier;
-import com.ticket.booking.application.SeatStateSnapshotReader;
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStateView;
 import com.ticket.booking.application.SeatStatus;
+import com.ticket.booking.application.port.SeatStateQueryPort;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
     private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-    private final SeatStateSnapshotReader seatStatusDbReader;
+    private final SeatStateQueryPort seatStateQueryPort;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
     private final AdmissionVerifier admissionVerifier;
@@ -59,7 +59,8 @@ public class GetSeatStatusUseCase {
         policy.ensureAcceptingOrders(now);
         ensureAdmitted(policy, input, now);
 
-        final List<SeatStateSnapshotRow> dbStates = seatStatusDbReader.read(performanceId);
+        final List<SeatStateSnapshotRow> dbStates =
+                seatStateQueryPort.findSeatStates(performanceId);
 
         final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
 

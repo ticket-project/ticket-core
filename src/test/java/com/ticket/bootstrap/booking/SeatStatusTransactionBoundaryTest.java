@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
-import com.ticket.booking.application.SeatStateSnapshotReader;
+import com.ticket.booking.application.port.SeatStateQueryPort;
 import com.ticket.booking.application.usecase.GetSeatStatusUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
@@ -23,8 +23,11 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
  * {@code @Transactional}을 붙이는 순간 조용히 무너지는데, 결과값은 그대로라 단위 테스트로는 드러나지 않는다.
  *
  * <p>그래서 결과가 아니라 <b>Spring이 실제로 무엇에 트랜잭션 advice를 적용하는지</b>를 본다. 단위 테스트는 클래스를 직접 생성하므로
- * {@code @Transactional}이 self-invocation으로 무력화돼도 통과한다. 여기서는 실제 컨텍스트가 만든 빈과 Spring 자신의
- * {@link TransactionAttributeSource}에 물어본다.
+ * {@code @Transactional}이 self-invocation으로 무력화돼도 통과한다. 여기서는 실제 컨텍스트가 만든 빈과 Spring 자신의 {@link
+ * TransactionAttributeSource}에 물어본다.
+ *
+ * <p>경계를 <b>누가</b> 소유하는지는 바뀔 수 있다 — 예전에는 조회 port를 감싼 별도 component가, 지금은 query adapter 자신이 갖는다. 고정하는
+ * 것은 소유자 이름이 아니라 "DB 읽기에는 읽기 전용 트랜잭션이 걸리고 use case에는 걸리지 않는다"는 성질이다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
@@ -32,16 +35,19 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
 
     @Test
     void DB_좌석_상태_읽기는_읽기_전용_트랜잭션_안에서_끝난다() throws Exception {
+        final Class<?> adapter = AopUtils.getTargetClass(context.getBean(SeatStateQueryPort.class));
+
         final TransactionAttribute attribute =
-                transactionAttributeOf(SeatStateSnapshotReader.class, "read", Long.class);
+                transactionAttributeOf(adapter, "findSeatStates", Long.class);
 
         assertThat(attribute).isNotNull();
         assertThat(attribute.isReadOnly()).isTrue();
     }
 
+    /** 트랜잭션 attribute가 선언돼 있어도 빈이 proxy가 아니면 실제로는 아무 경계도 없다. */
     @Test
     void 트랜잭션_경계를_소유한_빈은_실제로_proxy로_감싸진다() {
-        assertThat(AopUtils.isAopProxy(context.getBean(SeatStateSnapshotReader.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(SeatStateQueryPort.class))).isTrue();
     }
 
     /** use case가 트랜잭션을 소유하면 Redis 조회까지 DB connection을 쥔 채로 하게 된다. */
