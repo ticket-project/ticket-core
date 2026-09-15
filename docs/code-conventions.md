@@ -58,6 +58,10 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 
 - Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 계약은 `QueryPort`, 그 구현은 기술을
   드러내는 이름(`QuerydslSeatStateQueryPort`)을 쓴다.
+- **조회 구현은 Spring Data method·`@Query`·Querydsl 중 그 조회를 가장 간단히 표현하는 것을**
+  **고른다.** 동적 조건·복합 정렬·커서 페이징에는 Querydsl을 적극 쓰고, 단순 조회에까지 강제하지
+  않는다. 판단 기준과 보존해야 할 query semantics는
+  [readability-guidelines.md](readability-guidelines.md#조회-코드)가 원본이다.
 - **역할 이름을 붙일 수 있다는 것은 별도 class를 만들 이유가 아니다.** 먼저 독립적인 책임이나
   실제 경계(트랜잭션·모듈·외부 시스템·분산락·aggregate 생명주기)가 있는지 확인한다. 한 곳에서만
   쓰는 검증·매핑·조립은 같은 class의 private method를 먼저 검토한다. 판단 기준의 원본은

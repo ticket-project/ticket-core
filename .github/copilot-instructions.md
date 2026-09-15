@@ -15,7 +15,7 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 | 주문·hold 후처리 흐름 | `docs/core-booking-lifecycle.md` |
 | 검증 명령 | `/verify` 스킬 |
 | 테스트 관례(작성 방식·명명) | `docs/testing.md` |
-| 새 class를 만들지 판단하는 기준 | `docs/readability-guidelines.md` |
+| 새 class를 만들지 판단하는 기준, 조회 방식 선택 | `docs/readability-guidelines.md` |
 
 ## 문서를 열 수 없는 경우에도 적용할 최소 기준
 
@@ -26,6 +26,9 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 - 새 class 추출을 제안하기 전에 private method나 기존 경계로 충분한지 먼저 본다. UseCase에서
   핵심 업무 흐름이 읽히는지, wrapper chain이 생기지 않는지를 함께 본다
   (`docs/readability-guidelines.md`).
+- 단순 조회에 Querydsl을 강제하지 않되, 동적 조건·커서 페이징에는 적극 쓴다. 범용 query
+  framework는 만들지 않는다. 리팩터링 제안은 query shape·결과 순서·query 개수를 바꾸지 않는
+  것이어야 한다.
 - findings first 원칙을 따르고 심각도 높은 순서로 적는다. 각 이슈는 왜 문제인지와 어떤 조건에서
   깨지는지를 짧게 적는다.
 
