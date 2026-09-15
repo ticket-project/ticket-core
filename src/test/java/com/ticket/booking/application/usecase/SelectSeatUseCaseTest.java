@@ -24,16 +24,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.application.SeatSelectionCoordinator;
+import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;
 import com.ticket.booking.domain.salespolicy.OrderAcceptanceWindow;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.salespolicy.QueueMode;
-import com.ticket.booking.domain.selection.SeatSelectionAvailabilityValidator;
+import com.ticket.booking.domain.seat.PerformanceSeatRepository;
+import com.ticket.booking.domain.seat.PerformanceSeatState;
+import com.ticket.booking.domain.seat.PerformanceSeatStateSnapshot;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
+import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -45,7 +50,8 @@ class SelectSeatUseCaseTest {
             new SelectSeatUseCase.Input(10L, 20L, 1L, "admission-token");
     @Mock private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
     @Mock private SeatSelectionCoordinator seatSelectionCoordinator;
-    @Mock private SeatSelectionAvailabilityValidator seatSelectionAvailabilityValidator;
+    @Mock private PerformanceSeatRepository performanceSeatRepository;
+    @Mock private HoldManager holdManager;
     @Mock private AdmissionVerifier admissionVerifier;
     private SelectSeatUseCase useCase;
 
@@ -55,7 +61,8 @@ class SelectSeatUseCaseTest {
                 new SelectSeatUseCase(
                         performanceSalesPolicyRepository,
                         seatSelectionCoordinator,
-                        seatSelectionAvailabilityValidator,
+                        performanceSeatRepository,
+                        holdManager,
                         admissionVerifier,
                         CLOCK);
     }
@@ -64,17 +71,20 @@ class SelectSeatUseCaseTest {
     void 정책_판정_좌석_검증_선택_순서로_수행한다() {
         PerformanceSalesPolicy policy = openPolicy(false);
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(policy));
-        when(seatSelectionAvailabilityValidator.validate(10L, 20L)).thenReturn(501L);
+        when(performanceSeatRepository.findSeatState(10L, 20L))
+                .thenReturn(Optional.of(availableSeat()));
 
         useCase.execute(INPUT);
 
         InOrder inOrder =
                 inOrder(
                         performanceSalesPolicyRepository,
-                        seatSelectionAvailabilityValidator,
+                        performanceSeatRepository,
+                        holdManager,
                         seatSelectionCoordinator);
         inOrder.verify(performanceSalesPolicyRepository).findById(10L);
-        inOrder.verify(seatSelectionAvailabilityValidator).validate(10L, 20L);
+        inOrder.verify(performanceSeatRepository).findSeatState(10L, 20L);
+        inOrder.verify(holdManager).isHeld(10L, 20L);
         // 검증에서 얻은 performanceSeatId를 그대로 넘긴다. SELECTED 발행은 coordinator가 좌석 락
         // 안에서 하므로 여기서 다시 발행하지 않는다.
         inOrder.verify(seatSelectionCoordinator)
@@ -85,6 +95,8 @@ class SelectSeatUseCaseTest {
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         when(performanceSalesPolicyRepository.findById(10L))
                 .thenReturn(Optional.of(openPolicy(false)));
+        when(performanceSeatRepository.findSeatState(10L, 20L))
+                .thenReturn(Optional.of(availableSeat()));
 
         useCase.execute(INPUT);
 
@@ -102,7 +114,7 @@ class SelectSeatUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(seatSelectionAvailabilityValidator, seatSelectionCoordinator);
+        verifyNoInteractions(performanceSeatRepository, holdManager, seatSelectionCoordinator);
     }
 
     @Test
@@ -114,21 +126,63 @@ class SelectSeatUseCaseTest {
                 .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(
-                seatSelectionAvailabilityValidator, seatSelectionCoordinator, admissionVerifier);
+                performanceSeatRepository,
+                holdManager,
+                seatSelectionCoordinator,
+                admissionVerifier);
     }
 
     @Test
-    void 좌석_검증이_실패하면_선택하지_않는다() {
-        when(performanceSalesPolicyRepository.findById(10L))
-                .thenReturn(Optional.of(openPolicy(false)));
-        doThrow(new SeatAlreadyHeldException(10L, 20L))
-                .when(seatSelectionAvailabilityValidator)
-                .validate(10L, 20L);
+    void 회차에_없는_좌석이면_선택하지_않는다() {
+        openPerformance();
+        when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(SeatAlreadyHeldException.class);
+                .isInstanceOf(SeatMismatchInPerformanceException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L);
+
+        verifyNoInteractions(holdManager, seatSelectionCoordinator);
+    }
+
+    @Test
+    void 이미_판매된_좌석이면_hold를_보지_않고_실패한다() {
+        openPerformance();
+        when(performanceSeatRepository.findSeatState(10L, 20L))
+                .thenReturn(
+                        Optional.of(
+                                new PerformanceSeatStateSnapshot(
+                                        501L, PerformanceSeatState.RESERVED)));
+
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(NoAvailableSeatException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L);
+
+        verifyNoInteractions(holdManager, seatSelectionCoordinator);
+    }
+
+    /** 락 밖의 사전 확인이다 — 락 안에서 coordinator가 다시 보는 것과 같은 검증이 아니다. */
+    @Test
+    void 이미_선점된_좌석이면_선택하지_않는다() {
+        openPerformance();
+        when(performanceSeatRepository.findSeatState(10L, 20L))
+                .thenReturn(Optional.of(availableSeat()));
+        when(holdManager.isHeld(10L, 20L)).thenReturn(true);
+
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(SeatAlreadyHeldException.class)
+                .hasFieldOrPropertyWithValue("performanceId", 10L)
+                .hasFieldOrPropertyWithValue("seatId", 20L);
 
         verifyNoInteractions(seatSelectionCoordinator);
+    }
+
+    private void openPerformance() {
+        when(performanceSalesPolicyRepository.findById(10L))
+                .thenReturn(Optional.of(openPolicy(false)));
+    }
+
+    private PerformanceSeatStateSnapshot availableSeat() {
+        return new PerformanceSeatStateSnapshot(501L, PerformanceSeatState.AVAILABLE);
     }
 
     private PerformanceSalesPolicy openPolicy(final boolean queueRequired) {
