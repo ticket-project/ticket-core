@@ -30,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.application.LatestShowRow;
+import com.ticket.show.application.SaleOpeningSoonDetailRow;
+import com.ticket.show.application.SaleOpeningSoonSearchParam;
+import com.ticket.show.application.SaleOpeningSoonSummaryRow;
 import com.ticket.show.application.ShowCursor;
 import com.ticket.show.application.ShowListItemRow;
 import com.ticket.show.application.ShowListParam;
@@ -471,6 +474,283 @@ class QuerydslShowListQueryPortTest {
 
     private static List<String> titlesOf(final CursorPage<ShowListItemRow, ShowCursor> page) {
         return page.items().stream().map(ShowListItemRow::title).toList();
+    }
+
+    // 판매 오픈 예정 경로 ------------------------------------------------------
+    //
+    // 아래 두 query는 그동안 DB 레벨 테스트가 없었다. 조건 조립을 adapter 안으로 들이기 전에
+    // 지금 무엇을 보장하는지 먼저 고정한다.
+
+    /** 오픈 예정 목록은 아직 판매가 시작되지 않은 공연만, 판매 시작이 이른 순서로 돌려준다. */
+    @Test
+    void 오픈_예정_목록은_판매_시작_전_공연만_이른_순서로_돌려준다() {
+        persistShow(
+                "Soon Later",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(9),
+                LocalDateTime.now().plusDays(20));
+        persistShow(
+                "Soon Earlier",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
+        entityManager.flush();
+        entityManager.clear();
+
+        final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
+                showListQueryPort.findSaleOpeningSoonPage(
+                        saleOpeningSoon(null, null, null), 10, ShowSort.SALE_START_APPROACHING);
+
+        // 이미 판매가 시작된 setUp의 네 공연은 빠진다.
+        assertThat(result.items())
+                .extracting(SaleOpeningSoonDetailRow::title)
+                .containsExactly("Soon Earlier", "Soon Later");
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextPosition()).isNull();
+    }
+
+    /** 오픈 예정 목록의 지역과 제목 필터가 실제로 걸린다. */
+    @Test
+    void 오픈_예정_목록은_지역과_제목으로_거른다() {
+        persistShow(
+                "Soon Seoul",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
+        persistShow(
+                "Soon Busan",
+                10L,
+                LocalDate.now().plusDays(40),
+                busanVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(
+                        showListQueryPort
+                                .findSaleOpeningSoonPage(
+                                        saleOpeningSoon(null, null, Region.SEOUL),
+                                        10,
+                                        ShowSort.SALE_START_APPROACHING)
+                                .items())
+                .extracting(SaleOpeningSoonDetailRow::title)
+                .containsExactly("Soon Seoul");
+
+        assertThat(
+                        showListQueryPort
+                                .findSaleOpeningSoonPage(
+                                        saleOpeningSoon(null, "busan", null),
+                                        10,
+                                        ShowSort.SALE_START_APPROACHING)
+                                .items())
+                .extracting(SaleOpeningSoonDetailRow::title)
+                .containsExactly("Soon Busan");
+    }
+
+    /** 판매 시작 범위 필터는 열린 구간으로 건다. */
+    @Test
+    void 오픈_예정_목록은_판매_시작_범위로_거른다() {
+        persistShow(
+                "Soon Near",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
+        persistShow(
+                "Soon Far",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(30),
+                LocalDateTime.now().plusDays(40));
+        entityManager.flush();
+        entityManager.clear();
+
+        final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
+                showListQueryPort.findSaleOpeningSoonPage(
+                        new SaleOpeningSoonSearchParam(
+                                null,
+                                null,
+                                null,
+                                null,
+                                LocalDateTime.now().plusDays(10),
+                                null,
+                                null,
+                                null),
+                        10,
+                        ShowSort.SALE_START_APPROACHING);
+
+        assertThat(result.items())
+                .extracting(SaleOpeningSoonDetailRow::title)
+                .containsExactly("Soon Near");
+    }
+
+    /**
+     * 오픈 예정 요약(배너)만 GROUP BY가 아니라 {@code distinct}로 장르 조인의 행 중복을 없앤다. 두 방식을 통일하지 않는 이유는
+     * readability-guidelines 14항에 있다. 여기서는 지금 동작을 고정만 한다.
+     */
+    @Test
+    void 오픈_예정_요약은_장르가_여러_개여도_한_번만_나온다() {
+        final Show soon =
+                persistShow(
+                        "Soon Summary",
+                        10L,
+                        LocalDate.now().plusDays(40),
+                        seoulVenue,
+                        LocalDateTime.now().plusDays(3),
+                        LocalDateTime.now().plusDays(20));
+        entityManager.flush();
+        attachGenres(soon, "뮤지컬", "연극", "콘서트");
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(showListQueryPort.findSaleOpeningSoonSummaries(null, 10))
+                .extracting(SaleOpeningSoonSummaryRow::title)
+                .containsExactly("Soon Summary");
+    }
+
+    // 오름차순 정렬과 커서 ------------------------------------------------------
+
+    /**
+     * 커서 왕복은 그동안 LATEST와 POPULAR(둘 다 DESC)만 확인했다. ASC 정렬은 커서 비교가 반대 부등호로 뒤집히므로 별도 경로다. 한 건씩 끝까지 넘기며
+     * 중복도 누락도 없는지 본다.
+     */
+    @Test
+    void 판매_시작_임박순_커서를_끝까지_넘겨도_중복도_누락도_없다() {
+        persistShow(
+                "Soon C",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(7),
+                LocalDateTime.now().plusDays(20));
+        persistShow(
+                "Soon A",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
+        persistShow(
+                "Soon B",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(5),
+                LocalDateTime.now().plusDays(20));
+        entityManager.flush();
+        entityManager.clear();
+
+        final List<String> visited = new ArrayList<>();
+        ShowCursor cursor = null;
+        for (int page = 0; page < 5; page++) {
+            final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
+                    showListQueryPort.findSaleOpeningSoonPage(
+                            new SaleOpeningSoonSearchParam(
+                                    null, null, null, null, null, null, null, cursor),
+                            1,
+                            ShowSort.SALE_START_APPROACHING);
+            result.items().stream().map(SaleOpeningSoonDetailRow::title).forEach(visited::add);
+            if (!result.hasNext()) {
+                break;
+            }
+            cursor = result.nextPosition();
+        }
+
+        assertThat(visited).containsExactly("Soon A", "Soon B", "Soon C");
+    }
+
+    /**
+     * 공연 임박순 정렬은 <b>WHERE까지 바꾼다</b>. 이미 시작한 공연을 빼려고 startDate 하한을 더하는데, 집계는 정렬을 모르므로 그 조건이 붙지 않아 같은
+     * 검색의 목록 건수와 집계 건수가 어긋난다.
+     *
+     * <p>이것은 <b>현재 동작</b>이고 이번 작업에서 고치지 않는다. 조건 조립을 옮기면서 이 비대칭을 잃지 않도록 먼저 고정한다.
+     */
+    @Test
+    void 공연_임박순_정렬만_지난_공연을_빼고_집계는_빼지_않는다() {
+        final ShowSearchCriteria criteria =
+                ShowSearchCriteria.of(null, null, null, null, null, null, null);
+
+        final CursorPage<ShowSearchItemRow, ShowCursor> approaching =
+                showListQueryPort.searchShows(criteria, 10, ShowSort.SHOW_START_APPROACHING);
+        final CursorPage<ShowSearchItemRow, ShowCursor> popular =
+                showListQueryPort.searchShows(criteria, 10, ShowSort.POPULAR);
+
+        // "Closed Show"는 startDate가 어제라 임박순에서만 빠진다.
+        assertThat(approaching.items())
+                .extracting(ShowSearchItemRow::title)
+                .doesNotContain("Closed Show");
+        assertThat(popular.items()).extracting(ShowSearchItemRow::title).contains("Closed Show");
+
+        assertThat(approaching.items()).hasSize(3);
+        assertThat(showListQueryPort.countSearchShows(criteria)).isEqualTo(4);
+    }
+
+    // region 의미론 ------------------------------------------------------------
+    //
+    // 지역 해석을 application으로 옮기려면 이 셋이 서로 다른 동작이라는 사실이 고정돼 있어야 한다.
+    // "빈 venueId 집합이면 0건"은 이미 위에서 고정했고, 나머지 둘이 여기다.
+
+    /** 지역 조건이 없으면 공연장이 없는 공연도 결과에 들어온다. */
+    @Test
+    void 지역_조건이_없으면_공연장_없는_공연도_목록에_들어온다() {
+        persistShow(
+                "No Venue",
+                10L,
+                LocalDate.now().plusDays(5),
+                null,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(
+                        showListQueryPort
+                                .findAllBySearch(
+                                        new ShowListParam(null, null, null, null),
+                                        10,
+                                        ShowSort.POPULAR)
+                                .items())
+                .extracting(ShowListItemRow::title)
+                .contains("No Venue");
+    }
+
+    /** 반대로 지역을 주면 SQL의 NULL 비교 규칙 때문에 공연장이 없는 공연은 빠진다. */
+    @Test
+    void 지역을_주면_공연장_없는_공연은_목록에서_빠진다() {
+        persistShow(
+                "No Venue",
+                10L,
+                LocalDate.now().plusDays(5),
+                null,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(
+                        showListQueryPort
+                                .findAllBySearch(
+                                        new ShowListParam(null, null, Region.SEOUL, null),
+                                        10,
+                                        ShowSort.POPULAR)
+                                .items())
+                .extracting(ShowListItemRow::title)
+                .doesNotContain("No Venue");
+    }
+
+    private SaleOpeningSoonSearchParam saleOpeningSoon(
+            final String category, final String title, final Region region) {
+        return new SaleOpeningSoonSearchParam(
+                category, title, region, null, null, null, null, null);
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {
