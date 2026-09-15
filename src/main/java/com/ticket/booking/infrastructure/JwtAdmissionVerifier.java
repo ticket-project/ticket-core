@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import javax.crypto.SecretKey;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.AdmissionTokenExpiredException;
@@ -51,7 +53,8 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
      * 필요한지는 호출자가 이미 판단했으므로 여기서 회차 정책을 조회하지 않는다.
      */
     @Override
-    public void verify(final long performanceId, final long memberId, final String admissionToken) {
+    public void verify(
+            final long performanceId, final long memberId, final @Nullable String admissionToken) {
         if (!enforcementEnabled) {
             return;
         }

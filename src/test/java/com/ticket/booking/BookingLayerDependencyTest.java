@@ -12,14 +12,15 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * booking이 모듈 바로 아래 계층형으로 재편되면서 없어진 {@code booking.common}의 의존 규칙을 이어받는다.
+ * booking 고유의 기술 격리 규칙이다 — 이름으로 지목한 락 계약 넷이 저장 기술과 HTTP를 모르게 한다.
  *
- * <p>{@code BookingAuditedEntity}와 {@code RequestedSeatIds}는 {@code booking.domain}으로 돌아가 {@code
- * com.ticket.DomainIsolationTest}의 {@code ..domain..} 패턴이 다시 덮는다(다른 BC 참조 금지). 반면 락 계약 넷은 {@code
- * booking.application}에 있어 그 패턴 밖이라, 여기서 기술 의존만 따로 막는다.
+ * <p><b>계층 방향 규칙은 여기 없다.</b> "domain은 application·infrastructure·endpoint를 모른다"류는 booking만의 사정이 아니라
+ * 계층을 가진 모든 module에 같은 뜻이라, {@code com.ticket.ArchitectureRulesTest}가 module 목록 하나로 전부 덮는다. 예전에는 이
+ * 규칙이 booking에만 걸려 있어 show·like·member·venue·payment에는 같은 보호가 없었다.
  *
- * <p>계층 방향도 함께 고정한다. 업무별 폴더가 사라진 자리에서 "어느 계층이 어느 계층을 참조해도 되는가"를 말해 주는 것이 폴더 이름뿐이라, 그 방향을 실행 가능한
- * 규칙으로 남긴다.
+ * <p>여기 남은 규칙이 전역으로 올라가지 않는 이유: 대상이 package가 아니라 {@code LockManager}/{@code LockKey}/{@code
+ * LockOptions}/{@code LockScope}라는 <b>이름으로 지목한 네 타입</b>이다. 락 계약은 {@code booking.application}에 있어
+ * {@code ..domain..} 패턴 밖이고, 다른 module에는 대응하는 타입이 없다.
  */
 @AnalyzeClasses(
         packages = "com.ticket.booking",
@@ -45,38 +46,14 @@ class BookingLayerDependencyTest {
                     .because("락 계약에 Redis 구현 타입을 노출하지 않는다 — key 형식과 임대 방식은 infrastructure가 정한다");
 
     @ArchTest
-    static final ArchRule 락_계약은_web_계층을_모른다 =
+    static final ArchRule 락_계약은_endpoint_계층을_모른다 =
             noClasses()
                     .that()
                     .haveNameMatching(namePattern(LOCK_CONTRACT_TYPES))
                     .should()
                     .dependOnClassesThat()
-                    .resideInAnyPackage("..web..", "org.springframework.web..")
+                    .resideInAnyPackage("..endpoint..", "org.springframework.web..")
                     .because("락 계약은 HTTP 계약을 모른다");
-
-    @ArchTest
-    static final ArchRule domain은_application과_infrastructure를_모른다 =
-            noClasses()
-                    .that()
-                    .resideInAPackage("com.ticket.booking.domain..")
-                    .should()
-                    .dependOnClassesThat()
-                    .resideInAnyPackage(
-                            "com.ticket.booking.application..",
-                            "com.ticket.booking.infrastructure..",
-                            "com.ticket.booking.endpoint..")
-                    .because("업무 규칙과 상태는 조립·저장·HTTP를 모른다");
-
-    @ArchTest
-    static final ArchRule application은_infrastructure와_web을_모른다 =
-            noClasses()
-                    .that()
-                    .resideInAPackage("com.ticket.booking.application..")
-                    .should()
-                    .dependOnClassesThat()
-                    .resideInAnyPackage(
-                            "com.ticket.booking.infrastructure..", "com.ticket.booking.endpoint..")
-                    .because("application은 포트로만 밖을 부른다 — 구현 선택은 infrastructure가 갖는다");
 
     private static String namePattern(final String[] typeNames) {
         return Arrays.stream(typeNames).map(Pattern::quote).collect(Collectors.joining("|"));

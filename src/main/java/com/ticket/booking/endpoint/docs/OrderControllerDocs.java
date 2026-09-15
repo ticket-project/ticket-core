@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.http.ResponseEntity;
 
-import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.application.usecase.GetOrderStatusUseCase;
+import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.endpoint.request.CreateOrderRequest;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
@@ -75,7 +75,7 @@ public interface OrderControllerDocs {
                                                                 com.ticket.shared.web.ApiResponse
                                                                         .class)))
             })
-    ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
+    ResponseEntity<ApiResponse<StartBookingUseCase.Output>> createOrder(
             @Valid CreateOrderRequest request,
             @Parameter(description = "Queue Server가 발급한 admission token") String admissionToken,
             @Parameter(hidden = true) AuthenticatedMember member);

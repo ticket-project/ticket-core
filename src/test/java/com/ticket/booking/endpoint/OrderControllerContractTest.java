@@ -23,9 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.booking.application.usecase.CancelOrderUseCase;
-import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.application.usecase.GetOrderStatusUseCase;
+import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.member.api.AuthenticatedMember;
@@ -35,7 +35,7 @@ import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 @SuppressWarnings("NonAsciiCharacters")
 class OrderControllerContractTest {
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
-    private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
+    private final StartBookingUseCase startBookingUseCase = Mockito.mock(StartBookingUseCase.class);
     private final GetOrderDetailUseCase getOrderDetailUseCase =
             Mockito.mock(GetOrderDetailUseCase.class);
     private final CancelOrderUseCase cancelOrderUseCase = Mockito.mock(CancelOrderUseCase.class);
@@ -47,7 +47,7 @@ class OrderControllerContractTest {
     void setUp() {
         OrderController controller =
                 new OrderController(
-                        createOrderUseCase,
+                        startBookingUseCase,
                         getOrderDetailUseCase,
                         cancelOrderUseCase,
                         getOrderStatusUseCase);
@@ -69,11 +69,11 @@ class OrderControllerContractTest {
 
     @Test
     void 주문시작_성공시_201_헤더와_응답바디_계약을_지킨다() throws Exception {
-        when(createOrderUseCase.execute(
-                        new CreateOrderUseCase.Input(
+        when(startBookingUseCase.execute(
+                        new StartBookingUseCase.Input(
                                 10L, List.of(7L, 3L), 100L, "admission-token")))
                 .thenReturn(
-                        new CreateOrderUseCase.Output(
+                        new StartBookingUseCase.Output(
                                 "ORD-20260324",
                                 OrderState.PENDING,
                                 LocalDateTime.of(2026, 3, 24, 14, 10),
@@ -118,7 +118,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
-        verifyNoInteractions(createOrderUseCase);
+        verifyNoInteractions(startBookingUseCase);
     }
 
     @Test
@@ -137,7 +137,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
-        verifyNoInteractions(createOrderUseCase);
+        verifyNoInteractions(startBookingUseCase);
     }
 
     @Test

@@ -85,7 +85,7 @@ class BookingEventListenerIdContractTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired private CreatePendingOrderTransactionService createPendingOrderTransactionService;
+    @Autowired private PendingOrderCreator pendingOrderCreator;
     @Autowired private IncompleteEventPublications incompleteEventPublications;
     @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private EntityManager entityManager;
@@ -199,7 +199,7 @@ class BookingEventListenerIdContractTest {
         final List<PerformanceSeat> performanceSeats = List.of(seat);
 
         final String orderKey =
-                createPendingOrderTransactionService.create(
+                pendingOrderCreator.create(
                         MEMBER_ID,
                         PERFORMANCE_ID,
                         HOLD_DURATION,
