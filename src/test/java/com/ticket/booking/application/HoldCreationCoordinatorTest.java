@@ -26,7 +26,7 @@ import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.selection.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
-class HoldCreationTaskProcessorTest {
+class HoldCreationCoordinatorTest {
     @Mock private HoldStore holdStore;
     @Mock private SeatSelectionService seatSelectionService;
     @Mock private PerformanceSeatRepository performanceSeatRepository;
@@ -72,8 +72,8 @@ class HoldCreationTaskProcessorTest {
         return seat;
     }
 
-    private HoldCreationTaskProcessor processor() {
-        return new HoldCreationTaskProcessor(
+    private HoldCreationCoordinator processor() {
+        return new HoldCreationCoordinator(
                 new RecordingLockManager(),
                 holdStore,
                 seatSelectionService,

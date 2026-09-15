@@ -57,7 +57,7 @@ StartBookingUseCase          (POST /api/v1/orders)
   -> BookingEventListeners.on(OrderStarted)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
           (payload를 신뢰하지 않는다. 이후 Redis·WebSocket 작업은 DB connection을 쥐지 않는다)
-       -> HoldCreationTaskProcessor
+       -> HoldCreationCoordinator
             -> 주문 회원 소유 selection만 해제 (Redis)
             -> HELD 상태 발행             (WebSocket)
 ~~~
@@ -144,7 +144,7 @@ CancelOrderUseCase / ExpireOrderUseCase
   -> BookingEventListeners.on(OrderTerminated) (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
        -> HoldReleaseProgressRecorder로 이미 Redis 해제가 끝난 event인지 확인
-       -> HoldReleaseTaskProcessor
+       -> HoldReleaseCoordinator
             -> (아직이면) 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
             -> Redis 해제 완료를 eventId 기준으로 기록      (HoldReleaseProgressRecorder,
                자기 트랜잭션에서 곧바로 커밋한다 — 뒤이은 발행이 실패해도 되돌아가지 않는다)
@@ -256,8 +256,8 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 - 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
 - 커밋 후 리스너: `booking.application.BookingEventListeners`,
   `booking.application.OrderHoldSnapshotReader`(리스너가 쓸 DB 값을 짧은 읽기 트랜잭션에서 완성)
-- hold 생성/해제 후속 처리: `booking.application.HoldCreationTaskProcessor`,
-  `booking.application.HoldReleaseTaskProcessor`, `booking.application.HoldReleaseProgressRecorder`
+- hold 생성/해제 후속 처리: `booking.application.HoldCreationCoordinator`,
+  `booking.application.HoldReleaseCoordinator`, `booking.application.HoldReleaseProgressRecorder`
 - 좌석 선택 조율과 발행: `booking.application.SeatSelectionCoordinator`
 - 만료 보정: `booking.application.usecase.ExpirePendingOrdersUseCase`
 - background 트리거: `booking.infrastructure.OrderExpirationTrigger`

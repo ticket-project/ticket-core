@@ -33,7 +33,7 @@ import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.selection.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
-class HoldReleaseTaskProcessorTest {
+class HoldReleaseCoordinatorTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 25, 12, 0);
     private static final UUID EVENT_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
     @Mock private HoldManager holdManager;
@@ -42,7 +42,7 @@ class HoldReleaseTaskProcessorTest {
     @Mock private PerformanceSeatRepository performanceSeatRepository;
     @Mock private SeatStatusEventPublisher seatStatusEventPublisher;
     @Mock private HoldReleaseProgressRecorder progressRecorder;
-    @InjectMocks private HoldReleaseTaskProcessor taskProcessor;
+    @InjectMocks private HoldReleaseCoordinator taskProcessor;
 
     @Test
     void recordsHoldReleaseBeforePublishingCurrentlyAvailableSeats() {
