@@ -30,11 +30,6 @@ public class ApiResponse<T extends @Nullable Object> {
     }
 
     public static <S extends @Nullable Object> ApiResponse<S> error(
-            final String code, final String message) {
-        return error(code, message, null);
-    }
-
-    public static <S extends @Nullable Object> ApiResponse<S> error(
             final String code, final String message, final @Nullable Object data) {
         return new ApiResponse<>(ResultType.ERROR, null, new ErrorMessage(code, message, data));
     }

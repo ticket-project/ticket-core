@@ -21,8 +21,4 @@ public enum Region {
     Region(String description) {
         this.description = description;
     }
-
-    public String getCode() {
-        return name();
-    }
 }
