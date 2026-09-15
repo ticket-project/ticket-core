@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
+import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeType;
-import com.ticket.like.application.LikeRow;
 import com.ticket.like.application.port.LikeQueryPort;
 import com.ticket.member.domain.Member;
 import com.ticket.shared.api.CursorPage;
@@ -50,28 +50,30 @@ class QuerydslLikeQueryPortTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
-        CursorPage<LikeRow, Long> result =
+        CursorPage<LikeEntry, Long> result =
                 likeQueryPort.findLiked(LikeType.SHOW, memberId, null, 2);
 
-        assertThat(result.items()).extracting(LikeRow::targetId).containsExactly(showId3, showId2);
+        assertThat(result.items())
+                .extracting(LikeEntry::targetId)
+                .containsExactly(showId3, showId2);
         assertThat(result.nextPosition()).isNotNull();
         assertThat(result.hasNext()).isTrue();
     }
 
     @Test
     void 커서_이후의_찜한_대상을_조회한다() {
-        CursorPage<LikeRow, Long> firstPage =
+        CursorPage<LikeEntry, Long> firstPage =
                 likeQueryPort.findLiked(LikeType.SHOW, memberId, null, 1);
-        CursorPage<LikeRow, Long> secondPage =
+        CursorPage<LikeEntry, Long> secondPage =
                 likeQueryPort.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
 
-        assertThat(firstPage.items()).extracting(LikeRow::targetId).containsExactly(showId3);
-        assertThat(secondPage.items()).extracting(LikeRow::targetId).containsExactly(showId2);
+        assertThat(firstPage.items()).extracting(LikeEntry::targetId).containsExactly(showId3);
+        assertThat(secondPage.items()).extracting(LikeEntry::targetId).containsExactly(showId2);
     }
 
     @Test
     void 찜한_대상이_없으면_빈_슬라이스를_반환한다() {
-        CursorPage<LikeRow, Long> result = likeQueryPort.findLiked(LikeType.SHOW, -1L, null, 10);
+        CursorPage<LikeEntry, Long> result = likeQueryPort.findLiked(LikeType.SHOW, -1L, null, 10);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
