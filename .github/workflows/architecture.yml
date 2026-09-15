@@ -1,0 +1,64 @@
+# 구조 위반만 빠르게 잡는 gate다. 전체 CI(ci.yml)를 대신하지 않는다.
+#
+# 여기 있는 검사는 전부 정적이다 -- DB도 Redis도 Docker도 쓰지 않으므로 ci.yml의 verify job보다
+# 훨씬 먼저 끝난다. 구조를 깬 PR이 전체 테스트를 기다린 끝에 실패하는 일을 줄이는 것이 목적이다.
+#
+# ci.yml은 그대로 둔다. 책임이 다르다 -- 이 workflow는 "구조가 맞는가", ci.yml은 "동작하는가"다.
+# 여기서 도는 테스트는 ci.yml의 test에도 그대로 포함되므로, 이 workflow가 통과했다고 해서
+# ci.yml을 건너뛰지 않는다.
+name: Architecture Governance
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+concurrency:
+  group: core-architecture-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    name: Architecture Governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      # compileJava가 NullAway를 함께 돌린다. null 계약 위반은 여기서 빌드를 막는다.
+      # seedTest는 100만 행 가까이 적재해 "빠른 gate"의 뜻을 없애므로 뺀다 -- ci.yml이 돌린다.
+      - name: Check structure
+        run: |
+          chmod +x ./gradlew
+          ./gradlew spotlessCheck compileJava --no-daemon
+          ./gradlew test --no-daemon -x seedTest \
+            --tests "com.ticket.ArchitectureRulesTest" \
+            --tests "com.ticket.ModularityTests" \
+            --tests "com.ticket.DomainIsolationTest" \
+            --tests "com.ticket.AggregateAssociationTest" \
+            --tests "com.ticket.ControllerParameterConstraintTest" \
+            --tests "com.ticket.DocumentationTests" \
+            --tests "com.ticket.booking.BookingLayerDependencyTest" \
+            --tests "com.ticket.shared.SharedModulePurityTest" \
+            --tests "com.ticket.shared.exception.ErrorCodeUniquenessTest" \
+            --tests "com.ticket.shared.exception.ExceptionHandlerScopeTest"
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-test-reports
+          path: build/reports/tests/test/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -51,9 +51,9 @@
     },
     {
       "quality_gates": "pay_down_tech_debt",
-      "quality_gates_doc": "API 진입점과 설정도 강한 품질 게이트로 검증합니다. (옛 core/core-api 모듈 — 현재는 각 BC의 web 패키지로 흡수됨)",
-      "matching_content_path": "src/main/java/com/ticket/*/web/**",
-      "matching_content_path_doc": "각 BC 모듈의 web(controller) 패키지 경로입니다."
+      "quality_gates_doc": "API 진입점과 설정도 강한 품질 게이트로 검증합니다. (옛 core/core-api 모듈 — 현재는 각 BC의 endpoint 패키지로 흡수됨)",
+      "matching_content_path": "src/main/java/com/ticket/*/endpoint/**",
+      "matching_content_path_doc": "각 BC 모듈의 endpoint(controller) 패키지 경로입니다."
     },
     {
       "quality_gates": "pay_down_tech_debt",
