@@ -15,6 +15,7 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 | 주문·hold 후처리 흐름 | `docs/core-booking-lifecycle.md` |
 | 검증 명령 | `/verify` 스킬 |
 | 테스트 관례(작성 방식·명명) | `docs/testing.md` |
+| 새 class를 만들지 판단하는 기준 | `docs/readability-guidelines.md` |
 
 ## 문서를 열 수 없는 경우에도 적용할 최소 기준
 
@@ -22,6 +23,9 @@ review, Copilot coding agent는 모두 그 기준을 따른다. **이 파일에 
 - 패치만 보지 말고 주변 코드, 관련 설정, 관련 테스트, 호출 흐름을 함께 본다.
 - 스타일 취향보다 실제 결함 가능성, 회귀 위험, 테스트 공백을 우선 본다.
 - 요청 범위를 벗어난 기능 추가, 리팩터링, 추상화는 제안하지 않는다.
+- 새 class 추출을 제안하기 전에 private method나 기존 경계로 충분한지 먼저 본다. UseCase에서
+  핵심 업무 흐름이 읽히는지, wrapper chain이 생기지 않는지를 함께 본다
+  (`docs/readability-guidelines.md`).
 - findings first 원칙을 따르고 심각도 높은 순서로 적는다. 각 이슈는 왜 문제인지와 어떤 조건에서
   깨지는지를 짧게 적는다.
 

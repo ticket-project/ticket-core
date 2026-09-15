@@ -63,12 +63,18 @@ find src/test -path "*bootstrap*" -iname "*.java"
 [architecture.md](../../../docs/architecture.md#enforcement)를 본다.
 
 각 모듈의 `<Module>ModuleTests`(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
-`LikeModuleTests`, `MemberModuleTests`, `PaymentModuleTests`)는
+`LikeModuleTests`, `MemberModuleTests`, `SecurityModuleTests`, `PaymentModuleTests`)는
 `@ApplicationModuleTest(verifyAutomatically = false)`로 그 모듈이 STANDALONE으로
 부트스트랩되는지만 본다. 전체 구조 검증은 여기서 하지 않는다 — `ModularityTests`의 몫이다.
-`com.ticket.DomainPurityTest`(ArchUnit)는 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지
+`com.ticket.ArchitectureRulesTest`는 계층 방향, 다른 module 구현 참조 금지, `api` 공개면 오염
+금지, 공개된 named interface 목록, 모든 production package의 `@NullMarked` 선언을 고정한다.
+`com.ticket.DomainIsolationTest`(ArchUnit)는 6개 BC 전부에서 `<bc>.domain`이 다른 BC를 참조하지
 않는지 고정하고, `com.ticket.AggregateAssociationTest`는 같은 module 안에서 다른 aggregate를
 객체 연관관계로 묶지 않았는지 고정한다.
+
+`./gradlew compileJava`는 NullAway를 함께 돌린다 — null 계약 위반은 테스트가 아니라 컴파일에서
+막힌다. 구조 검사만 빠르게 보려면 `.github/workflows/architecture.yml`이 돌리는 조합을 그대로
+쓴다.
 
 `src/main/java`에 `com.ticket.bootstrap`이 없어 `BootstrapArchitectureTest`는 지웠다(검사 대상
 없는 rule이 실패하는 것을 실측 확인) — `src/test/java/com/ticket/bootstrap`의 통합 테스트는

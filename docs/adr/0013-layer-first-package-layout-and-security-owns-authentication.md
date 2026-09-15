@@ -4,6 +4,10 @@
 
 채택됨 (2026-09-14)
 
+> 2026-09-15 갱신: 계층 이름 `web`은 [ADR 0014](0014-module-public-contracts-live-in-api-packages.md)가
+> `endpoint`로 바꿨다. 모듈 → 계층 배치와 `security`만 기능으로 나눈다는 결정은 그대로 유효하고,
+> `shared.web`(응답 봉투)과 `security.http`(HTTP 보안 adapter)도 이름을 유지한다.
+
 [ADR 0003](0003-spring-modulith-application-module-boundaries.md)의 capability 축 배치와
 [ADR 0011](0011-shared-technical-package-layout.md)의 `shared.config`,
 [ADR 0012](0012-separate-global-http-security-from-member.md)의 "인증 업무는 member가 소유한다"를

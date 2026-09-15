@@ -126,7 +126,7 @@ H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationC
 
 ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
 테스트는 모두 `PerformanceSeatQueryControllerContractTest`
-(`src/test/java/com/ticket/booking/web/`) 하나에 있다.
+(`src/test/java/com/ticket/booking/endpoint/`) 하나에 있다.
 
 - `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
 - `GET /api/v1/shows/{id}/seats` — 기존 프론트 호환용 대표 회차 좌석 배치·등급·가격
@@ -134,15 +134,15 @@ ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId�
 - `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
 
 **N+1 회귀**는 `GetPerformanceSeatMapUseCaseTest`가 고정한다. `GetPerformanceSeatMapUseCase`는
-Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 show `PerformanceVenueLayoutCatalog`에서
-(내부적으로 venue의 `VenueSeatLookup`을 호출), 판매 편성된 좌석과 확정 가격을 booking
+Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 show `PerformanceVenueLayoutCatalogApi`에서
+(내부적으로 venue의 `VenueSeatLookupApi`을 호출), 판매 편성된 좌석과 확정 가격을 booking
 `PerformanceSeatMapQueryPort`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된 query
 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한 번만 호출되는지 확인한다 — 회차 좌석
 수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
 
-**가격 snapshot 불변성**은 두 단계로 고정된다. `OrderCreatorTest`는 주문 금액이 오직
+**가격 snapshot 불변성**은 두 단계로 고정된다. `PendingOrderCreatorTest`는 주문 금액이 오직
 `PerformanceSeat.unitPrice` 합계로만 계산되고(`sumTotalAmount`), show snapshot
-(`PerformanceSaleCatalog`)은 표시값(등급 코드/이름, 좌석 라벨, show/venue 이름)에만 쓰인다는 것을
+(`PerformanceSaleCatalogApi`)은 표시값(등급 코드/이름, 좌석 라벨, show/venue 이름)에만 쓰인다는 것을
 고정한다. `GetOrderDetailUseCaseTest`는 주문 상세 조회가 Order/OrderSeat에 생성 시점에 남긴
 snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 — show 쪽 가격·표시값이 나중에
 바뀌어도 기존 주문 상세가 그대로임을 보장하는 지점이 이 테스트다.
@@ -195,7 +195,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 
   ```java
   @SuppressWarnings("NonAsciiCharacters")
-  class CreateOrderUseCaseTest {
+  class StartBookingUseCaseTest {
 
       @Test
       void 유효한_요청이면_hold와_주문을_생성한다() { }
@@ -214,7 +214,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   이름과 애노테이션(`DIRECT_DEPENDENCIES`)으로 드러낸다.
 - Redis나 DB에 실제로 붙어야 하는 검증은 `@DataJpaTest`/Testcontainers로 분리한다. 단위 테스트에
   섞지 않는다.
-- 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `web`,
+- 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `endpoint`,
   `UseCase.Input` 계약은 `application`, 업무 불변식은 `domain` 테스트다. 같은
   규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [architecture.md의 계층별 검증 책임](architecture.md#계층별-검증-책임)을 본다.
 - 외부 오류 계약의 변경 영향을 분석할 때는 응답 구조·HTTP 상태·`error.code` 값에 대한 의존을

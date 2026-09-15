@@ -132,7 +132,7 @@ _Avoid_: 좋아요(도메인 용어는 찜으로 통일), Selection과 혼동, S
 
 **그 계정을 쓰는 인증 절차의 소유자는 security 모듈이다.** 가입·로그인·토큰 갱신·로그아웃·탈퇴
 절차, JWT 발급과 검증, OAuth2 provider 통신, refresh token 저장이 그렇다. security는 member가
-공개한 계정 연산(`MemberAccountOperations`)으로만 계정을 만진다 — 등록, 자격 증명 확인, 활성
+공개한 계정 연산(`MemberAccountApi`)으로만 계정을 만진다 — 등록, 자격 증명 확인, 활성
 확인, 소셜 신원 해석, 탈퇴 다섯 가지다.
 
 _Avoid_: 사용자, 고객, User, Customer, Account

@@ -1,7 +1,7 @@
 # Ticket Backend
 
 공연/전시 티켓 예매 백엔드다. 인증, 공연 조회, 좌석 선택, 좌석 선점, 주문 시작/취소/만료를
-단일 Gradle Spring Boot 프로젝트와 11개 Spring Modulith Application Module로 다룬다.
+단일 Gradle Spring Boot 프로젝트와 8개 Spring Modulith Application Module로 다룬다.
 Application Module(기술 모듈 제외)은 각각 하나의 Bounded Context와 일치한다([ADR 0006](docs/adr/0006-bounded-context-module-boundaries.md)).
 대기열 처리는 `ticket-queue` 별도 서버가 담당하고, 이 서버는 Queue Server가 발급한 admission
 token을 검증해 예매 API 진입을 제어한다.

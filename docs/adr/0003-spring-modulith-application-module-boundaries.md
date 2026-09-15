@@ -2,6 +2,11 @@
 
 ## Status
 
+> 2026-09-15 갱신: "모듈 root = cross-module 공개 계약"은
+> [ADR 0014](0014-module-public-contracts-live-in-api-packages.md)가 대체한다 — 공개 계약은 이제
+> `<module>.api`에 있고 `@NamedInterface("api")`로 선언한다. `Type.OPEN` 금지, cross-module JPA
+> 연관관계 금지, Application Module 경계 자체는 그대로 유효하다.
+
 > 2026-09-14 갱신: 패키지 배치를 모듈 → capability → 계층으로 정한 부분은
 > [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이 모듈 → 계층으로
 > 대체한다. Application Module 경계와 이벤트·publication registry에 대한 결정은 그대로 유효하다.

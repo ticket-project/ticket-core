@@ -27,6 +27,7 @@
 | 도메인 용어의 의미 | `CONTEXT.md` |
 | 현재 BC·Aggregate·Module 구조, 의존 DAG | `docs/architecture.md` |
 | Java 이름·패키지·포맷·테스트 관례 | `docs/code-conventions.md` |
+| 새 class를 만들지 private method로 둘지, UseCase를 어떻게 쓸지 | `docs/readability-guidelines.md` |
 | 중요한 결정을 왜 내렸는가 | `docs/adr/` |
 | 예매·hold 생명주기와 event 후속 처리 | `docs/core-booking-lifecycle.md` |
 | 무엇을 검증할지, 결과 보고 규칙 | **`/verify` 스킬** |
