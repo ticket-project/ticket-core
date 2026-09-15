@@ -19,6 +19,8 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 
@@ -26,11 +28,10 @@ import com.ticket.member.api.SocialProvider;
 class CustomOAuth2UserServiceTest {
     @Test
     void OAuth2_사용자정보를_회원에_연결하고_회원_식별자를_담은_주체를_반환한다() {
-        ProvisionOAuth2MemberUseCase provisionUseCase =
-                Mockito.mock(ProvisionOAuth2MemberUseCase.class);
+        MemberAccountApi memberAccountApi = Mockito.mock(MemberAccountApi.class);
         DefaultOAuth2UserService delegate = Mockito.mock(DefaultOAuth2UserService.class);
         CustomOAuth2UserService customOAuth2UserService =
-                new CustomOAuth2UserService(provisionUseCase);
+                new CustomOAuth2UserService(memberAccountApi);
         ReflectionTestUtils.setField(customOAuth2UserService, "delegate", delegate);
 
         Map<String, Object> attributes =
@@ -49,7 +50,8 @@ class CustomOAuth2UserServiceTest {
         final SocialIdentity userInfo =
                 new SocialIdentity(
                         SocialProvider.GOOGLE, "google-user-1", "user@example.com", true, "사용자");
-        when(provisionUseCase.execute(userInfo)).thenReturn(new ProvisionedMember(7L, "MEMBER"));
+        when(memberAccountApi.resolveSocialAccount(userInfo))
+                .thenReturn(new MemberStatus(7L, true, "MEMBER"));
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
         // getName()이 회원 식별자를 돌려주어야 로그인 성공 처리에서 auth code를 만들 수 있다.
@@ -61,7 +63,7 @@ class CustomOAuth2UserServiceTest {
         // 제공자가 준 정보는 버리지 않는다.
         assertThat(result.getAttributes()).containsEntry("email", "user@example.com");
         verify(delegate).loadUser(userRequest);
-        verify(provisionUseCase).execute(userInfo);
+        verify(memberAccountApi).resolveSocialAccount(userInfo);
     }
 
     private OAuth2UserRequest createUserRequest() {
