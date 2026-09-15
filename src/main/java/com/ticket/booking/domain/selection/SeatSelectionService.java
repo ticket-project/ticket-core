@@ -61,12 +61,15 @@ public class SeatSelectionService {
         return seatSelectionStore.getHolder(performanceId, seatId) != null;
     }
 
-    public DeselectedSeatIds deselectAll(final Long performanceId, final Long memberId) {
+    /**
+     * @return 실제로 해제된 좌석 id. 호출자가 그 좌석만 골라 알림을 보낸다
+     */
+    public List<Long> deselectAll(final Long performanceId, final Long memberId) {
         final String memberKey = memberKeyOf(memberId);
         final List<Long> deselectedSeatIds =
                 seatSelectionStore.releaseAllByMember(performanceId, memberKey);
         logDeselectedSeats(performanceId, memberId, deselectedSeatIds);
-        return DeselectedSeatIds.from(deselectedSeatIds);
+        return List.copyOf(deselectedSeatIds);
     }
 
     public boolean deselectIfOwned(

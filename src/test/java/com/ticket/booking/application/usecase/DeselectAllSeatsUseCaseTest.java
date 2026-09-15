@@ -19,7 +19,6 @@ import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
-import com.ticket.booking.domain.selection.DeselectedSeatIds;
 import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 
@@ -38,8 +37,7 @@ class DeselectAllSeatsUseCaseTest {
      */
     @Test
     void 해제된_좌석마다_미리_조회한_performanceSeatId로_알린다() {
-        when(seatSelectionService.deselectAll(10L, 1L))
-                .thenReturn(DeselectedSeatIds.from(List.of(20L, 21L)));
+        when(seatSelectionService.deselectAll(10L, 1L)).thenReturn(List.of(20L, 21L));
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L, 21L)))
                 .thenReturn(List.of(performanceSeat(20L, 501L), performanceSeat(21L, 502L)));
 
@@ -60,8 +58,7 @@ class DeselectAllSeatsUseCaseTest {
 
     @Test
     void 해제된_좌석이_없으면_좌석을_조회하지도_알리지도_않는다() {
-        when(seatSelectionService.deselectAll(10L, 1L))
-                .thenReturn(DeselectedSeatIds.from(List.of()));
+        when(seatSelectionService.deselectAll(10L, 1L)).thenReturn(List.of());
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
