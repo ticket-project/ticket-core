@@ -3,6 +3,7 @@ package com.ticket.booking.application.usecase;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,10 +12,10 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.SeatAvailabilityCalculator;
 import com.ticket.booking.application.SeatAvailabilitySnapshotReader;
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
 import com.ticket.booking.domain.hold.HoldManager;
+import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
@@ -36,7 +37,6 @@ public class GetSeatAvailabilityUseCase {
     private final PerformanceSaleCatalogApi performanceSaleCatalog;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
-    private final SeatAvailabilityCalculator seatAvailabilityCalculator;
 
     public record Input(Long performanceId) {
         public Input {
@@ -75,8 +75,7 @@ public class GetSeatAvailabilityUseCase {
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleCatalog.getSaleSnapshot(input.performanceId(), Set.of());
         final Map<Long, Long> availableCountsByGrade =
-                seatAvailabilityCalculator.calculate(
-                        stateRows, mergeRedisOccupiedIds(input.performanceId()));
+                countAvailableSeatsByGrade(stateRows, mergeRedisOccupiedIds(input.performanceId()));
 
         final List<GradeAvailability> grades =
                 availableCountsByGrade.entrySet().stream()
@@ -89,6 +88,30 @@ public class GetSeatAvailabilityUseCase {
                         .toList();
 
         return new Output(grades);
+    }
+
+    /**
+     * 등급별 잔여석을 센다. 그룹 key는 바뀔 수 있는 gradeName이 아니라 performanceGradeId다 — 표시 이름이 같아도 ID가 다른 등급을 합치지
+     * 않는다. 좌석이 하나도 남지 않은 등급도 0으로 남긴다.
+     */
+    private Map<Long, Long> countAvailableSeatsByGrade(
+            final List<PerformanceSeatStateRow> rows, final Set<Long> redisOccupiedSeatIds) {
+        if (rows.isEmpty()) {
+            return Map.of();
+        }
+
+        final Map<Long, Long> availableSeatCounts = new LinkedHashMap<>();
+        for (final PerformanceSeatStateRow row : rows) {
+            availableSeatCounts.putIfAbsent(row.performanceGradeId(), 0L);
+
+            if (row.state() == PerformanceSeatState.AVAILABLE
+                    && !redisOccupiedSeatIds.contains(row.seatId())) {
+                availableSeatCounts.computeIfPresent(
+                        row.performanceGradeId(), (key, count) -> count + 1L);
+            }
+        }
+
+        return availableSeatCounts;
     }
 
     private @Nullable GradeAvailability toGradeAvailability(

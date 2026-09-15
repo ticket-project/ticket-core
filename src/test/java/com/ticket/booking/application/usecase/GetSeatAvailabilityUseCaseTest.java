@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.application.SeatAvailabilityCalculator;
 import com.ticket.booking.application.SeatAvailabilitySnapshotReader;
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
 import com.ticket.booking.domain.hold.HoldManager;
@@ -31,7 +30,6 @@ class GetSeatAvailabilityUseCaseTest {
     @Mock private PerformanceSaleCatalogApi performanceSaleCatalog;
     @Mock private HoldManager holdManager;
     @Mock private SeatSelectionService seatSelectionService;
-    @Mock private SeatAvailabilityCalculator seatAvailabilityCalculator;
     @InjectMocks private GetSeatAvailabilityUseCase useCase;
 
     @Test
@@ -43,10 +41,9 @@ class GetSeatAvailabilityUseCaseTest {
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
+        // seat 1은 selecting, seat 2는 holding으로 점유돼 있다. 둘 다 잔여석에서 빠진다.
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
-        when(seatAvailabilityCalculator.calculate(stateRows, Set.of(1L, 2L)))
-                .thenReturn(Map.of(31L, 0L));
         // when
         GetSeatAvailabilityUseCase.Output output =
                 useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
@@ -55,7 +52,48 @@ class GetSeatAvailabilityUseCaseTest {
                 .containsExactly(
                         new GetSeatAvailabilityUseCase.GradeAvailability(
                                 31L, "VIP", "VIP석", BigDecimal.TEN, 1, 0L));
-        verify(seatAvailabilityCalculator).calculate(stateRows, Set.of(1L, 2L));
+    }
+
+    /** 옛 {@code SeatAvailabilityCalculatorTest}에서 옮겨 온다 — 집계가 use case의 private method가 됐다. */
+    @Test
+    void RESERVED_좌석은_잔여석에서_제외한다() {
+        final List<PerformanceSeatStateRow> stateRows =
+                List.of(
+                        new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L),
+                        new PerformanceSeatStateRow(2L, PerformanceSeatState.RESERVED, 31L));
+
+        when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
+        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of()))
+                .thenReturn(saleSnapshotWithGrade(31L, "VIP", "VIP석", 1));
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
+        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+
+        final GetSeatAvailabilityUseCase.Output output =
+                useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
+
+        assertThat(output.grades())
+                .extracting(GetSeatAvailabilityUseCase.GradeAvailability::availableSeats)
+                .containsExactly(1L);
+    }
+
+    /** 좌석이 있으면 잔여석이 0이어도 등급은 결과에 남는다 — "매진"을 보여줘야 하기 때문이다. */
+    @Test
+    void 좌석이_있으면_잔여석이_0이어도_grade는_결과에_포함된다() {
+        final List<PerformanceSeatStateRow> stateRows =
+                List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.RESERVED, 31L));
+
+        when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
+        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of()))
+                .thenReturn(saleSnapshotWithGrade(31L, "VIP", "VIP석", 1));
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
+        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+
+        final GetSeatAvailabilityUseCase.Output output =
+                useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
+
+        assertThat(output.grades())
+                .extracting(GetSeatAvailabilityUseCase.GradeAvailability::availableSeats)
+                .containsExactly(0L);
     }
 
     @Test
@@ -86,8 +124,6 @@ class GetSeatAvailabilityUseCaseTest {
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
-        when(seatAvailabilityCalculator.calculate(stateRows, Set.of()))
-                .thenReturn(Map.of(31L, 1L, 32L, 1L));
         // when
         GetSeatAvailabilityUseCase.Output output =
                 useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
