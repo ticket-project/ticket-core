@@ -6,6 +6,9 @@ import static com.ticket.show.domain.show.QShow.show;
 import static com.ticket.show.domain.show.QShowGenre.showGenre;
 import static com.ticket.show.infrastructure.QuerydslTupleColumns.required;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,11 +17,13 @@ import java.util.function.BiFunction;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.application.LatestShowRow;
@@ -35,6 +40,8 @@ import com.ticket.show.application.port.ShowListQueryPort;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver.SortOrder;
+import com.ticket.venue.api.Region;
+import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,17 +53,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuerydslShowListQueryPort implements ShowListQueryPort {
     private final JPAQueryFactory queryFactory;
-    private final QuerydslShowPredicates queryHelper;
-    private final QuerydslShowConditionBuilder showConditionFactory;
-    private final QuerydslShowSortResolver sortSupport;
-    private final QuerydslShowCursorConditionBuilder showCursorPolicy;
+    private final QuerydslShowSortResolver sortResolver;
+    private final QuerydslShowCursorConditionBuilder cursorConditionBuilder;
+    private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicates;
     private final ShowCardImagePathConverter showCardImagePathConverter;
+    private final VenueLookupApi venueLookup;
+    private final Clock clock;
 
     @Override
     public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort, param.getCursor());
-        final BooleanBuilder where = showConditionFactory.buildMainListCondition(param, sortOrder);
+        final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, param.getCursor());
+        final BooleanBuilder where = mainListCondition(param, sortOrder);
 
         return findCursorPage(
                 size,
@@ -72,7 +80,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
      */
     @Override
     public List<LatestShowRow> findLatestShows(final String categoryCode, final int limit) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(ShowSort.LATEST);
+        final SortOrder sortOrder = sortResolver.resolveSortOrder(ShowSort.LATEST);
         final List<Tuple> rows =
                 queryFactory
                         .select(
@@ -90,7 +98,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                         .on(showGenre.genreId.eq(genre.id))
                         .leftJoin(category)
                         .on(genre.categoryId.eq(category.id))
-                        .where(queryHelper.categoryCodeEq(categoryCode))
+                        .where(categoryCodeEq(categoryCode))
                         // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다.
                         .groupBy(
                                 show.id,
@@ -100,7 +108,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                                 show.endDate,
                                 show.venueId,
                                 show.createdAt)
-                        .orderBy(sortSupport.orderSpecifiers(sortOrder))
+                        .orderBy(sortResolver.orderSpecifiers(sortOrder))
                         .limit(limit)
                         .fetch();
 
@@ -126,9 +134,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                         .on(showGenre.genreId.eq(genre.id))
                         .leftJoin(category)
                         .on(genre.categoryId.eq(category.id))
-                        .where(
-                                showConditionFactory.buildSaleOpeningSoonSummaryCondition(
-                                        categoryCode))
+                        .where(saleOpeningSoonSummaryCondition(categoryCode))
                         .orderBy(show.displaySaleWindow.startsAt.asc())
                         .limit(limit)
                         .fetch();
@@ -139,8 +145,8 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     @Override
     public CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort, param.getCursor());
-        final BooleanBuilder where = showConditionFactory.buildSaleOpeningSoonCondition(param);
+        final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, param.getCursor());
+        final BooleanBuilder where = saleOpeningSoonCondition(param);
 
         return findCursorPage(
                 size,
@@ -153,8 +159,8 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     @Override
     public CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = sortSupport.resolveSortOrder(sort, criteria.getCursor());
-        final BooleanBuilder where = showConditionFactory.buildSearchCondition(criteria, sortOrder);
+        final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, criteria.getCursor());
+        final BooleanBuilder where = searchCondition(criteria, sortOrder);
 
         return findCursorPage(
                 size,
@@ -166,7 +172,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
 
     @Override
     public long countSearchShows(final ShowSearchCriteria criteria) {
-        final BooleanBuilder where = showConditionFactory.buildSearchCondition(criteria, null);
+        final BooleanBuilder where = searchCondition(criteria, null);
         final Long count =
                 queryFactory
                         .select(show.id.countDistinct())
@@ -182,6 +188,109 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         return count != null ? count : 0L;
     }
 
+    // 검색 조건 조립 ------------------------------------------------------------
+    //
+    // 각 query가 실제로 무엇으로 거르는지가 query 바로 옆에서 읽혀야 한다. 조건 조립을 별도 bean으로
+    // 빼면 호출부에는 "조건을 만든다"만 남고 keyword·category·genre·region·기간·판매 상태라는 사실이
+    // 사라진다. 값이 없는 조건은 null을 돌려주고 BooleanBuilder가 그것을 "조건 없음"으로 건너뛴다.
+
+    /** 메인 목록: 카테고리 · 지역 · 장르. 공연 임박순으로 정렬할 때만 이미 시작한 공연을 뺀다. */
+    private BooleanBuilder mainListCondition(final ShowListParam param, final SortOrder sortOrder) {
+        final BooleanBuilder where = new BooleanBuilder();
+        where.and(categoryCodeEq(param.getCategory()));
+        appendRegionCondition(where, param.getRegion());
+        where.and(genreCodeEq(param.getGenre()));
+        appendShowStartApproachingCondition(where, sortOrder, LocalDate.now(clock));
+        return where;
+    }
+
+    /** 오픈 예정 배너: 카테고리 · 아직 판매가 시작되지 않은 공연. */
+    private BooleanBuilder saleOpeningSoonSummaryCondition(final String categoryCode) {
+        final BooleanBuilder where = new BooleanBuilder();
+        where.and(categoryCodeEq(categoryCode));
+        where.and(show.displaySaleWindow.startsAt.goe(LocalDateTime.now(clock)));
+        return where;
+    }
+
+    /** 오픈 예정 목록: 아직 판매 전 · 카테고리 · 지역 · 제목 · 판매 시작/종료 기간(각각 열린 구간). */
+    private BooleanBuilder saleOpeningSoonCondition(final SaleOpeningSoonSearchParam param) {
+        final BooleanBuilder where = new BooleanBuilder();
+        where.and(show.displaySaleWindow.startsAt.goe(LocalDateTime.now(clock)));
+        where.and(categoryCodeEq(param.getCategory()));
+        appendRegionCondition(where, param.getRegion());
+        where.and(titleContains(param.getTitle()));
+
+        final LocalDateTime startsAtFrom = param.getDisplaySaleStartsAtFrom();
+        where.and(startsAtFrom != null ? show.displaySaleWindow.startsAt.goe(startsAtFrom) : null);
+        final LocalDateTime startsAtTo = param.getDisplaySaleStartsAtTo();
+        where.and(startsAtTo != null ? show.displaySaleWindow.startsAt.loe(startsAtTo) : null);
+        final LocalDateTime endsAtFrom = param.getDisplaySaleEndsAtFrom();
+        where.and(endsAtFrom != null ? show.displaySaleWindow.endsAt.goe(endsAtFrom) : null);
+        final LocalDateTime endsAtTo = param.getDisplaySaleEndsAtTo();
+        where.and(endsAtTo != null ? show.displaySaleWindow.endsAt.loe(endsAtTo) : null);
+        return where;
+    }
+
+    /**
+     * 검색: 키워드 · 카테고리 · 지역 · 공연 시작일 범위 · 판매 표시 상태.
+     *
+     * <p>판매 표시 상태 판정 시각과 공연 임박순의 기준 날짜는 <b>같은 now</b>를 쓴다. 집계는 정렬을 모르므로 {@code sortOrder}가 null로
+     * 들어오고, 그러면 공연 임박순 조건이 붙지 않는다.
+     */
+    private BooleanBuilder searchCondition(
+            final ShowSearchCriteria criteria, final @Nullable SortOrder sortOrder) {
+        final BooleanBuilder where = new BooleanBuilder();
+        final LocalDateTime now = LocalDateTime.now(clock);
+        where.and(titleContains(criteria.getKeyword()));
+        where.and(categoryCodeEq(criteria.getCategory()));
+        appendRegionCondition(where, criteria.getRegion());
+
+        final LocalDate startDateFrom = criteria.getStartDateFrom();
+        where.and(startDateFrom != null ? show.startDate.goe(startDateFrom) : null);
+        final LocalDate startDateTo = criteria.getStartDateTo();
+        where.and(startDateTo != null ? show.startDate.loe(startDateTo) : null);
+
+        where.and(saleDisplayStatusPredicates.condition(criteria.getSaleDisplayStatus(), now));
+        appendShowStartApproachingCondition(where, sortOrder, now.toLocalDate());
+        return where;
+    }
+
+    /**
+     * region을 venueId 집합으로 해석해 붙인다. show는 venue module의 Region entity를 직접 참조하지 않는다.
+     *
+     * <p><b>"지역 없음"과 "지역은 있으나 그 지역에 공연장이 없음"은 다른 결과다.</b> region이 null이면 venue를 조회하지도 않고 조건도 걸지 않아
+     * 공연장이 없는 공연까지 전부 나온다. region이 있는데 venueId가 비어 있으면 Querydsl이 {@code in(빈 컬렉션)}을 거짓 조건으로 직렬화해
+     * 결과가 0건이 된다 — 여기서 "조건 없음"으로 되돌리면 "그 지역에 공연장이 없다"가 "전체 목록"으로 바뀐다.
+     */
+    private void appendRegionCondition(final BooleanBuilder where, final @Nullable Region region) {
+        if (region != null) {
+            where.and(show.venueId.in(venueLookup.findIdsByRegion(region)));
+        }
+    }
+
+    private static void appendShowStartApproachingCondition(
+            final BooleanBuilder where,
+            final @Nullable SortOrder sortOrder,
+            final LocalDate today) {
+        if (sortOrder != null && ShowSort.SHOW_START_APPROACHING.equals(sortOrder.key())) {
+            where.and(show.startDate.goe(today));
+        }
+    }
+
+    /** 값이 없거나 공백이면 조건을 걸지 않는다 — 빈 문자열을 일치 조건으로 바꾸면 결과가 통째로 0건이 된다. */
+    private static @Nullable BooleanExpression categoryCodeEq(final @Nullable String categoryCode) {
+        return StringUtils.hasText(categoryCode) ? category.code.eq(categoryCode) : null;
+    }
+
+    private static @Nullable BooleanExpression genreCodeEq(final @Nullable String genreCode) {
+        return StringUtils.hasText(genreCode) ? genre.code.eq(genreCode) : null;
+    }
+
+    /** <b>검색 키워드는 제목만 본다</b> — 부제·출연자·공연장 이름은 대상이 아니다. 대소문자는 무시한다. */
+    private static @Nullable BooleanExpression titleContains(final @Nullable String title) {
+        return StringUtils.hasText(title) ? show.title.containsIgnoreCase(title) : null;
+    }
+
     /**
      * 커서 페이지 한 장을 읽는다. 1단계에서 정렬·커서로 id를 뽑고, 2단계에서 그 id로 본문을 다시 읽는다.
      *
@@ -195,9 +304,9 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
             final BooleanBuilder where,
             final SortOrder sortOrder,
             final BiFunction<OrderSpecifier<?>[], List<Long>, List<T>> resultFetcher) {
-        showCursorPolicy.applyCursor(where, cursor, sortOrder);
+        cursorConditionBuilder.applyCursor(where, cursor, sortOrder);
 
-        final OrderSpecifier<?>[] orders = sortSupport.orderSpecifiers(sortOrder);
+        final OrderSpecifier<?>[] orders = sortResolver.orderSpecifiers(sortOrder);
 
         final List<Tuple> rows = fetchShowPageRows(where, orders, size);
         final List<Long> ids = extractIds(rows);
@@ -210,7 +319,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         final List<T> pageResults = hasNext ? results.subList(0, size) : results;
 
         final ShowCursor nextPosition =
-                hasNext ? showCursorPolicy.buildNextPosition(rows, size, sortOrder) : null;
+                hasNext ? cursorConditionBuilder.buildNextPosition(rows, size, sortOrder) : null;
 
         return new CursorPage<>(List.copyOf(pageResults), hasNext, nextPosition);
     }
