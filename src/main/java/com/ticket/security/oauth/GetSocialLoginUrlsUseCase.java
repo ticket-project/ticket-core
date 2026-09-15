@@ -31,9 +31,10 @@ public class GetSocialLoginUrlsUseCase {
         return baseUrl + AUTHORIZATION_BASE_URI + "/" + registrationId;
     }
 
+    /** baseUrl은 설정 값이 아니라 호출자가 현재 요청에서 만들어 넘기는 값이다({@code AuthController}). */
     private String normalizeBaseUrl(final String baseUrl) {
         if (baseUrl == null || baseUrl.isBlank()) {
-            throw new IllegalStateException("app.auth.public-base-url must not be blank");
+            throw new IllegalStateException("baseUrl must not be blank");
         }
         return baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
     }
