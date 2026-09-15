@@ -33,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.application.BookingAvailabilityChecker;
 import com.ticket.booking.application.PendingOrderCreator;
@@ -84,11 +85,13 @@ class StartBookingUseCaseTest {
 
     @BeforeEach
     void setUp() {
+        // 진짜 AdmissionGuard를 mock verifier 위에 씌운다 -- "대기열이 필요할 때만 검증"이라는
+        // 분기가 mock에 가려지지 않고 그대로 검증된다.
         startBookingUseCase =
                 new StartBookingUseCase(
                         lockManager,
                         performanceSalesPolicyRepository,
-                        admissionVerifier,
+                        new AdmissionGuard(admissionVerifier),
                         memberLookup,
                         bookingAvailabilityChecker,
                         performanceSaleCatalog,

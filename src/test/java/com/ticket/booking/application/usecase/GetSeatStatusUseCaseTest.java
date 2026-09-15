@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.application.SeatStateSnapshotRow;
 import com.ticket.booking.application.SeatStateView;
@@ -55,13 +56,15 @@ class GetSeatStatusUseCaseTest {
 
     @BeforeEach
     void setUp() {
+        // 진짜 AdmissionGuard를 mock verifier 위에 씌운다 -- "대기열이 필요할 때만 검증"이라는
+        // 분기가 mock에 가려지지 않고 그대로 검증된다.
         useCase =
                 new GetSeatStatusUseCase(
                         performanceSalesPolicyRepository,
                         seatStateQueryPort,
                         seatSelectionService,
                         holdManager,
-                        admissionVerifier,
+                        new AdmissionGuard(admissionVerifier),
                         CLOCK);
     }
 
