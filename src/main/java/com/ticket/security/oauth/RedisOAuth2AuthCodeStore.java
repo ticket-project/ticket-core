@@ -21,7 +21,7 @@ public class RedisOAuth2AuthCodeStore implements OAuth2AuthCodeStore {
 
     @Override
     public String createCode(final Long memberId) {
-        final String code = uuidSupplier.get().toString();
+        final String code = uuidSupplier.newUuid().toString();
         final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code);
         bucket.set(String.valueOf(memberId), CODE_TTL);
         return code;

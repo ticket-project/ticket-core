@@ -28,7 +28,7 @@ class RedisRefreshTokenStoreTest {
     @Test
     void creates_refresh_token_and_stores_member_id() {
         doReturn(bucket).when(redissonClient).getBucket(anyString());
-        when(uuidSupplier.get())
+        when(uuidSupplier.newUuid())
                 .thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String token = refreshTokenStore.createRefreshToken(3L, 120L);
