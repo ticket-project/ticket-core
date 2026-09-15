@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
@@ -64,8 +63,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 param.getCursor(),
                 where,
                 sortOrder,
-                this::fetchShowPageRows,
-                (context, ids) -> fetchMainShowResponses(ids, context.orders()));
+                (orders, ids) -> fetchMainShowResponses(ids, orders));
     }
 
     /**
@@ -149,8 +147,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 param.getCursor(),
                 where,
                 sortOrder,
-                this::fetchShowPageRows,
-                (context, ids) -> fetchSaleOpeningSoonResponses(ids, context.orders()));
+                (orders, ids) -> fetchSaleOpeningSoonResponses(ids, orders));
     }
 
     @Override
@@ -164,8 +161,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 criteria.getCursor(),
                 where,
                 sortOrder,
-                this::fetchShowPageRows,
-                (context, ids) -> fetchSearchResponses(ids, context.orders()));
+                (orders, ids) -> fetchSearchResponses(ids, orders));
     }
 
     @Override
@@ -186,26 +182,30 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         return count != null ? count : 0L;
     }
 
+    /**
+     * 커서 페이지 한 장을 읽는다. 1단계에서 정렬·커서로 id를 뽑고, 2단계에서 그 id로 본문을 다시 읽는다.
+     *
+     * <p><b>2단계에도 1단계와 같은 {@code orders}를 건다.</b> {@code IN (...)} 조회가 돌려주는 순서를 믿지 않기 위해서다. 그래서 어떤
+     * 본문을 읽을지({@code resultFetcher})만 호출자가 정하고, 나머지 -- 1단계 query, 페이지 크기 계산, 다음 커서 -- 는 여기서 한 번만
+     * 정의한다.
+     */
     private <T> CursorPage<T, ShowCursor> findCursorPage(
             final int size,
             final @Nullable ShowCursor cursor,
             final BooleanBuilder where,
             final SortOrder sortOrder,
-            final Function<QueryPageContext, List<Tuple>> rowFetcher,
-            final BiFunction<QueryPageContext, List<Long>, List<T>> resultFetcher) {
+            final BiFunction<OrderSpecifier<?>[], List<Long>, List<T>> resultFetcher) {
         showCursorPolicy.applyCursor(where, cursor, sortOrder);
 
-        final QueryPageContext context =
-                new QueryPageContext(
-                        size, where, sortOrder, sortSupport.orderSpecifiers(sortOrder));
+        final OrderSpecifier<?>[] orders = sortSupport.orderSpecifiers(sortOrder);
 
-        final List<Tuple> rows = rowFetcher.apply(context);
+        final List<Tuple> rows = fetchShowPageRows(where, orders, size);
         final List<Long> ids = extractIds(rows);
         if (ids.isEmpty()) {
             return CursorPage.empty();
         }
 
-        final List<T> results = new ArrayList<>(resultFetcher.apply(context, ids));
+        final List<T> results = new ArrayList<>(resultFetcher.apply(orders, ids));
         final boolean hasNext = results.size() > size;
         final List<T> pageResults = hasNext ? results.subList(0, size) : results;
 
@@ -215,7 +215,8 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         return new CursorPage<>(List.copyOf(pageResults), hasNext, nextPosition);
     }
 
-    private List<Tuple> fetchShowPageRows(final QueryPageContext context) {
+    private List<Tuple> fetchShowPageRows(
+            final BooleanBuilder where, final OrderSpecifier<?>[] orders, final int size) {
         return queryFactory
                 .select(pageRowColumns())
                 .from(show)
@@ -225,14 +226,14 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 .on(showGenre.genreId.eq(genre.id))
                 .leftJoin(category)
                 .on(genre.categoryId.eq(category.id))
-                .where(context.where())
+                .where(where)
                 // DISTINCT가 아니라 GROUP BY로 장르 조인의 행 중복을 없앤다. SELECT DISTINCT는
                 // ORDER BY에 쓴 식이 select 목록에 "그대로" 있어야 하는데(H2 / Oracle ORA-01791),
                 // 최신순의 마감 여부 CASE는 바인딩 파라미터를 써서 두 자리가 같은 식으로 인정되지
                 // 않는다. GROUP BY는 그 제약을 받지 않는다.
                 .groupBy(pageRowColumns())
-                .orderBy(context.orders())
-                .limit(context.size() + 1L)
+                .orderBy(orders)
+                .limit(size + 1L)
                 .fetch();
     }
 
@@ -391,7 +392,4 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         }
         return genreMap;
     }
-
-    private record QueryPageContext(
-            int size, BooleanBuilder where, SortOrder sortOrder, OrderSpecifier<?>[] orders) {}
 }
