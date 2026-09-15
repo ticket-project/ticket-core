@@ -2,6 +2,8 @@ package com.ticket.show.endpoint.request;
 
 import java.time.LocalDate;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 
@@ -16,14 +18,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShowSearchRequest {
-    private String keyword;
-    private String category;
+    private @Nullable String keyword;
+    private @Nullable String category;
 
     @Schema(allowableValues = {"BEFORE_OPEN", "ON_SALE", "CLOSED"})
-    private String bookingStatus;
+    private @Nullable String bookingStatus;
 
-    private LocalDate startDateFrom;
-    private LocalDate startDateTo;
+    private @Nullable LocalDate startDateFrom;
+    private @Nullable LocalDate startDateTo;
 
     @Schema(
             allowableValues = {
@@ -36,9 +38,9 @@ public class ShowSearchRequest {
                 "GYEONGSANG",
                 "JEJU"
             })
-    private String region;
+    private @Nullable String region;
 
-    private String cursor;
+    private @Nullable String cursor;
 
     /** 집계는 커서를 쓰지 않는다. 잘못된 커서 문자열 때문에 건수 조회가 실패하지 않게 커서를 해석하지 않고 조건만 만든다. */
     public ShowSearchCriteria toCountCriteria() {

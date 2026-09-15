@@ -3,6 +3,7 @@ package com.ticket.show.endpoint.cursor;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import com.ticket.shared.exception.InvalidRequestException;
@@ -22,7 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class ShowCursorCodec {
     private final JsonMapper jsonMapper;
 
-    public String encode(final ShowCursor cursor) {
+    public @Nullable String encode(final @Nullable ShowCursor cursor) {
         if (cursor == null) {
             return null;
         }
@@ -36,7 +37,7 @@ public class ShowCursorCodec {
         }
     }
 
-    public ShowCursor decode(final String token) {
+    public @Nullable ShowCursor decode(final @Nullable String token) {
         if (token == null || token.isBlank()) {
             return null;
         }

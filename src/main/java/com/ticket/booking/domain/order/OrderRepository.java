@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 주문 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
  *
@@ -35,5 +37,5 @@ public interface OrderRepository {
      * <p>반환 건수가 {@code limit}보다 적으면 더 처리할 대상이 없다는 뜻이다.
      */
     List<Order> findExpirable(
-            OrderState status, LocalDateTime expiresAt, Long afterOrderId, int limit);
+            OrderState status, LocalDateTime expiresAt, @Nullable Long afterOrderId, int limit);
 }

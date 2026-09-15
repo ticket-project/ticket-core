@@ -25,7 +25,10 @@
  * {@code like -> member}는 순환을 만들지 않는다 — member는 어떤 업무 module도 참조하지 않는 leaf이기 때문이다(ADR 0006 §2, ADR
  * 0008).
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Member",
         allowedDependencies = {"shared :: api", "shared :: web", "shared :: exception"})
 package com.ticket.member;
+
+import org.jspecify.annotations.NullMarked;

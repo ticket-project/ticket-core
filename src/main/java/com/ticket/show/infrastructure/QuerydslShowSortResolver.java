@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +34,9 @@ public class QuerydslShowSortResolver {
      * @param saleClosedEvaluatedAt 마감 여부 판정 시각. {@link ShowSort#LATEST}에서만 값이 있다.
      */
     public record SortOrder(
-            ShowSort key, Sort.Direction direction, LocalDateTime saleClosedEvaluatedAt) {}
+            ShowSort key,
+            Sort.Direction direction,
+            @Nullable LocalDateTime saleClosedEvaluatedAt) {}
 
     /**
      * 첫 페이지는 현재 시각으로, 이어지는 페이지는 커서에 적힌 시각으로 마감 여부를 판정한다.
@@ -41,7 +44,7 @@ public class QuerydslShowSortResolver {
      * @throws InvalidRequestException 최신순인데 커서에 판정 시각이 없거나 형식이 틀릴 때. 정렬 규칙이 바뀌기 전에 발급된 커서가 여기에 걸린다
      *     — 조용히 섞인 순서를 내놓는 것보다 낫다.
      */
-    public SortOrder resolveSortOrder(final ShowSort sort, final ShowCursor cursor) {
+    public SortOrder resolveSortOrder(final ShowSort sort, final @Nullable ShowCursor cursor) {
         final Sort.Direction direction =
                 switch (sort) {
                     case POPULAR, LATEST -> Sort.Direction.DESC;
@@ -89,8 +92,8 @@ public class QuerydslShowSortResolver {
         return saleDisplayStatusPredicateFactory.saleClosedRank(evaluatedAt);
     }
 
-    private LocalDateTime resolveSaleClosedEvaluatedAt(
-            final ShowSort sort, final ShowCursor cursor) {
+    private @Nullable LocalDateTime resolveSaleClosedEvaluatedAt(
+            final ShowSort sort, final @Nullable ShowCursor cursor) {
         if (!ShowSort.LATEST.equals(sort)) {
             return null;
         }

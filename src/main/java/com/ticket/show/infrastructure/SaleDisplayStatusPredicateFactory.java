@@ -4,6 +4,7 @@ import static com.ticket.show.domain.show.QShow.show;
 
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -32,8 +33,9 @@ public class SaleDisplayStatusPredicateFactory {
                 .otherwise(0);
     }
 
-    public BooleanExpression condition(
-            final SaleDisplayStatus saleDisplayStatus, final LocalDateTime now) {
+    /** 상태 필터가 지정되지 않으면(= {@code null}) 조건 없이 전체를 보도록 {@code null}을 돌려준다. */
+    public @Nullable BooleanExpression condition(
+            final @Nullable SaleDisplayStatus saleDisplayStatus, final LocalDateTime now) {
         if (saleDisplayStatus == null) {
             return null;
         }

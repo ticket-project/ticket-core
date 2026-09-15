@@ -3,7 +3,9 @@ package com.ticket.like.infrastructure;
 import static com.ticket.like.domain.QLike.like;
 
 import java.util.List;
+import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
@@ -23,7 +25,10 @@ public class QuerydslLikeQueryPort implements LikeQueryPort {
 
     @Override
     public CursorPage<LikeRow, Long> findLiked(
-            final LikeType likeType, final Long memberId, final Long cursorLikeId, final int size) {
+            final LikeType likeType,
+            final Long memberId,
+            final @Nullable Long cursorLikeId,
+            final int size) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(like.memberId.eq(memberId));
         where.and(like.likeType.eq(likeType));
@@ -50,11 +55,16 @@ public class QuerydslLikeQueryPort implements LikeQueryPort {
 
         final List<LikeRow> items = pageRows.stream().map(this::mapRow).toList();
 
-        final Long nextPosition = hasNext ? pageRows.get(pageRows.size() - 1).get(like.id) : null;
+        final @Nullable Long nextPosition =
+                hasNext ? pageRows.get(pageRows.size() - 1).get(like.id) : null;
         return new CursorPage<>(items, hasNext, nextPosition);
     }
 
     private LikeRow mapRow(final Tuple tuple) {
-        return new LikeRow(tuple.get(like.id), tuple.get(like.targetId), tuple.get(like.createdAt));
+        // LIKES의 id·target_id·created_at은 모두 NOT NULL 컬럼이라 같은 행에서 항상 값이 있다.
+        return new LikeRow(
+                Objects.requireNonNull(tuple.get(like.id), "like.id"),
+                Objects.requireNonNull(tuple.get(like.targetId), "like.targetId"),
+                Objects.requireNonNull(tuple.get(like.createdAt), "like.createdAt"));
     }
 }

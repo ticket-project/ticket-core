@@ -1,5 +1,7 @@
 package com.ticket.shared.web;
 
+import org.jspecify.annotations.Nullable;
+
 import lombok.Getter;
 
 /**
@@ -14,9 +16,9 @@ import lombok.Getter;
 public class ErrorMessage {
     private final String code;
     private final String message;
-    private final Object data;
+    private final @Nullable Object data;
 
-    public ErrorMessage(final String code, final String message, final Object data) {
+    public ErrorMessage(final String code, final String message, final @Nullable Object data) {
         this.code = code;
         this.message = message;
         this.data = data;

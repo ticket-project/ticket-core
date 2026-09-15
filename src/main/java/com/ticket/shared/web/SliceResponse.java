@@ -2,6 +2,8 @@ package com.ticket.shared.web;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,10 +23,13 @@ public record SliceResponse<T>(
                         - `hasNext`가 false이면 null
                         """,
                         example = "e" + "yJzb3J0IjoiUE9QVUxBUiIsImRpciI6IkRFU0MifQ")
-                String nextCursor) {
+                @Nullable String nextCursor) {
     /** app 조회 결과를 응답으로 옮긴다. {@code size}는 요청한 페이지 크기이고 {@code numberOfElements}는 실제 반환된 개수다. */
     public static <T> SliceResponse<T> of(
-            final List<T> items, final boolean hasNext, final int size, final String nextCursor) {
+            final List<T> items,
+            final boolean hasNext,
+            final int size,
+            final @Nullable String nextCursor) {
         return new SliceResponse<>(items, hasNext, size, items.size(), nextCursor);
     }
 }

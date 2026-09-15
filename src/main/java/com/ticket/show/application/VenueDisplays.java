@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -23,16 +25,16 @@ public record VenueDisplays(Map<Long, VenueSummary> byId) {
         return new VenueDisplays(venueLookup.getSummaries(ids));
     }
 
-    public VenueSummary get(final Long venueId) {
+    public @Nullable VenueSummary get(final @Nullable Long venueId) {
         return venueId == null ? null : byId.get(venueId);
     }
 
-    public String nameOf(final Long venueId) {
+    public @Nullable String nameOf(final @Nullable Long venueId) {
         final VenueSummary summary = get(venueId);
         return summary == null ? null : summary.name();
     }
 
-    public Region regionOf(final Long venueId) {
+    public @Nullable Region regionOf(final @Nullable Long venueId) {
         final VenueSummary summary = get(venueId);
         return summary == null ? null : summary.region();
     }

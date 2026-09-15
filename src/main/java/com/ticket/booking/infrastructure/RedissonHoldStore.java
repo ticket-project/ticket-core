@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.jspecify.annotations.Nullable;
 import org.redisson.api.RBucket;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
@@ -154,7 +155,7 @@ public class RedissonHoldStore implements HoldStore {
                 HoldRedisKey.holdSeatIndex(performanceId), LongCodec.INSTANCE);
     }
 
-    private Hold readHold(final String holdKey) {
+    private @Nullable Hold readHold(final String holdKey) {
         final RBucket<String> metaBucket =
                 redissonClient.getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE);
         final String payload = metaBucket.get();

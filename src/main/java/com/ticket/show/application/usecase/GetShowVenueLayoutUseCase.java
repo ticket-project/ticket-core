@@ -1,5 +1,6 @@
 package com.ticket.show.application.usecase;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +35,8 @@ public class GetShowVenueLayoutUseCase {
         }
     }
 
-    public record Output(String name, int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
+    public record Output(
+            @Nullable String name, int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
 
     public Output execute(final Input input) {
         final Show show =

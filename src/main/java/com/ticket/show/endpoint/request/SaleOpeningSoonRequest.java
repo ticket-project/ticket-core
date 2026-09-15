@@ -2,6 +2,7 @@ package com.ticket.show.endpoint.request;
 
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.ticket.show.application.SaleOpeningSoonSearchParam;
@@ -19,8 +20,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SaleOpeningSoonRequest {
-    private String category;
-    private String title;
+    private @Nullable String category;
+    private @Nullable String title;
 
     @Schema(
             allowableValues = {
@@ -33,21 +34,21 @@ public class SaleOpeningSoonRequest {
                 "GYEONGSANG",
                 "JEJU"
             })
-    private String region;
+    private @Nullable String region;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleStartDateFrom;
+    private @Nullable LocalDateTime saleStartDateFrom;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleStartDateTo;
+    private @Nullable LocalDateTime saleStartDateTo;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleEndDateFrom;
+    private @Nullable LocalDateTime saleEndDateFrom;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime saleEndDateTo;
+    private @Nullable LocalDateTime saleEndDateTo;
 
-    private String cursor;
+    private @Nullable String cursor;
 
     public SaleOpeningSoonSearchParam toParam(final ShowCursorCodec cursorCodec) {
         return SaleOpeningSoonSearchParam.of(

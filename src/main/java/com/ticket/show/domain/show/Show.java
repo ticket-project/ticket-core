@@ -14,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.domain.ShowAuditedEntity;
 
 import lombok.AccessLevel;
@@ -65,9 +67,9 @@ public class Show extends ShowAuditedEntity {
      * 스키마가 바뀌지 않는다.
      */
     @Column(name = "venue_id")
-    private Long venueId;
+    private @Nullable Long venueId;
 
-    private Integer runningMinutes;
+    private @Nullable Integer runningMinutes;
 
     /**
      * Performer는 Show와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 — {@code
@@ -75,7 +77,7 @@ public class Show extends ShowAuditedEntity {
      * performer_id}를 그대로 쓴다.
      */
     @Column(name = "performer_id")
-    private Long performerId;
+    private @Nullable Long performerId;
 
     public Show(
             final String title,
@@ -85,12 +87,12 @@ public class Show extends ShowAuditedEntity {
             final LocalDate endDate,
             final long viewCount,
             final SaleType displaySaleType,
-            final LocalDateTime displaySaleStartsAt,
-            final LocalDateTime displaySaleEndsAt,
+            final @Nullable LocalDateTime displaySaleStartsAt,
+            final @Nullable LocalDateTime displaySaleEndsAt,
             final String image,
-            final Long venueId,
-            final Long performerId,
-            final Integer runningMinutes) {
+            final @Nullable Long venueId,
+            final @Nullable Long performerId,
+            final @Nullable Integer runningMinutes) {
         this.title = title;
         this.subTitle = subTitle;
         this.info = info;
@@ -113,11 +115,11 @@ public class Show extends ShowAuditedEntity {
         return displaySaleWindow.statusAt(now);
     }
 
-    public LocalDateTime getDisplaySaleStartsAt() {
+    public @Nullable LocalDateTime getDisplaySaleStartsAt() {
         return displaySaleWindow.getStartsAt();
     }
 
-    public LocalDateTime getDisplaySaleEndsAt() {
+    public @Nullable LocalDateTime getDisplaySaleEndsAt() {
         return displaySaleWindow.getEndsAt();
     }
 }

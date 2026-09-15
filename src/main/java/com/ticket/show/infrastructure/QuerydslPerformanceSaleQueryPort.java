@@ -4,6 +4,7 @@ import static com.ticket.show.domain.QGrade.grade;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
 import static com.ticket.show.domain.show.QShow.show;
+import static com.ticket.show.infrastructure.QuerydslTupleColumns.required;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,8 +49,9 @@ public class QuerydslPerformanceSaleQueryPort implements PerformanceSaleQueryPor
 
         return Optional.of(
                 new PerformanceSaleContext(
-                        row.get(performance.id),
-                        row.get(show.id),
+                        // performance.id/show.id는 PK라 조회된 행에서는 값이 비어 있을 수 없다.
+                        required(row, performance.id),
+                        required(row, show.id),
                         row.get(show.title),
                         row.get(show.venueId),
                         row.get(performance.startTime)));

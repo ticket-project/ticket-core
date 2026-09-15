@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
@@ -70,7 +71,7 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
                         performanceDates));
     }
 
-    private Show fetchShow(final Long showId) {
+    private @Nullable Show fetchShow(final Long showId) {
         return queryFactory.selectFrom(show).where(show.id.eq(showId)).fetchOne();
     }
 
@@ -78,7 +79,7 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
      * Performer는 Show와 다른 aggregate라 {@code performerId} scalar로만 연결된다 — 옛 {@code fetchJoin()} 대신
      * 식별자로 따로 조회한다. 같은 module 안의 다른 aggregate라 venue와 달리 여기서 직접 조회해도 된다.
      */
-    private Performer fetchPerformer(final Long performerId) {
+    private @Nullable Performer fetchPerformer(final @Nullable Long performerId) {
         if (performerId == null) {
             return null;
         }
@@ -99,7 +100,7 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
      * ADR 0005: show-level 가격표는 없다. 이 show의 모든 Performance에 배정된 PerformanceGrade.price 중 최소/최대만
      * 파생한다 — 대표 회차 하나의 가격을 show 전체 가격처럼 보여주지 않는다.
      */
-    private PriceSummary fetchPriceSummary(final Long showId) {
+    private @Nullable PriceSummary fetchPriceSummary(final Long showId) {
         final com.querydsl.core.Tuple result =
                 queryFactory
                         .select(performanceGrade.price.min(), performanceGrade.price.max())
@@ -173,10 +174,10 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
 
     private ShowDetailView toShowDetail(
             final Show showEntity,
-            final Performer performerEntity,
+            final @Nullable Performer performerEntity,
             final List<String> genreNames,
             final List<ShowGradeView> grades,
-            final PriceSummary priceSummary,
+            final @Nullable PriceSummary priceSummary,
             final List<PerformanceDateInfo> performanceDates) {
         final SaleDisplayStatus saleDisplayStatus =
                 showEntity.saleDisplayStatusAt(LocalDateTime.now(clock));
@@ -203,7 +204,7 @@ public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
                 performanceDates);
     }
 
-    private PerformerInfo toPerformerInfo(final Performer performerEntity) {
+    private @Nullable PerformerInfo toPerformerInfo(final @Nullable Performer performerEntity) {
         if (performerEntity == null) {
             return null;
         }

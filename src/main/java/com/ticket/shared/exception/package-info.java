@@ -8,5 +8,8 @@
  *
  * <p>응답 봉투는 같은 shared 모듈의 {@code web} 패키지에 있다.
  */
+@NullMarked
 @org.springframework.modulith.NamedInterface("exception")
 package com.ticket.shared.exception;
+
+import org.jspecify.annotations.NullMarked;

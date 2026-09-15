@@ -14,6 +14,8 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import org.jspecify.annotations.Nullable;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -71,25 +73,25 @@ public class Payment extends PaymentAuditedEntity {
     private PaymentStatus status;
 
     @Column(name = "provider_payment_key", length = 64)
-    private String providerPaymentKey;
+    private @Nullable String providerPaymentKey;
 
     @Column(name = "requested_at", nullable = false)
     private LocalDateTime requestedAt;
 
     @Column(name = "approved_at")
-    private LocalDateTime approvedAt;
+    private @Nullable LocalDateTime approvedAt;
 
     @Column(name = "failed_at")
-    private LocalDateTime failedAt;
+    private @Nullable LocalDateTime failedAt;
 
     @Column(name = "canceled_at")
-    private LocalDateTime canceledAt;
+    private @Nullable LocalDateTime canceledAt;
 
     @Column(name = "failure_code", length = 64)
-    private String failureCode;
+    private @Nullable String failureCode;
 
     @Column(name = "failure_message", length = 1000)
-    private String failureMessage;
+    private @Nullable String failureMessage;
 
     private Payment(
             final Long orderId,

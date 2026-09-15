@@ -1,6 +1,7 @@
 package com.ticket.booking.endpoint;
 
 import java.net.URI;
+import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,10 +41,11 @@ public class OrderController implements OrderControllerDocs {
             @RequestHeader(value = "X-Admission-Token", required = false)
                     final String admissionToken,
             final AuthenticatedMember member) {
+        // @Valid가 performanceId·seatIds의 null을 이미 400으로 거른 뒤에야 여기에 닿는다.
         final CreateOrderUseCase.Input input =
                 new CreateOrderUseCase.Input(
-                        request.getPerformanceId(),
-                        request.getSeatIds(),
+                        Objects.requireNonNull(request.getPerformanceId(), "performanceId"),
+                        Objects.requireNonNull(request.getSeatIds(), "seatIds"),
                         member.memberId(),
                         admissionToken);
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);

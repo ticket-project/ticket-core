@@ -2,6 +2,7 @@ package com.ticket.like.application;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,10 @@ public class LikeQueryService implements LikeQueryApi {
 
     @Override
     public CursorPage<LikeEntry, Long> findLiked(
-            final LikeType likeType, final long memberId, final Long cursorLikeId, final int size) {
+            final LikeType likeType,
+            final long memberId,
+            final @Nullable Long cursorLikeId,
+            final int size) {
         final CursorPage<LikeRow, Long> page =
                 likeQueryPort.findLiked(likeType, memberId, cursorLikeId, size);
         final List<LikeEntry> entries =

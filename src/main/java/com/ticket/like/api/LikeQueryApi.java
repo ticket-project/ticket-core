@@ -1,5 +1,7 @@
 package com.ticket.like.api;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.shared.api.CursorPage;
 
 /** 찜 읽기 전용 조회 공개 계약이다. 대상 entity를 노출하지 않는다. */
@@ -15,5 +17,5 @@ public interface LikeQueryApi {
      * likeId다(첫 페이지는 null).
      */
     CursorPage<LikeEntry, Long> findLiked(
-            LikeType likeType, long memberId, Long cursorLikeId, int size);
+            LikeType likeType, long memberId, @Nullable Long cursorLikeId, int size);
 }

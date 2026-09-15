@@ -19,6 +19,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.booking.domain.BookingAuditedEntity;
 
 import lombok.AccessLevel;
@@ -75,9 +77,10 @@ public class Order extends BookingAuditedEntity {
     @Column(name = "venue_name_snapshot", nullable = false)
     private String venueNameSnapshot;
 
-    private LocalDateTime confirmedAt;
-    private LocalDateTime expiredAt;
-    private LocalDateTime canceledAt;
+    // 종료 시각은 해당 전이가 일어난 뒤에만 채워진다 — PENDING 주문에서는 셋 다 null이다.
+    private @Nullable LocalDateTime confirmedAt;
+    private @Nullable LocalDateTime expiredAt;
+    private @Nullable LocalDateTime canceledAt;
 
     /**
      * 이 주문이 포함한 좌석이다({@code 1:1..N}, 빈 주문은 없다). Order aggregate 안의 자식이라 {@code cascade = ALL}로 root

@@ -1,5 +1,7 @@
 package com.ticket.booking.exception;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.shared.exception.TicketException;
 
 /**
@@ -12,26 +14,26 @@ import com.ticket.shared.exception.TicketException;
 public sealed class AdmissionTokenException extends TicketException
         permits AdmissionTokenExpiredException, AdmissionTokenRequiredException {
     private static final String MESSAGE = "대기열 입장 토큰이 올바르지 않습니다.";
-    private final String reason;
+    private final @Nullable String reason;
 
     public AdmissionTokenException(final String reason) {
         this(reason, null);
     }
 
-    public AdmissionTokenException(final String reason, final Throwable cause) {
+    public AdmissionTokenException(final String reason, final @Nullable Throwable cause) {
         this(AdmissionErrorCode.E8002, MESSAGE, reason, cause);
     }
 
     protected AdmissionTokenException(
             final AdmissionErrorCode errorCode,
             final String message,
-            final String reason,
-            final Throwable cause) {
+            final @Nullable String reason,
+            final @Nullable Throwable cause) {
         super(errorCode, message, null, cause);
         this.reason = reason;
     }
 
-    public String getReason() {
+    public @Nullable String getReason() {
         return reason;
     }
 }

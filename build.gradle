@@ -1,3 +1,5 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+
 plugins {
     id 'java'
     id 'com.diffplug.spotless' version '8.9.0'
@@ -217,9 +219,10 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('compileJava') {
     options.errorprone {
+        // 위 configureEach가 전부 껐다. production 컴파일에서만 다시 켠다.
+        enabled = true
         // 기본 rule 전체를 끄고 아래에서 필요한 것만 되켠다.
         disableAllChecks = true
-        error('NullAway')
         // 실수하기 쉽고 오탐이 적은 것만 경고로 남긴다. 빌드를 막지 않는다.
         warn('MissingOverride', 'EqualsHashCode', 'ReturnValueIgnored', 'UnusedVariable')
         // Querydsl Q-type과 Lombok 산출물은 우리가 고칠 수 있는 코드가 아니다.
@@ -227,15 +230,24 @@ tasks.named('compileJava') {
         excludedPaths = '.*/build/generated/.*'
 
         nullaway {
+            // NullAway의 severity는 여기서 정한다. errorprone 쪽 error('NullAway')로 정하면
+            // nullaway plugin이 뒤에 붙이는 -Xep:NullAway가 그것을 기본값(WARN)으로 되돌린다.
+            severity = CheckSeverity.ERROR
             // @NullMarked가 붙은 package만 검사한다. 표기 없는 코드는 판단하지 않는다.
             onlyNullMarked = true
             // JSpecify의 type-use/generic 의미까지 본다.
             jspecifyMode = true
-            // 필드를 생성자가 아니라 프레임워크가 채우는 자리다. NullAway는 이를 알 수 없다.
-            //   @Autowired/@Value        -- Spring 주입
-            //   @DefaultValue            -- @ConfigurationProperties 바인딩
-            //   @Mock/@InjectMocks       -- (test에서만) Mockito 주입
+            // 생성자가 아니라 프레임워크가 채우는 필드다. NullAway는 그 시점을 볼 수 없어
+            // "생성자에서 초기화되지 않았다"고 보고하는데, 그 보고가 맞지 않는 자리만 최소로 적는다.
+            // 클래스 전체를 빼지 않는다 -- 같은 entity의 진짜 nullable 컬럼은 계속 검사받아야 한다.
+            //   @Id/@GeneratedValue  -- persistence provider가 flush 시점에 채운다
+            //   @Version             -- Hibernate가 채우고 관리한다
+            //   @Autowired/@Value    -- Spring 주입
+            //   @DefaultValue        -- @ConfigurationProperties 바인딩
             excludedFieldAnnotations = [
+                    'jakarta.persistence.Id',
+                    'jakarta.persistence.GeneratedValue',
+                    'jakarta.persistence.Version',
                     'org.springframework.beans.factory.annotation.Autowired',
                     'org.springframework.beans.factory.annotation.Value',
                     'org.springframework.boot.context.properties.bind.DefaultValue',
@@ -356,5 +368,11 @@ static void configureSeedExecution(JavaExec task, Project project) {
         if (key.toString().startsWith('seed.')) {
             task.systemProperty key.toString(), value
         }
+    }
+}
+
+tasks.register('dumpEpArgs') {
+    doLast {
+        println tasks.named('compileJava').get().options.allCompilerArgs.join('\n')
     }
 }

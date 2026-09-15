@@ -1,5 +1,6 @@
 package com.ticket.security.http;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,9 +21,9 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
     @Override
     public Object resolveArgument(
             final MethodParameter parameter,
-            final ModelAndViewContainer mavContainer,
+            final @Nullable ModelAndViewContainer mavContainer,
             final NativeWebRequest webRequest,
-            final WebDataBinderFactory binderFactory) {
+            final @Nullable WebDataBinderFactory binderFactory) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw unauthorized();

@@ -2,6 +2,8 @@ package com.ticket.show.application;
 
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.port.ShowListQueryPort;
 
 /**
@@ -9,4 +11,8 @@ import com.ticket.show.application.port.ShowListQueryPort;
  * 담는다 — venue 표시값 조합은 {@code GetSaleOpeningSoonShowsUseCase} (application)가 한다.
  */
 public record SaleOpeningSoonSummaryRow(
-        Long id, String title, String image, Long venueId, LocalDateTime displaySaleStartsAt) {}
+        Long id,
+        @Nullable String title,
+        @Nullable String image,
+        @Nullable Long venueId,
+        @Nullable LocalDateTime displaySaleStartsAt) {}

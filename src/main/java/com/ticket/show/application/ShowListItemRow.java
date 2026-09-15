@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.show.application.port.ShowListQueryPort;
 import com.ticket.show.domain.show.SaleType;
 
@@ -13,15 +15,15 @@ import com.ticket.show.domain.show.SaleType;
  */
 public record ShowListItemRow(
         Long id,
-        String title,
-        String subTitle,
-        String image,
+        @Nullable String title,
+        @Nullable String subTitle,
+        @Nullable String image,
         List<String> genreNames,
-        LocalDate startDate,
-        LocalDate endDate,
+        @Nullable LocalDate startDate,
+        @Nullable LocalDate endDate,
         long viewCount,
         SaleType displaySaleType,
-        LocalDateTime displaySaleStartsAt,
-        LocalDateTime displaySaleEndsAt,
+        @Nullable LocalDateTime displaySaleStartsAt,
+        @Nullable LocalDateTime displaySaleEndsAt,
         LocalDateTime createdAt,
-        Long venueId) {}
+        @Nullable Long venueId) {}

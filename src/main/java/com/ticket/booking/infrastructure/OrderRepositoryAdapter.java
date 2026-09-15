@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
@@ -58,7 +59,7 @@ public class OrderRepositoryAdapter implements OrderRepository {
     public List<Order> findExpirable(
             final OrderState status,
             final LocalDateTime expiresAt,
-            final Long afterOrderId,
+            final @Nullable Long afterOrderId,
             final int limit) {
         return jpaRepository
                 .findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(

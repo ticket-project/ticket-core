@@ -2,6 +2,7 @@ package com.ticket.show.application.usecase;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +19,7 @@ public class GetGenresByCategoryUseCase {
 
     public record Input(String categoryCode) {}
 
-    public record GenreItem(Long id, String code, String name) {}
+    public record GenreItem(Long id, String code, @Nullable String name) {}
 
     public record Output(List<GenreItem> genres) {}
 

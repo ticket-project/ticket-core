@@ -1,5 +1,7 @@
 package com.ticket.show.application;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.venue.api.Region;
 
@@ -12,16 +14,16 @@ import lombok.Getter;
  */
 @Getter
 public class ShowListParam {
-    private final String category;
-    private final String genre;
-    private final Region region;
-    private final ShowCursor cursor;
+    private final @Nullable String category;
+    private final @Nullable String genre;
+    private final @Nullable Region region;
+    private final @Nullable ShowCursor cursor;
 
     public ShowListParam(
-            final String category,
-            final String genre,
-            final Region region,
-            final ShowCursor cursor) {
+            final @Nullable String category,
+            final @Nullable String genre,
+            final @Nullable Region region,
+            final @Nullable ShowCursor cursor) {
         this.category = category;
         this.genre = genre;
         this.region = region;
@@ -29,15 +31,15 @@ public class ShowListParam {
     }
 
     public static ShowListParam of(
-            final String category,
-            final String genre,
-            final String region,
-            final ShowCursor cursor) {
+            final @Nullable String category,
+            final @Nullable String genre,
+            final @Nullable String region,
+            final @Nullable ShowCursor cursor) {
         return new ShowListParam(category, genre, parseRegion(region), cursor);
     }
 
     /** 이전에는 Spring의 enum 변환기가 이 값을 바꿨고 그 변환기는 앞뒤 공백을 지웠다. 변환 주체가 이 계층으로 옮겨왔으므로 같은 관용을 유지한다. */
-    static Region parseRegion(final String region) {
+    static @Nullable Region parseRegion(final @Nullable String region) {
         if (region == null || region.isBlank()) {
             return null;
         }

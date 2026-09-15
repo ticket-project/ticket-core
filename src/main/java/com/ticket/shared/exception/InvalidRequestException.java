@@ -1,5 +1,7 @@
 package com.ticket.shared.exception;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 요청 자체가 올바르지 않다. 어느 module에서든 뜻이 같아 여기 있다.
  *
@@ -18,7 +20,7 @@ public final class InvalidRequestException extends TicketException {
      * @param detail 어디가 잘못됐는지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로 나가고 고정 {@code message}를
      *     덮지 않는다. 내부 사정은 넣지 않는다.
      */
-    public InvalidRequestException(final String detail) {
+    public InvalidRequestException(final @Nullable String detail) {
         super(CommonErrorCode.E400, MESSAGE, detail);
     }
 }

@@ -17,6 +17,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.member.api.SocialProvider;
 
 import lombok.AccessLevel;
@@ -48,7 +50,7 @@ public class MemberSocialAccount extends MemberAuditedEntity {
     @Column(name = "social_id", nullable = false)
     private String socialId;
 
-    @Column private LocalDateTime deletedAt;
+    @Column private @Nullable LocalDateTime deletedAt;
 
     private MemberSocialAccount(
             final Member member, final SocialProvider socialProvider, final String socialId) {

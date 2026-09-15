@@ -1,12 +1,15 @@
 package com.ticket.show.infrastructure;
 
 import static com.ticket.show.domain.show.QShow.show;
+import static com.ticket.show.infrastructure.QuerydslTupleColumns.required;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -38,7 +41,9 @@ public class QuerydslShowCursorConditionBuilder {
     private final QuerydslShowSortResolver sortResolver;
 
     public void applyCursor(
-            final BooleanBuilder where, final ShowCursor cursor, final SortOrder sortOrder) {
+            final BooleanBuilder where,
+            final @Nullable ShowCursor cursor,
+            final SortOrder sortOrder) {
         if (cursor == null) {
             return;
         }
@@ -53,12 +58,16 @@ public class QuerydslShowCursorConditionBuilder {
     public ShowCursor buildNextPosition(
             final List<Tuple> rows, final int size, final SortOrder sortOrder) {
         final Tuple lastRow = rows.get(size - 1);
-        final Long lastId = lastRow.get(show.id);
+        // show.id는 이 projection에 항상 들어 있는 PK라 조회된 행에서는 값이 비어 있을 수 없다.
+        final Long lastId = required(lastRow, show.id);
         final String lastValue = resolveLastValue(lastRow, sortOrder);
         if (!ShowSort.LATEST.equals(sortOrder.key())) {
             return new ShowCursor(sortOrder.key(), sortOrder.direction().name(), lastValue, lastId);
         }
-        final LocalDateTime evaluatedAt = sortOrder.saleClosedEvaluatedAt();
+        // 위에서 최신순이 아니면 이미 반환했고, 최신순 SortOrder는 판정 시각을 반드시 갖는다.
+        final LocalDateTime evaluatedAt =
+                Objects.requireNonNull(
+                        sortOrder.saleClosedEvaluatedAt(), "최신순 SortOrder에 마감 판정 시각이 없습니다.");
         return new ShowCursor(
                 sortOrder.key(),
                 sortOrder.direction().name(),
@@ -110,7 +119,8 @@ public class QuerydslShowCursorConditionBuilder {
             case LATEST -> {
                 final LocalDateTime last = LocalDateTime.parse(cursor.lastValue());
                 final NumberExpression<Integer> rank = sortResolver.saleClosedRank(sortOrder);
-                final int lastRank = cursor.saleClosedRank();
+                // LATEST 커서는 위 validate에서 saleClosedRank가 있는 것만 통과한다.
+                final int lastRank = Objects.requireNonNull(cursor.saleClosedRank());
                 final BooleanExpression afterWithinSameRank =
                         show.createdAt.lt(last).or(show.createdAt.eq(last).and(show.id.lt(lastId)));
                 // ORDER BY: 마감 여부 ASC -> 등록일 DESC -> id DESC. 조건도 같은 순서로 겹친다.
@@ -132,10 +142,14 @@ public class QuerydslShowCursorConditionBuilder {
 
     private String resolveLastValue(final Tuple lastRow, final SortOrder sortOrder) {
         return switch (sortOrder.key()) {
-            case POPULAR -> String.valueOf(lastRow.get(show.viewCount));
-            case LATEST -> lastRow.get(show.createdAt).toString();
-            case SHOW_START_APPROACHING -> lastRow.get(show.startDate).toString();
-            case SALE_START_APPROACHING -> lastRow.get(show.displaySaleWindow.startsAt).toString();
+            case POPULAR -> String.valueOf(required(lastRow, show.viewCount));
+            case LATEST -> required(lastRow, show.createdAt).toString();
+            // 이 정렬의 키가 startDate라 마지막 행에는 값이 있다.
+            case SHOW_START_APPROACHING ->
+                    Objects.requireNonNull(lastRow.get(show.startDate)).toString();
+            // 이 정렬은 판매 시작이 있는 행만 대상으로 하므로 마지막 행에도 값이 있다.
+            case SALE_START_APPROACHING ->
+                    Objects.requireNonNull(lastRow.get(show.displaySaleWindow.startsAt)).toString();
         };
     }
 }

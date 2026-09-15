@@ -1,6 +1,7 @@
 package com.ticket.show.infrastructure;
 
 import static com.ticket.show.domain.show.QShow.show;
+import static com.ticket.show.infrastructure.QuerydslTupleColumns.required;
 
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class QuerydslShowSummaryBatchQueryPort implements ShowSummaryBatchQueryP
                 .map(
                         row ->
                                 new ShowSummaryRow(
-                                        row.get(show.id),
+                                        required(row, show.id),
                                         row.get(show.title),
                                         row.get(show.image),
                                         row.get(show.startDate),

@@ -1,5 +1,7 @@
 package com.ticket.member.application;
 
+import java.util.Objects;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -72,8 +74,10 @@ public class OAuth2MemberProvisioningService {
     }
 
     private String resolveEmail(final SocialIdentity userInfo) {
-        if (userInfo.emailVerified() && StringUtils.hasText(userInfo.email())) {
-            return userInfo.email().trim().toLowerCase();
+        final String email = userInfo.email();
+        if (userInfo.emailVerified() && StringUtils.hasText(email)) {
+            // StringUtils.hasText가 null과 공백을 모두 걸러 낸 뒤이므로 여기서 email은 null일 수 없다.
+            return Objects.requireNonNull(email).trim().toLowerCase();
         }
         return userInfo.provider().name().toLowerCase()
                 + "_"
@@ -82,8 +86,10 @@ public class OAuth2MemberProvisioningService {
     }
 
     private String resolveName(final SocialIdentity userInfo) {
-        if (StringUtils.hasText(userInfo.name())) {
-            return userInfo.name().trim();
+        final String name = userInfo.name();
+        if (StringUtils.hasText(name)) {
+            // StringUtils.hasText가 null과 공백을 모두 걸러 낸 뒤이므로 여기서 name은 null일 수 없다.
+            return Objects.requireNonNull(name).trim();
         }
         return userInfo.provider().name().toLowerCase() + "_" + userInfo.providerId();
     }

@@ -2,6 +2,8 @@ package com.ticket.show.application;
 
 import java.time.LocalDate;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.venue.api.Region;
@@ -15,22 +17,22 @@ import lombok.Getter;
  */
 @Getter
 public class ShowSearchCriteria {
-    private String keyword;
-    private String category;
-    private SaleDisplayStatus saleDisplayStatus;
-    private LocalDate startDateFrom;
-    private LocalDate startDateTo;
-    private Region region;
-    private ShowCursor cursor;
+    private @Nullable String keyword;
+    private @Nullable String category;
+    private @Nullable SaleDisplayStatus saleDisplayStatus;
+    private @Nullable LocalDate startDateFrom;
+    private @Nullable LocalDate startDateTo;
+    private @Nullable Region region;
+    private @Nullable ShowCursor cursor;
 
     public ShowSearchCriteria(
-            final String keyword,
-            final String category,
-            final SaleDisplayStatus saleDisplayStatus,
-            final LocalDate startDateFrom,
-            final LocalDate startDateTo,
-            final Region region,
-            final ShowCursor cursor) {
+            final @Nullable String keyword,
+            final @Nullable String category,
+            final @Nullable SaleDisplayStatus saleDisplayStatus,
+            final @Nullable LocalDate startDateFrom,
+            final @Nullable LocalDate startDateTo,
+            final @Nullable Region region,
+            final @Nullable ShowCursor cursor) {
         validateStartDateRange(startDateFrom, startDateTo);
         this.keyword = keyword;
         this.category = category;
@@ -43,13 +45,13 @@ public class ShowSearchCriteria {
 
     /** API 경계에서 넘어온 문자열을 도메인 enum으로 바꾼다. 값이 올바르지 않으면 조회로 넘어가기 전에 INVALID_REQUEST로 끊는다. */
     public static ShowSearchCriteria of(
-            final String keyword,
-            final String category,
-            final String bookingStatus,
-            final LocalDate startDateFrom,
-            final LocalDate startDateTo,
-            final String region,
-            final ShowCursor cursor) {
+            final @Nullable String keyword,
+            final @Nullable String category,
+            final @Nullable String bookingStatus,
+            final @Nullable LocalDate startDateFrom,
+            final @Nullable LocalDate startDateTo,
+            final @Nullable String region,
+            final @Nullable ShowCursor cursor) {
         return new ShowSearchCriteria(
                 keyword,
                 category,
@@ -61,8 +63,8 @@ public class ShowSearchCriteria {
     }
 
     /** region 변환은 목록 조회와 같은 규칙을 써야 하므로 {@link ShowListParam#parseRegion}이 소유한다. */
-    private static <E extends Enum<E>> E parseEnum(
-            final Class<E> type, final String value, final String field) {
+    private static <E extends Enum<E>> @Nullable E parseEnum(
+            final Class<E> type, final @Nullable String value, final String field) {
         if (value == null || value.isBlank()) {
             return null;
         }
@@ -74,7 +76,7 @@ public class ShowSearchCriteria {
     }
 
     private void validateStartDateRange(
-            final LocalDate startDateFrom, final LocalDate startDateTo) {
+            final @Nullable LocalDate startDateFrom, final @Nullable LocalDate startDateTo) {
         if (startDateFrom == null || startDateTo == null) {
             return;
         }

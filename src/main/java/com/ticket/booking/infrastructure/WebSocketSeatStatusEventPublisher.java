@@ -3,6 +3,7 @@ package com.ticket.booking.infrastructure;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ public class WebSocketSeatStatusEventPublisher implements SeatStatusEventPublish
     @Override
     public void publish(
             final Long performanceId,
-            final Long performanceSeatId,
+            final @Nullable Long performanceSeatId,
             final Long seatId,
             final SeatStatusAction action) {
         final SeatStatusEvent event =

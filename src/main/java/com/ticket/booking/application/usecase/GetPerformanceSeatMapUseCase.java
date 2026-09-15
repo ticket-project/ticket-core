@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,8 +45,8 @@ public class GetPerformanceSeatMapUseCase {
     public record Output(VenueView venue, List<SeatMapEntry> seats) {}
 
     public record VenueView(
-            Long venueId,
-            String venueName,
+            @Nullable Long venueId,
+            @Nullable String venueName,
             int viewBoxWidth,
             int viewBoxHeight,
             double seatDiameter) {}
@@ -89,7 +90,7 @@ public class GetPerformanceSeatMapUseCase {
     }
 
     /** show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤 오류로 다룰지는 이 조합 시점에서 판정하지 않는다. */
-    private SeatMapEntry toSeatMapEntry(
+    private @Nullable SeatMapEntry toSeatMapEntry(
             final PerformanceSeatMapRow row, final PerformanceVenueLayout layout) {
         final PerformanceVenueLayout.SeatLayout seatLayout =
                 layout.seatLayoutBySeatId().get(row.seatId());

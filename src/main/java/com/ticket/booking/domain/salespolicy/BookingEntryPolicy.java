@@ -7,6 +7,8 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
+import org.jspecify.annotations.Nullable;
+
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -17,29 +19,30 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookingEntryPolicy {
+    // 다섯 값 모두 선택 항목이다 — none()이 전부 null인 정책을 만들고, 옛 queue policy row가 없던 회차도 그렇다.
     @Enumerated(EnumType.STRING)
     @Column(name = "queue_mode", length = 20)
-    private QueueMode queueMode;
+    private @Nullable QueueMode queueMode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "queue_level", length = 20)
-    private QueueLevel queueLevel;
+    private @Nullable QueueLevel queueLevel;
 
     @Column(name = "preopen_queue_starts_at")
-    private LocalDateTime preopenQueueStartAt;
+    private @Nullable LocalDateTime preopenQueueStartAt;
 
     @Column(name = "waiting_room_message", length = 255)
-    private String waitingRoomMessage;
+    private @Nullable String waitingRoomMessage;
 
     @Column(name = "queue_policy_reason", length = 255)
-    private String reason;
+    private @Nullable String reason;
 
     public BookingEntryPolicy(
-            final QueueMode queueMode,
-            final QueueLevel queueLevel,
-            final LocalDateTime preopenQueueStartAt,
-            final String waitingRoomMessage,
-            final String reason) {
+            final @Nullable QueueMode queueMode,
+            final @Nullable QueueLevel queueLevel,
+            final @Nullable LocalDateTime preopenQueueStartAt,
+            final @Nullable String waitingRoomMessage,
+            final @Nullable String reason) {
         this.queueMode = queueMode;
         this.queueLevel = queueLevel;
         this.preopenQueueStartAt = preopenQueueStartAt;
@@ -51,23 +54,23 @@ public class BookingEntryPolicy {
         return new BookingEntryPolicy(null, null, null, null, null);
     }
 
-    public QueueMode queueMode() {
+    public @Nullable QueueMode queueMode() {
         return queueMode;
     }
 
-    public QueueLevel queueLevel() {
+    public @Nullable QueueLevel queueLevel() {
         return queueLevel;
     }
 
-    public LocalDateTime preopenQueueStartAt() {
+    public @Nullable LocalDateTime preopenQueueStartAt() {
         return preopenQueueStartAt;
     }
 
-    public String waitingRoomMessage() {
+    public @Nullable String waitingRoomMessage() {
         return waitingRoomMessage;
     }
 
-    public String reason() {
+    public @Nullable String reason() {
         return reason;
     }
 

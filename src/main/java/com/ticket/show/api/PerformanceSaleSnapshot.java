@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * booking이 판매 좌석 편성과 주문 표시 snapshot 작성에 쓰는 회차 판매 정보의 불변 snapshot이다.
  *
@@ -13,10 +15,10 @@ import java.util.Map;
 public record PerformanceSaleSnapshot(
         long performanceId,
         long showId,
-        String showTitle,
-        Long venueId,
-        String venueName,
-        LocalDateTime performanceStartTime,
+        @Nullable String showTitle,
+        @Nullable Long venueId,
+        @Nullable String venueName,
+        @Nullable LocalDateTime performanceStartTime,
         Map<Long, SeatInfo> seatInfoBySeatId,
         Map<Long, GradeInfo> gradeInfoByPerformanceGradeId) {
     public PerformanceSaleSnapshot {

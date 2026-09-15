@@ -6,7 +6,10 @@
  * <p>booking의 Order를 참조할 때 {@code orderId}는 scalar {@code Long} 컬럼일 뿐 JPA 연관관계가 아니다 — cross-module
  * JPA 관계와 물리 FK는 금지된다(ADR 0003).
  */
+@NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Payment",
         allowedDependencies = {})
 package com.ticket.payment;
+
+import org.jspecify.annotations.NullMarked;

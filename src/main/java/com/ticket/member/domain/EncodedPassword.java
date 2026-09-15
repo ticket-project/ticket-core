@@ -11,7 +11,10 @@ import lombok.Getter;
 public class EncodedPassword {
     private String password;
 
-    protected EncodedPassword() {}
+    protected EncodedPassword() {
+        // JPA 전용 생성자다. 빈 문자열은 PasswordEncoder.matches에서 null과 동일하게 취급되므로 동작이 바뀌지 않는다.
+        this.password = "";
+    }
 
     private EncodedPassword(final String encodedPassword) {
         this.password = encodedPassword;

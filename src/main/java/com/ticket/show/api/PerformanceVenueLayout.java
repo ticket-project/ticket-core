@@ -2,6 +2,8 @@ package com.ticket.show.api;
 
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * booking이 회차 정적 seat-map 응답(Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값)을 조합하는 데 쓰는 불변 snapshot이다.
  *
@@ -11,8 +13,8 @@ import java.util.Map;
  */
 public record PerformanceVenueLayout(
         long performanceId,
-        Long venueId,
-        String venueName,
+        @Nullable Long venueId,
+        @Nullable String venueName,
         int viewBoxWidth,
         int viewBoxHeight,
         double seatDiameter,
