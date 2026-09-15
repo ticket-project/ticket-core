@@ -6,11 +6,10 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.domain.salespolicy.OrderAcceptanceStatus;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceBookingModeUseCase {
-    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+    private final PerformanceSaleFinder performanceSaleFinder;
     private final Clock clock;
 
     public record Input(Long performanceId) {
@@ -53,13 +52,7 @@ public class GetPerformanceBookingModeUseCase {
 
     public Output execute(final Input input) {
         final PerformanceSalesPolicy policy =
-                performanceSalesPolicyRepository
-                        .findById(input.performanceId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "회차 판매 정책을 찾을 수 없습니다. id="
-                                                        + input.performanceId()));
+                performanceSaleFinder.findPolicy(input.performanceId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final OrderAcceptanceStatus status = policy.acceptanceStatus(now);
