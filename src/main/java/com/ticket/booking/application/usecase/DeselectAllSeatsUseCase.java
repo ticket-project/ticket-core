@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
-import com.ticket.booking.domain.selection.DeselectedSeatIds;
 import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -49,7 +48,7 @@ public class DeselectAllSeatsUseCase {
 
     public void execute(final Input input) {
         memberLookup.requireActive(input.memberId());
-        final DeselectedSeatIds seatIds =
+        final List<Long> seatIds =
                 seatSelectionService.deselectAll(input.performanceId(), input.memberId());
         final Map<Long, Long> performanceSeatIdBySeatId =
                 resolvePerformanceSeatIds(input.performanceId(), seatIds);
@@ -65,13 +64,12 @@ public class DeselectAllSeatsUseCase {
     }
 
     private Map<Long, Long> resolvePerformanceSeatIds(
-            final Long performanceId, final DeselectedSeatIds seatIds) {
-        final List<Long> ids = seatIds.values();
-        if (ids.isEmpty()) {
+            final Long performanceId, final List<Long> seatIds) {
+        if (seatIds.isEmpty()) {
             return Map.of();
         }
         return performanceSeatRepository
-                .findAllByPerformanceIdAndSeatIdIn(performanceId, ids)
+                .findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds)
                 .stream()
                 .collect(
                         java.util.stream.Collectors.toMap(

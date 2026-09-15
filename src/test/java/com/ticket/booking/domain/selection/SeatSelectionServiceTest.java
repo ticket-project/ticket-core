@@ -110,6 +110,6 @@ class SeatSelectionServiceTest {
         // given
         when(seatSelectionStore.releaseAllByMember(10L, "3")).thenReturn(List.of(20L));
         // then
-        assertThat(seatSelectionService.deselectAll(10L, 3L).values()).containsExactly(20L);
+        assertThat(seatSelectionService.deselectAll(10L, 3L)).containsExactly(20L);
     }
 }
