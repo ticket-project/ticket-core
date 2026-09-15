@@ -7,8 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort;
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
-import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class SeatAvailabilitySnapshotReader {
-    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+    private final PerformanceSaleFinder performanceSaleFinder;
     private final SeatAvailabilityQueryPort seatAvailabilityQueryPort;
 
     /**
@@ -33,10 +31,7 @@ public class SeatAvailabilitySnapshotReader {
      */
     @Transactional(readOnly = true)
     public List<PerformanceSeatStateRow> read(final Long performanceId) {
-        performanceSalesPolicyRepository
-                .findById(performanceId)
-                .orElseThrow(
-                        () -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
+        performanceSaleFinder.findPolicy(performanceId);
         return seatAvailabilityQueryPort.findSeatStates(performanceId);
     }
 }

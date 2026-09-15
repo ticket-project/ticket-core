@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;
 import com.ticket.booking.domain.salespolicy.OrderAcceptanceStatus;
@@ -37,7 +38,11 @@ class GetPerformanceBookingModeUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new GetPerformanceBookingModeUseCase(performanceSalesPolicyRepository, CLOCK);
+        // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
+        // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
+        useCase =
+                new GetPerformanceBookingModeUseCase(
+                        new PerformanceSaleFinder(performanceSalesPolicyRepository), CLOCK);
     }
 
     @Test

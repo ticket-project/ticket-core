@@ -15,17 +15,16 @@ import com.ticket.booking.application.LockKey;
 import com.ticket.booking.application.LockManager;
 import com.ticket.booking.application.LockOptions;
 import com.ticket.booking.application.PendingOrderCreator;
+import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.order.OrderRemainingTime;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
@@ -59,7 +58,7 @@ public class StartBookingUseCase {
             LockOptions.defaults().withFailureMessage("주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요.");
 
     private final LockManager lockManager;
-    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+    private final PerformanceSaleFinder performanceSaleFinder;
     private final AdmissionGuard admissionGuard;
     private final MemberLookupApi memberLookup;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
@@ -106,7 +105,8 @@ public class StartBookingUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         // 1. 지금 이 회차의 예매를 받을 수 있는가.
-        final PerformanceSalesPolicy policy = findSalesPolicy(input.performanceId());
+        final PerformanceSalesPolicy policy =
+                performanceSaleFinder.findPolicy(input.performanceId());
         policy.ensureAcceptingOrders(now);
         policy.ensureWithinHoldLimit(requestedSeatIds.size());
         admissionGuard.verifyIfRequired(
@@ -154,13 +154,6 @@ public class StartBookingUseCase {
                 hold.expiresAt(),
                 OrderRemainingTime.seconds(
                         OrderState.PENDING, hold.expiresAt(), LocalDateTime.now(clock)));
-    }
-
-    private PerformanceSalesPolicy findSalesPolicy(final Long performanceId) {
-        return performanceSalesPolicyRepository
-                .findById(performanceId)
-                .orElseThrow(
-                        () -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
     }
 
     /** 대기열을 요구하는 회차에서만 ticket-queue가 발급한 입장 토큰을 검증한다. */

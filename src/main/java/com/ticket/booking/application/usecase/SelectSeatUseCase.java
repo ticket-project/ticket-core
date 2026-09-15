@@ -6,10 +6,10 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.AdmissionGuard;
+import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.seat.PerformanceSeatStateSnapshot;
@@ -17,14 +17,13 @@ import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class SelectSeatUseCase {
-    private final PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+    private final PerformanceSaleFinder performanceSaleFinder;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final HoldManager holdManager;
@@ -57,7 +56,8 @@ public class SelectSeatUseCase {
     public void execute(final Input input) {
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceSalesPolicy policy = findPolicy(input.performanceId());
+        final PerformanceSalesPolicy policy =
+                performanceSaleFinder.findPolicy(input.performanceId());
         policy.ensureAcceptingOrders(now);
         admissionGuard.verifyIfRequired(
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
@@ -97,12 +97,5 @@ public class SelectSeatUseCase {
             throw new SeatAlreadyHeldException(performanceId, seatId);
         }
         return seat.performanceSeatId();
-    }
-
-    private PerformanceSalesPolicy findPolicy(final Long performanceId) {
-        return performanceSalesPolicyRepository
-                .findById(performanceId)
-                .orElseThrow(
-                        () -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
     }
 }

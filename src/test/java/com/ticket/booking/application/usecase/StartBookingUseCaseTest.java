@@ -37,6 +37,7 @@ import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.application.BookingAvailabilityChecker;
 import com.ticket.booking.application.PendingOrderCreator;
+import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.application.RecordingLockManager;
 import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.domain.hold.Hold;
@@ -85,12 +86,12 @@ class StartBookingUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        // 진짜 AdmissionGuard를 mock verifier 위에 씌운다 -- "대기열이 필요할 때만 검증"이라는
-        // 분기가 mock에 가려지지 않고 그대로 검증된다.
         startBookingUseCase =
+                // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
+                // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new StartBookingUseCase(
                         lockManager,
-                        performanceSalesPolicyRepository,
+                        new PerformanceSaleFinder(performanceSalesPolicyRepository),
                         new AdmissionGuard(admissionVerifier),
                         memberLookup,
                         bookingAvailabilityChecker,
