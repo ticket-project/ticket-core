@@ -18,7 +18,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 
     @Override
     public String createRefreshToken(final Long memberId, final long expirationSeconds) {
-        final String tokenValue = uuidSupplier.get().toString();
+        final String tokenValue = uuidSupplier.newUuid().toString();
         final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + tokenValue);
         bucket.set(String.valueOf(memberId), Duration.ofSeconds(expirationSeconds));
         return tokenValue;
