@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.ticket.show.infrastructure.QuerydslShowCursorConditionBuilder;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver;
-import com.ticket.show.infrastructure.SaleDisplayStatusPredicateFactory;
+import com.ticket.show.infrastructure.SaleDisplayStatusPredicates;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
 import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryPort;
@@ -20,7 +20,7 @@ import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
  * 실패한다(observed-failures 참고).
  */
 @Import({
-    SaleDisplayStatusPredicateFactory.class,
+    SaleDisplayStatusPredicates.class,
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
     VenueLookupService.class,

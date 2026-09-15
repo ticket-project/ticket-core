@@ -22,7 +22,7 @@ class QuerydslShowSortResolverTest {
     private final Clock clock =
             Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneId.from(ZoneOffset.UTC));
     private final QuerydslShowSortResolver showSortSupport =
-            new QuerydslShowSortResolver(new SaleDisplayStatusPredicateFactory(), clock);
+            new QuerydslShowSortResolver(new SaleDisplayStatusPredicates(), clock);
 
     @Test
     void 인기순은_desc_정렬을_사용한다() {

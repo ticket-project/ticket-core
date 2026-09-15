@@ -54,7 +54,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     private final JPAQueryFactory queryFactory;
     private final QuerydslShowSortResolver sortResolver;
     private final QuerydslShowCursorConditionBuilder cursorConditionBuilder;
-    private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicates;
+    private final SaleDisplayStatusPredicates saleDisplayStatusPredicates;
     private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
 
