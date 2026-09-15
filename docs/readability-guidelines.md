@@ -138,6 +138,86 @@ Manager    Processor    Coordinator    Preparer    Helper    Util    Service    
 이름이나 정확한 메서드 시그니처를 불필요하게 고정하지 않는다 — 그러면 구조를 고칠 때마다 테스트가
 깨지고, 테스트가 리팩터링을 막는다.
 
+## 조회 코드
+
+### 10. 조회 방식은 "가장 쉽게 표현되는 것"으로 고른다
+
+이 저장소는 Querydsl을 계속 쓴다. 동적 조건, optional filter 조합, 복합 정렬, 커서 페이징, 복잡한
+projection과 join에서 Querydsl의 값어치는 충분하다. **Querydsl 사용량을 줄이는 것은 목표가 아니다.**
+
+다만 반대 방향도 강제하지 않는다. 조회 구현은 "이 프로젝트가 Querydsl을 쓰는가"가 아니라 "이
+조회를 가장 간단하고 명확하게 표현하는 것이 무엇인가"로 고른다.
+
+| 조회의 성격 | 먼저 검토할 것 |
+| --- | --- |
+| 단일 id 조회, `exists`, 고정 조건 | Spring Data repository method |
+| 짧은 고정 projection·고정 join | repository method / `@Query` / 짧은 Querydsl 중 읽기 쉬운 것 |
+| 동적 조건, 복합 정렬, 커서 페이징, 복잡한 projection | Querydsl |
+
+**이미 짧고 명확한 Querydsl 코드를 "단순 조회"라는 이유만으로 `@Query`로 바꾸지 않는다.** 바꾸는
+쪽이 더 읽기 쉬울 때만 바꾸고, projection·정렬·null 처리·join·query 개수가 하나라도 달라질
+가능성이 있으면 그대로 둔다.
+
+### 11. Querydsl 자체와 Querydsl 주변의 포장을 구분한다
+
+Querydsl은 그 자체로 읽을 수 있는 코드다.
+
+```java
+queryFactory.select(...).from(show).leftJoin(...).where(...).orderBy(...).limit(...).fetch();
+```
+
+이것을 숨기려고 `JoinBuilder`/`ConditionBuilder`/`QueryExecutor`/`ProjectionBuilder` 같은 계층을
+쌓지 않는다. **실제 query의 의미가 persistence adapter에서 보여야 한다.**
+
+`var where = conditionBuilder.build(criteria);` 한 줄 때문에 검색 조건이 keyword·category·genre·
+region·기간·판매 상태라는 사실이 전혀 보이지 않는다면, 몇 줄 늘어나더라도 조건을 늘어놓는 편이 낫다.
+
+**새 범용 query framework를 만들지 않는다** — `BaseQuerydslRepository`, `QueryExecutor`,
+`PredicatePipeline`, `CursorStrategyFactory` 같은 것들이다. 지금 문제는 abstraction 부족이 아니다.
+
+### 12. 다만 correctness abstraction은 보존한다
+
+반대로 다음은 별도 helper의 값어치가 높다. 틀리기 쉽고, 틀리면 조용히 틀리기 때문이다.
+
+```text
+LIKE escaping    대소문자 무시 검색    판매 상태 CASE expression
+커서 비교 조건    tie breaker    복합 정렬 정책    페이징 correctness
+```
+
+> wrapper는 걷어내되 correctness abstraction은 보존한다.
+
+정렬 정의와 커서 비교 조건처럼 **같은 규칙이 두 곳에 복제되면** 언젠가 어긋난다. 한쪽을 고치고
+다른 쪽을 잊는 순간 페이지 사이에 중복이나 누락이 생기고, 그것은 테스트 없이는 보이지 않는다.
+가능하면 같은 정의를 공유하게 만든다 — 그러자고 새 framework를 만들지는 않는다.
+
+### 13. 조회 helper 안에 I/O를 숨기지 않는다
+
+조건을 만드는 class 안에서 다른 module API를 부르거나 DB를 조회하면, 이름이 말하는 것과 실제로
+하는 일이 달라진다. 가능하면 application이 그 조회를 먼저 하고 결과 값을 query port에 넘긴다.
+
+```text
+region -> VenueLookupApi.findIdsByRegion(...) -> venueIds -> ShowQueryPort.search(..., venueIds)
+```
+
+그러면 Querydsl 코드는 `show.venueId.in(venueIds)`라는 자기 DB query에 집중한다. 단 **module
+경계와 결과 semantics가 완전히 같을 때만** 옮긴다 — 빈 집합일 때의 동작까지 확인한다.
+
+### 14. 리팩터링은 동작을 바꾸지 않는다
+
+조회 코드를 고칠 때 다음이 하나라도 달라지면 그것은 리팩터링이 아니라 변경이다.
+
+```text
+WHERE    join type과 ON 조건    GROUP BY / DISTINCT    ORDER BY와 ASC/DESC    tie breaker
+LIMIT    커서 비교    null 처리    projection    결과 순서    query 개수(N+1)
+```
+
+특히 `GROUP BY`를 `DISTINCT`로(또는 반대로) 바꾸지 않는다 — join 행 중복, dialect 차이,
+`SELECT DISTINCT` + `ORDER BY` expression 제약 같은 이유가 있을 수 있다. 확신이 없으면 고치지 않고
+후보로만 남긴다.
+
+"같아 보인다"로 판단하지 않는다. 같은 입력에 같은 결과·같은 예외·같은 순서·같은 query 개수인지를
+테스트로 확인하고, 확인할 테스트가 없으면 **먼저 현재 동작을 고정하는 테스트를 쓴다.**
+
 ## 대표 예: 예매 시작(Start Booking)
 
 ### Before
