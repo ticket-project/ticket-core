@@ -14,25 +14,24 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
  * 테스트(QuerydslShowListQueryPortTest 등)가 고정한다. 여기서는 각 상태가 만들어내는 조건식의 형태만 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
-class SaleDisplayStatusPredicateFactoryTest {
-    private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicateFactory =
-            new SaleDisplayStatusPredicateFactory();
+class SaleDisplayStatusPredicatesTest {
+    private final SaleDisplayStatusPredicates saleDisplayStatusPredicates =
+            new SaleDisplayStatusPredicates();
     private final LocalDateTime fixedNow = LocalDateTime.of(2026, 3, 15, 19, 0);
 
     @Test
     void saleDisplayStatus가_null이면_null을_반환한다() {
-        assertThat(saleDisplayStatusPredicateFactory.condition(null, fixedNow)).isNull();
+        assertThat(saleDisplayStatusPredicates.condition(null, fixedNow)).isNull();
     }
 
     @Test
     void saleDisplayStatus별로_고정시각_기준_조건식을_반환한다() {
         BooleanExpression beforeOpen =
-                saleDisplayStatusPredicateFactory.condition(
-                        SaleDisplayStatus.BEFORE_OPEN, fixedNow);
+                saleDisplayStatusPredicates.condition(SaleDisplayStatus.BEFORE_OPEN, fixedNow);
         BooleanExpression onSale =
-                saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.ON_SALE, fixedNow);
+                saleDisplayStatusPredicates.condition(SaleDisplayStatus.ON_SALE, fixedNow);
         BooleanExpression closed =
-                saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.CLOSED, fixedNow);
+                saleDisplayStatusPredicates.condition(SaleDisplayStatus.CLOSED, fixedNow);
 
         assertThat(beforeOpen).isNotNull();
         assertThat(onSale).isNotNull();
@@ -45,7 +44,7 @@ class SaleDisplayStatusPredicateFactoryTest {
     @Test
     void CLOSED_조건식은_null_창도_포함한다() {
         BooleanExpression closed =
-                saleDisplayStatusPredicateFactory.condition(SaleDisplayStatus.CLOSED, fixedNow);
+                saleDisplayStatusPredicates.condition(SaleDisplayStatus.CLOSED, fixedNow);
 
         assertThat(closed.toString()).contains("is null");
     }

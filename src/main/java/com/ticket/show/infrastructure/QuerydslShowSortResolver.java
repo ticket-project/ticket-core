@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class QuerydslShowSortResolver {
-    private final SaleDisplayStatusPredicateFactory saleDisplayStatusPredicateFactory;
+    private final SaleDisplayStatusPredicates saleDisplayStatusPredicates;
     private final Clock clock;
 
     /**
@@ -89,7 +89,7 @@ public class QuerydslShowSortResolver {
             throw new IllegalStateException(
                     "마감 여부 판정 시각이 없습니다. 최신순이 아닌 정렬에서 호출했습니다: " + sortOrder.key());
         }
-        return saleDisplayStatusPredicateFactory.saleClosedRank(evaluatedAt);
+        return saleDisplayStatusPredicates.saleClosedRank(evaluatedAt);
     }
 
     private @Nullable LocalDateTime resolveSaleClosedEvaluatedAt(

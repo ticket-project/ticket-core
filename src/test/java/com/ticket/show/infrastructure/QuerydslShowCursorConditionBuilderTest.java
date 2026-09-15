@@ -26,7 +26,7 @@ class QuerydslShowCursorConditionBuilderTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 9, 14, 10, 0);
     private final QuerydslShowSortResolver sortResolver =
             new QuerydslShowSortResolver(
-                    new SaleDisplayStatusPredicateFactory(),
+                    new SaleDisplayStatusPredicates(),
                     Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneId.from(ZoneOffset.UTC)));
     private final QuerydslShowCursorConditionBuilder showCursorPolicy =
             new QuerydslShowCursorConditionBuilder(sortResolver);

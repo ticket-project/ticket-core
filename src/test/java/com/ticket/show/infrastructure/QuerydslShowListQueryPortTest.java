@@ -88,7 +88,7 @@ import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
     QuerydslShowListQueryPortTest.TestConfig.class,
     QuerydslShowListQueryPortTest.AuditingTestConfig.class,
     QuerydslShowListQueryPort.class,
-    SaleDisplayStatusPredicateFactory.class,
+    SaleDisplayStatusPredicates.class,
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
     ShowCardImagePathConverter.class,

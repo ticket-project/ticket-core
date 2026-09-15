@@ -18,7 +18,7 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
  * 결과가 어긋났다).
  */
 @Component
-public class SaleDisplayStatusPredicateFactory {
+public class SaleDisplayStatusPredicates {
     /**
      * 마감(={@code CLOSED})이면 1, 아니면 0. 최신순 정렬에서 마감된 공연을 뒤로 보내는 데 쓴다 (ORDER BY 이 값 ASC -> 마감되지 않은 공연이
      * 먼저).
