@@ -13,6 +13,8 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.SocialIdentity;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     static final String MEMBER_ID_ATTRIBUTE = "memberId";
 
     private final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
-    private final ProvisionOAuth2MemberUseCase provisionOAuth2MemberUseCase;
+    private final MemberAccountApi memberAccountApi;
 
     @Override
     public OAuth2User loadUser(final OAuth2UserRequest userRequest)
@@ -37,7 +39,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         final SocialIdentity userInfo =
                 OAuth2UserInfoMapper.map(registrationId, oauth2User.getAttributes());
-        final ProvisionedMember member = provisionOAuth2MemberUseCase.execute(userInfo);
+        // 소셜 신원을 회원에 연결한다. 없으면 만든다 -- 그 판정과 트랜잭션은 member가 소유한다.
+        final MemberStatus member = memberAccountApi.resolveSocialAccount(userInfo);
 
         final Map<String, Object> attributes = new HashMap<>(oauth2User.getAttributes());
         attributes.put(MEMBER_ID_ATTRIBUTE, member.memberId());
