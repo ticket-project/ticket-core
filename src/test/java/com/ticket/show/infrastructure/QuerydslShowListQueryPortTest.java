@@ -37,10 +37,13 @@ import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.ShowSearchItemRow;
 import com.ticket.show.application.ShowSort;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.domain.Category;
+import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
+import com.ticket.show.domain.show.ShowGenre;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
@@ -132,6 +135,127 @@ class QuerydslShowListQueryPortTest {
 
         entityManager.flush();
         entityManager.clear();
+    }
+
+    /**
+     * 목록 query는 show x showGenre x genre x category를 leftJoin하므로 장르가 여러 개면 행이 늘어난다. 그것을 GROUP BY가
+     * 정확히 하나로 접는다 -- 접지 못하면 같은 공연이 목록에 여러 번 나오고 페이지 크기 계산도 어긋난다.
+     *
+     * <p>이 테스트가 없으면 {@code fetchShowPageRows}의 GROUP BY를 통째로 지워도 아무도 모른다.
+     */
+    @Test
+    void 공연에_장르가_여러_개여도_목록에_한_번만_나온다() {
+        final Show seoulPopular = findShowByTitle("Seoul Popular");
+        attachGenres(seoulPopular, "뮤지컬", "연극", "콘서트");
+        entityManager.flush();
+        entityManager.clear();
+
+        // 페이지 크기를 2로 잡는 것이 핵심이다. 1단계 query는 size + 1 = 3건만 읽으므로, 장르 조인으로
+        // 늘어난 행이 접히지 않으면 그 3건이 전부 "Seoul Popular" 한 공연으로 채워져 두 번째 공연이
+        // 페이지에서 밀려난다. size를 크게 잡으면 2단계의 IN 조회가 중복을 흡수해 버려 이 회귀를 놓친다.
+        final CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null), 2, ShowSort.POPULAR);
+
+        assertThat(result.items())
+                .extracting(ShowListItemRow::title)
+                .containsExactly("Seoul Popular", "Seoul Normal");
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.items().getFirst().genreNames())
+                .containsExactlyInAnyOrder("뮤지컬", "연극", "콘서트");
+    }
+
+    /** 같은 이유로 count도 행이 아니라 공연 수를 세야 한다({@code countDistinct}). */
+    @Test
+    void 공연에_장르가_여러_개여도_집계는_공연_수를_센다() {
+        final Show seoulPopular = findShowByTitle("Seoul Popular");
+        attachGenres(seoulPopular, "뮤지컬", "연극", "콘서트");
+        entityManager.flush();
+        entityManager.clear();
+
+        final long count =
+                showListQueryPort.countSearchShows(
+                        ShowSearchCriteria.of(null, null, null, null, null, "SEOUL", null));
+
+        assertThat(count).isEqualTo(3);
+    }
+
+    /**
+     * 목록 조회는 2단계다 -- 1단계가 정렬·커서로 id를 뽑고 2단계가 그 id로 본문을 다시 읽는다. 2단계는 {@code IN (...)} 조회라 DB가 돌려주는
+     * 순서를 믿을 수 없어서, 1단계와 <b>같은 ORDER BY</b>를 다시 건다.
+     *
+     * <p>그래서 정렬 순서와 id 순서가 어긋나도록 데이터를 만든 뒤 순서를 확인한다. 등록 순서(id 오름차순)와 조회수 순서가 반대가 되게 배치했으므로, 2단계의
+     * ORDER BY가 빠지면 이 단언이 깨진다.
+     */
+    @Test
+    void 두_단계_조회에서도_정렬_순서가_유지된다() {
+        // 등록 순서: A(1) -> B(2) -> C(3). 조회수 순서는 그 반대다.
+        persistShow(
+                "Order A",
+                10L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        persistShow(
+                "Order B",
+                20L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        persistShow(
+                "Order C",
+                30L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        entityManager.flush();
+        entityManager.clear();
+
+        final CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
+
+        assertThat(result.items())
+                .extracting(ShowListItemRow::title)
+                .startsWith(
+                        "Seoul Popular",
+                        "Seoul Normal",
+                        "Closed Show",
+                        "Order C",
+                        "Order B",
+                        "Order A");
+    }
+
+    /**
+     * region에 해당하는 공연장이 하나도 없으면 결과가 없다.
+     *
+     * <p>{@code QuerydslShowPredicates.venueIdIn}이 빈 집합에도 {@code null}(조건 없음)이 아니라 {@code 1 = 2}에
+     * 해당하는 조건을 돌려주기 때문이다. 이것을 "빈 집합이면 조건 없음"으로 바꾸면 필터가 통째로 사라져 <b>전체 목록이 나온다</b> — 조용히 틀리는 회귀라 목록과
+     * 집계 양쪽을 고정한다.
+     */
+    @Test
+    void 지역에_공연장이_하나도_없으면_목록과_집계가_모두_비어_있다() {
+        final CursorPage<ShowListItemRow, ShowCursor> result =
+                showListQueryPort.findAllBySearch(
+                        new ShowListParam(null, null, Region.JEJU, null), 10, ShowSort.POPULAR);
+        final long count =
+                showListQueryPort.countSearchShows(
+                        ShowSearchCriteria.of(null, null, null, null, null, "JEJU", null));
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextPosition()).isNull();
+        assertThat(count).isZero();
+    }
+
+    private Show findShowByTitle(final String title) {
+        return entityManager
+                .createQuery("select s from Show s where s.title = :title", Show.class)
+                .setParameter("title", title)
+                .getSingleResult();
     }
 
     @Test
@@ -394,6 +518,18 @@ class QuerydslShowListQueryPortTest {
                         120);
         entityManager.persist(show);
         return show;
+    }
+
+    /** 한 공연에 장르를 여러 개 붙인다. 목록 query가 장르 join으로 늘어난 행을 접는지 확인하기 위한 fixture다. */
+    private void attachGenres(final Show show, final String... genreNames) {
+        final Category category = Category.of("CAT-" + show.getId(), "카테고리");
+        entityManager.persist(category);
+        for (final String genreName : genreNames) {
+            final Genre genre =
+                    new Genre("G-" + show.getId() + "-" + genreName, genreName, category.getId());
+            entityManager.persist(genre);
+            entityManager.persist(new ShowGenre(show.getId(), genre.getId()));
+        }
     }
 
     static class TestConfig {
