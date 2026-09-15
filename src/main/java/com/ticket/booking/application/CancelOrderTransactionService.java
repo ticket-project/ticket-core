@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
  * component가 짧은 쓰기 트랜잭션 안에서 pending 주문 조회와 취소만 수행한다.
  *
  * <p>package-private component로 분리한 이유는 self-invocation을 피하기 위해서다. 같은 클래스 안에서 이 method를 호출하면
- * {@code @Transactional} proxy가 적용되지 않는다 ({@link PendingOrderLocalValidator}와 같은 이유).
+ * {@code @Transactional} proxy가 적용되지 않는다 ({@link BookingAvailabilityChecker}와 같은 이유).
  */
 @Component
 @RequiredArgsConstructor

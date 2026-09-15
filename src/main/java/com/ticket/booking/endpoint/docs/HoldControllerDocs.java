@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.ResponseEntity;
 
-import com.ticket.booking.application.usecase.CreateOrderUseCase;
+import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.endpoint.request.CreateHoldRequest;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
@@ -74,7 +74,7 @@ public interface HoldControllerDocs {
                                                                 com.ticket.shared.web.ApiResponse
                                                                         .class)))
             })
-    ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createHold(
+    ResponseEntity<ApiResponse<StartBookingUseCase.Output>> createHold(
             @Parameter(description = "회차 ID", example = "1", required = true) @Positive
                     Long performanceId,
             @Valid CreateHoldRequest request,

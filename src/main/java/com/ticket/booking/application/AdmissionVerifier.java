@@ -1,5 +1,7 @@
 package com.ticket.booking.application;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 대기열 입장 자격을 검증하는 booking의 출력 포트다(원래 별도 admission module의 공개 계약이었다).
  *
@@ -16,5 +18,5 @@ public interface AdmissionVerifier {
      * @param memberId 요청한 회원 id
      * @param admissionToken 요청이 전달한 입장 토큰. null 또는 빈 문자열일 수 있다
      */
-    void verify(long performanceId, long memberId, String admissionToken);
+    void verify(long performanceId, long memberId, @Nullable String admissionToken);
 }

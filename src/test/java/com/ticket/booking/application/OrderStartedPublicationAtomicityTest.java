@@ -77,7 +77,7 @@ class OrderStartedPublicationAtomicityTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired private CreatePendingOrderTransactionService createPendingOrderTransactionService;
+    @Autowired private PendingOrderCreator pendingOrderCreator;
     @Autowired private OrderRepository orderRepository;
     @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private EntityManager entityManager;
@@ -89,7 +89,7 @@ class OrderStartedPublicationAtomicityTest {
         final List<PerformanceSeat> performanceSeats = persistedSeats(holdKey);
 
         final String orderKey =
-                createPendingOrderTransactionService.create(
+                pendingOrderCreator.create(
                         MEMBER_ID,
                         PERFORMANCE_ID,
                         HOLD_DURATION,
@@ -125,7 +125,7 @@ class OrderStartedPublicationAtomicityTest {
                                 new TransactionTemplate(transactionManager)
                                         .executeWithoutResult(
                                                 status -> {
-                                                    createPendingOrderTransactionService.create(
+                                                    pendingOrderCreator.create(
                                                             MEMBER_ID,
                                                             PERFORMANCE_ID,
                                                             HOLD_DURATION,
@@ -155,7 +155,7 @@ class OrderStartedPublicationAtomicityTest {
     @Test
     void 주문_생성_트랜잭션은_orderKey만_반환한다() throws NoSuchMethodException {
         assertThat(
-                        CreatePendingOrderTransactionService.class
+                        PendingOrderCreator.class
                                 .getDeclaredMethod(
                                         "create",
                                         Long.class,

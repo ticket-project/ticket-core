@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
+import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.infrastructure.OrderExpirationTrigger;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
@@ -26,7 +26,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
 
     @Test
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
-        assertThat(context.getBean(CreateOrderUseCase.class)).isNotNull();
+        assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.domain.order.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.application.BookingEventListeners")).isNotNull();

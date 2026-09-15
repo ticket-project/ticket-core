@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.booking.application.usecase.CancelOrderUseCase;
-import com.ticket.booking.application.usecase.CreateOrderUseCase;
 import com.ticket.booking.application.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.application.usecase.GetOrderStatusUseCase;
+import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.endpoint.docs.OrderControllerDocs;
 import com.ticket.booking.endpoint.request.CreateOrderRequest;
 import com.ticket.member.api.AuthenticatedMember;
@@ -28,27 +28,27 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController implements OrderControllerDocs {
-    private final CreateOrderUseCase createOrderUseCase;
+    private final StartBookingUseCase startBookingUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
     private final GetOrderStatusUseCase getOrderStatusUseCase;
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
+    public ResponseEntity<ApiResponse<StartBookingUseCase.Output>> createOrder(
             @RequestBody final CreateOrderRequest request,
             // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
             @RequestHeader(value = "X-Admission-Token", required = false)
                     final String admissionToken,
             final AuthenticatedMember member) {
         // @Valid가 performanceId·seatIds의 null을 이미 400으로 거른 뒤에야 여기에 닿는다.
-        final CreateOrderUseCase.Input input =
-                new CreateOrderUseCase.Input(
+        final StartBookingUseCase.Input input =
+                new StartBookingUseCase.Input(
                         Objects.requireNonNull(request.getPerformanceId(), "performanceId"),
                         Objects.requireNonNull(request.getSeatIds(), "seatIds"),
                         member.memberId(),
                         admissionToken);
-        final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
+        final StartBookingUseCase.Output output = startBookingUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
                 .header("X-Order-Key", output.orderKey())
                 .body(ApiResponse.success(output));
