@@ -2,8 +2,8 @@ package com.ticket.like.application.port;
 
 import org.jspecify.annotations.Nullable;
 
+import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeType;
-import com.ticket.like.application.LikeRow;
 import com.ticket.shared.api.CursorPage;
 
 /**
@@ -12,6 +12,6 @@ import com.ticket.shared.api.CursorPage;
  * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 호출하는 module의 {@code endpoint}가 한다.
  */
 public interface LikeQueryPort {
-    CursorPage<LikeRow, Long> findLiked(
+    CursorPage<LikeEntry, Long> findLiked(
             LikeType likeType, Long memberId, @Nullable Long cursorLikeId, int size);
 }
