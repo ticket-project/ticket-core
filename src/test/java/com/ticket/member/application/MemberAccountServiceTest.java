@@ -52,11 +52,10 @@ class MemberAccountServiceTest {
 
     private MemberAccountService service() {
         return new MemberAccountService(
-                new MemberRegistrar(memberRepository, passwordHasher),
-                new CredentialAuthenticator(memberRepository, passwordHasher),
+                memberRepository,
+                passwordHasher,
                 new OAuth2MemberProvisioningService(memberRepository),
-                new MemberWithdrawalTransactionService(memberRepository, CLOCK),
-                memberRepository);
+                CLOCK);
     }
 
     // ── 등록 ────────────────────────────────────────────────────────────────
@@ -206,12 +205,24 @@ class MemberAccountServiceTest {
     @Test
     void 계정_연산의_트랜잭션_경계를_고정한다() throws NoSuchMethodException {
         assertWriteTransaction(
-                MemberRegistrar.class, "register", Email.class, RawPassword.class, String.class);
-        assertReadOnlyTransaction(CredentialAuthenticator.class);
+                MemberAccountService.class,
+                "register",
+                String.class,
+                RawPassword.class,
+                String.class);
+        assertReadOnlyTransaction(
+                MemberAccountService.class.getMethod(
+                        "authenticate", String.class, RawPassword.class));
         assertReadOnlyTransaction(
                 MemberAccountService.class.getMethod("requireActiveIdentity", long.class));
+        assertWriteTransaction(MemberAccountService.class, "withdraw", long.class);
+        // 소셜 연결만 흡수하지 않았다 — 트랜잭션도 그대로 provisioning service가 소유한다.
+        assertThat(
+                        MemberAccountService.class
+                                .getMethod("resolveSocialAccount", SocialIdentity.class)
+                                .isAnnotationPresent(Transactional.class))
+                .isFalse();
         assertWriteTransaction(OAuth2MemberProvisioningService.class);
-        assertWriteTransaction(MemberWithdrawalTransactionService.class, "withdraw", Long.class);
     }
 
     // ── 도우미 ──────────────────────────────────────────────────────────────
@@ -231,12 +242,6 @@ class MemberAccountServiceTest {
                 .as("%s.%s가 쓰기 트랜잭션을 소유한다", type.getSimpleName(), methodName)
                 .isNotNull();
         assertThat(transactional.readOnly()).isFalse();
-    }
-
-    private void assertReadOnlyTransaction(final Class<?> type) {
-        final Transactional transactional = type.getAnnotation(Transactional.class);
-        assertThat(transactional).as("%s가 읽기 전용 트랜잭션을 소유한다", type.getSimpleName()).isNotNull();
-        assertThat(transactional.readOnly()).isTrue();
     }
 
     private void assertReadOnlyTransaction(final Method method) {
