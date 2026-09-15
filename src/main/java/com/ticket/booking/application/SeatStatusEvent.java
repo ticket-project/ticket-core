@@ -21,13 +21,4 @@ public record SeatStatusEvent(
         RELEASED,
         RESERVED
     }
-
-    public static SeatStatusEvent of(
-            final Long performanceId,
-            final @Nullable Long performanceSeatId,
-            final Long seatId,
-            final SeatStatusAction action,
-            final LocalDateTime timestamp) {
-        return new SeatStatusEvent(performanceId, performanceSeatId, seatId, action, timestamp);
-    }
 }
