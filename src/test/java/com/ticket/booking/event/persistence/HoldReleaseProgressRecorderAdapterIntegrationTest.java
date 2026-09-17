@@ -96,11 +96,7 @@ class HoldReleaseProgressRecorderAdapterIntegrationTest {
     @EnableAutoConfiguration
     @TestComponent
     @EntityScan(
-            basePackages = {
-                "com.ticket.booking.infrastructure",
-                "com.ticket.booking.domain.hold",
-                "com.ticket.booking.domain"
-            })
+            basePackages = {"com.ticket.booking.event.persistence", "com.ticket.booking.domain"})
     @EnableJpaRepositories(basePackageClasses = SpringDataHoldReleaseProgressJpaRepository.class)
     @EnableJpaAuditing
     @Import(HoldReleaseProgressRecorderAdapter.class)
