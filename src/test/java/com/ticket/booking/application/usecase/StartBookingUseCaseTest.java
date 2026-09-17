@@ -34,11 +34,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.application.AdmissionGuard;
-import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.application.BookingAvailabilityChecker;
 import com.ticket.booking.application.PendingOrderCreator;
 import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.application.RecordingLockManager;
+import com.ticket.booking.application.port.AdmissionVerifier;
 import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.hold.HoldManager;

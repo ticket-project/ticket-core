@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.booking.application.SeatStateSnapshotRow;
-import com.ticket.booking.application.SeatStatus;
 import com.ticket.booking.application.port.SeatStateQueryPort;
+import com.ticket.booking.application.query.SeatStateSnapshotRow;
+import com.ticket.booking.application.query.SeatStatus;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 
 import lombok.RequiredArgsConstructor;

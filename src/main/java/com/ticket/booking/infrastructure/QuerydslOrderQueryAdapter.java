@@ -10,9 +10,9 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.booking.application.OrderDetailRow;
-import com.ticket.booking.application.OrderStatusView;
 import com.ticket.booking.application.port.OrderQueryPort;
+import com.ticket.booking.application.query.OrderDetailRow;
+import com.ticket.booking.application.query.OrderStatusView;
 
 import lombok.RequiredArgsConstructor;
 

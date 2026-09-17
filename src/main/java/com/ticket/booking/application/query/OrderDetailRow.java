@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.application.query;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

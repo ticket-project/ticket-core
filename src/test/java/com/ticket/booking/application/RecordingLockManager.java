@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.application.concurrency.LockManager;
+import com.ticket.booking.application.concurrency.LockOptions;
+
 /**
  * 테스트용 {@link LockManager}다. 실제로 잠그지 않고 무엇을 어떤 조건으로 잠그려 했는지 기록한다.
  *

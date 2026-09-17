@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.application.port;
 
 import org.jspecify.annotations.Nullable;
 

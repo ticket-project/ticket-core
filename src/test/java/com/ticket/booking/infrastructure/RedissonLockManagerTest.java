@@ -19,8 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.application.concurrency.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
 
 @SuppressWarnings("NonAsciiCharacters")

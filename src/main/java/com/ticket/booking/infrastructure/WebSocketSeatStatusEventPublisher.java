@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.ticket.booking.application.SeatStatusEvent;
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.application.SeatStatusEventPublisher;
+import com.ticket.booking.application.port.SeatStatusEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

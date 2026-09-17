@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.application.HoldReleaseProgressRecorder;
+import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
 
 import lombok.RequiredArgsConstructor;
 

@@ -23,7 +23,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.ticket.booking.application.HoldReleaseProgressRecorder;
+import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
 
 /**
  * 선점 해제 완료 기록의 커밋 경계와 멱등성을 실제 DB에서 고정한다.

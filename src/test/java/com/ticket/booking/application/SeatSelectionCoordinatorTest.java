@@ -24,6 +24,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.application.port.SeatStatusEventPublisher;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;

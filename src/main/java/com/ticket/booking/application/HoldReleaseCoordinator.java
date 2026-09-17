@@ -10,6 +10,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.application.concurrency.LockManager;
+import com.ticket.booking.application.concurrency.LockOptions;
+import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
+import com.ticket.booking.application.port.SeatStatusEventPublisher;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;

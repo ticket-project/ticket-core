@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.BookingAvailabilityChecker;
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
 import com.ticket.booking.application.PendingOrderCreator;
 import com.ticket.booking.application.PerformanceSaleFinder;
+import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.application.concurrency.LockManager;
+import com.ticket.booking.application.concurrency.LockOptions;
 import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.hold.HoldManager;

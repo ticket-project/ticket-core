@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-import com.ticket.booking.application.LockManager;
+import com.ticket.booking.application.concurrency.LockManager;
 import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.infrastructure.OrderExpirationTrigger;

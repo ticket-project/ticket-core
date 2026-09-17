@@ -2,7 +2,7 @@ package com.ticket.booking.infrastructure;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.LockKey;
+import com.ticket.booking.application.concurrency.LockKey;
 
 /**
  * 업무 의미의 락 대상을 Redis key 문자열로 바꾼다.

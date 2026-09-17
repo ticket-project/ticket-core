@@ -16,8 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ticket.booking.application.SeatStateView;
-import com.ticket.booking.application.SeatStatus;
+import com.ticket.booking.application.query.SeatStateView;
+import com.ticket.booking.application.query.SeatStatus;
 import com.ticket.booking.application.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.application.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.application.usecase.GetSeatStatusUseCase;

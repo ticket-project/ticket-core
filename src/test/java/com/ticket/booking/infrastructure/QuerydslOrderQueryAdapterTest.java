@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import com.ticket.booking.application.OrderDetailRow;
-import com.ticket.booking.application.OrderStatusView;
 import com.ticket.booking.application.port.OrderQueryPort;
+import com.ticket.booking.application.query.OrderDetailRow;
+import com.ticket.booking.application.query.OrderStatusView;
 import com.ticket.booking.domain.order.Order;
 import com.ticket.booking.domain.order.OrderSeat;
 import com.ticket.booking.domain.order.OrderState;

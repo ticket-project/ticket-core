@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.application.query;
 
 /**
  * 좌석 상태 조회의 DB 원본 행이다. {@code seatId}는 Redis selection/hold 점유 집합(물리 좌석 기준)과 병합할 때만 쓰는 내부 join
