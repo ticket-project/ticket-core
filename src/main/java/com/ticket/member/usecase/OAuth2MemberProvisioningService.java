@@ -1,4 +1,4 @@
-package com.ticket.member.application;
+package com.ticket.member.usecase;
 
 import java.util.Objects;
 import java.util.Optional;

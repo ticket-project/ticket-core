@@ -1,7 +1,7 @@
 package com.ticket.member.endpoint.docs;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.member.application.usecase.GetCurrentMemberUseCase;
+import com.ticket.member.usecase.GetCurrentMemberUseCase;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;

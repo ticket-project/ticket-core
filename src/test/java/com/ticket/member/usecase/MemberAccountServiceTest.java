@@ -1,4 +1,4 @@
-package com.ticket.member.application;
+package com.ticket.member.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,13 +27,13 @@ import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
-import com.ticket.member.application.port.PasswordHasher;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
 import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.password.PasswordHasher;
 import com.ticket.shared.exception.NotFoundException;
 
 /**

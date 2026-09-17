@@ -1,4 +1,4 @@
-package com.ticket.member.application;
+package com.ticket.member.usecase;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -14,13 +14,13 @@ import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.member.api.SocialIdentity;
-import com.ticket.member.application.port.PasswordHasher;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
 import com.ticket.member.exception.DuplicateEmailException;
 import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.password.PasswordHasher;
 import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;

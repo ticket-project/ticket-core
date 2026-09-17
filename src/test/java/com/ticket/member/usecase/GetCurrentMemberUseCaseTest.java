@@ -1,4 +1,4 @@
-package com.ticket.member.application.usecase;
+package com.ticket.member.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

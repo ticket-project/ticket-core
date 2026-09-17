@@ -1,4 +1,4 @@
-package com.ticket.member.application;
+package com.ticket.member.usecase;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
