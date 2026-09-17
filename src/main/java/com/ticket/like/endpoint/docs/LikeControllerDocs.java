@@ -2,9 +2,9 @@ package com.ticket.like.endpoint.docs;
 
 import jakarta.validation.constraints.Positive;
 
-import com.ticket.like.application.usecase.AddLikeUseCase;
-import com.ticket.like.application.usecase.GetLikeStatusUseCase;
-import com.ticket.like.application.usecase.RemoveLikeUseCase;
+import com.ticket.like.usecase.AddLikeUseCase;
+import com.ticket.like.usecase.GetLikeStatusUseCase;
+import com.ticket.like.usecase.RemoveLikeUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 

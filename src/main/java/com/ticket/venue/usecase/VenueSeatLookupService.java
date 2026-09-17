@@ -1,0 +1,35 @@
+package com.ticket.venue.usecase;
+
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ticket.venue.api.VenueSeatAddress;
+import com.ticket.venue.api.VenueSeatLayout;
+import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.query.VenueSeatQueryPort;
+
+import lombok.RequiredArgsConstructor;
+
+/** {@link VenueSeatLookupApi}의 venue 소유 구현이다. */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class VenueSeatLookupService implements VenueSeatLookupApi {
+    private final VenueSeatQueryPort venueSeatQueryPort;
+
+    @Override
+    public List<VenueSeatAddress> findSeatAddresses(final long venueId, final Set<Long> seatIds) {
+        if (seatIds.isEmpty()) {
+            return List.of();
+        }
+        return venueSeatQueryPort.findSeatAddresses(venueId, seatIds);
+    }
+
+    @Override
+    public List<VenueSeatLayout> findAllSeatLayouts(final long venueId) {
+        return venueSeatQueryPort.findAllSeatLayouts(venueId);
+    }
+}

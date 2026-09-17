@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.like.api.LikeType;
-import com.ticket.like.application.usecase.AddLikeUseCase;
-import com.ticket.like.application.usecase.GetLikeStatusUseCase;
-import com.ticket.like.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.endpoint.docs.LikeControllerDocs;
+import com.ticket.like.usecase.AddLikeUseCase;
+import com.ticket.like.usecase.GetLikeStatusUseCase;
+import com.ticket.like.usecase.RemoveLikeUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 

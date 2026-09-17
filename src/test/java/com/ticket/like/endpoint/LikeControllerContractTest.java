@@ -17,10 +17,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.like.api.LikeType;
-import com.ticket.like.application.usecase.AddLikeUseCase;
-import com.ticket.like.application.usecase.GetLikeStatusUseCase;
-import com.ticket.like.application.usecase.RemoveLikeUseCase;
 import com.ticket.like.exception.handler.LikeExceptionHandler;
+import com.ticket.like.usecase.AddLikeUseCase;
+import com.ticket.like.usecase.GetLikeStatusUseCase;
+import com.ticket.like.usecase.RemoveLikeUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
