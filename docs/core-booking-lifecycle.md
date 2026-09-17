@@ -240,9 +240,9 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 
 ## 주요 코드
 
-- 예매 시작: `booking.usecase.StartBookingUseCase`(정책·입장·회원 확인부터 Redis
+- 예매 시작: `booking.order.usecase.StartBookingUseCase`(정책·입장·회원 확인부터 Redis
   선점, 주문 생성, 실패 시 보상까지의 workflow를 조율한다. 검증 순서가 이 클래스에서 그대로 읽힌다)
-- 좌석 판매 가능 확인: `booking.usecase.BookingAvailabilityChecker`(짧은 읽기 트랜잭션)
+- 좌석 판매 가능 확인: `booking.order.usecase.BookingAvailabilityChecker`(짧은 읽기 트랜잭션)
 - 주문 DB 생성: `booking.order.usecase.PendingOrderCreator`(조립·저장·이력·이벤트가 한 트랜잭션)
 - 선점 이력 조립: `booking.order.usecase.OrderHoldHistoryRecorder`. `HoldHistory`와 저장 계약은
   `booking.domain.hold`가 그대로 소유한다

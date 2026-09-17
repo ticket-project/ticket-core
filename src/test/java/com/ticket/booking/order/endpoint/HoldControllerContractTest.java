@@ -1,4 +1,4 @@
-package com.ticket.booking.endpoint;
+package com.ticket.booking.order.endpoint;
 
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.usecase.StartBookingUseCase;
+import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;

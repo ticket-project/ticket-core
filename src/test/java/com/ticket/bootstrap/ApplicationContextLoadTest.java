@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationContext;
 import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.order.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.order.usecase.OrderExpirationTrigger;
-import com.ticket.booking.usecase.StartBookingUseCase;
+import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**

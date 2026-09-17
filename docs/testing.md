@@ -126,7 +126,7 @@ H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationC
 
 ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
 테스트는 모두 `PerformanceSeatQueryControllerContractTest`
-(`src/test/java/com/ticket/booking/endpoint/`) 하나에 있다.
+(`src/test/java/com/ticket/booking/*/endpoint/`) 하나에 있다.
 
 - `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
 - `GET /api/v1/shows/{id}/seats` — 기존 프론트 호환용 대표 회차 좌석 배치·등급·가격

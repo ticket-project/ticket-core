@@ -215,8 +215,6 @@ member                 like                venue               payment       sho
 ```text
 booking
 ├─ OrderStarted / OrderTerminated   ← 공개 이벤트(FQCN이 DB에 저장된 값이라 root 고정)
-├─ usecase        여러 capability를 조율하는 module 전체 workflow
-├─ endpoint       그 workflow의 HTTP 진입점
 ├─ event          커밋 이후 후속 처리 조율 (+ event.persistence)
 ├─ exception      module 전체 error code와 handler
 ├─ domain         여러 capability가 함께 쓰는 감사 기반 타입과 요청 값
@@ -244,7 +242,9 @@ Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`securit
 **여러 capability를 조율하는 코드는 capability에 억지로 넣지 않는다.** 판단 기준은 "어떤 상태를
 저장하는가"가 아니라 **"어떤 workflow의 결과를 책임지는가"**다.
 
-- `StartBookingUseCase`는 정책·입장·회원·좌석·선점·주문·보상을 함께 조율하므로 `booking.usecase`다.
+- `StartBookingUseCase`는 정책·입장·회원·좌석·선점·보상을 조율하지만 책임지는 결과가 주문이라
+  (`OrderStarted`를 발행한다) `booking.order.usecase`다. `HoldController`도 경로 이름만 hold이고
+  실제로는 이 use case를 부르므로 `booking.order.endpoint`다.
 - `HoldCreationCoordinator`/`HoldReleaseCoordinator`는 이름에 Hold가 있지만 책임지는 결과가
   "주문 이벤트가 끝까지 처리됐는가"라 `booking.hold`가 아니라 `booking.event`다.
 - `SeatSelectionCoordinator`는 선점 충돌 확인과 좌석 상태 발행까지 하지만 책임지는 결과가 선택
@@ -496,7 +496,7 @@ OAuth provider raw attribute는 `security.oauth.OAuth2UserInfoMapper`가 `member
 격리한다.
 
 **좌석 조회는 performanceId 기준이다** — 같은 Show라도 회차마다 편성·가격이 다를 수 있어 `showId`
-기준 조회 API는 만들지 않는다. `booking.endpoint.PerformanceSeatQueryController`가 공개하는 3개 API
+기준 조회 API는 만들지 않는다. `booking.seat.endpoint.PerformanceSeatQueryController`가 공개하는 3개 API
 (정적 seat-map / 동적 상태 / 등급별 잔여석)는 회차당 고정된 query 수를 유지한다 — 무엇을 어떻게
 고정하는지는 [testing.md의 performance 기준 API](testing.md#performance-기준-api와-가격-snapshot-회귀)가
 원본이다. **정적 seat-map에 있는데 상태 응답에 없는 좌석을 클라이언트가 AVAILABLE로 추정하게 하지
