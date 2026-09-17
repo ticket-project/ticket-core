@@ -21,11 +21,11 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
-import com.ticket.booking.domain.seat.PerformanceSeat;
-import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 
 /**
  * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderStarted} event publication이 원자적으로 함께 저장되거나 함께 사라지는지

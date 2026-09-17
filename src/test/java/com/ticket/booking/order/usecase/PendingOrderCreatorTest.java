@@ -34,13 +34,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.OrderStarted;
-import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderKeyGenerator;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
 /**

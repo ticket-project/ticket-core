@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.show.api.ShowPerformanceLookupApi;
 
 @ExtendWith(MockitoExtension.class)

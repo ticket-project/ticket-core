@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
 import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
-import com.ticket.booking.domain.seat.PerformanceSeatRepository;
-import com.ticket.booking.domain.seat.PerformanceSeatState;
-import com.ticket.booking.domain.seat.PerformanceSeatStateSnapshot;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;

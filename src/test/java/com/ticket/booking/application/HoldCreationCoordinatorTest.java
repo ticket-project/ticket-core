@@ -17,13 +17,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.application.port.SeatStatusEventPublisher;
-import com.ticket.booking.domain.seat.PerformanceSeat;
-import com.ticket.booking.domain.seat.PerformanceSeatRepository;
-import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
