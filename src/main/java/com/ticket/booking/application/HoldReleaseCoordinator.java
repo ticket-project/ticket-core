@@ -36,14 +36,15 @@ public class HoldReleaseCoordinator {
     private final SeatStatusEventPublisher seatStatusEventPublisher;
     private final HoldReleaseProgressRecorder progressRecorder;
 
-    public void process(final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
+    public void releaseAndPublish(
+            final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
         lockManager.withLock(
                 LockKey.seats(task.performanceId(), task.seatIds()),
                 LockOptions.defaults(),
-                () -> releaseAndPublish(eventId, task, now));
+                () -> releaseAndPublishLocked(eventId, task, now));
     }
 
-    private void releaseAndPublish(
+    private void releaseAndPublishLocked(
             final UUID eventId, final HoldReleaseTask task, final LocalDateTime now) {
         releaseHoldOnce(eventId, task, now);
         final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(task);

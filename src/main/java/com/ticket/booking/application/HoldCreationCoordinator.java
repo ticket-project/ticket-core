@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 주문이 만들어진 뒤 좌석 선점을 실제로 확정하고, 그 결과를 좌석 상태 이벤트로 알린다.
+ * 주문이 만들어진 뒤 그 좌석들에 남은 선택 상태를 정리하고, 좌석이 선점됐다는 사실을 좌석 상태 이벤트로 알린다.
+ *
+ * <p>선점 자체는 이 시점에 이미 Redis에 기록돼 있다. 여기서 하는 일은 선점자의 좌석 선택을 거두고 HELD를 발행하는 것이다.
  *
  * <p><b>좌석 락 안에서 상태 변경과 발행을 함께 한다</b> — {@link SeatSelectionCoordinator}와 같은 이유다. 선점 확정과 선택 정리, 그리고
  * 그것을 알리는 발행이 같은 임계 구역 안에 있어야 서버가 내보내는 순서가 상태 변화 순서와 같아진다.
@@ -34,14 +36,14 @@ public class HoldCreationCoordinator {
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
-    public void process(final Hold hold) {
+    public void clearSelectionsAndPublishHeld(final Hold hold) {
         lockManager.withLock(
                 LockKey.seats(hold.performanceId(), hold.seatIds()),
                 LockOptions.defaults(),
-                () -> processLocked(hold));
+                () -> clearSelectionsAndPublishHeldLocked(hold));
     }
 
-    private void processLocked(final Hold hold) {
+    private void clearSelectionsAndPublishHeldLocked(final Hold hold) {
         if (!isCurrentHold(hold)) {
             log.debug("주문 생성 후처리를 건너뜁니다. hold가 이미 종료되었습니다. holdKey={}", hold.holdKey());
             return;

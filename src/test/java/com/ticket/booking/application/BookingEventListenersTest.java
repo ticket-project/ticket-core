@@ -100,7 +100,7 @@ class BookingEventListenersTest {
 
         final Hold expectedHold =
                 new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
-        verify(holdCreationCoordinator).process(expectedHold);
+        verify(holdCreationCoordinator).clearSelectionsAndPublishHeld(expectedHold);
     }
 
     @Test
@@ -126,7 +126,7 @@ class BookingEventListenersTest {
         final ArgumentCaptor<HoldReleaseTask> captor =
                 ArgumentCaptor.forClass(HoldReleaseTask.class);
         verify(holdReleaseCoordinator)
-                .process(
+                .releaseAndPublish(
                         org.mockito.ArgumentMatchers.eq(event.eventId()),
                         captor.capture(),
                         org.mockito.ArgumentMatchers.eq(LocalDateTime.now(FIXED_CLOCK)));
@@ -154,7 +154,7 @@ class BookingEventListenersTest {
         final ArgumentCaptor<HoldReleaseTask> captor =
                 ArgumentCaptor.forClass(HoldReleaseTask.class);
         verify(holdReleaseCoordinator, org.mockito.Mockito.times(2))
-                .process(
+                .releaseAndPublish(
                         org.mockito.ArgumentMatchers.eq(event.eventId()),
                         captor.capture(),
                         org.mockito.ArgumentMatchers.any());
