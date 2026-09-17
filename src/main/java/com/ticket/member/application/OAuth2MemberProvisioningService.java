@@ -39,55 +39,55 @@ public class OAuth2MemberProvisioningService {
      *   <li>있고 이미 다른 provider 계정 ID로 연결돼 있으면 충돌이다.
      * </ol>
      */
-    public Member getOrCreateMember(final SocialIdentity userInfo) {
+    public Member getOrCreateMember(final SocialIdentity identity) {
         final Optional<Member> linkedMember =
                 memberRepository.findActiveBySocialAccount(
-                        userInfo.provider(), userInfo.providerId());
+                        identity.provider(), identity.providerId());
         if (linkedMember.isPresent()) {
             return linkedMember.get();
         }
 
-        final String email = resolveEmail(userInfo);
+        final String email = resolveEmail(identity);
         final Optional<Member> memberWithSameEmail = memberRepository.findActiveByEmail(email);
         if (memberWithSameEmail.isEmpty()) {
             final Member member =
                     Member.createSocialMember(
-                            Email.create(email), resolveName(userInfo), Role.MEMBER);
-            member.addSocialAccount(userInfo.provider(), userInfo.providerId());
+                            Email.create(email), resolveName(identity), Role.MEMBER);
+            member.addSocialAccount(identity.provider(), identity.providerId());
             return memberRepository.save(member);
         }
 
         final Member existingMember = memberWithSameEmail.get();
         final Optional<MemberSocialAccount> linkedAccount =
-                existingMember.findActiveSocialAccount(userInfo.provider());
+                existingMember.findActiveSocialAccount(identity.provider());
         if (linkedAccount.isEmpty()) {
-            existingMember.addSocialAccount(userInfo.provider(), userInfo.providerId());
+            existingMember.addSocialAccount(identity.provider(), identity.providerId());
             return memberRepository.save(existingMember);
         }
-        if (!linkedAccount.get().isSameSocialId(userInfo.providerId())) {
+        if (!linkedAccount.get().isSameSocialId(identity.providerId())) {
             throw new DuplicateEmailException("Email is already linked to another social account.");
         }
         return existingMember;
     }
 
-    private String resolveEmail(final SocialIdentity userInfo) {
-        final String email = userInfo.email();
-        if (userInfo.emailVerified() && StringUtils.hasText(email)) {
+    private String resolveEmail(final SocialIdentity identity) {
+        final String email = identity.email();
+        if (identity.emailVerified() && StringUtils.hasText(email)) {
             // StringUtils.hasText가 null과 공백을 모두 걸러 낸 뒤이므로 여기서 email은 null일 수 없다.
             return Objects.requireNonNull(email).trim().toLowerCase();
         }
-        return userInfo.provider().name().toLowerCase()
+        return identity.provider().name().toLowerCase()
                 + "_"
-                + userInfo.providerId()
+                + identity.providerId()
                 + "@social.ticket";
     }
 
-    private String resolveName(final SocialIdentity userInfo) {
-        final String name = userInfo.name();
+    private String resolveName(final SocialIdentity identity) {
+        final String name = identity.name();
         if (StringUtils.hasText(name)) {
             // StringUtils.hasText가 null과 공백을 모두 걸러 낸 뒤이므로 여기서 name은 null일 수 없다.
             return Objects.requireNonNull(name).trim();
         }
-        return userInfo.provider().name().toLowerCase() + "_" + userInfo.providerId();
+        return identity.provider().name().toLowerCase() + "_" + identity.providerId();
     }
 }
