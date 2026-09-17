@@ -67,12 +67,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         final SortOrder sortOrder = sortResolver.resolveSortOrder(sort, param.getCursor());
         final BooleanBuilder where = mainListCondition(param, venueIds, sortOrder);
 
-        return findCursorPage(
-                size,
-                param.getCursor(),
-                where,
-                sortOrder,
-                (orders, ids) -> fetchMainShowResponses(ids, orders));
+        return findCursorPage(size, param.getCursor(), where, sortOrder, this::fetchShowListRows);
     }
 
     /**
@@ -153,11 +148,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         final BooleanBuilder where = saleOpeningSoonCondition(param, venueIds);
 
         return findCursorPage(
-                size,
-                param.getCursor(),
-                where,
-                sortOrder,
-                (orders, ids) -> fetchSaleOpeningSoonResponses(ids, orders));
+                size, param.getCursor(), where, sortOrder, this::fetchSaleOpeningSoonDetailRows);
     }
 
     @Override
@@ -170,11 +161,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         final BooleanBuilder where = searchCondition(criteria, venueIds, sortOrder);
 
         return findCursorPage(
-                size,
-                criteria.getCursor(),
-                where,
-                sortOrder,
-                (orders, ids) -> fetchSearchResponses(ids, orders));
+                size, criteria.getCursor(), where, sortOrder, this::fetchShowSearchRows);
     }
 
     @Override
@@ -306,27 +293,27 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     /**
      * 커서 페이지 한 장을 읽는다. 1단계에서 정렬·커서로 id를 뽑고, 2단계에서 그 id로 본문을 다시 읽는다.
      *
-     * <p><b>2단계에도 1단계와 같은 {@code orders}를 건다.</b> {@code IN (...)} 조회가 돌려주는 순서를 믿지 않기 위해서다. 그래서 어떤
-     * 본문을 읽을지({@code resultFetcher})만 호출자가 정하고, 나머지 -- 1단계 query, 페이지 크기 계산, 다음 커서 -- 는 여기서 한 번만
-     * 정의한다.
+     * <p><b>2단계에도 1단계와 같은 {@code orderSpecifiers}를 건다.</b> {@code IN (...)} 조회가 돌려주는 순서를 믿지 않기
+     * 위해서다. 그래서 어떤 본문을 읽을지({@code rowFetcher})만 호출자가 정하고, 나머지 -- 1단계 query, 페이지 크기 계산, 다음 커서 -- 는
+     * 여기서 한 번만 정의한다.
      */
     private <T> CursorPage<T, ShowCursor> findCursorPage(
             final int size,
             final @Nullable ShowCursor cursor,
             final BooleanBuilder where,
             final SortOrder sortOrder,
-            final BiFunction<OrderSpecifier<?>[], List<Long>, List<T>> resultFetcher) {
+            final BiFunction<List<Long>, OrderSpecifier<?>[], List<T>> rowFetcher) {
         cursorConditionBuilder.applyCursor(where, cursor, sortOrder);
 
-        final OrderSpecifier<?>[] orders = sortResolver.orderSpecifiers(sortOrder);
+        final OrderSpecifier<?>[] orderSpecifiers = sortResolver.orderSpecifiers(sortOrder);
 
-        final List<Tuple> rows = fetchShowPageRows(where, orders, size);
-        final List<Long> ids = extractIds(rows);
-        if (ids.isEmpty()) {
+        final List<Tuple> rows = fetchShowPageRows(where, orderSpecifiers, size);
+        final List<Long> showIds = extractShowIds(rows);
+        if (showIds.isEmpty()) {
             return CursorPage.empty();
         }
 
-        final List<T> results = new ArrayList<>(resultFetcher.apply(orders, ids));
+        final List<T> results = new ArrayList<>(rowFetcher.apply(showIds, orderSpecifiers));
         final boolean hasNext = results.size() > size;
         final List<T> pageResults = hasNext ? results.subList(0, size) : results;
 
@@ -337,7 +324,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
     }
 
     private List<Tuple> fetchShowPageRows(
-            final BooleanBuilder where, final OrderSpecifier<?>[] orders, final int size) {
+            final BooleanBuilder where, final OrderSpecifier<?>[] orderSpecifiers, final int size) {
         return queryFactory
                 .select(pageRowColumns())
                 .from(show)
@@ -353,7 +340,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 // 최신순의 마감 여부 CASE는 바인딩 파라미터를 써서 두 자리가 같은 식으로 인정되지
                 // 않는다. GROUP BY는 그 제약을 받지 않는다.
                 .groupBy(pageRowColumns())
-                .orderBy(orders)
+                .orderBy(orderSpecifiers)
                 .limit(size + 1L)
                 .fetch();
     }
@@ -371,36 +358,41 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
         };
     }
 
-    private List<ShowListItemRow> fetchMainShowResponses(
-            final List<Long> ids, final OrderSpecifier<?>[] orders) {
-        final Map<Long, List<String>> genreMap = fetchGenreMap(ids);
+    private List<ShowListItemRow> fetchShowListRows(
+            final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
+        final Map<Long, List<String>> genreNamesByShowId = fetchGenreNamesByShowId(showIds);
         final List<Show> shows =
-                queryFactory.selectFrom(show).where(show.id.in(ids)).orderBy(orders).fetch();
+                queryFactory
+                        .selectFrom(show)
+                        .where(show.id.in(showIds))
+                        .orderBy(orderSpecifiers)
+                        .fetch();
 
         return new ArrayList<>(
                 shows.stream()
                         .map(
-                                s ->
+                                showEntity ->
                                         new ShowListItemRow(
-                                                s.getId(),
-                                                s.getTitle(),
-                                                s.getSubTitle(),
+                                                showEntity.getId(),
+                                                showEntity.getTitle(),
+                                                showEntity.getSubTitle(),
                                                 showCardImagePathConverter.toCardImage(
-                                                        s.getImage()),
-                                                genreMap.getOrDefault(s.getId(), List.of()),
-                                                s.getStartDate(),
-                                                s.getEndDate(),
-                                                s.getViewCount(),
-                                                s.getDisplaySaleType(),
-                                                s.getDisplaySaleStartsAt(),
-                                                s.getDisplaySaleEndsAt(),
-                                                s.getCreatedAt(),
-                                                s.getVenueId()))
+                                                        showEntity.getImage()),
+                                                genreNamesByShowId.getOrDefault(
+                                                        showEntity.getId(), List.of()),
+                                                showEntity.getStartDate(),
+                                                showEntity.getEndDate(),
+                                                showEntity.getViewCount(),
+                                                showEntity.getDisplaySaleType(),
+                                                showEntity.getDisplaySaleStartsAt(),
+                                                showEntity.getDisplaySaleEndsAt(),
+                                                showEntity.getCreatedAt(),
+                                                showEntity.getVenueId()))
                         .toList());
     }
 
-    private List<SaleOpeningSoonDetailRow> fetchSaleOpeningSoonResponses(
-            final List<Long> ids, final OrderSpecifier<?>[] orders) {
+    private List<SaleOpeningSoonDetailRow> fetchSaleOpeningSoonDetailRows(
+            final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
         final List<Tuple> rows =
                 queryFactory
                         .select(
@@ -415,15 +407,15 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                                 show.displaySaleWindow.endsAt,
                                 show.viewCount)
                         .from(show)
-                        .where(show.id.in(ids))
-                        .orderBy(orders)
+                        .where(show.id.in(showIds))
+                        .orderBy(orderSpecifiers)
                         .fetch();
 
         return rows.stream().map(this::toSaleOpeningSoonDetailRow).toList();
     }
 
-    private List<ShowSearchItemRow> fetchSearchResponses(
-            final List<Long> ids, final OrderSpecifier<?>[] orders) {
+    private List<ShowSearchItemRow> fetchShowSearchRows(
+            final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
         final List<Tuple> rows =
                 queryFactory
                         .select(
@@ -435,15 +427,15 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                                 show.endDate,
                                 show.viewCount)
                         .from(show)
-                        .where(show.id.in(ids))
-                        .orderBy(orders)
+                        .where(show.id.in(showIds))
+                        .orderBy(orderSpecifiers)
                         .fetch();
 
         return rows.stream().map(this::toShowSearchItemRow).toList();
     }
 
-    private List<Long> extractIds(final List<Tuple> rows) {
-        return rows.stream().map(t -> t.get(show.id)).toList();
+    private List<Long> extractShowIds(final List<Tuple> rows) {
+        return rows.stream().map(tuple -> tuple.get(show.id)).toList();
     }
 
     private LatestShowRow toLatestShowRow(final Tuple tuple) {
@@ -491,7 +483,7 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                 tuple.get(show.venueId));
     }
 
-    private Map<Long, List<String>> fetchGenreMap(final List<Long> ids) {
+    private Map<Long, List<String>> fetchGenreNamesByShowId(final List<Long> showIds) {
         final List<Tuple> genreTuples =
                 queryFactory
                         .select(show.id, genre.name)
@@ -500,17 +492,17 @@ public class QuerydslShowListQueryPort implements ShowListQueryPort {
                         .on(showGenre.showId.eq(show.id))
                         .leftJoin(genre)
                         .on(showGenre.genreId.eq(genre.id))
-                        .where(show.id.in(ids))
+                        .where(show.id.in(showIds))
                         .fetch();
 
-        final Map<Long, List<String>> genreMap = new LinkedHashMap<>();
+        final Map<Long, List<String>> genreNamesByShowId = new LinkedHashMap<>();
         for (Tuple tuple : genreTuples) {
             final Long showId = required(tuple, show.id);
             final String genreName = tuple.get(genre.name);
             if (genreName != null) {
-                genreMap.computeIfAbsent(showId, key -> new ArrayList<>()).add(genreName);
+                genreNamesByShowId.computeIfAbsent(showId, key -> new ArrayList<>()).add(genreName);
             }
         }
-        return genreMap;
+        return genreNamesByShowId;
     }
 }
