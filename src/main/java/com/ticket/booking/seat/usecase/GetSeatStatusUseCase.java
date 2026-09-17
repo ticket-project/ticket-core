@@ -9,9 +9,9 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.AdmissionGuard;
-import com.ticket.booking.application.PerformanceSaleFinder;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.query.SeatStateQueryPort;
 import com.ticket.booking.seat.query.SeatStateSnapshotRow;
 import com.ticket.booking.seat.query.SeatStateView;

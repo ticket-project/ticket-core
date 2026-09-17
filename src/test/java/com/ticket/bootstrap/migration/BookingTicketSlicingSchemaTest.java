@@ -23,7 +23,7 @@ import org.hibernate.tool.schema.spi.SchemaManagementTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.domain.ticket.Ticket;
+import com.ticket.booking.ticket.domain.Ticket;
 
 /**
  * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이)

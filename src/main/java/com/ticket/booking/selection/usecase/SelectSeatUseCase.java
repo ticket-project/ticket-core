@@ -6,12 +6,12 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.AdmissionGuard;
-import com.ticket.booking.application.PerformanceSaleFinder;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;

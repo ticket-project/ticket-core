@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.application.port.AdmissionVerifier;
-import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
+import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 
 import lombok.RequiredArgsConstructor;
 

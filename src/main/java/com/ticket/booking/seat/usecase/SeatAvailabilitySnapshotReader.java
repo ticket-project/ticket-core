@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.application.PerformanceSaleFinder;
+import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.query.SeatAvailabilityQueryPort;
 import com.ticket.booking.seat.query.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
 
