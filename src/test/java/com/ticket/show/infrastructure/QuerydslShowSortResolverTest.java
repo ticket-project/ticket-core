@@ -13,8 +13,8 @@ import org.springframework.data.domain.Sort;
 
 import com.querydsl.core.types.Order;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowSort;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowSort;
 
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowSortResolverTest {

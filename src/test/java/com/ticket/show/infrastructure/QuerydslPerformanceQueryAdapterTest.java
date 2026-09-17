@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import com.ticket.show.application.PerformanceSummaryView;
 import com.ticket.show.application.port.PerformanceQueryPort;
+import com.ticket.show.application.query.PerformanceSummaryView;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;

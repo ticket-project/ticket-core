@@ -16,9 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.show.application.LatestShowRow;
-import com.ticket.show.application.ShowSummaryView;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.LatestShowRow;
+import com.ticket.show.application.query.ShowSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 

@@ -12,8 +12,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.application.ShowSummaryRow;
 import com.ticket.show.application.port.ShowSummaryBatchQueryPort;
+import com.ticket.show.application.query.ShowSummaryRow;
 
 import lombok.RequiredArgsConstructor;
 

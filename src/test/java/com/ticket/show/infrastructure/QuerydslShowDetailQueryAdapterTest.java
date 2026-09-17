@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import com.ticket.show.application.ShowDetailView;
 import com.ticket.show.application.port.ShowDetailQueryPort;
+import com.ticket.show.application.query.ShowDetailView;
 import com.ticket.show.domain.Category;
 import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.Grade;

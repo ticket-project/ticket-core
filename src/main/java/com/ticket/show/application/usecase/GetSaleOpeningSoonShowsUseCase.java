@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.SaleOpeningSoonSummaryRow;
-import com.ticket.show.application.SaleOpeningSoonSummaryView;
-import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.SaleOpeningSoonSummaryRow;
+import com.ticket.show.application.query.SaleOpeningSoonSummaryView;
+import com.ticket.show.application.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;

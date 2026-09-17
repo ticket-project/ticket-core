@@ -17,11 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowListItemRow;
-import com.ticket.show.application.ShowListParam;
-import com.ticket.show.application.ShowSort;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowListItemRow;
+import com.ticket.show.application.query.ShowListParam;
+import com.ticket.show.application.query.ShowSort;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;

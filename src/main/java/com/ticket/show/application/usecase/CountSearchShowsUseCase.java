@@ -4,9 +4,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.RegionVenueIds;
-import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.RegionVenueIds;
+import com.ticket.show.application.query.ShowSearchCriteria;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;

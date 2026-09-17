@@ -3,7 +3,7 @@ package com.ticket.show.application.port;
 import java.util.Map;
 import java.util.Set;
 
-import com.ticket.show.application.ShowSummaryRow;
+import com.ticket.show.application.query.ShowSummaryRow;
 
 /** showId 집합으로 공연 표시값을 배치 조회하는 내부 포트다. 내 찜 목록처럼 show 내부의 다른 use case가 자기 show 데이터를 조회할 때 쓴다. */
 public interface ShowSummaryBatchQueryPort {

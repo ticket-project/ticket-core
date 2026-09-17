@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowSort;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowSort;
 
 import lombok.RequiredArgsConstructor;
 

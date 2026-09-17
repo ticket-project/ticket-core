@@ -15,9 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.show.application.SaleOpeningSoonSummaryRow;
-import com.ticket.show.application.SaleOpeningSoonSummaryView;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.SaleOpeningSoonSummaryRow;
+import com.ticket.show.application.query.SaleOpeningSoonSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
