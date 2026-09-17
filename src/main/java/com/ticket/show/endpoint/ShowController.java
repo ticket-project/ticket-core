@@ -9,22 +9,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
-import com.ticket.show.application.query.SaleOpeningSoonDetailView;
-import com.ticket.show.application.query.ShowListItemView;
-import com.ticket.show.application.query.ShowSearchItemView;
-import com.ticket.show.application.query.ShowSort;
-import com.ticket.show.application.usecase.CountSearchShowsUseCase;
-import com.ticket.show.application.usecase.GetLatestShowsUseCase;
-import com.ticket.show.application.usecase.GetSaleOpeningSoonShowsPageUseCase;
-import com.ticket.show.application.usecase.GetSaleOpeningSoonShowsUseCase;
-import com.ticket.show.application.usecase.GetShowDetailUseCase;
-import com.ticket.show.application.usecase.GetShowsUseCase;
-import com.ticket.show.application.usecase.SearchShowsUseCase;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 import com.ticket.show.endpoint.docs.ShowControllerDocs;
 import com.ticket.show.endpoint.request.SaleOpeningSoonRequest;
 import com.ticket.show.endpoint.request.ShowListRequest;
 import com.ticket.show.endpoint.request.ShowSearchRequest;
+import com.ticket.show.query.SaleOpeningSoonDetailView;
+import com.ticket.show.query.ShowListItemView;
+import com.ticket.show.query.ShowSearchItemView;
+import com.ticket.show.query.ShowSort;
+import com.ticket.show.usecase.CountSearchShowsUseCase;
+import com.ticket.show.usecase.GetLatestShowsUseCase;
+import com.ticket.show.usecase.GetSaleOpeningSoonShowsPageUseCase;
+import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
+import com.ticket.show.usecase.GetShowDetailUseCase;
+import com.ticket.show.usecase.GetShowsUseCase;
+import com.ticket.show.usecase.SearchShowsUseCase;
 
 import lombok.RequiredArgsConstructor;
 

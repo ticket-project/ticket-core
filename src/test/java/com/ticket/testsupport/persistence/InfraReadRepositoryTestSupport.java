@@ -4,9 +4,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import com.ticket.show.infrastructure.querydsl.QuerydslShowCursorConditionBuilder;
-import com.ticket.show.infrastructure.querydsl.QuerydslShowSortResolver;
-import com.ticket.show.infrastructure.querydsl.SaleDisplayStatusPredicates;
+import com.ticket.show.persistence.querydsl.QuerydslShowCursorConditionBuilder;
+import com.ticket.show.persistence.querydsl.QuerydslShowSortResolver;
+import com.ticket.show.persistence.querydsl.SaleDisplayStatusPredicates;
 import com.ticket.venue.persistence.QuerydslVenueSeatQueryAdapter;
 import com.ticket.venue.persistence.QuerydslVenueSummaryQueryAdapter;
 import com.ticket.venue.usecase.VenueLookupService;

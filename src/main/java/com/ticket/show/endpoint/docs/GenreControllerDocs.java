@@ -3,7 +3,7 @@ package com.ticket.show.endpoint.docs;
 import java.util.List;
 
 import com.ticket.shared.web.ApiResponse;
-import com.ticket.show.application.usecase.GetGenresByCategoryUseCase;
+import com.ticket.show.usecase.GetGenresByCategoryUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

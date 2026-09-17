@@ -25,8 +25,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
-import com.ticket.show.application.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.exception.handler.ShowExceptionHandler;
+import com.ticket.show.usecase.GetMyShowLikesUseCase;
 
 @SuppressWarnings("NonAsciiCharacters")
 class MyShowLikesControllerContractTest {

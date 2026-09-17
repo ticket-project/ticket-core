@@ -3,8 +3,8 @@ package com.ticket.show.endpoint.docs;
 import jakarta.validation.constraints.Positive;
 
 import com.ticket.shared.web.ApiResponse;
-import com.ticket.show.application.usecase.GetPerformanceScheduleListUseCase;
-import com.ticket.show.application.usecase.GetPerformanceSummaryUseCase;
+import com.ticket.show.usecase.GetPerformanceScheduleListUseCase;
+import com.ticket.show.usecase.GetPerformanceSummaryUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

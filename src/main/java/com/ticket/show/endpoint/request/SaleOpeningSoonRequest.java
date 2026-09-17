@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import org.jspecify.annotations.Nullable;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import com.ticket.show.application.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
+import com.ticket.show.query.SaleOpeningSoonSearchParam;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

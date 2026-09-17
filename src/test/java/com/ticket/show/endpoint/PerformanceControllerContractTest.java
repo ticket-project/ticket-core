@@ -11,9 +11,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
-import com.ticket.show.application.usecase.GetPerformanceScheduleListUseCase;
-import com.ticket.show.application.usecase.GetPerformanceSummaryUseCase;
 import com.ticket.show.exception.handler.ShowExceptionHandler;
+import com.ticket.show.usecase.GetPerformanceScheduleListUseCase;
+import com.ticket.show.usecase.GetPerformanceSummaryUseCase;
 
 class PerformanceControllerContractTest {
     private final GetPerformanceSummaryUseCase getPerformanceSummaryUseCase =
