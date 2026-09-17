@@ -29,8 +29,10 @@ import com.ticket.booking.OrderStarted;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
 import com.ticket.booking.domain.hold.Hold;
-import com.ticket.booking.domain.order.Order;
-import com.ticket.booking.domain.order.OrderSeat;
+import com.ticket.booking.order.domain.Order;
+import com.ticket.booking.order.domain.OrderSeat;
+import com.ticket.booking.order.usecase.OrderHoldSnapshot;
+import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
 
 /**
  * Task 8 Step 5: listener 멱등성과 stale-event 방어를 고정한다.

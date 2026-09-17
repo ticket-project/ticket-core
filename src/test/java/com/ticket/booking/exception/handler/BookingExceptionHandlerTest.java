@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.AdmissionTokenExpiredException;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
@@ -31,6 +30,7 @@ import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.exception.SeatNotOwnedException;
 import com.ticket.booking.exception.SeatVenueMismatchException;
+import com.ticket.booking.order.domain.OrderState;
 import com.ticket.shared.web.ApiResponse;
 
 /**

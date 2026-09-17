@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.ticket.booking.application.concurrency.LockManager;
-import com.ticket.booking.application.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.application.usecase.StartBookingUseCase;
-import com.ticket.booking.infrastructure.OrderExpirationTrigger;
+import com.ticket.booking.order.usecase.ExpirePendingOrdersUseCase;
+import com.ticket.booking.order.usecase.OrderExpirationTrigger;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -27,7 +27,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     @Test
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
         assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
-        assertThat(beanOf("com.ticket.booking.domain.order.OrderRepository")).isNotNull();
+        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.application.BookingEventListeners")).isNotNull();
         assertThat(beanOf("com.ticket.shared.infrastructure.EventPublicationMaintenance"))
@@ -37,7 +37,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     /** 도메인 Repository는 포트이고 실제 빈은 infra 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */
     @Test
     void 도메인_Repository는_infra_어댑터로_구현된다() {
-        assertThat(beanOf("com.ticket.booking.domain.order.OrderRepository").getClass().getName())
+        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository").getClass().getName())
                 .startsWith("com.ticket.booking.infrastructure.");
         assertThat(beanOf("com.ticket.booking.domain.hold.HoldStore").getClass().getName())
                 .startsWith("com.ticket.booking.infrastructure.");

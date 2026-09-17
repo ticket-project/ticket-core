@@ -17,14 +17,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.domain.RequestedSeatIds;
-import com.ticket.booking.domain.order.OrderRepository;
-import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderState;
 
 /**
  * booking local DB만 보는 예매 가능 여부 판정을 고정한다.
