@@ -27,6 +27,7 @@ import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
+import com.ticket.member.application.port.PasswordHasher;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;

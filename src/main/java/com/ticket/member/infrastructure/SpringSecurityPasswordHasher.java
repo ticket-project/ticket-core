@@ -4,7 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.ticket.member.api.RawPassword;
-import com.ticket.member.application.PasswordHasher;
+import com.ticket.member.application.port.PasswordHasher;
 import com.ticket.member.domain.EncodedPassword;
 
 import lombok.RequiredArgsConstructor;
