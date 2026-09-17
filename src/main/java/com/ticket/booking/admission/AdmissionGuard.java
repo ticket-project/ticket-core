@@ -1,11 +1,10 @@
-package com.ticket.booking.application;
+package com.ticket.booking.admission;
 
 import java.time.LocalDateTime;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.port.AdmissionVerifier;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 
 import lombok.RequiredArgsConstructor;

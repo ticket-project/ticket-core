@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.admission;
+package com.ticket.booking.admission;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;

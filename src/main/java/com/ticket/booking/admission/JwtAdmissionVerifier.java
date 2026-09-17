@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.admission;
+package com.ticket.booking.admission;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -9,7 +9,6 @@ import javax.crypto.SecretKey;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.booking.application.port.AdmissionVerifier;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.AdmissionTokenExpiredException;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
