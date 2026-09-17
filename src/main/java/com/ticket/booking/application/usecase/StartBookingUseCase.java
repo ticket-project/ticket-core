@@ -106,7 +106,7 @@ public class StartBookingUseCase {
 
         // 1. 지금 이 회차의 예매를 받을 수 있는가.
         final PerformanceSalesPolicy policy =
-                performanceSaleFinder.findPolicy(input.performanceId());
+                performanceSaleFinder.requirePolicy(input.performanceId());
         policy.ensureAcceptingOrders(now);
         policy.ensureWithinHoldLimit(requestedSeatIds.size());
         admissionGuard.verifyIfRequired(

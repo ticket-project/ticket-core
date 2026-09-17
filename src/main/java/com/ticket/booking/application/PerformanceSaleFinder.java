@@ -31,7 +31,7 @@ public class PerformanceSaleFinder {
      * @return 회차의 판매 정책. 이 조회는 회차 존재 확인을 겸한다
      * @throws NotFoundException 그 회차의 판매 정책이 없을 때
      */
-    public PerformanceSalesPolicy findPolicy(final Long performanceId) {
+    public PerformanceSalesPolicy requirePolicy(final Long performanceId) {
         return performanceSalesPolicyRepository
                 .findById(performanceId)
                 .orElseThrow(

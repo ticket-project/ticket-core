@@ -54,7 +54,7 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceSalesPolicy policy = performanceSaleFinder.findPolicy(performanceId);
+        final PerformanceSalesPolicy policy = performanceSaleFinder.requirePolicy(performanceId);
         policy.ensureAcceptingOrders(now);
         admissionGuard.verifyIfRequired(
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);

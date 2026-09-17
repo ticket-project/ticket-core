@@ -57,7 +57,7 @@ public class SelectSeatUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         final PerformanceSalesPolicy policy =
-                performanceSaleFinder.findPolicy(input.performanceId());
+                performanceSaleFinder.requirePolicy(input.performanceId());
         policy.ensureAcceptingOrders(now);
         admissionGuard.verifyIfRequired(
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);

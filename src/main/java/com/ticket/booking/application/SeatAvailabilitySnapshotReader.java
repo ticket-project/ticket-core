@@ -31,7 +31,7 @@ public class SeatAvailabilitySnapshotReader {
      */
     @Transactional(readOnly = true)
     public List<PerformanceSeatStateRow> read(final Long performanceId) {
-        performanceSaleFinder.findPolicy(performanceId);
+        performanceSaleFinder.requirePolicy(performanceId);
         return seatAvailabilityQueryPort.findSeatStates(performanceId);
     }
 }

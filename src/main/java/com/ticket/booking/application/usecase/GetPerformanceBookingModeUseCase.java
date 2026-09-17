@@ -52,7 +52,7 @@ public class GetPerformanceBookingModeUseCase {
 
     public Output execute(final Input input) {
         final PerformanceSalesPolicy policy =
-                performanceSaleFinder.findPolicy(input.performanceId());
+                performanceSaleFinder.requirePolicy(input.performanceId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final OrderAcceptanceStatus status = policy.acceptanceStatus(now);
