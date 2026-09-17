@@ -7,9 +7,9 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.SeatStatusEvent;
-import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.application.port.SeatStatusEventPublisher;
+import com.ticket.booking.seat.port.SeatStatusEvent;
+import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -15,13 +15,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.hold.domain.HoldHistory;
 import com.ticket.booking.hold.domain.HoldHistoryEventType;
 import com.ticket.booking.hold.domain.HoldHistoryRepository;
 import com.ticket.booking.hold.domain.HoldReleaseReason;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)

@@ -11,8 +11,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
-import com.ticket.booking.application.port.SeatStateQueryPort;
-import com.ticket.booking.application.usecase.GetSeatStatusUseCase;
+import com.ticket.booking.seat.query.SeatStateQueryPort;
+import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
