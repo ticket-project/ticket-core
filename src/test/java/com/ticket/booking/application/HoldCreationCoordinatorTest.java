@@ -22,9 +22,9 @@ import com.ticket.booking.application.port.SeatStatusEventPublisher;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
-import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 class HoldCreationCoordinatorTest {

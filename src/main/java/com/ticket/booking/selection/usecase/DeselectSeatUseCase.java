@@ -1,8 +1,7 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.usecase;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;

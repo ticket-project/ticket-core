@@ -36,11 +36,11 @@ import com.ticket.booking.domain.salespolicy.OrderAcceptanceWindow;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicyRepository;
 import com.ticket.booking.domain.salespolicy.QueueMode;
-import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingNotOpenYetException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

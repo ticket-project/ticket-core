@@ -1,4 +1,4 @@
-package com.ticket.booking.endpoint;
+package com.ticket.booking.selection.endpoint;
 
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -16,10 +16,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ticket.booking.application.usecase.DeselectAllSeatsUseCase;
-import com.ticket.booking.application.usecase.DeselectSeatUseCase;
-import com.ticket.booking.application.usecase.SelectSeatUseCase;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
+import com.ticket.booking.selection.usecase.DeselectAllSeatsUseCase;
+import com.ticket.booking.selection.usecase.DeselectSeatUseCase;
+import com.ticket.booking.selection.usecase.SelectSeatUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;

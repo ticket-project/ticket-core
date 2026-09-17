@@ -1,4 +1,4 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.usecase;
 
 import static org.mockito.Mockito.verify;
 
@@ -7,8 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.ticket.booking.application.SeatSelectionCoordinator;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

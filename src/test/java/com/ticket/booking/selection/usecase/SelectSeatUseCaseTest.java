@@ -1,4 +1,4 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.usecase;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.PerformanceSaleFinder;
-import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.application.port.AdmissionVerifier;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;
