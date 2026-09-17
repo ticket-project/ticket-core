@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceSeatMapQueryPort implements PerformanceSeatMapQueryPort {
+public class QuerydslPerformanceSeatMapQueryAdapter implements PerformanceSeatMapQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

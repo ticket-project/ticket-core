@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslOrderQueryPort implements OrderQueryPort {
+public class QuerydslOrderQueryAdapter implements OrderQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

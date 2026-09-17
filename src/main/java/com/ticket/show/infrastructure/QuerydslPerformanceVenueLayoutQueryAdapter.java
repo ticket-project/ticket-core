@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceVenueLayoutQueryPort implements PerformanceVenueLayoutQueryPort {
+public class QuerydslPerformanceVenueLayoutQueryAdapter implements PerformanceVenueLayoutQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

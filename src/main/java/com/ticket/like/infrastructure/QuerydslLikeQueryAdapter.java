@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslLikeQueryPort implements LikeQueryPort {
+public class QuerydslLikeQueryAdapter implements LikeQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

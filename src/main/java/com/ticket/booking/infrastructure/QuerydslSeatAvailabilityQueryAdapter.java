@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslSeatAvailabilityQueryPort implements SeatAvailabilityQueryPort {
+public class QuerydslSeatAvailabilityQueryAdapter implements SeatAvailabilityQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

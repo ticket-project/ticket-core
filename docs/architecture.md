@@ -172,7 +172,7 @@ like를 모른다 — `show.application`의 조회 use case가 like의 공개 �
 **패키지 구조는 모듈 → 계층이다.** 업무 모듈 여섯(`booking`/`member`/`show`/`venue`/`like`/
 `payment`)은 모듈 root 바로 아래에 위 계층 표의 `api`/`endpoint`/`application`/`domain`/`infrastructure`를
 둔다 — `booking.application.usecase.StartBookingUseCase`,
-`show.infrastructure.QuerydslShowListQueryPort`처럼 읽는다.
+`show.infrastructure.QuerydslShowListQueryAdapter`처럼 읽는다.
 
 **업무별 폴더는 `domain` 아래에만 둔다.** `application`/`infrastructure`/`endpoint` 아래에는
 `application.order`, `infrastructure.seat` 같은 업무 분류를 다시 만들지 않는다. 그 계층에서
@@ -251,7 +251,7 @@ Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계�
 use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회
 포트(옛 `query`)는 아래 "Repository와 Query Port" 절이 별도로 다룬다.
 
-Querydsl 조회 구현은 `Querydsl` 접두사(`QuerydslShowListQueryPort implements
+Querydsl 조회 구현은 `Querydsl` 접두사(`QuerydslShowListQueryAdapter implements
 ShowListQueryPort`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는 Spring
 Data 인터페이스는 `SpringData*JpaRepository`로 구분한다. `View`는 조회 경계의 화면/응답용
 projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서는 cross-module 스냅샷), `Row`는

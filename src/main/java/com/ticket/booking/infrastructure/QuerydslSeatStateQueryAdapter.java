@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslSeatStateQueryPort implements SeatStateQueryPort {
+public class QuerydslSeatStateQueryAdapter implements SeatStateQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

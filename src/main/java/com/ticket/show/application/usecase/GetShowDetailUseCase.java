@@ -29,8 +29,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * show 상세 조회는 자기 DB 조회({@link ShowDetailQueryPort})에 venue 표시값(like 개수도 마찬가지)을 조합한 결과다. 그 조합은 이 use
- * case가 한다 — persistence adapter ({@code QuerydslShowDetailQueryPort})는 venue를 모르고 {@code venueId}
- * scalar만 넘긴다.
+ * case가 한다 — persistence adapter ({@code QuerydslShowDetailQueryAdapter})는 venue를 모르고 {@code
+ * venueId} scalar만 넘긴다.
  */
 @Service
 @Transactional(readOnly = true)

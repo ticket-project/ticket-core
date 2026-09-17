@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowSummaryBatchQueryPort implements ShowSummaryBatchQueryPort {
+public class QuerydslShowSummaryBatchQueryAdapter implements ShowSummaryBatchQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

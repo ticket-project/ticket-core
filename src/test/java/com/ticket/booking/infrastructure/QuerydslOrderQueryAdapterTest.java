@@ -23,9 +23,9 @@ import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
  * booking이 소유한 order/orderSeat 테이블만으로 조회하는지 확인한다. show/member 표시값 합성은 {@code
  * GetOrderDetailUseCase}/{@code GetOrderStatusUseCase} 단위 테스트가 담당한다.
  */
-@Import(QuerydslOrderQueryPort.class)
+@Import(QuerydslOrderQueryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslOrderQueryPortTest extends ReadRepositoryTestSupport {
+class QuerydslOrderQueryAdapterTest extends ReadRepositoryTestSupport {
     @Autowired private OrderQueryPort repository;
     private Long memberId;
     private Long performanceId;

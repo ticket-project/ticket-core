@@ -55,12 +55,12 @@ import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryPort;
-import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
+import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryAdapter;
+import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryAdapter;
 
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,
-        classes = QuerydslShowListQueryPortTest.TestApplication.class)
+        classes = QuerydslShowListQueryAdapterTest.TestApplication.class)
 @TestPropertySource(
         properties = {
             "spring.profiles.active=test",
@@ -84,21 +84,21 @@ import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
         })
 @Transactional
 @Import({
-    QuerydslShowListQueryPortTest.QuerydslTestConfig.class,
-    QuerydslShowListQueryPortTest.TestConfig.class,
-    QuerydslShowListQueryPortTest.AuditingTestConfig.class,
-    QuerydslShowListQueryPort.class,
+    QuerydslShowListQueryAdapterTest.QuerydslTestConfig.class,
+    QuerydslShowListQueryAdapterTest.TestConfig.class,
+    QuerydslShowListQueryAdapterTest.AuditingTestConfig.class,
+    QuerydslShowListQueryAdapter.class,
     SaleDisplayStatusPredicates.class,
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
     ShowCardImagePathConverter.class,
     VenueLookupService.class,
-    QuerydslVenueSummaryQueryPort.class,
+    QuerydslVenueSummaryQueryAdapter.class,
     VenueSeatLookupService.class,
-    QuerydslVenueSeatQueryPort.class
+    QuerydslVenueSeatQueryAdapter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslShowListQueryPortTest {
+class QuerydslShowListQueryAdapterTest {
     @Autowired private EntityManager entityManager;
     @Autowired private ShowListQueryPort showListQueryPort;
     @Autowired private VenueLookupApi venueLookup;
