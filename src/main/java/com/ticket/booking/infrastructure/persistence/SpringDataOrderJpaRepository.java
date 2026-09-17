@@ -1,0 +1,57 @@
+package com.ticket.booking.infrastructure.persistence;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import jakarta.persistence.LockModeType;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.ticket.booking.domain.order.Order;
+import com.ticket.booking.domain.order.OrderState;
+
+interface SpringDataOrderJpaRepository extends JpaRepository<Order, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            """
+            select o
+            from Order o
+            where o.orderKey = :orderKey
+              and o.memberId = :memberId
+            """)
+    Optional<Order> findByOrderKeyAndMemberIdForUpdate(
+            @Param("orderKey") String orderKey, @Param("memberId") Long memberId);
+
+    boolean existsByMemberIdAndPerformanceIdAndStatus(
+            Long memberId, Long performanceId, OrderState status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            """
+            select o
+            from Order o
+            where o.holdKey = :holdKey
+              and o.status = :status
+            """)
+    Optional<Order> findByHoldKeyAndStatusForUpdate(
+            @Param("holdKey") String holdKey, @Param("status") OrderState status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            """
+            select o
+            from Order o
+            where o.id = :orderId
+              and o.status = :status
+            """)
+    Optional<Order> findByIdAndStatusForUpdate(
+            @Param("orderId") Long orderId, @Param("status") OrderState status);
+
+    Slice<Order> findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(
+            OrderState status, LocalDateTime expiresAt, Long afterOrderId, Pageable pageable);
+}
