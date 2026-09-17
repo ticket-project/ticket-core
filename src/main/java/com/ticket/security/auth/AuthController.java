@@ -56,7 +56,8 @@ public class AuthController implements AuthControllerDocs {
                             required = false)
                     final String refreshToken,
             final HttpServletResponse response) {
-        final RefreshAuthTokenUseCase.Input input = RefreshAuthTokenUseCase.Input.of(refreshToken);
+        final RefreshAuthTokenUseCase.Input input =
+                RefreshAuthTokenUseCase.Input.from(refreshToken);
         final RefreshAuthTokenUseCase.Result result = refreshAuthTokenUseCase.execute(input);
         addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());

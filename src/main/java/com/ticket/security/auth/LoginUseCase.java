@@ -17,6 +17,33 @@ public class LoginUseCase {
     private final MemberAccountApi memberAccountOperations;
     private final AuthTokenIssuer authTokenIssuer;
 
+    public Result execute(final Input input) {
+        final MemberStatus member =
+                memberAccountOperations.authenticate(
+                        input.email(), RawPassword.create(input.password()));
+        final IssuedAuthTokens tokens =
+                authTokenIssuer.issueTokens(member.memberId(), member.role());
+        return toResult(tokens);
+    }
+
+    private static Result toResult(final IssuedAuthTokens tokens) {
+        return new Result(
+                new Output(
+                        tokens.accessToken(),
+                        tokens.tokenType(),
+                        tokens.expiresIn(),
+                        tokens.memberId()),
+                tokens.refreshToken(),
+                tokens.refreshTokenExpiresIn());
+    }
+
+    private static String redact(final String value) {
+        if (value == null) {
+            return "null";
+        }
+        return "[REDACTED]";
+    }
+
     public record Input(String email, String password) {
         public Input {
             if (email == null || email.isBlank()) {
@@ -56,28 +83,5 @@ public class LoginUseCase {
                     + refreshTokenExpiresIn
                     + ']';
         }
-    }
-
-    public Result execute(final Input input) {
-        final MemberStatus member =
-                memberAccountOperations.authenticate(
-                        input.email(), RawPassword.create(input.password()));
-        final IssuedAuthTokens result =
-                authTokenIssuer.issueTokens(member.memberId(), member.role());
-        return new Result(
-                new Output(
-                        result.accessToken(),
-                        result.tokenType(),
-                        result.expiresIn(),
-                        result.memberId()),
-                result.refreshToken(),
-                result.refreshTokenExpiresIn());
-    }
-
-    private static String redact(final String value) {
-        if (value == null) {
-            return "null";
-        }
-        return "[REDACTED]";
     }
 }
