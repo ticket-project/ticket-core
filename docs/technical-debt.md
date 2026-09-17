@@ -56,3 +56,40 @@ TD 표와 달리 코드 문제가 아니라 **제품 결정이 없어 손대지 
 ## 보류 원칙
 
 위 항목은 구현하지 않는다. 특히 외부 JSON, HTTP 상태, DB schema, Redis key, JWT claim, WebSocket destination을 바꾸지 않고 해결할 수 있는 설계와 단계별 호환성 계획을 먼저 확정한다.
+
+## 과설계 정리 후보 (OE)
+
+TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지울 수 있는데 아직 안 지운 것**이다.
+외부 계약(JSON·HTTP 상태·DB schema·Redis key·JWT claim)을 건드리지 않고 내부 구조만 줄인다.
+
+측정 기준: `refactor/jspecify` (2026-09-17), `src/main/java` 504파일 19,939줄. `.worktrees/` 제외.
+
+| ID | 태그 | 대상 | 지금 구조 | 대체 | 절감 |
+|---|---|---|---|---|---|
+| OE-01 | yagni | `*/domain/*Repository.java`, `*/persistence/*RepositoryAdapter.java`, `SpringData*JpaRepository` | 저장소 하나에 타입 3개 ×13벌. Adapter는 1:1 위임이다 — `LikeRepositoryAdapter`는 5개 메서드 중 4개가 시그니처까지 그대로 전달한다 | Spring Data 인터페이스가 이미 포트다. `SpringData*JpaRepository`만 남긴다 | −724줄, 파일 −26 |
+| OE-02 | yagni | `*/exception/**` | 오류 코드 1개당 예외 클래스 1개(30개). `*ErrorCode` enum이 이미 가진 목록을 클래스 이름으로 한 번, `sealed ... permits` 목록으로 또 한 번 적는다 | HTTP 상태를 `ErrorCode` enum에 올리고 module당 예외 1개 + 진단 필드 | −500줄 |
+| OE-03 | native | `*/endpoint/docs/**` | `*ControllerDocs` 인터페이스 12개, 각각 구현 1개, `@Operation` 1048줄 | 애너테이션을 controller 메서드에 직접 붙인다 | 순 −300줄, 파일 −12 |
+| OE-04 | yagni | `*/query/*QueryPort.java` | `*Api` → `*Service`(위임) → `*QueryPort`(시그니처 동일) → `*QueryAdapter`. `VenueSeatLookupApi`와 `VenueSeatQueryPort`는 메서드 2개가 완전히 같고, Service가 더하는 건 빈 목록 체크 하나다 | `*QueryPort`를 지우고 Service가 Adapter 위에서 `*Api`를 구현 | −219줄, 파일 −7 |
+| OE-05 | shrink | `*/domain/*AuditedEntity.java` | 같은 38줄을 module마다 복사 ×6 | `shared`에 `@MappedSuperclass` 기반 1개. `@Modulith(sharedModules = "shared")`가 이미 있다 | −190줄 |
+| OE-06 | native | `build.gradle`, `shared/infrastructure/P6SpyConfig.java` | SQL 파라미터 로깅에 p6spy 의존성 + 47줄 설정 | Hibernate 자체 `org.hibernate.orm.jdbc.bind=TRACE` | −47줄, 의존성 −1 |
+| OE-07 | delete | `HELP.md`, `build.gradle`의 `dumpEpArgs` task | 전자는 Spring Initializr 기본 생성물, 후자는 참조 0개인 디버그 task | 없음 | −31줄 |
+| OE-08 | stdlib | `security/token/UuidSupplier.java`, `UuidSupplierConfig.java` | 테스트 고정을 위해 `@FunctionalInterface` + `@Bean`을 직접 만들었다 | `java.util.function.Supplier<UUID>` | −30줄, 파일 −2 |
+| OE-09 | shrink | `booking/domain/hold/HoldKeyGenerator.java`, `booking/order/domain/OrderKeyGenerator.java` | prefix 문자열만 다른 동일 클래스 2개 | `KeyGenerator(String prefix)` 1개 | −11줄 |
+| OE-10 | native | `build.gradle` | `spring-context`·`spring-tx`·`spring-core`·`spring-beans`·`slf4j-api`·`spring-data-jpa`·`jakarta.persistence-api`를 명시 선언 | starter가 전이로 가져온다. 선언만 지운다(산출물 변화 없음) | −7줄 |
+
+합계 약 −2,060줄(main의 10%), 의존성 −1.
+
+**보류 — 지우지 않는다**: `payment` module(9파일 328줄)은 module 밖 호출자가 없지만 죽은 코드가
+아니다. `db/migration-vendor/{h2,oracle}/payment/V1__create_payments.sql`이 실제 `payments` 테이블을
+만들고, `PaymentModuleSlicingSchemaTest`·`PaymentTest`·`ArchitectureRulesTest`가 이 module을 검증한다.
+결제 기능 착수 전 선행 구축이다. 제거는 TD-14(`Venue.gapX/gapY`)와 같은 운영 migration 결정이라
+여기서 다루지 않는다.
+
+**확인했지만 후보가 아닌 것**: `package-info.java` 82개(`@NullMarked`와 modulith `ApplicationModule`
+선언이 실제로 걸려 있다), `*Row` → `*View` 쌍(`venueId`를 이름·지역으로 바꾸는 실제 변환이라 단순
+복사가 아니다), `ShowCursorCodec`(이미 stdlib `Base64`), `testsupport`의 base 클래스들, 실제 설정을
+담은 `@Configuration`들.
+
+**측정이 말하는 것**: main의 인터페이스 82개 중 구현이 2개 이상인 것은 0개다. 10줄 미만 파일이
+93개다. 위 항목을 다 적용해도 이 비율 자체는 남는다 — 다음 module 추출 때 타입을 먼저 만들지 말라는
+신호로 읽는다.
