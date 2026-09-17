@@ -62,13 +62,14 @@ public class SeatSelectionCoordinator {
                         throw new SeatAlreadyHeldException(performanceId, seatId);
                     }
                     seatSelectionService.select(performanceId, seatId, memberId);
-                    publish(performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED);
+                    seatEventPublisher.publish(
+                            performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED);
                 });
     }
 
     /** 실제로 해제된 경우에만 알린다 — 이미 만료됐거나 없는 선택을 해제 요청했다고 해서 알림을 내보내지 않는다. */
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
-        final Long performanceSeatId = resolvePerformanceSeatId(performanceId, seatId);
+        final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
         lockManager.withLock(
                 List.of(LockKey.seat(performanceId, seatId)),
                 SELECT_LOCK,
@@ -76,7 +77,8 @@ public class SeatSelectionCoordinator {
                     if (!seatSelectionService.deselect(performanceId, seatId, memberId)) {
                         return;
                     }
-                    publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
+                    seatEventPublisher.publish(
+                            performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
                 });
     }
 
@@ -85,8 +87,7 @@ public class SeatSelectionCoordinator {
      * 않는다.
      */
     public void notifyReleasedIfFree(final Long performanceId, final Long seatId) {
-        notifyReleasedIfFree(
-                performanceId, seatId, resolvePerformanceSeatId(performanceId, seatId));
+        notifyReleasedIfFree(performanceId, seatId, findPerformanceSeatId(performanceId, seatId));
     }
 
     /**
@@ -104,20 +105,13 @@ public class SeatSelectionCoordinator {
                     if (holdManager.isHeld(performanceId, seatId)) {
                         return;
                     }
-                    publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
+                    seatEventPublisher.publish(
+                            performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
                 });
     }
 
-    private void publish(
-            final Long performanceId,
-            final @Nullable Long performanceSeatId,
-            final Long seatId,
-            final SeatStatusAction action) {
-        seatEventPublisher.publish(performanceId, performanceSeatId, seatId, action);
-    }
-
     /** 락 밖에서 미리 읽는다 — DB 조회를 좌석 락 안에 넣으면 고빈도 경로의 락 보유 시간이 DB 지연을 그대로 따라간다. */
-    private @Nullable Long resolvePerformanceSeatId(final Long performanceId, final Long seatId) {
+    private @Nullable Long findPerformanceSeatId(final Long performanceId, final Long seatId) {
         return performanceSeatRepository
                 .findAllByPerformanceIdAndSeatIdIn(performanceId, List.of(seatId))
                 .stream()
