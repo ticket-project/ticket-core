@@ -222,7 +222,7 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 - `redisExpirationSubscriptionExecutor`: Redis 구독 전용 worker 1~2개
 - `redisExpirationTaskExecutor`: 만료 handler worker 2개, queue 256개, 공유 permit 2개
 - queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
-- `OrderExpirationTrigger`(`com.ticket.booking.infrastructure`) →
+- `OrderExpirationTrigger`(`com.ticket.booking.order.usecase`) →
   `ExpirePendingOrdersUseCase`: `worker.order-expiration.fixed-delay`(기본 5분)마다 만료 주문을
   보정한다. **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
   무관하게 앞으로만 가므로, 앞의 주문이 계속 실패해도 뒤의 정상 만료 대상이 같은 순회에서
@@ -240,27 +240,27 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 
 ## 주요 코드
 
-- 예매 시작: `booking.application.usecase.StartBookingUseCase`(정책·입장·회원 확인부터 Redis
+- 예매 시작: `booking.usecase.StartBookingUseCase`(정책·입장·회원 확인부터 Redis
   선점, 주문 생성, 실패 시 보상까지의 workflow를 조율한다. 검증 순서가 이 클래스에서 그대로 읽힌다)
-- 좌석 판매 가능 확인: `booking.application.BookingAvailabilityChecker`(짧은 읽기 트랜잭션)
-- 주문 DB 생성: `booking.application.PendingOrderCreator`(조립·저장·이력·이벤트가 한 트랜잭션)
-- 선점 이력 조립: `booking.application.OrderHoldHistoryRecorder`. `HoldHistory`와 저장 계약은
+- 좌석 판매 가능 확인: `booking.usecase.BookingAvailabilityChecker`(짧은 읽기 트랜잭션)
+- 주문 DB 생성: `booking.order.usecase.PendingOrderCreator`(조립·저장·이력·이벤트가 한 트랜잭션)
+- 선점 이력 조립: `booking.order.usecase.OrderHoldHistoryRecorder`. `HoldHistory`와 저장 계약은
   `booking.domain.hold`가 그대로 소유한다
 - 예매 정책 조회: `booking.domain.salespolicy.PerformanceSalesPolicy`(booking local
   aggregate) / 표시 snapshot 조회: `show.PerformanceSaleCatalogApi`
 - 판매 좌석과 가격 원본: `booking.domain.seat.PerformanceSeat`
   (`unitPrice`, `performanceGradeId`, `@Version`)
-- 주문 종료: `booking.application.OrderTerminationService`
+- 주문 종료: `booking.order.usecase.OrderTerminationService`
 - 상태 전이 규칙: `booking.domain.order.Order`(confirm, expire, cancel),
   `OrderState`(PENDING/CONFIRMED/EXPIRED/CANCELED)
 - 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
 - 커밋 후 리스너: `booking.application.BookingEventListeners`,
-  `booking.application.OrderHoldSnapshotReader`(리스너가 쓸 DB 값을 짧은 읽기 트랜잭션에서 완성)
-- hold 생성/해제 후속 처리: `booking.application.HoldCreationCoordinator`,
-  `booking.application.HoldReleaseCoordinator`, `booking.application.HoldReleaseProgressRecorder`
-- 좌석 선택 조율과 발행: `booking.application.SeatSelectionCoordinator`
-- 만료 보정: `booking.application.usecase.ExpirePendingOrdersUseCase`
-- background 트리거: `booking.infrastructure.OrderExpirationTrigger`
+  `booking.order.usecase.OrderHoldSnapshotReader`(리스너가 쓸 DB 값을 짧은 읽기 트랜잭션에서 완성)
+- hold 생성/해제 후속 처리: `booking.event.HoldCreationCoordinator`,
+  `booking.event.HoldReleaseCoordinator`, `booking.event.HoldReleaseProgressRecorder`
+- 좌석 선택 조율과 발행: `booking.selection.usecase.SeatSelectionCoordinator`
+- 만료 보정: `booking.order.usecase.ExpirePendingOrdersUseCase`
+- background 트리거: `booking.order.usecase.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.infrastructure.RedisExpirationListenerConfig`
 - event publication 운영: `shared.infrastructure.EventPublicationMaintenance`
 - 분산락 포트: `booking.application.LockManager`(잠글 대상은 `LockKey`/`LockScope` — 업무

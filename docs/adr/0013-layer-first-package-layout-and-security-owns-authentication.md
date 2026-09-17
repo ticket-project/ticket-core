@@ -4,6 +4,11 @@
 
 채택됨 (2026-09-14)
 
+> 2026-09-17 갱신: "모듈 → 계층" 배치는
+> [ADR 0016](0016-capability-first-layout-inside-modules.md)이 대체했다. 계층 이름은 역할 이름이 되고
+> (`application` → `usecase`/`query`/`port`, `infrastructure` → `persistence`), `booking`은 역할보다
+> 업무(capability)를 먼저 드러낸다. **`security`만 기능으로 나눈다는 결정은 그대로 유효하다.**
+>
 > 2026-09-15 갱신: 계층 이름 `web`은 [ADR 0014](0014-module-public-contracts-live-in-api-packages.md)가
 > `endpoint`로 바꿨다. 모듈 → 계층 배치와 `security`만 기능으로 나눈다는 결정은 그대로 유효하고,
 > `shared.web`(응답 봉투)과 `security.http`(HTTP 보안 adapter)도 이름을 유지한다.
