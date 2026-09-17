@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-import com.ticket.booking.application.concurrency.LockManager;
-import com.ticket.booking.application.usecase.StartBookingUseCase;
+import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.order.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.order.usecase.OrderExpirationTrigger;
+import com.ticket.booking.usecase.StartBookingUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -29,7 +29,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
         assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository")).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
-        assertThat(beanOf("com.ticket.booking.application.BookingEventListeners")).isNotNull();
+        assertThat(beanOf("com.ticket.booking.event.BookingEventListeners")).isNotNull();
         assertThat(beanOf("com.ticket.shared.infrastructure.EventPublicationMaintenance"))
                 .isNotNull();
     }

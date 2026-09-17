@@ -17,7 +17,7 @@
  * FQCN은 DB에 저장된 값이다.</b> Modulith event publication registry의 {@code EVENT_PUBLICATION.event_type}
  * 컬럼이 이벤트 class의 FQCN을 그대로 담는다. package를 옮기면 배포 시점에 아직 완료되지 않은 publication row의 {@code event_type}이
  * 지금 코드에 없는 class를 가리키게 되어 재처리가 되지 않는다. 같은 성격의 사고를 listener id에서 이미 한 번 겪었고 그 회귀를 {@code
- * com.ticket.booking.application.BookingEventListenerIdContractTest}가 고정하고 있다.
+ * com.ticket.booking.event.BookingEventListenerIdContractTest}가 고정하고 있다.
  *
  * <p>{@code security} 의존은 WebSocket 인증 하나뿐이다 — STOMP CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독
  * 인터셉터가 {@code AccessTokenAuthenticator}로 토큰을 직접 검증한다.

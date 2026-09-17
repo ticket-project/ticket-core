@@ -119,7 +119,7 @@ class EventPublicationSerializedEventLengthTest {
                                 + " event_type, completion_attempts, status)"
                                 + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, 0, 'PUBLISHED')")) {
             statement.setObject(1, UUID.randomUUID());
-            statement.setString(2, "com.ticket.booking.application.BookingEventListeners.on(...)");
+            statement.setString(2, "com.ticket.booking.event.BookingEventListeners.on(...)");
             statement.setString(3, serializedEvent);
             statement.setString(4, OrderTerminated.class.getName());
             statement.executeUpdate();

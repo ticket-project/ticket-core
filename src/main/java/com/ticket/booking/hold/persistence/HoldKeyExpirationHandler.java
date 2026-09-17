@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.infrastructure.redis.RedisKeyExpirationHandler;
 import com.ticket.booking.order.usecase.ExpireOrderUseCase;
+import com.ticket.booking.redis.RedisKeyExpirationHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -2,7 +2,7 @@ package com.ticket.booking.selection.persistence;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.infrastructure.redis.RedisKeyExpirationHandler;
+import com.ticket.booking.redis.RedisKeyExpirationHandler;
 import com.ticket.booking.selection.usecase.SeatSelectionCoordinator;
 
 import lombok.RequiredArgsConstructor;

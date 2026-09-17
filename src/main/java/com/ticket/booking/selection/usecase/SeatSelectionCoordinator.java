@@ -8,9 +8,9 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.concurrency.LockKey;
-import com.ticket.booking.application.concurrency.LockManager;
-import com.ticket.booking.application.concurrency.LockOptions;
+import com.ticket.booking.concurrency.LockKey;
+import com.ticket.booking.concurrency.LockManager;
+import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.hold.domain.HoldManager;
