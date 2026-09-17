@@ -17,9 +17,21 @@
 클래스 이름이 말한다. `domain` 아래 묶음은 함께 읽히는 도메인 모델의 묶음이며 Aggregate와
 일대일이 아니다 — 실제 경계는 `AggregateAssociationTest`가 강제한다.
 
-허용된 역할별 하위 폴더는 `application.usecase`, `application.port`, `endpoint.request`,
-`endpoint.docs`, `exception.handler` 넷뿐이다. 이것들은 업무가 아니라 역할을 말한다. `application.usecase`에는
-`*UseCase`로 끝나는 클래스만 둔다.
+하위 폴더는 업무가 아니라 **역할이나 기술 책임**을 말할 때만 만든다. `application.usecase`,
+`application.port`, `endpoint.request`, `endpoint.docs`, `exception.handler`가 모든 모듈에서 같은 뜻인
+역할 폴더다. `application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.
+
+여기에 더해, 한 계층의 파일 수가 그 계층 목록만으로 무엇이 무엇인지 알 수 없을 만큼 많아지면 한 단계
+더 나눈다 — 조회 읽기 모델은 `application.query`(`show`, `booking`), 분산락 계약은
+`application.concurrency`(`booking`), 저장 기술은 `infrastructure.persistence`/`querydsl`/`redis`/
+`websocket`/`admission`(`show`, `booking`)이다. **모든 모듈을 같은 모양으로 만들지 않는다.** `member`·
+`like`·`venue`·`payment`는 계층 목록이 짧아 평평한 편이 더 잘 읽히므로 나누지 않는다. 판단 기준은
+하나다 — 폴더가 실제로 찾는 시간을 줄이는가. 파일 하나를 넣기 위한 폴더는 만들지 않는다
+(`member.application.port`만 예외다. `port`는 모든 모듈에서 같은 자리를 뜻하는 역할 이름이라
+"이 모듈이 밖에 요구하는 것"을 모듈마다 다른 곳에서 찾게 하지 않는다).
+
+`infrastructure` 아래는 한 단계까지다. `infrastructure/persistence/jpa/repository/adapter`처럼
+깊어지면 탐색이 아니라 다이어그램이 된다.
 
 **모듈 안에 `common`·`support` 같은 패키지를 만들지 않는다.** 여러 업무가 함께 쓰는 기반도 그
 역할의 계층이 받는다 — 계약은 `application`, 도메인 기반 타입과 값은 `domain`
@@ -56,8 +68,11 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 
 ## Component와 메서드
 
-- Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 계약은 `QueryPort`, 그 구현은 기술을
-  드러내는 이름(`QuerydslSeatStateQueryAdapter`)을 쓴다.
+- Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 계약은 `QueryPort`다. **`Port`는
+  application이 요구하는 계약이고 그 구현은 `Adapter`다** — 구현에는 기술을 드러내는 접두사와
+  `Adapter` 접미사를 함께 쓴다(`QuerydslSeatStateQueryAdapter implements SeatStateQueryPort`,
+  `ShowRepositoryAdapter implements ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로
+  계약과 구현을 구분할 수 없다.
 - **조회 구현은 Spring Data method·`@Query`·Querydsl 중 그 조회를 가장 간단히 표현하는 것을**
   **고른다.** 동적 조건·복합 정렬·커서 페이징에는 Querydsl을 적극 쓰고, 단순 조회에까지 강제하지
   않는다. 판단 기준과 보존해야 할 query semantics는
