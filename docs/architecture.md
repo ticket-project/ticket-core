@@ -218,7 +218,12 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 - **실제로 필요한 계층만** 만든다. 코드가 없는 `endpoint`/`application`은 미리 만들지 않는다
   (`payment`에는 지금 `domain`과 `infrastructure`뿐이다).
 - `application.port`/`application.usecase`, `endpoint`의 `request`/`docs`, `exception`의 `handler`는
-  그대로 유효한 역할별 하위 폴더다.
+  그대로 유효한 역할별 하위 폴더다. 여기에 더해 계층 목록이 너무 길어진 모듈만 역할·기술 기준으로 한
+  단계 더 나눈다 — `show`·`booking`의 `application.query`(조회 읽기 모델), `booking`의
+  `application.concurrency`(분산락 계약), `show`의 `infrastructure.persistence`/`querydsl`,
+  `booking`의 `infrastructure.persistence`/`querydsl`/`redis`/`websocket`/`admission`이다. 업무
+  분류가 아니라 역할·기술이라 아래 "업무별 폴더는 `domain` 아래에만" 규칙과 충돌하지 않는다.
+  `member`·`like`·`venue`·`payment`는 목록이 짧아 나누지 않는다. `infrastructure` 아래는 한 단계까지다.
 - `exception`은 모듈 바로 아래 하나다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
   [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다(ADR 0002가 정한
   "모듈이 자기 오류를 소유한다"는 원칙 자체는 그대로다).
@@ -231,9 +236,10 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
   Repository는 root에 두지 않는다.
 
 **`application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.** use case가 조립에 쓰는
-서비스·헬퍼·view·port는 여기 두지 않고 `application` 바로 아래(또는 port는 `application.port`)에
-둔다 — use case가 진입점이라는 것만 폴더로 드러내고, 그 진입점이 무엇을 조립해 쓰는지는 여전히
-`application` 평평한 목록에서 바로 보이게 하기 위해서다.
+서비스·헬퍼는 여기 두지 않고 `application` 바로 아래에 둔다 — use case가 진입점이라는 것만 폴더로
+드러내고, 그 진입점이 무엇을 조립해 쓰는지는 여전히 `application` 목록에서 바로 보이게 하기
+위해서다. 출력 계약은 `application.port`, 조회 읽기 모델은 (그 수가 실행 코드를 덮는 `show`·
+`booking`에 한해) `application.query`다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
