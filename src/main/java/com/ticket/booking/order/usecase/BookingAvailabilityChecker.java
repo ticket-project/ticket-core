@@ -1,4 +1,4 @@
-package com.ticket.booking.usecase;
+package com.ticket.booking.order.usecase;
 
 import java.util.List;
 
@@ -21,8 +21,8 @@ import lombok.RequiredArgsConstructor;
  * 예매를 시작해도 되는지를 booking 자신의 DB만 보고 판단하고, 통과하면 그 좌석들을 돌려준다.
  *
  * <p><b>별도 bean인 이유는 트랜잭션 경계 하나뿐이다.</b> 여기 있는 두 확인은 같은 읽기 트랜잭션 안에서 이뤄져야 하고, 그 트랜잭션은 다른 module 호출이나
- * Redis 왕복을 포함하지 않을 만큼 짧아야 한다. {@link com.ticket.booking.usecase.StartBookingUseCase}가 같은 클래스의
- * private method로 호출하면 Spring proxy가 적용되지 않아 트랜잭션이 아예 걸리지 않는다.
+ * Redis 왕복을 포함하지 않을 만큼 짧아야 한다. {@link com.ticket.booking.order.usecase.StartBookingUseCase}가 같은
+ * 클래스의 private method로 호출하면 Spring proxy가 적용되지 않아 트랜잭션이 아예 걸리지 않는다.
  *
  * <p>확인하는 것은 둘이다.
  *

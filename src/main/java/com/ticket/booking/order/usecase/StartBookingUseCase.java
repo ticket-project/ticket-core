@@ -1,4 +1,4 @@
-package com.ticket.booking.usecase;
+package com.ticket.booking.order.usecase;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -18,7 +18,6 @@ import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.usecase.PendingOrderCreator;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;

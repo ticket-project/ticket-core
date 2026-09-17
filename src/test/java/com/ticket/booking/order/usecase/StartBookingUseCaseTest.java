@@ -1,4 +1,4 @@
-package com.ticket.booking.usecase;
+package com.ticket.booking.order.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,7 +45,6 @@ import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.usecase.PendingOrderCreator;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;

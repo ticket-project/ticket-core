@@ -1,4 +1,4 @@
-package com.ticket.booking.usecase;
+package com.ticket.booking.order.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

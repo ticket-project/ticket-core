@@ -1,11 +1,11 @@
-package com.ticket.booking.endpoint;
+package com.ticket.booking.seat.endpoint;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ticket.booking.usecase.GetShowSeatMapUseCase;
+import com.ticket.booking.seat.usecase.GetShowSeatMapUseCase;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;

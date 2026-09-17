@@ -41,8 +41,8 @@
 Module은 여덟 개 그대로다.
 
 **여러 capability를 조율하는 코드는 capability에 억지로 넣지 않는다.** 판단 기준은 "어떤 상태를
-저장하는가"가 아니라 "어떤 workflow의 결과를 책임지는가"다. `StartBookingUseCase`는
-`booking.usecase`, `HoldReleaseCoordinator`는 (이름과 달리) `booking.event`다.
+저장하는가"가 아니라 "어떤 workflow의 결과를 책임지는가"다. `StartBookingUseCase`는 결과가 주문이라
+`booking.order.usecase`, `HoldReleaseCoordinator`는 (이름과 달리) `booking.event`다.
 
 **`security`만 역할 대신 기능으로 나눈다** — `auth`/`jwt`/`oauth`/`token`/`http`이고 각
 폴더 안에 역할 폴더를 다시 만들지 않는다. 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더

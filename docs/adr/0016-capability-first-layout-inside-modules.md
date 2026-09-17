@@ -39,10 +39,10 @@ ADR 0013은 업무 모듈을 `<module>.<layer>`로 폈다. 모듈이 작을 때�
    부르므로 평평하고, `booking.order`는 크므로 역할로 나눈다. 일반적인 최대는 모듈 → capability →
    역할이다.
 
-4. **여러 capability를 조율하는 코드는 capability에 억지로 넣지 않는다.** 판단 기준은 "어떤 상태를
-   저장하는가"가 아니라 **"어떤 workflow의 결과를 책임지는가"**다. `StartBookingUseCase`는
-   `booking.usecase`, `HoldCreationCoordinator`/`HoldReleaseCoordinator`는 이름과 달리
-   `booking.event`다.
+4. **여러 capability를 조율하는 코드는 이름이 아니라 결과로 배치한다.** 판단 기준은 "어떤 상태를
+   저장하는가"가 아니라 **"어떤 workflow의 결과를 책임지는가"**다. `StartBookingUseCase`는 정책·입장·
+   회원·좌석·선점을 조율하지만 결과가 주문이라 `booking.order.usecase`이고,
+   `HoldCreationCoordinator`/`HoldReleaseCoordinator`는 이름과 달리 `booking.event`다.
 
 5. **`Repository`(계약)와 `persistence`(기술)를 구분한다.** Aggregate 저장·복원 계약은 `domain`이
    소유하고 `persistence`에는 구현만 둔다. `XXXPort`/`XXXAdapter`도 규모와 무관하게 다른 package다.
@@ -79,5 +79,10 @@ interface 밖은 금지"로 뒤집어 오히려 넓어졌다. `booking.ticket`�
 수도 있었지만, `domain`/`persistence`로 나눠야 `DomainIsolationTest`의 `..domain..` 패턴과 계층
 방향 규칙이 계속 걸리므로 나눈 쪽을 골랐다.
 
-**남은 것.** `member.password`와 `booking.admission`은 계약과 구현이 같은 package에 있어 방향 규칙
+**남은 것.** `booking` 바로 아래에는 여러 capability가 함께 쓰는 것만 남았다 — `domain`(감사 기반
+타입), `exception`(module error code와 handler), `event`, `concurrency`, `redis`, `websocket`이다.
+capability 하나가 소유할 수 없는 것들이라 더 내리지 않는다. `BookingAuditedEntity`를 `order`로 내리면
+hold·seat·salespolicy·ticket entity가 order를 상속하게 된다.
+
+`member.password`와 `booking.admission`은 계약과 구현이 같은 package에 있어 방향 규칙
 대상이 아니다. 파일이 늘어 목록만으로 무엇이 무엇인지 알 수 없어지면 그때 나눈다.

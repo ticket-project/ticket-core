@@ -1,4 +1,4 @@
-package com.ticket.booking.endpoint;
+package com.ticket.booking.order.endpoint;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.ticket.booking.endpoint;
+package com.ticket.booking.seat.endpoint;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ticket.booking.usecase.GetShowSeatMapUseCase;
+import com.ticket.booking.seat.usecase.GetShowSeatMapUseCase;
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowSeatMapControllerContractTest {
