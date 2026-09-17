@@ -1,8 +1,8 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.domain.hold.Hold;
+import com.ticket.booking.hold.domain.Hold;
 
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.json.JsonMapper;

@@ -26,7 +26,6 @@ import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.PerformanceSaleFinder;
 import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.application.port.AdmissionVerifier;
-import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;
 import com.ticket.booking.domain.salespolicy.OrderAcceptanceWindow;
@@ -41,6 +40,7 @@ import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.hold.domain.HoldManager;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

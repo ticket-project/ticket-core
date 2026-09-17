@@ -15,11 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.domain.hold.HoldHistory;
-import com.ticket.booking.domain.hold.HoldHistoryEventType;
-import com.ticket.booking.domain.hold.HoldHistoryRepository;
-import com.ticket.booking.domain.hold.HoldReleaseReason;
 import com.ticket.booking.domain.seat.PerformanceSeat;
+import com.ticket.booking.hold.domain.HoldHistory;
+import com.ticket.booking.hold.domain.HoldHistoryEventType;
+import com.ticket.booking.hold.domain.HoldHistoryRepository;
+import com.ticket.booking.hold.domain.HoldReleaseReason;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 

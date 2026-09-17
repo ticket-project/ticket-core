@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -16,8 +16,8 @@ import org.redisson.client.codec.LongCodec;
 import org.redisson.client.codec.StringCodec;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.domain.hold.Hold;
-import com.ticket.booking.domain.hold.HoldStore;
+import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.HoldStore;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

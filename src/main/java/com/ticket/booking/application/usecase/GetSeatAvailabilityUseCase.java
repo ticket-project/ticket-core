@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.SeatAvailabilitySnapshotReader;
 import com.ticket.booking.application.port.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
-import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.domain.selection.SeatSelectionService;
+import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;

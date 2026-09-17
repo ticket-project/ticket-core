@@ -5,10 +5,10 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.domain.hold.HoldHistory;
-import com.ticket.booking.domain.hold.HoldHistoryRepository;
-import com.ticket.booking.domain.hold.HoldReleaseReason;
 import com.ticket.booking.domain.seat.PerformanceSeat;
+import com.ticket.booking.hold.domain.HoldHistory;
+import com.ticket.booking.hold.domain.HoldHistoryRepository;
+import com.ticket.booking.hold.domain.HoldReleaseReason;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 

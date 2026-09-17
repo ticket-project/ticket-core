@@ -1,4 +1,4 @@
-package com.ticket.booking.domain.hold;
+package com.ticket.booking.hold.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

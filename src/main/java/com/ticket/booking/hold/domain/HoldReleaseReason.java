@@ -1,4 +1,4 @@
-package com.ticket.booking.domain.hold;
+package com.ticket.booking.hold.domain;
 
 public enum HoldReleaseReason {
     PAYMENT_CONFIRMED("결제 확정"),

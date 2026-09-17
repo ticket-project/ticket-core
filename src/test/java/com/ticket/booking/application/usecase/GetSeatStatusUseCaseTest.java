@@ -30,7 +30,6 @@ import com.ticket.booking.application.port.SeatStateQueryPort;
 import com.ticket.booking.application.query.SeatStateSnapshotRow;
 import com.ticket.booking.application.query.SeatStateView;
 import com.ticket.booking.application.query.SeatStatus;
-import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;
 import com.ticket.booking.domain.salespolicy.OrderAcceptanceWindow;
@@ -41,6 +40,7 @@ import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingNotOpenYetException;
 import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.hold.domain.HoldManager;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
