@@ -21,9 +21,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
-import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
+import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 

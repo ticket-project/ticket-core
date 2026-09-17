@@ -1,11 +1,11 @@
-package com.ticket.booking.infrastructure.persistence;
+package com.ticket.booking.hold.persistence;
 
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.ticket.booking.domain.hold.HoldHistory;
-import com.ticket.booking.domain.hold.HoldHistoryRepository;
+import com.ticket.booking.hold.domain.HoldHistory;
+import com.ticket.booking.hold.domain.HoldHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
 

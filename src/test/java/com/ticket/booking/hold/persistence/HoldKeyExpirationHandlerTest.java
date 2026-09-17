@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;

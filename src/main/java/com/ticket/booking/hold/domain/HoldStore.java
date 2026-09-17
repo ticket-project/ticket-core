@@ -1,4 +1,4 @@
-package com.ticket.booking.domain.hold;
+package com.ticket.booking.hold.domain;
 
 import java.time.Duration;
 import java.util.List;

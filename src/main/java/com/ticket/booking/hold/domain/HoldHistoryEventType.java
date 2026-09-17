@@ -1,4 +1,4 @@
-package com.ticket.booking.domain.hold;
+package com.ticket.booking.hold.domain;
 
 public enum HoldHistoryEventType {
     CREATED("선점 생성"),

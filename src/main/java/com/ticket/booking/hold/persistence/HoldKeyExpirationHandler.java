@@ -1,10 +1,11 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
+import com.ticket.booking.infrastructure.redis.RedisKeyExpirationHandler;
 import com.ticket.booking.order.usecase.ExpireOrderUseCase;
 
 import lombok.RequiredArgsConstructor;

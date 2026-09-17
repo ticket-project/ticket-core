@@ -14,9 +14,9 @@ import com.ticket.booking.application.port.SeatStateQueryPort;
 import com.ticket.booking.application.query.SeatStateSnapshotRow;
 import com.ticket.booking.application.query.SeatStateView;
 import com.ticket.booking.application.query.SeatStatus;
-import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.selection.SeatSelectionService;
+import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;

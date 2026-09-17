@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.OrderStarted;
-import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.seat.PerformanceSeat;
+import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderKeyGenerator;
 import com.ticket.booking.order.domain.OrderRepository;

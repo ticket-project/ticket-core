@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,7 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.domain.hold.Hold;
+import com.ticket.booking.hold.domain.Hold;
 
 import tools.jackson.databind.json.JsonMapper;
 

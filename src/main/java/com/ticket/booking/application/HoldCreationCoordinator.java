@@ -10,11 +10,11 @@ import com.ticket.booking.application.concurrency.LockKey;
 import com.ticket.booking.application.concurrency.LockManager;
 import com.ticket.booking.application.concurrency.LockOptions;
 import com.ticket.booking.application.port.SeatStatusEventPublisher;
-import com.ticket.booking.domain.hold.Hold;
-import com.ticket.booking.domain.hold.HoldStore;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.selection.SeatSelectionService;
+import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.HoldStore;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

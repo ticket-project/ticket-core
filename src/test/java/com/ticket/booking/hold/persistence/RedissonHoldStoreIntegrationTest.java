@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,7 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.ticket.booking.domain.hold.Hold;
+import com.ticket.booking.hold.domain.Hold;
 
 /**
  * hold 생성의 부분 실패 보상을 <b>실제 Redis</b>에서 확인한다. mock 테스트는 "어떤 호출을 했는가"만 보므로, 좌석 키·회차별 점유 인덱스·메타데이터가

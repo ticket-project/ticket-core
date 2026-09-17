@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +26,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.LongCodec;
 import org.redisson.client.codec.StringCodec;
 
-import com.ticket.booking.domain.hold.Hold;
+import com.ticket.booking.hold.domain.Hold;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
