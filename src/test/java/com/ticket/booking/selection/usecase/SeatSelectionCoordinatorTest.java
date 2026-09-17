@@ -23,8 +23,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.application.RecordingLockManager;
-import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.concurrency.LockKey;
+import com.ticket.booking.concurrency.RecordingLockManager;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.hold.domain.HoldManager;

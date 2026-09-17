@@ -20,9 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.booking.order.domain.OrderState;
+import com.ticket.booking.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;

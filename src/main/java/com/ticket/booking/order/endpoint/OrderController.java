@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ticket.booking.application.usecase.StartBookingUseCase;
 import com.ticket.booking.order.usecase.CancelOrderUseCase;
 import com.ticket.booking.order.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.order.usecase.GetOrderStatusUseCase;
+import com.ticket.booking.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
