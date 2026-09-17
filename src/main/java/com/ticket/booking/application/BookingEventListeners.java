@@ -86,7 +86,7 @@ class BookingEventListeners {
                         snapshot.performanceId(),
                         snapshot.seatIds(),
                         snapshot.expiresAt());
-        holdCreationCoordinator.process(hold);
+        holdCreationCoordinator.clearSelectionsAndPublishHeld(hold);
     }
 
     /**
@@ -109,6 +109,6 @@ class BookingEventListeners {
                         event.holdKey(),
                         snapshot.seatIds(),
                         alreadyReleased);
-        holdReleaseCoordinator.process(event.eventId(), task, LocalDateTime.now(clock));
+        holdReleaseCoordinator.releaseAndPublish(event.eventId(), task, LocalDateTime.now(clock));
     }
 }

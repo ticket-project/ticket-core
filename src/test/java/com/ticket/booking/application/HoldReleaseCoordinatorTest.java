@@ -42,7 +42,7 @@ class HoldReleaseCoordinatorTest {
     @Mock private PerformanceSeatRepository performanceSeatRepository;
     @Mock private SeatStatusEventPublisher seatStatusEventPublisher;
     @Mock private HoldReleaseProgressRecorder progressRecorder;
-    @InjectMocks private HoldReleaseCoordinator taskProcessor;
+    @InjectMocks private HoldReleaseCoordinator coordinator;
 
     @Test
     void recordsHoldReleaseBeforePublishingCurrentlyAvailableSeats() {
@@ -52,7 +52,7 @@ class HoldReleaseCoordinatorTest {
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();
 
-        taskProcessor.process(EVENT_ID, task, FIXED_NOW);
+        coordinator.releaseAndPublish(EVENT_ID, task, FIXED_NOW);
 
         final InOrder inOrder = inOrder(holdManager, progressRecorder, seatStatusEventPublisher);
         inOrder.verify(holdManager).release(1L, "old-hold", List.of(10L, 20L));
@@ -69,7 +69,7 @@ class HoldReleaseCoordinatorTest {
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();
 
-        taskProcessor.process(EVENT_ID, task, FIXED_NOW.plusSeconds(30));
+        coordinator.releaseAndPublish(EVENT_ID, task, FIXED_NOW.plusSeconds(30));
 
         verify(holdManager, never()).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, never()).recordHoldReleased(EVENT_ID, FIXED_NOW.plusSeconds(30));
@@ -84,7 +84,7 @@ class HoldReleaseCoordinatorTest {
         when(holdManager.isHeld(1L, 10L)).thenReturn(true);
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
 
-        taskProcessor.process(EVENT_ID, task, FIXED_NOW.plusSeconds(30));
+        coordinator.releaseAndPublish(EVENT_ID, task, FIXED_NOW.plusSeconds(30));
 
         verifyNoInteractions(seatStatusEventPublisher);
     }
@@ -102,9 +102,9 @@ class HoldReleaseCoordinatorTest {
                 .when(seatStatusEventPublisher)
                 .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
 
-        assertThatThrownBy(() -> taskProcessor.process(EVENT_ID, firstAttempt, FIXED_NOW))
+        assertThatThrownBy(() -> coordinator.releaseAndPublish(EVENT_ID, firstAttempt, FIXED_NOW))
                 .hasMessage("publish failed");
-        taskProcessor.process(EVENT_ID, retry, FIXED_NOW.plusSeconds(30));
+        coordinator.releaseAndPublish(EVENT_ID, retry, FIXED_NOW.plusSeconds(30));
 
         verify(holdManager, times(1)).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, times(1)).recordHoldReleased(EVENT_ID, FIXED_NOW);
@@ -129,7 +129,7 @@ class HoldReleaseCoordinatorTest {
 
     @Test
     void holdsSeatLocksAcrossReleaseAndPublication() {
-        taskProcessor.process(EVENT_ID, task(false), LocalDateTime.of(2026, 3, 15, 12, 0));
+        coordinator.releaseAndPublish(EVENT_ID, task(false), LocalDateTime.of(2026, 3, 15, 12, 0));
 
         assertThat(lockManager.lastAcquisition().keys())
                 .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));

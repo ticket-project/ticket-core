@@ -40,7 +40,7 @@ class HoldCreationCoordinatorTest {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(100L, 200L)))
                 .thenReturn(List.of(performanceSeat(100L, 901L), performanceSeat(200L, 902L)));
 
-        processor().process(hold);
+        coordinator().clearSelectionsAndPublishHeld(hold);
 
         final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
@@ -56,7 +56,7 @@ class HoldCreationCoordinatorTest {
         final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(false);
 
-        processor().process(hold);
+        coordinator().clearSelectionsAndPublishHeld(hold);
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
@@ -72,7 +72,7 @@ class HoldCreationCoordinatorTest {
         return seat;
     }
 
-    private HoldCreationCoordinator processor() {
+    private HoldCreationCoordinator coordinator() {
         return new HoldCreationCoordinator(
                 new RecordingLockManager(),
                 holdStore,
