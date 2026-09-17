@@ -68,26 +68,7 @@ public class PendingOrderCreator {
                                 saleSnapshot.performanceStartTime(), "performanceStartTime"),
                         Objects.requireNonNull(saleSnapshot.venueName(), "venueName"));
 
-        for (final PerformanceSeat seat : performanceSeats) {
-            final PerformanceSaleSnapshot.SeatInfo seatInfo =
-                    saleSnapshot.seatInfoBySeatId().get(seat.getSeatId());
-            if (seatInfo == null) {
-                throw new IllegalStateException("좌석 표시값을 찾을 수 없습니다. seatId=" + seat.getSeatId());
-            }
-            final PerformanceSaleSnapshot.GradeInfo gradeInfo =
-                    saleSnapshot.gradeInfoByPerformanceGradeId().get(seat.getPerformanceGradeId());
-            if (gradeInfo == null) {
-                throw new IllegalStateException(
-                        "등급 표시값을 찾을 수 없습니다. performanceGradeId=" + seat.getPerformanceGradeId());
-            }
-            order.addOrderSeat(
-                    seat.getId(),
-                    seat.getSeatId(),
-                    seat.getUnitPrice(),
-                    gradeInfo.gradeCode(),
-                    gradeInfo.gradeName(),
-                    seatInfo.label());
-        }
+        addSeatsToOrder(order, performanceSeats, saleSnapshot);
 
         final Order savedOrder = orderRepository.save(order);
 
@@ -111,6 +92,33 @@ public class PendingOrderCreator {
                         startedAt.atZone(clock.getZone()).toInstant()));
 
         return savedOrder.getOrderKey();
+    }
+
+    /** 주문 좌석마다 좌석 표시값과 등급 표시값을 붙여 Order에 더한다. 총액은 {@code addOrderSeat}가 좌석 단가로 누적한다. */
+    private void addSeatsToOrder(
+            final Order order,
+            final List<PerformanceSeat> performanceSeats,
+            final PerformanceSaleSnapshot saleSnapshot) {
+        for (final PerformanceSeat seat : performanceSeats) {
+            final PerformanceSaleSnapshot.SeatInfo seatInfo =
+                    saleSnapshot.seatInfoBySeatId().get(seat.getSeatId());
+            if (seatInfo == null) {
+                throw new IllegalStateException("좌석 표시값을 찾을 수 없습니다. seatId=" + seat.getSeatId());
+            }
+            final PerformanceSaleSnapshot.GradeInfo gradeInfo =
+                    saleSnapshot.gradeInfoByPerformanceGradeId().get(seat.getPerformanceGradeId());
+            if (gradeInfo == null) {
+                throw new IllegalStateException(
+                        "등급 표시값을 찾을 수 없습니다. performanceGradeId=" + seat.getPerformanceGradeId());
+            }
+            order.addOrderSeat(
+                    seat.getId(),
+                    seat.getSeatId(),
+                    seat.getUnitPrice(),
+                    gradeInfo.gradeCode(),
+                    gradeInfo.gradeName(),
+                    seatInfo.label());
+        }
     }
 
     private Set<Long> performanceSeatIds(final List<PerformanceSeat> performanceSeats) {
