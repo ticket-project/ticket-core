@@ -18,8 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.application.OrderDetailRow;
 import com.ticket.booking.application.port.OrderQueryPort;
+import com.ticket.booking.application.query.OrderDetailRow;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.member.api.MemberLookupApi;

@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.application.OrderStatusView;
 import com.ticket.booking.application.port.OrderQueryPort;
+import com.ticket.booking.application.query.OrderStatusView;
 import com.ticket.booking.domain.order.OrderRemainingTime;
 import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.exception.OrderNotOwnedException;

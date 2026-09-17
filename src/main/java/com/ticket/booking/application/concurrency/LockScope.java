@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.application.concurrency;
 
 /**
  * 락이 보호하는 대상의 업무 의미다.

@@ -24,12 +24,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.application.AdmissionGuard;
-import com.ticket.booking.application.AdmissionVerifier;
 import com.ticket.booking.application.PerformanceSaleFinder;
-import com.ticket.booking.application.SeatStateSnapshotRow;
-import com.ticket.booking.application.SeatStateView;
-import com.ticket.booking.application.SeatStatus;
+import com.ticket.booking.application.port.AdmissionVerifier;
 import com.ticket.booking.application.port.SeatStateQueryPort;
+import com.ticket.booking.application.query.SeatStateSnapshotRow;
+import com.ticket.booking.application.query.SeatStateView;
+import com.ticket.booking.application.query.SeatStatus;
 import com.ticket.booking.domain.hold.HoldManager;
 import com.ticket.booking.domain.salespolicy.BookingEntryPolicy;
 import com.ticket.booking.domain.salespolicy.HoldPolicy;

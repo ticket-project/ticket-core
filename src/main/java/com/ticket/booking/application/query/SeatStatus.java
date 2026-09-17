@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.application.query;
 
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 

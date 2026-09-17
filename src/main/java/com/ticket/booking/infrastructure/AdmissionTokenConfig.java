@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.ticket.booking.application.AdmissionVerifier;
+import com.ticket.booking.application.port.AdmissionVerifier;
 
 @Configuration
 @EnableConfigurationProperties(AdmissionTokenProperties.class)

@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import com.ticket.booking.application.SeatStateSnapshotRow;
-import com.ticket.booking.application.SeatStatus;
 import com.ticket.booking.application.port.SeatStateQueryPort;
+import com.ticket.booking.application.query.SeatStateSnapshotRow;
+import com.ticket.booking.application.query.SeatStatus;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.show.domain.performance.Performance;

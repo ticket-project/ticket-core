@@ -28,9 +28,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.ticket.booking.application.LockKey;
-import com.ticket.booking.application.LockManager;
-import com.ticket.booking.application.LockOptions;
+import com.ticket.booking.application.concurrency.LockKey;
+import com.ticket.booking.application.concurrency.LockManager;
+import com.ticket.booking.application.concurrency.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RedisRefreshTokenStore;

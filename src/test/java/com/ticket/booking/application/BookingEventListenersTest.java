@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Propagation;
 
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.OrderTerminated;
+import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
 import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.order.Order;
 import com.ticket.booking.domain.order.OrderSeat;
