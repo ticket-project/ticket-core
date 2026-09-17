@@ -52,11 +52,11 @@ import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowGenre;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.application.VenueLookupService;
-import com.ticket.venue.application.VenueSeatLookupService;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryAdapter;
-import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryAdapter;
+import com.ticket.venue.persistence.QuerydslVenueSeatQueryAdapter;
+import com.ticket.venue.persistence.QuerydslVenueSummaryQueryAdapter;
+import com.ticket.venue.usecase.VenueLookupService;
+import com.ticket.venue.usecase.VenueSeatLookupService;
 
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,

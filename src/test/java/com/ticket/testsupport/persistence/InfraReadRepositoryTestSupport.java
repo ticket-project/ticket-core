@@ -7,10 +7,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import com.ticket.show.infrastructure.querydsl.QuerydslShowCursorConditionBuilder;
 import com.ticket.show.infrastructure.querydsl.QuerydslShowSortResolver;
 import com.ticket.show.infrastructure.querydsl.SaleDisplayStatusPredicates;
-import com.ticket.venue.application.VenueLookupService;
-import com.ticket.venue.application.VenueSeatLookupService;
-import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryAdapter;
-import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryAdapter;
+import com.ticket.venue.persistence.QuerydslVenueSeatQueryAdapter;
+import com.ticket.venue.persistence.QuerydslVenueSummaryQueryAdapter;
+import com.ticket.venue.usecase.VenueLookupService;
+import com.ticket.venue.usecase.VenueSeatLookupService;
 
 /**
  * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼를 빈으로 올린다.
