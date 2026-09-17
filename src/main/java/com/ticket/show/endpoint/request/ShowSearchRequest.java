@@ -4,8 +4,8 @@ import java.time.LocalDate;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.show.application.query.ShowSearchCriteria;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
+import com.ticket.show.query.ShowSearchCriteria;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

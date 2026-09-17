@@ -12,8 +12,8 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.query.ShowCursor;
-import com.ticket.show.application.query.ShowSort;
+import com.ticket.show.query.ShowCursor;
+import com.ticket.show.query.ShowSort;
 
 import tools.jackson.databind.json.JsonMapper;
 

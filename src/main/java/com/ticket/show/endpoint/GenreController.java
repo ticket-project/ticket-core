@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.shared.web.ApiResponse;
-import com.ticket.show.application.usecase.GetGenresByCategoryUseCase;
 import com.ticket.show.endpoint.docs.GenreControllerDocs;
+import com.ticket.show.usecase.GetGenresByCategoryUseCase;
 
 import lombok.RequiredArgsConstructor;
 

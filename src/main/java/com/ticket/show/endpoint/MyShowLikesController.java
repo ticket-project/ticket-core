@@ -10,9 +10,9 @@ import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
-import com.ticket.show.application.query.ShowLikeSummaryView;
-import com.ticket.show.application.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.endpoint.docs.MyShowLikesControllerDocs;
+import com.ticket.show.query.ShowLikeSummaryView;
+import com.ticket.show.usecase.GetMyShowLikesUseCase;
 
 import lombok.RequiredArgsConstructor;
 
