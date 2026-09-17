@@ -54,7 +54,7 @@ import com.tngtech.archunit.lang.CompositeArchRule;
  * docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.
  *
  * <p><b>Querydsl Q-type 주의.</b> Q-type은 {@code build/generated/sources/annotationProcessor} 아래에
- * 생성되지만 package는 원본 entity와 같아서({@code com.ticket.booking.domain.order.QOrder}) 여기 분석 대상에 그대로 들어온다.
+ * 생성되지만 package는 원본 entity와 같아서({@code com.ticket.booking.order.domain.QOrder}) 여기 분석 대상에 그대로 들어온다.
  * 지금 규칙들은 "무엇을 참조하면 안 되는가" 형태라 Q-type이 걸리지 않는다. 이름 관례나 "public 필드 금지" 같은 규칙을 뒤에 추가한다면 Q-type을 먼저
  * 제외해야 한다.
  */

@@ -11,6 +11,8 @@ import com.ticket.booking.OrderStarted;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
 import com.ticket.booking.domain.hold.Hold;
+import com.ticket.booking.order.usecase.OrderHoldSnapshot;
+import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

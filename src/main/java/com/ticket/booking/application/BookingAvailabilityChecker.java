@@ -6,14 +6,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.domain.RequestedSeatIds;
-import com.ticket.booking.domain.order.OrderRepository;
-import com.ticket.booking.domain.order.OrderState;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderState;
 
 import lombok.RequiredArgsConstructor;
 

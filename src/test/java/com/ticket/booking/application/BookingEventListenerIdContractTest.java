@@ -27,6 +27,7 @@ import com.ticket.TicketApplication;
 import com.ticket.booking.domain.hold.Hold;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
+import com.ticket.booking.order.usecase.PendingOrderCreator;
 
 /**
  * Modulith listener id가 package 이동 뒤에도 옛 값으로 유지되는지 고정한다.

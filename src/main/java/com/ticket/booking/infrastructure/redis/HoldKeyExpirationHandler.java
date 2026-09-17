@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.application.usecase.ExpireOrderUseCase;
+import com.ticket.booking.order.usecase.ExpireOrderUseCase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

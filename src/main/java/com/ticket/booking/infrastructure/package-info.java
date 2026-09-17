@@ -5,7 +5,7 @@
  * querydsl}은 조회 port의 Querydsl 구현, {@code redis}는 hold·좌석 선점 저장과 분산락·키 만료 처리, {@code websocket}은
  * STOMP 배선과 좌석 상태 발행, {@code admission}은 입장 토큰 발급 설정과 검증이다.
  *
- * <p>root에 남은 {@link com.ticket.booking.infrastructure.OrderExpirationTrigger}는 어느 기술 묶음에도 속하지 않는
+ * <p>root에 남은 {@link com.ticket.booking.order.usecase.OrderExpirationTrigger}는 어느 기술 묶음에도 속하지 않는
  * 스케줄 배선 하나뿐이라 그것만을 위한 package를 만들지 않았다.
  */
 @NullMarked
