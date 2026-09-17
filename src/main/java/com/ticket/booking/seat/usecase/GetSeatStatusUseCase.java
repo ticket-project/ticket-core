@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.AdmissionGuard;
+import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;

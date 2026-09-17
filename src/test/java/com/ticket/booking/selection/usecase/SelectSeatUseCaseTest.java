@@ -22,8 +22,8 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.application.AdmissionGuard;
-import com.ticket.booking.application.port.AdmissionVerifier;
+import com.ticket.booking.admission.AdmissionGuard;
+import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PerformanceIsPastException;

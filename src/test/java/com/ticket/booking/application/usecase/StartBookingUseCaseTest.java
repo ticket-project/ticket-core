@@ -33,10 +33,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.application.AdmissionGuard;
+import com.ticket.booking.admission.AdmissionGuard;
+import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.application.BookingAvailabilityChecker;
 import com.ticket.booking.application.RecordingLockManager;
-import com.ticket.booking.application.port.AdmissionVerifier;
 import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;

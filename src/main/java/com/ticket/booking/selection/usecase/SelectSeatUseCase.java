@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.AdmissionGuard;
+import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;

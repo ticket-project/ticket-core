@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.admission;
+package com.ticket.booking.admission;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

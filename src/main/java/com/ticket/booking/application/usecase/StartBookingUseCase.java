@@ -9,7 +9,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.AdmissionGuard;
+import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.application.BookingAvailabilityChecker;
 import com.ticket.booking.application.concurrency.LockKey;
 import com.ticket.booking.application.concurrency.LockManager;
