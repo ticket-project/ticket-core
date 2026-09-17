@@ -43,7 +43,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowDetailQueryPort implements ShowDetailQueryPort {
+public class QuerydslShowDetailQueryAdapter implements ShowDetailQueryPort {
     private final JPAQueryFactory queryFactory;
     private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;

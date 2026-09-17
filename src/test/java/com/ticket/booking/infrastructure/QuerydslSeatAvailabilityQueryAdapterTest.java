@@ -21,10 +21,12 @@ import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
-/** booking local 조회만 검증한다. 등급·가격 조합은 show {@code QuerydslShowSeatMapQueryPort}가 소유하고 별도로 검증한다. */
-@Import(QuerydslSeatAvailabilityQueryPort.class)
+/**
+ * booking local 조회만 검증한다. 등급·가격 조합은 show {@code QuerydslShowSeatMapQueryAdapter}가 소유하고 별도로 검증한다.
+ */
+@Import(QuerydslSeatAvailabilityQueryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatAvailabilityQueryPortTest extends ReadRepositoryTestSupport {
+class QuerydslSeatAvailabilityQueryAdapterTest extends ReadRepositoryTestSupport {
     @Autowired private SeatAvailabilityQueryPort seatAvailabilityQueryPort;
     private Long performanceId;
     private Long seat1Id;

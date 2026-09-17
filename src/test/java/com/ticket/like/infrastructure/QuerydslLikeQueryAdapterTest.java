@@ -14,9 +14,9 @@ import com.ticket.member.domain.Member;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
-@Import(QuerydslLikeQueryPort.class)
+@Import(QuerydslLikeQueryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslLikeQueryPortTest extends InfraReadRepositoryTestSupport {
+class QuerydslLikeQueryAdapterTest extends InfraReadRepositoryTestSupport {
     @Autowired private LikeQueryPort likeQueryPort;
     private Long memberId;
     private Long showId1;

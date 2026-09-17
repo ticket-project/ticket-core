@@ -16,9 +16,9 @@ import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-@Import(QuerydslPerformanceQueryPort.class)
+@Import(QuerydslPerformanceQueryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslPerformanceQueryPortTest extends InfraReadRepositoryTestSupport {
+class QuerydslPerformanceQueryAdapterTest extends InfraReadRepositoryTestSupport {
     @Autowired private PerformanceQueryPort repository;
 
     @Test

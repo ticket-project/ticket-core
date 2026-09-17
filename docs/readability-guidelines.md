@@ -110,7 +110,7 @@ method를 먼저 검토한다. bean으로 만들 이유는 위 3의 목록에 �
 | 트랜잭션 없는 listener에서 lazy 연관을 읽어야 한다 | 별도 bean이 필요하다 — proxy가 없으면 초기화에 실패한다 |
 | 공개 계약 구현이 자기 연산마다 경계를 갖는다 | 그 구현이 직접 갖는다 — 밖에서 인터페이스로 부르므로 self-invocation이 아니다 |
 
-`SeatStateSnapshotReader`가 첫 줄에 해당해 사라졌고(`QuerydslSeatStateQueryPort`가 경계를 가져갔다),
+`SeatStateSnapshotReader`가 첫 줄에 해당해 사라졌고(`QuerydslSeatStateQueryAdapter`가 경계를 가져갔다),
 `SeatAvailabilitySnapshotReader`와 `OrderHoldSnapshotReader`는 둘째·셋째 줄에 해당해 남았다.
 `MemberAccountService`는 넷째 줄이라 협력자 셋을 흡수하면서 각 연산이 자기 `@Transactional`을 갖게 됐다.
 

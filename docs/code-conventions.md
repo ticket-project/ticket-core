@@ -57,7 +57,7 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 ## Component와 메서드
 
 - Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 계약은 `QueryPort`, 그 구현은 기술을
-  드러내는 이름(`QuerydslSeatStateQueryPort`)을 쓴다.
+  드러내는 이름(`QuerydslSeatStateQueryAdapter`)을 쓴다.
 - **조회 구현은 Spring Data method·`@Query`·Querydsl 중 그 조회를 가장 간단히 표현하는 것을**
   **고른다.** 동적 조건·복합 정렬·커서 페이징에는 Querydsl을 적극 쓰고, 단순 조회에까지 강제하지
   않는다. 판단 기준과 보존해야 할 query semantics는

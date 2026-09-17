@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class QuerydslVenueSummaryQueryPort implements VenueSummaryQueryPort {
+public class QuerydslVenueSummaryQueryAdapter implements VenueSummaryQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

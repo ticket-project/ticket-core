@@ -26,9 +26,9 @@ import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-@Import({QuerydslShowDetailQueryPort.class, ShowCardImagePathConverter.class})
+@Import({QuerydslShowDetailQueryAdapter.class, ShowCardImagePathConverter.class})
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslShowDetailQueryPortTest extends InfraReadRepositoryTestSupport {
+class QuerydslShowDetailQueryAdapterTest extends InfraReadRepositoryTestSupport {
     @Autowired private ShowDetailQueryPort showDetailQueryPort;
     private Long showId;
     private Long venueId;

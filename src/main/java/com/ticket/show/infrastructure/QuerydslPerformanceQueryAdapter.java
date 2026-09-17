@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceQueryPort implements PerformanceQueryPort {
+public class QuerydslPerformanceQueryAdapter implements PerformanceQueryPort {
     private final JPAQueryFactory queryFactory;
 
     @Override

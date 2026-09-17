@@ -50,7 +50,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowListQueryPort implements ShowListQueryPort {
+public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
     private final JPAQueryFactory queryFactory;
     private final QuerydslShowSortResolver sortResolver;
     private final QuerydslShowCursorConditionBuilder cursorConditionBuilder;

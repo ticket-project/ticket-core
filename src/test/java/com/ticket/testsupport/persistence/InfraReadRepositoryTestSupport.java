@@ -9,13 +9,13 @@ import com.ticket.show.infrastructure.QuerydslShowSortResolver;
 import com.ticket.show.infrastructure.SaleDisplayStatusPredicates;
 import com.ticket.venue.application.VenueLookupService;
 import com.ticket.venue.application.VenueSeatLookupService;
-import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryPort;
-import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
+import com.ticket.venue.infrastructure.QuerydslVenueSeatQueryAdapter;
+import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryAdapter;
 
 /**
  * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼를 빈으로 올린다.
  *
- * <p>{@code QuerydslShowListQueryPort}가 Region 검색 조건을 venueId로 바꾸기 위해 {@code VenueLookupApi}을
+ * <p>{@code QuerydslShowListQueryAdapter}가 Region 검색 조건을 venueId로 바꾸기 위해 {@code VenueLookupApi}을
  * 주입받으므로, venue module의 공개 계약 구현 4개도 여기서 함께 올린다 — 없으면 이 베이스를 쓰는 booking 테스트까지 컨텍스트 기동에
  * 실패한다(observed-failures 참고).
  */
@@ -24,9 +24,9 @@ import com.ticket.venue.infrastructure.QuerydslVenueSummaryQueryPort;
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
     VenueLookupService.class,
-    QuerydslVenueSummaryQueryPort.class,
+    QuerydslVenueSummaryQueryAdapter.class,
     VenueSeatLookupService.class,
-    QuerydslVenueSeatQueryPort.class,
+    QuerydslVenueSeatQueryAdapter.class,
     InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {
