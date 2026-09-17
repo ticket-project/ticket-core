@@ -32,6 +32,57 @@ public class GetOrderDetailUseCase {
     private final MemberLookupApi memberLookup;
     private final Clock clock;
 
+    public Output execute(final Input input) {
+        final List<OrderDetailRow> rows =
+                orderQueryPort.findDetailRows(input.orderKey(), input.memberId());
+        if (rows.isEmpty()) {
+            throw new OrderNotOwnedException(input.orderKey(), input.memberId());
+        }
+
+        final OrderDetailRow orderRow = rows.getFirst();
+        // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
+        // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
+        final MemberProfile member = memberLookup.getProfile(orderRow.memberId());
+
+        final LocalDateTime now = LocalDateTime.now(clock);
+        final List<TicketSeat> seats = rows.stream().map(this::toTicketSeat).toList();
+        final BigDecimal ticketAmount =
+                rows.stream()
+                        .map(OrderDetailRow::unitPrice)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        final long remainingSeconds =
+                OrderRemainingTime.seconds(orderRow.status(), orderRow.expiresAt(), now);
+
+        return new Output(
+                orderRow.orderKey(),
+                orderRow.status(),
+                orderRow.expiresAt(),
+                remainingSeconds,
+                new ShowInfo(orderRow.showTitleSnapshot()),
+                new PerformanceInfo(
+                        orderRow.performanceId(),
+                        orderRow.performanceStartAtSnapshot(),
+                        orderRow.venueNameSnapshot()),
+                new BookerInfo(member.memberId(), member.name(), member.email()),
+                new PriceInfo(
+                        ticketAmount,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        ticketAmount),
+                new TicketInfo(seats.size(), seats));
+    }
+
+    private TicketSeat toTicketSeat(final OrderDetailRow row) {
+        return new TicketSeat(
+                row.performanceSeatId(),
+                row.seatId(),
+                row.gradeCodeSnapshot(),
+                row.gradeNameSnapshot(),
+                row.seatLabelSnapshot(),
+                row.unitPrice());
+    }
+
     public record Input(String orderKey, Long memberId) {
         public Input {
             if (orderKey == null || orderKey.isBlank()) {
@@ -79,55 +130,4 @@ public class GetOrderDetailUseCase {
             String gradeName,
             String label,
             BigDecimal price) {}
-
-    public Output execute(final Input input) {
-        final List<OrderDetailRow> rows =
-                orderQueryPort.findDetailRows(input.orderKey(), input.memberId());
-        if (rows.isEmpty()) {
-            throw new OrderNotOwnedException(input.orderKey(), input.memberId());
-        }
-
-        final OrderDetailRow first = rows.getFirst();
-        // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
-        // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
-        final MemberProfile member = memberLookup.getProfile(first.memberId());
-
-        final LocalDateTime now = LocalDateTime.now(clock);
-        final List<TicketSeat> seats = rows.stream().map(this::toTicketSeat).toList();
-        final BigDecimal ticketAmount =
-                rows.stream()
-                        .map(OrderDetailRow::unitPrice)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-        final long remainingSeconds =
-                OrderRemainingTime.seconds(first.status(), first.expiresAt(), now);
-
-        return new Output(
-                first.orderKey(),
-                first.status(),
-                first.expiresAt(),
-                remainingSeconds,
-                new ShowInfo(first.showTitleSnapshot()),
-                new PerformanceInfo(
-                        first.performanceId(),
-                        first.performanceStartAtSnapshot(),
-                        first.venueNameSnapshot()),
-                new BookerInfo(member.memberId(), member.name(), member.email()),
-                new PriceInfo(
-                        ticketAmount,
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        ticketAmount),
-                new TicketInfo(seats.size(), seats));
-    }
-
-    private TicketSeat toTicketSeat(final OrderDetailRow row) {
-        return new TicketSeat(
-                row.performanceSeatId(),
-                row.seatId(),
-                row.gradeCodeSnapshot(),
-                row.gradeNameSnapshot(),
-                row.seatLabelSnapshot(),
-                row.unitPrice());
-    }
 }

@@ -19,9 +19,40 @@ public class RefreshAuthTokenUseCase {
     private final MemberAccountApi memberAccountOperations;
     private final AuthTokenIssuer authTokenIssuer;
 
+    public Result execute(final Input input) {
+        final Long memberId =
+                refreshTokenStore
+                        .validate(input.refreshToken())
+                        .orElseThrow(
+                                () -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
+        final MemberStatus member = memberAccountOperations.requireActiveIdentity(memberId);
+        final IssuedAuthTokens tokens =
+                authTokenIssuer.rotateTokens(
+                        member.memberId(), member.role(), input.refreshToken());
+        return toResult(tokens);
+    }
+
+    private static Result toResult(final IssuedAuthTokens tokens) {
+        return new Result(
+                new Output(
+                        tokens.accessToken(),
+                        tokens.tokenType(),
+                        tokens.expiresIn(),
+                        tokens.memberId()),
+                tokens.refreshToken(),
+                tokens.refreshTokenExpiresIn());
+    }
+
+    private static String redact(final String value) {
+        if (value == null) {
+            return "null";
+        }
+        return "[REDACTED]";
+    }
+
     public record Input(AuthRefreshToken refreshToken) {
         /** API 경계에서 받은 원문을 값 객체로 바꾼다. 컨트롤러가 도메인 타입을 알지 않아도 되고, 형식이 올바르지 않으면 이 지점에서 인증 오류로 걸린다. */
-        public static Input of(final String rawRefreshToken) {
+        public static Input from(final String rawRefreshToken) {
             return new Input(AuthRefreshToken.from(rawRefreshToken));
         }
     }
@@ -54,32 +85,5 @@ public class RefreshAuthTokenUseCase {
                     + refreshTokenExpiresIn
                     + ']';
         }
-    }
-
-    public Result execute(final Input input) {
-        final Long memberId =
-                refreshTokenStore
-                        .validate(input.refreshToken())
-                        .orElseThrow(
-                                () -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
-        final MemberStatus member = memberAccountOperations.requireActiveIdentity(memberId);
-        final IssuedAuthTokens result =
-                authTokenIssuer.rotateTokens(
-                        member.memberId(), member.role(), input.refreshToken());
-        return new Result(
-                new Output(
-                        result.accessToken(),
-                        result.tokenType(),
-                        result.expiresIn(),
-                        result.memberId()),
-                result.refreshToken(),
-                result.refreshTokenExpiresIn());
-    }
-
-    private static String redact(final String value) {
-        if (value == null) {
-            return "null";
-        }
-        return "[REDACTED]";
     }
 }
