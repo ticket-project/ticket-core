@@ -18,7 +18,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 
 import com.ticket.member.api.RawPassword;
-import com.ticket.member.application.PasswordHasher;
+import com.ticket.member.application.port.PasswordHasher;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.infrastructure.SpringSecurityPasswordHasher;
 import com.ticket.seed.support.AppSchema;
