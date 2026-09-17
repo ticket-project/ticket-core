@@ -34,15 +34,15 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
                 .isNotNull();
     }
 
-    /** 도메인 Repository는 포트이고 실제 빈은 infra 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */
+    /** 도메인 Repository는 포트이고 실제 빈은 저장 기술 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */
     @Test
-    void 도메인_Repository는_infra_어댑터로_구현된다() {
+    void 도메인_Repository는_저장_기술_어댑터로_구현된다() {
         assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository").getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+                .startsWith("com.ticket.booking.order.persistence.");
         assertThat(beanOf("com.ticket.booking.hold.domain.HoldStore").getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+                .startsWith("com.ticket.booking.hold.persistence.");
         assertThat(context.getBean(LockManager.class).getClass().getName())
-                .startsWith("com.ticket.booking.infrastructure.");
+                .startsWith("com.ticket.booking.concurrency.redis.");
     }
 
     /** bootstrap은 도메인을 컴파일 타임에 보지 않는다. 런타임 클래스패스에만 있으므로 이름으로 찾는다. */
