@@ -32,6 +32,8 @@ import com.ticket.booking.application.concurrency.LockKey;
 import com.ticket.booking.application.concurrency.LockManager;
 import com.ticket.booking.application.concurrency.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.selection.persistence.RedissonSeatSelectionStore;
+import com.ticket.booking.selection.persistence.SeatSelectionRedisKey;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RedisRefreshTokenStore;
 import com.ticket.security.token.UuidSupplier;

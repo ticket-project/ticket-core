@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.selection.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -10,7 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.application.SeatSelectionCoordinator;
+import com.ticket.booking.selection.usecase.SeatSelectionCoordinator;
 
 /**
  * 이 핸들러는 Redis key 해석과 호출만 한다. 현재 상태 확인과 알림 필요 여부 판단은 {@code SeatSelectionCoordinatorTest}가 고정한다.

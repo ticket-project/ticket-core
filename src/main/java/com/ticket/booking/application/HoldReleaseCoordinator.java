@@ -17,8 +17,9 @@ import com.ticket.booking.application.port.HoldReleaseProgressRecorder;
 import com.ticket.booking.application.port.SeatStatusEventPublisher;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
-import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.booking.selection.usecase.SeatSelectionCoordinator;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,4 +1,4 @@
-package com.ticket.booking.infrastructure.redis;
+package com.ticket.booking.selection.persistence;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.domain.selection.SeatSelectionStore;
+import com.ticket.booking.selection.domain.SeatSelectionStore;
 
 import lombok.RequiredArgsConstructor;
 

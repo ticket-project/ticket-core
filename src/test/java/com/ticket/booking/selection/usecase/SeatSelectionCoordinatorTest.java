@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.selection.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,16 +23,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.ticket.booking.application.RecordingLockManager;
 import com.ticket.booking.application.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.application.concurrency.LockKey;
 import com.ticket.booking.application.port.SeatStatusEventPublisher;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;
-import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

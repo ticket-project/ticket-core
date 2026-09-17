@@ -1,4 +1,4 @@
-package com.ticket.booking.application;
+package com.ticket.booking.selection.usecase;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -15,10 +15,10 @@ import com.ticket.booking.application.concurrency.LockOptions;
 import com.ticket.booking.application.port.SeatStatusEventPublisher;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
-import com.ticket.booking.domain.selection.SeatSelectionService;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
 

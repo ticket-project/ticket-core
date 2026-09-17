@@ -1,4 +1,4 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.usecase;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.booking.application.AdmissionGuard;
 import com.ticket.booking.application.PerformanceSaleFinder;
-import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.domain.salespolicy.PerformanceSalesPolicy;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
 import com.ticket.booking.domain.seat.PerformanceSeatState;

@@ -1,4 +1,4 @@
-package com.ticket.booking.endpoint;
+package com.ticket.booking.selection.endpoint;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -7,10 +7,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ticket.booking.application.usecase.DeselectAllSeatsUseCase;
-import com.ticket.booking.application.usecase.DeselectSeatUseCase;
-import com.ticket.booking.application.usecase.SelectSeatUseCase;
-import com.ticket.booking.endpoint.docs.SeatSelectionControllerDocs;
+import com.ticket.booking.selection.usecase.DeselectAllSeatsUseCase;
+import com.ticket.booking.selection.usecase.DeselectSeatUseCase;
+import com.ticket.booking.selection.usecase.SelectSeatUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 

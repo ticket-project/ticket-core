@@ -1,14 +1,13 @@
-package com.ticket.booking.application.usecase;
+package com.ticket.booking.selection.usecase;
 
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.application.SeatSelectionCoordinator;
 import com.ticket.booking.domain.seat.PerformanceSeat;
 import com.ticket.booking.domain.seat.PerformanceSeatRepository;
-import com.ticket.booking.domain.selection.SeatSelectionService;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
