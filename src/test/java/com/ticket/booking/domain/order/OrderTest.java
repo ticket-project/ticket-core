@@ -12,11 +12,10 @@ import org.junit.jupiter.api.Test;
 class OrderTest {
     @Test
     void 주문을_생성하면_pending_상태로_초기화된다() {
-        // given
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
-        // when
+
         Order order = createOrder(expiresAt);
-        // then
+
         assertThat(order.getMemberId()).isEqualTo(1L);
         assertThat(order.getPerformanceId()).isEqualTo(10L);
         assertThat(order.getOrderKey()).isEqualTo("order-key");
@@ -29,48 +28,43 @@ class OrderTest {
 
     @Test
     void pending_주문은_확정할_수_있다() {
-        // given
         LocalDateTime now = LocalDateTime.of(2026, 3, 15, 12, 0);
         Order order = createOrder(now.plusMinutes(10));
-        // when
+
         order.confirm(now);
-        // then
+
         assertThat(order.getStatus()).isEqualTo(OrderState.CONFIRMED);
         assertThat(order.getConfirmedAt()).isEqualTo(now);
     }
 
     @Test
     void pending_주문은_만료시각이_지나면_만료할_수_있다() {
-        // given
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime now = expiresAt.plusMinutes(1);
         Order order = createOrder(expiresAt);
-        // when
+
         order.expire(now);
-        // then
+
         assertThat(order.getStatus()).isEqualTo(OrderState.EXPIRED);
         assertThat(order.getExpiredAt()).isEqualTo(now);
     }
 
     @Test
     void pending_주문은_취소할_수_있다() {
-        // given
         LocalDateTime now = LocalDateTime.of(2026, 3, 15, 12, 0);
         Order order = createOrder(now.plusMinutes(10));
-        // when
+
         order.cancel(now);
-        // then
+
         assertThat(order.getStatus()).isEqualTo(OrderState.CANCELED);
         assertThat(order.getCanceledAt()).isEqualTo(now);
     }
 
     @Test
     void pending이_아닌_주문은_다시_전이할_수_없다() {
-        // given
         Order order = createOrder(LocalDateTime.of(2026, 3, 15, 12, 30));
         order.confirm(LocalDateTime.of(2026, 3, 15, 12, 0));
-        // when
-        // then
+
         assertThatThrownBy(() -> order.cancel(LocalDateTime.of(2026, 3, 15, 12, 5)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("currentStatus=CONFIRMED");
@@ -78,11 +72,9 @@ class OrderTest {
 
     @Test
     void 만료시각과_같거나_지나면_만료_처리_대상이다() {
-        // given
-        // when
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         Order order = createOrder(expiresAt);
-        // then
+
         assertThat(order.isExpirable(expiresAt.minusSeconds(1))).isFalse();
         assertThat(order.isExpirable(expiresAt)).isTrue();
         assertThat(order.isExpirable(expiresAt.plusSeconds(1))).isTrue();
@@ -90,16 +82,14 @@ class OrderTest {
 
     @Test
     void pending이_아니면_만료시각이_지나도_만료_처리_대상이_아니다() {
-        // given
-        // when
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         Order order = createOrder(expiresAt);
         order.confirm(expiresAt.minusMinutes(1));
-        // then
+
         assertThat(order.isExpirable(expiresAt.plusMinutes(1))).isFalse();
     }
 
-    /** 옛 구현은 시각을 보지 않아 아직 유효한 주문도 만료 경로로 들어오면 EXPIRED가 됐다. 사용자가 보고 있는 잔여 시간과 실제 상태가 어긋나는 지점이었다. */
+    /** 만료는 시각으로만 정해진다 — 만료 경로로 불렸다는 사실만으로는 아직 유효한 주문을 EXPIRED로 바꿀 수 없다. */
     @Test
     void 만료시각_전에는_만료할_수_없다() {
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
