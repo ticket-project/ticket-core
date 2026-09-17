@@ -27,9 +27,9 @@ import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.ShowLikeSummaryView;
-import com.ticket.show.application.ShowSummaryRow;
 import com.ticket.show.application.port.ShowSummaryBatchQueryPort;
+import com.ticket.show.application.query.ShowLikeSummaryView;
+import com.ticket.show.application.query.ShowSummaryRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 

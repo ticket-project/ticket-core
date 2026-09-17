@@ -8,9 +8,9 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowSearchCriteria;
-import com.ticket.show.application.ShowSort;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowSearchCriteria;
+import com.ticket.show.application.query.ShowSort;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 import com.ticket.venue.api.Region;

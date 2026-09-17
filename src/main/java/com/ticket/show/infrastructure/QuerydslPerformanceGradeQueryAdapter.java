@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.application.PerformanceGradeView;
 import com.ticket.show.application.port.PerformanceGradeQueryPort;
+import com.ticket.show.application.query.PerformanceGradeView;
 
 import lombok.RequiredArgsConstructor;
 

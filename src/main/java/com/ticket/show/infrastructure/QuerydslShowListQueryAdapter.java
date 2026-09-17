@@ -27,17 +27,17 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
-import com.ticket.show.application.LatestShowRow;
-import com.ticket.show.application.SaleOpeningSoonDetailRow;
-import com.ticket.show.application.SaleOpeningSoonSearchParam;
-import com.ticket.show.application.SaleOpeningSoonSummaryRow;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowListItemRow;
-import com.ticket.show.application.ShowListParam;
-import com.ticket.show.application.ShowSearchCriteria;
-import com.ticket.show.application.ShowSearchItemRow;
-import com.ticket.show.application.ShowSort;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.LatestShowRow;
+import com.ticket.show.application.query.SaleOpeningSoonDetailRow;
+import com.ticket.show.application.query.SaleOpeningSoonSearchParam;
+import com.ticket.show.application.query.SaleOpeningSoonSummaryRow;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowListItemRow;
+import com.ticket.show.application.query.ShowListParam;
+import com.ticket.show.application.query.ShowSearchCriteria;
+import com.ticket.show.application.query.ShowSearchItemRow;
+import com.ticket.show.application.query.ShowSort;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.infrastructure.QuerydslShowSortResolver.SortOrder;
@@ -257,7 +257,8 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
     }
 
     /**
-     * 지역 조건은 application이 이미 venueId로 해석해 넘긴다({@link com.ticket.show.application.RegionVenueIds}).
+     * 지역 조건은 application이 이미 venueId로 해석해 넘긴다({@link
+     * com.ticket.show.application.query.RegionVenueIds}).
      *
      * <p><b>{@code null}과 빈 집합을 같게 다루면 안 된다.</b> null은 지역 조건이 없다는 뜻이라 조건을 걸지 않고, 공연장이 없는 공연까지 전부
      * 나온다. 빈 집합은 조건은 있는데 그 지역에 공연장이 없다는 뜻이고, Querydsl이 {@code in(빈 컬렉션)}을 거짓 조건으로 직렬화해 결과가 0건이 된다 —

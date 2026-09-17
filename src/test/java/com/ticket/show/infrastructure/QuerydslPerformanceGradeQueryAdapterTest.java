@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import com.ticket.show.application.PerformanceGradeView;
 import com.ticket.show.application.port.PerformanceGradeQueryPort;
+import com.ticket.show.application.query.PerformanceGradeView;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;

@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.application.PerformanceSummaryView;
 import com.ticket.show.application.port.PerformanceQueryPort;
+import com.ticket.show.application.query.PerformanceSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;

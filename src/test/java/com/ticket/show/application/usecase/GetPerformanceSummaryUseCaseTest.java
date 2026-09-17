@@ -14,8 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.application.PerformanceSummaryView;
 import com.ticket.show.application.port.PerformanceQueryPort;
+import com.ticket.show.application.query.PerformanceSummaryView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;

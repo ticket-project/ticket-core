@@ -9,8 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.application.PerformanceSummaryView;
 import com.ticket.show.application.port.PerformanceQueryPort;
+import com.ticket.show.application.query.PerformanceSummaryView;
 
 import lombok.RequiredArgsConstructor;
 

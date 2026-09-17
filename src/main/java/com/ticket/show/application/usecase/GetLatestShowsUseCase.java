@@ -5,10 +5,10 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.show.application.LatestShowRow;
-import com.ticket.show.application.ShowSummaryView;
-import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.LatestShowRow;
+import com.ticket.show.application.query.ShowSummaryView;
+import com.ticket.show.application.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;

@@ -8,14 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.RegionVenueIds;
-import com.ticket.show.application.SaleOpeningSoonDetailRow;
-import com.ticket.show.application.SaleOpeningSoonDetailView;
-import com.ticket.show.application.SaleOpeningSoonSearchParam;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowSort;
-import com.ticket.show.application.VenueDisplays;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.RegionVenueIds;
+import com.ticket.show.application.query.SaleOpeningSoonDetailRow;
+import com.ticket.show.application.query.SaleOpeningSoonDetailView;
+import com.ticket.show.application.query.SaleOpeningSoonSearchParam;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowSort;
+import com.ticket.show.application.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;

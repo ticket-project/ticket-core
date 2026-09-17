@@ -10,8 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.show.application.ShowSearchCriteria;
 import com.ticket.show.application.port.ShowListQueryPort;
+import com.ticket.show.application.query.ShowSearchCriteria;
 import com.ticket.venue.api.VenueLookupApi;
 
 @ExtendWith(MockitoExtension.class)

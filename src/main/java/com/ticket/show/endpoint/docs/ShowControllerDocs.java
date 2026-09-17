@@ -6,9 +6,9 @@ import org.springdoc.core.annotations.ParameterObject;
 
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
-import com.ticket.show.application.SaleOpeningSoonDetailView;
-import com.ticket.show.application.ShowListItemView;
-import com.ticket.show.application.ShowSearchItemView;
+import com.ticket.show.application.query.SaleOpeningSoonDetailView;
+import com.ticket.show.application.query.ShowListItemView;
+import com.ticket.show.application.query.ShowSearchItemView;
 import com.ticket.show.application.usecase.CountSearchShowsUseCase;
 import com.ticket.show.application.usecase.GetLatestShowsUseCase;
 import com.ticket.show.application.usecase.GetSaleOpeningSoonShowsUseCase;

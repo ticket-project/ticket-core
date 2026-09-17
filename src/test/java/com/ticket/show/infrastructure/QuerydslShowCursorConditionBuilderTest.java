@@ -17,8 +17,8 @@ import org.springframework.data.domain.Sort;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.application.ShowCursor;
-import com.ticket.show.application.ShowSort;
+import com.ticket.show.application.query.ShowCursor;
+import com.ticket.show.application.query.ShowSort;
 import com.ticket.show.domain.show.QShow;
 
 @SuppressWarnings("NonAsciiCharacters")
