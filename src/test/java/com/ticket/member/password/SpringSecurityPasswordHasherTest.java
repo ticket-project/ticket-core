@@ -1,4 +1,4 @@
-package com.ticket.member.infrastructure;
+package com.ticket.member.password;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;

@@ -1,4 +1,4 @@
-package com.ticket.member.infrastructure;
+package com.ticket.member.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

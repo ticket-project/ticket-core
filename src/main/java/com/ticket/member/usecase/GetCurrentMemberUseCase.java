@@ -1,4 +1,4 @@
-package com.ticket.member.application.usecase;
+package com.ticket.member.usecase;
 
 import org.springframework.stereotype.Service;
 
