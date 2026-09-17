@@ -158,37 +158,138 @@ like를 모른다 — `show.application`의 조회 use case가 like의 공개 �
 
 물리적으로 별도 Gradle 모듈이 아니라 `<module>` 아래의 패키지일 뿐이다.
 
-| 하위 패키지 | 담는 것 |
+**배치의 기준은 하나다 — 작은 모듈은 역할을 바로 보여주고, 큰 모듈은 업무를 먼저 보여준다.**
+모든 모듈을 같은 모양으로 만들지 않는다. 폴더 깊이는 코드 규모와 책임 복잡도에 비례한다.
+
+### 역할 이름
+
+| 역할 폴더 | 담는 것 |
 | --- | --- |
 | `api` | 다른 module에 공개하는 계약(interface + record snapshot + enum). `@NamedInterface("api")` |
-| `endpoint` | Controller, 요청/응답 DTO, HTTP 커서 문자열 |
-| `application` | use case, 트랜잭션 경계, 조회 포트와 결과 view, 분산락·이벤트 발행·외부 provider 등 출력 포트 |
+| `endpoint` | Controller, 요청 DTO, OpenAPI 문서 interface, HTTP 커서 문자열 |
+| `usecase` | 요청 단위 use case와 그 조립 서비스, 트랜잭션 경계 |
+| `event` | 커밋 이후 후속 처리 조율(`booking`에만 있다) |
+| `query` | 조회 계약(`*QueryPort`)과 그 읽기 모델(`*Row`/`*View`/`*Param`) |
+| `port` | 조회가 아닌 출력 계약(발행·외부 provider) |
 | `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
-| `infrastructure` | Repository 어댑터, Querydsl 조회, Redis/Redisson, WebSocket publisher, 외부 HTTP client |
+| `persistence` | Repository 어댑터, Spring Data 인터페이스, Querydsl 조회, Redis/Redisson 저장 구현 |
 | `exception` | `<Module>ErrorCode`, 예외 클래스, `handler` |
 
-**모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
+**역할 폴더는 템플릿이 아니다.** 실제 파일과 책임이 있을 때만 만든다 — `payment`에는 지금
+`domain`과 `persistence`뿐이고, `venue`에는 `endpoint`도 `exception`도 없다.
 
-**패키지 구조는 모듈 → 계층이다.** 업무 모듈 여섯(`booking`/`member`/`show`/`venue`/`like`/
-`payment`)은 모듈 root 바로 아래에 위 계층 표의 `api`/`endpoint`/`application`/`domain`/`infrastructure`를
-둔다 — `booking.application.usecase.StartBookingUseCase`,
-`show.infrastructure.QuerydslShowListQueryAdapter`처럼 읽는다.
+**`Repository`와 `persistence`는 다른 것을 뜻한다.** `Repository`는 Aggregate 저장·복원 *계약*이라
+`domain`이 소유하고(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`),
+`persistence`는 JPA·Spring Data·Querydsl·Redis 같은 실제 저장 *기술*이다
+(`member.persistence.MemberRepositoryAdapter`). 계약을 `persistence`로 옮기지 않는다.
 
-**업무별 폴더는 `domain` 아래에만 둔다.** `application`/`infrastructure`/`endpoint` 아래에는
-`application.order`, `infrastructure.seat` 같은 업무 분류를 다시 만들지 않는다. 그 계층에서
-"무엇에 관한 코드인가"는 폴더가 아니라 클래스 이름이 말한다(`StartBookingUseCase`,
-`OrderRepositoryAdapter`, `SeatSelectionController`). 폴더를 둘 축(계층·업무)으로 나누면 파일
-하나를 찾는 데 두 번 판단해야 하고, 여러 업무를 조립하는 코드가 어느 폴더에도 맞지 않는다.
+`XXXPort`는 계약, `XXXAdapter`는 그 구현이다. 규모가 작아도 이 둘은 다른 package에 둔다 —
+같은 package에 있으면 use case가 구현을 직접 부르는 것을 규칙으로 막을 수 없다.
+
+### 작은/중간 모듈 — 역할을 모듈 바로 아래에 둔다
+
+`member`·`like`·`venue`·`payment`·`show`는 모듈 root 바로 아래에 역할 폴더를 둔다.
+
+```text
+member                 like                venue               payment       show
+├─ api                 ├─ api              ├─ api              ├─ domain     ├─ api
+├─ usecase             ├─ usecase          ├─ usecase          └─ persistence├─ usecase
+├─ domain              ├─ query            ├─ query                          ├─ query
+├─ password            ├─ domain           ├─ domain                         ├─ domain
+├─ persistence         ├─ persistence      └─ persistence                    ├─ persistence
+├─ endpoint            ├─ endpoint                                           │  └─ querydsl
+└─ exception           └─ exception                                          ├─ endpoint
+                                                                             └─ exception
+```
+
+`member.password`는 계약(`PasswordHasher`)과 Spring Security 구현, bean 설정을 한 묶음으로 둔
+작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다.
+
+`show.persistence.querydsl`은 Querydsl 어댑터와 그 어댑터들이 package-private으로 공유하는
+조건·정렬 helper를 함께 둔다. 기술 응집도가 높고 파일이 많아 한 단계를 허용한 예외다.
+
+### booking — 업무(capability)를 먼저 보여준다
+
+`booking`은 하나의 기능이 아니라 여러 관련 업무의 묶음이다. 그래서 모듈 바로 아래가 capability다.
+
+```text
+booking
+├─ OrderStarted / OrderTerminated   ← 공개 이벤트(FQCN이 DB에 저장된 값이라 root 고정)
+├─ usecase        여러 capability를 조율하는 module 전체 workflow
+├─ endpoint       그 workflow의 HTTP 진입점
+├─ event          커밋 이후 후속 처리 조율 (+ event.persistence)
+├─ exception      module 전체 error code와 handler
+├─ domain         여러 capability가 함께 쓰는 감사 기반 타입과 요청 값
+├─ concurrency    분산락 계약 (+ concurrency.redis 구현)
+├─ redis          Redis 키 만료 수신 배선
+├─ websocket      STOMP 배선과 좌석 상태 발행 구현
+│
+├─ order          domain · usecase · query · persistence · endpoint
+├─ hold           domain · persistence
+├─ selection      domain · usecase · persistence · endpoint
+├─ seat           domain · usecase · query · port · persistence · endpoint
+├─ salespolicy    domain · usecase · persistence · endpoint
+├─ ticket         domain · persistence
+└─ admission      (flat — 파일 일곱이 서로만 부른다)
+```
+
+package tree만 보고 답할 수 있어야 한다 — 주문은 `booking.order`, 선점은 `booking.hold`, 좌석
+선택은 `booking.selection`, 대기열 입장 검증은 `booking.admission`, 판매 정책은
+`booking.salespolicy`, 판매 좌석과 잔여는 `booking.seat`다.
+
+**`booking` 하위 capability는 Spring Modulith Application Module이 아니다.** `@ApplicationModule`도
+`@NamedInterface`도 붙이지 않고, capability 사이에 module API를 만들지 않는다. 최상위 Application
+Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`security`/`shared`) 그대로다.
+
+**여러 capability를 조율하는 코드는 capability에 억지로 넣지 않는다.** 판단 기준은 "어떤 상태를
+저장하는가"가 아니라 **"어떤 workflow의 결과를 책임지는가"**다.
+
+- `StartBookingUseCase`는 정책·입장·회원·좌석·선점·주문·보상을 함께 조율하므로 `booking.usecase`다.
+- `HoldCreationCoordinator`/`HoldReleaseCoordinator`는 이름에 Hold가 있지만 책임지는 결과가
+  "주문 이벤트가 끝까지 처리됐는가"라 `booking.hold`가 아니라 `booking.event`다.
+- `SeatSelectionCoordinator`는 선점 충돌 확인과 좌석 상태 발행까지 하지만 책임지는 결과가 선택
+  상태라 `booking.selection.usecase`다.
+- `OrderHoldHistoryRecorder`는 "주문이 선점 이력을 어떻게 남기는가"의 조립이고 호출자가 모두 주문
+  트랜잭션 안이라 `booking.order.usecase`다.
+
+### 깊이와 금지
+
+- 일반적인 최대 구조는 **모듈 → capability → 역할**이다(`booking.order.persistence`).
+  `booking.order.persistence.jpa.repository.adapter`처럼 깊게 만들지 않는다. 기술 응집도가 높고
+  파일이 많은 `show.persistence.querydsl`·`booking.concurrency.redis` 정도가 허용 범위다.
+- **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
+  그 타입의 소유 capability나 실제 역할을 먼저 정한다. 여러 업무가 함께 쓰는 기반도 그 역할이
+  받는다 — 락 계약은 `booking.concurrency`, 감사 기반 타입과 요청 좌석 값은 `booking.domain`이다.
+- **모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
+  `booking.OrderStarted`/`OrderTerminated`만 예외이며 그 이유는 `booking` package-info가 원본이다.
+- 여러 업무를 호출하는 Controller는 쪼개지 않는다. 폴더를 맞추려고 HTTP 계약을 바꾸지 않는다.
+- `exception`은 모듈 바로 아래 하나다. 배치 기준은 [아래 오류 처리](#오류-처리) 절과
+  [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다.
+
+### security와 shared
+
+**`security`만 역할 대신 기능으로 나눈다.** 여기 있는 것은 업무가 아니라 인증 기술이라 "무엇에
+관한 코드인가"가 더 나은 탐색 단위다. `auth`(가입·로그인·갱신·로그아웃·탈퇴 조립과 인증
+Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain·handler·provider 통신·응답
+해석·인증 코드·외부 unlink), `token`(토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성
+기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이며, **각 폴더
+안에 역할 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
+하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
+
+`shared`는 공개 계약을 `api`/`web`/`exception` 세 named interface에 나눠 두고, 실행 배선·설정 구현은
+`shared.infrastructure`에 둔다. 업무 모듈에서 갈 곳이 애매한 타입을 `shared`로 보내지 않는다.
+
+### domain 아래 묶음
 
 | 모듈 | `domain` 아래 묶음 |
 | --- | --- |
-| `booking` | `order`(Order와 자식 OrderSeat) · `hold` · `selection` · `seat` · `salespolicy` · `ticket` |
+| `booking` | capability마다 자기 `domain`을 갖는다(`order`/`hold`/`selection`/`seat`/`salespolicy`/`ticket`). 여러 capability가 함께 쓰는 기반 타입만 `booking.domain` 직속이다 |
 | `show` | `show`(Show와 판매 표시 규칙) · `performance`(Performance와 허용된 PerformanceGrade 연관) · 나머지(Grade·Category·Genre·Performer와 저장 계약)는 `domain` 직속 |
 | `member` | 단일 Member Aggregate 중심이라 `domain` 직속 |
 | `venue` · `like` · `payment` | `domain` 직속 |
 
-`domain` 묶음은 **Aggregate와 일대일이 아니다.** `booking.domain.hold`와
-`booking.domain.selection`은 Redis 상태와 그 규칙의 묶음이고, hold 이력처럼 같은 묶음에 있는
+`domain` 묶음은 **Aggregate와 일대일이 아니다.** `booking.hold.domain`과
+`booking.selection.domain`은 Redis 상태와 그 규칙의 묶음이고, hold 이력처럼 같은 묶음에 있는
 별도 영속 모델도 자기 Aggregate 경계를 그대로 유지한다. 작은 독립 모델마다 폴더를 더 만들지
 않는다 — 실제 Aggregate 경계는 `com.ticket.AggregateAssociationTest`가 강제한다.
 
@@ -197,65 +298,28 @@ like를 모른다 — `show.application`의 조회 use case가 like의 공개 �
 `booking.domain.RequestedSeatIds`가 그렇다. 이를 이유로 모든 BC의 감사 기반 타입을 `shared`로
 합치지 않는다.
 
-**모듈 안의 별도 `common` 패키지는 두지 않는다.** 여러 업무가 함께 쓰는 기반도 그 역할의 계층이
-받는다 — 락 계약은 `booking.application`, 감사 기반 타입과 요청 좌석 값은 `booking.domain`,
-Redisson 락 구현과 Redis 만료 수신 배선은 `booking.infrastructure`다. `common`이나 `support`
-같은 이름은 "계층을 정하기 어려운 것"을 모으는 자리가 되어, 시간이 지나면 무엇이든 들어간다.
+### 포트 소유
 
-**`security`만 계층 대신 기능으로 나눈다.** 여기 있는 것은 업무가 아니라 인증 기술이라 "무엇에
-관한 코드인가"가 더 나은 탐색 단위다. `auth`(가입·로그인·갱신·로그아웃·탈퇴 조립과 인증
-Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain·handler·provider 통신·응답
-해석·인증 코드·외부 unlink), `token`(토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성
-기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이며, **각 폴더
-안에 계층 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
-하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
-
-`shared`는 공개 계약을 `api`/`web`/`exception` 세 named interface에 나눠 두고, 실행 배선·설정 구현은
-`shared.infrastructure`에 둔다.
-
-배치 규칙:
-
-- **실제로 필요한 계층만** 만든다. 코드가 없는 `endpoint`/`application`은 미리 만들지 않는다
-  (`payment`에는 지금 `domain`과 `infrastructure`뿐이다).
-- `application.port`/`application.usecase`, `endpoint`의 `request`/`docs`, `exception`의 `handler`는
-  그대로 유효한 역할별 하위 폴더다. 여기에 더해 계층 목록이 너무 길어진 모듈만 역할·기술 기준으로 한
-  단계 더 나눈다 — `show`·`booking`의 `application.query`(조회 읽기 모델), `booking`의
-  `application.concurrency`(분산락 계약), `show`의 `infrastructure.persistence`/`querydsl`,
-  `booking`의 `infrastructure.persistence`/`querydsl`/`redis`/`websocket`/`admission`이다. 업무
-  분류가 아니라 역할·기술이라 아래 "업무별 폴더는 `domain` 아래에만" 규칙과 충돌하지 않는다.
-  `member`·`like`·`venue`·`payment`는 목록이 짧아 나누지 않는다. `infrastructure` 아래는 한 단계까지다.
-- `exception`은 모듈 바로 아래 하나다. 실제 배치 기준은 [아래 오류 처리](#오류-처리) 절과
-  [ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)이 원본이다(ADR 0002가 정한
-  "모듈이 자기 오류를 소유한다"는 원칙 자체는 그대로다).
-- 여러 업무를 조립하는 코드는 **결과를 책임지는 계층**에 둔다. 주문이 좌석·hold·정책을 엮는
-  조립도, 주문 모델을 선점 이력으로 바꾸는 변환도 `application`이다 — `domain` 밖으로 나가야 할
-  조립을 `domain`에 남기지 않는다.
-- Controller 하나가 여러 업무를 호출하는 것은 허용한다. 폴더를 맞추려고 endpoint나 Controller를
-  쪼개지 않는다.
-- **모듈 root = cross-module 공개 계약**이라는 규칙은 그대로다. 구현 클래스, JPA entity,
-  Repository는 root에 두지 않는다.
-
-**`application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.** use case가 조립에 쓰는
-서비스·헬퍼는 여기 두지 않고 `application` 바로 아래에 둔다 — use case가 진입점이라는 것만 폴더로
-드러내고, 그 진입점이 무엇을 조립해 쓰는지는 여전히 `application` 목록에서 바로 보이게 하기
-위해서다. 출력 계약은 `application.port`, 조회 읽기 모델은 (그 수가 실행 코드를 덮는 `show`·
-`booking`에 한해) `application.query`다.
+**`usecase`에는 `*UseCase`만 두지 않는다.** use case가 조립에 쓰는 서비스·헬퍼도 같은 package에
+둔다 — 주문 생성과 그 조립 helper가 한 목록에서 읽혀야 트랜잭션 원자성이 어디서 보장되는지 보인다.
+조회 계약과 읽기 모델은 `query`, 발행 같은 출력 계약은 `port`다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
 | 계약의 성격 | 소유 위치 |
 | --- | --- |
 | aggregate 저장·복원과 업무 명령에 필요한 조회 | `domain` |
-| 화면 조회·검색·집계 결과 | `application` |
-| 분산락, 토큰, 외부 provider, publisher/client | `application` |
+| 화면 조회·검색·집계 결과 | `query` |
+| 분산락 | `booking.concurrency` |
+| 발행·외부 provider·client | `port`(없으면 그 기능을 정의하는 package) |
 | HTTP 입력·출력 계약 | `endpoint` |
-| JPA, Querydsl, Redis, Redisson, JWT 구현 | `infrastructure` |
+| JPA, Querydsl, Redis, Redisson, JWT 구현 | `persistence`(또는 그 기술을 소유한 기능 package) |
 
 기능은 클래스 이름 접두사로 드러낸다(`ShowRepository`, `PerformanceGrade`, `PendingOrderCreator` 등).
-`model`/`repository`/`store`/`command`는 더 이상 하위 패키지가 아니라 **명명 관용**이다 —
+`model`/`repository`/`store`/`command`는 하위 패키지가 아니라 **명명 관용**이다 —
 Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계약(옛 `store`), 상태 변경
 use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회
-포트(옛 `query`)는 아래 "Repository와 Query Port" 절이 별도로 다룬다.
+포트는 아래 "Repository와 Query Port" 절이 별도로 다룬다.
 
 Querydsl 조회 구현은 `Querydsl` 접두사(`QuerydslShowListQueryAdapter implements
 ShowListQueryPort`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는 Spring
@@ -264,6 +328,8 @@ projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서
 저장소 조회 한 행, `Output`은 use case 반환값, `Param`/`Criteria`/`Event`/`Request`는 각각 조회
 조건 구성값/검색 조건/발생한 사실/외부 입력이다. **조회 전용 `...View` 타입에 비즈니스 로직을
 두지 않는다** — 판정은 별도 validator/policy가 맡는다.
+
+배경은 [ADR 0016](adr/0016-capability-first-layout-inside-modules.md)이다.
 
 ## Repository와 Query Port
 
@@ -460,7 +526,7 @@ one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈�
 key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가
 원본이다.
 
-분산락은 `com.ticket.booking.application.concurrency.LockManager` 같은 명시적 포트 호출로 처리한다.
+분산락은 `com.ticket.booking.concurrency.LockManager` 같은 명시적 포트 호출로 처리한다.
 어노테이션과 SpEL로 감추지 않는다. 포트·구현 클래스 목록은
 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)가, 락 순서·임계
 구역 같은 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가 원본이다.

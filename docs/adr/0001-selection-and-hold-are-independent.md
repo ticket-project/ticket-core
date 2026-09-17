@@ -1,9 +1,9 @@
 # Selection과 Hold를 독립으로 둔다
 
 > **구현 참조 갱신(2026-09-15):** `HoldSeatAvailabilityValidator`는
-> `com.ticket.booking.application.BookingAvailabilityChecker`로 흡수됐고, 주문 생성은
-> `com.ticket.booking.application.usecase.StartBookingUseCase` +
-> `com.ticket.booking.application.PendingOrderCreator`가 담당한다. Selection과 Hold를 독립으로
+> `com.ticket.booking.usecase.BookingAvailabilityChecker`로 흡수됐고, 주문 생성은
+> `com.ticket.booking.usecase.StartBookingUseCase` +
+> `com.ticket.booking.order.usecase.PendingOrderCreator`가 담당한다. Selection과 Hold를 독립으로
 > 둔다는 결정 자체는 그대로다.
 
 > **구현 참조 갱신(2026-09-02):** 아래 본문의 업무 결정 자체는 바뀌지 않았다. 다만 예시로 든

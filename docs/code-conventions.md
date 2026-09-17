@@ -6,41 +6,46 @@
 
 ## 패키지와 역할
 
-업무 코드는 `com.ticket.<module>.<layer>` 순서로 둔다. 예를 들어
-`booking.application.usecase.StartBookingUseCase`, `show.infrastructure.ShowRepositoryAdapter`,
-`member.endpoint.MemberController`처럼 읽는다. `api`는 다른 module에 공개하는 계약,
-`endpoint`는 HTTP 진입점, `application`은 use case와 조합, `domain`은 상태와 업무 규칙,
-`infrastructure`는 DB·Redis·외부 client 구현을 소유한다.
+업무 코드의 배치 기준은 하나다 — **작은 모듈은 역할을 바로 보여주고, 큰 모듈은 업무를 먼저
+보여준다.** 모든 모듈을 같은 모양으로 만들지 않는다.
 
-**업무별 폴더는 `domain` 아래에만 둔다.** `application.order`, `infrastructure.seat`,
-`endpoint.selection` 같은 분류를 만들지 않는다. 그 계층에서 "무엇에 관한 코드인가"는 폴더가 아니라
-클래스 이름이 말한다. `domain` 아래 묶음은 함께 읽히는 도메인 모델의 묶음이며 Aggregate와
-일대일이 아니다 — 실제 경계는 `AggregateAssociationTest`가 강제한다.
+작은/중간 모듈은 `com.ticket.<module>.<role>`이다 — `member.usecase.MemberAccountService`,
+`show.persistence.ShowRepositoryAdapter`, `member.endpoint.MemberController`처럼 읽는다.
+`booking`만 `com.ticket.booking.<capability>.<role>`이다 —
+`booking.order.usecase.CancelOrderUseCase`, `booking.selection.persistence.RedissonSeatSelectionStore`.
 
-하위 폴더는 업무가 아니라 **역할이나 기술 책임**을 말할 때만 만든다. `application.usecase`,
-`application.port`, `endpoint.request`, `endpoint.docs`, `exception.handler`가 모든 모듈에서 같은 뜻인
-역할 폴더다. `application.usecase`에는 `*UseCase`로 끝나는 클래스만 둔다.
+역할 이름은 모든 모듈에서 같은 뜻이다. `api`는 다른 module에 공개하는 계약, `endpoint`는 HTTP
+진입점, `usecase`는 요청 단위 조립과 트랜잭션 경계, `query`는 조회 계약과 읽기 모델, `port`는
+조회가 아닌 출력 계약, `domain`은 상태와 업무 규칙, `persistence`는 DB·Redis 구현이다.
 
-여기에 더해, 한 계층의 파일 수가 그 계층 목록만으로 무엇이 무엇인지 알 수 없을 만큼 많아지면 한 단계
-더 나눈다 — 조회 읽기 모델은 `application.query`(`show`, `booking`), 분산락 계약은
-`application.concurrency`(`booking`), 저장 기술은 `infrastructure.persistence`/`querydsl`/`redis`/
-`websocket`/`admission`(`show`, `booking`)이다. **모든 모듈을 같은 모양으로 만들지 않는다.** `member`·
-`like`·`venue`·`payment`는 계층 목록이 짧아 평평한 편이 더 잘 읽히므로 나누지 않는다. 판단 기준은
-하나다 — 폴더가 실제로 찾는 시간을 줄이는가. 파일 하나를 넣기 위한 폴더는 만들지 않는다
-(`member.application.port`만 예외다. `port`는 모든 모듈에서 같은 자리를 뜻하는 역할 이름이라
-"이 모듈이 밖에 요구하는 것"을 모듈마다 다른 곳에서 찾게 하지 않는다).
+**역할 폴더는 템플릿이 아니다.** 실제 파일과 책임이 있을 때만 만든다 — `payment`에는 `domain`과
+`persistence`뿐이고, `venue`에는 `endpoint`가 없다. 미래를 예상해 빈 폴더를 만들지 않는다.
 
-`infrastructure` 아래는 한 단계까지다. `infrastructure/persistence/jpa/repository/adapter`처럼
-깊어지면 탐색이 아니라 다이어그램이 된다.
+**`Repository`는 계약이고 `persistence`는 기술이다.** Aggregate 저장·복원 계약은 `domain`이
+소유한다(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`). `persistence`에는
+그 계약을 만족시키는 구현만 둔다(`member.persistence.MemberRepositoryAdapter`). `XXXPort`는 계약,
+`XXXAdapter`는 구현이며 규모가 작아도 둘을 다른 package에 둔다.
 
-**모듈 안에 `common`·`support` 같은 패키지를 만들지 않는다.** 여러 업무가 함께 쓰는 기반도 그
-역할의 계층이 받는다 — 계약은 `application`, 도메인 기반 타입과 값은 `domain`
-(`show.domain.ShowAuditedEntity`, `booking.domain.BookingAuditedEntity`), 기술 구현은
-`infrastructure`다. 계층을 정하기 어렵다는 이유로 중립적인 이름의 폴더에 모으면, 시간이 지나며
-그 폴더가 무엇이든 받는다.
+**폴더 깊이는 규모에 비례한다.** 일반적인 최대는 모듈 → capability → 역할이다
+(`booking.order.persistence`). 기술 응집도가 높고 파일이 많을 때만 한 단계를 더
+쓴다(`show.persistence.querydsl`, `booking.concurrency.redis`). 파일이 적고 서로만 부르는 묶음은
+평평하게 둔다(`booking.admission` 일곱 파일, `member.password` 세 파일).
 
-**`security`만 예외로 계층 대신 기능으로 나눈다** — `auth`/`jwt`/`oauth`/`token`/`http`이고 각
-폴더 안에 계층 폴더를 다시 만들지 않는다. 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더
+**모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
+그 타입의 소유 capability나 실제 역할을 먼저 판단한다. 여러 업무가 함께 쓰는 기반도 그 역할이
+받는다 — 락 계약은 `booking.concurrency`, 도메인 기반 타입과 값은 `domain`
+(`show.domain.ShowAuditedEntity`, `booking.domain.BookingAuditedEntity`)이다.
+
+**`booking` 하위 capability는 Spring Modulith Application Module이 아니다.** `@ApplicationModule`도
+`@NamedInterface`도 붙이지 않고 capability 사이에 module API를 만들지 않는다. 최상위 Application
+Module은 여덟 개 그대로다.
+
+**여러 capability를 조율하는 코드는 capability에 억지로 넣지 않는다.** 판단 기준은 "어떤 상태를
+저장하는가"가 아니라 "어떤 workflow의 결과를 책임지는가"다. `StartBookingUseCase`는
+`booking.usecase`, `HoldReleaseCoordinator`는 (이름과 달리) `booking.event`다.
+
+**`security`만 역할 대신 기능으로 나눈다** — `auth`/`jwt`/`oauth`/`token`/`http`이고 각
+폴더 안에 역할 폴더를 다시 만들지 않는다. 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더
 나은 탐색 단위이기 때문이다. `security.http`는 controller 패키지가 아니라 HTTP 보안 adapter라
 `endpoint`로 바꾸지 않는다. `shared`도 공개 계약을 성격별로 `shared.api`/`shared.web`/
 `shared.exception` 세 named interface에 나눠 두고, 실행 배선은 `shared.infrastructure`에 둔다.
@@ -51,7 +56,7 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 [ADR 0014](adr/0014-module-public-contracts-live-in-api-packages.md)다.
 
 배치의 단일 기준은 [architecture.md](architecture.md#module-structure)이고 배경은
-[ADR 0013](adr/0013-layer-first-package-layout-and-security-owns-authentication.md)이다.
+[ADR 0016](adr/0016-capability-first-layout-inside-modules.md)이다.
 
 ## Application 계약
 
