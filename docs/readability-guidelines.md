@@ -92,6 +92,12 @@ Event Publication Registry 내부    토큰 서명 방식
 특정 UseCase 하나에서만 쓰는 검증·매핑·변환·조립은 별도 Spring bean보다 같은 클래스의 private
 method를 먼저 검토한다. bean으로 만들 이유는 위 3의 목록에 있어야 한다.
 
+**여러 `Input`이 문구까지 똑같이 반복하던 "null 검사 → 양수 검사"는 `com.ticket.shared.api.InputChecks`
+의 정적 메서드 `requirePositiveId`/`requireProvided`로 모은다.** 그 이상으로 나가지 않는다 — Spring
+bean, 검증 인터페이스, `Input`별 Validator, Bean Validation 교체, 커스텀 애너테이션은 만들지 않는다.
+오류 문구와 `null`/0 이하의 구분, 검사 순서는 공개 계약이라 그대로 보존한다. 조회별 `size` 상한처럼
+`Input`마다 다른 규칙과 도메인이 소유한 규칙은 각자의 자리에 남는다.
+
 ### 5. 실제 경계는 유지한다
 
 다음은 클래스를 나눌 강한 이유다. 가독성을 이유로 없애지 않는다.
@@ -171,23 +177,55 @@ Manager    Processor    Coordinator    Preparer    Helper    Util    Service    
 
 ## 조회 코드
 
-### 10. 조회 방식은 "가장 쉽게 표현되는 것"으로 고른다
+### 10. Querydsl은 기본 선택이 아니다
 
-이 저장소는 Querydsl을 계속 쓴다. 동적 조건, optional filter 조합, 복합 정렬, 커서 페이징, 복잡한
-projection과 join에서 Querydsl의 값어치는 충분하다. **Querydsl 사용량을 줄이는 것은 목표가 아니다.**
+**Querydsl을 조회의 기본값으로 두지 않는다.** 단순 조회는 Spring Data 파생 메서드로, 짧은 고정
+쿼리는 `@Query`로 단순화한다. Querydsl은 그 이점이 분명한 곳에만 남긴다 — 동적 조건과 optional
+filter 조합, 복합 정렬, 커서 페이징, 집계와 복잡한 join이 그 자리다.
 
-다만 반대 방향도 강제하지 않는다. 조회 구현은 "이 프로젝트가 Querydsl을 쓰는가"가 아니라 "이
-조회를 가장 간단하고 명확하게 표현하는 것이 무엇인가"로 고른다.
-
-| 조회의 성격 | 먼저 검토할 것 |
+| 조회의 성격 | 쓸 것 |
 | --- | --- |
-| 단일 id 조회, `exists`, 고정 조건 | Spring Data repository method |
-| 짧은 고정 projection·고정 join | repository method / `@Query` / 짧은 Querydsl 중 읽기 쉬운 것 |
-| 동적 조건, 복합 정렬, 커서 페이징, 복잡한 projection | Querydsl |
+| 단일 id 조회, `exists`, 고정 조건 | Spring Data 파생 메서드 |
+| 짧은 고정 projection·고정 join | `@Query`(필요하면 생성자 표현식) |
+| 동적 조건, 복합 정렬, 커서 페이징, 집계·복합 join | Querydsl |
 
-**이미 짧고 명확한 Querydsl 코드를 "단순 조회"라는 이유만으로 `@Query`로 바꾸지 않는다.** 바꾸는
-쪽이 더 읽기 쉬울 때만 바꾸고, projection·정렬·null 처리·join·query 개수가 하나라도 달라질
-가능성이 있으면 그대로 둔다.
+**단, 대체가 오히려 읽기 어려워지면 기존 Querydsl을 유지한다.** 긴 파생 메서드 이름
+(`findAllByShowIdOrderByStartTimeAscPerformanceNoAsc`보다 더 긴 것)이나 복잡한 문자열 쿼리가
+생긴다면 바꾸지 않는다. 바꾸더라도 projection·정렬·null 처리·join·query 개수는 그대로여야
+한다(§14).
+
+#### 10-1. 엔티티로 충분한 조회는 엔티티를 반환한다
+
+Querydsl을 유지하든 아니든, **엔티티로 충분한 조회는 엔티티를 반환하고 최종 응답으로 한 번만
+변환한다.** 값을 한 번 담았다가 그대로 다시 옮기는 단계를 만들지 않는다.
+
+다만 엔티티 반환이 다음을 부르면 projection DTO를 유지한다 — 판단 근거를 그 자리에 남긴다.
+
+```text
+큰 컬럼(CLOB 등) 로딩    lazy 초기화    N+1    과도한 컬럼 조회    트랜잭션 확대
+```
+
+show 목록·검색·오픈예정의 `*Row`는 `Show`의 `@Lob info`가 목록 전건에 실리기 때문에, booking seat의
+`PerformanceSeatMapRow`·`PerformanceSeatStateRow`는 회차 전 좌석(수천 행)을 엔티티로 로딩하는 것이
+과도하기 때문에 projection으로 남아 있다.
+
+#### 10-2. "계층마다 DTO"는 타입을 남길 이유가 아니다
+
+**값을 담았다가 다른 응답 DTO로 그대로 복사하기만 하는 중간 타입은 없앤다.** 계층마다 DTO가 있어야
+한다는 것은 근거가 아니다. 다음은 남긴다.
+
+```text
+최종 응답 항목    집계·복합 JOIN 결과    모듈 공개 계약    트랜잭션 snapshot
+```
+
+**파일 이동이나 내부 record 재배치는 정리가 아니다.** 실제로 없어지는 타입과 사라지는 변환 단계가
+있어야 한다. 그 자리를 메우는 새 `Mapper`/`Assembler`/wrapper나 MapStruct는 만들지 않는다.
+
+공연 상세가 그 예다. `ShowQueryRepository`는 19필드짜리 `ShowDetailView`를 조립하는 대신
+`findShow`(엔티티)·`findGenreNames`·`findGrades`·`findPriceSummary`·`findPerformanceDates`·
+`findPerformer` 조각만 주고, `GetShowDetailUseCase`가 Output을 직접 만든다. 주문 상세·상태도
+Querydsl projection 대신 `OrderRepository`의 `@Query`(`join fetch o.orderSeats`)로 `Order`를 받아
+use case가 Output을 만든다. 두 경우 모두 query 개수는 그대로다.
 
 ### 11. Querydsl 자체와 Querydsl 주변의 포장을 구분한다
 
