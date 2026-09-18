@@ -15,8 +15,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatStateRow;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
@@ -59,9 +59,9 @@ public class GetSeatAvailabilityUseCase {
 
     public Output execute(Input input) {
         // 회차 존재 확인과 좌석 상태 조회를 짧은 읽기 트랜잭션에서 함께 끝낸다.
-        final List<PerformanceSeatStateRow> stateRows =
+        final List<PerformanceSeat> performanceSeats =
                 seatAvailabilitySnapshotReader.read(input.performanceId());
-        if (stateRows.isEmpty()) {
+        if (performanceSeats.isEmpty()) {
             return new Output(List.of());
         }
 
@@ -70,7 +70,8 @@ public class GetSeatAvailabilityUseCase {
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleCatalog.getSaleSnapshot(input.performanceId(), Set.of());
         final Map<Long, Long> availableCountsByGrade =
-                countAvailableSeatsByGrade(stateRows, mergeRedisOccupiedIds(input.performanceId()));
+                countAvailableSeatsByGrade(
+                        performanceSeats, mergeRedisOccupiedIds(input.performanceId()));
 
         final List<GradeAvailability> grades =
                 availableCountsByGrade.entrySet().stream()
@@ -90,19 +91,19 @@ public class GetSeatAvailabilityUseCase {
      * 않는다. 좌석이 하나도 남지 않은 등급도 0으로 남긴다.
      */
     private Map<Long, Long> countAvailableSeatsByGrade(
-            final List<PerformanceSeatStateRow> rows, final Set<Long> redisOccupiedSeatIds) {
-        if (rows.isEmpty()) {
+            final List<PerformanceSeat> performanceSeats, final Set<Long> redisOccupiedSeatIds) {
+        if (performanceSeats.isEmpty()) {
             return Map.of();
         }
 
         final Map<Long, Long> availableSeatCounts = new LinkedHashMap<>();
-        for (final PerformanceSeatStateRow row : rows) {
-            availableSeatCounts.putIfAbsent(row.performanceGradeId(), 0L);
+        for (final PerformanceSeat performanceSeat : performanceSeats) {
+            availableSeatCounts.putIfAbsent(performanceSeat.getPerformanceGradeId(), 0L);
 
-            if (row.state() == PerformanceSeatState.AVAILABLE
-                    && !redisOccupiedSeatIds.contains(row.seatId())) {
+            if (performanceSeat.getState() == PerformanceSeatState.AVAILABLE
+                    && !redisOccupiedSeatIds.contains(performanceSeat.getSeatId())) {
                 availableSeatCounts.computeIfPresent(
-                        row.performanceGradeId(), (key, count) -> count + 1L);
+                        performanceSeat.getPerformanceGradeId(), (key, count) -> count + 1L);
             }
         }
 

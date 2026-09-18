@@ -21,7 +21,6 @@ import com.ticket.booking.seat.query.SeatStatus;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
-import com.ticket.booking.seat.usecase.view.SeatStateView;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
@@ -91,7 +90,9 @@ class PerformanceSeatQueryControllerContractTest {
                         new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .thenReturn(
                         new GetSeatStatusUseCase.Output(
-                                List.of(new SeatStateView(1001L, 101L, SeatStatus.OCCUPIED))));
+                                List.of(
+                                        new GetSeatStatusUseCase.Seat(
+                                                1001L, 101L, SeatStatus.OCCUPIED))));
 
         mockMvc.perform(
                         get("/api/v1/performances/10/seats/status")

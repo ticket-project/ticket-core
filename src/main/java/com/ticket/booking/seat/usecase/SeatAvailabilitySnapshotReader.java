@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
-import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatStateRow;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,10 +28,10 @@ public class SeatAvailabilitySnapshotReader {
     /**
      * 회차 판매 정책 조회는 회차 존재 확인을 겸한다. 접수 기간 차단은 여기서 하지 않는다 — 잔여석 조회는 접수 종료 후에도 가능해야 한다.
      *
-     * @return 회차 좌석의 판매 상태 행. Redis 점유는 반영하지 않은 DB 시점의 상태다
+     * @return 회차 좌석 편성. Redis 점유는 반영하지 않은 DB 시점의 상태다
      */
     @Transactional(readOnly = true)
-    public List<PerformanceSeatStateRow> read(final Long performanceId) {
+    public List<PerformanceSeat> read(final Long performanceId) {
         performanceSaleFinder.requirePolicy(performanceId);
         return performanceSeatQueryRepository.findSeatAvailabilities(performanceId);
     }

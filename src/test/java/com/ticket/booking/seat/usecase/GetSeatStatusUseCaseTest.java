@@ -36,9 +36,10 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
+import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
 import com.ticket.booking.seat.query.SeatStatus;
-import com.ticket.booking.seat.usecase.view.SeatStateView;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,8 +75,10 @@ class GetSeatStatusUseCaseTest {
         when(performanceSeatQueryRepository.findSeatStates(10L))
                 .thenReturn(
                         List.of(
-                                new SeatStateView(101L, 1L, SeatStatus.AVAILABLE),
-                                new SeatStateView(102L, 2L, SeatStatus.OCCUPIED)));
+                                PerformanceSeatFixture.seat(
+                                        101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
+                                PerformanceSeatFixture.seat(
+                                        102L, 2L, 31L, PerformanceSeatState.RESERVED)));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -84,17 +87,17 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats())
                 .containsExactly(
-                        new SeatStateView(101L, 1L, SeatStatus.OCCUPIED),
-                        new SeatStateView(102L, 2L, SeatStatus.OCCUPIED));
+                        new GetSeatStatusUseCase.Seat(101L, 1L, SeatStatus.OCCUPIED),
+                        new GetSeatStatusUseCase.Seat(102L, 2L, SeatStatus.OCCUPIED));
         verify(performanceSalesPolicyRepository).findById(10L);
     }
 
     @Test
     void redis_점유좌석이_없으면_db_상태를_performanceSeatId_기준으로_그대로_반환한다() {
-        List<SeatStateView> dbStates =
+        List<PerformanceSeat> dbStates =
                 List.of(
-                        new SeatStateView(101L, 1L, SeatStatus.AVAILABLE),
-                        new SeatStateView(102L, 2L, SeatStatus.OCCUPIED));
+                        PerformanceSeatFixture.seat(101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
+                        PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatQueryRepository.findSeatStates(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
@@ -105,8 +108,8 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats())
                 .containsExactly(
-                        new SeatStateView(101L, 1L, SeatStatus.AVAILABLE),
-                        new SeatStateView(102L, 2L, SeatStatus.OCCUPIED));
+                        new GetSeatStatusUseCase.Seat(101L, 1L, SeatStatus.AVAILABLE),
+                        new GetSeatStatusUseCase.Seat(102L, 2L, SeatStatus.OCCUPIED));
         verify(performanceSeatQueryRepository).findSeatStates(10L);
     }
 
@@ -114,11 +117,11 @@ class GetSeatStatusUseCaseTest {
     void DB에_존재하는_좌석은_상태를_생략하지_않고_그대로_노출한다() {
         // 정적 seat-map(Task 9)과 같은 PerformanceSeat 조회원본을 쓰므로, 여기 나타난 좌석을
         // 응답에서 누락시키면 클라이언트가 그 좌석을 AVAILABLE로 잘못 추정할 수 있다.
-        List<SeatStateView> dbStates =
+        List<PerformanceSeat> dbStates =
                 List.of(
-                        new SeatStateView(101L, 1L, SeatStatus.AVAILABLE),
-                        new SeatStateView(102L, 2L, SeatStatus.OCCUPIED),
-                        new SeatStateView(103L, 3L, SeatStatus.AVAILABLE));
+                        PerformanceSeatFixture.seat(101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
+                        PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED),
+                        PerformanceSeatFixture.seat(103L, 3L, 31L, PerformanceSeatState.AVAILABLE));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatQueryRepository.findSeatStates(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
@@ -129,9 +132,11 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats()).hasSize(dbStates.size());
         assertThat(output.seats())
-                .extracting(SeatStateView::performanceSeatId)
+                .extracting(GetSeatStatusUseCase.Seat::performanceSeatId)
                 .containsExactly(101L, 102L, 103L);
-        assertThat(output.seats()).extracting(SeatStateView::seatId).containsExactly(1L, 2L, 3L);
+        assertThat(output.seats())
+                .extracting(GetSeatStatusUseCase.Seat::seatId)
+                .containsExactly(1L, 2L, 3L);
     }
 
     @Test
