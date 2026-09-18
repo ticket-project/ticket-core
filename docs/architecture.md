@@ -116,7 +116,7 @@
 | 경계 | 참조 | Repository |
 | --- | --- | --- |
 | 같은 Aggregate 내부 | Entity 연관관계 가능(`@ManyToOne(LAZY, optional=false)`) | Root만 Repository |
-| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*Query`) | 각 Root별 Repository |
+| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*QueryRepository`) | 각 Root별 Repository |
 | 다른 BC | scalar ID 참조(강제). 상대 모듈이 공개한 query API를 쓴다 | 각 BC가 자기 Repository 소유 |
 | cross-BC DB JOIN | reporting/integration read model처럼 명시적으로 허용된 경우만. 현재 애플리케이션 안에는 예외가 없다 | — |
 
@@ -169,25 +169,28 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 | `endpoint` | Controller, 요청 DTO, OpenAPI 문서 interface, HTTP 커서 문자열 |
 | `usecase` | 요청 단위 use case와 그 조립 서비스, 트랜잭션 경계 |
 | `event` | 커밋 이후 후속 처리 조율(`booking`에만 있다) |
-| `query` | 자기 module DB의 조회 구현(`*Query`)과 그 읽기 모델(`*Row`/`*View`/`*Param`) |
+| `query` | 자기 module의 읽기 모델(`*Row`/`*View`/`*Param`)과 커서·정렬 타입 |
 | `port` | 조회가 아닌 출력 계약(발행·외부 provider) |
 | `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
-| `persistence` | Repository 어댑터, Spring Data 인터페이스, Redis/Redisson 저장 구현 |
+| `persistence` | 저장 adapter와 local DB 조회 Repository(`*QueryRepository`), Spring Data 인터페이스, Redis/Redisson 저장 구현 |
 | `exception` | `<Module>ErrorCode`, 예외 클래스, `handler` |
 
 **역할 폴더는 템플릿이 아니다.** 실제 파일과 책임이 있을 때만 만든다 — `payment`에는 지금
-`domain`과 `persistence`뿐이고, `venue`에는 `api`·`query`·`domain`뿐이라 `usecase`도 `persistence`도 `endpoint`도 없다.
+`domain`과 `persistence`뿐이고, `venue`에는 `api`·`persistence`·`domain`뿐이라 `usecase`도 `endpoint`도 없다.
 
 **`Repository`와 `persistence`는 다른 것을 뜻한다.** `Repository`는 Aggregate 저장·복원 *계약*이라
 `domain`이 소유하고(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`),
 `persistence`는 JPA·Spring Data·Redis 같은 실제 저장 *기술*이다
 (`member.persistence.MemberRepositoryAdapter`). 계약을 `persistence`로 옮기지 않는다.
 
-**`query`는 계약이 아니라 구현이다.** 자기 module DB를 읽는 조회는 `query`가 Querydsl/JPA까지
-직접 갖는다(`show.query.ShowListQuery`). 조회마다 port interface와 adapter를 한 쌍씩 만들지
-않는다 — 구현이 하나뿐인 1:1 위임은 기능을 이해하는 데 아무것도 보태지 않는다. 대신 방향을
-규칙으로 막는다(`query`는 `usecase`/`event`/`endpoint`/`persistence`를 모르고, DB를 읽는
-`*Query`는 다른 업무 module을 조합하지 않는다 — `ArchitectureRulesTest`).
+**조회 구현은 `persistence`가 갖고 `query`는 읽기 모델만 갖는다.** 자기 module DB를 읽는 조회는
+`persistence`의 `*QueryRepository`가 Querydsl/JPA까지 직접 갖고
+(`show.persistence.ShowQueryRepository`), `query`에는 그 결과 타입과 검색 조건만 남는다. 조회마다
+port interface와 adapter를 한 쌍씩 만들지 않는다 — 구현이 하나뿐인 1:1 위임은 기능을 이해하는 데
+아무것도 보태지 않는다. **use case는 같은 module의 조회 Repository만 `persistence`에서 직접 부를
+수 있고, 저장 adapter·Spring Data 인터페이스·Redis 구현 직접 호출은 그대로 막는다.** 나머지
+방향도 규칙으로 막는다(`query`는 `usecase`/`event`/`endpoint`/`persistence`를 모르고, DB를 읽는
+클래스는 다른 업무 module을 조합하지 않는다 — `ArchitectureRulesTest`).
 
 `XXXPort`는 **밖을 부르는 출력 계약**이고 `XXXAdapter`는 그 구현이다(`booking.seat.port`의
 이벤트 발행 계약처럼). 이 둘은 다른 package에 둔다 — 같은 package에 있으면 use case가 구현을
@@ -199,27 +202,28 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 `member`·`like`·`venue`·`payment`·`show`는 모듈 root 바로 아래에 역할 폴더를 둔다.
 
 ```text
-member                 like                venue         payment        show
-├─ api                 ├─ api              ├─ api        ├─ domain      ├─ api
-├─ usecase             ├─ usecase          ├─ query      └─ persistence ├─ usecase
-├─ domain              ├─ query            └─ domain                    ├─ query
-├─ password            ├─ domain                                       ├─ domain
-├─ persistence         ├─ persistence                                  ├─ persistence
-├─ endpoint            ├─ endpoint                                     ├─ endpoint
-└─ exception           └─ exception                                    └─ exception
+member                 like                venue           payment        show
+├─ api                 ├─ api              ├─ api          ├─ domain      ├─ api
+├─ usecase             ├─ usecase          ├─ domain       └─ persistence ├─ usecase
+├─ domain              ├─ domain           └─ persistence                 ├─ query
+├─ password            ├─ persistence                                     ├─ domain
+├─ persistence         ├─ endpoint                                        ├─ persistence
+├─ endpoint            └─ exception                                       ├─ endpoint
+└─ exception                                                              └─ exception
 ```
 
 `member.password`는 계약(`PasswordHasher`)과 Spring Security 구현, bean 설정을 한 묶음으로 둔
 작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다.
 
-`venue`는 공개 계약(`venue.api`)을 `venue.query`의 조회가 직접 구현해서 `usecase`도
-`persistence`도 없다. 위임만 하는 service를 사이에 두지 않는다 — 다른 module은 여전히
-`venue.api`의 interface만 본다.
+`venue`는 공개 계약(`venue.api`)을 `venue.persistence.VenueQueryRepository implements
+VenueLookupApi, VenueSeatLookupApi`가 직접 구현해서 `usecase`가 없다. 위임만 하는 service를
+사이에 두지 않는다 — 다른 module은 여전히 `venue.api`의 interface만 본다.
 
-`show.query`는 조회 구현과 함께, 그 구현들이 package-private으로 공유하는 정렬·커서·판매 상태
-조건 helper(`QuerydslShowSortResolver`, `QuerydslShowCursorConditionBuilder`,
-`SaleDisplayStatusPredicates`, `QuerydslTupleColumns`)를 둔다. package-private으로 유지하려면
-쓰는 쪽과 같은 package에 있어야 한다.
+`show`의 정렬·커서·판매 상태 조건 helper 셋(`QuerydslShowSortResolver`,
+`QuerydslShowCursorConditionBuilder`, `SaleDisplayStatusPredicates`)은 별도 class가 아니라
+`ShowQueryRepository`의 private 메서드다 — 쓰는 곳이 그 한 class뿐이라 Spring 빈으로 둘 이유가
+없다. 두 조회 Repository가 함께 쓰는 `QuerydslTupleColumns`만 `show.persistence`에
+package-private으로 남는다. package-private으로 유지하려면 쓰는 쪽과 같은 package에 있어야 한다.
 
 ### booking — 업무(capability)를 먼저 보여준다
 
@@ -315,14 +319,15 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 
 **`usecase`에는 `*UseCase`만 두지 않는다.** use case가 조립에 쓰는 서비스·헬퍼도 같은 package에
 둔다 — 주문 생성과 그 조립 helper가 한 목록에서 읽혀야 트랜잭션 원자성이 어디서 보장되는지 보인다.
-조회 계약과 읽기 모델은 `query`, 발행 같은 출력 계약은 `port`다.
+읽기 모델은 `query`, 그 조회 구현은 `persistence`의 `*QueryRepository`, 발행 같은 출력 계약은
+`port`다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
 | 계약의 성격 | 소유 위치 |
 | --- | --- |
 | aggregate 저장·복원과 업무 명령에 필요한 조회 | `domain` |
-| 화면 조회·검색·집계 결과 | `query` |
+| 화면 조회·검색·집계 결과의 읽기 모델 | `query`(그 조회 구현은 `persistence`) |
 | 분산락 | `booking.concurrency` |
 | 발행·외부 provider·client | `port`(없으면 그 기능을 정의하는 package) |
 | HTTP 입력·출력 계약 | `endpoint` |
@@ -331,13 +336,12 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 기능은 클래스 이름 접두사로 드러낸다(`ShowRepository`, `PerformanceGrade`, `PendingOrderCreator` 등).
 `model`/`repository`/`store`/`command`는 하위 패키지가 아니라 **명명 관용**이다 —
 Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계약(옛 `store`), 상태 변경
-use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회
-조회는 아래 "Repository와 Query" 절이 별도로 다룬다.
+use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회는
+아래 "Repository와 조회 Repository" 절이 별도로 다룬다.
 
-자기 module DB 조회는 `*Query`(`ShowListQuery`, `SeatStateQuery`), Aggregate Repository
-어댑터는 `*RepositoryAdapter`, 안에서 쓰는 Spring Data 인터페이스는 `SpringData*JpaRepository`로
-구분한다. `Querydsl` 접두사는 이제 여러 조회가 공유하는 Querydsl helper에만 남는다
-(`QuerydslShowSortResolver`). `View`는 조회 경계의 화면/응답용
+자기 module DB 조회는 `persistence`의 `*QueryRepository`(`ShowQueryRepository`,
+`PerformanceSeatQueryRepository`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는
+Spring Data 인터페이스는 `SpringData*JpaRepository`로 구분한다. `View`는 조회 경계의 화면/응답용
 projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서는 cross-module 스냅샷), `Row`는
 저장소 조회 한 행, `Output`은 use case 반환값, `Param`/`Criteria`/`Event`/`Request`는 각각 조회
 조건 구성값/검색 조건/발생한 사실/외부 입력이다. **조회 전용 `...View` 타입에 비즈니스 로직을
@@ -345,13 +349,14 @@ projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서
 
 배경은 [ADR 0016](adr/0016-capability-first-layout-inside-modules.md)이다.
 
-## Repository와 Query
+## Repository와 조회 Repository
 
 조회 기능이라고 해서 모두 같은 길을 쓰지 않는다. **Aggregate를 저장·복원하기 위한 Domain
-Repository**와 **화면/검색/목록 조회를 위한 Query**를 구분한다.
+Repository**와 **화면/검색/목록 조회를 위한 조회 Repository**를 구분한다. 둘 다 `Repository`지만
+계약은 `domain`, 조회 구현은 `persistence`에 있다.
 
-판단 기준은 쿼리의 복잡도가 아니다. **행동시키기 위해 Aggregate를 가져오면 Domain Repository를
-쓰고, 보여주기 위해 데이터를 가져오면 Query를 쓴다.**
+판단 기준은 쿼리의 복잡도가 아니다. **바꾸기 위해 가져오면 Domain Repository를 쓰고, 보여주기
+위해 가져오면 조회 Repository를 쓴다.**
 
 ### Domain Repository
 
@@ -371,43 +376,50 @@ showRepository.save(show);
 `ORDER_SEAT`까지 복원) Aggregate 복원이 목적이면 여전히 Domain Repository다 — **쿼리가
 복잡한지는 판단 기준이 아니다.**
 
-### Query
+### 조회 Repository
 
 화면·API·검색·목록·집계에 필요한 데이터를 조회하는 클래스다. Aggregate를 복원하는 게
 목적이 아니라 **use case가 필요로 하는 조회 결과를 만드는 것**이 목적이다.
 
 ```java
-ShowDetailView detail = showDetailQuery.findShowDetail(showId)
+ShowDetailView detail = showQueryRepository.findShowDetail(showId)
         .orElseThrow(() -> new NotFoundException(...));
 ```
 
-module의 `query` package에 두고 이름은 `*Query`를 쓴다(`ShowDetailQuery`, `ShowListQuery`).
-**local DB 조회에는 1:1 port/adapter를 두지 않는다** — `query`가 `@Repository` + 생성자 주입으로
-Querydsl/JPA를 직접 쓰는 구체 class다. 조회 대상이 자기 module DB가 아니거나(외부 API, Redis,
-JWT 같은 외부 시스템), 실제로 교체 지점이 있거나, domain을 보호해야 할 때만 interface를 둔다.
+module의 `persistence` package에 두고 이름은 `*QueryRepository`를 쓴다(`ShowQueryRepository`,
+`PerformanceQueryRepository`, `PerformanceSeatQueryRepository`). **한 module의 관련 조회는 한
+class로 모은다** — 조회 하나에 class 하나를 만들지 않는다.
+**local DB 조회에는 1:1 port/adapter를 두지 않는다** — 조회 Repository가 `@Repository` + 생성자
+주입으로 Querydsl/JPA를 직접 쓰는 구체 class다. 조회 대상이 자기 module DB가 아니거나(외부 API,
+Redis, JWT 같은 외부 시스템), 실제로 교체 지점이 있거나, domain을 보호해야 할 때만 interface를
+둔다. use case는 `persistence`에서 이 조회 Repository만 직접 부를 수 있고, 저장 adapter와
+Spring Data 인터페이스·Redis 구현은 그대로 막혀 있다.
 
 Aggregate를 여러 개 복원해 Java에서 조합하기보다, Querydsl로 필요한 read model을 직접 만든다 —
-반환 타입은 Aggregate가 아니라 `View`/`Row`(위 "패키지 구조" 절의 명명 규칙)다.
+반환 타입은 Aggregate가 아니라 `View`/`Row`(위 "패키지 구조" 절의 명명 규칙)이고, 그 읽기 모델
+타입은 `query` package가 소유한다.
 
 단순한 local 조회는 그 module의 **공개 API interface를 직접 구현해도 된다**
-(`venue.query.VenueSummaryQuery implements VenueLookupApi`). 위임만 하는 service를 사이에 두지
-않는다. 이때 읽기 전용 트랜잭션 같은 경계는 그 Query가 소유한다.
+(`venue.persistence.VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi`). 위임만
+하는 service를 사이에 두지 않는다. 이때 읽기 전용 트랜잭션 같은 경계는 그 조회 Repository가
+소유한다.
 
 **Aggregate 경계와 API 응답 경계는 같을 필요가 없다.** 공연 상세는 Show/Performance/Grade/
 Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까지 한 응답에 담는다 — 그 조합은
-Query 자신이 아니라 그 Query를 부르는 use case가 한다(`GetShowDetailUseCase`가
-`ShowDetailQuery`로 show 자기 데이터를 얻고, `VenueLookupApi`/`LikeQueryApi`로 다른 BC의 표시값을
-더한다). **DB를 읽는 `*Query`가 다른 module의 공개 계약을 직접 호출해 결과를 조합하지 않는다** —
-Query의 역할은 자기 module DB를 읽는 것까지이고, 이 규칙은 `ArchitectureRulesTest`가 강제한다.
+조회 Repository 자신이 아니라 그것을 부르는 use case가 한다(`GetShowDetailUseCase`가
+`ShowQueryRepository`로 show 자기 데이터를 얻고, `VenueLookupApi`/`LikeQueryApi`로 다른 BC의
+표시값을 더한다). **DB를 읽는 클래스가 다른 module의 공개 계약을 직접 호출해 결과를 조합하지
+않는다** — 조회 Repository의 역할은 자기 module DB를 읽는 것까지이고, 이 규칙은
+`ArchitectureRulesTest`가 강제한다.
 
 **같은 id로 두 계약이 동시에 존재해도 된다.**
 
 ```java
-// Domain Repository — Aggregate 복원 → 업무 행동
+// Domain Repository — Aggregate 복원 → 업무 행동(`show.domain`)
 Optional<Show> ShowRepository.findById(Long showId);
 
-// Query — 화면 표시값 → API 응답
-Optional<ShowDetailView> ShowDetailQuery.findShowDetail(Long showId);
+// 조회 Repository — 화면 표시값 → API 응답
+Optional<ShowDetailView> ShowQueryRepository.findShowDetail(Long showId);
 ```
 
 둘 다 같은 `SHOWS` 테이블을 볼 수 있지만 목적이 다르다. Read model(`View`/`Row`)은 Aggregate가
@@ -568,9 +580,10 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 | 필수 입력 오류 문구 | `com.ticket.shared.exception.InvalidRequestMessageContractTest` |
 | E-code 전역 유일성 / handler 스코프 | `ErrorCodeUniquenessTest` / `ExceptionHandlerScopeTest` |
 | 계층 방향, cross-module 구현 참조, `api` 공개면 오염 | `com.ticket.ArchitectureRulesTest` |
-| `query`가 조립·HTTP·저장 구현을 거꾸로 참조하는지 | `com.ticket.ArchitectureRulesTest` |
-| DB를 읽는 `*Query`가 다른 업무 module을 조합하는지 | `com.ticket.ArchitectureRulesTest` |
-| `endpoint`가 use case를 건너뛰고 Repository·Query를 직접 부르는지 | `com.ticket.ArchitectureRulesTest` |
+| 읽기 모델 package `query`가 조립·HTTP·저장 구현을 거꾸로 참조하는지 | `com.ticket.ArchitectureRulesTest` |
+| use case가 저장 adapter를 직접 부르는지 / `persistence`에 조회 Repository만 열려 있는지 | `com.ticket.ArchitectureRulesTest` |
+| DB를 읽는 클래스(`JPAQueryFactory` 보유)가 다른 업무 module을 조합하는지 | `com.ticket.ArchitectureRulesTest` |
+| `endpoint`가 use case를 건너뛰고 Repository·조회 Repository를 직접 부르는지 | `com.ticket.ArchitectureRulesTest` |
 | 공개된 `@NamedInterface` 목록이 늘거나 줄었는지 | `com.ticket.ArchitectureRulesTest` |
 | production package의 `@NullMarked` 선언 누락 | `com.ticket.ArchitectureRulesTest` |
 | null 계약 위반 | NullAway (`./gradlew compileJava`, 테스트가 아니라 컴파일에서 막힌다) |

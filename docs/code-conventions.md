@@ -15,8 +15,9 @@
 `booking.order.usecase.CancelOrderUseCase`, `booking.selection.persistence.RedissonSeatSelectionStore`.
 
 역할 이름은 모든 모듈에서 같은 뜻이다. `api`는 다른 module에 공개하는 계약, `endpoint`는 HTTP
-진입점, `usecase`는 요청 단위 조립과 트랜잭션 경계, `query`는 조회 계약과 읽기 모델, `port`는
-조회가 아닌 출력 계약, `domain`은 상태와 업무 규칙, `persistence`는 DB·Redis 구현이다.
+진입점, `usecase`는 요청 단위 조립과 트랜잭션 경계, `query`는 읽기 모델(`*Row`/`*View`/`*Param`), `port`는
+조회가 아닌 출력 계약, `domain`은 상태와 업무 규칙, `persistence`는 저장 adapter와 local DB 조회
+Repository를 포함한 DB·Redis 구현이다.
 
 **역할 폴더는 템플릿이 아니다.** 실제 파일과 책임이 있을 때만 만든다 — `payment`에는 `domain`과
 `persistence`뿐이고, `venue`에는 `endpoint`가 없다. 미래를 예상해 빈 폴더를 만들지 않는다.
@@ -25,7 +26,8 @@
 소유한다(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`). `persistence`에는
 그 계약을 만족시키는 구현만 둔다(`member.persistence.MemberRepositoryAdapter`). `XXXPort`는 밖을
 부르는 출력 계약, `XXXAdapter`는 그 구현이며 둘을 다른 package에 둔다. 자기 module DB를 읽는
-조회는 이 대상이 아니다 — `query`가 구현까지 갖는다(아래 "Component와 메서드").
+조회는 이 대상이 아니다 — `persistence`의 `*QueryRepository`가 구현까지 갖는다
+(아래 "Component와 메서드").
 
 **폴더 깊이는 규모에 비례한다.** 일반적인 최대는 모듈 → capability → 역할이다
 (`booking.order.persistence`). 기술 응집도가 높고 파일이 많을 때만 한 단계를 더
@@ -69,23 +71,27 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 - `Context`는 여러 application 단계 사이의 내부 처리 정보다. 외부 요청이 아닌 검증 결과에
   `Request`를 붙이지 않는다. 다만 한 use case 안에서만 오가는 값이면 `Context` 타입을 만들기 전에
   지역 변수로 충분한지 먼저 본다.
-- `Row`는 persistence/query projection, `View`는 응답용 조합 모델, `Snapshot`은 특정 시점에 고정한
+- `Row`는 조회 Repository가 만드는 projection(타입은 `query`가 소유), `View`는 응답용 조합 모델, `Snapshot`은 특정 시점에 고정한
   상태다. `Criteria`는 검색·판정 조건, `Param`은 목록·커서 조회 실행 파라미터에 쓴다.
 
 ## Component와 메서드
 
-- Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 조회는 `Query`다. Aggregate 저장은
+- Aggregate 저장 계약은 `domain`의 `Repository`, 읽기 전용 projection 조회는 `persistence`의
+  `*QueryRepository`다. Aggregate 저장은
   계약과 구현을 나눈다 — **`Port`는 application이 요구하는 계약이고 그 구현은 `Adapter`다**. 구현에는
   기술을 드러내는 접두사와 `Adapter` 접미사를 함께 쓴다(`ShowRepositoryAdapter implements
   ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로 계약과 구현을 구분할 수 없다.
-- **자기 module DB를 읽는 조회에는 port interface를 두지 않는다.** `query` package의 구체
-  class(`ShowListQuery`, `SeatStateQuery`)가 `@Repository` + 생성자 주입으로 Querydsl/JPA를 직접
-  쓴다. 호출 계약에 Querydsl 타입을 노출하지는 않는다. 단순한 조회는 그 module의 공개 API
-  interface를 직접 구현해도 된다(`VenueSummaryQuery implements VenueLookupApi`). interface는 실제
+- **자기 module DB를 읽는 조회에는 port interface를 두지 않는다.** `persistence` package의 구체
+  class(`ShowQueryRepository`, `PerformanceSeatQueryRepository`)가 `@Repository` + 생성자 주입으로
+  Querydsl/JPA를 직접 쓰고, 관련 조회는 한 class로 모은다. 결과 타입(`*Row`/`*View`)만 `query`가
+  소유한다. 호출 계약에 Querydsl 타입을 노출하지는 않는다. 단순한 조회는 그 module의 공개 API
+  interface를 직접 구현해도 된다
+  (`VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi`). interface는 실제
   계약·교체 지점·외부 시스템 경계·domain 보호처럼 근거가 있을 때 둔다 — Redis·분산락·JWT·
   WebSocket·외부 API가 그 예다.
-- **다른 module의 정보를 합치는 일은 use case/service가 한다.** `Query`는 자기 module DB 조회에
-  집중한다.
+- **다른 module의 정보를 합치는 일은 use case/service가 한다.** 조회 Repository는 자기 module DB
+  조회에 집중한다. use case는 같은 module의 조회 Repository를 직접 부를 수 있지만, 저장
+  adapter·Spring Data 인터페이스·Redis 구현은 직접 부르지 않는다.
 - **조회 구현은 Spring Data method·`@Query`·Querydsl 중 그 조회를 가장 간단히 표현하는 것을**
   **고른다.** 동적 조건·복합 정렬·커서 페이징에는 Querydsl을 적극 쓰고, 단순 조회에까지 강제하지
   않는다. 판단 기준과 보존해야 할 query semantics는
