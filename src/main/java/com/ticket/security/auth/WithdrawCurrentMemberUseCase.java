@@ -1,5 +1,7 @@
 package com.ticket.security.auth;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -7,7 +9,6 @@ import org.springframework.stereotype.Service;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.security.oauth.SocialAccountUnlinker;
-import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +22,7 @@ public class WithdrawCurrentMemberUseCase {
 
     public record Input(Long memberId) {
         public Input {
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            requirePositiveId(memberId, "memberId");
         }
     }
 
