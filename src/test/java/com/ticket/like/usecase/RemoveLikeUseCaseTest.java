@@ -2,9 +2,13 @@ package com.ticket.like.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -16,37 +20,78 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.api.LikeCommandApi;
-import com.ticket.like.api.LikeInfo;
 import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.Like;
+import com.ticket.like.domain.LikeRepository;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RemoveLikeUseCaseTest {
     @Mock private MemberLookupApi memberLookup;
-    @Mock private LikeCommandApi likeCommand;
+    @Mock private LikeRepository likeRepository;
     @InjectMocks private RemoveLikeUseCase useCase;
 
     @Test
-    void 회원이_활성이면_like에_찜_해제를_위임한다() {
-        when(likeCommand.unlike(1L, LikeType.SHOW, 2L)).thenReturn(new LikeInfo(false, 4L));
+    void 찜한_상태면_삭제하고_갱신된_찜수를_돌려준다() {
+        Like like = new Like(1L, LikeType.SHOW, 2L);
+        when(likeRepository.findByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(Optional.of(like));
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(4L);
+
+        RemoveLikeUseCase.Output output =
+                useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
+
+        assertThat(output.targetId()).isEqualTo(2L);
+        assertThat(output.liked()).isFalse();
+        assertThat(output.likeCount()).isEqualTo(4L);
+        verify(memberLookup).requireActive(1L);
+        verify(likeRepository).delete(like);
+    }
+
+    @Test
+    void 찜하지_않은_상태로_불러도_예외_없이_해제_상태를_돌려준다() {
+        when(likeRepository.findByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(Optional.empty());
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(4L);
 
         RemoveLikeUseCase.Output output =
                 useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
-        verify(memberLookup).requireActive(1L);
-        verify(likeCommand).unlike(1L, LikeType.SHOW, 2L);
+        verify(likeRepository, never()).delete(any());
+    }
+
+    @Test
+    void 탈퇴_회원이면_삭제하지_않는다() {
+        doThrow(new NotFoundException("탈퇴한 회원입니다.")).when(memberLookup).requireActive(1L);
+
+        assertThatThrownBy(
+                        () -> useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
+                .isInstanceOf(NotFoundException.class);
+
+        verify(likeRepository, never()).delete(any());
     }
 
     @ParameterizedTest
     @MethodSource("invalidComponents")
-    void memberId나_targetId가_유효하지_않으면_Input_생성에서_예외를_던진다(final Long memberId, final Long targetId) {
+    void memberId나_targetId가_유효하지_않으면_Input_생성에서_예외를_던진다(
+            final Long memberId, final Long targetId, final String message) {
         assertThatThrownBy(() -> new RemoveLikeUseCase.Input(memberId, LikeType.SHOW, targetId))
-                .isInstanceOf(InvalidRequestException.class);
+                .isInstanceOf(InvalidRequestException.class)
+                .extracting(exception -> ((InvalidRequestException) exception).getData())
+                .isEqualTo(message);
+    }
+
+    @Test
+    void likeType이_없으면_예외를_던진다() {
+        assertThatThrownBy(() -> new RemoveLikeUseCase.Input(1L, null, 2L))
+                .isInstanceOf(InvalidRequestException.class)
+                .extracting(exception -> ((InvalidRequestException) exception).getData())
+                .isEqualTo("likeType는 필수입니다.");
     }
 
     @Test
@@ -56,9 +101,9 @@ class RemoveLikeUseCaseTest {
 
     private static Stream<Arguments> invalidComponents() {
         return Stream.of(
-                Arguments.of(null, 2L),
-                Arguments.of(1L, null),
-                Arguments.of(0L, 2L),
-                Arguments.of(1L, -1L));
+                Arguments.of(null, 2L, "memberId는 필수입니다."),
+                Arguments.of(1L, null, "targetId는 필수입니다."),
+                Arguments.of(0L, 2L, "memberId는 양수여야 합니다."),
+                Arguments.of(1L, -1L, "targetId는 양수여야 합니다."));
     }
 }

@@ -1,14 +1,15 @@
 package com.ticket.like.usecase;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ticket.like.api.LikeCommandApi;
-import com.ticket.like.api.LikeInfo;
 import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.LikeRepository;
+import com.ticket.like.exception.LikeAlreadyExistsException;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.api.InputChecks;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,31 +18,22 @@ import lombok.RequiredArgsConstructor;
  * 않는다(memberId·likeType·targetId 조합의 유일성만 보장한다). 존재하지 않는 targetId를 찜해도 조용히 저장된다. 회원 활성 확인은 다르다 —
  * JWT 인증 필터는 서명·만료만 검사하고 탈퇴 여부를 재확인하지 않으므로(탈퇴해도 access token은 만료 전까지 유효하다), 탈퇴 회원이 자기 데이터를 건드리지 못하게
  * 하려면 여기서 직접 {@link MemberLookupApi#requireActive}로 다시 확인해야 한다.
+ *
+ * <p>이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시 요청이 먼저 저장을 끝냈다면(unique 제약 위반) {@link
+ * LikeAlreadyExistsException}(409, E7001)을 던진다.
  */
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class AddLikeUseCase {
     private final MemberLookupApi memberLookup;
-    private final LikeCommandApi likeCommand;
+    private final LikeRepository likeRepository;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
         public Input {
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
-            if (likeType == null) {
-                throw new InvalidRequestException("likeType는 필수입니다.");
-            }
-            if (targetId == null) {
-                throw new InvalidRequestException("targetId는 필수입니다.");
-            }
-            if (targetId <= 0) {
-                throw new InvalidRequestException("targetId는 양수여야 합니다.");
-            }
+            InputChecks.requirePositiveId(memberId, "memberId");
+            InputChecks.requireProvided(likeType, "likeType");
+            InputChecks.requirePositiveId(targetId, "targetId");
         }
     }
 
@@ -49,10 +41,20 @@ public class AddLikeUseCase {
     public record Output(@JsonProperty("showId") Long targetId, boolean liked, long likeCount) {}
 
     public Output execute(final Input input) {
-        memberLookup.requireActive(input.memberId());
+        final Long memberId = input.memberId();
+        final LikeType likeType = input.likeType();
+        final Long targetId = input.targetId();
+        memberLookup.requireActive(memberId);
 
-        final LikeInfo info =
-                likeCommand.like(input.memberId(), input.likeType(), input.targetId());
-        return new Output(input.targetId(), info.liked(), info.likeCount());
+        if (!likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)) {
+            try {
+                likeRepository.like(memberId, likeType, targetId);
+            } catch (final DataIntegrityViolationException e) {
+                throw new LikeAlreadyExistsException(memberId, likeType, targetId);
+            }
+        }
+
+        return new Output(
+                targetId, true, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
     }
 }
