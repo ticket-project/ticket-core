@@ -97,11 +97,13 @@ OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 
 여기서 다루지 않는다.
 
 **확인했지만 후보가 아닌 것**: `package-info.java` 95개(`@NullMarked`와 modulith `ApplicationModule`
-선언이 실제로 걸려 있다), 목록·검색·오픈예정의 `*Row`(`ShowListItemRow`, `ShowSearchItemRow`,
-`SaleOpeningSoon{Summary,Detail}Row`, `ShowSummaryRow`, `LatestShowRow` — 엔티티로 바꾸면 `Show`의
-`@Lob info` CLOB이 목록 전건에 실린다)와 booking seat의 `PerformanceSeatMapRow`·
-`PerformanceSeatStateRow`(회차 전 좌석 수천 행을 엔티티로 로딩하게 된다), `ShowCursorCodec`(이미 stdlib `Base64`), `testsupport`의 base 클래스들, 실제 설정을
-담은 `@Configuration`들.
+선언이 실제로 걸려 있다), `ShowCursorCodec`(이미 stdlib `Base64`), `testsupport`의 base 클래스들,
+실제 설정을 담은 `@Configuration`들.
+
+목록·검색·오픈예정의 `*Row` 6개와 booking seat의 `PerformanceSeatMapRow`·`PerformanceSeatStateRow`는
+2026-09-19에 제거했다(조회가 엔티티를 반환하고 use case가 응답을 만든다). 그 대가로 목록 전건에
+`Show.info` CLOB이, 좌석 상태 조회에 회차 전 좌석 엔티티가 실린다 — 방침상 수용한 비용이고, 지연
+로딩·캐시 도입은 별도 결정으로 남긴다.
 
 **측정이 말하는 것**: main의 인터페이스 68개 중 구현이 2개 이상인 것은 0개다. 10줄 미만 파일이
 83개다(OE-04 전에는 각각 82개·93개였다 — 조회 port 14개가 사라진 만큼 줄었다). 위 항목을 다 적용해도 이 비율 자체는 남는다 — 다음 module 추출 때 타입을 먼저 만들지 말라는
