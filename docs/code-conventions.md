@@ -23,12 +23,13 @@
 
 **`Repository`는 계약이고 `persistence`는 기술이다.** Aggregate 저장·복원 계약은 `domain`이
 소유한다(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`). `persistence`에는
-그 계약을 만족시키는 구현만 둔다(`member.persistence.MemberRepositoryAdapter`). `XXXPort`는 계약,
-`XXXAdapter`는 구현이며 규모가 작아도 둘을 다른 package에 둔다.
+그 계약을 만족시키는 구현만 둔다(`member.persistence.MemberRepositoryAdapter`). `XXXPort`는 밖을
+부르는 출력 계약, `XXXAdapter`는 그 구현이며 둘을 다른 package에 둔다. 자기 module DB를 읽는
+조회는 이 대상이 아니다 — `query`가 구현까지 갖는다(아래 "Component와 메서드").
 
 **폴더 깊이는 규모에 비례한다.** 일반적인 최대는 모듈 → capability → 역할이다
 (`booking.order.persistence`). 기술 응집도가 높고 파일이 많을 때만 한 단계를 더
-쓴다(`show.persistence.querydsl`, `booking.concurrency.redis`). 파일이 적고 서로만 부르는 묶음은
+쓴다(`booking.concurrency.redis`). 파일이 적고 서로만 부르는 묶음은
 평평하게 둔다(`booking.admission` 일곱 파일, `member.password` 세 파일).
 
 **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
@@ -73,11 +74,18 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 
 ## Component와 메서드
 
-- Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 계약은 `QueryPort`다. **`Port`는
-  application이 요구하는 계약이고 그 구현은 `Adapter`다** — 구현에는 기술을 드러내는 접두사와
-  `Adapter` 접미사를 함께 쓴다(`QuerydslSeatStateQueryAdapter implements SeatStateQueryPort`,
-  `ShowRepositoryAdapter implements ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로
-  계약과 구현을 구분할 수 없다.
+- Aggregate 저장 계약은 `Repository`, 읽기 전용 projection 조회는 `Query`다. Aggregate 저장은
+  계약과 구현을 나눈다 — **`Port`는 application이 요구하는 계약이고 그 구현은 `Adapter`다**. 구현에는
+  기술을 드러내는 접두사와 `Adapter` 접미사를 함께 쓴다(`ShowRepositoryAdapter implements
+  ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로 계약과 구현을 구분할 수 없다.
+- **자기 module DB를 읽는 조회에는 port interface를 두지 않는다.** `query` package의 구체
+  class(`ShowListQuery`, `SeatStateQuery`)가 `@Repository` + 생성자 주입으로 Querydsl/JPA를 직접
+  쓴다. 호출 계약에 Querydsl 타입을 노출하지는 않는다. 단순한 조회는 그 module의 공개 API
+  interface를 직접 구현해도 된다(`VenueSummaryQuery implements VenueLookupApi`). interface는 실제
+  계약·교체 지점·외부 시스템 경계·domain 보호처럼 근거가 있을 때 둔다 — Redis·분산락·JWT·
+  WebSocket·외부 API가 그 예다.
+- **다른 module의 정보를 합치는 일은 use case/service가 한다.** `Query`는 자기 module DB 조회에
+  집중한다.
 - **조회 구현은 Spring Data method·`@Query`·Querydsl 중 그 조회를 가장 간단히 표현하는 것을**
   **고른다.** 동적 조건·복합 정렬·커서 페이징에는 Querydsl을 적극 쓰고, 단순 조회에까지 강제하지
   않는다. 판단 기준과 보존해야 할 query semantics는

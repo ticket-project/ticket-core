@@ -79,6 +79,13 @@ Event Publication Registry 내부    토큰 서명 방식
 특히 마지막 항목을 조심한다. 한 곳에서만 쓰는 collaborator를 만들어 mock으로 검증하면, 테스트가
 업무 행동이 아니라 **구현 모양**을 고정하게 된다.
 
+**interface도 같은 기준으로 만든다.** 구현이 하나뿐이고 시그니처가 같은 port는 계약이 아니라
+경유 지점이다 — 자기 module DB를 읽는 조회에는 port를 두지 않고 `query`의 구체 class가 조회를
+직접 갖는다(`show.query.ShowListQuery`). interface는 실제 계약·교체 지점·domain 보호처럼 근거가
+있을 때 둔다. Redis, 분산락, JWT, WebSocket, 외부 API 같은 **의미 있는 외부 시스템 경계**와
+다른 module에 공개하는 API가 그 자리다. 위임만 하는 service도 마찬가지다 — 단순 local 조회는 공개
+API interface를 직접 구현해도 된다(`venue.query.VenueSummaryQuery implements VenueLookupApi`).
+
 ### 4. 한 번만 쓰는 helper는 private method부터 검토한다
 
 특정 UseCase 하나에서만 쓰는 검증·매핑·변환·조립은 별도 Spring bean보다 같은 클래스의 private
@@ -105,12 +112,12 @@ method를 먼저 검토한다. bean으로 만들 이유는 위 3의 목록에 �
 
 | 경계 안의 일 | 어디가 소유하는가 |
 | --- | --- |
-| DB 접근 하나 | 그 조회를 실행하는 query adapter가 직접 갖는다 |
+| DB 접근 하나 | 그 조회를 실행하는 `*Query`가 직접 갖는다 |
 | DB 접근 둘 이상을 한 시점으로 묶어야 한다 | 별도 bean이 필요하다 — 묶는 것 자체가 그 bean의 일이다 |
 | 트랜잭션 없는 listener에서 lazy 연관을 읽어야 한다 | 별도 bean이 필요하다 — proxy가 없으면 초기화에 실패한다 |
 | 공개 계약 구현이 자기 연산마다 경계를 갖는다 | 그 구현이 직접 갖는다 — 밖에서 인터페이스로 부르므로 self-invocation이 아니다 |
 
-`SeatStateSnapshotReader`가 첫 줄에 해당해 사라졌고(`QuerydslSeatStateQueryAdapter`가 경계를 가져갔다),
+`SeatStateSnapshotReader`가 첫 줄에 해당해 사라졌고(`SeatStateQuery`가 경계를 가져갔다),
 `SeatAvailabilitySnapshotReader`와 `OrderHoldSnapshotReader`는 둘째·셋째 줄에 해당해 남았다.
 `MemberAccountService`는 넷째 줄이라 협력자 셋을 흡수하면서 각 연산이 자기 `@Transactional`을 갖게 됐다.
 
@@ -189,7 +196,7 @@ queryFactory.select(...).from(show).leftJoin(...).where(...).orderBy(...).limit(
 ```
 
 이것을 숨기려고 `JoinBuilder`/`ConditionBuilder`/`QueryExecutor`/`ProjectionBuilder` 같은 계층을
-쌓지 않는다. **실제 query의 의미가 persistence adapter에서 보여야 한다.**
+쌓지 않는다. **실제 query의 의미가 `*Query`에서 보여야 한다.**
 
 `var where = conditionBuilder.build(criteria);` 한 줄 때문에 검색 조건이 keyword·category·genre·
 region·기간·판매 상태라는 사실이 전혀 보이지 않는다면, 몇 줄 늘어나더라도 조건을 늘어놓는 편이 낫다.
@@ -215,10 +222,10 @@ LIKE escaping    대소문자 무시 검색    판매 상태 CASE expression
 ### 13. 조회 helper 안에 I/O를 숨기지 않는다
 
 조건을 만드는 class 안에서 다른 module API를 부르거나 DB를 조회하면, 이름이 말하는 것과 실제로
-하는 일이 달라진다. 가능하면 application이 그 조회를 먼저 하고 결과 값을 query port에 넘긴다.
+하는 일이 달라진다. 가능하면 application이 그 조회를 먼저 하고 결과 값을 `*Query`에 넘긴다.
 
 ```text
-region -> VenueLookupApi.findIdsByRegion(...) -> venueIds -> ShowQueryPort.search(..., venueIds)
+region -> VenueLookupApi.findIdsByRegion(...) -> venueIds -> ShowListQuery.search(..., venueIds)
 ```
 
 그러면 Querydsl 코드는 `show.venueId.in(venueIds)`라는 자기 DB query에 집중한다. 단 **module
