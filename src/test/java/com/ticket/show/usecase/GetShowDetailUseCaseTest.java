@@ -78,19 +78,19 @@ class GetShowDetailUseCaseTest {
 
     private void stubEmptyFragments() {
         when(showQueryRepository.findGenreNames(1L)).thenReturn(List.of());
-        when(showQueryRepository.findGrades(1L)).thenReturn(List.of());
-        when(showQueryRepository.findPerformanceDates(1L)).thenReturn(List.of());
+        when(showQueryRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
+        when(showQueryRepository.findPerformances(1L)).thenReturn(List.of());
     }
 
     @Test
     void show_엔티티에서_응답을_만들고_찜_개수와_venue_표시값을_조합한다() {
         when(showQueryRepository.findShow(1L)).thenReturn(Optional.of(show(5L, null)));
         when(showQueryRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
-        when(showQueryRepository.findGrades(1L)).thenReturn(List.of());
+        when(showQueryRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(showQueryRepository.findPriceSummary(1L))
                 .thenReturn(
                         new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
-        when(showQueryRepository.findPerformanceDates(1L)).thenReturn(List.of());
+        when(showQueryRepository.findPerformances(1L)).thenReturn(List.of());
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
         when(venueLookup.findSummary(5L))
                 .thenReturn(
