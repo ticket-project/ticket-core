@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,14 +20,16 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
+import com.ticket.show.query.ShowDetailView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-@Import({ShowDetailQuery.class, ShowCardImagePathConverter.class})
+/** {@link ShowQueryRepository#findShowDetail}의 조합 결과를 고정한다. */
+@Import({ShowQueryRepository.class, ShowCardImagePathConverter.class})
 @SuppressWarnings("NonAsciiCharacters")
-class ShowDetailQueryTest extends InfraReadRepositoryTestSupport {
-    @Autowired private ShowDetailQuery showDetailQuery;
+class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
+    @Autowired private ShowQueryRepository showQueryRepository;
     private Long showId;
     private Long venueId;
 
@@ -69,7 +71,7 @@ class ShowDetailQueryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 공연_상세정보를_조합해_조회하고_예매상태는_Clock_기준으로_계산한다() {
-        Optional<ShowDetailView> result = showDetailQuery.findShowDetail(showId);
+        Optional<ShowDetailView> result = showQueryRepository.findShowDetail(showId);
 
         assertThat(result).isPresent();
         ShowDetailView detail = result.orElseThrow();
@@ -94,6 +96,6 @@ class ShowDetailQueryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 존재하지_않는_공연이면_empty를_반환한다() {
-        assertThat(showDetailQuery.findShowDetail(999999L)).isEmpty();
+        assertThat(showQueryRepository.findShowDetail(999999L)).isEmpty();
     }
 }

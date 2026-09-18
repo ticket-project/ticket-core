@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase;
 
 import java.util.Collection;
 import java.util.Map;

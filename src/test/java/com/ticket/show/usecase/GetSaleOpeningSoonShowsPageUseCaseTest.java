@@ -17,11 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
+import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.SaleOpeningSoonDetailRow;
 import com.ticket.show.query.SaleOpeningSoonDetailView;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -32,7 +32,7 @@ import com.ticket.venue.api.VenueSummary;
 class GetSaleOpeningSoonShowsPageUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowListQuery showListQuery;
+    @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetSaleOpeningSoonShowsPageUseCase useCase;
 
@@ -59,7 +59,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                         7L);
         CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
                 new CursorPage<>(List.of(row), true, NEXT_POSITION);
-        when(showListQuery.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
+        when(showQueryRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -96,7 +96,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                                 100L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListQuery).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+        verify(showQueryRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
@@ -105,7 +105,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
                 new CursorPage<>(List.of(), false, null);
-        when(showListQuery.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
+        when(showQueryRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
         GetSaleOpeningSoonShowsPageUseCase.Output output =
@@ -115,6 +115,32 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListQuery).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+        verify(showQueryRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+    }
+
+    /**
+     * 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다.
+     */
+    @Test
+    void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
+        CursorPage<SaleOpeningSoonDetailRow, ShowCursor> empty =
+                new CursorPage<>(List.of(), false, null);
+        SaleOpeningSoonSearchParam noRegion =
+                new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
+        SaleOpeningSoonSearchParam jeju =
+                new SaleOpeningSoonSearchParam(
+                        null, null, Region.JEJU, null, null, null, null, null);
+        when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
+        when(showQueryRepository.findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR))
+                .thenReturn(empty);
+        when(showQueryRepository.findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR))
+                .thenReturn(empty);
+
+        useCase.execute(
+                new GetSaleOpeningSoonShowsPageUseCase.Input(noRegion, 10, ShowSort.POPULAR));
+        useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(jeju, 10, ShowSort.POPULAR));
+
+        verify(showQueryRepository).findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR);
+        verify(showQueryRepository).findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR);
     }
 }

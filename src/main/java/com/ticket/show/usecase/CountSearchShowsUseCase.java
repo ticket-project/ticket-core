@@ -1,12 +1,15 @@
 package com.ticket.show.usecase;
 
+import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.query.RegionVenueIds;
-import com.ticket.show.query.ShowListQuery;
+import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowSearchCriteria;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -16,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CountSearchShowsUseCase {
-    private final ShowListQuery showListQuery;
+    private final ShowQueryRepository showQueryRepository;
     private final VenueLookupApi venueLookup;
 
     public record Input(ShowSearchCriteria criteria) {
@@ -31,8 +34,17 @@ public class CountSearchShowsUseCase {
 
     public Output execute(final Input input) {
         return new Output(
-                showListQuery.countSearchShows(
-                        input.criteria(),
-                        RegionVenueIds.resolve(venueLookup, input.criteria().getRegion())));
+                showQueryRepository.countSearchShows(
+                        input.criteria(), venueIdsOf(input.criteria().getRegion())));
+    }
+
+    /**
+     * 지역 조건을 venueId 집합으로 해석한다.
+     *
+     * <p><b>"지역 없음"과 "지역은 있으나 그 지역에 공연장이 없음"은 다른 결과다.</b> 그래서 {@code null}(지역 조건 자체가 없음)과 빈 집합(조건은
+     * 있는데 해당 공연장이 없으니 결과 0건)을 구분해 넘긴다. 이 둘을 뭉개면 "제주에 공연장이 하나도 없다"가 "전체 목록"으로 조용히 바뀐다.
+     */
+    private @Nullable Set<Long> venueIdsOf(final @Nullable Region region) {
+        return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 }

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * {@link DisplaySaleWindow#statusAt}이 {@link SaleDisplayStatus} 판정의 유일한 원본이다(TD-12 해소). {@code
- * SaleDisplayStatusPredicates}가 같은 결론을 내는지는 {@code SaleDisplayStatusPredicatesTest}가 같은 케이스로 고정한다.
+ * ShowQueryRepository}의 SQL 조건이 같은 결론을 내는지는 {@code ShowQueryRepositoryTest}가 실제 조회 결과로 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class DisplaySaleWindowTest {

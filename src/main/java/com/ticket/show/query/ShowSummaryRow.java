@@ -5,9 +5,9 @@ import java.time.LocalDate;
 import org.jspecify.annotations.Nullable;
 
 /**
- * showId 집합으로 공연 표시값을 배치 조회하는 내부 포트({@code ShowSummaryBatchQuery})의 조회 결과 한 행이다. 내 찜 목록처럼 show 내부의
- * 다른 use case가 자기 show 데이터를 조회할 때 쓰는 내부 타입이다 — 다른 module에는 노출하지 않는다. {@code venueId}는 scalar 참조만
- * 담는다 — venue 표시값 조합은 {@code GetMyShowLikesUseCase}(application)가 한다.
+ * showId 집합으로 공연 표시값을 배치 조회하는 내부 포트({@code ShowQueryRepository#findSummaries})의 조회 결과 한 행이다. 내 찜
+ * 목록처럼 show 내부의 다른 use case가 자기 show 데이터를 조회할 때 쓰는 내부 타입이다 — 다른 module에는 노출하지 않는다. {@code venueId}는
+ * scalar 참조만 담는다 — venue 표시값 조합은 {@code GetMyShowLikesUseCase}(application)가 한다.
  */
 public record ShowSummaryRow(
         long showId,

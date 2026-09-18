@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.persistence;
 
 import java.util.Objects;
 
