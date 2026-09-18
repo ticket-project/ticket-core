@@ -1,4 +1,4 @@
-package com.ticket.booking.order.query;
+package com.ticket.booking.order.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,16 +14,18 @@ import org.springframework.context.annotation.Import;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
+import com.ticket.booking.order.query.OrderDetailRow;
+import com.ticket.booking.order.query.OrderStatusView;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 
 /**
  * booking이 소유한 order/orderSeat 테이블만으로 조회하는지 확인한다. show/member 표시값 합성은 {@code
  * GetOrderDetailUseCase}/{@code GetOrderStatusUseCase} 단위 테스트가 담당한다.
  */
-@Import(OrderQuery.class)
+@Import(OrderQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class OrderQueryTest extends ReadRepositoryTestSupport {
-    @Autowired private OrderQuery repository;
+class OrderQueryRepositoryTest extends ReadRepositoryTestSupport {
+    @Autowired private OrderQueryRepository repository;
     private Long memberId;
     private Long performanceId;
     private String orderKey;

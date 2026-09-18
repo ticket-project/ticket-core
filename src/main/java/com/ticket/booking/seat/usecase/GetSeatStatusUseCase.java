@@ -12,8 +12,7 @@ import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
-import com.ticket.booking.seat.query.SeatStateQuery;
-import com.ticket.booking.seat.query.SeatStateSnapshotRow;
+import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
 import com.ticket.booking.seat.query.SeatStateView;
 import com.ticket.booking.seat.query.SeatStatus;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -25,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
     private final PerformanceSaleFinder performanceSaleFinder;
-    private final SeatStateQuery seatStateQuery;
+    private final PerformanceSeatQueryRepository performanceSeatQueryRepository;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
     private final AdmissionGuard admissionGuard;
@@ -59,18 +58,19 @@ public class GetSeatStatusUseCase {
         admissionGuard.verifyIfRequired(
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
-        final List<SeatStateSnapshotRow> dbStates = seatStateQuery.findSeatStates(performanceId);
+        final List<SeatStateView> dbStates =
+                performanceSeatQueryRepository.findSeatStates(performanceId);
 
         final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
 
         final List<SeatStateView> seats =
-                dbStates.stream().map(row -> toSeatStateView(row, redisOccupiedIds)).toList();
+                dbStates.stream().map(row -> withRedisOccupancy(row, redisOccupiedIds)).toList();
 
         return new Output(seats);
     }
 
-    private SeatStateView toSeatStateView(
-            final SeatStateSnapshotRow row, final Set<Long> redisOccupiedIds) {
+    private SeatStateView withRedisOccupancy(
+            final SeatStateView row, final Set<Long> redisOccupiedIds) {
         final SeatStatus status =
                 redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : row.status();
         return new SeatStateView(row.performanceSeatId(), row.seatId(), status);
