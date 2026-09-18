@@ -2,6 +2,7 @@ package com.ticket.booking.order.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
 
 @SpringBootTest(
@@ -99,6 +101,73 @@ class OrderRepositoryAdapterIntegrationTest {
                 .allSatisfy(
                         orderSeat ->
                                 assertThat(orderSeat.getOrder().getId()).isEqualTo(order.getId()));
+    }
+
+    /**
+     * 주문 상세 조회다. 좌석까지 {@code join fetch}로 한 번에 채워 오므로 트랜잭션 밖에서 좌석을 읽어도 lazy 초기화가 일어나지 않는다 — 여기서 좌석을
+     * 읽는 것 자체가 fetch join이 실제로 걸렸다는 검증이다. 순서는 {@code @OrderBy("id ASC")}가 fetch join SQL에 그대로 붙어
+     * 보존된다.
+     */
+    @Test
+    void 주문상세는_좌석까지_한번에_채워_조회한다() {
+        Order order = order("detail", LocalDateTime.now().plusMinutes(5));
+        order.addOrderSeat(501L, 42L, BigDecimal.valueOf(120_000), "R", "R석", "1F 가구역 A열 1번");
+        order.addOrderSeat(502L, 43L, BigDecimal.valueOf(100_000), "S", "S석", "1F 가구역 A열 2번");
+        inTransaction(() -> orderRepository.save(order));
+
+        Order found =
+                inTransactionWithResult(
+                        () ->
+                                orderRepository
+                                        .findDetailByOrderKeyAndMemberId(
+                                                order.getOrderKey(), MEMBER_ID)
+                                        .orElseThrow());
+
+        assertThat(found.getMemberId()).isEqualTo(MEMBER_ID);
+        assertThat(found.getPerformanceId()).isEqualTo(PERFORMANCE_ID);
+        assertThat(found.getShowTitleSnapshot()).isEqualTo("show-title");
+        assertThat(found.getVenueNameSnapshot()).isEqualTo("venue-name");
+        assertThat(found.getOrderSeats())
+                .extracting(
+                        OrderSeat::getPerformanceSeatId,
+                        OrderSeat::getSeatId,
+                        OrderSeat::getGradeCodeSnapshot,
+                        OrderSeat::getSeatLabelSnapshot)
+                .containsExactly(
+                        tuple(501L, 42L, "R", "1F 가구역 A열 1번"),
+                        tuple(502L, 43L, "S", "1F 가구역 A열 2번"));
+        assertThat(found.getOrderSeats().getFirst().getUnitPrice()).isEqualByComparingTo("120000");
+    }
+
+    @Test
+    void 다른_회원의_주문키로는_조회되지_않는다() {
+        Order order = order("other-member", LocalDateTime.now().plusMinutes(5));
+        order.addOrderSeat(501L, 42L, BigDecimal.valueOf(120_000), "R", "R석", "1F 가구역 A열 1번");
+        inTransaction(() -> orderRepository.save(order));
+
+        assertThat(
+                        orderRepository.findDetailByOrderKeyAndMemberId(
+                                order.getOrderKey(), MEMBER_ID + 1))
+                .isEmpty();
+        assertThat(orderRepository.findByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID + 1))
+                .isEmpty();
+    }
+
+    @Test
+    void 주문상태는_잠금없이_조회한다() {
+        Order order = order("status", LocalDateTime.now().plusMinutes(5));
+        inTransaction(() -> orderRepository.save(order));
+
+        Order found =
+                inTransactionWithResult(
+                        () ->
+                                orderRepository
+                                        .findByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID)
+                                        .orElseThrow());
+
+        assertThat(found.getOrderKey()).isEqualTo(order.getOrderKey());
+        assertThat(found.getStatus()).isEqualTo(OrderState.PENDING);
+        assertThat(found.getExpiresAt()).isNotNull();
     }
 
     @Test

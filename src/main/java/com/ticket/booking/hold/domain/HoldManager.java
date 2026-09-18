@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HoldManager {
     private final HoldStore holdStore;
-    private final HoldKeyGenerator holdKeyGenerator;
 
     /** 좌석을 선점한다. 좌석 단위 상호 배제는 호출하는 유스케이스가 락으로 보장한다. */
     public Hold createHold(
@@ -27,8 +27,7 @@ public class HoldManager {
             final LocalDateTime now) {
         final List<Long> seatIds = requestedSeatIds.toList();
         final Hold hold =
-                Hold.create(
-                        holdKeyGenerator.generate(), memberId, performanceId, seatIds, now, ttl);
+                Hold.create(generateHoldKey(), memberId, performanceId, seatIds, now, ttl);
 
         ensureSeatsNotHeld(performanceId, seatIds);
         holdStore.save(hold, ttl);
@@ -48,6 +47,10 @@ public class HoldManager {
 
     public boolean isHeld(final Long performanceId, final Long seatId) {
         return holdStore.isHeld(performanceId, seatId);
+    }
+
+    private String generateHoldKey() {
+        return "HOLD-" + UUID.randomUUID().toString().replace("-", "");
     }
 
     private void ensureSeatsNotHeld(final Long performanceId, final List<Long> seatIds) {

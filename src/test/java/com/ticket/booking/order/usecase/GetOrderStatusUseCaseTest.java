@@ -19,9 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.order.domain.Order;
+import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.persistence.OrderQueryRepository;
-import com.ticket.booking.order.query.OrderStatusView;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.NotFoundException;
 
@@ -30,7 +30,7 @@ import com.ticket.shared.exception.NotFoundException;
 class GetOrderStatusUseCaseTest {
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderQueryRepository repository;
+    @Mock private OrderRepository repository;
     @Mock private MemberLookupApi memberLookup;
     private GetOrderStatusUseCase useCase;
 
@@ -41,13 +41,8 @@ class GetOrderStatusUseCaseTest {
 
     @Test
     void 결제대기_주문의_남은시간을_반환한다() {
-        when(repository.findStatus("order-key", 1L))
-                .thenReturn(
-                        Optional.of(
-                                new OrderStatusView(
-                                        "order-key",
-                                        OrderState.PENDING,
-                                        LocalDateTime.of(2026, 3, 15, 19, 10))));
+        when(repository.findByOrderKeyAndMemberId("order-key", 1L))
+                .thenReturn(Optional.of(order()));
 
         GetOrderStatusUseCase.Output output =
                 useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L));
@@ -59,7 +54,7 @@ class GetOrderStatusUseCaseTest {
 
     @Test
     void 본인_주문이_없으면_권한예외를_던진다() {
-        when(repository.findStatus("missing", 1L)).thenReturn(Optional.empty());
+        when(repository.findByOrderKeyAndMemberId("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("missing", 1L)))
                 .isInstanceOf(OrderNotOwnedException.class)
@@ -69,18 +64,25 @@ class GetOrderStatusUseCaseTest {
 
     @Test
     void 탈퇴한_회원의_주문상태는_조회하지_않는다() {
-        when(repository.findStatus("order-key", 1L))
-                .thenReturn(
-                        Optional.of(
-                                new OrderStatusView(
-                                        "order-key",
-                                        OrderState.PENDING,
-                                        LocalDateTime.of(2026, 3, 15, 19, 10))));
+        when(repository.findByOrderKeyAndMemberId("order-key", 1L))
+                .thenReturn(Optional.of(order()));
         doThrow(new NotFoundException()).when(memberLookup).requireActive(1L);
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))
                 .isInstanceOf(OrderNotOwnedException.class)
                 .hasFieldOrPropertyWithValue("orderKey", "order-key")
                 .hasFieldOrPropertyWithValue("memberId", 1L);
+    }
+
+    private Order order() {
+        return new Order(
+                1L,
+                10L,
+                "order-key",
+                "hold-key",
+                LocalDateTime.of(2026, 3, 15, 19, 10),
+                "뮤지컬",
+                LocalDateTime.of(2026, 3, 20, 19, 30),
+                "올림픽홀");
     }
 }

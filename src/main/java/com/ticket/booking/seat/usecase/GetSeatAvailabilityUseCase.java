@@ -1,5 +1,7 @@
 package com.ticket.booking.seat.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -16,7 +18,6 @@ import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatStateRow;
 import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
@@ -39,12 +40,7 @@ public class GetSeatAvailabilityUseCase {
 
     public record Input(Long performanceId) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
         }
     }
 

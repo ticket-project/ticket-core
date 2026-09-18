@@ -1,4 +1,6 @@
-package com.ticket.booking.seat.query;
+package com.ticket.booking.seat.usecase.view;
+
+import com.ticket.booking.seat.query.SeatStatus;
 
 /**
  * 좌석 상태 조회의 DB 원본 행이자 API 응답 한 건이다 — 조회 결과에 Redis 점유만 덧씌우면 그대로 응답이 되므로 별도 타입으로 나누지 않는다.

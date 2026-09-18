@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
-import com.ticket.booking.order.domain.OrderKeyGenerator;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
@@ -61,7 +60,6 @@ class PendingOrderCreatorTest {
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     @Mock private OrderRepository orderRepository;
-    @Mock private OrderKeyGenerator orderKeyGenerator;
     @Mock private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
     @Mock private ApplicationEventPublisher eventPublisher;
     private PendingOrderCreator pendingOrderCreator;
@@ -70,11 +68,7 @@ class PendingOrderCreatorTest {
     void setUp() {
         pendingOrderCreator =
                 new PendingOrderCreator(
-                        orderRepository,
-                        orderKeyGenerator,
-                        orderHoldHistoryRecorder,
-                        eventPublisher,
-                        FIXED_CLOCK);
+                        orderRepository, orderHoldHistoryRecorder, eventPublisher, FIXED_CLOCK);
     }
 
     @Test
@@ -82,13 +76,12 @@ class PendingOrderCreatorTest {
         final PerformanceSeat seat = performanceSeat(501L, 201L, 1L, BigDecimal.TEN);
         final List<PerformanceSeat> seats = List.of(seat);
         final Hold hold = hold();
-        when(orderKeyGenerator.generate()).thenReturn("order-key");
         saveAssigningId(55L);
 
         final String orderKey =
                 pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot());
 
-        assertThat(orderKey).isEqualTo("order-key");
+        assertThat(orderKey).startsWith("ORDER-");
         final InOrder inOrder = inOrder(orderRepository, orderHoldHistoryRecorder, eventPublisher);
         // 조립과 저장, 트랜잭션 경계가 이제 한 클래스에 있다.
         inOrder.verify(orderRepository).save(any(Order.class));
@@ -113,7 +106,6 @@ class PendingOrderCreatorTest {
     void 좌석_단가_합계로_pending_주문과_orderSeat를_조립한다() {
         final PerformanceSeat firstSeat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
         final PerformanceSeat secondSeat = performanceSeat(102L, 202L, 2L, BigDecimal.valueOf(20));
-        when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
         saveAssigningId(55L);
 
         final String orderKey =
@@ -125,9 +117,11 @@ class PendingOrderCreatorTest {
                         List.of(firstSeat, secondSeat),
                         saleSnapshot());
 
-        assertThat(orderKey).isEqualTo("ORDER-KEY");
         final Order order = savedOrder();
-        assertThat(order.getOrderKey()).isEqualTo("ORDER-KEY");
+        // 없어진 OrderKeyGeneratorTest가 고정하던 주문 키 형식이다.
+        assertThat(orderKey).startsWith("ORDER-");
+        assertThat(orderKey.substring("ORDER-".length())).hasSize(32).doesNotContain("-");
+        assertThat(order.getOrderKey()).isEqualTo(orderKey);
         assertThat(order.getStatus()).isEqualTo(OrderState.PENDING);
         assertThat(order.getMemberId()).isEqualTo(1L);
         assertThat(order.getPerformanceId()).isEqualTo(10L);
@@ -164,6 +158,20 @@ class PendingOrderCreatorTest {
     }
 
     @Test
+    void 주문키는_주문마다_새로_생성한다() {
+        final List<PerformanceSeat> seats =
+                List.of(performanceSeat(101L, 201L, 1L, BigDecimal.TEN));
+        saveAssigningId(55L);
+
+        final String first =
+                pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
+        final String second =
+                pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
+
+        assertThat(first).isNotEqualTo(second);
+    }
+
+    @Test
     void 주문_좌석_컬렉션은_밖에서_직접_바꿀_수_없다() {
         final Order order =
                 new Order(
@@ -182,7 +190,6 @@ class PendingOrderCreatorTest {
 
     @Test
     void 좌석_표시값이_없으면_주문_생성에_실패한다() {
-        when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
         final PerformanceSeat seat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
 
         assertThatThrownBy(
@@ -202,7 +209,6 @@ class PendingOrderCreatorTest {
 
     @Test
     void 등급_표시값이_없으면_주문_생성에_실패한다() {
-        when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
         final PerformanceSeat seat = performanceSeat(101L, 201L, 99L, BigDecimal.TEN);
 
         assertThatThrownBy(
@@ -224,7 +230,6 @@ class PendingOrderCreatorTest {
     @Test
     void 주문_저장_실패는_그대로_전파한다() {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
-        when(orderKeyGenerator.generate()).thenReturn("ORDER-KEY");
         when(orderRepository.save(any(Order.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 

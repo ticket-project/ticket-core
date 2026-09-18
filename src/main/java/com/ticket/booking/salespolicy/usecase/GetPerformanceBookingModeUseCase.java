@@ -1,5 +1,7 @@
 package com.ticket.booking.salespolicy.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 
@@ -8,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,12 +26,7 @@ public class GetPerformanceBookingModeUseCase {
 
     public record Input(Long performanceId) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
         }
     }
 

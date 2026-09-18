@@ -1,5 +1,7 @@
 package com.ticket.booking.order.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -22,7 +24,6 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
@@ -72,18 +73,8 @@ public class StartBookingUseCase {
             Long memberId,
             @Nullable String admissionToken) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
+            memberId = requirePositiveId(memberId, "memberId");
         }
     }
 

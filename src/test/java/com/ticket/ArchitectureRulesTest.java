@@ -209,7 +209,6 @@ class ArchitectureRulesTest {
                     "com.ticket.show.persistence.PerformanceQueryRepository",
                     "com.ticket.venue.persistence.VenueQueryRepository",
                     "com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository",
-                    "com.ticket.booking.order.persistence.OrderQueryRepository",
                     "com.ticket.like.persistence.LikeQueryRepository");
 
     private static JavaClass topLevelOf(final JavaClass clazz) {
