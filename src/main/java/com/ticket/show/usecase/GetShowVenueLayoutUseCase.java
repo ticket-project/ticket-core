@@ -1,10 +1,11 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
@@ -26,12 +27,7 @@ public class GetShowVenueLayoutUseCase {
 
     public record Input(Long showId) {
         public Input {
-            if (showId == null) {
-                throw new InvalidRequestException("showId는 필수입니다.");
-            }
-            if (showId <= 0) {
-                throw new InvalidRequestException("showId는 양수여야 합니다.");
-            }
+            showId = requirePositiveId(showId, "showId");
         }
     }
 

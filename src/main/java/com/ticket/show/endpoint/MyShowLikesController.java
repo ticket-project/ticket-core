@@ -11,8 +11,8 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
 import com.ticket.show.endpoint.docs.MyShowLikesControllerDocs;
-import com.ticket.show.query.ShowLikeSummaryView;
 import com.ticket.show.usecase.GetMyShowLikesUseCase;
+import com.ticket.show.usecase.view.ShowLikeSummaryView;
 
 import lombok.RequiredArgsConstructor;
 

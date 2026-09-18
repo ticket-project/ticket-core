@@ -1,12 +1,13 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requireProvided;
+
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.venue.api.Region;
@@ -24,9 +25,7 @@ public class CountSearchShowsUseCase {
 
     public record Input(ShowSearchCriteria criteria) {
         public Input {
-            if (criteria == null) {
-                throw new InvalidRequestException("request는 필수입니다.");
-            }
+            criteria = requireProvided(criteria, "request");
         }
     }
 
