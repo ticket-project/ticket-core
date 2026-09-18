@@ -8,8 +8,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.seat.query.PerformanceSeatMapQuery;
-import com.ticket.booking.seat.query.PerformanceSeatMapQuery.PerformanceSeatMapRow;
+import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
+import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatMapRow;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
@@ -21,14 +21,15 @@ import lombok.RequiredArgsConstructor;
  * PerformanceVenueLayoutCatalogApi}에서, 이 회차에 실제로 판매 편성된 좌석(PerformanceSeat)과 확정 가격은 booking local에서
  * 각각 한 번씩만 조회해 N+1 없이 고정된 query 수로 조합한다.
  *
- * <p>Performance에 판매 편성되지 않은 물리 Seat는 {@link PerformanceSeatMapQuery}에 아예 나타나지 않으므로 응답에도 포함되지 않는다.
+ * <p>Performance에 판매 편성되지 않은 물리 Seat는 {@link PerformanceSeatQueryRepository}에 아예 나타나지 않으므로 응답에도
+ * 포함되지 않는다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSeatMapUseCase {
     private final PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
-    private final PerformanceSeatMapQuery performanceSeatMapQuery;
+    private final PerformanceSeatQueryRepository performanceSeatQueryRepository;
 
     public record Input(Long performanceId) {
         public Input {
@@ -68,7 +69,7 @@ public class GetPerformanceSeatMapUseCase {
         final PerformanceVenueLayout layout =
                 performanceVenueLayoutCatalog.getVenueLayout(input.performanceId());
         final List<PerformanceSeatMapRow> rows =
-                performanceSeatMapQuery.findAllByPerformanceId(input.performanceId());
+                performanceSeatQueryRepository.findAllByPerformanceId(input.performanceId());
 
         final List<SeatMapEntry> seats =
                 rows.stream()

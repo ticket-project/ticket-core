@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
-import com.ticket.booking.seat.query.SeatStateQuery;
+import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
@@ -26,7 +26,7 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
  * {@code @Transactional}이 self-invocation으로 무력화돼도 통과한다. 여기서는 실제 컨텍스트가 만든 빈과 Spring 자신의 {@link
  * TransactionAttributeSource}에 물어본다.
  *
- * <p>경계를 <b>누가</b> 소유하는지는 바뀔 수 있다 — 예전에는 조회 port를 감싼 별도 component가, 지금은 query adapter 자신이 갖는다. 고정하는
+ * <p>경계를 <b>누가</b> 소유하는지는 바뀔 수 있다 — 예전에는 조회 port를 감싼 별도 component가, 지금은 조회 Repository 자신이 갖는다. 고정하는
  * 것은 소유자 이름이 아니라 "DB 읽기에는 읽기 전용 트랜잭션이 걸리고 use case에는 걸리지 않는다"는 성질이다.
  */
 @SuppressWarnings("NonAsciiCharacters")
@@ -35,7 +35,8 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
 
     @Test
     void DB_좌석_상태_읽기는_읽기_전용_트랜잭션_안에서_끝난다() throws Exception {
-        final Class<?> adapter = AopUtils.getTargetClass(context.getBean(SeatStateQuery.class));
+        final Class<?> adapter =
+                AopUtils.getTargetClass(context.getBean(PerformanceSeatQueryRepository.class));
 
         final TransactionAttribute attribute =
                 transactionAttributeOf(adapter, "findSeatStates", Long.class);
@@ -47,7 +48,8 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     /** 트랜잭션 attribute가 선언돼 있어도 빈이 proxy가 아니면 실제로는 아무 경계도 없다. */
     @Test
     void 트랜잭션_경계를_소유한_빈은_실제로_proxy로_감싸진다() {
-        assertThat(AopUtils.isAopProxy(context.getBean(SeatStateQuery.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(PerformanceSeatQueryRepository.class)))
+                .isTrue();
     }
 
     /** use case가 트랜잭션을 소유하면 Redis 조회까지 DB connection을 쥔 채로 하게 된다. */

@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.query.OrderQuery;
+import com.ticket.booking.order.persistence.OrderQueryRepository;
 import com.ticket.booking.order.query.OrderStatusView;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.NotFoundException;
@@ -30,7 +30,7 @@ import com.ticket.shared.exception.NotFoundException;
 class GetOrderStatusUseCaseTest {
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderQuery repository;
+    @Mock private OrderQueryRepository repository;
     @Mock private MemberLookupApi memberLookup;
     private GetOrderStatusUseCase useCase;
 
