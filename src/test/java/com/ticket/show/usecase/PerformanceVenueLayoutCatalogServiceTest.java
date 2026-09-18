@@ -17,7 +17,6 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 import com.ticket.show.persistence.PerformanceQueryRepository;
-import com.ticket.show.persistence.PerformanceQueryRepository.PerformanceGradeLayoutRow;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
@@ -78,7 +77,8 @@ class PerformanceVenueLayoutCatalogServiceTest {
         when(venueSeatLookup.findAllSeatLayouts(3L))
                 .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 129.0, 101.0)));
         when(performanceQueryRepository.findGradeLayouts(1L))
-                .thenReturn(List.of(new PerformanceGradeLayoutRow(100L, "VIP", "VIP석", 1)));
+                .thenReturn(
+                        List.of(new PerformanceVenueLayout.GradeLayout(100L, "VIP", "VIP석", 1)));
 
         final PerformanceVenueLayout layout = service.getVenueLayout(1L);
 
