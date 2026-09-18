@@ -33,7 +33,7 @@ Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면
 | --- | --- | --- |
 | Spring 컨텍스트 없는 단위 테스트 | 엔티티, 값 객체, 상태 전이, 정책, 불변식, use case(외부 port는 mock/fake) | Spring 컨텍스트, DB, Redis |
 | `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인 | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
-| `@DataJpaTest` (+ Spring Modulith `@ModuleSlicing` 조합) | JPA/Querydsl/RepositoryAdapter, 해당 모듈 소유 migration만으로 schema가 만들어지는지 | 업무 규칙 단위 테스트 |
+| `@DataJpaTest` (+ Spring Modulith `@ModuleSlicing` 조합) | `*Query`의 Querydsl 조회, RepositoryAdapter, 해당 모듈 소유 migration만으로 schema가 만들어지는지 | 업무 규칙 단위 테스트 |
 | `@SpringBootTest`(+ Testcontainers) | 전체 컨텍스트 기동, Redis/Redisson 실제 연동, 실제 HTTP로 스택을 관통하는 예매 E2E | 개별 클래스 단위 검증 |
 
 Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** Docker가 없으면 실패의 원인이
@@ -136,7 +136,7 @@ ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId�
 **N+1 회귀**는 `GetPerformanceSeatMapUseCaseTest`가 고정한다. `GetPerformanceSeatMapUseCase`는
 Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 show `PerformanceVenueLayoutCatalogApi`에서
 (내부적으로 venue의 `VenueSeatLookupApi`을 호출), 판매 편성된 좌석과 확정 가격을 booking
-`PerformanceSeatMapQueryPort`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된 query
+`PerformanceSeatMapQuery`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된 query
 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한 번만 호출되는지 확인한다 — 회차 좌석
 수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
 
@@ -209,7 +209,8 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - 테스트 클래스 이름은 대상 클래스 이름 + `Test`로 맞춘다. Controller 계약 테스트는
   `...ContractTest`, 모듈 STANDALONE 테스트는 `...ModuleTests`, Modulith 시나리오 테스트는
   `...ScenarioTest`를 쓴다.
-- 도메인 규칙과 use case는 Spring 컨텍스트 없이 검증한다. port는 fake나 mock으로 대체한다. 다른
+- 도메인 규칙과 use case는 Spring 컨텍스트 없이 검증한다. port와 구체 `*Query`는 fake나 mock으로
+  대체한다(`*Query`는 interface가 아니지만 Mockito가 class도 mock한다). 다른
   모듈의 공개 API도 마찬가지로 mock/fake로 대체하고, 실제 모듈 조합이 필요하면 그 사실을 테스트
   이름과 애노테이션(`DIRECT_DEPENDENCIES`)으로 드러낸다.
 - Redis나 DB에 실제로 붙어야 하는 검증은 `@DataJpaTest`/Testcontainers로 분리한다. 단위 테스트에
