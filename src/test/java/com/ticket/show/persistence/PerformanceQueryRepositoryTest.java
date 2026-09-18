@@ -1,19 +1,22 @@
 package com.ticket.show.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
+import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.query.PerformanceGradeView;
 import com.ticket.show.query.PerformanceSummaryView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
@@ -50,7 +53,7 @@ class PerformanceQueryRepositoryTest extends InfraReadRepositoryTestSupport {
     }
 
     @Test
-    void 회차의_grade_목록을_표시_순서대로_가격과_함께_반환한다() throws Exception {
+    void 회차의_grade_목록을_가격과_표시순서와_함께_반환한다() throws Exception {
         Venue venue = persistVenue("올림픽홀", Region.SEOUL);
         Show show =
                 persistShow(
@@ -69,14 +72,15 @@ class PerformanceQueryRepositoryTest extends InfraReadRepositoryTestSupport {
         Long performanceId = performance.getId();
         flushAndClear();
 
-        List<PerformanceGradeView> result =
-                repository.findAllByPerformanceIdOrderBySortOrderAsc(performanceId);
+        List<GradeInfo> result = repository.findPerformanceGrades(performanceId);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).gradeCode()).isEqualTo("VIP");
-        assertThat(result.get(0).price()).isEqualByComparingTo(BigDecimal.valueOf(150_000));
-        assertThat(result.get(1).gradeCode()).isEqualTo("R");
-        assertThat(result.get(1).price()).isEqualByComparingTo(BigDecimal.valueOf(80_000));
+        assertThat(result)
+                .extracting(GradeInfo::gradeCode, GradeInfo::gradeName, GradeInfo::sortOrder)
+                .containsExactlyInAnyOrder(tuple("VIP", "VIP석", 1), tuple("R", "R석", 2));
+        Map<String, BigDecimal> priceByGradeCode =
+                result.stream().collect(Collectors.toMap(GradeInfo::gradeCode, GradeInfo::price));
+        assertThat(priceByGradeCode.get("VIP")).isEqualByComparingTo(BigDecimal.valueOf(150_000));
+        assertThat(priceByGradeCode.get("R")).isEqualByComparingTo(BigDecimal.valueOf(80_000));
     }
 
     @Test
@@ -95,9 +99,6 @@ class PerformanceQueryRepositoryTest extends InfraReadRepositoryTestSupport {
         Long performanceId = performance.getId();
         flushAndClear();
 
-        List<PerformanceGradeView> result =
-                repository.findAllByPerformanceIdOrderBySortOrderAsc(performanceId);
-
-        assertThat(result).isEmpty();
+        assertThat(repository.findPerformanceGrades(performanceId)).isEmpty();
     }
 }

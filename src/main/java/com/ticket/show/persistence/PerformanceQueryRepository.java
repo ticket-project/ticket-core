@@ -6,7 +6,6 @@ import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGr
 import static com.ticket.show.domain.show.QShow.show;
 import static com.ticket.show.persistence.QuerydslTupleColumns.required;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,9 +14,10 @@ import org.springframework.stereotype.Repository;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
+import com.ticket.show.api.PerformanceVenueLayout.GradeLayout;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.query.PerformanceGradeView;
 import com.ticket.show.query.PerformanceSummaryView;
 
 import lombok.RequiredArgsConstructor;
@@ -57,26 +57,6 @@ public class PerformanceQueryRepository {
                         row.get(performance.startTime)));
     }
 
-    /** 회차별 grade 목록·가격 화면 조회다. aggregate 복원이 아니라 표시용 join 결과를 반환한다. */
-    public List<PerformanceGradeView> findAllByPerformanceIdOrderBySortOrderAsc(
-            final Long performanceId) {
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                PerformanceGradeView.class,
-                                performanceGrade.id,
-                                grade.code,
-                                grade.name,
-                                performanceGrade.price,
-                                performanceGrade.sortOrder))
-                .from(performanceGrade)
-                .join(grade)
-                .on(grade.id.eq(performanceGrade.gradeId))
-                .where(performanceGrade.performance.id.eq(performanceId))
-                .orderBy(performanceGrade.sortOrder.asc())
-                .fetch();
-    }
-
     public Optional<PerformanceSaleContext> findContext(final long performanceId) {
         final Tuple row =
                 queryFactory
@@ -106,11 +86,11 @@ public class PerformanceQueryRepository {
     }
 
     /** 이 회차에 배정된 모든 PerformanceGrade를 반환한다. */
-    public List<PerformanceGradeRow> findPerformanceGrades(final long performanceId) {
+    public List<GradeInfo> findPerformanceGrades(final long performanceId) {
         return queryFactory
                 .select(
                         Projections.constructor(
-                                PerformanceGradeRow.class,
+                                GradeInfo.class,
                                 performanceGrade.id,
                                 grade.code,
                                 grade.name,
@@ -154,11 +134,11 @@ public class PerformanceQueryRepository {
     }
 
     /** 이 회차에 배정된 모든 PerformanceGrade의 표시값을 반환한다. 가격은 담지 않는다. */
-    public List<PerformanceGradeLayoutRow> findGradeLayouts(final long performanceId) {
+    public List<GradeLayout> findGradeLayouts(final long performanceId) {
         return queryFactory
                 .select(
                         Projections.constructor(
-                                PerformanceGradeLayoutRow.class,
+                                GradeLayout.class,
                                 performanceGrade.id,
                                 grade.code,
                                 grade.name,
@@ -169,14 +149,4 @@ public class PerformanceQueryRepository {
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .fetch();
     }
-
-    public record PerformanceGradeRow(
-            Long performanceGradeId,
-            String gradeCode,
-            String gradeName,
-            Integer sortOrder,
-            BigDecimal price) {}
-
-    public record PerformanceGradeLayoutRow(
-            Long performanceGradeId, String gradeCode, String gradeName, Integer sortOrder) {}
 }

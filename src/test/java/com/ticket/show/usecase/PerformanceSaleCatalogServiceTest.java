@@ -19,7 +19,6 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.persistence.PerformanceQueryRepository;
-import com.ticket.show.persistence.PerformanceQueryRepository.PerformanceGradeRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatAddress;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -60,7 +59,7 @@ class PerformanceSaleCatalogServiceTest {
         when(performanceQueryRepository.findPerformanceGrades(1L))
                 .thenReturn(
                         List.of(
-                                new PerformanceGradeRow(
+                                new PerformanceSaleSnapshot.GradeInfo(
                                         100L, "VIP", "VIP석", 1, new BigDecimal("170000"))));
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
