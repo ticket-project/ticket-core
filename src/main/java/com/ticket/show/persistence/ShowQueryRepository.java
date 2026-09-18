@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -46,30 +45,23 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.query.LatestShowRow;
 import com.ticket.show.query.PerformanceDateInfo;
 import com.ticket.show.query.PerformanceInfo;
 import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.SaleOpeningSoonDetailRow;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
-import com.ticket.show.query.SaleOpeningSoonSummaryRow;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListItemRow;
 import com.ticket.show.query.ShowListParam;
 import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSearchItemRow;
 import com.ticket.show.query.ShowSort;
-import com.ticket.show.query.ShowSummaryRow;
 import com.ticket.show.usecase.view.ShowGradeView;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세·요약 배치가 한 곳에 있다. show 자기 DB만 본다: 반환 타입은 전부 {@code
- * venueId} scalar만 담은 raw row이고, venue 표시값 조합은 이 조회를 부르는 use case(application)가 한다.
+ * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세·요약 배치가 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show}
+ * 엔티티나 그 조각이고, venue 표시값 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
  *
- * <p>밖으로 내보내는 것은 app이 소유한 read model과 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
+ * <p>밖으로 내보내는 것은 show 자기 엔티티와 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
  *
  * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다(use case가 {@code VenueLookupApi}로 해석한다). {@code null}은 지역
  * 조건 없음이고, <b>빈 집합은 조건은 있으나 해당 공연장이 없다는 뜻이라 결과가 0건</b>이다 — 둘을 같게 다루면 안 된다.
@@ -83,12 +75,11 @@ public class ShowQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final SpringDataShowJpaRepository showJpaRepository;
     private final SpringDataPerformanceJpaRepository performanceJpaRepository;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
 
     // 공연 목록 · 검색 ----------------------------------------------------------
 
-    public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
+    public CursorPage<Show, ShowCursor> findAllBySearch(
             final ShowListParam param,
             final @Nullable Set<Long> venueIds,
             final int size,
@@ -96,25 +87,18 @@ public class ShowQueryRepository {
         final SortOrder sortOrder = resolveSortOrder(sort, param.getCursor());
         final BooleanBuilder where = mainListCondition(param, venueIds, sortOrder);
 
-        return findCursorPage(size, param.getCursor(), where, sortOrder, this::fetchShowListRows);
+        return findCursorPage(size, param.getCursor(), where, sortOrder);
     }
 
     /**
      * 상단 최신 공연 배너다. 전체 목록의 최신순과 같은 순서를 쓴다 — <b>마감되지 않은 공연 먼저, 등록일 내림차순, 등록일이 같으면 id 내림차순</b>. 배너와
      * 목록이 다른 순서를 쓰면 같은 화면에서 "최신"의 의미가 둘이 된다.
      */
-    public List<LatestShowRow> findLatestShows(final String categoryCode, final int limit) {
+    public List<Show> findLatestShows(final String categoryCode, final int limit) {
         final SortOrder sortOrder = resolveSortOrder(ShowSort.LATEST);
-        final List<Tuple> rows =
+        final List<Long> showIds =
                 queryFactory
-                        .select(
-                                show.id,
-                                show.title,
-                                show.image,
-                                show.startDate,
-                                show.endDate,
-                                show.venueId,
-                                show.createdAt)
+                        .select(show.id)
                         .from(show)
                         .leftJoin(showGenre)
                         .on(showGenre.showId.eq(show.id))
@@ -124,31 +108,19 @@ public class ShowQueryRepository {
                         .on(genre.categoryId.eq(category.id))
                         .where(categoryCodeEq(categoryCode))
                         // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다.
-                        .groupBy(
-                                show.id,
-                                show.title,
-                                show.image,
-                                show.startDate,
-                                show.endDate,
-                                show.venueId,
-                                show.createdAt)
+                        .groupBy(show.id, show.createdAt)
                         .orderBy(orderSpecifiers(sortOrder))
                         .limit(limit)
                         .fetch();
 
-        return rows.stream().map(this::toLatestShowRow).toList();
+        return findShowsInIdOrder(showIds);
     }
 
-    public List<SaleOpeningSoonSummaryRow> findSaleOpeningSoonSummaries(
-            final String categoryCode, final int limit) {
-        final List<Tuple> rows =
+    public List<Show> findSaleOpeningSoonSummaries(final String categoryCode, final int limit) {
+        final List<Long> showIds =
                 queryFactory
-                        .select(
-                                show.id,
-                                show.title,
-                                show.image,
-                                show.venueId,
-                                show.displaySaleWindow.startsAt)
+                        // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(H2).
+                        .select(show.id, show.displaySaleWindow.startsAt)
                         .distinct()
                         .from(show)
                         .leftJoin(showGenre)
@@ -160,12 +132,15 @@ public class ShowQueryRepository {
                         .where(saleOpeningSoonSummaryCondition(categoryCode))
                         .orderBy(show.displaySaleWindow.startsAt.asc())
                         .limit(limit)
-                        .fetch();
+                        .fetch()
+                        .stream()
+                        .map(tuple -> required(tuple, show.id))
+                        .toList();
 
-        return rows.stream().map(this::toSaleOpeningSoonSummaryRow).toList();
+        return findShowsInIdOrder(showIds);
     }
 
-    public CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
+    public CursorPage<Show, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param,
             final @Nullable Set<Long> venueIds,
             final int size,
@@ -173,11 +148,10 @@ public class ShowQueryRepository {
         final SortOrder sortOrder = resolveSortOrder(sort, param.getCursor());
         final BooleanBuilder where = saleOpeningSoonCondition(param, venueIds);
 
-        return findCursorPage(
-                size, param.getCursor(), where, sortOrder, this::fetchSaleOpeningSoonDetailRows);
+        return findCursorPage(size, param.getCursor(), where, sortOrder);
     }
 
-    public CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
+    public CursorPage<Show, ShowCursor> searchShows(
             final ShowSearchCriteria criteria,
             final @Nullable Set<Long> venueIds,
             final int size,
@@ -185,8 +159,7 @@ public class ShowQueryRepository {
         final SortOrder sortOrder = resolveSortOrder(sort, criteria.getCursor());
         final BooleanBuilder where = searchCondition(criteria, venueIds, sortOrder);
 
-        return findCursorPage(
-                size, criteria.getCursor(), where, sortOrder, this::fetchShowSearchRows);
+        return findCursorPage(size, criteria.getCursor(), where, sortOrder);
     }
 
     public long countSearchShows(
@@ -218,35 +191,13 @@ public class ShowQueryRepository {
     // 표시값 조합은 하지 않고 venueId scalar만 담아 넘긴다.
 
     /** 빈 {@code showIds}는 빈 map을 반환한다. */
-    public Map<Long, ShowSummaryRow> findSummaries(final Set<Long> showIds) {
+    public Map<Long, Show> findSummaries(final Set<Long> showIds) {
         if (showIds.isEmpty()) {
             return Map.of();
         }
 
-        final List<Tuple> rows =
-                queryFactory
-                        .select(
-                                show.id,
-                                show.title,
-                                show.image,
-                                show.startDate,
-                                show.endDate,
-                                show.venueId)
-                        .from(show)
-                        .where(show.id.in(showIds))
-                        .fetch();
-
-        return rows.stream()
-                .map(
-                        row ->
-                                new ShowSummaryRow(
-                                        required(row, show.id),
-                                        row.get(show.title),
-                                        row.get(show.image),
-                                        row.get(show.startDate),
-                                        row.get(show.endDate),
-                                        row.get(show.venueId)))
-                .collect(Collectors.toMap(ShowSummaryRow::showId, summary -> summary));
+        return showJpaRepository.findAllById(showIds).stream()
+                .collect(Collectors.toMap(Show::getId, showEntity -> showEntity));
     }
 
     // 검색 조건 조립 ------------------------------------------------------------
@@ -616,15 +567,13 @@ public class ShowQueryRepository {
      * 커서 페이지 한 장을 읽는다. 1단계에서 정렬·커서로 id를 뽑고, 2단계에서 그 id로 본문을 다시 읽는다.
      *
      * <p><b>2단계에도 1단계와 같은 {@code orderSpecifiers}를 건다.</b> {@code IN (...)} 조회가 돌려주는 순서를 믿지 않기
-     * 위해서다. 그래서 어떤 본문을 읽을지({@code rowFetcher})만 호출자가 정하고, 나머지 -- 1단계 query, 페이지 크기 계산, 다음 커서 -- 는
-     * 여기서 한 번만 정의한다.
+     * 위해서다. 1단계 query, 페이지 크기 계산, 다음 커서는 여기서 한 번만 정의한다.
      */
-    private <T> CursorPage<T, ShowCursor> findCursorPage(
+    private CursorPage<Show, ShowCursor> findCursorPage(
             final int size,
             final @Nullable ShowCursor cursor,
             final BooleanBuilder where,
-            final SortOrder sortOrder,
-            final BiFunction<List<Long>, OrderSpecifier<?>[], List<T>> rowFetcher) {
+            final SortOrder sortOrder) {
         applyCursor(where, cursor, sortOrder);
 
         final OrderSpecifier<?>[] orderSpecifiers = orderSpecifiers(sortOrder);
@@ -635,9 +584,9 @@ public class ShowQueryRepository {
             return CursorPage.empty();
         }
 
-        final List<T> results = new ArrayList<>(rowFetcher.apply(showIds, orderSpecifiers));
+        final List<Show> results = new ArrayList<>(fetchShows(showIds, orderSpecifiers));
         final boolean hasNext = results.size() > size;
-        final List<T> pageResults = hasNext ? results.subList(0, size) : results;
+        final List<Show> pageResults = hasNext ? results.subList(0, size) : results;
 
         final ShowCursor nextPosition = hasNext ? buildNextPosition(rows, size, sortOrder) : null;
 
@@ -679,132 +628,45 @@ public class ShowQueryRepository {
         };
     }
 
-    private List<ShowListItemRow> fetchShowListRows(
+    /** 페이지 2단계다. 1단계가 고른 id의 {@code Show}를 1단계와 같은 정렬로 한 번에 읽는다. */
+    private List<Show> fetchShows(
             final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
-        final Map<Long, List<String>> genreNamesByShowId = fetchGenreNamesByShowId(showIds);
-        final List<Show> shows =
-                queryFactory
-                        .selectFrom(show)
-                        .where(show.id.in(showIds))
-                        .orderBy(orderSpecifiers)
-                        .fetch();
-
-        return new ArrayList<>(
-                shows.stream()
-                        .map(
-                                showEntity ->
-                                        new ShowListItemRow(
-                                                showEntity.getId(),
-                                                showEntity.getTitle(),
-                                                showEntity.getSubTitle(),
-                                                showCardImagePathConverter.toCardImage(
-                                                        showEntity.getImage()),
-                                                genreNamesByShowId.getOrDefault(
-                                                        showEntity.getId(), List.of()),
-                                                showEntity.getStartDate(),
-                                                showEntity.getEndDate(),
-                                                showEntity.getViewCount(),
-                                                showEntity.getDisplaySaleType(),
-                                                showEntity.getDisplaySaleStartsAt(),
-                                                showEntity.getDisplaySaleEndsAt(),
-                                                showEntity.getCreatedAt(),
-                                                showEntity.getVenueId()))
-                        .toList());
+        return queryFactory
+                .selectFrom(show)
+                .where(show.id.in(showIds))
+                .orderBy(orderSpecifiers)
+                .fetch();
     }
 
-    private List<SaleOpeningSoonDetailRow> fetchSaleOpeningSoonDetailRows(
-            final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
-        final List<Tuple> rows =
-                queryFactory
-                        .select(
-                                show.id,
-                                show.title,
-                                show.subTitle,
-                                show.image,
-                                show.venueId,
-                                show.startDate,
-                                show.endDate,
-                                show.displaySaleWindow.startsAt,
-                                show.displaySaleWindow.endsAt,
-                                show.viewCount)
-                        .from(show)
-                        .where(show.id.in(showIds))
-                        .orderBy(orderSpecifiers)
-                        .fetch();
+    /**
+     * 배너 2단계다. 정렬은 1단계가 이미 끝냈으므로 {@code IN (...)} 결과를 그 id 순서대로 다시 늘어놓는다 — 정렬식을 두 번 쓰지 않으니 동률의 순서가
+     * 두 query 사이에서 흔들리지 않는다.
+     */
+    private List<Show> findShowsInIdOrder(final List<Long> showIds) {
+        if (showIds.isEmpty()) {
+            return List.of();
+        }
 
-        return rows.stream().map(this::toSaleOpeningSoonDetailRow).toList();
-    }
+        final Map<Long, Show> showsById =
+                queryFactory.selectFrom(show).where(show.id.in(showIds)).fetch().stream()
+                        .collect(Collectors.toMap(Show::getId, showEntity -> showEntity));
 
-    private List<ShowSearchItemRow> fetchShowSearchRows(
-            final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
-        final List<Tuple> rows =
-                queryFactory
-                        .select(
-                                show.id,
-                                show.title,
-                                show.image,
-                                show.venueId,
-                                show.startDate,
-                                show.endDate,
-                                show.viewCount)
-                        .from(show)
-                        .where(show.id.in(showIds))
-                        .orderBy(orderSpecifiers)
-                        .fetch();
-
-        return rows.stream().map(this::toShowSearchItemRow).toList();
+        return showIds.stream().map(showsById::get).filter(Objects::nonNull).toList();
     }
 
     private List<Long> extractShowIds(final List<Tuple> rows) {
         return rows.stream().map(tuple -> tuple.get(show.id)).toList();
     }
 
-    private LatestShowRow toLatestShowRow(final Tuple tuple) {
-        return new LatestShowRow(
-                required(tuple, show.id),
-                tuple.get(show.title),
-                showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(show.startDate),
-                tuple.get(show.endDate),
-                tuple.get(show.venueId),
-                required(tuple, show.createdAt));
-    }
+    /**
+     * 목록 한 페이지의 장르 이름을 공연 id 전체로 한 번에 읽는다 — 목록 크기에 따라 query가 늘지 않는다. 장르가 없는 공연은 map에 들어오지 않으므로 호출자가
+     * 빈 목록으로 본다.
+     */
+    public Map<Long, List<String>> findGenreNamesByShowIds(final List<Long> showIds) {
+        if (showIds.isEmpty()) {
+            return Map.of();
+        }
 
-    private SaleOpeningSoonSummaryRow toSaleOpeningSoonSummaryRow(final Tuple tuple) {
-        return new SaleOpeningSoonSummaryRow(
-                required(tuple, show.id),
-                tuple.get(show.title),
-                showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(show.venueId),
-                tuple.get(show.displaySaleWindow.startsAt));
-    }
-
-    private SaleOpeningSoonDetailRow toSaleOpeningSoonDetailRow(final Tuple tuple) {
-        return new SaleOpeningSoonDetailRow(
-                required(tuple, show.id),
-                tuple.get(show.title),
-                tuple.get(show.subTitle),
-                showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(show.startDate),
-                tuple.get(show.endDate),
-                tuple.get(show.displaySaleWindow.startsAt),
-                tuple.get(show.displaySaleWindow.endsAt),
-                required(tuple, show.viewCount),
-                tuple.get(show.venueId));
-    }
-
-    private ShowSearchItemRow toShowSearchItemRow(final Tuple tuple) {
-        return new ShowSearchItemRow(
-                required(tuple, show.id),
-                tuple.get(show.title),
-                showCardImagePathConverter.toCardImage(tuple.get(show.image)),
-                tuple.get(show.startDate),
-                tuple.get(show.endDate),
-                required(tuple, show.viewCount),
-                tuple.get(show.venueId));
-    }
-
-    private Map<Long, List<String>> fetchGenreNamesByShowId(final List<Long> showIds) {
         final List<Tuple> genreTuples =
                 queryFactory
                         .select(show.id, genre.name)

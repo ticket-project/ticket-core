@@ -27,9 +27,8 @@ import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.ShowSummaryRow;
-import com.ticket.show.usecase.view.ShowLikeSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
@@ -49,10 +48,11 @@ class GetMyShowLikesUseCaseTest {
         when(likeQuery.findLiked(LikeType.SHOW, 1L, 10L, 20))
                 .thenReturn(new CursorPage<>(List.of(entry), true, 9L));
 
-        ShowSummaryRow summary =
-                new ShowSummaryRow(
-                        2L, "공연", "image", LocalDate.now(), LocalDate.now().plusDays(1), 7L);
-        when(showQueryRepository.findSummaries(Set.of(2L))).thenReturn(Map.of(2L, summary));
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.plusDays(1);
+        Show show =
+                ShowFixture.show(2L, "공연", 7L, startDate, endDate, null, 0L, LocalDateTime.now());
+        when(showQueryRepository.findSummaries(Set.of(2L))).thenReturn(Map.of(2L, show));
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -73,14 +73,8 @@ class GetMyShowLikesUseCaseTest {
 
         assertThat(output.items())
                 .containsExactly(
-                        new ShowLikeSummaryView(
-                                2L,
-                                "공연",
-                                "image",
-                                summary.startDate(),
-                                summary.endDate(),
-                                "장소",
-                                likedAt));
+                        new GetMyShowLikesUseCase.Item(
+                                2L, "공연", "image", startDate, endDate, "장소", likedAt));
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
         verify(memberLookup).requireActive(1L);

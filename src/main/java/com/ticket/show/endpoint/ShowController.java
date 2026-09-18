@@ -22,9 +22,6 @@ import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
 import com.ticket.show.usecase.GetShowsUseCase;
 import com.ticket.show.usecase.SearchShowsUseCase;
-import com.ticket.show.usecase.view.SaleOpeningSoonDetailView;
-import com.ticket.show.usecase.view.ShowListItemView;
-import com.ticket.show.usecase.view.ShowSearchItemView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,7 +47,7 @@ public class ShowController implements ShowControllerDocs {
 
     @Override
     @GetMapping
-    public ApiResponse<SliceResponse<ShowListItemView>> getShowsPage(
+    public ApiResponse<SliceResponse<GetShowsUseCase.Item>> getShowsPage(
             @ParameterObject final ShowListRequest request,
             @RequestParam(defaultValue = "5") final int size,
             @RequestParam(defaultValue = "popular") final String sort) {
@@ -86,10 +83,11 @@ public class ShowController implements ShowControllerDocs {
 
     @Override
     @GetMapping("/sale-opening-soon/page")
-    public ApiResponse<SliceResponse<SaleOpeningSoonDetailView>> getShowsSaleOpeningSoonPage(
-            @ParameterObject final SaleOpeningSoonRequest request,
-            @RequestParam(defaultValue = "16") final int size,
-            @RequestParam(defaultValue = "saleStartApproaching") final String sort) {
+    public ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.Item>>
+            getShowsSaleOpeningSoonPage(
+                    @ParameterObject final SaleOpeningSoonRequest request,
+                    @RequestParam(defaultValue = "16") final int size,
+                    @RequestParam(defaultValue = "saleStartApproaching") final String sort) {
         final GetSaleOpeningSoonShowsPageUseCase.Input input =
                 new GetSaleOpeningSoonShowsPageUseCase.Input(
                         request.toParam(showCursorCodec), size, ShowSort.from(sort));
@@ -105,7 +103,7 @@ public class ShowController implements ShowControllerDocs {
 
     @Override
     @GetMapping("/search")
-    public ApiResponse<SliceResponse<ShowSearchItemView>> searchShows(
+    public ApiResponse<SliceResponse<SearchShowsUseCase.Item>> searchShows(
             @ParameterObject final ShowSearchRequest request,
             @RequestParam(defaultValue = "20") final int size,
             @RequestParam(defaultValue = "popular") final String sort) {

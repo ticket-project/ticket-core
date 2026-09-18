@@ -2,21 +2,26 @@ package com.ticket.show.usecase;
 
 import static com.ticket.shared.api.InputChecks.requireProvided;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.domain.show.SaleType;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListItemRow;
 import com.ticket.show.query.ShowListParam;
 import com.ticket.show.query.ShowSort;
-import com.ticket.show.usecase.view.ShowListItemView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -31,6 +36,7 @@ public class GetShowsUseCase {
 
     private final ShowQueryRepository showQueryRepository;
     private final VenueLookupApi venueLookup;
+    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(ShowListParam param, int size, ShowSort sort) {
         public Input {
@@ -42,20 +48,43 @@ public class GetShowsUseCase {
         }
     }
 
-    public record Output(
-            List<ShowListItemView> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+    public record Output(List<Item> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+
+    /**
+     * 컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름 {@code saleType}/{@code
+     * saleStartDate}/{@code saleEndDate}는 그대로 고정한다.
+     */
+    public record Item(
+            Long id,
+            @Nullable String title,
+            @Nullable String subTitle,
+            @Nullable String image,
+            List<String> genreNames,
+            @Nullable LocalDate startDate,
+            @Nullable LocalDate endDate,
+            long viewCount,
+            @JsonProperty("saleType") SaleType displaySaleType,
+            @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
+            @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
+            LocalDateTime createdAt,
+            @Nullable Region region,
+            @Nullable String venue) {}
 
     public Output execute(final Input input) {
-        final CursorPage<ShowListItemRow, ShowCursor> page =
+        final CursorPage<Show, ShowCursor> page =
                 showQueryRepository.findAllBySearch(
                         input.param(),
                         venueIdsOf(input.param().getRegion()),
                         input.size(),
                         input.sort());
+        final Map<Long, List<String>> genreNames =
+                showQueryRepository.findGenreNamesByShowIds(
+                        page.items().stream().map(Show::getId).toList());
         final VenueDisplays venues =
                 VenueDisplays.load(
-                        venueLookup, page.items().stream().map(ShowListItemRow::venueId).toList());
-        final CursorPage<ShowListItemView, ShowCursor> view = page.map(row -> toView(row, venues));
+                        venueLookup, page.items().stream().map(Show::getVenueId).toList());
+        final CursorPage<Item, ShowCursor> view =
+                page.map(show -> toItem(show, genreNames, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -69,21 +98,22 @@ public class GetShowsUseCase {
         return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 
-    private ShowListItemView toView(final ShowListItemRow row, final VenueDisplays venues) {
-        return new ShowListItemView(
-                row.id(),
-                row.title(),
-                row.subTitle(),
-                row.image(),
-                row.genreNames(),
-                row.startDate(),
-                row.endDate(),
-                row.viewCount(),
-                row.displaySaleType(),
-                row.displaySaleStartsAt(),
-                row.displaySaleEndsAt(),
-                row.createdAt(),
-                venues.regionOf(row.venueId()),
-                venues.nameOf(row.venueId()));
+    private Item toItem(
+            final Show show, final Map<Long, List<String>> genreNames, final VenueDisplays venues) {
+        return new Item(
+                show.getId(),
+                show.getTitle(),
+                show.getSubTitle(),
+                showCardImagePathConverter.toCardImage(show.getImage()),
+                genreNames.getOrDefault(show.getId(), List.of()),
+                show.getStartDate(),
+                show.getEndDate(),
+                show.getViewCount(),
+                show.getDisplaySaleType(),
+                show.getDisplaySaleStartsAt(),
+                show.getDisplaySaleEndsAt(),
+                show.getCreatedAt(),
+                venues.regionOf(show.getVenueId()),
+                venues.nameOf(show.getVenueId()));
     }
 }

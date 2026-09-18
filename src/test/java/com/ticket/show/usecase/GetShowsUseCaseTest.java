@@ -14,13 +14,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
-import com.ticket.show.domain.show.SaleType;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListItemRow;
 import com.ticket.show.query.ShowListParam;
 import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
@@ -34,6 +35,11 @@ class GetShowsUseCaseTest {
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
     @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
+
+    @Spy
+    private ShowCardImagePathConverter showCardImagePathConverter =
+            new ShowCardImagePathConverter();
+
     @InjectMocks private GetShowsUseCase useCase;
 
     @Test
@@ -45,25 +51,24 @@ class GetShowsUseCaseTest {
         LocalDateTime saleEndDate = LocalDateTime.of(2026, 3, 28, 10, 0);
         LocalDateTime createdAt = LocalDateTime.of(2026, 3, 1, 10, 0);
 
-        ShowListItemRow row =
-                new ShowListItemRow(
+        Show show =
+                ShowFixture.show(
                         1L,
                         "concert",
                         "subtitle",
                         "image",
-                        List.of("rock"),
+                        7L,
                         startDate,
                         endDate,
-                        10L,
-                        SaleType.GENERAL,
                         saleStartDate,
                         saleEndDate,
-                        createdAt,
-                        7L);
-        CursorPage<ShowListItemRow, ShowCursor> result =
-                new CursorPage<>(List.of(row), true, NEXT_POSITION);
+                        10L,
+                        createdAt);
+        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQueryRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
+        when(showQueryRepository.findGenreNamesByShowIds(List.of(1L)))
+                .thenReturn(Map.of(1L, List.of("rock")));
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -84,6 +89,7 @@ class GetShowsUseCaseTest {
 
         assertThat(output.items()).hasSize(1);
         assertThat(output.items().getFirst().title()).isEqualTo("concert");
+        assertThat(output.items().getFirst().genreNames()).containsExactly("rock");
         assertThat(output.items().getFirst().venue()).isEqualTo("venue");
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
@@ -93,7 +99,7 @@ class GetShowsUseCaseTest {
     @Test
     void 공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, null, null);
-        CursorPage<ShowListItemRow, ShowCursor> result = new CursorPage<>(List.of(), false, null);
+        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
         when(showQueryRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
@@ -111,7 +117,7 @@ class GetShowsUseCaseTest {
      */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
-        CursorPage<ShowListItemRow, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
+        CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         ShowListParam noRegion = new ShowListParam(null, null, null, null);
         ShowListParam jeju = new ShowListParam(null, null, Region.JEJU, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());

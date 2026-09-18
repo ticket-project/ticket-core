@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,15 +14,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSearchItemRow;
 import com.ticket.show.query.ShowSort;
-import com.ticket.show.usecase.view.ShowSearchItemView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -33,23 +35,28 @@ class SearchShowsUseCaseTest {
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
     @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
+
+    @Spy
+    private ShowCardImagePathConverter showCardImagePathConverter =
+            new ShowCardImagePathConverter();
+
     @InjectMocks private SearchShowsUseCase useCase;
 
     @Test
     void 검색_결과와_커서를_반환한다() {
         ShowSearchCriteria request =
                 new ShowSearchCriteria("concert", null, null, null, null, null, null);
-        ShowSearchItemRow row =
-                new ShowSearchItemRow(
+        Show show =
+                ShowFixture.show(
                         1L,
                         "concert",
-                        "image",
+                        7L,
                         LocalDate.of(2026, 3, 27),
                         LocalDate.of(2026, 3, 28),
+                        null,
                         10L,
-                        7L);
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
-                new CursorPage<>(List.of(row), true, NEXT_POSITION);
+                        LocalDateTime.of(2026, 3, 1, 10, 0));
+        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQueryRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
@@ -73,7 +80,7 @@ class SearchShowsUseCaseTest {
 
         assertThat(output.items())
                 .containsExactly(
-                        new ShowSearchItemView(
+                        new SearchShowsUseCase.Item(
                                 1L,
                                 "concert",
                                 "image",
@@ -91,7 +98,7 @@ class SearchShowsUseCaseTest {
     void 검색_결과가_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowSearchCriteria request =
                 new ShowSearchCriteria("missing", null, null, null, null, null, null);
-        CursorPage<ShowSearchItemRow, ShowCursor> result = new CursorPage<>(List.of(), false, null);
+        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
         when(showQueryRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
 
@@ -110,7 +117,7 @@ class SearchShowsUseCaseTest {
      */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
-        CursorPage<ShowSearchItemRow, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
+        CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         ShowSearchCriteria noRegion =
                 new ShowSearchCriteria(null, null, null, null, null, null, null);
         ShowSearchCriteria jeju =

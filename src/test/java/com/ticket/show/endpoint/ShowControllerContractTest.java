@@ -36,8 +36,6 @@ import com.ticket.show.usecase.GetShowDetailUseCase;
 import com.ticket.show.usecase.GetShowsUseCase;
 import com.ticket.show.usecase.SearchShowsUseCase;
 import com.ticket.show.usecase.view.ShowGradeView;
-import com.ticket.show.usecase.view.ShowListItemView;
-import com.ticket.show.usecase.view.ShowSearchItemView;
 import com.ticket.venue.api.Region;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -72,8 +70,8 @@ class ShowControllerContractTest {
                         new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        ShowListItemView show =
-                new ShowListItemView(
+        GetShowsUseCase.Item show =
+                new GetShowsUseCase.Item(
                         1L,
                         "공연",
                         "부제",
@@ -117,8 +115,8 @@ class ShowControllerContractTest {
                         new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        ShowSearchItemView item =
-                new ShowSearchItemView(
+        SearchShowsUseCase.Item item =
+                new SearchShowsUseCase.Item(
                         1L,
                         "공연",
                         "image",

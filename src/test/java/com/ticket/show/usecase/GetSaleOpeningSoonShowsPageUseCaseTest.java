@@ -14,15 +14,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.SaleOpeningSoonDetailRow;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowSort;
-import com.ticket.show.usecase.view.SaleOpeningSoonDetailView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -34,6 +35,11 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
     @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
+
+    @Spy
+    private ShowCardImagePathConverter showCardImagePathConverter =
+            new ShowCardImagePathConverter();
+
     @InjectMocks private GetSaleOpeningSoonShowsPageUseCase useCase;
 
     @Test
@@ -45,20 +51,20 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         LocalDateTime saleStartDate = LocalDateTime.of(2026, 3, 27, 10, 0);
         LocalDateTime saleEndDate = LocalDateTime.of(2026, 3, 28, 10, 0);
 
-        SaleOpeningSoonDetailRow row =
-                new SaleOpeningSoonDetailRow(
+        Show show =
+                ShowFixture.show(
                         1L,
                         "concert",
                         "subtitle",
                         "image",
+                        7L,
                         startDate,
                         endDate,
                         saleStartDate,
                         saleEndDate,
                         100L,
-                        7L);
-        CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
-                new CursorPage<>(List.of(row), true, NEXT_POSITION);
+                        LocalDateTime.of(2026, 3, 1, 10, 0));
+        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQueryRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
@@ -82,7 +88,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
 
         assertThat(output.items())
                 .containsExactly(
-                        new SaleOpeningSoonDetailView(
+                        new GetSaleOpeningSoonShowsPageUseCase.Item(
                                 1L,
                                 "concert",
                                 "subtitle",
@@ -103,8 +109,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
     void 판매_오픈예정_공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         SaleOpeningSoonSearchParam param =
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
-        CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
-                new CursorPage<>(List.of(), false, null);
+        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
         when(showQueryRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
@@ -123,8 +128,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
      */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
-        CursorPage<SaleOpeningSoonDetailRow, ShowCursor> empty =
-                new CursorPage<>(List.of(), false, null);
+        CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         SaleOpeningSoonSearchParam noRegion =
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         SaleOpeningSoonSearchParam jeju =
