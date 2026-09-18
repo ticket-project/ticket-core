@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
-import com.ticket.booking.seat.query.SeatAvailabilityQueryPort;
-import com.ticket.booking.seat.query.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
+import com.ticket.booking.seat.query.SeatAvailabilityQuery;
+import com.ticket.booking.seat.query.SeatAvailabilityQuery.PerformanceSeatStateRow;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,13 +17,13 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>회차 존재 확인과 좌석 상태 조회 <b>두 번의 DB 접근을 한 트랜잭션으로 묶어야 해서</b> 별도 component다. use case의 private method로
  * 부르면 같은 클래스 안 호출이라 {@code @Transactional} proxy가 적용되지 않는다(self-invocation). DB 접근이 하나뿐인 조회는 이런
- * wrapper 없이 query adapter가 직접 경계를 갖는다({@code QuerydslSeatStateQueryAdapter}).
+ * wrapper 없이 Query가 직접 경계를 갖는다({@code SeatStateQuery}).
  */
 @Component
 @RequiredArgsConstructor
 public class SeatAvailabilitySnapshotReader {
     private final PerformanceSaleFinder performanceSaleFinder;
-    private final SeatAvailabilityQueryPort seatAvailabilityQueryPort;
+    private final SeatAvailabilityQuery seatAvailabilityQuery;
 
     /**
      * 회차 판매 정책 조회는 회차 존재 확인을 겸한다. 접수 기간 차단은 여기서 하지 않는다 — 잔여석 조회는 접수 종료 후에도 가능해야 한다.
@@ -33,6 +33,6 @@ public class SeatAvailabilitySnapshotReader {
     @Transactional(readOnly = true)
     public List<PerformanceSeatStateRow> read(final Long performanceId) {
         performanceSaleFinder.requirePolicy(performanceId);
-        return seatAvailabilityQueryPort.findSeatStates(performanceId);
+        return seatAvailabilityQuery.findSeatStates(performanceId);
     }
 }

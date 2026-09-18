@@ -1,4 +1,4 @@
-package com.ticket.booking.seat.persistence;
+package com.ticket.booking.seat.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,8 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.query.SeatAvailabilityQueryPort;
-import com.ticket.booking.seat.query.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
+import com.ticket.booking.seat.query.SeatAvailabilityQuery.PerformanceSeatStateRow;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
@@ -22,12 +21,12 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
 /**
- * booking local 조회만 검증한다. 등급·가격 조합은 show {@code QuerydslShowSeatMapQueryAdapter}가 소유하고 별도로 검증한다.
+ * booking local 조회만 검증한다. 등급·가격 조합은 show 쪽 조회가 소유하고 별도로 검증한다.
  */
-@Import(QuerydslSeatAvailabilityQueryAdapter.class)
+@Import(SeatAvailabilityQuery.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatAvailabilityQueryAdapterTest extends ReadRepositoryTestSupport {
-    @Autowired private SeatAvailabilityQueryPort seatAvailabilityQueryPort;
+class SeatAvailabilityQueryTest extends ReadRepositoryTestSupport {
+    @Autowired private SeatAvailabilityQuery seatAvailabilityQuery;
     private Long performanceId;
     private Long seat1Id;
     private Long seat2Id;
@@ -61,7 +60,7 @@ class QuerydslSeatAvailabilityQueryAdapterTest extends ReadRepositoryTestSupport
     void 좌석ID순으로_회차의_판매_상태를_조회한다() {
         // when
         List<PerformanceSeatStateRow> result =
-                seatAvailabilityQueryPort.findSeatStates(performanceId);
+                seatAvailabilityQuery.findSeatStates(performanceId);
         // then
         assertThat(result)
                 .extracting(PerformanceSeatStateRow::seatId)

@@ -1,4 +1,4 @@
-package com.ticket.booking.seat.persistence;
+package com.ticket.booking.seat.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,9 +13,6 @@ import org.springframework.context.annotation.Import;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.query.SeatStateQueryPort;
-import com.ticket.booking.seat.query.SeatStateSnapshotRow;
-import com.ticket.booking.seat.query.SeatStatus;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
@@ -25,12 +22,12 @@ import com.ticket.venue.domain.Venue;
 
 /**
  * booking local 조회(회차 좌석 판매 상태)만 검증한다. 물리 좌석·등급 조합은 show {@code
- * QuerydslPerformanceVenueLayoutQueryAdapter}가 소유하고 별도로 검증한다.
+ * PerformanceVenueLayoutQuery}가 소유하고 별도로 검증한다.
  */
-@Import(QuerydslSeatStateQueryAdapter.class)
+@Import(SeatStateQuery.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslSeatStateQueryAdapterTest extends ReadRepositoryTestSupport {
-    @Autowired private SeatStateQueryPort seatStateQueryPort;
+class SeatStateQueryTest extends ReadRepositoryTestSupport {
+    @Autowired private SeatStateQuery seatStateQuery;
     private Long performanceId;
     private PerformanceSeat performanceSeat1;
     private PerformanceSeat performanceSeat2;
@@ -68,7 +65,7 @@ class QuerydslSeatStateQueryAdapterTest extends ReadRepositoryTestSupport {
 
     @Test
     void 좌석별_상태를_performanceSeatId_기준_api_상태로_변환한다() {
-        List<SeatStateSnapshotRow> result = seatStateQueryPort.findSeatStates(performanceId);
+        List<SeatStateSnapshotRow> result = seatStateQuery.findSeatStates(performanceId);
 
         assertThat(result)
                 .containsExactly(
