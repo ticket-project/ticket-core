@@ -18,7 +18,7 @@ public interface VenueLookupApi {
     /**
      * 주어진 지역에 속한 venue의 id 집합을 반환한다. 해당 지역에 venue가 없으면 빈 집합이다.
      *
-     * @throws IllegalArgumentException region이 null이면 던진다 — "필터 없음"은 호출자가 이 메서드를 부르지 않는 것으로 표현한다.
+     * @throws NullPointerException region이 null이면 던진다 — "필터 없음"은 호출자가 이 메서드를 부르지 않는 것으로 표현한다.
      */
     Set<Long> findIdsByRegion(Region region);
 }
