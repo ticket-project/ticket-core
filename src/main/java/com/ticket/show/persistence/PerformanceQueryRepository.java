@@ -14,7 +14,6 @@ import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.api.PerformanceVenueLayout.GradeLayout;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.usecase.view.PerformanceSummaryView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +21,9 @@ import lombok.RequiredArgsConstructor;
  * show 자기 DB에서 회차 표시값을 읽는다 — 회차 요약, 회차별 grade 목록, 판매 snapshot 조회({@link
  * com.ticket.show.api.PerformanceSaleCatalogApi}), 정적 seat-map 조회({@link
  * com.ticket.show.api.PerformanceVenueLayoutCatalogApi})가 한 곳에 있다.
+ *
+ * <p>회차 요약({@code GetPerformanceSummaryUseCase})도 판매 snapshot과 같은 {@link #findContext} 조회를 재사용한다 —
+ * 같은 값을 읽는 조회를 두 벌 두지 않는다.
  *
  * <p>booking data도, venue data도 여기서 참조하지 않는다 — {@code venueId} scalar만 넘긴다. venue 이름·region·좌석
  * 주소·좌석 배치 좌표 조합은 application({@code GetPerformanceSummaryUseCase}, {@code
@@ -33,10 +35,6 @@ import lombok.RequiredArgsConstructor;
 public class PerformanceQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final SpringDataPerformanceJpaRepository performanceJpaRepository;
-
-    public Optional<PerformanceSummaryView> findByPerformanceId(final Long performanceId) {
-        return performanceJpaRepository.findSummaryByPerformanceId(performanceId);
-    }
 
     public Optional<PerformanceSaleContext> findContext(final long performanceId) {
         return performanceJpaRepository.findSaleContextByPerformanceId(performanceId);

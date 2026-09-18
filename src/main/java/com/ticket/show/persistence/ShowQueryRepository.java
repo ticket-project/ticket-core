@@ -2,7 +2,6 @@ package com.ticket.show.persistence;
 
 import static com.ticket.show.domain.QCategory.category;
 import static com.ticket.show.domain.QGenre.genre;
-import static com.ticket.show.domain.QGrade.grade;
 import static com.ticket.show.domain.QPerformer.performer;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
@@ -15,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,6 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -40,20 +39,19 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.Performer;
 import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.query.PerformanceDateInfo;
-import com.ticket.show.query.PerformanceInfo;
 import com.ticket.show.query.PriceSummary;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowListParam;
 import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.show.query.ShowSort;
-import com.ticket.show.usecase.view.ShowGradeView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -75,6 +73,7 @@ public class ShowQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final SpringDataShowJpaRepository showJpaRepository;
     private final SpringDataPerformanceJpaRepository performanceJpaRepository;
+    private final SpringDataGradeJpaRepository gradeJpaRepository;
     private final Clock clock;
 
     // 공연 목록 · 검색 ----------------------------------------------------------
@@ -731,18 +730,13 @@ public class ShowQueryRepository {
         return new PriceSummary(minPrice, maxPrice);
     }
 
-    /** 기존 프론트 계약에는 공연 가격표가 필요하므로 가장 이른 회차의 등급과 가격을 대표값으로 제공한다. */
-    public List<ShowGradeView> findGrades(final Long showId) {
+    /**
+     * 기존 프론트 계약에는 공연 가격표가 필요하므로 가장 이른 회차의 등급 배정을 대표값으로 제공한다. 등급 이름은 {@link #findGradeNames}로 따로 읽는다
+     * — Grade는 PerformanceGrade와 다른 aggregate라 id로만 연결된다.
+     */
+    public List<PerformanceGrade> findRepresentativePerformanceGrades(final Long showId) {
         return queryFactory
-                .select(
-                        Projections.constructor(
-                                ShowGradeView.class,
-                                performanceGrade.gradeId,
-                                grade.name,
-                                performanceGrade.price))
-                .from(performanceGrade)
-                .join(grade)
-                .on(grade.id.eq(performanceGrade.gradeId))
+                .selectFrom(performanceGrade)
                 .where(
                         performanceGrade.performance.id.eq(
                                 JPAExpressions.select(performance.id.min())
@@ -752,31 +746,18 @@ public class ShowQueryRepository {
                 .fetch();
     }
 
-    public List<PerformanceDateInfo> findPerformanceDates(final Long showId) {
-        final List<PerformanceInfo> performances =
-                performanceJpaRepository
-                        .findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId)
-                        .stream()
-                        .map(this::toPerformanceInfo)
-                        .toList();
+    /** 빈 {@code gradeIds}는 빈 map을 반환한다. */
+    public Map<Long, Grade> findGradeNames(final Collection<Long> gradeIds) {
+        if (gradeIds.isEmpty()) {
+            return Map.of();
+        }
 
-        return performances.stream()
-                .collect(
-                        Collectors.groupingBy(
-                                performanceInfo -> performanceInfo.startTime().toLocalDate(),
-                                LinkedHashMap::new,
-                                Collectors.toList()))
-                .entrySet()
-                .stream()
-                .map(entry -> new PerformanceDateInfo(entry.getKey(), entry.getValue()))
-                .toList();
+        return gradeJpaRepository.findAllById(gradeIds).stream()
+                .collect(Collectors.toMap(Grade::getId, gradeEntity -> gradeEntity));
     }
 
-    private PerformanceInfo toPerformanceInfo(final Performance performanceEntity) {
-        return new PerformanceInfo(
-                performanceEntity.getId(),
-                performanceEntity.getPerformanceNo(),
-                performanceEntity.getStartTime(),
-                performanceEntity.getEndTime());
+    /** 회차를 시작 시각·회차 번호 순으로 돌려준다. 날짜별 묶음과 응답 변환은 {@code GetShowDetailUseCase}가 한다. */
+    public List<Performance> findPerformances(final Long showId) {
+        return performanceJpaRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId);
     }
 }
