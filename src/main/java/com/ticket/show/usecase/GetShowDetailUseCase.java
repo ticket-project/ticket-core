@@ -2,10 +2,15 @@ package com.ticket.show.usecase;
 
 import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -15,17 +20,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.Performer;
+import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.PerformanceDateInfo;
-import com.ticket.show.query.PerformerInfo;
 import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.VenueInfo;
-import com.ticket.show.usecase.view.ShowGradeView;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
@@ -74,9 +79,33 @@ public class GetShowDetailUseCase {
             @Nullable VenueInfo venue,
             @Nullable PerformerInfo performer,
             List<String> genreNames,
-            List<ShowGradeView> grades,
+            List<GradeInfo> grades,
             @Nullable PriceSummary priceSummary,
             List<PerformanceDateInfo> performanceDates) {}
+
+    /**
+     * show 상세에 쓰는 venue 표시값 조합 결과다. venue module의 {@code VenueSummary}를 이 응답 모양(좌석 배치 등 여기서 쓰지 않는
+     * 필드는 뺀)으로 옮겨 담는다.
+     */
+    public record VenueInfo(
+            Long id,
+            @Nullable String name,
+            @Nullable String address,
+            @Nullable Region region,
+            @Nullable BigDecimal latitude,
+            @Nullable BigDecimal longitude,
+            @Nullable String phone,
+            @Nullable String imageUrl) {}
+
+    public record PerformerInfo(Long id, String name, String profileImageUrl) {}
+
+    /** 기존 공연 상세 응답에서 사용하는 대표 회차의 등급별 가격이다. {@code id}는 등급 id다. */
+    public record GradeInfo(Long id, String gradeName, BigDecimal price) {}
+
+    public record PerformanceDateInfo(LocalDate date, List<PerformanceInfo> performances) {}
+
+    public record PerformanceInfo(
+            Long id, Long performanceNo, LocalDateTime startTime, LocalDateTime endTime) {}
 
     public Output execute(final Input input) {
         final Long showId = input.showId();
@@ -103,9 +132,60 @@ public class GetShowDetailUseCase {
                 resolveVenue(show.getVenueId()),
                 resolvePerformer(show.getPerformerId()),
                 showQueryRepository.findGenreNames(showId),
-                showQueryRepository.findGrades(showId),
+                resolveGrades(showId),
                 showQueryRepository.findPriceSummary(showId),
-                showQueryRepository.findPerformanceDates(showId));
+                resolvePerformanceDates(showId));
+    }
+
+    /**
+     * 대표 회차의 등급 배정과 그 등급 이름을 조합한다. 표시 순서는 {@code PerformanceGrade.sortOrder}이고, 이름을 찾지 못한 등급은 제외한다
+     * — 예전 {@code join grade}가 그랬듯 조용히 빠진다.
+     */
+    private List<GradeInfo> resolveGrades(final Long showId) {
+        final List<PerformanceGrade> performanceGrades =
+                showQueryRepository.findRepresentativePerformanceGrades(showId);
+        final Map<Long, Grade> gradesById =
+                showQueryRepository.findGradeNames(
+                        performanceGrades.stream()
+                                .map(PerformanceGrade::getGradeId)
+                                .collect(Collectors.toSet()));
+
+        return performanceGrades.stream()
+                .map(performanceGrade -> toGradeInfo(performanceGrade, gradesById))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private @Nullable GradeInfo toGradeInfo(
+            final PerformanceGrade performanceGrade, final Map<Long, Grade> gradesById) {
+        final Grade grade = gradesById.get(performanceGrade.getGradeId());
+        if (grade == null) {
+            return null;
+        }
+        return new GradeInfo(
+                performanceGrade.getGradeId(), grade.getName(), performanceGrade.getPrice());
+    }
+
+    /** 회차를 날짜별로 묶는다. 조회가 이미 시작 시각·회차 번호 순으로 주므로 그 순서를 그대로 유지한다. */
+    private List<PerformanceDateInfo> resolvePerformanceDates(final Long showId) {
+        return showQueryRepository.findPerformances(showId).stream()
+                .collect(
+                        Collectors.groupingBy(
+                                performance -> performance.getStartTime().toLocalDate(),
+                                LinkedHashMap::new,
+                                Collectors.mapping(this::toPerformanceInfo, Collectors.toList())))
+                .entrySet()
+                .stream()
+                .map(entry -> new PerformanceDateInfo(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    private PerformanceInfo toPerformanceInfo(final Performance performance) {
+        return new PerformanceInfo(
+                performance.getId(),
+                performance.getPerformanceNo(),
+                performance.getStartTime(),
+                performance.getEndTime());
     }
 
     private @Nullable PerformerInfo resolvePerformer(final @Nullable Long performerId) {

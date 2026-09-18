@@ -97,23 +97,34 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
                 .isEqualByComparingTo("180000");
     }
 
-    /** 대표 가격표는 가장 이른 회차의 등급을 표시 순서대로 준다. */
+    /** 대표 가격표는 가장 이른 회차의 등급을 표시 순서대로 준다. 등급 이름은 use case가 따로 조합한다. */
     @Test
     void 대표_회차의_등급을_표시_순서대로_조회한다() {
-        assertThat(showQueryRepository.findGrades(showId))
-                .extracting(grade -> grade.gradeName() + ":" + grade.price())
+        var performanceGrades = showQueryRepository.findRepresentativePerformanceGrades(showId);
+        var gradesById =
+                showQueryRepository.findGradeNames(
+                        performanceGrades.stream()
+                                .map(
+                                        com.ticket.show.domain.performance.PerformanceGrade
+                                                ::getGradeId)
+                                .toList());
+
+        assertThat(performanceGrades)
+                .extracting(
+                        performanceGrade ->
+                                gradesById.get(performanceGrade.getGradeId()).getName()
+                                        + ":"
+                                        + performanceGrade.getPrice())
                 .containsExactly("VIP석:150000", "R석:100000");
     }
 
     @Test
-    void 회차를_날짜별로_묶고_회차_번호_순서를_지킨다() {
-        var performanceDates = showQueryRepository.findPerformanceDates(showId);
+    void 회차를_시작_시각과_회차_번호_순서로_조회한다() {
+        var performances = showQueryRepository.findPerformances(showId);
 
-        assertThat(performanceDates).hasSize(1);
-        assertThat(performanceDates.getFirst().performances()).hasSize(2);
-        assertThat(performanceDates.getFirst().performances().getFirst().performanceNo())
-                .isEqualTo(1L);
-        assertThat(performanceDates.getFirst().performances().get(1).performanceNo()).isEqualTo(2L);
+        assertThat(performances).hasSize(2);
+        assertThat(performances.getFirst().getPerformanceNo()).isEqualTo(1L);
+        assertThat(performances.get(1).getPerformanceNo()).isEqualTo(2L);
     }
 
     @Test

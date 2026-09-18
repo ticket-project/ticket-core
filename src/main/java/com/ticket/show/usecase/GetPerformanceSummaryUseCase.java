@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.persistence.PerformanceQueryRepository;
-import com.ticket.show.usecase.view.PerformanceSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -32,9 +32,9 @@ public class GetPerformanceSummaryUseCase {
             @Nullable String title, @Nullable String region, @Nullable LocalDateTime startTime) {}
 
     public Output execute(final Input input) {
-        final PerformanceSummaryView summary =
+        final PerformanceSaleContext context =
                 performanceQueryRepository
-                        .findByPerformanceId(input.performanceId())
+                        .findContext(input.performanceId())
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(
@@ -42,13 +42,13 @@ public class GetPerformanceSummaryUseCase {
                                                         + input.performanceId()));
 
         final String region =
-                summary.venueId() == null
+                context.venueId() == null
                         ? null
                         : venueLookup
-                                .findSummary(summary.venueId())
+                                .findSummary(context.venueId())
                                 .map(v -> v.region() == null ? null : v.region().getDescription())
                                 .orElse(null);
 
-        return new Output(summary.title(), region, summary.startTime());
+        return new Output(context.showTitle(), region, context.performanceStartTime());
     }
 }

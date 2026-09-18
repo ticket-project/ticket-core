@@ -16,8 +16,8 @@ import org.springframework.context.annotation.Import;
 import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.usecase.view.PerformanceSummaryView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
@@ -45,11 +45,11 @@ class PerformanceQueryRepositoryTest extends InfraReadRepositoryTestSupport {
         LocalDateTime startTime = performance.getStartTime();
         flushAndClear();
 
-        PerformanceSummaryView result = repository.findByPerformanceId(performanceId).orElseThrow();
+        PerformanceSaleContext result = repository.findContext(performanceId).orElseThrow();
 
-        assertThat(result.title()).isEqualTo("싱어게인");
+        assertThat(result.showTitle()).isEqualTo("싱어게인");
         assertThat(result.venueId()).isEqualTo(venue.getId());
-        assertThat(result.startTime()).isEqualTo(startTime);
+        assertThat(result.performanceStartTime()).isEqualTo(startTime);
     }
 
     @Test

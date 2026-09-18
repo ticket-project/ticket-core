@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.usecase.view.PerformanceSummaryView;
 
 /**
  * Show는 Performance와 다른 aggregate라 {@code showId} scalar로만 연결된다 — 아래 조회들은 연관관계 경로 탐색 대신 명시적 join
@@ -18,16 +17,6 @@ import com.ticket.show.usecase.view.PerformanceSummaryView;
  */
 interface SpringDataPerformanceJpaRepository extends JpaRepository<Performance, Long> {
     List<Performance> findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(Long showId);
-
-    @Query(
-            """
-            SELECT new com.ticket.show.usecase.view.PerformanceSummaryView(s.title, s.venueId, p.startTime)
-            FROM Performance p
-            JOIN Show s ON s.id = p.showId
-            WHERE p.id = :performanceId
-            """)
-    Optional<PerformanceSummaryView> findSummaryByPerformanceId(
-            @Param("performanceId") Long performanceId);
 
     @Query(
             """

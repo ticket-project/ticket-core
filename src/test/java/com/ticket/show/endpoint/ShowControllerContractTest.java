@@ -23,8 +23,6 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 import com.ticket.show.exception.handler.ShowExceptionHandler;
-import com.ticket.show.query.PerformanceDateInfo;
-import com.ticket.show.query.PerformanceInfo;
 import com.ticket.show.query.PriceSummary;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowSort;
@@ -35,7 +33,6 @@ import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
 import com.ticket.show.usecase.GetShowsUseCase;
 import com.ticket.show.usecase.SearchShowsUseCase;
-import com.ticket.show.usecase.view.ShowGradeView;
 import com.ticket.venue.api.Region;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -151,8 +148,8 @@ class ShowControllerContractTest {
                         new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        PerformanceInfo performance =
-                new PerformanceInfo(
+        GetShowDetailUseCase.PerformanceInfo performance =
+                new GetShowDetailUseCase.PerformanceInfo(
                         10L,
                         1L,
                         LocalDateTime.of(2026, 3, 20, 19, 0),
@@ -177,13 +174,13 @@ class ShowControllerContractTest {
                         null,
                         List.of("콘서트"),
                         List.of(
-                                new ShowGradeView(
+                                new GetShowDetailUseCase.GradeInfo(
                                         1L, "VIP석", java.math.BigDecimal.valueOf(170000))),
                         new PriceSummary(
                                 java.math.BigDecimal.valueOf(100000),
                                 java.math.BigDecimal.valueOf(200000)),
                         List.of(
-                                new PerformanceDateInfo(
+                                new GetShowDetailUseCase.PerformanceDateInfo(
                                         LocalDate.of(2026, 3, 20), List.of(performance))));
 
         when(getShowDetailUseCase.execute(new GetShowDetailUseCase.Input(1L))).thenReturn(detail);
