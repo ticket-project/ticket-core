@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.query.OrderDetailRow;
-import com.ticket.booking.order.query.OrderQueryPort;
+import com.ticket.booking.order.query.OrderQuery;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.member.api.MemberProfile;
 import com.ticket.shared.exception.NotFoundException;
@@ -31,18 +31,18 @@ import com.ticket.shared.exception.NotFoundException;
 class GetOrderDetailUseCaseTest {
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderQueryPort orderQueryPort;
+    @Mock private OrderQuery orderQuery;
     @Mock private MemberLookupApi memberLookup;
     private GetOrderDetailUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderDetailUseCase(orderQueryPort, memberLookup, FIXED_CLOCK);
+        useCase = new GetOrderDetailUseCase(orderQuery, memberLookup, FIXED_CLOCK);
     }
 
     @Test
     void 단일_조회결과를_주문상세로_조합한다() {
-        when(orderQueryPort.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
+        when(orderQuery.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
         when(memberLookup.getProfile(1L))
                 .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
 
@@ -63,7 +63,7 @@ class GetOrderDetailUseCaseTest {
     @Test
     void show_값이_바뀌어도_이미_만든_주문_상세는_바뀌지_않는다() {
         // Order/OrderSeat가 생성 시점에 남긴 snapshot만 쓰므로 show를 다시 조회하지 않는다.
-        when(orderQueryPort.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
+        when(orderQuery.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
         when(memberLookup.getProfile(1L))
                 .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
 
@@ -76,7 +76,7 @@ class GetOrderDetailUseCaseTest {
 
     @Test
     void 본인_주문이_없으면_권한예외를_던진다() {
-        when(orderQueryPort.findDetailRows("missing", 1L)).thenReturn(List.of());
+        when(orderQuery.findDetailRows("missing", 1L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("missing", 1L)))
                 .isInstanceOf(OrderNotOwnedException.class)
@@ -88,7 +88,7 @@ class GetOrderDetailUseCaseTest {
 
     @Test
     void 탈퇴한_회원의_주문이면_조회하지_않는다() {
-        when(orderQueryPort.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
+        when(orderQuery.findDetailRows("order-key", 1L)).thenReturn(List.of(row()));
         when(memberLookup.getProfile(1L)).thenThrow(new NotFoundException());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L)))
