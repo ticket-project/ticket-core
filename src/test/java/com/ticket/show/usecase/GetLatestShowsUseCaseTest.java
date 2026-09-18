@@ -14,11 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.usecase.view.ShowSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
@@ -27,6 +28,11 @@ import com.ticket.venue.api.VenueSummary;
 class GetLatestShowsUseCaseTest {
     @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
+
+    @Spy
+    private ShowCardImagePathConverter showCardImagePathConverter =
+            new ShowCardImagePathConverter();
+
     @InjectMocks private GetLatestShowsUseCase useCase;
 
     @Test
@@ -34,10 +40,10 @@ class GetLatestShowsUseCaseTest {
         LocalDate startDate = LocalDate.of(2026, 3, 27);
         LocalDate endDate = LocalDate.of(2026, 3, 28);
         LocalDateTime createdAt = LocalDateTime.of(2026, 3, 1, 12, 0);
-        List<LatestShowRow> rows =
+        List<Show> rows =
                 List.of(
-                        new LatestShowRow(
-                                1L, "concert", "image", startDate, endDate, 7L, createdAt));
+                        ShowFixture.show(
+                                1L, "concert", 7L, startDate, endDate, null, 0L, createdAt));
         when(showQueryRepository.findLatestShows(
                         "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(rows);
@@ -61,7 +67,7 @@ class GetLatestShowsUseCaseTest {
 
         assertThat(output.shows())
                 .containsExactly(
-                        new ShowSummaryView(
+                        new GetLatestShowsUseCase.Item(
                                 1L, "concert", "image", startDate, endDate, "venue", createdAt));
         verify(showQueryRepository)
                 .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);

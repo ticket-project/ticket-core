@@ -12,7 +12,6 @@ import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
 import com.ticket.show.endpoint.docs.MyShowLikesControllerDocs;
 import com.ticket.show.usecase.GetMyShowLikesUseCase;
-import com.ticket.show.usecase.view.ShowLikeSummaryView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +30,7 @@ public class MyShowLikesController implements MyShowLikesControllerDocs {
 
     @Override
     @GetMapping
-    public ApiResponse<SliceResponse<ShowLikeSummaryView>> getMyLikes(
+    public ApiResponse<SliceResponse<GetMyShowLikesUseCase.Item>> getMyLikes(
             final AuthenticatedMember member,
             @RequestParam(required = false) final String cursor,
             @RequestParam(defaultValue = "20") final int size) {

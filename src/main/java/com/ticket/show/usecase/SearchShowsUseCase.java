@@ -2,6 +2,7 @@ package com.ticket.show.usecase;
 
 import static com.ticket.shared.api.InputChecks.requireProvided;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -11,12 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSearchItemRow;
 import com.ticket.show.query.ShowSort;
-import com.ticket.show.usecase.view.ShowSearchItemView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class SearchShowsUseCase {
     private final ShowQueryRepository showQueryRepository;
     private final VenueLookupApi venueLookup;
+    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
         public Input {
@@ -39,11 +41,20 @@ public class SearchShowsUseCase {
         }
     }
 
-    public record Output(
-            List<ShowSearchItemView> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+    public record Output(List<Item> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+
+    public record Item(
+            Long id,
+            @Nullable String title,
+            @Nullable String image,
+            @Nullable String venue,
+            @Nullable LocalDate startDate,
+            @Nullable LocalDate endDate,
+            @Nullable Region region,
+            long viewCount) {}
 
     public Output execute(final Input input) {
-        final CursorPage<ShowSearchItemRow, ShowCursor> page =
+        final CursorPage<Show, ShowCursor> page =
                 showQueryRepository.searchShows(
                         input.criteria(),
                         venueIdsOf(input.criteria().getRegion()),
@@ -51,10 +62,8 @@ public class SearchShowsUseCase {
                         input.sort());
         final VenueDisplays venues =
                 VenueDisplays.load(
-                        venueLookup,
-                        page.items().stream().map(ShowSearchItemRow::venueId).toList());
-        final CursorPage<ShowSearchItemView, ShowCursor> view =
-                page.map(row -> toView(row, venues));
+                        venueLookup, page.items().stream().map(Show::getVenueId).toList());
+        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -68,15 +77,15 @@ public class SearchShowsUseCase {
         return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 
-    private ShowSearchItemView toView(final ShowSearchItemRow row, final VenueDisplays venues) {
-        return new ShowSearchItemView(
-                row.id(),
-                row.title(),
-                row.image(),
-                venues.nameOf(row.venueId()),
-                row.startDate(),
-                row.endDate(),
-                venues.regionOf(row.venueId()),
-                row.viewCount());
+    private Item toItem(final Show show, final VenueDisplays venues) {
+        return new Item(
+                show.getId(),
+                show.getTitle(),
+                showCardImagePathConverter.toCardImage(show.getImage()),
+                venues.nameOf(show.getVenueId()),
+                show.getStartDate(),
+                show.getEndDate(),
+                venues.regionOf(show.getVenueId()),
+                show.getViewCount());
     }
 }

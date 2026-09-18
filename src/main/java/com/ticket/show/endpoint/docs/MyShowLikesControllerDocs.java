@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Positive;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
-import com.ticket.show.usecase.view.ShowLikeSummaryView;
+import com.ticket.show.usecase.GetMyShowLikesUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,7 +31,7 @@ public interface MyShowLikesControllerDocs {
                         responseCode = "401",
                         description = "인증 실패")
             })
-    ApiResponse<SliceResponse<ShowLikeSummaryView>> getMyLikes(
+    ApiResponse<SliceResponse<GetMyShowLikesUseCase.Item>> getMyLikes(
             @Parameter(hidden = true) AuthenticatedMember member,
             @Parameter(description = "커서(마지막 찜 ID)", example = "123") String cursor,
             @Parameter(description = "페이지 크기", example = "20") @Positive int size);
