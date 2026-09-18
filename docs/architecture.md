@@ -144,7 +144,7 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니오(존재)만 있으면 되는 것**(찜하기·
 찜 해제·찜 상태 조회)은 like가 소유하고, **다른 BC의 실제 표시 데이터**가 필요한 것("내 찜
 목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain.show`는
-like를 모른다 — `show.application`의 조회 use case가 like의 공개 조회 API(`LikeQueryApi`)를 주입받아
+like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회 API(`LikeQueryApi`)를 주입받아
 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
 않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
 순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
@@ -429,7 +429,7 @@ Optional<ShowDetailView> ShowDetailQuery.findShowDetail(Long showId);
 | `domain` | 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도 | 소유 모듈 `exception`의 업무 예외 |
 | `infrastructure` | Redis·JWT·외부 API payload decode, DB constraint 번역 | 기술 예외를 상위 계층이 이해할 실패로 번역 |
 
-**Bean Validation은 `endpoint`만 쓴다.** 파라미터 제약은 `controller.docs` 인터페이스에만 선언한다 —
+**Bean Validation은 `endpoint`만 쓴다.** 파라미터 제약은 `*ControllerDocs` 인터페이스에만 선언한다 —
 상위 타입과 구현체 양쪽에 선언하면 Jakarta Bean Validation이 `ConstraintDeclarationException`
 (HV000151)을 던져 method validation 전체가 500으로 무너진다. 왜 그런지와 `@Validated`를
 Controller에 붙이지 않는 이유는 `ControllerParameterConstraintTest`의 JavaDoc이 원본이다.
@@ -501,16 +501,16 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 **비밀번호 해시는 member 밖으로 나가지 않는다.** 해싱과 일치 확인을 member가 직접 수행하므로
 `member -> security` 의존이 생기지 않는다. 의존 방향은 `security -> member -> shared`다.
 
-다른 모듈의 controller는 `member.AuthenticatedMember`만 parameter로 받고 JWT나 `member` 내부의
+다른 모듈의 controller는 `member.api.AuthenticatedMember`만 parameter로 받고 JWT나 `member` 내부의
 `Member`를 보지 않는다. `booking`은 WebSocket 인증 하나 때문에 `security`를 참조한다 — STOMP
 CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독 인터셉터가
-`security.AccessTokenAuthenticator`로 토큰을 직접 검증한다.
+`security.api.AccessTokenAuthenticator`로 토큰을 직접 검증한다.
 
 `GET /api/v1/members`는 member가, `DELETE /api/v1/members`는 security가 갖는다. 탈퇴는 DB
 처리로 끝나지 않고 커밋 뒤 외부 provider 연결 해제와 SecurityContext 정리가 이어지는 인증
 조립이기 때문이다. 같은 URL을 두 모듈이 메서드로 나눠 갖는다.
 
-OAuth provider raw attribute는 `security.oauth.OAuth2UserInfoMapper`가 `member.SocialIdentity`로
+OAuth provider raw attribute는 `security.oauth.OAuth2UserInfoMapper`가 `member.api.SocialIdentity`로
 정규화한 뒤 member의 공개 계약에 넘긴다. 기존 계정에 같은 이메일로 자동 연결하는 것은 provider가
 이메일 검증을 명시한 경우에만 허용하고, 검증되지 않은 이메일은 provider ID 기반 대체 주소로
 격리한다.

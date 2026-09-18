@@ -61,9 +61,9 @@
 `@EntityScan`이 기존 module domain 패키지 목록으로 하드코딩돼 있어 `Payment` entity를
 Hibernate가 몰라 `@DataJpaTest` 22건이 `Not a managed type: Payment`로 실패했다(`f8d54281`에서
 수정). 이후 ADR 0006의 venue module 분리 작업 중, 같은 교훈이 `ReadRepositoryTestSupport`/
-`InfraReadRepositoryTestSupport`만 가리키는 것으로 오해될 뻔했다 — `QuerydslShowListReadRepositoryTest`는
-그 클래스들을 상속하지 않고 자기 `@SpringBootTest`와 자체 `@EntityScan`을 가져, 하드코딩 위치가
-한 곳이 아니라 두 곳이었다.
+`InfraReadRepositoryTestSupport`만 가리키는 것으로 오해될 뻔했다 — `ShowListQueryTest`(당시 이름은
+`QuerydslShowListQueryAdapterTest`)는 그 클래스들을 상속하지 않고 자기 `@SpringBootTest`와 자체
+`@EntityScan`을 가져, 하드코딩 위치가 한 곳이 아니라 두 곳이었다.
 
 **왜**: `@EnableJpaRepositories(basePackages = "com.ticket")`는 새 module의 repository를
 자동으로 줍지만, 개별 테스트가 자기 `@EntityScan`/`@Import`로 별도 Spring context를 구성하면
