@@ -1,4 +1,4 @@
-package com.ticket.like.persistence;
+package com.ticket.like.query;
 
 import static com.ticket.like.domain.QLike.like;
 
@@ -13,17 +13,20 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeType;
-import com.ticket.like.query.LikeQueryPort;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 찜 목록 읽기 전용 조회다.
+ *
+ * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 호출하는 module의 {@code endpoint}가 한다.
+ */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslLikeQueryAdapter implements LikeQueryPort {
+public class LikeQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
     public CursorPage<LikeEntry, Long> findLiked(
             final LikeType likeType,
             final Long memberId,

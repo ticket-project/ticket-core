@@ -9,7 +9,7 @@ import com.ticket.like.api.LikeInfo;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.LikeRepository;
-import com.ticket.like.query.LikeQueryPort;
+import com.ticket.like.query.LikeQuery;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class LikeQueryService implements LikeQueryApi {
     private final LikeRepository likeRepository;
-    private final LikeQueryPort likeQueryPort;
+    private final LikeQuery likeQuery;
 
     @Override
     public LikeInfo get(final LikeType likeType, final long targetId, final long memberId) {
@@ -41,6 +41,6 @@ public class LikeQueryService implements LikeQueryApi {
             final long memberId,
             final @Nullable Long cursorLikeId,
             final int size) {
-        return likeQueryPort.findLiked(likeType, memberId, cursorLikeId, size);
+        return likeQuery.findLiked(likeType, memberId, cursorLikeId, size);
     }
 }
