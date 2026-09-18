@@ -1,6 +1,7 @@
-package com.ticket.show.query;
+package com.ticket.show.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.Category;
 import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.show.SaleDisplayStatus;
@@ -38,15 +40,32 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowGenre;
+import com.ticket.show.query.LatestShowRow;
+import com.ticket.show.query.SaleOpeningSoonDetailRow;
+import com.ticket.show.query.SaleOpeningSoonSearchParam;
+import com.ticket.show.query.SaleOpeningSoonSummaryRow;
+import com.ticket.show.query.ShowCursor;
+import com.ticket.show.query.ShowListItemRow;
+import com.ticket.show.query.ShowListParam;
+import com.ticket.show.query.ShowSearchCriteria;
+import com.ticket.show.query.ShowSearchItemRow;
+import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.query.VenueSeatQuery;
-import com.ticket.venue.query.VenueSummaryQuery;
+import com.ticket.venue.persistence.VenueQueryRepository;
 
+/**
+ * {@link ShowQueryRepository}의 실제 DB 조회 동작을 고정한다.
+ *
+ * <p>정렬 키·tie breaker, 커서 형식 검증, 최신순의 마감 판정(TD-12: null 창은 CLOSED)은 예전에 {@code
+ * QuerydslShowSortResolverTest} / {@code QuerydslShowCursorConditionBuilderTest} / {@code
+ * SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그 helper들이 이 Repository 안으로 흡수되면서 같은
+ * 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
+ */
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,
-        classes = ShowListQueryTest.TestApplication.class)
+        classes = ShowQueryRepositoryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
             "spring.profiles.active=test",
@@ -70,21 +89,17 @@ import com.ticket.venue.query.VenueSummaryQuery;
         })
 @Transactional
 @Import({
-    ShowListQueryTest.QuerydslTestConfig.class,
-    ShowListQueryTest.TestConfig.class,
-    ShowListQueryTest.AuditingTestConfig.class,
-    ShowListQuery.class,
-    SaleDisplayStatusPredicates.class,
-    QuerydslShowSortResolver.class,
-    QuerydslShowCursorConditionBuilder.class,
+    ShowQueryRepositoryTest.QuerydslTestConfig.class,
+    ShowQueryRepositoryTest.TestConfig.class,
+    ShowQueryRepositoryTest.AuditingTestConfig.class,
+    ShowQueryRepository.class,
     ShowCardImagePathConverter.class,
-    VenueSummaryQuery.class,
-    VenueSeatQuery.class
+    VenueQueryRepository.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class ShowListQueryTest {
+class ShowQueryRepositoryTest {
     @Autowired private EntityManager entityManager;
-    @Autowired private ShowListQuery showListQuery;
+    @Autowired private ShowQueryRepository showQueryRepository;
     @Autowired private VenueLookupApi venueLookup;
     private Venue seoulVenue;
     private Venue busanVenue;
@@ -394,7 +409,7 @@ class ShowListQueryTest {
         setCreatedAt("Closed Show", LocalDateTime.now());
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
-        List<LatestShowRow> rows = showListQuery.findLatestShows(null, 10);
+        List<LatestShowRow> rows = showQueryRepository.findLatestShows(null, 10);
 
         assertThat(rows).extracting(LatestShowRow::title).endsWith("Closed Show");
     }
@@ -439,6 +454,294 @@ class ShowListQueryTest {
         assertThat(result.nextPosition()).isNull();
     }
 
+    // 정렬 키와 tie breaker ------------------------------------------------------
+    //
+    // 옛 QuerydslShowSortResolverTest는 OrderSpecifier 배열의 방향만 봤다. 여기서는 같은 규칙을
+    // 실제 조회 결과 순서로 고정한다.
+
+    /** 공연 임박순은 공연일 오름차순이고, 같은 날이면 id 오름차순이다. */
+    @Test
+    void 공연_임박순은_공연일_오름차순이고_같은_날이면_id_오름차순이다() {
+        persistShow(
+                "Tie A",
+                10L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        persistShow(
+                "Tie B",
+                20L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        entityManager.flush();
+        entityManager.clear();
+
+        CursorPage<ShowListItemRow, ShowCursor> result =
+                findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null),
+                        10,
+                        ShowSort.SHOW_START_APPROACHING);
+
+        // 같은 공연일(오늘 +5) 안에서는 등록 순서(id 오름차순)로 이어진다.
+        assertThat(result.items())
+                .extracting(ShowListItemRow::title)
+                .containsExactly("Seoul Popular", "Tie A", "Tie B", "Seoul Normal");
+    }
+
+    /** 인기순은 조회수 내림차순이고, 조회수가 같으면 id 내림차순이다. */
+    @Test
+    void 인기순은_조회수가_같으면_id_내림차순이다() {
+        persistShow(
+                "Same A",
+                777L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        persistShow(
+                "Same B",
+                777L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(10));
+        entityManager.flush();
+        entityManager.clear();
+
+        CursorPage<ShowListItemRow, ShowCursor> result =
+                findAllBySearch(
+                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
+
+        assertThat(titlesOf(result)).startsWith("Same B", "Same A");
+    }
+
+    // 커서 형식 검증 -------------------------------------------------------------
+    //
+    // 옛 QuerydslShowCursorConditionBuilderTest / QuerydslShowSortResolverTest가 helper를 직접
+    // 불러 고정하던 거부 규칙이다. 지금은 조회 입구에서 같은 예외가 나오는지 본다.
+
+    @Test
+    void cursor의_sort가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
+        ShowCursor cursor =
+                new ShowCursor(
+                        ShowSort.LATEST,
+                        "DESC",
+                        LocalDateTime.now().toString(),
+                        1L,
+                        0,
+                        LocalDateTime.now().toString());
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.POPULAR))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void cursor의_dir가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "ASC", "10", 1L);
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.POPULAR))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void cursor의_lastId가_없으면_INVALID_INPUT_예외를_던진다() {
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", "10", null);
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.POPULAR))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void cursor의_lastValue가_없으면_INVALID_INPUT_예외를_던진다() {
+        ShowCursor cursor = new ShowCursor(ShowSort.POPULAR, "DESC", " ", 1L);
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.POPULAR))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void cursor의_lastValue가_정렬형식과_맞지_않으면_INVALID_INPUT_예외를_던진다() {
+        ShowCursor cursor =
+                new ShowCursor(
+                        ShowSort.LATEST,
+                        "DESC",
+                        "not-a-date",
+                        1L,
+                        0,
+                        LocalDateTime.now().toString());
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void 최신순_커서에_판정_시각이_없으면_INVALID_INPUT_예외를_던진다() {
+        // 정렬 규칙이 바뀌기 전에 발급된 커서다. 조용히 섞인 순서를 내놓는 것보다 거부가 낫다.
+        ShowCursor legacyCursor =
+                new ShowCursor(ShowSort.LATEST, "DESC", LocalDateTime.now().toString(), 1L);
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(legacyCursor), 10, ShowSort.LATEST))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void 최신순_커서의_판정_시각_형식이_틀리면_INVALID_INPUT_예외를_던진다() {
+        ShowCursor cursor =
+                new ShowCursor(
+                        ShowSort.LATEST,
+                        "DESC",
+                        LocalDateTime.now().toString(),
+                        1L,
+                        0,
+                        "not-a-datetime");
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void 최신순_커서에_마감여부가_없으면_INVALID_INPUT_예외를_던진다() {
+        // 최신순이 마감 여부를 먼저 보기 전에 발급된 커서다. 그대로 이어 읽으면 마감 그룹 경계를
+        // 무시하고 등록일만으로 잘라 중복·누락이 생긴다.
+        ShowCursor cursor =
+                new ShowCursor(
+                        ShowSort.LATEST,
+                        "DESC",
+                        LocalDateTime.now().toString(),
+                        1L,
+                        null,
+                        LocalDateTime.now().toString());
+
+        assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    // 다음 커서에 담기는 값 --------------------------------------------------------
+
+    @Test
+    void 인기순_다음_커서는_마감여부와_판정_시각을_담지_않는다() {
+        CursorPage<ShowListItemRow, ShowCursor> page =
+                findAllBySearch(seoulParam(null), 1, ShowSort.POPULAR);
+
+        assertThat(page.nextPosition()).isNotNull();
+        assertThat(page.nextPosition().saleClosedRank()).isNull();
+        assertThat(page.nextPosition().evaluatedAt()).isNull();
+    }
+
+    @Test
+    void 최신순_다음_커서에_마감여부와_판정_시각을_담고_다음_페이지도_그_시각을_그대로_쓴다() {
+        setCreatedAt("Seoul Popular", LocalDateTime.now());
+        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Closed Show", LocalDateTime.now().minusDays(2));
+
+        CursorPage<ShowListItemRow, ShowCursor> firstPage =
+                findAllBySearch(seoulParam(null), 1, ShowSort.LATEST);
+
+        assertThat(firstPage.nextPosition()).isNotNull();
+        assertThat(firstPage.nextPosition().saleClosedRank()).isZero();
+        assertThat(firstPage.nextPosition().evaluatedAt()).isNotNull();
+
+        CursorPage<ShowListItemRow, ShowCursor> secondPage =
+                findAllBySearch(seoulParam(firstPage.nextPosition()), 1, ShowSort.LATEST);
+
+        // 페이지를 넘기는 사이 마감된 공연이 그룹을 옮기면 중복·누락이 생긴다. 시각을 고정한다.
+        assertThat(secondPage.nextPosition().evaluatedAt())
+                .isEqualTo(firstPage.nextPosition().evaluatedAt());
+    }
+
+    @Test
+    void 판매기간이_끝난_공연은_다음_커서에서_마감으로_적힌다() {
+        persistShow(
+                "Closed Later",
+                10L,
+                LocalDate.now().plusDays(5),
+                seoulVenue,
+                LocalDateTime.now().minusDays(20),
+                LocalDateTime.now().minusDays(15));
+        entityManager.flush();
+        entityManager.clear();
+
+        CursorPage<ShowSearchItemRow, ShowCursor> result =
+                searchShows(closedCriteria(), 1, ShowSort.LATEST);
+
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextPosition().saleClosedRank()).isEqualTo(1);
+    }
+
+    /**
+     * 표시 판매기간이 비어 있는 공연도 마감으로 본다 — {@code DisplaySaleWindow.statusAt}과 같은 규칙이다(TD-12). 필터 결과와 다음 커서
+     * 양쪽에서 같은 결론이 나와야 정렬 경계가 어긋나지 않는다.
+     */
+    @Test
+    void 표시_판매기간이_비어있는_공연도_마감으로_본다() {
+        persistShow("No Window", 10L, LocalDate.now().plusDays(5), seoulVenue, null, null);
+        entityManager.flush();
+        entityManager.clear();
+        setCreatedAt("No Window", LocalDateTime.now());
+
+        CursorPage<ShowSearchItemRow, ShowCursor> result =
+                searchShows(closedCriteria(), 1, ShowSort.LATEST);
+
+        assertThat(result.items())
+                .as("null 창은 CLOSED 필터에 걸린다")
+                .extracting(ShowSearchItemRow::title)
+                .containsExactly("No Window");
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextPosition().saleClosedRank()).isEqualTo(1);
+    }
+
+    // 판매 표시 상태 필터 ---------------------------------------------------------
+
+    @Test
+    void 판매_표시_상태를_주지_않으면_상태로_거르지_않는다() {
+        CursorPage<ShowSearchItemRow, ShowCursor> result =
+                searchShows(
+                        new ShowSearchCriteria(null, null, null, null, null, Region.SEOUL, null),
+                        10,
+                        ShowSort.POPULAR);
+
+        assertThat(result.items())
+                .extracting(ShowSearchItemRow::title)
+                .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
+    }
+
+    @Test
+    void 판매_시작_전_공연만_거른다() {
+        persistShow(
+                "Before Open",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
+        entityManager.flush();
+        entityManager.clear();
+
+        CursorPage<ShowSearchItemRow, ShowCursor> result =
+                searchShows(
+                        new ShowSearchCriteria(
+                                null, null, SaleDisplayStatus.BEFORE_OPEN, null, null, null, null),
+                        10,
+                        ShowSort.POPULAR);
+
+        assertThat(result.items())
+                .extracting(ShowSearchItemRow::title)
+                .containsExactly("Before Open");
+    }
+
+    @Test
+    void 판매가_끝난_공연만_거른다() {
+        CursorPage<ShowSearchItemRow, ShowCursor> result =
+                searchShows(closedCriteria(), 10, ShowSort.POPULAR);
+
+        assertThat(result.items())
+                .extracting(ShowSearchItemRow::title)
+                .containsExactly("Closed Show");
+    }
+
     /** 등록일은 JPA auditing이 넣으므로 테스트에서 직접 못 정한다. 최신순 정렬은 이 값이 기준이라 네이티브 UPDATE로 고정한다. */
     private void setCreatedAt(final String title, final LocalDateTime createdAt) {
         entityManager
@@ -459,6 +762,14 @@ class ShowListQueryTest {
 
     private static List<String> titlesOf(final CursorPage<ShowListItemRow, ShowCursor> page) {
         return page.items().stream().map(ShowListItemRow::title).toList();
+    }
+
+    private static ShowListParam seoulParam(final @Nullable ShowCursor cursor) {
+        return new ShowListParam(null, null, Region.SEOUL, cursor);
+    }
+
+    private static ShowSearchCriteria closedCriteria() {
+        return new ShowSearchCriteria(null, null, SaleDisplayStatus.CLOSED, null, null, null, null);
     }
 
     // 판매 오픈 예정 경로 ------------------------------------------------------
@@ -595,7 +906,7 @@ class ShowListQueryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(showListQuery.findSaleOpeningSoonSummaries(null, 10))
+        assertThat(showQueryRepository.findSaleOpeningSoonSummaries(null, 10))
                 .extracting(SaleOpeningSoonSummaryRow::title)
                 .containsExactly("Soon Summary");
     }
@@ -679,8 +990,7 @@ class ShowListQueryTest {
 
     // region 의미론 ------------------------------------------------------------
     //
-    // 지역 해석을 application으로 옮기려면 이 셋이 서로 다른 동작이라는 사실이 고정돼 있어야 한다.
-    // "빈 venueId 집합이면 0건"은 이미 위에서 고정했고, 나머지 둘이 여기다.
+    // 지역 해석은 application의 몫이다. "빈 venueId 집합이면 0건"은 이미 위에서 고정했고, 나머지 둘이 여기다.
 
     /** 지역 조건이 없으면 공연장이 없는 공연도 결과에 들어온다. */
     @Test
@@ -734,31 +1044,34 @@ class ShowListQueryTest {
                 category, title, region, null, null, null, null, null);
     }
 
-    // 지역 조건 해석은 application의 몫이다(RegionVenueIds). 이 테스트도 use case와 같은 순서로 -- 지역을
-    // venueId로 먼저 해석한 뒤 port를 부른다 -- 조합해야 실제 동작과 같은 것을 검증한다.
+    // 지역 조건 해석은 application의 몫이다. 이 테스트도 use case와 같은 순서로 -- 지역을 venueId로 먼저
+    // 해석한 뒤 Repository를 부른다 -- 조합해야 실제 동작과 같은 것을 검증한다.
 
     private CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        return showListQuery.findAllBySearch(param, venueIdsOf(param.getRegion()), size, sort);
+        return showQueryRepository.findAllBySearch(
+                param, venueIdsOf(param.getRegion()), size, sort);
     }
 
     private CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        return showListQuery.searchShows(criteria, venueIdsOf(criteria.getRegion()), size, sort);
+        return showQueryRepository.searchShows(
+                criteria, venueIdsOf(criteria.getRegion()), size, sort);
     }
 
     private long countSearchShows(final ShowSearchCriteria criteria) {
-        return showListQuery.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
+        return showQueryRepository.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
     }
 
     private CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        return showListQuery.findSaleOpeningSoonPage(
+        return showQueryRepository.findSaleOpeningSoonPage(
                 param, venueIdsOf(param.getRegion()), size, sort);
     }
 
+    /** {@code null}(지역 조건 없음)과 빈 집합(그 지역에 공연장 없음)을 구분해 넘긴다 — use case와 같은 규칙이다. */
     private @Nullable Set<Long> venueIdsOf(final @Nullable Region region) {
-        return RegionVenueIds.resolve(venueLookup, region);
+        return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {

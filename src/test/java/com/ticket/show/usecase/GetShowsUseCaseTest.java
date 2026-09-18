@@ -18,11 +18,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.SaleType;
+import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowListItemRow;
 import com.ticket.show.query.ShowListParam;
-import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSort;
+import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
@@ -31,7 +32,7 @@ import com.ticket.venue.api.VenueSummary;
 class GetShowsUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowListQuery showListQuery;
+    @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetShowsUseCase useCase;
 
@@ -61,7 +62,8 @@ class GetShowsUseCaseTest {
                         7L);
         CursorPage<ShowListItemRow, ShowCursor> result =
                 new CursorPage<>(List.of(row), true, NEXT_POSITION);
-        when(showListQuery.findAllBySearch(param, null, 10, ShowSort.POPULAR)).thenReturn(result);
+        when(showQueryRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+                .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -85,14 +87,15 @@ class GetShowsUseCaseTest {
         assertThat(output.items().getFirst().venue()).isEqualTo("venue");
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListQuery).findAllBySearch(param, null, 10, ShowSort.POPULAR);
+        verify(showQueryRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
     void 공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, null, null);
         CursorPage<ShowListItemRow, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showListQuery.findAllBySearch(param, null, 10, ShowSort.POPULAR)).thenReturn(result);
+        when(showQueryRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+                .thenReturn(result);
 
         GetShowsUseCase.Output output =
                 useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));
@@ -100,6 +103,27 @@ class GetShowsUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListQuery).findAllBySearch(param, null, 10, ShowSort.POPULAR);
+        verify(showQueryRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
+    }
+
+    /**
+     * 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다.
+     */
+    @Test
+    void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
+        CursorPage<ShowListItemRow, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
+        ShowListParam noRegion = new ShowListParam(null, null, null, null);
+        ShowListParam jeju = new ShowListParam(null, null, Region.JEJU, null);
+        when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
+        when(showQueryRepository.findAllBySearch(noRegion, null, 10, ShowSort.POPULAR))
+                .thenReturn(empty);
+        when(showQueryRepository.findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR))
+                .thenReturn(empty);
+
+        useCase.execute(new GetShowsUseCase.Input(noRegion, 10, ShowSort.POPULAR));
+        useCase.execute(new GetShowsUseCase.Input(jeju, 10, ShowSort.POPULAR));
+
+        verify(showQueryRepository).findAllBySearch(noRegion, null, 10, ShowSort.POPULAR);
+        verify(showQueryRepository).findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR);
     }
 }

@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.query.PerformanceQuery;
+import com.ticket.show.persistence.PerformanceQueryRepository;
 import com.ticket.show.query.PerformanceSummaryView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -23,14 +23,14 @@ import com.ticket.venue.api.VenueSummary;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetPerformanceSummaryUseCaseTest {
-    @Mock private PerformanceQuery performanceQuery;
+    @Mock private PerformanceQueryRepository performanceQueryRepository;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetPerformanceSummaryUseCase useCase;
 
     @Test
     void 공연_요약정보를_반환한다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
-        when(performanceQuery.findByPerformanceId(1L))
+        when(performanceQueryRepository.findByPerformanceId(1L))
                 .thenReturn(Optional.of(new PerformanceSummaryView("싱어게인", 5L, startTime)));
         when(venueLookup.findSummary(5L))
                 .thenReturn(
@@ -56,7 +56,7 @@ class GetPerformanceSummaryUseCaseTest {
 
     @Test
     void 공연과_연결되지_않은_회차면_예외를_던진다() {
-        when(performanceQuery.findByPerformanceId(1L)).thenReturn(Optional.empty());
+        when(performanceQueryRepository.findByPerformanceId(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetPerformanceSummaryUseCase.Input(1L)))
                 .isInstanceOf(NotFoundException.class);
@@ -65,7 +65,7 @@ class GetPerformanceSummaryUseCaseTest {
     @Test
     void 공연장이_없어도_지역은_null로_반환한다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
-        when(performanceQuery.findByPerformanceId(1L))
+        when(performanceQueryRepository.findByPerformanceId(1L))
                 .thenReturn(Optional.of(new PerformanceSummaryView("싱어게인", null, startTime)));
 
         GetPerformanceSummaryUseCase.Output output =

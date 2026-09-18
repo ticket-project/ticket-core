@@ -15,10 +15,10 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
+import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.PerformanceDateInfo;
 import com.ticket.show.query.PerformerInfo;
 import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.ShowDetailQuery;
 import com.ticket.show.query.ShowDetailView;
 import com.ticket.show.query.ShowGradeView;
 import com.ticket.show.query.VenueInfo;
@@ -28,14 +28,14 @@ import com.ticket.venue.api.VenueSummary;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 상세 조회는 자기 DB 조회({@link ShowDetailQuery})에 venue 표시값(like 개수도 마찬가지)을 조합한 결과다. 그 조합은 이 use
- * case가 한다 — local 조회({@code ShowDetailQuery})는 venue를 모르고 {@code venueId} scalar만 넘긴다.
+ * show 상세 조회는 자기 DB 조회({@link ShowQueryRepository#findShowDetail})에 venue 표시값(like 개수도 마찬가지)을 조합한
+ * 결과다. 그 조합은 이 use case가 한다 — local 조회는 venue를 모르고 {@code venueId} scalar만 넘긴다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowDetailUseCase {
-    private final ShowDetailQuery showDetailQuery;
+    private final ShowQueryRepository showQueryRepository;
     private final LikeQueryApi likeQuery;
     private final VenueLookupApi venueLookup;
 
@@ -79,7 +79,7 @@ public class GetShowDetailUseCase {
 
     public Output execute(final Input input) {
         final ShowDetailView view =
-                showDetailQuery
+                showQueryRepository
                         .findShowDetail(input.showId())
                         .orElseThrow(
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId()));
