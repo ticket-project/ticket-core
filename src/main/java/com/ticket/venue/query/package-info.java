@@ -1,4 +1,4 @@
-/** venue가 요구하는 조회 계약과 결과 타입이다. Querydsl 구현은 {@code venue.persistence}가 갖는다. */
+/** venue의 local DB 조회 구현과 읽기 모델이다. 공개 계약({@code venue.api})의 구현이 여기 있다. */
 @NullMarked
 package com.ticket.venue.query;
 

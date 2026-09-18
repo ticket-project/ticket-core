@@ -53,10 +53,8 @@ import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.persistence.QuerydslVenueSeatQueryAdapter;
-import com.ticket.venue.persistence.QuerydslVenueSummaryQueryAdapter;
-import com.ticket.venue.usecase.VenueLookupService;
-import com.ticket.venue.usecase.VenueSeatLookupService;
+import com.ticket.venue.query.VenueSeatQuery;
+import com.ticket.venue.query.VenueSummaryQuery;
 
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,
@@ -92,10 +90,8 @@ import com.ticket.venue.usecase.VenueSeatLookupService;
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
     ShowCardImagePathConverter.class,
-    VenueLookupService.class,
-    QuerydslVenueSummaryQueryAdapter.class,
-    VenueSeatLookupService.class,
-    QuerydslVenueSeatQueryAdapter.class
+    VenueSummaryQuery.class,
+    VenueSeatQuery.class
 })
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowListQueryAdapterTest {
