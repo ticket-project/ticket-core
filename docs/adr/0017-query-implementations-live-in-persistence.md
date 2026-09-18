@@ -91,3 +91,21 @@ package(`domain` vs `persistence`)와 접미사로만 드러난다 —
 대상이 `..query..`에서 **module 전체 + `JPAQueryFactory` 보유 클래스**로 넓어져, 옮겨진 조회
 Repository에도 그대로 걸린다. `endpoint`가 use case를 건너뛰고 Repository·조회 Repository를 직접
 부르지 못하는 규칙도 그대로다. 전부 `com.ticket.ArchitectureRulesTest`가 원본이다.
+
+## 후속 메모 (2026-09-19)
+
+위 결정은 그대로 유효하다. 다만 그 뒤 조회 방침이 바뀌면서(Querydsl을 기본 선택으로 두지 않고,
+엔티티로 충분한 조회는 엔티티를 반환한다 — `docs/readability-guidelines.md` §10) 본문이 든 예시
+중 일부는 현재 코드에 없다.
+
+- **`ShowDetailView`(§배경)가 사라졌다.** `ShowQueryRepository`는 `findShow`(`Show` 엔티티)·
+  `findGenreNames`·`findGrades`·`findPriceSummary`·`findPerformanceDates`·`findPerformer` 조각만
+  주고 `GetShowDetailUseCase`가 Output을 직접 만든다. query 개수는 그대로다.
+- **`booking.order.persistence.OrderQueryRepository`(결정 §2)와 `booking.order.query` package
+  (§하지 않은 것)가 사라졌다.** 주문 상세·상태는 `OrderRepository`의 Spring Data `@Query`
+  (`join fetch o.orderSeats`)로 `Order` 엔티티를 받아 use case가 Output을 만든다. 조회 Repository는
+  6개에서 5개가 됐다(`ArchitectureRulesTest.APPROVED_QUERY_REPOSITORIES`도 그에 맞는다).
+- **남은 `query` package는 `show.query`와 `booking.seat.query` 둘이다.**
+- `PerformanceQueryRepository`에는 grade projection 2개만 Querydsl로 남았고, 나머지 고정 조회는
+  `@Query` 생성자 표현식으로 옮겼다. `PerformanceSeatRepositoryAdapter`도 Querydsl을 쓰지 않아,
+  저장 adapter 중 Querydsl을 쓰는 것은 없다.
