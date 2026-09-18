@@ -15,10 +15,9 @@ import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowLikeSummaryView;
-import com.ticket.show.query.ShowSummaryBatchQuery;
 import com.ticket.show.query.ShowSummaryRow;
-import com.ticket.show.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,7 @@ public class GetMyShowLikesUseCase {
     private static final int MAX_SIZE = 100;
     private final MemberLookupApi memberLookup;
     private final LikeQueryApi likeQuery;
-    private final ShowSummaryBatchQuery showSummaryBatchQuery;
+    private final ShowQueryRepository showQueryRepository;
     private final VenueLookupApi venueLookup;
 
     /**
@@ -73,7 +72,7 @@ public class GetMyShowLikesUseCase {
 
         final Set<Long> showIds =
                 page.items().stream().map(LikeEntry::targetId).collect(Collectors.toSet());
-        final Map<Long, ShowSummaryRow> summaries = showSummaryBatchQuery.findSummaries(showIds);
+        final Map<Long, ShowSummaryRow> summaries = showQueryRepository.findSummaries(showIds);
         final VenueDisplays venues =
                 VenueDisplays.load(
                         venueLookup,
