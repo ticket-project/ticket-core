@@ -13,7 +13,8 @@
  * com.ticket.member.api.MemberLookupApi}을 직접 불러 다시 확인한다. {@code member}는 아무 업무 module도 참조하지 않는
  * leaf라 이 방향은 순환을 만들지 않는다.
  *
- * <p>공개 계약: - LikeQueryApi (찜 여부·개수·내 찜 목록 조회) - LikeCommandApi (찜하기/찜 해제) - LikeType (찜 대상 종류)
+ * <p>공개 계약: - LikeQueryApi (찜 여부·개수·내 찜 목록 조회) - LikeType (찜 대상 종류). 찜하기·찜 해제는 이 module의 HTTP
+ * endpoint와 use case로만 쓰고 밖에 노출하지 않는다.
  *
  * <p>"내 찜 목록"(showId 목록에 제목·이미지·공연장 이름을 붙여 보여주는 것)은 이 module이 아니라 show의 {@code
  * GetMyShowLikesUseCase}가 한다 — 대상 표시값 조립은 그 대상을 아는 module의 책임이라는 원칙 때문이다. 여러 BC를 넘나드는 "내 정보" 조합을

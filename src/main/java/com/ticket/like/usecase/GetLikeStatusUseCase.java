@@ -8,7 +8,7 @@ import com.ticket.like.api.LikeInfo;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.api.InputChecks;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,21 +22,9 @@ public class GetLikeStatusUseCase {
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
         public Input {
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
-            if (likeType == null) {
-                throw new InvalidRequestException("likeType는 필수입니다.");
-            }
-            if (targetId == null) {
-                throw new InvalidRequestException("targetId는 필수입니다.");
-            }
-            if (targetId <= 0) {
-                throw new InvalidRequestException("targetId는 양수여야 합니다.");
-            }
+            InputChecks.requirePositiveId(memberId, "memberId");
+            InputChecks.requireProvided(likeType, "likeType");
+            InputChecks.requirePositiveId(targetId, "targetId");
         }
     }
 
