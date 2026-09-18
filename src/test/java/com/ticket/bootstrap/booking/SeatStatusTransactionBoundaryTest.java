@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
-import com.ticket.booking.seat.query.SeatStateQueryPort;
+import com.ticket.booking.seat.query.SeatStateQuery;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
@@ -35,7 +35,7 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
 
     @Test
     void DB_좌석_상태_읽기는_읽기_전용_트랜잭션_안에서_끝난다() throws Exception {
-        final Class<?> adapter = AopUtils.getTargetClass(context.getBean(SeatStateQueryPort.class));
+        final Class<?> adapter = AopUtils.getTargetClass(context.getBean(SeatStateQuery.class));
 
         final TransactionAttribute attribute =
                 transactionAttributeOf(adapter, "findSeatStates", Long.class);
@@ -47,7 +47,7 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     /** 트랜잭션 attribute가 선언돼 있어도 빈이 proxy가 아니면 실제로는 아무 경계도 없다. */
     @Test
     void 트랜잭션_경계를_소유한_빈은_실제로_proxy로_감싸진다() {
-        assertThat(AopUtils.isAopProxy(context.getBean(SeatStateQueryPort.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(SeatStateQuery.class))).isTrue();
     }
 
     /** use case가 트랜잭션을 소유하면 Redis 조회까지 DB connection을 쥔 채로 하게 된다. */

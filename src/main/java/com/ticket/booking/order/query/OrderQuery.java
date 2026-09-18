@@ -1,4 +1,4 @@
-package com.ticket.booking.order.persistence;
+package com.ticket.booking.order.query;
 
 import static com.ticket.booking.order.domain.QOrder.order;
 import static com.ticket.booking.order.domain.QOrderSeat.orderSeat;
@@ -10,9 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.booking.order.query.OrderDetailRow;
-import com.ticket.booking.order.query.OrderQueryPort;
-import com.ticket.booking.order.query.OrderStatusView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,10 +19,9 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslOrderQueryAdapter implements OrderQueryPort {
+public class OrderQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
     public List<OrderDetailRow> findDetailRows(final String orderKey, final Long memberId) {
         return queryFactory
                 .select(
@@ -53,7 +49,6 @@ public class QuerydslOrderQueryAdapter implements OrderQueryPort {
                 .fetch();
     }
 
-    @Override
     public Optional<OrderStatusView> findStatus(final String orderKey, final Long memberId) {
         return Optional.ofNullable(
                 queryFactory

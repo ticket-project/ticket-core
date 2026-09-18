@@ -12,7 +12,7 @@ import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
-import com.ticket.booking.seat.query.SeatStateQueryPort;
+import com.ticket.booking.seat.query.SeatStateQuery;
 import com.ticket.booking.seat.query.SeatStateSnapshotRow;
 import com.ticket.booking.seat.query.SeatStateView;
 import com.ticket.booking.seat.query.SeatStatus;
@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
     private final PerformanceSaleFinder performanceSaleFinder;
-    private final SeatStateQueryPort seatStateQueryPort;
+    private final SeatStateQuery seatStateQuery;
     private final SeatSelectionService seatSelectionService;
     private final HoldManager holdManager;
     private final AdmissionGuard admissionGuard;
@@ -60,7 +60,7 @@ public class GetSeatStatusUseCase {
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         final List<SeatStateSnapshotRow> dbStates =
-                seatStateQueryPort.findSeatStates(performanceId);
+                seatStateQuery.findSeatStates(performanceId);
 
         final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
 

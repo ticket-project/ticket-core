@@ -1,4 +1,4 @@
-package com.ticket.booking.seat.persistence;
+package com.ticket.booking.seat.query;
 
 import static com.ticket.booking.seat.domain.QPerformanceSeat.performanceSeat;
 
@@ -10,9 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.query.SeatStateQueryPort;
-import com.ticket.booking.seat.query.SeatStateSnapshotRow;
-import com.ticket.booking.seat.query.SeatStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,10 +22,9 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslSeatStateQueryAdapter implements SeatStateQueryPort {
+public class SeatStateQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
     @Transactional(readOnly = true)
     public List<SeatStateSnapshotRow> findSeatStates(final Long performanceId) {
         return queryFactory

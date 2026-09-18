@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.query.SeatAvailabilityQueryPort.PerformanceSeatStateRow;
+import com.ticket.booking.seat.query.SeatAvailabilityQuery.PerformanceSeatStateRow;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;

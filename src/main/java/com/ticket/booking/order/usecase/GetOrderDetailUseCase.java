@@ -12,7 +12,7 @@ import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.query.OrderDetailRow;
-import com.ticket.booking.order.query.OrderQueryPort;
+import com.ticket.booking.order.query.OrderQuery;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.member.api.MemberProfile;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -28,13 +28,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
-    private final OrderQueryPort orderQueryPort;
+    private final OrderQuery orderQuery;
     private final MemberLookupApi memberLookup;
     private final Clock clock;
 
     public Output execute(final Input input) {
         final List<OrderDetailRow> rows =
-                orderQueryPort.findDetailRows(input.orderKey(), input.memberId());
+                orderQuery.findDetailRows(input.orderKey(), input.memberId());
         if (rows.isEmpty()) {
             throw new OrderNotOwnedException(input.orderKey(), input.memberId());
         }
