@@ -25,11 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
  * ConstraintDeclarationException(HV000151)을 던진다. Controller가 문서 인터페이스를 구현하므로 같은 제약을 두 곳에 두면 method
  * validation 자체가 깨진다.
  *
- * <p>controller와 문서 인터페이스는 한 곳에 모여 있지 않다 — 업무 module은 {@code <module>.endpoint}와 {@code
- * <module>.endpoint.docs}에, security는 기능 폴더인 {@code security.auth}에 둔다. 그래서 {@code
- * src/main/java/com/ticket} 전체를 훑되, <b>controller는 디렉터리 이름이 아니라 {@code @RestController} 애노테이션으로
- * 찾는다.</b> 디렉터리 이름으로 찾으면 package 이름이 바뀔 때 검사 대상이 조용히 0개가 되어 테스트가 통과해 버린다 (실제로 {@code web} -> {@code
- * endpoint} 개명에서 그럴 뻔했다). 문서 인터페이스는 애노테이션으로 구분되지 않아 {@code docs} 디렉터리 이름을 계속 쓴다.
+ * <p>controller와 문서 인터페이스는 한 곳에 모여 있지 않다 — {@code like}/{@code member}/{@code show}는 {@code
+ * <module>.endpoint.docs}에, {@code booking}의 capability들은 {@code <capability>.endpoint}에 flat으로,
+ * security는 기능 폴더인 {@code security.auth}에 둔다. 그래서 {@code src/main/java/com/ticket} 전체를 훑되, <b>디렉터리
+ * 이름이 아니라 타입 자체로 찾는다</b> — controller는 {@code @RestController} 애노테이션으로, 문서 인터페이스는 {@code
+ * *ControllerDocs} 이름으로 찾는다. 디렉터리 이름으로 찾으면 package 배치가 바뀔 때 검사 대상이 조용히 줄어도 테스트가 통과해 버린다 (실제로 {@code
+ * web} -> {@code endpoint} 개명에서 그럴 뻔했고, {@code docs} 디렉터리를 쓰지 않는 module의 문서 인터페이스는 한동안 검사 밖에 있었다).
  *
  * <p>상대 경로로 소스 디렉터리를 읽으므로 Gradle이 정해 주는 작업 디렉터리에서만 통과한다.
  */
@@ -108,30 +109,12 @@ class ControllerParameterConstraintTest {
                 .toList();
     }
 
+    /** 문서 인터페이스는 애노테이션으로 구분되지 않는다 — 배치가 module마다 달라 디렉터리 대신 이름으로 찾는다. */
     private List<Class<?>> docsInterfaces() throws IOException {
-        return classesUnderDirectoriesNamed("docs");
-    }
-
-    /**
-     * {@code SOURCE_ROOT} 아래에서 마지막 디렉터리 이름이 {@code leafDirName}인 모든 디렉터리를 찾아 그 바로 아래(하위 디렉터리 제외)
-     * {@code .java} 파일을 class로 읽는다. {@code docs}는 각 module의 문서 인터페이스 패키지를 가리킨다.
-     */
-    private List<Class<?>> classesUnderDirectoriesNamed(final String leafDirName)
-            throws IOException {
-        if (!Files.isDirectory(SOURCE_ROOT)) {
-            throw new IllegalStateException(SOURCE_ROOT + "가 있어야 한다");
-        }
-        final List<Class<?>> classes = new ArrayList<>();
-        try (Stream<Path> allDirs = Files.walk(SOURCE_ROOT)) {
-            final List<Path> matchingDirs =
-                    allDirs.filter(Files::isDirectory)
-                            .filter(path -> path.getFileName().toString().equals(leafDirName))
-                            .toList();
-            for (final Path directory : matchingDirs) {
-                classes.addAll(classesDirectlyIn(directory));
-            }
-        }
-        return classes;
+        return allClassesUnder(SOURCE_ROOT).stream()
+                .filter(type -> type.isInterface())
+                .filter(type -> type.getSimpleName().endsWith("ControllerDocs"))
+                .toList();
     }
 
     /** {@code SOURCE_ROOT} 아래 모든 {@code .java}를 class로 읽는다. package 이름에 기대지 않는다. */
