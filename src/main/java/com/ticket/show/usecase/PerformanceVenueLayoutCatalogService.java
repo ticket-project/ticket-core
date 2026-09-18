@@ -12,8 +12,8 @@ import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 import com.ticket.show.api.ShowPerformanceLookupApi;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.query.PerformanceVenueLayoutQueryPort;
-import com.ticket.show.query.PerformanceVenueLayoutQueryPort.PerformanceGradeLayoutRow;
+import com.ticket.show.query.PerformanceVenueLayoutQuery;
+import com.ticket.show.query.PerformanceVenueLayoutQuery.PerformanceGradeLayoutRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -25,14 +25,14 @@ import lombok.RequiredArgsConstructor;
  * {@link PerformanceVenueLayoutCatalogApi}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한
  * 번에 조회해 booking에게 scalar snapshot만 넘긴다.
  *
- * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — persistence adapter({@code
- * PerformanceVenueLayoutQueryPort}의 구현)는 show 자기 DB만 본다.
+ * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — local 조회({@code
+ * PerformanceVenueLayoutQuery}의 구현)는 show 자기 DB만 본다.
  */
 @Service
 @RequiredArgsConstructor
 public class PerformanceVenueLayoutCatalogService
         implements PerformanceVenueLayoutCatalogApi, ShowPerformanceLookupApi {
-    private final PerformanceVenueLayoutQueryPort performanceVenueLayoutQueryPort;
+    private final PerformanceVenueLayoutQuery performanceVenueLayoutQuery;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;
 
@@ -40,7 +40,7 @@ public class PerformanceVenueLayoutCatalogService
     @Transactional(readOnly = true)
     public PerformanceVenueLayout getVenueLayout(final long performanceId) {
         final PerformanceVenueLayoutContext context =
-                performanceVenueLayoutQueryPort
+                performanceVenueLayoutQuery
                         .findVenueLayoutContext(performanceId)
                         .orElseThrow(
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
@@ -59,7 +59,7 @@ public class PerformanceVenueLayoutCatalogService
                                                 VenueSeatLayout::seatId, this::toSeatLayout));
 
         final Map<Long, PerformanceVenueLayout.GradeLayout> gradeLayoutByPerformanceGradeId =
-                performanceVenueLayoutQueryPort.findGradeLayouts(performanceId).stream()
+                performanceVenueLayoutQuery.findGradeLayouts(performanceId).stream()
                         .collect(
                                 Collectors.toMap(
                                         PerformanceGradeLayoutRow::performanceGradeId,
@@ -79,7 +79,7 @@ public class PerformanceVenueLayoutCatalogService
     @Override
     @Transactional(readOnly = true)
     public Optional<Long> findRepresentativePerformanceId(final long showId) {
-        return performanceVenueLayoutQueryPort.findRepresentativePerformanceIdByShowId(showId);
+        return performanceVenueLayoutQuery.findRepresentativePerformanceIdByShowId(showId);
     }
 
     private PerformanceVenueLayout.SeatLayout toSeatLayout(final VenueSeatLayout layout) {

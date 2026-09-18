@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -25,7 +25,7 @@ import com.ticket.venue.api.VenueSummary;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetLatestShowsUseCaseTest {
-    @Mock private ShowListQueryPort showListQueryPort;
+    @Mock private ShowListQuery showListQuery;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetLatestShowsUseCase useCase;
 
@@ -38,8 +38,7 @@ class GetLatestShowsUseCaseTest {
                 List.of(
                         new LatestShowRow(
                                 1L, "concert", "image", startDate, endDate, 7L, createdAt));
-        when(showListQueryPort.findLatestShows(
-                        "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
+        when(showListQuery.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(rows);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -63,21 +62,20 @@ class GetLatestShowsUseCaseTest {
                 .containsExactly(
                         new ShowSummaryView(
                                 1L, "concert", "image", startDate, endDate, "venue", createdAt));
-        verify(showListQueryPort)
+        verify(showListQuery)
                 .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 
     @Test
     void 최신_공연이_없으면_빈_목록을_반환한다() {
-        when(showListQueryPort.findLatestShows(
-                        "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
+        when(showListQuery.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(List.of());
 
         GetLatestShowsUseCase.Output output =
                 useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
 
         assertThat(output.shows()).isEmpty();
-        verify(showListQueryPort)
+        verify(showListQuery)
                 .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 }

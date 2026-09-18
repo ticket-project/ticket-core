@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.show.QShow.show;
@@ -9,21 +9,18 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.query.PerformanceQueryPort;
-import com.ticket.show.query.PerformanceSummaryView;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB에서 회차 요약 데이터를 읽는 persistence adapter다. venue region 표시값 조합은 {@code
+ * show 자기 DB에서 회차 요약 데이터를 읽는다. venue region 표시값 조합은 {@code
  * GetPerformanceSummaryUseCase}(application)가 한다 — 여기서는 {@code venueId} scalar만 넘긴다.
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceQueryAdapter implements PerformanceQueryPort {
+public class PerformanceQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
     public Optional<PerformanceSummaryView> findByPerformanceId(final Long performanceId) {
         final Tuple row =
                 queryFactory

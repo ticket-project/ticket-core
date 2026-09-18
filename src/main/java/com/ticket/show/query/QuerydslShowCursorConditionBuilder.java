@@ -1,7 +1,7 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.persistence.querydsl.QuerydslTupleColumns.required;
+import static com.ticket.show.query.QuerydslTupleColumns.required;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,9 +20,7 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
-import com.ticket.show.persistence.querydsl.QuerydslShowSortResolver.SortOrder;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowSort;
+import com.ticket.show.query.QuerydslShowSortResolver.SortOrder;
 
 import lombok.RequiredArgsConstructor;
 

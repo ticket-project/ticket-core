@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,18 +38,6 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowGenre;
-import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.query.RegionVenueIds;
-import com.ticket.show.query.SaleOpeningSoonDetailRow;
-import com.ticket.show.query.SaleOpeningSoonSearchParam;
-import com.ticket.show.query.SaleOpeningSoonSummaryRow;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListItemRow;
-import com.ticket.show.query.ShowListParam;
-import com.ticket.show.query.ShowListQueryPort;
-import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSearchItemRow;
-import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.domain.Venue;
@@ -58,7 +46,7 @@ import com.ticket.venue.query.VenueSummaryQuery;
 
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,
-        classes = QuerydslShowListQueryAdapterTest.TestApplication.class)
+        classes = ShowListQueryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
             "spring.profiles.active=test",
@@ -82,10 +70,10 @@ import com.ticket.venue.query.VenueSummaryQuery;
         })
 @Transactional
 @Import({
-    QuerydslShowListQueryAdapterTest.QuerydslTestConfig.class,
-    QuerydslShowListQueryAdapterTest.TestConfig.class,
-    QuerydslShowListQueryAdapterTest.AuditingTestConfig.class,
-    QuerydslShowListQueryAdapter.class,
+    ShowListQueryTest.QuerydslTestConfig.class,
+    ShowListQueryTest.TestConfig.class,
+    ShowListQueryTest.AuditingTestConfig.class,
+    ShowListQuery.class,
     SaleDisplayStatusPredicates.class,
     QuerydslShowSortResolver.class,
     QuerydslShowCursorConditionBuilder.class,
@@ -94,9 +82,9 @@ import com.ticket.venue.query.VenueSummaryQuery;
     VenueSeatQuery.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslShowListQueryAdapterTest {
+class ShowListQueryTest {
     @Autowired private EntityManager entityManager;
-    @Autowired private ShowListQueryPort showListQueryPort;
+    @Autowired private ShowListQuery showListQuery;
     @Autowired private VenueLookupApi venueLookup;
     private Venue seoulVenue;
     private Venue busanVenue;
@@ -406,7 +394,7 @@ class QuerydslShowListQueryAdapterTest {
         setCreatedAt("Closed Show", LocalDateTime.now());
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
-        List<LatestShowRow> rows = showListQueryPort.findLatestShows(null, 10);
+        List<LatestShowRow> rows = showListQuery.findLatestShows(null, 10);
 
         assertThat(rows).extracting(LatestShowRow::title).endsWith("Closed Show");
     }
@@ -607,7 +595,7 @@ class QuerydslShowListQueryAdapterTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(showListQueryPort.findSaleOpeningSoonSummaries(null, 10))
+        assertThat(showListQuery.findSaleOpeningSoonSummaries(null, 10))
                 .extracting(SaleOpeningSoonSummaryRow::title)
                 .containsExactly("Soon Summary");
     }
@@ -751,22 +739,21 @@ class QuerydslShowListQueryAdapterTest {
 
     private CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        return showListQueryPort.findAllBySearch(param, venueIdsOf(param.getRegion()), size, sort);
+        return showListQuery.findAllBySearch(param, venueIdsOf(param.getRegion()), size, sort);
     }
 
     private CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        return showListQueryPort.searchShows(
-                criteria, venueIdsOf(criteria.getRegion()), size, sort);
+        return showListQuery.searchShows(criteria, venueIdsOf(criteria.getRegion()), size, sort);
     }
 
     private long countSearchShows(final ShowSearchCriteria criteria) {
-        return showListQueryPort.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
+        return showListQuery.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
     }
 
     private CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        return showListQueryPort.findSaleOpeningSoonPage(
+        return showListQuery.findSaleOpeningSoonPage(
                 param, venueIdsOf(param.getRegion()), size, sort);
     }
 

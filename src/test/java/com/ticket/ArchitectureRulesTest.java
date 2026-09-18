@@ -206,15 +206,14 @@ class ArchitectureRulesTest {
                     .should()
                     .dependOnClassesThat()
                     .resideInAnyPackage(PERSISTENCE, ENDPOINT)
-                    .because(
-                            "출력 port는 밖을 부르는 계약이다 — 계약이 구현을 알면 계약과 구현을 나눈 이유가 사라진다");
+                    .because("출력 port는 밖을 부르는 계약이다 — 계약이 구현을 알면 계약과 구현을 나눈 이유가 사라진다");
 
     /**
      * {@code query}는 계약이 아니라 자기 module의 local DB 조회 <b>구현</b>이다.
      *
      * <p>그래서 {@link #출력_port는_구현과_HTTP를_모른다}와 규칙이 다르다 — Querydsl·JPA를 직접 쓰는 것은 허용하고(아래 {@link
-     * #업무_코드는_Querydsl과_Redisson을_모른다}가 {@code query}를 대상에서 뺀 이유다), 대신 <b>방향</b>을 막는다. 조회가
-     * 조립(use case·event)이나 HTTP를 거꾸로 부르면 읽기 경로가 업무 흐름에 묶이고, persistence의 RepositoryAdapter를 거치면 조회가
+     * #업무_코드는_Querydsl과_Redisson을_모른다}가 {@code query}를 대상에서 뺀 이유다), 대신 <b>방향</b>을 막는다. 조회가 조립(use
+     * case·event)이나 HTTP를 거꾸로 부르면 읽기 경로가 업무 흐름에 묶이고, persistence의 RepositoryAdapter를 거치면 조회가
      * aggregate 복원 경로에 다시 얹힌다.
      */
     @ArchTest
@@ -303,8 +302,8 @@ class ArchitectureRulesTest {
      * {@code query}는 자기 module의 DB만 본다.
      *
      * <p>조회가 다른 module의 공개 API를 불러 결과를 합치기 시작하면 그 조합이 어디서 일어나는지가 조회 구현 안으로 숨는다. 표시값 조합은 use
-     * case·service가 한다 — {@code GetShowDetailUseCase}가 venue 이름을, {@code PerformanceSaleCatalogService}가
-     * venue 좌석 주소를 붙이는 것이 그 자리다.
+     * case·service가 한다 — {@code GetShowDetailUseCase}가 venue 이름을, {@code
+     * PerformanceSaleCatalogService}가 venue 좌석 주소를 붙이는 것이 그 자리다.
      */
     @ArchTest
     static final ArchRule query는_다른_업무_module을_조합하지_않는다 =
@@ -503,8 +502,8 @@ class ArchitectureRulesTest {
     /**
      * 위 규칙들이 허용 사례와 위반 사례를 실제로 가르는지 확인한다.
      *
-     * <p>구조 규칙은 조용히 아무것도 검사하지 않는 쪽으로 무너진다 — 패턴이 빗나가면 위반이 있어도 통과한다. 특히 {@code query}의 역할이 바뀌면서
-     * "이름이 {@code QueryPort}인 것"을 보던 검사가 새 구체 {@code Query}를 놓칠 수 있었다. 그래서 {@code
+     * <p>구조 규칙은 조용히 아무것도 검사하지 않는 쪽으로 무너진다 — 패턴이 빗나가면 위반이 있어도 통과한다. 특히 {@code query}의 역할이 바뀌면서 "이름이
+     * {@code QueryPort}인 것"을 보던 검사가 새 구체 {@code Query}를 놓칠 수 있었다. 그래서 {@code
      * com.ticket.archfixture}에 허용·위반 사례를 한 쌍씩 두고 규칙을 직접 평가한다.
      */
     @Test

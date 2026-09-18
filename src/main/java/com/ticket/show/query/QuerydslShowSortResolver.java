@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.show.QShow.show;
 
@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowSort;
 
 import lombok.RequiredArgsConstructor;
 

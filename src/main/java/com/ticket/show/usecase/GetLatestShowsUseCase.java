@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSummaryView;
 import com.ticket.show.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetLatestShowsUseCase {
     public static final int LATEST_SHOWS_MAX_COUNT = 10;
-    private final ShowListQueryPort showListQueryPort;
+    private final ShowListQuery showListQuery;
     private final VenueLookupApi venueLookup;
 
     public record Input(String category) {}
@@ -27,7 +27,7 @@ public class GetLatestShowsUseCase {
 
     public Output execute(final Input input) {
         final List<LatestShowRow> rows =
-                showListQueryPort.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
+                showListQuery.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
         final VenueDisplays venues =
                 VenueDisplays.load(venueLookup, rows.stream().map(LatestShowRow::venueId).toList());
         return new Output(rows.stream().map(row -> toView(row, venues)).toList());

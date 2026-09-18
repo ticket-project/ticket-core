@@ -1,10 +1,10 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.QCategory.category;
 import static com.ticket.show.domain.QGenre.genre;
 import static com.ticket.show.domain.show.QShow.show;
 import static com.ticket.show.domain.show.QShowGenre.showGenre;
-import static com.ticket.show.persistence.querydsl.QuerydslTupleColumns.required;
+import static com.ticket.show.query.QuerydslTupleColumns.required;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -29,28 +29,22 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.querydsl.QuerydslShowSortResolver.SortOrder;
-import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.query.SaleOpeningSoonDetailRow;
-import com.ticket.show.query.SaleOpeningSoonSearchParam;
-import com.ticket.show.query.SaleOpeningSoonSummaryRow;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListItemRow;
-import com.ticket.show.query.ShowListParam;
-import com.ticket.show.query.ShowListQueryPort;
-import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSearchItemRow;
-import com.ticket.show.query.ShowSort;
+import com.ticket.show.query.QuerydslShowSortResolver.SortOrder;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB에서 공연 목록·검색 데이터를 읽는 persistence adapter다. venue 표시값 조합은 여기서 하지 않는다 — {@code venueId}
- * scalar만 담은 raw row를 돌려주고, 실제 venue 조회·조합은 이 포트를 부르는 use case(application)가 한다.
+ * 공연 목록/검색 읽기 전용 조회다. show 자기 DB만 본다 — 반환 타입은 전부 {@code venueId} scalar만 담은 raw row이고, venue 표시값
+ * 조합은 이 조회를 부르는 use case(application)가 한다.
+ *
+ * <p>밖으로 내보내는 것은 app이 소유한 read model과 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
+ *
+ * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다({@link RegionVenueIds}). {@code null}은 지역 조건 없음이고, <b>빈
+ * 집합은 조건은 있으나 해당 공연장이 없다는 뜻이라 결과가 0건</b>이다 — 둘을 같게 다루면 안 된다.
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
+public class ShowListQuery {
     private final JPAQueryFactory queryFactory;
     private final QuerydslShowSortResolver sortResolver;
     private final QuerydslShowCursorConditionBuilder cursorConditionBuilder;
@@ -58,7 +52,6 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
     private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
 
-    @Override
     public CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
             final ShowListParam param,
             final @Nullable Set<Long> venueIds,
@@ -74,7 +67,6 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
      * 상단 최신 공연 배너다. 전체 목록의 최신순과 같은 순서를 쓴다 — <b>마감되지 않은 공연 먼저, 등록일 내림차순, 등록일이 같으면 id 내림차순</b>. 배너와
      * 목록이 다른 순서를 쓰면 같은 화면에서 "최신"의 의미가 둘이 된다.
      */
-    @Override
     public List<LatestShowRow> findLatestShows(final String categoryCode, final int limit) {
         final SortOrder sortOrder = sortResolver.resolveSortOrder(ShowSort.LATEST);
         final List<Tuple> rows =
@@ -111,7 +103,6 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
         return rows.stream().map(this::toLatestShowRow).toList();
     }
 
-    @Override
     public List<SaleOpeningSoonSummaryRow> findSaleOpeningSoonSummaries(
             final String categoryCode, final int limit) {
         final List<Tuple> rows =
@@ -138,7 +129,6 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
         return rows.stream().map(this::toSaleOpeningSoonSummaryRow).toList();
     }
 
-    @Override
     public CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param,
             final @Nullable Set<Long> venueIds,
@@ -151,7 +141,6 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
                 size, param.getCursor(), where, sortOrder, this::fetchSaleOpeningSoonDetailRows);
     }
 
-    @Override
     public CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
             final ShowSearchCriteria criteria,
             final @Nullable Set<Long> venueIds,
@@ -164,7 +153,6 @@ public class QuerydslShowListQueryAdapter implements ShowListQueryPort {
                 size, criteria.getCursor(), where, sortOrder, this::fetchShowSearchRows);
     }
 
-    @Override
     public long countSearchShows(
             final ShowSearchCriteria criteria, final @Nullable Set<Long> venueIds) {
         final BooleanBuilder where = searchCondition(criteria, venueIds, null);

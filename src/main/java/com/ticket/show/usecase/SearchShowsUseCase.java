@@ -10,7 +10,7 @@ import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.query.RegionVenueIds;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.show.query.ShowSearchItemRow;
 import com.ticket.show.query.ShowSearchItemView;
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class SearchShowsUseCase {
-    private final ShowListQueryPort showListQueryPort;
+    private final ShowListQuery showListQuery;
     private final VenueLookupApi venueLookup;
 
     public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
@@ -46,7 +46,7 @@ public class SearchShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<ShowSearchItemRow, ShowCursor> page =
-                showListQueryPort.searchShows(
+                showListQuery.searchShows(
                         input.criteria(),
                         RegionVenueIds.resolve(venueLookup, input.criteria().getRegion()),
                         input.size(),

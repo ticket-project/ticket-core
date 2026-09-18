@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,7 +11,7 @@ import com.ticket.show.domain.show.SaleDisplayStatus;
 
 /**
  * 경계값·null 케이스가 {@link com.ticket.show.domain.show.DisplaySaleWindowTest}와 같은 결론을 내는지는 실제 DB 조회 통합
- * 테스트(QuerydslShowListQueryAdapterTest 등)가 고정한다. 여기서는 각 상태가 만들어내는 조건식의 형태만 고정한다.
+ * 테스트(ShowListQueryTest 등)가 고정한다. 여기서는 각 상태가 만들어내는 조건식의 형태만 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SaleDisplayStatusPredicatesTest {

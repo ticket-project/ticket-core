@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,16 +10,14 @@ import org.springframework.context.annotation.Import;
 
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.query.PerformanceQueryPort;
-import com.ticket.show.query.PerformanceSummaryView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-@Import(QuerydslPerformanceQueryAdapter.class)
+@Import(PerformanceQuery.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslPerformanceQueryAdapterTest extends InfraReadRepositoryTestSupport {
-    @Autowired private PerformanceQueryPort repository;
+class PerformanceQueryTest extends InfraReadRepositoryTestSupport {
+    @Autowired private PerformanceQuery repository;
 
     @Test
     void 회차와_공연장_요약을_한번에_조회한다() throws Exception {
