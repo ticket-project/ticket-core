@@ -1,4 +1,4 @@
-package com.ticket.like.query;
+package com.ticket.like.persistence;
 
 import static com.ticket.like.domain.QLike.like;
 
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class LikeQuery {
+public class LikeQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public CursorPage<LikeEntry, Long> findLiked(

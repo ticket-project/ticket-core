@@ -1,4 +1,4 @@
-package com.ticket.like.query;
+package com.ticket.like.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,10 +13,10 @@ import com.ticket.member.domain.Member;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
-@Import(LikeQuery.class)
+@Import(LikeQueryRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class LikeQueryTest extends InfraReadRepositoryTestSupport {
-    @Autowired private LikeQuery likeQuery;
+class LikeQueryRepositoryTest extends InfraReadRepositoryTestSupport {
+    @Autowired private LikeQueryRepository likeQueryRepository;
     private Long memberId;
     private Long showId1;
     private Long showId2;
@@ -49,7 +49,8 @@ class LikeQueryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
-        CursorPage<LikeEntry, Long> result = likeQuery.findLiked(LikeType.SHOW, memberId, null, 2);
+        CursorPage<LikeEntry, Long> result =
+                likeQueryRepository.findLiked(LikeType.SHOW, memberId, null, 2);
 
         assertThat(result.items())
                 .extracting(LikeEntry::targetId)
@@ -61,9 +62,9 @@ class LikeQueryTest extends InfraReadRepositoryTestSupport {
     @Test
     void 커서_이후의_찜한_대상을_조회한다() {
         CursorPage<LikeEntry, Long> firstPage =
-                likeQuery.findLiked(LikeType.SHOW, memberId, null, 1);
+                likeQueryRepository.findLiked(LikeType.SHOW, memberId, null, 1);
         CursorPage<LikeEntry, Long> secondPage =
-                likeQuery.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
+                likeQueryRepository.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
 
         assertThat(firstPage.items()).extracting(LikeEntry::targetId).containsExactly(showId3);
         assertThat(secondPage.items()).extracting(LikeEntry::targetId).containsExactly(showId2);
@@ -71,7 +72,8 @@ class LikeQueryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상이_없으면_빈_슬라이스를_반환한다() {
-        CursorPage<LikeEntry, Long> result = likeQuery.findLiked(LikeType.SHOW, -1L, null, 10);
+        CursorPage<LikeEntry, Long> result =
+                likeQueryRepository.findLiked(LikeType.SHOW, -1L, null, 10);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
