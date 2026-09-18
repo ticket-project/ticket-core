@@ -13,7 +13,6 @@ import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 import com.ticket.show.api.ShowPerformanceLookupApi;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 import com.ticket.show.persistence.PerformanceQueryRepository;
-import com.ticket.show.persistence.PerformanceQueryRepository.PerformanceGradeLayoutRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -62,8 +61,8 @@ public class PerformanceVenueLayoutCatalogService
                 performanceQueryRepository.findGradeLayouts(performanceId).stream()
                         .collect(
                                 Collectors.toMap(
-                                        PerformanceGradeLayoutRow::performanceGradeId,
-                                        this::toGradeLayout));
+                                        PerformanceVenueLayout.GradeLayout::performanceGradeId,
+                                        gradeLayout -> gradeLayout));
 
         return new PerformanceVenueLayout(
                 performanceId,
@@ -91,10 +90,5 @@ public class PerformanceVenueLayoutCatalogService
                 layout.seatNo(),
                 layout.x(),
                 layout.y());
-    }
-
-    private PerformanceVenueLayout.GradeLayout toGradeLayout(final PerformanceGradeLayoutRow row) {
-        return new PerformanceVenueLayout.GradeLayout(
-                row.performanceGradeId(), row.gradeCode(), row.gradeName(), row.sortOrder());
     }
 }

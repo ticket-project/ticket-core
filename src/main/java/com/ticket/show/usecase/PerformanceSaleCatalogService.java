@@ -12,7 +12,6 @@ import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.persistence.PerformanceQueryRepository;
-import com.ticket.show.persistence.PerformanceQueryRepository.PerformanceGradeRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatAddress;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -63,8 +62,8 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 performanceQueryRepository.findPerformanceGrades(performanceId).stream()
                         .collect(
                                 Collectors.toMap(
-                                        PerformanceGradeRow::performanceGradeId,
-                                        this::toGradeInfo));
+                                        PerformanceSaleSnapshot.GradeInfo::performanceGradeId,
+                                        gradeInfo -> gradeInfo));
 
         return new PerformanceSaleSnapshot(
                 performanceId,
@@ -84,14 +83,5 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 address.section(),
                 address.rowNo(),
                 address.seatNo());
-    }
-
-    private PerformanceSaleSnapshot.GradeInfo toGradeInfo(final PerformanceGradeRow row) {
-        return new PerformanceSaleSnapshot.GradeInfo(
-                row.performanceGradeId(),
-                row.gradeCode(),
-                row.gradeName(),
-                row.sortOrder(),
-                row.price());
     }
 }
