@@ -15,7 +15,7 @@
 `booking.order.usecase.CancelOrderUseCase`, `booking.selection.persistence.RedissonSeatSelectionStore`.
 
 역할 이름은 모든 모듈에서 같은 뜻이다. `api`는 다른 module에 공개하는 계약, `endpoint`는 HTTP
-진입점, `usecase`는 요청 단위 조립과 트랜잭션 경계(응답 조합 결과 `*View`는 `usecase/view`), `query`는 조회 projection(`*Row`)과 조회 파라미터, `port`는
+진입점, `usecase`는 요청 단위 조립과 트랜잭션 경계(응답 항목은 그 use case의 중첩 record), `query`는 조회 파라미터와 DB 집계 결과, `port`는
 조회가 아닌 출력 계약, `domain`은 상태와 업무 규칙, `persistence`는 저장 adapter와 local DB 조회
 Repository를 포함한 DB·Redis 구현이다.
 
@@ -71,12 +71,12 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 - `Context`는 여러 application 단계 사이의 내부 처리 정보다. 외부 요청이 아닌 검증 결과에
   `Request`를 붙이지 않는다. 다만 한 use case 안에서만 오가는 값이면 `Context` 타입을 만들기 전에
   지역 변수로 충분한지 먼저 본다.
-- `Row`는 조회 Repository가 만드는 projection(타입은 `query`가 소유), `View`는 use case가 만드는 응답용 조합 모델로 `usecase/view`가 소유한다, `Snapshot`은 특정 시점에 고정한
-  상태다. `Criteria`는 검색·판정 조건, `Param`은 목록·커서 조회 실행 파라미터에 쓴다.
+- 응답 항목은 그 use case의 중첩 record가 소유하고(`GetShowsUseCase.Item`), 조회 파라미터와 DB
+  집계 결과는 `query`가 소유한다. `Snapshot`은 특정 시점에 고정한 상태다. `Criteria`는 검색·판정
+  조건, `Param`은 목록·커서 조회 실행 파라미터에 쓴다.
 - **중간 타입을 계층마다 만들지 않는다.** 값을 담았다가 다른 응답 DTO로 그대로 복사하기만 하는
-  타입은 두지 않고, 엔티티로 충분한 조회는 엔티티를 반환해 use case가 `Output`을 직접 만든다
-  (`GetShowDetailUseCase`, 주문 상세·상태). `*Row`/`*View`는 최종 응답 항목, 집계·복합 join 결과,
-  모듈 공개 계약, 트랜잭션 snapshot이거나 엔티티 반환이 과도할 때(목록의 CLOB, 회차 전 좌석) 쓴다.
+  타입은 두지 않고, 조회는 엔티티를 반환해 use case가 `Output`을 직접 만든다. 별도 타입은 최종 응답
+  항목(그 use case의 중첩 record), DB 집계 결과, 모듈 공개 계약, 트랜잭션 snapshot일 때만 둔다.
 
 ## Component와 메서드
 
@@ -87,8 +87,8 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
   ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로 계약과 구현을 구분할 수 없다.
 - **자기 module DB를 읽는 조회에는 port interface를 두지 않는다.** `persistence` package의 구체
   class(`ShowQueryRepository`, `PerformanceSeatQueryRepository`)가 `@Repository` + 생성자 주입으로
-  Querydsl/JPA를 직접 쓰고, 관련 조회는 한 class로 모은다. 반환 타입은 엔티티이거나 읽기
-  모델이며, 조회 projection(`*Row`)만 `query`가 소유한다(`*View`는 `usecase/view`). 호출 계약에 Querydsl 타입을 노출하지는
+  Querydsl/JPA를 직접 쓰고, 관련 조회는 한 class로 모은다. 반환 타입은 엔티티가 기본이고, DB 집계
+  결과처럼 엔티티로 표현되지 않는 것만 `query`가 소유한다. 호출 계약에 Querydsl 타입을 노출하지는
   않는다. 단순한 조회는 그 module의 공개 API
   interface를 직접 구현해도 된다
   (`VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi`). interface는 실제

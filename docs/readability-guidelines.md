@@ -194,20 +194,23 @@ filter 조합, 복합 정렬, 커서 페이징, 집계와 복잡한 join이 그 
 생긴다면 바꾸지 않는다. 바꾸더라도 projection·정렬·null 처리·join·query 개수는 그대로여야
 한다(§14).
 
-#### 10-1. 엔티티로 충분한 조회는 엔티티를 반환한다
+#### 10-1. 조회는 엔티티를 반환한다
 
-Querydsl을 유지하든 아니든, **엔티티로 충분한 조회는 엔티티를 반환하고 최종 응답으로 한 번만
-변환한다.** 값을 한 번 담았다가 그대로 다시 옮기는 단계를 만들지 않는다.
+Querydsl을 유지하든 아니든, **조회는 엔티티를 반환하고 최종 응답으로 한 번만 변환한다.** 값을 한 번
+담았다가 그대로 다시 옮기는 단계를 만들지 않는다. show 목록·검색·오픈예정도, booking의 좌석 조회도
+엔티티를 돌려준다 — 목록 전건에 `Show.info`(CLOB)가, 좌석 상태 조회에 회차 전 좌석이 실리는 비용은
+그 대가로 받아들인다.
 
-다만 엔티티 반환이 다음을 부르면 projection DTO를 유지한다 — 판단 근거를 그 자리에 남긴다.
+projection이 남는 자리는 **엔티티로 표현되지 않는 조회 결과**다.
 
 ```text
-큰 컬럼(CLOB 등) 로딩    lazy 초기화    N+1    과도한 컬럼 조회    트랜잭션 확대
+DB 집계(min/max/count)    여러 테이블을 한 값으로 접는 복합 JOIN 결과
+모듈 공개 계약(snapshot)    트랜잭션 snapshot
 ```
 
-show 목록·검색·오픈예정의 `*Row`는 `Show`의 `@Lob info`가 목록 전건에 실리기 때문에, booking seat의
-`PerformanceSeatMapRow`·`PerformanceSeatStateRow`는 회차 전 좌석(수천 행)을 엔티티로 로딩하는 것이
-과도하기 때문에 projection으로 남아 있다.
+`PriceSummary`가 그 예다 — 회차 전체 가격의 최소·최대를 DB가 계산한 결과라, 가격을 전부 메모리로
+읽어 계산하지 않는다. 반대로 커서 페이징의 1단계 id 조회처럼 엔티티가 아직 필요 없는 단계는 그
+단계에서만 scalar를 읽고, 2단계에서 엔티티를 한 번에 읽는다.
 
 #### 10-2. "계층마다 DTO"는 타입을 남길 이유가 아니다
 
@@ -221,11 +224,14 @@ show 목록·검색·오픈예정의 `*Row`는 `Show`의 `@Lob info`가 목록 �
 **파일 이동이나 내부 record 재배치는 정리가 아니다.** 실제로 없어지는 타입과 사라지는 변환 단계가
 있어야 한다. 그 자리를 메우는 새 `Mapper`/`Assembler`/wrapper나 MapStruct는 만들지 않는다.
 
+**최종 응답 항목은 그 use case의 중첩 record가 소유한다.** 응답 모양 하나에 파일 하나를 두지 않는다
+— `GetShowsUseCase.Item`, `GetSeatStatusUseCase.Seat`, `GetShowDetailUseCase.VenueInfo`가 그 예다.
+
 공연 상세가 그 예다. `ShowQueryRepository`는 19필드짜리 `ShowDetailView`를 조립하는 대신
-`findShow`(엔티티)·`findGenreNames`·`findGrades`·`findPriceSummary`·`findPerformanceDates`·
-`findPerformer` 조각만 주고, `GetShowDetailUseCase`가 Output을 직접 만든다. 주문 상세·상태도
-Querydsl projection 대신 `OrderRepository`의 `@Query`(`join fetch o.orderSeats`)로 `Order`를 받아
-use case가 Output을 만든다. 두 경우 모두 query 개수는 그대로다.
+`findShow`(엔티티)·`findGenreNames`·`findRepresentativePerformanceGrades`·`findGradeNames`·
+`findPriceSummary`·`findPerformances`·`findPerformer` 조각만 주고, `GetShowDetailUseCase`가 Output을
+직접 만든다. 주문 상세·상태도 Querydsl projection 대신 `OrderRepository`의
+`@Query`(`join fetch o.orderSeats`)로 `Order`를 받아 use case가 Output을 만든다.
 
 ### 11. Querydsl 자체와 Querydsl 주변의 포장을 구분한다
 
