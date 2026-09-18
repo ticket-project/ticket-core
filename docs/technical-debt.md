@@ -77,12 +77,16 @@ TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지�
 | OE-08 | stdlib | `security/token/UuidSupplier.java`, `UuidSupplierConfig.java` | 테스트 고정을 위해 `@FunctionalInterface` + `@Bean`을 직접 만들었다 | `java.util.function.Supplier<UUID>` | −30줄, 파일 −2 |
 | OE-09 | shrink | `booking/hold/domain/HoldKeyGenerator.java`, `booking/order/domain/OrderKeyGenerator.java` | prefix 문자열만 다른 동일 클래스 2개 | `KeyGenerator(String prefix)` 1개 | −11줄 |
 | OE-10 | native | `build.gradle` | `spring-context`·`spring-tx`·`spring-core`·`spring-beans`·`slf4j-api`·`spring-data-jpa`·`jakarta.persistence-api`를 명시 선언 | starter가 전이로 가져온다. 선언만 지운다(산출물 변화 없음) | −7줄 |
+| ~~OE-11~~ | yagni | `*/query/*Query.java` | **완료(2026-09-18).** local 조회 구현 14개를 module별 `persistence`의 조회 Repository 6개(`ShowQueryRepository`, `PerformanceQueryRepository`, `VenueQueryRepository`, `PerformanceSeatQueryRepository`, `OrderQueryRepository`, `LikeQueryRepository`)로 합쳤다. 정렬·커서·판매 상태 helper 3개는 `ShowQueryRepository`의 private 메서드로 흡수됐고, `RegionVenueIds`와 `SeatStateSnapshotRow`는 사라졌다(`venue.query`·`like.query` package도 함께). `query`에는 읽기 모델만 남는다 | — | 실측 최상위 타입 −13(404→391), Spring bean −11(152→141), main 파일 −14(499→485), −189줄 |
 
-남은 항목 합계 약 −1,830줄(main의 9%), 의존성 −1. OE-04는 완료했다.
+남은 항목 합계 약 −1,830줄(main의 9%), 의존성 −1. OE-04와 OE-11은 완료했다.
 
 OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 Query"와
 `docs/readability-guidelines.md` §3이 원본이다 — 자기 module DB 조회에는 1:1 port/adapter를
-두지 않고, interface는 실제 계약·교체 지점·외부 시스템 경계·domain 보호에만 둔다. 나머지 OE
+두지 않고, interface는 실제 계약·교체 지점·외부 시스템 경계·domain 보호에만 둔다. OE-11로 조회
+구현이 `query`에서 `persistence`의 `*QueryRepository`로 옮겨지면서 그 기준 문서(`architecture.md`의
+"Repository와 조회 Repository", `code-conventions.md`, `readability-guidelines.md`, `testing.md`)도
+함께 갱신했고, 배경은 [ADR 0017](adr/0017-query-implementations-live-in-persistence.md)이다. 나머지 OE
 항목(OE-01 Repository 제거, OE-02 예외 통합, OE-03 ControllerDocs 제거, OE-05 공통 기반 클래스)은
 이 작업 범위가 아니었고 그대로 남아 있다.
 
