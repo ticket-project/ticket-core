@@ -1,4 +1,4 @@
-package com.ticket.booking.order.query;
+package com.ticket.booking.order.persistence;
 
 import static com.ticket.booking.order.domain.QOrder.order;
 import static com.ticket.booking.order.domain.QOrderSeat.orderSeat;
@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.booking.order.query.OrderDetailRow;
+import com.ticket.booking.order.query.OrderStatusView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +21,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class OrderQuery {
+public class OrderQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public List<OrderDetailRow> findDetailRows(final String orderKey, final Long memberId) {
