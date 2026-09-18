@@ -1,5 +1,7 @@
 package com.ticket.booking.selection.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.util.List;
 import java.util.Map;
 
@@ -9,7 +11,6 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,18 +31,8 @@ public class DeselectAllSeatsUseCase {
 
     public record Input(Long performanceId, Long memberId) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
+            memberId = requirePositiveId(memberId, "memberId");
         }
     }
 

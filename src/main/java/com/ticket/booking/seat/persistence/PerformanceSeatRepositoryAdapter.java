@@ -1,15 +1,11 @@
 package com.ticket.booking.seat.persistence;
 
-import static com.ticket.booking.seat.domain.QPerformanceSeat.performanceSeat;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
@@ -21,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PerformanceSeatRepositoryAdapter implements PerformanceSeatRepository {
     private final SpringDataPerformanceSeatJpaRepository jpaRepository;
-    private final JPAQueryFactory queryFactory;
 
     @Override
     public List<PerformanceSeat> saveAll(final List<PerformanceSeat> performanceSeats) {
@@ -41,17 +36,6 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
     @Override
     public Optional<PerformanceSeatStateSnapshot> findSeatState(
             final Long performanceId, final Long seatId) {
-        return Optional.ofNullable(
-                queryFactory
-                        .select(
-                                Projections.constructor(
-                                        PerformanceSeatStateSnapshot.class,
-                                        performanceSeat.id,
-                                        performanceSeat.state))
-                        .from(performanceSeat)
-                        .where(
-                                performanceSeat.performanceId.eq(performanceId),
-                                performanceSeat.seatId.eq(seatId))
-                        .fetchOne());
+        return jpaRepository.findSeatState(performanceId, seatId);
     }
 }
