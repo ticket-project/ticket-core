@@ -4,24 +4,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import com.ticket.show.query.QuerydslShowCursorConditionBuilder;
-import com.ticket.show.query.QuerydslShowSortResolver;
-import com.ticket.show.query.SaleDisplayStatusPredicates;
-import com.ticket.venue.query.VenueSeatQuery;
-import com.ticket.venue.query.VenueSummaryQuery;
+import com.ticket.venue.persistence.VenueQueryRepository;
 
 /**
- * Querydsl 조회 어댑터 테스트의 베이스다. 조건 생성·정렬·커서 헬퍼를 빈으로 올린다.
+ * Querydsl 조회 Repository 테스트의 베이스다.
  *
- * <p>venue 공개 계약({@code VenueLookupApi}/{@code VenueSeatLookupApi})의 구현도 함께 올린다 — 이 베이스를 쓰는 테스트가 그
- * 계약을 주입받으면 없을 때 컨텍스트 기동부터 실패한다(observed-failures 참고).
+ * <p>venue 공개 계약({@code VenueLookupApi}/{@code VenueSeatLookupApi})의 구현을 빈으로 올린다 — 이 베이스를 쓰는 테스트가 그
+ * 계약을 주입받으면 없을 때 컨텍스트 기동부터 실패한다(observed-failures 참고). 두 계약은 이제 {@link VenueQueryRepository} 하나가 함께
+ * 구현한다.
+ *
+ * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQueryRepository}가 private 메서드로 갖는다.
  */
 @Import({
-    SaleDisplayStatusPredicates.class,
-    QuerydslShowSortResolver.class,
-    QuerydslShowCursorConditionBuilder.class,
-    VenueSummaryQuery.class,
-    VenueSeatQuery.class,
+    VenueQueryRepository.class,
     InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {

@@ -2,18 +2,18 @@ package com.ticket.archfixture.left.usecase;
 
 import java.util.List;
 
-import com.ticket.archfixture.left.query.AllowedFixtureQuery;
+import com.ticket.archfixture.left.persistence.AllowedFixtureQueryRepository;
 import com.ticket.archfixture.left.query.FixtureRow;
 
-/** 허용 사례: use case가 구체 Query를 직접 부른다. */
+/** 허용 사례: use case가 같은 module의 조회 Repository를 직접 부른다. */
 public class FixtureUseCase {
-    private final AllowedFixtureQuery query;
+    private final AllowedFixtureQueryRepository queryRepository;
 
-    public FixtureUseCase(final AllowedFixtureQuery query) {
-        this.query = query;
+    public FixtureUseCase(final AllowedFixtureQueryRepository queryRepository) {
+        this.queryRepository = queryRepository;
     }
 
     public List<FixtureRow> execute() {
-        return query.findAll();
+        return queryRepository.findAll();
     }
 }

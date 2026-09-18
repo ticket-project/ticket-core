@@ -126,13 +126,13 @@ class ArchitectureRulesTest {
     /** 커밋 이후 후속 처리 조율. use case와 같은 쪽(안)이다. */
     private static final String EVENT = "com.ticket..event..";
 
-    /** 자기 module의 local DB 조회 구현과 그 읽기 모델. */
+    /** 자기 module의 읽기 모델·검색 조건·커서 타입. DB 조회 구현은 {@link #PERSISTENCE}가 소유한다. */
     private static final String QUERY = "com.ticket..query..";
 
     /** 밖을 부르는 출력 계약. */
     private static final String PORT = "com.ticket..port..";
 
-    /** 저장·조회 기술 구현. */
+    /** 저장 adapter와 local DB 조회 Repository 구현. */
     private static final String PERSISTENCE = "com.ticket..persistence..";
 
     /** HTTP 진입점. */
@@ -174,6 +174,52 @@ class ArchitectureRulesTest {
                                                             .equals(
                                                                     "com.querydsl.jpa.impl.JPAQueryFactory")));
 
+    /**
+     * use case가 직접 불러도 되는 {@code persistence} 클래스다 — 조회 Repository와 그 안에 중첩된 읽기 모델.
+     *
+     * <p>{@code persistence}에는 두 종류가 있다. 하나는 aggregate를 복원·저장하는 adapter(Spring Data·Redis 구현)이고, 다른
+     * 하나는 화면용 읽기 모델을 바로 돌려주는 조회 Repository다. 앞의 것은 domain repository 계약 뒤에 있어야 하고(구현 선택은
+     * persistence가 갖는다), 뒤의 것은 계약을 한 겹 더 두어도 읽을 것이 늘지 않는다.
+     *
+     * <p>둘을 <b>이름 하나로만</b>가르지 않는다. {@code *QueryRepository}라는 이름과 {@code JPAQueryFactory}를 실제로 갖고
+     * 있다는 사실을 함께 본다 — 이름만 보면 저장 adapter가 같은 이름을 달 때 조용히 열리고, 필드만 보면 Querydsl을 쓰는 저장 adapter({@code
+     * PerformanceSeatRepositoryAdapter})까지 함께 열린다.
+     *
+     * <p>중첩 타입은 자기 최상위 클래스로 판정한다. 조회 Repository가 자기 projection record를 안에 두기 때문이다.
+     */
+    private static final DescribedPredicate<JavaClass> QUERY_REPOSITORY =
+            describe(
+                    "persistence의 조회 Repository(중첩 읽기 모델 포함)",
+                    clazz -> {
+                        final JavaClass topLevel = topLevelOf(clazz);
+                        return resideInAPackage(PERSISTENCE).test(topLevel)
+                                && topLevel.getSimpleName().endsWith("QueryRepository")
+                                && DB_QUERY.test(topLevel);
+                    });
+
+    /**
+     * 지금 실제로 use case에 열려 있는 조회 Repository다.
+     *
+     * <p>{@link #QUERY_REPOSITORY}는 "무엇을 열어도 되는가"의 규칙이고 이 목록은 "지금 무엇이 열려 있는가"다. 새 조회 Repository가
+     * PR에서 조용히 늘면 여기서 실패한다 — {@code persistence}를 use case에 여는 것은 의식적인 결정이어야 한다.
+     */
+    private static final Set<String> APPROVED_QUERY_REPOSITORIES =
+            Set.of(
+                    "com.ticket.show.persistence.ShowQueryRepository",
+                    "com.ticket.show.persistence.PerformanceQueryRepository",
+                    "com.ticket.venue.persistence.VenueQueryRepository",
+                    "com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository",
+                    "com.ticket.booking.order.persistence.OrderQueryRepository",
+                    "com.ticket.like.persistence.LikeQueryRepository");
+
+    private static JavaClass topLevelOf(final JavaClass clazz) {
+        JavaClass current = clazz;
+        while (current.getEnclosingClass().isPresent()) {
+            current = current.getEnclosingClass().get();
+        }
+        return current;
+    }
+
     /** 규칙이 이름을 아는 역할이다. 하나라도 소스 트리에서 사라지면 규칙이 조용히 비어 버리므로 존재를 따로 확인한다. */
     private static final List<String> ROLE_DIRECTORY_NAMES =
             List.of("domain", "usecase", "event", "query", "port", "persistence", "endpoint");
@@ -189,15 +235,29 @@ class ArchitectureRulesTest {
                     .resideInAnyPackage(USECASE, EVENT, QUERY, PERSISTENCE, ENDPOINT)
                     .because("domain은 업무 규칙과 상태만 안다 — 조립·조회 계약·저장·HTTP를 모른다");
 
+    /**
+     * 조립은 저장 구현과 HTTP를 모른다. <b>예외는 같은 module의 조회 Repository 하나다</b>({@link #QUERY_REPOSITORY}).
+     *
+     * <p>읽기 경로에는 계약을 한 겹 더 둘 이유가 없다 — 조회는 구현을 바꿔 끼울 일이 아니라 화면이 요구하는 SQL 그 자체이고, port interface와
+     * adapter를 한 쌍씩 만들면 use case에서 SQL까지 읽을 것 없는 경유 지점만 늘어난다. 반면 <b>저장 adapter·Spring Data
+     * 인터페이스·Redis 구현에 대한 직접 접근 금지는 그대로다</b> — aggregate 복원·저장은 domain repository 계약 뒤에 있어야 한다.
+     *
+     * <p>다른 module의 조회 Repository는 여기서 열리지 않는다. {@link #다른_module의_공개면_밖을_참조하지_않는다}가 공개면 밖을 이미 전부
+     * 막는다.
+     */
     @ArchTest
     static final ArchRule usecase와_event는_저장_구현과_HTTP를_모른다 =
             noClasses()
                     .that(resideInAnyPackage(USECASE, EVENT).and(not(GENERATED_OR_IMPLEMENTATION)))
                     .should()
-                    .dependOnClassesThat()
-                    .resideInAnyPackage(PERSISTENCE, ENDPOINT)
+                    .dependOnClassesThat(
+                            resideInAPackage(PERSISTENCE)
+                                    .and(not(QUERY_REPOSITORY))
+                                    .or(resideInAPackage(ENDPOINT))
+                                    .as("저장 구현(조회 Repository 제외)이거나 HTTP"))
                     .because(
-                            "조립은 계약(domain repository·query port·output port)으로만 밖을 부른다 — 구현 선택은 persistence가 갖는다");
+                            "조립은 계약(domain repository·output port)과 같은 module의 조회 Repository로만 밖을 부른다"
+                                    + " — 저장 구현 선택은 persistence가 갖는다");
 
     @ArchTest
     static final ArchRule 출력_port는_구현과_HTTP를_모른다 =
@@ -209,12 +269,11 @@ class ArchitectureRulesTest {
                     .because("출력 port는 밖을 부르는 계약이다 — 계약이 구현을 알면 계약과 구현을 나눈 이유가 사라진다");
 
     /**
-     * {@code query}는 계약이 아니라 자기 module의 local DB 조회 <b>구현</b>이다.
+     * {@code query}는 자기 module의 읽기 모델·검색 조건·커서 타입만 갖는다. DB 조회 구현은 {@code persistence}의 조회
+     * Repository가 소유한다.
      *
-     * <p>그래서 {@link #출력_port는_구현과_HTTP를_모른다}와 규칙이 다르다 — Querydsl·JPA를 직접 쓰는 것은 허용하고(아래 {@link
-     * #업무_코드는_Querydsl과_Redisson을_모른다}가 {@code query}를 대상에서 뺀 이유다), 대신 <b>방향</b>을 막는다. 조회가 조립(use
-     * case·event)이나 HTTP를 거꾸로 부르면 읽기 경로가 업무 흐름에 묶이고, persistence의 RepositoryAdapter를 거치면 조회가
-     * aggregate 복원 경로에 다시 얹힌다.
+     * <p>읽기 모델은 use case가 응답을 조립할 때도, endpoint가 그대로 내보낼 때도 쓰이므로 <b>아무 쪽도 참조하지 않아야</b> 한다. 읽기 모델이
+     * 조립·HTTP·저장 구현을 알기 시작하면 그 타입을 쓰는 쪽이 전부 그 선택에 묶인다.
      */
     @ArchTest
     static final ArchRule query는_조립과_HTTP를_모른다 =
@@ -223,8 +282,7 @@ class ArchitectureRulesTest {
                     .should()
                     .dependOnClassesThat()
                     .resideInAnyPackage(USECASE, EVENT, ENDPOINT, PERSISTENCE)
-                    .because(
-                            "query는 자기 module의 DB 조회만 한다 — 조립·HTTP를 거꾸로 부르거나 저장 adapter를 경유하지 않는다");
+                    .because("query는 읽기 모델만 갖는다 — 조립·HTTP·저장 구현을 거꾸로 참조하지 않는다");
 
     @ArchTest
     static final ArchRule endpoint는_저장_구현을_모른다 =
@@ -258,9 +316,9 @@ class ArchitectureRulesTest {
      * entity 자체이고 auditing도 Spring Data가 준다 — 여기서 막으면 지금 구조를 통째로 부정하게 된다. 반면 Querydsl과 Redisson은 조회
      * 표현과 락 임대 방식이라, 업무 코드가 알면 그 선택에 묶인다.
      *
-     * <p><b>{@code query}는 대상이 아니다.</b> {@code query}는 local DB 조회 구현을 소유하므로 Querydsl·JPA를 직접 쓴다.
-     * 여기까지 막으면 조회마다 port interface와 adapter를 한 쌍씩 만들어야 하고, 그 경유 지점은 기능을 이해하는 데 아무것도 보태지 않는다. 대신
-     * {@link #query는_조립과_HTTP를_모른다}와 {@link #query는_다른_업무_module을_조합하지_않는다}가 방향을 막는다.
+     * <p><b>{@code persistence}는 대상이 아니다.</b> 조회 Repository가 local DB 조회 구현을 소유하므로 Querydsl·JPA를 직접
+     * 쓴다. 여기까지 막으면 조회마다 port interface와 adapter를 한 쌍씩 만들어야 하고, 그 경유 지점은 기능을 이해하는 데 아무것도 보태지 않는다. 대신
+     * {@link #query는_다른_업무_module을_조합하지_않는다}가 조회가 다른 module을 조합하는 것을 막는다.
      */
     @ArchTest
     static final ArchRule 업무_코드는_Querydsl과_Redisson을_모른다 =
@@ -299,7 +357,7 @@ class ArchitectureRulesTest {
                                                     + "이 의도적으로 공개한 named interface로만 한다"));
 
     /**
-     * {@code query}는 자기 module의 DB만 본다.
+     * DB 조회 구현은 자기 module의 DB만 본다.
      *
      * <p>조회가 다른 module의 공개 API를 불러 결과를 합치기 시작하면 그 조합이 어디서 일어나는지가 조회 구현 안으로 숨는다. 표시값 조합은 use
      * case·service가 한다 — {@code GetShowDetailUseCase}가 venue 이름을, {@code
@@ -319,22 +377,23 @@ class ArchitectureRulesTest {
     /**
      * {@link #query는_다른_업무_module을_조합하지_않는다}의 module 한 개짜리 규칙이다. 회귀 검증이 같은 factory를 쓴다.
      *
-     * <p>대상은 {@code query} package 전체가 아니라 <b>DB를 직접 읽는 Query</b>다. 같은 package의 읽기 모델은 다른 module의
+     * <p>대상은 package 위치가 아니라 <b>DB를 직접 읽는 클래스</b>({@link #DB_QUERY})다. 조회 구현이 {@code query}에서
+     * {@code persistence}로 옮겨 가도 같은 검사가 그대로 걸리고, Querydsl을 쓰는 저장 adapter도 함께 덮인다. 읽기 모델은 다른 module의
      * 공개 값 타입({@code venue.api.Region} 등)을 담을 수 있고 담아야 한다 — 막아야 하는 것은 조회 구현이 다른 module을 불러 결과를 합치는
      * 것이다.
      */
     private static ArchRule queryReadsOnlyOwnModule(
             final String module, final List<String> otherModules) {
         return noClasses()
-                .that(resideInAPackage("com.ticket." + module + "..query..").and(DB_QUERY))
+                .that(resideInAPackage("com.ticket." + module + "..").and(DB_QUERY))
                 .should()
                 .dependOnClassesThat()
                 .resideInAnyPackage(
                         otherModules.stream()
                                 .map(other -> "com.ticket." + other + "..")
                                 .toArray(String[]::new))
-                .because(module + "의 query는 자기 DB만 조회한다 — 다른 module의 정보 조합은 use case가 한다")
-                // member·payment처럼 query package가 없는 module도 목록에 있다. 없는 것은 위반이 아니다.
+                .because(module + "의 조회 구현은 자기 DB만 조회한다 — 다른 module의 정보 조합은 use case가 한다")
+                // member·payment처럼 DB 조회 구현이 없는 module도 목록에 있다. 없는 것은 위반이 아니다.
                 .allowEmptyShould(true);
     }
 
@@ -502,31 +561,61 @@ class ArchitectureRulesTest {
     /**
      * 위 규칙들이 허용 사례와 위반 사례를 실제로 가르는지 확인한다.
      *
-     * <p>구조 규칙은 조용히 아무것도 검사하지 않는 쪽으로 무너진다 — 패턴이 빗나가면 위반이 있어도 통과한다. 특히 {@code query}의 역할이 바뀌면서 "이름이
-     * {@code QueryPort}인 것"을 보던 검사가 새 구체 {@code Query}를 놓칠 수 있었다. 그래서 {@code
-     * com.ticket.archfixture}에 허용·위반 사례를 한 쌍씩 두고 규칙을 직접 평가한다.
+     * <p>구조 규칙은 조용히 아무것도 검사하지 않는 쪽으로 무너진다 — 패턴이 빗나가면 위반이 있어도 통과한다. 조회 구현이 {@code query}에서 {@code
+     * persistence}로 옮겨 간 것이 바로 그런 변화였다. 그래서 {@code com.ticket.archfixture}에 허용·위반 사례를 한 쌍씩 두고 규칙을
+     * 직접 평가한다.
      */
     @Test
     void 새_query_규칙이_허용_사례와_위반_사례를_구별한다() {
         assertThat(violationsOf(query는_조립과_HTTP를_모른다))
-                .as("조회가 use case를 거꾸로 부르면 잡는다")
+                .as("읽기 모델 package가 use case를 거꾸로 부르면 잡는다")
                 .anyMatch(detail -> detail.contains("UseCaseCallingFixtureQuery"))
-                .as("Querydsl로 자기 DB만 읽는 조회는 걸리지 않는다")
-                .noneMatch(detail -> detail.contains("AllowedFixtureQuery"));
+                .as("읽기 모델 자체는 걸리지 않는다")
+                .noneMatch(detail -> detail.contains("FixtureRow"));
 
         assertThat(violationsOf(업무_코드는_Querydsl과_Redisson을_모른다))
                 .as("use case의 Querydsl 직접 사용은 여전히 잡는다")
                 .anyMatch(detail -> detail.contains("QuerydslUsingFixtureUseCase"))
-                .as("query의 Querydsl 사용은 이제 허용한다")
-                .noneMatch(detail -> detail.contains("AllowedFixtureQuery"));
+                .as("persistence의 조회 Repository가 Querydsl을 쓰는 것은 허용한다")
+                .noneMatch(detail -> detail.contains("AllowedFixtureQueryRepository"));
 
         assertThat(
                         violationsOf(
                                 queryReadsOnlyOwnModule(
                                         "archfixture.left", List.of("archfixture.right"))))
-                .as("조회가 다른 module의 공개 API로 결과를 조합하면 잡는다")
-                .anyMatch(detail -> detail.contains("CrossModuleFixtureQuery"))
-                .noneMatch(detail -> detail.contains("AllowedFixtureQuery"));
+                .as("조회 구현이 다른 module의 공개 API로 결과를 조합하면 잡는다")
+                .anyMatch(detail -> detail.contains("CrossModuleFixtureQueryRepository"))
+                .noneMatch(detail -> detail.contains("AllowedFixtureQueryRepository"));
+    }
+
+    /**
+     * use case에 열리는 {@code persistence} 면이 조회 Repository까지인지 확인한다.
+     *
+     * <p>이 규칙은 "persistence 전체 금지"에서 "조회 Repository만 예외"로 좁혀졌다. 예외가 저장 adapter까지 번지면 규칙이 사실상 사라지므로,
+     * 허용 사례와 위반 사례를 fixture로 함께 고정한다.
+     */
+    @Test
+    void use_case는_persistence에서_조회_Repository만_부를_수_있다() {
+        assertThat(violationsOf(usecase와_event는_저장_구현과_HTTP를_모른다))
+                .as("use case가 저장 adapter를 직접 부르면 잡는다")
+                .anyMatch(detail -> detail.contains("StorageAdapterUsingFixtureUseCase"))
+                .as("use case가 같은 module의 조회 Repository를 부르는 것은 허용한다")
+                .noneMatch(detail -> detail.contains("left.usecase.FixtureUseCase"));
+    }
+
+    /** 지금 use case에 열려 있는 조회 Repository가 승인된 목록과 같은지 확인한다. */
+    @ArchTest
+    static void use_case에_열린_조회_Repository는_승인된_목록과_일치한다(final JavaClasses classes) {
+        final Set<String> open =
+                classes.stream()
+                        .filter(clazz -> clazz.getEnclosingClass().isEmpty())
+                        .filter(QUERY_REPOSITORY)
+                        .map(JavaClass::getFullName)
+                        .collect(Collectors.toSet());
+
+        assertThat(open)
+                .as("조회 Repository가 늘거나 이름이 바뀌면 이 목록도 함께 바꾼다 — 왜 바꾸는지는 PR이 설명한다")
+                .containsExactlyInAnyOrderElementsOf(APPROVED_QUERY_REPOSITORIES);
     }
 
     @Test

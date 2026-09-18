@@ -24,7 +24,8 @@ import org.junit.jupiter.api.Test;
  * Show/Venue/Performer 전체 mapping을 함께 올려야 한다. 그 전체 그래프를 흉내 낸 legacy baseline을 새로 만드는 대신, 실제
  * migration이 만든 schema에 직접 INSERT해 제약이 동작하는지 확인하는 쪽을 택했다 — 목적(제약이 실제로 걸리는지 확인)에는 이 쪽이 더 직접적이다.
  * Grade 엔티티 매핑 자체는 {@code GradeRepositoryAdapterTest}가 {@code ddl-auto=create-drop}로 검증한다({@code
- * PerformanceGradeRepositoryAdapter}는 소비자가 없어 제거됐고, 회차 등급 조회는 {@code PerformanceGradeQuery}가 담당한다).
+ * PerformanceGradeRepositoryAdapter}는 소비자가 없어 제거됐고, 회차 등급 조회는 {@code PerformanceQueryRepository}가
+ * 담당한다).
  */
 class ShowGradeSchemaMigrationTest {
     private static final String URL =
