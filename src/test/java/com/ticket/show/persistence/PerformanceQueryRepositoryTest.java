@@ -17,7 +17,7 @@ import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.query.PerformanceSummaryView;
+import com.ticket.show.usecase.view.PerformanceSummaryView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;

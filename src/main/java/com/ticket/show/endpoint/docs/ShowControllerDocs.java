@@ -9,13 +9,13 @@ import com.ticket.shared.web.SliceResponse;
 import com.ticket.show.endpoint.request.SaleOpeningSoonRequest;
 import com.ticket.show.endpoint.request.ShowListRequest;
 import com.ticket.show.endpoint.request.ShowSearchRequest;
-import com.ticket.show.query.SaleOpeningSoonDetailView;
-import com.ticket.show.query.ShowListItemView;
-import com.ticket.show.query.ShowSearchItemView;
 import com.ticket.show.usecase.CountSearchShowsUseCase;
 import com.ticket.show.usecase.GetLatestShowsUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
+import com.ticket.show.usecase.view.SaleOpeningSoonDetailView;
+import com.ticket.show.usecase.view.ShowListItemView;
+import com.ticket.show.usecase.view.ShowSearchItemView;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

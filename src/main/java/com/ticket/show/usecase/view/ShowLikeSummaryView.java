@@ -1,15 +1,15 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase.view;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.jspecify.annotations.Nullable;
 
-public record ShowSummaryView(
-        Long id,
+public record ShowLikeSummaryView(
+        Long showId,
         @Nullable String title,
         @Nullable String image,
         @Nullable LocalDate startDate,
         @Nullable LocalDate endDate,
         @Nullable String venue,
-        LocalDateTime createdAt) {}
+        LocalDateTime likedAt) {}

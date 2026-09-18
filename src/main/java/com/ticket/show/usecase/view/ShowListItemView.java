@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase.view;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -20,12 +20,11 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.query.ShowDetailView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-/** {@link ShowQueryRepository#findShowDetail}의 조합 결과를 고정한다. */
+/** 공연 상세 응답을 만들 때 쓰는 {@link ShowQueryRepository}의 조회 조각들을 고정한다. */
 @Import({ShowQueryRepository.class, ShowCardImagePathConverter.class})
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
@@ -70,32 +69,55 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
     }
 
     @Test
-    void 공연_상세정보를_조합해_조회하고_예매상태는_Clock_기준으로_계산한다() {
-        Optional<ShowDetailView> result = showQueryRepository.findShowDetail(showId);
+    void 공연_상세에_쓰는_show_엔티티를_조회한다() {
+        Optional<Show> result = showQueryRepository.findShow(showId);
 
         assertThat(result).isPresent();
-        ShowDetailView detail = result.orElseThrow();
-        assertThat(detail.title()).isEqualTo("단독 공연");
-        assertThat(detail.genreNames()).contains("케이팝");
-        assertThat(detail.priceSummary().minPrice()).isEqualByComparingTo("100000");
-        assertThat(detail.priceSummary().maxPrice()).isEqualByComparingTo("180000");
-        assertThat(detail.grades())
+        Show show = result.orElseThrow();
+        assertThat(show.getTitle()).isEqualTo("단독 공연");
+        assertThat(show.getVenueId()).isEqualTo(venueId);
+        assertThat(show.getImage()).isEqualTo("/api/images/shows/" + showId + ".png");
+        assertThat(show.saleDisplayStatusAt(LocalDateTime.of(2026, 3, 15, 12, 0)))
+                .isEqualTo(SaleDisplayStatus.ON_SALE);
+        assertThat(showQueryRepository.findPerformer(show.getPerformerId()).orElseThrow().getName())
+                .isEqualTo("홍길동");
+    }
+
+    @Test
+    void 장르_이름을_조회한다() {
+        assertThat(showQueryRepository.findGenreNames(showId)).contains("케이팝");
+    }
+
+    /** ADR 0005: show-level 가격표는 없다 — 회차 전체의 min/max를 파생한다. */
+    @Test
+    void 가격_요약은_회차_전체의_최소_최대다() {
+        assertThat(showQueryRepository.findPriceSummary(showId).minPrice())
+                .isEqualByComparingTo("100000");
+        assertThat(showQueryRepository.findPriceSummary(showId).maxPrice())
+                .isEqualByComparingTo("180000");
+    }
+
+    /** 대표 가격표는 가장 이른 회차의 등급을 표시 순서대로 준다. */
+    @Test
+    void 대표_회차의_등급을_표시_순서대로_조회한다() {
+        assertThat(showQueryRepository.findGrades(showId))
                 .extracting(grade -> grade.gradeName() + ":" + grade.price())
                 .containsExactly("VIP석:150000", "R석:100000");
-        assertThat(detail.performanceDates()).hasSize(1);
-        assertThat(detail.performanceDates().getFirst().performances()).hasSize(2);
-        assertThat(detail.performanceDates().getFirst().performances().getFirst().performanceNo())
+    }
+
+    @Test
+    void 회차를_날짜별로_묶고_회차_번호_순서를_지킨다() {
+        var performanceDates = showQueryRepository.findPerformanceDates(showId);
+
+        assertThat(performanceDates).hasSize(1);
+        assertThat(performanceDates.getFirst().performances()).hasSize(2);
+        assertThat(performanceDates.getFirst().performances().getFirst().performanceNo())
                 .isEqualTo(1L);
-        assertThat(detail.performanceDates().getFirst().performances().get(1).performanceNo())
-                .isEqualTo(2L);
-        assertThat(detail.image()).isEqualTo("/api/images/shows/card/" + showId + ".jpg");
-        assertThat(detail.venueId()).isEqualTo(venueId);
-        assertThat(detail.performer().name()).isEqualTo("홍길동");
-        assertThat(detail.saleDisplayStatus()).isEqualTo(SaleDisplayStatus.ON_SALE);
+        assertThat(performanceDates.getFirst().performances().get(1).performanceNo()).isEqualTo(2L);
     }
 
     @Test
     void 존재하지_않는_공연이면_empty를_반환한다() {
-        assertThat(showQueryRepository.findShowDetail(999999L)).isEmpty();
+        assertThat(showQueryRepository.findShow(999999L)).isEmpty();
     }
 }

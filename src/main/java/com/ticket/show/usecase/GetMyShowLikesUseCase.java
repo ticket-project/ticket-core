@@ -1,5 +1,7 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,8 +18,8 @@ import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.ShowLikeSummaryView;
 import com.ticket.show.query.ShowSummaryRow;
+import com.ticket.show.usecase.view.ShowLikeSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -44,12 +46,7 @@ public class GetMyShowLikesUseCase {
      */
     public record Input(Long memberId, @Nullable Long cursorLikeId, int size) {
         public Input {
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            memberId = requirePositiveId(memberId, "memberId");
             if (size <= 0 || size > MAX_SIZE) {
                 throw new InvalidRequestException("size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
             }

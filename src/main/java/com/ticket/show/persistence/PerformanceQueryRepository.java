@@ -1,24 +1,20 @@
 package com.ticket.show.persistence;
 
 import static com.ticket.show.domain.QGrade.grade;
-import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
-import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.persistence.QuerydslTupleColumns.required;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.api.PerformanceVenueLayout.GradeLayout;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.query.PerformanceSummaryView;
+import com.ticket.show.usecase.view.PerformanceSummaryView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,53 +32,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PerformanceQueryRepository {
     private final JPAQueryFactory queryFactory;
+    private final SpringDataPerformanceJpaRepository performanceJpaRepository;
 
     public Optional<PerformanceSummaryView> findByPerformanceId(final Long performanceId) {
-        final Tuple row =
-                queryFactory
-                        .select(show.title, show.venueId, performance.startTime)
-                        .from(performance)
-                        .join(show)
-                        .on(show.id.eq(performance.showId))
-                        .where(performance.id.eq(performanceId))
-                        .fetchOne();
-        if (row == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(
-                new PerformanceSummaryView(
-                        row.get(show.title),
-                        row.get(show.venueId),
-                        row.get(performance.startTime)));
+        return performanceJpaRepository.findSummaryByPerformanceId(performanceId);
     }
 
     public Optional<PerformanceSaleContext> findContext(final long performanceId) {
-        final Tuple row =
-                queryFactory
-                        .select(
-                                performance.id,
-                                show.id,
-                                show.title,
-                                show.venueId,
-                                performance.startTime)
-                        .from(performance)
-                        .join(show)
-                        .on(show.id.eq(performance.showId))
-                        .where(performance.id.eq(performanceId))
-                        .fetchOne();
-        if (row == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(
-                new PerformanceSaleContext(
-                        // performance.id/show.id는 PK라 조회된 행에서는 값이 비어 있을 수 없다.
-                        required(row, performance.id),
-                        required(row, show.id),
-                        row.get(show.title),
-                        row.get(show.venueId),
-                        row.get(performance.startTime)));
+        return performanceJpaRepository.findSaleContextByPerformanceId(performanceId);
     }
 
     /** 이 회차에 배정된 모든 PerformanceGrade를 반환한다. */
@@ -105,32 +62,11 @@ public class PerformanceQueryRepository {
 
     public Optional<PerformanceVenueLayoutContext> findVenueLayoutContext(
             final long performanceId) {
-        final Tuple row =
-                queryFactory
-                        .select(performance.id, show.venueId)
-                        .from(performance)
-                        .join(show)
-                        .on(show.id.eq(performance.showId))
-                        .where(performance.id.eq(performanceId))
-                        .fetchOne();
-        if (row == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(
-                new PerformanceVenueLayoutContext(
-                        // performance.id는 PK라 조회된 행에서는 값이 비어 있을 수 없다.
-                        required(row, performance.id), row.get(show.venueId)));
+        return performanceJpaRepository.findVenueLayoutContextByPerformanceId(performanceId);
     }
 
     public Optional<Long> findRepresentativePerformanceIdByShowId(final long showId) {
-        return Optional.ofNullable(
-                queryFactory
-                        .select(performance.id)
-                        .from(performance)
-                        .where(performance.showId.eq(showId))
-                        .orderBy(performance.id.asc())
-                        .fetchFirst());
+        return performanceJpaRepository.findRepresentativePerformanceIdByShowId(showId);
     }
 
     /** 이 회차에 배정된 모든 PerformanceGrade의 표시값을 반환한다. 가격은 담지 않는다. */

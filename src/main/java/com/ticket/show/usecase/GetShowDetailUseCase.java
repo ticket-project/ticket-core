@@ -1,5 +1,8 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,25 +14,26 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.domain.Performer;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.PerformanceDateInfo;
 import com.ticket.show.query.PerformerInfo;
 import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.ShowDetailView;
-import com.ticket.show.query.ShowGradeView;
 import com.ticket.show.query.VenueInfo;
+import com.ticket.show.usecase.view.ShowGradeView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 상세 조회는 자기 DB 조회({@link ShowQueryRepository#findShowDetail})에 venue 표시값(like 개수도 마찬가지)을 조합한
- * 결과다. 그 조합은 이 use case가 한다 — local 조회는 venue를 모르고 {@code venueId} scalar만 넘긴다.
+ * show 상세 응답은 show 자기 DB의 조각들({@link ShowQueryRepository})에 venue 표시값과 찜 개수를 조합한 결과다. 그 조합은 이 use
+ * case가 한다 — local 조회는 venue도 like도 모르고 {@code venueId} scalar만 넘긴다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -38,15 +42,12 @@ public class GetShowDetailUseCase {
     private final ShowQueryRepository showQueryRepository;
     private final LikeQueryApi likeQuery;
     private final VenueLookupApi venueLookup;
+    private final ShowCardImagePathConverter showCardImagePathConverter;
+    private final Clock clock;
 
     public record Input(Long showId) {
         public Input {
-            if (showId == null) {
-                throw new InvalidRequestException("showId는 필수입니다.");
-            }
-            if (showId <= 0) {
-                throw new InvalidRequestException("showId는 양수여야 합니다.");
-            }
+            showId = requirePositiveId(showId, "showId");
         }
     }
 
@@ -78,35 +79,48 @@ public class GetShowDetailUseCase {
             List<PerformanceDateInfo> performanceDates) {}
 
     public Output execute(final Input input) {
-        final ShowDetailView view =
+        final Long showId = input.showId();
+        final Show show =
                 showQueryRepository
-                        .findShowDetail(input.showId())
-                        .orElseThrow(
-                                () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId()));
-        final long likeCount = likeQuery.countByTarget(LikeType.SHOW, input.showId());
-        final VenueInfo venue = resolveVenue(view.venueId());
+                        .findShow(showId)
+                        .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + showId));
 
         return new Output(
-                view.id(),
-                view.title(),
-                view.subTitle(),
-                view.info(),
-                view.startDate(),
-                view.endDate(),
-                view.runningMinutes(),
-                view.viewCount(),
-                likeCount,
-                view.saleDisplayStatus(),
-                view.displaySaleType(),
-                view.displaySaleStartsAt(),
-                view.displaySaleEndsAt(),
-                view.image(),
-                venue,
-                view.performer(),
-                view.genreNames(),
-                view.grades(),
-                view.priceSummary(),
-                view.performanceDates());
+                show.getId(),
+                show.getTitle(),
+                show.getSubTitle(),
+                show.getInfo(),
+                show.getStartDate(),
+                show.getEndDate(),
+                show.getRunningMinutes(),
+                show.getViewCount(),
+                likeQuery.countByTarget(LikeType.SHOW, showId),
+                show.saleDisplayStatusAt(LocalDateTime.now(clock)),
+                show.getDisplaySaleType(),
+                show.getDisplaySaleStartsAt(),
+                show.getDisplaySaleEndsAt(),
+                showCardImagePathConverter.toCardImage(show.getImage()),
+                resolveVenue(show.getVenueId()),
+                resolvePerformer(show.getPerformerId()),
+                showQueryRepository.findGenreNames(showId),
+                showQueryRepository.findGrades(showId),
+                showQueryRepository.findPriceSummary(showId),
+                showQueryRepository.findPerformanceDates(showId));
+    }
+
+    private @Nullable PerformerInfo resolvePerformer(final @Nullable Long performerId) {
+        if (performerId == null) {
+            return null;
+        }
+        return showQueryRepository
+                .findPerformer(performerId)
+                .map(this::toPerformerInfo)
+                .orElse(null);
+    }
+
+    private PerformerInfo toPerformerInfo(final Performer performer) {
+        return new PerformerInfo(
+                performer.getId(), performer.getName(), performer.getProfileImageUrl());
     }
 
     private @Nullable VenueInfo resolveVenue(final @Nullable Long venueId) {

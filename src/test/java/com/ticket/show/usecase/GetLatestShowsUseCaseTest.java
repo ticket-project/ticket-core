@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.query.ShowSummaryView;
+import com.ticket.show.usecase.view.ShowSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
