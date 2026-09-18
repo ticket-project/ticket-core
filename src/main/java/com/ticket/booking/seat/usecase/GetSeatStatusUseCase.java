@@ -14,9 +14,9 @@ import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
 import com.ticket.booking.seat.query.SeatStatus;
-import com.ticket.booking.seat.usecase.view.SeatStateView;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,14 @@ public class GetSeatStatusUseCase {
         }
     }
 
-    public record Output(List<SeatStateView> seats) {}
+    public record Output(List<Seat> seats) {}
+
+    /**
+     * 좌석 상태 응답 한 건이다. 기존 프론트가 배치도와 상태를 연결하는 물리 {@code seatId}와 회차 판매 좌석 식별자인 {@code
+     * performanceSeatId}를 함께 제공한다. {@code seatId}는 Redis selection/hold 점유 집합(물리 좌석 기준)과 병합하는 join
+     * key이기도 하다.
+     */
+    public record Seat(Long performanceSeatId, Long seatId, SeatStatus status) {}
 
     public Output execute(final Input input) {
         final Long performanceId = input.performanceId();
@@ -49,22 +56,26 @@ public class GetSeatStatusUseCase {
         admissionGuard.verifyIfRequired(
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
-        final List<SeatStateView> dbStates =
+        final List<PerformanceSeat> performanceSeats =
                 performanceSeatQueryRepository.findSeatStates(performanceId);
 
         final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
 
-        final List<SeatStateView> seats =
-                dbStates.stream().map(row -> withRedisOccupancy(row, redisOccupiedIds)).toList();
+        final List<Seat> seats =
+                performanceSeats.stream()
+                        .map(performanceSeat -> toSeat(performanceSeat, redisOccupiedIds))
+                        .toList();
 
         return new Output(seats);
     }
 
-    private SeatStateView withRedisOccupancy(
-            final SeatStateView row, final Set<Long> redisOccupiedIds) {
+    /** DB 상태를 응답 상태로 옮기고 Redis 점유를 덧씌운다 — 엔티티의 상태는 바꾸지 않는다. */
+    private Seat toSeat(final PerformanceSeat performanceSeat, final Set<Long> redisOccupiedIds) {
         final SeatStatus status =
-                redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : row.status();
-        return new SeatStateView(row.performanceSeatId(), row.seatId(), status);
+                redisOccupiedIds.contains(performanceSeat.getSeatId())
+                        ? SeatStatus.OCCUPIED
+                        : SeatStatus.from(performanceSeat.getState());
+        return new Seat(performanceSeat.getId(), performanceSeat.getSeatId(), status);
     }
 
     /**

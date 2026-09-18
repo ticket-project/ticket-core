@@ -16,8 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatStateRow;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
@@ -34,8 +34,8 @@ class GetSeatAvailabilityUseCaseTest {
     @Test
     void DB와_redis_점유좌석을_합쳐_잔여석을_계산한다() {
         // given
-        List<PerformanceSeatStateRow> stateRows =
-                List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L));
+        List<PerformanceSeat> stateRows =
+                List.of(PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.AVAILABLE));
         PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", "VIP석", 1);
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
@@ -56,10 +56,10 @@ class GetSeatAvailabilityUseCaseTest {
     /** 옛 {@code SeatAvailabilityCalculatorTest}에서 옮겨 온다 — 집계가 use case의 private method가 됐다. */
     @Test
     void RESERVED_좌석은_잔여석에서_제외한다() {
-        final List<PerformanceSeatStateRow> stateRows =
+        final List<PerformanceSeat> stateRows =
                 List.of(
-                        new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L),
-                        new PerformanceSeatStateRow(2L, PerformanceSeatState.RESERVED, 31L));
+                        PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.AVAILABLE),
+                        PerformanceSeatFixture.seat(502L, 2L, 31L, PerformanceSeatState.RESERVED));
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of()))
@@ -78,8 +78,8 @@ class GetSeatAvailabilityUseCaseTest {
     /** 좌석이 있으면 잔여석이 0이어도 등급은 결과에 남는다 — "매진"을 보여줘야 하기 때문이다. */
     @Test
     void 좌석이_있으면_잔여석이_0이어도_grade는_결과에_포함된다() {
-        final List<PerformanceSeatStateRow> stateRows =
-                List.of(new PerformanceSeatStateRow(1L, PerformanceSeatState.RESERVED, 31L));
+        final List<PerformanceSeat> stateRows =
+                List.of(PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.RESERVED));
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
         when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of()))
@@ -98,10 +98,10 @@ class GetSeatAvailabilityUseCaseTest {
     @Test
     void 이름이_같아도_performanceGradeId가_다르면_따로_집계한다() {
         // given
-        List<PerformanceSeatStateRow> stateRows =
+        List<PerformanceSeat> stateRows =
                 List.of(
-                        new PerformanceSeatStateRow(1L, PerformanceSeatState.AVAILABLE, 31L),
-                        new PerformanceSeatStateRow(2L, PerformanceSeatState.AVAILABLE, 32L));
+                        PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.AVAILABLE),
+                        PerformanceSeatFixture.seat(502L, 2L, 32L, PerformanceSeatState.AVAILABLE));
         PerformanceSaleSnapshot saleSnapshot =
                 new PerformanceSaleSnapshot(
                         10L,

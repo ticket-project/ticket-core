@@ -10,8 +10,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
-import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatMapRow;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
@@ -64,12 +64,12 @@ public class GetPerformanceSeatMapUseCase {
     public Output execute(final Input input) {
         final PerformanceVenueLayout layout =
                 performanceVenueLayoutCatalog.getVenueLayout(input.performanceId());
-        final List<PerformanceSeatMapRow> rows =
+        final List<PerformanceSeat> performanceSeats =
                 performanceSeatQueryRepository.findAllByPerformanceId(input.performanceId());
 
         final List<SeatMapEntry> seats =
-                rows.stream()
-                        .map(row -> toSeatMapEntry(row, layout))
+                performanceSeats.stream()
+                        .map(performanceSeat -> toSeatMapEntry(performanceSeat, layout))
                         .filter(Objects::nonNull)
                         .toList();
 
@@ -87,26 +87,27 @@ public class GetPerformanceSeatMapUseCase {
 
     /** show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤 오류로 다룰지는 이 조합 시점에서 판정하지 않는다. */
     private @Nullable SeatMapEntry toSeatMapEntry(
-            final PerformanceSeatMapRow row, final PerformanceVenueLayout layout) {
+            final PerformanceSeat performanceSeat, final PerformanceVenueLayout layout) {
         final PerformanceVenueLayout.SeatLayout seatLayout =
-                layout.seatLayoutBySeatId().get(row.seatId());
+                layout.seatLayoutBySeatId().get(performanceSeat.getSeatId());
         final PerformanceVenueLayout.GradeLayout gradeLayout =
-                layout.gradeLayoutByPerformanceGradeId().get(row.performanceGradeId());
+                layout.gradeLayoutByPerformanceGradeId()
+                        .get(performanceSeat.getPerformanceGradeId());
         if (seatLayout == null || gradeLayout == null) {
             return null;
         }
         return new SeatMapEntry(
-                row.performanceSeatId(),
-                row.seatId(),
+                performanceSeat.getId(),
+                performanceSeat.getSeatId(),
                 seatLayout.floor(),
                 seatLayout.section(),
                 seatLayout.rowNo(),
                 seatLayout.seatNo(),
                 seatLayout.x(),
                 seatLayout.y(),
-                row.performanceGradeId(),
+                performanceSeat.getPerformanceGradeId(),
                 gradeLayout.gradeCode(),
                 gradeLayout.gradeName(),
-                row.unitPrice());
+                performanceSeat.getUnitPrice());
     }
 }
