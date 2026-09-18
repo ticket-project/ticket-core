@@ -78,3 +78,16 @@ module에 새로 작성해야 한다. 이 사실을 미리 적어 두는 이유�
 - Flyway 이력 테이블 이름이 module 이름에서 나온다(`flyway_schema_history_{module}`). 개명 후
   `..._favorite`는 남고 `..._like`가 새로 생겨 V1·V2를 재적용한다 — 두 migration 모두 존재
   확인 가드가 있어 재적용이 안전하다. 옛 이력 테이블 정리는 이 ADR의 범위 밖이다.
+
+## 후속 메모 (2026-09-19)
+
+결정 §2가 든 공개 계약 중 **쓰기 계약 `LikeCommand.like/unlike`는 지금 없다.** 그 계약과 구현
+(`like.api.LikeCommandApi`, `like.usecase.LikeCommandService`)은 구현이 하나뿐인 경유 지점이라
+제거했고, `AddLikeUseCase`/`RemoveLikeUseCase`가 `LikeRepository`를 직접 쓴다. 대상 일반화
+(`LikeType`, `targetId`)와 조회 계약 `LikeQueryApi`(`countByTarget`/`get`/`findLiked`)·`LikeInfo`는
+결정 그대로 유효하다.
+
+§4가 말한 배치도 지금은 일부만 맞는다 — 찜 등록·해제 use case와 endpoint는 `like` module에 있고
+(`like.usecase.AddLikeUseCase`/`RemoveLikeUseCase`, `like.endpoint.LikeController`), `show`에는
+찜 목록·상세 표시값 쪽(`MyShowLikesController`, `GetMyShowLikesUseCase`)이 남아 있다. §4가 든
+판단 근거(사실의 소유자 기준)는 그대로다.

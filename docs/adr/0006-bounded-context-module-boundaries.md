@@ -69,13 +69,13 @@ class Show {
     private List<ShowLike> likes;   // ✗
 }
 
-// 허용 — show.application이 favorite의 공개 계약으로 조합한다
+// 허용 — show의 use case가 like의 공개 계약으로 조합한다
 class GetShowDetailUseCase {
-    private final ShowLikeQuery showLikeQuery;   // favorite의 공개 API
-    ShowDetailView handle(long showId) {
-        ShowDetailView local = showDetailReadRepository.findShowDetail(showId);
-        long likeCount = showLikeQuery.countByShowId(showId);
-        return local.withLikeCount(likeCount);
+    private final LikeQueryApi likeQueryApi;   // like의 공개 API
+    Output execute(Input input) {
+        Show show = showQueryRepository.findShow(input.showId()).orElseThrow(...);
+        long likeCount = likeQueryApi.countByTarget(LikeType.SHOW, input.showId());
+        return new Output(show, ..., likeCount);
     }
 }
 ```

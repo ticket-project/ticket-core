@@ -75,11 +75,11 @@ TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지�
 | OE-06 | native | `build.gradle`, `shared/infrastructure/P6SpyConfig.java` | SQL 파라미터 로깅에 p6spy 의존성 + 47줄 설정 | Hibernate 자체 `org.hibernate.orm.jdbc.bind=TRACE` | −47줄, 의존성 −1 |
 | OE-07 | delete | `build.gradle`의 `dumpEpArgs` task | 참조 0개인 디버그 task. 함께 적혀 있던 Spring Initializr 기본 생성물 HELP.md는 이미 지워졌다 | 없음 | −20줄 |
 | OE-08 | stdlib | `security/token/UuidSupplier.java`, `UuidSupplierConfig.java` | 테스트 고정을 위해 `@FunctionalInterface` + `@Bean`을 직접 만들었다 | `java.util.function.Supplier<UUID>` | −30줄, 파일 −2 |
-| OE-09 | shrink | `booking/hold/domain/HoldKeyGenerator.java`, `booking/order/domain/OrderKeyGenerator.java` | prefix 문자열만 다른 동일 클래스 2개 | `KeyGenerator(String prefix)` 1개 | −11줄 |
+| ~~OE-09~~ | shrink | `booking/hold/domain/HoldKeyGenerator.java`, `booking/order/domain/OrderKeyGenerator.java` | **완료(2026-09-19).** 공통 클래스로 합치지 않고 **각 소유 클래스의 private 메서드로 흡수**했다 — `PendingOrderCreator.generateOrderKey()`, `HoldManager.generateHoldKey()`. 호출자가 하나뿐이라 타입을 하나로 줄이는 것보다 없애는 쪽이 짧았다. 키 형식(`ORDER-`/`HOLD-` + 하이픈 없는 UUID)은 그대로다 | — | 실측 파일 −2 |
 | OE-10 | native | `build.gradle` | `spring-context`·`spring-tx`·`spring-core`·`spring-beans`·`slf4j-api`·`spring-data-jpa`·`jakarta.persistence-api`를 명시 선언 | starter가 전이로 가져온다. 선언만 지운다(산출물 변화 없음) | −7줄 |
-| ~~OE-11~~ | yagni | `*/query/*Query.java` | **완료(2026-09-18).** local 조회 구현 14개를 module별 `persistence`의 조회 Repository 6개(`ShowQueryRepository`, `PerformanceQueryRepository`, `VenueQueryRepository`, `PerformanceSeatQueryRepository`, `OrderQueryRepository`, `LikeQueryRepository`)로 합쳤다. 정렬·커서·판매 상태 helper 3개는 `ShowQueryRepository`의 private 메서드로 흡수됐고, `RegionVenueIds`와 `SeatStateSnapshotRow`는 사라졌다(`venue.query`·`like.query` package도 함께). `query`에는 읽기 모델만 남는다 | — | 실측 최상위 타입 −13(404→391), Spring bean −11(152→141), main 파일 −14(499→485), −189줄 |
+| ~~OE-11~~ | yagni | `*/query/*Query.java` | **완료(2026-09-18).** local 조회 구현 14개를 module별 `persistence`의 조회 Repository 6개(`ShowQueryRepository`, `PerformanceQueryRepository`, `VenueQueryRepository`, `PerformanceSeatQueryRepository`, `OrderQueryRepository`, `LikeQueryRepository`)로 합쳤다. 그 뒤 주문 상세·상태가 `OrderRepository`의 `@Query`로 옮겨가면서 `OrderQueryRepository`는 사라져 지금은 5개다(2026-09-19). 정렬·커서·판매 상태 helper 3개는 `ShowQueryRepository`의 private 메서드로 흡수됐고, `RegionVenueIds`와 `SeatStateSnapshotRow`는 사라졌다(`venue.query`·`like.query` package도 함께). `query`에는 읽기 모델만 남는다 | — | 실측 최상위 타입 −13(404→391), Spring bean −11(152→141), main 파일 −14(499→485), −189줄 |
 
-남은 항목 합계 약 −1,830줄(main의 9%), 의존성 −1. OE-04와 OE-11은 완료했다.
+남은 항목 합계 약 −1,820줄(main의 9%, OE-09 완료분 제외), 의존성 −1. OE-04·OE-09·OE-11은 완료했다.
 
 OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 Query"와
 `docs/readability-guidelines.md` §3이 원본이다 — 자기 module DB 조회에는 1:1 port/adapter를
@@ -97,8 +97,10 @@ OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 
 여기서 다루지 않는다.
 
 **확인했지만 후보가 아닌 것**: `package-info.java` 95개(`@NullMarked`와 modulith `ApplicationModule`
-선언이 실제로 걸려 있다), `*Row` → `*View` 쌍(`venueId`를 이름·지역으로 바꾸는 실제 변환이라 단순
-복사가 아니다), `ShowCursorCodec`(이미 stdlib `Base64`), `testsupport`의 base 클래스들, 실제 설정을
+선언이 실제로 걸려 있다), 목록·검색·오픈예정의 `*Row`(`ShowListItemRow`, `ShowSearchItemRow`,
+`SaleOpeningSoon{Summary,Detail}Row`, `ShowSummaryRow`, `LatestShowRow` — 엔티티로 바꾸면 `Show`의
+`@Lob info` CLOB이 목록 전건에 실린다)와 booking seat의 `PerformanceSeatMapRow`·
+`PerformanceSeatStateRow`(회차 전 좌석 수천 행을 엔티티로 로딩하게 된다), `ShowCursorCodec`(이미 stdlib `Base64`), `testsupport`의 base 클래스들, 실제 설정을
 담은 `@Configuration`들.
 
 **측정이 말하는 것**: main의 인터페이스 68개 중 구현이 2개 이상인 것은 0개다. 10줄 미만 파일이
