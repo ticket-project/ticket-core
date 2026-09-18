@@ -169,8 +169,7 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 | `endpoint` | Controller, 요청 DTO, OpenAPI 문서 interface, HTTP 커서 문자열 |
 | `usecase` | 요청 단위 use case와 그 조립 서비스, 트랜잭션 경계 |
 | `event` | 커밋 이후 후속 처리 조율(`booking`에만 있다) |
-| `query` | 자기 module의 조회 projection(`*Row`)과 조회 파라미터·커서·정렬 타입 |
-| `usecase/view` | use case가 응답으로 내보내는 조합 결과(`*View`) |
+| `query` | 자기 module의 조회 파라미터·커서·정렬 타입과 DB 집계 결과 |
 | `port` | 조회가 아닌 출력 계약(발행·외부 provider) |
 | `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
 | `persistence` | 저장 adapter와 local DB 조회 Repository(`*QueryRepository`), Spring Data 인터페이스, Redis/Redisson 저장 구현 |
@@ -342,16 +341,17 @@ use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계�
 
 자기 module DB 조회는 `persistence`의 `*QueryRepository`(`ShowQueryRepository`,
 `PerformanceSeatQueryRepository`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는
-Spring Data 인터페이스는 `SpringData*JpaRepository`로 구분한다. `View`는 use case가 만드는 응답용
-projection, `Snapshot`은 특정 시점의 읽기 결과(모듈 공개 API에서는 cross-module 스냅샷), `Row`는
-저장소 조회 한 행, `Output`은 use case 반환값, `Param`/`Criteria`/`Event`/`Request`는 각각 조회
-조건 구성값/검색 조건/발생한 사실/외부 입력이다. **조회 전용 `...View` 타입에 비즈니스 로직을
-두지 않는다** — 판정은 별도 validator/policy가 맡는다.
+Spring Data 인터페이스는 `SpringData*JpaRepository`로 구분한다. `Snapshot`은 특정 시점의 읽기
+결과(모듈 공개 API에서는 cross-module 스냅샷), `Output`은 use case 반환값,
+`Param`/`Criteria`/`Event`/`Request`는 각각 조회 조건 구성값/검색 조건/발생한 사실/외부 입력이다.
+**조회 전용 응답 타입에 비즈니스 로직을 두지 않는다** — 판정은 별도 validator/policy가 맡는다.
 
-**`Row`/`View`는 필요할 때만 만든다.** 엔티티로 충분한 조회는 엔티티를 반환하고 use case가 Output을
-직접 만든다 — 값을 담았다가 그대로 다른 DTO로 옮기기만 하는 중간 타입은 두지 않는다. 지금 남아 있는
-`*Row`는 목록의 CLOB(`Show.info`) 로딩이나 회차 전 좌석 로딩처럼 엔티티 반환이 과도한 자리들이다.
-기준은 [readability-guidelines.md](readability-guidelines.md#조회-코드) §10이 원본이다.
+**조회는 엔티티를 반환하고 use case가 Output을 직접 만든다.** 값을 담았다가 그대로 다른 DTO로
+옮기기만 하는 중간 타입(`*Row`/`*View`)은 두지 않고, 최종 응답 항목은 그 use case의 중첩 record가
+소유한다(`GetShowsUseCase.Item`, `GetSeatStatusUseCase.Seat`). 목록의 CLOB(`Show.info`)이나 회차 전
+좌석을 엔티티로 읽는 비용은 그 대가로 받아들인다. 남는 것은 DB 집계 결과(`PriceSummary`)처럼 엔티티로
+표현되지 않는 조회 결과뿐이다. 기준은
+[readability-guidelines.md](readability-guidelines.md#조회-코드) §10이 원본이다.
 
 배경은 [ADR 0016](adr/0016-capability-first-layout-inside-modules.md)이다.
 
@@ -388,7 +388,7 @@ showRepository.save(show);
 목적이 아니라 **use case가 필요로 하는 조회 결과를 만드는 것**이 목적이다.
 
 ```java
-CursorPage<ShowListItemRow, ShowCursor> page = showQueryRepository.findAllBySearch(param, venueIds);
+CursorPage<Show, ShowCursor> page = showQueryRepository.findAllBySearch(param, venueIds);
 ```
 
 module의 `persistence` package에 두고 이름은 `*QueryRepository`를 쓴다(`ShowQueryRepository`,
@@ -400,11 +400,10 @@ Redis, JWT 같은 외부 시스템), 실제로 교체 지점이 있거나, domai
 둔다. use case는 `persistence`에서 이 조회 Repository만 직접 부를 수 있고, 저장 adapter와
 Spring Data 인터페이스·Redis 구현은 그대로 막혀 있다.
 
-Aggregate를 여러 개 복원해 Java에서 조합하기보다, 필요한 read model을 직접 조회한다. 반환 타입은
-그 조회에 맞춰 고른다 — 엔티티 하나로 충분하면 엔티티를 반환하고(`ShowQueryRepository.findShow`),
-목록·집계처럼 엔티티 로딩이 과도한 자리에만 `View`/`Row`(위 "패키지 구조" 절의 명명 규칙)를 쓰며 그
-읽기 모델 타입은 `query` package가 소유한다. 조회 구현 방식(파생 메서드 / `@Query` / Querydsl)도
-같은 기준으로 고른다 — Querydsl이 기본값은 아니다.
+Aggregate를 여러 개 복원해 Java에서 조합하기보다, 필요한 값을 직접 조회한다. 반환 타입은 엔티티가
+기본이고(`ShowQueryRepository.findShow`, `findAllBySearch`), DB 집계처럼 엔티티로 표현되지 않는
+결과에만 별도 타입을 두며 그 타입은 `query` package가 소유한다(`PriceSummary`). 조회 구현
+방식(파생 메서드 / `@Query` / Querydsl)도 같은 기준으로 고른다 — Querydsl이 기본값은 아니다.
 
 단순한 local 조회는 그 module의 **공개 API interface를 직접 구현해도 된다**
 (`venue.persistence.VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi`). 위임만
@@ -425,14 +424,14 @@ Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까
 // Domain Repository — Aggregate 복원 → 업무 행동(`show.domain`)
 Optional<Show> ShowRepository.findById(Long showId);
 
-// 조회 Repository — 화면 표시값 → API 응답(목록은 CLOB을 피해 projection을 쓴다)
-Map<Long, ShowSummaryRow> ShowQueryRepository.findSummaries(Set<Long> showIds);
+// 조회 Repository — 화면 표시값 → API 응답(읽기 전용, 상태를 바꾸지 않는다)
+Map<Long, Show> ShowQueryRepository.findSummaries(Set<Long> showIds);
 ```
 
-둘 다 같은 `SHOWS` 테이블을 볼 수 있지만 목적이 다르다. Read model(`View`/`Row`)은 Aggregate가
-아니고, 상태 변경을 하지 않으며, 핵심 업무 불변식을 갖지 않는다 — "구매 가능한가" 같은 판정은
-그 값을 정하는 domain(`PerformanceSalesPolicy` 등)이 하고, Read model은 이미 정해진 값을
-전달하는 역할에 머문다(`docs/architecture.md`의 "조회 전용 `...View` 타입에 비즈니스 로직을
+둘 다 같은 `SHOWS` 테이블을 보고 같은 엔티티를 돌려줄 수 있지만 목적이 다르다. 조회 쪽 결과는 읽기
+전용이라 상태를 바꾸지 않고, 핵심 업무 불변식 판정도 하지 않는다 — "구매 가능한가" 같은 판정은
+그 값을 정하는 domain(`PerformanceSalesPolicy` 등)이 하고, 조회 결과는 이미 정해진 값을
+전달하는 역할에 머문다(`docs/architecture.md`의 "조회 전용 응답 타입에 비즈니스 로직을
 두지 않는다" 규칙과 같다).
 
 ## 계층별 검증 책임
