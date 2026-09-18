@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,8 +13,6 @@ import org.springframework.data.domain.Sort;
 
 import com.querydsl.core.types.Order;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowSort;
 
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowSortResolverTest {

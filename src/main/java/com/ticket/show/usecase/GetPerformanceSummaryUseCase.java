@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.query.PerformanceQueryPort;
+import com.ticket.show.query.PerformanceQuery;
 import com.ticket.show.query.PerformanceSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSummaryUseCase {
-    private final PerformanceQueryPort performanceQueryPort;
+    private final PerformanceQuery performanceQuery;
     private final VenueLookupApi venueLookup;
 
     public record Input(Long performanceId) {
@@ -37,7 +37,7 @@ public class GetPerformanceSummaryUseCase {
 
     public Output execute(final Input input) {
         final PerformanceSummaryView summary =
-                performanceQueryPort
+                performanceQuery
                         .findByPerformanceId(input.performanceId())
                         .orElseThrow(
                                 () ->

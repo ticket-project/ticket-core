@@ -13,7 +13,7 @@ import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowListItemRow;
 import com.ticket.show.query.ShowListItemView;
 import com.ticket.show.query.ShowListParam;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSort;
 import com.ticket.show.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
@@ -27,7 +27,7 @@ public class GetShowsUseCase {
     /** API 문서가 공개한 상한이다(`한 번에 조회할 개수 (기본값: 5, 최대: 100)`). 상한은 유스케이스 조건이므로 API가 아니라 여기가 소유한다. */
     public static final int MAX_SIZE = 100;
 
-    private final ShowListQueryPort showListQueryPort;
+    private final ShowListQuery showListQuery;
     private final VenueLookupApi venueLookup;
 
     public record Input(ShowListParam param, int size, ShowSort sort) {
@@ -49,7 +49,7 @@ public class GetShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<ShowListItemRow, ShowCursor> page =
-                showListQueryPort.findAllBySearch(
+                showListQuery.findAllBySearch(
                         input.param(),
                         RegionVenueIds.resolve(venueLookup, input.param().getRegion()),
                         input.size(),

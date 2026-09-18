@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.QGrade.grade;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
@@ -9,17 +9,15 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.query.PerformanceGradeQueryPort;
-import com.ticket.show.query.PerformanceGradeView;
 
 import lombok.RequiredArgsConstructor;
 
+/** 회차별 grade 목록·가격 화면 조회다. aggregate 복원이 아니라 표시용 join 결과를 반환한다. */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceGradeQueryAdapter implements PerformanceGradeQueryPort {
+public class PerformanceGradeQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
     public List<PerformanceGradeView> findAllByPerformanceIdOrderBySortOrderAsc(
             final Long performanceId) {
         return queryFactory

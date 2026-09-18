@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,16 +13,14 @@ import org.springframework.context.annotation.Import;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.query.PerformanceGradeQueryPort;
-import com.ticket.show.query.PerformanceGradeView;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-@Import(QuerydslPerformanceGradeQueryAdapter.class)
+@Import(PerformanceGradeQuery.class)
 @SuppressWarnings("NonAsciiCharacters")
-class QuerydslPerformanceGradeQueryAdapterTest extends InfraReadRepositoryTestSupport {
-    @Autowired private PerformanceGradeQueryPort repository;
+class PerformanceGradeQueryTest extends InfraReadRepositoryTestSupport {
+    @Autowired private PerformanceGradeQuery repository;
 
     @Test
     void 회차의_grade_목록을_표시_순서대로_가격과_함께_반환한다() throws Exception {

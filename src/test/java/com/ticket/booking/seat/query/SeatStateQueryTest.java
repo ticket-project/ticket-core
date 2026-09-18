@@ -21,8 +21,8 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
 /**
- * booking local 조회(회차 좌석 판매 상태)만 검증한다. 물리 좌석·등급 조합은 show {@code
- * PerformanceVenueLayoutQuery}가 소유하고 별도로 검증한다.
+ * booking local 조회(회차 좌석 판매 상태)만 검증한다. 물리 좌석·등급 조합은 show {@code PerformanceVenueLayoutQuery}가 소유하고
+ * 별도로 검증한다.
  */
 @Import(SeatStateQuery.class)
 @SuppressWarnings("NonAsciiCharacters")

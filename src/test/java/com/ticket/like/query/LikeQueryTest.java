@@ -49,8 +49,7 @@ class LikeQueryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
-        CursorPage<LikeEntry, Long> result =
-                likeQuery.findLiked(LikeType.SHOW, memberId, null, 2);
+        CursorPage<LikeEntry, Long> result = likeQuery.findLiked(LikeType.SHOW, memberId, null, 2);
 
         assertThat(result.items())
                 .extracting(LikeEntry::targetId)

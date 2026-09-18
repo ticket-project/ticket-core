@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.QGenre.genre;
 import static com.ticket.show.domain.QGrade.grade;
@@ -26,29 +26,20 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.query.PerformanceDateInfo;
-import com.ticket.show.query.PerformanceInfo;
-import com.ticket.show.query.PerformerInfo;
-import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.ShowDetailQueryPort;
-import com.ticket.show.query.ShowDetailView;
-import com.ticket.show.query.ShowGradeView;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB에서 show 상세 데이터를 읽는 persistence adapter다. venue 표시값 조합은 여기서 하지 않는다 — {@code venueId}
- * scalar만 {@link ShowDetailView}에 담아 넘기고, 실제 venue 조회는 {@code GetShowDetailUseCase}(application)가
- * 한다.
+ * show 자기 DB에서 show 상세 데이터를 읽는다. venue 표시값 조합은 여기서 하지 않는다 — {@code venueId} scalar만 {@link
+ * ShowDetailView}에 담아 넘기고, 실제 venue 조회는 {@code GetShowDetailUseCase}(application)가 한다.
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowDetailQueryAdapter implements ShowDetailQueryPort {
+public class ShowDetailQuery {
     private final JPAQueryFactory queryFactory;
     private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
 
-    @Override
     public Optional<ShowDetailView> findShowDetail(final Long showId) {
         final Show showEntity = fetchShow(showId);
         if (showEntity == null) {

@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,8 +18,6 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.QShow;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowSort;
 
 @SuppressWarnings("NonAsciiCharacters")
 class QuerydslShowCursorConditionBuilderTest {

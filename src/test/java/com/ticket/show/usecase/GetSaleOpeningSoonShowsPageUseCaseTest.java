@@ -21,7 +21,7 @@ import com.ticket.show.query.SaleOpeningSoonDetailRow;
 import com.ticket.show.query.SaleOpeningSoonDetailView;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -32,7 +32,7 @@ import com.ticket.venue.api.VenueSummary;
 class GetSaleOpeningSoonShowsPageUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowListQueryPort showListQueryPort;
+    @Mock private ShowListQuery showListQuery;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetSaleOpeningSoonShowsPageUseCase useCase;
 
@@ -59,7 +59,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                         7L);
         CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
                 new CursorPage<>(List.of(row), true, NEXT_POSITION);
-        when(showListQueryPort.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
+        when(showListQuery.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -96,7 +96,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                                 100L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showListQueryPort).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+        verify(showListQuery).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
@@ -105,7 +105,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
                 new CursorPage<>(List.of(), false, null);
-        when(showListQueryPort.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
+        when(showListQuery.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
         GetSaleOpeningSoonShowsPageUseCase.Output output =
@@ -115,6 +115,6 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showListQueryPort).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+        verify(showListQuery).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 }

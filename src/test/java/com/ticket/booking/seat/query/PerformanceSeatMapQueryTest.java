@@ -24,8 +24,8 @@ import com.ticket.venue.domain.Venue;
 /**
  * seat-map의 booking local 조회(회차에 판매 편성된 좌석과 확정 가격)만 검증한다. 물리 좌석 좌표·등급 표시값 조합은 show 쪽 조회가 소유한다.
  *
- * <p>고정하는 것은 셋이다 — 회차가 서로 섞이지 않는 것, 편성되지 않은 물리 좌석은 나타나지 않는 것, 그리고 주문 금액의 근거가 되는 {@code
- * unitPrice}가 그대로 projection되는 것이다.
+ * <p>고정하는 것은 셋이다 — 회차가 서로 섞이지 않는 것, 편성되지 않은 물리 좌석은 나타나지 않는 것, 그리고 주문 금액의 근거가 되는 {@code unitPrice}가
+ * 그대로 projection되는 것이다.
  */
 @Import(PerformanceSeatMapQuery.class)
 @SuppressWarnings("NonAsciiCharacters")

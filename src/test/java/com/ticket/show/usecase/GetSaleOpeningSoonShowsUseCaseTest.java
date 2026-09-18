@@ -17,14 +17,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.query.SaleOpeningSoonSummaryRow;
 import com.ticket.show.query.SaleOpeningSoonSummaryView;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetSaleOpeningSoonShowsUseCaseTest {
-    @Mock private ShowListQueryPort showListQueryPort;
+    @Mock private ShowListQuery showListQuery;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetSaleOpeningSoonShowsUseCase useCase;
 
@@ -33,7 +33,7 @@ class GetSaleOpeningSoonShowsUseCaseTest {
         LocalDateTime saleStartDate = LocalDateTime.of(2026, 3, 27, 12, 0);
         List<SaleOpeningSoonSummaryRow> rows =
                 List.of(new SaleOpeningSoonSummaryRow(1L, "concert", "image", 7L, saleStartDate));
-        when(showListQueryPort.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(rows);
+        when(showListQuery.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(rows);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -56,17 +56,17 @@ class GetSaleOpeningSoonShowsUseCaseTest {
                 .containsExactly(
                         new SaleOpeningSoonSummaryView(
                                 1L, "concert", "image", "venue", saleStartDate));
-        verify(showListQueryPort).findSaleOpeningSoonSummaries("CONCERT", 5);
+        verify(showListQuery).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
 
     @Test
     void 판매시작임박_공연이_없으면_빈_목록을_반환한다() {
-        when(showListQueryPort.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(List.of());
+        when(showListQuery.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(List.of());
 
         GetSaleOpeningSoonShowsUseCase.Output output =
                 useCase.execute(new GetSaleOpeningSoonShowsUseCase.Input("CONCERT", 5));
 
         assertThat(output.shows()).isEmpty();
-        verify(showListQueryPort).findSaleOpeningSoonSummaries("CONCERT", 5);
+        verify(showListQuery).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
 }
