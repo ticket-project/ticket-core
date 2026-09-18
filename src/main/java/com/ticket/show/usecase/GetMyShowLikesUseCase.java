@@ -2,8 +2,11 @@ package com.ticket.show.usecase;
 
 import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,9 +20,8 @@ import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.ShowSummaryRow;
-import com.ticket.show.usecase.view.ShowLikeSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -53,8 +55,16 @@ public class GetMyShowLikesUseCase {
         }
     }
 
-    public record Output(
-            List<ShowLikeSummaryView> items, boolean hasNext, @Nullable Long nextPosition) {}
+    public record Output(List<Item> items, boolean hasNext, @Nullable Long nextPosition) {}
+
+    public record Item(
+            Long showId,
+            @Nullable String title,
+            @Nullable String image,
+            @Nullable LocalDate startDate,
+            @Nullable LocalDate endDate,
+            @Nullable String venue,
+            LocalDateTime likedAt) {}
 
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
@@ -69,35 +79,33 @@ public class GetMyShowLikesUseCase {
 
         final Set<Long> showIds =
                 page.items().stream().map(LikeEntry::targetId).collect(Collectors.toSet());
-        final Map<Long, ShowSummaryRow> summaries = showQueryRepository.findSummaries(showIds);
+        final Map<Long, Show> shows = showQueryRepository.findSummaries(showIds);
         final VenueDisplays venues =
                 VenueDisplays.load(
-                        venueLookup,
-                        summaries.values().stream().map(ShowSummaryRow::venueId).toList());
+                        venueLookup, shows.values().stream().map(Show::getVenueId).toList());
 
-        final List<ShowLikeSummaryView> items =
+        final List<Item> items =
                 page.items().stream()
-                        .map(entry -> toSummaryView(entry, summaries.get(entry.targetId()), venues))
-                        .filter(java.util.Objects::nonNull)
+                        .map(entry -> toItem(entry, shows.get(entry.targetId()), venues))
+                        .filter(Objects::nonNull)
                         .toList();
 
         return new Output(items, page.hasNext(), page.nextPosition());
     }
 
-    private @Nullable ShowLikeSummaryView toSummaryView(
-            final LikeEntry entry,
-            final @Nullable ShowSummaryRow summary,
-            final VenueDisplays venues) {
-        if (summary == null) {
+    /** 찜 목록의 이미지는 원본 경로 그대로다 — 목록 카드용 변환({@code ShowCardImagePathConverter})을 쓰지 않는 기존 계약이다. */
+    private @Nullable Item toItem(
+            final LikeEntry entry, final @Nullable Show show, final VenueDisplays venues) {
+        if (show == null) {
             return null;
         }
-        return new ShowLikeSummaryView(
-                summary.showId(),
-                summary.title(),
-                summary.image(),
-                summary.startDate(),
-                summary.endDate(),
-                venues.nameOf(summary.venueId()),
+        return new Item(
+                show.getId(),
+                show.getTitle(),
+                show.getImage(),
+                show.getStartDate(),
+                show.getEndDate(),
+                venues.nameOf(show.getVenueId()),
                 entry.likedAt());
     }
 }

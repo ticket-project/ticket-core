@@ -11,11 +11,11 @@ import com.ticket.show.endpoint.request.ShowListRequest;
 import com.ticket.show.endpoint.request.ShowSearchRequest;
 import com.ticket.show.usecase.CountSearchShowsUseCase;
 import com.ticket.show.usecase.GetLatestShowsUseCase;
+import com.ticket.show.usecase.GetSaleOpeningSoonShowsPageUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
-import com.ticket.show.usecase.view.SaleOpeningSoonDetailView;
-import com.ticket.show.usecase.view.ShowListItemView;
-import com.ticket.show.usecase.view.ShowSearchItemView;
+import com.ticket.show.usecase.GetShowsUseCase;
+import com.ticket.show.usecase.SearchShowsUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -113,7 +113,7 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<SliceResponse<ShowListItemView>> getShowsPage(
+    ApiResponse<SliceResponse<GetShowsUseCase.Item>> getShowsPage(
             @ParameterObject ShowListRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") @Positive
                     int size,
@@ -246,7 +246,7 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<SliceResponse<SaleOpeningSoonDetailView>> getShowsSaleOpeningSoonPage(
+    ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.Item>> getShowsSaleOpeningSoonPage(
             @ParameterObject SaleOpeningSoonRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 16)", example = "16") @Positive int size,
             @Parameter(
@@ -310,7 +310,7 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<SliceResponse<ShowSearchItemView>> searchShows(
+    ApiResponse<SliceResponse<SearchShowsUseCase.Item>> searchShows(
             @ParameterObject ShowSearchRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 20)", example = "20") @Positive int size,
             @Parameter(

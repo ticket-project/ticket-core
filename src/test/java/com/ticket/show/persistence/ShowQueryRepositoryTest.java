@@ -38,17 +38,11 @@ import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowGenre;
-import com.ticket.show.query.LatestShowRow;
-import com.ticket.show.query.SaleOpeningSoonDetailRow;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
-import com.ticket.show.query.SaleOpeningSoonSummaryRow;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListItemRow;
 import com.ticket.show.query.ShowListParam;
 import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSearchItemRow;
 import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -93,7 +87,6 @@ import com.ticket.venue.persistence.VenueQueryRepository;
     ShowQueryRepositoryTest.TestConfig.class,
     ShowQueryRepositoryTest.AuditingTestConfig.class,
     ShowQueryRepository.class,
-    ShowCardImagePathConverter.class,
     VenueQueryRepository.class
 })
 @SuppressWarnings("NonAsciiCharacters")
@@ -158,15 +151,18 @@ class ShowQueryRepositoryTest {
         // 페이지 크기를 2로 잡는 것이 핵심이다. 1단계 query는 size + 1 = 3건만 읽으므로, 장르 조인으로
         // 늘어난 행이 접히지 않으면 그 3건이 전부 "Seoul Popular" 한 공연으로 채워져 두 번째 공연이
         // 페이지에서 밀려난다. size를 크게 잡으면 2단계의 IN 조회가 중복을 흡수해 버려 이 회귀를 놓친다.
-        final CursorPage<ShowListItemRow, ShowCursor> result =
+        final CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 2, ShowSort.POPULAR);
 
         assertThat(result.items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Seoul Normal");
         assertThat(result.hasNext()).isTrue();
-        assertThat(result.items().getFirst().genreNames())
+        assertThat(
+                        showQueryRepository
+                                .findGenreNamesByShowIds(List.of(seoulPopular.getId()))
+                                .get(seoulPopular.getId()))
                 .containsExactlyInAnyOrder("뮤지컬", "연극", "콘서트");
     }
 
@@ -219,12 +215,12 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        final CursorPage<ShowListItemRow, ShowCursor> result =
+        final CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .startsWith(
                         "Seoul Popular",
                         "Seoul Normal",
@@ -242,7 +238,7 @@ class ShowQueryRepositoryTest {
      */
     @Test
     void 지역에_공연장이_하나도_없으면_목록과_집계가_모두_비어_있다() {
-        final CursorPage<ShowListItemRow, ShowCursor> result =
+        final CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.JEJU, null), 10, ShowSort.POPULAR);
         final long count =
@@ -265,35 +261,30 @@ class ShowQueryRepositoryTest {
     void 지역으로_필터링하고_인기순으로_공연을_조회한다() {
         ShowListParam param = new ShowListParam(null, null, Region.SEOUL, null);
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
-                findAllBySearch(param, 10, ShowSort.POPULAR);
-        List<ShowListItemRow> slice = result.items();
+        CursorPage<Show, ShowCursor> result = findAllBySearch(param, 10, ShowSort.POPULAR);
+        List<Show> slice = result.items();
 
         assertThat(slice)
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
-        assertThat(slice).extracting(ShowListItemRow::viewCount).containsExactly(300L, 120L, 50L);
+        assertThat(slice).extracting(Show::getViewCount).containsExactly(300L, 120L, 50L);
         assertThat(result.nextPosition()).isNull();
     }
 
     @Test
     void 커서를_전달하면_다음_페이지를_조회한다() {
         ShowListParam firstPageParam = new ShowListParam(null, null, Region.SEOUL, null);
-        CursorPage<ShowListItemRow, ShowCursor> firstPage =
+        CursorPage<Show, ShowCursor> firstPage =
                 findAllBySearch(firstPageParam, 1, ShowSort.POPULAR);
 
         ShowListParam secondPageParam =
                 new ShowListParam(null, null, Region.SEOUL, firstPage.nextPosition());
-        CursorPage<ShowListItemRow, ShowCursor> secondPage =
+        CursorPage<Show, ShowCursor> secondPage =
                 findAllBySearch(secondPageParam, 1, ShowSort.POPULAR);
 
-        assertThat(firstPage.items())
-                .extracting(ShowListItemRow::title)
-                .containsExactly("Seoul Popular");
+        assertThat(firstPage.items()).extracting(Show::getTitle).containsExactly("Seoul Popular");
         assertThat(firstPage.nextPosition()).isNotNull();
-        assertThat(secondPage.items())
-                .extracting(ShowListItemRow::title)
-                .containsExactly("Seoul Normal");
+        assertThat(secondPage.items()).extracting(Show::getTitle).containsExactly("Seoul Normal");
     }
 
     @Test
@@ -313,11 +304,10 @@ class ShowQueryRepositoryTest {
                 new ShowSearchCriteria(
                         "Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
 
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
-                searchShows(request, 10, ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> result = searchShows(request, 10, ShowSort.POPULAR);
 
         assertThat(result.items())
-                .extracting(ShowSearchItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Seoul Normal");
     }
 
@@ -328,12 +318,12 @@ class ShowQueryRepositoryTest {
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
         setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
 
         assertThat(result.items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
     }
 
@@ -343,12 +333,12 @@ class ShowQueryRepositoryTest {
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
         setCreatedAt("Closed Show", LocalDateTime.now().minusDays(5));
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
 
         assertThat(result.items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Normal", "Seoul Popular", "Closed Show");
     }
 
@@ -386,7 +376,7 @@ class ShowQueryRepositoryTest {
         List<String> paged = new ArrayList<>();
         ShowCursor cursor = null;
         for (int page = 0; page < 5; page++) {
-            CursorPage<ShowListItemRow, ShowCursor> result =
+            CursorPage<Show, ShowCursor> result =
                     findAllBySearch(
                             new ShowListParam(null, null, Region.SEOUL, cursor),
                             1,
@@ -409,9 +399,9 @@ class ShowQueryRepositoryTest {
         setCreatedAt("Closed Show", LocalDateTime.now());
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
-        List<LatestShowRow> rows = showQueryRepository.findLatestShows(null, 10);
+        List<Show> rows = showQueryRepository.findLatestShows(null, 10);
 
-        assertThat(rows).extracting(LatestShowRow::title).endsWith("Closed Show");
+        assertThat(rows).extracting(Show::getTitle).endsWith("Closed Show");
     }
 
     @Test
@@ -419,12 +409,12 @@ class ShowQueryRepositoryTest {
         // 사용자가 명시적으로 고른 정렬의 의미는 바꾸지 않는다.
         setCreatedAt("Closed Show", LocalDateTime.now());
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
     }
 
@@ -433,21 +423,20 @@ class ShowQueryRepositoryTest {
         setCreatedAt("Busan Hit", LocalDateTime.now());
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.GYEONGSANG, null),
                         10,
                         ShowSort.LATEST);
 
-        assertThat(result.items()).extracting(ShowListItemRow::title).containsExactly("Busan Hit");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Busan Hit");
     }
 
     @Test
     void 조건에_맞는_공연이_없으면_빈_슬라이스를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, Region.JEOLLA, null);
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
-                findAllBySearch(param, 10, ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> result = findAllBySearch(param, 10, ShowSort.POPULAR);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
@@ -479,7 +468,7 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null),
                         10,
@@ -487,7 +476,7 @@ class ShowQueryRepositoryTest {
 
         // 같은 공연일(오늘 +5) 안에서는 등록 순서(id 오름차순)로 이어진다.
         assertThat(result.items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Tie A", "Tie B", "Seoul Normal");
     }
 
@@ -511,7 +500,7 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        CursorPage<ShowListItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 findAllBySearch(
                         new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
@@ -623,8 +612,7 @@ class ShowQueryRepositoryTest {
 
     @Test
     void 인기순_다음_커서는_마감여부와_판정_시각을_담지_않는다() {
-        CursorPage<ShowListItemRow, ShowCursor> page =
-                findAllBySearch(seoulParam(null), 1, ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> page = findAllBySearch(seoulParam(null), 1, ShowSort.POPULAR);
 
         assertThat(page.nextPosition()).isNotNull();
         assertThat(page.nextPosition().saleClosedRank()).isNull();
@@ -637,14 +625,14 @@ class ShowQueryRepositoryTest {
         setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(1));
         setCreatedAt("Closed Show", LocalDateTime.now().minusDays(2));
 
-        CursorPage<ShowListItemRow, ShowCursor> firstPage =
+        CursorPage<Show, ShowCursor> firstPage =
                 findAllBySearch(seoulParam(null), 1, ShowSort.LATEST);
 
         assertThat(firstPage.nextPosition()).isNotNull();
         assertThat(firstPage.nextPosition().saleClosedRank()).isZero();
         assertThat(firstPage.nextPosition().evaluatedAt()).isNotNull();
 
-        CursorPage<ShowListItemRow, ShowCursor> secondPage =
+        CursorPage<Show, ShowCursor> secondPage =
                 findAllBySearch(seoulParam(firstPage.nextPosition()), 1, ShowSort.LATEST);
 
         // 페이지를 넘기는 사이 마감된 공연이 그룹을 옮기면 중복·누락이 생긴다. 시각을 고정한다.
@@ -664,8 +652,7 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
-                searchShows(closedCriteria(), 1, ShowSort.LATEST);
+        CursorPage<Show, ShowCursor> result = searchShows(closedCriteria(), 1, ShowSort.LATEST);
 
         assertThat(result.hasNext()).isTrue();
         assertThat(result.nextPosition().saleClosedRank()).isEqualTo(1);
@@ -682,12 +669,11 @@ class ShowQueryRepositoryTest {
         entityManager.clear();
         setCreatedAt("No Window", LocalDateTime.now());
 
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
-                searchShows(closedCriteria(), 1, ShowSort.LATEST);
+        CursorPage<Show, ShowCursor> result = searchShows(closedCriteria(), 1, ShowSort.LATEST);
 
         assertThat(result.items())
                 .as("null 창은 CLOSED 필터에 걸린다")
-                .extracting(ShowSearchItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("No Window");
         assertThat(result.hasNext()).isTrue();
         assertThat(result.nextPosition().saleClosedRank()).isEqualTo(1);
@@ -697,14 +683,14 @@ class ShowQueryRepositoryTest {
 
     @Test
     void 판매_표시_상태를_주지_않으면_상태로_거르지_않는다() {
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 searchShows(
                         new ShowSearchCriteria(null, null, null, null, null, Region.SEOUL, null),
                         10,
                         ShowSort.POPULAR);
 
         assertThat(result.items())
-                .extracting(ShowSearchItemRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
     }
 
@@ -720,26 +706,21 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
+        CursorPage<Show, ShowCursor> result =
                 searchShows(
                         new ShowSearchCriteria(
                                 null, null, SaleDisplayStatus.BEFORE_OPEN, null, null, null, null),
                         10,
                         ShowSort.POPULAR);
 
-        assertThat(result.items())
-                .extracting(ShowSearchItemRow::title)
-                .containsExactly("Before Open");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Before Open");
     }
 
     @Test
     void 판매가_끝난_공연만_거른다() {
-        CursorPage<ShowSearchItemRow, ShowCursor> result =
-                searchShows(closedCriteria(), 10, ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> result = searchShows(closedCriteria(), 10, ShowSort.POPULAR);
 
-        assertThat(result.items())
-                .extracting(ShowSearchItemRow::title)
-                .containsExactly("Closed Show");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Closed Show");
     }
 
     /** 등록일은 JPA auditing이 넣으므로 테스트에서 직접 못 정한다. 최신순 정렬은 이 값이 기준이라 네이티브 UPDATE로 고정한다. */
@@ -760,8 +741,8 @@ class ShowQueryRepositoryTest {
                 .getSingleResult();
     }
 
-    private static List<String> titlesOf(final CursorPage<ShowListItemRow, ShowCursor> page) {
-        return page.items().stream().map(ShowListItemRow::title).toList();
+    private static List<String> titlesOf(final CursorPage<Show, ShowCursor> page) {
+        return page.items().stream().map(Show::getTitle).toList();
     }
 
     private static ShowListParam seoulParam(final @Nullable ShowCursor cursor) {
@@ -797,13 +778,13 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
+        final CursorPage<Show, ShowCursor> result =
                 findSaleOpeningSoonPage(
                         saleOpeningSoon(null, null, null), 10, ShowSort.SALE_START_APPROACHING);
 
         // 이미 판매가 시작된 setUp의 네 공연은 빠진다.
         assertThat(result.items())
-                .extracting(SaleOpeningSoonDetailRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Soon Earlier", "Soon Later");
         assertThat(result.hasNext()).isFalse();
         assertThat(result.nextPosition()).isNull();
@@ -835,7 +816,7 @@ class ShowQueryRepositoryTest {
                                         10,
                                         ShowSort.SALE_START_APPROACHING)
                                 .items())
-                .extracting(SaleOpeningSoonDetailRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Soon Seoul");
 
         assertThat(
@@ -844,7 +825,7 @@ class ShowQueryRepositoryTest {
                                         10,
                                         ShowSort.SALE_START_APPROACHING)
                                 .items())
-                .extracting(SaleOpeningSoonDetailRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Soon Busan");
     }
 
@@ -868,7 +849,7 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
+        final CursorPage<Show, ShowCursor> result =
                 findSaleOpeningSoonPage(
                         new SaleOpeningSoonSearchParam(
                                 null,
@@ -882,9 +863,7 @@ class ShowQueryRepositoryTest {
                         10,
                         ShowSort.SALE_START_APPROACHING);
 
-        assertThat(result.items())
-                .extracting(SaleOpeningSoonDetailRow::title)
-                .containsExactly("Soon Near");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Soon Near");
     }
 
     /**
@@ -907,7 +886,7 @@ class ShowQueryRepositoryTest {
         entityManager.clear();
 
         assertThat(showQueryRepository.findSaleOpeningSoonSummaries(null, 10))
-                .extracting(SaleOpeningSoonSummaryRow::title)
+                .extracting(Show::getTitle)
                 .containsExactly("Soon Summary");
     }
 
@@ -946,13 +925,13 @@ class ShowQueryRepositoryTest {
         final List<String> visited = new ArrayList<>();
         ShowCursor cursor = null;
         for (int page = 0; page < 5; page++) {
-            final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> result =
+            final CursorPage<Show, ShowCursor> result =
                     findSaleOpeningSoonPage(
                             new SaleOpeningSoonSearchParam(
                                     null, null, null, null, null, null, null, cursor),
                             1,
                             ShowSort.SALE_START_APPROACHING);
-            result.items().stream().map(SaleOpeningSoonDetailRow::title).forEach(visited::add);
+            result.items().stream().map(Show::getTitle).forEach(visited::add);
             if (!result.hasNext()) {
                 break;
             }
@@ -973,16 +952,13 @@ class ShowQueryRepositoryTest {
         final ShowSearchCriteria criteria =
                 ShowSearchCriteria.of(null, null, null, null, null, null, null);
 
-        final CursorPage<ShowSearchItemRow, ShowCursor> approaching =
+        final CursorPage<Show, ShowCursor> approaching =
                 searchShows(criteria, 10, ShowSort.SHOW_START_APPROACHING);
-        final CursorPage<ShowSearchItemRow, ShowCursor> popular =
-                searchShows(criteria, 10, ShowSort.POPULAR);
+        final CursorPage<Show, ShowCursor> popular = searchShows(criteria, 10, ShowSort.POPULAR);
 
         // "Closed Show"는 startDate가 어제라 임박순에서만 빠진다.
-        assertThat(approaching.items())
-                .extracting(ShowSearchItemRow::title)
-                .doesNotContain("Closed Show");
-        assertThat(popular.items()).extracting(ShowSearchItemRow::title).contains("Closed Show");
+        assertThat(approaching.items()).extracting(Show::getTitle).doesNotContain("Closed Show");
+        assertThat(popular.items()).extracting(Show::getTitle).contains("Closed Show");
 
         assertThat(approaching.items()).hasSize(3);
         assertThat(countSearchShows(criteria)).isEqualTo(4);
@@ -1011,7 +987,7 @@ class ShowQueryRepositoryTest {
                                         10,
                                         ShowSort.POPULAR)
                                 .items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .contains("No Venue");
     }
 
@@ -1034,7 +1010,7 @@ class ShowQueryRepositoryTest {
                                         10,
                                         ShowSort.POPULAR)
                                 .items())
-                .extracting(ShowListItemRow::title)
+                .extracting(Show::getTitle)
                 .doesNotContain("No Venue");
     }
 
@@ -1047,13 +1023,13 @@ class ShowQueryRepositoryTest {
     // 지역 조건 해석은 application의 몫이다. 이 테스트도 use case와 같은 순서로 -- 지역을 venueId로 먼저
     // 해석한 뒤 Repository를 부른다 -- 조합해야 실제 동작과 같은 것을 검증한다.
 
-    private CursorPage<ShowListItemRow, ShowCursor> findAllBySearch(
+    private CursorPage<Show, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
         return showQueryRepository.findAllBySearch(
                 param, venueIdsOf(param.getRegion()), size, sort);
     }
 
-    private CursorPage<ShowSearchItemRow, ShowCursor> searchShows(
+    private CursorPage<Show, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
         return showQueryRepository.searchShows(
                 criteria, venueIdsOf(criteria.getRegion()), size, sort);
@@ -1063,7 +1039,7 @@ class ShowQueryRepositoryTest {
         return showQueryRepository.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
     }
 
-    private CursorPage<SaleOpeningSoonDetailRow, ShowCursor> findSaleOpeningSoonPage(
+    private CursorPage<Show, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
         return showQueryRepository.findSaleOpeningSoonPage(
                 param, venueIdsOf(param.getRegion()), size, sort);

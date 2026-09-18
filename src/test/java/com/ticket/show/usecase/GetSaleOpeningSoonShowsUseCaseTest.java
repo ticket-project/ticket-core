@@ -13,11 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.SaleOpeningSoonSummaryRow;
-import com.ticket.show.usecase.view.SaleOpeningSoonSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
@@ -26,13 +27,20 @@ import com.ticket.venue.api.VenueSummary;
 class GetSaleOpeningSoonShowsUseCaseTest {
     @Mock private ShowQueryRepository showQueryRepository;
     @Mock private VenueLookupApi venueLookup;
+
+    @Spy
+    private ShowCardImagePathConverter showCardImagePathConverter =
+            new ShowCardImagePathConverter();
+
     @InjectMocks private GetSaleOpeningSoonShowsUseCase useCase;
 
     @Test
     void 판매시작임박_공연_목록을_반환한다() {
         LocalDateTime saleStartDate = LocalDateTime.of(2026, 3, 27, 12, 0);
-        List<SaleOpeningSoonSummaryRow> rows =
-                List.of(new SaleOpeningSoonSummaryRow(1L, "concert", "image", 7L, saleStartDate));
+        List<Show> rows =
+                List.of(
+                        ShowFixture.show(
+                                1L, "concert", 7L, null, null, saleStartDate, 0L, saleStartDate));
         when(showQueryRepository.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(rows);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -54,7 +62,7 @@ class GetSaleOpeningSoonShowsUseCaseTest {
 
         assertThat(output.shows())
                 .containsExactly(
-                        new SaleOpeningSoonSummaryView(
+                        new GetSaleOpeningSoonShowsUseCase.Item(
                                 1L, "concert", "image", "venue", saleStartDate));
         verify(showQueryRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
