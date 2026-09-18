@@ -1,4 +1,4 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import java.util.Objects;
 

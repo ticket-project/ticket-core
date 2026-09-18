@@ -20,9 +20,7 @@ import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
-/**
- * booking local 조회만 검증한다. 등급·가격 조합은 show 쪽 조회가 소유하고 별도로 검증한다.
- */
+/** booking local 조회만 검증한다. 등급·가격 조합은 show 쪽 조회가 소유하고 별도로 검증한다. */
 @Import(SeatAvailabilityQuery.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatAvailabilityQueryTest extends ReadRepositoryTestSupport {
@@ -59,8 +57,7 @@ class SeatAvailabilityQueryTest extends ReadRepositoryTestSupport {
     @Test
     void 좌석ID순으로_회차의_판매_상태를_조회한다() {
         // when
-        List<PerformanceSeatStateRow> result =
-                seatAvailabilityQuery.findSeatStates(performanceId);
+        List<PerformanceSeatStateRow> result = seatAvailabilityQuery.findSeatStates(performanceId);
         // then
         assertThat(result)
                 .extracting(PerformanceSeatStateRow::seatId)

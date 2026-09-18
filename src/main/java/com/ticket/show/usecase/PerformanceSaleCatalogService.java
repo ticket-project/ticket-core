@@ -11,8 +11,8 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
-import com.ticket.show.query.PerformanceSaleQueryPort;
-import com.ticket.show.query.PerformanceSaleQueryPort.PerformanceGradeRow;
+import com.ticket.show.query.PerformanceSaleQuery;
+import com.ticket.show.query.PerformanceSaleQuery.PerformanceGradeRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatAddress;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -23,13 +23,13 @@ import lombok.RequiredArgsConstructor;
  * {@link PerformanceSaleCatalogApi}의 show 소유 구현이다. 판매 좌석 편성과 주문 표시 snapshot에 필요한 회차·venue·좌석·등급
  * 표시값을 한 번에 조회해 booking에게 scalar snapshot만 넘긴다.
  *
- * <p>venue 조합(venue 이름, 좌석 주소)은 이 application 계층이 한다 — persistence adapter ({@code
- * PerformanceSaleQueryPort}의 구현)는 show 자기 DB만 본다.
+ * <p>venue 조합(venue 이름, 좌석 주소)은 이 application 계층이 한다 — local 조회({@code PerformanceSaleQuery}의 구현)는
+ * show 자기 DB만 본다.
  */
 @Service
 @RequiredArgsConstructor
 public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi {
-    private final PerformanceSaleQueryPort performanceSaleQueryPort;
+    private final PerformanceSaleQuery performanceSaleQuery;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;
 
@@ -38,7 +38,7 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
     public PerformanceSaleSnapshot getSaleSnapshot(
             final long performanceId, final Set<Long> seatIds) {
         final PerformanceSaleContext context =
-                performanceSaleQueryPort
+                performanceSaleQuery
                         .findContext(performanceId)
                         .orElseThrow(
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
@@ -60,7 +60,7 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                                                 VenueSeatAddress::seatId, this::toSeatInfo));
 
         final Map<Long, PerformanceSaleSnapshot.GradeInfo> gradeInfoByPerformanceGradeId =
-                performanceSaleQueryPort.findPerformanceGrades(performanceId).stream()
+                performanceSaleQuery.findPerformanceGrades(performanceId).stream()
                         .collect(
                                 Collectors.toMap(
                                         PerformanceGradeRow::performanceGradeId,

@@ -59,8 +59,7 @@ public class GetSeatStatusUseCase {
         admissionGuard.verifyIfRequired(
                 policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
-        final List<SeatStateSnapshotRow> dbStates =
-                seatStateQuery.findSeatStates(performanceId);
+        final List<SeatStateSnapshotRow> dbStates = seatStateQuery.findSeatStates(performanceId);
 
         final Set<Long> redisOccupiedIds = mergeRedisOccupiedIds(performanceId);
 

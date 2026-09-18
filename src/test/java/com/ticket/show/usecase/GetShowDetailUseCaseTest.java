@@ -23,7 +23,7 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.ShowDetailQueryPort;
+import com.ticket.show.query.ShowDetailQuery;
 import com.ticket.show.query.ShowDetailView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -32,7 +32,7 @@ import com.ticket.venue.api.VenueSummary;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowDetailUseCaseTest {
-    @Mock private ShowDetailQueryPort showDetailQueryPort;
+    @Mock private ShowDetailQuery showDetailQuery;
     @Mock private LikeQueryApi likeQuery;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetShowDetailUseCase useCase;
@@ -62,7 +62,7 @@ class GetShowDetailUseCaseTest {
                                 java.math.BigDecimal.valueOf(100000),
                                 java.math.BigDecimal.valueOf(200000)),
                         List.of());
-        when(showDetailQueryPort.findShowDetail(1L)).thenReturn(Optional.of(detail));
+        when(showDetailQuery.findShowDetail(1L)).thenReturn(Optional.of(detail));
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
         when(venueLookup.findSummary(5L))
                 .thenReturn(
@@ -86,7 +86,7 @@ class GetShowDetailUseCaseTest {
         assertThat(output.genreNames()).isEqualTo(detail.genreNames());
         assertThat(output.likeCount()).isEqualTo(10L);
         assertThat(output.venue().name()).isEqualTo("예술의전당");
-        verify(showDetailQueryPort).findShowDetail(1L);
+        verify(showDetailQuery).findShowDetail(1L);
         verify(likeQuery).countByTarget(LikeType.SHOW, 1L);
         verify(venueLookup).findSummary(5L);
     }
@@ -114,7 +114,7 @@ class GetShowDetailUseCaseTest {
                         List.of(),
                         null,
                         List.of());
-        when(showDetailQueryPort.findShowDetail(1L)).thenReturn(Optional.of(detail));
+        when(showDetailQuery.findShowDetail(1L)).thenReturn(Optional.of(detail));
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(0L);
 
         GetShowDetailUseCase.Output output = useCase.execute(new GetShowDetailUseCase.Input(1L));
@@ -124,7 +124,7 @@ class GetShowDetailUseCaseTest {
 
     @Test
     void 공연_상세가_없으면_not_found_data_예외를_던진다() {
-        when(showDetailQueryPort.findShowDetail(1L)).thenReturn(Optional.empty());
+        when(showDetailQuery.findShowDetail(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new GetShowDetailUseCase.Input(1L)))
                 .isInstanceOf(NotFoundException.class);

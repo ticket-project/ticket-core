@@ -1,10 +1,10 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.QGrade.grade;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.persistence.querydsl.QuerydslTupleColumns.required;
+import static com.ticket.show.query.QuerydslTupleColumns.required;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,21 +15,19 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.query.PerformanceVenueLayoutQueryPort;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link PerformanceVenueLayoutQueryPort}의 show 소유 구현이다. show 자기 DB만 본다 — booking data도, venue 좌석
- * 배치 좌표도 여기서 참조하지 않는다. 좌석 배치 좌표·venue 표시값 조합은 {@code
+ * {@link com.ticket.show.api.PerformanceVenueLayoutCatalogApi}이 쓰는 회차 정적 seat-map 표시값 조회다. show 자기
+ * DB만 본다 — booking data도, venue 좌석 배치 좌표도 여기서 참조하지 않는다. 좌석 배치 좌표·venue 표시값 조합은 {@code
  * PerformanceVenueLayoutCatalogService}(application)가 venue module의 공개 계약을 직접 불러서 한다.
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslPerformanceVenueLayoutQueryAdapter implements PerformanceVenueLayoutQueryPort {
+public class PerformanceVenueLayoutQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
     public Optional<PerformanceVenueLayoutContext> findVenueLayoutContext(
             final long performanceId) {
         final Tuple row =
@@ -50,7 +48,6 @@ public class QuerydslPerformanceVenueLayoutQueryAdapter implements PerformanceVe
                         required(row, performance.id), row.get(show.venueId)));
     }
 
-    @Override
     public Optional<Long> findRepresentativePerformanceIdByShowId(final long showId) {
         return Optional.ofNullable(
                 queryFactory
@@ -61,7 +58,7 @@ public class QuerydslPerformanceVenueLayoutQueryAdapter implements PerformanceVe
                         .fetchFirst());
     }
 
-    @Override
+    /** 이 회차에 배정된 모든 PerformanceGrade의 표시값을 반환한다. 가격은 담지 않는다. */
     public List<PerformanceGradeLayoutRow> findGradeLayouts(final long performanceId) {
         return queryFactory
                 .select(
@@ -77,4 +74,7 @@ public class QuerydslPerformanceVenueLayoutQueryAdapter implements PerformanceVe
                 .where(performanceGrade.performance.id.eq(performanceId))
                 .fetch();
     }
+
+    public record PerformanceGradeLayoutRow(
+            Long performanceGradeId, String gradeCode, String gradeName, Integer sortOrder) {}
 }

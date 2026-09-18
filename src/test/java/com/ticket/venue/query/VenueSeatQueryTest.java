@@ -17,8 +17,8 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
 /**
- * venue 공개 계약({@link VenueSeatLookupApi})의 실제 DB 동작을 고정한다. 위임만 하던 {@code
- * VenueSeatLookupService}가 갖고 있던 빈 {@code seatIds} 처리도 이 조회로 왔다.
+ * venue 공개 계약({@link VenueSeatLookupApi})의 실제 DB 동작을 고정한다. 위임만 하던 {@code VenueSeatLookupService}가
+ * 갖고 있던 빈 {@code seatIds} 처리도 이 조회로 왔다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class VenueSeatQueryTest extends InfraReadRepositoryTestSupport {

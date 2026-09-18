@@ -18,8 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
-import com.ticket.show.query.PerformanceSaleQueryPort;
-import com.ticket.show.query.PerformanceSaleQueryPort.PerformanceGradeRow;
+import com.ticket.show.query.PerformanceSaleQuery;
+import com.ticket.show.query.PerformanceSaleQuery.PerformanceGradeRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatAddress;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -27,14 +27,14 @@ import com.ticket.venue.api.VenueSeatLookupApi;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class PerformanceSaleCatalogServiceTest {
-    @Mock private PerformanceSaleQueryPort performanceSaleQueryPort;
+    @Mock private PerformanceSaleQuery performanceSaleQuery;
     @Mock private VenueLookupApi venueLookup;
     @Mock private VenueSeatLookupApi venueSeatLookup;
     @InjectMocks private PerformanceSaleCatalogService service;
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
-        when(performanceSaleQueryPort.findContext(1L)).thenReturn(Optional.empty());
+        when(performanceSaleQuery.findContext(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L)))
                 .isInstanceOf(NotFoundException.class);
@@ -42,9 +42,9 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue가_없는_show면_seatInfo가_빈_맵이다() {
-        when(performanceSaleQueryPort.findContext(1L))
+        when(performanceSaleQuery.findContext(1L))
                 .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", null, null)));
-        when(performanceSaleQueryPort.findPerformanceGrades(1L)).thenReturn(List.of());
+        when(performanceSaleQuery.findPerformanceGrades(1L)).thenReturn(List.of());
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
 
@@ -53,11 +53,11 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
-        when(performanceSaleQueryPort.findContext(1L))
+        when(performanceSaleQuery.findContext(1L))
                 .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
         when(venueSeatLookup.findSeatAddresses(3L, Set.of(10L)))
                 .thenReturn(List.of(new VenueSeatAddress(10L, 1, "가", "A", "1")));
-        when(performanceSaleQueryPort.findPerformanceGrades(1L))
+        when(performanceSaleQuery.findPerformanceGrades(1L))
                 .thenReturn(
                         List.of(
                                 new PerformanceGradeRow(

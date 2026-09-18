@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.query.RegionVenueIds;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CountSearchShowsUseCase {
-    private final ShowListQueryPort showListQueryPort;
+    private final ShowListQuery showListQuery;
     private final VenueLookupApi venueLookup;
 
     public record Input(ShowSearchCriteria criteria) {
@@ -31,7 +31,7 @@ public class CountSearchShowsUseCase {
 
     public Output execute(final Input input) {
         return new Output(
-                showListQueryPort.countSearchShows(
+                showListQuery.countSearchShows(
                         input.criteria(),
                         RegionVenueIds.resolve(venueLookup, input.criteria().getRegion())));
     }

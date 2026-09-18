@@ -1,7 +1,7 @@
-package com.ticket.show.persistence.querydsl;
+package com.ticket.show.query;
 
 import static com.ticket.show.domain.show.QShow.show;
-import static com.ticket.show.persistence.querydsl.QuerydslTupleColumns.required;
+import static com.ticket.show.query.QuerydslTupleColumns.required;
 
 import java.util.List;
 import java.util.Map;
@@ -12,21 +12,21 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.show.query.ShowSummaryBatchQueryPort;
-import com.ticket.show.query.ShowSummaryRow;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB에서 공연 표시값을 배치 조회하는 persistence adapter다. venue 표시값 조합은 여기서 하지 않는다 — {@code venueId}
- * scalar만 담아 넘기고, 실제 venue 조회는 이 포트를 부르는 use case(application)가 한다.
+ * showId 집합으로 공연 표시값을 배치 조회한다. 내 찜 목록처럼 show 내부의 다른 use case가 자기 show 데이터를 조회할 때 쓴다.
+ *
+ * <p>venue 표시값 조합은 여기서 하지 않는다 — {@code venueId} scalar만 담아 넘기고, 실제 venue 조회는 이 조회를 부르는 use
+ * case(application)가 한다.
  */
 @Repository
 @RequiredArgsConstructor
-public class QuerydslShowSummaryBatchQueryAdapter implements ShowSummaryBatchQueryPort {
+public class ShowSummaryBatchQuery {
     private final JPAQueryFactory queryFactory;
 
-    @Override
+    /** 빈 {@code showIds}는 빈 map을 반환한다. */
     public Map<Long, ShowSummaryRow> findSummaries(final Set<Long> showIds) {
         if (showIds.isEmpty()) {
             return Map.of();

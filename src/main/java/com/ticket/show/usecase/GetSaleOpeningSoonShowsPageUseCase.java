@@ -13,7 +13,7 @@ import com.ticket.show.query.SaleOpeningSoonDetailRow;
 import com.ticket.show.query.SaleOpeningSoonDetailView;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListQueryPort;
+import com.ticket.show.query.ShowListQuery;
 import com.ticket.show.query.ShowSort;
 import com.ticket.show.query.VenueDisplays;
 import com.ticket.venue.api.VenueLookupApi;
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetSaleOpeningSoonShowsPageUseCase {
-    private final ShowListQueryPort showListQueryPort;
+    private final ShowListQuery showListQuery;
     private final VenueLookupApi venueLookup;
 
     public record Input(SaleOpeningSoonSearchParam param, int size, ShowSort sort) {
@@ -48,7 +48,7 @@ public class GetSaleOpeningSoonShowsPageUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<SaleOpeningSoonDetailRow, ShowCursor> page =
-                showListQueryPort.findSaleOpeningSoonPage(
+                showListQuery.findSaleOpeningSoonPage(
                         input.param(),
                         RegionVenueIds.resolve(venueLookup, input.param().getRegion()),
                         input.size(),

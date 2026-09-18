@@ -13,8 +13,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 회차 정적 seat-map에 필요한 booking local 판매 편성(PerformanceSeat) 조회다. 이 회차에 실제로 판매 편성된 좌석만 반환한다 — 편성되지 않은 물리
- * Seat는 여기 나타나지 않으므로 seat-map 응답에서도 자연히 제외된다.
+ * 회차 정적 seat-map에 필요한 booking local 판매 편성(PerformanceSeat) 조회다. 이 회차에 실제로 판매 편성된 좌석만 반환한다 — 편성되지 않은
+ * 물리 Seat는 여기 나타나지 않으므로 seat-map 응답에서도 자연히 제외된다.
  */
 @Repository
 @RequiredArgsConstructor
