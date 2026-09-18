@@ -13,8 +13,8 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.query.SeatStateView;
 import com.ticket.booking.seat.query.SeatStatus;
+import com.ticket.booking.seat.usecase.view.SeatStateView;
 
 import lombok.RequiredArgsConstructor;
 

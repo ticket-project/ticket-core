@@ -21,6 +21,12 @@ public interface OrderRepository {
     /** 주문을 잠근 뒤 반환한다. 상태 전이 전에 동시 갱신을 막기 위해 쓴다. */
     Optional<Order> findByOrderKeyAndMemberIdForUpdate(String orderKey, Long memberId);
 
+    /** 잠금 없이 주문을 조회한다. 상태 조회처럼 읽기만 하는 경로가 쓴다. */
+    Optional<Order> findByOrderKeyAndMemberId(String orderKey, Long memberId);
+
+    /** 좌석까지 한 번에 채워 주문을 조회한다. 주문 상세처럼 좌석을 모두 읽는 경로가 쓴다 — 좌석은 id 오름차순이다. */
+    Optional<Order> findDetailByOrderKeyAndMemberId(String orderKey, Long memberId);
+
     boolean existsByMemberIdAndPerformanceIdAndStatus(
             Long memberId, Long performanceId, OrderState status);
 

@@ -1,5 +1,7 @@
 package com.ticket.booking.seat.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -13,10 +15,9 @@ import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
-import com.ticket.booking.seat.query.SeatStateView;
 import com.ticket.booking.seat.query.SeatStatus;
+import com.ticket.booking.seat.usecase.view.SeatStateView;
 import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,18 +33,8 @@ public class GetSeatStatusUseCase {
 
     public record Input(Long performanceId, Long memberId, String admissionToken) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
+            memberId = requirePositiveId(memberId, "memberId");
         }
     }
 

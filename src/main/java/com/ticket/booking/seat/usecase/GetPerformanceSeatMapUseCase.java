@@ -1,5 +1,7 @@
 package com.ticket.booking.seat.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository.PerformanceSeatMapRow;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
@@ -33,12 +34,7 @@ public class GetPerformanceSeatMapUseCase {
 
     public record Input(Long performanceId) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
         }
     }
 

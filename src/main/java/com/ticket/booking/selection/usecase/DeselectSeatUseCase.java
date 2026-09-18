@@ -1,8 +1,8 @@
 package com.ticket.booking.selection.usecase;
 
-import org.springframework.stereotype.Service;
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
-import com.ticket.shared.exception.InvalidRequestException;
+import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,24 +19,9 @@ public class DeselectSeatUseCase {
 
     public record Input(Long performanceId, Long seatId, Long memberId) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
-            if (seatId == null) {
-                throw new InvalidRequestException("seatId는 필수입니다.");
-            }
-            if (seatId <= 0) {
-                throw new InvalidRequestException("seatId는 양수여야 합니다.");
-            }
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
+            seatId = requirePositiveId(seatId, "seatId");
+            memberId = requirePositiveId(memberId, "memberId");
         }
     }
 

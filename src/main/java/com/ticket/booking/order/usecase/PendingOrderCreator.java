@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.OrderStarted;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
-import com.ticket.booking.order.domain.OrderKeyGenerator;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.api.PerformanceSaleSnapshot;
@@ -37,7 +36,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PendingOrderCreator {
     private final OrderRepository orderRepository;
-    private final OrderKeyGenerator orderKeyGenerator;
     private final OrderHoldHistoryRecorder orderHoldHistoryRecorder;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
@@ -58,7 +56,7 @@ public class PendingOrderCreator {
                 new Order(
                         memberId,
                         performanceId,
-                        orderKeyGenerator.generate(),
+                        generateOrderKey(),
                         hold.holdKey(),
                         hold.expiresAt(),
                         // ORDERS의 이 세 컬럼은 NOT NULL이다 -- 표시값이 없는 공연은 주문이 성립하지 않는다.
@@ -92,6 +90,10 @@ public class PendingOrderCreator {
                         startedAt.atZone(clock.getZone()).toInstant()));
 
         return savedOrder.getOrderKey();
+    }
+
+    private String generateOrderKey() {
+        return "ORDER-" + UUID.randomUUID().toString().replace("-", "");
     }
 
     /** 주문 좌석마다 좌석 표시값과 등급 표시값을 붙여 Order에 더한다. 총액은 {@code addOrderSeat}가 좌석 단가로 누적한다. */

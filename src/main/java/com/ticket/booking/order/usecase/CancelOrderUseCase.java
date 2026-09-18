@@ -1,5 +1,7 @@
 package com.ticket.booking.order.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.MemberLookupApi;
@@ -23,12 +25,7 @@ public class CancelOrderUseCase {
             if (orderKey == null || orderKey.isBlank()) {
                 throw new InvalidRequestException("orderKey는 필수입니다.");
             }
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            memberId = requirePositiveId(memberId, "memberId");
         }
     }
 

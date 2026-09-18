@@ -1,5 +1,7 @@
 package com.ticket.booking.order.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -9,10 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRemainingTime;
+import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.order.persistence.OrderQueryRepository;
-import com.ticket.booking.order.query.OrderDetailRow;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.member.api.MemberProfile;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -28,41 +31,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
-    private final OrderQueryRepository orderQueryRepository;
+    private final OrderRepository orderRepository;
     private final MemberLookupApi memberLookup;
     private final Clock clock;
 
     public Output execute(final Input input) {
-        final List<OrderDetailRow> rows =
-                orderQueryRepository.findDetailRows(input.orderKey(), input.memberId());
-        if (rows.isEmpty()) {
-            throw new OrderNotOwnedException(input.orderKey(), input.memberId());
-        }
+        // 좌석까지 join fetch로 함께 읽는다 — 쿼리는 한 개이고 트랜잭션 안에서 좌석 접근이 끝난다.
+        final Order order =
+                orderRepository
+                        .findDetailByOrderKeyAndMemberId(input.orderKey(), input.memberId())
+                        .orElseThrow(
+                                () ->
+                                        new OrderNotOwnedException(
+                                                input.orderKey(), input.memberId()));
 
-        final OrderDetailRow orderRow = rows.getFirst();
         // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
         // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
-        final MemberProfile member = memberLookup.getProfile(orderRow.memberId());
+        final MemberProfile member = memberLookup.getProfile(order.getMemberId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
-        final List<TicketSeat> seats = rows.stream().map(this::toTicketSeat).toList();
+        final List<TicketSeat> seats =
+                order.getOrderSeats().stream().map(this::toTicketSeat).toList();
         final BigDecimal ticketAmount =
-                rows.stream()
-                        .map(OrderDetailRow::unitPrice)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                seats.stream().map(TicketSeat::price).reduce(BigDecimal.ZERO, BigDecimal::add);
         final long remainingSeconds =
-                OrderRemainingTime.seconds(orderRow.status(), orderRow.expiresAt(), now);
+                OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), now);
 
         return new Output(
-                orderRow.orderKey(),
-                orderRow.status(),
-                orderRow.expiresAt(),
+                order.getOrderKey(),
+                order.getStatus(),
+                order.getExpiresAt(),
                 remainingSeconds,
-                new ShowInfo(orderRow.showTitleSnapshot()),
+                new ShowInfo(order.getShowTitleSnapshot()),
                 new PerformanceInfo(
-                        orderRow.performanceId(),
-                        orderRow.performanceStartAtSnapshot(),
-                        orderRow.venueNameSnapshot()),
+                        order.getPerformanceId(),
+                        order.getPerformanceStartAtSnapshot(),
+                        order.getVenueNameSnapshot()),
                 new BookerInfo(member.memberId(), member.name(), member.email()),
                 new PriceInfo(
                         ticketAmount,
@@ -73,14 +77,14 @@ public class GetOrderDetailUseCase {
                 new TicketInfo(seats.size(), seats));
     }
 
-    private TicketSeat toTicketSeat(final OrderDetailRow row) {
+    private TicketSeat toTicketSeat(final OrderSeat orderSeat) {
         return new TicketSeat(
-                row.performanceSeatId(),
-                row.seatId(),
-                row.gradeCodeSnapshot(),
-                row.gradeNameSnapshot(),
-                row.seatLabelSnapshot(),
-                row.unitPrice());
+                orderSeat.getPerformanceSeatId(),
+                orderSeat.getSeatId(),
+                orderSeat.getGradeCodeSnapshot(),
+                orderSeat.getGradeNameSnapshot(),
+                orderSeat.getSeatLabelSnapshot(),
+                orderSeat.getUnitPrice());
     }
 
     public record Input(String orderKey, Long memberId) {
@@ -88,12 +92,7 @@ public class GetOrderDetailUseCase {
             if (orderKey == null || orderKey.isBlank()) {
                 throw new InvalidRequestException("orderKey는 필수입니다.");
             }
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            memberId = requirePositiveId(memberId, "memberId");
         }
     }
 
