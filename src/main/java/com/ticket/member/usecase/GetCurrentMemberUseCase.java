@@ -1,10 +1,11 @@
 package com.ticket.member.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import org.springframework.stereotype.Service;
 
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,7 @@ public class GetCurrentMemberUseCase {
 
     public record Input(Long memberId) {
         public Input {
-            if (memberId == null) {
-                throw new InvalidRequestException("memberId는 필수입니다.");
-            }
-            if (memberId <= 0) {
-                throw new InvalidRequestException("memberId는 양수여야 합니다.");
-            }
+            requirePositiveId(memberId, "memberId");
         }
     }
 
