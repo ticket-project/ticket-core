@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.SaleOpeningSoonSummaryRow;
-import com.ticket.show.query.SaleOpeningSoonSummaryView;
+import com.ticket.show.usecase.view.SaleOpeningSoonSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 

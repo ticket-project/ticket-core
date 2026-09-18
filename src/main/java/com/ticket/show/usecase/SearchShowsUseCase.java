@@ -1,5 +1,7 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requireProvided;
+
 import java.util.List;
 import java.util.Set;
 
@@ -13,8 +15,8 @@ import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.show.query.ShowSearchItemRow;
-import com.ticket.show.query.ShowSearchItemView;
 import com.ticket.show.query.ShowSort;
+import com.ticket.show.usecase.view.ShowSearchItemView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -29,12 +31,8 @@ public class SearchShowsUseCase {
 
     public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
         public Input {
-            if (criteria == null) {
-                throw new InvalidRequestException("request는 필수입니다.");
-            }
-            if (sort == null) {
-                throw new InvalidRequestException("sort는 필수입니다.");
-            }
+            criteria = requireProvided(criteria, "request");
+            sort = requireProvided(sort, "sort");
             if (size <= 0) {
                 throw new InvalidRequestException("size는 1 이상이어야 합니다.");
             }

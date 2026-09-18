@@ -28,8 +28,8 @@ import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.ShowLikeSummaryView;
 import com.ticket.show.query.ShowSummaryRow;
+import com.ticket.show.usecase.view.ShowLikeSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 

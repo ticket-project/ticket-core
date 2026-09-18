@@ -1,5 +1,7 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requireProvided;
+
 import java.util.List;
 import java.util.Set;
 
@@ -11,10 +13,10 @@ import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.SaleOpeningSoonDetailRow;
-import com.ticket.show.query.SaleOpeningSoonDetailView;
 import com.ticket.show.query.SaleOpeningSoonSearchParam;
 import com.ticket.show.query.ShowCursor;
 import com.ticket.show.query.ShowSort;
+import com.ticket.show.usecase.view.SaleOpeningSoonDetailView;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -29,12 +31,8 @@ public class GetSaleOpeningSoonShowsPageUseCase {
 
     public record Input(SaleOpeningSoonSearchParam param, int size, ShowSort sort) {
         public Input {
-            if (param == null) {
-                throw new InvalidRequestException("param는 필수입니다.");
-            }
-            if (sort == null) {
-                throw new InvalidRequestException("sort는 필수입니다.");
-            }
+            param = requireProvided(param, "param");
+            sort = requireProvided(sort, "sort");
             if (size <= 0) {
                 throw new InvalidRequestException("size는 1 이상이어야 합니다.");
             }

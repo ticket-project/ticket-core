@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.query.SaleOpeningSoonSummaryRow;
-import com.ticket.show.query.SaleOpeningSoonSummaryView;
+import com.ticket.show.usecase.view.SaleOpeningSoonSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;

@@ -1,15 +1,16 @@
 package com.ticket.show.usecase;
 
+import static com.ticket.shared.api.InputChecks.requirePositiveId;
+
 import java.time.LocalDateTime;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.persistence.PerformanceQueryRepository;
-import com.ticket.show.query.PerformanceSummaryView;
+import com.ticket.show.usecase.view.PerformanceSummaryView;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,7 @@ public class GetPerformanceSummaryUseCase {
 
     public record Input(Long performanceId) {
         public Input {
-            if (performanceId == null) {
-                throw new InvalidRequestException("performanceId는 필수입니다.");
-            }
-            if (performanceId <= 0) {
-                throw new InvalidRequestException("performanceId는 양수여야 합니다.");
-            }
+            performanceId = requirePositiveId(performanceId, "performanceId");
         }
     }
 

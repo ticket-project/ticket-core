@@ -1,17 +1,15 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase.view;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.venue.api.Region;
-
-public record ShowSearchItemView(
+public record ShowSummaryView(
         Long id,
         @Nullable String title,
         @Nullable String image,
-        @Nullable String venue,
         @Nullable LocalDate startDate,
         @Nullable LocalDate endDate,
-        @Nullable Region region,
-        long viewCount) {}
+        @Nullable String venue,
+        LocalDateTime createdAt) {}
