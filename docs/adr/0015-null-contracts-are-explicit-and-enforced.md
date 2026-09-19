@@ -4,6 +4,9 @@
 
 채택됨 (2026-09-15)
 
+> 2026-09-19 갱신: `TicketException`의 직접 하위 타입은 일곱이 아니라 여덟이다(흩어진 package가
+> 다섯인 것은 그대로). sealed와 exhaustive switch 결정 자체는 그대로다.
+
 [ADR 0002](0002-module-owned-error-contracts.md)와
 [ADR 0010](0010-exceptions-do-not-own-http-status.md)의 오류 설계를 강화한다(대체하지 않는다).
 "module이 자기 오류를 소유한다"와 "예외는 HTTP 상태를 모른다"는 그대로이고, 그 두 규칙이 지금까지

@@ -2,6 +2,11 @@
 
 ## Status
 
+> 2026-09-19 갱신: §8의 `com.ticket.bootstrap`과 §9의 `com.ticket.config` module은 둘 다 없어졌다 —
+> 전역 기술 설정은 `shared.infrastructure`가 갖고 `@Modulith(sharedModules = "shared")` 하나만
+> 선언한다. 본문이 예로 든 `UuidSupplier`도 `java.util.function.Supplier<UUID>`로 대체됐다.
+> Application Module 경계와 이벤트·publication registry에 대한 결정은 그대로 유효하다.
+
 > 2026-09-15 갱신: "모듈 root = cross-module 공개 계약"은
 > [ADR 0014](0014-module-public-contracts-live-in-api-packages.md)가 대체한다 — 공개 계약은 이제
 > `<module>.api`에 있고 `@NamedInterface("api")`로 선언한다. `Type.OPEN` 금지, cross-module JPA

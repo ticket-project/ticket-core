@@ -2,6 +2,11 @@
 
 ## 상태(2026-09-09): 채택·구현됨. ADR 0008 §4를 supersede
 
+> 2026-09-19 갱신: 본문의 package 경로는 그 뒤 리팩터링으로 바뀌었다 — `like.preference.web`은
+> `like.endpoint`, `show.application.usecase`/`like.application.usecase`는 각각 `show.usecase`/
+> `like.usecase`, `MemberLookup`은 `member.api.MemberLookupApi`다. `allowedDependencies`도 module
+> 전체가 아니라 named interface 단위로 적는다(ADR 0014). 소유권 결정 자체는 그대로 유효하다.
+
 ## 배경
 
 ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있다"고 결정했다 —

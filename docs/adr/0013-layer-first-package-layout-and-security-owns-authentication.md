@@ -4,6 +4,12 @@
 
 채택됨 (2026-09-14)
 
+> 2026-09-19 갱신: 아래 2026-09-17 갱신이 적은 `application` → `usecase`/`query`/`port` 중 `query`는
+> [ADR 0017](0017-query-implementations-live-in-persistence.md) 이후 없어졌다 — 읽기 모델과 조회
+> 타입도 `usecase`가 갖는다. 본문의 `MemberAccountOperations`는 `member.api.MemberAccountApi`,
+> `AccessTokenAuthenticator`는 `security.api`에 있고(ADR 0014), 감사 base entity는 `booking.domain`이
+> 아니라 `shared.jpa.AuditedEntity`다(ADR 0018).
+
 > 2026-09-17 갱신: "모듈 → 계층" 배치는
 > [ADR 0016](0016-capability-first-layout-inside-modules.md)이 대체했다. 계층 이름은 역할 이름이 되고
 > (`application` → `usecase`/`query`/`port`, `infrastructure` → `persistence`), `booking`은 역할보다

@@ -2,6 +2,13 @@
 
 ## 상태(2026-09-07): 채택·구현됨. ADR 0003 §3·§11, ADR 0005 §4를 module set·DAG 범위에서 다시 supersede
 
+> 2026-09-19 갱신: 본문의 package 경로와 타입 이름은 그 뒤 리팩터링으로 거의 다 바뀌었다 —
+> `PerformanceSalesPolicy`는 `booking.salespolicy.domain`, cross-module 계약은 `<module>.api`에서
+> `...Api` 접미사를 갖고(`PerformanceSaleCatalogApi`, `VenueLookupApi`), `VenueDisplays`는
+> `show.usecase`에 있다. `QuerydslShowPredicates`·`QuerydslShowConditionBuilder`·`shared.UuidSupplier`는
+> 없다. `favorite`는 `like`로 개명됐다(ADR 0008) — 본문이 현재형으로 적은 `favorite`는 그 시점의
+> 기록이다. BC 경계 결정 자체는 그대로 유효하다.
+
 **2026-09-13 후속 결정**: 아래 §6의 관측 중 전역 HTTP security 소유권은 ADR 0012가 대체한다.
 `account`/`auth`/`oauth`는 member 내부 capability로 유지하고, BC가 아닌 기술 Application Module
 `security`만 신설했다. 따라서 member 자체를 여러 BC로 분해하지 않는 결정은 유지된다.
