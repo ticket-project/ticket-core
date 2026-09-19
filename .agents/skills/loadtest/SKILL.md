@@ -35,7 +35,7 @@ Gatling 소스와 실행 옵션의 원본은 형제 저장소 `../gatling-test`�
 5. Simulation 또는 정합성 JUnit 테스트를 실행한다.
 6. 실패율, 응답 시간, admitted/waiting 비율, safe TPS, order 성공·거부 건수를 확인한다.
 
-**정확한 옵션 이름과 명령은 [ticket-open-local.md](../../../docs/load-test/ticket-open-local.md)를
+**정확한 옵션 이름과 명령은 [load-test.md](../../../docs/load-test.md)를
 그대로 쓰고 외워서 조립하지 않는다.**
 
 ## 시나리오
@@ -75,7 +75,7 @@ Gatling 소스와 실행 옵션의 원본은 형제 저장소 `../gatling-test`�
 - `executor_queued_tasks`가 256에 오래 머물거나 queue 포화 경고가 반복되면 이전 회차 작업이 현재
   부하와 겹친 상태다. **backlog가 해소되기 전에 다음 부하를 넣지 않는다.**
 - 지표와 PromQL은 [operations.md의 Core 용량 관측](../../../docs/operations.md#core-용량-관측)을 따른다.
-- 완료 기준은 [ticket-open-local.md](../../../docs/load-test/ticket-open-local.md)의 목록을 그대로 쓴다.
+- 완료 기준은 [load-test.md](../../../docs/load-test.md)의 목록을 그대로 쓴다.
 
 ## 연속 실행 격리
 
