@@ -9,11 +9,10 @@
 #   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다).
 #      vendored Matt Pocock 스킬(skills-lock.json에 등록된 것)의 예시 링크는 상류
 #      문서 내용이라 제외한다.
-#   3. docs/archive 각 파일에 "현행 아님" 배너가 있는지
-#   4. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
-#   5. UTF-8 BOM이 섞이지 않았는지
-#   6. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
-#   7. 오래 손대지 않은 문서 보고 (실패시키지 않음)
+#   3. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
+#   4. UTF-8 BOM이 섞이지 않았는지
+#   5. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
+#   6. 오래 손대지 않은 문서 보고 (실패시키지 않음)
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
 # 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. Stop 훅이 매 턴 이 스크립트를 돌리므로
@@ -31,14 +30,14 @@ fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 미커밋 .md만 본다. 저장소 전체·git 이력을 훑는 검사 3·7은 건너뛴다.
+# --changed: 미커밋 .md만 본다. git 이력을 훑는 검사 6은 건너뛴다.
 # Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
 SCOPE="all"
 [ "${1:-}" = "--changed" ] && SCOPE="changed"
 
-# 검사 대상 문서 목록. docs/archive는 완료된 기록이라 제외한다.
+# 검사 대상 문서 목록.
 if [ "$SCOPE" = "changed" ]; then
-  DOCS=$(git status --porcelain -- '*.md' | sed 's/^...//' | grep -v '^docs/archive/' | sort -u)
+  DOCS=$(git status --porcelain -- '*.md' | sed 's/^...//' | sort -u)
   if [ -z "$DOCS" ]; then
     echo "ok    바뀐 문서 없음"
     exit 0
@@ -49,11 +48,10 @@ else
   VENDORED=$(node -e 'try{console.log(Object.keys(JSON.parse(require("fs").readFileSync("skills-lock.json","utf8")).skills).join("|"))}catch(e){}' 2>/dev/null)
   if [ -n "${VENDORED:-}" ]; then
     DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
-            | grep -v '^docs/archive/' \
             | grep -vE "^\.(claude|agents)/skills/(${VENDORED})/" | sort -u )
   else
     DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
-            | grep -v '^docs/archive/' | sort -u )
+            | sort -u )
   fi
 fi
 
@@ -94,21 +92,7 @@ done < <(printf '%s\n' "$DOCS" \
          | sort -u)
 [ "$broken" -eq 0 ] && ok "문서 포인터 전부 실재"
 
-# 3 ─ 아카이브 배너 (저장소 전체 검사)
-if [ "$SCOPE" = "all" ] && [ -d docs/archive ]; then
-  archive_files=$(git ls-files 'docs/archive/*.md' | grep -v '/README.md$')
-  if [ -n "$archive_files" ]; then
-    nobanner=$(printf '%s\n' "$archive_files" \
-               | xargs awk 'FNR==1 && $0 !~ /완료·폐기된 기록/ { print FILENAME }' 2>/dev/null)
-    if [ -n "$nobanner" ]; then
-      while IFS= read -r f; do err "$f 에 현행 아님 배너가 없다"; done <<< "$nobanner"
-    else
-      ok "docs/archive 배너 전부 존재"
-    fi
-  fi
-fi
-
-# 4 ─ 스킬 프론트매터
+# 3 ─ 스킬 프론트매터
 if [ -d .agents/skills ]; then
   skills=$(find -L .agents/skills -name 'SKILL.md')
   skillcount=$(printf '%s\n' "$skills" | grep -c . )
@@ -131,7 +115,7 @@ if [ -d .agents/skills ]; then
   fi
 fi
 
-# 5 ─ BOM
+# 4 ─ BOM
 # awk 문자열의 8진 이스케이프로 EF BB BF를 비교한다. gawk/mawk 모두에서 동작한다.
 bomlist=$(printf '%s\n' "$DOCS" \
           | xargs awk 'FNR==1 && substr($0,1,3)=="\357\273\277" { print FILENAME }' 2>/dev/null)
@@ -142,7 +126,7 @@ else
 fi
 
 
-# 6 ─ 관측 태그와 실패 기록 대조
+# 5 ─ 관측 태그와 실패 기록 대조
 # 근거 없는 규칙이 다시 쌓이는 것을 막는다. 문서에 규칙을 남기려면 실제 관측이 있어야 한다.
 if [ ! -f "$OBS" ]; then
   err "$OBS 가 없다. 관측된 실패를 적는 곳이 있어야 규칙을 지울 수 있다"
@@ -170,7 +154,7 @@ if [ "$SCOPE" = "changed" ]; then
 fi
 
 echo
-# 7 ─ 신선도 보고 (실패시키지 않는다)
+# 6 ─ 신선도 보고 (실패시키지 않는다)
 # 손으로 적는 "기준일" 프론트매터는 반드시 실제와 어긋난다. git 이력을 신선도 신호로 쓴다.
 # git log는 최신순이므로 파일을 처음 만난 시점이 그 파일의 최신 커밋이다.
 STALE_DAYS=${STALE_DAYS:-120}
