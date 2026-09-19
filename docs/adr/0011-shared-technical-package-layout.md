@@ -4,6 +4,12 @@
 
 채택됨 (2026-09-10)
 
+> 2026-09-19 갱신: 본문의 `<module>.application`/`<module>.infrastructure`는 없어졌다
+> (`usecase`/`persistence`, ADR 0016). `shared`의 named interface는 셋이 아니라 넷이고
+> (`api`/`web`/`exception`/`jpa`, ADR 0018), `AuditorPrincipal`은 `shared.api`에 있다. 업무 모듈은
+> `shared :: *` 와일드카드를 쓰지 않고 필요한 named interface만 명시한다. shared가 무엇을 담고
+> 무엇을 담지 않는지에 대한 결정 자체는 그대로다.
+
 > 2026-09-14 갱신: `shared.config`라는 이름은
 > [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이
 > `shared.infrastructure`로 바꿨다. 아래 본문의 `shared.config`는 그 패키지를 가리킨다. 무엇을

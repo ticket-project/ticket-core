@@ -1,5 +1,9 @@
 # 업무 예외는 HTTP 상태를 모른다 — 웹 계층이 상태를 정한다
 
+> 2026-09-19 갱신: 본문이 예로 든 `AdmissionExceptionHandler`는 없다. `booking`은 오류 계층 둘
+> (`BookingException`·`AdmissionTokenException`)을 갖지만 handler는 `BookingExceptionHandler` 하나가
+> 둘 다 잡는다 — "handler는 module에 하나"라는 규칙이 이겼다. 원칙 자체는 그대로다.
+
 > 2026-09-15 갱신: [ADR 0015](0015-null-contracts-are-explicit-and-enforced.md)가 이 결정을 강화했다 —
 > module base 예외를 sealed로 만들어 handler switch를 exhaustive하게 하고 `default` 분기를 없앴다.
 > "예외는 HTTP를 모르고 웹 계층이 상태를 정한다"는 원칙 자체는 그대로다.

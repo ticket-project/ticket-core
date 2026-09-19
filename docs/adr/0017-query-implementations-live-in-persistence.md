@@ -4,6 +4,13 @@
 
 채택됨 (2026-09-18)
 
+> 2026-09-19 갱신: **이 ADR이 남긴다고 한 `query` package는 그 뒤 전부 없어졌다.** 읽기 모델과
+> 검색 조건, 커서·정렬 타입(`ShowCursor`/`ShowSort`)은 `<module>.usecase`가 갖고 응답 항목은 그
+> use case의 중첩 record다. `QuerydslTupleColumns`는 `ShowQueryRepository`가 흡수했고,
+> `APPROVED_QUERY_REPOSITORIES`는 여섯이 아니라 다섯이며 `query는_조립과_HTTP를_모른다` 규칙은
+> 없다(`com.ticket.ArchitectureRulesTest`가 원본). 아래 후속 메모가 적은 "남은 query package 둘"도
+> 지금은 없다. 조회 구현이 `persistence`에 있다는 결정 자체는 그대로 유효하다.
+
 [ADR 0016](0016-capability-first-layout-inside-modules.md)이 `query`에 준 두 역할 중 **조회 구현**
 부분만 `persistence`로 옮긴다. `query`는 읽기 모델(`*Row`/`*View`/`*Info`)과 검색 조건
 (`*Param`/`*Criteria`), 커서·정렬 타입(`ShowCursor`/`ShowSort`)을 계속 소유한다. 0016의 나머지

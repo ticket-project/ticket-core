@@ -4,6 +4,12 @@
 
 채택됨 (2026-09-17)
 
+> 2026-09-19 갱신: 이 ADR이 `application`을 `usecase`/`query`/`port` 셋으로 나눈 것 중 `query`는
+> [ADR 0017](0017-query-implementations-live-in-persistence.md)과 그 후속 정리로 없어졌다 — 조회
+> 구현은 `persistence`, 읽기 모델과 조회 타입은 `usecase`가 갖는다. 본문이 예로 든
+> `show.persistence.querydsl.QuerydslShowListQueryAdapter`도 없다. `member`의 역할 폴더는 여섯이
+> 아니라 일곱이다(`api`·`domain`·`endpoint`·`exception`·`password`·`persistence`·`usecase`).
+
 [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)의 "모듈 → 계층"
 배치를 이 부분에 한해 대체한다. 그 ADR의 나머지 결정(**`security`만 기능으로 나눈다**)은 그대로
 유효하다. Application Module 경계([ADR 0003](0003-spring-modulith-application-module-boundaries.md),

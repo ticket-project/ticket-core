@@ -4,6 +4,9 @@
 
 채택됨 (2026-09-15)
 
+> 2026-09-19 갱신: 공개된 named interface는 아홉이 아니라 열이다 — ADR 0018이 `shared :: jpa`를
+> 더했다. 목록의 원본은 `com.ticket.ArchitectureRulesTest`다.
+
 [ADR 0003](0003-spring-modulith-application-module-boundaries.md)의 "모듈 root = cross-module
 공개 계약"과 [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)의
 계층 이름 `web`을 이 부분에 한해 대체한다. 두 ADR의 나머지 결정(Application Module 경계, 모듈 →

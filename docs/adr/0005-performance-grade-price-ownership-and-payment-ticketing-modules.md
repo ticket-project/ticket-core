@@ -2,6 +2,11 @@
 
 ## 상태(2026-09-04): 채택·구현됨. ADR 0003을 module set/DAG 범위에서 부분적으로 supersede한다.
 
+> 2026-09-19 갱신: 이 ADR이 적은 module 12개는 ADR 0006 이후 8개다
+> (`com.ticket.ModularityTests`가 원본). `Ticket`의 자리도 `booking.domain.ticket`이 아니라
+> `booking.ticket.domain`이다(ADR 0016). 가격 원본이 `PerformanceGrade`이고 payment/ticketing을
+> entity-only로 시작한다는 결정 자체는 그대로다.
+
 **2026-09-13 호환성 보완**: 가격 원본은 계속 PerformanceGrade이고 ShowGrade/ShowSeat도 복원하지 않는다.
 기존 프론트가 소비하는 공연 상세 `grades`와 `GET /api/v1/shows/{showId}/seats`는 현재 시드에서 모든
 회차의 등급·가격·좌석 배치가 같다는 조건 아래 가장 이른 회차의 snapshot으로 제공한다. 정확한 회차별
