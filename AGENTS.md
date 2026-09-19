@@ -41,8 +41,7 @@
 
 **현재 사실은 문서보다 코드와 executable test가 우선이다** — `com.ticket.ModularityTests`,
 `DomainIsolationTest`, `AggregateAssociationTest`가 모듈 경계·aggregate 규칙을 강제한다.
-`docs/archive/`는 완료·폐기된 기록이다. **요청받지 않는 한 읽지 않고**, 현재 구조의 근거로
-인용하지 않는다.
+완료·폐기된 기록은 문서로 남기지 않는다 — 그 자리는 `git log`다.
 
 부하 테스트의 실제 시나리오와 실행 옵션은 형제 저장소 `../gatling-test`를 기준으로 본다.
 
