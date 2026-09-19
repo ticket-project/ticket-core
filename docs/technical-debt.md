@@ -69,9 +69,9 @@ TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지�
 |---|---|---|---|---|---|
 | OE-01 | yagni | `*/domain/*Repository.java`, `*/persistence/*RepositoryAdapter.java`, `SpringData*JpaRepository` | 저장소 하나에 타입 3개 ×13벌. Adapter는 1:1 위임이다 — `LikeRepositoryAdapter`는 5개 메서드 중 4개가 시그니처까지 그대로 전달한다 | Spring Data 인터페이스가 이미 포트다. `SpringData*JpaRepository`만 남긴다 | −724줄, 파일 −26 |
 | OE-02 | yagni | `*/exception/**` | 오류 코드 1개당 예외 클래스 1개(31개 — `TicketException`과 module 공통 base 4개 포함). `*ErrorCode` enum이 이미 가진 목록을 클래스 이름으로 한 번, `sealed ... permits` 목록으로 또 한 번 적는다 | HTTP 상태를 `ErrorCode` enum에 올리고 module당 예외 1개 + 진단 필드 | −500줄 |
-| OE-03 | native | `*ControllerDocs` 전부 | 인터페이스 14개(`*/endpoint/docs/**`에 10개, 나머지는 `booking.*.endpoint`·`security.auth`에 flat), 각각 구현 1개, 합계 1,176줄 | 애너테이션을 controller 메서드에 직접 붙인다 | 순 −300줄, 파일 −14 |
+| OE-03 | native | `*ControllerDocs` 전부 | 인터페이스 14개(`*/endpoint/docs/**`에 12개, 나머지 2개는 계층 package를 쓰지 않는 `security.auth`에 flat), 각각 구현 1개, 합계 1,176줄 | 애너테이션을 controller 메서드에 직접 붙인다 | 순 −300줄, 파일 −14 |
 | ~~OE-04~~ | yagni | `*/query/*QueryPort.java` | **완료(2026-09-18).** local 조회 14쌍의 `*QueryPort`와 `Querydsl*QueryAdapter`를 `query` package의 구체 `*Query`로 합쳤고, venue의 위임 service 2개는 `*Query`가 공개 API를 직접 구현하며 사라졌다 | — | 실측 파일 −16 |
-| OE-05 | shrink | `*/domain/*AuditedEntity.java` | 같은 38줄을 module마다 복사 ×6 | `shared`에 `@MappedSuperclass` 기반 1개. `@Modulith(sharedModules = "shared")`가 이미 있다 | −190줄 |
+| ~~OE-05~~ | shrink | `*/domain/*AuditedEntity.java` | **완료(2026-09-19).** 6벌을 `shared.jpa.AuditedEntity` 1개로 합쳤고 entity 21개가 직접 상속한다. `shared.api`(JPA 참조 금지)·`shared.persistence`(역할 이름이라 `..domain..`이 못 참조)를 둘 다 쓸 수 없어 네 번째 named interface `shared :: jpa`를 열었다. `venue`·`payment`가 처음으로 의존(`shared`)을 갖는다. 배경은 [ADR 0018](adr/0018-audit-base-entity-lives-in-shared.md) | 실측 파일 −5 |
 | OE-06 | native | `build.gradle`, `shared/infrastructure/P6SpyConfig.java` | SQL 파라미터 로깅에 p6spy 의존성 + 47줄 설정 | Hibernate 자체 `org.hibernate.orm.jdbc.bind=TRACE` | −47줄, 의존성 −1 |
 | OE-07 | delete | `build.gradle`의 `dumpEpArgs` task | 참조 0개인 디버그 task. 함께 적혀 있던 Spring Initializr 기본 생성물 HELP.md는 이미 지워졌다 | 없음 | −20줄 |
 | OE-08 | stdlib | `security/token/UuidSupplier.java`, `UuidSupplierConfig.java` | 테스트 고정을 위해 `@FunctionalInterface` + `@Bean`을 직접 만들었다 | `java.util.function.Supplier<UUID>` | −30줄, 파일 −2 |
@@ -79,7 +79,8 @@ TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지�
 | OE-10 | native | `build.gradle` | `spring-context`·`spring-tx`·`spring-core`·`spring-beans`·`slf4j-api`·`spring-data-jpa`·`jakarta.persistence-api`를 명시 선언 | starter가 전이로 가져온다. 선언만 지운다(산출물 변화 없음) | −7줄 |
 | ~~OE-11~~ | yagni | `*/query/*Query.java` | **완료(2026-09-18).** local 조회 구현 14개를 module별 `persistence`의 조회 Repository 6개(`ShowQueryRepository`, `PerformanceQueryRepository`, `VenueQueryRepository`, `PerformanceSeatQueryRepository`, `OrderQueryRepository`, `LikeQueryRepository`)로 합쳤다. 그 뒤 주문 상세·상태가 `OrderRepository`의 `@Query`로 옮겨가면서 `OrderQueryRepository`는 사라져 지금은 5개다(2026-09-19). 정렬·커서·판매 상태 helper 3개는 `ShowQueryRepository`의 private 메서드로 흡수됐고, `RegionVenueIds`와 `SeatStateSnapshotRow`는 사라졌다(`venue.query`·`like.query` package도 함께). `query`에는 읽기 모델만 남는다 | — | 실측 최상위 타입 −13(404→391), Spring bean −11(152→141), main 파일 −14(499→485), −189줄 |
 
-남은 항목 합계 약 −1,820줄(main의 9%, OE-09 완료분 제외), 의존성 −1. OE-04·OE-09·OE-11은 완료했다.
+남은 항목 합계 약 −1,630줄(main의 8%, OE-05·OE-09 완료분 제외), 의존성 −1.
+OE-04·OE-05·OE-09·OE-11은 완료했다.
 
 OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 Query"와
 `docs/readability-guidelines.md` §3이 원본이다 — 자기 module DB 조회에는 1:1 port/adapter를
@@ -87,8 +88,8 @@ OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 
 구현이 `query`에서 `persistence`의 `*QueryRepository`로 옮겨지면서 그 기준 문서(`architecture.md`의
 "Repository와 조회 Repository", `code-conventions.md`, `readability-guidelines.md`, `testing.md`)도
 함께 갱신했고, 배경은 [ADR 0017](adr/0017-query-implementations-live-in-persistence.md)이다. 나머지 OE
-항목(OE-01 Repository 제거, OE-02 예외 통합, OE-03 ControllerDocs 제거, OE-05 공통 기반 클래스)은
-이 작업 범위가 아니었고 그대로 남아 있다.
+항목(OE-01 Repository 제거, OE-02 예외 통합, OE-03 ControllerDocs 제거)은 이 작업 범위가 아니었고
+그대로 남아 있다. OE-05(공통 기반 클래스)는 그 뒤 ADR 0018로 따로 처리했다.
 
 **보류 — 지우지 않는다**: `payment` module(9파일 328줄)은 module 밖 호출자가 없지만 죽은 코드가
 아니다. `db/migration-vendor/{h2,oracle}/payment/V1__create_payments.sql`이 실제 `payments` 테이블을
