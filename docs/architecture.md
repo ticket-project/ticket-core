@@ -16,7 +16,8 @@
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
   `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은 `shared.api`·`shared.web`·
-  `shared.exception`, 공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은 `security`에 둔다.
+  `shared.exception`·`shared.jpa`, 공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은
+  `security`에 둔다.
 - **다른 모듈이 쓰는 공개 계약은 `<module>.api`에 두고 `@NamedInterface("api")`로 선언한다**
   ([ADR 0014](adr/0014-module-public-contracts-live-in-api-packages.md)). 작은 interface와 불변
   `record` snapshot, enum만 두고 구현은 `endpoint`/`usecase`/`domain`/`persistence`/
@@ -62,7 +63,7 @@
 아래는 **왜 그 edge가 허용되는가**만 적는다.
 
 - `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 `shared :: api`,
-  `shared :: web`, `shared :: exception` 셋을 필요한 만큼 명시해 참조한다 — `shared :: *`
+  `shared :: web`, `shared :: exception`, `shared :: jpa` 넷을 필요한 만큼 명시해 참조한다 — `shared :: *`
   와일드카드는 쓰지 않는다.
 - `security -> member`는 Authorization header의 access token을 member의 공개 계약으로 검증하고
   `AuthenticatedMember`를 SecurityContext에 넣기 위한 단방향 의존이다. security는 전역 API URL
@@ -76,8 +77,9 @@
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
   `PerformanceSaleCatalogApi`/`PerformanceVenueLayoutCatalogApi`를 show가 façade로 유지하기
   때문이다.
-- `payment`는 entity-only 단계라 `shared`도 참조하지 않는 완전한 leaf다 —
-  controller가 없어 응답 봉투가, 자기 오류 타입을 던지지 않아 `error`도 필요 없다.
+- `payment`는 entity-only 단계라 업무 모듈 의존이 없다. 다만 감사 컬럼 때문에 `shared :: jpa`
+  하나를 참조한다(ADR 0018) — controller가 없어 `shared :: web`이, 자기 오류 타입을 던지지 않아
+  `shared :: exception`이 필요 없다.
 - 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
 
 ## Aggregates
@@ -212,8 +214,9 @@ member                 like                venue           payment        show
 └─ exception
 ```
 
-`member.password`는 계약(`PasswordHasher`)과 Spring Security 구현, bean 설정을 한 묶음으로 둔
-작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다.
+`member.password`는 Spring Security `PasswordEncoder` bean 설정(`PasswordHashingConfig`)만 두는
+작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다. 옛
+`PasswordHasher` 래퍼는 걷어냈고 `member`가 `PasswordEncoder`를 직접 쓴다.
 
 `venue`는 공개 계약(`venue.api`)을 `venue.persistence.VenueQueryRepository implements
 VenueLookupApi, VenueSeatLookupApi`가 직접 구현해서 `usecase`가 없다. 위임만 하는 service를
@@ -222,8 +225,8 @@ VenueLookupApi, VenueSeatLookupApi`가 직접 구현해서 `usecase`가 없다. 
 `show`의 정렬·커서·판매 상태 조건 helper 셋(`QuerydslShowSortResolver`,
 `QuerydslShowCursorConditionBuilder`, `SaleDisplayStatusPredicates`)은 별도 class가 아니라
 `ShowQueryRepository`의 private 메서드다 — 쓰는 곳이 그 한 class뿐이라 Spring 빈으로 둘 이유가
-없다. 두 조회 Repository가 함께 쓰는 `QuerydslTupleColumns`만 `show.persistence`에
-package-private으로 남는다. package-private으로 유지하려면 쓰는 쪽과 같은 package에 있어야 한다.
+없다. 두 조회 Repository가 함께 쓰던 `QuerydslTupleColumns`도 `ShowQueryRepository`가 흡수해
+`show.persistence`에는 조회 Repository 둘만 남는다.
 
 ### booking — 업무(capability)를 먼저 보여준다
 
@@ -290,11 +293,12 @@ Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`securit
 관한 코드인가"가 더 나은 탐색 단위다. `auth`(가입·로그인·갱신·로그아웃·탈퇴 조립과 인증
 Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain·handler·provider 통신·응답
 해석·인증 코드·외부 unlink), `token`(토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성
-기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이며, **각 폴더
+기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이다. 여기에
+다른 모듈에 공개하는 계약만 담는 `api`(`AccessTokenAuthenticator`)가 더해진다 — **각 폴더
 안에 역할 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
 하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
 
-`shared`는 공개 계약을 `api`/`web`/`exception` 세 named interface에 나눠 두고, 실행 배선·설정 구현은
+`shared`는 공개 계약을 `api`/`web`/`exception`/`jpa` 네 named interface에 나눠 두고, 실행 배선·설정 구현은
 `shared.infrastructure`에 둔다. 업무 모듈에서 갈 곳이 애매한 타입을 `shared`로 보내지 않는다.
 
 ### domain 아래 묶음
@@ -485,9 +489,14 @@ com/ticket/<module>/exception/
   <Module>Exception.java          abstract sealed extends com.ticket.shared.exception.TicketException
                                   (errorCode·message·data만) -- permits로 하위 타입을 닫는다
   <구체 예외>.java                 final. errorCode·메시지·data를 생성자에서 확정(상태는 없다)
-  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), base 타입 하나만 잡고
+  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), 자기 module의 base 타입만 잡고
                                           구체 타입 -> HTTP 상태를 exhaustive switch로 정한다
 ```
+
+한 module이 성격이 다른 오류 계층을 둘 가질 수 있다. `booking`이 그렇다 — `BookingErrorCode`와
+`AdmissionErrorCode`, base 타입 `BookingException`과 `AdmissionTokenException`을 갖고
+`BookingExceptionHandler` 하나가 둘 다 잡는다. 대기열 입장 실패는 예매 업무 실패와 원인이 달라
+코드 공간을 나누고, handler는 module에 하나라는 규칙은 지킨다.
 
 **module base 예외는 sealed다.** `permits` 목록이 곧 handler switch가 덮어야 할 집합이라, 새 예외를
 추가하면서 HTTP 매핑을 빠뜨리면 runtime이 아니라 컴파일이 실패한다. 그래서 handler switch에
