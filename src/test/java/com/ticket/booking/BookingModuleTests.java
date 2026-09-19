@@ -12,7 +12,6 @@ import com.ticket.member.api.MemberLookupApi;
 import com.ticket.security.api.AccessTokenAuthenticator;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
-import com.ticket.show.api.ShowPerformanceLookupApi;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은 {@code
@@ -38,7 +37,6 @@ import com.ticket.show.api.ShowPerformanceLookupApi;
 class BookingModuleTests {
     @MockitoBean private PerformanceSaleCatalogApi performanceSaleCatalog;
     @MockitoBean private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
-    @MockitoBean private ShowPerformanceLookupApi showPerformanceLookup;
     @MockitoBean private MemberLookupApi memberLookup;
     @MockitoBean private AccessTokenAuthenticator accessTokenAuthenticator;
     @MockitoBean private JPAQueryFactory jpaQueryFactory;
