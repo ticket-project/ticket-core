@@ -1,4 +1,4 @@
-package com.ticket.booking.salespolicy.endpoint;
+package com.ticket.booking.salespolicy.endpoint.docs;
 
 import jakarta.validation.constraints.Positive;
 
