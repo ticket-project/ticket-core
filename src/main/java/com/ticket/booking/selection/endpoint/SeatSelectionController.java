@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.booking.selection.endpoint.docs.SeatSelectionControllerDocs;
 import com.ticket.booking.selection.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.selection.usecase.DeselectSeatUseCase;
 import com.ticket.booking.selection.usecase.SelectSeatUseCase;

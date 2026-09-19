@@ -1,10 +1,11 @@
-package com.ticket.booking.order.endpoint;
+package com.ticket.booking.order.endpoint.docs;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.ResponseEntity;
 
+import com.ticket.booking.order.endpoint.CreateHoldRequest;
 import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
