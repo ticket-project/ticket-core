@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,13 +23,13 @@ import org.redisson.api.RedissonClient;
 class RedisRefreshTokenStoreTest {
     @Mock private RedissonClient redissonClient;
     @Mock private RBucket<String> bucket;
-    @Mock private UuidSupplier uuidSupplier;
+    @Mock private Supplier<UUID> uuidSupplier;
     @InjectMocks private RedisRefreshTokenStore refreshTokenStore;
 
     @Test
     void creates_refresh_token_and_stores_member_id() {
         doReturn(bucket).when(redissonClient).getBucket(anyString());
-        when(uuidSupplier.newUuid())
+        when(uuidSupplier.get())
                 .thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String token = refreshTokenStore.createRefreshToken(3L, 120L);

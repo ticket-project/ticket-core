@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,7 +37,6 @@ import com.ticket.booking.selection.persistence.RedissonSeatSelectionStore;
 import com.ticket.booking.selection.persistence.SeatSelectionRedisKey;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RedisRefreshTokenStore;
-import com.ticket.security.token.UuidSupplier;
 
 @Testcontainers
 class CoreRedisIntegrationTest {
@@ -122,7 +122,7 @@ class CoreRedisIntegrationTest {
     @Test
     void refresh_token_can_be_consumed_only_once_under_concurrency() throws Exception {
         UUID tokenId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        UuidSupplier uuidSupplier = () -> tokenId;
+        Supplier<UUID> uuidSupplier = () -> tokenId;
         RedisRefreshTokenStore store = new RedisRefreshTokenStore(redissonClient, uuidSupplier);
         String token = store.createRefreshToken(7L, 60L);
         AuthRefreshToken refreshToken = AuthRefreshToken.from(token);
