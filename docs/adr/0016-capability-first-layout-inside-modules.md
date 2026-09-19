@@ -79,10 +79,13 @@ interface 밖은 금지"로 뒤집어 오히려 넓어졌다. `booking.ticket`�
 수도 있었지만, `domain`/`persistence`로 나눠야 `DomainIsolationTest`의 `..domain..` 패턴과 계층
 방향 규칙이 계속 걸리므로 나눈 쪽을 골랐다.
 
-**남은 것.** `booking` 바로 아래에는 여러 capability가 함께 쓰는 것만 남았다 — `domain`(감사 기반
-타입), `exception`(module error code와 handler), `event`, `concurrency`, `redis`, `websocket`이다.
-capability 하나가 소유할 수 없는 것들이라 더 내리지 않는다. `BookingAuditedEntity`를 `order`로 내리면
-hold·seat·salespolicy·ticket entity가 order를 상속하게 된다.
+**남은 것.** `booking` 바로 아래에는 여러 capability가 함께 쓰는 것만 남았다 — `domain`(요청 좌석
+값), `exception`(module error code와 handler), `event`, `concurrency`, `redis`, `websocket`이다.
+capability 하나가 소유할 수 없는 것들이라 더 내리지 않는다.
+
+> 2026-09-19 갱신: 이 문단이 원래 예로 들던 `BookingAuditedEntity`는
+> [ADR 0018](0018-audit-base-entity-lives-in-shared.md)이 `shared.jpa.AuditedEntity` 하나로 합쳐
+> 더 이상 `booking.domain`에 없다. `booking.domain`은 `RequestedSeatIds`로 남는다.
 
 `member.password`와 `booking.admission`은 계약과 구현이 같은 package에 있어 방향 규칙
 대상이 아니다. 파일이 늘어 목록만으로 무엇이 무엇인지 알 수 없어지면 그때 나눈다.

@@ -234,7 +234,7 @@ booking
 ├─ OrderStarted / OrderTerminated   ← 공개 이벤트(FQCN이 DB에 저장된 값이라 root 고정)
 ├─ event          커밋 이후 후속 처리 조율 (+ event.persistence)
 ├─ exception      module 전체 error code와 handler
-├─ domain         여러 capability가 함께 쓰는 감사 기반 타입과 요청 값
+├─ domain         여러 capability가 함께 쓰는 요청 값
 ├─ concurrency    분산락 계약 (+ concurrency.redis 구현)
 ├─ redis          Redis 키 만료 수신 배선
 ├─ websocket      STOMP 배선과 좌석 상태 발행 구현
@@ -276,7 +276,8 @@ Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`securit
   파일이 많은 `booking.concurrency.redis` 정도가 허용 범위다.
 - **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
   그 타입의 소유 capability나 실제 역할을 먼저 정한다. 여러 업무가 함께 쓰는 기반도 그 역할이
-  받는다 — 락 계약은 `booking.concurrency`, 감사 기반 타입과 요청 좌석 값은 `booking.domain`이다.
+  받는다 — 락 계약은 `booking.concurrency`, 요청 좌석 값은 `booking.domain`이다(감사 기반 타입은
+  module이 갖지 않는다 — ADR 0018).
 - **모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
   `booking.OrderStarted`/`OrderTerminated`만 예외이며 그 이유는 `booking` package-info가 원본이다.
 - 여러 업무를 호출하는 Controller는 쪼개지 않는다. 폴더를 맞추려고 HTTP 계약을 바꾸지 않는다.
@@ -310,10 +311,12 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 별도 영속 모델도 자기 Aggregate 경계를 그대로 유지한다. 작은 독립 모델마다 폴더를 더 만들지
 않는다 — 실제 Aggregate 경계는 `com.ticket.AggregateAssociationTest`가 강제한다.
 
-같은 모듈의 여러 도메인 모델이 함께 쓰는 기반 타입과 값은 모듈의 `domain` 바로 아래 둔다. 예를
-들어 `show.domain.ShowAuditedEntity`, `booking.domain.BookingAuditedEntity`,
-`booking.domain.RequestedSeatIds`가 그렇다. 이를 이유로 모든 BC의 감사 기반 타입을 `shared`로
-합치지 않는다.
+같은 모듈의 여러 도메인 모델이 함께 쓰는 기반 타입과 값은 모듈의 `domain` 바로 아래 둔다.
+`booking.domain.RequestedSeatIds`가 그렇다.
+
+**감사 기반 타입은 예외다.** 모든 BC가 같은 네 컬럼을 쓰고 업무 vocabulary를 담지 않아
+`shared.jpa.AuditedEntity` 하나를 entity 21개가 상속한다 — 근거는
+[ADR 0018](adr/0018-audit-base-entity-lives-in-shared.md)이다.
 
 ### 포트 소유
 
@@ -329,6 +332,7 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 | aggregate 저장·복원과 업무 명령에 필요한 조회 | `domain` |
 | 화면 조회의 검색 조건·커서·응답 항목·집계 결과 | `usecase`(그 조회 구현은 `persistence`) |
 | 분산락 | `booking.concurrency` |
+| entity 감사 컬럼 | `shared.jpa`(ADR 0018) |
 | 발행·외부 provider·client | `port`(없으면 그 기능을 정의하는 package) |
 | HTTP 입력·출력 계약 | `endpoint` |
 | JPA, Querydsl, Redis, Redisson, JWT 구현 | `persistence`(또는 그 기술을 소유한 기능 package) |
