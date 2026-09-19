@@ -12,7 +12,8 @@
 #   3. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   4. UTF-8 BOM이 섞이지 않았는지
 #   5. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
-#   6. 오래 손대지 않은 문서 보고 (실패시키지 않음)
+#   6. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
+#   7. 오래 손대지 않은 문서 보고 (실패시키지 않음)
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
 # 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. Stop 훅이 매 턴 이 스크립트를 돌리므로
@@ -24,13 +25,15 @@ cd "$(dirname "$0")/.."
 AGENTS_MAX=80
 # 조건부·미래 참조라 없어도 정상인 경로
 ALLOW_MISSING="CONTEXT-MAP.md"
+# 일부러 "이렇게 하지 말라"고 적은 package 이름과, DB에 박혀 바꿀 수 없는 호환성 식별자.
+ALLOW_DEAD_PKG="booking.common booking.order.persistence.jpa.repository.adapter booking.application"
 OBS="docs/agents/observed-failures.md"
 
 fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 미커밋 .md만 본다. git 이력을 훑는 검사 6은 건너뛴다.
+# --changed: 미커밋 .md만 본다. git 이력을 훑는 검사 7은 건너뛴다.
 # Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
 SCOPE="all"
 [ "${1:-}" = "--changed" ] && SCOPE="changed"
@@ -147,6 +150,33 @@ else
   [ "$tagfail" -eq 0 ] && ok "관측 태그와 $OBS 항목이 일치"
 fi
 
+# 6 ─ 문서가 가리키는 package 경로
+# 계층 이름이 바뀌는 리팩터링(application -> usecase 등)에서 문서만 옛 이름으로 남는 것을 막는다.
+# 검사 2가 .md 링크를 지켜주듯 이쪽은 산문 속 package 경로를 지킨다.
+# ADR은 결정 당시의 기록이라 옛 경로가 정상이므로 제외한다 -- 어긋난 부분은 갱신 배너로 덮는다.
+# ponytail: package 경로만 본다. 타입 이름은 stdlib/enum 값/역할 이름 오탐이 많아 allowlist 관리 비용이
+# 검사 가치를 넘는다. 필요해지면 그때 넓힌다.
+deadpkg=0
+PKG_DOCS=$(printf '%s\n' "$DOCS" | grep -v '^docs/adr/')
+if [ -n "$PKG_DOCS" ]; then
+  while IFS= read -r hit; do
+    [ -n "$hit" ] || continue
+    f=${hit%%:*}
+    p=${hit#*:}
+    p=${p//\`/}
+    p=${p#com.ticket.}
+    case " $ALLOW_DEAD_PKG " in *" $p "*) continue ;; esac
+    # tr/dirname을 부르지 않는다 -- 셸 내장 치환으로 경로를 만든다(검사 2의 주석 참고).
+    if [ ! -d "src/main/java/com/ticket/${p//./\/}" ]; then
+      err "$f 가 없는 package를 가리킨다 -> $p"
+      deadpkg=1
+    fi
+  done < <(printf '%s\n' "$PKG_DOCS" \
+           | xargs grep -oHE '`(com\.ticket\.)?(booking|show|member|like|venue|payment|security|shared)(\.[a-z][a-z0-9]*)+`' 2>/dev/null \
+           | sort -u)
+fi
+[ "$deadpkg" -eq 0 ] && ok "문서가 가리키는 package 전부 실재"
+
 if [ "$SCOPE" = "changed" ]; then
   if [ "$fail" -ne 0 ]; then echo "문서 검사 실패"; exit 1; fi
   echo "문서 검사 통과 (바뀜 문서만)"
@@ -154,7 +184,7 @@ if [ "$SCOPE" = "changed" ]; then
 fi
 
 echo
-# 6 ─ 신선도 보고 (실패시키지 않는다)
+# 7 ─ 신선도 보고 (실패시키지 않는다)
 # 손으로 적는 "기준일" 프론트매터는 반드시 실제와 어긋난다. git 이력을 신선도 신호로 쓴다.
 # git log는 최신순이므로 파일을 처음 만난 시점이 그 파일의 최신 커밋이다.
 STALE_DAYS=${STALE_DAYS:-120}
