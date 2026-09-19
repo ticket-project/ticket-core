@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import com.ticket.like.api.LikeType;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.Getter;
 
@@ -30,7 +31,7 @@ import lombok.Getter;
             @Index(name = "IDX_LIKES_MEMBER_ID_ID", columnList = "member_id,id"),
             @Index(name = "IDX_LIKES_TARGET", columnList = "like_type,target_id")
         })
-public class Like extends LikeAuditedEntity {
+public class Like extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

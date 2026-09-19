@@ -31,7 +31,8 @@
             "security :: api",
             "shared :: api",
             "shared :: web",
-            "shared :: exception"
+            "shared :: exception",
+            "shared :: jpa"
         })
 package com.ticket.booking;
 
