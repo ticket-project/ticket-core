@@ -3,7 +3,7 @@ package com.ticket.show.endpoint.request;
 import org.jspecify.annotations.Nullable;
 
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
-import com.ticket.show.query.ShowListParam;
+import com.ticket.show.usecase.ShowListParam;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

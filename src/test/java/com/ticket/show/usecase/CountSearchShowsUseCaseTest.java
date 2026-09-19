@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
