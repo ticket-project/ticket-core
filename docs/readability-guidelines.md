@@ -340,8 +340,8 @@ StartBookingUseCase
 | `OrderCreator` | `PendingOrderCreator`로 흡수 | 트랜잭션 경계 뒤에 실제 생성 구현을 다시 숨기고 있었다 |
 
 남긴 것과 이유: `HoldManager`(Redis 일관성 경계), `LockManager`(분산락),
-`OrderHoldHistoryRecorder`(주문 취소 흐름도 쓴다 — 실제 재사용), `AdmissionVerifier`(외부 토큰 검증
-경계, 세 use case가 쓴다).
+`OrderHoldHistoryRecorder`(주문 취소 흐름도 쓴다 — 실제 재사용), `AdmissionGuard`(대기열 입장 검증
+경계, 세 use case가 쓴다 — 외부 토큰 검증 자체는 그 안의 `AdmissionVerifier`).
 
 **모든 UseCase를 이 모양에 억지로 맞추라는 뜻은 아니다.** 판단 기준은 위 원칙이고, 이것은 그 기준을
 적용한 예다.
