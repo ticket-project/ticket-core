@@ -32,7 +32,7 @@ Repository를 포함한 DB·Redis 구현이다.
 **폴더 깊이는 규모에 비례한다.** 일반적인 최대는 모듈 → capability → 역할이다
 (`booking.order.persistence`). 기술 응집도가 높고 파일이 많을 때만 한 단계를 더
 쓴다(`booking.concurrency.redis`). 파일이 적고 서로만 부르는 묶음은
-평평하게 둔다(`booking.admission` 일곱 파일, `member.password` 세 파일).
+평평하게 둔다(`package-info.java`를 빼고 `booking.admission` 일곱 파일, `member.password` 한 파일).
 
 **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
 그 타입의 소유 capability나 실제 역할을 먼저 판단한다. 여러 업무가 함께 쓰는 기반도 그 역할이
@@ -48,11 +48,13 @@ Module은 여덟 개 그대로다.
 저장하는가"가 아니라 "어떤 workflow의 결과를 책임지는가"다. `StartBookingUseCase`는 결과가 주문이라
 `booking.order.usecase`, `HoldReleaseCoordinator`는 (이름과 달리) `booking.event`다.
 
-**`security`만 역할 대신 기능으로 나눈다** — `auth`/`jwt`/`oauth`/`token`/`http`이고 각
+**`security`만 역할 대신 기능으로 나눈다** — `auth`/`jwt`/`oauth`/`token`/`http`이고(여기에 다른
+module에 공개하는 계약만 담는 `api`가 더해진다) 각
 폴더 안에 역할 폴더를 다시 만들지 않는다. 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더
 나은 탐색 단위이기 때문이다. `security.http`는 controller 패키지가 아니라 HTTP 보안 adapter라
 `endpoint`로 바꾸지 않는다. `shared`도 공개 계약을 성격별로 `shared.api`/`shared.web`/
-`shared.exception` 세 named interface에 나눠 두고, 실행 배선은 `shared.infrastructure`에 둔다.
+`shared.exception`/`shared.jpa` 네 named interface에 나눠 두고, 실행 배선은 `shared.infrastructure`에
+둔다.
 
 **cross-module 공개 계약은 module root가 아니라 `<module>.api`에 둔다.** 다른 module이
 호출하는 행위 계약에만 `Api` 접미사를 붙이고(`MemberLookupApi`, `VenueLookupApi`), record·snapshot·
@@ -149,8 +151,9 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 ## 테스트와 형식
 
 - 개별 단위·구조 테스트는 `XxxTest`, HTTP/API 계약은 `XxxContractTest`, Spring Modulith slice는
-  `XxxModuleTests`를 쓴다. 데이터 생성은 `XxxFixture`, test double은 `FakeXxx` 또는 호출을 기록하는
-  `RecordingXxx`로 역할을 드러낸다.
+  `XxxModuleTests`를 쓴다. 데이터 생성은 `XxxFixture`, test double은 호출을 기록하는
+  `RecordingXxx`(`RecordingLockManager`)로 역할을 드러낸다. 상태만 흉내내는 것이 필요하면
+  `FakeXxx`를 쓰지만 지금은 하나도 없다 — 대부분 `@MockitoBean`으로 충분하다.
 - 여러 모듈의 JPA/Querydsl 테스트가 공유하는 기반 코드는 `com.ticket.testsupport.persistence`에 둔다.
 - Java와 seed source는 Spotless가 4칸 들여쓰기, 120자 줄 길이, 명시적 import, import 순서,
   trailing whitespace와 EOF newline을 관리한다. `./gradlew spotlessApply`로 수정하고
