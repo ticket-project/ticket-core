@@ -1,4 +1,4 @@
-package com.ticket.booking.seat.endpoint;
+package com.ticket.booking.seat.endpoint.docs;
 
 import jakarta.validation.constraints.Positive;
 

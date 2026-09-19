@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.booking.seat.endpoint.docs.PerformanceSeatQueryControllerDocs;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
