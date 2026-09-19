@@ -16,11 +16,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.ticket.member.api.RawPassword;
-import com.ticket.member.domain.EncodedPassword;
-import com.ticket.member.password.PasswordHasher;
-import com.ticket.member.password.SpringSecurityPasswordHasher;
 import com.ticket.seed.support.AppSchema;
 
 /**
@@ -259,19 +256,12 @@ class SeedLocalTest {
                 .as("앱의 DelegatingPasswordEncoder가 읽는 접두사 형식이어야 한다")
                 .startsWith("{bcrypt}$2");
         // 앱이 실제로 로그인 검증에 쓰는 구현으로 그대로 검증한다.
-        final PasswordHasher passwordHasher =
-                new SpringSecurityPasswordHasher(
-                        PasswordEncoderFactories.createDelegatingPasswordEncoder());
-        assertThat(
-                        passwordHasher.matches(
-                                RawPassword.create(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_PASSWORD),
-                                EncodedPassword.create(stored)))
-                .as("시드가 넣은 해시가 앱 PasswordHasher로 검증돼야 한다")
+        final PasswordEncoder passwordEncoder =
+                PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        assertThat(passwordEncoder.matches(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_PASSWORD, stored))
+                .as("시드가 넣은 해시가 앱이 쓰는 PasswordEncoder로 검증돼야 한다")
                 .isTrue();
-        assertThat(
-                        passwordHasher.matches(
-                                RawPassword.create("wrong-password"),
-                                EncodedPassword.create(stored)))
+        assertThat(passwordEncoder.matches("wrong-password", stored))
                 .as("틀린 비밀번호는 통과하지 않아야 한다")
                 .isFalse();
     }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,6 @@ import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.member.password.PasswordHasher;
 import com.ticket.shared.exception.NotFoundException;
 
 /**
@@ -49,12 +49,12 @@ class MemberAccountServiceTest {
             Clock.fixed(Instant.parse("2026-09-15T02:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Mock private MemberRepository memberRepository;
-    @Mock private PasswordHasher passwordHasher;
+    @Mock private PasswordEncoder passwordEncoder;
 
     private MemberAccountService service() {
         return new MemberAccountService(
                 memberRepository,
-                passwordHasher,
+                passwordEncoder,
                 new OAuth2MemberProvisioningService(memberRepository),
                 CLOCK);
     }
@@ -63,8 +63,7 @@ class MemberAccountServiceTest {
 
     @Test
     void 가입은_이메일을_다듬어_저장하고_새_회원_번호를_돌려준다() {
-        when(passwordHasher.hash(RawPassword.create("password123!")))
-                .thenReturn(EncodedPassword.create("encoded-password"));
+        when(passwordEncoder.encode("password123!")).thenReturn("encoded-password");
         when(memberRepository.save(any(Member.class))).thenAnswer(withGeneratedId(11L));
 
         final Long memberId =
@@ -88,9 +87,7 @@ class MemberAccountServiceTest {
     void 로그인은_활성_회원의_번호와_역할을_돌려준다() {
         when(memberRepository.findActiveByEmail("user@example.com"))
                 .thenReturn(Optional.of(memberWithId(42L, passwordMember())));
-        when(passwordHasher.matches(
-                        RawPassword.create("password123!"), EncodedPassword.create("encoded")))
-                .thenReturn(true);
+        when(passwordEncoder.matches("password123!", "encoded")).thenReturn(true);
 
         assertThat(service().authenticate("user@example.com", RawPassword.create("password123!")))
                 .isEqualTo(new MemberStatus(42L, true, "MEMBER"));
@@ -105,8 +102,7 @@ class MemberAccountServiceTest {
                 .thenReturn(Optional.empty());
         when(memberRepository.findActiveByEmail("user@example.com"))
                 .thenReturn(Optional.of(passwordMember()));
-        when(passwordHasher.matches(RawPassword.create("wrong"), EncodedPassword.create("encoded")))
-                .thenReturn(false);
+        when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
         final UnauthenticatedException unknownAccount =
                 catchUnauthenticated("missing@example.com", "wrong");
@@ -127,7 +123,7 @@ class MemberAccountServiceTest {
 
         catchUnauthenticated("missing@example.com", "password123!");
 
-        verify(passwordHasher).hash(RawPassword.create("timing-guard-dummy-password"));
+        verify(passwordEncoder).encode("timing-guard-dummy-password");
     }
 
     /** 소셜 전용 회원은 저장된 비밀번호가 없다 — 일반 로그인으로는 들어올 수 없다. */
