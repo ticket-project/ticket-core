@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.show.exception.UnsupportedShowSortException;
-import com.ticket.show.query.ShowSort;
+import com.ticket.show.usecase.ShowSort;
 
 /** show 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다. */
 @SuppressWarnings("NonAsciiCharacters")

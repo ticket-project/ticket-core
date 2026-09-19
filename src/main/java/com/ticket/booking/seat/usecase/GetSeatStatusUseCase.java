@@ -15,8 +15,8 @@ import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
-import com.ticket.booking.seat.query.SeatStatus;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
@@ -46,6 +46,26 @@ public class GetSeatStatusUseCase {
      * key이기도 하다.
      */
     public record Seat(Long performanceSeatId, Long seatId, SeatStatus status) {}
+
+    /** 좌석 상태 API 응답 전용 enum. DB 저장용 {@link PerformanceSeatState}와 분리해 클라이언트에는 2가지만 노출한다. */
+    public enum SeatStatus {
+        AVAILABLE("선택 가능"),
+        OCCUPIED("사용 중");
+
+        private final String description;
+
+        SeatStatus(final String description) {
+            this.description = description;
+        }
+
+        public static SeatStatus from(final PerformanceSeatState state) {
+            return state == PerformanceSeatState.AVAILABLE ? AVAILABLE : OCCUPIED;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
 
     public Output execute(final Input input) {
         final Long performanceId = input.performanceId();

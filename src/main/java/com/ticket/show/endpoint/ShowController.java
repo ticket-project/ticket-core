@@ -14,7 +14,6 @@ import com.ticket.show.endpoint.docs.ShowControllerDocs;
 import com.ticket.show.endpoint.request.SaleOpeningSoonRequest;
 import com.ticket.show.endpoint.request.ShowListRequest;
 import com.ticket.show.endpoint.request.ShowSearchRequest;
-import com.ticket.show.query.ShowSort;
 import com.ticket.show.usecase.CountSearchShowsUseCase;
 import com.ticket.show.usecase.GetLatestShowsUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsPageUseCase;
@@ -22,6 +21,7 @@ import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
 import com.ticket.show.usecase.GetShowsUseCase;
 import com.ticket.show.usecase.SearchShowsUseCase;
+import com.ticket.show.usecase.ShowSort;
 
 import lombok.RequiredArgsConstructor;
 

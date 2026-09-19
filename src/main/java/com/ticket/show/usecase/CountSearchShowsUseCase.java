@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.ShowSearchCriteria;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 

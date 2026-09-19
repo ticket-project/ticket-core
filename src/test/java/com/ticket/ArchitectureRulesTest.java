@@ -126,9 +126,6 @@ class ArchitectureRulesTest {
     /** 커밋 이후 후속 처리 조율. use case와 같은 쪽(안)이다. */
     private static final String EVENT = "com.ticket..event..";
 
-    /** 자기 module의 읽기 모델·검색 조건·커서 타입. DB 조회 구현은 {@link #PERSISTENCE}가 소유한다. */
-    private static final String QUERY = "com.ticket..query..";
-
     /** 밖을 부르는 출력 계약. */
     private static final String PORT = "com.ticket..port..";
 
@@ -221,7 +218,7 @@ class ArchitectureRulesTest {
 
     /** 규칙이 이름을 아는 역할이다. 하나라도 소스 트리에서 사라지면 규칙이 조용히 비어 버리므로 존재를 따로 확인한다. */
     private static final List<String> ROLE_DIRECTORY_NAMES =
-            List.of("domain", "usecase", "event", "query", "port", "persistence", "endpoint");
+            List.of("domain", "usecase", "event", "port", "persistence", "endpoint");
 
     // ---------------------------------------------------------------- 계층 방향
 
@@ -231,8 +228,8 @@ class ArchitectureRulesTest {
                     .that(resideInAPackage(DOMAIN).and(not(GENERATED_OR_IMPLEMENTATION)))
                     .should()
                     .dependOnClassesThat()
-                    .resideInAnyPackage(USECASE, EVENT, QUERY, PERSISTENCE, ENDPOINT)
-                    .because("domain은 업무 규칙과 상태만 안다 — 조립·조회 계약·저장·HTTP를 모른다");
+                    .resideInAnyPackage(USECASE, EVENT, PERSISTENCE, ENDPOINT)
+                    .because("domain은 업무 규칙과 상태만 안다 — 조립·저장·HTTP를 모른다");
 
     /**
      * 조립은 저장 구현과 HTTP를 모른다. <b>예외는 같은 module의 조회 Repository 하나다</b>({@link #QUERY_REPOSITORY}).
@@ -266,22 +263,6 @@ class ArchitectureRulesTest {
                     .dependOnClassesThat()
                     .resideInAnyPackage(PERSISTENCE, ENDPOINT)
                     .because("출력 port는 밖을 부르는 계약이다 — 계약이 구현을 알면 계약과 구현을 나눈 이유가 사라진다");
-
-    /**
-     * {@code query}는 자기 module의 읽기 모델·검색 조건·커서 타입만 갖는다. DB 조회 구현은 {@code persistence}의 조회
-     * Repository가 소유한다.
-     *
-     * <p>읽기 모델은 use case가 응답을 조립할 때도, endpoint가 그대로 내보낼 때도 쓰이므로 <b>아무 쪽도 참조하지 않아야</b> 한다. 읽기 모델이
-     * 조립·HTTP·저장 구현을 알기 시작하면 그 타입을 쓰는 쪽이 전부 그 선택에 묶인다.
-     */
-    @ArchTest
-    static final ArchRule query는_조립과_HTTP를_모른다 =
-            noClasses()
-                    .that(resideInAPackage(QUERY).and(not(GENERATED_OR_IMPLEMENTATION)))
-                    .should()
-                    .dependOnClassesThat()
-                    .resideInAnyPackage(USECASE, EVENT, ENDPOINT, PERSISTENCE)
-                    .because("query는 읽기 모델만 갖는다 — 조립·HTTP·저장 구현을 거꾸로 참조하지 않는다");
 
     @ArchTest
     static final ArchRule endpoint는_저장_구현을_모른다 =
@@ -376,10 +357,9 @@ class ArchitectureRulesTest {
     /**
      * {@link #query는_다른_업무_module을_조합하지_않는다}의 module 한 개짜리 규칙이다. 회귀 검증이 같은 factory를 쓴다.
      *
-     * <p>대상은 package 위치가 아니라 <b>DB를 직접 읽는 클래스</b>({@link #DB_QUERY})다. 조회 구현이 {@code query}에서
-     * {@code persistence}로 옮겨 가도 같은 검사가 그대로 걸리고, Querydsl을 쓰는 저장 adapter도 함께 덮인다. 읽기 모델은 다른 module의
-     * 공개 값 타입({@code venue.api.Region} 등)을 담을 수 있고 담아야 한다 — 막아야 하는 것은 조회 구현이 다른 module을 불러 결과를 합치는
-     * 것이다.
+     * <p>대상은 package 위치가 아니라 <b>DB를 직접 읽는 클래스</b>({@link #DB_QUERY})다. 조회 구현이 어느 package에 있든 같은 검사가
+     * 걸리고, Querydsl을 쓰는 저장 adapter도 함께 덮인다. 조회 결과는 다른 module의 공개 값 타입({@code venue.api.Region} 등)을
+     * 담을 수 있고 담아야 한다 — 막아야 하는 것은 조회 구현이 다른 module을 불러 결과를 합치는 것이다.
      */
     private static ArchRule queryReadsOnlyOwnModule(
             final String module, final List<String> otherModules) {
@@ -565,13 +545,7 @@ class ArchitectureRulesTest {
      * 직접 평가한다.
      */
     @Test
-    void 새_query_규칙이_허용_사례와_위반_사례를_구별한다() {
-        assertThat(violationsOf(query는_조립과_HTTP를_모른다))
-                .as("읽기 모델 package가 use case를 거꾸로 부르면 잡는다")
-                .anyMatch(detail -> detail.contains("UseCaseCallingFixtureQuery"))
-                .as("읽기 모델 자체는 걸리지 않는다")
-                .noneMatch(detail -> detail.contains("FixtureRow"));
-
+    void 조회_규칙이_허용_사례와_위반_사례를_구별한다() {
         assertThat(violationsOf(업무_코드는_Querydsl과_Redisson을_모른다))
                 .as("use case의 Querydsl 직접 사용은 여전히 잡는다")
                 .anyMatch(detail -> detail.contains("QuerydslUsingFixtureUseCase"))
@@ -622,7 +596,7 @@ class ArchitectureRulesTest {
         assertThat(violationsOf(endpoint는_Repository를_직접_부르지_않는다))
                 .as("endpoint가 use case를 건너뛰고 구체 Query를 부르면 잡는다 — 옛 이름(QueryPort)만 보면 놓친다")
                 .anyMatch(detail -> detail.contains("QueryCallingFixtureController"))
-                .as("endpoint가 query package의 Row/View를 응답으로 쓰는 것은 허용한다")
+                .as("endpoint가 use case가 소유한 응답 record를 쓰는 것은 허용한다")
                 .noneMatch(detail -> detail.contains("ReadModelFixtureController"));
     }
 

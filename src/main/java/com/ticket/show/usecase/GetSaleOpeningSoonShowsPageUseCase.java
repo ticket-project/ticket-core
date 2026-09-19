@@ -17,9 +17,6 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.SaleOpeningSoonSearchParam;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 

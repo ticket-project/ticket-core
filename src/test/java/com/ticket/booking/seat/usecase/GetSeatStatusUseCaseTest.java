@@ -39,7 +39,7 @@ import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
-import com.ticket.booking.seat.query.SeatStatus;
+import com.ticket.booking.seat.usecase.GetSeatStatusUseCase.SeatStatus;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
