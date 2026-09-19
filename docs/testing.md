@@ -33,7 +33,8 @@ Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면
 | --- | --- | --- |
 | Spring 컨텍스트 없는 단위 테스트 | 엔티티, 값 객체, 상태 전이, 정책, 불변식, use case(외부 port는 mock/fake) | Spring 컨텍스트, DB, Redis |
 | `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인 | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
-| `@DataJpaTest` (+ Spring Modulith `@ModuleSlicing` 조합) | `*QueryRepository`의 Querydsl 조회, RepositoryAdapter, 해당 모듈 소유 migration만으로 schema가 만들어지는지 | 업무 규칙 단위 테스트 |
+| `@DataJpaTest` | `*QueryRepository`의 Querydsl 조회, RepositoryAdapter | 업무 규칙 단위 테스트 |
+| Spring context 없는 Hibernate 단독 검증 | 해당 모듈 소유 migration만으로 schema가 만들어지고 그 모듈 JPA 매핑이 `validate`를 통과하는지(`*SlicingSchemaTest`) | 업무 규칙 단위 테스트 |
 | `@SpringBootTest`(+ Testcontainers) | 전체 컨텍스트 기동, Redis/Redisson 실제 연동, 실제 HTTP로 스택을 관통하는 예매 E2E | 개별 클래스 단위 검증 |
 
 Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** Docker가 없으면 실패의 원인이
@@ -52,9 +53,9 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
 곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
 
-외부 모듈의 공개 API는 `@MockitoBean`으로 대체하는 것이 기본이다. 의도적으로 실제 의존 모듈
-조합이 필요한 소수의 contract test만 `DIRECT_DEPENDENCIES`를 쓰고, `ALL_DEPENDENCIES`는 전체
-조합이 필요한 이유가 있는 경우로 제한한다.
+외부 모듈의 공개 API는 `@MockitoBean`으로 대체하는 것이 기본이다. 지금은 예외가 없다 — 실제 의존
+모듈을 함께 띄우는 테스트는 하나도 없다. 꼭 필요해지면 `@ApplicationModuleTest`의
+`DIRECT_DEPENDENCIES`로 범위를 좁혀 쓰고 `ALL_DEPENDENCIES`는 이유가 있을 때만 쓴다.
 
 ## 구조 테스트
 
@@ -63,14 +64,17 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 | 테스트 | 고정하는 것 |
 | --- | --- |
+| `com.ticket.ArchitectureRulesTest` | 역할 package 이름으로 검사하는 전역 구조 규칙 열(`domain`·`usecase`·`endpoint`·출력 port의 의존 방향, 업무 코드의 Querydsl/Redisson 차단, 다른 module 공개면 밖 참조 금지, DB를 읽는 class가 다른 업무 module을 조합하지 않는 것, `api`에 구현 bean 금지)과, 규칙이 쓰는 역할 package 실재·공개 named interface 목록·production package의 `@NullMarked` 선언. **구조를 바꿨으면 이것부터 돌린다** |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
 | `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.infrastructure`와 `shared.exception.handler`에만 두는 것 |
 | `com.ticket.DomainIsolationTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — `booking.order.domain`처럼 capability 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.usecase`가 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules"). **`domain` 아래 묶음 폴더는 Aggregate 경계가 아니다** — 경계는 이 테스트가 FQCN으로 강제한다 |
-| `com.ticket.booking.BookingLayerDependencyTest` | booking의 계층 방향(`domain`은 application·infrastructure·web을 모른다, `application`은 infrastructure·web을 모른다)과 락 계약 넷이 Redis·web을 모르는 것. 옛 `booking.common`이 사라지며 그 의존 규칙을 이어받았다 |
+| `com.ticket.booking.BookingLayerDependencyTest` | `booking.concurrency`의 락 계약이 Redis 기술과 `endpoint` 계층을 모르는 것 두 가지. 옛 `booking.common`이 사라지며 그 의존 규칙을 이어받았다. booking의 계층 방향 자체는 `ArchitectureRulesTest`가 전역 규칙으로 덮는다 |
 | `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `*ControllerDocs` 인터페이스에만 두는 것 |
 | `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것. 생성물 목록과 CI artifact는 [architecture.md의 생성 문서](architecture.md#생성-문서)가 원본이다 |
+| `com.ticket.shared.exception.ExceptionHandlerScopeTest` | module handler가 다른 module의 오류까지 삼키지 않는 것 |
+| `com.ticket.shared.exception.ErrorCodeUniquenessTest` | E-code(외부 계약, `gatling-test`가 하드코딩)가 전역에서 유일한 것 |
 | `com.ticket.seed.ServiceSourceSeparationTest`(`seedTest`) | 시드 실행 코드·시드 SQL이 서비스 소스로 다시 섞이지 않는 것. 실제 jar는 `verifySeedNotInBootJar`가 확인한다 |
 
 `com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 `src/main/java`에 그 패키지가
@@ -99,7 +103,9 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 ## 모듈별 migration slice 테스트
 
 각 모듈이 자신의 Flyway 이력(`db/migration/__root` + `db/migration/{module}`)만으로 schema가
-만들어지고 CRUD가 동작하는지 `@DataJpaTest`와 module slicing 조합으로 검증한다. 지금 존재하는
+만들어지고 CRUD가 동작하는지 Spring context 없이 Hibernate 단독으로 검증한다(`@DataJpaTest`
+`@ModuleSlicing` 조합으로의 전환은 남은 후속 작업이다 — 사정은 `BookingModuleSlicingSchemaTest`의
+클래스 JavaDoc이 원본이다). 지금 존재하는
 것은 `BookingModuleSlicingSchemaTest`, `ShowModuleSlicingSchemaTest`(SHOWS.venue_id scalar 매핑과
 그 FK 제거), `VenueModuleSlicingSchemaTest`(Venue/Seat 매핑, ADR 0006으로 show에서 분리),
 `LikeModuleMigrationTest`(SHOW_LIKES의 옛 member/show FK 제거, LIKES로의 대상 일반화), `PaymentModuleSlicingSchemaTest`,
@@ -125,11 +131,14 @@ H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationC
 ## performance 기준 API와 가격 snapshot 회귀
 
 ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
-테스트는 모두 `PerformanceSeatQueryControllerContractTest`
-(`src/test/java/com/ticket/booking/*/endpoint/`) 하나에 있다.
+테스트는 `src/test/java/com/ticket/booking/seat/endpoint/`에 있다.
+`PerformanceSeatQueryControllerContractTest`가 `/api/v1/performances` 셋을 덮고,
+show 경로 호환 endpoint만 `ShowSeatMapControllerContractTest`가 따로 덮는다
+(서빙하는 controller가 `ShowSeatMapController`로 갈라져 있다).
 
 - `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
 - `GET /api/v1/shows/{id}/seats` — 기존 프론트 호환용 대표 회차 좌석 배치·등급·가격
+  (`ShowSeatMapController`)
 - `GET /api/v1/performances/{id}/seats/status` — 동적 판매 상태(`performanceSeatId` 기준)
 - `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
 
@@ -141,7 +150,8 @@ query 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한 번
 수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
 
 **가격 snapshot 불변성**은 두 단계로 고정된다. `PendingOrderCreatorTest`는 주문 금액이 오직
-`PerformanceSeat.unitPrice` 합계로만 계산되고(`sumTotalAmount`), show snapshot
+`PerformanceSeat.unitPrice` 합계로만 계산되고(`Order.addOrderSeat`가 `totalAmount`에 누적한다 —
+`좌석_단가_합계로_pending_주문과_orderSeat를_조립한다`), show snapshot
 (`PerformanceSaleCatalogApi`)은 표시값(등급 코드/이름, 좌석 라벨, show/venue 이름)에만 쓰인다는 것을
 고정한다. `GetOrderDetailUseCaseTest`는 주문 상세 조회가 Order/OrderSeat에 생성 시점에 남긴
 snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 — show 쪽 가격·표시값이 나중에
@@ -216,7 +226,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - Redis나 DB에 실제로 붙어야 하는 검증은 `@DataJpaTest`/Testcontainers로 분리한다. 단위 테스트에
   섞지 않는다.
 - 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `endpoint`,
-  `UseCase.Input` 계약은 `application`, 업무 불변식은 `domain` 테스트다. 같은
+  `UseCase.Input` 계약은 `usecase`, 업무 불변식은 `domain` 테스트다. 같은
   규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [architecture.md의 계층별 검증 책임](architecture.md#계층별-검증-책임)을 본다.
 - 외부 오류 계약의 변경 영향을 분석할 때는 응답 구조·HTTP 상태·`error.code` 값에 대한 의존을
   구분하고, 소비자 소스의 실제 사용 지점을 확인한다. 응답 봉투를 사용한다는 사실만으로 특정
@@ -224,7 +234,8 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
 - 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 이벤트 재시도, 순서 역전**을
   함께 고정한다.
 - 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로
-  `execute는_DB_트랜잭션을_직접_시작하지_않는다`, `주문_저장_메서드는_트랜잭션으로_실행된다`가
+  `execute는_DB_트랜잭션을_직접_시작하지_않는다`(`StartBookingUseCaseTest`),
+  `주문_생성_메서드는_트랜잭션으로_실행된다`(`PendingOrderCreatorTest`)가
   있다.
 
 ## 무엇을 돌릴지
