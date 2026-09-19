@@ -156,8 +156,8 @@ class ArchitectureRulesTest {
     /**
      * {@code JPAQueryFactory}를 주입받는 class — 즉 DB를 직접 읽는 구체 Query다.
      *
-     * <p>이름({@code *Query})이 아니라 실제로 무엇을 갖고 있는지로 가른다. 이름 규칙은 새 조회가 다른 이름을 달면 조용히 빠지지만, 조회를 하려면
-     * {@code JPAQueryFactory}는 반드시 갖고 있어야 한다.
+     * <p>이름({@code *Query})이 아니라 실제로 무엇을 갖고 있는지로 가른다 — 이름 규칙은 새 조회가 다른 이름을 달면 조용히 빠진다. 다만 Querydsl을
+     * 쓰지 않는 조회도 있으므로, "DB를 읽는다"의 판정은 {@link #READS_DB}가 한 겹 넓게 한다.
      */
     private static final DescribedPredicate<JavaClass> DB_QUERY =
             describe(
@@ -172,15 +172,35 @@ class ArchitectureRulesTest {
                                                                     "com.querydsl.jpa.impl.JPAQueryFactory")));
 
     /**
+     * DB를 직접 읽는다는 증거 — {@code JPAQueryFactory}이거나 Spring Data repository다.
+     *
+     * <p>조회 Repository가 반드시 Querydsl을 쓰는 것은 아니다. 조건 조립이 없는 조회는 Spring Data 파생 query 하나로 끝나고({@code
+     * PerformanceSeatQueryRepository}), 그 자리에 {@code JPAQueryFactory}를 들이는 것은 규칙을 만족시키려고 코드를 늘리는
+     * 일이다. {@link #DB_QUERY}를 직접 넓히지 않는 이유는 그것이 {@code 조회 구현은 자기 DB만 조회한다}의 대상도 정하기 때문이다 — 그쪽까지 넓히면
+     * 저장 adapter 전부가 한꺼번에 딸려 들어온다.
+     */
+    private static final DescribedPredicate<JavaClass> READS_DB =
+            describe(
+                    "JPAQueryFactory나 Spring Data repository로 DB를 읽는 class",
+                    clazz ->
+                            DB_QUERY.test(clazz)
+                                    || clazz.getAllFields().stream()
+                                            .anyMatch(
+                                                    field ->
+                                                            field.getRawType()
+                                                                    .isAssignableTo(
+                                                                            "org.springframework.data.repository.Repository")));
+
+    /**
      * use case가 직접 불러도 되는 {@code persistence} 클래스다 — 조회 Repository와 그 안에 중첩된 읽기 모델.
      *
      * <p>{@code persistence}에는 두 종류가 있다. 하나는 aggregate를 복원·저장하는 adapter(Spring Data·Redis 구현)이고, 다른
      * 하나는 화면용 읽기 모델을 바로 돌려주는 조회 Repository다. 앞의 것은 domain repository 계약 뒤에 있어야 하고(구현 선택은
      * persistence가 갖는다), 뒤의 것은 계약을 한 겹 더 두어도 읽을 것이 늘지 않는다.
      *
-     * <p>둘을 <b>이름 하나로만</b>가르지 않는다. {@code *QueryRepository}라는 이름과 {@code JPAQueryFactory}를 실제로 갖고
-     * 있다는 사실을 함께 본다 — 이름만 보면 저장 adapter가 같은 이름을 달 때 조용히 열리고, 필드만 보면 Querydsl을 쓰는 저장 adapter({@code
-     * PerformanceSeatRepositoryAdapter})까지 함께 열린다.
+     * <p>둘을 <b>이름 하나로만</b>가르지 않는다. {@code *QueryRepository}라는 이름과 실제로 DB를 읽는다는 사실({@link
+     * #READS_DB})을 함께 본다 — 이름만 보면 저장 adapter가 같은 이름을 달 때 조용히 열리고, 필드만 보면 Querydsl이나 Spring Data를 쓰는
+     * 저장 adapter({@code PerformanceSeatRepositoryAdapter})까지 함께 열린다.
      *
      * <p>중첩 타입은 자기 최상위 클래스로 판정한다. 조회 Repository가 자기 projection record를 안에 두기 때문이다.
      */
@@ -191,7 +211,7 @@ class ArchitectureRulesTest {
                         final JavaClass topLevel = topLevelOf(clazz);
                         return resideInAPackage(PERSISTENCE).test(topLevel)
                                 && topLevel.getSimpleName().endsWith("QueryRepository")
-                                && DB_QUERY.test(topLevel);
+                                && READS_DB.test(topLevel);
                     });
 
     /**
