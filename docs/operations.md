@@ -135,7 +135,7 @@ admission token의 서명 secret, issuer, audience는 Core와 `ticket-queue` 두
 
 **Redis 작업 규칙**
 
-- key 조립과 물리 TTL은 소유 모듈의 `infrastructure` adapter가 소유한다. `application`/`domain`은
+- key 조립과 물리 TTL은 소유 모듈의 `persistence` adapter가 소유한다. `usecase`/`domain`은
   Redis 타입이나 key가 아니라 저장 기술 중립 계약만 본다.
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차를 함께 설계한다.
@@ -250,7 +250,10 @@ db/migration/__root/V9__...sql           # 어떤 module에도 속하지 않는 
 outbox 테이블은 이 시점에 별도 booking migration으로 제거됐다). 기존 V3(`add_performance_seat_unique_index`)~V4(`add_order_seat_order_index`)의 조회 인덱스는 그대로 `__root`
 이력에 남아 있다.
 
-배포 전에는 `docs/database/booking-query-indexes.sql`의 중복 조회 결과가 0건인지 확인한다.
+배포 전에는 `PERFORMANCE_SEATS`에 `(performance_id, seat_id)` 중복이 있는지 확인한다 —
+`SELECT performance_id, seat_id, COUNT(*) FROM performance_seats GROUP BY performance_id, seat_id
+HAVING COUNT(*) > 1`의 결과가 0건이어야 한다(배포 전후로 `USER_IND_COLUMNS`에서
+`PERFORMANCE_SEATS`/`ORDER_SEATS`의 인덱스 컬럼과 순서도 같이 본다).
 중복이 있으면 배포를 중단하고, `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해
 대표 행을 결정한 뒤 정리한다. migration에서 중복 행을 임의 삭제하지 않는다.
 
@@ -332,7 +335,8 @@ Docker 이미지를 빌드하고 배포한다. `bootstrap/build/libs` 경로는 
 
 관련 파일:
 
-- `.github/workflows/ci.yml`
+- `.github/workflows/ci.yml`(전체 테스트 + `bash scripts/check-docs.sh`)
+- `.github/workflows/architecture.yml`(PR에서 구조 검사만 빠르게 돌리는 별도 gate)
 - `.github/workflows/deploy.yml`
 - `Dockerfile`(`build/libs/*.jar`를 `app.jar`로 복사)
 
