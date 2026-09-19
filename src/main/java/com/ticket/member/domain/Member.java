@@ -22,6 +22,7 @@ import jakarta.persistence.UniqueConstraint;
 import org.jspecify.annotations.Nullable;
 
 import com.ticket.member.api.SocialProvider;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,7 +34,7 @@ import lombok.NoArgsConstructor;
         name = "MEMBERS",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member extends MemberAuditedEntity {
+public class Member extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

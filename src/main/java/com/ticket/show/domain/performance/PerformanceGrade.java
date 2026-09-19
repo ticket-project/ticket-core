@@ -14,7 +14,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.domain.ShowAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
                         name = "UK_PERFORMANCE_GRADES_PERFORMANCE_" + "GRADE",
                         columnNames = {"performance_id", "grade_id"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PerformanceGrade extends ShowAuditedEntity {
+public class PerformanceGrade extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

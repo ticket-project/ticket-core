@@ -9,7 +9,7 @@
 @NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Payment",
-        allowedDependencies = {})
+        allowedDependencies = {"shared :: jpa"})
 package com.ticket.payment;
 
 import org.jspecify.annotations.NullMarked;

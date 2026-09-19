@@ -11,7 +11,7 @@ import jakarta.persistence.Transient;
 
 import org.springframework.data.domain.Persistable;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "ORDER_HOLD_RELEASE_PROGRESS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HoldReleaseProgress extends BookingAuditedEntity implements Persistable<UUID> {
+public class HoldReleaseProgress extends AuditedEntity implements Persistable<UUID> {
     @Id private UUID eventId;
 
     @Column(nullable = false)

@@ -16,6 +16,8 @@ import jakarta.persistence.UniqueConstraint;
 
 import org.jspecify.annotations.Nullable;
 
+import com.ticket.shared.jpa.AuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,7 +47,7 @@ import lombok.NoArgsConstructor;
         },
         indexes = {@Index(name = "IDX_PAYMENTS_ORDER_STATUS", columnList = "order_id,status")})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Payment extends PaymentAuditedEntity {
+public class Payment extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

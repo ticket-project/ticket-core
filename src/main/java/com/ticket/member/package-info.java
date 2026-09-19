@@ -28,7 +28,12 @@
 @NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Member",
-        allowedDependencies = {"shared :: api", "shared :: web", "shared :: exception"})
+        allowedDependencies = {
+            "shared :: api",
+            "shared :: web",
+            "shared :: exception",
+            "shared :: jpa"
+        })
 package com.ticket.member;
 
 import org.jspecify.annotations.NullMarked;

@@ -14,7 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
             @Index(name = "IDX_ORDER_SEATS_PERFORMANCE_SEAT_ID", columnList = "performance_seat_id")
         })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OrderSeat extends BookingAuditedEntity {
+public class OrderSeat extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
