@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSort;
+import com.ticket.show.usecase.ShowCursor;
+import com.ticket.show.usecase.ShowSearchCriteria;
+import com.ticket.show.usecase.ShowSort;
 import com.ticket.venue.api.Region;
 
 import tools.jackson.databind.json.JsonMapper;

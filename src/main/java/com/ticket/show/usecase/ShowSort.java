@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase;
 
 import com.ticket.show.exception.UnsupportedShowSortException;
 

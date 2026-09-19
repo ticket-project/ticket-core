@@ -169,7 +169,6 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 | `endpoint` | Controller, 요청 DTO, OpenAPI 문서 interface, HTTP 커서 문자열 |
 | `usecase` | 요청 단위 use case와 그 조립 서비스, 트랜잭션 경계 |
 | `event` | 커밋 이후 후속 처리 조율(`booking`에만 있다) |
-| `query` | 자기 module의 조회 파라미터·커서·정렬 타입과 DB 집계 결과 |
 | `port` | 조회가 아닌 출력 계약(발행·외부 provider) |
 | `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
 | `persistence` | 저장 adapter와 local DB 조회 Repository(`*QueryRepository`), Spring Data 인터페이스, Redis/Redisson 저장 구현 |
@@ -183,14 +182,15 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 `persistence`는 JPA·Spring Data·Redis 같은 실제 저장 *기술*이다
 (`member.persistence.MemberRepositoryAdapter`). 계약을 `persistence`로 옮기지 않는다.
 
-**조회 구현은 `persistence`가 갖고 `query`는 읽기 모델만 갖는다.** 자기 module DB를 읽는 조회는
-`persistence`의 `*QueryRepository`가 Querydsl/JPA까지 직접 갖고
-(`show.persistence.ShowQueryRepository`), `query`에는 그 결과 타입과 검색 조건만 남는다. 조회마다
+**조회 구현은 `persistence`가 갖고, 조회가 주고받는 타입은 `usecase`가 갖는다.** 자기 module DB를
+읽는 조회는 `persistence`의 `*QueryRepository`가 Querydsl/JPA까지 직접 갖고
+(`show.persistence.ShowQueryRepository`), 반환 타입은 엔티티다. 조회 파라미터·커서·정렬과 응답 항목,
+DB 집계 결과는 그것을 쓰는 use case가 소유한다(`show.usecase.ShowSearchCriteria`,
+`GetShowDetailUseCase.PriceSummary`) — 읽기 모델만 담는 `query` package는 더 두지 않는다. 조회마다
 port interface와 adapter를 한 쌍씩 만들지 않는다 — 구현이 하나뿐인 1:1 위임은 기능을 이해하는 데
 아무것도 보태지 않는다. **use case는 같은 module의 조회 Repository만 `persistence`에서 직접 부를
-수 있고, 저장 adapter·Spring Data 인터페이스·Redis 구현 직접 호출은 그대로 막는다.** 나머지
-방향도 규칙으로 막는다(`query`는 `usecase`/`event`/`endpoint`/`persistence`를 모르고, DB를 읽는
-클래스는 다른 업무 module을 조합하지 않는다 — `ArchitectureRulesTest`).
+수 있고, 저장 adapter·Spring Data 인터페이스·Redis 구현 직접 호출은 그대로 막는다.** DB를 읽는
+클래스가 다른 업무 module을 조합하지 않는 것도 규칙으로 막는다(`ArchitectureRulesTest`).
 
 `XXXPort`는 **밖을 부르는 출력 계약**이고 `XXXAdapter`는 그 구현이다(`booking.seat.port`의
 이벤트 발행 계약처럼). 이 둘은 다른 package에 둔다 — 같은 package에 있으면 use case가 구현을
@@ -205,11 +205,11 @@ port interface와 adapter를 한 쌍씩 만들지 않는다 — 구현이 하나
 member                 like                venue           payment        show
 ├─ api                 ├─ api              ├─ api          ├─ domain      ├─ api
 ├─ usecase             ├─ usecase          ├─ domain       └─ persistence ├─ usecase
-├─ domain              ├─ domain           └─ persistence                 ├─ query
-├─ password            ├─ persistence                                     ├─ domain
-├─ persistence         ├─ endpoint                                        ├─ persistence
-├─ endpoint            └─ exception                                       ├─ endpoint
-└─ exception                                                              └─ exception
+├─ domain              ├─ domain           └─ persistence                 ├─ domain
+├─ password            ├─ persistence                                     ├─ persistence
+├─ persistence         ├─ endpoint                                        ├─ endpoint
+├─ endpoint            └─ exception                                       └─ exception
+└─ exception
 ```
 
 `member.password`는 계약(`PasswordHasher`)과 Spring Security 구현, bean 설정을 한 묶음으로 둔
@@ -239,10 +239,10 @@ booking
 ├─ redis          Redis 키 만료 수신 배선
 ├─ websocket      STOMP 배선과 좌석 상태 발행 구현
 │
-├─ order          domain · usecase · query · persistence · endpoint
+├─ order          domain · usecase · persistence · endpoint
 ├─ hold           domain · persistence
 ├─ selection      domain · usecase · persistence · endpoint
-├─ seat           domain · usecase · query · port · persistence · endpoint
+├─ seat           domain · usecase · port · persistence · endpoint
 ├─ salespolicy    domain · usecase · persistence · endpoint
 ├─ ticket         domain · persistence
 └─ admission      (flat — 파일 일곱이 서로만 부른다)
@@ -327,7 +327,7 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 | 계약의 성격 | 소유 위치 |
 | --- | --- |
 | aggregate 저장·복원과 업무 명령에 필요한 조회 | `domain` |
-| 화면 조회·검색·집계 결과의 읽기 모델 | `query`(그 조회 구현은 `persistence`) |
+| 화면 조회의 검색 조건·커서·응답 항목·집계 결과 | `usecase`(그 조회 구현은 `persistence`) |
 | 분산락 | `booking.concurrency` |
 | 발행·외부 provider·client | `port`(없으면 그 기능을 정의하는 package) |
 | HTTP 입력·출력 계약 | `endpoint` |
@@ -402,7 +402,8 @@ Spring Data 인터페이스·Redis 구현은 그대로 막혀 있다.
 
 Aggregate를 여러 개 복원해 Java에서 조합하기보다, 필요한 값을 직접 조회한다. 반환 타입은 엔티티가
 기본이고(`ShowQueryRepository.findShow`, `findAllBySearch`), DB 집계처럼 엔티티로 표현되지 않는
-결과에만 별도 타입을 두며 그 타입은 `query` package가 소유한다(`PriceSummary`). 조회 구현
+결과에만 별도 타입을 두며 그 타입은 그것을 쓰는 use case가 소유한다
+(`GetShowDetailUseCase.PriceSummary`). 조회 구현
 방식(파생 메서드 / `@Query` / Querydsl)도 같은 기준으로 고른다 — Querydsl이 기본값은 아니다.
 
 단순한 local 조회는 그 module의 **공개 API interface를 직접 구현해도 된다**
@@ -586,7 +587,6 @@ key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](ope
 | 필수 입력 오류 문구 | `com.ticket.shared.exception.InvalidRequestMessageContractTest` |
 | E-code 전역 유일성 / handler 스코프 | `ErrorCodeUniquenessTest` / `ExceptionHandlerScopeTest` |
 | 계층 방향, cross-module 구현 참조, `api` 공개면 오염 | `com.ticket.ArchitectureRulesTest` |
-| 읽기 모델 package `query`가 조립·HTTP·저장 구현을 거꾸로 참조하는지 | `com.ticket.ArchitectureRulesTest` |
 | use case가 저장 adapter를 직접 부르는지 / `persistence`에 조회 Repository만 열려 있는지 | `com.ticket.ArchitectureRulesTest` |
 | DB를 읽는 클래스(`JPAQueryFactory` 보유)가 다른 업무 module을 조합하는지 | `com.ticket.ArchitectureRulesTest` |
 | `endpoint`가 use case를 건너뛰고 Repository·조회 Repository를 직접 부르는지 | `com.ticket.ArchitectureRulesTest` |

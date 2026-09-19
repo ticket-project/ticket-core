@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

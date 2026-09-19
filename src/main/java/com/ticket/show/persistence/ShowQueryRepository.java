@@ -46,12 +46,12 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.query.PriceSummary;
-import com.ticket.show.query.SaleOpeningSoonSearchParam;
-import com.ticket.show.query.ShowCursor;
-import com.ticket.show.query.ShowListParam;
-import com.ticket.show.query.ShowSearchCriteria;
-import com.ticket.show.query.ShowSort;
+import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
+import com.ticket.show.usecase.SaleOpeningSoonSearchParam;
+import com.ticket.show.usecase.ShowCursor;
+import com.ticket.show.usecase.ShowListParam;
+import com.ticket.show.usecase.ShowSearchCriteria;
+import com.ticket.show.usecase.ShowSort;
 
 import lombok.RequiredArgsConstructor;
 

@@ -29,7 +29,6 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQueryRepository;
-import com.ticket.show.query.PriceSummary;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -106,6 +105,15 @@ public class GetShowDetailUseCase {
 
     public record PerformanceInfo(
             Long id, Long performanceNo, LocalDateTime startTime, LocalDateTime endTime) {}
+
+    /**
+     * ADR 0005: show-level 가격표(과거 ShowGrade)는 폐기됐다. 등급·가격은 회차(Performance)마다 다를 수 있어 show 상세는 그
+     * 회차들의 PerformanceGrade.price 중 최소/최대만 요약해 보여준다. 정확한 가격은 회차를 고른 뒤 그 회차의 등급 API로 확인한다. 이 show에
+     * 등급이 하나도 없으면 {@code null}이다.
+     *
+     * <p>DB가 계산한 집계 결과다 — 가격 전체를 메모리로 읽어 세지 않는다. 그래서 {@code ShowQueryRepository}가 이 타입으로 돌려준다.
+     */
+    public record PriceSummary(BigDecimal minPrice, BigDecimal maxPrice) {}
 
     public Output execute(final Input input) {
         final Long showId = input.showId();

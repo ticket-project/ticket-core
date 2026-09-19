@@ -1,4 +1,4 @@
-package com.ticket.show.query;
+package com.ticket.show.usecase;
 
 import org.jspecify.annotations.Nullable;
 

@@ -17,10 +17,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
-import com.ticket.booking.seat.query.SeatStatus;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
+import com.ticket.booking.seat.usecase.GetSeatStatusUseCase.SeatStatus;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
