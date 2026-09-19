@@ -393,11 +393,10 @@ ORDER BY waiting_sessions DESC;
 
 ## 부하 테스트
 
-예매 오픈 부하 테스트는 [load-test.md](load-test.md)에서 시작한다.
+예매 오픈 부하 테스트의 목적과 실행 절차는 [load-test.md](load-test.md)에 있다.
 
-상세 실행 문서와 실제 실행 프로젝트:
+실제 실행 프로젝트:
 
-- `docs/load-test/ticket-open-local.md`
 - 형제 저장소 `../gatling-test/README.md`
 - 로컬 콘솔 `../gatling-test/console/README.md`
 
