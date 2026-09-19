@@ -7,8 +7,8 @@
  *
  * <p>읽기 전용 조회는 {@code ShowQueryRepository}(공연 목록·검색·오픈 예정·상세·요약 배치)와 {@code
  * PerformanceQueryRepository}(회차 요약·grade·판매 snapshot·seat-map)가 소유한다. 정렬·커서·판매 표시 상태 조건 같은
- * Querydsl 조립은 그 구현 안에만 있고, 밖으로는 {@code show.query}의 읽기 모델만 나간다. {@code QuerydslTupleColumns}는 두
- * Repository가 함께 쓰는 package-private helper다.
+ * Querydsl 조립은 그 구현 안에만 있고, 밖으로는 entity와 DB 집계 결과만 나간다 — 응답 항목은 그것을 쓰는 use case가 소유한다({@code
+ * show.usecase}).
  */
 @NullMarked
 package com.ticket.show.persistence;

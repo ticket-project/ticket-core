@@ -12,7 +12,7 @@
  * (commit 이후 후속 처리를 위한 이벤트).
  *
  * <p><b>이 둘만 module root에 남는다 — 다른 module처럼 {@code booking.api}로 옮기지 않는다.</b> 두 가지 이유다. (1) 다른
- * module이 호출하는 표면이 아니다. 두 이벤트의 listener는 {@code booking.application}에 있는 booking 자신이고, 다른 module의
+ * module이 호출하는 표면이 아니다. 두 이벤트의 listener는 {@code booking.event}에 있는 booking 자신이고, 다른 module의
  * production code는 이 타입을 참조하지 않는다 — 참조가 없는 곳에 {@code api} package를 만들지 않는다. (2) 더 중요한 이유로, <b>이 두
  * FQCN은 DB에 저장된 값이다.</b> Modulith event publication registry의 {@code EVENT_PUBLICATION.event_type}
  * 컬럼이 이벤트 class의 FQCN을 그대로 담는다. package를 옮기면 배포 시점에 아직 완료되지 않은 publication row의 {@code event_type}이

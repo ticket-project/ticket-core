@@ -1,8 +1,8 @@
 /**
  * 인증·인가와 그 조립을 소유하는 기술 모듈이다. 회원 데이터는 갖지 않는다 — 계정은 member의 {@code MemberAccountApi} 공개 계약으로만 만진다.
  *
- * <p><b>이 module만 계층 대신 기능으로 나눈다.</b> 업무 모듈은 endpoint/application/domain/infrastructure로 읽히지만, 여기
- * 있는 것은 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더 나은 탐색 단위다. 각 폴더 안에는 계층 폴더를 다시 만들지 않는다.
+ * <p><b>이 module만 계층 대신 기능으로 나눈다.</b> 업무 모듈은 endpoint/usecase/domain/persistence로 읽히지만, 여기 있는 것은
+ * 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더 나은 탐색 단위다. 각 폴더 안에는 계층 폴더를 다시 만들지 않는다.
  *
  * <ul>
  *   <li>{@code auth} — 가입·로그인·갱신·로그아웃·탈퇴 조립과 인증 Controller·요청·문서 타입

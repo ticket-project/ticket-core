@@ -205,7 +205,7 @@ class PaymentModuleSlicingSchemaTest {
     }
 
     private void persist(final Session session, final Object entity) {
-        // PaymentAuditedEntity의 감사 필드는 Spring Data JPA auditing(AuditingEntityListener +
+        // shared.jpa.AuditedEntity의 감사 필드는 Spring Data JPA auditing(AuditingEntityListener +
         // AuditorAware)이 채운다 — 이 테스트는 Spring context 없이 순수 Hibernate만 쓰므로 직접
         // 채운다. Spring auditing 배선 자체는 다른 통합 테스트가 이미 고정한다.
         ReflectionTestUtils.setField(entity, "createdAt", LocalDateTime.now());
