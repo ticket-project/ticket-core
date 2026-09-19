@@ -37,7 +37,8 @@ Repository를 포함한 DB·Redis 구현이다.
 **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
 그 타입의 소유 capability나 실제 역할을 먼저 판단한다. 여러 업무가 함께 쓰는 기반도 그 역할이
 받는다 — 락 계약은 `booking.concurrency`, 도메인 기반 타입과 값은 `domain`
-(`show.domain.ShowAuditedEntity`, `booking.domain.BookingAuditedEntity`)이다.
+(`booking.domain.RequestedSeatIds`)이다. entity 감사 컬럼만 module이 갖지 않고
+`shared.jpa.AuditedEntity` 하나를 상속한다(ADR 0018).
 
 **`booking` 하위 capability는 Spring Modulith Application Module이 아니다.** `@ApplicationModule`도
 `@NamedInterface`도 붙이지 않고 capability 사이에 module API를 만들지 않는다. 최상위 Application
