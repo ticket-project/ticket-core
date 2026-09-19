@@ -7,7 +7,6 @@ import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
 import static com.ticket.show.domain.show.QShow.show;
 import static com.ticket.show.domain.show.QShowGenre.showGenre;
-import static com.ticket.show.persistence.QuerydslTupleColumns.required;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -759,5 +758,9 @@ public class ShowQueryRepository {
     /** 회차를 시작 시각·회차 번호 순으로 돌려준다. 날짜별 묶음과 응답 변환은 {@code GetShowDetailUseCase}가 한다. */
     public List<Performance> findPerformances(final Long showId) {
         return performanceJpaRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId);
+    }
+
+    static <T> T required(final Tuple tuple, final Expression<T> column) {
+        return Objects.requireNonNull(tuple.get(column), () -> column + "은 NOT NULL 컬럼이다");
     }
 }
