@@ -20,7 +20,7 @@ import lombok.Getter;
  * <p>테이블을 갖지 않는 {@code @MappedSuperclass}라 상속해도 네 컬럼이 각 테이블에 그대로 인라인된다 — 상속으로 묶이는 것은 컬럼 정의뿐이고,
  * aggregate·트랜잭션·조회는 module마다 독립이다.
  *
- * <p>값을 채우는 쪽은 {@code shared.infrastructure.JpaAuditingConfig}이고, 감사자 ID는 {@link
+ * <p>값을 채우는 쪽은 {@code shared.config.JpaAuditingConfig}이고, 감사자 ID는 {@link
  * com.ticket.shared.api.AuditorPrincipal}에서 읽는다.
  *
  * <p><b>업무 의미를 가진 필드를 여기 추가하지 않는다.</b> 한 module에만 필요한 필드(낙관적 락 {@code @Version}, 소프트 삭제 표시 등)를 여기

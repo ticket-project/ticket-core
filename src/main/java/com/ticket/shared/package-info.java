@@ -7,8 +7,8 @@
  *
  * <p>공개 계약은 성격별로 네 named interface에 나눠 둔다 — 기술 중립 공유 계약은 {@code shared.api}, HTTP 응답 형식은 {@code
  * shared.web}, 공통 오류 계약은 {@code shared.exception}, entity가 상속하는 JPA 기반 타입은 {@code shared.jpa}다. 공통
- * 실행 설정은 {@code shared.infrastructure}, 전역 예외 처리는 {@code shared.exception.handler}가 소유한다. 이 모듈은
- * {@code sharedModules}로 모든 모듈 기동 테스트에 포함되므로, bean은 이 두 내부 패키지에만 둔다. {@link
+ * 실행 설정은 {@code shared.config}, 전역 예외 처리는 {@code shared.exception.handler}가 소유한다. 이 모듈은 {@code
+ * sharedModules}로 모든 모듈 기동 테스트에 포함되므로, bean은 이 두 내부 패키지에만 둔다. {@link
  * com.ticket.shared.api.CorsProperties}가 예외처럼 보이지만 아니다 — {@code @ConfigurationProperties} 값 홀더는 스스로
  * bean을 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이 한다.
  *

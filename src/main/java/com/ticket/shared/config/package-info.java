@@ -14,6 +14,6 @@
  * booking의 {@code WebSocketConfig}가 함께 쓰는 값이라 {@code shared}에 둔다.
  */
 @NullMarked
-package com.ticket.shared.infrastructure;
+package com.ticket.shared.config;
 
 import org.jspecify.annotations.NullMarked;
