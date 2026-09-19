@@ -43,7 +43,7 @@ Gatling 소스와 실행 옵션의 원본은 형제 저장소 `../gatling-test`�
 | 시나리오 | 측정 대상 | 함께 볼 것 |
 | --- | --- | --- |
 | `QueueEnterSimulation` | Queue join과 enter 처리량 | 두 요청의 실패율, enter p95·p99, Queue 예외 로그 |
-| `CoreAdmissionCapacitySimulation` | Core 단독 좌석·주문 처리량 | seat status·select·create order 실패율, p95·p99, 500 응답, DB pool, Redis latency |
+| `BookingCapacitySimulation` | Core 단독 좌석·주문 처리량 | seat status·select·create order 실패율, p95·p99, 500 응답, DB pool, Redis latency |
 | `TicketOpenEndToEndSimulation` | 예매 오픈 전체 흐름 | 위 두 항목 전부와 state polling 횟수 |
 | `SeatContentionSimulation` | 같은 좌석 hold·order 경합 | 성공한 hold·order 수가 좌석 수를 넘지 않는지 |
 
@@ -55,7 +55,7 @@ Gatling 소스와 실행 옵션의 원본은 형제 저장소 `../gatling-test`�
 대기열 방출량은 Queue Server 처리량이 아니라 **Ticket Server가 안정적으로 처리하는 입장 사용자
 수**를 기준으로 잡는다.
 
-1. `CoreAdmissionCapacitySimulation`을 단계별로 실행해 Core 단독 처리량을 측정한다.
+1. `BookingCapacitySimulation`을 단계별로 실행해 Core 단독 처리량을 측정한다.
    경계 탐색은 5, 10, 15, 20, 30, 40, 50 users/sec를 각각 별도 실행한다.
 2. 실패율, p95·p99, DB connection pool, Redis latency, JVM CPU·GC를 함께 본다.
 3. 안정 구간의 `admitted users/sec`에 0.6~0.7 안전계수를 적용한다.
@@ -83,7 +83,8 @@ Gatling 소스와 실행 옵션의 원본은 형제 저장소 `../gatling-test`�
 
 - 이전 실행의 PENDING 주문이 만료됐는가
 - Redis hold TTL이 끝났는가
-- `ORDER_HOLD_CREATION_OUTBOX`와 `ORDER_HOLD_RELEASE_OUTBOX`의 PENDING·FAILED 건이 정리됐는가
+- `EVENT_PUBLICATION`의 미완료 publication이 정리됐는가(옛 `ORDER_HOLD_*_OUTBOX` 테이블은
+  booking V2 migration이 지웠다 — `docs/operations.md`의 이벤트 운영 절이 원본이다)
 - Queue의 entered marker가 TTL로 만료됐는가
 
 정리되지 않은 상태에서 다음 부하를 넣으면 실패 원인이 이번 실행인지 이전 실행인지 구분할 수 없다.
