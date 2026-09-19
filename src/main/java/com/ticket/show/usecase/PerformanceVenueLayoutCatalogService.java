@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
-import com.ticket.show.api.ShowPerformanceLookupApi;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 import com.ticket.show.persistence.PerformanceQueryRepository;
 import com.ticket.venue.api.VenueLookupApi;
@@ -29,8 +28,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class PerformanceVenueLayoutCatalogService
-        implements PerformanceVenueLayoutCatalogApi, ShowPerformanceLookupApi {
+public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLayoutCatalogApi {
     private final PerformanceQueryRepository performanceQueryRepository;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;

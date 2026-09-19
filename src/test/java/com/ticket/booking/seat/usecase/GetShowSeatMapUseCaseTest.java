@@ -13,18 +13,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.show.api.ShowPerformanceLookupApi;
+import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowSeatMapUseCaseTest {
-    @Mock private ShowPerformanceLookupApi showPerformanceLookup;
+    @Mock private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
     @Mock private GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase;
     @InjectMocks private GetShowSeatMapUseCase useCase;
 
     @Test
     void 공연의_첫_회차_좌석을_기존_프론트_형식으로_변환한다() {
-        when(showPerformanceLookup.findRepresentativePerformanceId(1L))
+        when(performanceVenueLayoutCatalog.findRepresentativePerformanceId(1L))
                 .thenReturn(Optional.of(10L));
         when(getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(10L)))
                 .thenReturn(
