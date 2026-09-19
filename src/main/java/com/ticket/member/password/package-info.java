@@ -1,8 +1,9 @@
 /**
- * 비밀번호 해싱 기능이다 — 계약({@code PasswordHasher})과 Spring Security 구현, 그 bean 설정을 한곳에 둔다.
+ * 비밀번호 해싱 bean 설정이다. 해싱과 일치 확인 자체는 Spring Security의 {@code PasswordEncoder}가 한다 — member는 그 bean을
+ * 소유하고 {@code MemberAccountService}가 직접 쓴다.
  *
- * <p>해싱은 저장 기술이 아니라 보안 기술이라 {@code persistence}에 두지 않는다. 계약과 구현이 서로 밖에서 쓰이지 않는 작은 기능이라 역할별로 쪼개지 않고
- * 기능 이름 하나로 묶는다.
+ * <p>해싱은 저장 기술이 아니라 보안 기술이라 {@code persistence}에 두지 않는다. member가 이 bean을 소유하므로 {@code member ->
+ * security} 의존이 생기지 않는다.
  */
 @NullMarked
 package com.ticket.member.password;

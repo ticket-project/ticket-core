@@ -22,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * <p><b>인증 호환성은 비밀번호 저장 형식 하나에 달려 있다.</b> 앱의 {@code member.security.infrastructure.SecurityConfig}가
  * 등록하는 {@code PasswordEncoder}는 {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}다
  * — 여기서도 같은 factory를 그대로 쓴다. 그래서 저장되는 값은 앱이 만드는 것과 같은 {@code {bcrypt}$2a$...} 형식이고, 로그인 시 {@code
- * PasswordHasher.matches}가 그대로 통과한다. 검증을 통과시키려고 형식을 단순화하거나 해싱을 건너뛰지 않는다.
+ * PasswordEncoder.matches}가 그대로 통과한다. 검증을 통과시키려고 형식을 단순화하거나 해싱을 건너뛰지 않는다.
  *
  * <p>이메일 규칙 {@code loadtest{n}@test.com}은 형제 저장소 {@code gatling-test}의 {@code loginEmailPrefix}
  * 기본값과 같다. 이미 있는(탈퇴하지 않은) 이메일은 건너뛴다 — {@code MEMBERS.email}에 unique 제약이 있어 중복 INSERT는 실패한다.

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,12 +16,12 @@ import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialAccountConnection;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.domain.Email;
+import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
 import com.ticket.member.exception.DuplicateEmailException;
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.member.password.PasswordHasher;
 import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class MemberAccountService implements MemberAccountApi {
     private static final String TIMING_GUARD_DUMMY_PASSWORD = "timing-guard-dummy-password";
 
     private final MemberRepository memberRepository;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
     private final OAuth2MemberProvisioningService oauth2MemberProvisioningService;
     private final Clock clock;
 
@@ -56,7 +57,11 @@ public class MemberAccountService implements MemberAccountApi {
     public Long register(final String email, final RawPassword password, final String name) {
         final Email createdEmail = Email.create(email);
         final Member member =
-                new Member(createdEmail, passwordHasher.hash(password), name, Role.MEMBER);
+                new Member(
+                        createdEmail,
+                        EncodedPassword.create(passwordEncoder.encode(password.getPassword())),
+                        name,
+                        Role.MEMBER);
 
         try {
             return memberRepository.save(member).getId();
@@ -79,13 +84,14 @@ public class MemberAccountService implements MemberAccountApi {
         final Optional<Member> activeMember = memberRepository.findActiveByEmail(email);
 
         if (activeMember.isEmpty()) {
-            passwordHasher.hash(RawPassword.create(TIMING_GUARD_DUMMY_PASSWORD));
+            passwordEncoder.encode(TIMING_GUARD_DUMMY_PASSWORD);
             throw new UnauthenticatedException();
         }
 
         final Member member = activeMember.get();
         if (member.getEncodedPassword() == null
-                || !passwordHasher.matches(password, member.getEncodedPassword())) {
+                || !passwordEncoder.matches(
+                        password.getPassword(), member.getEncodedPassword().getPassword())) {
             throw new UnauthenticatedException();
         }
         return toStatus(member);
