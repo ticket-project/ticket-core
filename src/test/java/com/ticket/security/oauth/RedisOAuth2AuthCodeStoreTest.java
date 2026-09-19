@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,19 +19,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 
-import com.ticket.security.token.UuidSupplier;
-
 @ExtendWith(MockitoExtension.class)
 class RedisOAuth2AuthCodeStoreTest {
     @Mock private RedissonClient redissonClient;
     @Mock private RBucket<String> bucket;
-    @Mock private UuidSupplier uuidSupplier;
+    @Mock private Supplier<UUID> uuidSupplier;
     @InjectMocks private RedisOAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Test
     void creates_one_time_auth_code_and_stores_member_id() {
         doReturn(bucket).when(redissonClient).getBucket(anyString());
-        when(uuidSupplier.newUuid())
+        when(uuidSupplier.get())
                 .thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String code = oauth2AuthCodeStore.createCode(7L);

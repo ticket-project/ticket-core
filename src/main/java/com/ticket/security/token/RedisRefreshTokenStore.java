@@ -2,6 +2,8 @@ package com.ticket.security.token;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -14,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 public class RedisRefreshTokenStore implements RefreshTokenStore {
     private static final String KEY_PREFIX = "refresh_token:";
     private final RedissonClient redissonClient;
-    private final UuidSupplier uuidSupplier;
+    private final Supplier<UUID> uuidSupplier;
 
     @Override
     public String createRefreshToken(final Long memberId, final long expirationSeconds) {
-        final String tokenValue = uuidSupplier.newUuid().toString();
+        final String tokenValue = uuidSupplier.get().toString();
         final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + tokenValue);
         bucket.set(String.valueOf(memberId), Duration.ofSeconds(expirationSeconds));
         return tokenValue;
