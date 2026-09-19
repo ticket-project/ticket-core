@@ -19,7 +19,7 @@
   `shared.exception`, 공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은 `security`에 둔다.
 - **다른 모듈이 쓰는 공개 계약은 `<module>.api`에 두고 `@NamedInterface("api")`로 선언한다**
   ([ADR 0014](adr/0014-module-public-contracts-live-in-api-packages.md)). 작은 interface와 불변
-  `record` snapshot, enum만 두고 구현은 `endpoint`/`application`/`domain`/`infrastructure`/
+  `record` snapshot, enum만 두고 구현은 `endpoint`/`usecase`/`domain`/`persistence`/
   `exception` 패키지(`security`는 기능별 패키지)에 둔다. 별도 `internal` 계층은 두지 않는다 —
   Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도 `Type.OPEN`으로
   선언하지 않는다. `payment`처럼 공개할 계약이 없는 모듈에는 `api`를 만들지 않고, `booking`의
@@ -322,8 +322,8 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 
 **`usecase`에는 `*UseCase`만 두지 않는다.** use case가 조립에 쓰는 서비스·헬퍼도 같은 package에
 둔다 — 주문 생성과 그 조립 helper가 한 목록에서 읽혀야 트랜잭션 원자성이 어디서 보장되는지 보인다.
-읽기 모델은 `query`, 그 조회 구현은 `persistence`의 `*QueryRepository`, 발행 같은 출력 계약은
-`port`다.
+읽기 모델과 조회 파라미터·커서·정렬도 `usecase`가 갖고(읽기 모델만 담는 `query` package는 두지
+않는다), 그 조회 구현은 `persistence`의 `*QueryRepository`, 발행 같은 출력 계약은 `port`다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
@@ -442,22 +442,22 @@ Map<Long, Show> ShowQueryRepository.findSummaries(Set<Long> showIds);
 ## 계층별 검증 책임
 
 판단 기준 한 문장 — **"이 검증이 사라지면 무엇이 먼저 깨지는가."** HTTP 응답 품질만 나빠지면
-`endpoint`, 다른 adapter에서 호출해도 흐름이 깨지면 `application`, 어떤 호출 경로에서도 업무가 틀리면
-`domain`, 기술 경계에서만 성립하면 `infrastructure`다.
+`endpoint`, 다른 adapter에서 호출해도 흐름이 깨지면 `usecase`, 어떤 호출 경로에서도 업무가 틀리면
+`domain`, 기술 경계에서만 성립하면 `persistence`다.
 
 | 계층 | 소유하는 검증 | 실패 표현 |
 | --- | --- | --- |
 | `endpoint` | JSON·HTTP 요청 형식, 필수 body field, blank/null, ID 양수 여부, path/query/header 형식 | Bean Validation → `InvalidRequestException`(400/`E400`) |
-| `application` | adapter 공통 `UseCase.Input` 계약, 여러 입력 조합, 데이터 존재 여부, 요청 권한, 중복·멱등성, 다른 모듈 공개 API를 엮는 실행 선행조건 | 공통 예외 또는 소유 모듈 예외 |
+| `usecase` | adapter 공통 `UseCase.Input` 계약, 여러 입력 조합, 데이터 존재 여부, 요청 권한, 중복·멱등성, 다른 모듈 공개 API를 엮는 실행 선행조건 | 공통 예외 또는 소유 모듈 예외 |
 | `domain` | 업무 불변식, 값 객체 유효성, 상태 전이, 예매 가능 시간, 좌석 소유권과 선점 한도 | 소유 모듈 `exception`의 업무 예외 |
-| `infrastructure` | Redis·JWT·외부 API payload decode, DB constraint 번역 | 기술 예외를 상위 계층이 이해할 실패로 번역 |
+| `persistence` | Redis·JWT·외부 API payload decode, DB constraint 번역 | 기술 예외를 상위 계층이 이해할 실패로 번역 |
 
 **Bean Validation은 `endpoint`만 쓴다.** 파라미터 제약은 `*ControllerDocs` 인터페이스에만 선언한다 —
 상위 타입과 구현체 양쪽에 선언하면 Jakarta Bean Validation이 `ConstraintDeclarationException`
 (HV000151)을 던져 method validation 전체가 500으로 무너진다. 왜 그런지와 `@Validated`를
 Controller에 붙이지 않는 이유는 `ControllerParameterConstraintTest`의 JavaDoc이 원본이다.
 
-`application`은 필수 component를 record compact constructor 한곳에서 판정한다. 승인된 문구
+`usecase`는 필수 component를 record compact constructor 한곳에서 판정한다. 승인된 문구
 형태는 `InvalidRequestMessageContractTest`가 원본이다. `execute(null)`은 사용자 입력 오류가
 아니라 호출부 프로그래머 오류이므로 `NullPointerException`으로 드러낸다. **자기 모듈
 Repository는 "없다"는 사실만 알려주고 오류는 유스케이스가 고른다** — 도메인 Repository는
@@ -560,12 +560,13 @@ session 완료 요청을 보내지 않는다**). 두 저장소가 공유하는 s
 ## 저장소와 동시성
 
 주 영속 저장소는 RDB다. 업무 상태 JPA entity는 각 모듈 `domain`, Spring Data/JPQL/Querydsl/
-`EntityManager`/Repository adapter는 `infrastructure`에 둔다. Flyway는 module 소유권을 따른다
+`EntityManager`/Repository adapter는 `persistence`에 둔다. Flyway는 module 소유권을 따른다
 (폴더 구조와 절차는 [operations.md](operations.md#db-마이그레이션)가 원본).
 
 Redis는 짧은 수명 상태와 동시성 제어, 토큰 저장에 쓴다. 대기열 상태는 `ticket-queue`가 별도
 Redis에서 관리하고, Core Redis는 seat selection·seat hold(`booking`), refresh token·OAuth2
-one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈의 `infrastructure`에 둔다.
+one-time auth code(`member`)만 담당한다. Redis 구현체는 소유 모듈의 `persistence`에 둔다(기술 응집도가 높은 `booking.concurrency.redis`처럼
+그 기술을 소유한 기능 package도 같다).
 key 조립·TTL·전환 절차 같은 Redis 작업 규칙은 [operations.md](operations.md#분산락과-redis-작업-규칙)가
 원본이다.
 
@@ -652,13 +653,13 @@ Modulith `Documenter`로 만든다.
 
 ## 아키텍처 리뷰 질문
 
-- 이 코드의 책임이 web, application, domain, infrastructure 중 어디에 속하는가
+- 이 코드의 책임이 endpoint, usecase, domain, persistence 중 어디에 속하는가
 - 같은 검증이 두 계층에서 같은 목적으로 중복 실행되지 않는가
 - 다른 모듈의 하위 패키지, Repository, JPA entity를 직접 참조하지 않는가
 - 모듈을 넘는 JPA 연관관계나 DB FK가 새로 생기지 않았는가
 - 새 공개 계약이 JPA entity, Redis/JWT/Spring Web 타입을 노출하지 않는가
 - 새 클래스가 맞는 계층에 있는가 — 클래스 이름이 이미 업무를 말하는데 폴더로 또 나누지 않았는가
-- `application`/`infrastructure`/`endpoint` 아래에 업무별 폴더를 새로 만들지 않았는가
+- `usecase`/`persistence`/`endpoint` 아래에 업무별 폴더를 새로 만들지 않았는가
 - `domain` 아래 묶음이 실제 도메인 모델의 묶음인가, 폴더를 맞추려고 만든 것인가
 - 갈 곳을 못 정한 코드를 `common`/`support` 같은 이름에 모으지 않았는가
 - DB 상태와 Redis 상태를 합치는 규칙의 소유자가 한 곳인가
