@@ -68,7 +68,9 @@ $env:KAKAO_ADMIN_KEY="local-kakao-admin-key"
 .\gradlew.bat bootRun
 ```
 
-Queue API:
+Queue Server(`ticket-queue`)는 API와 advancement scheduler를 한 애플리케이션이 함께 띄운다
+(`QueueApiApplication`). 별도 scheduler 프로세스는 없다 — 멀티모듈로 쪼개는 작업은 그 저장소의
+`refactor/queue-multi-module` 브랜치에 있고 master에 머지되지 않았다.
 
 ```powershell
 # ticket-queue 저장소 루트의 별도 터미널에서 실행
@@ -78,15 +80,7 @@ $env:JWT_ISSUER="ticket"
 $env:JWT_ACCESS_TOKEN_EXPIRATION_SECONDS="1800"
 $env:ADMISSION_TOKEN_SECRET_KEY="same-admission-secret-32bytes-minimum"
 $env:QUEUE_TOKEN_SECRET="same-queue-token-secret-32bytes-minimum"
-.\gradlew.bat :queue-api:bootRun
-```
-
-Queue Scheduler:
-
-```powershell
-# ticket-queue 저장소 루트의 또 다른 터미널에서 실행
-$env:REDIS_PORT="6380"
-.\gradlew.bat :queue-scheduler:bootRun
+.\gradlew.bat bootRun
 ```
 
 ## API 흐름
@@ -173,11 +167,11 @@ Queue Server를 거치지 않고 Ticket Server에 `Authorization`과 `X-Admissio
 
 ```powershell
 .\gradlew.bat -p load-tests/gatling gatlingRun `
-  --simulation com.ticket.loadtest.simulation.CoreAdmissionCapacitySimulation `
+  --simulation com.ticket.loadtest.simulation.BookingCapacitySimulation `
   -DcoreBaseUrl=http://localhost:8080 `
   -DperformanceId=1 `
   -DbookingFeederFile=C:\path\booking-feeder.csv `
-  -DbookingScenario=CORE_ADMISSION_CAPACITY `
+  -DbookingScenario=BOOKING_CAPACITY `
   -DinjectionMode=constant-users-per-sec `
   -DusersPerSecond=10 `
   -DdurationSeconds=60 `

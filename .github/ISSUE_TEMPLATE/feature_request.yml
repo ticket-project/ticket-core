@@ -182,7 +182,7 @@ body:
       placeholder: |
         - 관련 이슈: #123
         - 관련 문서: docs/architecture.md
-        - 관련 클래스: HoldManager, StartOrderUseCase
+        - 관련 클래스: HoldManager, StartBookingUseCase
     validations:
       required: false
 

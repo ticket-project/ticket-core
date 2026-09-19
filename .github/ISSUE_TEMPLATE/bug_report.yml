@@ -63,7 +63,7 @@ body:
     attributes:
       label: 관련 API / 클래스 / 잡 이름
       description: 알고 있다면 가장 먼저 의심되는 진입점을 적어 주세요.
-      placeholder: POST /api/v1/performances/{performanceId}/holds, StartOrderUseCase, RedisKeyExpirationListener
+      placeholder: POST /api/v1/performances/{performanceId}/holds, StartBookingUseCase, RedisKeyExpirationListener
     validations:
       required: false
 
@@ -201,7 +201,7 @@ body:
       label: 추정 원인
       description: 원인을 이미 어느 정도 파악했다면 적어 주세요.
       placeholder: |
-        `StartOrderUseCase` 진입 전 좌석 락 범위가 충분하지 않거나,
+        `StartBookingUseCase` 진입 전 좌석 락 범위가 충분하지 않거나,
         hold 생성과 `PENDING` 주문 생성 사이의 정합성 보장이 약해 보입니다.
     validations:
       required: false
@@ -213,7 +213,7 @@ body:
       description: 재현 당시 핵심 로그나 응답 본문을 붙여 주세요.
       render: shell
       placeholder: |
-        2026-04-02 10:32:10 INFO  ... StartOrderUseCase
+        2026-04-02 10:32:10 INFO  ... StartBookingUseCase
         2026-04-02 10:32:10 INFO  ... holdKey=...
         2026-04-02 10:32:11 WARN  ... duplicated pending order ...
     validations:
