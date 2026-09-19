@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
                         name = "UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT",
                         columnNames = {"performance_id", "seat_id"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PerformanceSeat extends BookingAuditedEntity {
+public class PerformanceSeat extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

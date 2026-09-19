@@ -59,12 +59,12 @@ class ModularityTests {
             Map.ofEntries(
                     Map.entry("booking", Set.of("show", "member", "security", "shared")),
                     Map.entry("show", Set.of("venue", "like", "member", "shared")),
-                    Map.entry("venue", Set.of()),
+                    Map.entry("venue", Set.of("shared")),
                     Map.entry("like", Set.of("member", "shared")),
                     Map.entry("member", Set.of("shared")),
                     Map.entry("security", Set.of("member", "shared")),
                     Map.entry("shared", Set.of()),
-                    Map.entry("payment", Set.of()));
+                    Map.entry("payment", Set.of("shared")));
 
     @Test
     void verifiesModuleStructure() {

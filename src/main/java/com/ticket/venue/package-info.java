@@ -5,7 +5,7 @@
  * <p>공개 계약: - VenueLookupApi / VenueSummary (공연장 존재 확인·표시값·지역 조회) - VenueSeatLookupApi /
  * VenueSeatAddress / VenueSeatLayout (좌석 주소·배치 좌표 조회)
  *
- * <p>이 module은 업무 module을 하나도 참조하지 않는 leaf다({@code allowedDependencies = {}}).
+ * <p>이 module은 업무 module을 하나도 참조하지 않는다. 유일한 의존은 entity가 상속하는 {@code shared :: jpa}다.
  *
  * <p>공개 계약은 {@code venue.api}({@code @NamedInterface("api")})에 있고 module root에는 {@code
  * package-info.java}만 둔다. {@link com.ticket.venue.api.Region}(공연장 소재 지역)은 그 package의 유일한 예외 타입이다 —
@@ -15,7 +15,7 @@
 @NullMarked
 @org.springframework.modulith.ApplicationModule(
         displayName = "Venue",
-        allowedDependencies = {})
+        allowedDependencies = {"shared :: jpa"})
 package com.ticket.venue;
 
 import org.jspecify.annotations.NullMarked;

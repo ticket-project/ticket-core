@@ -16,7 +16,7 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.show.domain.ShowAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "SHOWS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Show extends ShowAuditedEntity {
+public class Show extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

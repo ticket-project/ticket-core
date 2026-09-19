@@ -7,7 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.ticket.show.domain.ShowAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "SHOW_GENRES")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ShowGenre extends ShowAuditedEntity {
+public class ShowGenre extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import com.ticket.shared.jpa.AuditedEntity;
 import com.ticket.venue.api.Region;
 
 import lombok.AccessLevel;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "VENUES")
-public class Venue extends VenueAuditedEntity {
+public class Venue extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

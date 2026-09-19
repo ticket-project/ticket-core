@@ -21,7 +21,7 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.booking.domain.BookingAuditedEntity;
+import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -37,7 +37,7 @@ import lombok.NoArgsConstructor;
                     columnList = "member_id,performance_id,status")
         })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Order extends BookingAuditedEntity {
+public class Order extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

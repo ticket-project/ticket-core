@@ -8,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import com.ticket.shared.jpa.AuditedEntity;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,7 +23,7 @@ import lombok.NoArgsConstructor;
                         name = "UK_SEATS_VENUE_SEAT_ADDRESS",
                         columnNames = {"venue_id", "floor", "section", "row_no", "seat_no"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Seat extends VenueAuditedEntity {
+public class Seat extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
