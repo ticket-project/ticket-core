@@ -52,7 +52,7 @@ Module은 여덟 개 그대로다.
 폴더 안에 역할 폴더를 다시 만들지 않는다. 업무가 아니라 인증 기술이라 "무엇에 관한 코드인가"가 더
 나은 탐색 단위이기 때문이다. `security.http`는 controller 패키지가 아니라 HTTP 보안 adapter라
 `endpoint`로 바꾸지 않는다. `shared`도 공개 계약을 성격별로 `shared.api`/`shared.web`/
-`shared.exception` 세 named interface에 나눠 두고, 실행 배선은 `shared.infrastructure`에 둔다.
+`shared.exception` 세 named interface에 나눠 두고, 실행 배선은 `shared.config`에 둔다.
 
 **cross-module 공개 계약은 module root가 아니라 `<module>.api`에 둔다.** 다른 module이
 호출하는 행위 계약에만 `Api` 접미사를 붙이고(`MemberLookupApi`, `VenueLookupApi`), record·snapshot·

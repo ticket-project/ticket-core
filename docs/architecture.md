@@ -16,7 +16,7 @@
 - **Business Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다**([ADR 0006](adr/0006-bounded-context-module-boundaries.md)).
   `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은 `shared.api`·`shared.web`·
-  `shared.exception`, 공통 실행 배선은 `shared.infrastructure`, 인증·인가와 그 조립은 `security`에 둔다.
+  `shared.exception`, 공통 실행 배선은 `shared.config`, 인증·인가와 그 조립은 `security`에 둔다.
 - **다른 모듈이 쓰는 공개 계약은 `<module>.api`에 두고 `@NamedInterface("api")`로 선언한다**
   ([ADR 0014](adr/0014-module-public-contracts-live-in-api-packages.md)). 작은 interface와 불변
   `record` snapshot, enum만 두고 구현은 `endpoint`/`application`/`domain`/`infrastructure`/
@@ -295,7 +295,7 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
 
 `shared`는 공개 계약을 `api`/`web`/`exception` 세 named interface에 나눠 두고, 실행 배선·설정 구현은
-`shared.infrastructure`에 둔다. 업무 모듈에서 갈 곳이 애매한 타입을 `shared`로 보내지 않는다.
+`shared.config`에 둔다. 업무 모듈에서 갈 곳이 애매한 타입을 `shared`로 보내지 않는다.
 
 ### domain 아래 묶음
 
