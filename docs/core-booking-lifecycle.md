@@ -36,8 +36,8 @@
 ~~~text
 StartBookingUseCase          (POST /api/v1/orders)
   -> LockScope.ORDER_START 락(같은 회원·회차 직렬화)
-  -> booking local PerformanceSalesPolicyRepository: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) 조회 (밖)
-  -> admission AdmissionVerifier: 대기열 필요 회차만 token 검증 (밖)
+  -> salespolicy PerformanceSaleFinder.requirePolicy: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) 조회 (밖)
+  -> admission AdmissionGuard.verifyIfRequired: 대기열 필요 회차만 token 검증 (밖)
   -> member MemberLookupApi: active member 확인 (밖)
   -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
   -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
@@ -130,10 +130,11 @@ entity-only 단계다(ADR 0005 §3). PG 연동, 결제 승인/실패 API, `Order
 ## 주문 취소와 만료
 
 취소는 소유권과 현재 상태를 검증하고, 만료는 orderId 또는 holdKey로 PENDING 주문을 잠근다.
-이후 공통 절차는 `OrderTerminationService`가 담당한다.
+이후 공통 절차는 `OrderTerminationService`가 담당한다. 취소는 짧은 쓰기 트랜잭션을
+`CancelOrderTransactionService`가 따로 갖는다 — `CancelOrderUseCase`는 트랜잭션을 직접 열지 않는다.
 
 ~~~text
-CancelOrderUseCase / ExpireOrderUseCase
+CancelOrderUseCase -> CancelOrderTransactionService / ExpireOrderUseCase
   -> PENDING 주문 row lock
   -> OrderTerminationService
        -> 주문 좌석 검증
@@ -216,8 +217,9 @@ spring:
 
 ## TTL 폭주와 보정
 
-Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrderUseCase.expireByHoldKey`를
-호출한다.
+Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 핸들러 목록에 위임하고,
+`booking.hold.persistence.HoldKeyExpirationHandler`가 키를 해석해
+`ExpireOrderUseCase.expireByHoldKey`를 호출한다.
 
 - `redisExpirationSubscriptionExecutor`: Redis 구독 전용 worker 1~2개
 - `redisExpirationTaskExecutor`: 만료 handler worker 2개, queue 256개, 공유 permit 2개
@@ -259,6 +261,10 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 `ExpireOrder
 - hold 생성/해제 후속 처리: `booking.event.HoldCreationCoordinator`,
   `booking.event.HoldReleaseCoordinator`, `booking.event.HoldReleaseProgressRecorder`
 - 좌석 선택 조율과 발행: `booking.selection.usecase.SeatSelectionCoordinator`
+- 예매 정책 조회: `booking.salespolicy.usecase.PerformanceSaleFinder`
+- 대기열 입장 검증: `booking.admission.AdmissionGuard`(실제 token 검증은 `AdmissionVerifier`에 위임)
+- 취소 쓰기 트랜잭션: `booking.order.usecase.CancelOrderTransactionService`
+- hold 만료 키 처리: `booking.hold.persistence.HoldKeyExpirationHandler`
 - 만료 보정: `booking.order.usecase.ExpirePendingOrdersUseCase`
 - background 트리거: `booking.order.usecase.OrderExpirationTrigger`
 - Redis TTL 진입 제한: `booking.redis.RedisExpirationListenerConfig`
