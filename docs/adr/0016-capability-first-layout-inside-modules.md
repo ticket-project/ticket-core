@@ -91,7 +91,11 @@ capability 하나가 소유할 수 없는 것들이라 더 내리지 않는다.
 
 > 2026-09-19 갱신: 이 문단이 원래 예로 들던 `BookingAuditedEntity`는
 > [ADR 0018](0018-audit-base-entity-lives-in-shared.md)이 `shared.jpa.AuditedEntity` 하나로 합쳐
-> 더 이상 `booking.domain`에 없다. `booking.domain`은 `RequestedSeatIds`로 남는다.
+> 더 이상 `booking.domain`에 없다.
+>
+> 2026-09-21 갱신: 마지막까지 남아 있던 `RequestedSeatIds`도 유일한 사용처인
+> `booking.order.usecase`로 내려갔다 — `booking.domain` 직속은 이제 없다. 이 문단의 "`domain`(요청
+> 좀석 값)"은 유효하지 않다.
 
 `member.password`와 `booking.admission`은 계약과 구현이 같은 package에 있어 방향 규칙
 대상이 아니다. 파일이 늘어 목록만으로 무엇이 무엇인지 알 수 없어지면 그때 나눈다.

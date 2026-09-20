@@ -65,6 +65,8 @@
 - **감사 컬럼 자체는 건드리지 않았다.** `createdBy`/`updatedBy`/`updatedAt`은 지금 읽는 코드가
   없지만 DB schema는 외부 계약이라 이 결정의 범위 밖이다.
 - **`booking.domain`을 없애지 않았다.** `RequestedSeatIds`가 남아 있어 package는 그대로다.
+  (2026-09-21 갱신: 그 `RequestedSeatIds`도 `booking.order.usecase`로 옮겨 `booking.domain` 직속은
+  이제 없다.)
 - **`security`의 `allowedDependencies`는 그대로다.** entity가 없어 `shared :: jpa`가 필요 없다.
 - **로직을 바꾸지 않았다.** 상속 대상 교체와 import 수정이 전부다. 감사 값을 채우는 주체
   (`JpaAuditingConfig` + `SecurityContextAuditorAware` + `AuditorPrincipal`)는 그대로다.
