@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;

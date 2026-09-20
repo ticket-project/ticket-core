@@ -8,7 +8,6 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 
 import lombok.RequiredArgsConstructor;
@@ -22,14 +21,13 @@ public class HoldManager {
     public Hold createHold(
             final Long memberId,
             final Long performanceId,
-            final RequestedSeatIds requestedSeatIds,
+            final List<Long> requestedSeatIds,
             final Duration ttl,
             final LocalDateTime now) {
-        final List<Long> seatIds = requestedSeatIds.toList();
         final Hold hold =
-                Hold.create(generateHoldKey(), memberId, performanceId, seatIds, now, ttl);
+                Hold.create(generateHoldKey(), memberId, performanceId, requestedSeatIds, now, ttl);
 
-        ensureSeatsNotHeld(performanceId, seatIds);
+        ensureSeatsNotHeld(performanceId, requestedSeatIds);
         holdStore.save(hold, ttl);
         return hold;
     }
