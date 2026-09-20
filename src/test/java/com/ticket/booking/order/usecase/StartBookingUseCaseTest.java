@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.concurrency.RecordingLockManager;
-import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.HoldLimitExceededException;
@@ -154,7 +153,8 @@ class StartBookingUseCaseTest {
                 .thenReturn(seats);
         when(performanceSaleCatalog.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
                 .thenReturn(saleSnapshot);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(
+                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
                         MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
@@ -181,7 +181,7 @@ class StartBookingUseCaseTest {
         inOrder.verify(performanceSaleCatalog)
                 .getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdManager)
-                .createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW);
+                .createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
         inOrder.verify(pendingOrderCreator)
                 .create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
     }
@@ -199,7 +199,8 @@ class StartBookingUseCaseTest {
                 .thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(
+                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
 
         startBookingUseCase.execute(input);
@@ -315,7 +316,8 @@ class StartBookingUseCaseTest {
                 .thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(
+                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
                         eq(MEMBER_ID),
@@ -345,7 +347,8 @@ class StartBookingUseCaseTest {
                 .thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(
+                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
                         eq(MEMBER_ID),
@@ -397,7 +400,11 @@ class StartBookingUseCaseTest {
         lenient()
                 .when(
                         holdManager.createHold(
-                                MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+                                MEMBER_ID,
+                                PERFORMANCE_ID,
+                                seatIds.toList(),
+                                HOLD_DURATION,
+                                FIXED_NOW))
                 .thenReturn(hold(seatIds.toList()));
     }
 

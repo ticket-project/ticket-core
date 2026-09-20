@@ -13,9 +13,9 @@ import com.tngtech.archunit.lang.ArchRule;
 /**
  * 6개 Bounded Context(BC) 전부에서 {@code <bc>}의 모든 {@code domain} 계층이 다른 BC를 모르게 한다.
  *
- * <p>검사 대상 패턴은 {@code com.ticket.<bc>..domain..}이다 — 모듈 직속 {@code booking.domain}과 그 아래 묶음 ({@code
- * booking.domain.order}, {@code show.domain.performance} 등)을 함께 잡는다. 한쪽만 검사하면 검사 대상이 비어 조용히 통과하는
- * 구간이 생긴다.
+ * <p>검사 대상 패턴은 {@code com.ticket.<bc>..domain..}이다 — 모듈 직속 {@code member.domain}과 capability 아래 묶음
+ * ({@code booking.order.domain}, {@code show.domain.performance} 등)을 함께 잡는다. 한쪽만 검사하면 검사 대상이 비어 조용히
+ * 통과하는 구간이 생긴다.
  *
  * <p>계층 방향(domain → application/infrastructure/endpoint 금지 등)은 {@code
  * com.ticket.ArchitectureRulesTest}가 전 module에 대해 맡고, booking 고유의 락 계약 규칙만 {@code

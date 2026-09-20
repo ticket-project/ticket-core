@@ -15,7 +15,6 @@ import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderRemainingTime;
@@ -159,7 +158,7 @@ public class StartBookingUseCase {
                         holdManager.createHold(
                                 input.memberId(),
                                 input.performanceId(),
-                                requestedSeatIds,
+                                requestedSeatIds.toList(),
                                 holdDuration,
                                 now));
     }

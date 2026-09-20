@@ -1,4 +1,4 @@
-package com.ticket.booking.domain;
+package com.ticket.booking.order.usecase;
 
 import java.util.HashSet;
 import java.util.List;

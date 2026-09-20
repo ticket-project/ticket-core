@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.domain.RequestedSeatIds;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
