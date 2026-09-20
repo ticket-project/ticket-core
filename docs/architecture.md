@@ -279,8 +279,9 @@ Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`securit
   파일이 많은 `booking.concurrency.redis` 정도가 허용 범위다.
 - **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
   그 타입의 소유 capability나 실제 역할을 먼저 정한다. 여러 업무가 함께 쓰는 기반도 그 역할이
-  받는다 — 락 계약은 `booking.concurrency`, 요청 좌석 값은 `booking.domain`이다(감사 기반 타입은
-  module이 갖지 않는다 — ADR 0018).
+  받는다 — 락 계약은 `booking.concurrency`다. 쓰는 곳이 하나뿐인 값은 그 곳에 둔다 — 요청 좌석
+  값 `RequestedSeatIds`는 `booking.order.usecase`다(감사 기반 타입은 module이 갖지 않는다 — ADR
+  0018).
 - **모듈 root = cross-module 공개 계약.** 구현 클래스, JPA entity, Repository는 root에 두지 않는다.
   `booking.OrderStarted`/`OrderTerminated`만 예외이며 그 이유는 `booking` package-info가 원본이다.
 - 여러 업무를 호출하는 Controller는 쪼개지 않는다. 폴더를 맞추려고 HTTP 계약을 바꾸지 않는다.
@@ -305,7 +306,7 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 
 | 모듈 | `domain` 아래 묶음 |
 | --- | --- |
-| `booking` | capability마다 자기 `domain`을 갖는다(`order`/`hold`/`selection`/`seat`/`salespolicy`/`ticket`). 여러 capability가 함께 쓰는 기반 타입만 `booking.domain` 직속이다 |
+| `booking` | capability마다 자기 `domain`을 갖는다(`order`/`hold`/`selection`/`seat`/`salespolicy`/`ticket`). module 직속 `domain` package는 없다 |
 | `show` | `show`(Show와 판매 표시 규칙) · `performance`(Performance와 허용된 PerformanceGrade 연관) · 나머지(Grade·Category·Genre·Performer와 저장 계약)는 `domain` 직속 |
 | `member` | 단일 Member Aggregate 중심이라 `domain` 직속 |
 | `venue` · `like` · `payment` | `domain` 직속 |
@@ -315,8 +316,10 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 별도 영속 모델도 자기 Aggregate 경계를 그대로 유지한다. 작은 독립 모델마다 폴더를 더 만들지
 않는다 — 실제 Aggregate 경계는 `com.ticket.AggregateAssociationTest`가 강제한다.
 
-같은 모듈의 여러 도메인 모델이 함께 쓰는 기반 타입과 값은 모듈의 `domain` 바로 아래 둔다.
-`booking.domain.RequestedSeatIds`가 그렇다.
+**값 타입은 `domain` 직속으로 올리지 말고 쓰는 곳에 둔다.** 요청 좌석 값
+`RequestedSeatIds`는 이것을 쓰는 `booking.order.usecase`에 산다 — module 직속 `domain`으로 올리면
+`booking.hold.domain` 같은 domain 계층이 usecase 계층을 참조하게 되고, 그 방향은
+`com.ticket.ArchitectureRulesTest`가 막는다. 여러 capability가 실제로 함께 쓰게 되는 시점에 옮긴다.
 
 **감사 기반 타입은 예외다.** 모든 BC가 같은 네 컬럼을 쓰고 업무 vocabulary를 담지 않아
 `shared.jpa.AuditedEntity` 하나를 entity 21개가 상속한다 — 근거는
