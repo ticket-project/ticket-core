@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.venue.api.VenueSeatAddress;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.domain.Seat;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +19,7 @@ import lombok.RequiredArgsConstructor;
  * <p>{@link VenueRepositoryAdapter}와 나눠 둔다 — Seat은 Venue와 다른 Aggregate라 {@code Seat.venueId}가 연관관계가
  * 아니라 raw 컬럼이고, 좌석 조회는 venue 표시값을 전혀 보지 않는다. 한 adapter가 둘을 함께 들면 Aggregate 경계가 코드에서 사라진다.
  *
- * <p>좌석 주소와 배치 좌표를 한 계약으로 합치지 않는 이유는 {@link SpringDataSeatJpaRepository}에 적어 뒀다.
+ * <p>조회는 {@code Seat} 엔티티를 받고 공개 계약 타입으로의 변환은 여기서 한 번만 한다.
  */
 @Repository
 @RequiredArgsConstructor
@@ -31,11 +32,35 @@ public class SeatRepositoryAdapter implements VenueSeatLookupApi {
         if (seatIds.isEmpty()) {
             return List.of();
         }
-        return seatJpaRepository.findAddressesByVenueIdAndIdIn(venueId, seatIds);
+        return seatJpaRepository.findAllByVenueIdAndIdIn(venueId, seatIds).stream()
+                .map(SeatRepositoryAdapter::toAddress)
+                .toList();
     }
 
     @Override
     public List<VenueSeatLayout> findAllSeatLayouts(final long venueId) {
-        return seatJpaRepository.findLayoutsByVenueId(venueId);
+        return seatJpaRepository.findAllByVenueId(venueId).stream()
+                .map(SeatRepositoryAdapter::toLayout)
+                .toList();
+    }
+
+    private static VenueSeatAddress toAddress(final Seat seat) {
+        return new VenueSeatAddress(
+                seat.getId(),
+                seat.getFloor(),
+                seat.getSection(),
+                seat.getRowNo(),
+                seat.getSeatNo());
+    }
+
+    private static VenueSeatLayout toLayout(final Seat seat) {
+        return new VenueSeatLayout(
+                seat.getId(),
+                seat.getFloor(),
+                seat.getSection(),
+                seat.getRowNo(),
+                seat.getSeatNo(),
+                seat.getX(),
+                seat.getY());
     }
 }
