@@ -61,8 +61,10 @@ class PerformanceVenueLayoutCatalogServiceTest {
 
     @Test
     void venue가_없는_show면_seatLayout이_빈_맵이다() {
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", null)));
+        final Performance performance = performance(2L, null);
+        final Show show = show(2L, "show", null);
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of());
 
         final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
@@ -72,8 +74,10 @@ class PerformanceVenueLayoutCatalogServiceTest {
 
     @Test
     void venue의_좌석_좌표와_회차_grade를_조합한다() {
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", 3L)));
+        final Performance performance = performance(2L, null);
+        final Show show = show(2L, "show", 3L);
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
         when(venueLookup.findSummary(3L))
                 .thenReturn(
                         Optional.of(
@@ -89,8 +93,8 @@ class PerformanceVenueLayoutCatalogServiceTest {
                                         new VenueSnapshot.SeatMapLayout(500, 356, 4.8))));
         when(venueSeatLookup.findAllSeatLayouts(3L))
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 129.0, 101.0)));
-        when(performanceRepository.findPerformanceGrades(1L))
-                .thenReturn(List.of(performanceGrade(100L, 7L, new BigDecimal("170000"), 1)));
+        final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
+        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
         when(gradeRepository.findGradeNames(Set.of(7L)))
                 .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
@@ -106,13 +110,13 @@ class PerformanceVenueLayoutCatalogServiceTest {
     /** 옛 {@code join grade}가 inner join이라 조용히 빠뜨리던 동작을 조립 쪽에서 그대로 유지한다. */
     @Test
     void 등급_이름을_찾지_못한_편성은_layout에서_빠진다() {
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", null)));
-        when(performanceRepository.findPerformanceGrades(1L))
-                .thenReturn(
-                        List.of(
-                                performanceGrade(100L, 7L, new BigDecimal("170000"), 1),
-                                performanceGrade(101L, 8L, new BigDecimal("120000"), 2)));
+        final Performance performance = performance(2L, null);
+        final Show show = show(2L, "show", null);
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
+        final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
+        final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
+        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));
         when(gradeRepository.findGradeNames(Set.of(7L, 8L)))
                 .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 

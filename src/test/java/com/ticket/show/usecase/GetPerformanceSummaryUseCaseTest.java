@@ -35,9 +35,10 @@ class GetPerformanceSummaryUseCaseTest {
     @Test
     void 공연_요약정보를_반환한다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
-        when(performanceRepository.findById(1L))
-                .thenReturn(Optional.of(performance(7L, startTime)));
-        when(showRepository.findById(7L)).thenReturn(Optional.of(show(7L, "싱어게인", 5L)));
+        final Performance performance = performance(7L, startTime);
+        final Show show = show(7L, "싱어게인", 5L);
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(showRepository.findById(7L)).thenReturn(Optional.of(show));
         when(venueLookup.findSummary(5L))
                 .thenReturn(
                         Optional.of(
@@ -71,9 +72,10 @@ class GetPerformanceSummaryUseCaseTest {
     @Test
     void 공연장이_없어도_지역은_null로_반환한다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
-        when(performanceRepository.findById(1L))
-                .thenReturn(Optional.of(performance(7L, startTime)));
-        when(showRepository.findById(7L)).thenReturn(Optional.of(show(7L, "싱어게인", null)));
+        final Performance performance = performance(7L, startTime);
+        final Show show = show(7L, "싱어게인", null);
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
+        when(showRepository.findById(7L)).thenReturn(Optional.of(show));
 
         GetPerformanceSummaryUseCase.Output output =
                 useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
