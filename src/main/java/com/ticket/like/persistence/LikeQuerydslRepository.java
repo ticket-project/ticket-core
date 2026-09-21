@@ -3,16 +3,14 @@ package com.ticket.like.persistence;
 import static com.ticket.like.domain.QLike.like;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.Like;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
@@ -21,13 +19,16 @@ import lombok.RequiredArgsConstructor;
  * 찜 목록 읽기 전용 조회다.
  *
  * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 호출하는 module의 {@code endpoint}가 한다.
+ *
+ * <p>엔티티를 그대로 돌려준다 — 공개 계약({@code like.api.LikeEntry})으로의 변환은 {@code LikeQueryService}가 한다({@code
+ * docs/readability-guidelines.md} §10-1).
  */
 @Repository
 @RequiredArgsConstructor
 public class LikeQuerydslRepository {
     private final JPAQueryFactory queryFactory;
 
-    public CursorPage<LikeEntry, Long> findLiked(
+    public CursorPage<Like, Long> findLiked(
             final LikeType likeType,
             final Long memberId,
             final @Nullable Long cursorLikeId,
@@ -40,10 +41,9 @@ public class LikeQuerydslRepository {
             where.and(like.id.lt(cursorLikeId));
         }
 
-        final List<Tuple> rows =
+        final List<Like> rows =
                 queryFactory
-                        .select(like.id, like.targetId, like.createdAt)
-                        .from(like)
+                        .selectFrom(like)
                         .where(where)
                         .orderBy(like.id.desc())
                         .limit(size + 1L)
@@ -54,20 +54,10 @@ public class LikeQuerydslRepository {
         }
 
         final boolean hasNext = rows.size() > size;
-        final List<Tuple> pageRows = hasNext ? rows.subList(0, size) : rows;
-
-        final List<LikeEntry> items = pageRows.stream().map(this::mapRow).toList();
+        final List<Like> pageRows = hasNext ? rows.subList(0, size) : rows;
 
         final @Nullable Long nextPosition =
-                hasNext ? pageRows.get(pageRows.size() - 1).get(like.id) : null;
-        return new CursorPage<>(items, hasNext, nextPosition);
-    }
-
-    private LikeEntry mapRow(final Tuple tuple) {
-        // LIKES의 id·target_id·created_at은 모두 NOT NULL 컬럼이라 같은 행에서 항상 값이 있다.
-        return new LikeEntry(
-                Objects.requireNonNull(tuple.get(like.id), "like.id"),
-                Objects.requireNonNull(tuple.get(like.targetId), "like.targetId"),
-                Objects.requireNonNull(tuple.get(like.createdAt), "like.createdAt"));
+                hasNext ? pageRows.get(pageRows.size() - 1).getId() : null;
+        return new CursorPage<>(pageRows, hasNext, nextPosition);
     }
 }
