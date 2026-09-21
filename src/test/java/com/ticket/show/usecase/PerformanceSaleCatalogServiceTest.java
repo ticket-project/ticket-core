@@ -20,7 +20,7 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatAddress;
+import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -54,8 +54,8 @@ class PerformanceSaleCatalogServiceTest {
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
         when(performanceRepository.findSaleContext(1L))
                 .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
-        when(venueSeatLookup.findSeatAddresses(3L, Set.of(10L)))
-                .thenReturn(List.of(new VenueSeatAddress(10L, 1, "가", "A", "1")));
+        when(venueSeatLookup.findSeats(3L, Set.of(10L)))
+                .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 0.0, 0.0)));
         when(performanceRepository.findPerformanceGrades(1L))
                 .thenReturn(
                         List.of(
