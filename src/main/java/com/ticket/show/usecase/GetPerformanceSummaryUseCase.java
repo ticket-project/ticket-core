@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
-import com.ticket.show.persistence.PerformanceQueryRepository;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSummaryUseCase {
-    private final PerformanceQueryRepository performanceQueryRepository;
+    private final PerformanceRepository performanceRepository;
     private final VenueLookupApi venueLookup;
 
     public record Input(Long performanceId) {
@@ -33,8 +33,8 @@ public class GetPerformanceSummaryUseCase {
 
     public Output execute(final Input input) {
         final PerformanceSaleContext context =
-                performanceQueryRepository
-                        .findContext(input.performanceId())
+                performanceRepository
+                        .findSaleContext(input.performanceId())
                         .orElseThrow(
                                 () ->
                                         new NotFoundException(
