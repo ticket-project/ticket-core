@@ -8,6 +8,7 @@ import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeInfo;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.persistence.LikeQuerydslRepository;
 import com.ticket.shared.api.CursorPage;
@@ -41,6 +42,12 @@ public class LikeQueryService implements LikeQueryApi {
             final long memberId,
             final @Nullable Long cursorLikeId,
             final int size) {
-        return likeQuerydslRepository.findLiked(likeType, memberId, cursorLikeId, size);
+        return likeQuerydslRepository
+                .findLiked(likeType, memberId, cursorLikeId, size)
+                .map(LikeQueryService::toEntry);
+    }
+
+    private static LikeEntry toEntry(final Like like) {
+        return new LikeEntry(like.getId(), like.getTargetId(), like.getCreatedAt());
     }
 }
