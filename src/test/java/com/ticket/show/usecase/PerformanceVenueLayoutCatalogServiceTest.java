@@ -2,10 +2,15 @@ package com.ticket.show.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceVenueLayout;
+import com.ticket.show.domain.Grade;
+import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 import com.ticket.venue.api.Region;
@@ -27,6 +35,7 @@ import com.ticket.venue.api.VenueSummary;
 @ExtendWith(MockitoExtension.class)
 class PerformanceVenueLayoutCatalogServiceTest {
     @Mock private PerformanceRepository performanceRepository;
+    @Mock private GradeRepository gradeRepository;
     @Mock private VenueLookupApi venueLookup;
     @Mock private VenueSeatLookupApi venueSeatLookup;
     @InjectMocks private PerformanceVenueLayoutCatalogService service;
@@ -50,7 +59,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
     void venue가_없는_show면_seatLayout이_빈_맵이다() {
         when(performanceRepository.findVenueLayoutContext(1L))
                 .thenReturn(Optional.of(new PerformanceVenueLayoutContext(1L, null)));
-        when(performanceRepository.findGradeLayouts(1L)).thenReturn(List.of());
+        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of());
 
         final PerformanceVenueLayout layout = service.getVenueLayout(1L);
 
@@ -76,9 +85,10 @@ class PerformanceVenueLayoutCatalogServiceTest {
                                         new VenueSummary.SeatMapLayout(500, 356, 4.8))));
         when(venueSeatLookup.findAllSeatLayouts(3L))
                 .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 129.0, 101.0)));
-        when(performanceRepository.findGradeLayouts(1L))
-                .thenReturn(
-                        List.of(new PerformanceVenueLayout.GradeLayout(100L, "VIP", "VIP석", 1)));
+        when(performanceRepository.findPerformanceGrades(1L))
+                .thenReturn(List.of(performanceGrade(100L, 7L, new BigDecimal("170000"), 1)));
+        when(gradeRepository.findGradeNames(Set.of(7L)))
+                .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
         final PerformanceVenueLayout layout = service.getVenueLayout(1L);
 
@@ -87,5 +97,33 @@ class PerformanceVenueLayoutCatalogServiceTest {
         assertThat(layout.seatLayoutBySeatId()).containsKey(10L);
         assertThat(layout.seatLayoutBySeatId().get(10L).x()).isEqualTo(129.0);
         assertThat(layout.gradeLayoutByPerformanceGradeId().get(100L).gradeCode()).isEqualTo("VIP");
+    }
+
+    /** 옛 {@code join grade}가 inner join이라 조용히 빠뜨리던 동작을 조립 쪽에서 그대로 유지한다. */
+    @Test
+    void 등급_이름을_찾지_못한_편성은_layout에서_빠진다() {
+        when(performanceRepository.findVenueLayoutContext(1L))
+                .thenReturn(Optional.of(new PerformanceVenueLayoutContext(1L, null)));
+        when(performanceRepository.findPerformanceGrades(1L))
+                .thenReturn(
+                        List.of(
+                                performanceGrade(100L, 7L, new BigDecimal("170000"), 1),
+                                performanceGrade(101L, 8L, new BigDecimal("120000"), 2)));
+        when(gradeRepository.findGradeNames(Set.of(7L, 8L)))
+                .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+
+        final PerformanceVenueLayout layout = service.getVenueLayout(1L);
+
+        assertThat(layout.gradeLayoutByPerformanceGradeId()).containsOnlyKeys(100L);
+    }
+
+    private static PerformanceGrade performanceGrade(
+            final long id, final long gradeId, final BigDecimal price, final int sortOrder) {
+        final PerformanceGrade performanceGrade = mock(PerformanceGrade.class);
+        lenient().when(performanceGrade.getId()).thenReturn(id);
+        lenient().when(performanceGrade.getGradeId()).thenReturn(gradeId);
+        lenient().when(performanceGrade.getPrice()).thenReturn(price);
+        lenient().when(performanceGrade.getSortOrder()).thenReturn(sortOrder);
+        return performanceGrade;
     }
 }

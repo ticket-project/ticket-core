@@ -1,6 +1,8 @@
 package com.ticket.show.usecase;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -10,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
+import com.ticket.show.domain.Grade;
+import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 import com.ticket.venue.api.VenueLookupApi;
@@ -30,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLayoutCatalogApi {
     private final PerformanceRepository performanceRepository;
+    private final GradeRepository gradeRepository;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;
 
@@ -56,11 +62,7 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
                                                 VenueSeatLayout::seatId, this::toSeatLayout));
 
         final Map<Long, PerformanceVenueLayout.GradeLayout> gradeLayoutByPerformanceGradeId =
-                performanceRepository.findGradeLayouts(performanceId).stream()
-                        .collect(
-                                Collectors.toMap(
-                                        PerformanceVenueLayout.GradeLayout::performanceGradeId,
-                                        gradeLayout -> gradeLayout));
+                toGradeLayouts(performanceId);
 
         return new PerformanceVenueLayout(
                 performanceId,
@@ -77,6 +79,38 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
     @Transactional(readOnly = true)
     public Optional<Long> findRepresentativePerformanceId(final long showId) {
         return performanceRepository.findRepresentativePerformanceIdByShowId(showId);
+    }
+
+    /** 등급 이름을 찾지 못한 편성은 제외한다 — 옛 {@code join grade}가 그랬듯 조용히 빠진다. */
+    private Map<Long, PerformanceVenueLayout.GradeLayout> toGradeLayouts(final long performanceId) {
+        final List<PerformanceGrade> performanceGrades =
+                performanceRepository.findPerformanceGrades(performanceId);
+        final Map<Long, Grade> gradesById =
+                gradeRepository.findGradeNames(
+                        performanceGrades.stream()
+                                .map(PerformanceGrade::getGradeId)
+                                .collect(Collectors.toSet()));
+
+        return performanceGrades.stream()
+                .filter(performanceGrade -> gradesById.containsKey(performanceGrade.getGradeId()))
+                .collect(
+                        Collectors.toMap(
+                                PerformanceGrade::getId,
+                                performanceGrade ->
+                                        toGradeLayout(
+                                                performanceGrade,
+                                                Objects.requireNonNull(
+                                                        gradesById.get(
+                                                                performanceGrade.getGradeId())))));
+    }
+
+    private PerformanceVenueLayout.GradeLayout toGradeLayout(
+            final PerformanceGrade performanceGrade, final Grade grade) {
+        return new PerformanceVenueLayout.GradeLayout(
+                performanceGrade.getId(),
+                grade.getCode(),
+                grade.getName(),
+                performanceGrade.getSortOrder());
     }
 
     private PerformanceVenueLayout.SeatLayout toSeatLayout(final VenueSeatLayout layout) {

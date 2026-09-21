@@ -5,9 +5,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
-import com.ticket.show.api.PerformanceVenueLayout.GradeLayout;
 import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
@@ -54,12 +53,7 @@ public class PerformanceRepositoryAdapter implements PerformanceRepository {
     }
 
     @Override
-    public List<GradeInfo> findPerformanceGrades(final long performanceId) {
-        return jpaRepository.findGradeInfosByPerformanceId(performanceId);
-    }
-
-    @Override
-    public List<GradeLayout> findGradeLayouts(final long performanceId) {
-        return jpaRepository.findGradeLayoutsByPerformanceId(performanceId);
+    public List<PerformanceGrade> findPerformanceGrades(final long performanceId) {
+        return jpaRepository.findGradesByPerformanceId(performanceId);
     }
 }
