@@ -29,15 +29,15 @@ import com.ticket.venue.domain.Venue;
 
 /** 공연 상세 응답을 만들 때 쓰는 조회 조각들을 고정한다 — Querydsl 조각과 계약 조각이 함께 한 응답을 이룬다. */
 @Import({
-    ShowQueryRepository.class,
+    ShowQuerydslRepository.class,
     ShowRepositoryAdapter.class,
     GradeRepositoryAdapter.class,
     PerformanceRepositoryAdapter.class,
     ShowCardImagePathConverter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
-    @Autowired private ShowQueryRepository showQueryRepository;
+class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
+    @Autowired private ShowQuerydslRepository showQuerydslRepository;
     @Autowired private ShowRepository showRepository;
     @Autowired private GradeRepository gradeRepository;
     @Autowired private PerformanceRepository performanceRepository;
@@ -91,7 +91,11 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
         assertThat(show.getImage()).isEqualTo("/api/images/shows/" + showId + ".png");
         assertThat(show.saleDisplayStatusAt(LocalDateTime.of(2026, 3, 15, 12, 0)))
                 .isEqualTo(SaleDisplayStatus.ON_SALE);
-        assertThat(showQueryRepository.findPerformer(show.getPerformerId()).orElseThrow().getName())
+        assertThat(
+                        showQuerydslRepository
+                                .findPerformer(show.getPerformerId())
+                                .orElseThrow()
+                                .getName())
                 .isEqualTo("홍길동");
     }
 
@@ -103,16 +107,16 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
     /** ADR 0005: show-level 가격표는 없다 — 회차 전체의 min/max를 파생한다. */
     @Test
     void 가격_요약은_회차_전체의_최소_최대다() {
-        assertThat(showQueryRepository.findPriceSummary(showId).minPrice())
+        assertThat(showQuerydslRepository.findPriceSummary(showId).minPrice())
                 .isEqualByComparingTo("100000");
-        assertThat(showQueryRepository.findPriceSummary(showId).maxPrice())
+        assertThat(showQuerydslRepository.findPriceSummary(showId).maxPrice())
                 .isEqualByComparingTo("180000");
     }
 
     /** 대표 가격표는 가장 이른 회차의 등급을 표시 순서대로 준다. 등급 이름은 use case가 따로 조합한다. */
     @Test
     void 대표_회차의_등급을_표시_순서대로_조회한다() {
-        var performanceGrades = showQueryRepository.findRepresentativePerformanceGrades(showId);
+        var performanceGrades = showQuerydslRepository.findRepresentativePerformanceGrades(showId);
         var gradesById =
                 gradeRepository.findGradeNames(
                         performanceGrades.stream()

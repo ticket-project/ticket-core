@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -30,7 +30,7 @@ import com.ticket.venue.api.VenueSummary;
 class GetShowsUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private VenueLookupApi venueLookup;
 
     @Spy
@@ -62,9 +62,9 @@ class GetShowsUseCaseTest {
                         10L,
                         createdAt);
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
-        when(showQueryRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
-        when(showQueryRepository.findGenreNamesByShowIds(List.of(1L)))
+        when(showQuerydslRepository.findGenreNamesByShowIds(List.of(1L)))
                 .thenReturn(Map.of(1L, List.of("rock")));
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -90,14 +90,14 @@ class GetShowsUseCaseTest {
         assertThat(output.items().getFirst().venue()).isEqualTo("venue");
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showQueryRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
     void 공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, null, null);
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showQueryRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
         GetShowsUseCase.Output output =
@@ -106,7 +106,7 @@ class GetShowsUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showQueryRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
     }
 
     /**
@@ -118,15 +118,15 @@ class GetShowsUseCaseTest {
         ShowListParam noRegion = new ShowListParam(null, null, null, null);
         ShowListParam jeju = new ShowListParam(null, null, Region.JEJU, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
-        when(showQueryRepository.findAllBySearch(noRegion, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findAllBySearch(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
-        when(showQueryRepository.findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR))
                 .thenReturn(empty);
 
         useCase.execute(new GetShowsUseCase.Input(noRegion, 10, ShowSort.POPULAR));
         useCase.execute(new GetShowsUseCase.Input(jeju, 10, ShowSort.POPULAR));
 
-        verify(showQueryRepository).findAllBySearch(noRegion, null, 10, ShowSort.POPULAR);
-        verify(showQueryRepository).findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findAllBySearch(noRegion, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR);
     }
 }

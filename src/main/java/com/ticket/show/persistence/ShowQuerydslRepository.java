@@ -65,7 +65,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class ShowQueryRepository {
+public class ShowQuerydslRepository {
     private final JPAQueryFactory queryFactory;
     private final Clock clock;
 

@@ -13,10 +13,10 @@ import com.ticket.member.domain.Member;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
-@Import(LikeQueryRepository.class)
+@Import(LikeQuerydslRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
-class LikeQueryRepositoryTest extends InfraReadRepositoryTestSupport {
-    @Autowired private LikeQueryRepository likeQueryRepository;
+class LikeQuerydslRepositoryTest extends InfraReadRepositoryTestSupport {
+    @Autowired private LikeQuerydslRepository likeQuerydslRepository;
     private Long memberId;
     private Long showId1;
     private Long showId2;
@@ -50,7 +50,7 @@ class LikeQueryRepositoryTest extends InfraReadRepositoryTestSupport {
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
         CursorPage<LikeEntry, Long> result =
-                likeQueryRepository.findLiked(LikeType.SHOW, memberId, null, 2);
+                likeQuerydslRepository.findLiked(LikeType.SHOW, memberId, null, 2);
 
         assertThat(result.items())
                 .extracting(LikeEntry::targetId)
@@ -62,9 +62,10 @@ class LikeQueryRepositoryTest extends InfraReadRepositoryTestSupport {
     @Test
     void 커서_이후의_찜한_대상을_조회한다() {
         CursorPage<LikeEntry, Long> firstPage =
-                likeQueryRepository.findLiked(LikeType.SHOW, memberId, null, 1);
+                likeQuerydslRepository.findLiked(LikeType.SHOW, memberId, null, 1);
         CursorPage<LikeEntry, Long> secondPage =
-                likeQueryRepository.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
+                likeQuerydslRepository.findLiked(
+                        LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
 
         assertThat(firstPage.items()).extracting(LikeEntry::targetId).containsExactly(showId3);
         assertThat(secondPage.items()).extracting(LikeEntry::targetId).containsExactly(showId2);
@@ -73,7 +74,7 @@ class LikeQueryRepositoryTest extends InfraReadRepositoryTestSupport {
     @Test
     void 찜한_대상이_없으면_빈_슬라이스를_반환한다() {
         CursorPage<LikeEntry, Long> result =
-                likeQueryRepository.findLiked(LikeType.SHOW, -1L, null, 10);
+                likeQuerydslRepository.findLiked(LikeType.SHOW, -1L, null, 10);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();

@@ -32,7 +32,7 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -46,7 +46,7 @@ class GetShowDetailUseCaseTest {
                     LocalDateTime.of(2026, 3, 15, 12, 0).atZone(ZoneId.systemDefault()).toInstant(),
                     ZoneId.systemDefault());
 
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private ShowRepository showRepository;
     @Mock private GradeRepository gradeRepository;
     @Mock private PerformanceRepository performanceRepository;
@@ -55,7 +55,7 @@ class GetShowDetailUseCaseTest {
 
     private GetShowDetailUseCase useCase() {
         return new GetShowDetailUseCase(
-                showQueryRepository,
+                showQuerydslRepository,
                 likeQuery,
                 venueLookup,
                 new ShowCardImagePathConverter(),
@@ -84,7 +84,7 @@ class GetShowDetailUseCaseTest {
 
     private void stubEmptyFragments() {
         when(showRepository.findGenreNames(1L)).thenReturn(List.of());
-        when(showQueryRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
+        when(showQuerydslRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
     }
@@ -93,8 +93,8 @@ class GetShowDetailUseCaseTest {
     void show_엔티티에서_응답을_만들고_찜_개수와_venue_표시값을_조합한다() {
         when(showRepository.findById(1L)).thenReturn(Optional.of(show(5L, null)));
         when(showRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
-        when(showQueryRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
-        when(showQueryRepository.findPriceSummary(1L))
+        when(showQuerydslRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
+        when(showQuerydslRepository.findPriceSummary(1L))
                 .thenReturn(
                         new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))

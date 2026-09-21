@@ -31,7 +31,7 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -39,14 +39,14 @@ import com.ticket.venue.api.VenueSummary;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 상세 응답은 show 자기 DB의 조각들({@link ShowQueryRepository})에 venue 표시값과 찜 개수를 조합한 결과다. 그 조합은 이 use
- * case가 한다 — local 조회는 venue도 like도 모르고 {@code venueId} scalar만 넘긴다.
+ * show 상세 응답은 show 자기 DB의 조각들({@link ShowQuerydslRepository})에 venue 표시값과 찜 개수를 조합한 결과다. 그 조합은 이
+ * use case가 한다 — local 조회는 venue도 like도 모르고 {@code venueId} scalar만 넘긴다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowDetailUseCase {
-    private final ShowQueryRepository showQueryRepository;
+    private final ShowQuerydslRepository showQuerydslRepository;
     private final ShowRepository showRepository;
     private final GradeRepository gradeRepository;
     private final PerformanceRepository performanceRepository;
@@ -117,7 +117,7 @@ public class GetShowDetailUseCase {
      * 회차들의 PerformanceGrade.price 중 최소/최대만 요약해 보여준다. 정확한 가격은 회차를 고른 뒤 그 회차의 등급 API로 확인한다. 이 show에
      * 등급이 하나도 없으면 {@code null}이다.
      *
-     * <p>DB가 계산한 집계 결과다 — 가격 전체를 메모리로 읽어 세지 않는다. 그래서 {@code ShowQueryRepository}가 이 타입으로 돌려준다.
+     * <p>DB가 계산한 집계 결과다 — 가격 전체를 메모리로 읽어 세지 않는다. 그래서 {@code ShowQuerydslRepository}가 이 타입으로 돌려준다.
      */
     public record PriceSummary(BigDecimal minPrice, BigDecimal maxPrice) {}
 
@@ -147,7 +147,7 @@ public class GetShowDetailUseCase {
                 resolvePerformer(show.getPerformerId()),
                 showRepository.findGenreNames(showId),
                 resolveGrades(showId),
-                showQueryRepository.findPriceSummary(showId),
+                showQuerydslRepository.findPriceSummary(showId),
                 resolvePerformanceDates(showId));
     }
 
@@ -157,7 +157,7 @@ public class GetShowDetailUseCase {
      */
     private List<GradeInfo> resolveGrades(final Long showId) {
         final List<PerformanceGrade> performanceGrades =
-                showQueryRepository.findRepresentativePerformanceGrades(showId);
+                showQuerydslRepository.findRepresentativePerformanceGrades(showId);
         final Map<Long, Grade> gradesById =
                 gradeRepository.findGradeNames(
                         performanceGrades.stream()
@@ -208,7 +208,7 @@ public class GetShowDetailUseCase {
         if (performerId == null) {
             return null;
         }
-        return showQueryRepository
+        return showQuerydslRepository
                 .findPerformer(performerId)
                 .map(this::toPerformerInfo)
                 .orElse(null);

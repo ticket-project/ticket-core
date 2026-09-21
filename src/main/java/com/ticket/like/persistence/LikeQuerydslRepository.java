@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @RequiredArgsConstructor
-public class LikeQueryRepository {
+public class LikeQuerydslRepository {
     private final JPAQueryFactory queryFactory;
 
     public CursorPage<LikeEntry, Long> findLiked(

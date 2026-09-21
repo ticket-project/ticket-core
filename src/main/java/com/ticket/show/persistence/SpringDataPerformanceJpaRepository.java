@@ -42,7 +42,7 @@ interface SpringDataPerformanceJpaRepository extends JpaRepository<Performance, 
     Optional<PerformanceVenueLayoutContext> findVenueLayoutContextByPerformanceId(
             @Param("performanceId") long performanceId);
 
-    /** 대표 회차는 이 show에서 가장 먼저 만들어진 회차다({@code ShowQueryRepository}의 대표 등급 조회와 같은 기준). */
+    /** 대표 회차는 이 show에서 가장 먼저 만들어진 회차다({@code ShowQuerydslRepository}의 대표 등급 조회와 같은 기준). */
     @Query("SELECT MIN(p.id) FROM Performance p WHERE p.showId = :showId")
     Optional<Long> findRepresentativePerformanceIdByShowId(@Param("showId") long showId);
 

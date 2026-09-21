@@ -12,14 +12,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CountSearchShowsUseCaseTest {
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private CountSearchShowsUseCase useCase;
 
@@ -27,26 +27,26 @@ class CountSearchShowsUseCaseTest {
     void 검색_개수를_응답으로_감싼다() {
         ShowSearchCriteria request =
                 new ShowSearchCriteria("뮤지컬", null, null, null, null, null, null);
-        when(showQueryRepository.countSearchShows(request, null)).thenReturn(42L);
+        when(showQuerydslRepository.countSearchShows(request, null)).thenReturn(42L);
 
         CountSearchShowsUseCase.Output output =
                 useCase.execute(new CountSearchShowsUseCase.Input(request));
 
         assertThat(output.count()).isEqualTo(42L);
-        verify(showQueryRepository).countSearchShows(request, null);
+        verify(showQuerydslRepository).countSearchShows(request, null);
     }
 
     @Test
     void 검색결과가_없으면_0건을_반환한다() {
         ShowSearchCriteria request =
                 new ShowSearchCriteria("없는공연", null, null, null, null, null, null);
-        when(showQueryRepository.countSearchShows(request, null)).thenReturn(0L);
+        when(showQuerydslRepository.countSearchShows(request, null)).thenReturn(0L);
 
         CountSearchShowsUseCase.Output output =
                 useCase.execute(new CountSearchShowsUseCase.Input(request));
 
         assertThat(output.count()).isZero();
-        verify(showQueryRepository).countSearchShows(request, null);
+        verify(showQuerydslRepository).countSearchShows(request, null);
     }
 
     /**
@@ -59,8 +59,8 @@ class CountSearchShowsUseCaseTest {
         ShowSearchCriteria jeju =
                 new ShowSearchCriteria(null, null, null, null, null, Region.JEJU, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
-        when(showQueryRepository.countSearchShows(noRegion, null)).thenReturn(7L);
-        when(showQueryRepository.countSearchShows(jeju, Set.of())).thenReturn(0L);
+        when(showQuerydslRepository.countSearchShows(noRegion, null)).thenReturn(7L);
+        when(showQuerydslRepository.countSearchShows(jeju, Set.of())).thenReturn(0L);
 
         assertThat(useCase.execute(new CountSearchShowsUseCase.Input(noRegion)).count())
                 .isEqualTo(7L);

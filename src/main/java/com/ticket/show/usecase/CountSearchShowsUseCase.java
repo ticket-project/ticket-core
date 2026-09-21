@@ -8,7 +8,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CountSearchShowsUseCase {
-    private final ShowQueryRepository showQueryRepository;
+    private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookup;
 
     public record Input(ShowSearchCriteria criteria) {
@@ -32,7 +32,7 @@ public class CountSearchShowsUseCase {
 
     public Output execute(final Input input) {
         return new Output(
-                showQueryRepository.countSearchShows(
+                showQuerydslRepository.countSearchShows(
                         input.criteria(), venueIdsOf(input.criteria().getRegion())));
     }
 

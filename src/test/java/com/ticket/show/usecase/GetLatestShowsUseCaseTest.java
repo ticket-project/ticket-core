@@ -19,14 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetLatestShowsUseCaseTest {
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private VenueLookupApi venueLookup;
 
     @Spy
@@ -44,7 +44,7 @@ class GetLatestShowsUseCaseTest {
                 List.of(
                         ShowFixture.show(
                                 1L, "concert", 7L, startDate, endDate, null, 0L, createdAt));
-        when(showQueryRepository.findLatestShows(
+        when(showQuerydslRepository.findLatestShows(
                         "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(rows);
         when(venueLookup.getSummaries(Set.of(7L)))
@@ -69,13 +69,13 @@ class GetLatestShowsUseCaseTest {
                 .containsExactly(
                         new GetLatestShowsUseCase.Item(
                                 1L, "concert", "image", startDate, endDate, "venue", createdAt));
-        verify(showQueryRepository)
+        verify(showQuerydslRepository)
                 .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 
     @Test
     void 최신_공연이_없으면_빈_목록을_반환한다() {
-        when(showQueryRepository.findLatestShows(
+        when(showQuerydslRepository.findLatestShows(
                         "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(List.of());
 
@@ -83,7 +83,7 @@ class GetLatestShowsUseCaseTest {
                 useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
 
         assertThat(output.shows()).isEmpty();
-        verify(showQueryRepository)
+        verify(showQuerydslRepository)
                 .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 }

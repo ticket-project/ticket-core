@@ -14,7 +14,8 @@ import com.ticket.venue.persistence.VenueRepositoryAdapter;
  * 계약을 주입받으면 없을 때 컨텍스트 기동부터 실패한다(observed-failures 참고). 두 계약은 이제 {@link VenueRepositoryAdapter} 하나가
  * 함께 구현한다.
  *
- * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQueryRepository}가 private 메서드로 갖는다.
+ * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQuerydslRepository}가 private 메서드로
+ * 갖는다.
  */
 @Import({
     VenueRepositoryAdapter.class,
