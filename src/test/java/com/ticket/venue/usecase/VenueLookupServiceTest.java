@@ -1,4 +1,4 @@
-package com.ticket.venue.persistence;
+package com.ticket.venue.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,7 +27,7 @@ import com.ticket.venue.domain.Venue;
  * 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 두 계약을 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
-class VenueRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
+class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     @Autowired private VenueLookupApi venueLookup;
     @Autowired private VenueSeatLookupApi venueSeatLookup;
 

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.ticket.venue.persistence.SeatRepositoryAdapter;
 import com.ticket.venue.persistence.VenueRepositoryAdapter;
+import com.ticket.venue.usecase.SeatLookupService;
+import com.ticket.venue.usecase.VenueLookupService;
 
 /**
  * Querydsl 조회 Repository 테스트의 베이스다.
@@ -20,6 +22,8 @@ import com.ticket.venue.persistence.VenueRepositoryAdapter;
 @Import({
     VenueRepositoryAdapter.class,
     SeatRepositoryAdapter.class,
+    VenueLookupService.class,
+    SeatLookupService.class,
     InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {
