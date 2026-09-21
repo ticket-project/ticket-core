@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
+import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
-import com.ticket.show.persistence.PerformanceQueryRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -24,12 +24,12 @@ import lombok.RequiredArgsConstructor;
  * 번에 조회해 booking에게 scalar snapshot만 넘긴다.
  *
  * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — local 조회({@code
- * PerformanceQueryRepository})는 show 자기 DB만 본다.
+ * PerformanceRepository})는 show 자기 DB만 본다.
  */
 @Service
 @RequiredArgsConstructor
 public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLayoutCatalogApi {
-    private final PerformanceQueryRepository performanceQueryRepository;
+    private final PerformanceRepository performanceRepository;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;
 
@@ -37,7 +37,7 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
     @Transactional(readOnly = true)
     public PerformanceVenueLayout getVenueLayout(final long performanceId) {
         final PerformanceVenueLayoutContext context =
-                performanceQueryRepository
+                performanceRepository
                         .findVenueLayoutContext(performanceId)
                         .orElseThrow(
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
@@ -56,7 +56,7 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
                                                 VenueSeatLayout::seatId, this::toSeatLayout));
 
         final Map<Long, PerformanceVenueLayout.GradeLayout> gradeLayoutByPerformanceGradeId =
-                performanceQueryRepository.findGradeLayouts(performanceId).stream()
+                performanceRepository.findGradeLayouts(performanceId).stream()
                         .collect(
                                 Collectors.toMap(
                                         PerformanceVenueLayout.GradeLayout::performanceGradeId,
@@ -76,7 +76,7 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
     @Override
     @Transactional(readOnly = true)
     public Optional<Long> findRepresentativePerformanceId(final long showId) {
-        return performanceQueryRepository.findRepresentativePerformanceIdByShowId(showId);
+        return performanceRepository.findRepresentativePerformanceIdByShowId(showId);
     }
 
     private PerformanceVenueLayout.SeatLayout toSeatLayout(final VenueSeatLayout layout) {

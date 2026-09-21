@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
@@ -23,10 +24,10 @@ import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
 /** 옛 {@code PerformanceQueryTest}와 {@code PerformanceGradeQueryTest}가 고정하던 동작이 그대로 들어 있다. */
-@Import(PerformanceQueryRepository.class)
+@Import(PerformanceRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceQueryRepositoryTest extends InfraReadRepositoryTestSupport {
-    @Autowired private PerformanceQueryRepository repository;
+class PerformanceRepositoryTest extends InfraReadRepositoryTestSupport {
+    @Autowired private PerformanceRepository repository;
 
     @Test
     void 회차와_공연장_요약을_한번에_조회한다() throws Exception {
@@ -45,7 +46,7 @@ class PerformanceQueryRepositoryTest extends InfraReadRepositoryTestSupport {
         LocalDateTime startTime = performance.getStartTime();
         flushAndClear();
 
-        PerformanceSaleContext result = repository.findContext(performanceId).orElseThrow();
+        PerformanceSaleContext result = repository.findSaleContext(performanceId).orElseThrow();
 
         assertThat(result.showTitle()).isEqualTo("싱어게인");
         assertThat(result.venueId()).isEqualTo(venue.getId());
