@@ -14,9 +14,11 @@ import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
-import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -36,27 +38,32 @@ import lombok.RequiredArgsConstructor;
 public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLayoutCatalogApi {
     private final PerformanceRepository performanceRepository;
     private final GradeRepository gradeRepository;
+    private final ShowRepository showRepository;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;
 
     @Override
     @Transactional(readOnly = true)
     public PerformanceVenueLayout getVenueLayout(final long performanceId) {
-        final PerformanceVenueLayoutContext context =
+        final Performance performance =
                 performanceRepository
-                        .findVenueLayoutContext(performanceId)
+                        .findById(performanceId)
                         .orElseThrow(
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+        final Show show =
+                showRepository
+                        .findById(performance.getShowId())
+                        .orElseThrow(
+                                () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+        final Long venueId = show.getVenueId();
 
         final VenueSummary venue =
-                context.venueId() == null
-                        ? null
-                        : venueLookup.findSummary(context.venueId()).orElse(null);
+                venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
 
         final Map<Long, PerformanceVenueLayout.SeatLayout> seatLayoutBySeatId =
-                context.venueId() == null
+                venueId == null
                         ? Map.of()
-                        : venueSeatLookup.findAllSeatLayouts(context.venueId()).stream()
+                        : venueSeatLookup.findAllSeatLayouts(venueId).stream()
                                 .collect(
                                         Collectors.toMap(
                                                 VenueSeatLayout::seatId, this::toSeatLayout));
@@ -66,7 +73,7 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
 
         return new PerformanceVenueLayout(
                 performanceId,
-                context.venueId(),
+                venueId,
                 venue == null ? null : venue.name(),
                 venue == null ? 0 : venue.seatMapLayout().viewBoxWidth(),
                 venue == null ? 0 : venue.seatMapLayout().viewBoxHeight(),

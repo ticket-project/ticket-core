@@ -14,9 +14,11 @@ import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
-import com.ticket.show.domain.performance.PerformanceSaleContext;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -35,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi {
     private final PerformanceRepository performanceRepository;
     private final GradeRepository gradeRepository;
+    private final ShowRepository showRepository;
     private final VenueLookupApi venueLookup;
     private final VenueSeatLookupApi venueSeatLookup;
 
@@ -42,24 +45,27 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
     @Transactional(readOnly = true)
     public PerformanceSaleSnapshot getSaleSnapshot(
             final long performanceId, final Set<Long> seatIds) {
-        final PerformanceSaleContext context =
+        final Performance performance =
                 performanceRepository
-                        .findSaleContext(performanceId)
+                        .findById(performanceId)
                         .orElseThrow(
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+        final Show show =
+                showRepository
+                        .findById(performance.getShowId())
+                        .orElseThrow(
+                                () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+        final Long venueId = show.getVenueId();
 
         final String venueName =
-                context.venueId() == null
+                venueId == null
                         ? null
-                        : venueLookup
-                                .findSummary(context.venueId())
-                                .map(v -> v.name())
-                                .orElse(null);
+                        : venueLookup.findSummary(venueId).map(v -> v.name()).orElse(null);
 
         final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
-                context.venueId() == null
+                venueId == null
                         ? Map.of()
-                        : venueSeatLookup.findSeats(context.venueId(), seatIds).stream()
+                        : venueSeatLookup.findSeats(venueId, seatIds).stream()
                                 .collect(
                                         Collectors.toMap(
                                                 VenueSeatLayout::seatId, this::toSeatInfo));
@@ -69,11 +75,11 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
 
         return new PerformanceSaleSnapshot(
                 performanceId,
-                context.showId(),
-                context.showTitle(),
-                context.venueId(),
+                show.getId(),
+                show.getTitle(),
+                venueId,
                 venueName,
-                context.performanceStartTime(),
+                performance.getStartTime(),
                 seatInfoBySeatId,
                 gradeInfoByPerformanceGradeId);
     }

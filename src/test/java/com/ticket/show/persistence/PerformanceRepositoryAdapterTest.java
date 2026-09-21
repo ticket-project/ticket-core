@@ -17,7 +17,6 @@ import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
-import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
@@ -28,30 +27,6 @@ import com.ticket.venue.domain.Venue;
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceRepositoryTest extends InfraReadRepositoryTestSupport {
     @Autowired private PerformanceRepository repository;
-
-    @Test
-    void 회차와_공연장_요약을_한번에_조회한다() throws Exception {
-        Venue venue = persistVenue("올림픽홀", Region.SEOUL);
-        Show show =
-                persistShow(
-                        "싱어게인",
-                        venue,
-                        null,
-                        0L,
-                        LocalDateTime.now(clock).minusDays(1),
-                        LocalDateTime.now(clock).plusDays(1));
-        Performance performance =
-                persistPerformance(show, 1L, LocalDateTime.now(clock).plusDays(1));
-        Long performanceId = performance.getId();
-        LocalDateTime startTime = performance.getStartTime();
-        flushAndClear();
-
-        PerformanceSaleContext result = repository.findSaleContext(performanceId).orElseThrow();
-
-        assertThat(result.showTitle()).isEqualTo("싱어게인");
-        assertThat(result.venueId()).isEqualTo(venue.getId());
-        assertThat(result.performanceStartTime()).isEqualTo(startTime);
-    }
 
     @Test
     void 회차의_grade_목록을_가격과_표시순서와_함께_반환한다() throws Exception {

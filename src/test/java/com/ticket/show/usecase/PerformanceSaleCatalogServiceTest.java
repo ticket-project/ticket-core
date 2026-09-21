@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,9 +23,11 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
-import com.ticket.show.domain.performance.PerformanceSaleContext;
+import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -33,6 +36,7 @@ import com.ticket.venue.api.VenueSeatLookupApi;
 @ExtendWith(MockitoExtension.class)
 class PerformanceSaleCatalogServiceTest {
     @Mock private PerformanceRepository performanceRepository;
+    @Mock private ShowRepository showRepository;
     @Mock private GradeRepository gradeRepository;
     @Mock private VenueLookupApi venueLookup;
     @Mock private VenueSeatLookupApi venueSeatLookup;
@@ -40,7 +44,7 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
-        when(performanceRepository.findSaleContext(1L)).thenReturn(Optional.empty());
+        when(performanceRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L)))
                 .isInstanceOf(NotFoundException.class);
@@ -48,8 +52,8 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue가_없는_show면_seatInfo가_빈_맵이다() {
-        when(performanceRepository.findSaleContext(1L))
-                .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", null, null)));
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", null)));
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of());
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
@@ -59,8 +63,8 @@ class PerformanceSaleCatalogServiceTest {
 
     @Test
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
-        when(performanceRepository.findSaleContext(1L))
-                .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", 3L)));
         when(venueSeatLookup.findSeats(3L, Set.of(10L)))
                 .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 0.0, 0.0)));
         when(performanceRepository.findPerformanceGrades(1L))
@@ -82,8 +86,8 @@ class PerformanceSaleCatalogServiceTest {
     /** 옛 {@code join grade}가 inner join이라 조용히 빠뜨리던 동작을 조립 쪽에서 그대로 유지한다. */
     @Test
     void 등급_이름을_찾지_못한_편성은_snapshot에서_빠진다() {
-        when(performanceRepository.findSaleContext(1L))
-                .thenReturn(Optional.of(new PerformanceSaleContext(1L, 2L, "show", 3L, null)));
+        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
+        when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", 3L)));
         when(venueSeatLookup.findSeats(3L, Set.of(10L))).thenReturn(List.of());
         when(performanceRepository.findPerformanceGrades(1L))
                 .thenReturn(
@@ -106,5 +110,20 @@ class PerformanceSaleCatalogServiceTest {
         lenient().when(performanceGrade.getPrice()).thenReturn(price);
         lenient().when(performanceGrade.getSortOrder()).thenReturn(sortOrder);
         return performanceGrade;
+    }
+
+    private static Performance performance(final long showId, final LocalDateTime startTime) {
+        final Performance performance = mock(Performance.class);
+        lenient().when(performance.getShowId()).thenReturn(showId);
+        lenient().when(performance.getStartTime()).thenReturn(startTime);
+        return performance;
+    }
+
+    private static Show show(final long showId, final String title, final Long venueId) {
+        final Show show = mock(Show.class);
+        lenient().when(show.getId()).thenReturn(showId);
+        lenient().when(show.getTitle()).thenReturn(title);
+        lenient().when(show.getVenueId()).thenReturn(venueId);
+        return show;
     }
 }
