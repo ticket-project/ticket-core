@@ -26,7 +26,7 @@ Repository를 포함한 DB·Redis 구현이다.
 소유한다(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`). `persistence`에는
 그 계약을 만족시키는 구현만 둔다(`member.persistence.MemberRepositoryAdapter`). `XXXPort`는 밖을
 부르는 출력 계약, `XXXAdapter`는 그 구현이며 둘을 다른 package에 둔다. 자기 module DB를 읽는
-조회는 이 대상이 아니다 — `persistence`의 `*QueryRepository`가 구현까지 갖는다
+조회는 이 대상이 아니다 — Querydsl 조회는 `persistence`의 `*QuerydslRepository`가 구현까지 갖는다
 (아래 "Component와 메서드").
 
 **폴더 깊이는 규모에 비례한다.** 일반적인 최대는 모듈 → capability → 역할이다
@@ -85,17 +85,17 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
 ## Component와 메서드
 
 - Aggregate 저장 계약은 `domain`의 `Repository`, 읽기 전용 projection 조회는 `persistence`의
-  `*QueryRepository`다. Aggregate 저장은
+  `*QuerydslRepository`다. Aggregate 저장과 고정 조회는
   계약과 구현을 나눈다 — **`Port`는 application이 요구하는 계약이고 그 구현은 `Adapter`다**. 구현에는
   기술을 드러내는 접두사와 `Adapter` 접미사를 함께 쓴다(`ShowRepositoryAdapter implements
   ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로 계약과 구현을 구분할 수 없다.
 - **자기 module DB를 읽는 조회에는 port interface를 두지 않는다.** `persistence` package의 구체
-  class(`ShowQueryRepository`, `PerformanceSeatQueryRepository`)가 `@Repository` + 생성자 주입으로
+  class(`ShowQuerydslRepository`, `LikeQuerydslRepository`)가 `@Repository` + 생성자 주입으로
   Querydsl/JPA를 직접 쓰고, 관련 조회는 한 class로 모은다. 반환 타입은 엔티티가 기본이고, DB 집계
   결과처럼 엔티티로 표현되지 않는 것만 별도 타입이며 그 타입은 use case가 소유한다. 호출 계약에
   Querydsl 타입을 노출하지는 않는다. 단순한 조회는 그 module의 공개 API
   interface를 직접 구현해도 된다
-  (`VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi`). interface는 실제
+  (`VenueRepositoryAdapter implements VenueLookupApi`). interface는 실제
   계약·교체 지점·외부 시스템 경계·domain 보호처럼 근거가 있을 때 둔다 — Redis·분산락·JWT·
   WebSocket·외부 API가 그 예다.
 - **다른 module의 정보를 합치는 일은 use case/service가 한다.** 조회 Repository는 자기 module DB
