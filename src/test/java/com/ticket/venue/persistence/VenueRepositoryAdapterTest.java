@@ -23,9 +23,9 @@ import com.ticket.venue.domain.Venue;
 /**
  * venue 공개 계약({@link VenueLookupApi}, {@link VenueSeatLookupApi})의 실제 DB 동작을 고정한다.
  *
- * <p>위임만 하던 {@code VenueLookupService}·{@code VenueSeatLookupService}가 사라지고 이 조회가 두 계약을 직접 구현하면서, 그
- * service들이 갖고 있던 빈 입력 처리와 지역 인자 null 검사도 여기로 왔다. 계약을 부르는 쪽에서 보이는 동작이 그대로인지를 본다. 테스트는 구현 클래스가 아니라
- * 계약 타입을 주입받으므로, 두 계약을 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
+ * <p>위임만 하던 {@code VenueLookupService}·{@code VenueSeatLookupService}가 사라지고 Aggregate별 adapter 둘이 두
+ * 계약을 직접 구현하면서, 그 service들이 갖고 있던 빈 입력 처리와 지역 인자 null 검사도 여기로 왔다. 계약을 부르는 쪽에서 보이는 동작이 그대로인지를 본다.
+ * 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 두 계약을 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class VenueRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
