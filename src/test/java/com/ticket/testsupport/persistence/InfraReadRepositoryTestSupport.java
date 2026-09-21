@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.ticket.venue.persistence.SeatRepositoryAdapter;
 import com.ticket.venue.persistence.VenueRepositoryAdapter;
 
 /**
@@ -17,6 +18,7 @@ import com.ticket.venue.persistence.VenueRepositoryAdapter;
  */
 @Import({
     VenueRepositoryAdapter.class,
+    SeatRepositoryAdapter.class,
     InfraReadRepositoryTestSupport.InfraJpaRepositoriesTestConfig.class
 })
 public abstract class InfraReadRepositoryTestSupport extends ReadRepositoryTestSupport {
