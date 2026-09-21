@@ -28,7 +28,7 @@ import com.ticket.venue.domain.Venue;
  * 계약 타입을 주입받으므로, 두 계약을 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
-class VenueQueryRepositoryTest extends InfraReadRepositoryTestSupport {
+class VenueRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
     @Autowired private VenueLookupApi venueLookup;
     @Autowired private VenueSeatLookupApi venueSeatLookup;
 

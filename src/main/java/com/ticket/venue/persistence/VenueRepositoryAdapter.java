@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi {
+public class VenueRepositoryAdapter implements VenueLookupApi, VenueSeatLookupApi {
     private final SpringDataVenueJpaRepository venueJpaRepository;
     private final SpringDataSeatJpaRepository seatJpaRepository;
 

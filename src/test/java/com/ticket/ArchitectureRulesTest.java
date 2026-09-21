@@ -225,7 +225,6 @@ class ArchitectureRulesTest {
             Set.of(
                     "com.ticket.show.persistence.ShowQueryRepository",
                     "com.ticket.show.persistence.PerformanceQueryRepository",
-                    "com.ticket.venue.persistence.VenueQueryRepository",
                     "com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository",
                     "com.ticket.like.persistence.LikeQueryRepository");
 

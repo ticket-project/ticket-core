@@ -48,7 +48,7 @@ import com.ticket.show.usecase.ShowSort;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.persistence.VenueQueryRepository;
+import com.ticket.venue.persistence.VenueRepositoryAdapter;
 
 /**
  * {@link ShowQueryRepository}의 실제 DB 조회 동작을 고정한다.
@@ -88,7 +88,7 @@ import com.ticket.venue.persistence.VenueQueryRepository;
     ShowQueryRepositoryTest.TestConfig.class,
     ShowQueryRepositoryTest.AuditingTestConfig.class,
     ShowQueryRepository.class,
-    VenueQueryRepository.class
+    VenueRepositoryAdapter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQueryRepositoryTest {
