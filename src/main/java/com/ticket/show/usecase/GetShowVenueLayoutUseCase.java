@@ -10,7 +10,7 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,7 +42,7 @@ public class GetShowVenueLayoutUseCase {
                                 () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId()));
 
         final Long venueId = show.getVenueId();
-        final VenueSummary venue =
+        final VenueSnapshot venue =
                 venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
         if (venue == null) {
             throw new NotFoundException("공연에 연결된 공연장을 찾을 수 없습니다.");

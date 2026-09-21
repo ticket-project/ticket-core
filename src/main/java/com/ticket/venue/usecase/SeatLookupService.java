@@ -6,8 +6,8 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.api.VenueSeatSnapshot;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.SeatRepository;
 
@@ -26,7 +26,7 @@ public class SeatLookupService implements VenueSeatLookupApi {
     private final SeatRepository seatRepository;
 
     @Override
-    public List<VenueSeatLayout> findSeats(final long venueId, final Set<Long> seatIds) {
+    public List<VenueSeatSnapshot> findSeats(final long venueId, final Set<Long> seatIds) {
         if (seatIds.isEmpty()) {
             return List.of();
         }
@@ -36,14 +36,14 @@ public class SeatLookupService implements VenueSeatLookupApi {
     }
 
     @Override
-    public List<VenueSeatLayout> findAllSeatLayouts(final long venueId) {
+    public List<VenueSeatSnapshot> findAllSeatLayouts(final long venueId) {
         return seatRepository.findAllByVenueId(venueId).stream()
                 .map(SeatLookupService::toLayout)
                 .toList();
     }
 
-    private static VenueSeatLayout toLayout(final Seat seat) {
-        return new VenueSeatLayout(
+    private static VenueSeatSnapshot toLayout(final Seat seat) {
+        return new VenueSeatSnapshot(
                 seat.getId(),
                 seat.getFloor(),
                 seat.getSection(),

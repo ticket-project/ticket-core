@@ -22,7 +22,7 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +41,7 @@ class GetPerformanceSummaryUseCaseTest {
         when(venueLookup.findSummary(5L))
                 .thenReturn(
                         Optional.of(
-                                new VenueSummary(
+                                new VenueSnapshot(
                                         5L,
                                         "venue",
                                         "주소",
@@ -50,7 +50,7 @@ class GetPerformanceSummaryUseCaseTest {
                                         null,
                                         null,
                                         null,
-                                        new VenueSummary.SeatMapLayout(0, 0, 0.0))));
+                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         GetPerformanceSummaryUseCase.Output output =
                 useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));

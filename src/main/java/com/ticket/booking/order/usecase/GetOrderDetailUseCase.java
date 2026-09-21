@@ -17,7 +17,7 @@ import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.member.api.MemberProfile;
+import com.ticket.member.api.MemberSnapshot;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class GetOrderDetailUseCase {
 
         // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
         // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
-        final MemberProfile member = memberLookup.getProfile(order.getMemberId());
+        final MemberSnapshot member = memberLookup.getProfile(order.getMemberId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final List<TicketSeat> seats =

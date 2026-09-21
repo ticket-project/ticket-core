@@ -2,8 +2,8 @@
  * Venue BC: 물리 공연장(Venue)과 그 안의 물리 좌석(Seat)을 소유한다. 좌석은 회차와 무관하게 존재한다(회차별 판매 상태는 booking의
  * PerformanceSeat).
  *
- * <p>공개 계약: - VenueLookupApi / VenueSummary (공연장 존재 확인·표시값·지역 조회) - VenueSeatLookupApi /
- * VenueSeatLayout / VenueSeatLayout (좌석 주소·배치 좌표 조회)
+ * <p>공개 계약: - VenueLookupApi / VenueSnapshot (공연장 존재 확인·표시값·지역 조회) - VenueSeatLookupApi /
+ * VenueSeatSnapshot / VenueSeatSnapshot (좌석 주소·배치 좌표 조회)
  *
  * <p>이 module은 업무 module을 하나도 참조하지 않는다. 유일한 의존은 entity가 상속하는 {@code shared :: jpa}다.
  *

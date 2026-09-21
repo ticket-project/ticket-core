@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.security.oauth.SocialAccountUnlinker;
 
 import lombok.RequiredArgsConstructor;
@@ -29,14 +29,14 @@ public class WithdrawCurrentMemberUseCase {
     public record Output() {}
 
     public Output execute(final Input input) {
-        final List<SocialAccountConnection> socialAccounts =
+        final List<SocialAccountSnapshot> socialAccounts =
                 memberAccountOperations.withdraw(input.memberId());
         unlinkSocialAccountsSafely(input.memberId(), socialAccounts);
         return new Output();
     }
 
     private void unlinkSocialAccountsSafely(
-            final Long memberId, final List<SocialAccountConnection> socialAccounts) {
+            final Long memberId, final List<SocialAccountSnapshot> socialAccounts) {
         socialAccounts.forEach(
                 connection -> {
                     try {

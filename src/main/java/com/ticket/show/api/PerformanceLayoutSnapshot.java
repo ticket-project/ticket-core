@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
  * 편성(PerformanceSeat)됐는지는 이 snapshot의 관심사가 아니고, 호출하는 booking 쪽이 PerformanceSeat 존재 여부로 걸러낸다. {@code
  * gradeLayoutByPerformanceGradeId}는 이 회차에 배정된 모든 PerformanceGrade를 담는다. show JPA entity를 노출하지 않는다.
  */
-public record PerformanceVenueLayout(
+public record PerformanceLayoutSnapshot(
         long performanceId,
         @Nullable Long venueId,
         @Nullable String venueName,
@@ -20,7 +20,7 @@ public record PerformanceVenueLayout(
         double seatDiameter,
         Map<Long, SeatLayout> seatLayoutBySeatId,
         Map<Long, GradeLayout> gradeLayoutByPerformanceGradeId) {
-    public PerformanceVenueLayout {
+    public PerformanceLayoutSnapshot {
         seatLayoutBySeatId = Map.copyOf(seatLayoutBySeatId);
         gradeLayoutByPerformanceGradeId = Map.copyOf(gradeLayoutByPerformanceGradeId);
     }

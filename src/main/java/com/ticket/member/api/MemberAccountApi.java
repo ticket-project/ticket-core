@@ -10,7 +10,7 @@ import java.util.List;
  * {@code member -> security} 의존이 생길 이유가 없다.
  *
  * <p>entity·저장소·프레임워크 타입도 노출하지 않는다. 여기 오가는 값은 {@link RawPassword}, {@link SocialIdentity}, {@link
- * MemberStatus}, {@link SocialAccountConnection}처럼 member가 소유한 공개 값뿐이다.
+ * MemberStatus}, {@link SocialAccountSnapshot}처럼 member가 소유한 공개 값뿐이다.
  *
  * <p>실패는 기존 오류 계약 그대로다 — 자격 증명 불일치·비활성 회원은 {@code UnauthenticatedException}(401, E1000), 중복 이메일은
  * {@code DuplicateEmailException}, 없는 회원은 {@code NotFoundException}(404, E404)이다.
@@ -50,5 +50,5 @@ public interface MemberAccountApi {
      *
      * @return 외부 연결 해제에 필요한 소셜 연결 목록. 탈퇴 처리로 값이 바뀌기 전에 모아 둔 것이다
      */
-    List<SocialAccountConnection> withdraw(long memberId);
+    List<SocialAccountSnapshot> withdraw(long memberId);
 }

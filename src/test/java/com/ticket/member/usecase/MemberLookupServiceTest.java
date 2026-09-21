@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.api.MemberProfile;
+import com.ticket.member.api.MemberSnapshot;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
@@ -33,9 +33,9 @@ class MemberLookupServiceTest {
         ReflectionTestUtils.setField(member, "id", 1L);
         when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
 
-        MemberProfile profile = service.getProfile(1L);
+        MemberSnapshot profile = service.getProfile(1L);
 
-        assertThat(profile).isEqualTo(new MemberProfile(1L, "홍길동", "user@example.com"));
+        assertThat(profile).isEqualTo(new MemberSnapshot(1L, "홍길동", "user@example.com"));
     }
 
     @Test

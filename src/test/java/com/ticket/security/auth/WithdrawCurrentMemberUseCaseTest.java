@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.security.oauth.SocialAccountUnlinker;
 
@@ -28,10 +28,8 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 탈퇴_후_모든_카카오_계정을_연동해제한다() {
         // given
-        final SocialAccountConnection first =
-                new SocialAccountConnection(SocialProvider.KAKAO, "100");
-        final SocialAccountConnection second =
-                new SocialAccountConnection(SocialProvider.KAKAO, "200");
+        final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
+        final SocialAccountSnapshot second = new SocialAccountSnapshot(SocialProvider.KAKAO, "200");
         when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
@@ -44,10 +42,9 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 카카오_연동해제_중_예외가_나도_탈퇴_흐름은_계속된다() {
         // given
-        final SocialAccountConnection first =
-                new SocialAccountConnection(SocialProvider.KAKAO, "100");
-        final SocialAccountConnection second =
-                new SocialAccountConnection(SocialProvider.GOOGLE, "200");
+        final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
+        final SocialAccountSnapshot second =
+                new SocialAccountSnapshot(SocialProvider.GOOGLE, "200");
         when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
         doThrow(new IllegalStateException("boom")).when(socialAccountUnlinker).unlink(first);
         // when

@@ -4,9 +4,9 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.like.api.LikeEntry;
-import com.ticket.like.api.LikeInfo;
+import com.ticket.like.api.LikeCountSnapshot;
 import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeSnapshot;
 import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
@@ -24,11 +24,12 @@ public class LikeQueryService implements LikeQueryApi {
     private final LikeQuerydslRepository likeQuerydslRepository;
 
     @Override
-    public LikeInfo get(final LikeType likeType, final long targetId, final long memberId) {
+    public LikeCountSnapshot get(
+            final LikeType likeType, final long targetId, final long memberId) {
         final boolean liked =
                 likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
         final long likeCount = likeRepository.countByLikeTypeAndTargetId(likeType, targetId);
-        return new LikeInfo(liked, likeCount);
+        return new LikeCountSnapshot(liked, likeCount);
     }
 
     @Override
@@ -37,7 +38,7 @@ public class LikeQueryService implements LikeQueryApi {
     }
 
     @Override
-    public CursorPage<LikeEntry, Long> findLiked(
+    public CursorPage<LikeSnapshot, Long> findLiked(
             final LikeType likeType,
             final long memberId,
             final @Nullable Long cursorLikeId,
@@ -47,7 +48,7 @@ public class LikeQueryService implements LikeQueryApi {
                 .map(LikeQueryService::toEntry);
     }
 
-    private static LikeEntry toEntry(final Like like) {
-        return new LikeEntry(like.getId(), like.getTargetId(), like.getCreatedAt());
+    private static LikeSnapshot toEntry(final Like like) {
+        return new LikeSnapshot(like.getId(), like.getTargetId(), like.getCreatedAt());
     }
 }

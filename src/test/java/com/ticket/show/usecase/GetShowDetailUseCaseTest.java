@@ -36,7 +36,7 @@ import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -106,7 +106,7 @@ class GetShowDetailUseCaseTest {
         when(venueLookup.findSummary(5L))
                 .thenReturn(
                         Optional.of(
-                                new VenueSummary(
+                                new VenueSnapshot(
                                         5L,
                                         "예술의전당",
                                         "주소",
@@ -115,7 +115,7 @@ class GetShowDetailUseCaseTest {
                                         null,
                                         null,
                                         null,
-                                        new VenueSummary.SeatMapLayout(0, 0, 0.0))));
+                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 

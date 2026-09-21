@@ -21,8 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeSnapshot;
 import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
@@ -30,7 +30,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +44,7 @@ class GetMyShowLikesUseCaseTest {
     @Test
     void 찜한_공연_목록을_show_표시값과_조합해_반환한다() {
         LocalDateTime likedAt = LocalDateTime.now();
-        LikeEntry entry = new LikeEntry(9L, 2L, likedAt);
+        LikeSnapshot entry = new LikeSnapshot(9L, 2L, likedAt);
         when(likeQuery.findLiked(LikeType.SHOW, 1L, 10L, 20))
                 .thenReturn(new CursorPage<>(List.of(entry), true, 9L));
 
@@ -57,7 +57,7 @@ class GetMyShowLikesUseCaseTest {
                 .thenReturn(
                         Map.of(
                                 7L,
-                                new VenueSummary(
+                                new VenueSnapshot(
                                         7L,
                                         "장소",
                                         "주소",
@@ -66,7 +66,7 @@ class GetMyShowLikesUseCaseTest {
                                         null,
                                         null,
                                         null,
-                                        new VenueSummary.SeatMapLayout(0, 0, 0.0))));
+                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         GetMyShowLikesUseCase.Output output =
                 useCase.execute(new GetMyShowLikesUseCase.Input(1L, 10L, 20));
@@ -83,7 +83,7 @@ class GetMyShowLikesUseCaseTest {
 
     @Test
     void show_표시값을_찾지_못한_항목은_건너뛴다() {
-        LikeEntry entry = new LikeEntry(9L, 2L, LocalDateTime.now());
+        LikeSnapshot entry = new LikeSnapshot(9L, 2L, LocalDateTime.now());
         when(likeQuery.findLiked(LikeType.SHOW, 1L, null, 20))
                 .thenReturn(new CursorPage<>(List.of(entry), false, null));
         when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());

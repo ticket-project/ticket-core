@@ -19,7 +19,7 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -37,7 +37,7 @@ class GetShowVenueLayoutUseCaseTest {
         when(venueLookup.findSummary(200L))
                 .thenReturn(
                         Optional.of(
-                                new VenueSummary(
+                                new VenueSnapshot(
                                         200L,
                                         "올림픽홀",
                                         "주소",
@@ -46,7 +46,7 @@ class GetShowVenueLayoutUseCaseTest {
                                         BigDecimal.ZERO,
                                         "02-0000-0000",
                                         "image",
-                                        new VenueSummary.SeatMapLayout(1000, 800, 12.0))));
+                                        new VenueSnapshot.SeatMapLayout(1000, 800, 12.0))));
         // when
         GetShowVenueLayoutUseCase.Output output =
                 useCase.execute(new GetShowVenueLayoutUseCase.Input(100L));

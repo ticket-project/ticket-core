@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.show.api.PerformanceVenueLayout;
+import com.ticket.show.api.PerformanceLayoutSnapshot;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
 import lombok.RequiredArgsConstructor;
@@ -62,7 +62,7 @@ public class GetPerformanceSeatMapUseCase {
             BigDecimal price) {}
 
     public Output execute(final Input input) {
-        final PerformanceVenueLayout layout =
+        final PerformanceLayoutSnapshot layout =
                 performanceVenueLayoutCatalog.getVenueLayout(input.performanceId());
         final List<PerformanceSeat> performanceSeats =
                 performanceSeatRepository.findAllByPerformanceId(input.performanceId());
@@ -76,7 +76,7 @@ public class GetPerformanceSeatMapUseCase {
         return new Output(toVenueView(layout), seats);
     }
 
-    private VenueView toVenueView(final PerformanceVenueLayout layout) {
+    private VenueView toVenueView(final PerformanceLayoutSnapshot layout) {
         return new VenueView(
                 layout.venueId(),
                 layout.venueName(),
@@ -87,10 +87,10 @@ public class GetPerformanceSeatMapUseCase {
 
     /** show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤 오류로 다룰지는 이 조합 시점에서 판정하지 않는다. */
     private @Nullable SeatMapEntry toSeatMapEntry(
-            final PerformanceSeat performanceSeat, final PerformanceVenueLayout layout) {
-        final PerformanceVenueLayout.SeatLayout seatLayout =
+            final PerformanceSeat performanceSeat, final PerformanceLayoutSnapshot layout) {
+        final PerformanceLayoutSnapshot.SeatLayout seatLayout =
                 layout.seatLayoutBySeatId().get(performanceSeat.getSeatId());
-        final PerformanceVenueLayout.GradeLayout gradeLayout =
+        final PerformanceLayoutSnapshot.GradeLayout gradeLayout =
                 layout.gradeLayoutByPerformanceGradeId()
                         .get(performanceSeat.getPerformanceGradeId());
         if (seatLayout == null || gradeLayout == null) {

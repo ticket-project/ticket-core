@@ -6,7 +6,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
-import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.shared.exception.InternalErrorException;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -29,7 +29,7 @@ public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
     }
 
     @Override
-    public void unlink(final SocialAccountConnection connection) {
+    public void unlink(final SocialAccountSnapshot connection) {
         if (connection.provider() == SocialProvider.KAKAO) {
             unlinkKakao(connection.providerId());
         }

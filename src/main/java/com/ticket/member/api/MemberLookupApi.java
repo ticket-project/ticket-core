@@ -14,5 +14,5 @@ public interface MemberLookupApi {
     MemberStatus getStatus(long memberId);
 
     /** 다른 module이 화면에 표시할 회원 이름·이메일을 조회한다. 존재하지 않거나 탈퇴한 회원이면 던진다. */
-    MemberProfile getProfile(long memberId);
+    MemberSnapshot getProfile(long memberId);
 }

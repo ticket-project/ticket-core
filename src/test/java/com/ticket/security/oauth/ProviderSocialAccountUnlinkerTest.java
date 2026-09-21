@@ -16,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.MultiValueMap;
 
-import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.shared.exception.InternalErrorException;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -76,7 +76,7 @@ class ProviderSocialAccountUnlinkerTest {
     void 카카오_외_provider는_외부_API를_호출하지_않는다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("admin-key");
 
-        unlinker.unlink(new SocialAccountConnection(SocialProvider.GOOGLE, "google-123"));
+        unlinker.unlink(new SocialAccountSnapshot(SocialProvider.GOOGLE, "google-123"));
 
         verifyNoInteractions(kakaoUnlinkApiClient);
     }
@@ -85,7 +85,7 @@ class ProviderSocialAccountUnlinkerTest {
         return new ProviderSocialAccountUnlinker(kakaoUnlinkApiClient, adminKey);
     }
 
-    private SocialAccountConnection kakao(final String providerId) {
-        return new SocialAccountConnection(SocialProvider.KAKAO, providerId);
+    private SocialAccountSnapshot kakao(final String providerId) {
+        return new SocialAccountSnapshot(SocialProvider.KAKAO, providerId);
     }
 }
