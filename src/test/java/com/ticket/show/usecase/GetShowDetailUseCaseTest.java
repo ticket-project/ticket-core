@@ -56,6 +56,9 @@ class GetShowDetailUseCaseTest {
     private GetShowDetailUseCase useCase() {
         return new GetShowDetailUseCase(
                 showQuerydslRepository,
+                showRepository,
+                gradeRepository,
+                performanceRepository,
                 likeQuery,
                 venueLookup,
                 new ShowCardImagePathConverter(),
