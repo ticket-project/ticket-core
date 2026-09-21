@@ -7,13 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
+import com.ticket.show.api.PerformanceVenueLayout.GradeLayout;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.show.domain.performance.PerformanceVenueLayoutContext;
 
 /**
  * Show는 Performance와 다른 aggregate라 {@code showId} scalar로만 연결된다 — 아래 조회들은 연관관계 경로 탐색 대신 명시적 join
- * JPQL을 쓴다.
+ * JPQL을 쓴다. {@code PerformanceGrade.gradeId}도 같은 이유로 raw 컬럼이라 {@code Grade} join이 명시적이다.
  */
 interface SpringDataPerformanceJpaRepository extends JpaRepository<Performance, Long> {
     List<Performance> findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(Long showId);
@@ -43,4 +45,25 @@ interface SpringDataPerformanceJpaRepository extends JpaRepository<Performance, 
     /** 대표 회차는 이 show에서 가장 먼저 만들어진 회차다({@code ShowQueryRepository}의 대표 등급 조회와 같은 기준). */
     @Query("SELECT MIN(p.id) FROM Performance p WHERE p.showId = :showId")
     Optional<Long> findRepresentativePerformanceIdByShowId(@Param("showId") long showId);
+
+    @Query(
+            """
+            SELECT new com.ticket.show.api.PerformanceSaleSnapshot$GradeInfo(
+                   pg.id, g.code, g.name, pg.sortOrder, pg.price)
+            FROM PerformanceGrade pg
+            JOIN Grade g ON g.id = pg.gradeId
+            WHERE pg.performance.id = :performanceId
+            """)
+    List<GradeInfo> findGradeInfosByPerformanceId(@Param("performanceId") long performanceId);
+
+    /** 표시값만 담는다 — 가격은 booking의 {@code PerformanceSeat.unitPrice}가 출처다. */
+    @Query(
+            """
+            SELECT new com.ticket.show.api.PerformanceVenueLayout$GradeLayout(
+                   pg.id, g.code, g.name, pg.sortOrder)
+            FROM PerformanceGrade pg
+            JOIN Grade g ON g.id = pg.gradeId
+            WHERE pg.performance.id = :performanceId
+            """)
+    List<GradeLayout> findGradeLayoutsByPerformanceId(@Param("performanceId") long performanceId);
 }
