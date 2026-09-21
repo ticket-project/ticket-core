@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetLatestShowsUseCase {
     public static final int LATEST_SHOWS_MAX_COUNT = 10;
-    private final ShowQueryRepository showQueryRepository;
+    private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookup;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
@@ -39,7 +39,7 @@ public class GetLatestShowsUseCase {
 
     public Output execute(final Input input) {
         final List<Show> shows =
-                showQueryRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
+                showQuerydslRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
         final VenueDisplays venues =
                 VenueDisplays.load(venueLookup, shows.stream().map(Show::getVenueId).toList());
         return new Output(shows.stream().map(show -> toItem(show, venues)).toList());

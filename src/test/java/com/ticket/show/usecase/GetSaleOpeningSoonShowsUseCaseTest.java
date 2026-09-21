@@ -18,14 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetSaleOpeningSoonShowsUseCaseTest {
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private VenueLookupApi venueLookup;
 
     @Spy
@@ -41,7 +41,7 @@ class GetSaleOpeningSoonShowsUseCaseTest {
                 List.of(
                         ShowFixture.show(
                                 1L, "concert", 7L, null, null, saleStartDate, 0L, saleStartDate));
-        when(showQueryRepository.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(rows);
+        when(showQuerydslRepository.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(rows);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -64,17 +64,18 @@ class GetSaleOpeningSoonShowsUseCaseTest {
                 .containsExactly(
                         new GetSaleOpeningSoonShowsUseCase.Item(
                                 1L, "concert", "image", "venue", saleStartDate));
-        verify(showQueryRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
+        verify(showQuerydslRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
 
     @Test
     void 판매시작임박_공연이_없으면_빈_목록을_반환한다() {
-        when(showQueryRepository.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(List.of());
+        when(showQuerydslRepository.findSaleOpeningSoonSummaries("CONCERT", 5))
+                .thenReturn(List.of());
 
         GetSaleOpeningSoonShowsUseCase.Output output =
                 useCase.execute(new GetSaleOpeningSoonShowsUseCase.Input("CONCERT", 5));
 
         assertThat(output.shows()).isEmpty();
-        verify(showQueryRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
+        verify(showQuerydslRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
 }

@@ -14,7 +14,7 @@ import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class SearchShowsUseCase {
-    private final ShowQueryRepository showQueryRepository;
+    private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookup;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
@@ -52,7 +52,7 @@ public class SearchShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<Show, ShowCursor> page =
-                showQueryRepository.searchShows(
+                showQuerydslRepository.searchShows(
                         input.criteria(),
                         venueIdsOf(input.criteria().getRegion()),
                         input.size(),

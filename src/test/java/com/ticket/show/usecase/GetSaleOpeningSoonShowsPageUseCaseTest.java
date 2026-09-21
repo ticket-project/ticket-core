@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -30,7 +30,7 @@ import com.ticket.venue.api.VenueSummary;
 class GetSaleOpeningSoonShowsPageUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private VenueLookupApi venueLookup;
 
     @Spy
@@ -62,7 +62,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                         100L,
                         LocalDateTime.of(2026, 3, 1, 10, 0));
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
-        when(showQueryRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -99,7 +99,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                                 100L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showQueryRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
     @Test
@@ -107,7 +107,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         SaleOpeningSoonSearchParam param =
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showQueryRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
 
         GetSaleOpeningSoonShowsPageUseCase.Output output =
@@ -117,7 +117,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showQueryRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
     /**
@@ -132,16 +132,18 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 new SaleOpeningSoonSearchParam(
                         null, null, Region.JEJU, null, null, null, null, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
-        when(showQueryRepository.findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
-        when(showQueryRepository.findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR))
                 .thenReturn(empty);
 
         useCase.execute(
                 new GetSaleOpeningSoonShowsPageUseCase.Input(noRegion, 10, ShowSort.POPULAR));
         useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(jeju, 10, ShowSort.POPULAR));
 
-        verify(showQueryRepository).findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR);
-        verify(showQueryRepository).findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository)
+                .findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository)
+                .findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR);
     }
 }

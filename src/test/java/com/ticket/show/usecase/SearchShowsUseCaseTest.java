@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -30,7 +30,7 @@ import com.ticket.venue.api.VenueSummary;
 class SearchShowsUseCaseTest {
     private static final ShowCursor NEXT_POSITION =
             new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowQuerydslRepository showQuerydslRepository;
     @Mock private VenueLookupApi venueLookup;
 
     @Spy
@@ -54,7 +54,7 @@ class SearchShowsUseCaseTest {
                         10L,
                         LocalDateTime.of(2026, 3, 1, 10, 0));
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
-        when(showQueryRepository.searchShows(request, null, 20, ShowSort.POPULAR))
+        when(showQuerydslRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
@@ -88,7 +88,7 @@ class SearchShowsUseCaseTest {
                                 10L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
-        verify(showQueryRepository).searchShows(request, null, 20, ShowSort.POPULAR);
+        verify(showQuerydslRepository).searchShows(request, null, 20, ShowSort.POPULAR);
     }
 
     @Test
@@ -96,7 +96,7 @@ class SearchShowsUseCaseTest {
         ShowSearchCriteria request =
                 new ShowSearchCriteria("missing", null, null, null, null, null, null);
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showQueryRepository.searchShows(request, null, 20, ShowSort.POPULAR))
+        when(showQuerydslRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
 
         SearchShowsUseCase.Output output =
@@ -106,7 +106,7 @@ class SearchShowsUseCaseTest {
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
         assertThat(output.hasNext()).isFalse();
-        verify(showQueryRepository).searchShows(request, null, 20, ShowSort.POPULAR);
+        verify(showQuerydslRepository).searchShows(request, null, 20, ShowSort.POPULAR);
     }
 
     /**
@@ -120,15 +120,15 @@ class SearchShowsUseCaseTest {
         ShowSearchCriteria jeju =
                 new ShowSearchCriteria(null, null, null, null, null, Region.JEJU, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
-        when(showQueryRepository.searchShows(noRegion, null, 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.searchShows(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
-        when(showQueryRepository.searchShows(jeju, Set.of(), 10, ShowSort.POPULAR))
+        when(showQuerydslRepository.searchShows(jeju, Set.of(), 10, ShowSort.POPULAR))
                 .thenReturn(empty);
 
         useCase.execute(new SearchShowsUseCase.Input(noRegion, 10, ShowSort.POPULAR));
         useCase.execute(new SearchShowsUseCase.Input(jeju, 10, ShowSort.POPULAR));
 
-        verify(showQueryRepository).searchShows(noRegion, null, 10, ShowSort.POPULAR);
-        verify(showQueryRepository).searchShows(jeju, Set.of(), 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).searchShows(noRegion, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).searchShows(jeju, Set.of(), 10, ShowSort.POPULAR);
     }
 }

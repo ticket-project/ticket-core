@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetSaleOpeningSoonShowsUseCase {
-    private final ShowQueryRepository showQueryRepository;
+    private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookup;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
@@ -46,7 +46,7 @@ public class GetSaleOpeningSoonShowsUseCase {
 
     public Output execute(final Input input) {
         final List<Show> shows =
-                showQueryRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
+                showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
         final VenueDisplays venues =
                 VenueDisplays.load(venueLookup, shows.stream().map(Show::getVenueId).toList());
         return new Output(shows.stream().map(show -> toItem(show, venues)).toList());

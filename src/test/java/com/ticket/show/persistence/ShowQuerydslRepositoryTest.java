@@ -51,7 +51,7 @@ import com.ticket.venue.domain.Venue;
 import com.ticket.venue.persistence.VenueRepositoryAdapter;
 
 /**
- * {@link ShowQueryRepository}의 실제 DB 조회 동작을 고정한다.
+ * {@link ShowQuerydslRepository}의 실제 DB 조회 동작을 고정한다.
  *
  * <p>정렬 키·tie breaker, 커서 형식 검증, 최신순의 마감 판정(TD-12: null 창은 CLOSED)은 예전에 {@code
  * QuerydslShowSortResolverTest} / {@code QuerydslShowCursorConditionBuilderTest} / {@code
@@ -60,7 +60,7 @@ import com.ticket.venue.persistence.VenueRepositoryAdapter;
  */
 @SpringBootTest(
         webEnvironment = WebEnvironment.NONE,
-        classes = ShowQueryRepositoryTest.TestApplication.class)
+        classes = ShowQuerydslRepositoryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
             "spring.profiles.active=test",
@@ -84,16 +84,16 @@ import com.ticket.venue.persistence.VenueRepositoryAdapter;
         })
 @Transactional
 @Import({
-    ShowQueryRepositoryTest.QuerydslTestConfig.class,
-    ShowQueryRepositoryTest.TestConfig.class,
-    ShowQueryRepositoryTest.AuditingTestConfig.class,
-    ShowQueryRepository.class,
+    ShowQuerydslRepositoryTest.QuerydslTestConfig.class,
+    ShowQuerydslRepositoryTest.TestConfig.class,
+    ShowQuerydslRepositoryTest.AuditingTestConfig.class,
+    ShowQuerydslRepository.class,
     VenueRepositoryAdapter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
-class ShowQueryRepositoryTest {
+class ShowQuerydslRepositoryTest {
     @Autowired private EntityManager entityManager;
-    @Autowired private ShowQueryRepository showQueryRepository;
+    @Autowired private ShowQuerydslRepository showQuerydslRepository;
     @Autowired private VenueLookupApi venueLookup;
     private Venue seoulVenue;
     private Venue busanVenue;
@@ -161,7 +161,7 @@ class ShowQueryRepositoryTest {
                 .containsExactly("Seoul Popular", "Seoul Normal");
         assertThat(result.hasNext()).isTrue();
         assertThat(
-                        showQueryRepository
+                        showQuerydslRepository
                                 .findGenreNamesByShowIds(List.of(seoulPopular.getId()))
                                 .get(seoulPopular.getId()))
                 .containsExactlyInAnyOrder("뮤지컬", "연극", "콘서트");
@@ -400,7 +400,7 @@ class ShowQueryRepositoryTest {
         setCreatedAt("Closed Show", LocalDateTime.now());
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
-        List<Show> rows = showQueryRepository.findLatestShows(null, 10);
+        List<Show> rows = showQuerydslRepository.findLatestShows(null, 10);
 
         assertThat(rows).extracting(Show::getTitle).endsWith("Closed Show");
     }
@@ -886,7 +886,7 @@ class ShowQueryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(showQueryRepository.findSaleOpeningSoonSummaries(null, 10))
+        assertThat(showQuerydslRepository.findSaleOpeningSoonSummaries(null, 10))
                 .extracting(Show::getTitle)
                 .containsExactly("Soon Summary");
     }
@@ -1026,23 +1026,23 @@ class ShowQueryRepositoryTest {
 
     private CursorPage<Show, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        return showQueryRepository.findAllBySearch(
+        return showQuerydslRepository.findAllBySearch(
                 param, venueIdsOf(param.getRegion()), size, sort);
     }
 
     private CursorPage<Show, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        return showQueryRepository.searchShows(
+        return showQuerydslRepository.searchShows(
                 criteria, venueIdsOf(criteria.getRegion()), size, sort);
     }
 
     private long countSearchShows(final ShowSearchCriteria criteria) {
-        return showQueryRepository.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
+        return showQuerydslRepository.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
     }
 
     private CursorPage<Show, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        return showQueryRepository.findSaleOpeningSoonPage(
+        return showQuerydslRepository.findSaleOpeningSoonPage(
                 param, venueIdsOf(param.getRegion()), size, sort);
     }
 
