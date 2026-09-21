@@ -224,7 +224,6 @@ class ArchitectureRulesTest {
     private static final Set<String> APPROVED_QUERY_REPOSITORIES =
             Set.of(
                     "com.ticket.show.persistence.ShowQueryRepository",
-                    "com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository",
                     "com.ticket.like.persistence.LikeQueryRepository");
 
     private static JavaClass topLevelOf(final JavaClass clazz) {
