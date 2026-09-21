@@ -13,7 +13,7 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatAddress;
+import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -53,10 +53,10 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
         final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
                 context.venueId() == null
                         ? Map.of()
-                        : venueSeatLookup.findSeatAddresses(context.venueId(), seatIds).stream()
+                        : venueSeatLookup.findSeats(context.venueId(), seatIds).stream()
                                 .collect(
                                         Collectors.toMap(
-                                                VenueSeatAddress::seatId, this::toSeatInfo));
+                                                VenueSeatLayout::seatId, this::toSeatInfo));
 
         final Map<Long, PerformanceSaleSnapshot.GradeInfo> gradeInfoByPerformanceGradeId =
                 performanceRepository.findPerformanceGrades(performanceId).stream()
@@ -76,7 +76,7 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 gradeInfoByPerformanceGradeId);
     }
 
-    private PerformanceSaleSnapshot.SeatInfo toSeatInfo(final VenueSeatAddress address) {
+    private PerformanceSaleSnapshot.SeatInfo toSeatInfo(final VenueSeatLayout address) {
         return new PerformanceSaleSnapshot.SeatInfo(
                 address.seatId(),
                 address.floor(),

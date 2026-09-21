@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatAddress;
 import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSummary;
@@ -107,13 +106,13 @@ class VenueRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
         persistSeat(venue, "B", "1", "1", 2);
         flushAndClear();
 
-        final List<VenueSeatAddress> addresses =
-                venueSeatLookup.findSeatAddresses(venue.getId(), Set.of(a1.getId(), a2.getId()));
+        final List<VenueSeatLayout> addresses =
+                venueSeatLookup.findSeats(venue.getId(), Set.of(a1.getId(), a2.getId()));
 
         assertThat(addresses)
-                .extracting(VenueSeatAddress::seatId)
+                .extracting(VenueSeatLayout::seatId)
                 .containsExactlyInAnyOrder(a1.getId(), a2.getId());
-        assertThat(addresses).extracting(VenueSeatAddress::section).containsOnly("A");
+        assertThat(addresses).extracting(VenueSeatLayout::section).containsOnly("A");
     }
 
     @Test
@@ -123,8 +122,7 @@ class VenueRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
         final Seat otherSeat = persistSeat(other, "A", "1", "1", 1);
         flushAndClear();
 
-        assertThat(venueSeatLookup.findSeatAddresses(venue.getId(), Set.of(otherSeat.getId())))
-                .isEmpty();
+        assertThat(venueSeatLookup.findSeats(venue.getId(), Set.of(otherSeat.getId()))).isEmpty();
     }
 
     @Test
@@ -132,7 +130,7 @@ class VenueRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
         final Venue venue = persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        assertThat(venueSeatLookup.findSeatAddresses(venue.getId(), Set.of())).isEmpty();
+        assertThat(venueSeatLookup.findSeats(venue.getId(), Set.of())).isEmpty();
     }
 
     @Test
