@@ -204,9 +204,14 @@ Querydsl을 유지하든 아니든, **조회는 엔티티를 반환하고 최종
 projection이 남는 자리는 **엔티티로 표현되지 않는 조회 결과**다.
 
 ```text
-DB 집계(min/max/count)    여러 테이블을 한 값으로 접는 복합 JOIN 결과
-모듈 공개 계약(snapshot)    트랜잭션 snapshot
+DB 집계(min/max/count)    트랜잭션 snapshot
 ```
+
+**모듈 공개 계약은 조회가 아니라 경계에서 만든다.** 다른 module에 엔티티를 노출할 수 없으니 `~Snapshot`
+타입은 반드시 있어야 하지만, 그것을 만드는 것은 조회가 아니라 **공개 계약 interface를 구현하는 쪽**이다.
+`PerformanceSaleCatalogService`(use case)와 `VenueLookupService`(use case)가 그 자리다. 조회는
+엔티티만 주고, 여러 aggregate를 합쳐야 하면 각각 읽어 use case가 조립한다 —
+`PerformanceRepository.findPerformanceGrades`(엔티티) + `GradeRepository.findGradeNames`가 그 예다.
 
 `PriceSummary`가 그 예다 — 회차 전체 가격의 최소·최대를 DB가 계산한 결과라, 가격을 전부 메모리로
 읽어 계산하지 않는다. 반대로 커서 페이징의 1단계 id 조회처럼 엔티티가 아직 필요 없는 단계는 그

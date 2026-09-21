@@ -219,9 +219,11 @@ member                 like                venue           payment        show
 작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다. 옛
 `PasswordHasher` 래퍼는 걷어냈고 `member`가 `PasswordEncoder`를 직접 쓴다.
 
-`venue`는 공개 계약(`venue.api`)을 Aggregate별 adapter가 구현한다 — `venue.persistence.VenueRepositoryAdapter implements
-VenueLookupApi, VenueSeatLookupApi`가 직접 구현해서 `usecase`가 없다. 위임만 하는 service를
-사이에 두지 않는다 — 다른 module은 여전히 `venue.api`의 interface만 본다.
+`venue`는 공개 계약(`venue.api`)을 Aggregate별 use case가 구현한다 — `VenueLookupService implements
+VenueLookupApi`, `SeatLookupService implements VenueSeatLookupApi`다. Venue와 Seat이 다른
+Aggregate라 구현도 둘로 나눈다. `persistence`의 adapter는 `venue.domain`의 `VenueRepository`·
+`SeatRepository` 계약을 구현해 **엔티티만** 돌려주고, 공개 계약 타입으로의 변환은 use case가 한다 —
+다른 module은 여전히 `venue.api`의 interface만 본다.
 
 `show`의 정렬·커서·판매 상태 조건 helper 셋(`QuerydslShowSortResolver`,
 `QuerydslShowCursorConditionBuilder`, `SaleDisplayStatusPredicates`)은 별도 class가 아니라
@@ -353,8 +355,15 @@ use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계�
 
 자기 module DB 조회 중 **Querydsl을 쓰는 것만** `persistence`의 `*QuerydslRepository`다
 (`ShowQuerydslRepository`, `LikeQuerydslRepository`). 나머지 조회와 Aggregate 저장은 모두
-계약 `*Repository` → `*RepositoryAdapter` → `SpringData*JpaRepository` 3단을 쓴다. `Snapshot`은 특정 시점의 읽기
-결과(모듈 공개 API에서는 cross-module 스냅샷), `Output`은 use case 반환값,
+계약 `*Repository` → `*RepositoryAdapter` → `SpringData*JpaRepository` 3단을 쓴다.
+
+**module 밖으로 나가는 읽기 뷰는 `*Snapshot`이다**(`VenueSnapshot`, `PerformanceSaleSnapshot`,
+`MemberSnapshot`, `LikeSnapshot`). 접미사는 최상위 타입에만 붙이고 중첩 record에는 붙이지 않는다.
+**들어오는 입력과 보안 principal은 대상이 아니다** — `RawPassword`, `SocialIdentity`는 밖에서 들어오는
+값이고 `AuthenticatedMember`는 `AuditorPrincipal`을 구현하는 principal이다. 이 타입들을 만드는 것은
+조회가 아니라 공개 계약 interface를 구현하는 쪽이다(`docs/readability-guidelines.md` §10-1).
+
+`Output`은 use case 반환값,
 `Param`/`Criteria`/`Event`/`Request`는 각각 조회 조건 구성값/검색 조건/발생한 사실/외부 입력이다.
 **조회 전용 응답 타입에 비즈니스 로직을 두지 않는다** — 판정은 별도 validator/policy가 맡는다.
 

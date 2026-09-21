@@ -163,7 +163,7 @@ Order/Ticket 사이보다 **좌석 재고(PerformanceSeat/Hold/Selection)와 주
 filter chain)다. `Member` entity 자체도 신원(email, name) + 자격증명(encodedPassword) +
 인가(role) + 탈퇴 생명주기를 겸한다. 사용자 BC 목록이 "Member BC = member"이므로 **이번에는
 나누지 않는다.** 다음 분리 후보는 `auth`(Identity/Access) module이며, 그때 `AuthenticatedMember`/
-`AccessTokenAuthenticator`/`SecurityConfig`가 `auth`로, `MemberLookup`/`MemberProfile`만 `member`에
+`AccessTokenAuthenticator`/`SecurityConfig`가 `auth`로, `MemberLookup`/`MemberSnapshot`만 `member`에
 남는다. 코드 변경 없음 — 이 절은 관측 기록이다.
 
 ## 승인된 의존 DAG (2026-09-07)
@@ -218,6 +218,6 @@ Performance 책임 혼재("Show가 예매·대기열 정책까지 겸한다")는
 - not-found가 전부 공통 E404로 뭉뚱그려져 있음(show 없음/회차 없음/회차의 Venue 없음이 같은
   코드), 도메인 불변식이 공통 `InvalidRequestException`을 던짐 — ADR 0002 의도대로 필요해질 때
   모듈 예외로 좁힌다.
-- `PerformanceSaleSnapshot`/`PerformanceVenueLayout`은 Venue+Show 데이터가 섞인 show façade로
+- `PerformanceSaleSnapshot`/`PerformanceLayoutSnapshot`은 Venue+Show 데이터가 섞인 show façade로
   남는다. booking이 두 BC를 직접 조합하는 방식은 후속 선택지다.
 - `payment -> booking` 엣지는 PG 연동 구현 시점에 추가한다(ADR 0005 유지).

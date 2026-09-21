@@ -54,7 +54,7 @@ module 안의 실제 어휘(엔티티 `ShowLike`, URL `/api/v1/likes/shows/{show
 - 찜 생성 전 "그 공연장이 존재하는가" 확인은 `venue` module의 책임이고, `like`는 여전히 이를
   확인하지 않는다(`allowedDependencies = {}` leaf를 유지한다).
 - "내 찜 목록"에 공연장 이름·이미지 같은 표시값을 채우는 조립은 `venue`(또는 그걸 아는 module)
-  가 `like`의 `LikeEntry.targetId()`로 자기 데이터를 다시 조회해서 한다 — `show`의
+  가 `like`의 `LikeSnapshot.targetId()`로 자기 데이터를 다시 조회해서 한다 — `show`의
   `GetMyShowLikesUseCase`가 지금 하는 것과 같은 패턴이다.
 
 즉 `LikeType` 도입이 줄여주는 것은 **테이블·리포지토리·중복 방지 불변식**뿐이고, 대상별 업무
@@ -84,7 +84,7 @@ module에 새로 작성해야 한다. 이 사실을 미리 적어 두는 이유�
 결정 §2가 든 공개 계약 중 **쓰기 계약 `LikeCommand.like/unlike`는 지금 없다.** 그 계약과 구현
 (`like.api.LikeCommandApi`, `like.usecase.LikeCommandService`)은 구현이 하나뿐인 경유 지점이라
 제거했고, `AddLikeUseCase`/`RemoveLikeUseCase`가 `LikeRepository`를 직접 쓴다. 대상 일반화
-(`LikeType`, `targetId`)와 조회 계약 `LikeQueryApi`(`countByTarget`/`get`/`findLiked`)·`LikeInfo`는
+(`LikeType`, `targetId`)와 조회 계약 `LikeQueryApi`(`countByTarget`/`get`/`findLiked`)·`LikeCountSnapshot`은
 결정 그대로 유효하다.
 
 §4가 말한 배치도 지금은 일부만 맞는다 — 찜 등록·해제 use case와 endpoint는 `like` module에 있고

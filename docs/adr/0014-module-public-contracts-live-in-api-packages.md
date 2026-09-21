@@ -49,7 +49,8 @@ CLOSED 모듈의 하위 패키지를 이미 막아 주므로 안전 자체는 �
 | 성격 | 이름 | 예 |
 | --- | --- | --- |
 | 다른 모듈이 호출하는 행위 계약 | `XxxApi` | `MemberLookupApi`, `VenueLookupApi` |
-| 오가는 데이터 | 도메인 이름 그대로 | `PerformanceSaleSnapshot`, `MemberProfile` |
+| 나가는 읽기 뷰 | `~Snapshot` | `PerformanceSaleSnapshot`, `MemberSnapshot`, `VenueSnapshot` |
+| 들어오는 입력·principal | 도메인 이름 그대로 | `RawPassword`, `SocialIdentity`, `AuthenticatedMember` |
 | 이벤트 | 발생한 사실의 이름 | `OrderStarted` |
 | enum·value object | 그대로 | `Region`, `LikeType`, `RawPassword` |
 
