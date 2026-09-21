@@ -15,20 +15,32 @@ import org.springframework.context.annotation.Import;
 import com.ticket.show.domain.Category;
 import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.Grade;
+import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.Performer;
 import com.ticket.show.domain.performance.Performance;
+import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.domain.Venue;
 
-/** 공연 상세 응답을 만들 때 쓰는 {@link ShowQueryRepository}의 조회 조각들을 고정한다. */
-@Import({ShowQueryRepository.class, ShowCardImagePathConverter.class})
+/** 공연 상세 응답을 만들 때 쓰는 조회 조각들을 고정한다 — Querydsl 조각과 계약 조각이 함께 한 응답을 이룬다. */
+@Import({
+    ShowQueryRepository.class,
+    ShowRepositoryAdapter.class,
+    GradeRepositoryAdapter.class,
+    PerformanceRepositoryAdapter.class,
+    ShowCardImagePathConverter.class
+})
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
     @Autowired private ShowQueryRepository showQueryRepository;
+    @Autowired private ShowRepository showRepository;
+    @Autowired private GradeRepository gradeRepository;
+    @Autowired private PerformanceRepository performanceRepository;
     private Long showId;
     private Long venueId;
 
@@ -70,7 +82,7 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 공연_상세에_쓰는_show_엔티티를_조회한다() {
-        Optional<Show> result = showQueryRepository.findShow(showId);
+        Optional<Show> result = showRepository.findById(showId);
 
         assertThat(result).isPresent();
         Show show = result.orElseThrow();
@@ -85,7 +97,7 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 장르_이름을_조회한다() {
-        assertThat(showQueryRepository.findGenreNames(showId)).contains("케이팝");
+        assertThat(showRepository.findGenreNames(showId)).contains("케이팝");
     }
 
     /** ADR 0005: show-level 가격표는 없다 — 회차 전체의 min/max를 파생한다. */
@@ -102,7 +114,7 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
     void 대표_회차의_등급을_표시_순서대로_조회한다() {
         var performanceGrades = showQueryRepository.findRepresentativePerformanceGrades(showId);
         var gradesById =
-                showQueryRepository.findGradeNames(
+                gradeRepository.findGradeNames(
                         performanceGrades.stream()
                                 .map(
                                         com.ticket.show.domain.performance.PerformanceGrade
@@ -120,7 +132,8 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 회차를_시작_시각과_회차_번호_순서로_조회한다() {
-        var performances = showQueryRepository.findPerformances(showId);
+        var performances =
+                performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId);
 
         assertThat(performances).hasSize(2);
         assertThat(performances.getFirst().getPerformanceNo()).isEqualTo(1L);
@@ -129,6 +142,6 @@ class ShowQueryRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 존재하지_않는_공연이면_empty를_반환한다() {
-        assertThat(showQueryRepository.findShow(999999L)).isEmpty();
+        assertThat(showRepository.findById(999999L)).isEmpty();
     }
 }

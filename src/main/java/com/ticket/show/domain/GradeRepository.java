@@ -1,6 +1,8 @@
 package com.ticket.show.domain;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -12,4 +14,7 @@ public interface GradeRepository {
     Optional<Grade> findById(Long gradeId);
 
     List<Grade> findAllOrderByCodeAsc();
+
+    /** 등급 id 집합으로 등급을 한 번에 복원한다. 빈 {@code gradeIds}는 빈 map을 반환한다. */
+    Map<Long, Grade> findGradeNames(Collection<Long> gradeIds);
 }

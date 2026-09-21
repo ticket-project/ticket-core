@@ -28,7 +28,7 @@ import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.persistence.ShowQueryRepository;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSummary;
 
@@ -37,7 +37,7 @@ import com.ticket.venue.api.VenueSummary;
 class GetMyShowLikesUseCaseTest {
     @Mock private MemberLookupApi memberLookup;
     @Mock private LikeQueryApi likeQuery;
-    @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowRepository showRepository;
     @Mock private VenueLookupApi venueLookup;
     @InjectMocks private GetMyShowLikesUseCase useCase;
 
@@ -52,7 +52,7 @@ class GetMyShowLikesUseCaseTest {
         LocalDate endDate = startDate.plusDays(1);
         Show show =
                 ShowFixture.show(2L, "공연", 7L, startDate, endDate, null, 0L, LocalDateTime.now());
-        when(showQueryRepository.findSummaries(Set.of(2L))).thenReturn(Map.of(2L, show));
+        when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of(2L, show));
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(
                         Map.of(
@@ -86,7 +86,7 @@ class GetMyShowLikesUseCaseTest {
         LikeEntry entry = new LikeEntry(9L, 2L, LocalDateTime.now());
         when(likeQuery.findLiked(LikeType.SHOW, 1L, null, 20))
                 .thenReturn(new CursorPage<>(List.of(entry), false, null));
-        when(showQueryRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());
+        when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());
 
         GetMyShowLikesUseCase.Output output =
                 useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));

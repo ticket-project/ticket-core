@@ -1,6 +1,10 @@
 package com.ticket.show.persistence;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -23,5 +27,19 @@ public class ShowRepositoryAdapter implements ShowRepository {
     @Override
     public boolean existsById(final Long showId) {
         return jpaRepository.existsById(showId);
+    }
+
+    @Override
+    public Map<Long, Show> findSummaries(final Set<Long> showIds) {
+        if (showIds.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.findAllById(showIds).stream()
+                .collect(Collectors.toMap(Show::getId, showEntity -> showEntity));
+    }
+
+    @Override
+    public List<String> findGenreNames(final Long showId) {
+        return jpaRepository.findGenreNamesByShowId(showId);
     }
 }
