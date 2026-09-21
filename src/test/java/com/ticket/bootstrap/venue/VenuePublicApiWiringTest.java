@@ -23,7 +23,7 @@ import com.ticket.venue.api.VenueSeatLookupApi;
  * service가 남아 있으면 주입이 모호해진다), 다른 하나는 service가 갖고 있던 <b>읽기 전용 트랜잭션</b>이 사라지는 것이다. 단위 테스트는 클래스를 직접
  * 생성하므로 둘 다 잡지 못한다 — Spring 자신에게 물어본다.
  *
- * <p>이제 두 계약을 {@code VenueQueryRepository} 한 빈이 구현한다. 그래도 보는 것은 같다 — 계약별로 주입 가능한 구현이 하나씩이어야 하고, 그
+ * <p>이제 두 계약을 {@code VenueRepositoryAdapter} 한 빈이 구현한다. 그래도 보는 것은 같다 — 계약별로 주입 가능한 구현이 하나씩이어야 하고, 그
  * 하나가 같은 빈이라는 사실까지 여기서 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
@@ -35,9 +35,9 @@ class VenuePublicApiWiringTest extends BookingE2ETestSupport {
         assertThat(context.getBeansOfType(VenueLookupApi.class)).hasSize(1);
         assertThat(context.getBeansOfType(VenueSeatLookupApi.class)).hasSize(1);
         assertThat(AopUtils.getTargetClass(context.getBean(VenueLookupApi.class)).getName())
-                .isEqualTo("com.ticket.venue.persistence.VenueQueryRepository");
+                .isEqualTo("com.ticket.venue.persistence.VenueRepositoryAdapter");
         assertThat(AopUtils.getTargetClass(context.getBean(VenueSeatLookupApi.class)).getName())
-                .isEqualTo("com.ticket.venue.persistence.VenueQueryRepository");
+                .isEqualTo("com.ticket.venue.persistence.VenueRepositoryAdapter");
         assertThat(context.getBean(VenueLookupApi.class))
                 .isSameAs(context.getBean(VenueSeatLookupApi.class));
     }
