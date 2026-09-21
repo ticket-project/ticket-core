@@ -118,7 +118,7 @@
 | 경계 | 참조 | Repository |
 | --- | --- | --- |
 | 같은 Aggregate 내부 | Entity 연관관계 가능(`@ManyToOne(LAZY, optional=false)`) | Root만 Repository |
-| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능(`*QueryRepository`) | 각 Root별 Repository |
+| 같은 BC, 다른 Aggregate | scalar ID 참조. read model에서는 JOIN 가능 | 각 Root별 Repository |
 | 다른 BC | scalar ID 참조(강제). 상대 모듈이 공개한 query API를 쓴다 | 각 BC가 자기 Repository 소유 |
 | cross-BC DB JOIN | reporting/integration read model처럼 명시적으로 허용된 경우만. 현재 애플리케이션 안에는 예외가 없다 | — |
 
@@ -173,7 +173,7 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 | `event` | 커밋 이후 후속 처리 조율(`booking`에만 있다) |
 | `port` | 조회가 아닌 출력 계약(발행·외부 provider) |
 | `domain` | 엔티티와 값 객체, 상태 enum, 정책과 검증기, Aggregate Repository 계약 |
-| `persistence` | 저장 adapter와 local DB 조회 Repository(`*QueryRepository`), Spring Data 인터페이스, Redis/Redisson 저장 구현 |
+| `persistence` | 저장·조회 adapter(`*RepositoryAdapter`)와 Querydsl 조회(`*QuerydslRepository`), Spring Data 인터페이스, Redis/Redisson 저장 구현 |
 | `exception` | `<Module>ErrorCode`, 예외 클래스, `handler` |
 
 **역할 폴더는 템플릿이 아니다.** 실제 파일과 책임이 있을 때만 만든다 — `payment`에는 지금
@@ -185,8 +185,9 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 (`member.persistence.MemberRepositoryAdapter`). 계약을 `persistence`로 옮기지 않는다.
 
 **조회 구현은 `persistence`가 갖고, 조회가 주고받는 타입은 `usecase`가 갖는다.** 자기 module DB를
-읽는 조회는 `persistence`의 `*QueryRepository`가 Querydsl/JPA까지 직접 갖고
-(`show.persistence.ShowQueryRepository`), 반환 타입은 엔티티다. 조회 파라미터·커서·정렬과 응답 항목,
+읽는 조회는 `persistence`가 갖는다 — 동적 조건·커서·집계는 `*QuerydslRepository`
+(`show.persistence.ShowQuerydslRepository`), 고정 조회는 계약 뒤의 `*RepositoryAdapter`이고 반환
+타입은 엔티티다. 조회 파라미터·커서·정렬과 응답 항목,
 DB 집계 결과는 그것을 쓰는 use case가 소유한다(`show.usecase.ShowSearchCriteria`,
 `GetShowDetailUseCase.PriceSummary`) — 읽기 모델만 담는 `query` package는 더 두지 않는다. 조회마다
 port interface와 adapter를 한 쌍씩 만들지 않는다 — 구현이 하나뿐인 1:1 위임은 기능을 이해하는 데
@@ -218,14 +219,14 @@ member                 like                venue           payment        show
 작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다. 옛
 `PasswordHasher` 래퍼는 걷어냈고 `member`가 `PasswordEncoder`를 직접 쓴다.
 
-`venue`는 공개 계약(`venue.api`)을 `venue.persistence.VenueQueryRepository implements
+`venue`는 공개 계약(`venue.api`)을 Aggregate별 adapter가 구현한다 — `venue.persistence.VenueRepositoryAdapter implements
 VenueLookupApi, VenueSeatLookupApi`가 직접 구현해서 `usecase`가 없다. 위임만 하는 service를
 사이에 두지 않는다 — 다른 module은 여전히 `venue.api`의 interface만 본다.
 
 `show`의 정렬·커서·판매 상태 조건 helper 셋(`QuerydslShowSortResolver`,
 `QuerydslShowCursorConditionBuilder`, `SaleDisplayStatusPredicates`)은 별도 class가 아니라
-`ShowQueryRepository`의 private 메서드다 — 쓰는 곳이 그 한 class뿐이라 Spring 빈으로 둘 이유가
-없다. 두 조회 Repository가 함께 쓰던 `QuerydslTupleColumns`도 `ShowQueryRepository`가 흡수해
+`ShowQuerydslRepository`의 private 메서드다 — 쓰는 곳이 그 한 class뿐이라 Spring 빈으로 둘 이유가
+없다. 두 조회가 함께 쓰던 `QuerydslTupleColumns`도 `ShowQuerydslRepository`가 흡수해
 `show.persistence`에는 조회 Repository 둘만 남는다.
 
 ### booking — 업무(capability)를 먼저 보여준다
@@ -330,7 +331,7 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 **`usecase`에는 `*UseCase`만 두지 않는다.** use case가 조립에 쓰는 서비스·헬퍼도 같은 package에
 둔다 — 주문 생성과 그 조립 helper가 한 목록에서 읽혀야 트랜잭션 원자성이 어디서 보장되는지 보인다.
 읽기 모델과 조회 파라미터·커서·정렬도 `usecase`가 갖고(읽기 모델만 담는 `query` package는 두지
-않는다), 그 조회 구현은 `persistence`의 `*QueryRepository`, 발행 같은 출력 계약은 `port`다.
+않는다), 그 조회 구현은 `persistence`의 `*RepositoryAdapter`나 `*QuerydslRepository`, 발행 같은 출력 계약은 `port`다.
 
 포트 소유 기준은 **그 기능을 필요로 하고 의미를 정의하는 쪽**이 소유한다.
 
@@ -350,9 +351,9 @@ Aggregate Repository 계약(옛 `repository`), 저장 기술 중립 상태 계�
 use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계약의 성격" 표로 판단한다. 조회는
 아래 "Repository와 조회 Repository" 절이 별도로 다룬다.
 
-자기 module DB 조회는 `persistence`의 `*QueryRepository`(`ShowQueryRepository`,
-`PerformanceSeatQueryRepository`), Aggregate Repository 어댑터는 `*RepositoryAdapter`, 안에서 쓰는
-Spring Data 인터페이스는 `SpringData*JpaRepository`로 구분한다. `Snapshot`은 특정 시점의 읽기
+자기 module DB 조회 중 **Querydsl을 쓰는 것만** `persistence`의 `*QuerydslRepository`다
+(`ShowQuerydslRepository`, `LikeQuerydslRepository`). 나머지 조회와 Aggregate 저장은 모두
+계약 `*Repository` → `*RepositoryAdapter` → `SpringData*JpaRepository` 3단을 쓴다. `Snapshot`은 특정 시점의 읽기
 결과(모듈 공개 API에서는 cross-module 스냅샷), `Output`은 use case 반환값,
 `Param`/`Criteria`/`Event`/`Request`는 각각 조회 조건 구성값/검색 조건/발생한 사실/외부 입력이다.
 **조회 전용 응답 타입에 비즈니스 로직을 두지 않는다** — 판정은 별도 validator/policy가 맡는다.
@@ -399,33 +400,37 @@ showRepository.save(show);
 목적이 아니라 **use case가 필요로 하는 조회 결과를 만드는 것**이 목적이다.
 
 ```java
-CursorPage<Show, ShowCursor> page = showQueryRepository.findAllBySearch(param, venueIds);
+CursorPage<Show, ShowCursor> page = showQuerydslRepository.findAllBySearch(param, venueIds);
 ```
 
-module의 `persistence` package에 두고 이름은 `*QueryRepository`를 쓴다(`ShowQueryRepository`,
-`PerformanceQueryRepository`, `PerformanceSeatQueryRepository`). **한 module의 관련 조회는 한
-class로 모은다** — 조회 하나에 class 하나를 만들지 않는다.
-**local DB 조회에는 1:1 port/adapter를 두지 않는다** — 조회 Repository가 `@Repository` + 생성자
-주입으로 Querydsl/JPA를 직접 쓰는 구체 class다. 조회 대상이 자기 module DB가 아니거나(외부 API,
+module의 `persistence` package에 두고, **Querydsl로 조립하는 것만** 이름이 `*QuerydslRepository`다
+(`ShowQuerydslRepository`, `LikeQuerydslRepository`). **한 module의 관련 조회는 한 class로 모은다**
+— 조회 하나에 class 하나를 만들지 않는다. **Querydsl 조회에는 1:1 port/adapter를 두지 않는다** —
+`@Repository` + 생성자 주입으로 Querydsl을 직접 쓰는 구체 class다. 동적 조건 조립은 화면이 요구하는
+SQL 그 자체라 교체 지점이 아니기 때문이다(ADR 0019).
+
+**Querydsl이 필요 없는 조회는 조회 Repository가 아니라 계약 뒤의 adapter가 갖는다** — 파생
+메서드나 `@Query` 하나로 끝나는 고정 조회는 `*Repository` 계약에 선언하고 `*RepositoryAdapter`가
+구현한다(`PerformanceRepository.findPerformanceGrades`). 조회 대상이 자기 module DB가 아니거나(외부 API,
 Redis, JWT 같은 외부 시스템), 실제로 교체 지점이 있거나, domain을 보호해야 할 때만 interface를
 둔다. use case는 `persistence`에서 이 조회 Repository만 직접 부를 수 있고, 저장 adapter와
 Spring Data 인터페이스·Redis 구현은 그대로 막혀 있다.
 
 Aggregate를 여러 개 복원해 Java에서 조합하기보다, 필요한 값을 직접 조회한다. 반환 타입은 엔티티가
-기본이고(`ShowQueryRepository.findShow`, `findAllBySearch`), DB 집계처럼 엔티티로 표현되지 않는
+기본이고(`ShowRepository.findById`, `ShowQuerydslRepository.findAllBySearch`), DB 집계처럼 엔티티로 표현되지 않는
 결과에만 별도 타입을 두며 그 타입은 그것을 쓰는 use case가 소유한다
 (`GetShowDetailUseCase.PriceSummary`). 조회 구현
 방식(파생 메서드 / `@Query` / Querydsl)도 같은 기준으로 고른다 — Querydsl이 기본값은 아니다.
 
 단순한 local 조회는 그 module의 **공개 API interface를 직접 구현해도 된다**
-(`venue.persistence.VenueQueryRepository implements VenueLookupApi, VenueSeatLookupApi`). 위임만
-하는 service를 사이에 두지 않는다. 이때 읽기 전용 트랜잭션 같은 경계는 그 조회 Repository가
-소유한다.
+(`venue.persistence.VenueRepositoryAdapter implements VenueLookupApi`). 위임만 하는 service를
+사이에 두지 않는다. 이때 읽기 전용 트랜잭션 같은 경계는 그 adapter가 소유한다. **한 adapter는 한
+Aggregate만 든다** — venue 좌석은 `SeatRepositoryAdapter`가 따로 갖는다.
 
 **Aggregate 경계와 API 응답 경계는 같을 필요가 없다.** 공연 상세는 Show/Performance/Grade/
 Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까지 한 응답에 담는다 — 그 조합은
 조회 Repository 자신이 아니라 그것을 부르는 use case가 한다(`GetShowDetailUseCase`가
-`ShowQueryRepository`로 show 자기 데이터를 얻고, `VenueLookupApi`/`LikeQueryApi`로 다른 BC의
+`ShowQuerydslRepository`로 show 자기 데이터를 얻고, `VenueLookupApi`/`LikeQueryApi`로 다른 BC의
 표시값을 더한다). **DB를 읽는 클래스가 다른 module의 공개 계약을 직접 호출해 결과를 조합하지
 않는다** — 조회 Repository의 역할은 자기 module DB를 읽는 것까지이고, 이 규칙은
 `ArchitectureRulesTest`가 강제한다.
@@ -437,7 +442,7 @@ Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까
 Optional<Show> ShowRepository.findById(Long showId);
 
 // 조회 Repository — 화면 표시값 → API 응답(읽기 전용, 상태를 바꾸지 않는다)
-Map<Long, Show> ShowQueryRepository.findSummaries(Set<Long> showIds);
+CursorPage<Show, ShowCursor> ShowQuerydslRepository.findAllBySearch(param, venueIds);
 ```
 
 둘 다 같은 `SHOWS` 테이블을 보고 같은 엔티티를 돌려줄 수 있지만 목적이 다르다. 조회 쪽 결과는 읽기

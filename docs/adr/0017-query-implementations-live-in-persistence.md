@@ -2,7 +2,8 @@
 
 ## 상태
 
-채택됨 (2026-09-18)
+일부 대체됨 (2026-09-21) — 결정 §1·§2·§5는 [ADR 0019](0019-querydsl-only-query-repositories.md)가
+대체한다. 조회 구현이 `persistence`에 있다는 뼈대와 결정 §4는 그대로 유효하다.
 
 > 2026-09-19 갱신: **이 ADR이 남긴다고 한 `query` package는 그 뒤 전부 없어졌다.** 읽기 모델과
 > 검색 조건, 커서·정렬 타입(`ShowCursor`/`ShowSort`)은 `<module>.usecase`가 갖고 응답 항목은 그

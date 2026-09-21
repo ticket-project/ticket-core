@@ -81,7 +81,7 @@ TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지�
 OE-04를 정리하며 세운 기준은 `docs/architecture.md`의 "Repository와 조회 Repository"와
 `docs/readability-guidelines.md` §3이 원본이다 — 자기 module DB 조회에는 1:1 port/adapter를
 두지 않고, interface는 실제 계약·교체 지점·외부 시스템 경계·domain 보호에만 둔다. OE-11로 조회
-구현이 `query`에서 `persistence`의 `*QueryRepository`로 옮겨지면서 그 기준 문서(`architecture.md`의
+구현이 `query`에서 `persistence`로 옮겨지면서 그 기준 문서(`architecture.md`의
 "Repository와 조회 Repository", `code-conventions.md`, `readability-guidelines.md`, `testing.md`)도
 함께 갱신했고, 배경은 [ADR 0017](adr/0017-query-implementations-live-in-persistence.md)이다. 나머지 OE
 항목(OE-01 Repository 제거, OE-02 예외 통합, OE-03 ControllerDocs 제거)은 이 작업 범위가 아니었고
