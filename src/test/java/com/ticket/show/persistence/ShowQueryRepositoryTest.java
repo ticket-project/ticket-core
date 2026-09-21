@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -1147,6 +1148,9 @@ class ShowQueryRepositoryTest {
                 "com.ticket.member",
                 "com.ticket.booking"
             })
+    // 이 슬라이스가 @Import하는 조회 Repository가 쓰는 Spring Data 인터페이스만 올린다. 명시하지 않으면
+    // auto-configuration package(=이 클래스의 package)만 스캔해 venue 쪽 인터페이스가 빠진다.
+    @EnableJpaRepositories(basePackages = {"com.ticket.show", "com.ticket.venue"})
     @Import({TestConfig.class, AuditingTestConfig.class})
     static class TestApplication {}
 }
