@@ -20,8 +20,8 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.api.VenueSeatSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -68,7 +68,7 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                         : venueSeatLookup.findSeats(venueId, seatIds).stream()
                                 .collect(
                                         Collectors.toMap(
-                                                VenueSeatLayout::seatId, this::toSeatInfo));
+                                                VenueSeatSnapshot::seatId, this::toSeatInfo));
 
         final Map<Long, PerformanceSaleSnapshot.GradeInfo> gradeInfoByPerformanceGradeId =
                 toGradeInfos(performanceId);
@@ -117,7 +117,7 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 performanceGrade.getPrice());
     }
 
-    private PerformanceSaleSnapshot.SeatInfo toSeatInfo(final VenueSeatLayout address) {
+    private PerformanceSaleSnapshot.SeatInfo toSeatInfo(final VenueSeatSnapshot address) {
         return new PerformanceSaleSnapshot.SeatInfo(
                 address.seatId(),
                 address.floor(),

@@ -13,9 +13,9 @@ import java.util.Optional;
 public interface PerformanceVenueLayoutCatalogApi {
     /**
      * 존재하지 않는 회차 ID는 공통 오류({@code com.ticket.shared.exception.NotFoundException})로 알린다. venue가 없는
-     * show는 {@link PerformanceVenueLayout#seatLayoutBySeatId()}가 빈 맵이다.
+     * show는 {@link PerformanceLayoutSnapshot#seatLayoutBySeatId()}가 빈 맵이다.
      */
-    PerformanceVenueLayout getVenueLayout(long performanceId);
+    PerformanceLayoutSnapshot getVenueLayout(long performanceId);
 
     /** 공연(Show) 단위 조회가 seat-map을 그릴 때 기준으로 삼는 대표 회차다. 회차가 하나도 없으면 비어 있다. */
     Optional<Long> findRepresentativePerformanceId(long showId);

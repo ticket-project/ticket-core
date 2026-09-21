@@ -14,8 +14,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.like.api.LikeEntry;
 import com.ticket.like.api.LikeQueryApi;
+import com.ticket.like.api.LikeSnapshot;
 import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
@@ -69,7 +69,7 @@ public class GetMyShowLikesUseCase {
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
 
-        final CursorPage<LikeEntry, Long> page =
+        final CursorPage<LikeSnapshot, Long> page =
                 likeQuery.findLiked(
                         LikeType.SHOW, input.memberId(), input.cursorLikeId(), input.size());
 
@@ -78,7 +78,7 @@ public class GetMyShowLikesUseCase {
         }
 
         final Set<Long> showIds =
-                page.items().stream().map(LikeEntry::targetId).collect(Collectors.toSet());
+                page.items().stream().map(LikeSnapshot::targetId).collect(Collectors.toSet());
         final Map<Long, Show> shows = showRepository.findSummaries(showIds);
         final VenueDisplays venues =
                 VenueDisplays.load(
@@ -95,7 +95,7 @@ public class GetMyShowLikesUseCase {
 
     /** 찜 목록의 이미지는 원본 경로 그대로다 — 목록 카드용 변환({@code ShowCardImagePathConverter})을 쓰지 않는 기존 계약이다. */
     private @Nullable Item toItem(
-            final LikeEntry entry, final @Nullable Show show, final VenueDisplays venues) {
+            final LikeSnapshot entry, final @Nullable Show show, final VenueDisplays venues) {
         if (show == null) {
             return null;
         }

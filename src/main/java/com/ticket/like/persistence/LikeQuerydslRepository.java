@@ -20,8 +20,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>커서 위치는 마지막 찜 id다. wire 문자열 변환은 호출하는 module의 {@code endpoint}가 한다.
  *
- * <p>엔티티를 그대로 돌려준다 — 공개 계약({@code like.api.LikeEntry})으로의 변환은 {@code LikeQueryService}가 한다({@code
- * docs/readability-guidelines.md} §10-1).
+ * <p>엔티티를 그대로 돌려준다 — 공개 계약({@code like.api.LikeSnapshot})으로의 변환은 {@code LikeQueryService}가
+ * 한다({@code docs/readability-guidelines.md} §10-1).
  */
 @Repository
 @RequiredArgsConstructor

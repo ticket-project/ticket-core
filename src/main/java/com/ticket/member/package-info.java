@@ -12,9 +12,9 @@
  *   <li>{@link com.ticket.member.api.MemberAccountApi} — 등록·자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴. 오가는 값은
  *       {@link com.ticket.member.api.RawPassword}, {@link com.ticket.member.api.SocialIdentity},
  *       {@link com.ticket.member.api.SocialProvider}, {@link
- *       com.ticket.member.api.SocialAccountConnection}이다
+ *       com.ticket.member.api.SocialAccountSnapshot}이다
  *   <li>{@link com.ticket.member.api.MemberLookupApi} / {@link com.ticket.member.api.MemberStatus}
- *       / {@link com.ticket.member.api.MemberProfile} — entity 대신 쓰는 회원 조회·활성 검증 계약
+ *       / {@link com.ticket.member.api.MemberSnapshot} — entity 대신 쓰는 회원 조회·활성 검증 계약
  *   <li>{@link com.ticket.member.api.AuthenticatedMember} — 다른 module controller가 parameter로 받는 인증
  *       principal. memberId와 role만 가진다
  * </ul>

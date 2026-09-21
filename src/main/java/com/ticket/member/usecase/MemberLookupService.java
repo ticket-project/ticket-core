@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.member.api.MemberProfile;
+import com.ticket.member.api.MemberSnapshot;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
@@ -33,9 +33,9 @@ public class MemberLookupService implements MemberLookupApi {
     }
 
     @Override
-    public MemberProfile getProfile(final long memberId) {
+    public MemberSnapshot getProfile(final long memberId) {
         final Member member = findActiveOrThrow(memberId);
-        return new MemberProfile(member.getId(), member.getName(), member.getEmail().getEmail());
+        return new MemberSnapshot(member.getId(), member.getName(), member.getEmail().getEmail());
     }
 
     private Member findActiveOrThrow(final long memberId) {

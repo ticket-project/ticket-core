@@ -29,8 +29,8 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
+import com.ticket.venue.api.VenueSeatSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +66,7 @@ class PerformanceSaleCatalogServiceTest {
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance(2L, null)));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", 3L)));
         when(venueSeatLookup.findSeats(3L, Set.of(10L)))
-                .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 0.0, 0.0)));
+                .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 0.0, 0.0)));
         when(performanceRepository.findPerformanceGrades(1L))
                 .thenReturn(List.of(performanceGrade(100L, 7L, new BigDecimal("170000"), 1)));
         when(gradeRepository.findGradeNames(Set.of(7L)))

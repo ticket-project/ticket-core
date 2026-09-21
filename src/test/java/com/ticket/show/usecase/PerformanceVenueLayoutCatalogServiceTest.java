@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.api.PerformanceVenueLayout;
+import com.ticket.show.api.PerformanceLayoutSnapshot;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.performance.Performance;
@@ -30,9 +30,9 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSeatSnapshot;
+import com.ticket.venue.api.VenueSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -65,7 +65,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         when(showRepository.findById(2L)).thenReturn(Optional.of(show(2L, "show", null)));
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of());
 
-        final PerformanceVenueLayout layout = service.getVenueLayout(1L);
+        final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
 
         assertThat(layout.seatLayoutBySeatId()).isEmpty();
     }
@@ -77,7 +77,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         when(venueLookup.findSummary(3L))
                 .thenReturn(
                         Optional.of(
-                                new VenueSummary(
+                                new VenueSnapshot(
                                         3L,
                                         "venue",
                                         "주소",
@@ -86,15 +86,15 @@ class PerformanceVenueLayoutCatalogServiceTest {
                                         null,
                                         null,
                                         null,
-                                        new VenueSummary.SeatMapLayout(500, 356, 4.8))));
+                                        new VenueSnapshot.SeatMapLayout(500, 356, 4.8))));
         when(venueSeatLookup.findAllSeatLayouts(3L))
-                .thenReturn(List.of(new VenueSeatLayout(10L, 1, "가", "A", "1", 129.0, 101.0)));
+                .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 129.0, 101.0)));
         when(performanceRepository.findPerformanceGrades(1L))
                 .thenReturn(List.of(performanceGrade(100L, 7L, new BigDecimal("170000"), 1)));
         when(gradeRepository.findGradeNames(Set.of(7L)))
                 .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
-        final PerformanceVenueLayout layout = service.getVenueLayout(1L);
+        final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
 
         assertThat(layout.venueId()).isEqualTo(3L);
         assertThat(layout.viewBoxWidth()).isEqualTo(500);
@@ -116,7 +116,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         when(gradeRepository.findGradeNames(Set.of(7L, 8L)))
                 .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
-        final PerformanceVenueLayout layout = service.getVenueLayout(1L);
+        final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
 
         assertThat(layout.gradeLayoutByPerformanceGradeId()).containsOnlyKeys(100L);
     }

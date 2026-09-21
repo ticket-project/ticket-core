@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ticket.like.api.LikeInfo;
+import com.ticket.like.api.LikeCountSnapshot;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
@@ -34,7 +34,8 @@ public class GetLikeStatusUseCase {
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
 
-        final LikeInfo info = likeQuery.get(input.likeType(), input.targetId(), input.memberId());
+        final LikeCountSnapshot info =
+                likeQuery.get(input.likeType(), input.targetId(), input.memberId());
         return new Output(input.targetId(), info.liked(), info.likeCount());
     }
 }

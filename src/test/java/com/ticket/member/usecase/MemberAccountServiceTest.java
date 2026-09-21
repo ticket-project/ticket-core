@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.RawPassword;
-import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Email;
@@ -177,10 +177,10 @@ class MemberAccountServiceTest {
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
         when(memberRepository.findActiveById(5L)).thenReturn(Optional.of(member));
 
-        final List<SocialAccountConnection> connections = service().withdraw(5L);
+        final List<SocialAccountSnapshot> connections = service().withdraw(5L);
 
         assertThat(connections)
-                .containsExactly(new SocialAccountConnection(SocialProvider.KAKAO, "kakao-1"));
+                .containsExactly(new SocialAccountSnapshot(SocialProvider.KAKAO, "kakao-1"));
         assertThat(member.isDeleted()).isTrue();
         assertThat(member.getDeletedAt()).isEqualTo(LocalDateTime.now(CLOCK));
         assertThat(member.activeSocialAccounts()).isEmpty();

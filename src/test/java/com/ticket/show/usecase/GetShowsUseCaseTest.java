@@ -23,7 +23,7 @@ import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -70,7 +70,7 @@ class GetShowsUseCaseTest {
                 .thenReturn(
                         Map.of(
                                 7L,
-                                new VenueSummary(
+                                new VenueSnapshot(
                                         7L,
                                         "venue",
                                         "주소",
@@ -79,7 +79,7 @@ class GetShowsUseCaseTest {
                                         null,
                                         null,
                                         null,
-                                        new VenueSummary.SeatMapLayout(0, 0, 0.0))));
+                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         GetShowsUseCase.Output output =
                 useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));

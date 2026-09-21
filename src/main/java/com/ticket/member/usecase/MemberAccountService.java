@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.RawPassword;
-import com.ticket.member.api.SocialAccountConnection;
+import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
@@ -121,17 +121,17 @@ public class MemberAccountService implements MemberAccountApi {
      */
     @Override
     @Transactional
-    public List<SocialAccountConnection> withdraw(final long memberId) {
+    public List<SocialAccountSnapshot> withdraw(final long memberId) {
         final LocalDateTime now = LocalDateTime.now(clock);
         final Member member =
                 memberRepository
                         .findActiveById(memberId)
                         .orElseThrow(() -> new NotFoundException());
-        final List<SocialAccountConnection> socialAccounts =
+        final List<SocialAccountSnapshot> socialAccounts =
                 member.activeSocialAccounts().stream()
                         .map(
                                 account ->
-                                        new SocialAccountConnection(
+                                        new SocialAccountSnapshot(
                                                 account.getSocialProvider(), account.getSocialId()))
                         .toList();
 

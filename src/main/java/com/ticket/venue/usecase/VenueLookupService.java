@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 import com.ticket.venue.domain.Venue;
 import com.ticket.venue.domain.VenueRepository;
 
@@ -32,18 +32,18 @@ public class VenueLookupService implements VenueLookupApi {
     private final VenueRepository venueRepository;
 
     @Override
-    public Optional<VenueSummary> findSummary(final long venueId) {
+    public Optional<VenueSnapshot> findSummary(final long venueId) {
         return venueRepository.findById(venueId).map(VenueLookupService::toSummary);
     }
 
     @Override
-    public Map<Long, VenueSummary> getSummaries(final Set<Long> venueIds) {
+    public Map<Long, VenueSnapshot> getSummaries(final Set<Long> venueIds) {
         if (venueIds.isEmpty()) {
             return Map.of();
         }
         return venueRepository.findAllById(venueIds).stream()
                 .map(VenueLookupService::toSummary)
-                .collect(Collectors.toMap(VenueSummary::venueId, summary -> summary));
+                .collect(Collectors.toMap(VenueSnapshot::venueId, summary -> summary));
     }
 
     @Override
@@ -52,8 +52,8 @@ public class VenueLookupService implements VenueLookupApi {
         return Set.copyOf(venueRepository.findIdsByRegion(region));
     }
 
-    private static VenueSummary toSummary(final Venue venue) {
-        return new VenueSummary(
+    private static VenueSnapshot toSummary(final Venue venue) {
+        return new VenueSnapshot(
                 venue.getId(),
                 venue.getName(),
                 venue.getAddress(),
@@ -62,7 +62,7 @@ public class VenueLookupService implements VenueLookupApi {
                 venue.getLongitude(),
                 venue.getPhone(),
                 venue.getImageUrl(),
-                new VenueSummary.SeatMapLayout(
+                new VenueSnapshot.SeatMapLayout(
                         venue.getViewBoxWidth(),
                         venue.getViewBoxHeight(),
                         venue.getSeatDiameter()));

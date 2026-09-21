@@ -22,7 +22,7 @@ import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.member.api.MemberProfile;
+import com.ticket.member.api.MemberSnapshot;
 import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +44,7 @@ class GetOrderDetailUseCaseTest {
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L))
                 .thenReturn(Optional.of(order()));
         when(memberLookup.getProfile(1L))
-                .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
+                .thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
 
         GetOrderDetailUseCase.Output output =
                 useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
@@ -68,7 +68,7 @@ class GetOrderDetailUseCaseTest {
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L))
                 .thenReturn(Optional.of(order));
         when(memberLookup.getProfile(1L))
-                .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
+                .thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
 
         GetOrderDetailUseCase.Output output =
                 useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
@@ -87,7 +87,7 @@ class GetOrderDetailUseCaseTest {
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L))
                 .thenReturn(Optional.of(order()));
         when(memberLookup.getProfile(1L))
-                .thenReturn(new MemberProfile(1L, "홍길동", "user@example.com"));
+                .thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
 
         GetOrderDetailUseCase.Output output =
                 useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));

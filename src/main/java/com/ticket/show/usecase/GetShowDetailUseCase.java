@@ -34,7 +34,7 @@ import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -89,7 +89,7 @@ public class GetShowDetailUseCase {
             List<PerformanceDateInfo> performanceDates) {}
 
     /**
-     * show 상세에 쓰는 venue 표시값 조합 결과다. venue module의 {@code VenueSummary}를 이 응답 모양(좌석 배치 등 여기서 쓰지 않는
+     * show 상세에 쓰는 venue 표시값 조합 결과다. venue module의 {@code VenueSnapshot}를 이 응답 모양(좌석 배치 등 여기서 쓰지 않는
      * 필드는 뺀)으로 옮겨 담는다.
      */
     public record VenueInfo(
@@ -226,7 +226,7 @@ public class GetShowDetailUseCase {
         return venueLookup.findSummary(venueId).map(this::toVenueInfo).orElse(null);
     }
 
-    private VenueInfo toVenueInfo(final VenueSummary venue) {
+    private VenueInfo toVenueInfo(final VenueSnapshot venue) {
         return new VenueInfo(
                 venue.venueId(),
                 venue.name(),

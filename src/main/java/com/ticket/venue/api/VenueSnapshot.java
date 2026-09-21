@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import org.jspecify.annotations.Nullable;
 
 /** 다른 module이 응답을 조합할 때 필요한 venue 표시값만 담은 불변 snapshot이다. JPA entity를 노출하지 않는다. */
-public record VenueSummary(
+public record VenueSnapshot(
         long venueId,
         @Nullable String name,
         @Nullable String address,

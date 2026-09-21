@@ -13,9 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
-import com.ticket.venue.api.VenueSeatLayout;
 import com.ticket.venue.api.VenueSeatLookupApi;
-import com.ticket.venue.api.VenueSummary;
+import com.ticket.venue.api.VenueSeatSnapshot;
+import com.ticket.venue.api.VenueSnapshot;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
@@ -36,7 +36,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Venue venue = persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        final VenueSummary summary = venueLookup.findSummary(venue.getId()).orElseThrow();
+        final VenueSnapshot summary = venueLookup.findSummary(venue.getId()).orElseThrow();
 
         assertThat(summary.venueId()).isEqualTo(venue.getId());
         assertThat(summary.name()).isEqualTo("올림픽홀");
@@ -57,7 +57,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Venue busan = persistVenue("벡스코", Region.GYEONGSANG);
         flushAndClear();
 
-        final Map<Long, VenueSummary> summaries =
+        final Map<Long, VenueSnapshot> summaries =
                 venueLookup.getSummaries(Set.of(seoul.getId(), busan.getId(), 999_999L));
 
         assertThat(summaries).containsOnlyKeys(seoul.getId(), busan.getId());
@@ -106,13 +106,13 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistSeat(venue, "B", "1", "1", 2);
         flushAndClear();
 
-        final List<VenueSeatLayout> addresses =
+        final List<VenueSeatSnapshot> addresses =
                 venueSeatLookup.findSeats(venue.getId(), Set.of(a1.getId(), a2.getId()));
 
         assertThat(addresses)
-                .extracting(VenueSeatLayout::seatId)
+                .extracting(VenueSeatSnapshot::seatId)
                 .containsExactlyInAnyOrder(a1.getId(), a2.getId());
-        assertThat(addresses).extracting(VenueSeatLayout::section).containsOnly("A");
+        assertThat(addresses).extracting(VenueSeatSnapshot::section).containsOnly("A");
     }
 
     @Test
@@ -141,11 +141,11 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistSeat(persistVenue("벡스코", Region.GYEONGSANG), "A", "1", "1", 1);
         flushAndClear();
 
-        final List<VenueSeatLayout> layouts = venueSeatLookup.findAllSeatLayouts(venue.getId());
+        final List<VenueSeatSnapshot> layouts = venueSeatLookup.findAllSeatLayouts(venue.getId());
 
         assertThat(layouts).hasSize(2);
-        assertThat(layouts).extracting(VenueSeatLayout::x).containsOnly(10.0);
-        assertThat(layouts).extracting(VenueSeatLayout::y).containsOnly(20.0);
+        assertThat(layouts).extracting(VenueSeatSnapshot::x).containsOnly(10.0);
+        assertThat(layouts).extracting(VenueSeatSnapshot::y).containsOnly(20.0);
     }
 
     @Test
