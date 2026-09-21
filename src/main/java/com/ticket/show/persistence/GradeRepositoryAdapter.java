@@ -1,7 +1,10 @@
 package com.ticket.show.persistence;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -24,5 +27,14 @@ public class GradeRepositoryAdapter implements GradeRepository {
     @Override
     public List<Grade> findAllOrderByCodeAsc() {
         return jpaRepository.findAllByOrderByCodeAsc();
+    }
+
+    @Override
+    public Map<Long, Grade> findGradeNames(final Collection<Long> gradeIds) {
+        if (gradeIds.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.findAllById(gradeIds).stream()
+                .collect(Collectors.toMap(Grade::getId, gradeEntity -> gradeEntity));
     }
 }

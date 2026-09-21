@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +37,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.Performer;
-import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
@@ -70,9 +67,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ShowQueryRepository {
     private final JPAQueryFactory queryFactory;
-    private final SpringDataShowJpaRepository showJpaRepository;
-    private final SpringDataPerformanceJpaRepository performanceJpaRepository;
-    private final SpringDataGradeJpaRepository gradeJpaRepository;
     private final Clock clock;
 
     // 공연 목록 · 검색 ----------------------------------------------------------
@@ -187,16 +181,6 @@ public class ShowQueryRepository {
     //
     // 내 찜 목록처럼 show 내부의 다른 use case가 자기 show 데이터를 조회할 때 쓴다. 여기서도 venue
     // 표시값 조합은 하지 않고 venueId scalar만 담아 넘긴다.
-
-    /** 빈 {@code showIds}는 빈 map을 반환한다. */
-    public Map<Long, Show> findSummaries(final Set<Long> showIds) {
-        if (showIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return showJpaRepository.findAllById(showIds).stream()
-                .collect(Collectors.toMap(Show::getId, showEntity -> showEntity));
-    }
 
     // 검색 조건 조립 ------------------------------------------------------------
     //
@@ -689,10 +673,6 @@ public class ShowQueryRepository {
 
     // 상세 조회 조각 ------------------------------------------------------------
 
-    public Optional<Show> findShow(final Long showId) {
-        return showJpaRepository.findById(showId);
-    }
-
     /**
      * Performer는 Show와 다른 aggregate라 {@code performerId} scalar로만 연결된다 — 옛 {@code fetchJoin()} 대신
      * 식별자로 따로 조회한다. 같은 module 안의 다른 aggregate라 venue와 달리 여기서 직접 조회해도 된다.
@@ -700,10 +680,6 @@ public class ShowQueryRepository {
     public Optional<Performer> findPerformer(final Long performerId) {
         return Optional.ofNullable(
                 queryFactory.selectFrom(performer).where(performer.id.eq(performerId)).fetchOne());
-    }
-
-    public List<String> findGenreNames(final Long showId) {
-        return showJpaRepository.findGenreNamesByShowId(showId);
     }
 
     /**
@@ -743,21 +719,6 @@ public class ShowQueryRepository {
                                         .where(performance.showId.eq(showId))))
                 .orderBy(performanceGrade.sortOrder.asc())
                 .fetch();
-    }
-
-    /** 빈 {@code gradeIds}는 빈 map을 반환한다. */
-    public Map<Long, Grade> findGradeNames(final Collection<Long> gradeIds) {
-        if (gradeIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return gradeJpaRepository.findAllById(gradeIds).stream()
-                .collect(Collectors.toMap(Grade::getId, gradeEntity -> gradeEntity));
-    }
-
-    /** 회차를 시작 시각·회차 번호 순으로 돌려준다. 날짜별 묶음과 응답 변환은 {@code GetShowDetailUseCase}가 한다. */
-    public List<Performance> findPerformances(final Long showId) {
-        return performanceJpaRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId);
     }
 
     static <T> T required(final Tuple tuple, final Expression<T> column) {

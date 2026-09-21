@@ -25,10 +25,13 @@ import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
+import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
 import com.ticket.venue.api.Region;
@@ -44,6 +47,9 @@ class GetShowDetailUseCaseTest {
                     ZoneId.systemDefault());
 
     @Mock private ShowQueryRepository showQueryRepository;
+    @Mock private ShowRepository showRepository;
+    @Mock private GradeRepository gradeRepository;
+    @Mock private PerformanceRepository performanceRepository;
     @Mock private LikeQueryApi likeQuery;
     @Mock private VenueLookupApi venueLookup;
 
@@ -77,20 +83,22 @@ class GetShowDetailUseCaseTest {
     }
 
     private void stubEmptyFragments() {
-        when(showQueryRepository.findGenreNames(1L)).thenReturn(List.of());
+        when(showRepository.findGenreNames(1L)).thenReturn(List.of());
         when(showQueryRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
-        when(showQueryRepository.findPerformances(1L)).thenReturn(List.of());
+        when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
+                .thenReturn(List.of());
     }
 
     @Test
     void show_엔티티에서_응답을_만들고_찜_개수와_venue_표시값을_조합한다() {
-        when(showQueryRepository.findShow(1L)).thenReturn(Optional.of(show(5L, null)));
-        when(showQueryRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
+        when(showRepository.findById(1L)).thenReturn(Optional.of(show(5L, null)));
+        when(showRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
         when(showQueryRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(showQueryRepository.findPriceSummary(1L))
                 .thenReturn(
                         new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
-        when(showQueryRepository.findPerformances(1L)).thenReturn(List.of());
+        when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
+                .thenReturn(List.of());
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
         when(venueLookup.findSummary(5L))
                 .thenReturn(
@@ -127,7 +135,7 @@ class GetShowDetailUseCaseTest {
     /** 예매 상태는 저장된 값이 아니라 주입된 Clock 기준으로 계산한다. */
     @Test
     void 예매_상태는_Clock_기준으로_계산한다() {
-        when(showQueryRepository.findShow(1L)).thenReturn(Optional.of(show(null, null)));
+        when(showRepository.findById(1L)).thenReturn(Optional.of(show(null, null)));
         stubEmptyFragments();
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
@@ -138,7 +146,7 @@ class GetShowDetailUseCaseTest {
     /** 카드 이미지 경로 변환은 조회가 아니라 응답 조립 단계의 일이다. */
     @Test
     void 이미지_경로를_카드_이미지로_바꾼다() {
-        when(showQueryRepository.findShow(1L)).thenReturn(Optional.of(show(null, null)));
+        when(showRepository.findById(1L)).thenReturn(Optional.of(show(null, null)));
         stubEmptyFragments();
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
@@ -148,7 +156,7 @@ class GetShowDetailUseCaseTest {
 
     @Test
     void venueId가_없으면_venue_조회_없이_null을_반환한다() {
-        when(showQueryRepository.findShow(1L)).thenReturn(Optional.of(show(null, null)));
+        when(showRepository.findById(1L)).thenReturn(Optional.of(show(null, null)));
         stubEmptyFragments();
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
@@ -159,7 +167,7 @@ class GetShowDetailUseCaseTest {
 
     @Test
     void 공연_상세가_없으면_not_found_data_예외를_던진다() {
-        when(showQueryRepository.findShow(1L)).thenReturn(Optional.empty());
+        when(showRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase().execute(new GetShowDetailUseCase.Input(1L)))
                 .isInstanceOf(NotFoundException.class);

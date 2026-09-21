@@ -21,13 +21,16 @@ import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.Grade;
+import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.Performer;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
+import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQueryRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -44,6 +47,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetShowDetailUseCase {
     private final ShowQueryRepository showQueryRepository;
+    private final ShowRepository showRepository;
+    private final GradeRepository gradeRepository;
+    private final PerformanceRepository performanceRepository;
     private final LikeQueryApi likeQuery;
     private final VenueLookupApi venueLookup;
     private final ShowCardImagePathConverter showCardImagePathConverter;
@@ -118,8 +124,8 @@ public class GetShowDetailUseCase {
     public Output execute(final Input input) {
         final Long showId = input.showId();
         final Show show =
-                showQueryRepository
-                        .findShow(showId)
+                showRepository
+                        .findById(showId)
                         .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + showId));
 
         return new Output(
@@ -139,7 +145,7 @@ public class GetShowDetailUseCase {
                 showCardImagePathConverter.toCardImage(show.getImage()),
                 resolveVenue(show.getVenueId()),
                 resolvePerformer(show.getPerformerId()),
-                showQueryRepository.findGenreNames(showId),
+                showRepository.findGenreNames(showId),
                 resolveGrades(showId),
                 showQueryRepository.findPriceSummary(showId),
                 resolvePerformanceDates(showId));
@@ -153,7 +159,7 @@ public class GetShowDetailUseCase {
         final List<PerformanceGrade> performanceGrades =
                 showQueryRepository.findRepresentativePerformanceGrades(showId);
         final Map<Long, Grade> gradesById =
-                showQueryRepository.findGradeNames(
+                gradeRepository.findGradeNames(
                         performanceGrades.stream()
                                 .map(PerformanceGrade::getGradeId)
                                 .collect(Collectors.toSet()));
@@ -176,7 +182,9 @@ public class GetShowDetailUseCase {
 
     /** 회차를 날짜별로 묶는다. 조회가 이미 시작 시각·회차 번호 순으로 주므로 그 순서를 그대로 유지한다. */
     private List<PerformanceDateInfo> resolvePerformanceDates(final Long showId) {
-        return showQueryRepository.findPerformances(showId).stream()
+        return performanceRepository
+                .findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId)
+                .stream()
                 .collect(
                         Collectors.groupingBy(
                                 performance -> performance.getStartTime().toLocalDate(),
