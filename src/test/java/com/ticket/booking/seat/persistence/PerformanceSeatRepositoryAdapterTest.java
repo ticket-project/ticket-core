@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
@@ -30,10 +31,10 @@ import com.ticket.venue.domain.Venue;
  *
  * <p>정렬을 실제로 검증하려면 저장 순서가 {@code seatId} 오름차순이면 안 된다 — 그래서 <b>seat2를 먼저 편성한다</b>.
  */
-@Import(PerformanceSeatQueryRepository.class)
+@Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceSeatQueryRepositoryTest extends InfraReadRepositoryTestSupport {
-    @Autowired private PerformanceSeatQueryRepository performanceSeatQueryRepository;
+class PerformanceSeatRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
+    @Autowired private PerformanceSeatRepository performanceSeatRepository;
     private Long performanceId;
     private Long otherPerformanceId;
     private Long seat1Id;
@@ -87,7 +88,7 @@ class PerformanceSeatQueryRepositoryTest extends InfraReadRepositoryTestSupport 
     @Test
     void 요청한_회차에_편성된_좌석만_반환한다() {
         final List<PerformanceSeat> seats =
-                performanceSeatQueryRepository.findAllByPerformanceId(performanceId);
+                performanceSeatRepository.findAllByPerformanceId(performanceId);
 
         assertThat(seats)
                 .extracting(PerformanceSeat::getSeatId)
@@ -98,7 +99,7 @@ class PerformanceSeatQueryRepositoryTest extends InfraReadRepositoryTestSupport 
     @Test
     void 다른_회차의_편성은_섞이지_않는다() {
         final List<PerformanceSeat> seats =
-                performanceSeatQueryRepository.findAllByPerformanceId(otherPerformanceId);
+                performanceSeatRepository.findAllByPerformanceId(otherPerformanceId);
 
         assertThat(seats).extracting(PerformanceSeat::getSeatId).containsExactly(seat1Id);
         assertThat(seats)
@@ -110,7 +111,7 @@ class PerformanceSeatQueryRepositoryTest extends InfraReadRepositoryTestSupport 
     @Test
     void 편성_식별자와_등급_확정_가격을_그대로_담는다() {
         final PerformanceSeat seat =
-                performanceSeatQueryRepository.findAllByPerformanceId(performanceId).stream()
+                performanceSeatRepository.findAllByPerformanceId(performanceId).stream()
                         .filter(candidate -> candidate.getSeatId().equals(seat1Id))
                         .findFirst()
                         .orElseThrow();
@@ -122,13 +123,13 @@ class PerformanceSeatQueryRepositoryTest extends InfraReadRepositoryTestSupport 
 
     @Test
     void 편성이_없는_회차는_빈_목록이다() {
-        assertThat(performanceSeatQueryRepository.findAllByPerformanceId(999_999L)).isEmpty();
+        assertThat(performanceSeatRepository.findAllByPerformanceId(999_999L)).isEmpty();
     }
 
     @Test
     void 좌석_상태를_seatId_오름차순으로_반환한다() {
         final List<PerformanceSeat> result =
-                performanceSeatQueryRepository.findSeatStates(performanceId);
+                performanceSeatRepository.findSeatStates(performanceId);
 
         assertThat(result)
                 .extracting(PerformanceSeat::getId, PerformanceSeat::getState)
@@ -139,13 +140,13 @@ class PerformanceSeatQueryRepositoryTest extends InfraReadRepositoryTestSupport 
 
     @Test
     void 편성이_없는_회차는_좌석_상태도_비어_있다() {
-        assertThat(performanceSeatQueryRepository.findSeatStates(999_999L)).isEmpty();
+        assertThat(performanceSeatRepository.findSeatStates(999_999L)).isEmpty();
     }
 
     @Test
     void 좌석ID순으로_회차의_판매_상태를_조회한다() {
         final List<PerformanceSeat> result =
-                performanceSeatQueryRepository.findSeatAvailabilities(performanceId);
+                performanceSeatRepository.findSeatAvailabilities(performanceId);
 
         assertThat(result)
                 .extracting(PerformanceSeat::getSeatId)

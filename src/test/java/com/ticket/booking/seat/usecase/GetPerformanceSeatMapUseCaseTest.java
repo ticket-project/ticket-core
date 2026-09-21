@@ -16,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.persistence.PerformanceSeatQueryRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.show.api.PerformanceVenueLayout;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
@@ -24,7 +24,7 @@ import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 @SuppressWarnings("NonAsciiCharacters")
 class GetPerformanceSeatMapUseCaseTest {
     @Mock private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
-    @Mock private PerformanceSeatQueryRepository performanceSeatQueryRepository;
+    @Mock private PerformanceSeatRepository performanceSeatRepository;
     @InjectMocks private GetPerformanceSeatMapUseCase useCase;
 
     @Test
@@ -51,7 +51,7 @@ class GetPerformanceSeatMapUseCaseTest {
                 List.of(PerformanceSeatFixture.seat(501L, 101L, 31L, BigDecimal.valueOf(170000)));
 
         when(performanceVenueLayoutCatalog.getVenueLayout(10L)).thenReturn(layout);
-        when(performanceSeatQueryRepository.findAllByPerformanceId(10L)).thenReturn(rows);
+        when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(rows);
         // when
         GetPerformanceSeatMapUseCase.Output output =
                 useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
@@ -100,12 +100,12 @@ class GetPerformanceSeatMapUseCaseTest {
                         Map.of(32L, new PerformanceVenueLayout.GradeLayout(32L, "R", "R석", 1)));
         when(performanceVenueLayoutCatalog.getVenueLayout(10L)).thenReturn(layoutA);
         when(performanceVenueLayoutCatalog.getVenueLayout(20L)).thenReturn(layoutB);
-        when(performanceSeatQueryRepository.findAllByPerformanceId(10L))
+        when(performanceSeatRepository.findAllByPerformanceId(10L))
                 .thenReturn(
                         List.of(
                                 PerformanceSeatFixture.seat(
                                         501L, 101L, 31L, BigDecimal.valueOf(170000))));
-        when(performanceSeatQueryRepository.findAllByPerformanceId(20L))
+        when(performanceSeatRepository.findAllByPerformanceId(20L))
                 .thenReturn(
                         List.of(
                                 PerformanceSeatFixture.seat(
@@ -147,13 +147,13 @@ class GetPerformanceSeatMapUseCaseTest {
                         seatLayouts,
                         Map.of(31L, new PerformanceVenueLayout.GradeLayout(31L, "VIP", "VIP석", 1)));
         when(performanceVenueLayoutCatalog.getVenueLayout(10L)).thenReturn(layout);
-        when(performanceSeatQueryRepository.findAllByPerformanceId(10L)).thenReturn(rows);
+        when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(rows);
         // when
         GetPerformanceSeatMapUseCase.Output output =
                 useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
         // then
         assertThat(output.seats()).hasSize(50);
         verify(performanceVenueLayoutCatalog, times(1)).getVenueLayout(10L);
-        verify(performanceSeatQueryRepository, times(1)).findAllByPerformanceId(10L);
+        verify(performanceSeatRepository, times(1)).findAllByPerformanceId(10L);
     }
 }
