@@ -1,15 +1,10 @@
 package com.ticket.show.persistence;
 
-import static com.ticket.show.domain.QGrade.grade;
-import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
-
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo;
 import com.ticket.show.api.PerformanceVenueLayout.GradeLayout;
 import com.ticket.show.domain.performance.PerformanceSaleContext;
@@ -33,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor
 public class PerformanceQueryRepository {
-    private final JPAQueryFactory queryFactory;
     private final SpringDataPerformanceJpaRepository performanceJpaRepository;
 
     public Optional<PerformanceSaleContext> findContext(final long performanceId) {
@@ -42,20 +36,7 @@ public class PerformanceQueryRepository {
 
     /** 이 회차에 배정된 모든 PerformanceGrade를 반환한다. */
     public List<GradeInfo> findPerformanceGrades(final long performanceId) {
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                GradeInfo.class,
-                                performanceGrade.id,
-                                grade.code,
-                                grade.name,
-                                performanceGrade.sortOrder,
-                                performanceGrade.price))
-                .from(performanceGrade)
-                .join(grade)
-                .on(grade.id.eq(performanceGrade.gradeId))
-                .where(performanceGrade.performance.id.eq(performanceId))
-                .fetch();
+        return performanceJpaRepository.findGradeInfosByPerformanceId(performanceId);
     }
 
     public Optional<PerformanceVenueLayoutContext> findVenueLayoutContext(
@@ -69,18 +50,6 @@ public class PerformanceQueryRepository {
 
     /** 이 회차에 배정된 모든 PerformanceGrade의 표시값을 반환한다. 가격은 담지 않는다. */
     public List<GradeLayout> findGradeLayouts(final long performanceId) {
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                GradeLayout.class,
-                                performanceGrade.id,
-                                grade.code,
-                                grade.name,
-                                performanceGrade.sortOrder))
-                .from(performanceGrade)
-                .join(grade)
-                .on(grade.id.eq(performanceGrade.gradeId))
-                .where(performanceGrade.performance.id.eq(performanceId))
-                .fetch();
+        return performanceJpaRepository.findGradeLayoutsByPerformanceId(performanceId);
     }
 }
