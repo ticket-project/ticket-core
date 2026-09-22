@@ -309,6 +309,32 @@ class ArchitectureRulesTest {
                     .resideInAnyPackage("com.querydsl..", "org.redisson..")
                     .because("조회 표현과 락 임대 방식은 persistence가 고른다 — 업무 코드가 알면 바꿀 때 함께 바뀐다");
 
+    /**
+     * 업무 쪽 코드가 <b>HTTP 표현·문서화 기술</b>을 직접 알지 않게 한다. 그 관심사는 {@code endpoint}가 소유한다.
+     *
+     * <p><b>Jackson({@code com.fasterxml.jackson..})은 일부러 뺐다.</b> 이 저장소는 use case의 중첩 record가 곧 최종
+     * 응답 항목이고({@code docs/readability-guidelines.md} §10-2), endpoint에 응답 DTO를 따로 두지 않는다. 그래서 공개
+     * JSON 이름을 고정하는 {@code @JsonProperty}가 use case record에 붙는다 — show 5건, like 3건이 그렇고 전부 ADR
+     * 0007·0008이 "옛 JSON 이름을 유지한다"고 기록한 결정의 결과다. 여기서 막으면 계층마다 DTO를 만들게 되어 §10-2를 정면으로 거스른다.
+     * Jackson을 걷어내려면 그 구조 결정을 먼저 뒤집어야 하고, 그것은 별도 결정이다.
+     *
+     * <p>나머지 넷은 지금 업무 계층에 한 건도 없다 — 규칙이 새로 막는 것이 아니라 이미 지켜진 상태를 고정한다.
+     */
+    @ArchTest
+    static final ArchRule 업무_코드는_HTTP와_문서화_기술을_모른다 =
+            noClasses()
+                    .that(
+                            resideInAnyPackage(DOMAIN, USECASE, EVENT, PORT)
+                                    .and(not(GENERATED_OR_IMPLEMENTATION)))
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage(
+                            "io.swagger..",
+                            "org.springdoc..",
+                            "org.springframework.web..",
+                            "org.springframework.http..")
+                    .because("HTTP 표현과 API 문서화는 endpoint가 소유한다 — 업무 코드가 알면 전송 방식에 묶인다");
+
     // ---------------------------------------------------------------- module 경계
 
     /**
