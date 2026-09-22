@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
-import com.ticket.shared.exception.NotFoundException;
+import com.ticket.member.exception.MemberNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +17,7 @@ public class GetCurrentMemberUseCase {
 
     public Output execute(final Input input) {
         final Member findMember =
-                memberRepository.findActiveById(input.memberId()).orElseThrow(() -> new NotFoundException());
+                memberRepository.findActiveById(input.memberId()).orElseThrow(() -> new MemberNotFoundException());
         return new Output(
                 findMember.getId(),
                 findMember.getEmail().getEmail(),

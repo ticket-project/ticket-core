@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.booking.exception.ShowPerformanceNotFoundException;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class GetShowSeatMapUseCase {
     public Output execute(final Input input) {
         final Long performanceId = performanceVenueLayoutCatalog
                 .findRepresentativePerformanceId(input.showId())
-                .orElseThrow(() -> new NotFoundException("공연 회차를 찾을 수 없습니다. showId=" + input.showId()));
+                .orElseThrow(() -> new ShowPerformanceNotFoundException(input.showId()));
         final GetPerformanceSeatMapUseCase.Output performanceSeatMap =
                 getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(performanceId));
 

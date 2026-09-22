@@ -2,6 +2,7 @@ package com.ticket.booking.salespolicy.usecase;
 
 import org.springframework.stereotype.Component;
 
+import com.ticket.booking.exception.PerformanceSalesPolicyNotFoundException;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.shared.exception.NotFoundException;
@@ -33,6 +34,6 @@ public class PerformanceSaleFinder {
     public PerformanceSalesPolicy requirePolicy(final Long performanceId) {
         return performanceSalesPolicyRepository
                 .findById(performanceId)
-                .orElseThrow(() -> new NotFoundException("회차 판매 정책을 찾을 수 없습니다. id=" + performanceId));
+                .orElseThrow(() -> new PerformanceSalesPolicyNotFoundException(performanceId));
     }
 }
