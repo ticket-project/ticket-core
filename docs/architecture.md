@@ -177,7 +177,7 @@ like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회
 | `exception` | `<Module>ErrorCode`, 예외 클래스, `handler` |
 
 **역할 폴더는 템플릿이 아니다.** 실제 파일과 책임이 있을 때만 만든다 — `payment`에는 지금
-`domain`과 `persistence`뿐이고, `venue`에는 `api`·`persistence`·`domain`뿐이라 `usecase`도 `endpoint`도 없다.
+`domain`과 `persistence`뿐이고, `venue`에는 HTTP 진입점이 없어 `endpoint`가 없다.
 
 **`Repository`와 `persistence`는 다른 것을 뜻한다.** `Repository`는 Aggregate 저장·복원 *계약*이라
 `domain`이 소유하고(`member.domain.MemberRepository`, `booking.order.domain.OrderRepository`),
@@ -207,10 +207,10 @@ port interface와 adapter를 한 쌍씩 만들지 않는다 — 구현이 하나
 ```text
 member                 like                venue           payment        show
 ├─ api                 ├─ api              ├─ api          ├─ domain      ├─ api
-├─ usecase             ├─ usecase          ├─ domain       └─ persistence ├─ usecase
-├─ domain              ├─ domain           └─ persistence                 ├─ domain
-├─ persistence         ├─ persistence                                     ├─ persistence
-├─ endpoint            ├─ endpoint                                        ├─ endpoint
+├─ usecase             ├─ usecase          ├─ usecase      └─ persistence ├─ usecase
+├─ domain              ├─ domain           ├─ domain                      ├─ domain
+├─ persistence         ├─ persistence      ├─ persistence                 ├─ persistence
+├─ endpoint            ├─ endpoint         └─ exception                   ├─ endpoint
 └─ exception           └─ exception                                       └─ exception
 ```
 
@@ -444,9 +444,9 @@ Aggregate를 여러 개 복원해 Java에서 조합하기보다, 필요한 값�
 (`GetShowDetailUseCase.PriceSummary`). 조회 구현
 방식(파생 메서드 / `@Query` / Querydsl)도 같은 기준으로 고른다 — Querydsl이 기본값은 아니다.
 
-단순한 local 조회는 그 module의 **공개 API interface를 직접 구현해도 된다**
-(`venue.persistence.VenueRepositoryAdapter implements VenueLookupApi`). 위임만 하는 service를
-사이에 두지 않는다. 이때 읽기 전용 트랜잭션 같은 경계는 그 adapter가 소유한다. **한 adapter는 한
+**공개 API interface는 use case가 구현한다** — adapter는 `domain`의 Repository 계약을 구현해 엔티티만
+돌려주고, 공개 계약 타입(`~Snapshot`)으로의 변환과 읽기 전용 트랜잭션 경계는 use case가 소유한다
+(`venue.usecase.VenueLookupService implements VenueLookupApi`). **한 adapter는 한
 Aggregate만 든다** — venue 좌석은 `SeatRepositoryAdapter`가 따로 갖는다.
 
 **Aggregate 경계와 API 응답 경계는 같을 필요가 없다.** 공연 상세는 Show/Performance/Grade/

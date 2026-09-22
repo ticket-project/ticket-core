@@ -83,9 +83,9 @@ Event Publication Registry 내부    토큰 서명 방식
 경유 지점이다 — 자기 module DB를 읽는 조회에는 port를 두지 않고 `persistence`의 구체
 `*QuerydslRepository`가 조회를 직접 갖는다(`show.persistence.ShowQuerydslRepository`). interface는 실제
 계약·교체 지점·domain 보호처럼 근거가 있을 때 둔다. Redis, 분산락, JWT, WebSocket, 외부 API 같은
-**의미 있는 외부 시스템 경계**와 다른 module에 공개하는 API가 그 자리다. 위임만 하는 service도
-마찬가지다 — 단순 local 조회는 공개 API interface를 직접 구현해도 된다
-(`venue.persistence.VenueRepositoryAdapter implements VenueLookupApi`).
+**의미 있는 외부 시스템 경계**와 다른 module에 공개하는 API가 그 자리다. 그 공개 API를 구현하는 것은
+조회 adapter가 아니라 use case다 — adapter는 엔티티만 돌려주고 `~Snapshot` 변환은 use case가 한다
+(`venue.usecase.VenueLookupService implements VenueLookupApi`).
 
 ### 4. 한 번만 쓰는 helper는 private method부터 검토한다
 
