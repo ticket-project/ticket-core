@@ -257,7 +257,7 @@ public interface ShowControllerDocs {
                                                     "venue": "블루스퀘어 신한카드홀",
                                                     "startDate": "2026-03-01",
                                                     "endDate": "2026-05-31",
-                                                    "region": "서울",
+                                                    "region": "SEOUL",
                                                     "viewCount": 15000
                                                   }
                                                 ],
