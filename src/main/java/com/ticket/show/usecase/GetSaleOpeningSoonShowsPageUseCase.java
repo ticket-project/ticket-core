@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -64,8 +65,7 @@ public class GetSaleOpeningSoonShowsPageUseCase {
                 input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
         final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
                 Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
-        final VenueDisplays venues = new VenueDisplays(venuesById);
-        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venues));
+        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venuesById));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -79,14 +79,18 @@ public class GetSaleOpeningSoonShowsPageUseCase {
         return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 
-    private Item toItem(final Show show, final VenueDisplays venues) {
+    private Item toItem(final Show show, final Map<Long, VenueSnapshot> venuesById) {
+        final VenueSnapshot venue = venuesById.get(show.getVenueId());
         return new Item(
                 show.getId(),
                 show.getTitle(),
                 show.getSubTitle(),
                 showCardImagePathConverter.toCardImage(show.getImage()),
-                venues.nameOf(show.getVenueId()),
-                venues.regionCodeOf(show.getVenueId()),
+                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
+                Optional.ofNullable(venue)
+                        .map(VenueSnapshot::region)
+                        .map(VenueSnapshot.RegionView::code)
+                        .orElse(null),
                 show.getStartDate(),
                 show.getEndDate(),
                 show.getDisplaySaleStartsAt(),

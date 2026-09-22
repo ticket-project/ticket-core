@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -76,8 +77,7 @@ public class GetShowsUseCase {
                 page.items().stream().map(Show::getId).toList());
         final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
                 Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
-        final VenueDisplays venues = new VenueDisplays(venuesById);
-        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, genreNames, venues));
+        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, genreNames, venuesById));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -91,7 +91,9 @@ public class GetShowsUseCase {
         return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 
-    private Item toItem(final Show show, final Map<Long, List<String>> genreNames, final VenueDisplays venues) {
+    private Item toItem(
+            final Show show, final Map<Long, List<String>> genreNames, final Map<Long, VenueSnapshot> venuesById) {
+        final VenueSnapshot venue = venuesById.get(show.getVenueId());
         return new Item(
                 show.getId(),
                 show.getTitle(),
@@ -105,7 +107,10 @@ public class GetShowsUseCase {
                 show.getDisplaySaleStartsAt(),
                 show.getDisplaySaleEndsAt(),
                 show.getCreatedAt(),
-                venues.regionCodeOf(show.getVenueId()),
-                venues.nameOf(show.getVenueId()));
+                Optional.ofNullable(venue)
+                        .map(VenueSnapshot::region)
+                        .map(VenueSnapshot.RegionView::code)
+                        .orElse(null),
+                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null));
     }
 }
