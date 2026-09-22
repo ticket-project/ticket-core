@@ -1,0 +1,7 @@
+# git blame에서 건너뛸 대규모 포맷 커밋 목록이다.
+#
+# 사용:  git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub blame은 이 파일을 자동으로 읽는다)
+
+# style: 포맷터를 palantir-java-format으로 바꾸고 전체를 재포맷한다
+b3d2365e3eecdcb8395d6b4c9fb1dfce101262a6
