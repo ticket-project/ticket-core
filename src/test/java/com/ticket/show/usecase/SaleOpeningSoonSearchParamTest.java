@@ -36,6 +36,9 @@ class SaleOpeningSoonSearchParamTest {
         assertThat(SaleOpeningSoonSearchParam.of(null, null, " SEOUL ", null, null, null, null, null)
                         .getRegion())
                 .isEqualTo("SEOUL");
+        assertThat(new SaleOpeningSoonSearchParam(null, null, " SEOUL ", null, null, null, null, null).getRegion())
+                .as("생성자로 만들어도 of()와 같아야 한다")
+                .isEqualTo("SEOUL");
     }
 
     private SaleOpeningSoonSearchParam param(
