@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -27,14 +28,16 @@ class GetLikeStatusUseCaseTest {
     private MemberLookupApi memberLookup;
 
     @Mock
-    private LikeQueryService likeQuery;
+    private LikeRepository likeRepository;
 
     @InjectMocks
     private GetLikeStatusUseCase useCase;
 
     @Test
     void 찜_상태와_총_찜수를_반환한다() {
-        when(likeQuery.countByTargetForMember(LikeType.SHOW, 2L, 1L)).thenReturn(new LikeCountSnapshot(true, 7L));
+        when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(true);
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(7L);
 
         GetLikeStatusUseCase.Output output = useCase.execute(new GetLikeStatusUseCase.Input(1L, LikeType.SHOW, 2L));
 

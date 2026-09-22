@@ -20,13 +20,6 @@ import lombok.RequiredArgsConstructor;
 public class LikeQueryService implements LikeQueryApi {
     private final LikeRepository likeRepository;
 
-    /** like 안에서만 쓰는 조회다 — 공개 계약이 아니다. 다른 module은 찜 여부를 묻지 않는다. */
-    public LikeCountSnapshot countByTargetForMember(final LikeType likeType, final long targetId, final long memberId) {
-        final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
-        final long likeCount = likeRepository.countByLikeTypeAndTargetId(likeType, targetId);
-        return new LikeCountSnapshot(liked, likeCount);
-    }
-
     @Override
     public long countByTarget(final String targetType, final long targetId) {
         return likeRepository.countByLikeTypeAndTargetId(LikeType.from(targetType), targetId);
