@@ -49,6 +49,12 @@ public class AddLikeUseCase {
             try {
                 likeRepository.like(memberId, likeType, targetId);
             } catch (final DataIntegrityViolationException e) {
+                // 이 catch가 중복 찜만 잡는 근거는 LIKES에 다른 무결성 제약이 없다는 것이다 -- FK는
+                // like V1·V2가 제거했고(모듈 간 FK 금지), NOT NULL 세 컬럼은 Like 생성자의
+                // requireNonNull이 DB에 닿기 전에 막는다. 남는 것은 UK_LIKES_MEMBER_TARGET뿐이다.
+                // 제약 이름으로 좁히려면 벤더마다 다르게 장식된 문자열을 파싱해야 해서 오히려 약해진다
+                // (H2 "...UK_LIKES_MEMBER_TARGET_INDEX_n", Oracle "SCHEMA.UK_...").
+                // 이 전제는 LikeRepositoryPagingTest가 실제 DB로 고정한다.
                 throw new LikeAlreadyExistsException(memberId, likeType, targetId);
             }
         }
