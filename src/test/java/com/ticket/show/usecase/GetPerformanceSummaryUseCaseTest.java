@@ -45,8 +45,8 @@ class GetPerformanceSummaryUseCaseTest {
         final Show show = show(7L, "싱어게인", 5L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(7L)).thenReturn(Optional.of(show));
-        when(venueLookup.findVenueSnapshot(5L))
-                .thenReturn(Optional.of(new VenueSnapshot(
+        when(venueLookup.getVenueSnapshot(5L))
+                .thenReturn((new VenueSnapshot(
                         5L,
                         "venue",
                         "주소",

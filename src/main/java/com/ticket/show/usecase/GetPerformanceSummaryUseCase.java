@@ -15,6 +15,7 @@ import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.PerformanceNotFoundException;
 import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,12 +46,8 @@ public class GetPerformanceSummaryUseCase {
                 .findById(performance.getShowId())
                 .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
 
-        final String region = show.getVenueId() == null
-                ? null
-                : venueLookup
-                        .findVenueSnapshot(show.getVenueId())
-                        .map(v -> v.region() == null ? null : v.region().name())
-                        .orElse(null);
+        final VenueSnapshot venue = venueLookup.getVenueSnapshot(show.getVenueId());
+        final String region = venue.region() == null ? null : venue.region().name();
 
         return new Output(show.getTitle(), region, performance.getStartTime());
     }

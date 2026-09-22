@@ -52,13 +52,10 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
         final Long venueId = show.getVenueId();
 
-        final String venueName = venueId == null
-                ? null
-                : venueLookup.findVenueSnapshot(venueId).map(v -> v.name()).orElse(null);
+        final String venueName = venueLookup.getVenueSnapshot(venueId).name();
 
-        final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId = venueId == null
-                ? Map.of()
-                : venueSeatLookup.findSeats(venueId, seatIds).stream()
+        final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
+                venueSeatLookup.findSeats(venueId, seatIds).stream()
                         .collect(Collectors.toMap(VenueSeatSnapshot::seatId, this::toSeatInfo));
 
         final Map<Long, PerformanceSaleSnapshot.GradeInfo> gradeInfoByPerformanceGradeId = toGradeInfos(performanceId);

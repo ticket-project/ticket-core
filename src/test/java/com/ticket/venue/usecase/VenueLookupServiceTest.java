@@ -63,11 +63,6 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     }
 
     @Test
-    void 없는_venueId를_find하면_empty다() {
-        assertThat(venueLookup.findVenueSnapshot(999_999L)).isEmpty();
-    }
-
-    @Test
     void 배치_조회는_요청한_id만_담고_없는_id는_조용히_빠진다() throws Exception {
         final Venue seoul = persistVenue("올림픽홀", Region.SEOUL);
         final Venue busan = persistVenue("벡스코", Region.GYEONGSANG);

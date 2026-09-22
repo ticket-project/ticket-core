@@ -2,7 +2,6 @@ package com.ticket.venue.usecase;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,12 +34,7 @@ public class VenueLookupService implements VenueLookupApi {
 
     @Override
     public VenueSnapshot getVenueSnapshot(final long venueId) {
-        return toSummary(venueRepository.findById(venueId).orElseThrow(() -> new VenueNotFoundException(venueId)));
-    }
-
-    @Override
-    public Optional<VenueSnapshot> findVenueSnapshot(final long venueId) {
-        return venueRepository.findById(venueId).map(VenueLookupService::toSummary);
+        return toSnapshot(venueRepository.findById(venueId).orElseThrow(() -> new VenueNotFoundException(venueId)));
     }
 
     @Override
@@ -49,7 +43,7 @@ public class VenueLookupService implements VenueLookupApi {
             return Map.of();
         }
         return venueRepository.findAllById(venueIds).stream()
-                .map(VenueLookupService::toSummary)
+                .map(VenueLookupService::toSnapshot)
                 .collect(Collectors.toMap(VenueSnapshot::venueId, summary -> summary));
     }
 
@@ -59,7 +53,7 @@ public class VenueLookupService implements VenueLookupApi {
         return Set.copyOf(venueRepository.findIdsByRegion(Region.from(regionCode)));
     }
 
-    private static VenueSnapshot toSummary(final Venue venue) {
+    private static VenueSnapshot toSnapshot(final Venue venue) {
         return new VenueSnapshot(
                 venue.getId(),
                 venue.getName(),
