@@ -36,7 +36,7 @@ class GetLikeStatusUseCaseTest {
 
     @Test
     void 찜_상태와_총_찜수를_반환한다() {
-        when(likeQuery.get(LikeType.SHOW, 2L, 1L)).thenReturn(new LikeCountSnapshot(true, 7L));
+        when(likeQuery.countByTargetForMember(LikeType.SHOW, 2L, 1L)).thenReturn(new LikeCountSnapshot(true, 7L));
 
         GetLikeStatusUseCase.Output output = useCase.execute(new GetLikeStatusUseCase.Input(1L, LikeType.SHOW, 2L));
 
