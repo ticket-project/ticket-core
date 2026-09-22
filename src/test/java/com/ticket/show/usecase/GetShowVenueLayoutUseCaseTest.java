@@ -39,7 +39,7 @@ class GetShowVenueLayoutUseCaseTest {
         Show show = mock(Show.class);
         when(show.getVenueId()).thenReturn(200L);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
-        when(venueLookup.findSummary(200L))
+        when(venueLookup.findVenueSnapshot(200L))
                 .thenReturn(Optional.of(new VenueSnapshot(
                         200L,
                         "올림픽홀",

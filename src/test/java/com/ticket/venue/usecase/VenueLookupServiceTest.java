@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ticket.shared.exception.CommonErrorCode;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -18,6 +19,7 @@ import com.ticket.venue.api.VenueSeatSnapshot;
 import com.ticket.venue.api.VenueSnapshot;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
+import com.ticket.venue.exception.VenueNotFoundException;
 
 /**
  * venue 공개 계약({@link VenueLookupApi}, {@link VenueSeatLookupApi})의 실제 DB 동작을 고정한다.
@@ -39,7 +41,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Venue venue = persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        final VenueSnapshot summary = venueLookup.findSummary(venue.getId()).orElseThrow();
+        final VenueSnapshot summary = venueLookup.getVenueSnapshot(venue.getId());
 
         assertThat(summary.venueId()).isEqualTo(venue.getId());
         assertThat(summary.name()).isEqualTo("올림픽홀");
@@ -50,8 +52,19 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     }
 
     @Test
-    void 없는_venueId는_예외가_아니라_empty다() {
-        assertThat(venueLookup.findSummary(999_999L)).isEmpty();
+    void 없는_venueId를_get하면_VenueNotFoundException을_던진다() {
+        assertThatThrownBy(() -> venueLookup.getVenueSnapshot(999_999L))
+                .isInstanceOf(VenueNotFoundException.class)
+                .satisfies(thrown -> {
+                    final VenueNotFoundException exception = (VenueNotFoundException) thrown;
+                    assertThat(exception.getErrorCode()).isEqualTo(CommonErrorCode.E404);
+                    assertThat(exception.getData()).asString().contains("id=999999");
+                });
+    }
+
+    @Test
+    void 없는_venueId를_find하면_empty다() {
+        assertThat(venueLookup.findVenueSnapshot(999_999L)).isEmpty();
     }
 
     @Test

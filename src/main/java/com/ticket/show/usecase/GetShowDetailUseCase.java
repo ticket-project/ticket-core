@@ -28,7 +28,6 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.show.persistence.ShowQuerydslRepository;
@@ -204,11 +203,11 @@ public class GetShowDetailUseCase {
         return new PerformerInfo(performer.getId(), performer.getName(), performer.getProfileImageUrl());
     }
 
-    private @Nullable VenueInfo resolveVenue(final @Nullable Long venueId) {
+    private VenueInfo resolveVenue(final Long venueId) {
         if (venueId == null) {
             return null;
         }
-        return venueLookup.findSummary(venueId).map(this::toVenueInfo).orElse(null);
+        return toVenueInfo(venueLookup.getVenueSnapshot(venueId));
     }
 
     private VenueInfo toVenueInfo(final VenueSnapshot venue) {
