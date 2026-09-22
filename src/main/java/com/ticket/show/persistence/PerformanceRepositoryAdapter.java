@@ -36,4 +36,9 @@ public class PerformanceRepositoryAdapter implements PerformanceRepository {
     public List<PerformanceGrade> findPerformanceGrades(final long performanceId) {
         return jpaRepository.findGradesByPerformanceId(performanceId);
     }
+
+    @Override
+    public List<PerformanceGrade> findRepresentativePerformanceGrades(final Long showId) {
+        return jpaRepository.findRepresentativePerformanceGrades(showId);
+    }
 }
