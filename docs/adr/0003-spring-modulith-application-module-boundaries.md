@@ -3,7 +3,7 @@
 ## Status
 
 > 2026-09-19 갱신: §8의 `com.ticket.bootstrap`과 §9의 `com.ticket.config` module은 둘 다 없어졌다 —
-> 전역 기술 설정은 `shared.infrastructure`가 갖고 `@Modulith(sharedModules = "shared")` 하나만
+> 전역 기술 설정은 `shared.config`가 갖고 `@Modulith(sharedModules = "shared")` 하나만
 > 선언한다. 본문이 예로 든 `UuidSupplier`도 `java.util.function.Supplier<UUID>`로 대체됐다.
 > Application Module 경계와 이벤트·publication registry에 대한 결정은 그대로 유효하다.
 

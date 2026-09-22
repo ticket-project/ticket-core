@@ -71,7 +71,7 @@ Redis가 모두 필요했다. 회원 데이터와 무관한 토큰 정책 변경
 여러 업무가 함께 쓰는 기반도 그 역할의 계층이 받는다. `booking.common`은 없애고 락 계약은
 `booking.application`, 감사 base entity와 요청 좌석 값은 `booking.domain`, Redisson 구현과 Redis
 만료 수신 배선은 `booking.infrastructure`가 가져갔다. `shared.config`도 같은 이유로
-`shared.infrastructure`가 됐다.
+`shared.config`가 됐다.
 
 평탄화로 폴더가 보장하던 것은 실행 가능한 규칙으로 옮겼다 —
 `com.ticket.booking.BookingLayerDependencyTest`가 계층 방향과 락 계약의 기술 의존 금지를 고정하고,

@@ -1,4 +1,4 @@
-package com.ticket.shared.infrastructure;
+package com.ticket.shared.config;
 
 import java.time.Duration;
 

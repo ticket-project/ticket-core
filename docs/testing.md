@@ -67,7 +67,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | `com.ticket.ArchitectureRulesTest` | 역할 package 이름으로 검사하는 전역 구조 규칙 열(`domain`·`usecase`·`endpoint`·출력 port의 의존 방향, 업무 코드의 Querydsl/Redisson 차단, 다른 module 공개면 밖 참조 금지, DB를 읽는 class가 다른 업무 module을 조합하지 않는 것, `api`에 구현 bean 금지)과, 규칙이 쓰는 역할 package 실재·공개 named interface 목록·production package의 `@NullMarked` 선언. **구조를 바꿨으면 이것부터 돌린다** |
 | `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
 | `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
-| `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.infrastructure`와 `shared.exception.handler`에만 두는 것 |
+| `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.config`와 `shared.exception.handler`에만 두는 것 |
 | `com.ticket.DomainIsolationTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — `booking.order.domain`처럼 capability 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.usecase`가 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules"). **`domain` 아래 묶음 폴더는 Aggregate 경계가 아니다** — 경계는 이 테스트가 FQCN으로 강제한다 |
 | `com.ticket.booking.BookingLayerDependencyTest` | `booking.concurrency`의 락 계약이 Redis 기술과 `endpoint` 계층을 모르는 것 두 가지. 옛 `booking.common`이 사라지며 그 의존 규칙을 이어받았다. booking의 계층 방향 자체는 `ArchitectureRulesTest`가 전역 규칙으로 덮는다 |
