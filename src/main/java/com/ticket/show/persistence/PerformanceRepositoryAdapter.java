@@ -11,7 +11,6 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link PerformanceRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class PerformanceRepositoryAdapter implements PerformanceRepository {

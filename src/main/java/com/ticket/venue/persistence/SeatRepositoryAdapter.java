@@ -10,7 +10,6 @@ import com.ticket.venue.domain.SeatRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link SeatRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class SeatRepositoryAdapter implements SeatRepository {

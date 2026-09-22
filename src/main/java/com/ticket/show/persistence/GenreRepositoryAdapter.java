@@ -9,7 +9,6 @@ import com.ticket.show.domain.GenreRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link GenreRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class GenreRepositoryAdapter implements GenreRepository {

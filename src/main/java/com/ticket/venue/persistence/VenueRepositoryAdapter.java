@@ -12,7 +12,6 @@ import com.ticket.venue.domain.VenueRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link VenueRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class VenueRepositoryAdapter implements VenueRepository {

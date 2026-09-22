@@ -13,7 +13,6 @@ import com.ticket.show.domain.GradeRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link GradeRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class GradeRepositoryAdapter implements GradeRepository {

@@ -9,7 +9,6 @@ import com.ticket.booking.ticket.domain.TicketRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link TicketRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class TicketRepositoryAdapter implements TicketRepository {

@@ -9,7 +9,6 @@ import com.ticket.booking.hold.domain.HoldHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link HoldHistoryRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class HoldHistoryRepositoryAdapter implements HoldHistoryRepository {
