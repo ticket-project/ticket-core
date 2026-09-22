@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
  */
 public record PerformanceLayoutSnapshot(
         long performanceId,
-        @Nullable Long venueId,
+        Long venueId,
         @Nullable String venueName,
         int viewBoxWidth,
         int viewBoxHeight,

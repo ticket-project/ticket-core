@@ -71,19 +71,26 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 gradeInfoByPerformanceGradeId);
     }
 
-    /** 등급 이름을 찾지 못한 편성은 제외한다 — 옛 {@code join grade}가 그랬듯 조용히 빠진다. */
+    /**
+     * 회차에 배정된 PerformanceGrade를 <b>하나도 빠뜨리지 않고</b> 담는다 — booking은 이 map을 완전한 것으로 보고 좌석 편성·주문 표시값을 만든다. 대응 Grade가 없는 편성은
+     * {@code fk_performance_grades_grade}가 막는 데이터 깨짐이라 조용히 빼지 않고 여기서 터진다.
+     */
     private Map<Long, PerformanceSaleSnapshot.GradeInfo> toGradeInfos(final long performanceId) {
         final List<PerformanceGrade> performanceGrades = performanceRepository.findPerformanceGrades(performanceId);
         final Map<Long, Grade> gradesById = gradeRepository.findGradeNames(
                 performanceGrades.stream().map(PerformanceGrade::getGradeId).collect(Collectors.toSet()));
 
         return performanceGrades.stream()
-                .filter(performanceGrade -> gradesById.containsKey(performanceGrade.getGradeId()))
                 .collect(Collectors.toMap(
                         PerformanceGrade::getId,
-                        performanceGrade -> toGradeInfo(
-                                performanceGrade,
-                                Objects.requireNonNull(gradesById.get(performanceGrade.getGradeId())))));
+                        performanceGrade -> toGradeInfo(performanceGrade, gradeOf(gradesById, performanceGrade))));
+    }
+
+    private static Grade gradeOf(final Map<Long, Grade> gradesById, final PerformanceGrade performanceGrade) {
+        return Objects.requireNonNull(
+                gradesById.get(performanceGrade.getGradeId()),
+                () -> "PerformanceGrade %d의 Grade를 찾을 수 없습니다: gradeId=%d"
+                        .formatted(performanceGrade.getId(), performanceGrade.getGradeId()));
     }
 
     private PerformanceSaleSnapshot.GradeInfo toGradeInfo(final PerformanceGrade performanceGrade, final Grade grade) {
