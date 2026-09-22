@@ -123,8 +123,7 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
     @Test
     void 장르_일괄_조회는_빈_ID와_존재하지_않는_ID를_건너뛴다() {
         assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of())).isEmpty();
-        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(Long.MAX_VALUE)))
-                .isEmpty();
+        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(Long.MAX_VALUE))).isEmpty();
         assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(showId, showId, Long.MAX_VALUE)))
                 .containsOnlyKeys(showId)
                 .hasEntrySatisfying(showId, names -> assertThat(names).containsExactly("케이팝"));
@@ -132,14 +131,12 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 장르가_없는_공연은_장르_일괄_조회_결과에_포함하지_않는다() {
-        entityManager
-                .createQuery("DELETE FROM ShowGenre sg WHERE sg.showId = :id")
+        entityManager.createQuery("DELETE FROM ShowGenre sg WHERE sg.showId = :id")
                 .setParameter("id", showId)
                 .executeUpdate();
         flushAndClear();
 
-        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(showId)))
-                .isEmpty();
+        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(showId))).isEmpty();
     }
 
     /** ADR 0005: show-level 가격표는 없다 — 회차 전체의 min/max를 파생한다. */
@@ -165,11 +162,8 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 대표_등급은_시작_시각이_아니라_회차_ID의_최솟값으로_고른다() {
-        Long representativeId = performanceRepository
-                .findRepresentativePerformanceIdByShowId(showId)
-                .orElseThrow();
-        entityManager
-                .createQuery("UPDATE Performance p SET p.startTime = :startTime WHERE p.id = :id")
+        Long representativeId = performanceRepository.findRepresentativePerformanceIdByShowId(showId).orElseThrow();
+        entityManager.createQuery("UPDATE Performance p SET p.startTime = :startTime WHERE p.id = :id")
                 .setParameter("startTime", LocalDateTime.of(2026, 4, 1, 14, 0))
                 .setParameter("id", representativeId)
                 .executeUpdate();
@@ -182,23 +176,18 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 대표_회차가_없으면_등급도_빈_목록이다() {
-        assertThat(performanceRepository.findRepresentativePerformanceGrades(Long.MAX_VALUE))
-                .isEmpty();
+        assertThat(performanceRepository.findRepresentativePerformanceGrades(Long.MAX_VALUE)).isEmpty();
     }
 
     @Test
     void 대표_회차에_등급이_없으면_다른_회차의_등급으로_대체하지_않는다() {
-        Long representativeId = performanceRepository
-                .findRepresentativePerformanceIdByShowId(showId)
-                .orElseThrow();
-        entityManager
-                .createQuery("DELETE FROM PerformanceGrade pg WHERE pg.performance.id = :id")
+        Long representativeId = performanceRepository.findRepresentativePerformanceIdByShowId(showId).orElseThrow();
+        entityManager.createQuery("DELETE FROM PerformanceGrade pg WHERE pg.performance.id = :id")
                 .setParameter("id", representativeId)
                 .executeUpdate();
         flushAndClear();
 
-        assertThat(performanceRepository.findRepresentativePerformanceGrades(showId))
-                .isEmpty();
+        assertThat(performanceRepository.findRepresentativePerformanceGrades(showId)).isEmpty();
     }
 
     @Test

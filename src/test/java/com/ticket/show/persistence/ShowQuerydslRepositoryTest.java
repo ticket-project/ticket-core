@@ -41,7 +41,6 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.domain.show.ShowGenre;
-import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.usecase.SaleOpeningSoonSearchParam;
 import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowListParam;
