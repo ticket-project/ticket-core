@@ -8,11 +8,12 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.exception.PerformanceNotFoundException;
+import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -39,10 +40,10 @@ public class GetPerformanceSummaryUseCase {
     public Output execute(final Input input) {
         final Performance performance = performanceRepository
                 .findById(input.performanceId())
-                .orElseThrow(() -> new NotFoundException("회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()));
+                .orElseThrow(() -> new PerformanceNotFoundException(input.performanceId()));
         final Show show = showRepository
                 .findById(performance.getShowId())
-                .orElseThrow(() -> new NotFoundException("회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()));
+                .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
 
         final String region = show.getVenueId() == null
                 ? null

@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.Grade;
@@ -19,6 +18,8 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.exception.PerformanceNotFoundException;
+import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSeatSnapshot;
@@ -45,10 +46,10 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
     public PerformanceSaleSnapshot getSaleSnapshot(final long performanceId, final Set<Long> seatIds) {
         final Performance performance = performanceRepository
                 .findById(performanceId)
-                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+                .orElseThrow(() -> new PerformanceNotFoundException(performanceId));
         final Show show = showRepository
                 .findById(performance.getShowId())
-                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+                .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
         final Long venueId = show.getVenueId();
 
         final String venueName = venueId == null

@@ -6,9 +6,9 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.exception.ShowNotFoundException;
+import com.ticket.show.exception.ShowVenueNotFoundException;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -33,15 +33,13 @@ public class GetShowVenueLayoutUseCase {
     public record Output(@Nullable String name, int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
 
     public Output execute(final Input input) {
-        final Show show = showRepository
-                .findById(input.showId())
-                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId()));
+        final Show show = showRepository.findById(input.showId()).orElseThrow(() -> new ShowNotFoundException(input.showId()));
 
         final Long venueId = show.getVenueId();
         final VenueSnapshot venue =
                 venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
         if (venue == null) {
-            throw new NotFoundException("공연에 연결된 공연장을 찾을 수 없습니다.");
+            throw new ShowVenueNotFoundException();
         }
 
         return new Output(
