@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.InputChecks;
@@ -16,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetLikeStatusUseCase {
     private final MemberLookupApi memberLookup;
-    private final LikeQueryService likeQuery;
+    private final LikeRepository likeRepository;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
         public Input {
@@ -32,8 +33,9 @@ public class GetLikeStatusUseCase {
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
 
-        final LikeCountSnapshot info =
-                likeQuery.countByTargetForMember(input.likeType(), input.targetId(), input.memberId());
-        return new Output(input.targetId(), info.liked(), info.likeCount());
+        final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(
+                input.memberId(), input.likeType(), input.targetId());
+        final long likeCount = likeRepository.countByLikeTypeAndTargetId(input.likeType(), input.targetId());
+        return new Output(input.targetId(), liked, likeCount);
     }
 }
