@@ -339,8 +339,8 @@ class ArchitectureRulesTest {
      * {@link #query는_다른_업무_module을_조합하지_않는다}의 module 한 개짜리 규칙이다. 회귀 검증이 같은 factory를 쓴다.
      *
      * <p>대상은 package 위치가 아니라 <b>DB를 직접 읽는 클래스</b>({@link #DB_QUERY})다. 조회 구현이 어느 package에 있든 같은 검사가 걸리고, Querydsl을 쓰는
-     * 저장 adapter도 함께 덮인다. 조회 결과는 다른 module의 공개 값 타입({@code venue.api.VenueSnapshot} 등)을 담을 수 있고 담아야 한다 — 막아야 하는 것은 조회 구현이 다른
-     * module을 불러 결과를 합치는 것이다.
+     * 저장 adapter도 함께 덮인다. 조회 결과는 다른 module의 공개 값 타입({@code venue.api.VenueSnapshot} 등)을 담을 수 있고 담아야 한다 — 막아야 하는 것은 조회
+     * 구현이 다른 module을 불러 결과를 합치는 것이다.
      */
     private static ArchRule queryReadsOnlyOwnModule(final String module, final List<String> otherModules) {
         return noClasses()

@@ -54,12 +54,10 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
                 .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
         final Long venueId = show.getVenueId();
 
-        final VenueSnapshot venue =
-                venueId == null ? null : venueLookup.findVenueSnapshot(venueId).orElse(null);
+        final VenueSnapshot venue = venueLookup.getVenueSnapshot(venueId);
 
-        final Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayoutBySeatId = venueId == null
-                ? Map.of()
-                : venueSeatLookup.findAllSeatLayouts(venueId).stream()
+        final Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayoutBySeatId =
+                venueSeatLookup.findAllSeatLayouts(venueId).stream()
                         .collect(Collectors.toMap(VenueSeatSnapshot::seatId, this::toSeatLayout));
 
         final Map<Long, PerformanceLayoutSnapshot.GradeLayout> gradeLayoutByPerformanceGradeId =
@@ -68,10 +66,10 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
         return new PerformanceLayoutSnapshot(
                 performanceId,
                 venueId,
-                venue == null ? null : venue.name(),
-                venue == null ? 0 : venue.seatMapLayout().viewBoxWidth(),
-                venue == null ? 0 : venue.seatMapLayout().viewBoxHeight(),
-                venue == null ? 0.0 : venue.seatMapLayout().seatDiameter(),
+                venue.name(),
+                venue.seatMapLayout().viewBoxWidth(),
+                venue.seatMapLayout().viewBoxHeight(),
+                venue.seatMapLayout().seatDiameter(),
                 seatLayoutBySeatId,
                 gradeLayoutByPerformanceGradeId);
     }
