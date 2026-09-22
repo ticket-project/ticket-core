@@ -2,6 +2,8 @@ package com.ticket.show.usecase;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,8 +46,9 @@ public class GetSaleOpeningSoonShowsUseCase {
 
     public Output execute(final Input input) {
         final List<Show> shows = showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
-        final VenueDisplays venues = VenueDisplays.load(
-                venueLookup, shows.stream().map(Show::getVenueId).toList());
+        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+                Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
+        final VenueDisplays venues = new VenueDisplays(venuesById);
         return new Output(shows.stream().map(show -> toItem(show, venues)).toList());
     }
 

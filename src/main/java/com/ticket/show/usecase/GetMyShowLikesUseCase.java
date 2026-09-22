@@ -23,6 +23,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -78,8 +79,9 @@ public class GetMyShowLikesUseCase {
         final Set<Long> showIds =
                 page.items().stream().map(LikeSnapshot::targetId).collect(Collectors.toSet());
         final Map<Long, Show> shows = showRepository.findSummaries(showIds);
-        final VenueDisplays venues = VenueDisplays.load(
-                venueLookup, shows.values().stream().map(Show::getVenueId).toList());
+        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+                Set.copyOf(shows.values().stream().map(Show::getVenueId).toList()));
+        final VenueDisplays venues = new VenueDisplays(venuesById);
 
         final List<Item> items = page.items().stream()
                 .map(entry -> toItem(entry, shows.get(entry.targetId()), venues))

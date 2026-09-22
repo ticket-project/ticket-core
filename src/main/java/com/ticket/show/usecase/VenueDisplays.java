@@ -1,12 +1,9 @@
 package com.ticket.show.usecase;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
 /**
@@ -14,10 +11,6 @@ import com.ticket.venue.api.VenueSnapshot;
  * cross-module FK가 없어(ADR 0003 §4) DB가 막아주지 않는 상태이고, 목록 한 건 때문에 응답 전체를 실패시키지 않는다(과거 {@code leftJoin} 결과와 동일).
  */
 public record VenueDisplays(Map<Long, VenueSnapshot> byId) {
-    public static VenueDisplays load(final VenueLookupApi venueLookup, final Collection<Long> venueIds) {
-        return new VenueDisplays(venueLookup.getSummaries(Set.copyOf(venueIds)));
-    }
-
     public @Nullable VenueSnapshot get(final long venueId) {
         return byId.get(venueId);
     }
