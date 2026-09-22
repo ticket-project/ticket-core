@@ -88,8 +88,12 @@ public class ShowQuerydslRepository {
                 .leftJoin(category)
                 .on(genre.categoryId.eq(category.id))
                 .where(categoryCodeEq(categoryCode))
-                // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다.
-                .groupBy(show.id, show.createdAt)
+                // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다. ORDER BY의 마감 여부
+                // CASE가 보는 판매 창 두 컬럼까지 GROUP BY에 넣는다 -- Oracle은 GROUP BY에 없는
+                // 컬럼을 ORDER BY에서 쓰면 ORA-00979로 거절한다(H2는 show.id가 PK라는 함수 종속을
+                // 알아서 통과시켜 이 차이가 테스트에 잡히지 않는다). show.id가 PK라 추가한 두 컬럼은
+                // 함수 종속이고, 묶이는 행 자체는 달라지지 않는다.
+                .groupBy(show.id, show.createdAt, show.displaySaleWindow.startsAt, show.displaySaleWindow.endsAt)
                 .orderBy(orderSpecifiers(sortOrder))
                 .limit(limit)
                 .fetch();
