@@ -3,7 +3,6 @@ package com.ticket.show.endpoint.docs;
 import jakarta.validation.constraints.Positive;
 
 import com.ticket.shared.web.ApiResponse;
-import com.ticket.show.usecase.GetPerformanceScheduleListUseCase;
 import com.ticket.show.usecase.GetPerformanceSummaryUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,12 +23,5 @@ public interface PerformanceControllerDocs {
             value = {@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
             })
     ApiResponse<GetPerformanceSummaryUseCase.Output> getPerformanceSummary(
-            @Parameter(description = "Performance ID", example = "1", required = true) @Positive Long performanceId);
-
-    @Operation(summary = "Get performance schedules")
-    @ApiResponses(
-            value = {@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")
-            })
-    ApiResponse<GetPerformanceScheduleListUseCase.Output> getPerformanceSchedules(
             @Parameter(description = "Performance ID", example = "1", required = true) @Positive Long performanceId);
 }

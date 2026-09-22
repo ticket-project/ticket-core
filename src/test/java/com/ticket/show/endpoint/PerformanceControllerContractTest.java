@@ -12,7 +12,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 import com.ticket.show.exception.handler.ShowExceptionHandler;
-import com.ticket.show.usecase.GetPerformanceScheduleListUseCase;
 import com.ticket.show.usecase.GetPerformanceSummaryUseCase;
 
 class PerformanceControllerContractTest {
@@ -20,8 +19,7 @@ class PerformanceControllerContractTest {
             Mockito.mock(GetPerformanceSummaryUseCase.class);
 
     private MockMvc newMockMvc() {
-        PerformanceController controller = new PerformanceController(
-                getPerformanceSummaryUseCase, Mockito.mock(GetPerformanceScheduleListUseCase.class));
+        PerformanceController controller = new PerformanceController(getPerformanceSummaryUseCase);
         return MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
                 .build();
