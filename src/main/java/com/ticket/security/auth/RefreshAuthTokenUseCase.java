@@ -23,7 +23,7 @@ public class RefreshAuthTokenUseCase {
         final Long memberId = refreshTokenStore
                 .validate(input.refreshToken())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
-        final MemberStatus member = memberAccountOperations.requireActiveIdentity(memberId);
+        final MemberStatus member = memberAccountOperations.getActiveIdentity(memberId);
         final IssuedAuthTokens tokens =
                 authTokenIssuer.rotateTokens(member.memberId(), member.role(), input.refreshToken());
         return toResult(tokens);

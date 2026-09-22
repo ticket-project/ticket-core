@@ -30,11 +30,11 @@ public interface MemberAccountApi {
     MemberStatus authenticate(String email, RawPassword password);
 
     /**
-     * 지금도 활성 회원인지 확인한다. 토큰만 유효하고 계정이 사라진 경우를 걸러내기 위해 토큰 갱신·코드 교환 흐름이 부른다.
+     * 지금도 활성 회원인지 확인하고 그 신원을 반환한다. 토큰만 유효하고 계정이 사라진 경우를 걸러내기 위해 토큰 갱신·코드 교환 흐름이 부른다. 존재하지 않거나 탈퇴한 회원이면 던진다.
      *
      * @return 현재 활성 회원의 번호와 역할
      */
-    MemberStatus requireActiveIdentity(long memberId);
+    MemberStatus getActiveIdentity(long memberId);
 
     /**
      * 정규화된 소셜 신원으로 회원을 찾고, 없으면 만들거나 기존 계정에 연결한다. 검증된 이메일만 기존 계정 연결에 쓰고, 식별은 provider와 provider 사용자 ID로 한다.

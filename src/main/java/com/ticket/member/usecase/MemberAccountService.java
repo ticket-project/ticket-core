@@ -97,7 +97,7 @@ public class MemberAccountService implements MemberAccountApi {
 
     @Override
     @Transactional(readOnly = true)
-    public MemberStatus requireActiveIdentity(final long memberId) {
+    public MemberStatus getActiveIdentity(final long memberId) {
         return toStatus(memberRepository.findActiveById(memberId).orElseThrow(() -> new MemberNotFoundException()));
     }
 
