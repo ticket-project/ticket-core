@@ -131,7 +131,7 @@ class MemberAccountServiceTest {
     void 활성_확인은_없는_회원이면_찾을_수_없다는_실패를_낸다() {
         when(memberRepository.findActiveById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service().requireActiveIdentity(99L)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service().getActiveIdentity(99L)).isInstanceOf(NotFoundException.class);
     }
 
     // ── 소셜 연결 ────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ class MemberAccountServiceTest {
         assertWriteTransaction(MemberAccountService.class, "register", String.class, RawPassword.class, String.class);
         assertReadOnlyTransaction(
                 MemberAccountService.class.getMethod("authenticate", String.class, RawPassword.class));
-        assertReadOnlyTransaction(MemberAccountService.class.getMethod("requireActiveIdentity", long.class));
+        assertReadOnlyTransaction(MemberAccountService.class.getMethod("getActiveIdentity", long.class));
         assertWriteTransaction(MemberAccountService.class, "withdraw", long.class);
         // 소셜 연결만 흡수하지 않았다 — 트랜잭션도 그대로 provisioning service가 소유한다.
         assertThat(MemberAccountService.class
