@@ -17,9 +17,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.exception.ShowVenueNotFoundException;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
+import com.ticket.venue.exception.VenueNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -39,8 +41,8 @@ class GetShowVenueLayoutUseCaseTest {
         Show show = mock(Show.class);
         when(show.getVenueId()).thenReturn(200L);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
-        when(venueLookup.findVenueSnapshot(200L))
-                .thenReturn(Optional.of(new VenueSnapshot(
+        when(venueLookup.getVenueSnapshot(200L))
+                .thenReturn(new VenueSnapshot(
                         200L,
                         "올림픽홀",
                         "주소",
@@ -49,7 +51,7 @@ class GetShowVenueLayoutUseCaseTest {
                         BigDecimal.ZERO,
                         "02-0000-0000",
                         "image",
-                        new VenueSnapshot.SeatMapLayout(1000, 800, 12.0))));
+                        new VenueSnapshot.SeatMapLayout(1000, 800, 12.0)));
         // when
         GetShowVenueLayoutUseCase.Output output = useCase.execute(new GetShowVenueLayoutUseCase.Input(100L));
         // then
@@ -68,12 +70,25 @@ class GetShowVenueLayoutUseCaseTest {
     }
 
     @Test
-    void 공연장_정보가_없으면_예외를_던진다() {
+    void 공연장이_지정되지_않았으면_예외를_던진다() {
         Show show = mock(Show.class);
         when(show.getVenueId()).thenReturn(null);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
 
         assertThatThrownBy(() -> useCase.execute(new GetShowVenueLayoutUseCase.Input(100L)))
+                .isInstanceOf(ShowVenueNotFoundException.class);
+    }
+
+    /** venueId는 있는데 venue module에 그 공연장이 없는 dangling 상태다. 좌석 맵은 공연장이 필수라 venue가 던지는 not-found가 그대로 나간다. */
+    @Test
+    void dangling_venueId는_venue의_not_found가_전파된다() {
+        Show show = mock(Show.class);
+        when(show.getVenueId()).thenReturn(200L);
+        when(showRepository.findById(100L)).thenReturn(Optional.of(show));
+        when(venueLookup.getVenueSnapshot(200L)).thenThrow(new VenueNotFoundException(200L));
+
+        assertThatThrownBy(() -> useCase.execute(new GetShowVenueLayoutUseCase.Input(100L)))
+                .isInstanceOf(VenueNotFoundException.class)
                 .isInstanceOf(NotFoundException.class);
     }
 }
