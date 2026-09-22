@@ -18,7 +18,6 @@ import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.ShowVenueNotFoundException;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 import com.ticket.venue.exception.VenueNotFoundException;
@@ -46,7 +45,7 @@ class GetShowVenueLayoutUseCaseTest {
                         200L,
                         "올림픽홀",
                         "주소",
-                        Region.SEOUL,
+                        new VenueSnapshot.RegionView("SEOUL", "서울"),
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
                         "02-0000-0000",

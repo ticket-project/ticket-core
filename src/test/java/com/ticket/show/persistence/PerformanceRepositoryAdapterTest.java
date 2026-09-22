@@ -19,7 +19,7 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
-import com.ticket.venue.api.Region;
+import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 
 /** 옛 {@code PerformanceQueryTest}와 {@code PerformanceGradeQueryTest}가 고정하던 동작이 그대로 들어 있다. */

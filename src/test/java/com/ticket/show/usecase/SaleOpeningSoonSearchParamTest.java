@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.venue.api.Region;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SaleOpeningSoonSearchParamTest {
@@ -36,7 +35,7 @@ class SaleOpeningSoonSearchParamTest {
         assertThat(param(null, null, null, null).getRegion()).isNull();
         assertThat(SaleOpeningSoonSearchParam.of(null, null, " SEOUL ", null, null, null, null, null)
                         .getRegion())
-                .isEqualTo(Region.SEOUL);
+                .isEqualTo("SEOUL");
     }
 
     private SaleOpeningSoonSearchParam param(

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -31,8 +30,11 @@ public record VenueDisplays(Map<Long, VenueSnapshot> byId) {
         return summary == null ? null : summary.name();
     }
 
-    public @Nullable Region regionOf(final @Nullable Long venueId) {
+    /** 응답에 싣는 지역 코드({@code "SEOUL"})다. */
+    public @Nullable String regionCodeOf(final @Nullable Long venueId) {
         final VenueSnapshot summary = get(venueId);
-        return summary == null ? null : summary.region();
+        return summary == null || summary.region() == null
+                ? null
+                : summary.region().code();
     }
 }

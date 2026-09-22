@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -63,7 +62,7 @@ class SearchShowsUseCaseTest {
                                 7L,
                                 "venue",
                                 "주소",
-                                Region.SEOUL,
+                                new VenueSnapshot.RegionView("SEOUL", "서울"),
                                 null,
                                 null,
                                 null,
@@ -81,7 +80,7 @@ class SearchShowsUseCaseTest {
                         "venue",
                         LocalDate.of(2026, 3, 27),
                         LocalDate.of(2026, 3, 28),
-                        Region.SEOUL,
+                        "SEOUL",
                         10L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
@@ -109,8 +108,8 @@ class SearchShowsUseCaseTest {
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
         CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         ShowSearchCriteria noRegion = new ShowSearchCriteria(null, null, null, null, null, null, null);
-        ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, Region.JEJU, null);
-        when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
+        ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, "JEJU", null);
+        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.searchShows(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.searchShows(jeju, Set.of(), 10, ShowSort.POPULAR))

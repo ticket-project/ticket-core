@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.ticket.venue.api.Region;
+import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 import com.ticket.venue.domain.VenueRepository;
 

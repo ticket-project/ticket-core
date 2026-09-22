@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import org.jspecify.annotations.Nullable;
 
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.venue.api.Region;
 
 import lombok.Getter;
 
@@ -19,7 +18,7 @@ import lombok.Getter;
 public class SaleOpeningSoonSearchParam {
     private final @Nullable String category;
     private final @Nullable String title;
-    private final @Nullable Region region;
+    private final @Nullable String region;
     private final @Nullable LocalDateTime displaySaleStartsAtFrom;
     private final @Nullable LocalDateTime displaySaleStartsAtTo;
     private final @Nullable LocalDateTime displaySaleEndsAtFrom;
@@ -29,7 +28,7 @@ public class SaleOpeningSoonSearchParam {
     public SaleOpeningSoonSearchParam(
             final @Nullable String category,
             final @Nullable String title,
-            final @Nullable Region region,
+            final @Nullable String region,
             final @Nullable LocalDateTime displaySaleStartsAtFrom,
             final @Nullable LocalDateTime displaySaleStartsAtTo,
             final @Nullable LocalDateTime displaySaleEndsAtFrom,
@@ -59,7 +58,7 @@ public class SaleOpeningSoonSearchParam {
         return new SaleOpeningSoonSearchParam(
                 category,
                 title,
-                ShowListParam.parseRegion(region),
+                ShowListParam.normalizeRegion(region),
                 displaySaleStartsAtFrom,
                 displaySaleStartsAtTo,
                 displaySaleEndsAtFrom,

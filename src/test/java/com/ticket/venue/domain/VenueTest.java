@@ -6,8 +6,6 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.venue.api.Region;
-
 @SuppressWarnings("NonAsciiCharacters")
 class VenueTest {
     @Test

@@ -28,7 +28,6 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSeatSnapshot;
@@ -93,7 +92,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
                         3L,
                         "venue",
                         "주소",
-                        Region.SEOUL,
+                        new VenueSnapshot.RegionView("SEOUL", "서울"),
                         null,
                         null,
                         null,

@@ -12,11 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ticket.shared.exception.CommonErrorCode;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSeatSnapshot;
 import com.ticket.venue.api.VenueSnapshot;
+import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 import com.ticket.venue.exception.VenueNotFoundException;
@@ -91,7 +91,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistVenue("벡스코", Region.GYEONGSANG);
         flushAndClear();
 
-        assertThat(venueLookup.findIdsByRegion(Region.SEOUL)).containsExactly(seoul.getId());
+        assertThat(venueLookup.findIdsByRegion("SEOUL")).containsExactly(seoul.getId());
     }
 
     @Test
@@ -99,7 +99,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        assertThat(venueLookup.findIdsByRegion(Region.JEJU)).isEmpty();
+        assertThat(venueLookup.findIdsByRegion("JEJU")).isEmpty();
     }
 
     /**

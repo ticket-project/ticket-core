@@ -2,27 +2,24 @@ package com.ticket.show.usecase;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.venue.api.Region;
-
 import lombok.Getter;
 
 /**
  * 공연 목록 조회 조건이다.
  *
- * <p>커서는 HTTP 문자열이 아니라 타입 값으로 받고, 지역 같은 도메인 enum 변환은 이 계층이 한다.
+ * <p>커서는 HTTP 문자열이 아니라 타입 값으로 받는다. 지역은 코드 문자열 그대로 들고 다닌다 — 코드가 실제 지역인지는 값 집합을 소유한 venue가 판정한다.
  */
 @Getter
 public class ShowListParam {
     private final @Nullable String category;
     private final @Nullable String genre;
-    private final @Nullable Region region;
+    private final @Nullable String region;
     private final @Nullable ShowCursor cursor;
 
     public ShowListParam(
             final @Nullable String category,
             final @Nullable String genre,
-            final @Nullable Region region,
+            final @Nullable String region,
             final @Nullable ShowCursor cursor) {
         this.category = category;
         this.genre = genre;
@@ -35,18 +32,18 @@ public class ShowListParam {
             final @Nullable String genre,
             final @Nullable String region,
             final @Nullable ShowCursor cursor) {
-        return new ShowListParam(category, genre, parseRegion(region), cursor);
+        return new ShowListParam(category, genre, normalizeRegion(region), cursor);
     }
 
-    /** 이전에는 Spring의 enum 변환기가 이 값을 바꿨고 그 변환기는 앞뒤 공백을 지웠다. 변환 주체가 이 계층으로 옮겨왔으므로 같은 관용을 유지한다. */
-    static @Nullable Region parseRegion(final @Nullable String region) {
+    /**
+     * 빈 문자열을 "필터 없음"으로 통일하고 앞뒤 공백을 지운다. 코드가 실제 지역인지는 보지 않는다 — venue가 판정한다.
+     *
+     * <p>목록·검색·오픈예정이 같은 규칙을 써야 하므로 여기 한 벌만 둔다.
+     */
+    static @Nullable String normalizeRegion(final @Nullable String region) {
         if (region == null || region.isBlank()) {
             return null;
         }
-        try {
-            return Region.valueOf(region.trim());
-        } catch (final IllegalArgumentException exception) {
-            throw new InvalidRequestException("region 값이 올바르지 않습니다: " + region);
-        }
+        return region.trim();
     }
 }

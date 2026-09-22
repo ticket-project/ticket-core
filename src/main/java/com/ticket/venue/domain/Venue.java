@@ -12,7 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import com.ticket.shared.jpa.AuditedEntity;
-import com.ticket.venue.api.Region;
 
 import lombok.AccessLevel;
 import lombok.Getter;

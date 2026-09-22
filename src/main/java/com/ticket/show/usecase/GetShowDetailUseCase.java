@@ -31,7 +31,6 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -92,7 +91,7 @@ public class GetShowDetailUseCase {
             Long id,
             @Nullable String name,
             @Nullable String address,
-            @Nullable Region region,
+            @Nullable String region,
             @Nullable BigDecimal latitude,
             @Nullable BigDecimal longitude,
             @Nullable String phone,
@@ -215,7 +214,7 @@ public class GetShowDetailUseCase {
                 venue.venueId(),
                 venue.name(),
                 venue.address(),
-                venue.region(),
+                venue.region() == null ? null : venue.region().code(),
                 venue.latitude(),
                 venue.longitude(),
                 venue.phone(),

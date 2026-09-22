@@ -33,7 +33,6 @@ import com.ticket.show.usecase.GetShowsUseCase;
 import com.ticket.show.usecase.SearchShowsUseCase;
 import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowSort;
-import com.ticket.venue.api.Region;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -76,7 +75,7 @@ class ShowControllerContractTest {
                 LocalDateTime.of(2026, 3, 19, 10, 0),
                 LocalDateTime.of(2026, 3, 21, 10, 0),
                 LocalDateTime.of(2026, 3, 18, 10, 0),
-                Region.SEOUL,
+                "SEOUL",
                 "장소");
         when(getShowsUseCase.execute(any(GetShowsUseCase.Input.class)))
                 .thenReturn(new GetShowsUseCase.Output(List.of(show), true, NEXT_POSITION));
@@ -107,7 +106,7 @@ class ShowControllerContractTest {
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
         SearchShowsUseCase.Item item = new SearchShowsUseCase.Item(
-                1L, "공연", "image", "장소", LocalDate.of(2026, 3, 20), LocalDate.of(2026, 3, 21), Region.SEOUL, 10L);
+                1L, "공연", "image", "장소", LocalDate.of(2026, 3, 20), LocalDate.of(2026, 3, 21), "SEOUL", 10L);
         when(searchShowsUseCase.execute(any(SearchShowsUseCase.Input.class)))
                 .thenReturn(new SearchShowsUseCase.Output(List.of(item), true, NEXT_POSITION));
 

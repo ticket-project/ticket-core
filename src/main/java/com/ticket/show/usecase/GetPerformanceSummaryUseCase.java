@@ -49,7 +49,7 @@ public class GetPerformanceSummaryUseCase {
                 ? null
                 : venueLookup
                         .findVenueSnapshot(show.getVenueId())
-                        .map(v -> v.region() == null ? null : v.region().getDescription())
+                        .map(v -> v.region() == null ? null : v.region().name())
                         .orElse(null);
 
         return new Output(show.getTitle(), region, performance.getStartTime());
