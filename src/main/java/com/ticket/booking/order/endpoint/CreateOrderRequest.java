@@ -23,10 +23,8 @@ public class CreateOrderRequest {
 
     @NotEmpty(message = "seatIds는 비어 있을 수 없습니다.")
     @ArraySchema(schema = @Schema(description = "좌석 ID", example = "42"))
-    private @Nullable
-            List<
-                    @NotNull(message = "seatIds는 null을 포함할 수 없습니다.")
-                    @Positive(message = "seatIds는 양수여야 합니다.") Long>
+    private @Nullable List<
+                    @NotNull(message = "seatIds는 null을 포함할 수 없습니다.") @Positive(message = "seatIds는 양수여야 합니다.") Long>
             seatIds;
 
     public CreateOrderRequest() {}

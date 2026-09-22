@@ -21,24 +21,29 @@ import org.redisson.api.RedissonClient;
 
 @ExtendWith(MockitoExtension.class)
 class RedisRefreshTokenStoreTest {
-    @Mock private RedissonClient redissonClient;
-    @Mock private RBucket<String> bucket;
-    @Mock private Supplier<UUID> uuidSupplier;
-    @InjectMocks private RedisRefreshTokenStore refreshTokenStore;
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RBucket<String> bucket;
+
+    @Mock
+    private Supplier<UUID> uuidSupplier;
+
+    @InjectMocks
+    private RedisRefreshTokenStore refreshTokenStore;
 
     @Test
     void creates_refresh_token_and_stores_member_id() {
         doReturn(bucket).when(redissonClient).getBucket(anyString());
-        when(uuidSupplier.get())
-                .thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+        when(uuidSupplier.get()).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String token = refreshTokenStore.createRefreshToken(3L, 120L);
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(redissonClient).getBucket(keyCaptor.capture());
         verify(bucket).set("3", Duration.ofSeconds(120L));
-        assertThat(keyCaptor.getValue())
-                .isEqualTo("refresh_token:123e4567-e89b-12d3-a456-426614174000");
+        assertThat(keyCaptor.getValue()).isEqualTo("refresh_token:123e4567-e89b-12d3-a456-426614174000");
         assertThat(token).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     }
 
@@ -47,7 +52,8 @@ class RedisRefreshTokenStoreTest {
         doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
         when(bucket.getAndDelete()).thenReturn("3");
 
-        assertThat(refreshTokenStore.validate(AuthRefreshToken.from("token-value"))).contains(3L);
+        assertThat(refreshTokenStore.validate(AuthRefreshToken.from("token-value")))
+                .contains(3L);
     }
 
     @Test
@@ -64,7 +70,8 @@ class RedisRefreshTokenStoreTest {
         doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
         when(bucket.getAndDelete()).thenReturn("not-a-number");
 
-        assertThat(refreshTokenStore.validate(AuthRefreshToken.from("token-value"))).isEmpty();
+        assertThat(refreshTokenStore.validate(AuthRefreshToken.from("token-value")))
+                .isEmpty();
     }
 
     @Test

@@ -29,25 +29,18 @@ public class WithdrawCurrentMemberUseCase {
     public record Output() {}
 
     public Output execute(final Input input) {
-        final List<SocialAccountSnapshot> socialAccounts =
-                memberAccountOperations.withdraw(input.memberId());
+        final List<SocialAccountSnapshot> socialAccounts = memberAccountOperations.withdraw(input.memberId());
         unlinkSocialAccountsSafely(input.memberId(), socialAccounts);
         return new Output();
     }
 
-    private void unlinkSocialAccountsSafely(
-            final Long memberId, final List<SocialAccountSnapshot> socialAccounts) {
-        socialAccounts.forEach(
-                connection -> {
-                    try {
-                        socialAccountUnlinker.unlink(connection);
-                    } catch (Exception e) {
-                        log.warn(
-                                "회원 탈퇴 후 소셜 연동 해제에 실패했습니다. memberId={}, provider={}",
-                                memberId,
-                                connection.provider(),
-                                e);
-                    }
-                });
+    private void unlinkSocialAccountsSafely(final Long memberId, final List<SocialAccountSnapshot> socialAccounts) {
+        socialAccounts.forEach(connection -> {
+            try {
+                socialAccountUnlinker.unlink(connection);
+            } catch (Exception e) {
+                log.warn("회원 탈퇴 후 소셜 연동 해제에 실패했습니다. memberId={}, provider={}", memberId, connection.provider(), e);
+            }
+        });
     }
 }

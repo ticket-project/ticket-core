@@ -21,24 +21,29 @@ import org.redisson.api.RedissonClient;
 
 @ExtendWith(MockitoExtension.class)
 class RedisOAuth2AuthCodeStoreTest {
-    @Mock private RedissonClient redissonClient;
-    @Mock private RBucket<String> bucket;
-    @Mock private Supplier<UUID> uuidSupplier;
-    @InjectMocks private RedisOAuth2AuthCodeStore oauth2AuthCodeStore;
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RBucket<String> bucket;
+
+    @Mock
+    private Supplier<UUID> uuidSupplier;
+
+    @InjectMocks
+    private RedisOAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Test
     void creates_one_time_auth_code_and_stores_member_id() {
         doReturn(bucket).when(redissonClient).getBucket(anyString());
-        when(uuidSupplier.get())
-                .thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+        when(uuidSupplier.get()).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String code = oauth2AuthCodeStore.createCode(7L);
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(redissonClient).getBucket(keyCaptor.capture());
         verify(bucket).set("7", Duration.ofSeconds(30));
-        assertThat(keyCaptor.getValue())
-                .isEqualTo("oauth2_auth_code:123e4567-e89b-12d3-a456-426614174000");
+        assertThat(keyCaptor.getValue()).isEqualTo("oauth2_auth_code:123e4567-e89b-12d3-a456-426614174000");
         assertThat(code).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
     }
 

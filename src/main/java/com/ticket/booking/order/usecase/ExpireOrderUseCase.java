@@ -36,7 +36,9 @@ public class ExpireOrderUseCase {
     }
 
     private @Nullable Order findPendingOrder(final Long orderId) {
-        return orderRepository.findByIdAndStatusForUpdate(orderId, OrderState.PENDING).orElse(null);
+        return orderRepository
+                .findByIdAndStatusForUpdate(orderId, OrderState.PENDING)
+                .orElse(null);
     }
 
     private @Nullable Order findPendingOrder(final String holdKey) {

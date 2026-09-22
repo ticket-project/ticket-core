@@ -14,26 +14,24 @@ public final class RefreshTokenCookieWriter {
 
     public static void addRefreshTokenCookie(
             final HttpServletResponse response, final String tokenValue, final long maxAgeSeconds) {
-        final ResponseCookie cookie =
-                ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, tokenValue)
-                        .httpOnly(true)
-                        .secure(true)
-                        .sameSite(SAME_SITE)
-                        .path(COOKIE_PATH)
-                        .maxAge(maxAgeSeconds)
-                        .build();
+        final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, tokenValue)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite(SAME_SITE)
+                .path(COOKIE_PATH)
+                .maxAge(maxAgeSeconds)
+                .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     public static void deleteRefreshTokenCookie(final HttpServletResponse response) {
-        final ResponseCookie cookie =
-                ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
-                        .httpOnly(true)
-                        .secure(true)
-                        .sameSite(SAME_SITE)
-                        .path(COOKIE_PATH)
-                        .maxAge(0)
-                        .build();
+        final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite(SAME_SITE)
+                .path(COOKIE_PATH)
+                .maxAge(0)
+                .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

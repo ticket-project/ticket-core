@@ -39,13 +39,27 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 class HoldReleaseCoordinatorTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 25, 12, 0);
     private static final UUID EVENT_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
-    @Mock private HoldManager holdManager;
-    @Spy private RecordingLockManager lockManager = new RecordingLockManager();
-    @Mock private SeatSelectionService seatSelectionService;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
-    @Mock private SeatStatusEventPublisher seatStatusEventPublisher;
-    @Mock private HoldReleaseProgressRecorder progressRecorder;
-    @InjectMocks private HoldReleaseCoordinator coordinator;
+
+    @Mock
+    private HoldManager holdManager;
+
+    @Spy
+    private RecordingLockManager lockManager = new RecordingLockManager();
+
+    @Mock
+    private SeatSelectionService seatSelectionService;
+
+    @Mock
+    private PerformanceSeatRepository performanceSeatRepository;
+
+    @Mock
+    private SeatStatusEventPublisher seatStatusEventPublisher;
+
+    @Mock
+    private HoldReleaseProgressRecorder progressRecorder;
+
+    @InjectMocks
+    private HoldReleaseCoordinator coordinator;
 
     @Test
     void recordsHoldReleaseBeforePublishingCurrentlyAvailableSeats() {
@@ -111,10 +125,8 @@ class HoldReleaseCoordinatorTest {
 
         verify(holdManager, times(1)).release(1L, "old-hold", List.of(10L, 20L));
         verify(progressRecorder, times(1)).recordHoldReleased(EVENT_ID, FIXED_NOW);
-        verify(seatStatusEventPublisher, times(2))
-                .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
-        verify(seatStatusEventPublisher, times(1))
-                .publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
 
     private void stubPerformanceSeats() {
@@ -123,9 +135,7 @@ class HoldReleaseCoordinatorTest {
     }
 
     private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {
-        PerformanceSeat seat =
-                new PerformanceSeat(
-                        1L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
+        PerformanceSeat seat = new PerformanceSeat(1L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
         ReflectionTestUtils.setField(seat, "id", performanceSeatId);
         return seat;
     }
@@ -134,8 +144,7 @@ class HoldReleaseCoordinatorTest {
     void holdsSeatLocksAcrossReleaseAndPublication() {
         coordinator.releaseAndPublish(EVENT_ID, task(false), LocalDateTime.of(2026, 3, 15, 12, 0));
 
-        assertThat(lockManager.lastAcquisition().keys())
-                .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
+        assertThat(lockManager.lastAcquisition().keys()).containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
     }
 
     private HoldReleaseTask task(final boolean holdReleased) {

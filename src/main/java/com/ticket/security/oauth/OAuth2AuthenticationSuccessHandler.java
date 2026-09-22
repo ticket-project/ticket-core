@@ -26,21 +26,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Override
     public void onAuthenticationSuccess(
-            final HttpServletRequest request,
-            final HttpServletResponse response,
-            final Authentication authentication)
+            final HttpServletRequest request, final HttpServletResponse response, final Authentication authentication)
             throws IOException, ServletException {
         // CustomOAuth2UserService가 nameAttributeKey를 memberId로 지정하므로 getName()이 회원 식별자다.
         final Long memberId = parseMemberId(authentication);
         // 1회용 auth code 생성 (Redis, TTL 30초)
         final String authCode = oauth2AuthCodeStore.createCode(memberId);
 
-        final String targetUrl =
-                UriComponentsBuilder.fromUriString(
-                                frontendRedirectResolver.resolveSuccessRedirectUri(request))
-                        .queryParam("code", authCode)
-                        .build(true)
-                        .toUriString();
+        final String targetUrl = UriComponentsBuilder.fromUriString(
+                        frontendRedirectResolver.resolveSuccessRedirectUri(request))
+                .queryParam("code", authCode)
+                .build(true)
+                .toUriString();
 
         frontendRedirectResolver.clear(request);
         clearAuthenticationAttributes(request);
@@ -51,8 +48,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             return Long.parseLong(authentication.getName());
         } catch (final NumberFormatException exception) {
-            throw new IllegalStateException(
-                    "인증 주체에서 회원 식별자를 읽을 수 없습니다. name=" + authentication.getName(), exception);
+            throw new IllegalStateException("인증 주체에서 회원 식별자를 읽을 수 없습니다. name=" + authentication.getName(), exception);
         }
     }
 }

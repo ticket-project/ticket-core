@@ -36,15 +36,12 @@ class HoldControllerContractTest {
     @BeforeEach
     void setUp() {
         HoldController controller = new HoldController(startBookingUseCase);
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(controller)
-                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new BookingExceptionHandler())
-                        .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
+                .build();
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
     }
 
     @AfterEach
@@ -54,22 +51,14 @@ class HoldControllerContractTest {
 
     @Test
     void hold_생성_성공시_기존_계약을_유지한다() throws Exception {
-        when(startBookingUseCase.execute(
-                        new StartBookingUseCase.Input(
-                                10L, List.of(7L, 3L), 100L, "admission-token")))
-                .thenReturn(
-                        new StartBookingUseCase.Output(
-                                "ORD-20260324",
-                                OrderState.PENDING,
-                                LocalDateTime.of(2026, 3, 24, 14, 10),
-                                600L));
+        when(startBookingUseCase.execute(new StartBookingUseCase.Input(10L, List.of(7L, 3L), 100L, "admission-token")))
+                .thenReturn(new StartBookingUseCase.Output(
+                        "ORD-20260324", OrderState.PENDING, LocalDateTime.of(2026, 3, 24, 14, 10), 600L));
 
-        mockMvc.perform(
-                        post("/api/v1/performances/10/holds")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("X-Admission-Token", "admission-token")
-                                .content(
-                                        """
+        mockMvc.perform(post("/api/v1/performances/10/holds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Admission-Token", "admission-token")
+                        .content("""
                                 {
                                   "seatIds": [7, 3]
                                 }
@@ -87,11 +76,9 @@ class HoldControllerContractTest {
 
     @Test
     void hold_생성_실패시_검증오류_응답_계약을_유지한다() throws Exception {
-        mockMvc.perform(
-                        post("/api/v1/performances/10/holds")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        """
+        mockMvc.perform(post("/api/v1/performances/10/holds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                                 {
                                   "seatIds": []
                                 }
@@ -106,11 +93,9 @@ class HoldControllerContractTest {
 
     @Test
     void performanceId가_양수가_아니면_400_계약을_지킨다() throws Exception {
-        mockMvc.perform(
-                        post("/api/v1/performances/-1/holds")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        """
+        mockMvc.perform(post("/api/v1/performances/-1/holds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                                 {
                                   "seatIds": [7]
                                 }

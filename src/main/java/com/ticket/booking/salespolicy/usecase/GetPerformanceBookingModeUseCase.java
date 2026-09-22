@@ -14,8 +14,8 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 인증 없이 회차의 예매 방식을 조회하는 booking 소유 use case다. 안내용 조회이므로 실제 좌석 선택·상태·주문 API는 이 결과와 무관하게 실행 시점에 정책을
- * 다시 검사한다. FE 라우트나 ticket-queue HTTP 경로는 담지 않는다 — {@code bookingMode}는 업무 의미만 전달한다.
+ * 인증 없이 회차의 예매 방식을 조회하는 booking 소유 use case다. 안내용 조회이므로 실제 좌석 선택·상태·주문 API는 이 결과와 무관하게 실행 시점에 정책을 다시 검사한다. FE 라우트나
+ * ticket-queue HTTP 경로는 담지 않는다 — {@code bookingMode}는 업무 의미만 전달한다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -46,8 +46,7 @@ public class GetPerformanceBookingModeUseCase {
             long holdDurationSeconds) {}
 
     public Output execute(final Input input) {
-        final PerformanceSalesPolicy policy =
-                performanceSaleFinder.requirePolicy(input.performanceId());
+        final PerformanceSalesPolicy policy = performanceSaleFinder.requirePolicy(input.performanceId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final OrderAcceptanceStatus status = policy.acceptanceStatus(now);
@@ -64,9 +63,7 @@ public class GetPerformanceBookingModeUseCase {
     }
 
     private BookingMode toBookingMode(
-            final PerformanceSalesPolicy policy,
-            final OrderAcceptanceStatus status,
-            final LocalDateTime now) {
+            final PerformanceSalesPolicy policy, final OrderAcceptanceStatus status, final LocalDateTime now) {
         if (status != OrderAcceptanceStatus.OPEN) {
             return BookingMode.UNAVAILABLE;
         }

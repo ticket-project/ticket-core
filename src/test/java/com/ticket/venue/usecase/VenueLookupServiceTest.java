@@ -22,14 +22,17 @@ import com.ticket.venue.domain.Venue;
 /**
  * venue 공개 계약({@link VenueLookupApi}, {@link VenueSeatLookupApi})의 실제 DB 동작을 고정한다.
  *
- * <p>위임만 하던 {@code VenueLookupService}·{@code VenueSeatLookupService}가 사라지고 Aggregate별 adapter 둘이 두
- * 계약을 직접 구현하면서, 그 service들이 갖고 있던 빈 입력 처리와 지역 인자 null 검사도 여기로 왔다. 계약을 부르는 쪽에서 보이는 동작이 그대로인지를 본다.
- * 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 두 계약을 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
+ * <p>위임만 하던 {@code VenueLookupService}·{@code VenueSeatLookupService}가 사라지고 Aggregate별 adapter 둘이 두 계약을 직접 구현하면서, 그
+ * service들이 갖고 있던 빈 입력 처리와 지역 인자 null 검사도 여기로 왔다. 계약을 부르는 쪽에서 보이는 동작이 그대로인지를 본다. 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 두 계약을
+ * 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
-    @Autowired private VenueLookupApi venueLookup;
-    @Autowired private VenueSeatLookupApi venueSeatLookup;
+    @Autowired
+    private VenueLookupApi venueLookup;
+
+    @Autowired
+    private VenueSeatLookupApi venueSeatLookup;
 
     @Test
     void 존재하는_venue의_표시값을_반환한다() throws Exception {
@@ -87,9 +90,9 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     }
 
     /**
-     * 옛 {@code VenueLookupService}의 {@code Objects.requireNonNull}을 그대로 옮겼다 — 실제로 던지는 것은 {@code
-     * NullPointerException}이다. {@link VenueLookupApi}의 Javadoc은 {@code IllegalArgumentException}이라고
-     * 적고 있지만 이번 리팩터링에서 동작을 바꾸지 않고 실측대로 고정한다.
+     * 옛 {@code VenueLookupService}의 {@code Objects.requireNonNull}을 그대로 옮겼다 — 실제로 던지는 것은
+     * {@code NullPointerException}이다. {@link VenueLookupApi}의 Javadoc은 {@code IllegalArgumentException}이라고 적고 있지만 이번
+     * 리팩터링에서 동작을 바꾸지 않고 실측대로 고정한다.
      */
     @Test
     void 지역_인자가_null이면_거부한다() {
@@ -109,9 +112,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final List<VenueSeatSnapshot> addresses =
                 venueSeatLookup.findSeats(venue.getId(), Set.of(a1.getId(), a2.getId()));
 
-        assertThat(addresses)
-                .extracting(VenueSeatSnapshot::seatId)
-                .containsExactlyInAnyOrder(a1.getId(), a2.getId());
+        assertThat(addresses).extracting(VenueSeatSnapshot::seatId).containsExactlyInAnyOrder(a1.getId(), a2.getId());
         assertThat(addresses).extracting(VenueSeatSnapshot::section).containsOnly("A");
     }
 
@@ -122,7 +123,8 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Seat otherSeat = persistSeat(other, "A", "1", "1", 1);
         flushAndClear();
 
-        assertThat(venueSeatLookup.findSeats(venue.getId(), Set.of(otherSeat.getId()))).isEmpty();
+        assertThat(venueSeatLookup.findSeats(venue.getId(), Set.of(otherSeat.getId())))
+                .isEmpty();
     }
 
     @Test

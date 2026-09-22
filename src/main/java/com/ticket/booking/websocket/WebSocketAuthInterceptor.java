@@ -23,8 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * STOMP CONNECT 프레임에서 JWT 토큰을 추출하여 인증을 처리하는 인터셉터. Spring Security의 WebSocket 보안보다 먼저 실행되도록 @Order
- * 설정. 인증 실패 시 연결을 차단합니다.
+ * STOMP CONNECT 프레임에서 JWT 토큰을 추출하여 인증을 처리하는 인터셉터. Spring Security의 WebSocket 보안보다 먼저 실행되도록 @Order 설정. 인증 실패 시 연결을
+ * 차단합니다.
  */
 @Slf4j
 @Component
@@ -37,8 +37,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) {
-        final StompHeaderAccessor accessor =
-                MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        final StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             final String authorization = accessor.getFirstNativeHeader(AUTHORIZATION_HEADER);
@@ -52,11 +51,8 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                     log.warn("웹소켓 JWT 인증에 실패해 연결을 차단합니다.");
                     throw new MessageDeliveryException("JWT 인증 실패");
                 }
-                accessor.setUser(
-                        new UsernamePasswordAuthenticationToken(
-                                member,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))));
+                accessor.setUser(new UsernamePasswordAuthenticationToken(
+                        member, null, List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))));
                 log.info("웹소켓 인증에 성공했습니다. memberId={}", member.memberId());
             } else {
                 log.warn("웹소켓 CONNECT 요청에 Authorization 헤더가 없어 연결을 차단합니다.");

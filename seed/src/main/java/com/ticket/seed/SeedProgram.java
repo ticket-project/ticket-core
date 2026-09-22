@@ -10,13 +10,13 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * {@code seedLocal}과 {@code seedProd}가 공유하는 실행 본체다. 두 명령의 차이는 <b>설정을 어디서 읽는가</b>와 <b>기본값</b>뿐이고, 적재
- * 순서·트랜잭션 경계·완전성 판정·보고 형식은 하나다.
+ * {@code seedLocal}과 {@code seedProd}가 공유하는 실행 본체다. 두 명령의 차이는 <b>설정을 어디서 읽는가</b>와 <b>기본값</b>뿐이고, 적재 순서·트랜잭션 경계·완전성
+ * 판정·보고 형식은 하나다.
  *
  * <p>{@code TicketApplication}을 띄우지 않는다. 웹 서버·Redis·OAuth 설정 없이 DB 접속과 적재에 필요한 것만 쓴다.
  *
- * <p>성공하면 작업별 결과를 출력하고 종료 코드 0으로 끝난다. 실패하면 원인을 요약하고 0이 아닌 종료 코드로 끝난다. <b>접속 비밀번호는 어떤 경로로도 출력하지
- * 않는다</b> — URL 안에 섞인 자격증명도 {@link SeedConsole#maskedUrl}로 가린다.
+ * <p>성공하면 작업별 결과를 출력하고 종료 코드 0으로 끝난다. 실패하면 원인을 요약하고 0이 아닌 종료 코드로 끝난다. <b>접속 비밀번호는 어떤 경로로도 출력하지 않는다</b> — URL 안에 섞인
+ * 자격증명도 {@link SeedConsole#maskedUrl}로 가린다.
  */
 final class SeedProgram {
     private SeedProgram() {}
@@ -36,8 +36,7 @@ final class SeedProgram {
         SeedConsole.info("  계정      : " + settings.jdbcUsername());
         SeedConsole.info("  시드 SQL  : " + settings.sqlPath());
         SeedConsole.info("  테스트 회원 : %d명".formatted(Math.max(0, settings.loadTestMemberCount())));
-        SeedConsole.info(
-                "  부하 회차  : %d개".formatted(Math.max(0, settings.loadTestPerformanceCount())));
+        SeedConsole.info("  부하 회차  : %d개".formatted(Math.max(0, settings.loadTestPerformanceCount())));
 
         final DataSource dataSource;
         try {
@@ -64,21 +63,16 @@ final class SeedProgram {
     }
 
     /**
-     * 실행 순서가 곧 계약이다. 공용 시드가 먼저 GRADES에 VIP/R/S/A code를 만들고, 부하 테스트 픽스처가 그 code를 재사용한다 — 순서가 바뀌면 같은
-     * code가 중복 생성돼 실패한다. 회원은 다른 두 작업과 독립이지만 마지막에 둔다(가장 빠르게 다시 만들 수 있는 데이터다).
+     * 실행 순서가 곧 계약이다. 공용 시드가 먼저 GRADES에 VIP/R/S/A code를 만들고, 부하 테스트 픽스처가 그 code를 재사용한다 — 순서가 바뀌면 같은 code가 중복 생성돼 실패한다.
+     * 회원은 다른 두 작업과 독립이지만 마지막에 둔다(가장 빠르게 다시 만들 수 있는 데이터다).
      */
     static List<SeedTask> tasks(
             final JdbcTemplate jdbcTemplate,
             final TransactionTemplate transactionTemplate,
             final SeedSettings settings) {
         return List.of(
-                new CuratedSeedLoader(
-                        jdbcTemplate,
-                        transactionTemplate,
-                        settings.sqlPath(),
-                        settings.batchSize()),
-                new LoadTestFixtureSeeder(
-                        jdbcTemplate, transactionTemplate, settings.loadTestPerformanceCount()),
+                new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
+                new LoadTestFixtureSeeder(jdbcTemplate, transactionTemplate, settings.loadTestPerformanceCount()),
                 new LoadTestMemberSeeder(
                         jdbcTemplate,
                         transactionTemplate,
@@ -94,10 +88,9 @@ final class SeedProgram {
             SeedConsole.info("      " + report.summary());
         }
 
-        final List<SeedRunner.Report> failures =
-                reports.stream()
-                        .filter(report -> report.status() == SeedRunner.Status.FAILED)
-                        .toList();
+        final List<SeedRunner.Report> failures = reports.stream()
+                .filter(report -> report.status() == SeedRunner.Status.FAILED)
+                .toList();
 
         if (failures.isEmpty()) {
             SeedConsole.info("");
@@ -111,11 +104,10 @@ final class SeedProgram {
             SeedConsole.error(indent(rootMessage(failure.failure())));
         }
 
-        final List<String> committed =
-                reports.stream()
-                        .filter(report -> report.status() == SeedRunner.Status.LOADED)
-                        .map(SeedRunner.Report::taskName)
-                        .toList();
+        final List<String> committed = reports.stream()
+                .filter(report -> report.status() == SeedRunner.Status.LOADED)
+                .map(SeedRunner.Report::taskName)
+                .toList();
         if (committed.isEmpty()) {
             SeedConsole.error("  커밋된 작업은 없습니다. DB 상태는 실행 전과 같습니다.");
         } else {

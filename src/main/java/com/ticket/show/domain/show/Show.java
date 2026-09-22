@@ -46,25 +46,25 @@ public class Show extends AuditedEntity {
     private long viewCount;
 
     /**
-     * 화면에 보여주는 판매 유형이다 — booking이 이 회차의 실제 접수 가능 여부를 판단하는 것과는 별개다. 컬럼명은 옛 {@code sale_type}을 그대로 써서
-     * 스키마가 바뀌지 않는다(ADR 0007).
+     * 화면에 보여주는 판매 유형이다 — booking이 이 회차의 실제 접수 가능 여부를 판단하는 것과는 별개다. 컬럼명은 옛 {@code sale_type}을 그대로 써서 스키마가 바뀌지 않는다(ADR
+     * 0007).
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "display_sale_type")
     private SaleType displaySaleType;
 
     /**
-     * 화면에 보여주는 판매 기간과 그 기간으로부터의 상태 판정을 함께 갖는다. 컬럼명은 옛 {@code sale_start_date}/{@code
-     * sale_end_date}를 그대로 써서 스키마가 바뀌지 않는다 (ADR 0007).
+     * 화면에 보여주는 판매 기간과 그 기간으로부터의 상태 판정을 함께 갖는다. 컬럼명은 옛 {@code sale_start_date}/{@code sale_end_date}를 그대로 써서 스키마가 바뀌지
+     * 않는다 (ADR 0007).
      */
-    @Embedded private DisplaySaleWindow displaySaleWindow;
+    @Embedded
+    private DisplaySaleWindow displaySaleWindow;
 
     private String image;
 
     /**
-     * venue module이 소유한 Venue의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로 {@code @ManyToOne}이 아니라 id 컬럼만
-     * 갖는다(ADR 0003 §4). 컬럼명은 옛 {@code @ManyToOne Venue venue} 암묵 매핑과 같은 {@code venue_id}를 그대로 써서
-     * 스키마가 바뀌지 않는다.
+     * venue module이 소유한 Venue의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로 {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR 0003 §4).
+     * 컬럼명은 옛 {@code @ManyToOne Venue venue} 암묵 매핑과 같은 {@code venue_id}를 그대로 써서 스키마가 바뀌지 않는다.
      */
     @Column(name = "venue_id")
     private @Nullable Long venueId;
@@ -72,9 +72,8 @@ public class Show extends AuditedEntity {
     private @Nullable Integer runningMinutes;
 
     /**
-     * Performer는 Show와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 — {@code
-     * docs/architecture.md}의 참조 규칙). 컬럼명은 옛 {@code @ManyToOne Performer performer} 암묵 매핑과 같은 {@code
-     * performer_id}를 그대로 쓴다.
+     * Performer는 Show와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 — {@code docs/architecture.md}의
+     * 참조 규칙). 컬럼명은 옛 {@code @ManyToOne Performer performer} 암묵 매핑과 같은 {@code performer_id}를 그대로 쓴다.
      */
     @Column(name = "performer_id")
     private @Nullable Long performerId;
@@ -108,8 +107,7 @@ public class Show extends AuditedEntity {
     }
 
     /**
-     * 화면에 보여줄 판매 상태다. 실제 주문 접수 가능 여부는 booking의 {@code PerformanceSalesPolicy}가 회차 단위로 따로 판단한다 — 이
-     * 메서드는 그 판단을 대체하지 않는다.
+     * 화면에 보여줄 판매 상태다. 실제 주문 접수 가능 여부는 booking의 {@code PerformanceSalesPolicy}가 회차 단위로 따로 판단한다 — 이 메서드는 그 판단을 대체하지 않는다.
      */
     public SaleDisplayStatus saleDisplayStatusAt(final LocalDateTime now) {
         return displaySaleWindow.statusAt(now);

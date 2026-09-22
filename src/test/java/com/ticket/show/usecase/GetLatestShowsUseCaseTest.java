@@ -26,64 +26,56 @@ import com.ticket.venue.api.VenueSnapshot;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetLatestShowsUseCaseTest {
-    @Mock private ShowQuerydslRepository showQuerydslRepository;
-    @Mock private VenueLookupApi venueLookup;
+    @Mock
+    private ShowQuerydslRepository showQuerydslRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
 
     @Spy
-    private ShowCardImagePathConverter showCardImagePathConverter =
-            new ShowCardImagePathConverter();
+    private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
 
-    @InjectMocks private GetLatestShowsUseCase useCase;
+    @InjectMocks
+    private GetLatestShowsUseCase useCase;
 
     @Test
     void 최신_공연은_최대_10개를_조회한다() {
         LocalDate startDate = LocalDate.of(2026, 3, 27);
         LocalDate endDate = LocalDate.of(2026, 3, 28);
         LocalDateTime createdAt = LocalDateTime.of(2026, 3, 1, 12, 0);
-        List<Show> rows =
-                List.of(
-                        ShowFixture.show(
-                                1L, "concert", 7L, startDate, endDate, null, 0L, createdAt));
-        when(showQuerydslRepository.findLatestShows(
-                        "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
+        List<Show> rows = List.of(ShowFixture.show(1L, "concert", 7L, startDate, endDate, null, 0L, createdAt));
+        when(showQuerydslRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(rows);
         when(venueLookup.getSummaries(Set.of(7L)))
-                .thenReturn(
-                        Map.of(
+                .thenReturn(Map.of(
+                        7L,
+                        new VenueSnapshot(
                                 7L,
-                                new VenueSnapshot(
-                                        7L,
-                                        "venue",
-                                        "주소",
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                                "venue",
+                                "주소",
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
-        GetLatestShowsUseCase.Output output =
-                useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
+        GetLatestShowsUseCase.Output output = useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
 
         assertThat(output.shows())
                 .containsExactly(
-                        new GetLatestShowsUseCase.Item(
-                                1L, "concert", "image", startDate, endDate, "venue", createdAt));
-        verify(showQuerydslRepository)
-                .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
+                        new GetLatestShowsUseCase.Item(1L, "concert", "image", startDate, endDate, "venue", createdAt));
+        verify(showQuerydslRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 
     @Test
     void 최신_공연이_없으면_빈_목록을_반환한다() {
-        when(showQuerydslRepository.findLatestShows(
-                        "CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
+        when(showQuerydslRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(List.of());
 
-        GetLatestShowsUseCase.Output output =
-                useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
+        GetLatestShowsUseCase.Output output = useCase.execute(new GetLatestShowsUseCase.Input("CONCERT"));
 
         assertThat(output.shows()).isEmpty();
-        verify(showQuerydslRepository)
-                .findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
+        verify(showQuerydslRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 }

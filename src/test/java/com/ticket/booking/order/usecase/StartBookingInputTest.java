@@ -27,8 +27,7 @@ class StartBookingInputTest {
     /** 좌석 목록의 null·빈 목록·중복은 도메인 불변식(RequestedSeatIds)이 판정한다. 같은 규칙을 Input에서 다시 실행하지 않는다. */
     @Test
     void 좌석_목록은_Input이_판정하지_않는다() {
-        assertThatCode(() -> new StartBookingUseCase.Input(1L, null, 10L, null))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> new StartBookingUseCase.Input(1L, null, 10L, null)).doesNotThrowAnyException();
         assertThatCode(() -> new StartBookingUseCase.Input(1L, List.of(), 10L, null))
                 .doesNotThrowAnyException();
     }

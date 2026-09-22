@@ -26,27 +26,15 @@ public class OAuth2SecurityConfig {
                         OAuth2EndpointConstants.CALLBACK_BASE_URI_PATTERN)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .oauth2Login(
-                        oauth2 ->
-                                oauth2.authorizationEndpoint(
-                                                authorization ->
-                                                        authorization.baseUri(
-                                                                OAuth2EndpointConstants
-                                                                        .AUTHORIZATION_BASE_URI))
-                                        .redirectionEndpoint(
-                                                redirection ->
-                                                        redirection.baseUri(
-                                                                OAuth2EndpointConstants
-                                                                        .CALLBACK_BASE_URI_PATTERN))
-                                        .userInfoEndpoint(
-                                                userInfo ->
-                                                        userInfo.userService(
-                                                                customOAuth2UserService))
-                                        .successHandler(oauth2AuthenticationSuccessHandler)
-                                        .failureHandler(oauth2AuthenticationFailureHandler));
+                .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(
+                                authorization -> authorization.baseUri(OAuth2EndpointConstants.AUTHORIZATION_BASE_URI))
+                        .redirectionEndpoint(
+                                redirection -> redirection.baseUri(OAuth2EndpointConstants.CALLBACK_BASE_URI_PATTERN))
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oauth2AuthenticationSuccessHandler)
+                        .failureHandler(oauth2AuthenticationFailureHandler));
         http.addFilterBefore(
                 new OAuth2FrontendRedirectCaptureFilter(frontendRedirectResolver),
                 OAuth2AuthorizationRequestRedirectFilter.class);

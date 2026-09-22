@@ -25,33 +25,21 @@ public class GetPerformanceScheduleListUseCase {
         }
     }
 
-    public record Output(
-            Long showId, Long selectedPerformanceId, List<PerformanceScheduleItem> schedules) {}
+    public record Output(Long showId, Long selectedPerformanceId, List<PerformanceScheduleItem> schedules) {}
 
-    public record PerformanceScheduleItem(
-            Long performanceId, Long performanceNo, java.time.LocalDateTime startTime) {}
+    public record PerformanceScheduleItem(Long performanceId, Long performanceNo, java.time.LocalDateTime startTime) {}
 
     public Output execute(final Input input) {
-        final Performance findPerformance =
-                performanceRepository
-                        .findById(input.performanceId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "공연을 찾을 수 없습니다. id=" + input.performanceId()));
+        final Performance findPerformance = performanceRepository
+                .findById(input.performanceId())
+                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
         final Long showId = findPerformance.getShowId();
 
         final List<PerformanceScheduleItem> scheduleItems =
-                performanceRepository
-                        .findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId)
-                        .stream()
-                        .map(
-                                performance ->
-                                        new PerformanceScheduleItem(
-                                                performance.getId(),
-                                                performance.getPerformanceNo(),
-                                                performance.getStartTime()))
+                performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId).stream()
+                        .map(performance -> new PerformanceScheduleItem(
+                                performance.getId(), performance.getPerformanceNo(), performance.getStartTime()))
                         .toList();
 
         return new Output(showId, findPerformance.getId(), scheduleItems);

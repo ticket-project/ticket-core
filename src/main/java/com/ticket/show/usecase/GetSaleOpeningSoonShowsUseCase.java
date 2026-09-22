@@ -34,9 +34,7 @@ public class GetSaleOpeningSoonShowsUseCase {
 
     public record Output(List<Item> shows) {}
 
-    /**
-     * 컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름 {@code saleStartDate}는 그대로 고정한다.
-     */
+    /** 컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름 {@code saleStartDate}는 그대로 고정한다. */
     public record Item(
             Long id,
             @Nullable String title,
@@ -45,10 +43,9 @@ public class GetSaleOpeningSoonShowsUseCase {
             @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt) {}
 
     public Output execute(final Input input) {
-        final List<Show> shows =
-                showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
-        final VenueDisplays venues =
-                VenueDisplays.load(venueLookup, shows.stream().map(Show::getVenueId).toList());
+        final List<Show> shows = showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
+        final VenueDisplays venues = VenueDisplays.load(
+                venueLookup, shows.stream().map(Show::getVenueId).toList());
         return new Output(shows.stream().map(show -> toItem(show, venues)).toList());
     }
 

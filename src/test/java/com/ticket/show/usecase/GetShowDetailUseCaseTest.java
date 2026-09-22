@@ -41,17 +41,26 @@ import com.ticket.venue.api.VenueSnapshot;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowDetailUseCaseTest {
-    private static final Clock FIXED_CLOCK =
-            Clock.fixed(
-                    LocalDateTime.of(2026, 3, 15, 12, 0).atZone(ZoneId.systemDefault()).toInstant(),
-                    ZoneId.systemDefault());
+    private static final Clock FIXED_CLOCK = Clock.fixed(
+            LocalDateTime.of(2026, 3, 15, 12, 0).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
 
-    @Mock private ShowQuerydslRepository showQuerydslRepository;
-    @Mock private ShowRepository showRepository;
-    @Mock private GradeRepository gradeRepository;
-    @Mock private PerformanceRepository performanceRepository;
-    @Mock private LikeQueryApi likeQuery;
-    @Mock private VenueLookupApi venueLookup;
+    @Mock
+    private ShowQuerydslRepository showQuerydslRepository;
+
+    @Mock
+    private ShowRepository showRepository;
+
+    @Mock
+    private GradeRepository gradeRepository;
+
+    @Mock
+    private PerformanceRepository performanceRepository;
+
+    @Mock
+    private LikeQueryApi likeQuery;
+
+    @Mock
+    private VenueLookupApi venueLookup;
 
     private GetShowDetailUseCase useCase() {
         return new GetShowDetailUseCase(
@@ -66,21 +75,20 @@ class GetShowDetailUseCaseTest {
     }
 
     private static Show show(final @Nullable Long venueId, final @Nullable Long performerId) {
-        final Show show =
-                new Show(
-                        "공연",
-                        "부제",
-                        "info",
-                        LocalDate.of(2026, 3, 10),
-                        LocalDate.of(2026, 3, 20),
-                        100L,
-                        SaleType.GENERAL,
-                        LocalDateTime.of(2026, 3, 1, 0, 0),
-                        LocalDateTime.of(2026, 3, 20, 23, 59),
-                        "/api/images/shows/1.png",
-                        venueId,
-                        performerId,
-                        120);
+        final Show show = new Show(
+                "공연",
+                "부제",
+                "info",
+                LocalDate.of(2026, 3, 10),
+                LocalDate.of(2026, 3, 20),
+                100L,
+                SaleType.GENERAL,
+                LocalDateTime.of(2026, 3, 1, 0, 0),
+                LocalDateTime.of(2026, 3, 20, 23, 59),
+                "/api/images/shows/1.png",
+                venueId,
+                performerId,
+                120);
         ReflectionTestUtils.setField(show, "id", 1L);
         return show;
     }
@@ -98,24 +106,21 @@ class GetShowDetailUseCaseTest {
         when(showRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
         when(showQuerydslRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(showQuerydslRepository.findPriceSummary(1L))
-                .thenReturn(
-                        new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
+                .thenReturn(new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
         when(venueLookup.findSummary(5L))
-                .thenReturn(
-                        Optional.of(
-                                new VenueSnapshot(
-                                        5L,
-                                        "예술의전당",
-                                        "주소",
-                                        Region.SEOUL,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                .thenReturn(Optional.of(new VenueSnapshot(
+                        5L,
+                        "예술의전당",
+                        "주소",
+                        Region.SEOUL,
+                        null,
+                        null,
+                        null,
+                        null,
+                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 
@@ -179,10 +184,8 @@ class GetShowDetailUseCaseTest {
     /** showId 계약은 Input 생성자 한곳에서만 판정한다. execute가 같은 검사를 반복하지 않는다. */
     @Test
     void showId가_유효하지_않으면_Input_생성에서_예외를_던진다() {
-        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null))
-                .isInstanceOf(InvalidRequestException.class);
-        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(0L))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(null)).isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new GetShowDetailUseCase.Input(0L)).isInstanceOf(InvalidRequestException.class);
     }
 
     /** Input을 아예 넘기지 않은 것은 사용자 입력 오류가 아니라 호출부의 프로그래머 오류다. */

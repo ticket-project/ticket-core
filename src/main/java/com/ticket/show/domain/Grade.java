@@ -16,9 +16,8 @@ import lombok.NoArgsConstructor;
 /**
  * 좌석 등급의 재사용 가능한 코드·이름이다.
  *
- * <p>가격이나 표시 순서를 갖지 않는다 — 둘 다 같은 Grade라도 회차(Performance)마다 달라질 수 있어 {@code PerformanceGrade}가 대신
- * 소유한다. 설계 배경은 {@code
- * docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md}를 본다.
+ * <p>가격이나 표시 순서를 갖지 않는다 — 둘 다 같은 Grade라도 회차(Performance)마다 달라질 수 있어 {@code PerformanceGrade}가 대신 소유한다. 설계 배경은
+ * {@code docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md}를 본다.
  */
 @Getter
 @Entity

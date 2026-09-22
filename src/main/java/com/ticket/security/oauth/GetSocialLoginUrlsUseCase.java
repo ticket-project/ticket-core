@@ -19,12 +19,11 @@ public class GetSocialLoginUrlsUseCase {
 
     public Output execute(final Input input) {
         final String normalizedBaseUrl = normalizeBaseUrl(input.baseUrl());
-        return new Output(
-                Map.of(
-                        GOOGLE_REGISTRATION_ID,
-                        buildSocialLoginUrl(normalizedBaseUrl, GOOGLE_REGISTRATION_ID),
-                        KAKAO_REGISTRATION_ID,
-                        buildSocialLoginUrl(normalizedBaseUrl, KAKAO_REGISTRATION_ID)));
+        return new Output(Map.of(
+                GOOGLE_REGISTRATION_ID,
+                buildSocialLoginUrl(normalizedBaseUrl, GOOGLE_REGISTRATION_ID),
+                KAKAO_REGISTRATION_ID,
+                buildSocialLoginUrl(normalizedBaseUrl, KAKAO_REGISTRATION_ID)));
     }
 
     private String buildSocialLoginUrl(final String baseUrl, final String registrationId) {

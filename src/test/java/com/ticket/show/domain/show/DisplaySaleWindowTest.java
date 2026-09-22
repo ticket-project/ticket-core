@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@link DisplaySaleWindow#statusAt}이 {@link SaleDisplayStatus} 판정의 유일한 원본이다(TD-12 해소). {@code
- * ShowQuerydslRepository}의 SQL 조건이 같은 결론을 내는지는 {@code ShowQuerydslRepositoryTest}가 실제 조회 결과로 고정한다.
+ * {@link DisplaySaleWindow#statusAt}이 {@link SaleDisplayStatus} 판정의 유일한 원본이다(TD-12 해소). {@code ShowQuerydslRepository}의
+ * SQL 조건이 같은 결론을 내는지는 {@code ShowQuerydslRepositoryTest}가 실제 조회 결과로 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class DisplaySaleWindowTest {
@@ -21,7 +21,8 @@ class DisplaySaleWindowTest {
 
     @Test
     void 시작만_없으면_CLOSED다() {
-        DisplaySaleWindow window = new DisplaySaleWindow(null, LocalDateTime.now().plusHours(1));
+        DisplaySaleWindow window =
+                new DisplaySaleWindow(null, LocalDateTime.now().plusHours(1));
 
         assertThat(window.statusAt(LocalDateTime.now())).isEqualTo(SaleDisplayStatus.CLOSED);
     }
@@ -35,18 +36,16 @@ class DisplaySaleWindowTest {
 
     @Test
     void 판매시작전이면_BEFORE_OPEN이다() {
-        DisplaySaleWindow window =
-                new DisplaySaleWindow(
-                        LocalDateTime.now().plusMinutes(10), LocalDateTime.now().plusHours(1));
+        DisplaySaleWindow window = new DisplaySaleWindow(
+                LocalDateTime.now().plusMinutes(10), LocalDateTime.now().plusHours(1));
 
         assertThat(window.statusAt(LocalDateTime.now())).isEqualTo(SaleDisplayStatus.BEFORE_OPEN);
     }
 
     @Test
     void 판매기간중이면_ON_SALE이다() {
-        DisplaySaleWindow window =
-                new DisplaySaleWindow(
-                        LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10));
+        DisplaySaleWindow window = new DisplaySaleWindow(
+                LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10));
 
         assertThat(window.statusAt(LocalDateTime.now())).isEqualTo(SaleDisplayStatus.ON_SALE);
     }
@@ -69,9 +68,8 @@ class DisplaySaleWindowTest {
 
     @Test
     void 판매종료후면_CLOSED다() {
-        DisplaySaleWindow window =
-                new DisplaySaleWindow(
-                        LocalDateTime.now().minusHours(1), LocalDateTime.now().minusMinutes(10));
+        DisplaySaleWindow window = new DisplaySaleWindow(
+                LocalDateTime.now().minusHours(1), LocalDateTime.now().minusMinutes(10));
 
         assertThat(window.statusAt(LocalDateTime.now())).isEqualTo(SaleDisplayStatus.CLOSED);
     }

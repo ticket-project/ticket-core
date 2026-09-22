@@ -20,22 +20,10 @@ class ShowSeatMapControllerContractTest {
     void 기존_프론트의_공연별_좌석_배치도_계약을_제공한다() throws Exception {
         GetShowSeatMapUseCase useCase = org.mockito.Mockito.mock(GetShowSeatMapUseCase.class);
         when(useCase.execute(new GetShowSeatMapUseCase.Input(1L)))
-                .thenReturn(
-                        new GetShowSeatMapUseCase.Output(
-                                List.of(
-                                        new GetShowSeatMapUseCase.SeatMapEntry(
-                                                101L,
-                                                1,
-                                                "가",
-                                                "A",
-                                                "1",
-                                                10.0,
-                                                20.0,
-                                                "VIP",
-                                                "VIP석",
-                                                BigDecimal.valueOf(170000)))));
-        MockMvc mockMvc =
-                MockMvcBuilders.standaloneSetup(new ShowSeatMapController(useCase)).build();
+                .thenReturn(new GetShowSeatMapUseCase.Output(List.of(new GetShowSeatMapUseCase.SeatMapEntry(
+                        101L, 1, "가", "A", "1", 10.0, 20.0, "VIP", "VIP석", BigDecimal.valueOf(170000)))));
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new ShowSeatMapController(useCase))
+                .build();
 
         mockMvc.perform(get("/api/v1/shows/1/seats"))
                 .andExpect(status().isOk())

@@ -43,18 +43,14 @@ public class GetShowSeatMapUseCase {
             BigDecimal price) {}
 
     public Output execute(final Input input) {
-        final Long performanceId =
-                performanceVenueLayoutCatalog
-                        .findRepresentativePerformanceId(input.showId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "공연 회차를 찾을 수 없습니다. showId=" + input.showId()));
+        final Long performanceId = performanceVenueLayoutCatalog
+                .findRepresentativePerformanceId(input.showId())
+                .orElseThrow(() -> new NotFoundException("공연 회차를 찾을 수 없습니다. showId=" + input.showId()));
         final GetPerformanceSeatMapUseCase.Output performanceSeatMap =
-                getPerformanceSeatMapUseCase.execute(
-                        new GetPerformanceSeatMapUseCase.Input(performanceId));
+                getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(performanceId));
 
-        return new Output(performanceSeatMap.seats().stream().map(this::toSeatMapEntry).toList());
+        return new Output(
+                performanceSeatMap.seats().stream().map(this::toSeatMapEntry).toList());
     }
 
     private SeatMapEntry toSeatMapEntry(final GetPerformanceSeatMapUseCase.SeatMapEntry seat) {

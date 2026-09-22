@@ -25,12 +25,8 @@ public class HoldKeyExpirationHandler implements RedisKeyExpirationHandler {
 
     @Override
     public void handle(final String expiredKey) {
-        final HoldRedisKey.HoldMetaKey holdMetaKey =
-                HoldRedisKey.tryParseHoldMetaKey(expiredKey)
-                        .orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "지원하지 않는 홀드 만료 키입니다: " + expiredKey));
+        final HoldRedisKey.HoldMetaKey holdMetaKey = HoldRedisKey.tryParseHoldMetaKey(expiredKey)
+                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 홀드 만료 키입니다: " + expiredKey));
 
         expireOrderUseCase.expireByHoldKey(holdMetaKey.holdKey(), LocalDateTime.now(clock));
         log.info("홀드 만료 이벤트 처리: holdKey={}", holdMetaKey.holdKey());

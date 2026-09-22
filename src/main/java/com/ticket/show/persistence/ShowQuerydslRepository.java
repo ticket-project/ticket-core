@@ -52,16 +52,15 @@ import com.ticket.show.usecase.ShowSort;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세·요약 배치가 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show}
- * 엔티티나 그 조각이고, venue 표시값 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
+ * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세·요약 배치가 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그 조각이고, venue 표시값
+ * 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
  *
  * <p>밖으로 내보내는 것은 show 자기 엔티티와 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
  *
- * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다(use case가 {@code VenueLookupApi}로 해석한다). {@code null}은 지역
- * 조건 없음이고, <b>빈 집합은 조건은 있으나 해당 공연장이 없다는 뜻이라 결과가 0건</b>이다 — 둘을 같게 다루면 안 된다.
+ * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다(use case가 {@code VenueLookupApi}로 해석한다). {@code null}은 지역 조건 없음이고, <b>빈 집합은
+ * 조건은 있으나 해당 공연장이 없다는 뜻이라 결과가 0건</b>이다 — 둘을 같게 다루면 안 된다.
  *
- * <p>정렬 정의·마감 판정 시각·커서 비교 규칙은 이 클래스 안에 한 벌만 둔다. 정렬이 마감 여부를 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12가 남긴
- * 교훈).
+ * <p>정렬 정의·마감 판정 시각·커서 비교 규칙은 이 클래스 안에 한 벌만 둔다. 정렬이 마감 여부를 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12가 남긴 교훈).
  */
 @Repository
 @RequiredArgsConstructor
@@ -72,10 +71,7 @@ public class ShowQuerydslRepository {
     // 공연 목록 · 검색 ----------------------------------------------------------
 
     public CursorPage<Show, ShowCursor> findAllBySearch(
-            final ShowListParam param,
-            final @Nullable Set<Long> venueIds,
-            final int size,
-            final ShowSort sort) {
+            final ShowListParam param, final @Nullable Set<Long> venueIds, final int size, final ShowSort sort) {
         final SortOrder sortOrder = resolveSortOrder(sort, param.getCursor());
         final BooleanBuilder where = mainListCondition(param, venueIds, sortOrder);
 
@@ -83,51 +79,49 @@ public class ShowQuerydslRepository {
     }
 
     /**
-     * 상단 최신 공연 배너다. 전체 목록의 최신순과 같은 순서를 쓴다 — <b>마감되지 않은 공연 먼저, 등록일 내림차순, 등록일이 같으면 id 내림차순</b>. 배너와
-     * 목록이 다른 순서를 쓰면 같은 화면에서 "최신"의 의미가 둘이 된다.
+     * 상단 최신 공연 배너다. 전체 목록의 최신순과 같은 순서를 쓴다 — <b>마감되지 않은 공연 먼저, 등록일 내림차순, 등록일이 같으면 id 내림차순</b>. 배너와 목록이 다른 순서를 쓰면 같은 화면에서
+     * "최신"의 의미가 둘이 된다.
      */
     public List<Show> findLatestShows(final String categoryCode, final int limit) {
         final SortOrder sortOrder = resolveSortOrder(ShowSort.LATEST);
-        final List<Long> showIds =
-                queryFactory
-                        .select(show.id)
-                        .from(show)
-                        .leftJoin(showGenre)
-                        .on(showGenre.showId.eq(show.id))
-                        .leftJoin(genre)
-                        .on(showGenre.genreId.eq(genre.id))
-                        .leftJoin(category)
-                        .on(genre.categoryId.eq(category.id))
-                        .where(categoryCodeEq(categoryCode))
-                        // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다.
-                        .groupBy(show.id, show.createdAt)
-                        .orderBy(orderSpecifiers(sortOrder))
-                        .limit(limit)
-                        .fetch();
+        final List<Long> showIds = queryFactory
+                .select(show.id)
+                .from(show)
+                .leftJoin(showGenre)
+                .on(showGenre.showId.eq(show.id))
+                .leftJoin(genre)
+                .on(showGenre.genreId.eq(genre.id))
+                .leftJoin(category)
+                .on(genre.categoryId.eq(category.id))
+                .where(categoryCodeEq(categoryCode))
+                // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다.
+                .groupBy(show.id, show.createdAt)
+                .orderBy(orderSpecifiers(sortOrder))
+                .limit(limit)
+                .fetch();
 
         return findShowsInIdOrder(showIds);
     }
 
     public List<Show> findSaleOpeningSoonSummaries(final String categoryCode, final int limit) {
-        final List<Long> showIds =
-                queryFactory
-                        // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(H2).
-                        .select(show.id, show.displaySaleWindow.startsAt)
-                        .distinct()
-                        .from(show)
-                        .leftJoin(showGenre)
-                        .on(showGenre.showId.eq(show.id))
-                        .leftJoin(genre)
-                        .on(showGenre.genreId.eq(genre.id))
-                        .leftJoin(category)
-                        .on(genre.categoryId.eq(category.id))
-                        .where(saleOpeningSoonSummaryCondition(categoryCode))
-                        .orderBy(show.displaySaleWindow.startsAt.asc())
-                        .limit(limit)
-                        .fetch()
-                        .stream()
-                        .map(tuple -> required(tuple, show.id))
-                        .toList();
+        final List<Long> showIds = queryFactory
+                // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(H2).
+                .select(show.id, show.displaySaleWindow.startsAt)
+                .distinct()
+                .from(show)
+                .leftJoin(showGenre)
+                .on(showGenre.showId.eq(show.id))
+                .leftJoin(genre)
+                .on(showGenre.genreId.eq(genre.id))
+                .leftJoin(category)
+                .on(genre.categoryId.eq(category.id))
+                .where(saleOpeningSoonSummaryCondition(categoryCode))
+                .orderBy(show.displaySaleWindow.startsAt.asc())
+                .limit(limit)
+                .fetch()
+                .stream()
+                .map(tuple -> required(tuple, show.id))
+                .toList();
 
         return findShowsInIdOrder(showIds);
     }
@@ -154,21 +148,19 @@ public class ShowQuerydslRepository {
         return findCursorPage(size, criteria.getCursor(), where, sortOrder);
     }
 
-    public long countSearchShows(
-            final ShowSearchCriteria criteria, final @Nullable Set<Long> venueIds) {
+    public long countSearchShows(final ShowSearchCriteria criteria, final @Nullable Set<Long> venueIds) {
         final BooleanBuilder where = searchCondition(criteria, venueIds, null);
-        final Long count =
-                queryFactory
-                        .select(show.id.countDistinct())
-                        .from(show)
-                        .leftJoin(showGenre)
-                        .on(showGenre.showId.eq(show.id))
-                        .leftJoin(genre)
-                        .on(showGenre.genreId.eq(genre.id))
-                        .leftJoin(category)
-                        .on(genre.categoryId.eq(category.id))
-                        .where(where)
-                        .fetchOne();
+        final Long count = queryFactory
+                .select(show.id.countDistinct())
+                .from(show)
+                .leftJoin(showGenre)
+                .on(showGenre.showId.eq(show.id))
+                .leftJoin(genre)
+                .on(showGenre.genreId.eq(genre.id))
+                .leftJoin(category)
+                .on(genre.categoryId.eq(category.id))
+                .where(where)
+                .fetchOne();
         return count != null ? count : 0L;
     }
 
@@ -190,9 +182,7 @@ public class ShowQuerydslRepository {
 
     /** 메인 목록: 카테고리 · 지역 · 장르. 공연 임박순으로 정렬할 때만 이미 시작한 공연을 뺀다. */
     private BooleanBuilder mainListCondition(
-            final ShowListParam param,
-            final @Nullable Set<Long> venueIds,
-            final SortOrder sortOrder) {
+            final ShowListParam param, final @Nullable Set<Long> venueIds, final SortOrder sortOrder) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(categoryCodeEq(param.getCategory()));
         where.and(venueIdIn(venueIds));
@@ -232,8 +222,8 @@ public class ShowQuerydslRepository {
     /**
      * 검색: 키워드 · 카테고리 · 지역 · 공연 시작일 범위 · 판매 표시 상태.
      *
-     * <p>판매 표시 상태 판정 시각과 공연 임박순의 기준 날짜는 <b>같은 now</b>를 쓴다. 집계는 정렬을 모르므로 {@code sortOrder}가 null로
-     * 들어오고, 그러면 공연 임박순 조건이 붙지 않는다.
+     * <p>판매 표시 상태 판정 시각과 공연 임박순의 기준 날짜는 <b>같은 now</b>를 쓴다. 집계는 정렬을 모르므로 {@code sortOrder}가 null로 들어오고, 그러면 공연 임박순 조건이
+     * 붙지 않는다.
      */
     private BooleanBuilder searchCondition(
             final ShowSearchCriteria criteria,
@@ -258,18 +248,16 @@ public class ShowQuerydslRepository {
     /**
      * 지역 조건은 application이 이미 venueId로 해석해 넘긴다.
      *
-     * <p><b>{@code null}과 빈 집합을 같게 다루면 안 된다.</b> null은 지역 조건이 없다는 뜻이라 조건을 걸지 않고, 공연장이 없는 공연까지 전부
-     * 나온다. 빈 집합은 조건은 있는데 그 지역에 공연장이 없다는 뜻이고, Querydsl이 {@code in(빈 컬렉션)}을 거짓 조건으로 직렬화해 결과가 0건이 된다 —
-     * 이것을 "조건 없음"으로 되돌리면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다.
+     * <p><b>{@code null}과 빈 집합을 같게 다루면 안 된다.</b> null은 지역 조건이 없다는 뜻이라 조건을 걸지 않고, 공연장이 없는 공연까지 전부 나온다. 빈 집합은 조건은 있는데 그
+     * 지역에 공연장이 없다는 뜻이고, Querydsl이 {@code in(빈 컬렉션)}을 거짓 조건으로 직렬화해 결과가 0건이 된다 — 이것을 "조건 없음"으로 되돌리면 "그 지역에 공연장이 없다"가 "전체
+     * 목록"으로 조용히 바뀐다.
      */
     private static @Nullable BooleanExpression venueIdIn(final @Nullable Set<Long> venueIds) {
         return venueIds == null ? null : show.venueId.in(venueIds);
     }
 
     private static void appendShowStartApproachingCondition(
-            final BooleanBuilder where,
-            final @Nullable SortOrder sortOrder,
-            final LocalDate today) {
+            final BooleanBuilder where, final @Nullable SortOrder sortOrder, final LocalDate today) {
         if (sortOrder != null && ShowSort.SHOW_START_APPROACHING.equals(sortOrder.key())) {
             where.and(show.startDate.goe(today));
         }
@@ -296,11 +284,10 @@ public class ShowQuerydslRepository {
     // (TD-12: 예전에는 이 null 처리가 도메인 판정과 달라서 필터 결과가 어긋났다).
 
     /**
-     * 마감(={@code CLOSED})이면 1, 아니면 0. 최신순 정렬에서 마감된 공연을 뒤로 보내는 데 쓴다 (ORDER BY 이 값 ASC -> 마감되지 않은 공연이
-     * 먼저).
+     * 마감(={@code CLOSED})이면 1, 아니면 0. 최신순 정렬에서 마감된 공연을 뒤로 보내는 데 쓴다 (ORDER BY 이 값 ASC -> 마감되지 않은 공연이 먼저).
      *
-     * <p>판정은 {@link #saleDisplayStatusCondition}의 {@code CLOSED}와 같은 식이다 — 마감 여부를 정렬이 따로 판단하면 필터
-     * 결과와 정렬 결과가 어긋난다(TD-12가 남긴 교훈).
+     * <p>판정은 {@link #saleDisplayStatusCondition}의 {@code CLOSED}와 같은 식이다 — 마감 여부를 정렬이 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12가
+     * 남긴 교훈).
      */
     private static NumberExpression<Integer> saleClosedRank(final LocalDateTime now) {
         return new CaseBuilder()
@@ -322,10 +309,10 @@ public class ShowQuerydslRepository {
         return switch (saleDisplayStatus) {
             case BEFORE_OPEN -> startsAt.isNotNull().and(endsAt.isNotNull()).and(startsAt.gt(now));
             case ON_SALE ->
-                    startsAt.isNotNull()
-                            .and(endsAt.isNotNull())
-                            .and(startsAt.loe(now))
-                            .and(endsAt.goe(now));
+                startsAt.isNotNull()
+                        .and(endsAt.isNotNull())
+                        .and(startsAt.loe(now))
+                        .and(endsAt.goe(now));
             case CLOSED -> startsAt.isNull().or(endsAt.isNull()).or(endsAt.lt(now));
         };
     }
@@ -338,9 +325,7 @@ public class ShowQuerydslRepository {
     // 등록일이 같으면 id 내림차순. 마감 판정에는 시각이 필요하고, 그 시각은 페이지 사이에 흔들리면
     // 안 되므로(ShowCursor 참고) SortOrder가 들고 다닌다.
 
-    /**
-     * @param saleClosedEvaluatedAt 마감 여부 판정 시각. {@link ShowSort#LATEST}에서만 값이 있다.
-     */
+    /** @param saleClosedEvaluatedAt 마감 여부 판정 시각. {@link ShowSort#LATEST}에서만 값이 있다. */
     private record SortOrder(
             ShowSort key,
             Sort.Direction direction,
@@ -349,8 +334,8 @@ public class ShowQuerydslRepository {
     /**
      * 첫 페이지는 현재 시각으로, 이어지는 페이지는 커서에 적힌 시각으로 마감 여부를 판정한다.
      *
-     * @throws InvalidRequestException 최신순인데 커서에 판정 시각이 없거나 형식이 틀릴 때. 정렬 규칙이 바뀌기 전에 발급된 커서가 여기에 걸린다
-     *     — 조용히 섞인 순서를 내놓는 것보다 낫다.
+     * @throws InvalidRequestException 최신순인데 커서에 판정 시각이 없거나 형식이 틀릴 때. 정렬 규칙이 바뀌기 전에 발급된 커서가 여기에 걸린다 — 조용히 섞인 순서를 내놓는 것보다
+     *     낫다.
      */
     private SortOrder resolveSortOrder(final ShowSort sort, final @Nullable ShowCursor cursor) {
         final Sort.Direction direction =
@@ -368,13 +353,9 @@ public class ShowQuerydslRepository {
     /** ORDER BY에 그대로 넘길 정렬 키 전체다. 페이지 조회와 결과 재조회가 같은 배열을 쓴다. */
     private OrderSpecifier<?>[] orderSpecifiers(final SortOrder sortOrder) {
         if (ShowSort.LATEST.equals(sortOrder.key())) {
-            return new OrderSpecifier<?>[] {
-                saleClosedRank(sortOrder).asc(), show.createdAt.desc(), show.id.desc()
-            };
+            return new OrderSpecifier<?>[] {saleClosedRank(sortOrder).asc(), show.createdAt.desc(), show.id.desc()};
         }
-        return new OrderSpecifier<?>[] {
-            primaryOrderSpecifier(sortOrder), tieBreakerOrder(sortOrder)
-        };
+        return new OrderSpecifier<?>[] {primaryOrderSpecifier(sortOrder), tieBreakerOrder(sortOrder)};
     }
 
     private static OrderSpecifier<?> primaryOrderSpecifier(final SortOrder sortOrder) {
@@ -394,8 +375,7 @@ public class ShowQuerydslRepository {
     private static NumberExpression<Integer> saleClosedRank(final SortOrder sortOrder) {
         final LocalDateTime evaluatedAt = sortOrder.saleClosedEvaluatedAt();
         if (evaluatedAt == null) {
-            throw new IllegalStateException(
-                    "마감 여부 판정 시각이 없습니다. 최신순이 아닌 정렬에서 호출했습니다: " + sortOrder.key());
+            throw new IllegalStateException("마감 여부 판정 시각이 없습니다. 최신순이 아닌 정렬에서 호출했습니다: " + sortOrder.key());
         }
         return saleClosedRank(evaluatedAt);
     }
@@ -429,9 +409,7 @@ public class ShowQuerydslRepository {
     // 방향이어야 페이지 사이에 중복·누락이 생기지 않는다.
 
     private static void applyCursor(
-            final BooleanBuilder where,
-            final @Nullable ShowCursor cursor,
-            final SortOrder sortOrder) {
+            final BooleanBuilder where, final @Nullable ShowCursor cursor, final SortOrder sortOrder) {
         if (cursor == null) {
             return;
         }
@@ -443,8 +421,7 @@ public class ShowQuerydslRepository {
         }
     }
 
-    private static ShowCursor buildNextPosition(
-            final List<Tuple> rows, final int size, final SortOrder sortOrder) {
+    private static ShowCursor buildNextPosition(final List<Tuple> rows, final int size, final SortOrder sortOrder) {
         final Tuple lastRow = rows.get(size - 1);
         // show.id는 이 projection에 항상 들어 있는 PK라 조회된 행에서는 값이 비어 있을 수 없다.
         final Long lastId = required(lastRow, show.id);
@@ -454,8 +431,7 @@ public class ShowQuerydslRepository {
         }
         // 위에서 최신순이 아니면 이미 반환했고, 최신순 SortOrder는 판정 시각을 반드시 갖는다.
         final LocalDateTime evaluatedAt =
-                Objects.requireNonNull(
-                        sortOrder.saleClosedEvaluatedAt(), "최신순 SortOrder에 마감 판정 시각이 없습니다.");
+                Objects.requireNonNull(sortOrder.saleClosedEvaluatedAt(), "최신순 SortOrder에 마감 판정 시각이 없습니다.");
         return new ShowCursor(
                 sortOrder.key(),
                 sortOrder.direction().name(),
@@ -465,20 +441,14 @@ public class ShowQuerydslRepository {
                 evaluatedAt.toString());
     }
 
-    /**
-     * 마지막 행의 마감 여부다. 판정은 {@link DisplaySaleWindow#statusAt}이 한다 — SQL 쪽 {@code CASE}와 같은 규칙이어야 커서
-     * 경계가 정렬과 어긋나지 않는다.
-     */
+    /** 마지막 행의 마감 여부다. 판정은 {@link DisplaySaleWindow#statusAt}이 한다 — SQL 쪽 {@code CASE}와 같은 규칙이어야 커서 경계가 정렬과 어긋나지 않는다. */
     private static int saleClosedRankOf(final Tuple lastRow, final LocalDateTime evaluatedAt) {
-        final DisplaySaleWindow window =
-                new DisplaySaleWindow(
-                        lastRow.get(show.displaySaleWindow.startsAt),
-                        lastRow.get(show.displaySaleWindow.endsAt));
+        final DisplaySaleWindow window = new DisplaySaleWindow(
+                lastRow.get(show.displaySaleWindow.startsAt), lastRow.get(show.displaySaleWindow.endsAt));
         return SaleDisplayStatus.CLOSED.equals(window.statusAt(evaluatedAt)) ? 1 : 0;
     }
 
-    private static void validateCursorMatchesRequest(
-            final ShowCursor cursor, final SortOrder sortOrder) {
+    private static void validateCursorMatchesRequest(final ShowCursor cursor, final SortOrder sortOrder) {
         if (!sortOrder.key().equals(cursor.sort())) {
             throw new IllegalArgumentException("cursor.sort와 요청 sort가 일치하지 않습니다.");
         }
@@ -498,8 +468,7 @@ public class ShowQuerydslRepository {
         }
     }
 
-    private static BooleanExpression cursorCondition(
-            final ShowCursor cursor, final SortOrder sortOrder) {
+    private static BooleanExpression cursorCondition(final ShowCursor cursor, final SortOrder sortOrder) {
         final Long lastId = cursor.lastId();
         return switch (sortOrder.key()) {
             case POPULAR -> {
@@ -536,10 +505,11 @@ public class ShowQuerydslRepository {
             case LATEST -> required(lastRow, show.createdAt).toString();
             // 이 정렬의 키가 startDate라 마지막 행에는 값이 있다.
             case SHOW_START_APPROACHING ->
-                    Objects.requireNonNull(lastRow.get(show.startDate)).toString();
+                Objects.requireNonNull(lastRow.get(show.startDate)).toString();
             // 이 정렬은 판매 시작이 있는 행만 대상으로 하므로 마지막 행에도 값이 있다.
             case SALE_START_APPROACHING ->
-                    Objects.requireNonNull(lastRow.get(show.displaySaleWindow.startsAt)).toString();
+                Objects.requireNonNull(lastRow.get(show.displaySaleWindow.startsAt))
+                        .toString();
         };
     }
 
@@ -548,14 +518,11 @@ public class ShowQuerydslRepository {
     /**
      * 커서 페이지 한 장을 읽는다. 1단계에서 정렬·커서로 id를 뽑고, 2단계에서 그 id로 본문을 다시 읽는다.
      *
-     * <p><b>2단계에도 1단계와 같은 {@code orderSpecifiers}를 건다.</b> {@code IN (...)} 조회가 돌려주는 순서를 믿지 않기
-     * 위해서다. 1단계 query, 페이지 크기 계산, 다음 커서는 여기서 한 번만 정의한다.
+     * <p><b>2단계에도 1단계와 같은 {@code orderSpecifiers}를 건다.</b> {@code IN (...)} 조회가 돌려주는 순서를 믿지 않기 위해서다. 1단계 query, 페이지 크기
+     * 계산, 다음 커서는 여기서 한 번만 정의한다.
      */
     private CursorPage<Show, ShowCursor> findCursorPage(
-            final int size,
-            final @Nullable ShowCursor cursor,
-            final BooleanBuilder where,
-            final SortOrder sortOrder) {
+            final int size, final @Nullable ShowCursor cursor, final BooleanBuilder where, final SortOrder sortOrder) {
         applyCursor(where, cursor, sortOrder);
 
         final OrderSpecifier<?>[] orderSpecifiers = orderSpecifiers(sortOrder);
@@ -611,8 +578,7 @@ public class ShowQuerydslRepository {
     }
 
     /** 페이지 2단계다. 1단계가 고른 id의 {@code Show}를 1단계와 같은 정렬로 한 번에 읽는다. */
-    private List<Show> fetchShows(
-            final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
+    private List<Show> fetchShows(final List<Long> showIds, final OrderSpecifier<?>[] orderSpecifiers) {
         return queryFactory
                 .selectFrom(show)
                 .where(show.id.in(showIds))
@@ -621,17 +587,16 @@ public class ShowQuerydslRepository {
     }
 
     /**
-     * 배너 2단계다. 정렬은 1단계가 이미 끝냈으므로 {@code IN (...)} 결과를 그 id 순서대로 다시 늘어놓는다 — 정렬식을 두 번 쓰지 않으니 동률의 순서가
-     * 두 query 사이에서 흔들리지 않는다.
+     * 배너 2단계다. 정렬은 1단계가 이미 끝냈으므로 {@code IN (...)} 결과를 그 id 순서대로 다시 늘어놓는다 — 정렬식을 두 번 쓰지 않으니 동률의 순서가 두 query 사이에서 흔들리지
+     * 않는다.
      */
     private List<Show> findShowsInIdOrder(final List<Long> showIds) {
         if (showIds.isEmpty()) {
             return List.of();
         }
 
-        final Map<Long, Show> showsById =
-                queryFactory.selectFrom(show).where(show.id.in(showIds)).fetch().stream()
-                        .collect(Collectors.toMap(Show::getId, showEntity -> showEntity));
+        final Map<Long, Show> showsById = queryFactory.selectFrom(show).where(show.id.in(showIds)).fetch().stream()
+                .collect(Collectors.toMap(Show::getId, showEntity -> showEntity));
 
         return showIds.stream().map(showsById::get).filter(Objects::nonNull).toList();
     }
@@ -640,32 +605,30 @@ public class ShowQuerydslRepository {
         return rows.stream().map(tuple -> tuple.get(show.id)).toList();
     }
 
-    /**
-     * 목록 한 페이지의 장르 이름을 공연 id 전체로 한 번에 읽는다 — 목록 크기에 따라 query가 늘지 않는다. 장르가 없는 공연은 map에 들어오지 않으므로 호출자가
-     * 빈 목록으로 본다.
-     */
+    /** 목록 한 페이지의 장르 이름을 공연 id 전체로 한 번에 읽는다 — 목록 크기에 따라 query가 늘지 않는다. 장르가 없는 공연은 map에 들어오지 않으므로 호출자가 빈 목록으로 본다. */
     public Map<Long, List<String>> findGenreNamesByShowIds(final List<Long> showIds) {
         if (showIds.isEmpty()) {
             return Map.of();
         }
 
-        final List<Tuple> genreTuples =
-                queryFactory
-                        .select(show.id, genre.name)
-                        .from(show)
-                        .leftJoin(showGenre)
-                        .on(showGenre.showId.eq(show.id))
-                        .leftJoin(genre)
-                        .on(showGenre.genreId.eq(genre.id))
-                        .where(show.id.in(showIds))
-                        .fetch();
+        final List<Tuple> genreTuples = queryFactory
+                .select(show.id, genre.name)
+                .from(show)
+                .leftJoin(showGenre)
+                .on(showGenre.showId.eq(show.id))
+                .leftJoin(genre)
+                .on(showGenre.genreId.eq(genre.id))
+                .where(show.id.in(showIds))
+                .fetch();
 
         final Map<Long, List<String>> genreNamesByShowId = new LinkedHashMap<>();
         for (Tuple tuple : genreTuples) {
             final Long showId = required(tuple, show.id);
             final String genreName = tuple.get(genre.name);
             if (genreName != null) {
-                genreNamesByShowId.computeIfAbsent(showId, key -> new ArrayList<>()).add(genreName);
+                genreNamesByShowId
+                        .computeIfAbsent(showId, key -> new ArrayList<>())
+                        .add(genreName);
             }
         }
         return genreNamesByShowId;
@@ -674,26 +637,27 @@ public class ShowQuerydslRepository {
     // 상세 조회 조각 ------------------------------------------------------------
 
     /**
-     * Performer는 Show와 다른 aggregate라 {@code performerId} scalar로만 연결된다 — 옛 {@code fetchJoin()} 대신
-     * 식별자로 따로 조회한다. 같은 module 안의 다른 aggregate라 venue와 달리 여기서 직접 조회해도 된다.
+     * Performer는 Show와 다른 aggregate라 {@code performerId} scalar로만 연결된다 — 옛 {@code fetchJoin()} 대신 식별자로 따로 조회한다. 같은
+     * module 안의 다른 aggregate라 venue와 달리 여기서 직접 조회해도 된다.
      */
     public Optional<Performer> findPerformer(final Long performerId) {
-        return Optional.ofNullable(
-                queryFactory.selectFrom(performer).where(performer.id.eq(performerId)).fetchOne());
+        return Optional.ofNullable(queryFactory
+                .selectFrom(performer)
+                .where(performer.id.eq(performerId))
+                .fetchOne());
     }
 
     /**
-     * ADR 0005: show-level 가격표는 없다. 이 show의 모든 Performance에 배정된 PerformanceGrade.price 중 최소/최대만
-     * 파생한다 — 대표 회차 하나의 가격을 show 전체 가격처럼 보여주지 않는다.
+     * ADR 0005: show-level 가격표는 없다. 이 show의 모든 Performance에 배정된 PerformanceGrade.price 중 최소/최대만 파생한다 — 대표 회차 하나의 가격을
+     * show 전체 가격처럼 보여주지 않는다.
      */
     public @Nullable PriceSummary findPriceSummary(final Long showId) {
-        final Tuple result =
-                queryFactory
-                        .select(performanceGrade.price.min(), performanceGrade.price.max())
-                        .from(performanceGrade)
-                        .join(performanceGrade.performance, performance)
-                        .where(performance.showId.eq(showId))
-                        .fetchOne();
+        final Tuple result = queryFactory
+                .select(performanceGrade.price.min(), performanceGrade.price.max())
+                .from(performanceGrade)
+                .join(performanceGrade.performance, performance)
+                .where(performance.showId.eq(showId))
+                .fetchOne();
         if (result == null) {
             return null;
         }
@@ -706,17 +670,15 @@ public class ShowQuerydslRepository {
     }
 
     /**
-     * 기존 프론트 계약에는 공연 가격표가 필요하므로 가장 이른 회차의 등급 배정을 대표값으로 제공한다. 등급 이름은 {@link #findGradeNames}로 따로 읽는다
-     * — Grade는 PerformanceGrade와 다른 aggregate라 id로만 연결된다.
+     * 기존 프론트 계약에는 공연 가격표가 필요하므로 가장 이른 회차의 등급 배정을 대표값으로 제공한다. 등급 이름은 {@link #findGradeNames}로 따로 읽는다 — Grade는
+     * PerformanceGrade와 다른 aggregate라 id로만 연결된다.
      */
     public List<PerformanceGrade> findRepresentativePerformanceGrades(final Long showId) {
         return queryFactory
                 .selectFrom(performanceGrade)
-                .where(
-                        performanceGrade.performance.id.eq(
-                                JPAExpressions.select(performance.id.min())
-                                        .from(performance)
-                                        .where(performance.showId.eq(showId))))
+                .where(performanceGrade.performance.id.eq(JPAExpressions.select(performance.id.min())
+                        .from(performance)
+                        .where(performance.showId.eq(showId))))
                 .orderBy(performanceGrade.sortOrder.asc())
                 .fetch();
     }

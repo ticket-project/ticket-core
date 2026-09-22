@@ -32,8 +32,7 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findByOrderKeyAndMemberIdForUpdate(
-            final String orderKey, final Long memberId) {
+    public Optional<Order> findByOrderKeyAndMemberIdForUpdate(final String orderKey, final Long memberId) {
         return jpaRepository.findByOrderKeyAndMemberIdForUpdate(orderKey, memberId);
     }
 
@@ -43,21 +42,18 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findDetailByOrderKeyAndMemberId(
-            final String orderKey, final Long memberId) {
+    public Optional<Order> findDetailByOrderKeyAndMemberId(final String orderKey, final Long memberId) {
         return jpaRepository.findDetailByOrderKeyAndMemberId(orderKey, memberId);
     }
 
     @Override
     public boolean existsByMemberIdAndPerformanceIdAndStatus(
             final Long memberId, final Long performanceId, final OrderState status) {
-        return jpaRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                memberId, performanceId, status);
+        return jpaRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, status);
     }
 
     @Override
-    public Optional<Order> findByHoldKeyAndStatusForUpdate(
-            final String holdKey, final OrderState status) {
+    public Optional<Order> findByHoldKeyAndStatusForUpdate(final String holdKey, final OrderState status) {
         return jpaRepository.findByHoldKeyAndStatusForUpdate(holdKey, status);
     }
 

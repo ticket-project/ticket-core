@@ -14,13 +14,12 @@ import com.ticket.shared.api.InputChecks;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 대상 존재 확인은 이 use case의 책임이 아니다 — like는 다른 BC의 entity 존재 여부를 자기 invariant로 잡지
- * 않는다(memberId·likeType·targetId 조합의 유일성만 보장한다). 존재하지 않는 targetId를 찜해도 조용히 저장된다. 회원 활성 확인은 다르다 —
- * JWT 인증 필터는 서명·만료만 검사하고 탈퇴 여부를 재확인하지 않으므로(탈퇴해도 access token은 만료 전까지 유효하다), 탈퇴 회원이 자기 데이터를 건드리지 못하게
- * 하려면 여기서 직접 {@link MemberLookupApi#requireActive}로 다시 확인해야 한다.
+ * 대상 존재 확인은 이 use case의 책임이 아니다 — like는 다른 BC의 entity 존재 여부를 자기 invariant로 잡지 않는다(memberId·likeType·targetId 조합의 유일성만
+ * 보장한다). 존재하지 않는 targetId를 찜해도 조용히 저장된다. 회원 활성 확인은 다르다 — JWT 인증 필터는 서명·만료만 검사하고 탈퇴 여부를 재확인하지 않으므로(탈퇴해도 access token은 만료
+ * 전까지 유효하다), 탈퇴 회원이 자기 데이터를 건드리지 못하게 하려면 여기서 직접 {@link MemberLookupApi#requireActive}로 다시 확인해야 한다.
  *
- * <p>이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시 요청이 먼저 저장을 끝냈다면(unique 제약 위반) {@link
- * LikeAlreadyExistsException}(409, E7001)을 던진다.
+ * <p>이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시 요청이 먼저 저장을 끝냈다면(unique 제약 위반)
+ * {@link LikeAlreadyExistsException}(409, E7001)을 던진다.
  */
 @Service
 @Transactional
@@ -54,7 +53,6 @@ public class AddLikeUseCase {
             }
         }
 
-        return new Output(
-                targetId, true, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
+        return new Output(targetId, true, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
     }
 }

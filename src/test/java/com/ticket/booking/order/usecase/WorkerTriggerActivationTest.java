@@ -12,25 +12,20 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings("NonAsciiCharacters")
 class WorkerTriggerActivationTest {
     private final ApplicationContextRunner contextRunner =
-            new ApplicationContextRunner()
-                    .withUserConfiguration(CollaboratorStubs.class, OrderExpirationTrigger.class);
+            new ApplicationContextRunner().withUserConfiguration(CollaboratorStubs.class, OrderExpirationTrigger.class);
 
     @Test
     void worker_설정이_없으면_트리거를_등록한다() {
-        contextRunner.run(
-                context -> {
-                    assertThat(context).hasSingleBean(OrderExpirationTrigger.class);
-                });
+        contextRunner.run(context -> {
+            assertThat(context).hasSingleBean(OrderExpirationTrigger.class);
+        });
     }
 
     @Test
     void worker_enabled가_false면_어떤_background_트리거도_등록되지_않는다() {
-        contextRunner
-                .withPropertyValues("worker.enabled=false")
-                .run(
-                        context -> {
-                            assertThat(context).doesNotHaveBean(OrderExpirationTrigger.class);
-                        });
+        contextRunner.withPropertyValues("worker.enabled=false").run(context -> {
+            assertThat(context).doesNotHaveBean(OrderExpirationTrigger.class);
+        });
     }
 
     @Configuration(proxyBeanMethods = false)

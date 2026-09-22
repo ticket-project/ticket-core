@@ -27,8 +27,7 @@ public interface OrderRepository {
     /** 좌석까지 한 번에 채워 주문을 조회한다. 주문 상세처럼 좌석을 모두 읽는 경로가 쓴다 — 좌석은 id 오름차순이다. */
     Optional<Order> findDetailByOrderKeyAndMemberId(String orderKey, Long memberId);
 
-    boolean existsByMemberIdAndPerformanceIdAndStatus(
-            Long memberId, Long performanceId, OrderState status);
+    boolean existsByMemberIdAndPerformanceIdAndStatus(Long memberId, Long performanceId, OrderState status);
 
     Optional<Order> findByHoldKeyAndStatusForUpdate(String holdKey, OrderState status);
 
@@ -37,11 +36,10 @@ public interface OrderRepository {
     /**
      * 만료 시각이 지난 주문을 id 오름차순으로 최대 {@code limit}건 조회한다. {@code afterOrderId}보다 큰 id만 돌려주는 커서 조회다.
      *
-     * <p>커서를 두는 이유는 진행 보장이다 — 앞쪽 주문이 계속 실패해도 다음 페이지로 넘어가야 뒤의 정상 대상이 처리된다. id는 불변이고 유일하므로 안정적인 커서가
-     * 된다. 첫 페이지는 {@code afterOrderId}에 {@code null}을 넘긴다.
+     * <p>커서를 두는 이유는 진행 보장이다 — 앞쪽 주문이 계속 실패해도 다음 페이지로 넘어가야 뒤의 정상 대상이 처리된다. id는 불변이고 유일하므로 안정적인 커서가 된다. 첫 페이지는
+     * {@code afterOrderId}에 {@code null}을 넘긴다.
      *
      * <p>반환 건수가 {@code limit}보다 적으면 더 처리할 대상이 없다는 뜻이다.
      */
-    List<Order> findExpirable(
-            OrderState status, LocalDateTime expiresAt, @Nullable Long afterOrderId, int limit);
+    List<Order> findExpirable(OrderState status, LocalDateTime expiresAt, @Nullable Long afterOrderId, int limit);
 }

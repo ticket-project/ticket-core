@@ -22,8 +22,11 @@ import com.ticket.shared.exception.InvalidRequestException;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetCurrentMemberUseCaseTest {
-    @Mock private MemberRepository memberRepository;
-    @InjectMocks private GetCurrentMemberUseCase useCase;
+    @Mock
+    private MemberRepository memberRepository;
+
+    @InjectMocks
+    private GetCurrentMemberUseCase useCase;
 
     @Test
     void 현재_회원_정보를_반환한다() {
@@ -35,8 +38,7 @@ class GetCurrentMemberUseCaseTest {
         when(member.getRole()).thenReturn(Role.MEMBER);
         when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
         // when
-        GetCurrentMemberUseCase.Output output =
-                useCase.execute(new GetCurrentMemberUseCase.Input(3L));
+        GetCurrentMemberUseCase.Output output = useCase.execute(new GetCurrentMemberUseCase.Input(3L));
         // then
         assertThat(output.memberId()).isEqualTo(3L);
         assertThat(output.email()).isEqualTo("user@example.com");
@@ -49,9 +51,7 @@ class GetCurrentMemberUseCaseTest {
         // given
         // when
         // then
-        assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(null))
-                .isInstanceOf(InvalidRequestException.class);
-        assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(0L))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(null)).isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(0L)).isInstanceOf(InvalidRequestException.class);
     }
 }

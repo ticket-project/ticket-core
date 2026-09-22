@@ -33,15 +33,18 @@ import com.ticket.booking.order.domain.OrderState;
 class ExpirePendingOrdersUseCaseTest {
     private static final int BATCH_SIZE = 100;
     private static final LocalDateTime EXPECTED_NOW = LocalDateTime.of(2026, 3, 15, 10, 0);
-    @Mock private OrderRepository orderRepository;
-    @Mock private ExpireOrderUseCase expireOrderUseCase;
-    private final Clock fixedClock =
-            Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private ExpireOrderUseCase expireOrderUseCase;
+
+    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Test
     void 만료_대상이_없으면_바로_끝난다() {
-        when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt()))
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt()))
                 .thenReturn(List.<Order>of());
 
         final ExpirePendingOrdersUseCase.Output output = useCase().execute();
@@ -53,8 +56,7 @@ class ExpirePendingOrdersUseCaseTest {
     @Test
     void 만료_대상을_clock의_현재_시각으로_만료한다() {
         final List<Order> page = List.of(order(1L, null), order(2L, null));
-        when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt()))
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt()))
                 .thenReturn(page);
 
         final ExpirePendingOrdersUseCase.Output output = useCase().execute();
@@ -63,34 +65,26 @@ class ExpirePendingOrdersUseCaseTest {
         verify(expireOrderUseCase).expireByOrderId(1L, EXPECTED_NOW);
         verify(expireOrderUseCase).expireByOrderId(2L, EXPECTED_NOW);
         // 마지막 페이지가 BATCH_SIZE 미만이면 더 읽지 않는다.
-        verify(orderRepository, times(1))
-                .findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt());
+        verify(orderRepository, times(1)).findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt());
     }
 
     /**
-     * 재현한 결함: 앞의 한 페이지가 전부 실패하면 옛 구현은 같은 첫 페이지를 다시 읽게 되므로 무한 반복을 피하려고 순회를 중단했고, 그 뒤의 정상 만료 대상은 영원히
-     * 처리되지 않았다. 커서가 실패 항목을 넘어가므로 뒤의 대상이 같은 순회에서 처리돼야 한다.
+     * 재현한 결함: 앞의 한 페이지가 전부 실패하면 옛 구현은 같은 첫 페이지를 다시 읽게 되므로 무한 반복을 피하려고 순회를 중단했고, 그 뒤의 정상 만료 대상은 영원히 처리되지 않았다. 커서가 실패 항목을
+     * 넘어가므로 뒤의 대상이 같은 순회에서 처리돼야 한다.
      */
     @Test
     void 앞_페이지가_전부_실패해도_뒤의_대상을_계속_처리한다() {
         final List<Order> failingPage = orders(1L, BATCH_SIZE);
         final List<Order> healthyPage = orders(BATCH_SIZE + 1L, 2);
-        when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), eq(BATCH_SIZE)))
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), eq(BATCH_SIZE)))
                 .thenReturn(failingPage);
         when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING),
-                        eq(EXPECTED_NOW),
-                        eq((long) BATCH_SIZE),
-                        eq(BATCH_SIZE)))
+                        eq(OrderState.PENDING), eq(EXPECTED_NOW), eq((long) BATCH_SIZE), eq(BATCH_SIZE)))
                 .thenReturn(healthyPage);
         // 스터빙 중에 mock의 메서드를 호출하지 않도록 id를 먼저 꺼내 둔다.
         final List<Long> failingIds = failingPage.stream().map(Order::getId).toList();
-        failingIds.forEach(
-                id ->
-                        doThrow(new RuntimeException("boom"))
-                                .when(expireOrderUseCase)
-                                .expireByOrderId(id, EXPECTED_NOW));
+        failingIds.forEach(id ->
+                doThrow(new RuntimeException("boom")).when(expireOrderUseCase).expireByOrderId(id, EXPECTED_NOW));
 
         final ExpirePendingOrdersUseCase.Output output = useCase().execute();
 
@@ -103,12 +97,9 @@ class ExpirePendingOrdersUseCaseTest {
     @Test
     void 실패_항목은_처리_완료로_세지_않는다() {
         final Order order = order(1L, "order-1");
-        when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt()))
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), anyInt()))
                 .thenReturn(List.of(order));
-        doThrow(new RuntimeException("boom"))
-                .when(expireOrderUseCase)
-                .expireByOrderId(1L, EXPECTED_NOW);
+        doThrow(new RuntimeException("boom")).when(expireOrderUseCase).expireByOrderId(1L, EXPECTED_NOW);
 
         final ExpirePendingOrdersUseCase.Output output = useCase().execute();
 
@@ -120,14 +111,10 @@ class ExpirePendingOrdersUseCaseTest {
     @Test
     void 가득_찬_페이지_뒤에_빈_페이지가_오면_순회가_끝난다() {
         final List<Order> fullPage = orders(1L, BATCH_SIZE);
-        when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), eq(BATCH_SIZE)))
+        when(orderRepository.findExpirable(eq(OrderState.PENDING), eq(EXPECTED_NOW), isNull(), eq(BATCH_SIZE)))
                 .thenReturn(fullPage);
         when(orderRepository.findExpirable(
-                        eq(OrderState.PENDING),
-                        eq(EXPECTED_NOW),
-                        eq((long) BATCH_SIZE),
-                        eq(BATCH_SIZE)))
+                        eq(OrderState.PENDING), eq(EXPECTED_NOW), eq((long) BATCH_SIZE), eq(BATCH_SIZE)))
                 .thenReturn(List.of());
 
         final ExpirePendingOrdersUseCase.Output output = useCase().execute();

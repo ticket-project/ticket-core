@@ -29,10 +29,17 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 class HoldCreationCoordinatorTest {
-    @Mock private HoldStore holdStore;
-    @Mock private SeatSelectionService seatSelectionService;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
-    @Mock private SeatStatusEventPublisher seatStatusEventPublisher;
+    @Mock
+    private HoldStore holdStore;
+
+    @Mock
+    private SeatSelectionService seatSelectionService;
+
+    @Mock
+    private PerformanceSeatRepository performanceSeatRepository;
+
+    @Mock
+    private SeatStatusEventPublisher seatStatusEventPublisher;
 
     @Test
     void current_hold_releases_only_the_owners_selection_before_publishing_held() {
@@ -62,14 +69,11 @@ class HoldCreationCoordinatorTest {
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
-        verifyNoInteractions(
-                seatSelectionService, seatStatusEventPublisher, performanceSeatRepository);
+        verifyNoInteractions(seatSelectionService, seatStatusEventPublisher, performanceSeatRepository);
     }
 
     private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {
-        PerformanceSeat seat =
-                new PerformanceSeat(
-                        10L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
+        PerformanceSeat seat = new PerformanceSeat(10L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
         ReflectionTestUtils.setField(seat, "id", performanceSeatId);
         return seat;
     }
@@ -84,7 +88,6 @@ class HoldCreationCoordinatorTest {
     }
 
     private Hold hold() {
-        return new Hold(
-                "hold-key", 20L, 10L, List.of(100L, 200L), LocalDateTime.of(2026, 3, 15, 12, 0));
+        return new Hold("hold-key", 20L, 10L, List.of(100L, 200L), LocalDateTime.of(2026, 3, 15, 12, 0));
     }
 }

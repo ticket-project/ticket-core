@@ -32,33 +32,24 @@ public class GetPerformanceSummaryUseCase {
     }
 
     public record Output(
-            @Nullable String title, @Nullable String region, @Nullable LocalDateTime startTime) {}
+            @Nullable String title,
+            @Nullable String region,
+            @Nullable LocalDateTime startTime) {}
 
     public Output execute(final Input input) {
-        final Performance performance =
-                performanceRepository
-                        .findById(input.performanceId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "회차에 연결된 공연을 찾을 수 없습니다. id="
-                                                        + input.performanceId()));
-        final Show show =
-                showRepository
-                        .findById(performance.getShowId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "회차에 연결된 공연을 찾을 수 없습니다. id="
-                                                        + input.performanceId()));
+        final Performance performance = performanceRepository
+                .findById(input.performanceId())
+                .orElseThrow(() -> new NotFoundException("회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()));
+        final Show show = showRepository
+                .findById(performance.getShowId())
+                .orElseThrow(() -> new NotFoundException("회차에 연결된 공연을 찾을 수 없습니다. id=" + input.performanceId()));
 
-        final String region =
-                show.getVenueId() == null
-                        ? null
-                        : venueLookup
-                                .findSummary(show.getVenueId())
-                                .map(v -> v.region() == null ? null : v.region().getDescription())
-                                .orElse(null);
+        final String region = show.getVenueId() == null
+                ? null
+                : venueLookup
+                        .findSummary(show.getVenueId())
+                        .map(v -> v.region() == null ? null : v.region().getDescription())
+                        .orElse(null);
 
         return new Output(show.getTitle(), region, performance.getStartTime());
     }

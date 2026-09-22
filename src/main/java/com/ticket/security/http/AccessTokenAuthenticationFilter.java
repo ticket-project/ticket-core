@@ -27,15 +27,12 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     private final AccessTokenReader accessTokenReader;
 
     public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
-        this.accessTokenReader =
-                Objects.requireNonNull(accessTokenReader, "accessTokenReader must not be null");
+        this.accessTokenReader = Objects.requireNonNull(accessTokenReader, "accessTokenReader must not be null");
     }
 
     @Override
     protected void doFilterInternal(
-            final HttpServletRequest request,
-            final HttpServletResponse response,
-            final FilterChain filterChain)
+            final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
             throws ServletException, IOException {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
@@ -54,12 +51,9 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             switch (readResult) {
-                case AccessTokenReadResult.Authenticated authenticated ->
-                        authenticate(authenticated.member());
-                case AccessTokenReadResult.Expired ignored ->
-                        markFailure(request, AccessTokenFailure.EXPIRED);
-                case AccessTokenReadResult.Invalid ignored ->
-                        markFailure(request, AccessTokenFailure.INVALID);
+                case AccessTokenReadResult.Authenticated authenticated -> authenticate(authenticated.member());
+                case AccessTokenReadResult.Expired ignored -> markFailure(request, AccessTokenFailure.EXPIRED);
+                case AccessTokenReadResult.Invalid ignored -> markFailure(request, AccessTokenFailure.INVALID);
             }
             filterChain.doFilter(request, response);
         } finally {
@@ -68,9 +62,8 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void authenticate(final AuthenticatedMember member) {
-        final UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        member, null, List.of(new SimpleGrantedAuthority("ROLE_" + member.role())));
+        final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                member, null, List.of(new SimpleGrantedAuthority("ROLE_" + member.role())));
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

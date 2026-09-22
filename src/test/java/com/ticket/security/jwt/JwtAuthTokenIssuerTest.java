@@ -18,10 +18,17 @@ import com.ticket.security.token.RefreshTokenStore;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class JwtAuthTokenIssuerTest {
-    @Mock private JwtAccessTokenCodec jwtAccessTokenCodec;
-    @Mock private JwtProperties jwtProperties;
-    @Mock private RefreshTokenStore refreshTokenStore;
-    @InjectMocks private JwtAuthTokenIssuer jwtAuthTokenIssuer;
+    @Mock
+    private JwtAccessTokenCodec jwtAccessTokenCodec;
+
+    @Mock
+    private JwtProperties jwtProperties;
+
+    @Mock
+    private RefreshTokenStore refreshTokenStore;
+
+    @InjectMocks
+    private JwtAuthTokenIssuer jwtAuthTokenIssuer;
 
     @Test
     void issue_tokens_returns_access_and_refresh_tokens() {

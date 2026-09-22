@@ -23,13 +23,15 @@ import com.ticket.shared.exception.NotFoundException;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class MemberLookupServiceTest {
-    @Mock private MemberRepository memberRepository;
-    @InjectMocks private MemberLookupService service;
+    @Mock
+    private MemberRepository memberRepository;
+
+    @InjectMocks
+    private MemberLookupService service;
 
     @Test
     void 활성_회원의_이름과_이메일을_반환한다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "홍길동", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "홍길동", Role.MEMBER);
         ReflectionTestUtils.setField(member, "id", 1L);
         when(memberRepository.findActiveById(1L)).thenReturn(Optional.of(member));
 

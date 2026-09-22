@@ -39,24 +39,23 @@ import com.ticket.shared.exception.NotFoundException;
 /**
  * {@code MemberAccountApi}의 구현이 계정 다섯 연산에서 실제로 무엇을 보장하는지 고정한다.
  *
- * <p>이 계약은 security의 가입·로그인·갱신·탈퇴 조립이 전부 기대는 지점인데, 그동안 이 클래스 자체를 검증하는 테스트가 없었다. 내부 협력자를 흡수하는 리팩터링을
- * 하기 전에 <b>밖에서 관찰되는 것</b>(반환 값, 실패의 종류와 내용, 트랜잭션 경계)을 먼저 못 박는다.
+ * <p>이 계약은 security의 가입·로그인·갱신·탈퇴 조립이 전부 기대는 지점인데, 그동안 이 클래스 자체를 검증하는 테스트가 없었다. 내부 협력자를 흡수하는 리팩터링을 하기 전에 <b>밖에서 관찰되는
+ * 것</b>(반환 값, 실패의 종류와 내용, 트랜잭션 경계)을 먼저 못 박는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class MemberAccountServiceTest {
-    private static final Clock CLOCK =
-            Clock.fixed(Instant.parse("2026-09-15T02:00:00Z"), ZoneId.of("Asia/Seoul"));
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-09-15T02:00:00Z"), ZoneId.of("Asia/Seoul"));
 
-    @Mock private MemberRepository memberRepository;
-    @Mock private PasswordEncoder passwordEncoder;
+    @Mock
+    private MemberRepository memberRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     private MemberAccountService service() {
         return new MemberAccountService(
-                memberRepository,
-                passwordEncoder,
-                new OAuth2MemberProvisioningService(memberRepository),
-                CLOCK);
+                memberRepository, passwordEncoder, new OAuth2MemberProvisioningService(memberRepository), CLOCK);
     }
 
     // ── 등록 ────────────────────────────────────────────────────────────────
@@ -66,17 +65,13 @@ class MemberAccountServiceTest {
         when(passwordEncoder.encode("password123!")).thenReturn("encoded-password");
         when(memberRepository.save(any(Member.class))).thenAnswer(withGeneratedId(11L));
 
-        final Long memberId =
-                service()
-                        .register(
-                                "  user@example.com  ", RawPassword.create("password123!"), "홍길동");
+        final Long memberId = service().register("  user@example.com  ", RawPassword.create("password123!"), "홍길동");
 
         final ArgumentCaptor<Member> saved = ArgumentCaptor.forClass(Member.class);
         verify(memberRepository).save(saved.capture());
         assertThat(memberId).isEqualTo(11L);
         assertThat(saved.getValue().getEmail()).isEqualTo(Email.create("user@example.com"));
-        assertThat(saved.getValue().getEncodedPassword())
-                .isEqualTo(EncodedPassword.create("encoded-password"));
+        assertThat(saved.getValue().getEncodedPassword()).isEqualTo(EncodedPassword.create("encoded-password"));
         assertThat(saved.getValue().getName()).isEqualTo("홍길동");
         assertThat(saved.getValue().getRole()).isEqualTo(Role.MEMBER);
     }
@@ -93,21 +88,15 @@ class MemberAccountServiceTest {
                 .isEqualTo(new MemberStatus(42L, true, "MEMBER"));
     }
 
-    /**
-     * 없는 계정과 틀린 비밀번호가 <b>구분되지 않는다</b>는 것이 이 계약의 핵심이다. 한쪽에만 detail을 붙이는 순간 계정 존재 여부가 응답으로 새어 나간다.
-     */
+    /** 없는 계정과 틀린 비밀번호가 <b>구분되지 않는다</b>는 것이 이 계약의 핵심이다. 한쪽에만 detail을 붙이는 순간 계정 존재 여부가 응답으로 새어 나간다. */
     @Test
     void 없는_계정과_틀린_비밀번호는_완전히_같은_실패를_낸다() {
-        when(memberRepository.findActiveByEmail("missing@example.com"))
-                .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("user@example.com"))
-                .thenReturn(Optional.of(passwordMember()));
+        when(memberRepository.findActiveByEmail("missing@example.com")).thenReturn(Optional.empty());
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(passwordMember()));
         when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
-        final UnauthenticatedException unknownAccount =
-                catchUnauthenticated("missing@example.com", "wrong");
-        final UnauthenticatedException wrongPassword =
-                catchUnauthenticated("user@example.com", "wrong");
+        final UnauthenticatedException unknownAccount = catchUnauthenticated("missing@example.com", "wrong");
+        final UnauthenticatedException wrongPassword = catchUnauthenticated("user@example.com", "wrong");
 
         assertThat(unknownAccount.getErrorCode()).isEqualTo(wrongPassword.getErrorCode());
         assertThat(unknownAccount.getMessage()).isEqualTo(wrongPassword.getMessage());
@@ -118,8 +107,7 @@ class MemberAccountServiceTest {
     /** 응답 시간까지 같아야 계정 존재 여부가 새지 않는다 — 회원이 없어도 해싱 비용을 그대로 치른다. */
     @Test
     void 없는_계정에도_타이밍_가드용_해싱을_수행한다() {
-        when(memberRepository.findActiveByEmail("missing@example.com"))
-                .thenReturn(Optional.empty());
+        when(memberRepository.findActiveByEmail("missing@example.com")).thenReturn(Optional.empty());
 
         catchUnauthenticated("missing@example.com", "password123!");
 
@@ -131,11 +119,10 @@ class MemberAccountServiceTest {
     void 비밀번호가_없는_소셜_회원은_일반_로그인에_실패한다() {
         when(memberRepository.findActiveByEmail("social@example.com"))
                 .thenReturn(
-                        Optional.of(
-                                Member.createSocialMember(
-                                        Email.create("social@example.com"), "홍길동", Role.MEMBER)));
+                        Optional.of(Member.createSocialMember(Email.create("social@example.com"), "홍길동", Role.MEMBER)));
 
-        assertThat(catchUnauthenticated("social@example.com", "password123!").getData()).isNull();
+        assertThat(catchUnauthenticated("social@example.com", "password123!").getData())
+                .isNull();
     }
 
     // ── 활성 확인 ────────────────────────────────────────────────────────────
@@ -144,8 +131,7 @@ class MemberAccountServiceTest {
     void 활성_확인은_없는_회원이면_찾을_수_없다는_실패를_낸다() {
         when(memberRepository.findActiveById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service().requireActiveIdentity(99L))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service().requireActiveIdentity(99L)).isInstanceOf(NotFoundException.class);
     }
 
     // ── 소셜 연결 ────────────────────────────────────────────────────────────
@@ -156,15 +142,9 @@ class MemberAccountServiceTest {
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "kakao-1"))
                 .thenReturn(Optional.of(member));
 
-        assertThat(
-                        service()
-                                .resolveSocialAccount(
-                                        new SocialIdentity(
-                                                SocialProvider.KAKAO,
-                                                "kakao-1",
-                                                "user@example.com",
-                                                true,
-                                                "홍길동")))
+        assertThat(service()
+                        .resolveSocialAccount(
+                                new SocialIdentity(SocialProvider.KAKAO, "kakao-1", "user@example.com", true, "홍길동")))
                 .isEqualTo(new MemberStatus(7L, true, "MEMBER"));
     }
 
@@ -179,8 +159,7 @@ class MemberAccountServiceTest {
 
         final List<SocialAccountSnapshot> connections = service().withdraw(5L);
 
-        assertThat(connections)
-                .containsExactly(new SocialAccountSnapshot(SocialProvider.KAKAO, "kakao-1"));
+        assertThat(connections).containsExactly(new SocialAccountSnapshot(SocialProvider.KAKAO, "kakao-1"));
         assertThat(member.isDeleted()).isTrue();
         assertThat(member.getDeletedAt()).isEqualTo(LocalDateTime.now(CLOCK));
         assertThat(member.activeSocialAccounts()).isEmpty();
@@ -196,28 +175,20 @@ class MemberAccountServiceTest {
     // ── 트랜잭션 경계 ─────────────────────────────────────────────────────────
 
     /**
-     * 계정 연산마다 트랜잭션을 <b>누가</b> 소유하는지를 고정한다. 협력자를 흡수하는 리팩터링에서 가장 조용히 깨지는 것이 이 경계다 — 같은 클래스 안에서 부르면
-     * Spring proxy가 적용되지 않아 {@code @Transactional}이 아예 걸리지 않는데, 결과 값은 그대로라 행동 테스트로는 드러나지 않는다.
+     * 계정 연산마다 트랜잭션을 <b>누가</b> 소유하는지를 고정한다. 협력자를 흡수하는 리팩터링에서 가장 조용히 깨지는 것이 이 경계다 — 같은 클래스 안에서 부르면 Spring proxy가 적용되지 않아
+     * {@code @Transactional}이 아예 걸리지 않는데, 결과 값은 그대로라 행동 테스트로는 드러나지 않는다.
      */
     @Test
     void 계정_연산의_트랜잭션_경계를_고정한다() throws NoSuchMethodException {
-        assertWriteTransaction(
-                MemberAccountService.class,
-                "register",
-                String.class,
-                RawPassword.class,
-                String.class);
+        assertWriteTransaction(MemberAccountService.class, "register", String.class, RawPassword.class, String.class);
         assertReadOnlyTransaction(
-                MemberAccountService.class.getMethod(
-                        "authenticate", String.class, RawPassword.class));
-        assertReadOnlyTransaction(
-                MemberAccountService.class.getMethod("requireActiveIdentity", long.class));
+                MemberAccountService.class.getMethod("authenticate", String.class, RawPassword.class));
+        assertReadOnlyTransaction(MemberAccountService.class.getMethod("requireActiveIdentity", long.class));
         assertWriteTransaction(MemberAccountService.class, "withdraw", long.class);
         // 소셜 연결만 흡수하지 않았다 — 트랜잭션도 그대로 provisioning service가 소유한다.
-        assertThat(
-                        MemberAccountService.class
-                                .getMethod("resolveSocialAccount", SocialIdentity.class)
-                                .isAnnotationPresent(Transactional.class))
+        assertThat(MemberAccountService.class
+                        .getMethod("resolveSocialAccount", SocialIdentity.class)
+                        .isAnnotationPresent(Transactional.class))
                 .isFalse();
         assertWriteTransaction(OAuth2MemberProvisioningService.class);
     }
@@ -230,8 +201,7 @@ class MemberAccountServiceTest {
         assertThat(transactional.readOnly()).isFalse();
     }
 
-    private void assertWriteTransaction(
-            final Class<?> type, final String methodName, final Class<?>... parameterTypes)
+    private void assertWriteTransaction(final Class<?> type, final String methodName, final Class<?>... parameterTypes)
             throws NoSuchMethodException {
         final Transactional transactional =
                 type.getMethod(methodName, parameterTypes).getAnnotation(Transactional.class);
@@ -247,19 +217,13 @@ class MemberAccountServiceTest {
         assertThat(transactional.readOnly()).isTrue();
     }
 
-    private UnauthenticatedException catchUnauthenticated(
-            final String email, final String password) {
-        return (UnauthenticatedException)
-                org.assertj.core.api.Assertions.catchThrowable(
-                        () -> service().authenticate(email, RawPassword.create(password)));
+    private UnauthenticatedException catchUnauthenticated(final String email, final String password) {
+        return (UnauthenticatedException) org.assertj.core.api.Assertions.catchThrowable(
+                () -> service().authenticate(email, RawPassword.create(password)));
     }
 
     private Member passwordMember() {
-        return new Member(
-                Email.create("user@example.com"),
-                EncodedPassword.create("encoded"),
-                "홍길동",
-                Role.MEMBER);
+        return new Member(Email.create("user@example.com"), EncodedPassword.create("encoded"), "홍길동", Role.MEMBER);
     }
 
     private Member memberWithId(final long id, final Member member) {

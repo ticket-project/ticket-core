@@ -25,16 +25,20 @@ import com.ticket.shared.exception.InvalidRequestException;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetLikeStatusUseCaseTest {
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private LikeQueryApi likeQuery;
-    @InjectMocks private GetLikeStatusUseCase useCase;
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private LikeQueryApi likeQuery;
+
+    @InjectMocks
+    private GetLikeStatusUseCase useCase;
 
     @Test
     void 찜_상태와_총_찜수를_반환한다() {
         when(likeQuery.get(LikeType.SHOW, 2L, 1L)).thenReturn(new LikeCountSnapshot(true, 7L));
 
-        GetLikeStatusUseCase.Output output =
-                useCase.execute(new GetLikeStatusUseCase.Input(1L, LikeType.SHOW, 2L));
+        GetLikeStatusUseCase.Output output = useCase.execute(new GetLikeStatusUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(7L);
@@ -54,10 +58,6 @@ class GetLikeStatusUseCaseTest {
     }
 
     private static Stream<Arguments> invalidComponents() {
-        return Stream.of(
-                Arguments.of(null, 2L),
-                Arguments.of(1L, null),
-                Arguments.of(0L, 2L),
-                Arguments.of(1L, -1L));
+        return Stream.of(Arguments.of(null, 2L), Arguments.of(1L, null), Arguments.of(0L, 2L), Arguments.of(1L, -1L));
     }
 }

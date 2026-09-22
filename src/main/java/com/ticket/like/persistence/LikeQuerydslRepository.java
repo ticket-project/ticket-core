@@ -29,10 +29,7 @@ public class LikeQuerydslRepository {
     private final JPAQueryFactory queryFactory;
 
     public CursorPage<Like, Long> findLiked(
-            final LikeType likeType,
-            final Long memberId,
-            final @Nullable Long cursorLikeId,
-            final int size) {
+            final LikeType likeType, final Long memberId, final @Nullable Long cursorLikeId, final int size) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(like.memberId.eq(memberId));
         where.and(like.likeType.eq(likeType));
@@ -41,13 +38,12 @@ public class LikeQuerydslRepository {
             where.and(like.id.lt(cursorLikeId));
         }
 
-        final List<Like> rows =
-                queryFactory
-                        .selectFrom(like)
-                        .where(where)
-                        .orderBy(like.id.desc())
-                        .limit(size + 1L)
-                        .fetch();
+        final List<Like> rows = queryFactory
+                .selectFrom(like)
+                .where(where)
+                .orderBy(like.id.desc())
+                .limit(size + 1L)
+                .fetch();
 
         if (rows.isEmpty()) {
             return CursorPage.empty();

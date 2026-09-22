@@ -17,11 +17,9 @@ interface SpringDataMemberJpaRepository extends JpaRepository<Member, Long> {
     boolean existsByIdAndDeletedAtIsNull(Long id);
 
     /**
-     * 소셜 계정 조건으로 회원을 찾는다. 자식(소셜 계정)과 부모(회원)의 {@code deletedAt} 조건을 둘 다 확인한다 — 탈퇴한 회원의 계정이나 연결 해제된
-     * 계정으로는 로그인되지 않아야 한다.
+     * 소셜 계정 조건으로 회원을 찾는다. 자식(소셜 계정)과 부모(회원)의 {@code deletedAt} 조건을 둘 다 확인한다 — 탈퇴한 회원의 계정이나 연결 해제된 계정으로는 로그인되지 않아야 한다.
      */
-    @Query(
-            """
+    @Query("""
             SELECT m
             FROM Member m
             JOIN m.socialAccounts msa
@@ -31,6 +29,5 @@ interface SpringDataMemberJpaRepository extends JpaRepository<Member, Long> {
               AND m.deletedAt IS NULL
             """)
     Optional<Member> findActiveBySocialAccount(
-            @Param("socialProvider") SocialProvider socialProvider,
-            @Param("socialId") String socialId);
+            @Param("socialProvider") SocialProvider socialProvider, @Param("socialId") String socialId);
 }

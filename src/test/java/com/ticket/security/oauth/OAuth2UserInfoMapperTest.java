@@ -17,18 +17,8 @@ class OAuth2UserInfoMapperTest {
     void google_raw_attribute를_정규화한다() {
         // given
         // when
-        SocialIdentity result =
-                OAuth2UserInfoMapper.map(
-                        "google",
-                        Map.of(
-                                "sub",
-                                "sub-1",
-                                "email",
-                                "user@example.com",
-                                "email_verified",
-                                true,
-                                "name",
-                                "사용자"));
+        SocialIdentity result = OAuth2UserInfoMapper.map(
+                "google", Map.of("sub", "sub-1", "email", "user@example.com", "email_verified", true, "name", "사용자"));
         // then
         assertThat(result.provider()).isEqualTo(SocialProvider.GOOGLE);
         assertThat(result.providerId()).isEqualTo("sub-1");
@@ -41,22 +31,21 @@ class OAuth2UserInfoMapperTest {
     void kakao_raw_attribute를_정규화한다() {
         // given
         // when
-        SocialIdentity result =
-                OAuth2UserInfoMapper.map(
-                        "kakao",
+        SocialIdentity result = OAuth2UserInfoMapper.map(
+                "kakao",
+                Map.of(
+                        "id",
+                        1L,
+                        "kakao_account",
                         Map.of(
-                                "id",
-                                1L,
-                                "kakao_account",
-                                Map.of(
-                                        "email",
-                                        "user@example.com",
-                                        "is_email_valid",
-                                        true,
-                                        "is_email_verified",
-                                        true,
-                                        "profile",
-                                        Map.of("nickname", "사용자"))));
+                                "email",
+                                "user@example.com",
+                                "is_email_valid",
+                                true,
+                                "is_email_verified",
+                                true,
+                                "profile",
+                                Map.of("nickname", "사용자"))));
         // then
         assertThat(result.provider()).isEqualTo(SocialProvider.KAKAO);
         assertThat(result.providerId()).isEqualTo("1");
@@ -67,20 +56,13 @@ class OAuth2UserInfoMapperTest {
 
     @Test
     void kakao_email은_유효성과_검증이_모두_true일_때만_검증된_것으로_본다() {
-        final SocialIdentity result =
-                OAuth2UserInfoMapper.map(
-                        "kakao",
-                        Map.of(
-                                "id",
-                                1L,
-                                "kakao_account",
-                                Map.of(
-                                        "email",
-                                        "user@example.com",
-                                        "is_email_valid",
-                                        false,
-                                        "is_email_verified",
-                                        true)));
+        final SocialIdentity result = OAuth2UserInfoMapper.map(
+                "kakao",
+                Map.of(
+                        "id",
+                        1L,
+                        "kakao_account",
+                        Map.of("email", "user@example.com", "is_email_valid", false, "is_email_verified", true)));
 
         assertThat(result.emailVerified()).isFalse();
     }

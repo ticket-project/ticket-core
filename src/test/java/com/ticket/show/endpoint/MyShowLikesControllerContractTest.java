@@ -31,22 +31,18 @@ import com.ticket.show.usecase.GetMyShowLikesUseCase;
 @SuppressWarnings("NonAsciiCharacters")
 class MyShowLikesControllerContractTest {
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(1L, "MEMBER");
-    private final GetMyShowLikesUseCase getMyShowLikesUseCase =
-            Mockito.mock(GetMyShowLikesUseCase.class);
+    private final GetMyShowLikesUseCase getMyShowLikesUseCase = Mockito.mock(GetMyShowLikesUseCase.class);
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         MyShowLikesController controller = new MyShowLikesController(getMyShowLikesUseCase);
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(controller)
-                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new ShowExceptionHandler())
-                        .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
+                .build();
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
     }
 
     @AfterEach
@@ -55,13 +51,12 @@ class MyShowLikesControllerContractTest {
     }
 
     /**
-     * 옛 {@code ShowLikeCursorCodecTest}가 고정하던 커서 wire 계약을 이어받는다. codec이 controller의 private method가
-     * 되면서 HTTP 경계에서만 확인할 수 있다 -- 확인하는 대상(요청 문자열 -> use case 입력, 응답 커서 문자열)은 같다.
+     * 옛 {@code ShowLikeCursorCodecTest}가 고정하던 커서 wire 계약을 이어받는다. codec이 controller의 private method가 되면서 HTTP 경계에서만 확인할
+     * 수 있다 -- 확인하는 대상(요청 문자열 -> use case 입력, 응답 커서 문자열)은 같다.
      */
     @Test
     void 커서는_마지막_찜_id를_십진수_문자열로_그대로_주고받는다() throws Exception {
-        when(getMyShowLikesUseCase.execute(any()))
-                .thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, 9L));
+        when(getMyShowLikesUseCase.execute(any())).thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, 9L));
 
         mockMvc.perform(get("/api/v1/members/me/likes").param("cursor", "9"))
                 .andExpect(status().isOk())
@@ -70,13 +65,13 @@ class MyShowLikesControllerContractTest {
         final ArgumentCaptor<GetMyShowLikesUseCase.Input> captor =
                 ArgumentCaptor.forClass(GetMyShowLikesUseCase.Input.class);
         verify(getMyShowLikesUseCase).execute(captor.capture());
-        org.assertj.core.api.Assertions.assertThat(captor.getValue().cursorLikeId()).isEqualTo(9L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().cursorLikeId())
+                .isEqualTo(9L);
     }
 
     @Test
     void 다음_페이지가_없으면_커서를_만들지_않는다() throws Exception {
-        when(getMyShowLikesUseCase.execute(any()))
-                .thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, null));
+        when(getMyShowLikesUseCase.execute(any())).thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, null));
 
         mockMvc.perform(get("/api/v1/members/me/likes"))
                 .andExpect(status().isOk())
@@ -86,16 +81,15 @@ class MyShowLikesControllerContractTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "   "})
     void 커서가_비어있으면_첫_페이지로_본다(final String cursor) throws Exception {
-        when(getMyShowLikesUseCase.execute(any()))
-                .thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, null));
+        when(getMyShowLikesUseCase.execute(any())).thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, null));
 
-        mockMvc.perform(get("/api/v1/members/me/likes").param("cursor", cursor))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/members/me/likes").param("cursor", cursor)).andExpect(status().isOk());
 
         final ArgumentCaptor<GetMyShowLikesUseCase.Input> captor =
                 ArgumentCaptor.forClass(GetMyShowLikesUseCase.Input.class);
         verify(getMyShowLikesUseCase).execute(captor.capture());
-        org.assertj.core.api.Assertions.assertThat(captor.getValue().cursorLikeId()).isNull();
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().cursorLikeId())
+                .isNull();
     }
 
     @ParameterizedTest

@@ -25,8 +25,8 @@ import org.testcontainers.utility.DockerImageName;
 import com.ticket.booking.hold.domain.Hold;
 
 /**
- * hold 생성의 부분 실패 보상을 <b>실제 Redis</b>에서 확인한다. mock 테스트는 "어떤 호출을 했는가"만 보므로, 좌석 키·회차별 점유 인덱스·메타데이터가
- * 실제로 어떤 상태로 남는지는 여기서 본다.
+ * hold 생성의 부분 실패 보상을 <b>실제 Redis</b>에서 확인한다. mock 테스트는 "어떤 호출을 했는가"만 보므로, 좌석 키·회차별 점유 인덱스·메타데이터가 실제로 어떤 상태로 남는지는 여기서
+ * 본다.
  */
 @Testcontainers
 @SuppressWarnings("NonAsciiCharacters")
@@ -37,8 +37,7 @@ class RedissonHoldStoreIntegrationTest {
 
     @Container
     private static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
-                    .withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(REDIS_PORT);
 
     private static RedissonClient redissonClient;
 
@@ -46,8 +45,7 @@ class RedissonHoldStoreIntegrationTest {
     static void setUpRedisClient() {
         final Config config = new Config();
         config.setCodec(StringCodec.INSTANCE);
-        config.useSingleServer()
-                .setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(REDIS_PORT));
+        config.useSingleServer().setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(REDIS_PORT));
         redissonClient = Redisson.create(config);
     }
 
@@ -97,10 +95,7 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(metaExists("hold-meta-fail")).isFalse();
     }
 
-    /**
-     * 좌석 키를 쓴 직후 실패해도 그 좌석이 정리돼야 한다. 옛 구현은 인덱스 등록까지 끝난 뒤에야 정리 대상으로 기록해서, 좌석 키를 쓰고 인덱스 등록 전에 실패하면 그
-     * 좌석 키가 영영 남았다.
-     */
+    /** 좌석 키를 쓴 직후 실패해도 그 좌석이 정리돼야 한다. 옛 구현은 인덱스 등록까지 끝난 뒤에야 정리 대상으로 기록해서, 좌석 키를 쓰고 인덱스 등록 전에 실패하면 그 좌석 키가 영영 남았다. */
     @Test
     void 좌석_하나만_쓰고_실패해도_그_좌석이_남지_않는다() {
         final HoldMetaCodec codec = mock(HoldMetaCodec.class);
@@ -124,16 +119,12 @@ class RedissonHoldStoreIntegrationTest {
     void 보상은_다른_요청이_새로_확보한_선점을_지우지_않는다() {
         final HoldMetaCodec codec = mock(HoldMetaCodec.class);
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient, codec);
-        when(codec.encode(org.mockito.ArgumentMatchers.any()))
-                .thenAnswer(
-                        invocation -> {
-                            redissonClient
-                                    .getBucket(
-                                            HoldRedisKey.hold(PERFORMANCE_ID, 20L),
-                                            StringCodec.INSTANCE)
-                                    .set("other-hold", TTL);
-                            throw new IllegalStateException("hold meta encode failed");
-                        });
+        when(codec.encode(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
+            redissonClient
+                    .getBucket(HoldRedisKey.hold(PERFORMANCE_ID, 20L), StringCodec.INSTANCE)
+                    .set("other-hold", TTL);
+            throw new IllegalStateException("hold meta encode failed");
+        });
 
         assertThatThrownBy(() -> store.save(hold("hold-conflict", List.of(10L, 20L)), TTL))
                 .isInstanceOf(IllegalStateException.class);
@@ -145,11 +136,14 @@ class RedissonHoldStoreIntegrationTest {
     }
 
     private boolean metaExists(final String holdKey) {
-        return redissonClient.getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE).get()
+        return redissonClient
+                        .getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE)
+                        .get()
                 != null;
     }
 
     private Hold hold(final String holdKey, final List<Long> seatIds) {
-        return new Hold(holdKey, 7L, PERFORMANCE_ID, seatIds, LocalDateTime.now().plusMinutes(5));
+        return new Hold(
+                holdKey, 7L, PERFORMANCE_ID, seatIds, LocalDateTime.now().plusMinutes(5));
     }
 }

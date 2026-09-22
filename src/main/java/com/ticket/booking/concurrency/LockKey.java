@@ -15,8 +15,7 @@ public record LockKey(LockScope scope, List<String> identifiers) {
     }
 
     public static LockKey seat(final Long performanceId, final Long seatId) {
-        return new LockKey(
-                LockScope.SEAT, List.of(String.valueOf(performanceId), String.valueOf(seatId)));
+        return new LockKey(LockScope.SEAT, List.of(String.valueOf(performanceId), String.valueOf(seatId)));
     }
 
     public static List<LockKey> seats(final Long performanceId, final List<Long> seatIds) {
@@ -24,8 +23,6 @@ public record LockKey(LockScope scope, List<String> identifiers) {
     }
 
     public static LockKey orderStart(final Long memberId, final Long performanceId) {
-        return new LockKey(
-                LockScope.ORDER_START,
-                List.of(String.valueOf(memberId), String.valueOf(performanceId)));
+        return new LockKey(LockScope.ORDER_START, List.of(String.valueOf(memberId), String.valueOf(performanceId)));
     }
 }

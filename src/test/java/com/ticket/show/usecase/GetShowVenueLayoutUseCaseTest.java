@@ -24,9 +24,14 @@ import com.ticket.venue.api.VenueSnapshot;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetShowVenueLayoutUseCaseTest {
-    @Mock private ShowRepository showRepository;
-    @Mock private VenueLookupApi venueLookup;
-    @InjectMocks private GetShowVenueLayoutUseCase useCase;
+    @Mock
+    private ShowRepository showRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
+
+    @InjectMocks
+    private GetShowVenueLayoutUseCase useCase;
 
     @Test
     void 공연장_레이아웃을_반환한다() {
@@ -35,21 +40,18 @@ class GetShowVenueLayoutUseCaseTest {
         when(show.getVenueId()).thenReturn(200L);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
         when(venueLookup.findSummary(200L))
-                .thenReturn(
-                        Optional.of(
-                                new VenueSnapshot(
-                                        200L,
-                                        "올림픽홀",
-                                        "주소",
-                                        Region.SEOUL,
-                                        BigDecimal.ZERO,
-                                        BigDecimal.ZERO,
-                                        "02-0000-0000",
-                                        "image",
-                                        new VenueSnapshot.SeatMapLayout(1000, 800, 12.0))));
+                .thenReturn(Optional.of(new VenueSnapshot(
+                        200L,
+                        "올림픽홀",
+                        "주소",
+                        Region.SEOUL,
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        "02-0000-0000",
+                        "image",
+                        new VenueSnapshot.SeatMapLayout(1000, 800, 12.0))));
         // when
-        GetShowVenueLayoutUseCase.Output output =
-                useCase.execute(new GetShowVenueLayoutUseCase.Input(100L));
+        GetShowVenueLayoutUseCase.Output output = useCase.execute(new GetShowVenueLayoutUseCase.Input(100L));
         // then
         assertThat(output.name()).isEqualTo("올림픽홀");
         assertThat(output.viewBoxWidth()).isEqualTo(1000);

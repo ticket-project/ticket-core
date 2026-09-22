@@ -12,8 +12,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * H2(Oracle 모드)와 Testcontainers Redis로 실제에 가까운 인프라 위에서 애플리케이션 컨텍스트가 정상 기동하는지 확인하는 platform smoke
- * test다. Modulith 구조 검증은 {@code com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
+ * H2(Oracle 모드)와 Testcontainers Redis로 실제에 가까운 인프라 위에서 애플리케이션 컨텍스트가 정상 기동하는지 확인하는 platform smoke test다. Modulith 구조 검증은
+ * {@code com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
  */
 @SpringBootTest(
         classes = TicketApplication.class,
@@ -42,8 +42,7 @@ class PlatformCompatibilityTest {
 
     /** RedissonConfig가 기동 시점에 연결을 맺으므로 실제 Redis 없이는 컨텍스트가 뜨지 않는다. */
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-                    .withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();
@@ -55,7 +54,8 @@ class PlatformCompatibilityTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired private ApplicationContext context;
+    @Autowired
+    private ApplicationContext context;
 
     @Test
     void boot_4_1_1과_modulith_2_1_1_조합으로_컨텍스트가_기동한다() {

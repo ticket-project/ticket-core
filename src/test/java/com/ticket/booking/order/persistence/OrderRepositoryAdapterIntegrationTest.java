@@ -65,9 +65,15 @@ class OrderRepositoryAdapterIntegrationTest {
     private static final long MEMBER_ID = 100L;
     private static final long PERFORMANCE_ID = 200L;
     private static final int BATCH_SIZE = 100;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private SpringDataOrderJpaRepository jpaRepository;
-    @Autowired private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private SpringDataOrderJpaRepository jpaRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @AfterEach
     void cleanUp() {
@@ -75,9 +81,8 @@ class OrderRepositoryAdapterIntegrationTest {
     }
 
     /**
-     * OrderSeat는 Order aggregate의 자식이라 자기 Repository 없이 root 저장에 cascade로 함께 실린다. 정렬은
-     * {@code @OrderBy("id ASC")}가 옛 {@code findAllByOrderIdOrderByIdAsc}의 순서를 그대로 유지한다 — hold 생성
-     * 후처리가 이 순서의 seatId 목록을 쓴다.
+     * OrderSeat는 Order aggregate의 자식이라 자기 Repository 없이 root 저장에 cascade로 함께 실린다. 정렬은 {@code @OrderBy("id ASC")}가 옛
+     * {@code findAllByOrderIdOrderByIdAsc}의 순서를 그대로 유지한다 — hold 생성 후처리가 이 순서의 seatId 목록을 쓴다.
      */
     @Test
     void 주문_좌석은_root_저장에_cascade되고_id_오름차순으로_복원된다() {
@@ -87,26 +92,22 @@ class OrderRepositoryAdapterIntegrationTest {
 
         inTransaction(() -> orderRepository.save(order));
 
-        Order reloaded =
-                inTransactionWithResult(
-                        () -> {
-                            Order found = jpaRepository.findById(order.getId()).orElseThrow();
-                            found.getOrderSeats().size();
-                            return found;
-                        });
+        Order reloaded = inTransactionWithResult(() -> {
+            Order found = jpaRepository.findById(order.getId()).orElseThrow();
+            found.getOrderSeats().size();
+            return found;
+        });
         assertThat(reloaded.getOrderSeats())
                 .extracting(orderSeat -> orderSeat.getPerformanceSeatId())
                 .containsExactly(501L, 502L);
         assertThat(reloaded.getOrderSeats())
                 .allSatisfy(
-                        orderSeat ->
-                                assertThat(orderSeat.getOrder().getId()).isEqualTo(order.getId()));
+                        orderSeat -> assertThat(orderSeat.getOrder().getId()).isEqualTo(order.getId()));
     }
 
     /**
-     * 주문 상세 조회다. 좌석까지 {@code join fetch}로 한 번에 채워 오므로 트랜잭션 밖에서 좌석을 읽어도 lazy 초기화가 일어나지 않는다 — 여기서 좌석을
-     * 읽는 것 자체가 fetch join이 실제로 걸렸다는 검증이다. 순서는 {@code @OrderBy("id ASC")}가 fetch join SQL에 그대로 붙어
-     * 보존된다.
+     * 주문 상세 조회다. 좌석까지 {@code join fetch}로 한 번에 채워 오므로 트랜잭션 밖에서 좌석을 읽어도 lazy 초기화가 일어나지 않는다 — 여기서 좌석을 읽는 것 자체가 fetch
+     * join이 실제로 걸렸다는 검증이다. 순서는 {@code @OrderBy("id ASC")}가 fetch join SQL에 그대로 붙어 보존된다.
      */
     @Test
     void 주문상세는_좌석까지_한번에_채워_조회한다() {
@@ -115,13 +116,9 @@ class OrderRepositoryAdapterIntegrationTest {
         order.addOrderSeat(502L, 43L, BigDecimal.valueOf(100_000), "S", "S석", "1F 가구역 A열 2번");
         inTransaction(() -> orderRepository.save(order));
 
-        Order found =
-                inTransactionWithResult(
-                        () ->
-                                orderRepository
-                                        .findDetailByOrderKeyAndMemberId(
-                                                order.getOrderKey(), MEMBER_ID)
-                                        .orElseThrow());
+        Order found = inTransactionWithResult(() -> orderRepository
+                .findDetailByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID)
+                .orElseThrow());
 
         assertThat(found.getMemberId()).isEqualTo(MEMBER_ID);
         assertThat(found.getPerformanceId()).isEqualTo(PERFORMANCE_ID);
@@ -133,9 +130,7 @@ class OrderRepositoryAdapterIntegrationTest {
                         OrderSeat::getSeatId,
                         OrderSeat::getGradeCodeSnapshot,
                         OrderSeat::getSeatLabelSnapshot)
-                .containsExactly(
-                        tuple(501L, 42L, "R", "1F 가구역 A열 1번"),
-                        tuple(502L, 43L, "S", "1F 가구역 A열 2번"));
+                .containsExactly(tuple(501L, 42L, "R", "1F 가구역 A열 1번"), tuple(502L, 43L, "S", "1F 가구역 A열 2번"));
         assertThat(found.getOrderSeats().getFirst().getUnitPrice()).isEqualByComparingTo("120000");
     }
 
@@ -145,9 +140,7 @@ class OrderRepositoryAdapterIntegrationTest {
         order.addOrderSeat(501L, 42L, BigDecimal.valueOf(120_000), "R", "R석", "1F 가구역 A열 1번");
         inTransaction(() -> orderRepository.save(order));
 
-        assertThat(
-                        orderRepository.findDetailByOrderKeyAndMemberId(
-                                order.getOrderKey(), MEMBER_ID + 1))
+        assertThat(orderRepository.findDetailByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID + 1))
                 .isEmpty();
         assertThat(orderRepository.findByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID + 1))
                 .isEmpty();
@@ -158,12 +151,9 @@ class OrderRepositoryAdapterIntegrationTest {
         Order order = order("status", LocalDateTime.now().plusMinutes(5));
         inTransaction(() -> orderRepository.save(order));
 
-        Order found =
-                inTransactionWithResult(
-                        () ->
-                                orderRepository
-                                        .findByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID)
-                                        .orElseThrow());
+        Order found = inTransactionWithResult(() -> orderRepository
+                .findByOrderKeyAndMemberId(order.getOrderKey(), MEMBER_ID)
+                .orElseThrow());
 
         assertThat(found.getOrderKey()).isEqualTo(order.getOrderKey());
         assertThat(found.getStatus()).isEqualTo(OrderState.PENDING);
@@ -180,33 +170,24 @@ class OrderRepositoryAdapterIntegrationTest {
         Order alreadyConfirmed = order("confirmed", now.minusMinutes(1));
         alreadyConfirmed.confirm(now.minusSeconds(1));
 
-        inTransaction(
-                () -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
+        inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
 
-        List<Order> result =
-                orderRepository.findExpirable(OrderState.PENDING, now, null, BATCH_SIZE);
+        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, null, BATCH_SIZE);
 
-        assertThat(result)
-                .extracting(Order::getOrderKey)
-                .containsExactly("order-past", "order-boundary");
+        assertThat(result).extracting(Order::getOrderKey).containsExactly("order-past", "order-boundary");
     }
 
     @Test
     void expiration_query_respects_the_requested_limit() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-        inTransaction(
-                () ->
-                        jpaRepository.saveAll(
-                                List.of(
-                                        order("first", now.minusMinutes(3)),
-                                        order("second", now.minusMinutes(2)),
-                                        order("third", now.minusMinutes(1)))));
+        inTransaction(() -> jpaRepository.saveAll(List.of(
+                order("first", now.minusMinutes(3)),
+                order("second", now.minusMinutes(2)),
+                order("third", now.minusMinutes(1)))));
 
         List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, null, 2);
 
-        assertThat(result)
-                .extracting(Order::getOrderKey)
-                .containsExactly("order-first", "order-second");
+        assertThat(result).extracting(Order::getOrderKey).containsExactly("order-first", "order-second");
     }
 
     /** 커서 뒤의 대상만 돌려줘야 만료 배치가 실패 항목을 넘어 앞으로 나아갈 수 있다. */
@@ -218,12 +199,9 @@ class OrderRepositoryAdapterIntegrationTest {
         Order third = order("cursor-third", now.minusMinutes(1));
         inTransaction(() -> jpaRepository.saveAll(List.of(first, second, third)));
 
-        List<Order> result =
-                orderRepository.findExpirable(OrderState.PENDING, now, first.getId(), BATCH_SIZE);
+        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, first.getId(), BATCH_SIZE);
 
-        assertThat(result)
-                .extracting(Order::getOrderKey)
-                .containsExactly("order-cursor-second", "order-cursor-third");
+        assertThat(result).extracting(Order::getOrderKey).containsExactly("order-cursor-second", "order-cursor-third");
     }
 
     @Test
@@ -231,69 +209,48 @@ class OrderRepositoryAdapterIntegrationTest {
         Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
         inTransaction(() -> jpaRepository.save(pending));
 
-        assertThat(
-                        orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                                MEMBER_ID, PERFORMANCE_ID, OrderState.PENDING))
+        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                        MEMBER_ID, PERFORMANCE_ID, OrderState.PENDING))
                 .isTrue();
-        assertThat(
-                        orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                                MEMBER_ID + 1, PERFORMANCE_ID, OrderState.PENDING))
+        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                        MEMBER_ID + 1, PERFORMANCE_ID, OrderState.PENDING))
                 .isFalse();
-        assertThat(
-                        orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                                MEMBER_ID, PERFORMANCE_ID, OrderState.CONFIRMED))
+        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
+                        MEMBER_ID, PERFORMANCE_ID, OrderState.CONFIRMED))
                 .isFalse();
     }
 
     @Test
     void pessimistic_write_lock_blocks_a_second_transaction_for_the_same_order() throws Exception {
-        Order saved =
-                inTransactionWithResult(
-                        () ->
-                                orderRepository.save(
-                                        order("lock", LocalDateTime.now().plusMinutes(5))));
+        Order saved = inTransactionWithResult(
+                () -> orderRepository.save(order("lock", LocalDateTime.now().plusMinutes(5))));
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch firstLockAcquired = new CountDownLatch(1);
         CountDownLatch secondTransactionStarted = new CountDownLatch(1);
         CountDownLatch releaseFirstLock = new CountDownLatch(1);
 
-        Future<Boolean> first =
-                executor.submit(
-                        () ->
-                                new TransactionTemplate(transactionManager)
-                                        .execute(
-                                                status -> {
-                                                    boolean found =
-                                                            orderRepository
-                                                                    .findByOrderKeyAndMemberIdForUpdate(
-                                                                            saved.getOrderKey(),
-                                                                            MEMBER_ID)
-                                                                    .isPresent();
-                                                    firstLockAcquired.countDown();
-                                                    await(releaseFirstLock);
-                                                    return found;
-                                                }));
+        Future<Boolean> first = executor.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
+            boolean found = orderRepository
+                    .findByOrderKeyAndMemberIdForUpdate(saved.getOrderKey(), MEMBER_ID)
+                    .isPresent();
+            firstLockAcquired.countDown();
+            await(releaseFirstLock);
+            return found;
+        }));
 
         try {
             assertThat(firstLockAcquired.await(3, TimeUnit.SECONDS)).isTrue();
 
-            Future<Boolean> second =
-                    executor.submit(
-                            () -> {
-                                secondTransactionStarted.countDown();
-                                return new TransactionTemplate(transactionManager)
-                                        .execute(
-                                                status ->
-                                                        orderRepository
-                                                                .findByOrderKeyAndMemberIdForUpdate(
-                                                                        saved.getOrderKey(),
-                                                                        MEMBER_ID)
-                                                                .isPresent());
-                            });
+            Future<Boolean> second = executor.submit(() -> {
+                secondTransactionStarted.countDown();
+                return new TransactionTemplate(transactionManager)
+                        .execute(status -> orderRepository
+                                .findByOrderKeyAndMemberIdForUpdate(saved.getOrderKey(), MEMBER_ID)
+                                .isPresent());
+            });
 
             assertThat(secondTransactionStarted.await(3, TimeUnit.SECONDS)).isTrue();
-            assertThatThrownBy(() -> second.get(300, TimeUnit.MILLISECONDS))
-                    .isInstanceOf(TimeoutException.class);
+            assertThatThrownBy(() -> second.get(300, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
 
             releaseFirstLock.countDown();
 

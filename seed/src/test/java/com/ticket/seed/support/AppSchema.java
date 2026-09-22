@@ -15,12 +15,11 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 임시 H2 파일 DB에 <b>실제 애플리케이션 스키마</b>를 만든다.
  *
- * <p>시드 테스트가 손으로 쓴 DDL을 쓰면 앱의 매핑이 바뀌어도 통과한다 — 그 순간 테스트는 "시드가 실제 앱 DB에서 동작한다"를 더 이상 보장하지 않는다. 여기서는
- * 로컬 프로파일과 같은 방식 (Hibernate {@code ddl-auto: create})으로 앱 entity 매핑에서 스키마를 직접 생성한다.
+ * <p>시드 테스트가 손으로 쓴 DDL을 쓰면 앱의 매핑이 바뀌어도 통과한다 — 그 순간 테스트는 "시드가 실제 앱 DB에서 동작한다"를 더 이상 보장하지 않는다. 여기서는 로컬 프로파일과 같은 방식
+ * (Hibernate {@code ddl-auto: create})으로 앱 entity 매핑에서 스키마를 직접 생성한다.
  *
- * <p>DataSource와 Hibernate JPA auto-configuration <b>둘만</b> 올린다. 웹 서버·Redis·OAuth·Modulith event
- * registry는 올리지 않는다 — 시드 검증에 필요하지 않고, 시드 때문에 그런 인프라가 필요해지는 구조를 만들지 않기 위해서다. 스키마를 만든 뒤 컨텍스트는 곧바로
- * 닫는다(파일 DB라 스키마는 디스크에 남는다).
+ * <p>DataSource와 Hibernate JPA auto-configuration <b>둘만</b> 올린다. 웹 서버·Redis·OAuth·Modulith event registry는 올리지 않는다 — 시드
+ * 검증에 필요하지 않고, 시드 때문에 그런 인프라가 필요해지는 구조를 만들지 않기 위해서다. 스키마를 만든 뒤 컨텍스트는 곧바로 닫는다(파일 DB라 스키마는 디스크에 남는다).
  */
 public final class AppSchema {
     /** 로컬 프로파일과 같은 H2 Oracle 모드다. 시드 SQL이 {@code FROM dual}을 쓴다. */
@@ -34,8 +33,7 @@ public final class AppSchema {
     }
 
     /** {@code extraUrlOptions}로 {@code ;AUTO_SERVER=TRUE} 같은 옵션을 덧붙인다. */
-    public static String createIn(
-            final Path directory, final String name, final String extraUrlOptions) {
+    public static String createIn(final Path directory, final String name, final String extraUrlOptions) {
         final String jdbcUrl = urlFor(directory, name) + extraUrlOptions;
         create(jdbcUrl);
         return jdbcUrl;
@@ -57,13 +55,11 @@ public final class AppSchema {
     /**
      * 임의의 DB(운영 검증용 Oracle Testcontainer 등)에 앱 entity 매핑으로 스키마를 만든다.
      *
-     * <p><b>테스트 소스에만 둔다.</b> 이 기능을 시드 프로그램에 노출하면 "운영 DB 초기화" 명령이 되어 버린다 — 테이블 생성·삭제는 이 도구의 범위가 아니고,
-     * {@code seedProd}는 이미 준비된 테이블에 데이터만 넣는다.
+     * <p><b>테스트 소스에만 둔다.</b> 이 기능을 시드 프로그램에 노출하면 "운영 DB 초기화" 명령이 되어 버린다 — 테이블 생성·삭제는 이 도구의 범위가 아니고, {@code seedProd}는
+     * 이미 준비된 테이블에 데이터만 넣는다.
      */
-    public static void createOn(
-            final String jdbcUrl, final String username, final String password) {
-        try (ConfigurableApplicationContext context =
-                context(jdbcUrl, username, password, "create")) {
+    public static void createOn(final String jdbcUrl, final String username, final String password) {
+        try (ConfigurableApplicationContext context = context(jdbcUrl, username, password, "create")) {
             context.getBeanFactory();
         }
     }
@@ -73,16 +69,12 @@ public final class AppSchema {
         return context(jdbcUrl, "none");
     }
 
-    private static ConfigurableApplicationContext context(
-            final String jdbcUrl, final String ddlAuto) {
+    private static ConfigurableApplicationContext context(final String jdbcUrl, final String ddlAuto) {
         return context(jdbcUrl, "sa", "", ddlAuto);
     }
 
     private static ConfigurableApplicationContext context(
-            final String jdbcUrl,
-            final String username,
-            final String password,
-            final String ddlAuto) {
+            final String jdbcUrl, final String username, final String password, final String ddlAuto) {
         return new SpringApplicationBuilder(SchemaConfiguration.class)
                 .web(WebApplicationType.NONE)
                 .bannerMode(Banner.Mode.OFF)
@@ -102,10 +94,7 @@ public final class AppSchema {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @ImportAutoConfiguration({
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class
-    })
+    @ImportAutoConfiguration({DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
     @EntityScan("com.ticket")
     static class SchemaConfiguration {}
 }

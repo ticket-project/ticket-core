@@ -29,13 +29,15 @@ public class MemberLookupService implements MemberLookupApi {
     @Override
     public MemberStatus getStatus(final long memberId) {
         final Member member = findActiveOrThrow(memberId);
-        return new MemberStatus(member.getId(), !member.isDeleted(), member.getRole().name());
+        return new MemberStatus(
+                member.getId(), !member.isDeleted(), member.getRole().name());
     }
 
     @Override
     public MemberSnapshot getProfile(final long memberId) {
         final Member member = findActiveOrThrow(memberId);
-        return new MemberSnapshot(member.getId(), member.getName(), member.getEmail().getEmail());
+        return new MemberSnapshot(
+                member.getId(), member.getName(), member.getEmail().getEmail());
     }
 
     private Member findActiveOrThrow(final long memberId) {

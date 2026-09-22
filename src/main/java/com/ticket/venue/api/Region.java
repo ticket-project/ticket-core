@@ -3,8 +3,8 @@ package com.ticket.venue.api;
 import lombok.Getter;
 
 /**
- * Venue의 행정 지역이다. show가 검색 조건("이 지역 공연장에서 하는 공연")과 표시값으로 함께 쓰는 공용 어휘라, root 공개 계약의 "interface +
- * record만" 원칙의 예외로 여기 둔다(package-info 참고).
+ * Venue의 행정 지역이다. show가 검색 조건("이 지역 공연장에서 하는 공연")과 표시값으로 함께 쓰는 공용 어휘라, root 공개 계약의 "interface + record만" 원칙의 예외로 여기
+ * 둔다(package-info 참고).
  */
 @Getter
 public enum Region {

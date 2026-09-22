@@ -24,30 +24,30 @@ import com.ticket.security.token.RefreshTokenStore;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class RefreshAuthTokenUseCaseTest {
-    @Mock private RefreshTokenStore refreshTokenStore;
-    @Mock private MemberAccountApi memberAccountOperations;
-    @Mock private AuthTokenIssuer authTokenIssuer;
-    @InjectMocks private RefreshAuthTokenUseCase useCase;
+    @Mock
+    private RefreshTokenStore refreshTokenStore;
+
+    @Mock
+    private MemberAccountApi memberAccountOperations;
+
+    @Mock
+    private AuthTokenIssuer authTokenIssuer;
+
+    @InjectMocks
+    private RefreshAuthTokenUseCase useCase;
 
     @Test
     void valid_refresh_token_rotates_tokens() {
         MemberStatus member = new MemberStatus(1L, true, "MEMBER");
         IssuedAuthTokens response =
-                new IssuedAuthTokens(
-                        "access-token-value",
-                        "new-refresh-token-value",
-                        "Bearer",
-                        1800L,
-                        1209600L,
-                        3L);
+                new IssuedAuthTokens("access-token-value", "new-refresh-token-value", "Bearer", 1800L, 1209600L, 3L);
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
         when(memberAccountOperations.requireActiveIdentity(3L)).thenReturn(member);
         when(authTokenIssuer.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
-        RefreshAuthTokenUseCase.Result result =
-                useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken));
+        RefreshAuthTokenUseCase.Result result = useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken));
         RefreshAuthTokenUseCase.Output output = result.output();
 
         assertThat(output.accessToken()).isEqualTo(response.accessToken());
@@ -55,9 +55,7 @@ class RefreshAuthTokenUseCaseTest {
         assertThat(output.expiresIn()).isEqualTo(response.expiresIn());
         assertThat(output.memberId()).isEqualTo(response.memberId());
         assertThat(result.refreshToken()).isEqualTo("new-refresh-token-value");
-        assertThat(result.toString())
-                .doesNotContain("access-token-value")
-                .doesNotContain("new-refresh-token-value");
+        assertThat(result.toString()).doesNotContain("access-token-value").doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
         verify(memberAccountOperations).requireActiveIdentity(3L);
         verify(authTokenIssuer).rotateTokens(1L, "MEMBER", refreshToken);

@@ -31,9 +31,9 @@ import com.ticket.member.domain.Role;
 /**
  * 소셜 계정이 회원 aggregate의 자식 컬렉션으로 바뀐 뒤에도 <b>soft delete가 유지되는지</b>를 실제 H2에 붙여 고정한다.
  *
- * <p>이 테스트가 지키는 것은 하나다 — {@code Member.socialAccounts}에 {@code orphanRemoval = true}나 {@code
- * CascadeType.REMOVE}가 붙으면 탈퇴 시 {@code MEMBER_SOCIAL_ACCOUNTS} row가 실제로 지워져 연결 이력이 사라진다. 그 실수를 잡으려고
- * JPA 컬렉션이 아니라 <b>native count</b>로 row 존재를 직접 확인한다.
+ * <p>이 테스트가 지키는 것은 하나다 — {@code Member.socialAccounts}에 {@code orphanRemoval = true}나 {@code CascadeType.REMOVE}가 붙으면
+ * 탈퇴 시 {@code MEMBER_SOCIAL_ACCOUNTS} row가 실제로 지워져 연결 이력이 사라진다. 그 실수를 잡으려고 JPA 컬렉션이 아니라 <b>native count</b>로 row 존재를 직접
+ * 확인한다.
  *
  * <p>member module만으로 컨텍스트가 서는 좁은 슬라이스라 공용 테스트 베이스를 상속하지 않는다.
  */
@@ -62,13 +62,15 @@ import com.ticket.member.domain.Role;
 @Transactional
 @SuppressWarnings("NonAsciiCharacters")
 class MemberSocialAccountPersistenceTest {
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private EntityManager entityManager;
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void 회원을_저장하면_소셜계정이_cascade로_함께_저장된다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
 
         memberRepository.save(member);
@@ -79,8 +81,7 @@ class MemberSocialAccountPersistenceTest {
 
     @Test
     void 탈퇴해도_소셜계정_row는_남고_deletedAt만_채워진다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
         member.addSocialAccount(SocialProvider.GOOGLE, "google-1");
         Long memberId = memberRepository.save(member).getId();
@@ -98,8 +99,7 @@ class MemberSocialAccountPersistenceTest {
 
     @Test
     void 탈퇴한_회원의_소셜계정으로는_다시_로그인되지_않는다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
         Long memberId = memberRepository.save(member).getId();
         flushAndClear();
@@ -119,8 +119,7 @@ class MemberSocialAccountPersistenceTest {
 
     @Test
     void 연결_해제된_소셜계정은_활성_계정에서_빠진다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
         member.addSocialAccount(SocialProvider.GOOGLE, "google-1");
         Long memberId = memberRepository.save(member).getId();
@@ -142,35 +141,29 @@ class MemberSocialAccountPersistenceTest {
 
     @Test
     void 소셜아이디로_회원을_찾을_때_다른_제공자는_걸리지_않는다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "same-id");
         memberRepository.save(member);
         flushAndClear();
 
-        Optional<Member> byKakao =
-                memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "same-id");
-        Optional<Member> byGoogle =
-                memberRepository.findActiveBySocialAccount(SocialProvider.GOOGLE, "same-id");
+        Optional<Member> byKakao = memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "same-id");
+        Optional<Member> byGoogle = memberRepository.findActiveBySocialAccount(SocialProvider.GOOGLE, "same-id");
 
         assertThat(byKakao).isPresent();
         assertThat(byGoogle).isEmpty();
     }
 
     private long socialAccountRowCount() {
-        return ((Number)
-                        entityManager
-                                .createNativeQuery("SELECT COUNT(*) FROM MEMBER_SOCIAL_ACCOUNTS")
-                                .getSingleResult())
+        return ((Number) entityManager
+                        .createNativeQuery("SELECT COUNT(*) FROM MEMBER_SOCIAL_ACCOUNTS")
+                        .getSingleResult())
                 .longValue();
     }
 
     private long deletedSocialAccountRowCount() {
-        return ((Number)
-                        entityManager
-                                .createNativeQuery(
-                                        "SELECT COUNT(*) FROM MEMBER_SOCIAL_ACCOUNTS WHERE deleted_at IS NOT NULL")
-                                .getSingleResult())
+        return ((Number) entityManager
+                        .createNativeQuery("SELECT COUNT(*) FROM MEMBER_SOCIAL_ACCOUNTS WHERE deleted_at IS NOT NULL")
+                        .getSingleResult())
                 .longValue();
     }
 

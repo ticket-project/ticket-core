@@ -21,17 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 요청 파라미터 제약은 문서 인터페이스 한곳에만 선언한다는 규칙을 고정한다.
  *
- * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하면
- * ConstraintDeclarationException(HV000151)을 던진다. Controller가 문서 인터페이스를 구현하므로 같은 제약을 두 곳에 두면 method
- * validation 자체가 깨진다.
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하면 ConstraintDeclarationException(HV000151)을 던진다.
+ * Controller가 문서 인터페이스를 구현하므로 같은 제약을 두 곳에 두면 method validation 자체가 깨진다.
  *
- * <p>문서 인터페이스는 {@code endpoint} package를 가진 module이면 모두 {@code ..endpoint.docs}에 있다({@code
- * like}/{@code member}/{@code show}와 {@code booking}의 각 capability). {@code security}만 예외로
- * controller 옆 기능 폴더({@code security.auth})에 둔다 — 이 module은 계층 package를 아예 쓰지 않는다(ADR 0013). 그래서
- * {@code src/main/java/com/ticket} 전체를 훑되, <b>디렉터리 이름이 아니라 타입 자체로 찾는다</b> — controller는
- * {@code @RestController} 애노테이션으로, 문서 인터페이스는 {@code *ControllerDocs} 이름으로 찾는다. 디렉터리 이름으로 찾으면
- * package 배치가 바뀔 때 검사 대상이 조용히 줄어도 테스트가 통과해 버린다 (실제로 {@code web} -> {@code endpoint} 개명에서 그럴 뻔했고,
- * {@code docs} 디렉터리를 쓰지 않는 module의 문서 인터페이스는 한동안 검사 밖에 있었다).
+ * <p>문서 인터페이스는 {@code endpoint} package를 가진 module이면 모두 {@code ..endpoint.docs}에
+ * 있다({@code like}/{@code member}/{@code show}와 {@code booking}의 각 capability). {@code security}만 예외로 controller 옆 기능
+ * 폴더({@code security.auth})에 둔다 — 이 module은 계층 package를 아예 쓰지 않는다(ADR 0013). 그래서 {@code src/main/java/com/ticket} 전체를
+ * 훑되, <b>디렉터리 이름이 아니라 타입 자체로 찾는다</b> — controller는 {@code @RestController} 애노테이션으로, 문서 인터페이스는 {@code *ControllerDocs}
+ * 이름으로 찾는다. 디렉터리 이름으로 찾으면 package 배치가 바뀔 때 검사 대상이 조용히 줄어도 테스트가 통과해 버린다 (실제로 {@code web} -> {@code endpoint} 개명에서 그럴
+ * 뻔했고, {@code docs} 디렉터리를 쓰지 않는 module의 문서 인터페이스는 한동안 검사 밖에 있었다).
  *
  * <p>상대 경로로 소스 디렉터리를 읽으므로 Gradle이 정해 주는 작업 디렉터리에서만 통과한다.
  */
@@ -133,12 +131,11 @@ class ControllerParameterConstraintTest {
     }
 
     private List<Class<?>> classesDirectlyIn(final Path directory) throws IOException {
-        final String packageName =
-                Path.of("src/main/java")
-                        .relativize(directory)
-                        .toString()
-                        .replace('\\', '.')
-                        .replace('/', '.');
+        final String packageName = Path.of("src/main/java")
+                .relativize(directory)
+                .toString()
+                .replace('\\', '.')
+                .replace('/', '.');
         try (Stream<Path> paths = Files.list(directory)) {
             return paths.filter(path -> path.toString().endsWith(".java"))
                     .map(path -> path.getFileName().toString().replace(".java", ""))

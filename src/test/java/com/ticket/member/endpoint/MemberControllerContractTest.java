@@ -23,23 +23,18 @@ import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 @SuppressWarnings("NonAsciiCharacters")
 class MemberControllerContractTest {
     private MockMvc mockMvc;
-    private final GetCurrentMemberUseCase getCurrentMemberUseCase =
-            Mockito.mock(GetCurrentMemberUseCase.class);
+    private final GetCurrentMemberUseCase getCurrentMemberUseCase = Mockito.mock(GetCurrentMemberUseCase.class);
 
     @BeforeEach
     void setUp() {
         MemberController controller = new MemberController(getCurrentMemberUseCase);
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(controller)
-                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new MemberExceptionHandler())
-                        .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(new GlobalExceptionHandler(), new MemberExceptionHandler())
+                .build();
         AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(
-                                principal, null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of()));
     }
 
     @AfterEach
@@ -50,9 +45,7 @@ class MemberControllerContractTest {
     @Test
     void 내_정보_API는_응답_계약을_유지한다() throws Exception {
         when(getCurrentMemberUseCase.execute(new GetCurrentMemberUseCase.Input(1L)))
-                .thenReturn(
-                        new GetCurrentMemberUseCase.Output(
-                                1L, "user@example.com", "홍길동", "MEMBER"));
+                .thenReturn(new GetCurrentMemberUseCase.Output(1L, "user@example.com", "홍길동", "MEMBER"));
 
         mockMvc.perform(get("/api/v1/members"))
                 .andExpect(status().isOk())

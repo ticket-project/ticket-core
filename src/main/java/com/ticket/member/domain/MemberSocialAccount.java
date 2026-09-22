@@ -51,13 +51,12 @@ public class MemberSocialAccount extends AuditedEntity {
     @Column(name = "social_id", nullable = false)
     private String socialId;
 
-    @Column private @Nullable LocalDateTime deletedAt;
+    @Column
+    private @Nullable LocalDateTime deletedAt;
 
-    private MemberSocialAccount(
-            final Member member, final SocialProvider socialProvider, final String socialId) {
+    private MemberSocialAccount(final Member member, final SocialProvider socialProvider, final String socialId) {
         this.member = Objects.requireNonNull(member, "member must not be null");
-        this.socialProvider =
-                Objects.requireNonNull(socialProvider, "socialProvider must not be null");
+        this.socialProvider = Objects.requireNonNull(socialProvider, "socialProvider must not be null");
         this.socialId = Objects.requireNonNull(socialId, "socialId must not be null");
     }
 

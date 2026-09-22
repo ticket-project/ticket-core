@@ -37,8 +37,7 @@ public class MemberRepositoryAdapter implements MemberRepository {
     }
 
     @Override
-    public Optional<Member> findActiveBySocialAccount(
-            final SocialProvider socialProvider, final String socialId) {
+    public Optional<Member> findActiveBySocialAccount(final SocialProvider socialProvider, final String socialId) {
         return jpaRepository.findActiveBySocialAccount(socialProvider, socialId);
     }
 }

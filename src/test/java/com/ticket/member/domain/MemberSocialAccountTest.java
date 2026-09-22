@@ -14,13 +14,8 @@ class MemberSocialAccountTest {
     @Test
     void matches_same_social_id() {
         Member member =
-                new Member(
-                        Email.create("user@example.com"),
-                        EncodedPassword.create("encoded"),
-                        "tester",
-                        Role.MEMBER);
-        MemberSocialAccount account =
-                MemberSocialAccount.create(member, SocialProvider.KAKAO, "kakao-123");
+                new Member(Email.create("user@example.com"), EncodedPassword.create("encoded"), "tester", Role.MEMBER);
+        MemberSocialAccount account = MemberSocialAccount.create(member, SocialProvider.KAKAO, "kakao-123");
 
         assertThat(account.isSameSocialId("kakao-123")).isTrue();
         assertThat(account.isSameSocialId("other")).isFalse();
@@ -29,13 +24,8 @@ class MemberSocialAccountTest {
     @Test
     void withdraw_uses_given_timestamp() {
         Member member =
-                new Member(
-                        Email.create("user@example.com"),
-                        EncodedPassword.create("encoded"),
-                        "tester",
-                        Role.MEMBER);
-        MemberSocialAccount account =
-                MemberSocialAccount.create(member, SocialProvider.KAKAO, "kakao-123");
+                new Member(Email.create("user@example.com"), EncodedPassword.create("encoded"), "tester", Role.MEMBER);
+        MemberSocialAccount account = MemberSocialAccount.create(member, SocialProvider.KAKAO, "kakao-123");
         LocalDateTime withdrawnAt = LocalDateTime.of(2026, 3, 15, 10, 0);
         ReflectionTestUtils.setField(account, "id", 11L);
 

@@ -13,16 +13,13 @@ import com.ticket.shared.exception.InvalidRequestException;
 public final class OAuth2UserInfoMapper {
     private OAuth2UserInfoMapper() {}
 
-    public static SocialIdentity map(
-            final String registrationId, final Map<String, Object> attributes) {
+    public static SocialIdentity map(final String registrationId, final Map<String, Object> attributes) {
         final String normalizedRegistrationId = registrationId.toLowerCase(Locale.ROOT);
 
         return switch (normalizedRegistrationId) {
             case "google" -> mapGoogle(attributes);
             case "kakao" -> mapKakao(attributes);
-            default ->
-                    throw new InvalidRequestException(
-                            "Unsupported social provider: " + registrationId);
+            default -> throw new InvalidRequestException("Unsupported social provider: " + registrationId);
         };
     }
 
@@ -38,10 +35,9 @@ public final class OAuth2UserInfoMapper {
     private static SocialIdentity mapKakao(final Map<String, Object> attributes) {
         final Map<String, Object> account = getMap(attributes, "kakao_account");
         final Map<String, Object> profile = account == null ? null : getMap(account, "profile");
-        final boolean emailVerified =
-                account != null
-                        && Boolean.TRUE.equals(account.get("is_email_valid"))
-                        && Boolean.TRUE.equals(account.get("is_email_verified"));
+        final boolean emailVerified = account != null
+                && Boolean.TRUE.equals(account.get("is_email_valid"))
+                && Boolean.TRUE.equals(account.get("is_email_verified"));
 
         return new SocialIdentity(
                 SocialProvider.KAKAO,
@@ -54,8 +50,7 @@ public final class OAuth2UserInfoMapper {
     }
 
     @SuppressWarnings("unchecked")
-    private static @Nullable Map<String, Object> getMap(
-            final Map<String, Object> source, final String key) {
+    private static @Nullable Map<String, Object> getMap(final Map<String, Object> source, final String key) {
         final Object value = source.get(key);
         if (value instanceof Map<?, ?> mapValue) {
             return (Map<String, Object>) mapValue;

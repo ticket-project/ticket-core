@@ -24,10 +24,8 @@ public class LikeQueryService implements LikeQueryApi {
     private final LikeQuerydslRepository likeQuerydslRepository;
 
     @Override
-    public LikeCountSnapshot get(
-            final LikeType likeType, final long targetId, final long memberId) {
-        final boolean liked =
-                likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
+    public LikeCountSnapshot get(final LikeType likeType, final long targetId, final long memberId) {
+        final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
         final long likeCount = likeRepository.countByLikeTypeAndTargetId(likeType, targetId);
         return new LikeCountSnapshot(liked, likeCount);
     }
@@ -39,10 +37,7 @@ public class LikeQueryService implements LikeQueryApi {
 
     @Override
     public CursorPage<LikeSnapshot, Long> findLiked(
-            final LikeType likeType,
-            final long memberId,
-            final @Nullable Long cursorLikeId,
-            final int size) {
+            final LikeType likeType, final long memberId, final @Nullable Long cursorLikeId, final int size) {
         return likeQuerydslRepository
                 .findLiked(likeType, memberId, cursorLikeId, size)
                 .map(LikeQueryService::toEntry);

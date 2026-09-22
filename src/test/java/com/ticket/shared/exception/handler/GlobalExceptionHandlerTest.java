@@ -25,21 +25,19 @@ import com.ticket.shared.exception.NotFoundException;
 /**
  * {@link GlobalExceptionHandler}가 만드는 오류 응답 계약을 고정한다.
  *
- * <p>RFC 9457 스타일의 공통 오류 표현 대신, 기존 {@code ApiResponse} 오류 envelope ({@code result/data/error})와
- * E-code, HTTP 상태를 그대로 유지하는지 검증한다.
+ * <p>RFC 9457 스타일의 공통 오류 표현 대신, 기존 {@code ApiResponse} 오류 envelope ({@code result/data/error})와 E-code, HTTP 상태를 그대로
+ * 유지하는지 검증한다.
  *
- * <p>업무 오류의 HTTP 상태는 더 이상 예외 자신이 들고 있지 않고 그 오류를 잡는 handler(각 module handler, 그리고 여기 있는 공통 오류 셋)가 안다
- * — {@link TicketException}은 errorCode·message· data만 옮기는 그릇이다. {@code InvalidRequestException}으로
- * "예외의 data가 error.data로 나가고 message를 덮지 않는다"는 공통 불변식을 확인한다. module 고유 오류(E6000 등)의 상태·코드·메시지는 각
- * module의 handler 테스트가 고정한다.
+ * <p>업무 오류의 HTTP 상태는 더 이상 예외 자신이 들고 있지 않고 그 오류를 잡는 handler(각 module handler, 그리고 여기 있는 공통 오류 셋)가 안다 —
+ * {@link TicketException}은 errorCode·message· data만 옮기는 그릇이다. {@code InvalidRequestException}으로 "예외의 data가 error.data로
+ * 나가고 message를 덮지 않는다"는 공통 불변식을 확인한다. module 고유 오류(E6000 등)의 상태·코드·메시지는 각 module의 handler 테스트가 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class GlobalExceptionHandlerTest {
 
-    private final MockMvc mockMvc =
-            MockMvcBuilders.standaloneSetup(new TestController())
-                    .setControllerAdvice(new GlobalExceptionHandler())
-                    .build();
+    private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
+            .setControllerAdvice(new GlobalExceptionHandler())
+            .build();
 
     @Test
     void 공통_오류는_예외가_들고_있는_code와_message를_그대로_반환하고_handler가_상태를_정한다() throws Exception {
@@ -78,20 +76,18 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void bean_validation_실패는_400과_E400을_반환한다() throws Exception {
-        mockMvc.perform(
-                        post("/test/validated-body")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"name\":\"\"}"))
+        mockMvc.perform(post("/test/validated-body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("E400"));
     }
 
     @Test
     void 읽을_수_없는_json은_400과_E400을_반환한다() throws Exception {
-        mockMvc.perform(
-                        post("/test/validated-body")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("not-json"))
+        mockMvc.perform(post("/test/validated-body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("not-json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("E400"));
     }
@@ -109,12 +105,9 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.error.code").value("E500"))
                 .andExpect(jsonPath("$.error.message").value("일시적인 오류가 발생했습니다."))
-                .andExpect(
-                        content()
-                                .string(
-                                        org.hamcrest.Matchers.not(
-                                                org.hamcrest.Matchers.containsString(
-                                                        "secret-internal-detail"))));
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("secret-internal-detail"))));
     }
 
     private static org.springframework.test.web.servlet.ResultMatcher contentTypeIsJson() {
@@ -158,7 +151,8 @@ class GlobalExceptionHandlerTest {
 
     private static class ValidatedRequest {
 
-        @NotBlank private String name;
+        @NotBlank
+        private String name;
 
         public String getName() {
             return name;

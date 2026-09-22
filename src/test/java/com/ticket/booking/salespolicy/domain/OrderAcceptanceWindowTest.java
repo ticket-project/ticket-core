@@ -18,8 +18,7 @@ class OrderAcceptanceWindowTest {
     void 시작_전이면_BEFORE_OPEN이다() {
         OrderAcceptanceWindow window = new OrderAcceptanceWindow(OPENS_AT, CLOSES_AT);
 
-        assertThat(window.statusAt(OPENS_AT.minusMinutes(1)))
-                .isEqualTo(OrderAcceptanceStatus.BEFORE_OPEN);
+        assertThat(window.statusAt(OPENS_AT.minusMinutes(1))).isEqualTo(OrderAcceptanceStatus.BEFORE_OPEN);
     }
 
     @Test
@@ -47,8 +46,7 @@ class OrderAcceptanceWindowTest {
     void 마감_이후면_CLOSED다() {
         OrderAcceptanceWindow window = new OrderAcceptanceWindow(OPENS_AT, CLOSES_AT);
 
-        assertThat(window.statusAt(CLOSES_AT.plusMinutes(1)))
-                .isEqualTo(OrderAcceptanceStatus.CLOSED);
+        assertThat(window.statusAt(CLOSES_AT.plusMinutes(1))).isEqualTo(OrderAcceptanceStatus.CLOSED);
     }
 
     @Test
@@ -59,8 +57,7 @@ class OrderAcceptanceWindowTest {
 
     @Test
     void closesAt이_null이면_예외를_던진다() {
-        assertThatThrownBy(() -> new OrderAcceptanceWindow(OPENS_AT, null))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new OrderAcceptanceWindow(OPENS_AT, null)).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test

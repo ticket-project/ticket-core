@@ -24,9 +24,9 @@ import com.ticket.seed.support.AppSchema;
 /**
  * 모든 공용 공연장에 물리 좌석이 있고, 모든 공용 회차에 그 공연장의 좌석이 연결되는지를 고정한다.
  *
- * <p>과거 실패를 그대로 재현한다. 공용 SQL의 좌석 복제({@code CROSS JOIN VENUES})는 <b>실행 시점에 존재하는</b> VENUES만 대상으로
- * 삼는데, KOPIS 수집 도구가 새 공연장을 파일 끝에 이어 붙였다. 그렇게 추가된 공연장은 좌석을 하나도 받지 못했고 그 공연장의 회차에는 회차좌석이 생기지 않았다. 개수
- * 비교만으로는 잡히지 않았다 — 기대값 자체를 "이미 만들어진 좌석"에서 계산했기 때문에 기대값과 실제값이 사이좋게 0이었다.
+ * <p>과거 실패를 그대로 재현한다. 공용 SQL의 좌석 복제({@code CROSS JOIN VENUES})는 <b>실행 시점에 존재하는</b> VENUES만 대상으로 삼는데, KOPIS 수집 도구가 새
+ * 공연장을 파일 끝에 이어 붙였다. 그렇게 추가된 공연장은 좌석을 하나도 받지 못했고 그 공연장의 회차에는 회차좌석이 생기지 않았다. 개수 비교만으로는 잡히지 않았다 — 기대값 자체를 "이미 만들어진 좌석"에서
+ * 계산했기 때문에 기대값과 실제값이 사이좋게 0이었다.
  *
  * <p>테스트 SQL은 {@code minimal-curated.sql}의 마커(@seed-splice) 위치를 기준으로 만든다. 마커 계약이 깨지면 여기서도 깨진다.
  */
@@ -54,27 +54,26 @@ class SeedSeatCoverageTest {
                     + " '2026-07-12 10:00:00', '2026-08-01 18:00:00', 4, 600, '2026-01-01 10:00:00',"
                     + " 'KOPIS_SEED');";
 
-    @TempDir Path tempDir;
+    @TempDir
+    Path tempDir;
 
     private String jdbcUrl;
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void prepareSchema() {
-        jdbcUrl =
-                AppSchema.createIn(
-                        tempDir, "coverage-" + UUID.randomUUID().toString().substring(0, 8));
+        jdbcUrl = AppSchema.createIn(
+                tempDir, "coverage-" + UUID.randomUUID().toString().substring(0, 8));
         jdbcTemplate = new JdbcTemplate(dataSource(jdbcUrl));
     }
 
     @Test
     void 마커_앞에_추가한_공연장은_좌석과_회차좌석을_받는다() {
-        final Path sqlPath =
-                write(
-                        "with-new-venue.sql",
-                        spliceBeforeVenueMarker(
-                                spliceBeforePerformanceMarker(minimalSeedSql(), NEW_PERFORMANCE),
-                                NEW_VENUE + System.lineSeparator() + NEW_SHOW));
+        final Path sqlPath = write(
+                "with-new-venue.sql",
+                spliceBeforeVenueMarker(
+                        spliceBeforePerformanceMarker(minimalSeedSql(), NEW_PERFORMANCE),
+                        NEW_VENUE + System.lineSeparator() + NEW_SHOW));
 
         assertThat(runSeed(sqlPath)).as("새 공연장을 추가해도 정상 적재된다").isZero();
 
@@ -88,15 +87,14 @@ class SeedSeatCoverageTest {
 
     @Test
     void 마커_뒤에_추가한_공연장은_적재를_시작하기_전에_실패한다() {
-        final Path sqlPath =
-                write(
-                        "venue-appended-at-end.sql",
-                        minimalSeedSql()
-                                + System.lineSeparator()
-                                + NEW_VENUE
-                                + System.lineSeparator()
-                                + NEW_SHOW
-                                + System.lineSeparator());
+        final Path sqlPath = write(
+                "venue-appended-at-end.sql",
+                minimalSeedSql()
+                        + System.lineSeparator()
+                        + NEW_VENUE
+                        + System.lineSeparator()
+                        + NEW_SHOW
+                        + System.lineSeparator());
 
         assertThat(runSeed(sqlPath)).as("순서가 어긋난 SQL은 실패로 알린다").isEqualTo(1);
 
@@ -110,13 +108,10 @@ class SeedSeatCoverageTest {
      */
     @Test
     void 좌석이_없는_공연장이_남으면_커밋하지_않고_되돌린다() {
-        final String excludedFromReplication =
-                spliceBeforeVenueMarker(
-                                spliceBeforePerformanceMarker(minimalSeedSql(), NEW_PERFORMANCE),
-                                NEW_VENUE + System.lineSeparator() + NEW_SHOW)
-                        .replace(
-                                "WHERE t.venue_id = 1 AND v.id <> 1;",
-                                "WHERE t.venue_id = 1 AND v.id <> 1 AND v.id <> 3;");
+        final String excludedFromReplication = spliceBeforeVenueMarker(
+                        spliceBeforePerformanceMarker(minimalSeedSql(), NEW_PERFORMANCE),
+                        NEW_VENUE + System.lineSeparator() + NEW_SHOW)
+                .replace("WHERE t.venue_id = 1 AND v.id <> 1;", "WHERE t.venue_id = 1 AND v.id <> 1 AND v.id <> 3;");
         final Path sqlPath = write("venue-without-seats.sql", excludedFromReplication);
 
         assertThat(runSeed(sqlPath)).as("좌석 없는 공연장이 남으면 실패로 알린다").isEqualTo(1);
@@ -153,11 +148,7 @@ class SeedSeatCoverageTest {
     private static String spliceBefore(final String sql, final String marker, final String block) {
         final int index = sql.indexOf(marker);
         assertThat(index).as("테스트 SQL에 마커 '%s'가 있어야 한다", marker).isNotNegative();
-        return sql.substring(0, index)
-                + block
-                + System.lineSeparator()
-                + System.lineSeparator()
-                + sql.substring(index);
+        return sql.substring(0, index) + block + System.lineSeparator() + System.lineSeparator() + sql.substring(index);
     }
 
     private static String minimalSeedSql() {
@@ -198,10 +189,8 @@ class SeedSeatCoverageTest {
     }
 
     private long count(final String from, final String where) {
-        final Long count =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM " + from + (where == null ? "" : " WHERE " + where),
-                        Long.class);
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + from + (where == null ? "" : " WHERE " + where), Long.class);
         return count == null ? 0L : count;
     }
 

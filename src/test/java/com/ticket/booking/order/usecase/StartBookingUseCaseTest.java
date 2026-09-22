@@ -71,16 +71,30 @@ class StartBookingUseCaseTest {
     private static final long PERFORMANCE_ID = 10L;
     private static final long MEMBER_ID = 20L;
     private static final String ADMISSION_TOKEN = "admission-token";
-    @Mock private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
-    @Mock private AdmissionVerifier admissionVerifier;
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private BookingAvailabilityChecker bookingAvailabilityChecker;
-    @Mock private PerformanceSaleCatalogApi performanceSaleCatalog;
-    @Mock private HoldManager holdManager;
-    @Mock private PendingOrderCreator pendingOrderCreator;
+
+    @Mock
+    private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
+
+    @Mock
+    private AdmissionVerifier admissionVerifier;
+
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private BookingAvailabilityChecker bookingAvailabilityChecker;
+
+    @Mock
+    private PerformanceSaleCatalogApi performanceSaleCatalog;
+
+    @Mock
+    private HoldManager holdManager;
+
+    @Mock
+    private PendingOrderCreator pendingOrderCreator;
+
     private final RecordingLockManager lockManager = new RecordingLockManager();
-    private final Clock fixedClock =
-            Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
+    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private StartBookingUseCase startBookingUseCase;
 
     @BeforeEach
@@ -103,11 +117,9 @@ class StartBookingUseCaseTest {
     @Test
     void 중복된_좌석_ID가_있으면_예외를_던진다() {
         final StartBookingUseCase.Input input =
-                new StartBookingUseCase.Input(
-                        PERFORMANCE_ID, List.of(3L, 1L, 3L), MEMBER_ID, ADMISSION_TOKEN);
+                new StartBookingUseCase.Input(PERFORMANCE_ID, List.of(3L, 1L, 3L), MEMBER_ID, ADMISSION_TOKEN);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> startBookingUseCase.execute(input)).isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
@@ -122,11 +134,9 @@ class StartBookingUseCaseTest {
     @Test
     void 좌석_ID가_비어있으면_예외를_던진다() {
         final StartBookingUseCase.Input input =
-                new StartBookingUseCase.Input(
-                        PERFORMANCE_ID, List.of(), MEMBER_ID, ADMISSION_TOKEN);
+                new StartBookingUseCase.Input(PERFORMANCE_ID, List.of(), MEMBER_ID, ADMISSION_TOKEN);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> startBookingUseCase.execute(input)).isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
@@ -142,22 +152,18 @@ class StartBookingUseCaseTest {
     void 유효한_요청이면_hold와_주문을_생성한다() {
         final StartBookingUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats =
-                List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
+        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
 
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(5)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
         when(performanceSaleCatalog.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
                 .thenReturn(saleSnapshot);
-        when(holdManager.createHold(
-                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(
-                        MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
+        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
                 .thenReturn("order-key");
 
         final StartBookingUseCase.Output output = startBookingUseCase.execute(input);
@@ -167,23 +173,19 @@ class StartBookingUseCaseTest {
         assertThat(output.expiresAt()).isEqualTo(hold.expiresAt());
         assertThat(output.remainingSeconds()).isEqualTo(600L);
 
-        final InOrder inOrder =
-                inOrder(
-                        performanceSalesPolicyRepository,
-                        memberLookup,
-                        bookingAvailabilityChecker,
-                        performanceSaleCatalog,
-                        holdManager,
-                        pendingOrderCreator);
+        final InOrder inOrder = inOrder(
+                performanceSalesPolicyRepository,
+                memberLookup,
+                bookingAvailabilityChecker,
+                performanceSaleCatalog,
+                holdManager,
+                pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
         inOrder.verify(memberLookup).requireActive(MEMBER_ID);
         inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
-        inOrder.verify(performanceSaleCatalog)
-                .getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
-        inOrder.verify(holdManager)
-                .createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
-        inOrder.verify(pendingOrderCreator)
-                .create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
+        inOrder.verify(performanceSaleCatalog).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
+        inOrder.verify(holdManager).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
+        inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
     }
 
     /** 확인한 정책과 좌석은 반환되지 않고 뒤 단계의 인자로만 관찰된다. */
@@ -191,42 +193,27 @@ class StartBookingUseCaseTest {
     void 확인한_정책의_선점_시간과_좌석을_그대로_뒤_단계로_넘긴다() {
         final StartBookingUseCase.Input input = input(List.of(1L, 2L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats =
-                List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
+        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
 
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(3)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(
-                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
 
         startBookingUseCase.execute(input);
 
         verify(memberLookup).requireActive(MEMBER_ID);
         verify(pendingOrderCreator)
-                .create(
-                        eq(MEMBER_ID),
-                        eq(PERFORMANCE_ID),
-                        eq(HOLD_DURATION),
-                        eq(hold),
-                        same(seats),
-                        any());
+                .create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), same(seats), any());
     }
 
     @Test
     void 예매가_마감된_회차는_DB_검증으로_넘어가지_않는다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(
-                        Optional.of(
-                                policy(
-                                        3,
-                                        FIXED_NOW.minusHours(2),
-                                        FIXED_NOW.minusHours(1),
-                                        false)));
+                .thenReturn(Optional.of(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), false)));
 
         assertError(seatIds, PerformanceIsPastException.class);
 
@@ -236,8 +223,7 @@ class StartBookingUseCaseTest {
     @Test
     void 최대_선점_가능_수량을_초과하면_DB_검증으로_넘어가지_않는다() {
         final List<Long> seatIds = List.of(1L, 2L, 3L);
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(2)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(2)));
 
         assertError(seatIds, HoldLimitExceededException.class);
 
@@ -248,8 +234,7 @@ class StartBookingUseCaseTest {
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         final StartBookingUseCase.Input input = input(List.of(1L, 2L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(3)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(List.of());
         stubHold(seatIds);
@@ -263,9 +248,7 @@ class StartBookingUseCaseTest {
     void 대기열이_필요한_회차는_입장_검사를_DB_검증보다_먼저_한다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(
-                        Optional.of(
-                                policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true)));
+                .thenReturn(Optional.of(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true)));
         doThrow(new AdmissionTokenRequiredException())
                 .when(admissionVerifier)
                 .verify(PERFORMANCE_ID, MEMBER_ID, ADMISSION_TOKEN);
@@ -279,10 +262,8 @@ class StartBookingUseCaseTest {
     @Test
     void 진행중인_pending_주문이_있으면_예외를_전파한다() {
         final List<Long> seatIds = List.of(1L, 2L);
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(3)));
-        when(bookingAvailabilityChecker.check(
-                        MEMBER_ID, PERFORMANCE_ID, RequestedSeatIds.from(seatIds)))
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
+        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, RequestedSeatIds.from(seatIds)))
                 .thenThrow(new PendingOrderAlreadyExistsException(MEMBER_ID, PERFORMANCE_ID));
 
         assertError(seatIds, PendingOrderAlreadyExistsException.class);
@@ -294,8 +275,7 @@ class StartBookingUseCaseTest {
     void 좌석_수_한도가_없으면_요청_수량을_제한하지_않는다() {
         final StartBookingUseCase.Input input = input(List.of(1L, 2L, 3L, 4L, 5L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(null)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(null)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(List.of());
         stubHold(seatIds);
@@ -312,20 +292,13 @@ class StartBookingUseCaseTest {
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
 
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(5)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(
-                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
-                        eq(MEMBER_ID),
-                        eq(PERFORMANCE_ID),
-                        eq(HOLD_DURATION),
-                        eq(hold),
-                        eq(seats),
-                        any()))
+                        eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
                 .thenThrow(new RuntimeException("order failed"));
 
         assertThatThrownBy(() -> startBookingUseCase.execute(input))
@@ -343,20 +316,13 @@ class StartBookingUseCaseTest {
         final Hold hold = hold(seatIds.toList());
         final RuntimeException originalException = new RuntimeException("order failed");
 
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
-                .thenReturn(Optional.of(openPolicy(5)));
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(
-                        MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
-                        eq(MEMBER_ID),
-                        eq(PERFORMANCE_ID),
-                        eq(HOLD_DURATION),
-                        eq(hold),
-                        eq(seats),
-                        any()))
+                        eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
                 .thenThrow(originalException);
         doThrow(new RuntimeException("release failed"))
                 .when(holdManager)
@@ -365,30 +331,28 @@ class StartBookingUseCaseTest {
         assertThatThrownBy(() -> startBookingUseCase.execute(input))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed")
-                .satisfies(
-                        exception -> {
-                            assertThat(exception.getSuppressed()).hasSize(1);
-                            assertThat(exception.getSuppressed()[0].getMessage())
-                                    .isEqualTo("release failed");
-                        });
+                .satisfies(exception -> {
+                    assertThat(exception.getSuppressed()).hasSize(1);
+                    assertThat(exception.getSuppressed()[0].getMessage()).isEqualTo("release failed");
+                });
     }
 
     @Test
     void execute는_DB_트랜잭션을_직접_시작하지_않는다() throws NoSuchMethodException {
-        assertThat(
-                        StartBookingUseCase.class
-                                .getDeclaredMethod("execute", StartBookingUseCase.Input.class)
-                                .isAnnotationPresent(Transactional.class))
+        assertThat(StartBookingUseCase.class
+                        .getDeclaredMethod("execute", StartBookingUseCase.Input.class)
+                        .isAnnotationPresent(Transactional.class))
                 .isFalse();
     }
 
     /**
-     * 준비 단계가 private method여도 이 use case는 DB 트랜잭션을 열지 않는다 — 열면 다른 module 호출·분산락·Redis 왕복이 전부 그 안에
-     * 들어가 connection을 오래 쥔다.
+     * 준비 단계가 private method여도 이 use case는 DB 트랜잭션을 열지 않는다 — 열면 다른 module 호출·분산락·Redis 왕복이 전부 그 안에 들어가 connection을 오래
+     * 쥔다.
      */
     @Test
     void 준비_단계는_트랜잭션_없이_다른_module_공개_API를_호출한다() {
-        assertThat(StartBookingUseCase.class.isAnnotationPresent(Transactional.class)).isFalse();
+        assertThat(StartBookingUseCase.class.isAnnotationPresent(Transactional.class))
+                .isFalse();
         for (final Method method : StartBookingUseCase.class.getDeclaredMethods()) {
             assertThat(method.isAnnotationPresent(Transactional.class))
                     .as("%s는 트랜잭션을 직접 열지 않는다", method.getName())
@@ -398,20 +362,12 @@ class StartBookingUseCaseTest {
 
     private void stubHold(final RequestedSeatIds seatIds) {
         lenient()
-                .when(
-                        holdManager.createHold(
-                                MEMBER_ID,
-                                PERFORMANCE_ID,
-                                seatIds.toList(),
-                                HOLD_DURATION,
-                                FIXED_NOW))
+                .when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold(seatIds.toList()));
     }
 
-    private void assertError(
-            final List<Long> seatIds, final Class<? extends BookingException> expected) {
-        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
-                .isInstanceOf(expected);
+    private void assertError(final List<Long> seatIds, final Class<? extends BookingException> expected) {
+        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds))).isInstanceOf(expected);
     }
 
     private StartBookingUseCase.Input input(final List<Long> seatIds) {
@@ -442,13 +398,6 @@ class StartBookingUseCaseTest {
 
     private PerformanceSaleSnapshot saleSnapshot() {
         return new PerformanceSaleSnapshot(
-                PERFORMANCE_ID,
-                1L,
-                "show-title",
-                1L,
-                "venue-name",
-                FIXED_NOW.plusDays(1),
-                Map.of(),
-                Map.of());
+                PERFORMANCE_ID, 1L, "show-title", 1L, "venue-name", FIXED_NOW.plusDays(1), Map.of(), Map.of());
     }
 }

@@ -20,10 +20,8 @@ class PerformanceControllerContractTest {
             Mockito.mock(GetPerformanceSummaryUseCase.class);
 
     private MockMvc newMockMvc() {
-        PerformanceController controller =
-                new PerformanceController(
-                        getPerformanceSummaryUseCase,
-                        Mockito.mock(GetPerformanceScheduleListUseCase.class));
+        PerformanceController controller = new PerformanceController(
+                getPerformanceSummaryUseCase, Mockito.mock(GetPerformanceScheduleListUseCase.class));
         return MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
                 .build();
@@ -31,9 +29,7 @@ class PerformanceControllerContractTest {
 
     @Test
     void booking_entry_api는_제공하지_않는다() throws Exception {
-        newMockMvc()
-                .perform(get("/api/v1/performances/10/booking-entry"))
-                .andExpect(status().isNotFound());
+        newMockMvc().perform(get("/api/v1/performances/10/booking-entry")).andExpect(status().isNotFound());
     }
 
     @Test

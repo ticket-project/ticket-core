@@ -24,30 +24,27 @@ import com.ticket.venue.domain.Venue;
 @Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryTestSupport {
-    @Autowired private PerformanceSeatRepository performanceSeatRepository;
+    @Autowired
+    private PerformanceSeatRepository performanceSeatRepository;
+
     private Long performanceId;
     private Long seatId;
 
     @BeforeEach
     void setUp() throws Exception {
         Venue venue = persistVenue("올림픽홀", Region.SEOUL);
-        Show show =
-                persistShow(
-                        "뮤지컬",
-                        venue,
-                        null,
-                        0L,
-                        LocalDateTime.now(clock).minusDays(1),
-                        LocalDateTime.now(clock).plusDays(1));
+        Show show = persistShow(
+                "뮤지컬",
+                venue,
+                null,
+                0L,
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(1));
         Performance performance =
                 persistPerformance(show, 1L, LocalDateTime.now(clock).plusDays(1));
         Seat seat = persistSeat(venue, "A", "10", "7", 1);
         PerformanceSeat performanceSeat =
-                persistPerformanceSeat(
-                        performance,
-                        seat,
-                        PerformanceSeatState.AVAILABLE,
-                        BigDecimal.valueOf(120000));
+                persistPerformanceSeat(performance, seat, PerformanceSeatState.AVAILABLE, BigDecimal.valueOf(120000));
         performanceId = performance.getId();
         seatId = performanceSeat.getSeatId();
         flushAndClear();
@@ -64,6 +61,7 @@ class PerformanceSeatRepositoryAdapterSelectionTest extends InfraReadRepositoryT
 
     @Test
     void 회차에_없는_좌석이면_비어있다() {
-        assertThat(performanceSeatRepository.findSeatState(performanceId, 999999L)).isEmpty();
+        assertThat(performanceSeatRepository.findSeatState(performanceId, 999999L))
+                .isEmpty();
     }
 }

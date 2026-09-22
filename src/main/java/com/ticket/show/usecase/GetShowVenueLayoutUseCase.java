@@ -15,8 +15,7 @@ import com.ticket.venue.api.VenueSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show에 연결된 공연장의 좌석 맵 배치를 조회한다. venue 표시값은 venue module의 {@link VenueLookupApi}에서 조회한다 — show는 물리
- * 공연장 entity를 참조하지 않는다.
+ * show에 연결된 공연장의 좌석 맵 배치를 조회한다. venue 표시값은 venue module의 {@link VenueLookupApi}에서 조회한다 — show는 물리 공연장 entity를 참조하지 않는다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -31,15 +30,12 @@ public class GetShowVenueLayoutUseCase {
         }
     }
 
-    public record Output(
-            @Nullable String name, int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
+    public record Output(@Nullable String name, int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
 
     public Output execute(final Input input) {
-        final Show show =
-                showRepository
-                        .findById(input.showId())
-                        .orElseThrow(
-                                () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId()));
+        final Show show = showRepository
+                .findById(input.showId())
+                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.showId()));
 
         final Long venueId = show.getVenueId();
         final VenueSnapshot venue =

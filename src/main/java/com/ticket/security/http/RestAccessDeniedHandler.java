@@ -38,7 +38,6 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         jsonMapper.writeValue(
                 response.getWriter(),
-                ApiResponse.error(
-                        error.getErrorCode().getCode(), error.getMessage(), error.getData()));
+                ApiResponse.error(error.getErrorCode().getCode(), error.getMessage(), error.getData()));
     }
 }

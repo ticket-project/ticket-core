@@ -20,9 +20,7 @@ class SecurityContextAuditorAwareTest {
     void 인증된_AuthenticatedMember가_있으면_memberId를_감사자로_반환한다() {
         AuthenticatedMember principal = new AuthenticatedMember(7L, "MEMBER");
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(
-                                principal, null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of()));
 
         SecurityContextAuditorAware auditorAware = new SecurityContextAuditorAware();
 

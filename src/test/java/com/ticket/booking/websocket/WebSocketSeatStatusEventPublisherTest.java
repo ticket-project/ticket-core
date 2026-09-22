@@ -21,9 +21,10 @@ import com.ticket.booking.seat.port.SeatStatusEvent;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WebSocketSeatStatusEventPublisherTest {
-    @Mock private SimpMessagingTemplate messagingTemplate;
-    private final Clock fixedClock =
-            Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+
+    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Test
     void 좌석_이벤트_발행_시_Clock_기준_시간이_메시지에_포함된다() {
@@ -33,8 +34,7 @@ class WebSocketSeatStatusEventPublisherTest {
 
         publisher.publish(10L, 20L, 30L, SeatStatusEvent.SeatStatusAction.HELD);
 
-        verify(messagingTemplate)
-                .convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
+        verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
         assertThat(captor.getValue().timestamp()).isEqualTo(LocalDateTime.of(2026, 3, 15, 10, 0));
         assertThat(captor.getValue().action()).isEqualTo(SeatStatusEvent.SeatStatusAction.HELD);
         assertThat(captor.getValue().performanceSeatId()).isEqualTo(20L);

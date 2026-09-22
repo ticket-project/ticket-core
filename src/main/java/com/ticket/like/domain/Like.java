@@ -36,10 +36,7 @@ public class Like extends AuditedEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * member가 소유한 회원의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로 {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR
-     * 0003 §4).
-     */
+    /** member가 소유한 회원의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로 {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR 0003 §4). */
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
@@ -49,9 +46,8 @@ public class Like extends AuditedEntity {
     private LikeType likeType;
 
     /**
-     * 대상(예: show)이 소유한 entity의 scalar 참조다. 원래는 공연에 대한 {@code @ManyToOne}이었지만, 찜이 별도 module(like)로
-     * 분리되며 모듈을 넘나드는 JPA 연관관계를 금지하는 규칙(ADR 0003 §4)에 맞춰 scalar id column으로 바뀌었다. 대상 존재 확인은 이 module의
-     * 책임이 아니다 — 호출자가 이미 확인했다는 전제다.
+     * 대상(예: show)이 소유한 entity의 scalar 참조다. 원래는 공연에 대한 {@code @ManyToOne}이었지만, 찜이 별도 module(like)로 분리되며 모듈을 넘나드는 JPA
+     * 연관관계를 금지하는 규칙(ADR 0003 §4)에 맞춰 scalar id column으로 바뀌었다. 대상 존재 확인은 이 module의 책임이 아니다 — 호출자가 이미 확인했다는 전제다.
      */
     @Column(name = "target_id", nullable = false)
     private Long targetId;

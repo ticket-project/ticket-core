@@ -16,22 +16,22 @@ import com.ticket.member.api.RawPassword;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class RegisterMemberUseCaseTest {
-    @Mock private MemberAccountApi memberAccountOperations;
-    @InjectMocks private RegisterMemberUseCase useCase;
+    @Mock
+    private MemberAccountApi memberAccountOperations;
+
+    @InjectMocks
+    private RegisterMemberUseCase useCase;
 
     @Test
     void 입력값을_값객체로_변환해_회원가입을_호출한다() {
         // given
-        when(memberAccountOperations.register(
-                        "user@example.com", RawPassword.create("password123!"), "홍길동"))
+        when(memberAccountOperations.register("user@example.com", RawPassword.create("password123!"), "홍길동"))
                 .thenReturn(11L);
         // when
         RegisterMemberUseCase.Output output =
-                useCase.execute(
-                        new RegisterMemberUseCase.Input("user@example.com", "password123!", "홍길동"));
+                useCase.execute(new RegisterMemberUseCase.Input("user@example.com", "password123!", "홍길동"));
         // then
         assertThat(output.memberId()).isEqualTo(11L);
-        verify(memberAccountOperations)
-                .register("user@example.com", RawPassword.create("password123!"), "홍길동");
+        verify(memberAccountOperations).register("user@example.com", RawPassword.create("password123!"), "홍길동");
     }
 }

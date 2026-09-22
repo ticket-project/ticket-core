@@ -21,9 +21,14 @@ import com.ticket.booking.order.domain.OrderState;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class ExpireOrderUseCaseTest {
-    @Mock private OrderRepository orderRepository;
-    @Mock private OrderTerminationService orderTerminationService;
-    @InjectMocks private ExpireOrderUseCase useCase;
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private OrderTerminationService orderTerminationService;
+
+    @InjectMocks
+    private ExpireOrderUseCase useCase;
 
     @Test
     void orderId로_조회한_주문이_없으면_noop이다() {
@@ -69,22 +74,20 @@ class ExpireOrderUseCaseTest {
         useCase.expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
         useCase.expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
 
-        verify(orderRepository, times(2))
-                .findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING);
+        verify(orderRepository, times(2)).findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING);
         verify(orderTerminationService).expire(order, LocalDateTime.of(2026, 3, 15, 10, 0));
     }
 
     private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
-        final Order order =
-                new Order(
-                        1L,
-                        performanceId,
-                        "order-key",
-                        holdKey,
-                        LocalDateTime.now().plusMinutes(5),
-                        "show-title",
-                        LocalDateTime.now().plusDays(1),
-                        "venue-name");
+        final Order order = new Order(
+                1L,
+                performanceId,
+                "order-key",
+                holdKey,
+                LocalDateTime.now().plusMinutes(5),
+                "show-title",
+                LocalDateTime.now().plusDays(1),
+                "venue-name");
         ReflectionTestUtils.setField(order, "id", id);
         return order;
     }

@@ -14,8 +14,7 @@ class HoldHistoryTest {
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         // when
-        HoldHistory holdHistory =
-                HoldHistory.created("hold-key", 1L, 10L, 100L, 200L, occurredAt, expiresAt);
+        HoldHistory holdHistory = HoldHistory.created("hold-key", 1L, 10L, 100L, 200L, occurredAt, expiresAt);
         // then
         assertThat(holdHistory.getHoldKey()).isEqualTo("hold-key");
         assertThat(holdHistory.getMemberId()).isEqualTo(1L);
@@ -34,8 +33,7 @@ class HoldHistoryTest {
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         // when
         HoldHistory holdHistory =
-                HoldHistory.expired(
-                        "hold-key", 1L, 10L, 100L, 200L, occurredAt, HoldReleaseReason.TTL_EXPIRED);
+                HoldHistory.expired("hold-key", 1L, 10L, 100L, 200L, occurredAt, HoldReleaseReason.TTL_EXPIRED);
         // then
         assertThat(holdHistory.getEventType()).isEqualTo(HoldHistoryEventType.EXPIRED);
         assertThat(holdHistory.getOccurredAt()).isEqualTo(occurredAt);
@@ -49,14 +47,7 @@ class HoldHistoryTest {
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 10);
         // when
         HoldHistory holdHistory =
-                HoldHistory.canceled(
-                        "hold-key",
-                        1L,
-                        10L,
-                        100L,
-                        200L,
-                        occurredAt,
-                        HoldReleaseReason.USER_CANCELED);
+                HoldHistory.canceled("hold-key", 1L, 10L, 100L, 200L, occurredAt, HoldReleaseReason.USER_CANCELED);
         // then
         assertThat(holdHistory.getEventType()).isEqualTo(HoldHistoryEventType.CANCELED);
         assertThat(holdHistory.getOccurredAt()).isEqualTo(occurredAt);

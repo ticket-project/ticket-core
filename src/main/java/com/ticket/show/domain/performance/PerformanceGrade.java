@@ -23,8 +23,8 @@ import lombok.NoArgsConstructor;
 /**
  * 특정 Performance에서 사용할 Grade다.
  *
- * <p>단순 join table이 아니라 회차별 가격과 표시 순서를 갖는 연결 entity다 — 가격의 원본은 이 entity이고, {@code
- * PerformanceSeat.unitPrice}/{@code OrderSeat.unitPrice}는 판매 오픈·주문 시점에 이 값을 snapshot한다. 설계 배경은
+ * <p>단순 join table이 아니라 회차별 가격과 표시 순서를 갖는 연결 entity다 — 가격의 원본은 이 entity이고,
+ * {@code PerformanceSeat.unitPrice}/{@code OrderSeat.unitPrice}는 판매 오픈·주문 시점에 이 값을 snapshot한다. 설계 배경은
  * {@code docs/adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md}를 본다.
  */
 @Getter
@@ -47,8 +47,7 @@ public class PerformanceGrade extends AuditedEntity {
 
     /**
      * Grade는 PerformanceGrade와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 —
-     * {@code docs/architecture.md}의 참조 규칙). 반면 위 {@code performance}는 같은 aggregate 안(부모)이라 객체 참조를
-     * 유지한다.
+     * {@code docs/architecture.md}의 참조 규칙). 반면 위 {@code performance}는 같은 aggregate 안(부모)이라 객체 참조를 유지한다.
      */
     @Column(name = "grade_id", nullable = false)
     private Long gradeId;
@@ -60,10 +59,7 @@ public class PerformanceGrade extends AuditedEntity {
     private Integer sortOrder;
 
     private PerformanceGrade(
-            final Performance performance,
-            final Long gradeId,
-            final BigDecimal price,
-            final Integer sortOrder) {
+            final Performance performance, final Long gradeId, final BigDecimal price, final Integer sortOrder) {
         this.performance = performance;
         this.gradeId = gradeId;
         this.price = validatePrice(price);
@@ -71,10 +67,7 @@ public class PerformanceGrade extends AuditedEntity {
     }
 
     public static PerformanceGrade assign(
-            final Performance performance,
-            final Long gradeId,
-            final BigDecimal price,
-            final Integer sortOrder) {
+            final Performance performance, final Long gradeId, final BigDecimal price, final Integer sortOrder) {
         return new PerformanceGrade(performance, gradeId, price, sortOrder);
     }
 

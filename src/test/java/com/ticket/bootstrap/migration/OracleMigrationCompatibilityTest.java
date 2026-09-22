@@ -23,12 +23,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.oracle.OracleContainer;
 
 /**
- * Task 11 Step 7: 저장소에 기존 Oracle Testcontainers/profile 인프라가 없어(확인함: {@code build.gradle}에 Oracle
- * Testcontainers 모듈이 전혀 없었다) 이 Task에서 새로 추가한다. 실제 Oracle(Testcontainers {@code gvenzl/oracle-free})
- * 위에서 {@code __root}(V2~V8, 특히 V8의 RAW(16)/CHECK 제약)와 독립된 {@code booking} module 자체 이력(V1의 PL/SQL
- * 동적 FK 제거, V2의 outbox table 제거)의 Oracle 방언 migration이 문법 오류 없이 실제로 적용되는지 검증한다. {@code booking}은
- * {@code spring.modulith.runtime.flyway-enabled}로 자신만의 {@code flyway_schema_history_booking}을 가지므로
- * root의 V-번호와 겹치지 않는다.
+ * Task 11 Step 7: 저장소에 기존 Oracle Testcontainers/profile 인프라가 없어(확인함: {@code build.gradle}에 Oracle Testcontainers 모듈이 전혀
+ * 없었다) 이 Task에서 새로 추가한다. 실제 Oracle(Testcontainers {@code gvenzl/oracle-free}) 위에서 {@code __root}(V2~V8, 특히 V8의
+ * RAW(16)/CHECK 제약)와 독립된 {@code booking} module 자체 이력(V1의 PL/SQL 동적 FK 제거, V2의 outbox table 제거)의 Oracle 방언 migration이
+ * 문법 오류 없이 실제로 적용되는지 검증한다. {@code booking}은 {@code spring.modulith.runtime.flyway-enabled}로 자신만의
+ * {@code flyway_schema_history_booking}을 가지므로 root의 V-번호와 겹치지 않는다.
  *
  * <p>Docker가 없는 환경에서는 이 클래스 전체가 Testcontainers에 의해 자동으로 건너뛰어진다 ({@code @Testcontainers}의 기본 동작).
  */
@@ -51,17 +50,15 @@ class OracleMigrationCompatibilityTest {
         createLegacyBaselineSchema();
         applyRootOnlyForQueuePoliciesTable();
 
-        final Flyway baseFlyway =
-                Flyway.configure()
-                        .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
-                        .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
-                        .load();
+        final Flyway baseFlyway = Flyway.configure()
+                .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
+                .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
+                .load();
 
         final ApplicationModuleIdentifiers identifiers =
                 ApplicationModuleIdentifiers.of(List.of(ApplicationModuleIdentifier.of("booking")));
 
-        new SpringModulithFlywayMigrationStrategy(identifiers, MigrationFilter.USE_ALL)
-                .migrate(baseFlyway);
+        new SpringModulithFlywayMigrationStrategy(identifiers, MigrationFilter.USE_ALL).migrate(baseFlyway);
 
         try (Connection connection = connect()) {
             assertThat(tableExists(connection, "EVENT_PUBLICATION")).isTrue();
@@ -76,13 +73,13 @@ class OracleMigrationCompatibilityTest {
             assertThat(importedKeyTables(connection, "PERFORMANCE_SEATS")).isEmpty();
             // ADR 0006 "Performance의 책임 혼재" A2: booking V6가 실제 Oracle 방언에서도 정책
             // 소유권 이관(backfill + drop)을 문법 오류 없이 수행하는지 확인한다.
-            assertThat(tableExists(connection, "BOOKING_PERFORMANCE_SALES_POLICIES")).isTrue();
+            assertThat(tableExists(connection, "BOOKING_PERFORMANCE_SALES_POLICIES"))
+                    .isTrue();
             assertThat(tableExists(connection, "PERFORMANCE_QUEUE_POLICIES")).isFalse();
             assertThat(hasColumn(connection, "PERFORMANCES", "ORDER_OPEN_TIME")).isFalse();
             try (Statement statement = connection.createStatement();
-                    ResultSet row =
-                            statement.executeQuery(
-                                    "SELECT hold_duration_seconds, queue_mode FROM BOOKING_PERFORMANCE_SALES_POLICIES WHERE performance_id = 1")) {
+                    ResultSet row = statement.executeQuery(
+                            "SELECT hold_duration_seconds, queue_mode FROM BOOKING_PERFORMANCE_SALES_POLICIES WHERE performance_id = 1")) {
                 assertThat(row.next()).isTrue();
                 assertThat(row.getLong("hold_duration_seconds")).isEqualTo(600);
                 assertThat(row.getString("queue_mode")).isEqualTo("FORCE_OFF");
@@ -90,27 +87,21 @@ class OracleMigrationCompatibilityTest {
         }
     }
 
-    private void assertSerializedEventHoldsLongPayload(
-            final Connection connection, final String table) throws SQLException {
+    private void assertSerializedEventHoldsLongPayload(final Connection connection, final String table)
+            throws SQLException {
         final String payload = "x".repeat(1000);
         try (Statement statement = connection.createStatement()) {
-            statement.execute(
-                    "INSERT INTO "
-                            + table
-                            + " (id, publication_date, listener_id, serialized_event, event_type,"
-                            + " completion_attempts, status) VALUES (SYS_GUID(), SYSTIMESTAMP,"
-                            + " 'listener', '"
-                            + payload
-                            + "', 'com.ticket.booking.OrderTerminated', 0, 'PUBLISHED')");
+            statement.execute("INSERT INTO "
+                    + table
+                    + " (id, publication_date, listener_id, serialized_event, event_type,"
+                    + " completion_attempts, status) VALUES (SYS_GUID(), SYSTIMESTAMP,"
+                    + " 'listener', '"
+                    + payload
+                    + "', 'com.ticket.booking.OrderTerminated', 0, 'PUBLISHED')");
         }
         try (Statement statement = connection.createStatement();
-                ResultSet row =
-                        statement.executeQuery(
-                                "SELECT COUNT(*) FROM "
-                                        + table
-                                        + " WHERE serialized_event = '"
-                                        + payload
-                                        + "'")) {
+                ResultSet row = statement.executeQuery(
+                        "SELECT COUNT(*) FROM " + table + " WHERE serialized_event = '" + payload + "'")) {
             assertThat(row.next()).isTrue();
             assertThat(row.getInt(1)).isEqualTo(1);
         }
@@ -119,8 +110,7 @@ class OracleMigrationCompatibilityTest {
     private void createLegacyBaselineSchema() throws SQLException {
         try (Connection connection = connect();
                 Statement statement = connection.createStatement()) {
-            statement.execute(
-                    """
+            statement.execute("""
                     CREATE TABLE performances (
                       id NUMBER(19,0) PRIMARY KEY,
                       order_open_time TIMESTAMP,
@@ -130,14 +120,13 @@ class OracleMigrationCompatibilityTest {
                     )
                     """);
             statement.execute("CREATE TABLE seats (id NUMBER(19,0) PRIMARY KEY)");
-            statement.execute(
-                    "CREATE TABLE performance_seats ("
-                            + "  id NUMBER(19,0) GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
-                            + "  performance_id NUMBER(19,0) NOT NULL, "
-                            + "  seat_id NUMBER(19,0) NOT NULL, "
-                            + "  CONSTRAINT legacy_fk_performance FOREIGN KEY (performance_id) REFERENCES performances(id), "
-                            + "  CONSTRAINT legacy_fk_seat FOREIGN KEY (seat_id) REFERENCES seats(id)"
-                            + ")");
+            statement.execute("CREATE TABLE performance_seats ("
+                    + "  id NUMBER(19,0) GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
+                    + "  performance_id NUMBER(19,0) NOT NULL, "
+                    + "  seat_id NUMBER(19,0) NOT NULL, "
+                    + "  CONSTRAINT legacy_fk_performance FOREIGN KEY (performance_id) REFERENCES performances(id), "
+                    + "  CONSTRAINT legacy_fk_seat FOREIGN KEY (seat_id) REFERENCES seats(id)"
+                    + ")");
             statement.execute("CREATE TABLE order_seats (order_id NUMBER(19,0) NOT NULL)");
             statement.execute(
                     "INSERT INTO performances (id, order_open_time, order_close_time, max_can_hold_count, hold_time) "
@@ -146,13 +135,11 @@ class OracleMigrationCompatibilityTest {
     }
 
     private void applyRootOnlyForQueuePoliciesTable() throws SQLException {
-        final Flyway rootOnlyFlyway =
-                Flyway.configure()
-                        .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
-                        .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
-                        .load();
-        new SpringModulithFlywayMigrationStrategy(
-                        ApplicationModuleIdentifiers.of(List.of()), MigrationFilter.USE_ALL)
+        final Flyway rootOnlyFlyway = Flyway.configure()
+                .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
+                .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
+                .load();
+        new SpringModulithFlywayMigrationStrategy(ApplicationModuleIdentifiers.of(List.of()), MigrationFilter.USE_ALL)
                 .migrate(rootOnlyFlyway);
 
         try (Connection connection = connect();
@@ -164,14 +151,11 @@ class OracleMigrationCompatibilityTest {
     }
 
     private Connection connect() throws SQLException {
-        return DriverManager.getConnection(
-                ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword());
+        return DriverManager.getConnection(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword());
     }
 
-    private boolean tableExists(final Connection connection, final String tableName)
-            throws SQLException {
-        try (ResultSet tables =
-                connection.getMetaData().getTables(null, null, tableName, new String[] {"TABLE"})) {
+    private boolean tableExists(final Connection connection, final String tableName) throws SQLException {
+        try (ResultSet tables = connection.getMetaData().getTables(null, null, tableName, new String[] {"TABLE"})) {
             return tables.next();
         }
     }
@@ -183,8 +167,7 @@ class OracleMigrationCompatibilityTest {
         }
     }
 
-    private Set<String> importedKeyTables(final Connection connection, final String tableName)
-            throws SQLException {
+    private Set<String> importedKeyTables(final Connection connection, final String tableName) throws SQLException {
         final Set<String> names = new HashSet<>();
         try (ResultSet keys = connection.getMetaData().getImportedKeys(null, null, tableName)) {
             while (keys.next()) {

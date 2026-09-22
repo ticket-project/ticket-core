@@ -38,10 +38,9 @@ public class GetLatestShowsUseCase {
             LocalDateTime createdAt) {}
 
     public Output execute(final Input input) {
-        final List<Show> shows =
-                showQuerydslRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
-        final VenueDisplays venues =
-                VenueDisplays.load(venueLookup, shows.stream().map(Show::getVenueId).toList());
+        final List<Show> shows = showQuerydslRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
+        final VenueDisplays venues = VenueDisplays.load(
+                venueLookup, shows.stream().map(Show::getVenueId).toList());
         return new Output(shows.stream().map(show -> toItem(show, venues)).toList());
     }
 

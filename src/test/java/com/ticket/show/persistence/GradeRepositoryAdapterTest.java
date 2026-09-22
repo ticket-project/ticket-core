@@ -15,7 +15,8 @@ import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 @Import(GradeRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GradeRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
-    @Autowired private GradeRepository repository;
+    @Autowired
+    private GradeRepository repository;
 
     @Test
     void code_오름차순으로_전체_Grade를_반환한다() throws Exception {

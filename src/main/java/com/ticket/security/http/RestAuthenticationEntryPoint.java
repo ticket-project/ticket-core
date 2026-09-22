@@ -31,8 +31,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             final AuthenticationException authException)
             throws IOException, ServletException {
         final String jwtError = (String) request.getAttribute(AccessTokenFailure.REQUEST_ATTRIBUTE);
-        final UnauthenticatedException error =
-                new UnauthenticatedException(resolveMessage(jwtError));
+        final UnauthenticatedException error = new UnauthenticatedException(resolveMessage(jwtError));
         // MemberExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
         // 거치지 않으므로 여기서 다시 정한다.
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -41,8 +40,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         jsonMapper.writeValue(
                 response.getWriter(),
-                ApiResponse.error(
-                        error.getErrorCode().getCode(), error.getMessage(), error.getData()));
+                ApiResponse.error(error.getErrorCode().getCode(), error.getMessage(), error.getData()));
     }
 
     private String resolveMessage(final String jwtError) {

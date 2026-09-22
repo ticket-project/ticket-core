@@ -24,11 +24,20 @@ import com.ticket.member.api.MemberLookupApi;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class DeselectAllSeatsUseCaseTest {
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private SeatSelectionService seatSelectionService;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
-    @Mock private SeatSelectionCoordinator seatSelectionCoordinator;
-    @InjectMocks private DeselectAllSeatsUseCase useCase;
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private SeatSelectionService seatSelectionService;
+
+    @Mock
+    private PerformanceSeatRepository performanceSeatRepository;
+
+    @Mock
+    private SeatSelectionCoordinator seatSelectionCoordinator;
+
+    @InjectMocks
+    private DeselectAllSeatsUseCase useCase;
 
     /**
      * 실제로 해제된 좌석만 알린다. 발행 자체는 coordinator가 좌석 락 안에서 현재 상태를 다시 확인한 뒤 하므로, 해제와 발행 사이에 남이 다시 선택한 좌석은
@@ -63,15 +72,12 @@ class DeselectAllSeatsUseCaseTest {
 
         verify(performanceSeatRepository, times(0))
                 .findAllByPerformanceIdAndSeatIdIn(
-                        org.mockito.ArgumentMatchers.anyLong(),
-                        org.mockito.ArgumentMatchers.anyList());
+                        org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyList());
         verifyNoMoreInteractions(seatSelectionCoordinator);
     }
 
     private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {
-        PerformanceSeat seat =
-                new PerformanceSeat(
-                        10L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
+        PerformanceSeat seat = new PerformanceSeat(10L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
         ReflectionTestUtils.setField(seat, "id", performanceSeatId);
         return seat;
     }

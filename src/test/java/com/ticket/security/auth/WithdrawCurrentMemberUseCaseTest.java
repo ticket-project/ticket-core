@@ -21,9 +21,14 @@ import com.ticket.security.oauth.SocialAccountUnlinker;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WithdrawCurrentMemberUseCaseTest {
-    @Mock private MemberAccountApi memberAccountOperations;
-    @Mock private SocialAccountUnlinker socialAccountUnlinker;
-    @InjectMocks private WithdrawCurrentMemberUseCase useCase;
+    @Mock
+    private MemberAccountApi memberAccountOperations;
+
+    @Mock
+    private SocialAccountUnlinker socialAccountUnlinker;
+
+    @InjectMocks
+    private WithdrawCurrentMemberUseCase useCase;
 
     @Test
     void 탈퇴_후_모든_카카오_계정을_연동해제한다() {
@@ -43,8 +48,7 @@ class WithdrawCurrentMemberUseCaseTest {
     void 카카오_연동해제_중_예외가_나도_탈퇴_흐름은_계속된다() {
         // given
         final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
-        final SocialAccountSnapshot second =
-                new SocialAccountSnapshot(SocialProvider.GOOGLE, "200");
+        final SocialAccountSnapshot second = new SocialAccountSnapshot(SocialProvider.GOOGLE, "200");
         when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
         doThrow(new IllegalStateException("boom")).when(socialAccountUnlinker).unlink(first);
         // when

@@ -21,14 +21,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.ticket.seed.support.AppSchema;
 
 /**
- * {@code seedLocal}의 <b>실제 실행 경로</b>를 임시 H2 파일 DB에서 통째로 돌린다. ({@link SeedLocalMain#execute()}가 그
- * 진입점이며, 여기서 호출하는 것이 운영 명령과 같은 코드다.)
+ * {@code seedLocal}의 <b>실제 실행 경로</b>를 임시 H2 파일 DB에서 통째로 돌린다. ({@link SeedLocalMain#execute()}가 그 진입점이며, 여기서 호출하는 것이 운영
+ * 명령과 같은 코드다.)
  *
- * <p>스키마는 손으로 쓴 DDL이 아니라 실제 앱 entity 매핑으로 만든다({@link AppSchema}) — 그래서 NOT NULL·unique 제약을 포함한 진짜
- * 제약 아래서 적재가 성립하는지를 본다.
+ * <p>스키마는 손으로 쓴 DDL이 아니라 실제 앱 entity 매핑으로 만든다({@link AppSchema}) — 그래서 NOT NULL·unique 제약을 포함한 진짜 제약 아래서 적재가 성립하는지를 본다.
  *
- * <p>공용 시드 전체 적재는 100만 행에 가까워 한 번만 돌린다. 그래서 이 클래스는 하나의 DB를 공유하며 순서를 고정한다: 빈 스키마 적재 → 관계 검증 → 재실행
- * 멱등성 → 회원 인증 호환성 → (마지막) 부분 적재 감지. 마지막 테스트는 일부러 데이터를 지우므로 반드시 끝에 둔다.
+ * <p>공용 시드 전체 적재는 100만 행에 가까워 한 번만 돌린다. 그래서 이 클래스는 하나의 DB를 공유하며 순서를 고정한다: 빈 스키마 적재 → 관계 검증 → 재실행 멱등성 → 회원 인증 호환성 →
+ * (마지막) 부분 적재 감지. 마지막 테스트는 일부러 데이터를 지우므로 반드시 끝에 둔다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -38,7 +37,10 @@ class SeedLocalTest {
     private static final int FIXTURE_PERFORMANCE_COUNT = 8;
     private static final int FIXTURE_SEAT_COUNT = 2000;
     private static final int MEMBER_COUNT = 25;
-    @TempDir static Path tempDir;
+
+    @TempDir
+    static Path tempDir;
+
     private static String jdbcUrl;
     private static JdbcTemplate jdbcTemplate;
     private static Map<String, String> restoredProperties;
@@ -48,17 +50,15 @@ class SeedLocalTest {
         jdbcUrl = AppSchema.createIn(tempDir, "seed-local");
         jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(jdbcUrl, "sa", ""));
 
-        restoredProperties =
-                SeedSystemProperties.set(
-                        Map.of(
-                                "seed.jdbc-url",
-                                jdbcUrl,
-                                // 회원 2,000명은 이 테스트가 확인하려는 것(형식·중복·인증 호환성)과 무관하게 느리다.
-                                // 기본값 2,000은 SeedSettingsTest가 따로 고정한다.
-                                "seed.load-test-members.count",
-                                String.valueOf(MEMBER_COUNT),
-                                "seed.load-test-fixture.performance-count",
-                                String.valueOf(FIXTURE_PERFORMANCE_COUNT)));
+        restoredProperties = SeedSystemProperties.set(Map.of(
+                "seed.jdbc-url",
+                jdbcUrl,
+                // 회원 2,000명은 이 테스트가 확인하려는 것(형식·중복·인증 호환성)과 무관하게 느리다.
+                // 기본값 2,000은 SeedSettingsTest가 따로 고정한다.
+                "seed.load-test-members.count",
+                String.valueOf(MEMBER_COUNT),
+                "seed.load-test-fixture.performance-count",
+                String.valueOf(FIXTURE_PERFORMANCE_COUNT)));
     }
 
     @AfterAll
@@ -81,27 +81,18 @@ class SeedLocalTest {
         final long curatedPerformances = curatedCount("PERFORMANCES", "id");
         assertThat(curatedCount("BOOKING_PERFORMANCE_SALES_POLICIES", "performance_id"))
                 .isEqualTo(curatedPerformances);
-        assertThat(curatedCount("PERFORMANCE_GRADES", "performance_id"))
-                .isEqualTo(curatedPerformances * 4);
+        assertThat(curatedCount("PERFORMANCE_GRADES", "performance_id")).isEqualTo(curatedPerformances * 4);
         // 부하 테스트 전용 고정 ID 대역: 회차 8개, 물리 좌석 2,000석.
-        assertThat(
-                        count(
-                                "SEATS",
-                                "id BETWEEN "
-                                        + (FIXTURE_ID_BASE + 1)
-                                        + " AND "
-                                        + (FIXTURE_ID_BASE + FIXTURE_SEAT_COUNT)))
+        assertThat(count(
+                        "SEATS",
+                        "id BETWEEN " + (FIXTURE_ID_BASE + 1) + " AND " + (FIXTURE_ID_BASE + FIXTURE_SEAT_COUNT)))
                 .isEqualTo(FIXTURE_SEAT_COUNT);
-        assertThat(count("PERFORMANCES", "id >= " + FIXTURE_ID_BASE))
-                .isEqualTo(FIXTURE_PERFORMANCE_COUNT);
+        assertThat(count("PERFORMANCES", "id >= " + FIXTURE_ID_BASE)).isEqualTo(FIXTURE_PERFORMANCE_COUNT);
         assertThat(count("PERFORMANCE_SEATS", "performance_id >= " + FIXTURE_ID_BASE))
                 .isEqualTo((long) FIXTURE_PERFORMANCE_COUNT * FIXTURE_SEAT_COUNT);
-        assertThat(
-                        count(
-                                "BOOKING_PERFORMANCE_SALES_POLICIES",
-                                "performance_id >= "
-                                        + FIXTURE_ID_BASE
-                                        + " AND queue_mode = 'FORCE_OFF'"))
+        assertThat(count(
+                        "BOOKING_PERFORMANCE_SALES_POLICIES",
+                        "performance_id >= " + FIXTURE_ID_BASE + " AND queue_mode = 'FORCE_OFF'"))
                 .isEqualTo(FIXTURE_PERFORMANCE_COUNT);
         assertThat(count("MEMBERS", "email LIKE 'loadtest%@test.com'")).isEqualTo(MEMBER_COUNT);
     }
@@ -109,51 +100,41 @@ class SeedLocalTest {
     @Test
     @Order(2)
     void 공연장_회차_좌석_등급_가격_판매정책_관계가_유지된다() {
-        assertThat(
-                        count(
-                                "PERFORMANCE_SEATS ps"
-                                        + " JOIN PERFORMANCES p ON p.id = ps.performance_id"
-                                        + " JOIN SHOWS sh ON sh.id = p.show_id"
-                                        + " JOIN SEATS st ON st.id = ps.seat_id",
-                                "st.venue_id <> sh.venue_id"))
+        assertThat(count(
+                        "PERFORMANCE_SEATS ps"
+                                + " JOIN PERFORMANCES p ON p.id = ps.performance_id"
+                                + " JOIN SHOWS sh ON sh.id = p.show_id"
+                                + " JOIN SEATS st ON st.id = ps.seat_id",
+                        "st.venue_id <> sh.venue_id"))
                 .as("회차좌석의 물리 좌석은 그 공연의 공연장에 속해야 한다")
                 .isZero();
 
-        assertThat(
-                        count(
-                                "PERFORMANCE_SEATS ps"
-                                        + " LEFT JOIN PERFORMANCE_GRADES pg ON pg.id = ps.performance_grade_id",
-                                "pg.id IS NULL OR pg.performance_id <> ps.performance_id"))
+        assertThat(count(
+                        "PERFORMANCE_SEATS ps" + " LEFT JOIN PERFORMANCE_GRADES pg ON pg.id = ps.performance_grade_id",
+                        "pg.id IS NULL OR pg.performance_id <> ps.performance_id"))
                 .as("회차좌석의 등급은 같은 회차의 PERFORMANCE_GRADES여야 한다")
                 .isZero();
 
-        assertThat(
-                        count(
-                                "PERFORMANCE_SEATS ps"
-                                        + " JOIN PERFORMANCE_GRADES pg ON pg.id = ps.performance_grade_id",
-                                "ps.unit_price <> pg.price"))
+        assertThat(count(
+                        "PERFORMANCE_SEATS ps" + " JOIN PERFORMANCE_GRADES pg ON pg.id = ps.performance_grade_id",
+                        "ps.unit_price <> pg.price"))
                 .as("회차좌석 단가의 원본은 PerformanceGrade.price다(ADR 0005)")
                 .isZero();
 
-        assertThat(
-                        count(
-                                "PERFORMANCE_GRADES pg LEFT JOIN GRADES g ON g.id = pg.grade_id",
-                                "g.id IS NULL"))
+        assertThat(count("PERFORMANCE_GRADES pg LEFT JOIN GRADES g ON g.id = pg.grade_id", "g.id IS NULL"))
                 .as("회차 등급은 실재하는 GRADES 코드를 가리켜야 한다")
                 .isZero();
 
-        assertThat(
-                        count(
-                                "PERFORMANCES p"
-                                        + " LEFT JOIN BOOKING_PERFORMANCE_SALES_POLICIES sp ON sp.performance_id = p.id",
-                                "sp.performance_id IS NULL"))
+        assertThat(count(
+                        "PERFORMANCES p"
+                                + " LEFT JOIN BOOKING_PERFORMANCE_SALES_POLICIES sp ON sp.performance_id = p.id",
+                        "sp.performance_id IS NULL"))
                 .as("모든 회차에 예매 판매정책이 있어야 한다")
                 .isZero();
 
-        assertThat(
-                        count(
-                                "SHOWS sh LEFT JOIN VENUES v ON v.id = sh.venue_id",
-                                "sh.venue_id IS NOT NULL AND v.id IS NULL"))
+        assertThat(count(
+                        "SHOWS sh LEFT JOIN VENUES v ON v.id = sh.venue_id",
+                        "sh.venue_id IS NOT NULL AND v.id IS NULL"))
                 .as("공연은 실재하는 공연장을 가리켜야 한다")
                 .isZero();
 
@@ -161,9 +142,7 @@ class SeedLocalTest {
                 .as("등급 코드는 code당 하나만 있어야 한다")
                 .isEqualTo(4);
 
-        final Long showGradePriceDifferences =
-                jdbcTemplate.queryForObject(
-                        """
+        final Long showGradePriceDifferences = jdbcTemplate.queryForObject("""
                         SELECT COUNT(*) FROM (
                           SELECT p.show_id, pg.grade_id
                           FROM PERFORMANCE_GRADES pg
@@ -171,15 +150,12 @@ class SeedLocalTest {
                           GROUP BY p.show_id, pg.grade_id
                           HAVING COUNT(DISTINCT pg.price) > 1
                         ) differing_grade_prices
-                        """,
-                        Long.class);
+                        """, Long.class);
         assertThat(showGradePriceDifferences)
                 .as("기존 프론트 호환 기간에는 같은 공연의 회차별 등급 가격이 같아야 한다")
                 .isZero();
 
-        final Long showSeatPriceDifferences =
-                jdbcTemplate.queryForObject(
-                        """
+        final Long showSeatPriceDifferences = jdbcTemplate.queryForObject("""
                         SELECT COUNT(*) FROM (
                           SELECT p.show_id, ps.seat_id
                           FROM PERFORMANCE_SEATS ps
@@ -187,13 +163,12 @@ class SeedLocalTest {
                           GROUP BY p.show_id, ps.seat_id
                           HAVING COUNT(DISTINCT ps.unit_price) > 1
                         ) differing_seat_prices
-                        """,
-                        Long.class);
-        assertThat(showSeatPriceDifferences).as("기존 공연별 좌석 배치도에 표시할 가격은 모든 회차에서 같아야 한다").isZero();
+                        """, Long.class);
+        assertThat(showSeatPriceDifferences)
+                .as("기존 공연별 좌석 배치도에 표시할 가격은 모든 회차에서 같아야 한다")
+                .isZero();
 
-        final Long showSeatLayoutDifferences =
-                jdbcTemplate.queryForObject(
-                        """
+        final Long showSeatLayoutDifferences = jdbcTemplate.queryForObject("""
                         SELECT COUNT(*) FROM (
                           SELECT p.show_id, ps.seat_id
                           FROM PERFORMANCE_SEATS ps
@@ -206,25 +181,14 @@ class SeedLocalTest {
                           )
                           OR COUNT(DISTINCT pg.grade_id) > 1
                         ) differing_seat_layouts
-                        """,
-                        Long.class);
+                        """, Long.class);
         assertThat(showSeatLayoutDifferences)
                 .as("기존 프론트 호환 기간에는 같은 공연의 회차별 좌석 구성과 등급 배정이 같아야 한다")
                 .isZero();
         // 부하 테스트 전용 데이터의 등급별 가격(구역 1~2 VIP 150000, 마지막 구역 A 60000).
-        assertThat(
-                        count(
-                                "PERFORMANCE_SEATS",
-                                "performance_id = "
-                                        + (FIXTURE_ID_BASE + 1)
-                                        + " AND unit_price = 150000"))
+        assertThat(count("PERFORMANCE_SEATS", "performance_id = " + (FIXTURE_ID_BASE + 1) + " AND unit_price = 150000"))
                 .isEqualTo(400);
-        assertThat(
-                        count(
-                                "PERFORMANCE_SEATS",
-                                "performance_id = "
-                                        + (FIXTURE_ID_BASE + 1)
-                                        + " AND unit_price = 60000"))
+        assertThat(count("PERFORMANCE_SEATS", "performance_id = " + (FIXTURE_ID_BASE + 1) + " AND unit_price = 60000"))
                 .isEqualTo(600);
     }
 
@@ -243,21 +207,16 @@ class SeedLocalTest {
     void 생성된_테스트_회원이_실제_앱_인증_경로와_호환된다() {
         final String email = "loadtest1@test.com";
         final Map<String, Object> row =
-                jdbcTemplate.queryForMap(
-                        "SELECT password, name, role, deleted_at FROM MEMBERS WHERE email = ?",
-                        email);
+                jdbcTemplate.queryForMap("SELECT password, name, role, deleted_at FROM MEMBERS WHERE email = ?", email);
 
         assertThat(row.get("ROLE")).isEqualTo("MEMBER");
         assertThat(row.get("NAME")).isEqualTo("loadtest1");
         assertThat(row.get("DELETED_AT")).isNull();
 
         final String stored = (String) row.get("PASSWORD");
-        assertThat(stored)
-                .as("앱의 DelegatingPasswordEncoder가 읽는 접두사 형식이어야 한다")
-                .startsWith("{bcrypt}$2");
+        assertThat(stored).as("앱의 DelegatingPasswordEncoder가 읽는 접두사 형식이어야 한다").startsWith("{bcrypt}$2");
         // 앱이 실제로 로그인 검증에 쓰는 구현으로 그대로 검증한다.
-        final PasswordEncoder passwordEncoder =
-                PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        final PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
         assertThat(passwordEncoder.matches(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_PASSWORD, stored))
                 .as("시드가 넣은 해시가 앱이 쓰는 PasswordEncoder로 검증돼야 한다")
                 .isTrue();
@@ -270,16 +229,14 @@ class SeedLocalTest {
     @Order(5)
     void 실제_앱_entity_매핑으로_시드_회원을_읽을_수_있다() {
         try (var context = AppSchema.openContext(jdbcUrl)) {
-            final var entityManagerFactory =
-                    context.getBean(jakarta.persistence.EntityManagerFactory.class);
+            final var entityManagerFactory = context.getBean(jakarta.persistence.EntityManagerFactory.class);
             try (var entityManager = entityManagerFactory.createEntityManager()) {
-                final var member =
-                        entityManager
-                                .createQuery(
-                                        "select m from Member m where m.email.email = :email",
-                                        com.ticket.member.domain.Member.class)
-                                .setParameter("email", "loadtest1@test.com")
-                                .getSingleResult();
+                final var member = entityManager
+                        .createQuery(
+                                "select m from Member m where m.email.email = :email",
+                                com.ticket.member.domain.Member.class)
+                        .setParameter("email", "loadtest1@test.com")
+                        .getSingleResult();
 
                 assertThat(member.getRole()).isEqualTo(com.ticket.member.domain.Role.MEMBER);
                 assertThat(member.isDeleted()).isFalse();
@@ -293,17 +250,13 @@ class SeedLocalTest {
     /**
      * 반드시 마지막이다 — 데이터를 일부러 지운다.
      *
-     * <p>예전 판정은 CATEGORIES에 행이 있는지 하나만 봤기 때문에, 뒤쪽 테이블이 통째로 비어도 "이미 적재됨"으로 넘어갔다. 지금은 테이블별 기대 행 수와
-     * 비교해 불일치를 실패로 만든다.
+     * <p>예전 판정은 CATEGORIES에 행이 있는지 하나만 봤기 때문에, 뒤쪽 테이블이 통째로 비어도 "이미 적재됨"으로 넘어갔다. 지금은 테이블별 기대 행 수와 비교해 불일치를 실패로 만든다.
      */
     @Test
     @Order(6)
     void 불완전한_데이터_상태를_정상_완료로_처리하지_않는다() {
-        final long removed =
-                jdbcTemplate.update(
-                        "DELETE FROM PERFORMANCE_SEATS WHERE performance_id < "
-                                + FIXTURE_ID_BASE
-                                + " AND MOD(seat_id, 2) = 0");
+        final long removed = jdbcTemplate.update(
+                "DELETE FROM PERFORMANCE_SEATS WHERE performance_id < " + FIXTURE_ID_BASE + " AND MOD(seat_id, 2) = 0");
         assertThat(removed).isPositive();
 
         assertThat(SeedLocalMain.execute()).as("부분 적재 상태는 실패로 알린다").isEqualTo(1);
@@ -346,10 +299,8 @@ class SeedLocalTest {
     }
 
     private static long count(final String from, final String where) {
-        final Long count =
-                jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM " + from + (where == null ? "" : " WHERE " + where),
-                        Long.class);
+        final Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + from + (where == null ? "" : " WHERE " + where), Long.class);
         return count == null ? 0L : count;
     }
 }

@@ -109,7 +109,6 @@ class PaymentTest {
     }
 
     private Payment createPayment(final LocalDateTime requestedAt) {
-        return Payment.request(
-                1L, "payment-key", 1, "TOSS", "CARD", BigDecimal.valueOf(15000), requestedAt);
+        return Payment.request(1L, "payment-key", 1, "TOSS", "CARD", BigDecimal.valueOf(15000), requestedAt);
     }
 }

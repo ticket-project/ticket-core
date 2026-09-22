@@ -12,14 +12,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.selection.usecase.SeatSelectionCoordinator;
 
-/**
- * 이 핸들러는 Redis key 해석과 호출만 한다. 현재 상태 확인과 알림 필요 여부 판단은 {@code SeatSelectionCoordinatorTest}가 고정한다.
- */
+/** 이 핸들러는 Redis key 해석과 호출만 한다. 현재 상태 확인과 알림 필요 여부 판단은 {@code SeatSelectionCoordinatorTest}가 고정한다. */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionExpirationHandlerTest {
-    @Mock private SeatSelectionCoordinator seatSelectionCoordinator;
-    @InjectMocks private SeatSelectionExpirationHandler handler;
+    @Mock
+    private SeatSelectionCoordinator seatSelectionCoordinator;
+
+    @InjectMocks
+    private SeatSelectionExpirationHandler handler;
 
     @Test
     void 좌석_select_키를_해석해_application에_넘긴다() {

@@ -31,9 +31,14 @@ import com.ticket.shared.exception.NotFoundException;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class AddLikeUseCaseTest {
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private LikeRepository likeRepository;
-    @InjectMocks private AddLikeUseCase useCase;
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private LikeRepository likeRepository;
+
+    @InjectMocks
+    private AddLikeUseCase useCase;
 
     @Test
     void 처음_찜하면_저장하고_갱신된_찜수를_돌려준다() {
@@ -41,8 +46,7 @@ class AddLikeUseCaseTest {
                 .thenReturn(false);
         when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(5L);
 
-        AddLikeUseCase.Output output =
-                useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L));
+        AddLikeUseCase.Output output = useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.targetId()).isEqualTo(2L);
         assertThat(output.liked()).isTrue();
@@ -57,8 +61,7 @@ class AddLikeUseCaseTest {
                 .thenReturn(true);
         when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(5L);
 
-        AddLikeUseCase.Output output =
-                useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L));
+        AddLikeUseCase.Output output = useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(5L);
@@ -82,8 +85,7 @@ class AddLikeUseCaseTest {
                 .thenReturn(false);
         when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 999L)).thenReturn(1L);
 
-        AddLikeUseCase.Output output =
-                useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 999L));
+        AddLikeUseCase.Output output = useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 999L));
 
         assertThat(output.liked()).isTrue();
         verify(likeRepository).like(1L, LikeType.SHOW, 999L);

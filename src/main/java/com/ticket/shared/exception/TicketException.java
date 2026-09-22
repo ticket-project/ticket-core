@@ -7,13 +7,12 @@ import org.jspecify.annotations.Nullable;
 /**
  * 모든 업무 예외의 기반이다. 예외는 실패의 의미(errorCode)와 그것을 좁히는 부가 정보(data)를 전달하는 그릇일 뿐이다 — HTTP로 어떻게 응답할지는 모른다.
  *
- * <p><b>HTTP 상태를 들고 있지 않는다.</b> 어떤 상태 코드로 응답할지는 이 오류를 처리하는 웹 계층(각 module의 handler, 공통 오류는 {@code
- * com.ticket.shared.exception.handler.GlobalExceptionHandler})이 안다 — 같은 업무 실패도 어느 채널로 나가느냐에 따라 표현이
- * 달라질 수 있고, 예외는 Spring Web/HTTP 타입을 몰라야 재사용 가능하다.
+ * <p><b>HTTP 상태를 들고 있지 않는다.</b> 어떤 상태 코드로 응답할지는 이 오류를 처리하는 웹 계층(각 module의 handler, 공통 오류는
+ * {@code com.ticket.shared.exception.handler.GlobalExceptionHandler})이 안다 — 같은 업무 실패도 어느 채널로 나가느냐에 따라 표현이 달라질 수 있고, 예외는
+ * Spring Web/HTTP 타입을 몰라야 재사용 가능하다.
  *
- * <p><b>{@code message}와 {@code data}를 바꿔 담지 않는다.</b> {@code message}는 오류마다 정해진 공개 문구이고 {@code
- * data}는 그 오류를 좁히는 부가 정보다(검증 실패 필드 목록, 인증 실패 사유 등). 응답에서 각각 {@code error.message}와 {@code
- * error.data}가 된다.
+ * <p><b>{@code message}와 {@code data}를 바꿔 담지 않는다.</b> {@code message}는 오류마다 정해진 공개 문구이고 {@code data}는 그 오류를 좁히는 부가
+ * 정보다(검증 실패 필드 목록, 인증 실패 사유 등). 응답에서 각각 {@code error.message}와 {@code error.data}가 된다.
  */
 public abstract class TicketException extends RuntimeException {
     private final ErrorCode errorCode;
@@ -23,8 +22,7 @@ public abstract class TicketException extends RuntimeException {
         this(errorCode, message, null);
     }
 
-    protected TicketException(
-            final ErrorCode errorCode, final String message, final @Nullable Object data) {
+    protected TicketException(final ErrorCode errorCode, final String message, final @Nullable Object data) {
         this(errorCode, message, data, null);
     }
 
@@ -42,8 +40,8 @@ public abstract class TicketException extends RuntimeException {
     /**
      * {@inheritDoc}
      *
-     * <p>{@link Throwable#getMessage()}는 일반적으로 null일 수 있지만 이 계층은 아니다 — 생성자가 공개 문구를 반드시 받는다. 그 좁힌
-     * 계약을 한 곳에서 선언해, 이 예외를 직렬화하는 handler가 매번 null을 확인하지 않게 한다.
+     * <p>{@link Throwable#getMessage()}는 일반적으로 null일 수 있지만 이 계층은 아니다 — 생성자가 공개 문구를 반드시 받는다. 그 좁힌 계약을 한 곳에서 선언해, 이 예외를
+     * 직렬화하는 handler가 매번 null을 확인하지 않게 한다.
      */
     @Override
     public String getMessage() {

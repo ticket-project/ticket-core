@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 /**
- * Performance는 이제 회차 일정 책임만 갖는다. 예매 정책·Hold 한도·대기열 정책 테스트는 {@code booking.salespolicy.domain} 아래로
- * 이관됐다(ADR 0006 "Performance의 책임 혼재" A2).
+ * Performance는 이제 회차 일정 책임만 갖는다. 예매 정책·Hold 한도·대기열 정책 테스트는 {@code booking.salespolicy.domain} 아래로 이관됐다(ADR 0006
+ * "Performance의 책임 혼재" A2).
  */
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceTest {

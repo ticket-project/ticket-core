@@ -19,12 +19,11 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show가 공개하는 판매 좌석 편성 snapshot({@link PerformanceSaleCatalogApi})을 입력으로 받아 회차의 판매
- * 좌석(PerformanceSeat)을 생성한다.
+ * show가 공개하는 판매 좌석 편성 snapshot({@link PerformanceSaleCatalogApi})을 입력으로 받아 회차의 판매 좌석(PerformanceSeat)을 생성한다.
  *
  * <p>생성 시점에 요청한 Seat가 그 회차의 Venue에 속하는지, 요청한 PerformanceGrade가 그 회차에 속하는지를 show 공개 snapshot으로 검증하고,
- * {@code PerformanceGrade.price}를 {@code PerformanceSeat.unitPrice}로 snapshot한다. 이후 이 unitPrice는
- * 바꾸지 않는다(고정 결정, ADR 0005).
+ * {@code PerformanceGrade.price}를 {@code PerformanceSeat.unitPrice}로 snapshot한다. 이후 이 unitPrice는 바꾸지 않는다(고정 결정, ADR
+ * 0005).
  */
 @Service
 @RequiredArgsConstructor
@@ -33,8 +32,8 @@ public class CreatePerformanceSeatsUseCase {
     private final PerformanceSeatRepository performanceSeatRepository;
 
     /**
-     * @param performanceGradeIdBySeatId 편성할 seatId -> 배정할 performanceGradeId. null·빈 map은 호출부 프로그래머
-     *     오류라 {@link InvalidRequestException}으로 드러낸다.
+     * @param performanceGradeIdBySeatId 편성할 seatId -> 배정할 performanceGradeId. null·빈 map은 호출부 프로그래머 오류라
+     *     {@link InvalidRequestException}으로 드러낸다.
      */
     public record Input(Long performanceId, Map<Long, Long> performanceGradeIdBySeatId) {
         public Input {
@@ -57,23 +56,15 @@ public class CreatePerformanceSeatsUseCase {
         final PerformanceSaleSnapshot snapshot =
                 performanceSaleCatalog.getSaleSnapshot(input.performanceId(), assignments.keySet());
 
-        final List<PerformanceSeat> performanceSeats =
-                assignments.entrySet().stream()
-                        .map(
-                                entry ->
-                                        toPerformanceSeat(
-                                                input.performanceId(),
-                                                entry.getKey(),
-                                                entry.getValue(),
-                                                snapshot))
-                        .toList();
+        final List<PerformanceSeat> performanceSeats = assignments.entrySet().stream()
+                .map(entry -> toPerformanceSeat(input.performanceId(), entry.getKey(), entry.getValue(), snapshot))
+                .toList();
 
         final List<PerformanceSeat> saved = performanceSeatRepository.saveAll(performanceSeats);
         return new Output(saved.stream().map(PerformanceSeat::getId).toList());
     }
 
-    private void ensureSeatsNotAlreadyCreated(
-            final Long performanceId, final java.util.Set<Long> seatIds) {
+    private void ensureSeatsNotAlreadyCreated(final Long performanceId, final java.util.Set<Long> seatIds) {
         if (performanceSeatRepository
                 .findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds)
                 .isEmpty()) {
@@ -96,10 +87,6 @@ public class CreatePerformanceSeatsUseCase {
             throw new PerformanceGradeMismatchException(performanceId, performanceGradeId);
         }
         return new PerformanceSeat(
-                performanceId,
-                seatId,
-                performanceGradeId,
-                PerformanceSeatState.AVAILABLE,
-                gradeInfo.price());
+                performanceId, seatId, performanceGradeId, PerformanceSeatState.AVAILABLE, gradeInfo.price());
     }
 }

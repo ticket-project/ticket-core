@@ -10,8 +10,7 @@ public interface VenueLookupApi {
     Optional<VenueSnapshot> findSummary(long venueId);
 
     /**
-     * 빈 {@code venueIds}는 빈 map을 반환한다. 존재하지 않는 ID는 결과 map에서 조용히 빠진다 — 어떤 ID가 없었는지 의미를 부여하는 것은 호출자의
-     * 몫이다. 쿼리 1회로 처리한다.
+     * 빈 {@code venueIds}는 빈 map을 반환한다. 존재하지 않는 ID는 결과 map에서 조용히 빠진다 — 어떤 ID가 없었는지 의미를 부여하는 것은 호출자의 몫이다. 쿼리 1회로 처리한다.
      */
     Map<Long, VenueSnapshot> getSummaries(Set<Long> venueIds);
 

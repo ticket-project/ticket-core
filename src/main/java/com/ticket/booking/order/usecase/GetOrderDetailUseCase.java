@@ -23,9 +23,8 @@ import com.ticket.shared.exception.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 show를 다시 조회하지 않고 Order/OrderSeat가 주문 생성 시점에 이미 남긴
- * snapshot을 그대로 쓴다 — show의 표시값이나 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 member의 공개 API로 추가
- * 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
+ * 주문 상세를 조회한다(ADR 0005). show/venue/등급/좌석 표시값은 show를 다시 조회하지 않고 Order/OrderSeat가 주문 생성 시점에 이미 남긴 snapshot을 그대로 쓴다 —
+ * show의 표시값이나 가격이 나중에 바뀌어도 이 응답은 바뀌지 않는다. 회원의 현재 이름·이메일만 member의 공개 API로 추가 조회한다(탈퇴 여부처럼 살아있는 값이라 snapshot 대상이 아니다).
  */
 @Service
 @RequiredArgsConstructor
@@ -37,13 +36,9 @@ public class GetOrderDetailUseCase {
 
     public Output execute(final Input input) {
         // 좌석까지 join fetch로 함께 읽는다 — 쿼리는 한 개이고 트랜잭션 안에서 좌석 접근이 끝난다.
-        final Order order =
-                orderRepository
-                        .findDetailByOrderKeyAndMemberId(input.orderKey(), input.memberId())
-                        .orElseThrow(
-                                () ->
-                                        new OrderNotOwnedException(
-                                                input.orderKey(), input.memberId()));
+        final Order order = orderRepository
+                .findDetailByOrderKeyAndMemberId(input.orderKey(), input.memberId())
+                .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
 
         // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
         // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
@@ -52,10 +47,8 @@ public class GetOrderDetailUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
         final List<TicketSeat> seats =
                 order.getOrderSeats().stream().map(this::toTicketSeat).toList();
-        final BigDecimal ticketAmount =
-                seats.stream().map(TicketSeat::price).reduce(BigDecimal.ZERO, BigDecimal::add);
-        final long remainingSeconds =
-                OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), now);
+        final BigDecimal ticketAmount = seats.stream().map(TicketSeat::price).reduce(BigDecimal.ZERO, BigDecimal::add);
+        final long remainingSeconds = OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), now);
 
         return new Output(
                 order.getOrderKey(),
@@ -64,16 +57,9 @@ public class GetOrderDetailUseCase {
                 remainingSeconds,
                 new ShowInfo(order.getShowTitleSnapshot()),
                 new PerformanceInfo(
-                        order.getPerformanceId(),
-                        order.getPerformanceStartAtSnapshot(),
-                        order.getVenueNameSnapshot()),
+                        order.getPerformanceId(), order.getPerformanceStartAtSnapshot(), order.getVenueNameSnapshot()),
                 new BookerInfo(member.memberId(), member.name(), member.email()),
-                new PriceInfo(
-                        ticketAmount,
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        ticketAmount),
+                new PriceInfo(ticketAmount, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, ticketAmount),
                 new TicketInfo(seats.size(), seats));
     }
 
@@ -123,10 +109,5 @@ public class GetOrderDetailUseCase {
     public record TicketInfo(int count, List<TicketSeat> seats) {}
 
     public record TicketSeat(
-            Long performanceSeatId,
-            Long seatId,
-            String gradeCode,
-            String gradeName,
-            String label,
-            BigDecimal price) {}
+            Long performanceSeatId, Long seatId, String gradeCode, String gradeName, String label, BigDecimal price) {}
 }

@@ -18,12 +18,8 @@ public interface MemberWithdrawalControllerDocs {
     @Operation(summary = "현재 회원 탈퇴", description = "로그인한 회원을 탈퇴 처리합니다.")
     @ApiResponses(
             value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "탈퇴 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "인증되지 않은 사용자")
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "탈퇴 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
             })
     ApiResponse<WithdrawCurrentMemberUseCase.Output> withdrawCurrentMember(
             @Parameter(hidden = true) AuthenticatedMember member);

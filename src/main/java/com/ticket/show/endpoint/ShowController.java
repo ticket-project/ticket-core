@@ -52,15 +52,10 @@ public class ShowController implements ShowControllerDocs {
             @RequestParam(defaultValue = "5") final int size,
             @RequestParam(defaultValue = "popular") final String sort) {
         final GetShowsUseCase.Input input =
-                new GetShowsUseCase.Input(
-                        request.toParam(showCursorCodec), size, ShowSort.from(sort));
+                new GetShowsUseCase.Input(request.toParam(showCursorCodec), size, ShowSort.from(sort));
         final GetShowsUseCase.Output output = getShowsUseCase.execute(input);
-        return ApiResponse.success(
-                SliceResponse.of(
-                        output.items(),
-                        output.hasNext(),
-                        size,
-                        showCursorCodec.encode(output.nextPosition())));
+        return ApiResponse.success(SliceResponse.of(
+                output.items(), output.hasNext(), size, showCursorCodec.encode(output.nextPosition())));
     }
 
     @Override
@@ -76,29 +71,21 @@ public class ShowController implements ShowControllerDocs {
     public ApiResponse<GetSaleOpeningSoonShowsUseCase.Output> getShowsSaleOpeningSoon(
             @RequestParam(defaultValue = "CONCERT") final String category,
             @RequestParam(defaultValue = "5") final int size) {
-        GetSaleOpeningSoonShowsUseCase.Input input =
-                new GetSaleOpeningSoonShowsUseCase.Input(category, size);
+        GetSaleOpeningSoonShowsUseCase.Input input = new GetSaleOpeningSoonShowsUseCase.Input(category, size);
         return ApiResponse.success(getSaleOpeningSoonShowsUseCase.execute(input));
     }
 
     @Override
     @GetMapping("/sale-opening-soon/page")
-    public ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.Item>>
-            getShowsSaleOpeningSoonPage(
-                    @ParameterObject final SaleOpeningSoonRequest request,
-                    @RequestParam(defaultValue = "16") final int size,
-                    @RequestParam(defaultValue = "saleStartApproaching") final String sort) {
-        final GetSaleOpeningSoonShowsPageUseCase.Input input =
-                new GetSaleOpeningSoonShowsPageUseCase.Input(
-                        request.toParam(showCursorCodec), size, ShowSort.from(sort));
-        final GetSaleOpeningSoonShowsPageUseCase.Output output =
-                getSaleOpeningSoonShowsPageUseCase.execute(input);
-        return ApiResponse.success(
-                SliceResponse.of(
-                        output.items(),
-                        output.hasNext(),
-                        size,
-                        showCursorCodec.encode(output.nextPosition())));
+    public ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.Item>> getShowsSaleOpeningSoonPage(
+            @ParameterObject final SaleOpeningSoonRequest request,
+            @RequestParam(defaultValue = "16") final int size,
+            @RequestParam(defaultValue = "saleStartApproaching") final String sort) {
+        final GetSaleOpeningSoonShowsPageUseCase.Input input = new GetSaleOpeningSoonShowsPageUseCase.Input(
+                request.toParam(showCursorCodec), size, ShowSort.from(sort));
+        final GetSaleOpeningSoonShowsPageUseCase.Output output = getSaleOpeningSoonShowsPageUseCase.execute(input);
+        return ApiResponse.success(SliceResponse.of(
+                output.items(), output.hasNext(), size, showCursorCodec.encode(output.nextPosition())));
     }
 
     @Override
@@ -108,23 +95,17 @@ public class ShowController implements ShowControllerDocs {
             @RequestParam(defaultValue = "20") final int size,
             @RequestParam(defaultValue = "popular") final String sort) {
         final SearchShowsUseCase.Input input =
-                new SearchShowsUseCase.Input(
-                        request.toCriteria(showCursorCodec), size, ShowSort.from(sort));
+                new SearchShowsUseCase.Input(request.toCriteria(showCursorCodec), size, ShowSort.from(sort));
         final SearchShowsUseCase.Output output = searchShowsUseCase.execute(input);
-        return ApiResponse.success(
-                SliceResponse.of(
-                        output.items(),
-                        output.hasNext(),
-                        size,
-                        showCursorCodec.encode(output.nextPosition())));
+        return ApiResponse.success(SliceResponse.of(
+                output.items(), output.hasNext(), size, showCursorCodec.encode(output.nextPosition())));
     }
 
     @Override
     @GetMapping("/search/count")
     public ApiResponse<CountSearchShowsUseCase.Output> countSearchShows(
             @ParameterObject final ShowSearchRequest request) {
-        final CountSearchShowsUseCase.Input input =
-                new CountSearchShowsUseCase.Input(request.toCountCriteria());
+        final CountSearchShowsUseCase.Input input = new CountSearchShowsUseCase.Input(request.toCountCriteria());
         return ApiResponse.success(countSearchShowsUseCase.execute(input));
     }
 }

@@ -14,7 +14,7 @@ plugins {
 spotless {
     java {
         target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'seed/src/**/*.java'
-        googleJavaFormat('1.30.0').aosp()
+        palantirJavaFormat('2.91.0').style('PALANTIR').formatJavadoc(true)
         removeUnusedImports()
         importOrder('java', 'javax', 'jakarta', 'org', 'com', '')
         forbidWildcardImports()

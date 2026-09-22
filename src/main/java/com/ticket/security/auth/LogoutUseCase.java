@@ -30,13 +30,11 @@ public class LogoutUseCase {
     public record Output() {}
 
     public Output execute(final Input input) {
-        final boolean revoked =
-                refreshTokenStore.revokeIfOwned(input.refreshToken(), input.memberId());
+        final boolean revoked = refreshTokenStore.revokeIfOwned(input.refreshToken(), input.memberId());
         if (!revoked) {
-            final Long tokenOwnerId =
-                    refreshTokenStore
-                            .validateWithoutConsume(input.refreshToken())
-                            .orElseThrow(() -> new UnauthenticatedException("유효하지 않은 리프레시 토큰입니다."));
+            final Long tokenOwnerId = refreshTokenStore
+                    .validateWithoutConsume(input.refreshToken())
+                    .orElseThrow(() -> new UnauthenticatedException("유효하지 않은 리프레시 토큰입니다."));
             if (!tokenOwnerId.equals(input.memberId())) {
                 throw new AuthorizationException("본인 토큰만 무효화할 수 있습니다.");
             }

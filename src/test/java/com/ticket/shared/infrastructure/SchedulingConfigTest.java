@@ -9,10 +9,9 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 @SuppressWarnings("NonAsciiCharacters")
 class SchedulingConfigTest {
-    private final ApplicationContextRunner contextRunner =
-            new ApplicationContextRunner()
-                    .withConfiguration(AutoConfigurations.of(TaskSchedulingAutoConfiguration.class))
-                    .withUserConfiguration(SchedulingConfig.class);
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(TaskSchedulingAutoConfiguration.class))
+            .withUserConfiguration(SchedulingConfig.class);
 
     @Test
     void worker_설정이_없으면_스케줄러를_활성화한다() {
@@ -28,14 +27,10 @@ class SchedulingConfigTest {
 
     @Test
     void worker_enabled가_false면_어떤_scheduled_트리거도_등록되지_않는다() {
-        contextRunner
-                .withPropertyValues("worker.enabled=false")
-                .run(
-                        context -> {
-                            assertThat(context).doesNotHaveBean(SchedulingConfig.class);
-                            assertThat(context)
-                                    .doesNotHaveBean(
-                                            "org.springframework.context.annotation.internalScheduledAnnotationProcessor");
-                        });
+        contextRunner.withPropertyValues("worker.enabled=false").run(context -> {
+            assertThat(context).doesNotHaveBean(SchedulingConfig.class);
+            assertThat(context)
+                    .doesNotHaveBean("org.springframework.context.annotation.internalScheduledAnnotationProcessor");
+        });
     }
 }

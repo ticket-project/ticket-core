@@ -16,8 +16,7 @@ public class RecordingLockManager implements LockManager {
     public record Acquisition(List<LockKey> keys, LockOptions options) {}
 
     @Override
-    public <T> T withLock(
-            final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
+    public <T> T withLock(final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
         acquisitions.add(new Acquisition(List.copyOf(keys), options));
         if (failure != null) {
             throw failure;
@@ -41,6 +40,8 @@ public class RecordingLockManager implements LockManager {
     }
 
     public List<LockKey> allKeys() {
-        return acquisitions.stream().flatMap(acquisition -> acquisition.keys().stream()).toList();
+        return acquisitions.stream()
+                .flatMap(acquisition -> acquisition.keys().stream())
+                .toList();
     }
 }

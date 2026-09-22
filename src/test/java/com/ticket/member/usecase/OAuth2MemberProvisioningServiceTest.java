@@ -27,15 +27,19 @@ import com.ticket.member.exception.DuplicateEmailException;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class OAuth2MemberProvisioningServiceTest {
-    @Mock private MemberRepository memberRepository;
-    @Mock private SocialIdentity userInfo;
-    @InjectMocks private OAuth2MemberProvisioningService oauth2MemberProvisioningService;
+    @Mock
+    private MemberRepository memberRepository;
+
+    @Mock
+    private SocialIdentity userInfo;
+
+    @InjectMocks
+    private OAuth2MemberProvisioningService oauth2MemberProvisioningService;
 
     @Test
     void 활성_소셜계정이_있으면_기존_회원만_반환한다() {
         // given
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "social-1");
         socialProviderAndId("social-1");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
@@ -50,15 +54,12 @@ class OAuth2MemberProvisioningServiceTest {
     @Test
     void 같은_이메일의_기존회원에_같은_제공자_연결이_없으면_소셜계정을_추가한다() {
         // given
-        Member existingMember =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member existingMember = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         socialUserWithEmail("social-1", " user@example.com ");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("user@example.com"))
-                .thenReturn(Optional.of(existingMember));
-        when(memberRepository.save(any(Member.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(existingMember));
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Member result = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
         // when
@@ -68,25 +69,21 @@ class OAuth2MemberProvisioningServiceTest {
         assertThat(result).isSameAs(existingMember);
         assertThat(memberCaptor.getValue()).isSameAs(existingMember);
         assertThat(existingMember.activeSocialAccounts()).hasSize(1);
-        assertThat(existingMember.activeSocialAccounts().get(0).getMember())
-                .isSameAs(existingMember);
+        assertThat(existingMember.activeSocialAccounts().get(0).getMember()).isSameAs(existingMember);
         assertThat(existingMember.activeSocialAccounts().get(0).getSocialProvider())
                 .isEqualTo(SocialProvider.KAKAO);
-        assertThat(existingMember.activeSocialAccounts().get(0).getSocialId())
-                .isEqualTo("social-1");
+        assertThat(existingMember.activeSocialAccounts().get(0).getSocialId()).isEqualTo("social-1");
     }
 
     @Test
     void 같은_이메일의_기존회원에_같은_소셜계정이_이미_연결돼있으면_기존회원을_반환한다() {
         // given
-        Member existingMember =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member existingMember = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         existingMember.addSocialAccount(SocialProvider.KAKAO, "social-1");
         socialUserWithEmail("social-1", "user@example.com");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("user@example.com"))
-                .thenReturn(Optional.of(existingMember));
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(existingMember));
         // when
         Member result = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
         // then
@@ -98,14 +95,12 @@ class OAuth2MemberProvisioningServiceTest {
     @Test
     void 같은_이메일이지만_다른_소셜아이디가_연결돼있으면_중복이메일_예외를_던진다() {
         // given
-        Member existingMember =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member existingMember = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         existingMember.addSocialAccount(SocialProvider.KAKAO, "other-social");
         socialUserWithEmail("social-1", "user@example.com");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("user@example.com"))
-                .thenReturn(Optional.of(existingMember));
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(existingMember));
         // when
         // then
         assertThatThrownBy(() -> oauth2MemberProvisioningService.getOrCreateMember(userInfo))
@@ -115,25 +110,21 @@ class OAuth2MemberProvisioningServiceTest {
     @Test
     void 탈퇴한_소셜계정만_남아있으면_같은_제공자로_다시_연결한다() {
         // given 연결 해제(soft delete)된 계정은 활성 연결로 치지 않는다
-        Member existingMember =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member existingMember = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         existingMember
                 .addSocialAccount(SocialProvider.KAKAO, "old-social")
                 .withdraw(java.time.LocalDateTime.of(2026, 3, 15, 10, 0));
         socialUserWithEmail("social-1", "user@example.com");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("user@example.com"))
-                .thenReturn(Optional.of(existingMember));
-        when(memberRepository.save(any(Member.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(existingMember));
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
         // when
         Member result = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
         // then 중복 예외가 아니라 새 연결이 추가된다
         assertThat(result).isSameAs(existingMember);
         assertThat(existingMember.activeSocialAccounts()).hasSize(1);
-        assertThat(existingMember.activeSocialAccounts().get(0).getSocialId())
-                .isEqualTo("social-1");
+        assertThat(existingMember.activeSocialAccounts().get(0).getSocialId()).isEqualTo("social-1");
     }
 
     @Test
@@ -143,8 +134,7 @@ class OAuth2MemberProvisioningServiceTest {
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
         when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.empty());
-        when(memberRepository.save(any(Member.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Member result = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
         // when
@@ -166,10 +156,8 @@ class OAuth2MemberProvisioningServiceTest {
         socialUserWithEmailAndName("social-1", " ", null);
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("kakao_social-1@social.ticket"))
-                .thenReturn(Optional.empty());
-        when(memberRepository.save(any(Member.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.findActiveByEmail("kakao_social-1@social.ticket")).thenReturn(Optional.empty());
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
         // when
         Member result = oauth2MemberProvisioningService.getOrCreateMember(userInfo);
         // then
@@ -180,14 +168,11 @@ class OAuth2MemberProvisioningServiceTest {
     @Test
     void 검증되지_않은_email은_기존계정_연결에_쓰지_않고_provider_대체값을_사용한다() {
         final SocialIdentity unverified =
-                new SocialIdentity(
-                        SocialProvider.KAKAO, "social-1", "victim@example.com", false, "사용자");
+                new SocialIdentity(SocialProvider.KAKAO, "social-1", "victim@example.com", false, "사용자");
         when(memberRepository.findActiveBySocialAccount(SocialProvider.KAKAO, "social-1"))
                 .thenReturn(Optional.empty());
-        when(memberRepository.findActiveByEmail("kakao_social-1@social.ticket"))
-                .thenReturn(Optional.empty());
-        when(memberRepository.save(any(Member.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.findActiveByEmail("kakao_social-1@social.ticket")).thenReturn(Optional.empty());
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         final Member result = oauth2MemberProvisioningService.getOrCreateMember(unverified);
 
@@ -200,8 +185,7 @@ class OAuth2MemberProvisioningServiceTest {
         when(userInfo.providerId()).thenReturn(providerId);
     }
 
-    private void socialUserWithEmailAndName(
-            final String providerId, final String email, final String name) {
+    private void socialUserWithEmailAndName(final String providerId, final String email, final String name) {
         socialProviderAndId(providerId);
         when(userInfo.email()).thenReturn(email);
         when(userInfo.emailVerified()).thenReturn(true);

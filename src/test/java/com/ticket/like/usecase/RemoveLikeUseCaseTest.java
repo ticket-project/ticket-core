@@ -30,9 +30,14 @@ import com.ticket.shared.exception.NotFoundException;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RemoveLikeUseCaseTest {
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private LikeRepository likeRepository;
-    @InjectMocks private RemoveLikeUseCase useCase;
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private LikeRepository likeRepository;
+
+    @InjectMocks
+    private RemoveLikeUseCase useCase;
 
     @Test
     void 찜한_상태면_삭제하고_갱신된_찜수를_돌려준다() {
@@ -41,8 +46,7 @@ class RemoveLikeUseCaseTest {
                 .thenReturn(Optional.of(like));
         when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(4L);
 
-        RemoveLikeUseCase.Output output =
-                useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
+        RemoveLikeUseCase.Output output = useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.targetId()).isEqualTo(2L);
         assertThat(output.liked()).isFalse();
@@ -57,8 +61,7 @@ class RemoveLikeUseCaseTest {
                 .thenReturn(Optional.empty());
         when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(4L);
 
-        RemoveLikeUseCase.Output output =
-                useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
+        RemoveLikeUseCase.Output output = useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
@@ -69,8 +72,7 @@ class RemoveLikeUseCaseTest {
     void 탈퇴_회원이면_삭제하지_않는다() {
         doThrow(new NotFoundException("탈퇴한 회원입니다.")).when(memberLookup).requireActive(1L);
 
-        assertThatThrownBy(
-                        () -> useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
+        assertThatThrownBy(() -> useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
                 .isInstanceOf(NotFoundException.class);
 
         verify(likeRepository, never()).delete(any());

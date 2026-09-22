@@ -21,15 +21,7 @@ public class ShowListRequest {
     private @Nullable String genre;
 
     @Schema(
-            allowableValues = {
-                "SEOUL",
-                "GYEONGGI",
-                "INCHEON",
-                "GANGWON",
-                "CHUNGCHEONG",
-                "JEOLLA",
-                "GYEONGSANG",
-                "JEJU"
+            allowableValues = {"SEOUL", "GYEONGGI", "INCHEON", "GANGWON", "CHUNGCHEONG", "JEOLLA", "GYEONGSANG", "JEJU"
             })
     private @Nullable String region;
 

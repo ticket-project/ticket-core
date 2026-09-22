@@ -32,11 +32,11 @@ import tools.jackson.databind.JsonNode;
 /**
  * 실제 스택을 관통하는 통합 테스트의 베이스다.
  *
- * <p>단위 테스트는 계층마다 mock을 끼우므로 각 층이 자기 mock에 대해 맞으면 통과한다. 층 사이를 이어 붙였을 때 어긋나는 것(Redis key 불일치, 커밋과 커밋
- * 후 처리의 순서, 트랜잭션 경계)은 진짜 HTTP로 진짜 스택을 두드려야 드러난다.
+ * <p>단위 테스트는 계층마다 mock을 끼우므로 각 층이 자기 mock에 대해 맞으면 통과한다. 층 사이를 이어 붙였을 때 어긋나는 것(Redis key 불일치, 커밋과 커밋 후 처리의 순서, 트랜잭션 경계)은
+ * 진짜 HTTP로 진짜 스택을 두드려야 드러난다.
  *
- * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과
- * 2분이라 초 단위로 끝나는 테스트를 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
+ * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 2분이라 초 단위로 끝나는 테스트를
+ * 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
  */
 @SpringBootTest(
         classes = TicketApplication.class,
@@ -72,21 +72,18 @@ public abstract class BookingE2ETestSupport {
 
     protected static final long SHOW_ID = ID_BASE + 1;
     protected static final long PERFORMANCE_ID = ID_BASE + 1;
-    protected static final List<Long> SEAT_IDS =
-            List.of(ID_BASE + 1, ID_BASE + 2, ID_BASE + 3, ID_BASE + 4);
+    protected static final List<Long> SEAT_IDS = List.of(ID_BASE + 1, ID_BASE + 2, ID_BASE + 3, ID_BASE + 4);
     protected static final int SEAT_PRICE = 120000;
 
     protected static final String SEAT_AVAILABLE = "AVAILABLE";
     protected static final String SEAT_OCCUPIED = "OCCUPIED";
 
     /**
-     * JVM 하나에 컨테이너 하나를 쓴다. @Testcontainers의 @Container는 테스트 클래스마다 컨테이너를 띄우고 클래스가 끝나면 멈추는데, Spring
-     * 컨텍스트는 클래스 사이에 재사용된다. 그러면 두 번째 테스트 클래스가 이미 멈춘 컨테이너의 포트를 가리킨 컨텍스트를 그대로 물려받아 실패한다. 정리는
-     * Testcontainers의 Ryuk이 JVM 종료 시 맡는다.
+     * JVM 하나에 컨테이너 하나를 쓴다. @Testcontainers의 @Container는 테스트 클래스마다 컨테이너를 띄우고 클래스가 끝나면 멈추는데, Spring 컨텍스트는 클래스 사이에 재사용된다.
+     * 그러면 두 번째 테스트 클래스가 이미 멈춘 컨테이너의 포트를 가리킨 컨텍스트를 그대로 물려받아 실패한다. 정리는 Testcontainers의 Ryuk이 JVM 종료 시 맡는다.
      */
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-                    .withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();
@@ -98,9 +95,11 @@ public abstract class BookingE2ETestSupport {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired protected TestRestTemplate restTemplate;
+    @Autowired
+    protected TestRestTemplate restTemplate;
 
-    @Autowired private RedisConnectionFactory redisConnectionFactory;
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
 
     /** 좌석 선택과 hold는 Redis에 남는다. DB만 되돌리면 이전 테스트의 점유가 다음 테스트의 좌석 상태 조회에 그대로 보인다. */
     @BeforeEach
@@ -118,15 +117,13 @@ public abstract class BookingE2ETestSupport {
         final String name = email.substring(0, email.indexOf('@'));
 
         final ResponseEntity<JsonNode> signUp =
-                restTemplate.postForEntity(
-                        "/api/v1/auth/signup", json(bodyOf(email, password, name)), JsonNode.class);
+                restTemplate.postForEntity("/api/v1/auth/signup", json(bodyOf(email, password, name)), JsonNode.class);
         if (!signUp.getStatusCode().is2xxSuccessful()) {
             fail("회원가입 실패: status=" + signUp.getStatusCode() + " body=" + signUp.getBody());
         }
 
         final ResponseEntity<JsonNode> login =
-                restTemplate.postForEntity(
-                        "/api/v1/auth/login", json(bodyOf(email, password, null)), JsonNode.class);
+                restTemplate.postForEntity("/api/v1/auth/login", json(bodyOf(email, password, null)), JsonNode.class);
         if (!login.getStatusCode().is2xxSuccessful()) {
             fail("로그인 실패: status=" + login.getStatusCode() + " body=" + login.getBody());
         }
@@ -138,13 +135,7 @@ public abstract class BookingE2ETestSupport {
         if (name == null) {
             return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
         }
-        return "{\"email\":\""
-                + email
-                + "\",\"password\":\""
-                + password
-                + "\",\"name\":\""
-                + name
-                + "\"}";
+        return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\",\"name\":\"" + name + "\"}";
     }
 
     // HTTP 헬퍼 -------------------------------------------------------------
@@ -212,8 +203,7 @@ public abstract class BookingE2ETestSupport {
     // 비동기 대기 -----------------------------------------------------------
 
     /** 커밋 후 처리는 요청 스레드 밖에서 끝난다. 고정 sleep은 느리거나 불안정하므로 조건을 폴링한다. */
-    protected void pollUntil(
-            final String what, final Duration timeout, final BooleanSupplier condition) {
+    protected void pollUntil(final String what, final Duration timeout, final BooleanSupplier condition) {
         final Instant deadline = Instant.now().plus(timeout);
         while (Instant.now().isBefore(deadline)) {
             if (condition.getAsBoolean()) {

@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * {@link LikeRepository}의 JPA 구현이다.
  *
- * <p>member·대상 모두 scalar id다(모듈을 넘나드는 JPA 연관관계 금지, ADR 0003 §4) — 그래서 {@code
- * EntityManager.getReference}로 FK 전용 참조를 미리 만들 필요 없이 값 그대로 entity를 구성한다.
+ * <p>member·대상 모두 scalar id다(모듈을 넘나드는 JPA 연관관계 금지, ADR 0003 §4) — 그래서 {@code EntityManager.getReference}로 FK 전용 참조를 미리
+ * 만들 필요 없이 값 그대로 entity를 구성한다.
  */
 @Repository
 @RequiredArgsConstructor

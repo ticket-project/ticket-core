@@ -11,6 +11,5 @@ import org.springframework.web.service.annotation.PostExchange;
 public interface KakaoUnlinkApiClient {
     @PostExchange(url = "/v1/user/unlink", contentType = "application/x-www-form-urlencoded")
     void unlink(
-            @RequestHeader("Authorization") String authorization,
-            @RequestBody MultiValueMap<String, String> formData);
+            @RequestHeader("Authorization") String authorization, @RequestBody MultiValueMap<String, String> formData);
 }
