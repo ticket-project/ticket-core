@@ -24,7 +24,8 @@ public class ShowGenre extends AuditedEntity {
     private Long id;
 
     /**
-     * Show·Genre는 각각 ShowGenre와 다른 aggregate라 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 —
+     * ShowGenre는 자기 aggregate root가 아니라 Show aggregate에 딸린 연결 entity다 — 전용 Repository가 없고 Show를 통해서만 만들어진다. Genre는
+     * 다른 aggregate라 어느 쪽도 객체 참조로 들지 않고 식별자로만 참조한다(같은 BC 안이어도 aggregate 경계를 넘는 참조는 ID로 한다 —
      * {@code docs/architecture.md}의 참조 규칙). 컬럼명은 옛 {@code @ManyToOne} 매핑과 같은 {@code show_id}/{@code genre_id}를 그대로 쓴다.
      */
     @Column(name = "show_id", nullable = false)
