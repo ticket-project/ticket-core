@@ -37,7 +37,7 @@ public class ShowSearchCriteria {
         this.saleDisplayStatus = saleDisplayStatus;
         this.startDateFrom = startDateFrom;
         this.startDateTo = startDateTo;
-        this.region = region;
+        this.region = ShowListParam.normalizeRegion(region);
         this.cursor = cursor;
     }
 
@@ -56,11 +56,10 @@ public class ShowSearchCriteria {
                 parseEnum(SaleDisplayStatus.class, bookingStatus, "bookingStatus"),
                 startDateFrom,
                 startDateTo,
-                ShowListParam.normalizeRegion(region),
+                region,
                 cursor);
     }
 
-    /** region 정규화는 목록 조회와 같은 규칙을 써야 하므로 {@link ShowListParam#normalizeRegion}이 소유한다. */
     private static <E extends Enum<E>> @Nullable E parseEnum(
             final Class<E> type, final @Nullable String value, final String field) {
         if (value == null || value.isBlank()) {

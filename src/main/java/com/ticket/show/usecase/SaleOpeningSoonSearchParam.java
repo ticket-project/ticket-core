@@ -38,7 +38,7 @@ public class SaleOpeningSoonSearchParam {
         validateRange(displaySaleEndsAtFrom, displaySaleEndsAtTo, "displaySaleEndsAt");
         this.category = category;
         this.title = title;
-        this.region = region;
+        this.region = ShowListParam.normalizeRegion(region);
         this.displaySaleStartsAtFrom = displaySaleStartsAtFrom;
         this.displaySaleStartsAtTo = displaySaleStartsAtTo;
         this.displaySaleEndsAtFrom = displaySaleEndsAtFrom;
@@ -58,7 +58,7 @@ public class SaleOpeningSoonSearchParam {
         return new SaleOpeningSoonSearchParam(
                 category,
                 title,
-                ShowListParam.normalizeRegion(region),
+                region,
                 displaySaleStartsAtFrom,
                 displaySaleStartsAtTo,
                 displaySaleEndsAtFrom,

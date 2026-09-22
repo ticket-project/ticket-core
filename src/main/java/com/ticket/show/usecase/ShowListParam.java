@@ -23,7 +23,7 @@ public class ShowListParam {
             final @Nullable ShowCursor cursor) {
         this.category = category;
         this.genre = genre;
-        this.region = region;
+        this.region = normalizeRegion(region);
         this.cursor = cursor;
     }
 
@@ -32,13 +32,14 @@ public class ShowListParam {
             final @Nullable String genre,
             final @Nullable String region,
             final @Nullable ShowCursor cursor) {
-        return new ShowListParam(category, genre, normalizeRegion(region), cursor);
+        return new ShowListParam(category, genre, region, cursor);
     }
 
     /**
      * 빈 문자열을 "필터 없음"으로 통일하고 앞뒤 공백을 지운다. 코드가 실제 지역인지는 보지 않는다 — venue가 판정한다.
      *
-     * <p>목록·검색·오픈예정이 같은 규칙을 써야 하므로 여기 한 벌만 둔다.
+     * <p>목록·검색·오픈예정이 같은 규칙을 써야 하므로 여기 한 벌만 둔다. 부르는 것은 <b>각 조건 객체의 생성자</b>다 — 정규화가 {@code of()}에만 있으면 생성자로 만든 객체와 뜻이
+     * 달라진다.
      */
     static @Nullable String normalizeRegion(final @Nullable String region) {
         if (region == null || region.isBlank()) {
