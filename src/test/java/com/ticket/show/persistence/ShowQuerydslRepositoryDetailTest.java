@@ -127,10 +127,10 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
         assertThat(showQuerydslRepository.findPriceSummary(showId).maxPrice()).isEqualByComparingTo("180000");
     }
 
-    /** 대표 가격표는 가장 이른 회차의 등급을 표시 순서대로 준다. 등급 이름은 use case가 따로 조합한다. */
+    /** 대표 가격표는 ID가 가장 작은 회차의 등급을 표시 순서대로 준다. */
     @Test
     void 대표_회차의_등급을_표시_순서대로_조회한다() {
-        var performanceGrades = showQuerydslRepository.findRepresentativePerformanceGrades(showId);
+        var performanceGrades = performanceRepository.findRepresentativePerformanceGrades(showId);
         var gradesById = gradeRepository.findGradeNames(performanceGrades.stream()
                 .map(com.ticket.show.domain.performance.PerformanceGrade::getGradeId)
                 .toList());
@@ -139,6 +139,44 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
                 .extracting(performanceGrade ->
                         gradesById.get(performanceGrade.getGradeId()).getName() + ":" + performanceGrade.getPrice())
                 .containsExactly("VIP석:150000", "R석:100000");
+    }
+
+    @Test
+    void 대표_등급은_시작_시각이_아니라_회차_ID의_최솟값으로_고른다() {
+        Long representativeId = performanceRepository
+                .findRepresentativePerformanceIdByShowId(showId)
+                .orElseThrow();
+        entityManager
+                .createQuery("UPDATE Performance p SET p.startTime = :startTime WHERE p.id = :id")
+                .setParameter("startTime", LocalDateTime.of(2026, 4, 1, 14, 0))
+                .setParameter("id", representativeId)
+                .executeUpdate();
+        flushAndClear();
+
+        assertThat(performanceRepository.findRepresentativePerformanceGrades(showId))
+                .extracting(grade -> grade.getPerformance().getId())
+                .containsExactly(representativeId, representativeId);
+    }
+
+    @Test
+    void 대표_회차가_없으면_등급도_빈_목록이다() {
+        assertThat(performanceRepository.findRepresentativePerformanceGrades(Long.MAX_VALUE))
+                .isEmpty();
+    }
+
+    @Test
+    void 대표_회차에_등급이_없으면_다른_회차의_등급으로_대체하지_않는다() {
+        Long representativeId = performanceRepository
+                .findRepresentativePerformanceIdByShowId(showId)
+                .orElseThrow();
+        entityManager
+                .createQuery("DELETE FROM PerformanceGrade pg WHERE pg.performance.id = :id")
+                .setParameter("id", representativeId)
+                .executeUpdate();
+        flushAndClear();
+
+        assertThat(performanceRepository.findRepresentativePerformanceGrades(showId))
+                .isEmpty();
     }
 
     @Test

@@ -14,9 +14,16 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 interface SpringDataPerformanceJpaRepository extends JpaRepository<Performance, Long> {
     List<Performance> findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(Long showId);
 
-    /** 대표 회차는 이 show에서 가장 먼저 만들어진 회차다({@code ShowQuerydslRepository}의 대표 등급 조회와 같은 기준). */
+    /** 대표 회차는 이 show에서 ID가 가장 작은 회차다. */
     @Query("SELECT MIN(p.id) FROM Performance p WHERE p.showId = :showId")
     Optional<Long> findRepresentativePerformanceIdByShowId(@Param("showId") long showId);
+
+    @Query("""
+            SELECT pg FROM PerformanceGrade pg
+            WHERE pg.performance.id = (SELECT MIN(p.id) FROM Performance p WHERE p.showId = :showId)
+            ORDER BY pg.sortOrder ASC
+            """)
+    List<PerformanceGrade> findRepresentativePerformanceGrades(@Param("showId") Long showId);
 
     /**
      * 이 회차에 배정된 PerformanceGrade를 엔티티로 반환한다. 등급 코드·이름은 Grade가 다른 aggregate라 여기서 join하지 않는다 — 호출하는 use case가

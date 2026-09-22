@@ -16,6 +16,9 @@ public interface PerformanceRepository {
     /** 대표 회차는 이 show에서 가장 먼저 만들어진 회차다. */
     Optional<Long> findRepresentativePerformanceIdByShowId(long showId);
 
+    /** ID가 가장 작은 회차의 등급을 표시 순서대로 반환한다. */
+    List<PerformanceGrade> findRepresentativePerformanceGrades(Long showId);
+
     /**
      * 이 회차에 배정된 모든 PerformanceGrade를 반환한다.
      *

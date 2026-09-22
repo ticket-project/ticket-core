@@ -31,11 +31,9 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
@@ -653,20 +651,6 @@ public class ShowQuerydslRepository {
             return null;
         }
         return new PriceSummary(minPrice, maxPrice);
-    }
-
-    /**
-     * 기존 프론트 계약에는 공연 가격표가 필요하므로 가장 이른 회차의 등급 배정을 대표값으로 제공한다. 등급 이름은 {@link #findGradeNames}로 따로 읽는다 — Grade는
-     * PerformanceGrade와 다른 aggregate라 id로만 연결된다.
-     */
-    public List<PerformanceGrade> findRepresentativePerformanceGrades(final Long showId) {
-        return queryFactory
-                .selectFrom(performanceGrade)
-                .where(performanceGrade.performance.id.eq(JPAExpressions.select(performance.id.min())
-                        .from(performance)
-                        .where(performance.showId.eq(showId))))
-                .orderBy(performanceGrade.sortOrder.asc())
-                .fetch();
     }
 
     static <T> T required(final Tuple tuple, final Expression<T> column) {

@@ -150,7 +150,7 @@ public class GetShowDetailUseCase {
      */
     private List<GradeInfo> resolveGrades(final Long showId) {
         final List<PerformanceGrade> performanceGrades =
-                showQuerydslRepository.findRepresentativePerformanceGrades(showId);
+                performanceRepository.findRepresentativePerformanceGrades(showId);
         final Map<Long, Grade> gradesById = gradeRepository.findGradeNames(
                 performanceGrades.stream().map(PerformanceGrade::getGradeId).collect(Collectors.toSet()));
 

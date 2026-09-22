@@ -99,7 +99,7 @@ class GetShowDetailUseCaseTest {
 
     private void stubEmptyFragments() {
         when(showRepository.findGenreNames(1L)).thenReturn(List.of());
-        when(showQuerydslRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
+        when(performanceRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
     }
@@ -108,7 +108,7 @@ class GetShowDetailUseCaseTest {
     void show_엔티티에서_응답을_만들고_찜_개수와_venue_표시값을_조합한다() {
         when(showRepository.findById(1L)).thenReturn(Optional.of(show(5L, null)));
         when(showRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
-        when(showQuerydslRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
+        when(performanceRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(showQuerydslRepository.findPriceSummary(1L))
                 .thenReturn(new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
