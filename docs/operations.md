@@ -296,12 +296,12 @@ migration으로 분리하고, 각 migration은 같은 목적의 기존 인덱스
 ### dangling venue_id 점검 (ADR 0006)
 
 `show` V8이 `SHOWS.venue_id`의 옛 cross-module FK를 제거하므로, DB 수준에서는 더 이상 존재하지
-않는 Venue를 가리키는 `venue_id`를 막지 않는다. `Show.venueId`는 그런 경우 애플리케이션 쪽에서
-"venue 없는 show"와 같은 결과(표시값 null, 좌석 빈 목록)로 통일해 처리하지만, 배포 후 다음
-쿼리로 실제로 그런 row가 생기지 않았는지 주기적으로 확인한다.
+않는 Venue를 가리키는 `venue_id`를 막지 않는다. `Show.venueId`는 필수값이라 단건 조회는 그런 row를
+만나면 venue의 not-found(404)를 그대로 내보낸다 — 목록 조회만 `getSummaries`가 해당 show의 표시값을
+비우고 넘어간다. 배포 후 다음 쿼리로 실제로 그런 row가 생기지 않았는지 주기적으로 확인한다.
 
 ```sql
-SELECT id FROM SHOWS WHERE venue_id IS NOT NULL AND venue_id NOT IN (SELECT id FROM VENUES);
+SELECT id FROM SHOWS WHERE venue_id NOT IN (SELECT id FROM VENUES);
 ```
 
 결과가 있으면 애플리케이션 오류가 아니라 데이터 정합성 문제다 — 해당 Show의 `venue_id`를 바로잡거나

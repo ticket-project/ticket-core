@@ -1,20 +1,17 @@
 package com.ticket.venue.api;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /** 다른 module이 venue 존재 확인과 표시값 조합에 쓰는 공개 계약이다. JPA entity를 노출하지 않는다. */
 public interface VenueLookupApi {
     /**
-     * 공연장이 반드시 있어야 하는 조회다. 없으면 venue가 not-found 오류를 던진다 — 오류 코드 {@code E404}와 HTTP 404로 나간다.
+     * 단건 공연장 조회다. 없으면 venue가 not-found 오류를 던진다 — 오류 코드 {@code E404}와 HTTP 404로 나간다.
      *
-     * <p>호출하는 module은 그 예외를 잡지 않는다. 공연장이 없어도 응답을 만들 수 있으면 {@link #findVenueSnapshot(long)}을 쓴다.
+     * <p>호출하는 module은 그 예외를 잡지 않는다. 공연장을 가리키는 id가 있는데 그 공연장이 없는 것은 정상 상태가 아니다. 여러 건을 한 번에 채우는 목록 조회만
+     * {@link #getSummaries(Set)}로 없는 id를 조용히 건너뛴다 — 한 건 때문에 목록 전체를 실패시키지 않기 위해서다.
      */
     VenueSnapshot getVenueSnapshot(long venueId);
-
-    /** 공연장이 없어도 되는 조회다. 존재하지 않으면 empty를 반환하고 예외를 던지지 않는다 — 없는 venueId에 의미를 부여하는 것은 호출자의 몫이다. */
-    Optional<VenueSnapshot> findVenueSnapshot(long venueId);
 
     /**
      * 빈 {@code venueIds}는 빈 map을 반환한다. 존재하지 않는 ID는 결과 map에서 조용히 빠진다 — 어떤 ID가 없었는지 의미를 부여하는 것은 호출자의 몫이다. 쿼리 1회로 처리한다.
