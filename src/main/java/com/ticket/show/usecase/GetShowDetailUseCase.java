@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeType;
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.Performer;
@@ -31,6 +30,7 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
@@ -119,8 +119,7 @@ public class GetShowDetailUseCase {
 
     public Output execute(final Input input) {
         final Long showId = input.showId();
-        final Show show =
-                showRepository.findById(showId).orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + showId));
+        final Show show = showRepository.findById(showId).orElseThrow(() -> new ShowNotFoundException(showId));
 
         return new Output(
                 show.getId(),

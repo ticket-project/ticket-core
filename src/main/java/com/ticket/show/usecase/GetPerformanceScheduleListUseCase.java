@@ -7,9 +7,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceRepository;
+import com.ticket.show.exception.PerformanceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,7 @@ public class GetPerformanceScheduleListUseCase {
     public Output execute(final Input input) {
         final Performance findPerformance = performanceRepository
                 .findById(input.performanceId())
-                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + input.performanceId()));
+                .orElseThrow(() -> new PerformanceNotFoundException(input.performanceId()));
 
         final Long showId = findPerformance.getShowId();
 
