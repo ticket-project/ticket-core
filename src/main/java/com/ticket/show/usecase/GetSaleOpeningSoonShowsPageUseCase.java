@@ -5,6 +5,7 @@ import static com.ticket.shared.api.InputChecks.requireProvided;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -17,6 +18,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,8 +62,9 @@ public class GetSaleOpeningSoonShowsPageUseCase {
     public Output execute(final Input input) {
         final CursorPage<Show, ShowCursor> page = showQuerydslRepository.findSaleOpeningSoonPage(
                 input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
-        final VenueDisplays venues = VenueDisplays.load(
-                venueLookup, page.items().stream().map(Show::getVenueId).toList());
+        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+                Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
+        final VenueDisplays venues = new VenueDisplays(venuesById);
         final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }

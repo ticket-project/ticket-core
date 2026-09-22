@@ -20,6 +20,7 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
+import com.ticket.venue.api.VenueSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -73,8 +74,9 @@ public class GetShowsUseCase {
                 input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
         final Map<Long, List<String>> genreNames = showRepository.findGenreNamesByShowIds(
                 page.items().stream().map(Show::getId).toList());
-        final VenueDisplays venues = VenueDisplays.load(
-                venueLookup, page.items().stream().map(Show::getVenueId).toList());
+        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+                Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
+        final VenueDisplays venues = new VenueDisplays(venuesById);
         final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, genreNames, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
