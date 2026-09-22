@@ -53,7 +53,7 @@ class GetMyShowLikesUseCaseTest {
     void 찜한_공연_목록을_show_표시값과_조합해_반환한다() {
         LocalDateTime likedAt = LocalDateTime.now();
         LikeSnapshot entry = new LikeSnapshot(9L, 2L, likedAt);
-        when(likeQuery.findLikedShows(1L, 10L, 20)).thenReturn(new CursorPage<>(List.of(entry), true, 9L));
+        when(likeQuery.findLiked("show", 1L, 10L, 20)).thenReturn(new CursorPage<>(List.of(entry), true, 9L));
 
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusDays(1);
@@ -80,13 +80,13 @@ class GetMyShowLikesUseCaseTest {
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
         verify(memberLookup).requireActive(1L);
-        verify(likeQuery).findLikedShows(1L, 10L, 20);
+        verify(likeQuery).findLiked("show", 1L, 10L, 20);
     }
 
     @Test
     void show_표시값을_찾지_못한_항목은_건너뛴다() {
         LikeSnapshot entry = new LikeSnapshot(9L, 2L, LocalDateTime.now());
-        when(likeQuery.findLikedShows(1L, null, 20)).thenReturn(new CursorPage<>(List.of(entry), false, null));
+        when(likeQuery.findLiked("show", 1L, null, 20)).thenReturn(new CursorPage<>(List.of(entry), false, null));
         when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());
 
         GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
@@ -110,14 +110,14 @@ class GetMyShowLikesUseCaseTest {
 
     @Test
     void 커서_위치가_없으면_첫_페이지를_조회한다() {
-        when(likeQuery.findLikedShows(1L, null, 20)).thenReturn(CursorPage.empty());
+        when(likeQuery.findLiked("show", 1L, null, 20)).thenReturn(CursorPage.empty());
 
         GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.hasNext()).isFalse();
         assertThat(output.nextPosition()).isNull();
-        verify(likeQuery).findLikedShows(1L, null, 20);
+        verify(likeQuery).findLiked("show", 1L, null, 20);
     }
 
     private static Stream<Arguments> invalidComponents() {

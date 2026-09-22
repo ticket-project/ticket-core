@@ -28,15 +28,15 @@ public class LikeQueryService implements LikeQueryApi {
     }
 
     @Override
-    public long countShowLikes(final long showId) {
-        return likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, showId);
+    public long countByTarget(final String targetType, final long targetId) {
+        return likeRepository.countByLikeTypeAndTargetId(LikeType.from(targetType), targetId);
     }
 
     @Override
-    public CursorPage<LikeSnapshot, Long> findLikedShows(
-            final long memberId, final @Nullable Long cursorLikeId, final int size) {
+    public CursorPage<LikeSnapshot, Long> findLiked(
+            final String targetType, final long memberId, final @Nullable Long cursorLikeId, final int size) {
         return likeRepository
-                .findLiked(LikeType.SHOW, memberId, cursorLikeId, size)
+                .findLiked(LikeType.from(targetType), memberId, cursorLikeId, size)
                 .map(LikeQueryService::toEntry);
     }
 
