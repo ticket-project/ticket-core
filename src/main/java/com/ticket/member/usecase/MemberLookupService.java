@@ -8,7 +8,7 @@ import com.ticket.member.api.MemberSnapshot;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
-import com.ticket.shared.exception.NotFoundException;
+import com.ticket.member.exception.MemberNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +22,7 @@ public class MemberLookupService implements MemberLookupApi {
     @Override
     public void requireActive(final long memberId) {
         if (!memberRepository.existsActiveById(memberId)) {
-            throw new NotFoundException("회원을 찾을 수 없습니다. id=" + memberId);
+            throw new MemberNotFoundException(memberId);
         }
     }
 
@@ -41,8 +41,6 @@ public class MemberLookupService implements MemberLookupApi {
     }
 
     private Member findActiveOrThrow(final long memberId) {
-        return memberRepository
-                .findActiveById(memberId)
-                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다. id=" + memberId));
+        return memberRepository.findActiveById(memberId).orElseThrow(() -> new MemberNotFoundException(memberId));
     }
 }

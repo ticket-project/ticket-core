@@ -21,8 +21,8 @@ import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
 import com.ticket.member.exception.DuplicateEmailException;
+import com.ticket.member.exception.MemberNotFoundException;
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +98,7 @@ public class MemberAccountService implements MemberAccountApi {
     @Override
     @Transactional(readOnly = true)
     public MemberStatus requireActiveIdentity(final long memberId) {
-        return toStatus(memberRepository.findActiveById(memberId).orElseThrow(() -> new NotFoundException()));
+        return toStatus(memberRepository.findActiveById(memberId).orElseThrow(() -> new MemberNotFoundException()));
     }
 
     /** 트랜잭션은 {@link OAuth2MemberProvisioningService}가 그대로 소유한다 — 여기서 다시 열지 않는다. */
@@ -118,7 +118,8 @@ public class MemberAccountService implements MemberAccountApi {
     @Transactional
     public List<SocialAccountSnapshot> withdraw(final long memberId) {
         final LocalDateTime now = LocalDateTime.now(clock);
-        final Member member = memberRepository.findActiveById(memberId).orElseThrow(() -> new NotFoundException());
+        final Member member =
+                memberRepository.findActiveById(memberId).orElseThrow(() -> new MemberNotFoundException());
         final List<SocialAccountSnapshot> socialAccounts = member.activeSocialAccounts().stream()
                 .map(account -> new SocialAccountSnapshot(account.getSocialProvider(), account.getSocialId()))
                 .toList();
