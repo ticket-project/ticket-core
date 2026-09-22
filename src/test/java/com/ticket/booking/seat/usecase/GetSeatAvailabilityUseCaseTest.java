@@ -42,7 +42,6 @@ class GetSeatAvailabilityUseCaseTest {
 
     @Test
     void DB와_redis_점유좌석을_합쳐_잔여석을_계산한다() {
-        // given
         List<PerformanceSeat> stateRows =
                 List.of(PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.AVAILABLE));
         PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", "VIP석", 1);
@@ -52,9 +51,7 @@ class GetSeatAvailabilityUseCaseTest {
         // seat 1은 selecting, seat 2는 holding으로 점유돼 있다. 둘 다 잔여석에서 빠진다.
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
-        // when
         GetSeatAvailabilityUseCase.Output output = useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
-        // then
         assertThat(output.grades())
                 .containsExactly(
                         new GetSeatAvailabilityUseCase.GradeAvailability(31L, "VIP", "VIP석", BigDecimal.TEN, 1, 0L));
@@ -101,7 +98,6 @@ class GetSeatAvailabilityUseCaseTest {
 
     @Test
     void 이름이_같아도_performanceGradeId가_다르면_따로_집계한다() {
-        // given
         List<PerformanceSeat> stateRows = List.of(
                 PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.AVAILABLE),
                 PerformanceSeatFixture.seat(502L, 2L, 32L, PerformanceSeatState.AVAILABLE));
@@ -123,9 +119,7 @@ class GetSeatAvailabilityUseCaseTest {
         when(performanceSaleCatalogApi.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
-        // when
         GetSeatAvailabilityUseCase.Output output = useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
-        // then
         assertThat(output.grades()).hasSize(2);
         assertThat(output.grades())
                 .extracting(GetSeatAvailabilityUseCase.GradeAvailability::performanceGradeId)
@@ -151,11 +145,8 @@ class GetSeatAvailabilityUseCaseTest {
 
     @Test
     void 회차의_좌석_상태가_없으면_show_판매_snapshot을_조회하지_않는다() {
-        // given
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(List.of());
-        // when
         useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
-        // then
         verify(performanceSaleCatalogApi, org.mockito.Mockito.never())
                 .getSaleSnapshot(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anySet());
     }

@@ -32,13 +32,10 @@ class WithdrawCurrentMemberUseCaseTest {
 
     @Test
     void 탈퇴_후_모든_카카오_계정을_연동해제한다() {
-        // given
         final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
         final SocialAccountSnapshot second = new SocialAccountSnapshot(SocialProvider.KAKAO, "200");
         when(memberAccountApi.withdraw(5L)).thenReturn(List.of(first, second));
-        // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
-        // then
         verify(memberAccountApi).withdraw(5L);
         verify(socialAccountUnlinker).unlink(first);
         verify(socialAccountUnlinker).unlink(second);
@@ -46,25 +43,19 @@ class WithdrawCurrentMemberUseCaseTest {
 
     @Test
     void 카카오_연동해제_중_예외가_나도_탈퇴_흐름은_계속된다() {
-        // given
         final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
         final SocialAccountSnapshot second = new SocialAccountSnapshot(SocialProvider.GOOGLE, "200");
         when(memberAccountApi.withdraw(5L)).thenReturn(List.of(first, second));
         doThrow(new IllegalStateException("boom")).when(socialAccountUnlinker).unlink(first);
-        // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
-        // then
         verify(socialAccountUnlinker).unlink(first);
         verify(socialAccountUnlinker).unlink(second);
     }
 
     @Test
     void 연동해제할_카카오계정이_없으면_unlink를_호출하지_않는다() {
-        // given
         when(memberAccountApi.withdraw(5L)).thenReturn(List.of());
-        // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
-        // then
         verify(memberAccountApi).withdraw(5L);
         verify(socialAccountUnlinker, never()).unlink(org.mockito.ArgumentMatchers.any());
     }
