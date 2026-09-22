@@ -71,20 +71,6 @@ class ShowSearchRequestTest {
     }
 
     @Test
-    void 알_수_없는_region_문자열이면_invalid_request_예외를_던진다() {
-        ShowSearchRequest request = new ShowSearchRequest(
-                "뮤지컬",
-                "MUSICAL",
-                "ON_SALE",
-                LocalDate.of(2026, 4, 1),
-                LocalDate.of(2026, 4, 30),
-                "NOWHERE",
-                ENCODED_CURSOR);
-
-        assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC)).isInstanceOf(InvalidRequestException.class);
-    }
-
-    @Test
     void 시작일_From이_To보다_늦으면_예외를_던진다() {
         ShowSearchRequest request = new ShowSearchRequest(
                 "뮤지컬", "MUSICAL", "ON_SALE", LocalDate.of(2026, 4, 30), LocalDate.of(2026, 4, 1), "SEOUL", null);

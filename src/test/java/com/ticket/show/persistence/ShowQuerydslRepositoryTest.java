@@ -39,6 +39,7 @@ import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.domain.show.ShowGenre;
 import com.ticket.show.usecase.SaleOpeningSoonSearchParam;
 import com.ticket.show.usecase.ShowCursor;
@@ -86,6 +87,7 @@ import com.ticket.venue.usecase.VenueLookupService;
     ShowQuerydslRepositoryTest.TestConfig.class,
     ShowQuerydslRepositoryTest.AuditingTestConfig.class,
     ShowQuerydslRepository.class,
+    ShowRepositoryAdapter.class,
     VenueRepositoryAdapter.class,
     VenueLookupService.class
 })
@@ -96,6 +98,9 @@ class ShowQuerydslRepositoryTest {
 
     @Autowired
     private ShowQuerydslRepository showQuerydslRepository;
+
+    @Autowired
+    private ShowRepository showRepository;
 
     @Autowired
     private VenueLookupApi venueLookup;
@@ -162,7 +167,7 @@ class ShowQuerydslRepositoryTest {
 
         assertThat(result.items()).extracting(Show::getTitle).containsExactly("Seoul Popular", "Seoul Normal");
         assertThat(result.hasNext()).isTrue();
-        assertThat(showQuerydslRepository
+        assertThat(showRepository
                         .findGenreNamesByShowIds(List.of(seoulPopular.getId()))
                         .get(seoulPopular.getId()))
                 .containsExactlyInAnyOrder("뮤지컬", "연극", "콘서트");
@@ -879,48 +884,6 @@ class ShowQuerydslRepositoryTest {
 
         assertThat(approaching.items()).hasSize(3);
         assertThat(countSearchShows(criteria)).isEqualTo(4);
-    }
-
-    // region 의미론 ------------------------------------------------------------
-    //
-    // 지역 해석은 application의 몫이다. "빈 venueId 집합이면 0건"은 이미 위에서 고정했고, 나머지 둘이 여기다.
-
-    /** 지역 조건이 없으면 공연장이 없는 공연도 결과에 들어온다. */
-    @Test
-    void 지역_조건이_없으면_공연장_없는_공연도_목록에_들어온다() {
-        persistShow(
-                "No Venue",
-                10L,
-                LocalDate.now().plusDays(5),
-                null,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(findAllBySearch(new ShowListParam(null, null, null, null), 10, ShowSort.POPULAR)
-                        .items())
-                .extracting(Show::getTitle)
-                .contains("No Venue");
-    }
-
-    /** 반대로 지역을 주면 SQL의 NULL 비교 규칙 때문에 공연장이 없는 공연은 빠진다. */
-    @Test
-    void 지역을_주면_공연장_없는_공연은_목록에서_빠진다() {
-        persistShow(
-                "No Venue",
-                10L,
-                LocalDate.now().plusDays(5),
-                null,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(findAllBySearch(new ShowListParam(null, null, "SEOUL", null), 10, ShowSort.POPULAR)
-                        .items())
-                .extracting(Show::getTitle)
-                .doesNotContain("No Venue");
     }
 
     private SaleOpeningSoonSearchParam saleOpeningSoon(final String category, final String title, final String region) {

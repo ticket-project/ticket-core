@@ -73,12 +73,15 @@ class GetPerformanceSummaryUseCaseTest {
     }
 
     @Test
-    void 공연장이_없어도_지역은_null로_반환한다() {
+    void 지역이_없는_공연장이면_region은_null이다() {
         LocalDateTime startTime = LocalDateTime.of(2026, 3, 20, 19, 30);
         final Performance performance = performance(7L, startTime);
-        final Show show = show(7L, "싱어게인", null);
+        final Show show = show(7L, "싱어게인", 5L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(7L)).thenReturn(Optional.of(show));
+        when(venueLookup.getVenueSnapshot(5L))
+                .thenReturn(new VenueSnapshot(
+                        5L, "venue", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
 
         GetPerformanceSummaryUseCase.Output output = useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
 

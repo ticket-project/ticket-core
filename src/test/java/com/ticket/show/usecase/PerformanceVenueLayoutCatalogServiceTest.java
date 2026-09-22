@@ -69,19 +69,6 @@ class PerformanceVenueLayoutCatalogServiceTest {
     }
 
     @Test
-    void venue가_없는_show면_seatLayout이_빈_맵이다() {
-        final Performance performance = performance(2L, null);
-        final Show show = show(2L, "show", null);
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of());
-
-        final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
-
-        assertThat(layout.seatLayoutBySeatId()).isEmpty();
-    }
-
-    @Test
     void venue의_좌석_좌표와_회차_grade를_조합한다() {
         final Performance performance = performance(2L, null);
         final Show show = show(2L, "show", 3L);
@@ -118,9 +105,12 @@ class PerformanceVenueLayoutCatalogServiceTest {
     @Test
     void 등급_이름을_찾지_못한_편성은_layout에서_빠진다() {
         final Performance performance = performance(2L, null);
-        final Show show = show(2L, "show", null);
+        final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
+        when(venueLookup.getVenueSnapshot(3L))
+                .thenReturn(new VenueSnapshot(
+                        3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));

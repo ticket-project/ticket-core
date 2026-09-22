@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ticket.shared.exception.CommonErrorCode;
+import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
@@ -45,7 +46,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
 
         assertThat(summary.venueId()).isEqualTo(venue.getId());
         assertThat(summary.name()).isEqualTo("올림픽홀");
-        assertThat(summary.region()).isEqualTo(Region.SEOUL);
+        assertThat(summary.region()).isEqualTo(new VenueSnapshot.RegionView("SEOUL", "서울"));
         assertThat(summary.seatMapLayout().viewBoxWidth()).isEqualTo(1000);
         assertThat(summary.seatMapLayout().viewBoxHeight()).isEqualTo(800);
         assertThat(summary.seatMapLayout().seatDiameter()).isEqualTo(12.0);
@@ -106,7 +107,13 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     void 지역_인자가_null이면_거부한다() {
         assertThatThrownBy(() -> venueLookup.findIdsByRegion(null))
                 .isInstanceOf(NullPointerException.class)
-                .hasMessage("region must not be null");
+                .hasMessage("regionCode must not be null");
+    }
+
+    /** 코드 판정은 값 집합을 소유한 venue의 몫이다 - 호출하는 module은 지역 코드 목록을 알지 못한다. */
+    @Test
+    void 알_수_없는_지역_코드면_invalid_request_예외를_던진다() {
+        assertThatThrownBy(() -> venueLookup.findIdsByRegion("NOWHERE")).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
