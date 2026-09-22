@@ -4,6 +4,9 @@
 
 채택됨 (2026-09-14)
 
+> 2026-09-22 갱신: 본문이 적은 `shared.config` → `shared.infrastructure` 개명은 되돌렸다
+> (ADR 0011 머리말 참조). 계층형 배치와 security가 인증 조립을 소유한다는 결정은 그대로다.
+
 > 2026-09-19 갱신: 아래 2026-09-17 갱신이 적은 `application` → `usecase`/`query`/`port` 중 `query`는
 > [ADR 0017](0017-query-implementations-live-in-persistence.md) 이후 없어졌다 — 읽기 모델과 조회
 > 타입도 `usecase`가 갖는다. 본문의 `MemberAccountOperations`는 `member.api.MemberAccountApi`,
@@ -71,7 +74,7 @@ Redis가 모두 필요했다. 회원 데이터와 무관한 토큰 정책 변경
 여러 업무가 함께 쓰는 기반도 그 역할의 계층이 받는다. `booking.common`은 없애고 락 계약은
 `booking.application`, 감사 base entity와 요청 좌석 값은 `booking.domain`, Redisson 구현과 Redis
 만료 수신 배선은 `booking.infrastructure`가 가져갔다. `shared.config`도 같은 이유로
-`shared.config`가 됐다.
+`shared.infrastructure`가 됐다.
 
 평탄화로 폴더가 보장하던 것은 실행 가능한 규칙으로 옮겼다 —
 `com.ticket.booking.BookingLayerDependencyTest`가 계층 방향과 락 계약의 기술 의존 금지를 고정하고,
