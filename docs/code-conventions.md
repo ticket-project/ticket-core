@@ -93,9 +93,9 @@ record·snapshot·event·enum 같은 데이터에는 붙이지 않는다. 배경
   class(`ShowQuerydslRepository`)가 `@Repository` + 생성자 주입으로
   Querydsl/JPA를 직접 쓰고, 관련 조회는 한 class로 모은다. 반환 타입은 엔티티가 기본이고, DB 집계
   결과처럼 엔티티로 표현되지 않는 것만 별도 타입이며 그 타입은 use case가 소유한다. 호출 계약에
-  Querydsl 타입을 노출하지는 않는다. 단순한 조회는 그 module의 공개 API
-  interface를 직접 구현해도 된다
-  (`VenueRepositoryAdapter implements VenueLookupApi`). interface는 실제
+  Querydsl 타입을 노출하지는 않는다. 공개 API interface를 구현하는 것은
+  adapter가 아니라 use case다
+  (`VenueLookupService implements VenueLookupApi`). interface는 실제
   계약·교체 지점·외부 시스템 경계·domain 보호처럼 근거가 있을 때 둔다 — Redis·분산락·JWT·
   WebSocket·외부 API가 그 예다.
 - **다른 module의 정보를 합치는 일은 use case/service가 한다.** 조회 Repository는 자기 module DB
