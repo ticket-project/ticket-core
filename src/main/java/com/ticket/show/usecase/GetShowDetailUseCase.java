@@ -50,7 +50,7 @@ public class GetShowDetailUseCase {
     private final GradeRepository gradeRepository;
     private final PerformerRepository performerRepository;
     private final PerformanceRepository performanceRepository;
-    private final LikeQueryApi likeQuery;
+    private final LikeQueryApi likeQueryApi;
     private final VenueLookupApi venueLookup;
     private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
@@ -130,7 +130,7 @@ public class GetShowDetailUseCase {
                 show.getEndDate(),
                 show.getRunningMinutes(),
                 show.getViewCount(),
-                likeQuery.countByTarget(LikeType.SHOW, showId),
+                likeQueryApi.countByTarget(LikeType.SHOW, showId),
                 show.saleDisplayStatusAt(LocalDateTime.now(clock)),
                 show.getDisplaySaleType(),
                 show.getDisplaySaleStartsAt(),
