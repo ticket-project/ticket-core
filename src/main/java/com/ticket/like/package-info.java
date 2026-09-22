@@ -12,8 +12,8 @@
  * token은 만료 전까지 유효하다) 이 module이 {@link com.ticket.member.api.MemberLookupApi}을 직접 불러 다시 확인한다. {@code member}는 아무 업무
  * module도 참조하지 않는 leaf라 이 방향은 순환을 만들지 않는다.
  *
- * <p>공개 계약: - LikeQueryApi (공연 찜 개수·내 찜 공연 목록 조회) - LikeSnapshot (그 결과 값). 찜하기·찜 해제·찜 상태 조회는 이 module의 HTTP endpoint와
- * use case로만 쓰고 밖에 노출하지 않는다. {@code LikeType}도 공개하지 않는다 — 공개면은 대상별 메서드로 나뉘어 종류를 값으로 받지 않는다.
+ * <p>공개 계약: - LikeQueryApi (대상별 찜 개수·내 찜 목록 조회) - LikeSnapshot (그 결과 값). 찜하기·찜 해제·찜 상태 조회는 이 module의 HTTP endpoint와 use
+ * case로만 쓰고 밖에 노출하지 않는다. {@code LikeType}도 공개하지 않는다 — 호출 module은 대상 종류를 문자열로 넘기고 like가 domain 값으로 변환한다.
  *
  * <p>"내 찜 목록"(showId 목록에 제목·이미지·공연장 이름을 붙여 보여주는 것)은 이 module이 아니라 show의 {@code GetMyShowLikesUseCase}가 한다 — 대상 표시값 조립은
  * 그 대상을 아는 module의 책임이라는 원칙 때문이다. 여러 BC를 넘나드는 "내 정보" 조합을 전담하는 module(가칭 mypage)이 생기면 그때 옮길 후보다(아직 만들지 않는다 — 지금은 이 하나의

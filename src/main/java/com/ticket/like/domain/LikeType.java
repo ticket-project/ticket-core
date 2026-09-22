@@ -7,5 +7,20 @@ package com.ticket.like.domain;
  * 남는다(이 열거형이 줄여주는 것은 테이블·리포지토리·중복 방지 불변식뿐이다).
  */
 public enum LikeType {
-    SHOW
+    SHOW("show");
+
+    private final String value;
+
+    LikeType(final String value) {
+        this.value = value;
+    }
+
+    public static LikeType from(final String value) {
+        for (LikeType likeType : values()) {
+            if (likeType.value.equals(value)) {
+                return likeType;
+            }
+        }
+        throw new IllegalArgumentException("지원하지 않는 찜 대상 종류입니다: " + value);
+    }
 }

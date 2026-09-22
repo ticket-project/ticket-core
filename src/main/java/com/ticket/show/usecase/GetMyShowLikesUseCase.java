@@ -70,7 +70,7 @@ public class GetMyShowLikesUseCase {
         memberLookup.requireActive(input.memberId());
 
         final CursorPage<LikeSnapshot, Long> page =
-                likeQuery.findLikedShows(input.memberId(), input.cursorLikeId(), input.size());
+                likeQuery.findLiked("show", input.memberId(), input.cursorLikeId(), input.size());
 
         if (page.items().isEmpty()) {
             return new Output(List.of(), page.hasNext(), page.nextPosition());
