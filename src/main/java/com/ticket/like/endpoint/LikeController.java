@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.LikeType;
 import com.ticket.like.endpoint.docs.LikeControllerDocs;
 import com.ticket.like.usecase.AddLikeUseCase;
 import com.ticket.like.usecase.GetLikeStatusUseCase;

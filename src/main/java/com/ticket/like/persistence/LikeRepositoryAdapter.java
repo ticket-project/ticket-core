@@ -7,9 +7,9 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
-import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
+import com.ticket.like.domain.LikeType;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;

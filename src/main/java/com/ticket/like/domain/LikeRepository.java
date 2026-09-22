@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.like.api.LikeType;
 import com.ticket.shared.api.CursorPage;
 
 /**

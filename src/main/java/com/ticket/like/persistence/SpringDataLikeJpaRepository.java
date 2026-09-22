@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
+import com.ticket.like.domain.LikeType;
 
 interface SpringDataLikeJpaRepository extends JpaRepository<Like, Long> {
     boolean existsByMemberIdAndLikeTypeAndTargetId(Long memberId, LikeType likeType, Long targetId);

@@ -81,7 +81,7 @@ class GetShowDetailUseCase {
     private final LikeQueryApi likeQueryApi;   // like의 공개 API
     Output execute(Input input) {
         Show show = showQueryRepository.findShow(input.showId()).orElseThrow(...);
-        long likeCount = likeQueryApi.countByTarget(LikeType.SHOW, input.showId());
+        long likeCount = likeQueryApi.countShowLikes(input.showId());
         return new Output(show, ..., likeCount);
     }
 }

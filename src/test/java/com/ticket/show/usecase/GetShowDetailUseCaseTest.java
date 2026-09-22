@@ -22,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.like.api.LikeQueryApi;
-import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.GradeRepository;
@@ -113,7 +112,7 @@ class GetShowDetailUseCaseTest {
                 .thenReturn(new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
-        when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
+        when(likeQuery.countShowLikes(1L)).thenReturn(10L);
         when(venueLookup.getVenueSnapshot(5L))
                 .thenReturn(new VenueSnapshot(
                         5L,
@@ -140,7 +139,7 @@ class GetShowDetailUseCaseTest {
         assertThat(output.likeCount()).isEqualTo(10L);
         assertThat(output.venue().name()).isEqualTo("예술의전당");
         assertThat(output.performer()).isNull();
-        verify(likeQuery).countByTarget(LikeType.SHOW, 1L);
+        verify(likeQuery).countShowLikes(1L);
         verify(venueLookup).getVenueSnapshot(5L);
     }
 

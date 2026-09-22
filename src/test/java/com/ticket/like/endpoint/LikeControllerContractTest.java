@@ -16,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.LikeType;
 import com.ticket.like.exception.handler.LikeExceptionHandler;
 import com.ticket.like.usecase.AddLikeUseCase;
 import com.ticket.like.usecase.GetLikeStatusUseCase;

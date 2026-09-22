@@ -4,12 +4,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.like.api.LikeCountSnapshot;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeSnapshot;
-import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
+import com.ticket.like.domain.LikeType;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class LikeQueryService implements LikeQueryApi {
     private final LikeRepository likeRepository;
 
-    @Override
+    /** like 안에서만 쓰는 조회다 — 공개 계약이 아니다. 다른 module은 찜 여부를 묻지 않는다. */
     public LikeCountSnapshot countByTargetForMember(final LikeType likeType, final long targetId, final long memberId) {
         final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
         final long likeCount = likeRepository.countByLikeTypeAndTargetId(likeType, targetId);
@@ -29,14 +28,16 @@ public class LikeQueryService implements LikeQueryApi {
     }
 
     @Override
-    public long countByTarget(final LikeType likeType, final long targetId) {
-        return likeRepository.countByLikeTypeAndTargetId(likeType, targetId);
+    public long countShowLikes(final long showId) {
+        return likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, showId);
     }
 
     @Override
-    public CursorPage<LikeSnapshot, Long> findLiked(
-            final LikeType likeType, final long memberId, final @Nullable Long cursorLikeId, final int size) {
-        return likeRepository.findLiked(likeType, memberId, cursorLikeId, size).map(LikeQueryService::toEntry);
+    public CursorPage<LikeSnapshot, Long> findLikedShows(
+            final long memberId, final @Nullable Long cursorLikeId, final int size) {
+        return likeRepository
+                .findLiked(LikeType.SHOW, memberId, cursorLikeId, size)
+                .map(LikeQueryService::toEntry);
     }
 
     private static LikeSnapshot toEntry(final Like like) {

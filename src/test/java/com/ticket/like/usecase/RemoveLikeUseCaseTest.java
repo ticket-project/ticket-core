@@ -20,9 +20,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
+import com.ticket.like.domain.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
