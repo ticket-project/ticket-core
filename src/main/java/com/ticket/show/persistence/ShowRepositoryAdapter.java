@@ -1,5 +1,7 @@
 package com.ticket.show.persistence;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,5 +43,22 @@ public class ShowRepositoryAdapter implements ShowRepository {
     @Override
     public List<String> findGenreNames(final Long showId) {
         return jpaRepository.findGenreNamesByShowId(showId);
+    }
+
+    @Override
+    public Map<Long, List<String>> findGenreNamesByShowIds(final List<Long> showIds) {
+        if (showIds.isEmpty()) {
+            return Map.of();
+        }
+        final Map<Long, List<String>> genreNames = new LinkedHashMap<>();
+        for (var row : jpaRepository.findGenreNamesByShowIds(showIds)) {
+            final String name = row.getGenreName();
+            if (name != null) {
+                genreNames
+                        .computeIfAbsent(row.getShowId(), key -> new ArrayList<>())
+                        .add(name);
+            }
+        }
+        return genreNames;
     }
 }

@@ -17,6 +17,7 @@ import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 
@@ -30,6 +31,7 @@ public class GetShowsUseCase {
     public static final int MAX_SIZE = 100;
 
     private final ShowQuerydslRepository showQuerydslRepository;
+    private final ShowRepository showRepository;
     private final VenueLookupApi venueLookup;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
@@ -69,7 +71,7 @@ public class GetShowsUseCase {
     public Output execute(final Input input) {
         final CursorPage<Show, ShowCursor> page = showQuerydslRepository.findAllBySearch(
                 input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
-        final Map<Long, List<String>> genreNames = showQuerydslRepository.findGenreNamesByShowIds(
+        final Map<Long, List<String>> genreNames = showRepository.findGenreNamesByShowIds(
                 page.items().stream().map(Show::getId).toList());
         final VenueDisplays venues = VenueDisplays.load(
                 venueLookup, page.items().stream().map(Show::getVenueId).toList());

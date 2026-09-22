@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -598,35 +597,6 @@ public class ShowQuerydslRepository {
 
     private List<Long> extractShowIds(final List<Tuple> rows) {
         return rows.stream().map(tuple -> tuple.get(show.id)).toList();
-    }
-
-    /** 목록 한 페이지의 장르 이름을 공연 id 전체로 한 번에 읽는다 — 목록 크기에 따라 query가 늘지 않는다. 장르가 없는 공연은 map에 들어오지 않으므로 호출자가 빈 목록으로 본다. */
-    public Map<Long, List<String>> findGenreNamesByShowIds(final List<Long> showIds) {
-        if (showIds.isEmpty()) {
-            return Map.of();
-        }
-
-        final List<Tuple> genreTuples = queryFactory
-                .select(show.id, genre.name)
-                .from(show)
-                .leftJoin(showGenre)
-                .on(showGenre.showId.eq(show.id))
-                .leftJoin(genre)
-                .on(showGenre.genreId.eq(genre.id))
-                .where(show.id.in(showIds))
-                .fetch();
-
-        final Map<Long, List<String>> genreNamesByShowId = new LinkedHashMap<>();
-        for (Tuple tuple : genreTuples) {
-            final Long showId = required(tuple, show.id);
-            final String genreName = tuple.get(genre.name);
-            if (genreName != null) {
-                genreNamesByShowId
-                        .computeIfAbsent(showId, key -> new ArrayList<>())
-                        .add(genreName);
-            }
-        }
-        return genreNamesByShowId;
     }
 
     // 상세 조회 조각 ------------------------------------------------------------

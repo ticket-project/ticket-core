@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
+import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
@@ -30,6 +31,9 @@ class GetShowsUseCaseTest {
 
     @Mock
     private ShowQuerydslRepository showQuerydslRepository;
+
+    @Mock
+    private ShowRepository showRepository;
 
     @Mock
     private VenueLookupApi venueLookup;
@@ -54,7 +58,7 @@ class GetShowsUseCaseTest {
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQuerydslRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
-        when(showQuerydslRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of(1L, List.of("rock")));
+        when(showRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of(1L, List.of("rock")));
         when(venueLookup.getSummaries(Set.of(7L)))
                 .thenReturn(Map.of(
                         7L,
