@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.member.api.MemberSnapshot;
-import com.ticket.member.api.MemberStatus;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.exception.MemberNotFoundException;
@@ -24,13 +23,6 @@ public class MemberLookupService implements MemberLookupApi {
         if (!memberRepository.existsActiveById(memberId)) {
             throw new MemberNotFoundException(memberId);
         }
-    }
-
-    @Override
-    public MemberStatus getStatus(final long memberId) {
-        final Member member = findActiveOrThrow(memberId);
-        return new MemberStatus(
-                member.getId(), !member.isDeleted(), member.getRole().name());
     }
 
     @Override

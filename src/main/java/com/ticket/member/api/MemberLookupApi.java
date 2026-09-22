@@ -10,9 +10,6 @@ public interface MemberLookupApi {
     /** 활성 회원인지 검증한다. 존재하지 않거나 탈퇴한 회원이면 던진다. */
     void requireActive(long memberId);
 
-    /** 회원 상태를 조회한다. 존재하지 않으면 던진다. */
-    MemberStatus getStatus(long memberId);
-
     /** 다른 module이 화면에 표시할 회원 이름·이메일을 조회한다. 존재하지 않거나 탈퇴한 회원이면 던진다. */
     MemberSnapshot getProfile(long memberId);
 }
