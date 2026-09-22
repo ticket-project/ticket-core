@@ -10,9 +10,14 @@
 > `shared :: *` 와일드카드를 쓰지 않고 필요한 named interface만 명시한다. shared가 무엇을 담고
 > 무엇을 담지 않는지에 대한 결정 자체는 그대로다.
 
+> 2026-09-22 갱신: 아래 2026-09-14 갱신이 적은 `shared.infrastructure`는 다시 `shared.config`로
+> 돌아왔다 — 전역 기술 배선과 공개 설정 값(`CorsProperties`)을 한 package로 합치면서 이름을
+> 본문 그대로 되돌렸다. 공개면은 넓히지 않았다: `@NamedInterface`가 package가 아니라
+> `CorsProperties` 타입에만 붙는다.
+
 > 2026-09-14 갱신: `shared.config`라는 이름은
 > [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이
-> `shared.config`로 바꿨다. 아래 본문의 `shared.config`는 그 패키지를 가리킨다. 무엇을
+> `shared.infrastructure`로 바꿨다. 아래 본문의 `shared.config`는 그 패키지를 가리킨다. 무엇을
 > 담고 무엇을 담지 않는지에 대한 결정 자체는 그대로다.
 
 2026-09-13 후속 변경: `AuthenticatedMember`가 `java.security.Principal`을 구현하면 Spring MVC의
