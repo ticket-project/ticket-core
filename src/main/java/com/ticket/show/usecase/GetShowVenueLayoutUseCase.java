@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.ShowNotFoundException;
 import com.ticket.show.exception.ShowVenueNotFoundException;
@@ -33,11 +34,12 @@ public class GetShowVenueLayoutUseCase {
     public record Output(@Nullable String name, int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
 
     public Output execute(final Input input) {
-        final Show show = showRepository.findById(input.showId()).orElseThrow(() -> new ShowNotFoundException(input.showId()));
+        final Show show =
+                showRepository.findById(input.showId()).orElseThrow(() -> new ShowNotFoundException(input.showId()));
 
         final Long venueId = show.getVenueId();
         final VenueSnapshot venue =
-                venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
+                venueId == null ? null : venueLookup.getVenueSnapshot(venueId).orElse(null);
         if (venue == null) {
             throw new ShowVenueNotFoundException();
         }
