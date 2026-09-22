@@ -16,7 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.api.AccessTokenAuthenticator;
+import com.ticket.security.api.AccessTokenAuthenticationApi;
 import com.ticket.shared.exception.TicketException;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private final AccessTokenAuthenticator accessTokenAuthenticator;
+    private final AccessTokenAuthenticationApi accessTokenAuthenticator;
 
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) {

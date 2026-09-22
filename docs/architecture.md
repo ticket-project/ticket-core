@@ -298,7 +298,7 @@ Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`securit
 Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain·handler·provider 통신·응답
 해석·인증 코드·외부 unlink), `token`(토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성
 기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이다. 여기에
-다른 모듈에 공개하는 계약만 담는 `api`(`AccessTokenAuthenticator`)가 더해진다 — **각 폴더
+다른 모듈에 공개하는 계약만 담는 `api`(`AccessTokenAuthenticationApi`)가 더해진다 — **각 폴더
 안에 역할 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
 하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
 
@@ -375,7 +375,7 @@ use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계�
 **module 밖으로 나가는 읽기 뷰는 `*Snapshot`이다**(`VenueSnapshot`, `PerformanceSaleSnapshot`,
 `MemberSnapshot`, `LikeSnapshot`). 접미사는 최상위 타입에만 붙이고 중첩 record에는 붙이지 않는다.
 **들어오는 입력과 보안 principal은 대상이 아니다** — `RawPassword`, `SocialIdentity`는 밖에서 들어오는
-값이고 `AuthenticatedMember`는 `AuditorPrincipal`을 구현하는 principal이다. 이 타입들을 만드는 것은
+값이고 `AuthenticatedMember`는 `AuditorPrincipalApi`를 구현하는 principal이다. 이 타입들을 만드는 것은
 조회가 아니라 공개 계약 interface를 구현하는 쪽이다(`docs/readability-guidelines.md` §10-1).
 
 `Output`은 use case 반환값,
@@ -568,7 +568,7 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 다른 모듈의 controller는 `member.api.AuthenticatedMember`만 parameter로 받고 JWT나 `member` 내부의
 `Member`를 보지 않는다. `booking`은 WebSocket 인증 하나 때문에 `security`를 참조한다 — STOMP
 CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독 인터셉터가
-`security.api.AccessTokenAuthenticator`로 토큰을 직접 검증한다.
+`security.api.AccessTokenAuthenticationApi`로 토큰을 직접 검증한다.
 
 `GET /api/v1/members`는 member가, `DELETE /api/v1/members`는 security가 갖는다. 탈퇴는 DB
 처리로 끝나지 않고 커밋 뒤 외부 provider 연결 해제와 SecurityContext 정리가 이어지는 인증

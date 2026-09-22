@@ -7,6 +7,11 @@
 > 2026-09-19 갱신: 공개된 named interface는 아홉이 아니라 열이다 — ADR 0018이 `shared :: jpa`를
 > 더했다. 목록의 원본은 `com.ticket.ArchitectureRulesTest`다.
 
+> 2026-09-22 갱신: 아래 "기존 이름이 이미 더 명확하면 붙이지 않는다" 예외를 걷어냈다.
+> **api 패키지의 interface에는 예외 없이 `Api`를 붙인다.** `AccessTokenAuthenticator` →
+> `AccessTokenAuthenticationApi`, `AuditorPrincipal` → `AuditorPrincipalApi`. 성격별 표와 대안 3
+> 기각 이유(데이터에는 붙이지 않는다)는 그대로 유효하다.
+
 [ADR 0003](0003-spring-modulith-application-module-boundaries.md)의 "모듈 root = cross-module
 공개 계약"과 [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)의
 계층 이름 `web`을 이 부분에 한해 대체한다. 두 ADR의 나머지 결정(Application Module 경계, 모듈 →
@@ -44,7 +49,7 @@ CLOSED 모듈의 하위 패키지를 이미 막아 주므로 안전 자체는 �
 `like`/`member`/`security`/`shared`/`show`/`venue`가 api 패키지를 갖는다. 이 여섯 모듈의 root에는
 `package-info.java`만 남는다.
 
-**호출용 행위 계약에만 `Api` 접미사를 붙인다.**
+**api 패키지의 interface에는 `Api` 접미사를 붙이고, 데이터에는 붙이지 않는다.**
 
 | 성격 | 이름 | 예 |
 | --- | --- | --- |
@@ -54,9 +59,13 @@ CLOSED 모듈의 하위 패키지를 이미 막아 주므로 안전 자체는 �
 | 이벤트 | 발생한 사실의 이름 | `OrderStarted` |
 | enum·value object | 그대로 | `Region`, `LikeType`, `RawPassword` |
 
-기존 이름이 이미 더 명확하면 붙이지 않는다. `AccessTokenAuthenticator`는 `-Authenticator`가 이미
-"이걸 불러 인증한다"를 말하고, `AuditorPrincipal`은 호출하는 계약이 아니라 **구현하는** 계약(SPI)
-이라 `Api`가 방향을 거꾸로 읽히게 만든다.
+접미사를 붙일지 말지는 타입의 **종류**로 정한다 — interface면 붙이고 record·enum·class면 붙이지
+않는다. 이름이 이미 충분히 명확해 보여도 예외를 두지 않는다. 예외가 있으면 "이건 왜 안 붙었나"를
+매번 판단해야 하고, 그 판단이 사람마다 갈린다.
+
+`AuditorPrincipalApi`는 다른 모듈이 **구현하는** 계약(SPI)이라 `Api`가 참조 방향을 거꾸로 읽히게
+한다는 약점이 남는다. 규칙이 단순해지는 대가로 받아들인다 — SPI는 `shared.api`에 하나뿐이고,
+`shared/api/package-info.java`가 방향을 적어 둔다.
 
 ### B. `allowedDependencies`를 named interface 단위로 좁힌다
 
