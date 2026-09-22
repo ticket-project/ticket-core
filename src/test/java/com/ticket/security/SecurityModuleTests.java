@@ -32,7 +32,7 @@ import com.ticket.member.api.MemberAccountApi;
         })
 class SecurityModuleTests {
     @MockitoBean
-    private MemberAccountApi memberAccountOperations;
+    private MemberAccountApi memberAccountApi;
 
     @MockitoBean
     private RedissonClient redissonClient;

@@ -21,7 +21,7 @@ class LikeModuleTests {
     private JPAQueryFactory jpaQueryFactory;
 
     @MockitoBean
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @Test
     void bootstraps() {}

@@ -28,7 +28,7 @@ class RefreshAuthTokenUseCaseTest {
     private RefreshTokenStore refreshTokenStore;
 
     @Mock
-    private MemberAccountApi memberAccountOperations;
+    private MemberAccountApi memberAccountApi;
 
     @Mock
     private AuthTokenIssuer authTokenIssuer;
@@ -44,7 +44,7 @@ class RefreshAuthTokenUseCaseTest {
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
         when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
-        when(memberAccountOperations.getActiveIdentity(3L)).thenReturn(member);
+        when(memberAccountApi.getActiveIdentity(3L)).thenReturn(member);
         when(authTokenIssuer.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result = useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken));
@@ -57,7 +57,7 @@ class RefreshAuthTokenUseCaseTest {
         assertThat(result.refreshToken()).isEqualTo("new-refresh-token-value");
         assertThat(result.toString()).doesNotContain("access-token-value").doesNotContain("new-refresh-token-value");
         verify(refreshTokenStore).validate(refreshToken);
-        verify(memberAccountOperations).getActiveIdentity(3L);
+        verify(memberAccountApi).getActiveIdentity(3L);
         verify(authTokenIssuer).rotateTokens(1L, "MEMBER", refreshToken);
     }
 

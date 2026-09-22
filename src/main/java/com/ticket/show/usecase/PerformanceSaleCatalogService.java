@@ -38,8 +38,8 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
     private final PerformanceRepository performanceRepository;
     private final GradeRepository gradeRepository;
     private final ShowRepository showRepository;
-    private final VenueLookupApi venueLookup;
-    private final VenueSeatLookupApi venueSeatLookup;
+    private final VenueLookupApi venueLookupApi;
+    private final VenueSeatLookupApi venueSeatLookupApi;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,10 +52,10 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
                 .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
         final Long venueId = show.getVenueId();
 
-        final String venueName = venueLookup.getVenueSnapshot(venueId).name();
+        final String venueName = venueLookupApi.getVenueSnapshot(venueId).name();
 
         final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
-                venueSeatLookup.findSeats(venueId, seatIds).stream()
+                venueSeatLookupApi.findSeats(venueId, seatIds).stream()
                         .collect(Collectors.toMap(VenueSeatSnapshot::seatId, this::toSeatInfo));
 
         final Map<Long, PerformanceSaleSnapshot.GradeInfo> gradeInfoByPerformanceGradeId = toGradeInfos(performanceId);

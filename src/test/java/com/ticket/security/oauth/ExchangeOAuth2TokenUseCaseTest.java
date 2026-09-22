@@ -26,7 +26,7 @@ class ExchangeOAuth2TokenUseCaseTest {
     private OAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Mock
-    private MemberAccountApi memberAccountOperations;
+    private MemberAccountApi memberAccountApi;
 
     @Mock
     private AuthTokenIssuer authTokenIssuer;
@@ -41,7 +41,7 @@ class ExchangeOAuth2TokenUseCaseTest {
                 new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 7L);
 
         when(oauth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
-        when(memberAccountOperations.getActiveIdentity(7L)).thenReturn(member);
+        when(memberAccountApi.getActiveIdentity(7L)).thenReturn(member);
         when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         ExchangeOAuth2TokenUseCase.Result result = useCase.execute(new ExchangeOAuth2TokenUseCase.Input("oauth-code"));
@@ -54,7 +54,7 @@ class ExchangeOAuth2TokenUseCaseTest {
         assertThat(result.refreshToken()).isEqualTo("refresh-token-value");
         assertThat(result.toString()).doesNotContain("access-token-value").doesNotContain("refresh-token-value");
         verify(oauth2AuthCodeStore).consumeCode("oauth-code");
-        verify(memberAccountOperations).getActiveIdentity(7L);
+        verify(memberAccountApi).getActiveIdentity(7L);
         verify(authTokenIssuer).issueTokens(1L, "MEMBER");
     }
 

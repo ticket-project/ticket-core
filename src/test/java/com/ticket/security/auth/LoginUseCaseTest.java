@@ -20,7 +20,7 @@ import com.ticket.security.token.IssuedAuthTokens;
 @SuppressWarnings("NonAsciiCharacters")
 class LoginUseCaseTest {
     @Mock
-    private MemberAccountApi memberAccountOperations;
+    private MemberAccountApi memberAccountApi;
 
     @Mock
     private AuthTokenIssuer authTokenIssuer;
@@ -34,7 +34,7 @@ class LoginUseCaseTest {
         IssuedAuthTokens response =
                 new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 1L);
 
-        when(memberAccountOperations.authenticate("user@example.com", RawPassword.create("password")))
+        when(memberAccountApi.authenticate("user@example.com", RawPassword.create("password")))
                 .thenReturn(member);
         when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
@@ -47,7 +47,7 @@ class LoginUseCaseTest {
         assertThat(output.memberId()).isEqualTo(response.memberId());
         assertThat(result.refreshToken()).isEqualTo("refresh-token-value");
         assertThat(result.toString()).doesNotContain("access-token-value").doesNotContain("refresh-token-value");
-        verify(memberAccountOperations).authenticate("user@example.com", RawPassword.create("password"));
+        verify(memberAccountApi).authenticate("user@example.com", RawPassword.create("password"));
         verify(authTokenIssuer).issueTokens(1L, "MEMBER");
     }
 }

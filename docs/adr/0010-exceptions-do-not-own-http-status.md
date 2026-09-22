@@ -61,7 +61,7 @@ ADR 0002가 확정한 모듈 소유 오류 계약에서 `TicketException`은 `Ht
 
 ## 확인한 경로 (합치거나 없애지 않은 이유)
 
-- **`GetOrderStatusUseCase`의 `NotFoundException` 처리**: `memberLookup.requireActive`가 던지는
+- **`GetOrderStatusUseCase`의 `NotFoundException` 처리**: `memberLookupApi.requireActive`가 던지는
   공통 `NotFoundException`을 잡아 `OrderNotOwnedException`으로 바꿔 던진다 — 호출부가 타입으로
   분기하는 실제 사례라 `NotFoundException`을 없애거나 다른 것과 합칠 수 없다.
 - **`WebSocketAuthInterceptor`의 `TicketException` 처리**: STOMP 인증 실패를 base 타입

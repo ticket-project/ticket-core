@@ -34,13 +34,13 @@ class GetOrderStatusUseCaseTest {
     private OrderRepository repository;
 
     @Mock
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     private GetOrderStatusUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderStatusUseCase(repository, memberLookup, CLOCK);
+        useCase = new GetOrderStatusUseCase(repository, memberLookupApi, CLOCK);
     }
 
     @Test
@@ -51,7 +51,7 @@ class GetOrderStatusUseCaseTest {
 
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
         assertThat(output.remainingSeconds()).isEqualTo(600L);
-        verify(memberLookup).requireActive(1L);
+        verify(memberLookupApi).requireActive(1L);
     }
 
     @Test
@@ -67,7 +67,7 @@ class GetOrderStatusUseCaseTest {
     @Test
     void 탈퇴한_회원의_주문상태는_조회하지_않는다() {
         when(repository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
-        doThrow(new NotFoundException()).when(memberLookup).requireActive(1L);
+        doThrow(new NotFoundException()).when(memberLookupApi).requireActive(1L);
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))
                 .isInstanceOf(OrderNotOwnedException.class)

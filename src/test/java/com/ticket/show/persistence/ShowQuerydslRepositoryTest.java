@@ -103,7 +103,7 @@ class ShowQuerydslRepositoryTest {
     private ShowRepository showRepository;
 
     @Autowired
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     private Venue seoulVenue;
     private Venue busanVenue;
@@ -966,7 +966,7 @@ class ShowQuerydslRepositoryTest {
 
     /** {@code null}(지역 조건 없음)과 빈 집합(그 지역에 공연장 없음)을 구분해 넘긴다 — use case와 같은 규칙이다. */
     private @Nullable Set<Long> venueIdsOf(final @Nullable String regionCode) {
-        return regionCode == null ? null : venueLookup.findIdsByRegion(regionCode);
+        return regionCode == null ? null : venueLookupApi.findIdsByRegion(regionCode);
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {

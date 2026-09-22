@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private final AccessTokenAuthenticationApi accessTokenAuthenticator;
+    private final AccessTokenAuthenticationApi accessTokenAuthenticationApi;
 
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) {
@@ -46,7 +46,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 final String token = authorization.substring(BEARER_PREFIX.length());
                 final AuthenticatedMember member;
                 try {
-                    member = accessTokenAuthenticator.authenticate(token);
+                    member = accessTokenAuthenticationApi.authenticate(token);
                 } catch (final TicketException exception) {
                     log.warn("웹소켓 JWT 인증에 실패해 연결을 차단합니다.");
                     throw new MessageDeliveryException("JWT 인증 실패");

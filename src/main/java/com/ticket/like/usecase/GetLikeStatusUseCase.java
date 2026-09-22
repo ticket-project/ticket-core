@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetLikeStatusUseCase {
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final LikeRepository likeRepository;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
@@ -31,7 +31,7 @@ public class GetLikeStatusUseCase {
     public record Output(@JsonProperty("showId") Long targetId, boolean liked, long likeCount) {}
 
     public Output execute(final Input input) {
-        memberLookup.requireActive(input.memberId());
+        memberLookupApi.requireActive(input.memberId());
 
         final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(
                 input.memberId(), input.likeType(), input.targetId());

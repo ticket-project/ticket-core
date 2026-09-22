@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final CancelOrderTransactionService cancelOrderTransactionService;
 
     public record Input(String orderKey, Long memberId) {
@@ -30,7 +30,7 @@ public class CancelOrderUseCase {
     }
 
     public void execute(final Input input) {
-        memberLookup.requireActive(input.memberId());
+        memberLookupApi.requireActive(input.memberId());
         cancelOrderTransactionService.cancel(input.orderKey(), input.memberId());
     }
 }

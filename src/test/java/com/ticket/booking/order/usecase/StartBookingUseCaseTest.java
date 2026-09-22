@@ -79,13 +79,13 @@ class StartBookingUseCaseTest {
     private AdmissionVerifier admissionVerifier;
 
     @Mock
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @Mock
     private BookingAvailabilityChecker bookingAvailabilityChecker;
 
     @Mock
-    private PerformanceSaleCatalogApi performanceSaleCatalog;
+    private PerformanceSaleCatalogApi performanceSaleCatalogApi;
 
     @Mock
     private HoldManager holdManager;
@@ -106,9 +106,9 @@ class StartBookingUseCaseTest {
                         lockManager,
                         new PerformanceSaleFinder(performanceSalesPolicyRepository),
                         new AdmissionGuard(admissionVerifier),
-                        memberLookup,
+                        memberLookupApi,
                         bookingAvailabilityChecker,
-                        performanceSaleCatalog,
+                        performanceSaleCatalogApi,
                         holdManager,
                         pendingOrderCreator,
                         fixedClock);
@@ -124,9 +124,9 @@ class StartBookingUseCaseTest {
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
                 admissionVerifier,
-                memberLookup,
+                memberLookupApi,
                 bookingAvailabilityChecker,
-                performanceSaleCatalog,
+                performanceSaleCatalogApi,
                 holdManager,
                 pendingOrderCreator);
     }
@@ -141,9 +141,9 @@ class StartBookingUseCaseTest {
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
                 admissionVerifier,
-                memberLookup,
+                memberLookupApi,
                 bookingAvailabilityChecker,
-                performanceSaleCatalog,
+                performanceSaleCatalogApi,
                 holdManager,
                 pendingOrderCreator);
     }
@@ -159,7 +159,7 @@ class StartBookingUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(performanceSaleCatalog.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
+        when(performanceSaleCatalogApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
                 .thenReturn(saleSnapshot);
         when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
@@ -175,15 +175,15 @@ class StartBookingUseCaseTest {
 
         final InOrder inOrder = inOrder(
                 performanceSalesPolicyRepository,
-                memberLookup,
+                memberLookupApi,
                 bookingAvailabilityChecker,
-                performanceSaleCatalog,
+                performanceSaleCatalogApi,
                 holdManager,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
-        inOrder.verify(memberLookup).requireActive(MEMBER_ID);
+        inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
         inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
-        inOrder.verify(performanceSaleCatalog).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
+        inOrder.verify(performanceSaleCatalogApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdManager).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
         inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
     }
@@ -204,7 +204,7 @@ class StartBookingUseCaseTest {
 
         startBookingUseCase.execute(input);
 
-        verify(memberLookup).requireActive(MEMBER_ID);
+        verify(memberLookupApi).requireActive(MEMBER_ID);
         verify(pendingOrderCreator)
                 .create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), same(seats), any());
     }
@@ -217,7 +217,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, PerformanceIsPastException.class);
 
-        verifyNoInteractions(memberLookup, admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
     }
 
     @Test
@@ -227,7 +227,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, HoldLimitExceededException.class);
 
-        verifyNoInteractions(memberLookup, admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
     }
 
     @Test
@@ -256,7 +256,7 @@ class StartBookingUseCaseTest {
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(memberLookup, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, bookingAvailabilityChecker);
     }
 
     @Test

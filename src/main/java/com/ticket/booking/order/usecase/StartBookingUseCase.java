@@ -57,9 +57,9 @@ public class StartBookingUseCase {
     private final LockManager lockManager;
     private final PerformanceSaleFinder performanceSaleFinder;
     private final AdmissionGuard admissionGuard;
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
-    private final PerformanceSaleCatalogApi performanceSaleCatalog;
+    private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
     private final HoldManager holdManager;
     private final PendingOrderCreator pendingOrderCreator;
     private final Clock clock;
@@ -97,7 +97,7 @@ public class StartBookingUseCase {
         admissionGuard.verifyIfRequired(policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         // 2. 예매할 수 있는 회원인가. JWT는 서명·만료만 보므로 탈퇴 회원은 여기서 걸러진다.
-        memberLookup.requireActive(input.memberId());
+        memberLookupApi.requireActive(input.memberId());
 
         // 3. 예매할 수 있는 좌석인가. booking local DB만 보는 짧은 읽기 트랜잭션이다.
         final List<PerformanceSeat> performanceSeats =
@@ -105,7 +105,7 @@ public class StartBookingUseCase {
 
         // 4. 주문에 남길 표시값(공연·공연장 이름, 등급, 좌석 라벨). 금액은 여기서 오지 않는다 -- 좌석 단가만 쓴다(ADR 0005).
         final PerformanceSaleSnapshot saleSnapshot =
-                performanceSaleCatalog.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
+                performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
 
         // 5. 좌석을 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
         //    connection 경합이 좌석 경합으로 번진다.

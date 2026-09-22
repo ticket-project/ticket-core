@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSeatAvailabilityUseCase {
     private final SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
-    private final PerformanceSaleCatalogApi performanceSaleCatalog;
+    private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
 
@@ -65,7 +65,7 @@ public class GetSeatAvailabilityUseCase {
         // 여기부터는 DB 트랜잭션 밖이다 — Redis 점유 조회와 show 표시값 조회가 connection을 쥐지 않는다.
 
         final PerformanceSaleSnapshot saleSnapshot =
-                performanceSaleCatalog.getSaleSnapshot(input.performanceId(), Set.of());
+                performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.of());
         final Map<Long, Long> availableCountsByGrade =
                 countAvailableSeatsByGrade(performanceSeats, mergeRedisOccupiedIds(input.performanceId()));
 

@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ExchangeOAuth2TokenUseCase {
     private final OAuth2AuthCodeStore oauth2AuthCodeStore;
-    private final MemberAccountApi memberAccountOperations;
+    private final MemberAccountApi memberAccountApi;
     private final AuthTokenIssuer authTokenIssuer;
 
     public record Input(String code) {
@@ -60,7 +60,7 @@ public class ExchangeOAuth2TokenUseCase {
         final Long memberId = oauth2AuthCodeStore
                 .consumeCode(input.code())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다."));
-        final MemberStatus member = memberAccountOperations.getActiveIdentity(memberId);
+        final MemberStatus member = memberAccountApi.getActiveIdentity(memberId);
         final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),

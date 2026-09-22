@@ -46,10 +46,10 @@ class PerformanceVenueLayoutCatalogServiceTest {
     private GradeRepository gradeRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Mock
-    private VenueSeatLookupApi venueSeatLookup;
+    private VenueSeatLookupApi venueSeatLookupApi;
 
     @InjectMocks
     private PerformanceVenueLayoutCatalogService service;
@@ -74,7 +74,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(venueLookup.getVenueSnapshot(3L))
+        when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn((new VenueSnapshot(
                         3L,
                         "venue",
@@ -85,7 +85,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
                         null,
                         null,
                         new VenueSnapshot.SeatMapLayout(500, 356, 4.8))));
-        when(venueSeatLookup.findAllSeatLayouts(3L))
+        when(venueSeatLookupApi.findAllSeatLayouts(3L))
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 129.0, 101.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
@@ -111,7 +111,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(venueLookup.getVenueSnapshot(3L))
+        when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn(new VenueSnapshot(
                         3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);

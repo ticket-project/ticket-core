@@ -22,7 +22,7 @@ import com.ticket.security.oauth.SocialAccountUnlinker;
 @SuppressWarnings("NonAsciiCharacters")
 class WithdrawCurrentMemberUseCaseTest {
     @Mock
-    private MemberAccountApi memberAccountOperations;
+    private MemberAccountApi memberAccountApi;
 
     @Mock
     private SocialAccountUnlinker socialAccountUnlinker;
@@ -35,11 +35,11 @@ class WithdrawCurrentMemberUseCaseTest {
         // given
         final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
         final SocialAccountSnapshot second = new SocialAccountSnapshot(SocialProvider.KAKAO, "200");
-        when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
+        when(memberAccountApi.withdraw(5L)).thenReturn(List.of(first, second));
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
         // then
-        verify(memberAccountOperations).withdraw(5L);
+        verify(memberAccountApi).withdraw(5L);
         verify(socialAccountUnlinker).unlink(first);
         verify(socialAccountUnlinker).unlink(second);
     }
@@ -49,7 +49,7 @@ class WithdrawCurrentMemberUseCaseTest {
         // given
         final SocialAccountSnapshot first = new SocialAccountSnapshot(SocialProvider.KAKAO, "100");
         final SocialAccountSnapshot second = new SocialAccountSnapshot(SocialProvider.GOOGLE, "200");
-        when(memberAccountOperations.withdraw(5L)).thenReturn(List.of(first, second));
+        when(memberAccountApi.withdraw(5L)).thenReturn(List.of(first, second));
         doThrow(new IllegalStateException("boom")).when(socialAccountUnlinker).unlink(first);
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
@@ -61,11 +61,11 @@ class WithdrawCurrentMemberUseCaseTest {
     @Test
     void 연동해제할_카카오계정이_없으면_unlink를_호출하지_않는다() {
         // given
-        when(memberAccountOperations.withdraw(5L)).thenReturn(List.of());
+        when(memberAccountApi.withdraw(5L)).thenReturn(List.of());
         // when
         useCase.execute(new WithdrawCurrentMemberUseCase.Input(5L));
         // then
-        verify(memberAccountOperations).withdraw(5L);
+        verify(memberAccountApi).withdraw(5L);
         verify(socialAccountUnlinker, never()).unlink(org.mockito.ArgumentMatchers.any());
     }
 }

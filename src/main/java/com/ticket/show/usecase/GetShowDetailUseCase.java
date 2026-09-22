@@ -50,7 +50,7 @@ public class GetShowDetailUseCase {
     private final PerformerRepository performerRepository;
     private final PerformanceRepository performanceRepository;
     private final LikeQueryApi likeQueryApi;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
     private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
 
@@ -204,7 +204,7 @@ public class GetShowDetailUseCase {
     }
 
     private VenueInfo resolveVenue(final long venueId) {
-        return toVenueInfo(venueLookup.getVenueSnapshot(venueId));
+        return toVenueInfo(venueLookupApi.getVenueSnapshot(venueId));
     }
 
     private VenueInfo toVenueInfo(final VenueSnapshot venue) {

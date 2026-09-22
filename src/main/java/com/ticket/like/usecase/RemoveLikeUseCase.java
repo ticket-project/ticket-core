@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 @RequiredArgsConstructor
 public class RemoveLikeUseCase {
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final LikeRepository likeRepository;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
@@ -38,7 +38,7 @@ public class RemoveLikeUseCase {
         final Long memberId = input.memberId();
         final LikeType likeType = input.likeType();
         final Long targetId = input.targetId();
-        memberLookup.requireActive(memberId);
+        memberLookupApi.requireActive(memberId);
 
         likeRepository
                 .findByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)

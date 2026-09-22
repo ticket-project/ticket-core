@@ -26,7 +26,7 @@ import com.ticket.security.api.AccessTokenAuthenticationApi;
 @SuppressWarnings("NonAsciiCharacters")
 class WebSocketAuthInterceptorTest {
     @Mock
-    private AccessTokenAuthenticationApi accessTokenAuthenticator;
+    private AccessTokenAuthenticationApi accessTokenAuthenticationApi;
 
     @InjectMocks
     private WebSocketAuthInterceptor interceptor;
@@ -36,7 +36,7 @@ class WebSocketAuthInterceptorTest {
     @Test
     void 유효한_bearer_토큰이면_인증된_사용자를_STOMP_세션에_설정한다() {
         final AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
-        when(accessTokenAuthenticator.authenticate("valid-token")).thenReturn(member);
+        when(accessTokenAuthenticationApi.authenticate("valid-token")).thenReturn(member);
 
         final StompHeaderAccessor accessor = connectAccessor("Bearer valid-token");
         final Message<?> message = interceptor.preSend(toMessage(accessor), channel);
@@ -57,7 +57,7 @@ class WebSocketAuthInterceptorTest {
 
     @Test
     void 토큰_검증에_실패하면_연결을_차단한다() {
-        when(accessTokenAuthenticator.authenticate("bad-token")).thenThrow(new UnauthenticatedException());
+        when(accessTokenAuthenticationApi.authenticate("bad-token")).thenThrow(new UnauthenticatedException());
 
         final StompHeaderAccessor accessor = connectAccessor("Bearer bad-token");
 

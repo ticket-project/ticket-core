@@ -17,7 +17,7 @@ import com.ticket.member.api.MemberLookupApi;
 @SuppressWarnings("NonAsciiCharacters")
 class CancelOrderUseCaseTest {
     @Mock
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @Mock
     private CancelOrderTransactionService cancelOrderTransactionService;
@@ -33,12 +33,12 @@ class CancelOrderUseCaseTest {
 
     @Test
     void 회원_활성_확인_후_booking_local_취소를_위임한다() {
-        final CancelOrderUseCase useCase = new CancelOrderUseCase(memberLookup, cancelOrderTransactionService);
+        final CancelOrderUseCase useCase = new CancelOrderUseCase(memberLookupApi, cancelOrderTransactionService);
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 
-        final InOrder order = inOrder(memberLookup, cancelOrderTransactionService);
-        order.verify(memberLookup).requireActive(1L);
+        final InOrder order = inOrder(memberLookupApi, cancelOrderTransactionService);
+        order.verify(memberLookupApi).requireActive(1L);
         order.verify(cancelOrderTransactionService).cancel("order-key", 1L);
         verify(cancelOrderTransactionService).cancel("order-key", 1L);
     }

@@ -31,7 +31,7 @@ import com.ticket.shared.exception.NotFoundException;
 @ExtendWith(MockitoExtension.class)
 class RemoveLikeUseCaseTest {
     @Mock
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @Mock
     private LikeRepository likeRepository;
@@ -51,7 +51,7 @@ class RemoveLikeUseCaseTest {
         assertThat(output.targetId()).isEqualTo(2L);
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
-        verify(memberLookup).requireActive(1L);
+        verify(memberLookupApi).requireActive(1L);
         verify(likeRepository).delete(like);
     }
 
@@ -70,7 +70,7 @@ class RemoveLikeUseCaseTest {
 
     @Test
     void 탈퇴_회원이면_삭제하지_않는다() {
-        doThrow(new NotFoundException("탈퇴한 회원입니다.")).when(memberLookup).requireActive(1L);
+        doThrow(new NotFoundException("탈퇴한 회원입니다.")).when(memberLookupApi).requireActive(1L);
 
         assertThatThrownBy(() -> useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
                 .isInstanceOf(NotFoundException.class);

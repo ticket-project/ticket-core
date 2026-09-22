@@ -18,9 +18,9 @@ public class SecurityContextAuditorAware implements AuditorAware<String> {
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of(DEFAULT_AUDITOR);
         }
-        if (!(authentication.getPrincipal() instanceof AuditorPrincipalApi principal)) {
+        if (!(authentication.getPrincipal() instanceof AuditorPrincipalApi auditorPrincipalApi)) {
             return Optional.of(DEFAULT_AUDITOR);
         }
-        return Optional.of(principal.auditorId());
+        return Optional.of(auditorPrincipalApi.auditorId());
     }
 }

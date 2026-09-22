@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class GetOrderDetailUseCase {
     private final OrderRepository orderRepository;
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final Clock clock;
 
     public Output execute(final Input input) {
@@ -40,9 +40,9 @@ public class GetOrderDetailUseCase {
                 .findDetailByOrderKeyAndMemberId(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
 
-        // memberLookup.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
+        // memberLookupApi.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
         // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.
-        final MemberSnapshot member = memberLookup.getProfile(order.getMemberId());
+        final MemberSnapshot member = memberLookupApi.getProfile(order.getMemberId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final List<TicketSeat> seats =

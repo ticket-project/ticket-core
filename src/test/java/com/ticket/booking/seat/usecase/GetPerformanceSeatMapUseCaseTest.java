@@ -24,7 +24,7 @@ import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 @SuppressWarnings("NonAsciiCharacters")
 class GetPerformanceSeatMapUseCaseTest {
     @Mock
-    private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
+    private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalogApi;
 
     @Mock
     private PerformanceSeatRepository performanceSeatRepository;
@@ -51,7 +51,7 @@ class GetPerformanceSeatMapUseCaseTest {
         // seat 102는 이 회차에 판매 편성(PerformanceSeat)되지 않아 응답에서 제외돼야 한다.
         List<PerformanceSeat> rows = List.of(PerformanceSeatFixture.seat(501L, 101L, 31L, BigDecimal.valueOf(170000)));
 
-        when(performanceVenueLayoutCatalog.getVenueLayout(10L)).thenReturn(layout);
+        when(performanceVenueLayoutCatalogApi.getVenueLayout(10L)).thenReturn(layout);
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(rows);
         // when
         GetPerformanceSeatMapUseCase.Output output = useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
@@ -90,8 +90,8 @@ class GetPerformanceSeatMapUseCaseTest {
                 4.8,
                 Map.of(101L, new PerformanceLayoutSnapshot.SeatLayout(101L, 1, "가", "A", "1", 129.0, 101.0)),
                 Map.of(32L, new PerformanceLayoutSnapshot.GradeLayout(32L, "R", "R석", 1)));
-        when(performanceVenueLayoutCatalog.getVenueLayout(10L)).thenReturn(layoutA);
-        when(performanceVenueLayoutCatalog.getVenueLayout(20L)).thenReturn(layoutB);
+        when(performanceVenueLayoutCatalogApi.getVenueLayout(10L)).thenReturn(layoutA);
+        when(performanceVenueLayoutCatalogApi.getVenueLayout(20L)).thenReturn(layoutB);
         when(performanceSeatRepository.findAllByPerformanceId(10L))
                 .thenReturn(List.of(PerformanceSeatFixture.seat(501L, 101L, 31L, BigDecimal.valueOf(170000))));
         when(performanceSeatRepository.findAllByPerformanceId(20L))
@@ -127,13 +127,13 @@ class GetPerformanceSeatMapUseCaseTest {
                 4.8,
                 seatLayouts,
                 Map.of(31L, new PerformanceLayoutSnapshot.GradeLayout(31L, "VIP", "VIP석", 1)));
-        when(performanceVenueLayoutCatalog.getVenueLayout(10L)).thenReturn(layout);
+        when(performanceVenueLayoutCatalogApi.getVenueLayout(10L)).thenReturn(layout);
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(rows);
         // when
         GetPerformanceSeatMapUseCase.Output output = useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
         // then
         assertThat(output.seats()).hasSize(50);
-        verify(performanceVenueLayoutCatalog, times(1)).getVenueLayout(10L);
+        verify(performanceVenueLayoutCatalogApi, times(1)).getVenueLayout(10L);
         verify(performanceSeatRepository, times(1)).findAllByPerformanceId(10L);
     }
 }

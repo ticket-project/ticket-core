@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class GetPerformanceSummaryUseCase {
     private final PerformanceRepository performanceRepository;
     private final ShowRepository showRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
 
     public record Input(Long performanceId) {
         public Input {
@@ -46,7 +46,7 @@ public class GetPerformanceSummaryUseCase {
                 .findById(performance.getShowId())
                 .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
 
-        final VenueSnapshot venue = venueLookup.getVenueSnapshot(show.getVenueId());
+        final VenueSnapshot venue = venueLookupApi.getVenueSnapshot(show.getVenueId());
         final String region = venue.region() == null ? null : venue.region().name();
 
         return new Output(show.getTitle(), region, performance.getStartTime());
