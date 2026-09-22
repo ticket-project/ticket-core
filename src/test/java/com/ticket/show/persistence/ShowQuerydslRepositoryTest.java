@@ -376,6 +376,58 @@ class ShowQuerydslRepositoryTest {
         assertThat(rows).extracting(Show::getTitle).endsWith("Closed Show");
     }
 
+    /**
+     * 배너 query는 GROUP BY로 장르 조인의 중복을 접는데, ORDER BY의 마감 여부 CASE가 보는 판매 창 컬럼이 GROUP BY에 없으면 Oracle이 ORA-00979로 거절한다. H2는
+     * {@code show.id}가 PK라는 함수 종속을 알아서 통과시키므로 이 테스트가 Oracle에서의 실패를 잡지는 못한다 — 여기서 고정하는 것은 <b>중복 없이 세 정렬 키가 그대로 적용된
+     * 결과</b>이고, GROUP BY를 좁히면 최소한 그 결과가 깨지는지는 보인다.
+     */
+    @Test
+    void 최신_공연_배너는_장르가_여러_개여도_공연을_한_번만_담는다() {
+        attachGenres(findShowByTitle("Seoul Popular"), "뮤지컬", "연극", "콘서트");
+        entityManager.flush();
+        entityManager.clear();
+        setCreatedAt("Seoul Popular", LocalDateTime.now());
+        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Busan Hit", LocalDateTime.now().minusDays(2));
+        // 마감 공연이 가장 최신이어도 맨 뒤다 -- 마감 여부가 등록일보다 먼저다.
+        setCreatedAt("Closed Show", LocalDateTime.now().plusDays(1));
+
+        List<Show> rows = showQuerydslRepository.findLatestShows(null, 10);
+
+        assertThat(rows)
+                .extracting(Show::getTitle)
+                .containsExactly("Seoul Popular", "Seoul Normal", "Busan Hit", "Closed Show");
+        assertThat(rows).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void 최신_공연_배너는_등록일이_같으면_id_내림차순으로_정렬한다() {
+        LocalDateTime sameMoment = LocalDateTime.now();
+        setCreatedAt("Seoul Popular", sameMoment);
+        setCreatedAt("Seoul Normal", sameMoment);
+        setCreatedAt("Busan Hit", sameMoment);
+        setCreatedAt("Closed Show", sameMoment);
+
+        List<Show> rows = showQuerydslRepository.findLatestShows(null, 10);
+
+        // 판매 중 셋은 나중에 만들어진 것(= 큰 id)이 먼저다. 마감 공연은 등록일이 같아도 맨 뒤다.
+        assertThat(rows)
+                .extracting(Show::getTitle)
+                .containsExactly("Busan Hit", "Seoul Normal", "Seoul Popular", "Closed Show");
+    }
+
+    @Test
+    void 최신_공연_배너는_카테고리로_거른다() {
+        Show seoulNormal = findShowByTitle("Seoul Normal");
+        attachGenres(seoulNormal, "뮤지컬", "연극");
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Show> rows = showQuerydslRepository.findLatestShows("CAT-" + seoulNormal.getId(), 10);
+
+        assertThat(rows).extracting(Show::getTitle).containsExactly("Seoul Normal");
+    }
+
     @Test
     void 인기순은_마감_여부를_정렬에_넣지_않는다() {
         // 사용자가 명시적으로 고른 정렬의 의미는 바꾸지 않는다.
