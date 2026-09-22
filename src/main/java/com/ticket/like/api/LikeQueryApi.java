@@ -6,8 +6,8 @@ import com.ticket.shared.api.CursorPage;
 
 /** 찜 읽기 전용 조회 공개 계약이다. 대상 entity를 노출하지 않는다. */
 public interface LikeQueryApi {
-    /** 특정 회원의 특정 대상 찜 여부와 그 대상의 전체 찜 개수를 함께 반환한다. */
-    LikeCountSnapshot get(LikeType likeType, long targetId, long memberId);
+    /** 특정 회원의 특정 대상 찜 여부와 그 대상의 전체 찜 개수를 함께 반환한다. 대상 존재 여부는 확인하지 않는다 — 존재하지 않는 targetId도 찜 없음과 0을 돌려주고 던지지 않는다. */
+    LikeCountSnapshot countByTargetForMember(LikeType likeType, long targetId, long memberId);
 
     /** 대상 하나의 전체 찜 개수만 반환한다. 찜이 하나도 없으면 0이다. 대상 존재 여부는 확인하지 않는다 — 존재하지 않는 targetId도 0을 돌려준다. */
     long countByTarget(LikeType likeType, long targetId);

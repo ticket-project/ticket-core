@@ -34,7 +34,8 @@ public class GetLikeStatusUseCase {
     public Output execute(final Input input) {
         memberLookup.requireActive(input.memberId());
 
-        final LikeCountSnapshot info = likeQuery.get(input.likeType(), input.targetId(), input.memberId());
+        final LikeCountSnapshot info =
+                likeQuery.countByTargetForMember(input.likeType(), input.targetId(), input.memberId());
         return new Output(input.targetId(), info.liked(), info.likeCount());
     }
 }

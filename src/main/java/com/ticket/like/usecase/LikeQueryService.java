@@ -24,7 +24,7 @@ public class LikeQueryService implements LikeQueryApi {
     private final LikeQuerydslRepository likeQuerydslRepository;
 
     @Override
-    public LikeCountSnapshot get(final LikeType likeType, final long targetId, final long memberId) {
+    public LikeCountSnapshot countByTargetForMember(final LikeType likeType, final long targetId, final long memberId) {
         final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
         final long likeCount = likeRepository.countByLikeTypeAndTargetId(likeType, targetId);
         return new LikeCountSnapshot(liked, likeCount);
