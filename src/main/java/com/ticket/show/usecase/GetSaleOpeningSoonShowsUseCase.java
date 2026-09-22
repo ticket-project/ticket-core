@@ -3,6 +3,7 @@ package com.ticket.show.usecase;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -48,16 +49,16 @@ public class GetSaleOpeningSoonShowsUseCase {
         final List<Show> shows = showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
         final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
                 Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
-        final VenueDisplays venues = new VenueDisplays(venuesById);
-        return new Output(shows.stream().map(show -> toItem(show, venues)).toList());
+        return new Output(shows.stream().map(show -> toItem(show, venuesById)).toList());
     }
 
-    private Item toItem(final Show show, final VenueDisplays venues) {
+    private Item toItem(final Show show, final Map<Long, VenueSnapshot> venuesById) {
+        final VenueSnapshot venue = venuesById.get(show.getVenueId());
         return new Item(
                 show.getId(),
                 show.getTitle(),
                 showCardImagePathConverter.toCardImage(show.getImage()),
-                venues.nameOf(show.getVenueId()),
+                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
                 show.getDisplaySaleStartsAt());
     }
 }

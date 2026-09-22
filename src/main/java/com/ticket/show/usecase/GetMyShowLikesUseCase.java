@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -80,10 +81,9 @@ public class GetMyShowLikesUseCase {
         final Map<Long, Show> shows = showRepository.findSummaries(showIds);
         final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
                 Set.copyOf(shows.values().stream().map(Show::getVenueId).toList()));
-        final VenueDisplays venues = new VenueDisplays(venuesById);
 
         final List<Item> items = page.items().stream()
-                .map(entry -> toItem(entry, shows.get(entry.targetId()), venues))
+                .map(entry -> toItem(entry, shows.get(entry.targetId()), venuesById))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -91,17 +91,19 @@ public class GetMyShowLikesUseCase {
     }
 
     /** 찜 목록의 이미지는 원본 경로 그대로다 — 목록 카드용 변환({@code ShowCardImagePathConverter})을 쓰지 않는 기존 계약이다. */
-    private @Nullable Item toItem(final LikeSnapshot entry, final @Nullable Show show, final VenueDisplays venues) {
+    private @Nullable Item toItem(
+            final LikeSnapshot entry, final @Nullable Show show, final Map<Long, VenueSnapshot> venuesById) {
         if (show == null) {
             return null;
         }
+        final VenueSnapshot venue = venuesById.get(show.getVenueId());
         return new Item(
                 show.getId(),
                 show.getTitle(),
                 show.getImage(),
                 show.getStartDate(),
                 show.getEndDate(),
-                venues.nameOf(show.getVenueId()),
+                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
                 entry.likedAt());
     }
 }
