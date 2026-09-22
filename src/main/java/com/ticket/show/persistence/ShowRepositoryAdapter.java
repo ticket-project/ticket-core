@@ -15,7 +15,6 @@ import com.ticket.show.domain.show.ShowRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link ShowRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class ShowRepositoryAdapter implements ShowRepository {

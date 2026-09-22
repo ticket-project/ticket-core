@@ -9,7 +9,6 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link PerformanceSalesPolicyRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class PerformanceSalesPolicyRepositoryAdapter implements PerformanceSalesPolicyRepository {

@@ -10,7 +10,6 @@ import com.ticket.payment.domain.PaymentRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link PaymentRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class PaymentRepositoryAdapter implements PaymentRepository {

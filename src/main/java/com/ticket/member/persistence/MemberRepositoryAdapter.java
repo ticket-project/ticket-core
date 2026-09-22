@@ -10,7 +10,6 @@ import com.ticket.member.domain.MemberRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** {@link MemberRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class MemberRepositoryAdapter implements MemberRepository {
