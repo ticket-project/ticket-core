@@ -10,7 +10,6 @@ import com.ticket.like.api.LikeSnapshot;
 import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
-import com.ticket.like.persistence.LikeQuerydslRepository;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class LikeQueryService implements LikeQueryApi {
     private final LikeRepository likeRepository;
-    private final LikeQuerydslRepository likeQuerydslRepository;
 
     @Override
     public LikeCountSnapshot countByTargetForMember(final LikeType likeType, final long targetId, final long memberId) {
@@ -38,9 +36,7 @@ public class LikeQueryService implements LikeQueryApi {
     @Override
     public CursorPage<LikeSnapshot, Long> findLiked(
             final LikeType likeType, final long memberId, final @Nullable Long cursorLikeId, final int size) {
-        return likeQuerydslRepository
-                .findLiked(likeType, memberId, cursorLikeId, size)
-                .map(LikeQueryService::toEntry);
+        return likeRepository.findLiked(likeType, memberId, cursorLikeId, size).map(LikeQueryService::toEntry);
     }
 
     private static LikeSnapshot toEntry(final Like like) {

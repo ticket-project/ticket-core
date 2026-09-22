@@ -90,7 +90,7 @@ record·snapshot·event·enum 같은 데이터에는 붙이지 않는다. 배경
   기술을 드러내는 접두사와 `Adapter` 접미사를 함께 쓴다(`ShowRepositoryAdapter implements
   ShowRepository`). 구현에 `Port`를 붙이면 파일 이름만으로 계약과 구현을 구분할 수 없다.
 - **자기 module DB를 읽는 조회에는 port interface를 두지 않는다.** `persistence` package의 구체
-  class(`ShowQuerydslRepository`, `LikeQuerydslRepository`)가 `@Repository` + 생성자 주입으로
+  class(`ShowQuerydslRepository`)가 `@Repository` + 생성자 주입으로
   Querydsl/JPA를 직접 쓰고, 관련 조회는 한 class로 모은다. 반환 타입은 엔티티가 기본이고, DB 집계
   결과처럼 엔티티로 표현되지 않는 것만 별도 타입이며 그 타입은 use case가 소유한다. 호출 계약에
   Querydsl 타입을 노출하지는 않는다. 단순한 조회는 그 module의 공개 API
