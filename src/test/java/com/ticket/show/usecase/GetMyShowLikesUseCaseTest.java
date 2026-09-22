@@ -95,6 +95,23 @@ class GetMyShowLikesUseCaseTest {
         assertThat(output.hasNext()).isFalse();
     }
 
+    /**
+     * 한 페이지의 찜이 전부 삭제된 공연을 가리키면 {@code items}가 비고 {@code hasNext}는 참인 중간 페이지가 나간다. 페이지를 억지로 채우려고 다음 페이지를 더 읽지 않는 것이 현재
+     * 계약이므로, 클라이언트가 {@code nextPosition}으로 이어 읽을 수 있다는 사실을 여기서 고정한다.
+     */
+    @Test
+    void 삭제된_공연만_있는_중간_페이지도_다음_커서를_그대로_넘긴다() {
+        LikeSnapshot deletedOnly = new LikeSnapshot(9L, 2L, LocalDateTime.now());
+        when(likeQuery.findLiked("show", 1L, null, 20)).thenReturn(new CursorPage<>(List.of(deletedOnly), true, 9L));
+        when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());
+
+        GetMyShowLikesUseCase.Output emptyPage = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
+
+        assertThat(emptyPage.items()).isEmpty();
+        assertThat(emptyPage.hasNext()).isTrue();
+        assertThat(emptyPage.nextPosition()).isEqualTo(9L);
+    }
+
     @ParameterizedTest
     @MethodSource("invalidComponents")
     void memberId나_size가_유효하지_않으면_Input_생성에서_예외를_던진다(final Long memberId, final int size) {
