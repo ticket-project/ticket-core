@@ -37,16 +37,16 @@ class ShowModuleTests {
     private Clock clock;
 
     @MockitoBean
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @MockitoBean
-    private LikeQueryApi likeQuery;
+    private LikeQueryApi likeQueryApi;
 
     @MockitoBean
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @MockitoBean
-    private VenueSeatLookupApi venueSeatLookup;
+    private VenueSeatLookupApi venueSeatLookupApi;
 
     @Test
     void bootstraps() {}

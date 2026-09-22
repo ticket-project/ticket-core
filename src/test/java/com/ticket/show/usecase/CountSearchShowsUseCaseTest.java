@@ -22,7 +22,7 @@ class CountSearchShowsUseCaseTest {
     private ShowQuerydslRepository showQuerydslRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @InjectMocks
     private CountSearchShowsUseCase useCase;
@@ -54,7 +54,7 @@ class CountSearchShowsUseCaseTest {
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
         ShowSearchCriteria noRegion = new ShowSearchCriteria(null, null, null, null, null, null, null);
         ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, "JEJU", null);
-        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
+        when(venueLookupApi.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.countSearchShows(noRegion, null)).thenReturn(7L);
         when(showQuerydslRepository.countSearchShows(jeju, Set.of())).thenReturn(0L);
 

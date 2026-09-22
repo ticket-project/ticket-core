@@ -39,7 +39,7 @@ class CreatePerformanceSeatsUseCaseTest {
     private static final long PERFORMANCE_GRADE_ID = 100L;
 
     @Mock
-    private PerformanceSaleCatalogApi performanceSaleCatalog;
+    private PerformanceSaleCatalogApi performanceSaleCatalogApi;
 
     @Mock
     private PerformanceSeatRepository performanceSeatRepository;
@@ -64,14 +64,14 @@ class CreatePerformanceSeatsUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(input))
                 .isInstanceOf(PerformanceSeatAlreadyExistsException.class)
                 .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID);
-        verify(performanceSaleCatalog, org.mockito.Mockito.never()).getSaleSnapshot(anyLong(), anySet());
+        verify(performanceSaleCatalogApi, org.mockito.Mockito.never()).getSaleSnapshot(anyLong(), anySet());
     }
 
     @Test
     void 다른_venue의_좌석이면_예외를_던진다() {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of());
-        when(performanceSaleCatalog.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
+        when(performanceSaleCatalogApi.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
                 .thenReturn(snapshotWithoutSeat());
 
         final CreatePerformanceSeatsUseCase.Input input =
@@ -87,7 +87,7 @@ class CreatePerformanceSeatsUseCaseTest {
     void 다른_회차의_grade면_예외를_던진다() {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of());
-        when(performanceSaleCatalog.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
+        when(performanceSaleCatalogApi.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
                 .thenReturn(snapshotWithSeatButNoGrade());
 
         final CreatePerformanceSeatsUseCase.Input input =
@@ -103,7 +103,7 @@ class CreatePerformanceSeatsUseCaseTest {
     void 유효한_요청이면_grade가격을_unitPrice로_snapshot해_생성한다() {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of());
-        when(performanceSaleCatalog.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
+        when(performanceSaleCatalogApi.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
                 .thenReturn(validSnapshot());
         when(performanceSeatRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 

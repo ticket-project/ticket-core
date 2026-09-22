@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 @RequiredArgsConstructor
 public class AddLikeUseCase {
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final LikeRepository likeRepository;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
@@ -43,7 +43,7 @@ public class AddLikeUseCase {
         final Long memberId = input.memberId();
         final LikeType likeType = input.likeType();
         final Long targetId = input.targetId();
-        memberLookup.requireActive(memberId);
+        memberLookupApi.requireActive(memberId);
 
         if (!likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)) {
             try {

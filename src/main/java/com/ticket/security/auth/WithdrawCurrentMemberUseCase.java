@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class WithdrawCurrentMemberUseCase {
-    private final MemberAccountApi memberAccountOperations;
+    private final MemberAccountApi memberAccountApi;
     private final SocialAccountUnlinker socialAccountUnlinker;
 
     public record Input(Long memberId) {
@@ -29,7 +29,7 @@ public class WithdrawCurrentMemberUseCase {
     public record Output() {}
 
     public Output execute(final Input input) {
-        final List<SocialAccountSnapshot> socialAccounts = memberAccountOperations.withdraw(input.memberId());
+        final List<SocialAccountSnapshot> socialAccounts = memberAccountApi.withdraw(input.memberId());
         unlinkSocialAccountsSafely(input.memberId(), socialAccounts);
         return new Output();
     }

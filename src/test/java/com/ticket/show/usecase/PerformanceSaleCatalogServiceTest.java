@@ -46,10 +46,10 @@ class PerformanceSaleCatalogServiceTest {
     private GradeRepository gradeRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Mock
-    private VenueSeatLookupApi venueSeatLookup;
+    private VenueSeatLookupApi venueSeatLookupApi;
 
     @InjectMocks
     private PerformanceSaleCatalogService service;
@@ -67,10 +67,10 @@ class PerformanceSaleCatalogServiceTest {
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(venueLookup.getVenueSnapshot(3L))
+        when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn(new VenueSnapshot(
                         3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
-        when(venueSeatLookup.findSeats(3L, Set.of(10L)))
+        when(venueSeatLookupApi.findSeats(3L, Set.of(10L)))
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 0.0, 0.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
@@ -98,10 +98,10 @@ class PerformanceSaleCatalogServiceTest {
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(venueLookup.getVenueSnapshot(3L))
+        when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn(new VenueSnapshot(
                         3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
-        when(venueSeatLookup.findSeats(3L, Set.of(10L))).thenReturn(List.of());
+        when(venueSeatLookupApi.findSeats(3L, Set.of(10L))).thenReturn(List.of());
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));

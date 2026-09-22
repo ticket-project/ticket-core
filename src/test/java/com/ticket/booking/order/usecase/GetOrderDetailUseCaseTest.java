@@ -35,19 +35,19 @@ class GetOrderDetailUseCaseTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     private GetOrderDetailUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderDetailUseCase(orderRepository, memberLookup, FIXED_CLOCK);
+        useCase = new GetOrderDetailUseCase(orderRepository, memberLookupApi, FIXED_CLOCK);
     }
 
     @Test
     void 단일_조회결과를_주문상세로_조합한다() {
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
-        when(memberLookup.getProfile(1L)).thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
+        when(memberLookupApi.getProfile(1L)).thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
 
         GetOrderDetailUseCase.Output output = useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
 
@@ -68,7 +68,7 @@ class GetOrderDetailUseCaseTest {
         Order order = order();
         order.addOrderSeat(502L, 43L, BigDecimal.valueOf(100000), "R", "R석", "1F A구역 10열 8번");
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order));
-        when(memberLookup.getProfile(1L)).thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
+        when(memberLookupApi.getProfile(1L)).thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
 
         GetOrderDetailUseCase.Output output = useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
 
@@ -84,7 +84,7 @@ class GetOrderDetailUseCaseTest {
     void show_값이_바뀌어도_이미_만든_주문_상세는_바뀌지_않는다() {
         // Order/OrderSeat가 생성 시점에 남긴 snapshot만 쓰므로 show를 다시 조회하지 않는다.
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
-        when(memberLookup.getProfile(1L)).thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
+        when(memberLookupApi.getProfile(1L)).thenReturn(new MemberSnapshot(1L, "홍길동", "user@example.com"));
 
         GetOrderDetailUseCase.Output output = useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L));
 
@@ -101,13 +101,13 @@ class GetOrderDetailUseCaseTest {
                 .hasFieldOrPropertyWithValue("orderKey", "missing")
                 .hasFieldOrPropertyWithValue("memberId", 1L);
 
-        verifyNoInteractions(memberLookup);
+        verifyNoInteractions(memberLookupApi);
     }
 
     @Test
     void 탈퇴한_회원의_주문이면_조회하지_않는다() {
         when(orderRepository.findDetailByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
-        when(memberLookup.getProfile(1L)).thenThrow(new NotFoundException());
+        when(memberLookupApi.getProfile(1L)).thenThrow(new NotFoundException());
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderDetailUseCase.Input("order-key", 1L)))
                 .isInstanceOf(NotFoundException.class);

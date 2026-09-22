@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CountSearchShowsUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
 
     public record Input(ShowSearchCriteria criteria) {
         public Input {
@@ -41,6 +41,6 @@ public class CountSearchShowsUseCase {
      * 0건)을 구분해 넘긴다. 이 둘을 뭉개면 "제주에 공연장이 하나도 없다"가 "전체 목록"으로 조용히 바뀐다.
      */
     private @Nullable Set<Long> venueIdsOf(final @Nullable String region) {
-        return region == null ? null : venueLookup.findIdsByRegion(region);
+        return region == null ? null : venueLookupApi.findIdsByRegion(region);
     }
 }

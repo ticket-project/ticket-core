@@ -28,7 +28,7 @@ class GetShowVenueLayoutUseCaseTest {
     private ShowRepository showRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @InjectMocks
     private GetShowVenueLayoutUseCase useCase;
@@ -39,7 +39,7 @@ class GetShowVenueLayoutUseCaseTest {
         Show show = mock(Show.class);
         when(show.getVenueId()).thenReturn(200L);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
-        when(venueLookup.getVenueSnapshot(200L))
+        when(venueLookupApi.getVenueSnapshot(200L))
                 .thenReturn(new VenueSnapshot(
                         200L,
                         "올림픽홀",
@@ -73,7 +73,7 @@ class GetShowVenueLayoutUseCaseTest {
         Show show = mock(Show.class);
         when(show.getVenueId()).thenReturn(200L);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
-        when(venueLookup.getVenueSnapshot(200L)).thenThrow(new VenueNotFoundException(200L));
+        when(venueLookupApi.getVenueSnapshot(200L)).thenThrow(new VenueNotFoundException(200L));
 
         assertThatThrownBy(() -> useCase.execute(new GetShowVenueLayoutUseCase.Input(100L)))
                 .isInstanceOf(VenueNotFoundException.class)

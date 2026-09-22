@@ -32,7 +32,7 @@ class SearchShowsUseCaseTest {
     private ShowQuerydslRepository showQuerydslRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Spy
     private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
@@ -55,7 +55,7 @@ class SearchShowsUseCaseTest {
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQuerydslRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
-        when(venueLookup.getSummaries(Set.of(7L)))
+        when(venueLookupApi.getSummaries(Set.of(7L)))
                 .thenReturn(Map.of(
                         7L,
                         new VenueSnapshot(
@@ -109,7 +109,7 @@ class SearchShowsUseCaseTest {
         CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         ShowSearchCriteria noRegion = new ShowSearchCriteria(null, null, null, null, null, null, null);
         ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, "JEJU", null);
-        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
+        when(venueLookupApi.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.searchShows(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.searchShows(jeju, Set.of(), 10, ShowSort.POPULAR))

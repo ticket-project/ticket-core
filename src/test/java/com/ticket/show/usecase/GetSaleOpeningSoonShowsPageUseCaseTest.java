@@ -32,7 +32,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
     private ShowQuerydslRepository showQuerydslRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Spy
     private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
@@ -64,7 +64,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQuerydslRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
-        when(venueLookup.getSummaries(Set.of(7L)))
+        when(venueLookupApi.getSummaries(Set.of(7L)))
                 .thenReturn(Map.of(
                         7L,
                         new VenueSnapshot(
@@ -124,7 +124,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         SaleOpeningSoonSearchParam jeju =
                 new SaleOpeningSoonSearchParam(null, null, "JEJU", null, null, null, null, null);
-        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
+        when(venueLookupApi.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR))

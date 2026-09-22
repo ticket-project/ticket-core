@@ -25,7 +25,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 @ExtendWith(MockitoExtension.class)
 class GetLikeStatusUseCaseTest {
     @Mock
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @Mock
     private LikeRepository likeRepository;
@@ -43,7 +43,7 @@ class GetLikeStatusUseCaseTest {
 
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(7L);
-        verify(memberLookup).requireActive(1L);
+        verify(memberLookupApi).requireActive(1L);
     }
 
     @ParameterizedTest

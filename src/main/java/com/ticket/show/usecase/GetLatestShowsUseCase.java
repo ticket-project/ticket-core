@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class GetLatestShowsUseCase {
     public static final int LATEST_SHOWS_MAX_COUNT = 10;
     private final ShowQuerydslRepository showQuerydslRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(String category) {}
@@ -42,7 +42,7 @@ public class GetLatestShowsUseCase {
 
     public Output execute(final Input input) {
         final List<Show> shows = showQuerydslRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
-        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+        final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
         return new Output(shows.stream().map(show -> toItem(show, venuesById)).toList());
     }

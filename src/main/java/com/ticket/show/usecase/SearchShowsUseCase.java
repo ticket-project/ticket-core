@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SearchShowsUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
@@ -55,7 +55,7 @@ public class SearchShowsUseCase {
     public Output execute(final Input input) {
         final CursorPage<Show, ShowCursor> page = showQuerydslRepository.searchShows(
                 input.criteria(), venueIdsOf(input.criteria().getRegion()), input.size(), input.sort());
-        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+        final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
         final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venuesById));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
@@ -68,7 +68,7 @@ public class SearchShowsUseCase {
      * 0건)을 구분해 넘긴다. 이 둘을 뭉개면 "제주에 공연장이 하나도 없다"가 "전체 목록"으로 조용히 바뀐다.
      */
     private @Nullable Set<Long> venueIdsOf(final @Nullable String region) {
-        return region == null ? null : venueLookup.findIdsByRegion(region);
+        return region == null ? null : venueLookupApi.findIdsByRegion(region);
     }
 
     private Item toItem(final Show show, final Map<Long, VenueSnapshot> venuesById) {

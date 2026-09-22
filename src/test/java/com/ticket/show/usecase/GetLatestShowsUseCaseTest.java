@@ -29,7 +29,7 @@ class GetLatestShowsUseCaseTest {
     private ShowQuerydslRepository showQuerydslRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Spy
     private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
@@ -45,7 +45,7 @@ class GetLatestShowsUseCaseTest {
         List<Show> rows = List.of(ShowFixture.show(1L, "concert", 7L, startDate, endDate, null, 0L, createdAt));
         when(showQuerydslRepository.findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT))
                 .thenReturn(rows);
-        when(venueLookup.getSummaries(Set.of(7L)))
+        when(venueLookupApi.getSummaries(Set.of(7L)))
                 .thenReturn(Map.of(
                         7L,
                         new VenueSnapshot(

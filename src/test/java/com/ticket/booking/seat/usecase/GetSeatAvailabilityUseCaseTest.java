@@ -29,7 +29,7 @@ class GetSeatAvailabilityUseCaseTest {
     private SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
 
     @Mock
-    private PerformanceSaleCatalogApi performanceSaleCatalog;
+    private PerformanceSaleCatalogApi performanceSaleCatalogApi;
 
     @Mock
     private HoldManager holdManager;
@@ -48,7 +48,7 @@ class GetSeatAvailabilityUseCaseTest {
         PerformanceSaleSnapshot saleSnapshot = saleSnapshotWithGrade(31L, "VIP", "VIP석", 1);
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
-        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
+        when(performanceSaleCatalogApi.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         // seat 1은 selecting, seat 2는 holding으로 점유돼 있다. 둘 다 잔여석에서 빠진다.
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
@@ -68,7 +68,7 @@ class GetSeatAvailabilityUseCaseTest {
                 PerformanceSeatFixture.seat(502L, 2L, 31L, PerformanceSeatState.RESERVED));
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
-        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of()))
+        when(performanceSaleCatalogApi.getSaleSnapshot(10L, Set.of()))
                 .thenReturn(saleSnapshotWithGrade(31L, "VIP", "VIP석", 1));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
@@ -87,7 +87,7 @@ class GetSeatAvailabilityUseCaseTest {
                 List.of(PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.RESERVED));
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
-        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of()))
+        when(performanceSaleCatalogApi.getSaleSnapshot(10L, Set.of()))
                 .thenReturn(saleSnapshotWithGrade(31L, "VIP", "VIP석", 1));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
@@ -120,7 +120,7 @@ class GetSeatAvailabilityUseCaseTest {
                         new PerformanceSaleSnapshot.GradeInfo(32L, "R", "같은이름", 2, BigDecimal.valueOf(5))));
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
-        when(performanceSaleCatalog.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
+        when(performanceSaleCatalogApi.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
         // when
@@ -156,7 +156,7 @@ class GetSeatAvailabilityUseCaseTest {
         // when
         useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
         // then
-        verify(performanceSaleCatalog, org.mockito.Mockito.never())
+        verify(performanceSaleCatalogApi, org.mockito.Mockito.never())
                 .getSaleSnapshot(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anySet());
     }
 

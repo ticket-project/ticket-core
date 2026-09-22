@@ -59,10 +59,10 @@ class GetShowDetailUseCaseTest {
     private PerformanceRepository performanceRepository;
 
     @Mock
-    private LikeQueryApi likeQuery;
+    private LikeQueryApi likeQueryApi;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     private GetShowDetailUseCase useCase() {
         return new GetShowDetailUseCase(
@@ -71,8 +71,8 @@ class GetShowDetailUseCaseTest {
                 gradeRepository,
                 performerRepository,
                 performanceRepository,
-                likeQuery,
-                venueLookup,
+                likeQueryApi,
+                venueLookupApi,
                 new ShowCardImagePathConverter(),
                 FIXED_CLOCK);
     }
@@ -112,8 +112,8 @@ class GetShowDetailUseCaseTest {
                 .thenReturn(new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
-        when(likeQuery.countByTarget("show", 1L)).thenReturn(10L);
-        when(venueLookup.getVenueSnapshot(5L))
+        when(likeQueryApi.countByTarget("show", 1L)).thenReturn(10L);
+        when(venueLookupApi.getVenueSnapshot(5L))
                 .thenReturn(new VenueSnapshot(
                         5L,
                         "예술의전당",
@@ -139,8 +139,8 @@ class GetShowDetailUseCaseTest {
         assertThat(output.likeCount()).isEqualTo(10L);
         assertThat(output.venue().name()).isEqualTo("예술의전당");
         assertThat(output.performer()).isNull();
-        verify(likeQuery).countByTarget("show", 1L);
-        verify(venueLookup).getVenueSnapshot(5L);
+        verify(likeQueryApi).countByTarget("show", 1L);
+        verify(venueLookupApi).getVenueSnapshot(5L);
     }
 
     @Test
@@ -179,7 +179,7 @@ class GetShowDetailUseCaseTest {
     private void stubShowWithPerformer(final @Nullable Long performerId) {
         when(showRepository.findById(1L)).thenReturn(Optional.of(show(5L, performerId)));
         stubEmptyFragments();
-        when(venueLookup.getVenueSnapshot(5L))
+        when(venueLookupApi.getVenueSnapshot(5L))
                 .thenReturn(new VenueSnapshot(
                         5L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
     }

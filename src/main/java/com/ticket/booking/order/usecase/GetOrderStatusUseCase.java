@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class GetOrderStatusUseCase {
     private final OrderRepository orderRepository;
-    private final MemberLookupApi memberLookup;
+    private final MemberLookupApi memberLookupApi;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {
@@ -54,7 +54,7 @@ public class GetOrderStatusUseCase {
 
     private void requireActiveMember(final String orderKey, final Long memberId) {
         try {
-            memberLookup.requireActive(memberId);
+            memberLookupApi.requireActive(memberId);
         } catch (final NotFoundException e) {
             throw new OrderNotOwnedException(orderKey, memberId);
         }

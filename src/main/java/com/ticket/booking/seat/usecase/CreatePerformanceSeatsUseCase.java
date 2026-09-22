@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CreatePerformanceSeatsUseCase {
-    private final PerformanceSaleCatalogApi performanceSaleCatalog;
+    private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
     private final PerformanceSeatRepository performanceSeatRepository;
 
     /**
@@ -54,7 +54,7 @@ public class CreatePerformanceSeatsUseCase {
         ensureSeatsNotAlreadyCreated(input.performanceId(), assignments.keySet());
 
         final PerformanceSaleSnapshot snapshot =
-                performanceSaleCatalog.getSaleSnapshot(input.performanceId(), assignments.keySet());
+                performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), assignments.keySet());
 
         final List<PerformanceSeat> performanceSeats = assignments.entrySet().stream()
                 .map(entry -> toPerformanceSeat(input.performanceId(), entry.getKey(), entry.getValue(), snapshot))

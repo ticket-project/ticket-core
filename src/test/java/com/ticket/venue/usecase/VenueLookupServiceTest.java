@@ -31,17 +31,17 @@ import com.ticket.venue.exception.VenueNotFoundException;
 @SuppressWarnings("NonAsciiCharacters")
 class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     @Autowired
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Autowired
-    private VenueSeatLookupApi venueSeatLookup;
+    private VenueSeatLookupApi venueSeatLookupApi;
 
     @Test
     void 존재하는_venue의_표시값을_반환한다() throws Exception {
         final Venue venue = persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        final VenueSnapshot summary = venueLookup.getVenueSnapshot(venue.getId());
+        final VenueSnapshot summary = venueLookupApi.getVenueSnapshot(venue.getId());
 
         assertThat(summary.venueId()).isEqualTo(venue.getId());
         assertThat(summary.name()).isEqualTo("올림픽홀");
@@ -53,7 +53,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 없는_venueId를_get하면_VenueNotFoundException을_던진다() {
-        assertThatThrownBy(() -> venueLookup.getVenueSnapshot(999_999L))
+        assertThatThrownBy(() -> venueLookupApi.getVenueSnapshot(999_999L))
                 .isInstanceOf(VenueNotFoundException.class)
                 .satisfies(thrown -> {
                     final VenueNotFoundException exception = (VenueNotFoundException) thrown;
@@ -69,7 +69,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         flushAndClear();
 
         final Map<Long, VenueSnapshot> summaries =
-                venueLookup.getSummaries(Set.of(seoul.getId(), busan.getId(), 999_999L));
+                venueLookupApi.getSummaries(Set.of(seoul.getId(), busan.getId(), 999_999L));
 
         assertThat(summaries).containsOnlyKeys(seoul.getId(), busan.getId());
         assertThat(summaries.get(busan.getId()).name()).isEqualTo("벡스코");
@@ -77,7 +77,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 빈_venueId_집합은_빈_map이다() {
-        assertThat(venueLookup.getSummaries(Set.of())).isEmpty();
+        assertThat(venueLookupApi.getSummaries(Set.of())).isEmpty();
     }
 
     @Test
@@ -86,7 +86,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistVenue("벡스코", Region.GYEONGSANG);
         flushAndClear();
 
-        assertThat(venueLookup.findIdsByRegion("SEOUL")).containsExactly(seoul.getId());
+        assertThat(venueLookupApi.findIdsByRegion("SEOUL")).containsExactly(seoul.getId());
     }
 
     @Test
@@ -94,12 +94,12 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        assertThat(venueLookup.findIdsByRegion("JEJU")).isEmpty();
+        assertThat(venueLookupApi.findIdsByRegion("JEJU")).isEmpty();
     }
 
     @Test
     void 지역_인자가_null이면_거부한다() {
-        assertThatThrownBy(() -> venueLookup.findIdsByRegion(null))
+        assertThatThrownBy(() -> venueLookupApi.findIdsByRegion(null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("regionCode must not be null");
     }
@@ -107,7 +107,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
     /** 코드 판정은 값 집합을 소유한 venue의 몫이다 - 호출하는 module은 지역 코드 목록을 알지 못한다. */
     @Test
     void 알_수_없는_지역_코드면_invalid_request_예외를_던진다() {
-        assertThatThrownBy(() -> venueLookup.findIdsByRegion("NOWHERE")).isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> venueLookupApi.findIdsByRegion("NOWHERE")).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -119,7 +119,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         flushAndClear();
 
         final List<VenueSeatSnapshot> addresses =
-                venueSeatLookup.findSeats(venue.getId(), Set.of(a1.getId(), a2.getId()));
+                venueSeatLookupApi.findSeats(venue.getId(), Set.of(a1.getId(), a2.getId()));
 
         assertThat(addresses).extracting(VenueSeatSnapshot::seatId).containsExactlyInAnyOrder(a1.getId(), a2.getId());
         assertThat(addresses).extracting(VenueSeatSnapshot::section).containsOnly("A");
@@ -132,7 +132,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Seat otherSeat = persistSeat(other, "A", "1", "1", 1);
         flushAndClear();
 
-        assertThat(venueSeatLookup.findSeats(venue.getId(), Set.of(otherSeat.getId())))
+        assertThat(venueSeatLookupApi.findSeats(venue.getId(), Set.of(otherSeat.getId())))
                 .isEmpty();
     }
 
@@ -141,7 +141,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Venue venue = persistVenue("올림픽홀", Region.SEOUL);
         flushAndClear();
 
-        assertThat(venueSeatLookup.findSeats(venue.getId(), Set.of())).isEmpty();
+        assertThat(venueSeatLookupApi.findSeats(venue.getId(), Set.of())).isEmpty();
     }
 
     @Test
@@ -152,7 +152,7 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         persistSeat(persistVenue("벡스코", Region.GYEONGSANG), "A", "1", "1", 1);
         flushAndClear();
 
-        final List<VenueSeatSnapshot> layouts = venueSeatLookup.findAllSeatLayouts(venue.getId());
+        final List<VenueSeatSnapshot> layouts = venueSeatLookupApi.findAllSeatLayouts(venue.getId());
 
         assertThat(layouts).hasSize(2);
         assertThat(layouts).extracting(VenueSeatSnapshot::x).containsOnly(10.0);
@@ -164,6 +164,6 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         final Venue venue = persistVenue("빈공연장", Region.SEOUL);
         flushAndClear();
 
-        assertThat(venueSeatLookup.findAllSeatLayouts(venue.getId())).isEmpty();
+        assertThat(venueSeatLookupApi.findAllSeatLayouts(venue.getId())).isEmpty();
     }
 }

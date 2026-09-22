@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetShowVenueLayoutUseCase {
     private final ShowRepository showRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
 
     public record Input(Long showId) {
         public Input {
@@ -36,7 +36,7 @@ public class GetShowVenueLayoutUseCase {
         final Show show =
                 showRepository.findById(input.showId()).orElseThrow(() -> new ShowNotFoundException(input.showId()));
 
-        final VenueSnapshot venue = venueLookup.getVenueSnapshot(show.getVenueId());
+        final VenueSnapshot venue = venueLookupApi.getVenueSnapshot(show.getVenueId());
 
         return new Output(
                 venue.name(),

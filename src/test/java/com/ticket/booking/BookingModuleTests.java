@@ -34,16 +34,16 @@ import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 @ApplicationModuleTest(verifyAutomatically = false)
 class BookingModuleTests {
     @MockitoBean
-    private PerformanceSaleCatalogApi performanceSaleCatalog;
+    private PerformanceSaleCatalogApi performanceSaleCatalogApi;
 
     @MockitoBean
-    private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
+    private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalogApi;
 
     @MockitoBean
-    private MemberLookupApi memberLookup;
+    private MemberLookupApi memberLookupApi;
 
     @MockitoBean
-    private AccessTokenAuthenticationApi accessTokenAuthenticator;
+    private AccessTokenAuthenticationApi accessTokenAuthenticationApi;
 
     @MockitoBean
     private JPAQueryFactory jpaQueryFactory;

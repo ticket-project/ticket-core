@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSeatMapUseCase {
-    private final PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalog;
+    private final PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalogApi;
     private final PerformanceSeatRepository performanceSeatRepository;
 
     public record Input(Long performanceId) {
@@ -60,7 +60,7 @@ public class GetPerformanceSeatMapUseCase {
             BigDecimal price) {}
 
     public Output execute(final Input input) {
-        final PerformanceLayoutSnapshot layout = performanceVenueLayoutCatalog.getVenueLayout(input.performanceId());
+        final PerformanceLayoutSnapshot layout = performanceVenueLayoutCatalogApi.getVenueLayout(input.performanceId());
         final List<PerformanceSeat> performanceSeats =
                 performanceSeatRepository.findAllByPerformanceId(input.performanceId());
 

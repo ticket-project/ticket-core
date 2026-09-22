@@ -39,10 +39,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetMyShowLikesUseCase {
     private static final int MAX_SIZE = 100;
-    private final MemberLookupApi memberLookup;
-    private final LikeQueryApi likeQuery;
+    private final MemberLookupApi memberLookupApi;
+    private final LikeQueryApi likeQueryApi;
     private final ShowRepository showRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
 
     /** @param cursorLikeId 이전 페이지 마지막 찜 id. 첫 페이지면 null이다. */
     public record Input(Long memberId, @Nullable Long cursorLikeId, int size) {
@@ -67,10 +67,10 @@ public class GetMyShowLikesUseCase {
             LocalDateTime likedAt) {}
 
     public Output execute(final Input input) {
-        memberLookup.requireActive(input.memberId());
+        memberLookupApi.requireActive(input.memberId());
 
         final CursorPage<LikeSnapshot, Long> page =
-                likeQuery.findLiked("show", input.memberId(), input.cursorLikeId(), input.size());
+                likeQueryApi.findLiked("show", input.memberId(), input.cursorLikeId(), input.size());
 
         if (page.items().isEmpty()) {
             return new Output(List.of(), page.hasNext(), page.nextPosition());
@@ -79,7 +79,7 @@ public class GetMyShowLikesUseCase {
         final Set<Long> showIds =
                 page.items().stream().map(LikeSnapshot::targetId).collect(Collectors.toSet());
         final Map<Long, Show> shows = showRepository.findSummaries(showIds);
-        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+        final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.values().stream().map(Show::getVenueId).toList()));
 
         final List<Item> items = page.items().stream()

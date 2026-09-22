@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSaleOpeningSoonShowsUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
-    private final VenueLookupApi venueLookup;
+    private final VenueLookupApi venueLookupApi;
     private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(String category, int size) {
@@ -47,7 +47,7 @@ public class GetSaleOpeningSoonShowsUseCase {
 
     public Output execute(final Input input) {
         final List<Show> shows = showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
-        final Map<Long, VenueSnapshot> venuesById = venueLookup.getSummaries(
+        final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
         return new Output(shows.stream().map(show -> toItem(show, venuesById)).toList());
     }

@@ -36,7 +36,7 @@ class GetShowsUseCaseTest {
     private ShowRepository showRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Spy
     private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
@@ -59,7 +59,7 @@ class GetShowsUseCaseTest {
         when(showQuerydslRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(showRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of(1L, List.of("rock")));
-        when(venueLookup.getSummaries(Set.of(7L)))
+        when(venueLookupApi.getSummaries(Set.of(7L)))
                 .thenReturn(Map.of(
                         7L,
                         new VenueSnapshot(
@@ -106,7 +106,7 @@ class GetShowsUseCaseTest {
         when(showQuerydslRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(new CursorPage<>(List.of(show), false, null));
         when(showRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of());
-        when(venueLookup.getSummaries(Set.of(7L))).thenReturn(Map.of());
+        when(venueLookupApi.getSummaries(Set.of(7L))).thenReturn(Map.of());
 
         GetShowsUseCase.Output output = useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));
 
@@ -137,7 +137,7 @@ class GetShowsUseCaseTest {
         CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         ShowListParam noRegion = new ShowListParam(null, null, null, null);
         ShowListParam jeju = new ShowListParam(null, null, "JEJU", null);
-        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
+        when(venueLookupApi.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.findAllBySearch(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR))

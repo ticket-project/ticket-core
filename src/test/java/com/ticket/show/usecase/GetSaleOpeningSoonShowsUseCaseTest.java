@@ -28,7 +28,7 @@ class GetSaleOpeningSoonShowsUseCaseTest {
     private ShowQuerydslRepository showQuerydslRepository;
 
     @Mock
-    private VenueLookupApi venueLookup;
+    private VenueLookupApi venueLookupApi;
 
     @Spy
     private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
@@ -41,7 +41,7 @@ class GetSaleOpeningSoonShowsUseCaseTest {
         LocalDateTime saleStartDate = LocalDateTime.of(2026, 3, 27, 12, 0);
         List<Show> rows = List.of(ShowFixture.show(1L, "concert", 7L, null, null, saleStartDate, 0L, saleStartDate));
         when(showQuerydslRepository.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(rows);
-        when(venueLookup.getSummaries(Set.of(7L)))
+        when(venueLookupApi.getSummaries(Set.of(7L)))
                 .thenReturn(Map.of(
                         7L,
                         new VenueSnapshot(

@@ -40,8 +40,8 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
     private final PerformanceRepository performanceRepository;
     private final GradeRepository gradeRepository;
     private final ShowRepository showRepository;
-    private final VenueLookupApi venueLookup;
-    private final VenueSeatLookupApi venueSeatLookup;
+    private final VenueLookupApi venueLookupApi;
+    private final VenueSeatLookupApi venueSeatLookupApi;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,10 +54,10 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
                 .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
         final Long venueId = show.getVenueId();
 
-        final VenueSnapshot venue = venueLookup.getVenueSnapshot(venueId);
+        final VenueSnapshot venue = venueLookupApi.getVenueSnapshot(venueId);
 
         final Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayoutBySeatId =
-                venueSeatLookup.findAllSeatLayouts(venueId).stream()
+                venueSeatLookupApi.findAllSeatLayouts(venueId).stream()
                         .collect(Collectors.toMap(VenueSeatSnapshot::seatId, this::toSeatLayout));
 
         final Map<Long, PerformanceLayoutSnapshot.GradeLayout> gradeLayoutByPerformanceGradeId =

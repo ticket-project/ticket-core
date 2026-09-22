@@ -16,14 +16,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RefreshAuthTokenUseCase {
     private final RefreshTokenStore refreshTokenStore;
-    private final MemberAccountApi memberAccountOperations;
+    private final MemberAccountApi memberAccountApi;
     private final AuthTokenIssuer authTokenIssuer;
 
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore
                 .validate(input.refreshToken())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
-        final MemberStatus member = memberAccountOperations.getActiveIdentity(memberId);
+        final MemberStatus member = memberAccountApi.getActiveIdentity(memberId);
         final IssuedAuthTokens tokens =
                 authTokenIssuer.rotateTokens(member.memberId(), member.role(), input.refreshToken());
         return toResult(tokens);
