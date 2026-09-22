@@ -369,7 +369,7 @@ use case(옛 `command`)가 어떤 성격인지는 클래스 이름과 위 "계�
 아래 "Repository와 조회 Repository" 절이 별도로 다룬다.
 
 자기 module DB 조회 중 **Querydsl을 쓰는 것만** `persistence`의 `*QuerydslRepository`다
-(`ShowQuerydslRepository`, `LikeQuerydslRepository`). 나머지 조회와 Aggregate 저장은 모두
+(`ShowQuerydslRepository`). 나머지 조회와 Aggregate 저장은 모두
 계약 `*Repository` → `*RepositoryAdapter` → `SpringData*JpaRepository` 3단을 쓴다.
 
 **module 밖으로 나가는 읽기 뷰는 `*Snapshot`이다**(`VenueSnapshot`, `PerformanceSaleSnapshot`,
@@ -428,7 +428,7 @@ CursorPage<Show, ShowCursor> page = showQuerydslRepository.findAllBySearch(param
 ```
 
 module의 `persistence` package에 두고, **Querydsl로 조립하는 것만** 이름이 `*QuerydslRepository`다
-(`ShowQuerydslRepository`, `LikeQuerydslRepository`). **한 module의 관련 조회는 한 class로 모은다**
+(`ShowQuerydslRepository`). **한 module의 관련 조회는 한 class로 모은다**
 — 조회 하나에 class 하나를 만들지 않는다. **Querydsl 조회에는 1:1 port/adapter를 두지 않는다** —
 `@Repository` + 생성자 주입으로 Querydsl을 직접 쓰는 구체 class다. 동적 조건 조립은 화면이 요구하는
 SQL 그 자체라 교체 지점이 아니기 때문이다(ADR 0019).

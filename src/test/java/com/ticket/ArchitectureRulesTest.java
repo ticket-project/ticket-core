@@ -186,8 +186,8 @@ class ArchitectureRulesTest {
      * <p>{@link #QUERY_REPOSITORY}는 "무엇을 열어도 되는가"의 규칙이고 이 목록은 "지금 무엇이 열려 있는가"다. 새 Querydsl 조회가 PR에서 조용히 늘면 여기서 실패한다 —
      * {@code persistence}를 use case에 여는 것은 의식적인 결정이어야 한다.
      */
-    private static final Set<String> APPROVED_QUERY_REPOSITORIES = Set.of(
-            "com.ticket.show.persistence.ShowQuerydslRepository", "com.ticket.like.persistence.LikeQuerydslRepository");
+    private static final Set<String> APPROVED_QUERY_REPOSITORIES =
+            Set.of("com.ticket.show.persistence.ShowQuerydslRepository");
 
     private static JavaClass topLevelOf(final JavaClass clazz) {
         JavaClass current = clazz;

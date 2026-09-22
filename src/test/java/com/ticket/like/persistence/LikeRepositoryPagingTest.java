@@ -9,15 +9,16 @@ import org.springframework.context.annotation.Import;
 
 import com.ticket.like.api.LikeType;
 import com.ticket.like.domain.Like;
+import com.ticket.like.domain.LikeRepository;
 import com.ticket.member.domain.Member;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
 
-@Import(LikeQuerydslRepository.class)
+@Import(LikeRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class LikeQuerydslRepositoryTest extends InfraReadRepositoryTestSupport {
+class LikeRepositoryPagingTest extends InfraReadRepositoryTestSupport {
     @Autowired
-    private LikeQuerydslRepository likeQuerydslRepository;
+    private LikeRepository likeRepository;
 
     private Long memberId;
     private Long showId1;
@@ -50,7 +51,7 @@ class LikeQuerydslRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
-        CursorPage<Like, Long> result = likeQuerydslRepository.findLiked(LikeType.SHOW, memberId, null, 2);
+        CursorPage<Like, Long> result = likeRepository.findLiked(LikeType.SHOW, memberId, null, 2);
 
         assertThat(result.items()).extracting(Like::getTargetId).containsExactly(showId3, showId2);
         assertThat(result.nextPosition()).isNotNull();
@@ -59,9 +60,9 @@ class LikeQuerydslRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 커서_이후의_찜한_대상을_조회한다() {
-        CursorPage<Like, Long> firstPage = likeQuerydslRepository.findLiked(LikeType.SHOW, memberId, null, 1);
+        CursorPage<Like, Long> firstPage = likeRepository.findLiked(LikeType.SHOW, memberId, null, 1);
         CursorPage<Like, Long> secondPage =
-                likeQuerydslRepository.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
+                likeRepository.findLiked(LikeType.SHOW, memberId, firstPage.nextPosition(), 1);
 
         assertThat(firstPage.items()).extracting(Like::getTargetId).containsExactly(showId3);
         assertThat(secondPage.items()).extracting(Like::getTargetId).containsExactly(showId2);
@@ -69,7 +70,7 @@ class LikeQuerydslRepositoryTest extends InfraReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상이_없으면_빈_슬라이스를_반환한다() {
-        CursorPage<Like, Long> result = likeQuerydslRepository.findLiked(LikeType.SHOW, -1L, null, 10);
+        CursorPage<Like, Long> result = likeRepository.findLiked(LikeType.SHOW, -1L, null, 10);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();

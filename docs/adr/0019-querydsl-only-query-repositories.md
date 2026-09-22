@@ -32,8 +32,9 @@ Querydsl을 쓰는 것은 아니다"라고 적고 있었다. 규칙이 이름을
 
 1. **Querydsl로 조회하는 것만 `*QuerydslRepository`라는 이름을 쓴다.** 판별은 "`persistence`
    package + 이름이 `QuerydslRepository`로 끝남 + `JPAQueryFactory` 필드 보유"다. 남은 것은
-   `ShowQuerydslRepository`와 `LikeQuerydslRepository` 둘이다 — 동적 조건 조합, 복합 정렬,
-   커서 페이징, 집계가 그 자리다.
+   현재 남은 것은 `ShowQuerydslRepository` 하나다 — 동적 조건 조합, 복합 정렬, 커서 페이징,
+   집계가 그 자리다. `LikeQuerydslRepository`는 단순한 선택적 ID 커서 조건뿐이어서 2026-09-22에
+   Spring Data 고정 조회로 옮겼다.
 
 2. **Spring Data/JPQL로 끝나는 조회는 3단으로 내려간다** — 계약 `*Repository`(domain 또는 공개
    `api`) → `*RepositoryAdapter`(persistence) → `SpringData*JpaRepository`(package-private).

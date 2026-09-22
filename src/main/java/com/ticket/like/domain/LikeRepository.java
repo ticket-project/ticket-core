@@ -2,7 +2,10 @@ package com.ticket.like.domain;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import com.ticket.like.api.LikeType;
+import com.ticket.shared.api.CursorPage;
 
 /**
  * 찜 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
@@ -20,4 +23,6 @@ public interface LikeRepository {
     Optional<Like> findByMemberIdAndLikeTypeAndTargetId(Long memberId, LikeType likeType, Long targetId);
 
     long countByLikeTypeAndTargetId(LikeType likeType, Long targetId);
+
+    CursorPage<Like, Long> findLiked(LikeType likeType, Long memberId, @Nullable Long cursorLikeId, int size);
 }

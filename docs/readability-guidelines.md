@@ -234,7 +234,7 @@ DB 집계(min/max/count)    트랜잭션 snapshot
 
 공연 상세가 그 예다. show 조회는 19필드짜리 `ShowDetailView`를 조립하는 대신
 `findShow`(엔티티)·`findGenreNames`·`findRepresentativePerformanceGrades`·`findGradeNames`·
-`findPriceSummary`·`findPerformances`·`findPerformer` 조각만 주고, `GetShowDetailUseCase`가 Output을
+`findPriceSummary`·`findPerformances` 조각만 주고, `GetShowDetailUseCase`가 Output을
 직접 만든다. 주문 상세·상태도 Querydsl projection 대신 `OrderRepository`의
 `@Query`(`join fetch o.orderSeats`)로 `Order`를 받아 use case가 Output을 만든다.
 
