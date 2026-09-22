@@ -18,7 +18,6 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
 import lombok.RequiredArgsConstructor;
@@ -64,7 +63,7 @@ public class GetShowsUseCase {
             @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
             @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
             LocalDateTime createdAt,
-            @Nullable Region region,
+            @Nullable String region,
             @Nullable String venue) {}
 
     public Output execute(final Input input) {
@@ -84,7 +83,7 @@ public class GetShowsUseCase {
      * <p><b>"지역 없음"과 "지역은 있으나 그 지역에 공연장이 없음"은 다른 결과다.</b> 그래서 {@code null}(지역 조건 자체가 없음)과 빈 집합(조건은 있는데 해당 공연장이 없으니 결과
      * 0건)을 구분해 넘긴다. 이 둘을 뭉개면 "제주에 공연장이 하나도 없다"가 "전체 목록"으로 조용히 바뀐다.
      */
-    private @Nullable Set<Long> venueIdsOf(final @Nullable Region region) {
+    private @Nullable Set<Long> venueIdsOf(final @Nullable String region) {
         return region == null ? null : venueLookup.findIdsByRegion(region);
     }
 
@@ -102,7 +101,7 @@ public class GetShowsUseCase {
                 show.getDisplaySaleStartsAt(),
                 show.getDisplaySaleEndsAt(),
                 show.getCreatedAt(),
-                venues.regionOf(show.getVenueId()),
+                venues.regionCodeOf(show.getVenueId()),
                 venues.nameOf(show.getVenueId()));
     }
 }

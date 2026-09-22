@@ -33,7 +33,6 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -114,7 +113,7 @@ class GetShowDetailUseCaseTest {
                         5L,
                         "예술의전당",
                         "주소",
-                        Region.SEOUL,
+                        new VenueSnapshot.RegionView("SEOUL", "서울"),
                         null,
                         null,
                         null,

@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -72,7 +71,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                                 7L,
                                 "venue",
                                 "주소",
-                                Region.SEOUL,
+                                new VenueSnapshot.RegionView("SEOUL", "서울"),
                                 null,
                                 null,
                                 null,
@@ -89,7 +88,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                         "subtitle",
                         "image",
                         "venue",
-                        Region.SEOUL,
+                        "SEOUL",
                         startDate,
                         endDate,
                         saleStartDate,
@@ -124,8 +123,8 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         SaleOpeningSoonSearchParam noRegion =
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         SaleOpeningSoonSearchParam jeju =
-                new SaleOpeningSoonSearchParam(null, null, Region.JEJU, null, null, null, null, null);
-        when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
+                new SaleOpeningSoonSearchParam(null, null, "제주", null, null, null, null, null);
+        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR))

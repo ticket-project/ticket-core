@@ -7,9 +7,10 @@
  * <p>이 module은 업무 module을 하나도 참조하지 않는다. 의존은 entity가 상속하는 {@code shared :: jpa}와 not-found 계약을 상속하는 {@code shared ::
  * exception}뿐이다.
  *
- * <p>공개 계약은 {@code venue.api}({@code @NamedInterface("api")})에 있고 module root에는 {@code package-info.java}만 둔다.
- * {@link com.ticket.venue.api.Region}(공연장 소재 지역)은 그 package의 유일한 예외 타입이다 — "공개 계약에는 interface + record만" 원칙에서 벗어난
- * enum이지만, show가 검색 조건·표시값으로 함께 쓰는 공용 어휘라 여기 복제하면 원본이 둘로 갈린다. show는 이 enum을 그대로 참조한다.
+ * <p>공개 계약은 {@code venue.api}({@code @NamedInterface("api")})에 있고 module root에는 {@code package-info.java}만 둔다. 공개면은
+ * interface와 record뿐이다 — 지역({@link com.ticket.venue.domain.Region})은 Venue entity의 필드이자 venue가 값 집합을 소유한 도메인 enum이라
+ * {@code venue.domain}에 있고, 밖으로는 {@code VenueSnapshot.RegionView}(코드·표시명 쌍)와 {@code findIdsByRegion}이 받는 코드 문자열로만 오간다.
+ * 코드 판정도 venue가 한다.
  */
 @NullMarked
 @org.springframework.modulith.ApplicationModule(

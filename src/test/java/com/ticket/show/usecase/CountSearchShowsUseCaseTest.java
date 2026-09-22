@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,8 +53,8 @@ class CountSearchShowsUseCaseTest {
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
         ShowSearchCriteria noRegion = new ShowSearchCriteria(null, null, null, null, null, null, null);
-        ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, Region.JEJU, null);
-        when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
+        ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, "JEJU", null);
+        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.countSearchShows(noRegion, null)).thenReturn(7L);
         when(showQuerydslRepository.countSearchShows(jeju, Set.of())).thenReturn(0L);
 

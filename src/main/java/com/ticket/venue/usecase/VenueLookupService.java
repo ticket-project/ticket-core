@@ -6,12 +6,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
+import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 import com.ticket.venue.domain.VenueRepository;
 import com.ticket.venue.exception.VenueNotFoundException;
@@ -34,7 +35,7 @@ public class VenueLookupService implements VenueLookupApi {
 
     @Override
     public VenueSnapshot getVenueSnapshot(final long venueId) {
-        return findVenueSnapshot(venueId).orElseThrow(() -> new VenueNotFoundException(venueId));
+        return toSummary(venueRepository.findById(venueId).orElseThrow(() -> new VenueNotFoundException(venueId)));
     }
 
     @Override
@@ -53,9 +54,9 @@ public class VenueLookupService implements VenueLookupApi {
     }
 
     @Override
-    public Set<Long> findIdsByRegion(final Region region) {
-        Objects.requireNonNull(region, "region must not be null");
-        return Set.copyOf(venueRepository.findIdsByRegion(region));
+    public Set<Long> findIdsByRegion(final String regionCode) {
+        Objects.requireNonNull(regionCode, "regionCode must not be null");
+        return Set.copyOf(venueRepository.findIdsByRegion(Region.from(regionCode)));
     }
 
     private static VenueSnapshot toSummary(final Venue venue) {
@@ -63,12 +64,16 @@ public class VenueLookupService implements VenueLookupApi {
                 venue.getId(),
                 venue.getName(),
                 venue.getAddress(),
-                venue.getRegion(),
+                toRegionView(venue.getRegion()),
                 venue.getLatitude(),
                 venue.getLongitude(),
                 venue.getPhone(),
                 venue.getImageUrl(),
                 new VenueSnapshot.SeatMapLayout(
                         venue.getViewBoxWidth(), venue.getViewBoxHeight(), venue.getSeatDiameter()));
+    }
+
+    private static VenueSnapshot.@Nullable RegionView toRegionView(final @Nullable Region region) {
+        return region == null ? null : new VenueSnapshot.RegionView(region.name(), region.getDescription());
     }
 }

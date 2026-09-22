@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -101,8 +100,8 @@ class GetShowsUseCaseTest {
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
         CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         ShowListParam noRegion = new ShowListParam(null, null, null, null);
-        ShowListParam jeju = new ShowListParam(null, null, Region.JEJU, null);
-        when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
+        ShowListParam jeju = new ShowListParam(null, null, "JEJU", null);
+        when(venueLookup.findIdsByRegion("JEJU")).thenReturn(Set.of());
         when(showQuerydslRepository.findAllBySearch(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.findAllBySearch(jeju, Set.of(), 10, ShowSort.POPULAR))

@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.SaleDisplayStatus;
-import com.ticket.venue.api.Region;
 
 import lombok.Getter;
 
@@ -21,7 +20,7 @@ public class ShowSearchCriteria {
     private @Nullable SaleDisplayStatus saleDisplayStatus;
     private @Nullable LocalDate startDateFrom;
     private @Nullable LocalDate startDateTo;
-    private @Nullable Region region;
+    private @Nullable String region;
     private @Nullable ShowCursor cursor;
 
     public ShowSearchCriteria(
@@ -30,7 +29,7 @@ public class ShowSearchCriteria {
             final @Nullable SaleDisplayStatus saleDisplayStatus,
             final @Nullable LocalDate startDateFrom,
             final @Nullable LocalDate startDateTo,
-            final @Nullable Region region,
+            final @Nullable String region,
             final @Nullable ShowCursor cursor) {
         validateStartDateRange(startDateFrom, startDateTo);
         this.keyword = keyword;
@@ -57,11 +56,11 @@ public class ShowSearchCriteria {
                 parseEnum(SaleDisplayStatus.class, bookingStatus, "bookingStatus"),
                 startDateFrom,
                 startDateTo,
-                ShowListParam.parseRegion(region),
+                ShowListParam.normalizeRegion(region),
                 cursor);
     }
 
-    /** region 변환은 목록 조회와 같은 규칙을 써야 하므로 {@link ShowListParam#parseRegion}이 소유한다. */
+    /** region 정규화는 목록 조회와 같은 규칙을 써야 하므로 {@link ShowListParam#normalizeRegion}이 소유한다. */
     private static <E extends Enum<E>> @Nullable E parseEnum(
             final Class<E> type, final @Nullable String value, final String field) {
         if (value == null || value.isBlank()) {

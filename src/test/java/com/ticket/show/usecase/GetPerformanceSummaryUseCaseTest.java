@@ -20,7 +20,6 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.venue.api.Region;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -51,7 +50,7 @@ class GetPerformanceSummaryUseCaseTest {
                         5L,
                         "venue",
                         "주소",
-                        Region.CHUNGCHEONG,
+                        new VenueSnapshot.RegionView("CHUNGCHEONG", "충청"),
                         null,
                         null,
                         null,

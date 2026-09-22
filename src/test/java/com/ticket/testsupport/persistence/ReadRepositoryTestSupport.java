@@ -39,7 +39,7 @@ import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowGenre;
-import com.ticket.venue.api.Region;
+import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 

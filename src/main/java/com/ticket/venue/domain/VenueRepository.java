@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import com.ticket.venue.api.Region;
-
 /**
  * Venue aggregate의 복원을 담당하는 도메인 Repository다.
  *

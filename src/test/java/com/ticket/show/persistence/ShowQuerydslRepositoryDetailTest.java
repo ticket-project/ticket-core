@@ -24,7 +24,7 @@ import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.usecase.ShowCardImagePathConverter;
 import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
-import com.ticket.venue.api.Region;
+import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 
 /** 공연 상세 응답을 만들 때 쓰는 조회 조각들을 고정한다 — Querydsl 조각과 계약 조각이 함께 한 응답을 이룬다. */

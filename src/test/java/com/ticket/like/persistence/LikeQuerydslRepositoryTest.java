@@ -36,7 +36,7 @@ class LikeQuerydslRepositoryTest extends InfraReadRepositoryTestSupport {
     }
 
     private Long persistShowLikeFixture(final Member member, final String title) throws Exception {
-        var venue = persistVenue(title + " 공연장", com.ticket.venue.api.Region.SEOUL);
+        var venue = persistVenue(title + " 공연장", com.ticket.venue.domain.Region.SEOUL);
         var show = persistShow(
                 title,
                 venue,

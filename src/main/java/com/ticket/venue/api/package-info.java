@@ -2,10 +2,12 @@
  * venue가 다른 module에 공개하는 계약이다.
  *
  * <p>행위 계약 둘: {@link com.ticket.venue.api.VenueLookupApi}(공연장 존재 확인·표시값·지역 조회)와
- * {@link com.ticket.venue.api.VenueSeatLookupApi}(좌석 주소·배치 좌표 조회). 나머지 넷은 그 계약이 돌려주는 값이다.
+ * {@link com.ticket.venue.api.VenueSeatLookupApi}(좌석 주소·배치 좌표 조회). 나머지 둘({@code VenueSnapshot},
+ * {@code VenueSeatSnapshot})은 그 계약이 돌려주는 값이다.
  *
- * <p>{@link com.ticket.venue.api.Region}(공연장 소재 지역)은 이 package의 유일한 enum이다 — "공개 계약에는 interface + record만" 원칙에서 벗어나지만,
- * show가 검색 조건·표시값으로 함께 쓰는 공용 어휘라 복제하면 원본이 둘로 갈린다. show는 이 enum을 그대로 참조한다.
+ * <p>지역 enum은 여기 노출하지 않는다. {@code Region}은 Venue entity의 필드이자 venue가 값 집합을 소유한 도메인 타입이라 {@code venue.domain}에 있고, 밖으로는
+ * {@code VenueSnapshot.RegionView}(코드·표시명 쌍)로 나가고 {@code findIdsByRegion}은 코드 문자열을 받아 venue가 판정한다. 호출하는 module은 지역 코드
+ * 목록을 알 필요가 없다.
  */
 @NullMarked
 @org.springframework.modulith.NamedInterface("api")

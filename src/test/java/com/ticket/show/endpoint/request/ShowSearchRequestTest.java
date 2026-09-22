@@ -13,7 +13,6 @@ import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowSearchCriteria;
 import com.ticket.show.usecase.ShowSort;
-import com.ticket.venue.api.Region;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -42,7 +41,7 @@ class ShowSearchRequestTest {
         assertThat(criteria.getSaleDisplayStatus()).isEqualTo(SaleDisplayStatus.ON_SALE);
         assertThat(criteria.getStartDateFrom()).isEqualTo(LocalDate.of(2026, 4, 1));
         assertThat(criteria.getStartDateTo()).isEqualTo(LocalDate.of(2026, 4, 30));
-        assertThat(criteria.getRegion()).isEqualTo(Region.SEOUL);
+        assertThat(criteria.getRegion()).isEqualTo("SEOUL");
         assertThat(criteria.getCursor()).isEqualTo(CURSOR_POSITION);
     }
 
