@@ -328,6 +328,21 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 `shared.jpa.AuditedEntity` 하나를 entity 21개가 상속한다 — 근거는
 [ADR 0018](adr/0018-audit-base-entity-lives-in-shared.md)이다.
 
+### HTTP 표현은 endpoint가 소유한다
+
+**`domain`·`usecase`·`port`·module `api`는 HTTP·직렬화·API 문서화 기술에 묶이지 않는다.** Swagger,
+springdoc, Spring Web, Spring HTTP는 `endpoint`가 소유한다 —
+`ArchitectureRulesTest.업무_코드는_HTTP와_문서화_기술을_모른다`가 강제한다.
+
+**Jackson은 그 규칙에서 빠져 있다.** 이 저장소는 use case의 중첩 record가 곧 최종 응답 항목이고
+(`readability-guidelines.md` §10-2) endpoint에 응답 DTO를 따로 두지 않으므로, 공개 JSON 이름을
+고정하는 `@JsonProperty`가 use case record에 붙는다(show 5건, like 3건 — [ADR 0007](adr/0007-show-sale-fields-are-display-only.md)과
+[ADR 0008](adr/0008-like-target-generalization.md)이 "옛 JSON 이름을 유지한다"고 기록한 결정의 결과다).
+
+**use case Output과 HTTP 응답이 항상 별도 타입이어야 한다는 규칙은 두지 않는다.** 별도 HTTP DTO는
+외부 계약과 application 모델을 실제로 갈라야 할 때만 만든다 — 값을 그대로 옮기기만 하는 중간
+타입을 계층마다 만드는 것은 §10-2가 금지한다.
+
 ### 포트 소유
 
 **`usecase`에는 `*UseCase`만 두지 않는다.** use case가 조립에 쓰는 서비스·헬퍼도 같은 package에
