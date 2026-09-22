@@ -97,5 +97,5 @@ capability 하나가 소유할 수 없는 것들이라 더 내리지 않는다.
 > `booking.order.usecase`로 내려갔다 — `booking.domain` 직속은 이제 없다. 이 문단의 "`domain`(요청
 > 좀석 값)"은 유효하지 않다.
 
-`member.password`와 `booking.admission`은 계약과 구현이 같은 package에 있어 방향 규칙
-대상이 아니다. 파일이 늘어 목록만으로 무엇이 무엇인지 알 수 없어지면 그때 나눈다.
+`booking.admission`은 계약과 구현이 같은 package에 있어 방향 규칙 대상이 아니다. 파일이 늘어
+목록만으로 무엇이 무엇인지 알 수 없어지면 그때 나눈다.

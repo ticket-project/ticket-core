@@ -1,4 +1,4 @@
-package com.ticket.member.password;
+package com.ticket.shared.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -32,7 +32,7 @@ Repository를 포함한 DB·Redis 구현이다.
 **폴더 깊이는 규모에 비례한다.** 일반적인 최대는 모듈 → capability → 역할이다
 (`booking.order.persistence`). 기술 응집도가 높고 파일이 많을 때만 한 단계를 더
 쓴다(`booking.concurrency.redis`). 파일이 적고 서로만 부르는 묶음은
-평평하게 둔다(`package-info.java`를 빼고 `booking.admission` 일곱 파일, `member.password` 한 파일).
+평평하게 둔다(`package-info.java`를 빼고 `booking.admission` 일곱 파일).
 
 **모듈 안에 `common`·`util`·`helper`·`support`·`misc` 패키지를 만들지 않는다.** 갈 곳이 애매하면
 그 타입의 소유 capability나 실제 역할을 먼저 판단한다. 여러 업무가 함께 쓰는 기반도 그 역할이

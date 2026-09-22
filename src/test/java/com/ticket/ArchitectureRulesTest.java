@@ -62,9 +62,8 @@ import com.tngtech.archunit.lang.CompositeArchRule;
  * 사실을 두 번 확인할 뿐이라 두지 않는다.
  *
  * <p><b>역할 package가 없는 곳은 규칙 대상이 아니다.</b> {@code security}는 기능으로
- * 나뉘고({@code auth}/{@code jwt}/{@code oauth}/{@code token}/{@code http}), {@code booking.admission}과
- * {@code member.password}도 파일이 적어 flat이다. 역할 이름이 없으면 방향 규칙이 말할 것도 없다 — 근거는
- * {@code docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.
+ * 나뉘고({@code auth}/{@code jwt}/{@code oauth}/{@code token}/{@code http}), {@code booking.admission}도 파일이 적어 flat이다. 역할
+ * 이름이 없으면 방향 규칙이 말할 것도 없다 — 근거는 {@code docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.
  *
  * <p><b>Querydsl Q-type 주의.</b> Q-type은 {@code build/generated/sources/annotationProcessor} 아래에 생성되지만 package는 원본
  * entity와 같아서({@code com.ticket.booking.order.domain.QOrder}) 여기 분석 대상에 그대로 들어온다. 지금 규칙들은 "무엇을 참조하면 안 되는가" 형태라 Q-type이
