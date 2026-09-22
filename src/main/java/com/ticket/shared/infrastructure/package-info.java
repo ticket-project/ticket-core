@@ -10,7 +10,7 @@
  * SecurityContextAuditorAware})도 여기 있다. shared가 member를 참조하지 않는 것은 인증 주체가 shared의 {@code
  * AuditorPrincipal} SPI를 <b>구현</b>하기 때문이다 — 참조 방향이 반대라 순환이 생기지 않는다.
  *
- * <p>{@link com.ticket.shared.api.CorsProperties}는 여기 없다 — security의 {@code ApiSecurityConfig}와
+ * <p>{@link com.ticket.shared.config.CorsProperties}는 여기 없다 — security의 {@code ApiSecurityConfig}와
  * booking의 {@code WebSocketConfig}가 함께 쓰는 값이라 {@code shared}에 둔다.
  */
 @NullMarked

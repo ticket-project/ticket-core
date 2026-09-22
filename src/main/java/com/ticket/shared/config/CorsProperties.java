@@ -1,4 +1,4 @@
-package com.ticket.shared.api;
+package com.ticket.shared.config;
 
 import java.util.ArrayList;
 import java.util.List;

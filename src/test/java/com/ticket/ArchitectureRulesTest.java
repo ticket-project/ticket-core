@@ -107,6 +107,7 @@ class ArchitectureRulesTest {
                     "member :: exception",
                     "security :: api",
                     "shared :: api",
+                    "shared :: config",
                     "shared :: exception",
                     "shared :: jpa",
                     "shared :: web",
