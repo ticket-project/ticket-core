@@ -2,7 +2,6 @@ package com.ticket.show.persistence;
 
 import static com.ticket.show.domain.QCategory.category;
 import static com.ticket.show.domain.QGenre.genre;
-import static com.ticket.show.domain.QPerformer.performer;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
 import static com.ticket.show.domain.show.QShow.show;
@@ -17,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,7 +35,6 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.show.domain.Performer;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
@@ -635,17 +632,6 @@ public class ShowQuerydslRepository {
     }
 
     // 상세 조회 조각 ------------------------------------------------------------
-
-    /**
-     * Performer는 Show와 다른 aggregate라 {@code performerId} scalar로만 연결된다 — 옛 {@code fetchJoin()} 대신 식별자로 따로 조회한다. 같은
-     * module 안의 다른 aggregate라 venue와 달리 여기서 직접 조회해도 된다.
-     */
-    public Optional<Performer> findPerformer(final Long performerId) {
-        return Optional.ofNullable(queryFactory
-                .selectFrom(performer)
-                .where(performer.id.eq(performerId))
-                .fetchOne());
-    }
 
     /**
      * ADR 0005: show-level 가격표는 없다. 이 show의 모든 Performance에 배정된 PerformanceGrade.price 중 최소/최대만 파생한다 — 대표 회차 하나의 가격을

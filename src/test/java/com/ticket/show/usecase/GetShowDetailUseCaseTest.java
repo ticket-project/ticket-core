@@ -3,6 +3,7 @@ package com.ticket.show.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -25,6 +26,8 @@ import com.ticket.like.api.LikeType;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.domain.GradeRepository;
+import com.ticket.show.domain.Performer;
+import com.ticket.show.domain.PerformerRepository;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
@@ -51,6 +54,9 @@ class GetShowDetailUseCaseTest {
     private GradeRepository gradeRepository;
 
     @Mock
+    private PerformerRepository performerRepository;
+
+    @Mock
     private PerformanceRepository performanceRepository;
 
     @Mock
@@ -64,6 +70,7 @@ class GetShowDetailUseCaseTest {
                 showQuerydslRepository,
                 showRepository,
                 gradeRepository,
+                performerRepository,
                 performanceRepository,
                 likeQuery,
                 venueLookup,
@@ -137,11 +144,51 @@ class GetShowDetailUseCaseTest {
         verify(venueLookup).getVenueSnapshot(5L);
     }
 
+    @Test
+    void 출연자_ID로_조회한_정보를_응답에_담는다() {
+        stubShowWithPerformer(7L);
+        Performer performer = Performer.create("아이유", "/performers/7.png");
+        ReflectionTestUtils.setField(performer, "id", 7L);
+        when(performerRepository.findById(7L)).thenReturn(Optional.of(performer));
+
+        var output = useCase().execute(new GetShowDetailUseCase.Input(1L));
+
+        assertThat(output.performer())
+                .isEqualTo(new GetShowDetailUseCase.PerformerInfo(7L, "아이유", "/performers/7.png"));
+    }
+
+    @Test
+    void 출연자_ID가_없으면_조회하지_않고_null을_반환한다() {
+        stubShowWithPerformer(null);
+
+        var output = useCase().execute(new GetShowDetailUseCase.Input(1L));
+
+        assertThat(output.performer()).isNull();
+        verifyNoInteractions(performerRepository);
+    }
+
+    @Test
+    void 참조한_출연자가_없으면_null을_반환한다() {
+        stubShowWithPerformer(7L);
+        when(performerRepository.findById(7L)).thenReturn(Optional.empty());
+
+        var output = useCase().execute(new GetShowDetailUseCase.Input(1L));
+
+        assertThat(output.performer()).isNull();
+    }
+
+    private void stubShowWithPerformer(final @Nullable Long performerId) {
+        when(showRepository.findById(1L)).thenReturn(Optional.of(show(5L, performerId)));
+        stubEmptyFragments();
+        when(venueLookup.getVenueSnapshot(5L))
+                .thenReturn(new VenueSnapshot(
+                        5L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
+    }
+
     /** 예매 상태는 저장된 값이 아니라 주입된 Clock 기준으로 계산한다. */
     @Test
     void 예매_상태는_Clock_기준으로_계산한다() {
-        when(showRepository.findById(1L)).thenReturn(Optional.of(show(null, null)));
-        stubEmptyFragments();
+        stubShowWithPerformer(null);
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 
@@ -151,8 +198,7 @@ class GetShowDetailUseCaseTest {
     /** 카드 이미지 경로 변환은 조회가 아니라 응답 조립 단계의 일이다. */
     @Test
     void 이미지_경로를_카드_이미지로_바꾼다() {
-        when(showRepository.findById(1L)).thenReturn(Optional.of(show(null, null)));
-        stubEmptyFragments();
+        stubShowWithPerformer(null);
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 

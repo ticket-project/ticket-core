@@ -17,6 +17,7 @@ import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.Performer;
+import com.ticket.show.domain.PerformerRepository;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
@@ -32,6 +33,7 @@ import com.ticket.venue.domain.Venue;
     ShowQuerydslRepository.class,
     ShowRepositoryAdapter.class,
     GradeRepositoryAdapter.class,
+    PerformerRepositoryAdapter.class,
     PerformanceRepositoryAdapter.class,
     ShowCardImagePathConverter.class
 })
@@ -45,6 +47,9 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
 
     @Autowired
     private GradeRepository gradeRepository;
+
+    @Autowired
+    private PerformerRepository performerRepository;
 
     @Autowired
     private PerformanceRepository performanceRepository;
@@ -98,11 +103,16 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
         assertThat(show.getImage()).isEqualTo("/api/images/shows/" + showId + ".png");
         assertThat(show.saleDisplayStatusAt(LocalDateTime.of(2026, 3, 15, 12, 0)))
                 .isEqualTo(SaleDisplayStatus.ON_SALE);
-        assertThat(showQuerydslRepository
-                        .findPerformer(show.getPerformerId())
+        assertThat(performerRepository
+                        .findById(show.getPerformerId())
                         .orElseThrow()
                         .getName())
                 .isEqualTo("홍길동");
+    }
+
+    @Test
+    void 존재하지_않는_출연자_ID는_빈_결과를_반환한다() {
+        assertThat(performerRepository.findById(Long.MAX_VALUE)).isEmpty();
     }
 
     @Test
