@@ -84,6 +84,38 @@ class GetShowsUseCaseTest {
         verify(showQuerydslRepository).findAllBySearch(param, null, 10, ShowSort.POPULAR);
     }
 
+    /**
+     * venueId는 있는데 venue module에 그 공연장이 없는 dangling 상태다. cross-module FK가 없어(ADR 0003 §4) DB가 막아주지 않으므로 발생할 수 있고, 목록 한
+     * 건 때문에 응답 전체를 실패시키지 않는다 — 표시값만 비운다(과거 {@code leftJoin} 결과와 동일).
+     */
+    @Test
+    void 공연장이_없는_공연은_표시값만_비우고_목록에_남는다() {
+        ShowListParam param = new ShowListParam(null, null, null, null);
+        Show show = ShowFixture.show(
+                1L,
+                "concert",
+                "subtitle",
+                "image",
+                7L,
+                LocalDate.of(2026, 3, 27),
+                LocalDate.of(2026, 3, 28),
+                LocalDateTime.of(2026, 3, 20, 10, 0),
+                LocalDateTime.of(2026, 3, 28, 10, 0),
+                10L,
+                LocalDateTime.of(2026, 3, 1, 10, 0));
+        when(showQuerydslRepository.findAllBySearch(param, null, 10, ShowSort.POPULAR))
+                .thenReturn(new CursorPage<>(List.of(show), false, null));
+        when(showRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of());
+        when(venueLookup.getSummaries(Set.of(7L))).thenReturn(Map.of());
+
+        GetShowsUseCase.Output output = useCase.execute(new GetShowsUseCase.Input(param, 10, ShowSort.from("popular")));
+
+        assertThat(output.items()).hasSize(1);
+        assertThat(output.items().getFirst().title()).isEqualTo("concert");
+        assertThat(output.items().getFirst().venue()).isNull();
+        assertThat(output.items().getFirst().region()).isNull();
+    }
+
     @Test
     void 공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
         ShowListParam param = new ShowListParam(null, null, null, null);
