@@ -22,6 +22,7 @@ import com.ticket.like.api.LikeType;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.Performer;
+import com.ticket.show.domain.PerformerRepository;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
@@ -47,6 +48,7 @@ public class GetShowDetailUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
     private final ShowRepository showRepository;
     private final GradeRepository gradeRepository;
+    private final PerformerRepository performerRepository;
     private final PerformanceRepository performanceRepository;
     private final LikeQueryApi likeQuery;
     private final VenueLookupApi venueLookup;
@@ -192,8 +194,8 @@ public class GetShowDetailUseCase {
         if (performerId == null) {
             return null;
         }
-        return showQuerydslRepository
-                .findPerformer(performerId)
+        return performerRepository
+                .findById(performerId)
                 .map(this::toPerformerInfo)
                 .orElse(null);
     }
