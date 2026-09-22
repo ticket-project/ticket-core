@@ -25,9 +25,8 @@ import com.ticket.venue.exception.VenueNotFoundException;
 /**
  * venue 공개 계약({@link VenueLookupApi}, {@link VenueSeatLookupApi})의 실제 DB 동작을 고정한다.
  *
- * <p>위임만 하던 {@code VenueLookupService}·{@code VenueSeatLookupService}가 사라지고 Aggregate별 adapter 둘이 두 계약을 직접 구현하면서, 그
- * service들이 갖고 있던 빈 입력 처리와 지역 인자 null 검사도 여기로 왔다. 계약을 부르는 쪽에서 보이는 동작이 그대로인지를 본다. 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 두 계약을
- * 한 빈이 구현하게 된 뒤에도 보는 것은 달라지지 않는다.
+ * <p>Aggregate별 use case 둘({@code VenueLookupService}·{@code SeatLookupService})이 계약을 하나씩 구현한다. 빈 입력 처리와 지역 인자 null
+ * 검사까지 계약을 부르는 쪽에서 보이는 동작을 그대로 고정한다. 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 구현이 바뀌어도 보는 것은 달라지지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
@@ -98,11 +97,6 @@ class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
         assertThat(venueLookup.findIdsByRegion("JEJU")).isEmpty();
     }
 
-    /**
-     * 옛 {@code VenueLookupService}의 {@code Objects.requireNonNull}을 그대로 옮겼다 — 실제로 던지는 것은
-     * {@code NullPointerException}이다. {@link VenueLookupApi}의 Javadoc은 {@code IllegalArgumentException}이라고 적고 있지만 이번
-     * 리팩터링에서 동작을 바꾸지 않고 실측대로 고정한다.
-     */
     @Test
     void 지역_인자가_null이면_거부한다() {
         assertThatThrownBy(() -> venueLookup.findIdsByRegion(null))

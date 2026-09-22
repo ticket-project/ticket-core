@@ -19,8 +19,8 @@ import com.ticket.venue.api.VenueSeatLookupApi;
 /**
  * venue 공개 계약이 실제 컨텍스트에서 어떻게 배선되는지를 고정한다.
  *
- * <p>위임만 하던 service를 지우고 조회 Repository가 두 계약을 직접 구현하면서 두 가지가 조용히 깨질 수 있다. 하나는 <b>구현이 둘</b>이 되는 것(옛 service가 남아 있으면 주입이
- * 모호해진다), 다른 하나는 service가 갖고 있던 <b>읽기 전용 트랜잭션</b>이 사라지는 것이다. 단위 테스트는 클래스를 직접 생성하므로 둘 다 잡지 못한다 — Spring 자신에게 물어본다.
+ * <p>공개 계약은 Aggregate별 use case가 하나씩 구현한다. 여기서 조용히 깨질 수 있는 것이 둘이다. 하나는 한 계약의 <b>구현이 둘</b>이 되어 주입이 모호해지는 것, 다른 하나는 use
+ * case가 선언한 <b>읽기 전용 트랜잭션</b>이 proxy가 아니어서 실제로는 없는 것이다. 단위 테스트는 클래스를 직접 생성하므로 둘 다 잡지 못한다 — Spring 자신에게 물어본다.
  *
  * <p>두 계약은 Aggregate를 따라 빈 둘로 나뉘어 있다 — venue 표시값은 {@code VenueLookupService}, 물리 좌석은 {@code SeatLookupService}다. 계약별로
  * 주입 가능한 구현이 하나씩이라는 것과, 둘이 서로 다른 빈이라는 것을 여기서 고정한다.
