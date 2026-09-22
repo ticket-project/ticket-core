@@ -41,7 +41,7 @@
 
 | BC | 소유 | 비고 |
 | --- | --- | --- |
-| Show | Show, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 옛 `catalog`. 가격 원본은 `PerformanceGrade.price`. Show의 판매 필드(`displaySaleType`/`displaySaleWindow`)는 화면 표시 전용이고 실제 판단은 Booking의 `PerformanceSalesPolicy`가 한다(ADR 0007) |
+| Show | Show, ShowGenre, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 옛 `catalog`. 가격 원본은 `PerformanceGrade.price`. Show의 판매 필드(`displaySaleType`/`displaySaleWindow`)는 화면 표시 전용이고 실제 판단은 Booking의 `PerformanceSalesPolicy`가 한다(ADR 0007) |
 | Venue | Venue, Seat, Region | 물리 시설. show에서 분리됨 |
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
@@ -88,7 +88,7 @@
 | --- | --- | --- |
 | Venue | — | Venue |
 | Seat | — | Venue |
-| Show | — | Show |
+| Show | ShowGenre(Show↔Genre 연결 entity) | Show |
 | Performance | PerformanceGrade | Show |
 | Grade / Category / Genre / Performer | — | Show |
 | PerformanceSalesPolicy | OrderAcceptanceWindow · HoldPolicy · BookingEntryPolicy(값 객체) | Booking |
@@ -308,7 +308,7 @@ Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain�
 | 모듈 | `domain` 아래 묶음 |
 | --- | --- |
 | `booking` | capability마다 자기 `domain`을 갖는다(`order`/`hold`/`selection`/`seat`/`salespolicy`/`ticket`). module 직속 `domain` package는 없다 |
-| `show` | `show`(Show와 판매 표시 규칙) · `performance`(Performance와 허용된 PerformanceGrade 연관) · 나머지(Grade·Category·Genre·Performer와 저장 계약)는 `domain` 직속 |
+| `show` | `show`(Show·ShowGenre와 판매 표시 규칙) · `performance`(Performance와 허용된 PerformanceGrade 연관) · 나머지(Grade·Category·Genre·Performer와 저장 계약)는 `domain` 직속 |
 | `member` | 단일 Member Aggregate 중심이라 `domain` 직속 |
 | `venue` · `like` · `payment` | `domain` 직속 |
 
@@ -422,7 +422,7 @@ showRepository.save(show);
 목적이 아니라 **use case가 필요로 하는 조회 결과를 만드는 것**이 목적이다.
 
 ```java
-CursorPage<Show, ShowCursor> page = showQuerydslRepository.findAllBySearch(param, venueIds);
+CursorPage<Show, ShowCursor> page = showQuerydslRepository.findAllBySearch(param, venueIds, size, sort);
 ```
 
 module의 `persistence` package에 두고, **Querydsl로 조립하는 것만** 이름이 `*QuerydslRepository`다
@@ -464,7 +464,7 @@ Genre/Performer뿐 아니라 다른 BC의 표시값(venue 이름, 찜 개수)까
 Optional<Show> ShowRepository.findById(Long showId);
 
 // 조회 Repository — 화면 표시값 → API 응답(읽기 전용, 상태를 바꾸지 않는다)
-CursorPage<Show, ShowCursor> ShowQuerydslRepository.findAllBySearch(param, venueIds);
+CursorPage<Show, ShowCursor> ShowQuerydslRepository.findAllBySearch(param, venueIds, size, sort);
 ```
 
 둘 다 같은 `SHOWS` 테이블을 보고 같은 엔티티를 돌려줄 수 있지만 목적이 다르다. 조회 쪽 결과는 읽기
