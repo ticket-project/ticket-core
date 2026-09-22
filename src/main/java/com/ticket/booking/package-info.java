@@ -30,6 +30,7 @@
             "member :: api",
             "security :: api",
             "shared :: api",
+            "shared :: config",
             "shared :: web",
             "shared :: exception",
             "shared :: jpa"

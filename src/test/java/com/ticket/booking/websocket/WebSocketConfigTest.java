@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 
-import com.ticket.shared.api.CorsProperties;
+import com.ticket.shared.config.CorsProperties;
 
 class WebSocketConfigTest {
     @Test
