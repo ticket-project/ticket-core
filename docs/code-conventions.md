@@ -155,9 +155,15 @@ event·enum 같은 데이터에는 붙이지 않는다. 배경은
   `RecordingXxx`(`RecordingLockManager`)로 역할을 드러낸다. 상태만 흉내내는 것이 필요하면
   `FakeXxx`를 쓰지만 지금은 하나도 없다 — 대부분 `@MockitoBean`으로 충분하다.
 - 여러 모듈의 JPA/Querydsl 테스트가 공유하는 기반 코드는 `com.ticket.testsupport.persistence`에 둔다.
-- Java와 seed source는 Spotless가 4칸 들여쓰기, 120자 줄 길이, 명시적 import, import 순서,
-  trailing whitespace와 EOF newline을 관리한다. `./gradlew spotlessApply`로 수정하고
-  `./gradlew spotlessCheck`로 검사한다. wildcard import는 허용하지 않는다.
+- **코드 형식의 원본은 `build.gradle`의 Spotless 설정이다.** 포맷터 이름과 옵션을 문서에 옮겨
+  적지 않는다 — 설정을 바꾸면 문서가 조용히 어긋난다. `./gradlew spotlessApply`로 맞추고
+  `./gradlew spotlessCheck`로 검사하며, CI 두 워크플로가 같은 검사를 돌린다.
+- **줄바꿈 위치는 사람이 정하지 않는다.** Spotless가 쓰는 포맷터는 AST에서 출력을 다시 만들기
+  때문에 손으로 넣은 줄바꿈은 버려진다. 들여쓰기·줄 길이·import 순서도 마찬가지다. 관례를
+  외우는 대신 `spotlessApply`를 돌린다. wildcard import는 설정이 막는다.
+- **`.editorconfig`는 IDE가 치는 모양을 그 결과에 미리 맞추는 용도다.** 최종 강제는 Spotless가
+  하고, `.editorconfig`의 `ij_*` 속성은 IntelliJ에서만 동작한다. 둘이 어긋나면 `.editorconfig`를
+  Spotless 쪽에 맞춘다.
 - **production package는 `package-info.java`에 `@NullMarked`를 선언한다.** `@NullMarked`는 하위
   package로 전파되지 않으므로 package를 새로 만들 때마다 필요하다. 실제로 없을 수 있는 값에만
   `@Nullable`을 붙이고, `@NullUnmarked`와 suppression은 쓰지 않는다. NullAway 오류는 CI 실패다.

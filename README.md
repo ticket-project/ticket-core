@@ -18,7 +18,8 @@ token을 검증해 예매 API 진입을 제어한다.
 
 ## 문서
 
-작업 규칙과 어떤 문서를 먼저 읽을지는 **[`AGENTS.md`](AGENTS.md)** 하나가 원본이다.
+사람은 **[`CONTRIBUTING.md`](CONTRIBUTING.md)**, AI 에이전트와 코딩 도구는
+**[`AGENTS.md`](AGENTS.md)**에서 시작한다. 둘 다 규칙을 담지 않고 원본 문서를 가리키기만 한다.
 
 ## 로컬 실행
 
