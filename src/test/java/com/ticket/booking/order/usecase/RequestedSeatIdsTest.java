@@ -15,14 +15,12 @@ import com.ticket.shared.exception.InvalidRequestException;
 class RequestedSeatIdsTest {
     @Test
     void 빈_좌석_id_목록이면_예외를_던진다() {
-        assertThatThrownBy(() -> RequestedSeatIds.from(List.of()))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> RequestedSeatIds.from(List.of())).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
     void null_좌석_id_목록이면_예외를_던진다() {
-        assertThatThrownBy(() -> RequestedSeatIds.from(null))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> RequestedSeatIds.from(null)).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -35,8 +33,7 @@ class RequestedSeatIdsTest {
     void null_좌석_id가_포함되면_예외를_던진다() {
         final List<Long> seatIds = Arrays.asList(3L, null, 5L);
 
-        assertThatThrownBy(() -> RequestedSeatIds.from(seatIds))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> RequestedSeatIds.from(seatIds)).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test

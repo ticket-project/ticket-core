@@ -19,8 +19,8 @@ interface SpringDataPerformanceJpaRepository extends JpaRepository<Performance, 
     Optional<Long> findRepresentativePerformanceIdByShowId(@Param("showId") long showId);
 
     /**
-     * 이 회차에 배정된 PerformanceGrade를 엔티티로 반환한다. 등급 코드·이름은 Grade가 다른 aggregate라 여기서 join하지 않는다 — 호출하는
-     * use case가 {@code GradeRepository}로 따로 읽어 조합한다.
+     * 이 회차에 배정된 PerformanceGrade를 엔티티로 반환한다. 등급 코드·이름은 Grade가 다른 aggregate라 여기서 join하지 않는다 — 호출하는 use case가
+     * {@code GradeRepository}로 따로 읽어 조합한다.
      */
     @Query("SELECT pg FROM PerformanceGrade pg WHERE pg.performance.id = :performanceId")
     List<PerformanceGrade> findGradesByPerformanceId(@Param("performanceId") long performanceId);

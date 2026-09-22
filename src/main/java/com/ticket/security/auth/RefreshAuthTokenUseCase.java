@@ -20,25 +20,18 @@ public class RefreshAuthTokenUseCase {
     private final AuthTokenIssuer authTokenIssuer;
 
     public Result execute(final Input input) {
-        final Long memberId =
-                refreshTokenStore
-                        .validate(input.refreshToken())
-                        .orElseThrow(
-                                () -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
+        final Long memberId = refreshTokenStore
+                .validate(input.refreshToken())
+                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
         final MemberStatus member = memberAccountOperations.requireActiveIdentity(memberId);
         final IssuedAuthTokens tokens =
-                authTokenIssuer.rotateTokens(
-                        member.memberId(), member.role(), input.refreshToken());
+                authTokenIssuer.rotateTokens(member.memberId(), member.role(), input.refreshToken());
         return toResult(tokens);
     }
 
     private static Result toResult(final IssuedAuthTokens tokens) {
         return new Result(
-                new Output(
-                        tokens.accessToken(),
-                        tokens.tokenType(),
-                        tokens.expiresIn(),
-                        tokens.memberId()),
+                new Output(tokens.accessToken(), tokens.tokenType(), tokens.expiresIn(), tokens.memberId()),
                 tokens.refreshToken(),
                 tokens.refreshTokenExpiresIn());
     }

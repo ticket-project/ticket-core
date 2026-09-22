@@ -20,7 +20,8 @@ import tools.jackson.databind.json.JsonMapper;
 @SuppressWarnings("NonAsciiCharacters")
 class ShowCursorCodecTest {
 
-    private final ShowCursorCodec codec = new ShowCursorCodec(JsonMapper.builder().build());
+    private final ShowCursorCodec codec =
+            new ShowCursorCodec(JsonMapper.builder().build());
 
     @Test
     void 커서_wire_포맷은_url_safe_base64_json이다() {
@@ -29,42 +30,31 @@ class ShowCursorCodecTest {
         String encoded = codec.encode(position);
 
         String json = new String(Base64.getUrlDecoder().decode(encoded), StandardCharsets.UTF_8);
-        assertThat(json)
-                .isEqualTo(
-                        "{\"sort\":\"POPULAR\",\"dir\":\"DESC\",\"lastValue\":\"10\",\"lastId\":1}");
+        assertThat(json).isEqualTo("{\"sort\":\"POPULAR\",\"dir\":\"DESC\",\"lastValue\":\"10\",\"lastId\":1}");
         assertThat(encoded).doesNotContain("=");
     }
 
     @Test
     void 최신순_커서에는_마감여부와_판정_시각이_함께_담긴다() {
-        ShowCursor position =
-                new ShowCursor(
-                        ShowSort.LATEST, "DESC", "2026-09-14T09:00", 7L, 0, "2026-09-14T10:00");
+        ShowCursor position = new ShowCursor(ShowSort.LATEST, "DESC", "2026-09-14T09:00", 7L, 0, "2026-09-14T10:00");
 
-        String json =
-                new String(
-                        Base64.getUrlDecoder().decode(codec.encode(position)),
-                        StandardCharsets.UTF_8);
+        String json = new String(Base64.getUrlDecoder().decode(codec.encode(position)), StandardCharsets.UTF_8);
 
         assertThat(json)
-                .isEqualTo(
-                        "{\"sort\":\"LATEST\",\"dir\":\"DESC\",\"lastValue\":\"2026-09-14T09:00\","
-                                + "\"lastId\":7,\"saleClosedRank\":0,\"evaluatedAt\":\"2026-09-14T10:00\"}");
+                .isEqualTo("{\"sort\":\"LATEST\",\"dir\":\"DESC\",\"lastValue\":\"2026-09-14T09:00\","
+                        + "\"lastId\":7,\"saleClosedRank\":0,\"evaluatedAt\":\"2026-09-14T10:00\"}");
     }
 
     @Test
     void 최신순_커서도_그대로_되읽는다() {
-        ShowCursor position =
-                new ShowCursor(
-                        ShowSort.LATEST, "DESC", "2026-09-14T09:00", 7L, 1, "2026-09-14T10:00");
+        ShowCursor position = new ShowCursor(ShowSort.LATEST, "DESC", "2026-09-14T09:00", 7L, 1, "2026-09-14T10:00");
 
         assertThat(codec.decode(codec.encode(position))).isEqualTo(position);
     }
 
     @Test
     void 인코딩한_커서를_그대로_되읽는다() {
-        ShowCursor position =
-                new ShowCursor(ShowSort.SALE_START_APPROACHING, "ASC", "2026-03-15T10:00", 42L);
+        ShowCursor position = new ShowCursor(ShowSort.SALE_START_APPROACHING, "ASC", "2026-03-15T10:00", 42L);
 
         assertThat(codec.decode(codec.encode(position))).isEqualTo(position);
     }

@@ -21,9 +21,11 @@ import tools.jackson.databind.json.JsonMapper;
 @ExtendWith(MockitoExtension.class)
 class HoldMetaCodecTest {
 
-    @Mock private JsonMapper jsonMapper;
+    @Mock
+    private JsonMapper jsonMapper;
 
-    @InjectMocks private HoldMetaCodec codec;
+    @InjectMocks
+    private HoldMetaCodec codec;
 
     @Test
     void hold를_json으로_인코딩한다() {
@@ -72,13 +74,11 @@ class HoldMetaCodecTest {
         String json = realCodec.encode(createHold());
 
         assertThat(json)
-                .isEqualTo(
-                        "{\"holdKey\":\"hold-key\",\"memberId\":1,\"performanceId\":10,"
-                                + "\"seatIds\":[100,101],\"expiresAt\":\"2026-03-15T12:30:00\"}");
+                .isEqualTo("{\"holdKey\":\"hold-key\",\"memberId\":1,\"performanceId\":10,"
+                        + "\"seatIds\":[100,101],\"expiresAt\":\"2026-03-15T12:30:00\"}");
     }
 
     private Hold createHold() {
-        return new Hold(
-                "hold-key", 1L, 10L, List.of(100L, 101L), LocalDateTime.of(2026, 3, 15, 12, 30));
+        return new Hold("hold-key", 1L, 10L, List.of(100L, 101L), LocalDateTime.of(2026, 3, 15, 12, 30));
     }
 }

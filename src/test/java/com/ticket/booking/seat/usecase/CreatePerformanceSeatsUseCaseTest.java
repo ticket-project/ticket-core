@@ -37,9 +37,15 @@ class CreatePerformanceSeatsUseCaseTest {
     private static final long PERFORMANCE_ID = 1L;
     private static final long SEAT_ID = 10L;
     private static final long PERFORMANCE_GRADE_ID = 100L;
-    @Mock private PerformanceSaleCatalogApi performanceSaleCatalog;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
-    @InjectMocks private CreatePerformanceSeatsUseCase useCase;
+
+    @Mock
+    private PerformanceSaleCatalogApi performanceSaleCatalog;
+
+    @Mock
+    private PerformanceSeatRepository performanceSeatRepository;
+
+    @InjectMocks
+    private CreatePerformanceSeatsUseCase useCase;
 
     @Test
     void 편성할_좌석이_없으면_예외를_던진다() {
@@ -49,32 +55,27 @@ class CreatePerformanceSeatsUseCaseTest {
 
     @Test
     void 이미_편성된_좌석이면_예외를_던지고_show를_조회하지_않는다() {
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(
-                        PERFORMANCE_ID, Set.of(SEAT_ID)))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of(mock(PerformanceSeat.class)));
 
         final CreatePerformanceSeatsUseCase.Input input =
-                new CreatePerformanceSeatsUseCase.Input(
-                        PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
+                new CreatePerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
 
         assertThatThrownBy(() -> useCase.execute(input))
                 .isInstanceOf(PerformanceSeatAlreadyExistsException.class)
                 .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID);
-        verify(performanceSaleCatalog, org.mockito.Mockito.never())
-                .getSaleSnapshot(anyLong(), anySet());
+        verify(performanceSaleCatalog, org.mockito.Mockito.never()).getSaleSnapshot(anyLong(), anySet());
     }
 
     @Test
     void 다른_venue의_좌석이면_예외를_던진다() {
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(
-                        PERFORMANCE_ID, Set.of(SEAT_ID)))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of());
         when(performanceSaleCatalog.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
                 .thenReturn(snapshotWithoutSeat());
 
         final CreatePerformanceSeatsUseCase.Input input =
-                new CreatePerformanceSeatsUseCase.Input(
-                        PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
+                new CreatePerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
 
         assertThatThrownBy(() -> useCase.execute(input))
                 .isInstanceOf(SeatVenueMismatchException.class)
@@ -84,15 +85,13 @@ class CreatePerformanceSeatsUseCaseTest {
 
     @Test
     void 다른_회차의_grade면_예외를_던진다() {
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(
-                        PERFORMANCE_ID, Set.of(SEAT_ID)))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of());
         when(performanceSaleCatalog.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
                 .thenReturn(snapshotWithSeatButNoGrade());
 
         final CreatePerformanceSeatsUseCase.Input input =
-                new CreatePerformanceSeatsUseCase.Input(
-                        PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
+                new CreatePerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
 
         assertThatThrownBy(() -> useCase.execute(input))
                 .isInstanceOf(PerformanceGradeMismatchException.class)
@@ -102,17 +101,14 @@ class CreatePerformanceSeatsUseCaseTest {
 
     @Test
     void 유효한_요청이면_grade가격을_unitPrice로_snapshot해_생성한다() {
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(
-                        PERFORMANCE_ID, Set.of(SEAT_ID)))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, Set.of(SEAT_ID)))
                 .thenReturn(List.of());
         when(performanceSaleCatalog.getSaleSnapshot(eq(PERFORMANCE_ID), anySet()))
                 .thenReturn(validSnapshot());
-        when(performanceSeatRepository.saveAll(any()))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(performanceSeatRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         final CreatePerformanceSeatsUseCase.Input input =
-                new CreatePerformanceSeatsUseCase.Input(
-                        PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
+                new CreatePerformanceSeatsUseCase.Input(PERFORMANCE_ID, Map.of(SEAT_ID, PERFORMANCE_GRADE_ID));
         useCase.execute(input);
 
         final ArgumentCaptor<List<PerformanceSeat>> captor = ArgumentCaptor.forClass(List.class);

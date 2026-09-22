@@ -19,7 +19,6 @@ public class ShowSeatMapController {
 
     @GetMapping("/{showId}/seats")
     public ApiResponse<GetShowSeatMapUseCase.Output> getSeatMap(@PathVariable final Long showId) {
-        return ApiResponse.success(
-                getShowSeatMapUseCase.execute(new GetShowSeatMapUseCase.Input(showId)));
+        return ApiResponse.success(getShowSeatMapUseCase.execute(new GetShowSeatMapUseCase.Input(showId)));
     }
 }

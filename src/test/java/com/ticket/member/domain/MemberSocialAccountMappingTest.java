@@ -16,10 +16,9 @@ import com.ticket.member.api.SocialProvider;
 /**
  * {@code Member.socialAccounts} 매핑이 soft delete 규칙을 깨지 않는지 고정한다.
  *
- * <p>매핑 애노테이션을 직접 확인하는 이유가 있다. 지금 탈퇴 흐름은 컬렉션에서 자식을 <b>빼지 않고</b> {@code deletedAt}만 채우므로, {@code
- * orphanRemoval = true}를 붙여도 그 흐름만으로는 아무 일도 일어나지 않는다({@code MemberSocialAccountPersistenceTest}가
- * 통과해 버린다). 위험은 나중에 누군가 컬렉션에서 자식을 빼는 메서드를 추가하는 순간 <b>연결 이력 row가 조용히 삭제되는 것</b>이다. 행위 테스트로는 그 미래의
- * 실수를 잡을 수 없어, 결정 자체를 여기서 못박는다.
+ * <p>매핑 애노테이션을 직접 확인하는 이유가 있다. 지금 탈퇴 흐름은 컬렉션에서 자식을 <b>빼지 않고</b> {@code deletedAt}만 채우므로, {@code orphanRemoval = true}를
+ * 붙여도 그 흐름만으로는 아무 일도 일어나지 않는다({@code MemberSocialAccountPersistenceTest}가 통과해 버린다). 위험은 나중에 누군가 컬렉션에서 자식을 빼는 메서드를 추가하는
+ * 순간 <b>연결 이력 row가 조용히 삭제되는 것</b>이다. 행위 테스트로는 그 미래의 실수를 잡을 수 없어, 결정 자체를 여기서 못박는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class MemberSocialAccountMappingTest {
@@ -28,8 +27,7 @@ class MemberSocialAccountMappingTest {
         OneToMany mapping = socialAccountsMapping();
 
         assertThat(mapping.orphanRemoval())
-                .as(
-                        "MemberSocialAccount는 deletedAt으로 soft delete한다 — 컬렉션에서 빼는 순간 row가 지워지면 연결 이력이 사라진다")
+                .as("MemberSocialAccount는 deletedAt으로 soft delete한다 — 컬렉션에서 빼는 순간 row가 지워지면 연결 이력이 사라진다")
                 .isFalse();
     }
 
@@ -44,8 +42,7 @@ class MemberSocialAccountMappingTest {
 
     @Test
     void 활성_소셜계정만_노출하고_탈퇴한_계정은_감춘다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
         MemberSocialAccount google = member.addSocialAccount(SocialProvider.GOOGLE, "google-1");
 
@@ -59,8 +56,7 @@ class MemberSocialAccountMappingTest {
 
     @Test
     void 활성_소셜계정_목록을_바꿔도_aggregate에_반영되지_않는다() {
-        Member member =
-                Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
+        Member member = Member.createSocialMember(Email.create("user@example.com"), "사용자", Role.MEMBER);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
 
         List<MemberSocialAccount> accounts = member.activeSocialAccounts();

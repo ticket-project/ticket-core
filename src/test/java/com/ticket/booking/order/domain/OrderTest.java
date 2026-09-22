@@ -131,15 +131,7 @@ class OrderTest {
         Order order = createOrder(expiresAt);
         order.cancel(expiresAt.minusMinutes(1));
 
-        assertThatThrownBy(
-                        () ->
-                                order.addOrderSeat(
-                                        501L,
-                                        42L,
-                                        new BigDecimal("12000"),
-                                        "R",
-                                        "R석",
-                                        "1F 가구역 A열 1번"))
+        assertThatThrownBy(() -> order.addOrderSeat(501L, 42L, new BigDecimal("12000"), "R", "R석", "1F 가구역 A열 1번"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("currentStatus=CANCELED");
         assertThat(order.getTotalAmount()).isEqualByComparingTo("0");
@@ -147,13 +139,6 @@ class OrderTest {
 
     private Order createOrder(final LocalDateTime expiresAt) {
         return new Order(
-                1L,
-                10L,
-                "order-key",
-                "hold-key",
-                expiresAt,
-                "show-title",
-                expiresAt.minusDays(1),
-                "venue-name");
+                1L, 10L, "order-key", "hold-key", expiresAt, "show-title", expiresAt.minusDays(1), "venue-name");
     }
 }

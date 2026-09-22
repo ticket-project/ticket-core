@@ -12,11 +12,7 @@ import lombok.RequiredArgsConstructor;
  * <p>여기에는 조회도 상태 판단도 두지 않는다. 실행 주기만 정하고 유스케이스를 한 번 부른다.
  */
 @Component
-@ConditionalOnProperty(
-        prefix = "worker",
-        name = "enabled",
-        havingValue = "true",
-        matchIfMissing = true)
+@ConditionalOnProperty(prefix = "worker", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class OrderExpirationTrigger {
     private final ExpirePendingOrdersUseCase expirePendingOrdersUseCase;

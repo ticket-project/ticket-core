@@ -22,18 +22,12 @@ public class OAuth2FrontendRedirectResolver {
     private final String defaultFailureRedirectUri;
 
     public OAuth2FrontendRedirectResolver(
-            @Value("${app.auth.frontend.local-base-url:http://localhost:3000}")
-                    final String localFrontendBaseUrl,
-            @Value("${app.auth.frontend.prod-base-url:https://oneticket.site}")
-                    final String prodFrontendBaseUrl,
-            @Value("${app.auth.oauth2-success-redirect-path:/auth/callback}")
-                    final String successRedirectPath,
-            @Value("${app.auth.oauth2-failure-redirect-path:/auth/callback}")
-                    final String failureRedirectPath,
-            @Value("${app.auth.oauth2-success-redirect-uri}")
-                    final String defaultSuccessRedirectUri,
-            @Value("${app.auth.oauth2-failure-redirect-uri}")
-                    final String defaultFailureRedirectUri) {
+            @Value("${app.auth.frontend.local-base-url:http://localhost:3000}") final String localFrontendBaseUrl,
+            @Value("${app.auth.frontend.prod-base-url:https://oneticket.site}") final String prodFrontendBaseUrl,
+            @Value("${app.auth.oauth2-success-redirect-path:/auth/callback}") final String successRedirectPath,
+            @Value("${app.auth.oauth2-failure-redirect-path:/auth/callback}") final String failureRedirectPath,
+            @Value("${app.auth.oauth2-success-redirect-uri}") final String defaultSuccessRedirectUri,
+            @Value("${app.auth.oauth2-failure-redirect-uri}") final String defaultFailureRedirectUri) {
         this.localFrontendBaseUrl = normalizeBaseUrl(localFrontendBaseUrl);
         this.prodFrontendBaseUrl = normalizeBaseUrl(prodFrontendBaseUrl);
         this.successRedirectPath = normalizePath(successRedirectPath);

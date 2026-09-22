@@ -36,27 +36,20 @@ public class GetOrderStatusUseCase {
         }
     }
 
-    public record Output(
-            String orderKey, OrderState status, LocalDateTime expiresAt, long remainingSeconds) {}
+    public record Output(String orderKey, OrderState status, LocalDateTime expiresAt, long remainingSeconds) {}
 
     public Output execute(final Input input) {
-        final Order order =
-                orderRepository
-                        .findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
-                        .orElseThrow(
-                                () ->
-                                        new OrderNotOwnedException(
-                                                input.orderKey(), input.memberId()));
+        final Order order = orderRepository
+                .findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
+                .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
         // 탈퇴한 회원은 자신의 주문 상태도 조회할 수 없다 — 기존에는 상태 조회의 member join이
         // deletedAt으로 걸러냈다. member 조회가 booking 밖으로 빠졌으므로 여기서 같은 결과를 낸다.
         requireActiveMember(input.orderKey(), input.memberId());
 
         final long remainingSeconds =
-                OrderRemainingTime.seconds(
-                        order.getStatus(), order.getExpiresAt(), LocalDateTime.now(clock));
+                OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), LocalDateTime.now(clock));
 
-        return new Output(
-                order.getOrderKey(), order.getStatus(), order.getExpiresAt(), remainingSeconds);
+        return new Output(order.getOrderKey(), order.getStatus(), order.getExpiresAt(), remainingSeconds);
     }
 
     private void requireActiveMember(final String orderKey, final Long memberId) {

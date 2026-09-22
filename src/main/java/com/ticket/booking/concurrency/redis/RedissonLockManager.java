@@ -30,8 +30,7 @@ public class RedissonLockManager implements LockManager {
     private final RedissonLockKeyFormatter keyFormatter;
 
     @Override
-    public <T> T withLock(
-            final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
+    public <T> T withLock(final List<LockKey> keys, final LockOptions options, final Supplier<T> action) {
         final List<String> lockNames =
                 keys.stream().map(keyFormatter::format).distinct().sorted().toList();
         if (lockNames.isEmpty()) {
@@ -54,8 +53,7 @@ public class RedissonLockManager implements LockManager {
         }
     }
 
-    private boolean tryLock(final RLock lock, final LockOptions options)
-            throws InterruptedException {
+    private boolean tryLock(final RLock lock, final LockOptions options) throws InterruptedException {
         if (options.autoExtends()) {
             return lock.tryLock(options.waitTime().toMillis(), TimeUnit.MILLISECONDS);
         }

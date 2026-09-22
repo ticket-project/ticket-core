@@ -40,8 +40,7 @@ class PerformanceSalesPolicyTest {
     void 접수_기간_안이면_예외를_던지지_않는다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
-        assertThatCode(() -> policy.ensureAcceptingOrders(OPENS_AT.plusDays(1)))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> policy.ensureAcceptingOrders(OPENS_AT.plusDays(1))).doesNotThrowAnyException();
     }
 
     @Test

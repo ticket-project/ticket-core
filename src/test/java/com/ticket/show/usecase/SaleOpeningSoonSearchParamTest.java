@@ -18,14 +18,12 @@ class SaleOpeningSoonSearchParamTest {
 
     @Test
     void 판매시작_From이_To보다_늦으면_invalid_input_예외를_던진다() {
-        assertThatThrownBy(() -> param(LATE, EARLY, null, null))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> param(LATE, EARLY, null, null)).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
     void 판매종료_From이_To보다_늦으면_invalid_input_예외를_던진다() {
-        assertThatThrownBy(() -> param(null, null, LATE, EARLY))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> param(null, null, LATE, EARLY)).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -36,10 +34,8 @@ class SaleOpeningSoonSearchParamTest {
     @Test
     void 지역_문자열은_목록_조회와_같은_규칙으로_변환한다() {
         assertThat(param(null, null, null, null).getRegion()).isNull();
-        assertThat(
-                        SaleOpeningSoonSearchParam.of(
-                                        null, null, " SEOUL ", null, null, null, null, null)
-                                .getRegion())
+        assertThat(SaleOpeningSoonSearchParam.of(null, null, " SEOUL ", null, null, null, null, null)
+                        .getRegion())
                 .isEqualTo(Region.SEOUL);
     }
 

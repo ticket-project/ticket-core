@@ -22,8 +22,11 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetPerformanceScheduleListUseCaseTest {
-    @Mock private PerformanceRepository performanceRepository;
-    @InjectMocks private GetPerformanceScheduleListUseCase useCase;
+    @Mock
+    private PerformanceRepository performanceRepository;
+
+    @InjectMocks
+    private GetPerformanceScheduleListUseCase useCase;
 
     @Test
     void 같은_공연의_회차_목록을_반환한다() {

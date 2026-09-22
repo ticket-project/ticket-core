@@ -36,11 +36,10 @@ import com.ticket.shared.web.ApiResponse;
 /**
  * booking 오류의 외부 계약(HTTP 상태, E-code, 공개 메시지)을 한곳에 고정한다.
  *
- * <p>예전에는 전역 advice 테스트가 booking의 E6000을 빌려 와 확인했다. 오류를 module이 소유하게 되면서 그 자리를 여기가 대신한다 — {@code
- * gatling-test}가 E4001·E6000·E6003을 하드코딩하므로 이 표가 곧 외부 계약이다.
+ * <p>예전에는 전역 advice 테스트가 booking의 E6000을 빌려 와 확인했다. 오류를 module이 소유하게 되면서 그 자리를 여기가 대신한다 — {@code gatling-test}가
+ * E4001·E6000·E6003을 하드코딩하므로 이 표가 곧 외부 계약이다.
  *
- * <p>admission token 오류(E8xxx)도 이 handler가 잡으므로 여기서 함께 고정한다. 검증 실패 사유({@code reason})는 응답에 노출되지 않고
- * 로그에만 쓰인다.
+ * <p>admission token 오류(E8xxx)도 이 handler가 잡으므로 여기서 함께 고정한다. 검증 실패 사유({@code reason})는 응답에 노출되지 않고 로그에만 쓰인다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class BookingExceptionHandlerTest {
@@ -49,30 +48,16 @@ class BookingExceptionHandlerTest {
     static Stream<Arguments> 오류_계약() {
         return Stream.of(
                 Arguments.of(
-                        new PerformanceIsPastException(10L),
-                        HttpStatus.BAD_REQUEST,
-                        "E3001",
-                        "과거 공연은 예매할 수 없습니다."),
+                        new PerformanceIsPastException(10L), HttpStatus.BAD_REQUEST, "E3001", "과거 공연은 예매할 수 없습니다."),
                 Arguments.of(
-                        new BookingNotOpenYetException(10L),
-                        HttpStatus.BAD_REQUEST,
-                        "E3002",
-                        "아직 예매가 오픈되지 않았습니다."),
-                Arguments.of(
-                        new NoAvailableSeatException(10L),
-                        HttpStatus.BAD_REQUEST,
-                        "E3003",
-                        "이용 가능한 좌석이 없습니다."),
+                        new BookingNotOpenYetException(10L), HttpStatus.BAD_REQUEST, "E3002", "아직 예매가 오픈되지 않았습니다."),
+                Arguments.of(new NoAvailableSeatException(10L), HttpStatus.BAD_REQUEST, "E3003", "이용 가능한 좌석이 없습니다."),
                 Arguments.of(
                         new SeatMismatchInPerformanceException(10L),
                         HttpStatus.BAD_REQUEST,
                         "E4000",
                         "요청한 좌석 정보와 일치하지 않습니다."),
-                Arguments.of(
-                        new SeatAlreadySelectedException(10L, 20L),
-                        HttpStatus.CONFLICT,
-                        "E4001",
-                        "이미 선택된 좌석입니다."),
+                Arguments.of(new SeatAlreadySelectedException(10L, 20L), HttpStatus.CONFLICT, "E4001", "이미 선택된 좌석입니다."),
                 Arguments.of(
                         new SeatNotOwnedException(10L, 20L, 30L),
                         HttpStatus.FORBIDDEN,
@@ -108,21 +93,10 @@ class BookingExceptionHandlerTest {
                         HttpStatus.CONFLICT,
                         "E5004",
                         "이미 진행 중인 결제 대기 주문이 있습니다."),
+                Arguments.of(new SeatAlreadyHeldException(10L, 20L), HttpStatus.CONFLICT, "E6000", "좌석이 이미 선점되었습니다."),
                 Arguments.of(
-                        new SeatAlreadyHeldException(10L, 20L),
-                        HttpStatus.CONFLICT,
-                        "E6000",
-                        "좌석이 이미 선점되었습니다."),
-                Arguments.of(
-                        new HoldLimitExceededException(5L, 4),
-                        HttpStatus.CONFLICT,
-                        "E6001",
-                        "선점 가능한 좌석 수를 초과하였습니다."),
-                Arguments.of(
-                        new HoldBusyException(),
-                        HttpStatus.CONFLICT,
-                        "E6003",
-                        "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
+                        new HoldLimitExceededException(5L, 4), HttpStatus.CONFLICT, "E6001", "선점 가능한 좌석 수를 초과하였습니다."),
+                Arguments.of(new HoldBusyException(), HttpStatus.CONFLICT, "E6003", "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
     }
 
     @ParameterizedTest
@@ -132,8 +106,7 @@ class BookingExceptionHandlerTest {
             final HttpStatus expectedStatus,
             final String expectedCode,
             final String expectedMessage) {
-        final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleBookingException(exception);
+        final ResponseEntity<ApiResponse<Object>> response = handler.handleBookingException(exception);
 
         assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
         assertThat(response.getBody()).isNotNull();
@@ -151,18 +124,13 @@ class BookingExceptionHandlerTest {
                 handler.handleBookingException(new HoldBusyException("좌석 처리 중입니다."));
 
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getMessage())
-                .isEqualTo("좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요.");
+        assertThat(response.getBody().getError().getMessage()).isEqualTo("좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요.");
         assertThat(response.getBody().getError().getData()).isEqualTo("좌석 처리 중입니다.");
     }
 
     static Stream<Arguments> admission_오류_계약() {
         return Stream.of(
-                Arguments.of(
-                        new AdmissionTokenRequiredException(),
-                        HttpStatus.FORBIDDEN,
-                        "E8000",
-                        "대기열 입장 토큰이 필요합니다."),
+                Arguments.of(new AdmissionTokenRequiredException(), HttpStatus.FORBIDDEN, "E8000", "대기열 입장 토큰이 필요합니다."),
                 Arguments.of(
                         new AdmissionTokenExpiredException("expired-reason", null),
                         HttpStatus.FORBIDDEN,
@@ -182,8 +150,7 @@ class BookingExceptionHandlerTest {
             final HttpStatus expectedStatus,
             final String expectedCode,
             final String expectedMessage) {
-        final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleAdmissionTokenException(exception);
+        final ResponseEntity<ApiResponse<Object>> response = handler.handleAdmissionTokenException(exception);
 
         assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
         assertThat(response.getBody()).isNotNull();
@@ -195,8 +162,7 @@ class BookingExceptionHandlerTest {
     void admission_검증_실패_사유는_응답에_노출되지_않는다() {
         final AdmissionTokenException exception = new AdmissionTokenException("서명 불일치: 상세 진단 정보");
 
-        final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleAdmissionTokenException(exception);
+        final ResponseEntity<ApiResponse<Object>> response = handler.handleAdmissionTokenException(exception);
 
         assertThat(exception.getReason()).isEqualTo("서명 불일치: 상세 진단 정보");
         assertThat(response.getBody()).isNotNull();

@@ -13,11 +13,10 @@ import com.ticket.show.exception.ShowException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * show 오류를 응답으로 옮긴다. base 예외 하나만 잡는다 — 그 범위는 {@code
- * com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
+ * show 오류를 응답으로 옮긴다. base 예외 하나만 잡는다 — 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
  *
- * <p>{@link ShowException}은 상태를 모른다. 지금 구체 타입은 {@code UnsupportedShowSortException} 하나뿐이고 400으로
- * 응답한다 — 두 번째 타입이 생기면 {@code BookingExceptionHandler}처럼 타입별 switch로 바꾼다.
+ * <p>{@link ShowException}은 상태를 모른다. 지금 구체 타입은 {@code UnsupportedShowSortException} 하나뿐이고 400으로 응답한다 — 두 번째 타입이 생기면
+ * {@code BookingExceptionHandler}처럼 타입별 switch로 바꾼다.
  */
 @Slf4j
 @RestControllerAdvice
@@ -28,10 +27,7 @@ public class ShowExceptionHandler {
         log.info("show.rejected: code={}", exception.getErrorCode().getCode());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
-                .body(
-                        ApiResponse.error(
-                                exception.getErrorCode().getCode(),
-                                exception.getMessage(),
-                                exception.getData()));
+                .body(ApiResponse.error(
+                        exception.getErrorCode().getCode(), exception.getMessage(), exception.getData()));
     }
 }

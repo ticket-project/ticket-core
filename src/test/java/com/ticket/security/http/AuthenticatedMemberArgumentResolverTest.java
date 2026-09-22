@@ -14,8 +14,7 @@ import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.UnauthenticatedException;
 
 class AuthenticatedMemberArgumentResolverTest {
-    private final AuthenticatedMemberArgumentResolver resolver =
-            new AuthenticatedMemberArgumentResolver();
+    private final AuthenticatedMemberArgumentResolver resolver = new AuthenticatedMemberArgumentResolver();
 
     @AfterEach
     void tearDown() {
@@ -32,8 +31,7 @@ class AuthenticatedMemberArgumentResolverTest {
     void 인증된_AuthenticatedMember를_반환한다() {
         AuthenticatedMember principal = new AuthenticatedMember(10L, "MEMBER");
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(principal, null, List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, List.of()));
 
         Object resolved = resolver.resolveArgument(null, null, null, null);
 
@@ -43,8 +41,7 @@ class AuthenticatedMemberArgumentResolverTest {
     @Test
     void principal이_AuthenticatedMember가_아니면_401을_던진다() {
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken("member", null, List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken("member", null, List.of()));
 
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
                 .isInstanceOf(UnauthenticatedException.class);

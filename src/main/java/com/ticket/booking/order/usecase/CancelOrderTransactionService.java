@@ -15,11 +15,11 @@ import com.ticket.booking.order.domain.OrderState;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 주문 취소의 booking local DB 쓰기만 담당한다. {@link CancelOrderUseCase}가 member 공개 API를 트랜잭션 밖에서 호출한 뒤, 이
- * component가 짧은 쓰기 트랜잭션 안에서 pending 주문 조회와 취소만 수행한다.
+ * 주문 취소의 booking local DB 쓰기만 담당한다. {@link CancelOrderUseCase}가 member 공개 API를 트랜잭션 밖에서 호출한 뒤, 이 component가 짧은 쓰기 트랜잭션
+ * 안에서 pending 주문 조회와 취소만 수행한다.
  *
- * <p>package-private component로 분리한 이유는 self-invocation을 피하기 위해서다. 같은 클래스 안에서 이 method를 호출하면
- * {@code @Transactional} proxy가 적용되지 않는다 ({@link BookingAvailabilityChecker}와 같은 이유).
+ * <p>package-private component로 분리한 이유는 self-invocation을 피하기 위해서다. 같은 클래스 안에서 이 method를 호출하면 {@code @Transactional}
+ * proxy가 적용되지 않는다 ({@link BookingAvailabilityChecker}와 같은 이유).
  */
 @Component
 @RequiredArgsConstructor
@@ -35,10 +35,9 @@ public class CancelOrderTransactionService {
     }
 
     private Order getPendingOwnedOrder(final String orderKey, final Long memberId) {
-        final Order order =
-                orderRepository
-                        .findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
-                        .orElseThrow(() -> new OrderNotOwnedException(orderKey, memberId));
+        final Order order = orderRepository
+                .findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
+                .orElseThrow(() -> new OrderNotOwnedException(orderKey, memberId));
         if (order.getStatus() != OrderState.PENDING) {
             throw new OrderNotPendingException(order.getStatus());
         }

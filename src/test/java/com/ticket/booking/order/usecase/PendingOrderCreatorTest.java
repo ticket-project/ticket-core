@@ -45,12 +45,12 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 /**
  * 예매 시작의 DB 구간을 고정한다.
  *
- * <p>옛 {@code OrderCreator}(주문 조립)와 옛 {@code CreatePendingOrderTransactionService}(저장·이력·event 발행과
- * 트랜잭션 경계)가 이 한 클래스로 합쳐졌다. 그래서 두 테스트가 각각 고정하던 것을 여기서 함께 본다 — 조립 결과(orderKey, PENDING, 표시 snapshot,
- * 좌석 단가 합계)와 한 트랜잭션 안의 순서(저장 → 이력 → publication).
+ * <p>옛 {@code OrderCreator}(주문 조립)와 옛 {@code CreatePendingOrderTransactionService}(저장·이력·event 발행과 트랜잭션 경계)가 이 한 클래스로
+ * 합쳐졌다. 그래서 두 테스트가 각각 고정하던 것을 여기서 함께 본다 — 조립 결과(orderKey, PENDING, 표시 snapshot, 좌석 단가 합계)와 한 트랜잭션 안의 순서(저장 → 이력 →
+ * publication).
  *
- * <p>옛 {@code OrderCreatorTest}의 "조립만 하고 저장하지 않는다"는 이 병합으로 뜻이 뒤집혔다. 지금은 저장과 트랜잭션 경계를 이 클래스가 가지므로, 그
- * 자리를 {@link #주문_생성_메서드는_트랜잭션으로_실행된다}가 대신한다.
+ * <p>옛 {@code OrderCreatorTest}의 "조립만 하고 저장하지 않는다"는 이 병합으로 뜻이 뒤집혔다. 지금은 저장과 트랜잭션 경계를 이 클래스가 가지므로, 그 자리를
+ * {@link #주문_생성_메서드는_트랜잭션으로_실행된다}가 대신한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -59,16 +59,22 @@ class PendingOrderCreatorTest {
     private static final LocalDateTime EXPIRES_AT = LocalDateTime.of(2026, 3, 15, 12, 0);
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderRepository orderRepository;
-    @Mock private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
-    @Mock private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private PendingOrderCreator pendingOrderCreator;
 
     @BeforeEach
     void setUp() {
         pendingOrderCreator =
-                new PendingOrderCreator(
-                        orderRepository, orderHoldHistoryRecorder, eventPublisher, FIXED_CLOCK);
+                new PendingOrderCreator(orderRepository, orderHoldHistoryRecorder, eventPublisher, FIXED_CLOCK);
     }
 
     @Test
@@ -78,16 +84,14 @@ class PendingOrderCreatorTest {
         final Hold hold = hold();
         saveAssigningId(55L);
 
-        final String orderKey =
-                pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot());
+        final String orderKey = pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot());
 
         assertThat(orderKey).startsWith("ORDER-");
         final InOrder inOrder = inOrder(orderRepository, orderHoldHistoryRecorder, eventPublisher);
         // 조립과 저장, 트랜잭션 경계가 이제 한 클래스에 있다.
         inOrder.verify(orderRepository).save(any(Order.class));
         inOrder.verify(orderHoldHistoryRecorder)
-                .recordCreated(
-                        20L, 10L, "hold-key", EXPIRES_AT.minusSeconds(600), EXPIRES_AT, seats);
+                .recordCreated(20L, 10L, "hold-key", EXPIRES_AT.minusSeconds(600), EXPIRES_AT, seats);
         final ArgumentCaptor<OrderStarted> captor = ArgumentCaptor.forClass(OrderStarted.class);
         inOrder.verify(eventPublisher).publishEvent(captor.capture());
         final OrderStarted event = captor.getValue();
@@ -97,8 +101,10 @@ class PendingOrderCreatorTest {
         assertThat(event.performanceSeatIds()).isEqualTo(Set.of(501L));
         assertThat(event.schemaVersion()).isEqualTo(OrderStarted.SCHEMA_VERSION);
         assertThat(event.occurredAt())
-                .isEqualTo(
-                        EXPIRES_AT.minusSeconds(600).atZone(ZoneId.of("Asia/Seoul")).toInstant());
+                .isEqualTo(EXPIRES_AT
+                        .minusSeconds(600)
+                        .atZone(ZoneId.of("Asia/Seoul"))
+                        .toInstant());
     }
 
     /** 옛 {@code OrderCreatorTest}의 조립 계약이다. 금액은 show의 표시값이 아니라 좌석 단가만으로 누적한다(ADR 0005). */
@@ -108,14 +114,8 @@ class PendingOrderCreatorTest {
         final PerformanceSeat secondSeat = performanceSeat(102L, 202L, 2L, BigDecimal.valueOf(20));
         saveAssigningId(55L);
 
-        final String orderKey =
-                pendingOrderCreator.create(
-                        1L,
-                        10L,
-                        HOLD_DURATION,
-                        hold(),
-                        List.of(firstSeat, secondSeat),
-                        saleSnapshot());
+        final String orderKey = pendingOrderCreator.create(
+                1L, 10L, HOLD_DURATION, hold(), List.of(firstSeat, secondSeat), saleSnapshot());
 
         final Order order = savedOrder();
         // 없어진 OrderKeyGeneratorTest가 고정하던 주문 키 형식이다.
@@ -130,15 +130,12 @@ class PendingOrderCreatorTest {
         // show가 준 표시값은 주문 생성 시점 그대로 박제된다(ADR 0005).
         assertThat(order.getShowTitleSnapshot()).isEqualTo("show-title");
         assertThat(order.getVenueNameSnapshot()).isEqualTo("venue-name");
-        assertThat(order.getPerformanceStartAtSnapshot())
-                .isEqualTo(LocalDateTime.of(2026, 3, 20, 19, 0));
+        assertThat(order.getPerformanceStartAtSnapshot()).isEqualTo(LocalDateTime.of(2026, 3, 20, 19, 0));
         // 총액은 따로 더하지 않고 Order.addOrderSeat가 좌석 단가를 누적한 결과다.
         assertThat(order.getTotalAmount()).isEqualByComparingTo("30");
         // 좌석은 별도 Repository가 아니라 Order aggregate가 들고 있고, cascade로 함께 저장된다.
         assertThat(order.getOrderSeats()).hasSize(2);
-        assertThat(order.getOrderSeats())
-                .extracting(OrderSeat::getSeatId)
-                .containsExactly(201L, 202L);
+        assertThat(order.getOrderSeats()).extracting(OrderSeat::getSeatId).containsExactly(201L, 202L);
         assertThat(order.getOrderSeats())
                 .extracting(OrderSeat::getPerformanceSeatId)
                 .containsExactly(101L, 102L);
@@ -159,48 +156,36 @@ class PendingOrderCreatorTest {
 
     @Test
     void 주문키는_주문마다_새로_생성한다() {
-        final List<PerformanceSeat> seats =
-                List.of(performanceSeat(101L, 201L, 1L, BigDecimal.TEN));
+        final List<PerformanceSeat> seats = List.of(performanceSeat(101L, 201L, 1L, BigDecimal.TEN));
         saveAssigningId(55L);
 
-        final String first =
-                pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
-        final String second =
-                pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
+        final String first = pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
+        final String second = pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
 
         assertThat(first).isNotEqualTo(second);
     }
 
     @Test
     void 주문_좌석_컬렉션은_밖에서_직접_바꿀_수_없다() {
-        final Order order =
-                new Order(
-                        1L,
-                        10L,
-                        "ORDER-KEY",
-                        "hold-key",
-                        EXPIRES_AT,
-                        "show-title",
-                        LocalDateTime.of(2026, 3, 20, 19, 0),
-                        "venue-name");
+        final Order order = new Order(
+                1L,
+                10L,
+                "ORDER-KEY",
+                "hold-key",
+                EXPIRES_AT,
+                "show-title",
+                LocalDateTime.of(2026, 3, 20, 19, 0),
+                "venue-name");
 
-        assertThatThrownBy(() -> order.getOrderSeats().add(null))
-                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> order.getOrderSeats().add(null)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void 좌석_표시값이_없으면_주문_생성에_실패한다() {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
 
-        assertThatThrownBy(
-                        () ->
-                                pendingOrderCreator.create(
-                                        1L,
-                                        10L,
-                                        HOLD_DURATION,
-                                        hold(),
-                                        List.of(seat),
-                                        emptySaleSnapshot()))
+        assertThatThrownBy(() ->
+                        pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), List.of(seat), emptySaleSnapshot()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("좌석 표시값");
 
@@ -212,14 +197,7 @@ class PendingOrderCreatorTest {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 99L, BigDecimal.TEN);
 
         assertThatThrownBy(
-                        () ->
-                                pendingOrderCreator.create(
-                                        1L,
-                                        10L,
-                                        HOLD_DURATION,
-                                        hold(),
-                                        List.of(seat),
-                                        saleSnapshot()))
+                        () -> pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), List.of(seat), saleSnapshot()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("등급 표시값");
 
@@ -230,18 +208,10 @@ class PendingOrderCreatorTest {
     @Test
     void 주문_저장_실패는_그대로_전파한다() {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
-        when(orderRepository.save(any(Order.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(orderRepository.save(any(Order.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        assertThatThrownBy(
-                        () ->
-                                pendingOrderCreator.create(
-                                        20L,
-                                        10L,
-                                        HOLD_DURATION,
-                                        hold(),
-                                        List.of(seat),
-                                        saleSnapshot()))
+        assertThatThrownBy(() ->
+                        pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold(), List.of(seat), saleSnapshot()))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
         verifyNoInteractions(orderHoldHistoryRecorder, eventPublisher);
@@ -249,28 +219,25 @@ class PendingOrderCreatorTest {
 
     @Test
     void 주문_생성_메서드는_트랜잭션으로_실행된다() throws NoSuchMethodException {
-        assertThat(
-                        PendingOrderCreator.class
-                                .getDeclaredMethod(
-                                        "create",
-                                        Long.class,
-                                        Long.class,
-                                        Duration.class,
-                                        Hold.class,
-                                        List.class,
-                                        PerformanceSaleSnapshot.class)
-                                .isAnnotationPresent(Transactional.class))
+        assertThat(PendingOrderCreator.class
+                        .getDeclaredMethod(
+                                "create",
+                                Long.class,
+                                Long.class,
+                                Duration.class,
+                                Hold.class,
+                                List.class,
+                                PerformanceSaleSnapshot.class)
+                        .isAnnotationPresent(Transactional.class))
                 .isTrue();
     }
 
     private void saveAssigningId(final long id) {
-        when(orderRepository.save(any(Order.class)))
-                .thenAnswer(
-                        invocation -> {
-                            final Order order = invocation.getArgument(0);
-                            ReflectionTestUtils.setField(order, "id", id);
-                            return order;
-                        });
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            final Order order = invocation.getArgument(0);
+            ReflectionTestUtils.setField(order, "id", id);
+            return order;
+        });
     }
 
     private Order savedOrder() {
@@ -313,19 +280,11 @@ class PendingOrderCreatorTest {
                         1L,
                         new PerformanceSaleSnapshot.GradeInfo(1L, "VIP", "VIP석", 1, BigDecimal.TEN),
                         2L,
-                        new PerformanceSaleSnapshot.GradeInfo(
-                                2L, "R", "R석", 2, BigDecimal.valueOf(20))));
+                        new PerformanceSaleSnapshot.GradeInfo(2L, "R", "R석", 2, BigDecimal.valueOf(20))));
     }
 
     private PerformanceSaleSnapshot emptySaleSnapshot() {
         return new PerformanceSaleSnapshot(
-                10L,
-                1L,
-                "show-title",
-                1L,
-                "venue-name",
-                LocalDateTime.of(2026, 3, 20, 19, 0),
-                Map.of(),
-                Map.of());
+                10L, 1L, "show-title", 1L, "venue-name", LocalDateTime.of(2026, 3, 20, 19, 0), Map.of(), Map.of());
     }
 }

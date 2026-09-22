@@ -34,11 +34,9 @@ public class JwtAccessTokenCodec implements AccessTokenReader {
     }
 
     JwtAccessTokenCodec(final JwtProperties jwtProperties, final Clock clock) {
-        this.jwtProperties =
-                Objects.requireNonNull(jwtProperties, "jwtProperties must not be null");
+        this.jwtProperties = Objects.requireNonNull(jwtProperties, "jwtProperties must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
-        this.secretKey =
-                Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     public String createAccessToken(final Long memberId, final String role) {
@@ -68,22 +66,17 @@ public class JwtAccessTokenCodec implements AccessTokenReader {
     }
 
     private AuthenticatedMember parse(final String accessToken) {
-        Claims claims =
-                Jwts.parser()
-                        .requireIssuer(jwtProperties.getIssuer())
-                        .clock(() -> Date.from(clock.instant()))
-                        .verifyWith(secretKey)
-                        .build()
-                        .parseSignedClaims(accessToken)
-                        .getPayload();
+        Claims claims = Jwts.parser()
+                .requireIssuer(jwtProperties.getIssuer())
+                .clock(() -> Date.from(clock.instant()))
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(accessToken)
+                .getPayload();
 
         String subject = claims.getSubject();
         String role = claims.get(ROLE_CLAIM, String.class);
-        if (subject == null
-                || subject.isBlank()
-                || role == null
-                || role.isBlank()
-                || claims.getExpiration() == null) {
+        if (subject == null || subject.isBlank() || role == null || role.isBlank() || claims.getExpiration() == null) {
             throw new IllegalArgumentException("JWT required claim is missing");
         }
 

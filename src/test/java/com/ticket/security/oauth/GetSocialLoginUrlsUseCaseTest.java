@@ -17,11 +17,9 @@ class GetSocialLoginUrlsUseCaseTest {
                 useCase.execute(new GetSocialLoginUrlsUseCase.Input("https://ticket.example.com/"));
         // then
         assertThat(output.urls())
-                .containsEntry(
-                        "google", "https://ticket.example.com/api/v1/auth/oauth2/authorize/google");
+                .containsEntry("google", "https://ticket.example.com/api/v1/auth/oauth2/authorize/google");
         assertThat(output.urls())
-                .containsEntry(
-                        "kakao", "https://ticket.example.com/api/v1/auth/oauth2/authorize/kakao");
+                .containsEntry("kakao", "https://ticket.example.com/api/v1/auth/oauth2/authorize/kakao");
     }
 
     @Test

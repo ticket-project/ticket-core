@@ -48,10 +48,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     @Override
-    public String rotate(
-            final AuthRefreshToken refreshToken,
-            final Long memberId,
-            final long expirationSeconds) {
+    public String rotate(final AuthRefreshToken refreshToken, final Long memberId, final long expirationSeconds) {
         revoke(refreshToken);
         return createRefreshToken(memberId, expirationSeconds);
     }

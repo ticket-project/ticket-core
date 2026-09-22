@@ -34,10 +34,8 @@ class HoldTest {
 
     @Test
     void 시작시각은_만료시각에서_유효시간을_뺀_값이다() {
-        Hold hold =
-                new Hold("hold-key", 1L, 10L, List.of(100L), LocalDateTime.of(2026, 3, 15, 12, 30));
+        Hold hold = new Hold("hold-key", 1L, 10L, List.of(100L), LocalDateTime.of(2026, 3, 15, 12, 30));
 
-        assertThat(hold.startedAt(Duration.ofMinutes(5)))
-                .isEqualTo(LocalDateTime.of(2026, 3, 15, 12, 25));
+        assertThat(hold.startedAt(Duration.ofMinutes(5))).isEqualTo(LocalDateTime.of(2026, 3, 15, 12, 25));
     }
 }

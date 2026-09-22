@@ -57,19 +57,13 @@ public class ExchangeOAuth2TokenUseCase {
     }
 
     public Result execute(final Input input) {
-        final Long memberId =
-                oauth2AuthCodeStore
-                        .consumeCode(input.code())
-                        .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다."));
+        final Long memberId = oauth2AuthCodeStore
+                .consumeCode(input.code())
+                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다."));
         final MemberStatus member = memberAccountOperations.requireActiveIdentity(memberId);
-        final IssuedAuthTokens result =
-                authTokenIssuer.issueTokens(member.memberId(), member.role());
+        final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return new Result(
-                new Output(
-                        result.accessToken(),
-                        result.tokenType(),
-                        result.expiresIn(),
-                        result.memberId()),
+                new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
                 result.refreshToken(),
                 result.refreshTokenExpiresIn());
     }

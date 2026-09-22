@@ -15,14 +15,14 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 /**
  * 실행 모듈이 전체 컨텍스트를 실제로 조립하는지 확인한다.
  *
- * <p>단위 테스트는 각 클래스를 직접 생성하므로 빈 배선이 깨져도 통과한다. 모듈 사이로 빈을 옮기는 변경에서 기동 실패를 잡아내려면 컨텍스트를 한 번은 통째로 띄워봐야
- * 한다.
+ * <p>단위 테스트는 각 클래스를 직접 생성하므로 빈 배선이 깨져도 통과한다. 모듈 사이로 빈을 옮기는 변경에서 기동 실패를 잡아내려면 컨텍스트를 한 번은 통째로 띄워봐야 한다.
  *
  * <p>기동 설정은 {@link BookingE2ETestSupport}가 소유한다. 예매 E2E 테스트와 같은 설정을 써야 Spring 컨텍스트가 하나로 재사용된다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class ApplicationContextLoadTest extends BookingE2ETestSupport {
-    @Autowired private ApplicationContext context;
+    @Autowired
+    private ApplicationContext context;
 
     @Test
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
@@ -37,7 +37,9 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     /** 도메인 Repository는 포트이고 실제 빈은 저장 기술 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */
     @Test
     void 도메인_Repository는_저장_기술_어댑터로_구현된다() {
-        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository").getClass().getName())
+        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository")
+                        .getClass()
+                        .getName())
                 .startsWith("com.ticket.booking.order.persistence.");
         assertThat(beanOf("com.ticket.booking.hold.domain.HoldStore").getClass().getName())
                 .startsWith("com.ticket.booking.hold.persistence.");

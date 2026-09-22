@@ -21,15 +21,12 @@ class LoginRequestTest {
 
     @Test
     void supportsLoginIdAlias() throws Exception {
-        LoginRequest request =
-                objectMapper.readValue(
-                        """
+        LoginRequest request = objectMapper.readValue("""
                         {
                           "id": "user@example.com",
                           "password": "password123!"
                         }
-                        """,
-                        LoginRequest.class);
+                        """, LoginRequest.class);
 
         assertThat(request.getEmail()).isEqualTo("user@example.com");
     }

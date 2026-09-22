@@ -1,30 +1,27 @@
 /**
  * 다른 module이 <b>호출하는</b> 공유 계약만 두는 자리다.
  *
- * <p>여기에 두는 class는 기술 adapter가 아니고 업무 vocabulary를 전혀 담지 않는, 둘 이상의 독립 module이 의미 그대로 공유하는 타입이어야 한다.
- * Entity도 두지 않는다 — 테이블을 갖지 않는 감사 기반 타입 {@code shared.jpa.AuditedEntity}만 예외이며, 그 이유는 ADR 0018이
- * 원본이다.
+ * <p>여기에 두는 class는 기술 adapter가 아니고 업무 vocabulary를 전혀 담지 않는, 둘 이상의 독립 module이 의미 그대로 공유하는 타입이어야 한다. Entity도 두지 않는다 —
+ * 테이블을 갖지 않는 감사 기반 타입 {@code shared.jpa.AuditedEntity}만 예외이며, 그 이유는 ADR 0018이 원본이다.
  *
- * <p>공개 계약은 성격별로 네 named interface에 나눠 둔다 — 기술 중립 공유 계약은 {@code shared.api}, HTTP 응답 형식은 {@code
- * shared.web}, 공통 오류 계약은 {@code shared.exception}, entity가 상속하는 JPA 기반 타입은 {@code shared.jpa}다. 공통
- * 실행 설정은 {@code shared.infrastructure}, 전역 예외 처리는 {@code shared.exception.handler}가 소유한다. 이 모듈은
- * {@code sharedModules}로 모든 모듈 기동 테스트에 포함되므로, bean은 이 두 내부 패키지에만 둔다. {@link
- * com.ticket.shared.config.CorsProperties}가 예외처럼 보이지만 아니다 — {@code @ConfigurationProperties} 값 홀더는
- * 스스로 bean을 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이 한다.
+ * <p>공개 계약은 성격별로 네 named interface에 나눠 둔다 — 기술 중립 공유 계약은 {@code shared.api}, HTTP 응답 형식은 {@code shared.web}, 공통 오류 계약은
+ * {@code shared.exception}, entity가 상속하는 JPA 기반 타입은 {@code shared.jpa}다. 공통 실행 설정은 {@code shared.infrastructure}, 전역 예외
+ * 처리는 {@code shared.exception.handler}가 소유한다. 이 모듈은 {@code sharedModules}로 모든 모듈 기동 테스트에 포함되므로, bean은 이 두 내부 패키지에만 둔다.
+ * {@link com.ticket.shared.config.CorsProperties}가 예외처럼 보이지만 아니다 — {@code @ConfigurationProperties} 값 홀더는 스스로 bean을
+ * 등록하지 않고 주입받아 읽는 값 타입이며, 등록은 그 값을 쓰는 module이 한다.
  *
  * <p><b>이 module은 아무 module도 참조하지 않는 leaf여야 한다.</b>
  *
- * <p><b>module root에는 {@code package-info.java}만 있다.</b> 공개 계약을 root가 아니라 이름 붙인 package에 두면 무엇이
- * 공개면이고 무엇이 구현인지가 import 문에서 바로 읽히고, 참조하는 module이 {@code shared :: api}처럼 필요한 표면만 열 수 있다.
+ * <p><b>module root에는 {@code package-info.java}만 있다.</b> 공개 계약을 root가 아니라 이름 붙인 package에 두면 무엇이 공개면이고 무엇이 구현인지가 import
+ * 문에서 바로 읽히고, 참조하는 module이 {@code shared :: api}처럼 필요한 표면만 열 수 있다.
  *
- * <p><b>{@code @ApplicationModule}을 선언하는 이유</b>: package-info에 annotation이 없으면 javac가 {@code
- * package-info.class}를 만들지 않아 Spring Modulith의 {@code direct-sub-packages} 감지가 이 package를 아예
- * module로 보지 못한다.
+ * <p><b>{@code @ApplicationModule}을 선언하는 이유</b>: package-info에 annotation이 없으면 javac가 {@code package-info.class}를 만들지
+ * 않아 Spring Modulith의 {@code direct-sub-packages} 감지가 이 package를 아예 module로 보지 못한다.
  *
- * <p><b>{@code allowedDependencies = {}}를 명시하는 이유</b>: 이 module은 {@code sharedModules}로 선언돼 있어 속성을
- * 아예 생략해도 컴파일된다. 하지만 생략하면 Modulith {@code verify()}가 이 module의 나가는 의존에 아무 제약도 걸지 않는다 — "leaf여야 한다"는
- * 위 문장이 실행 검증 없이 {@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG} 스냅샷에만 기대게 된다. 빈 값을 명시하면
- * leaf 위반이 스냅샷이 아니라 {@code verify()} 자체에서 잡힌다.
+ * <p><b>{@code allowedDependencies = {}}를 명시하는 이유</b>: 이 module은 {@code sharedModules}로 선언돼 있어 속성을 아예 생략해도 컴파일된다. 하지만
+ * 생략하면 Modulith {@code verify()}가 이 module의 나가는 의존에 아무 제약도 걸지 않는다 — "leaf여야 한다"는 위 문장이 실행 검증 없이
+ * {@code com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG} 스냅샷에만 기대게 된다. 빈 값을 명시하면 leaf 위반이 스냅샷이 아니라 {@code verify()}
+ * 자체에서 잡힌다.
  */
 @NullMarked
 @org.springframework.modulith.ApplicationModule(

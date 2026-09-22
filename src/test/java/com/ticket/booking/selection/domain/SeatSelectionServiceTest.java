@@ -20,8 +20,11 @@ import com.ticket.booking.exception.SeatNotOwnedException;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class SeatSelectionServiceTest {
-    @Mock private SeatSelectionStore seatSelectionStore;
-    @InjectMocks private SeatSelectionService seatSelectionService;
+    @Mock
+    private SeatSelectionStore seatSelectionStore;
+
+    @InjectMocks
+    private SeatSelectionService seatSelectionService;
 
     @Test
     void 빈_좌석이면_선택한다() {

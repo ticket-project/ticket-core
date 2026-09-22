@@ -21,20 +21,19 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ticket.booking.OrderTerminated;
 
 /**
- * {@code __root} V9가 {@code serialized_event}를 넓히기 전에는 현실적인 {@link OrderTerminated} 직렬화 결과가 옛
- * VARCHAR(255) 컬럼에 들어가지 못한다는 것을 재현하고, V9 적용 후에는 저장·보관·완료 조회가 모두 되는 것을 고정한다.
+ * {@code __root} V9가 {@code serialized_event}를 넓히기 전에는 현실적인 {@link OrderTerminated} 직렬화 결과가 옛 VARCHAR(255) 컬럼에 들어가지
+ * 못한다는 것을 재현하고, V9 적용 후에는 저장·보관·완료 조회가 모두 되는 것을 고정한다.
  *
- * <p>직렬화는 Spring Modulith의 {@code JacksonEventSerializer}가 애플리케이션 {@code ObjectMapper}로 수행한다. 이
- * 저장소는 Jackson을 따로 설정하지 않으므로 Boot 기본값(JavaTimeModule 등록, timestamp 비활성)을 그대로 재현한다.
+ * <p>직렬화는 Spring Modulith의 {@code JacksonEventSerializer}가 애플리케이션 {@code ObjectMapper}로 수행한다. 이 저장소는 Jackson을 따로 설정하지
+ * 않으므로 Boot 기본값(JavaTimeModule 등록, timestamp 비활성)을 그대로 재현한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class EventPublicationSerializedEventLengthTest {
     private static final int LEGACY_COLUMN_LENGTH = 255;
 
-    private final ObjectMapper objectMapper =
-            new ObjectMapper()
-                    .registerModule(new JavaTimeModule())
-                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Test
     void 현실적인_주문종료_이벤트_직렬화는_옛_255자_컬럼을_넘는다() throws Exception {
@@ -108,16 +107,13 @@ class EventPublicationSerializedEventLengthTest {
                 Instant.parse("2026-09-14T12:34:56.123456789Z"));
     }
 
-    private void insertPublication(
-            final Connection connection, final String table, final String serializedEvent)
+    private void insertPublication(final Connection connection, final String table, final String serializedEvent)
             throws SQLException {
-        try (PreparedStatement statement =
-                connection.prepareStatement(
-                        "INSERT INTO "
-                                + table
-                                + " (id, publication_date, listener_id, serialized_event,"
-                                + " event_type, completion_attempts, status)"
-                                + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, 0, 'PUBLISHED')")) {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO "
+                + table
+                + " (id, publication_date, listener_id, serialized_event,"
+                + " event_type, completion_attempts, status)"
+                + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, 0, 'PUBLISHED')")) {
             statement.setObject(1, UUID.randomUUID());
             statement.setString(2, "com.ticket.booking.event.BookingEventListeners.on(...)");
             statement.setString(3, serializedEvent);
@@ -126,12 +122,10 @@ class EventPublicationSerializedEventLengthTest {
         }
     }
 
-    private int countBySerializedEvent(
-            final Connection connection, final String table, final String serializedEvent)
+    private int countBySerializedEvent(final Connection connection, final String table, final String serializedEvent)
             throws SQLException {
         try (PreparedStatement statement =
-                connection.prepareStatement(
-                        "SELECT COUNT(*) FROM " + table + " WHERE serialized_event = ?")) {
+                connection.prepareStatement("SELECT COUNT(*) FROM " + table + " WHERE serialized_event = ?")) {
             statement.setString(1, serializedEvent);
             try (ResultSet resultSet = statement.executeQuery()) {
                 resultSet.next();
@@ -140,10 +134,8 @@ class EventPublicationSerializedEventLengthTest {
         }
     }
 
-    private int serializedEventColumnLength(final Connection connection, final String table)
-            throws SQLException {
-        try (ResultSet columns =
-                connection.getMetaData().getColumns(null, null, table, "SERIALIZED_EVENT")) {
+    private int serializedEventColumnLength(final Connection connection, final String table) throws SQLException {
+        try (ResultSet columns = connection.getMetaData().getColumns(null, null, table, "SERIALIZED_EVENT")) {
             assertThat(columns.next()).as("%s.serialized_event 컬럼", table).isTrue();
             return columns.getInt("COLUMN_SIZE");
         }
@@ -164,8 +156,6 @@ class EventPublicationSerializedEventLengthTest {
     }
 
     private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:event-publication-length-"
-                + name
-                + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=TRUE";
+        return "jdbc:h2:mem:event-publication-length-" + name + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=TRUE";
     }
 }

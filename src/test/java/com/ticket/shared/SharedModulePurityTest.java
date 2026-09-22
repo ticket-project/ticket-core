@@ -11,8 +11,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * shared의 공개 계약에는 bean을 등록하지 않고, 공통 실행 코드는 {@code shared.infrastructure}와 {@code
- * shared.exception.handler}에만 둔다.
+ * shared의 공개 계약에는 bean을 등록하지 않고, 공통 실행 코드는 {@code shared.infrastructure}와 {@code shared.exception.handler}에만 둔다.
  *
  * <p>배경은 {@code docs/adr/0003-spring-modulith-application-module-boundaries.md} §6이 원본이다.
  */
@@ -22,15 +21,12 @@ import com.tngtech.archunit.lang.ArchRule;
 @SuppressWarnings("NonAsciiCharacters")
 class SharedModulePurityTest {
     @ArchTest
-    static final ArchRule shared의_공개_계약에는_bean을_등록하지_않는다 =
-            noClasses()
-                    .that()
-                    .resideOutsideOfPackages(
-                            "com.ticket.shared.infrastructure..",
-                            "com.ticket.shared.exception.handler..")
-                    .should()
-                    .beAnnotatedWith(Configuration.class)
-                    .orShould()
-                    .beMetaAnnotatedWith(Component.class)
-                    .because("공개 계약에는 상태 없는 타입만 두고, 공통 실행 코드는 정해진 내부 패키지에만 둔다");
+    static final ArchRule shared의_공개_계약에는_bean을_등록하지_않는다 = noClasses()
+            .that()
+            .resideOutsideOfPackages("com.ticket.shared.infrastructure..", "com.ticket.shared.exception.handler..")
+            .should()
+            .beAnnotatedWith(Configuration.class)
+            .orShould()
+            .beMetaAnnotatedWith(Component.class)
+            .because("공개 계약에는 상태 없는 타입만 두고, 공통 실행 코드는 정해진 내부 패키지에만 둔다");
 }

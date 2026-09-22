@@ -36,47 +36,52 @@ import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
 /**
  * Task 8 Step 5: listener 멱등성과 stale-event 방어를 고정한다.
  *
- * <p>{@link BookingEventListeners}는 event payload를 그대로 믿지 않고 {@code orderId}로 현재 저장된
- * order·orderSeat를 다시 읽는다. hold 생성·해제 자체의 멱등 로직은 {@code HoldCreationCoordinatorTest}/{@code
- * HoldReleaseCoordinatorTest}가 이미 고정하므로, 여기서는 listener가 그 로직에 올바른 입력(특히 {@code holdReleased} 플래그)을
- * 넘기는지와 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를 본다.
+ * <p>{@link BookingEventListeners}는 event payload를 그대로 믿지 않고 {@code orderId}로 현재 저장된 order·orderSeat를 다시 읽는다. hold
+ * 생성·해제 자체의 멱등 로직은 {@code HoldCreationCoordinatorTest}/{@code HoldReleaseCoordinatorTest}가 이미 고정하므로, 여기서는 listener가 그
+ * 로직에 올바른 입력(특히 {@code holdReleased} 플래그)을 넘기는지와 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를 본다.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class BookingEventListenersTest {
     private static final Clock FIXED_CLOCK =
             Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderHoldSnapshotReader orderHoldSnapshotReader;
-    @Mock private HoldCreationCoordinator holdCreationCoordinator;
-    @Mock private HoldReleaseCoordinator holdReleaseCoordinator;
-    @Mock private HoldReleaseProgressRecorder holdReleaseProgressRecorder;
+
+    @Mock
+    private OrderHoldSnapshotReader orderHoldSnapshotReader;
+
+    @Mock
+    private HoldCreationCoordinator holdCreationCoordinator;
+
+    @Mock
+    private HoldReleaseCoordinator holdReleaseCoordinator;
+
+    @Mock
+    private HoldReleaseProgressRecorder holdReleaseProgressRecorder;
+
     private BookingEventListeners listeners;
 
     @BeforeEach
     void setUp() {
-        listeners =
-                new BookingEventListeners(
-                        orderHoldSnapshotReader,
-                        holdCreationCoordinator,
-                        holdReleaseCoordinator,
-                        holdReleaseProgressRecorder,
-                        FIXED_CLOCK);
+        listeners = new BookingEventListeners(
+                orderHoldSnapshotReader,
+                holdCreationCoordinator,
+                holdReleaseCoordinator,
+                holdReleaseProgressRecorder,
+                FIXED_CLOCK);
     }
 
     /** listener 자체가 DB 트랜잭션을 열면 Redis·WebSocket 작업이 booking connection을 쥔 채로 실행된다. */
     @Test
     void listener는_자기_DB_트랜잭션을_열지_않는다() throws NoSuchMethodException {
-        assertThat(
-                        BookingEventListeners.class
-                                .getDeclaredMethod("on", OrderStarted.class)
-                                .getAnnotation(ApplicationModuleListener.class)
-                                .propagation())
+        assertThat(BookingEventListeners.class
+                        .getDeclaredMethod("on", OrderStarted.class)
+                        .getAnnotation(ApplicationModuleListener.class)
+                        .propagation())
                 .isEqualTo(Propagation.NOT_SUPPORTED);
-        assertThat(
-                        BookingEventListeners.class
-                                .getDeclaredMethod("on", OrderTerminated.class)
-                                .getAnnotation(ApplicationModuleListener.class)
-                                .propagation())
+        assertThat(BookingEventListeners.class
+                        .getDeclaredMethod("on", OrderTerminated.class)
+                        .getAnnotation(ApplicationModuleListener.class)
+                        .propagation())
                 .isEqualTo(Propagation.NOT_SUPPORTED);
     }
 
@@ -100,8 +105,7 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        final Hold expectedHold =
-                new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
+        final Hold expectedHold = new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
         verify(holdCreationCoordinator).clearSelectionsAndPublishHeld(expectedHold);
     }
 
@@ -125,22 +129,19 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        final ArgumentCaptor<HoldReleaseTask> captor =
-                ArgumentCaptor.forClass(HoldReleaseTask.class);
+        final ArgumentCaptor<HoldReleaseTask> captor = ArgumentCaptor.forClass(HoldReleaseTask.class);
         verify(holdReleaseCoordinator)
                 .releaseAndPublish(
                         org.mockito.ArgumentMatchers.eq(event.eventId()),
                         captor.capture(),
                         org.mockito.ArgumentMatchers.eq(LocalDateTime.now(FIXED_CLOCK)));
-        assertThat(captor.getValue())
-                .isEqualTo(new HoldReleaseTask(200L, "hold-key", List.of(42L), false));
+        assertThat(captor.getValue()).isEqualTo(new HoldReleaseTask(200L, "hold-key", List.of(42L), false));
     }
 
     /**
-     * 같은 eventId가 재전달되면(at-least-once) listener는 매번 DB를 다시 읽지만, Redis 해제 자체는 {@link
-     * HoldReleaseProgressRecorder}에 남은 진행 상태로 건너뛴다. 이 재확인이 바로 "예전 event가 새 hold/selection을 지우지 못하게"
-     * 하는 지점이다 — 재전달에서 {@code holdReleased=true}가 넘어가야 {@link HoldReleaseCoordinator}가 Redis
-     * release를 반복하지 않는다.
+     * 같은 eventId가 재전달되면(at-least-once) listener는 매번 DB를 다시 읽지만, Redis 해제 자체는 {@link HoldReleaseProgressRecorder}에 남은 진행
+     * 상태로 건너뛴다. 이 재확인이 바로 "예전 event가 새 hold/selection을 지우지 못하게" 하는 지점이다 — 재전달에서 {@code holdReleased=true}가 넘어가야
+     * {@link HoldReleaseCoordinator}가 Redis release를 반복하지 않는다.
      */
     @Test
     void OrderTerminated_재전달이면_holdReleased_true로_넘겨_Redis_해제를_반복하지_않는다() {
@@ -153,8 +154,7 @@ class BookingEventListenersTest {
         listeners.on(event);
         listeners.on(event);
 
-        final ArgumentCaptor<HoldReleaseTask> captor =
-                ArgumentCaptor.forClass(HoldReleaseTask.class);
+        final ArgumentCaptor<HoldReleaseTask> captor = ArgumentCaptor.forClass(HoldReleaseTask.class);
         verify(holdReleaseCoordinator, org.mockito.Mockito.times(2))
                 .releaseAndPublish(
                         org.mockito.ArgumentMatchers.eq(event.eventId()),
@@ -174,13 +174,7 @@ class BookingEventListenersTest {
 
     private OrderStarted orderStarted(final long orderId, final String holdKey) {
         return new OrderStarted(
-                UUID.randomUUID(),
-                OrderStarted.SCHEMA_VERSION,
-                orderId,
-                20L,
-                holdKey,
-                Set.of(501L),
-                Instant.now());
+                UUID.randomUUID(), OrderStarted.SCHEMA_VERSION, orderId, 20L, holdKey, Set.of(501L), Instant.now());
     }
 
     private OrderTerminated orderTerminated(final long orderId, final String holdKey) {
@@ -195,21 +189,16 @@ class BookingEventListenersTest {
                 Instant.now());
     }
 
-    private Order order(
-            final Long id,
-            final Long performanceId,
-            final String holdKey,
-            final LocalDateTime expiresAt) {
-        final Order order =
-                new Order(
-                        20L,
-                        performanceId,
-                        "order-" + id,
-                        holdKey,
-                        expiresAt,
-                        "show-title",
-                        expiresAt.minusDays(1),
-                        "venue-name");
+    private Order order(final Long id, final Long performanceId, final String holdKey, final LocalDateTime expiresAt) {
+        final Order order = new Order(
+                20L,
+                performanceId,
+                "order-" + id,
+                holdKey,
+                expiresAt,
+                "show-title",
+                expiresAt.minusDays(1),
+                "venue-name");
         ReflectionTestUtils.setField(order, "id", id);
         return order;
     }

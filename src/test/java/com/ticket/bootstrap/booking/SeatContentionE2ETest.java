@@ -23,8 +23,8 @@ import tools.jackson.databind.JsonNode;
 /**
  * 같은 좌석에 동시에 주문이 들어와도 하나만 성공하는지 실제 스택에서 확인한다.
  *
- * <p>티켓 예매에서 이중 판매보다 큰 사고가 없는데, 이 성질을 실제 분산락과 실제 Redis로 검증하는 테스트가 없었다. 단위 테스트는 LockManager를 mock으로
- * 바꾸므로 락이 실제로 상호 배제하는지 알 수 없고, 락 범위가 잘못 잡혀도 통과한다.
+ * <p>티켓 예매에서 이중 판매보다 큰 사고가 없는데, 이 성질을 실제 분산락과 실제 Redis로 검증하는 테스트가 없었다. 단위 테스트는 LockManager를 mock으로 바꾸므로 락이 실제로 상호 배제하는지
+ * 알 수 없고, 락 범위가 잘못 잡혀도 통과한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeatContentionE2ETest extends BookingE2ETestSupport {
@@ -46,8 +46,7 @@ class SeatContentionE2ETest extends BookingE2ETestSupport {
         }
     }
 
-    private void assertExactlyOneWins(final List<String> tokens, final long seatId, final int round)
-            throws Exception {
+    private void assertExactlyOneWins(final List<String> tokens, final long seatId, final int round) throws Exception {
         final ExecutorService pool = Executors.newFixedThreadPool(tokens.size());
         final CountDownLatch startLine = new CountDownLatch(1);
         try {
@@ -63,13 +62,13 @@ class SeatContentionE2ETest extends BookingE2ETestSupport {
             String winnerOrderKey = null;
             final List<String> rejections = new ArrayList<>();
             for (int index = 0; index < results.size(); index++) {
-                final ResponseEntity<JsonNode> response =
-                        results.get(index).get(30, TimeUnit.SECONDS);
+                final ResponseEntity<JsonNode> response = results.get(index).get(30, TimeUnit.SECONDS);
                 if (response.getStatusCode() == HttpStatus.CREATED) {
                     created++;
                     winnerToken = tokens.get(index);
-                    winnerOrderKey =
-                            requireData(response.getBody(), "주문 생성").get("orderKey").asText();
+                    winnerOrderKey = requireData(response.getBody(), "주문 생성")
+                            .get("orderKey")
+                            .asText();
                 } else {
                     rejections.add(response.getStatusCode() + " " + response.getBody());
                 }
@@ -100,10 +99,7 @@ class SeatContentionE2ETest extends BookingE2ETestSupport {
         return () -> {
             startLine.await();
             return restTemplate.exchange(
-                    "/api/v1/orders",
-                    HttpMethod.POST,
-                    authedJson(token, createOrderBody(seatId)),
-                    JsonNode.class);
+                    "/api/v1/orders", HttpMethod.POST, authedJson(token, createOrderBody(seatId)), JsonNode.class);
         };
     }
 }

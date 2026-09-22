@@ -20,8 +20,11 @@ import com.ticket.security.token.RefreshTokenStore;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class LogoutUseCaseTest {
-    @Mock private RefreshTokenStore refreshTokenStore;
-    @InjectMocks private LogoutUseCase useCase;
+    @Mock
+    private RefreshTokenStore refreshTokenStore;
+
+    @InjectMocks
+    private LogoutUseCase useCase;
 
     @Test
     void owned_token_is_revoked() {

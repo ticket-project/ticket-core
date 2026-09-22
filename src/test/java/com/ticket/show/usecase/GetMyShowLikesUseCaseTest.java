@@ -35,46 +35,49 @@ import com.ticket.venue.api.VenueSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetMyShowLikesUseCaseTest {
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private LikeQueryApi likeQuery;
-    @Mock private ShowRepository showRepository;
-    @Mock private VenueLookupApi venueLookup;
-    @InjectMocks private GetMyShowLikesUseCase useCase;
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private LikeQueryApi likeQuery;
+
+    @Mock
+    private ShowRepository showRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
+
+    @InjectMocks
+    private GetMyShowLikesUseCase useCase;
 
     @Test
     void 찜한_공연_목록을_show_표시값과_조합해_반환한다() {
         LocalDateTime likedAt = LocalDateTime.now();
         LikeSnapshot entry = new LikeSnapshot(9L, 2L, likedAt);
-        when(likeQuery.findLiked(LikeType.SHOW, 1L, 10L, 20))
-                .thenReturn(new CursorPage<>(List.of(entry), true, 9L));
+        when(likeQuery.findLiked(LikeType.SHOW, 1L, 10L, 20)).thenReturn(new CursorPage<>(List.of(entry), true, 9L));
 
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusDays(1);
-        Show show =
-                ShowFixture.show(2L, "공연", 7L, startDate, endDate, null, 0L, LocalDateTime.now());
+        Show show = ShowFixture.show(2L, "공연", 7L, startDate, endDate, null, 0L, LocalDateTime.now());
         when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of(2L, show));
         when(venueLookup.getSummaries(Set.of(7L)))
-                .thenReturn(
-                        Map.of(
+                .thenReturn(Map.of(
+                        7L,
+                        new VenueSnapshot(
                                 7L,
-                                new VenueSnapshot(
-                                        7L,
-                                        "장소",
-                                        "주소",
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                                "장소",
+                                "주소",
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
-        GetMyShowLikesUseCase.Output output =
-                useCase.execute(new GetMyShowLikesUseCase.Input(1L, 10L, 20));
+        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, 10L, 20));
 
         assertThat(output.items())
-                .containsExactly(
-                        new GetMyShowLikesUseCase.Item(
-                                2L, "공연", "image", startDate, endDate, "장소", likedAt));
+                .containsExactly(new GetMyShowLikesUseCase.Item(2L, "공연", "image", startDate, endDate, "장소", likedAt));
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
         verify(memberLookup).requireActive(1L);
@@ -88,8 +91,7 @@ class GetMyShowLikesUseCaseTest {
                 .thenReturn(new CursorPage<>(List.of(entry), false, null));
         when(showRepository.findSummaries(Set.of(2L))).thenReturn(Map.of());
 
-        GetMyShowLikesUseCase.Output output =
-                useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
+        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.hasNext()).isFalse();
@@ -112,8 +114,7 @@ class GetMyShowLikesUseCaseTest {
     void 커서_위치가_없으면_첫_페이지를_조회한다() {
         when(likeQuery.findLiked(LikeType.SHOW, 1L, null, 20)).thenReturn(CursorPage.empty());
 
-        GetMyShowLikesUseCase.Output output =
-                useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
+        GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, null, 20));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.hasNext()).isFalse();
@@ -122,10 +123,6 @@ class GetMyShowLikesUseCaseTest {
     }
 
     private static Stream<Arguments> invalidComponents() {
-        return Stream.of(
-                Arguments.of(null, 20),
-                Arguments.of(0L, 20),
-                Arguments.of(1L, 0),
-                Arguments.of(1L, 101));
+        return Stream.of(Arguments.of(null, 20), Arguments.of(0L, 20), Arguments.of(1L, 0), Arguments.of(1L, 101));
     }
 }

@@ -39,50 +39,45 @@ import tools.jackson.databind.json.JsonMapper;
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowControllerContractTest {
-    private static final ShowCursor NEXT_POSITION =
-            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
+    private static final ShowCursor NEXT_POSITION = new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
 
     /** 기존 wire 포맷을 유지한다: URL-safe Base64(JSON(ShowCursor)). */
-    private static final String EXPECTED_NEXT_CURSOR =
-            Base64.getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(
-                            JsonMapper.builder()
-                                    .build()
-                                    .writeValueAsString(NEXT_POSITION)
-                                    .getBytes(StandardCharsets.UTF_8));
+    private static final String EXPECTED_NEXT_CURSOR = Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(JsonMapper.builder()
+                    .build()
+                    .writeValueAsString(NEXT_POSITION)
+                    .getBytes(StandardCharsets.UTF_8));
 
     @Test
     void 공연_목록_api는_슬라이스_응답_계약을_유지한다() throws Exception {
         GetShowsUseCase getShowsUseCase = mock(GetShowsUseCase.class);
-        ShowController controller =
-                new ShowController(
-                        getShowsUseCase,
-                        mock(GetLatestShowsUseCase.class),
-                        mock(GetSaleOpeningSoonShowsUseCase.class),
-                        mock(GetSaleOpeningSoonShowsPageUseCase.class),
-                        mock(SearchShowsUseCase.class),
-                        mock(CountSearchShowsUseCase.class),
-                        mock(GetShowDetailUseCase.class),
-                        new ShowCursorCodec(JsonMapper.builder().build()));
+        ShowController controller = new ShowController(
+                getShowsUseCase,
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsPageUseCase.class),
+                mock(SearchShowsUseCase.class),
+                mock(CountSearchShowsUseCase.class),
+                mock(GetShowDetailUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        GetShowsUseCase.Item show =
-                new GetShowsUseCase.Item(
-                        1L,
-                        "공연",
-                        "부제",
-                        "image",
-                        List.of("장르"),
-                        LocalDate.of(2026, 3, 20),
-                        LocalDate.of(2026, 3, 21),
-                        10L,
-                        SaleType.GENERAL,
-                        LocalDateTime.of(2026, 3, 19, 10, 0),
-                        LocalDateTime.of(2026, 3, 21, 10, 0),
-                        LocalDateTime.of(2026, 3, 18, 10, 0),
-                        Region.SEOUL,
-                        "장소");
+        GetShowsUseCase.Item show = new GetShowsUseCase.Item(
+                1L,
+                "공연",
+                "부제",
+                "image",
+                List.of("장르"),
+                LocalDate.of(2026, 3, 20),
+                LocalDate.of(2026, 3, 21),
+                10L,
+                SaleType.GENERAL,
+                LocalDateTime.of(2026, 3, 19, 10, 0),
+                LocalDateTime.of(2026, 3, 21, 10, 0),
+                LocalDateTime.of(2026, 3, 18, 10, 0),
+                Region.SEOUL,
+                "장소");
         when(getShowsUseCase.execute(any(GetShowsUseCase.Input.class)))
                 .thenReturn(new GetShowsUseCase.Output(List.of(show), true, NEXT_POSITION));
 
@@ -100,28 +95,19 @@ class ShowControllerContractTest {
     @Test
     void 공연_검색_api는_슬라이스_응답_계약을_유지한다() throws Exception {
         SearchShowsUseCase searchShowsUseCase = mock(SearchShowsUseCase.class);
-        ShowController controller =
-                new ShowController(
-                        mock(GetShowsUseCase.class),
-                        mock(GetLatestShowsUseCase.class),
-                        mock(GetSaleOpeningSoonShowsUseCase.class),
-                        mock(GetSaleOpeningSoonShowsPageUseCase.class),
-                        searchShowsUseCase,
-                        mock(CountSearchShowsUseCase.class),
-                        mock(GetShowDetailUseCase.class),
-                        new ShowCursorCodec(JsonMapper.builder().build()));
+        ShowController controller = new ShowController(
+                mock(GetShowsUseCase.class),
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsPageUseCase.class),
+                searchShowsUseCase,
+                mock(CountSearchShowsUseCase.class),
+                mock(GetShowDetailUseCase.class),
+                new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        SearchShowsUseCase.Item item =
-                new SearchShowsUseCase.Item(
-                        1L,
-                        "공연",
-                        "image",
-                        "장소",
-                        LocalDate.of(2026, 3, 20),
-                        LocalDate.of(2026, 3, 21),
-                        Region.SEOUL,
-                        10L);
+        SearchShowsUseCase.Item item = new SearchShowsUseCase.Item(
+                1L, "공연", "image", "장소", LocalDate.of(2026, 3, 20), LocalDate.of(2026, 3, 21), Region.SEOUL, 10L);
         when(searchShowsUseCase.execute(any(SearchShowsUseCase.Input.class)))
                 .thenReturn(new SearchShowsUseCase.Output(List.of(item), true, NEXT_POSITION));
 
@@ -136,52 +122,40 @@ class ShowControllerContractTest {
     @Test
     void show_detail_response의_회차는_일정만_담고_예매_정책_필드를_노출하지_않는다() throws Exception {
         GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
-        ShowController controller =
-                new ShowController(
-                        mock(GetShowsUseCase.class),
-                        mock(GetLatestShowsUseCase.class),
-                        mock(GetSaleOpeningSoonShowsUseCase.class),
-                        mock(GetSaleOpeningSoonShowsPageUseCase.class),
-                        mock(SearchShowsUseCase.class),
-                        mock(CountSearchShowsUseCase.class),
-                        getShowDetailUseCase,
-                        new ShowCursorCodec(JsonMapper.builder().build()));
+        ShowController controller = new ShowController(
+                mock(GetShowsUseCase.class),
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsPageUseCase.class),
+                mock(SearchShowsUseCase.class),
+                mock(CountSearchShowsUseCase.class),
+                getShowDetailUseCase,
+                new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        GetShowDetailUseCase.PerformanceInfo performance =
-                new GetShowDetailUseCase.PerformanceInfo(
-                        10L,
-                        1L,
-                        LocalDateTime.of(2026, 3, 20, 19, 0),
-                        LocalDateTime.of(2026, 3, 20, 21, 0));
-        GetShowDetailUseCase.Output detail =
-                new GetShowDetailUseCase.Output(
-                        1L,
-                        "공연",
-                        "부제",
-                        "소개",
-                        LocalDate.of(2026, 3, 20),
-                        LocalDate.of(2026, 3, 21),
-                        120,
-                        10L,
-                        2L,
-                        SaleDisplayStatus.ON_SALE,
-                        SaleType.GENERAL,
-                        LocalDateTime.of(2026, 3, 10, 10, 0),
-                        LocalDateTime.of(2026, 3, 20, 20, 0),
-                        "image",
-                        null,
-                        null,
-                        List.of("콘서트"),
-                        List.of(
-                                new GetShowDetailUseCase.GradeInfo(
-                                        1L, "VIP석", java.math.BigDecimal.valueOf(170000))),
-                        new PriceSummary(
-                                java.math.BigDecimal.valueOf(100000),
-                                java.math.BigDecimal.valueOf(200000)),
-                        List.of(
-                                new GetShowDetailUseCase.PerformanceDateInfo(
-                                        LocalDate.of(2026, 3, 20), List.of(performance))));
+        GetShowDetailUseCase.PerformanceInfo performance = new GetShowDetailUseCase.PerformanceInfo(
+                10L, 1L, LocalDateTime.of(2026, 3, 20, 19, 0), LocalDateTime.of(2026, 3, 20, 21, 0));
+        GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
+                1L,
+                "공연",
+                "부제",
+                "소개",
+                LocalDate.of(2026, 3, 20),
+                LocalDate.of(2026, 3, 21),
+                120,
+                10L,
+                2L,
+                SaleDisplayStatus.ON_SALE,
+                SaleType.GENERAL,
+                LocalDateTime.of(2026, 3, 10, 10, 0),
+                LocalDateTime.of(2026, 3, 20, 20, 0),
+                "image",
+                null,
+                null,
+                List.of("콘서트"),
+                List.of(new GetShowDetailUseCase.GradeInfo(1L, "VIP석", java.math.BigDecimal.valueOf(170000))),
+                new PriceSummary(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
+                List.of(new GetShowDetailUseCase.PerformanceDateInfo(LocalDate.of(2026, 3, 20), List.of(performance))));
 
         when(getShowDetailUseCase.execute(new GetShowDetailUseCase.Input(1L))).thenReturn(detail);
 
@@ -197,38 +171,30 @@ class ShowControllerContractTest {
                 .andExpect(jsonPath("$.data.grades[0].id").value(1))
                 .andExpect(jsonPath("$.data.grades[0].gradeName").value("VIP석"))
                 .andExpect(jsonPath("$.data.grades[0].price").value(170000))
-                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].id").value(10))
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].performanceNo")
-                                .value(1))
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].orderOpenTime")
-                                .doesNotExist())
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].orderCloseTime")
-                                .doesNotExist())
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].entryType")
-                                .doesNotExist())
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].queueRequired")
-                                .doesNotExist())
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].redirectUrl")
-                                .doesNotExist())
-                .andExpect(
-                        jsonPath("$.data.performanceDates[0].performances[0].queueEnterUrl")
-                                .doesNotExist());
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].id")
+                        .value(10))
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].performanceNo")
+                        .value(1))
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].orderOpenTime")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].orderCloseTime")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].entryType")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueRequired")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].redirectUrl")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.data.performanceDates[0].performances[0].queueEnterUrl")
+                        .doesNotExist());
     }
 
     @Test
     void showId가_양수가_아니면_400_계약을_지킨다() throws Exception {
         GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
-        MockMvc mockMvc =
-                MockMvcBuilders.standaloneSetup(newController(getShowDetailUseCase))
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new ShowExceptionHandler())
-                        .build();
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(newController(getShowDetailUseCase))
+                .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
+                .build();
 
         mockMvc.perform(get("/api/v1/shows/-1"))
                 .andExpect(status().isBadRequest())
@@ -241,11 +207,9 @@ class ShowControllerContractTest {
     @Test
     void size가_양수가_아니면_400_계약을_지킨다() throws Exception {
         GetShowsUseCase getShowsUseCase = mock(GetShowsUseCase.class);
-        MockMvc mockMvc =
-                MockMvcBuilders.standaloneSetup(newControllerWithShows(getShowsUseCase))
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new ShowExceptionHandler())
-                        .build();
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(newControllerWithShows(getShowsUseCase))
+                .setControllerAdvice(new GlobalExceptionHandler(), new ShowExceptionHandler())
+                .build();
 
         mockMvc.perform(get("/api/v1/shows").param("size", "0"))
                 .andExpect(status().isBadRequest())

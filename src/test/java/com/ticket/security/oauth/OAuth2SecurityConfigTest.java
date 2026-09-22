@@ -45,46 +45,50 @@ import com.ticket.security.token.AccessTokenReader;
 @TestPropertySource(properties = "app.cors.allowed-origins=http://localhost:3000")
 @SuppressWarnings("NonAsciiCharacters")
 class OAuth2SecurityConfigTest {
-    @Autowired private MockMvc mockMvc;
-    @MockitoBean private CustomOAuth2UserService customOAuth2UserService;
-    @MockitoBean private OAuth2FrontendRedirectResolver frontendRedirectResolver;
-    @MockitoBean private OAuth2AuthenticationSuccessHandler authenticationSuccessHandler;
-    @MockitoBean private OAuth2AuthenticationFailureHandler authenticationFailureHandler;
-    @MockitoBean private AccessTokenReader accessTokenReader;
-    @MockitoBean private RestAuthenticationEntryPoint authenticationEntryPoint;
-    @MockitoBean private RestAccessDeniedHandler accessDeniedHandler;
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @MockitoBean
+    private OAuth2FrontendRedirectResolver frontendRedirectResolver;
+
+    @MockitoBean
+    private OAuth2AuthenticationSuccessHandler authenticationSuccessHandler;
+
+    @MockitoBean
+    private OAuth2AuthenticationFailureHandler authenticationFailureHandler;
+
+    @MockitoBean
+    private AccessTokenReader accessTokenReader;
+
+    @MockitoBean
+    private RestAuthenticationEntryPoint authenticationEntryPoint;
+
+    @MockitoBean
+    private RestAccessDeniedHandler accessDeniedHandler;
 
     @BeforeEach
     void setUp() throws Exception {
-        Mockito.doAnswer(
-                        invocation -> {
-                            final HttpServletResponse response = invocation.getArgument(1);
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            return null;
-                        })
+        Mockito.doAnswer(invocation -> {
+                    final HttpServletResponse response = invocation.getArgument(1);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return null;
+                })
                 .when(authenticationEntryPoint)
                 .commence(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
     void OAuth2_authorization_경로는_Order_1_chain이_처리해_provider로_redirect한다() throws Exception {
-        mockMvc.perform(
-                        get("/api/v1/auth/oauth2/authorize/google")
-                                .header("Origin", "http://localhost:3000"))
+        mockMvc.perform(get("/api/v1/auth/oauth2/authorize/google").header("Origin", "http://localhost:3000"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(
-                        header().string(
-                                        HttpHeaders.LOCATION,
-                                        startsWith("https://accounts.example/authorize?")))
-                .andExpect(
-                        header().string(
-                                        HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-                                        "http://localhost:3000"))
-                .andExpect(
-                        result ->
-                                org.assertj.core.api.Assertions.assertThat(
-                                                result.getRequest().getSession(false))
-                                        .isNotNull());
+                .andExpect(header().string(HttpHeaders.LOCATION, startsWith("https://accounts.example/authorize?")))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:3000"))
+                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
+                                result.getRequest().getSession(false))
+                        .isNotNull());
 
         verify(frontendRedirectResolver).storeFrontendBaseUrl(Mockito.any());
     }
@@ -106,18 +110,17 @@ class OAuth2SecurityConfigTest {
     static class ClientRegistrationConfig {
         @Bean
         ClientRegistrationRepository clientRegistrationRepository() {
-            final ClientRegistration google =
-                    ClientRegistration.withRegistrationId("google")
-                            .clientId("client-id")
-                            .clientSecret("client-secret")
-                            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                            .redirectUri("{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}")
-                            .authorizationUri("https://accounts.example/authorize")
-                            .tokenUri("https://accounts.example/token")
-                            .userInfoUri("https://accounts.example/userinfo")
-                            .userNameAttributeName("sub")
-                            .scope("openid", "profile", "email")
-                            .build();
+            final ClientRegistration google = ClientRegistration.withRegistrationId("google")
+                    .clientId("client-id")
+                    .clientSecret("client-secret")
+                    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                    .redirectUri("{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}")
+                    .authorizationUri("https://accounts.example/authorize")
+                    .tokenUri("https://accounts.example/token")
+                    .userInfoUri("https://accounts.example/userinfo")
+                    .userNameAttributeName("sub")
+                    .scope("openid", "profile", "email")
+                    .build();
             return new InMemoryClientRegistrationRepository(google);
         }
     }

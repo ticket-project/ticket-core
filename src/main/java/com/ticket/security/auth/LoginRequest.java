@@ -20,7 +20,8 @@ public class LoginRequest {
     @NotBlank
     private @Nullable String email;
 
-    @NotBlank private @Nullable String password;
+    @NotBlank
+    private @Nullable String password;
 
     public LoginUseCase.Input toInput() {
         // @Valid가 @NotBlank를 먼저 통과시킨 뒤에만 호출되므로 두 값은 여기서 null일 수 없다.

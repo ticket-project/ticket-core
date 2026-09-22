@@ -16,8 +16,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * {@link VenueSeatLookupApi}의 venue 소유 구현이다.
  *
- * <p>{@link VenueLookupService}와 나눠 둔다 — Seat은 Venue와 다른 Aggregate라 {@code Seat.venueId}가 연관관계가 아니라
- * raw 컬럼이고, 좌석 조회는 venue 표시값을 전혀 보지 않는다. 한 구현이 둘을 함께 들면 Aggregate 경계가 코드에서 사라진다.
+ * <p>{@link VenueLookupService}와 나눠 둔다 — Seat은 Venue와 다른 Aggregate라 {@code Seat.venueId}가 연관관계가 아니라 raw 컬럼이고, 좌석 조회는
+ * venue 표시값을 전혀 보지 않는다. 한 구현이 둘을 함께 들면 Aggregate 경계가 코드에서 사라진다.
  */
 @Service
 @RequiredArgsConstructor

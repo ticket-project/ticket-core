@@ -16,23 +16,24 @@ import com.ticket.member.api.MemberLookupApi;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CancelOrderUseCaseTest {
-    @Mock private MemberLookupApi memberLookup;
-    @Mock private CancelOrderTransactionService cancelOrderTransactionService;
+    @Mock
+    private MemberLookupApi memberLookup;
+
+    @Mock
+    private CancelOrderTransactionService cancelOrderTransactionService;
 
     @Test
     void execute는_트랜잭션_없이_다른_module_공개_API를_호출한다() throws NoSuchMethodException {
-        Transactional transactional =
-                CancelOrderUseCase.class
-                        .getDeclaredMethod("execute", CancelOrderUseCase.Input.class)
-                        .getAnnotation(Transactional.class);
+        Transactional transactional = CancelOrderUseCase.class
+                .getDeclaredMethod("execute", CancelOrderUseCase.Input.class)
+                .getAnnotation(Transactional.class);
 
         assertThat(transactional).isNull();
     }
 
     @Test
     void 회원_활성_확인_후_booking_local_취소를_위임한다() {
-        final CancelOrderUseCase useCase =
-                new CancelOrderUseCase(memberLookup, cancelOrderTransactionService);
+        final CancelOrderUseCase useCase = new CancelOrderUseCase(memberLookup, cancelOrderTransactionService);
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 

@@ -11,8 +11,7 @@ class RegisterMemberRequestTest {
 
     @Test
     void mapsToUseCaseInput() {
-        RegisterMemberRequest request =
-                new RegisterMemberRequest("user@example.com", "password123!", "tester");
+        RegisterMemberRequest request = new RegisterMemberRequest("user@example.com", "password123!", "tester");
 
         RegisterMemberUseCase.Input input = request.toInput();
 
@@ -23,16 +22,13 @@ class RegisterMemberRequestTest {
 
     @Test
     void supportsLoginIdAlias() throws Exception {
-        RegisterMemberRequest request =
-                objectMapper.readValue(
-                        """
+        RegisterMemberRequest request = objectMapper.readValue("""
                         {
                           "loginId": "user@example.com",
                           "password": "password123!",
                           "name": "tester"
                         }
-                        """,
-                        RegisterMemberRequest.class);
+                        """, RegisterMemberRequest.class);
 
         assertThat(request.getEmail()).isEqualTo("user@example.com");
     }

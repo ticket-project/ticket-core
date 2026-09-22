@@ -29,25 +29,25 @@ import com.ticket.booking.order.domain.OrderState;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CancelOrderTransactionServiceTest {
-    @Mock private OrderRepository orderRepository;
-    @Mock private OrderTerminationService orderTerminationService;
-    private final Clock fixedClock =
-            Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private OrderTerminationService orderTerminationService;
+
+    private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     private CancelOrderTransactionService service;
 
     @BeforeEach
     void setUp() {
-        service =
-                new CancelOrderTransactionService(
-                        orderRepository, orderTerminationService, fixedClock);
+        service = new CancelOrderTransactionService(orderRepository, orderTerminationService, fixedClock);
     }
 
     @Test
     void cancel은_짧은_쓰기_트랜잭션에서_실행된다() throws NoSuchMethodException {
-        Transactional transactional =
-                CancelOrderTransactionService.class
-                        .getDeclaredMethod("cancel", String.class, Long.class)
-                        .getAnnotation(Transactional.class);
+        Transactional transactional = CancelOrderTransactionService.class
+                .getDeclaredMethod("cancel", String.class, Long.class)
+                .getAnnotation(Transactional.class);
 
         assertThat(transactional).isNotNull();
     }
@@ -67,8 +67,7 @@ class CancelOrderTransactionServiceTest {
 
     @Test
     void 본인_주문이_없으면_권한예외를_던진다() {
-        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("missing", 1L))
-                .thenReturn(Optional.empty());
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.cancel("missing", 1L))
                 .isInstanceOf(OrderNotOwnedException.class)
@@ -91,16 +90,15 @@ class CancelOrderTransactionServiceTest {
     }
 
     private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
-        final Order order =
-                new Order(
-                        1L,
-                        performanceId,
-                        "order-key",
-                        holdKey,
-                        LocalDateTime.now().plusMinutes(5),
-                        "show-title",
-                        LocalDateTime.now().plusDays(1),
-                        "venue-name");
+        final Order order = new Order(
+                1L,
+                performanceId,
+                "order-key",
+                holdKey,
+                LocalDateTime.now().plusMinutes(5),
+                "show-title",
+                LocalDateTime.now().plusDays(1),
+                "venue-name");
         ReflectionTestUtils.setField(order, "id", id);
         return order;
     }

@@ -26,8 +26,11 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class OrderHoldHistoryRecorderTest {
-    @Mock private HoldHistoryRepository holdHistoryRepository;
-    @InjectMocks private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
+    @Mock
+    private HoldHistoryRepository holdHistoryRepository;
+
+    @InjectMocks
+    private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
 
     @Test
     void 선택한_좌석마다_created_hold_history를_기록한다() {
@@ -37,8 +40,7 @@ class OrderHoldHistoryRecorderTest {
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         // when
-        orderHoldHistoryRecorder.recordCreated(
-                1L, 2L, "hold-key", occurredAt, expiresAt, List.of(first, second));
+        orderHoldHistoryRecorder.recordCreated(1L, 2L, "hold-key", occurredAt, expiresAt, List.of(first, second));
         // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(2);

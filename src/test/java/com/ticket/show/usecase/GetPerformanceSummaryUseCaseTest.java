@@ -27,10 +27,17 @@ import com.ticket.venue.api.VenueSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetPerformanceSummaryUseCaseTest {
-    @Mock private PerformanceRepository performanceRepository;
-    @Mock private ShowRepository showRepository;
-    @Mock private VenueLookupApi venueLookup;
-    @InjectMocks private GetPerformanceSummaryUseCase useCase;
+    @Mock
+    private PerformanceRepository performanceRepository;
+
+    @Mock
+    private ShowRepository showRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
+
+    @InjectMocks
+    private GetPerformanceSummaryUseCase useCase;
 
     @Test
     void 공연_요약정보를_반환한다() {
@@ -40,21 +47,18 @@ class GetPerformanceSummaryUseCaseTest {
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(7L)).thenReturn(Optional.of(show));
         when(venueLookup.findSummary(5L))
-                .thenReturn(
-                        Optional.of(
-                                new VenueSnapshot(
-                                        5L,
-                                        "venue",
-                                        "주소",
-                                        Region.CHUNGCHEONG,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                .thenReturn(Optional.of(new VenueSnapshot(
+                        5L,
+                        "venue",
+                        "주소",
+                        Region.CHUNGCHEONG,
+                        null,
+                        null,
+                        null,
+                        null,
+                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
-        GetPerformanceSummaryUseCase.Output output =
-                useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
+        GetPerformanceSummaryUseCase.Output output = useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
 
         assertThat(output.title()).isEqualTo("싱어게인");
         assertThat(output.region()).isEqualTo("충청");
@@ -77,8 +81,7 @@ class GetPerformanceSummaryUseCaseTest {
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(7L)).thenReturn(Optional.of(show));
 
-        GetPerformanceSummaryUseCase.Output output =
-                useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
+        GetPerformanceSummaryUseCase.Output output = useCase.execute(new GetPerformanceSummaryUseCase.Input(1L));
 
         assertThat(output.region()).isNull();
     }

@@ -32,11 +32,10 @@ public class RedissonHoldStore implements HoldStore {
     /**
      * 좌석 키, 회차별 점유 인덱스, 메타데이터를 순서대로 쓴다. 어느 단계에서 실패하든 이 hold가 남긴 흔적만 되돌린다.
      *
-     * <p>되돌릴 대상은 "쓰기를 시도한 좌석"이다 — 좌석 키를 쓰기 <b>전에</b> 기록해 둔다. 옛 구현은 인덱스 등록까지 끝난 뒤에야 기록해서, 인덱스 등록이
-     * 실패하면 방금 쓴 좌석 키가 정리 대상에서 빠졌다. 인덱스 자체도 되돌리지 않아 좌석 키 없는 유령 점유가 인덱스에 남았다.
+     * <p>되돌릴 대상은 "쓰기를 시도한 좌석"이다 — 좌석 키를 쓰기 <b>전에</b> 기록해 둔다. 옛 구현은 인덱스 등록까지 끝난 뒤에야 기록해서, 인덱스 등록이 실패하면 방금 쓴 좌석 키가 정리
+     * 대상에서 빠졌다. 인덱스 자체도 되돌리지 않아 좌석 키 없는 유령 점유가 인덱스에 남았다.
      *
-     * <p>보상은 반드시 <b>소유 키를 확인하고</b> 지운다. TTL 만료 뒤 다른 요청이 같은 좌석을 새로 확보했을 수 있으므로, 값이 이 hold의 key일 때만
-     * 삭제한다.
+     * <p>보상은 반드시 <b>소유 키를 확인하고</b> 지운다. TTL 만료 뒤 다른 요청이 같은 좌석을 새로 확보했을 수 있으므로, 값이 이 hold의 key일 때만 삭제한다.
      */
     @Override
     public void save(final Hold hold, final Duration ttl) {
@@ -59,15 +58,14 @@ public class RedissonHoldStore implements HoldStore {
     }
 
     @Override
-    public List<Long> release(
-            final Long performanceId, final String holdKey, final List<Long> seatIds) {
+    public List<Long> release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
         final Hold storedHold = readHold(holdKey);
-        final List<Long> normalizedSeatIds = seatIds.stream().distinct().sorted().toList();
+        final List<Long> normalizedSeatIds =
+                seatIds.stream().distinct().sorted().toList();
         final RSetCache<Long> holdSeatIndex = holdSeatIndex(performanceId);
         final List<Long> releasedSeatIds = new ArrayList<>();
         boolean fullyReleased =
-                storedHold == null
-                        || new HashSet<>(normalizedSeatIds).containsAll(storedHold.seatIds());
+                storedHold == null || new HashSet<>(normalizedSeatIds).containsAll(storedHold.seatIds());
         for (final Long seatId : normalizedSeatIds) {
             final RBucket<String> bucket = seatBucket(performanceId, seatId);
             final String storedHoldKey = bucket.get();
@@ -80,7 +78,9 @@ public class RedissonHoldStore implements HoldStore {
             }
         }
         if (fullyReleased) {
-            redissonClient.getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE).delete();
+            redissonClient
+                    .getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE)
+                    .delete();
         }
         return releasedSeatIds;
     }
@@ -106,11 +106,7 @@ public class RedissonHoldStore implements HoldStore {
             try {
                 rollbackSeat(hold, seatId, holdSeatIndex);
             } catch (final Exception rollbackException) {
-                log.warn(
-                        "홀드 롤백에 실패했습니다. performanceId={}, seatId={}",
-                        hold.performanceId(),
-                        seatId,
-                        rollbackException);
+                log.warn("홀드 롤백에 실패했습니다. performanceId={}, seatId={}", hold.performanceId(), seatId, rollbackException);
             }
         }
         try {
@@ -123,8 +119,7 @@ public class RedissonHoldStore implements HoldStore {
         }
     }
 
-    private void rollbackSeat(
-            final Hold hold, final Long seatId, final RSetCache<Long> holdSeatIndex) {
+    private void rollbackSeat(final Hold hold, final Long seatId, final RSetCache<Long> holdSeatIndex) {
         final RBucket<String> bucket = seatBucket(hold.performanceId(), seatId);
         final String storedHoldKey = bucket.get();
         if (hold.holdKey().equals(storedHoldKey)) {
@@ -146,13 +141,11 @@ public class RedissonHoldStore implements HoldStore {
     }
 
     private RBucket<String> seatBucket(final Long performanceId, final Long seatId) {
-        return redissonClient.getBucket(
-                HoldRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
+        return redissonClient.getBucket(HoldRedisKey.hold(performanceId, seatId), StringCodec.INSTANCE);
     }
 
     private RSetCache<Long> holdSeatIndex(final Long performanceId) {
-        return redissonClient.getSetCache(
-                HoldRedisKey.holdSeatIndex(performanceId), LongCodec.INSTANCE);
+        return redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(performanceId), LongCodec.INSTANCE);
     }
 
     private @Nullable Hold readHold(final String holdKey) {

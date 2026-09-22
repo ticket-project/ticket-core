@@ -28,10 +28,14 @@ import com.ticket.shared.exception.NotFoundException;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetOrderStatusUseCaseTest {
-    private static final Clock CLOCK =
-            Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
-    @Mock private OrderRepository repository;
-    @Mock private MemberLookupApi memberLookup;
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
+
+    @Mock
+    private OrderRepository repository;
+
+    @Mock
+    private MemberLookupApi memberLookup;
+
     private GetOrderStatusUseCase useCase;
 
     @BeforeEach
@@ -41,11 +45,9 @@ class GetOrderStatusUseCaseTest {
 
     @Test
     void 결제대기_주문의_남은시간을_반환한다() {
-        when(repository.findByOrderKeyAndMemberId("order-key", 1L))
-                .thenReturn(Optional.of(order()));
+        when(repository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
 
-        GetOrderStatusUseCase.Output output =
-                useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L));
+        GetOrderStatusUseCase.Output output = useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L));
 
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
         assertThat(output.remainingSeconds()).isEqualTo(600L);
@@ -64,8 +66,7 @@ class GetOrderStatusUseCaseTest {
 
     @Test
     void 탈퇴한_회원의_주문상태는_조회하지_않는다() {
-        when(repository.findByOrderKeyAndMemberId("order-key", 1L))
-                .thenReturn(Optional.of(order()));
+        when(repository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
         doThrow(new NotFoundException()).when(memberLookup).requireActive(1L);
 
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))

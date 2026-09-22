@@ -13,8 +13,7 @@ class WebSocketConfigTest {
     void server_events_are_published_to_each_session_in_order() {
         final MessageBrokerRegistry registry = mock(MessageBrokerRegistry.class);
         final WebSocketConfig config =
-                new WebSocketConfig(
-                        mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class));
+                new WebSocketConfig(mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class));
 
         config.configureMessageBroker(registry);
 

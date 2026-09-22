@@ -25,8 +25,7 @@ public class GenreController implements GenreControllerDocs {
     @GetMapping
     public ApiResponse<List<GetGenresByCategoryUseCase.GenreItem>> getGenres(
             @RequestParam(required = false) final String category) {
-        final GetGenresByCategoryUseCase.Input input =
-                new GetGenresByCategoryUseCase.Input(category);
+        final GetGenresByCategoryUseCase.Input input = new GetGenresByCategoryUseCase.Input(category);
         final GetGenresByCategoryUseCase.Output output = getGenresByCategoryUseCase.execute(input);
         return ApiResponse.success(output.genres());
     }

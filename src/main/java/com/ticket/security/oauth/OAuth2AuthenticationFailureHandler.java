@@ -18,8 +18,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     private static final String DEFAULT_ERROR_CODE = "oauth2_login_failed";
     private final OAuth2FrontendRedirectResolver frontendRedirectResolver;
 
-    public OAuth2AuthenticationFailureHandler(
-            final OAuth2FrontendRedirectResolver frontendRedirectResolver) {
+    public OAuth2AuthenticationFailureHandler(final OAuth2FrontendRedirectResolver frontendRedirectResolver) {
         this.frontendRedirectResolver = frontendRedirectResolver;
     }
 
@@ -30,13 +29,12 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             final AuthenticationException exception)
             throws IOException {
         log.warn("소셜 로그인 OAuth2 인증에 실패했습니다. 사유={}", exception.getMessage(), exception);
-        final String targetUrl =
-                UriComponentsBuilder.fromUriString(
-                                frontendRedirectResolver.resolveFailureRedirectUri(request))
-                        .queryParam("error", DEFAULT_ERROR_CODE)
-                        .encode()
-                        .build()
-                        .toUriString();
+        final String targetUrl = UriComponentsBuilder.fromUriString(
+                        frontendRedirectResolver.resolveFailureRedirectUri(request))
+                .queryParam("error", DEFAULT_ERROR_CODE)
+                .encode()
+                .build()
+                .toUriString();
 
         frontendRedirectResolver.clear(request);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

@@ -14,9 +14,7 @@ class OrderSeatTest {
     void 주문좌석을_생성하면_좌석_스냅샷_정보만_보관한다() {
         Order order = createOrder();
 
-        OrderSeat orderSeat =
-                new OrderSeat(
-                        order, 100L, 200L, BigDecimal.valueOf(12000), "R", "R석", "1F 가구역 A열 1번");
+        OrderSeat orderSeat = new OrderSeat(order, 100L, 200L, BigDecimal.valueOf(12000), "R", "R석", "1F 가구역 A열 1번");
 
         assertThat(orderSeat.getOrder()).isSameAs(order);
         assertThat(orderSeat.getPerformanceSeatId()).isEqualTo(100L);
@@ -35,9 +33,7 @@ class OrderSeatTest {
 
     @Test
     void orderSeat는_상태_전이_메서드를_가지지_않는다() {
-        assertThat(
-                        Arrays.stream(OrderSeat.class.getDeclaredMethods())
-                                .map(method -> method.getName()))
+        assertThat(Arrays.stream(OrderSeat.class.getDeclaredMethods()).map(method -> method.getName()))
                 .doesNotContain("confirm", "expire", "cancel");
     }
 

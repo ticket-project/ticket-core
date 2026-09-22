@@ -32,20 +32,16 @@ class SeatSelectionControllerContractTest {
 
     @BeforeEach
     void setUp() {
-        SeatSelectionController controller =
-                new SeatSelectionController(
-                        selectSeatUseCase,
-                        Mockito.mock(DeselectSeatUseCase.class),
-                        Mockito.mock(DeselectAllSeatsUseCase.class));
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(controller)
-                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new BookingExceptionHandler())
-                        .build();
+        SeatSelectionController controller = new SeatSelectionController(
+                selectSeatUseCase,
+                Mockito.mock(DeselectSeatUseCase.class),
+                Mockito.mock(DeselectAllSeatsUseCase.class));
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
+                .build();
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
     }
 
     @AfterEach
@@ -55,10 +51,9 @@ class SeatSelectionControllerContractTest {
 
     @Test
     void 좌석_선택_API는_200과_성공_응답_계약을_유지한다() throws Exception {
-        mockMvc.perform(
-                        post("/api/v1/performances/10/seats/20/select")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("X-Admission-Token", "admission-token"))
+        mockMvc.perform(post("/api/v1/performances/10/seats/20/select")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Admission-Token", "admission-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())
@@ -67,9 +62,7 @@ class SeatSelectionControllerContractTest {
 
     @Test
     void 좌석_선택_해제_API는_200과_성공_응답_계약을_유지한다() throws Exception {
-        mockMvc.perform(
-                        delete("/api/v1/performances/10/seats/20/select")
-                                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete("/api/v1/performances/10/seats/20/select").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())
@@ -78,9 +71,7 @@ class SeatSelectionControllerContractTest {
 
     @Test
     void 내_선택_좌석_전체_해제_API는_200과_성공_응답_계약을_유지한다() throws Exception {
-        mockMvc.perform(
-                        delete("/api/v1/performances/10/seats/select")
-                                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete("/api/v1/performances/10/seats/select").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data").isEmpty())

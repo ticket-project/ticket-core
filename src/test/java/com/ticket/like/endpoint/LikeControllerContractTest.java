@@ -29,26 +29,19 @@ import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 class LikeControllerContractTest {
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
     private final AddLikeUseCase addLikeUseCase = Mockito.mock(AddLikeUseCase.class);
-    private final GetLikeStatusUseCase getLikeStatusUseCase =
-            Mockito.mock(GetLikeStatusUseCase.class);
+    private final GetLikeStatusUseCase getLikeStatusUseCase = Mockito.mock(GetLikeStatusUseCase.class);
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         LikeController controller =
-                new LikeController(
-                        addLikeUseCase,
-                        Mockito.mock(RemoveLikeUseCase.class),
-                        getLikeStatusUseCase);
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(controller)
-                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new LikeExceptionHandler())
-                        .build();
+                new LikeController(addLikeUseCase, Mockito.mock(RemoveLikeUseCase.class), getLikeStatusUseCase);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(new GlobalExceptionHandler(), new LikeExceptionHandler())
+                .build();
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
     }
 
     @AfterEach

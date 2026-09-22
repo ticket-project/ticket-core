@@ -28,8 +28,8 @@ import com.ticket.booking.event.HoldReleaseProgressRecorder;
 /**
  * 선점 해제 완료 기록의 커밋 경계와 멱등성을 실제 DB에서 고정한다.
  *
- * <p>재현한 결함: Redis 해제를 마치고 완료 기록을 남긴 뒤 WebSocket 발행이 실패하면, 완료 기록이 호출자의 트랜잭션과 함께 롤백돼 재시도에서 Redis 해제를
- * 다시 수행했다. 기록은 자기 트랜잭션에서 곧바로 커밋돼야 한다.
+ * <p>재현한 결함: Redis 해제를 마치고 완료 기록을 남긴 뒤 WebSocket 발행이 실패하면, 완료 기록이 호출자의 트랜잭션과 함께 롤백돼 재시도에서 Redis 해제를 다시 수행했다. 기록은 자기
+ * 트랜잭션에서 곧바로 커밋돼야 한다.
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
@@ -55,23 +55,21 @@ import com.ticket.booking.event.HoldReleaseProgressRecorder;
 class HoldReleaseProgressRecorderAdapterIntegrationTest {
     private static final LocalDateTime RELEASED_AT = LocalDateTime.of(2026, 3, 15, 12, 0);
 
-    @Autowired private HoldReleaseProgressRecorder recorder;
-    @Autowired private PlatformTransactionManager transactionManager;
+    @Autowired
+    private HoldReleaseProgressRecorder recorder;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void 완료_기록은_호출자_트랜잭션이_롤백돼도_남는다() {
         final UUID eventId = UUID.randomUUID();
 
-        assertThatThrownBy(
-                        () ->
-                                new TransactionTemplate(transactionManager)
-                                        .executeWithoutResult(
-                                                status -> {
-                                                    recorder.recordHoldReleased(
-                                                            eventId, RELEASED_AT);
-                                                    // Redis 해제 뒤의 WebSocket 발행 실패를 흉내 낸다.
-                                                    throw new IllegalStateException("발행 실패");
-                                                }))
+        assertThatThrownBy(() -> new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+                    recorder.recordHoldReleased(eventId, RELEASED_AT);
+                    // Redis 해제 뒤의 WebSocket 발행 실패를 흉내 낸다.
+                    throw new IllegalStateException("발행 실패");
+                }))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(recorder.isReleased(eventId)).isTrue();

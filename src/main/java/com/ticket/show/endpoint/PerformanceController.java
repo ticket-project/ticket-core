@@ -23,8 +23,7 @@ public class PerformanceController implements PerformanceControllerDocs {
     @GetMapping("/{performanceId}/summary")
     public ApiResponse<GetPerformanceSummaryUseCase.Output> getPerformanceSummary(
             @PathVariable final Long performanceId) {
-        final GetPerformanceSummaryUseCase.Input input =
-                new GetPerformanceSummaryUseCase.Input(performanceId);
+        final GetPerformanceSummaryUseCase.Input input = new GetPerformanceSummaryUseCase.Input(performanceId);
         return ApiResponse.success(getPerformanceSummaryUseCase.execute(input));
     }
 

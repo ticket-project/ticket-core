@@ -12,15 +12,13 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 interface SpringDataPerformanceSeatJpaRepository extends JpaRepository<PerformanceSeat, Long> {
-    List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(
-            Long performanceId, Collection<Long> seatIds);
+    List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(Long performanceId, Collection<Long> seatIds);
 
     List<PerformanceSeat> findAllByPerformanceId(Long performanceId);
 
     List<PerformanceSeat> findAllByPerformanceIdOrderBySeatIdAsc(Long performanceId);
 
-    @Query(
-            """
+    @Query("""
             select new com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot(p.id, p.state)
             from PerformanceSeat p
             where p.performanceId = :performanceId

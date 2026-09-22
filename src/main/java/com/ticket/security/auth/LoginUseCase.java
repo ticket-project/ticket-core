@@ -19,20 +19,14 @@ public class LoginUseCase {
 
     public Result execute(final Input input) {
         final MemberStatus member =
-                memberAccountOperations.authenticate(
-                        input.email(), RawPassword.create(input.password()));
-        final IssuedAuthTokens tokens =
-                authTokenIssuer.issueTokens(member.memberId(), member.role());
+                memberAccountOperations.authenticate(input.email(), RawPassword.create(input.password()));
+        final IssuedAuthTokens tokens = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return toResult(tokens);
     }
 
     private static Result toResult(final IssuedAuthTokens tokens) {
         return new Result(
-                new Output(
-                        tokens.accessToken(),
-                        tokens.tokenType(),
-                        tokens.expiresIn(),
-                        tokens.memberId()),
+                new Output(tokens.accessToken(), tokens.tokenType(), tokens.expiresIn(), tokens.memberId()),
                 tokens.refreshToken(),
                 tokens.refreshTokenExpiresIn());
     }

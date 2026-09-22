@@ -13,8 +13,8 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * 인가 실패 응답 계약을 고정한다.
  *
- * <p>{@link RestAuthenticationEntryPointTest}와 같은 이유로 필요하다 — 이 핸들러도 메시지 컨버터를 거치지 않고 직접 직렬화한다. 인증
- * 실패와 달리 {@code error.data}는 항상 null이다.
+ * <p>{@link RestAuthenticationEntryPointTest}와 같은 이유로 필요하다 — 이 핸들러도 메시지 컨버터를 거치지 않고 직접 직렬화한다. 인증 실패와 달리
+ * {@code error.data}는 항상 null이다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class RestAccessDeniedHandlerTest {

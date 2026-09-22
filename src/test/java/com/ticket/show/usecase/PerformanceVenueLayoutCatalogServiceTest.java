@@ -37,17 +37,27 @@ import com.ticket.venue.api.VenueSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class PerformanceVenueLayoutCatalogServiceTest {
-    @Mock private PerformanceRepository performanceRepository;
-    @Mock private ShowRepository showRepository;
-    @Mock private GradeRepository gradeRepository;
-    @Mock private VenueLookupApi venueLookup;
-    @Mock private VenueSeatLookupApi venueSeatLookup;
-    @InjectMocks private PerformanceVenueLayoutCatalogService service;
+    @Mock
+    private PerformanceRepository performanceRepository;
+
+    @Mock
+    private ShowRepository showRepository;
+
+    @Mock
+    private GradeRepository gradeRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
+
+    @Mock
+    private VenueSeatLookupApi venueSeatLookup;
+
+    @InjectMocks
+    private PerformanceVenueLayoutCatalogService service;
 
     @Test
     void 공연의_첫_회차_ID를_조회한다() {
-        when(performanceRepository.findRepresentativePerformanceIdByShowId(10L))
-                .thenReturn(Optional.of(20L));
+        when(performanceRepository.findRepresentativePerformanceIdByShowId(10L)).thenReturn(Optional.of(20L));
 
         assertThat(service.findRepresentativePerformanceId(10L)).contains(20L);
     }
@@ -79,24 +89,21 @@ class PerformanceVenueLayoutCatalogServiceTest {
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
         when(venueLookup.findSummary(3L))
-                .thenReturn(
-                        Optional.of(
-                                new VenueSnapshot(
-                                        3L,
-                                        "venue",
-                                        "주소",
-                                        Region.SEOUL,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(500, 356, 4.8))));
+                .thenReturn(Optional.of(new VenueSnapshot(
+                        3L,
+                        "venue",
+                        "주소",
+                        Region.SEOUL,
+                        null,
+                        null,
+                        null,
+                        null,
+                        new VenueSnapshot.SeatMapLayout(500, 356, 4.8))));
         when(venueSeatLookup.findAllSeatLayouts(3L))
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 129.0, 101.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
-        when(gradeRepository.findGradeNames(Set.of(7L)))
-                .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+        when(gradeRepository.findGradeNames(Set.of(7L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
         final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
 
@@ -104,7 +111,8 @@ class PerformanceVenueLayoutCatalogServiceTest {
         assertThat(layout.viewBoxWidth()).isEqualTo(500);
         assertThat(layout.seatLayoutBySeatId()).containsKey(10L);
         assertThat(layout.seatLayoutBySeatId().get(10L).x()).isEqualTo(129.0);
-        assertThat(layout.gradeLayoutByPerformanceGradeId().get(100L).gradeCode()).isEqualTo("VIP");
+        assertThat(layout.gradeLayoutByPerformanceGradeId().get(100L).gradeCode())
+                .isEqualTo("VIP");
     }
 
     /** 옛 {@code join grade}가 inner join이라 조용히 빠뜨리던 동작을 조립 쪽에서 그대로 유지한다. */
@@ -117,8 +125,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));
-        when(gradeRepository.findGradeNames(Set.of(7L, 8L)))
-                .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+        when(gradeRepository.findGradeNames(Set.of(7L, 8L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
         final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
 

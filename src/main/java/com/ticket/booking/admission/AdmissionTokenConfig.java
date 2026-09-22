@@ -10,10 +10,7 @@ public class AdmissionTokenConfig {
     @Bean
     public AdmissionVerifier admissionVerifier(final AdmissionTokenProperties properties) {
         return new JwtAdmissionVerifier(
-                new AdmissionTokenSettings(
-                        properties.getIssuer(),
-                        properties.getAudience(),
-                        properties.getSecretKey()),
+                new AdmissionTokenSettings(properties.getIssuer(), properties.getAudience(), properties.getSecretKey()),
                 properties.isEnforcementEnabled());
     }
 }

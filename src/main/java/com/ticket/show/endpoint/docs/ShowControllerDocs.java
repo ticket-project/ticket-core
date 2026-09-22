@@ -28,34 +28,23 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * 요청 파라미터 제약은 이 문서 인터페이스에만 선언한다.
  *
- * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을
- * 금지한다(ConstraintDeclarationException). Controller는 binding 애노테이션만 갖고, 제약과 @Valid cascade는 여기 한곳에
- * 둔다.
+ * <p>Jakarta Bean Validation은 상위 타입 메서드의 파라미터 제약을 구현체가 다시 선언하는 것을 금지한다(ConstraintDeclarationException). Controller는
+ * binding 애노테이션만 갖고, 제약과 @Valid cascade는 여기 한곳에 둔다.
  */
 @Tag(name = "공연(Show)", description = "공연 정보 조회 API")
 public interface ShowControllerDocs {
     // ========== 상세 조회 API ==========
-    @Operation(
-            summary = "공연 상세 조회",
-            description =
-                    """
+    @Operation(summary = "공연 상세 조회", description = """
                     공연 ID로 상세 정보를 조회합니다.
                     출연자, 장르, 좌석 등급/가격, 공연 회차 등 모든 정보를 포함합니다.
                     """)
     @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "조회 성공")
-            })
+            value = {@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     ApiResponse<GetShowDetailUseCase.Output> getShowDetail(
             @Parameter(description = "공연 ID", example = "1", required = true) @Positive Long id);
 
     // ========== 메인 페이지 API ==========
-    @Operation(
-            summary = "공연 조회 (무한스크롤)",
-            description =
-                    """
+    @Operation(summary = "공연 조회 (무한스크롤)", description = """
                     공연 목록을 커서 기반 무한스크롤 방식으로 조회합니다.
 
                     ## 사용 방법
@@ -76,11 +65,7 @@ public interface ShowControllerDocs {
                         content =
                                 @Content(
                                         mediaType = "a" + "pplication/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        name = "성공 응답 예시",
-                                                        value =
-                                                                """
+                                        examples = @ExampleObject(name = "성공 응답 예시", value = """
                                             {
                                               "result": "SUCCESS",
                                               "data": {
@@ -115,11 +100,9 @@ public interface ShowControllerDocs {
             })
     ApiResponse<SliceResponse<GetShowsUseCase.Item>> getShowsPage(
             @ParameterObject ShowListRequest request,
-            @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") @Positive
-                    int size,
+            @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") @Positive int size,
             @Parameter(
-                            description =
-                                    "정렬 기준 [popular(인기순), latest(최신순), showStartApproaching(공연임박순)]",
+                            description = "정렬 기준 [popular(인기순), latest(최신순), showStartApproaching(공연임박순)]",
                             example = "pop" + "ular")
                     String sort);
 
@@ -132,11 +115,7 @@ public interface ShowControllerDocs {
                         content =
                                 @Content(
                                         mediaType = "a" + "pplication/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        name = "성공 응답 예시",
-                                                        value =
-                                                                """
+                                        examples = @ExampleObject(name = "성공 응답 예시", value = """
                                             {
                                               "result": "SUCCESS",
                                               "data": {
@@ -167,11 +146,7 @@ public interface ShowControllerDocs {
                         content =
                                 @Content(
                                         mediaType = "a" + "pplication/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        name = "성공 응답 예시",
-                                                        value =
-                                                                """
+                                        examples = @ExampleObject(name = "성공 응답 예시", value = """
                                             {
                                               "result": "SUCCESS",
                                               "data": {
@@ -193,10 +168,7 @@ public interface ShowControllerDocs {
             @Parameter(description = "카테고리", example = "CONCERT", required = true) String category,
             @Parameter(description = "조회 개수", example = "5") @Positive int size);
 
-    @Operation(
-            summary = "판매 오픈 예정 공연 목록 조회 (무한스크롤)",
-            description =
-                    """
+    @Operation(summary = "판매 오픈 예정 공연 목록 조회 (무한스크롤)", description = """
                     판매 오픈 예정 공연 목록을 커서 기반 무한스크롤로 조회합니다.
 
                     ## 검색 조건
@@ -217,11 +189,7 @@ public interface ShowControllerDocs {
                         content =
                                 @Content(
                                         mediaType = "a" + "pplication/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        name = "성공 응답 예시",
-                                                        value =
-                                                                """
+                                        examples = @ExampleObject(name = "성공 응답 예시", value = """
                                             {
                                               "result": "SUCCESS",
                                               "data": {
@@ -250,16 +218,12 @@ public interface ShowControllerDocs {
             @ParameterObject SaleOpeningSoonRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 16)", example = "16") @Positive int size,
             @Parameter(
-                            description =
-                                    "정렬 기준 [saleStartApproaching(판매시작일순), popular(인기순), latest(최신순)]",
+                            description = "정렬 기준 [saleStartApproaching(판매시작일순), popular(인기순), latest(최신순)]",
                             example = "sa" + "leStartApproaching")
                     String sort);
 
     // ========== 검색 API ==========
-    @Operation(
-            summary = "공연 검색 (무한스크롤)",
-            description =
-                    """
+    @Operation(summary = "공연 검색 (무한스크롤)", description = """
                     공연을 다양한 조건으로 검색합니다.
 
                     ## 검색 조건
@@ -281,11 +245,7 @@ public interface ShowControllerDocs {
                         content =
                                 @Content(
                                         mediaType = "a" + "pplication/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        name = "성공 응답 예시",
-                                                        value =
-                                                                """
+                                        examples = @ExampleObject(name = "성공 응답 예시", value = """
                                             {
                                               "result": "SUCCESS",
                                               "data": {
@@ -313,15 +273,10 @@ public interface ShowControllerDocs {
     ApiResponse<SliceResponse<SearchShowsUseCase.Item>> searchShows(
             @ParameterObject ShowSearchRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 20)", example = "20") @Positive int size,
-            @Parameter(
-                            description = "정렬 기준 [popular(조회순), showStartApproaching(공연임박순)]",
-                            example = "popular")
+            @Parameter(description = "정렬 기준 [popular(조회순), showStartApproaching(공연임박순)]", example = "popular")
                     String sort);
 
-    @Operation(
-            summary = "공연 검색 결과 개수 조회",
-            description =
-                    """
+    @Operation(summary = "공연 검색 결과 개수 조회", description = """
                     필터 조건에 맞는 공연 개수만 조회합니다.
                     필터 변경 시 실제 데이터 없이 개수만 빠르게 확인할 때 사용합니다.
                     """)
@@ -333,11 +288,7 @@ public interface ShowControllerDocs {
                         content =
                                 @Content(
                                         mediaType = "a" + "pplication/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        name = "성공 응답 예시",
-                                                        value =
-                                                                """
+                                        examples = @ExampleObject(name = "성공 응답 예시", value = """
                                             {
                                               "result": "SUCCESS",
                                               "data": {
@@ -347,6 +298,5 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<CountSearchShowsUseCase.Output> countSearchShows(
-            @ParameterObject ShowSearchRequest request);
+    ApiResponse<CountSearchShowsUseCase.Output> countSearchShows(@ParameterObject ShowSearchRequest request);
 }

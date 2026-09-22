@@ -6,8 +6,7 @@ import java.time.LocalDateTime;
 public final class OrderRemainingTime {
     private OrderRemainingTime() {}
 
-    public static long seconds(
-            final OrderState status, final LocalDateTime expiresAt, final LocalDateTime now) {
+    public static long seconds(final OrderState status, final LocalDateTime expiresAt, final LocalDateTime now) {
         if (status != OrderState.PENDING) {
             return 0L;
         }

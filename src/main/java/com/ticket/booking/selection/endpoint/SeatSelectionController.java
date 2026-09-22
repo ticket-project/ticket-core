@@ -30,23 +30,18 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
             @PathVariable final Long performanceId,
             @PathVariable final Long seatId,
             // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
-            @RequestHeader(value = "X-Admission-Token", required = false)
-                    final String admissionToken,
+            @RequestHeader(value = "X-Admission-Token", required = false) final String admissionToken,
             final AuthenticatedMember member) {
         selectSeatUseCase.execute(
-                new SelectSeatUseCase.Input(
-                        performanceId, seatId, member.memberId(), admissionToken));
+                new SelectSeatUseCase.Input(performanceId, seatId, member.memberId(), admissionToken));
         return ApiResponse.success();
     }
 
     @Override
     @DeleteMapping("/{seatId}/select")
     public ApiResponse<Void> deselectSeat(
-            @PathVariable final Long performanceId,
-            @PathVariable final Long seatId,
-            final AuthenticatedMember member) {
-        deselectSeatUseCase.execute(
-                new DeselectSeatUseCase.Input(performanceId, seatId, member.memberId()));
+            @PathVariable final Long performanceId, @PathVariable final Long seatId, final AuthenticatedMember member) {
+        deselectSeatUseCase.execute(new DeselectSeatUseCase.Input(performanceId, seatId, member.memberId()));
         return ApiResponse.success();
     }
 
@@ -54,8 +49,7 @@ public class SeatSelectionController implements SeatSelectionControllerDocs {
     @DeleteMapping("/select")
     public ApiResponse<Void> deselectAllSeats(
             @PathVariable final Long performanceId, final AuthenticatedMember member) {
-        deselectAllSeatsUseCase.execute(
-                new DeselectAllSeatsUseCase.Input(performanceId, member.memberId()));
+        deselectAllSeatsUseCase.execute(new DeselectAllSeatsUseCase.Input(performanceId, member.memberId()));
         return ApiResponse.success();
     }
 }

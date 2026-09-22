@@ -29,8 +29,7 @@ public class WebSocketSeatStatusEventPublisher implements SeatStatusEventPublish
             final Long seatId,
             final SeatStatusAction action) {
         final SeatStatusEvent event =
-                new SeatStatusEvent(
-                        performanceId, performanceSeatId, seatId, action, LocalDateTime.now(clock));
+                new SeatStatusEvent(performanceId, performanceSeatId, seatId, action, LocalDateTime.now(clock));
         final String destination = String.format(SEAT_TOPIC_FORMAT, event.performanceId());
         messagingTemplate.convertAndSend(destination, event);
         log.debug(

@@ -11,14 +11,10 @@ import java.util.function.Supplier;
 public interface LockManager {
     <T> T withLock(List<LockKey> keys, LockOptions options, Supplier<T> action);
 
-    default void withLock(
-            final List<LockKey> keys, final LockOptions options, final Runnable action) {
-        withLock(
-                keys,
-                options,
-                () -> {
-                    action.run();
-                    return null;
-                });
+    default void withLock(final List<LockKey> keys, final LockOptions options, final Runnable action) {
+        withLock(keys, options, () -> {
+            action.run();
+            return null;
+        });
     }
 }

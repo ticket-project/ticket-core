@@ -8,8 +8,7 @@ public class CrossModuleFixtureQuerydslRepository {
     private final JPAQueryFactory queryFactory;
     private final FixtureApi other;
 
-    public CrossModuleFixtureQuerydslRepository(
-            final JPAQueryFactory queryFactory, final FixtureApi other) {
+    public CrossModuleFixtureQuerydslRepository(final JPAQueryFactory queryFactory, final FixtureApi other) {
         this.queryFactory = queryFactory;
         this.other = other;
     }

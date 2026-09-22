@@ -24,10 +24,17 @@ import org.redisson.client.codec.StringCodec;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RedissonSeatSelectionStoreTest {
-    @Mock private RedissonClient redissonClient;
-    @Mock private RBucket<String> bucket;
-    @Mock private RScript script;
-    @InjectMocks private RedissonSeatSelectionStore redissonSeatSelectionStore;
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RBucket<String> bucket;
+
+    @Mock
+    private RScript script;
+
+    @InjectMocks
+    private RedissonSeatSelectionStore redissonSeatSelectionStore;
 
     @Test
     void 비어있는_좌석이면_selectIfAbsent가_true다() {
@@ -38,25 +45,20 @@ class RedissonSeatSelectionStoreTest {
                         eq(RScript.Mode.READ_WRITE),
                         anyString(),
                         eq(RScript.ReturnType.LONG),
-                        eq(
-                                List.<Object>of(
-                                        SeatSelectionRedisKey.select(10L, 20L),
-                                        SeatSelectionRedisKey.selectSeatIndex(10L))),
+                        eq(List.<Object>of(
+                                SeatSelectionRedisKey.select(10L, 20L), SeatSelectionRedisKey.selectSeatIndex(10L))),
                         eq(Duration.ofMinutes(5).toMillis()),
                         eq("3"),
                         eq("20"));
 
-        boolean result =
-                redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5));
+        boolean result = redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5));
 
         assertThat(result).isTrue();
     }
 
     @Test
     void holder를_조회하고_소유자가_맞으면_해제한다() {
-        doReturn(bucket)
-                .when(redissonClient)
-                .getBucket(SeatSelectionRedisKey.select(10L, 20L), StringCodec.INSTANCE);
+        doReturn(bucket).when(redissonClient).getBucket(SeatSelectionRedisKey.select(10L, 20L), StringCodec.INSTANCE);
         doReturn("3").when(bucket).get();
         doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
         doReturn(1L)
@@ -65,10 +67,8 @@ class RedissonSeatSelectionStoreTest {
                         eq(RScript.Mode.READ_WRITE),
                         anyString(),
                         eq(RScript.ReturnType.LONG),
-                        eq(
-                                List.<Object>of(
-                                        SeatSelectionRedisKey.select(10L, 20L),
-                                        SeatSelectionRedisKey.selectSeatIndex(10L))),
+                        eq(List.<Object>of(
+                                SeatSelectionRedisKey.select(10L, 20L), SeatSelectionRedisKey.selectSeatIndex(10L))),
                         eq("3"),
                         eq("20"));
 

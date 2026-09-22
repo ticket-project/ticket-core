@@ -30,17 +30,13 @@ class MemberWithdrawalControllerContractTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(
-                                new MemberWithdrawalController(withdrawCurrentMemberUseCase))
-                        .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                        .setControllerAdvice(
-                                new GlobalExceptionHandler(), new MemberExceptionHandler())
-                        .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new MemberWithdrawalController(withdrawCurrentMemberUseCase))
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(new GlobalExceptionHandler(), new MemberExceptionHandler())
+                .build();
         SecurityContextHolder.getContext()
-                .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(
-                                new AuthenticatedMember(1L, "MEMBER"), null, java.util.List.of()));
+                .setAuthentication(new UsernamePasswordAuthenticationToken(
+                        new AuthenticatedMember(1L, "MEMBER"), null, java.util.List.of()));
     }
 
     @AfterEach
@@ -50,8 +46,7 @@ class MemberWithdrawalControllerContractTest {
 
     @Test
     void 탈퇴_API는_기존_URL과_응답_계약을_유지한다() throws Exception {
-        when(withdrawCurrentMemberUseCase.execute(any()))
-                .thenReturn(new WithdrawCurrentMemberUseCase.Output());
+        when(withdrawCurrentMemberUseCase.execute(any())).thenReturn(new WithdrawCurrentMemberUseCase.Output());
 
         mockMvc.perform(delete("/api/v1/members"))
                 .andExpect(status().isOk())
@@ -63,8 +58,7 @@ class MemberWithdrawalControllerContractTest {
     /** 응답을 내보내기 전에 SecurityContext를 비운다 — 같은 요청 스레드에 인증 주체가 남지 않는다. */
     @Test
     void 탈퇴_후_SecurityContext를_비운다() throws Exception {
-        when(withdrawCurrentMemberUseCase.execute(any()))
-                .thenReturn(new WithdrawCurrentMemberUseCase.Output());
+        when(withdrawCurrentMemberUseCase.execute(any())).thenReturn(new WithdrawCurrentMemberUseCase.Output());
 
         mockMvc.perform(delete("/api/v1/members")).andExpect(status().isOk());
 

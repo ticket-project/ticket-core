@@ -27,11 +27,11 @@ import com.ticket.venue.api.VenueSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link PerformanceVenueLayoutCatalogApi}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한
- * 번에 조회해 booking에게 scalar snapshot만 넘긴다.
+ * {@link PerformanceVenueLayoutCatalogApi}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한 번에 조회해 booking에게
+ * scalar snapshot만 넘긴다.
  *
- * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — local 조회({@code
- * PerformanceRepository})는 show 자기 DB만 본다.
+ * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — local 조회({@code PerformanceRepository})는 show 자기 DB만
+ * 본다.
  */
 @Service
 @RequiredArgsConstructor
@@ -45,28 +45,21 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
     @Override
     @Transactional(readOnly = true)
     public PerformanceLayoutSnapshot getVenueLayout(final long performanceId) {
-        final Performance performance =
-                performanceRepository
-                        .findById(performanceId)
-                        .orElseThrow(
-                                () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
-        final Show show =
-                showRepository
-                        .findById(performance.getShowId())
-                        .orElseThrow(
-                                () -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+        final Performance performance = performanceRepository
+                .findById(performanceId)
+                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
+        final Show show = showRepository
+                .findById(performance.getShowId())
+                .orElseThrow(() -> new NotFoundException("공연을 찾을 수 없습니다. id=" + performanceId));
         final Long venueId = show.getVenueId();
 
         final VenueSnapshot venue =
                 venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
 
-        final Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayoutBySeatId =
-                venueId == null
-                        ? Map.of()
-                        : venueSeatLookup.findAllSeatLayouts(venueId).stream()
-                                .collect(
-                                        Collectors.toMap(
-                                                VenueSeatSnapshot::seatId, this::toSeatLayout));
+        final Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayoutBySeatId = venueId == null
+                ? Map.of()
+                : venueSeatLookup.findAllSeatLayouts(venueId).stream()
+                        .collect(Collectors.toMap(VenueSeatSnapshot::seatId, this::toSeatLayout));
 
         final Map<Long, PerformanceLayoutSnapshot.GradeLayout> gradeLayoutByPerformanceGradeId =
                 toGradeLayouts(performanceId);
@@ -89,36 +82,24 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
     }
 
     /** 등급 이름을 찾지 못한 편성은 제외한다 — 옛 {@code join grade}가 그랬듯 조용히 빠진다. */
-    private Map<Long, PerformanceLayoutSnapshot.GradeLayout> toGradeLayouts(
-            final long performanceId) {
-        final List<PerformanceGrade> performanceGrades =
-                performanceRepository.findPerformanceGrades(performanceId);
-        final Map<Long, Grade> gradesById =
-                gradeRepository.findGradeNames(
-                        performanceGrades.stream()
-                                .map(PerformanceGrade::getGradeId)
-                                .collect(Collectors.toSet()));
+    private Map<Long, PerformanceLayoutSnapshot.GradeLayout> toGradeLayouts(final long performanceId) {
+        final List<PerformanceGrade> performanceGrades = performanceRepository.findPerformanceGrades(performanceId);
+        final Map<Long, Grade> gradesById = gradeRepository.findGradeNames(
+                performanceGrades.stream().map(PerformanceGrade::getGradeId).collect(Collectors.toSet()));
 
         return performanceGrades.stream()
                 .filter(performanceGrade -> gradesById.containsKey(performanceGrade.getGradeId()))
-                .collect(
-                        Collectors.toMap(
-                                PerformanceGrade::getId,
-                                performanceGrade ->
-                                        toGradeLayout(
-                                                performanceGrade,
-                                                Objects.requireNonNull(
-                                                        gradesById.get(
-                                                                performanceGrade.getGradeId())))));
+                .collect(Collectors.toMap(
+                        PerformanceGrade::getId,
+                        performanceGrade -> toGradeLayout(
+                                performanceGrade,
+                                Objects.requireNonNull(gradesById.get(performanceGrade.getGradeId())))));
     }
 
     private PerformanceLayoutSnapshot.GradeLayout toGradeLayout(
             final PerformanceGrade performanceGrade, final Grade grade) {
         return new PerformanceLayoutSnapshot.GradeLayout(
-                performanceGrade.getId(),
-                grade.getCode(),
-                grade.getName(),
-                performanceGrade.getSortOrder());
+                performanceGrade.getId(), grade.getCode(), grade.getName(), performanceGrade.getSortOrder());
     }
 
     private PerformanceLayoutSnapshot.SeatLayout toSeatLayout(final VenueSeatSnapshot layout) {

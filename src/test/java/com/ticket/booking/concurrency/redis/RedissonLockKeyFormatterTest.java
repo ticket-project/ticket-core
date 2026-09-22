@@ -18,7 +18,6 @@ class RedissonLockKeyFormatterTest {
 
     @Test
     void 주문_시작_락은_회원과_회차로_key를_만든다() {
-        assertThat(formatter.format(LockKey.orderStart(20L, 10L)))
-                .isEqualTo("LOCK:start-order:20:10");
+        assertThat(formatter.format(LockKey.orderStart(20L, 10L))).isEqualTo("LOCK:start-order:20:10");
     }
 }

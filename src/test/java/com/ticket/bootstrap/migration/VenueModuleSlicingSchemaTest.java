@@ -29,50 +29,45 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
 /**
- * BC(Bounded Context) 재편으로 물리 공연장·좌석(Venue/Seat)이 show(옛 catalog)에서 venue module로 분리됐다. 이 테스트는
- * {@code venue} module이 {@code __root} + 자신의 migration(V1 Seat-Venue 관계 추가, 옛 catalog/show V3가 이
- * module의 새 Flyway 이력으로 옮겨오며 번호가 재시작됐다)만으로 (booking·member·show 등 다른 module의 migration 없이) {@link
- * Seat}/{@link Venue} 매핑과 실제로 맞는 schema를 만들고, Venue별 좌석 주소 unique 제약이 실제로 동작하는지 검증한다. Show가 소유한
- * {@code SHOWS.venue_id} scalar 컬럼 매핑과 그 FK 제거는 {@code ShowModuleSlicingSchemaTest}가 검증한다. 옛
- * catalog V1(SHOW_LIKES member FK 제거)은 찜이 like module(옛 favorite)로 분리되며 {@code like}의 migration으로
- * 옮겨갔다 — {@code LikeModuleMigrationTest}가 검증한다.
+ * BC(Bounded Context) 재편으로 물리 공연장·좌석(Venue/Seat)이 show(옛 catalog)에서 venue module로 분리됐다. 이 테스트는 {@code venue} module이
+ * {@code __root} + 자신의 migration(V1 Seat-Venue 관계 추가, 옛 catalog/show V3가 이 module의 새 Flyway 이력으로 옮겨오며 번호가 재시작됐다)만으로
+ * (booking·member·show 등 다른 module의 migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는 schema를 만들고, Venue별 좌석 주소
+ * unique 제약이 실제로 동작하는지 검증한다. Show가 소유한 {@code SHOWS.venue_id} scalar 컬럼 매핑과 그 FK 제거는
+ * {@code ShowModuleSlicingSchemaTest}가 검증한다. 옛 catalog V1(SHOW_LIKES member FK 제거)은 찜이 like module(옛 favorite)로 분리되며
+ * {@code like}의 migration으로 옮겨갔다 — {@code LikeModuleMigrationTest}가 검증한다.
  *
- * <p>{@code BookingModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로 {@code
- * ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다. {@code SEATS}/{@code VENUES}는 어떤 Flyway
- * migration도 만들지 않는 pre-Flyway baseline이므로(V1은 기존 SEATS에 컬럼을 더할 뿐이다) legacy baseline schema를 먼저 만든
- * 뒤 module migration을 적용한다.
+ * <p>{@code BookingModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로 {@code ddl-auto=validate}와 같은
+ * 검증, 그리고 CRUD/제약 위반을 확인한다. {@code SEATS}/{@code VENUES}는 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이므로(V1은 기존
+ * SEATS에 컬럼을 더할 뿐이다) legacy baseline schema를 먼저 만든 뒤 module migration을 적용한다.
  */
 class VenueModuleSlicingSchemaTest {
     private static final String URL =
             "jdbc:h2:mem:venue-module-slicing-schema;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 
     @Test
-    void root_and_venue_migrations_alone_produce_a_schema_the_seat_venue_mapping_can_use()
-            throws Exception {
+    void root_and_venue_migrations_alone_produce_a_schema_the_seat_venue_mapping_can_use() throws Exception {
         createLegacyBaselineSchema();
         // booking/member/show 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 — __root와
         // venue뿐이다.
         ModulithFlywayTestSupport.migrate(URL, List.of("venue"));
 
-        final StandardServiceRegistry registry =
-                new StandardServiceRegistryBuilder()
-                        .applySetting("hibernate.connection.url", URL)
-                        .applySetting("hibernate.connection.driver_class", "org.h2.Driver")
-                        .applySetting("hibernate.connection.username", "sa")
-                        .applySetting("hibernate.connection.password", "")
-                        .applySetting(
-                                "hibernate.implicit_naming_strategy",
-                                "org.springframework.boot.hibernate.SpringImplicitNamingStrategy")
-                        .applySetting(
-                                "hibernate.physical_naming_strategy",
-                                "org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl")
-                        .build();
+        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
+                .applySetting("hibernate.connection.url", URL)
+                .applySetting("hibernate.connection.driver_class", "org.h2.Driver")
+                .applySetting("hibernate.connection.username", "sa")
+                .applySetting("hibernate.connection.password", "")
+                .applySetting(
+                        "hibernate.implicit_naming_strategy",
+                        "org.springframework.boot.hibernate.SpringImplicitNamingStrategy")
+                .applySetting(
+                        "hibernate.physical_naming_strategy",
+                        "org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl")
+                .build();
         try {
-            final Metadata metadata =
-                    new MetadataSources(registry)
-                            .addAnnotatedClass(Venue.class)
-                            .addAnnotatedClass(Seat.class)
-                            .buildMetadata();
+            final Metadata metadata = new MetadataSources(registry)
+                    .addAnnotatedClass(Venue.class)
+                    .addAnnotatedClass(Seat.class)
+                    .buildMetadata();
             // (1) __root + show migration만으로 만든 schema가 Seat/Venue 매핑과 실제로 맞는지 —
             // 운영이 쓰는 ddl-auto=validate와 같은 검증이다.
             validateSchema(registry, metadata);
@@ -87,32 +82,29 @@ class VenueModuleSlicingSchemaTest {
         final SchemaManagementTool tool = registry.getService(SchemaManagementTool.class);
         final Map<String, Object> configValues = Map.of();
 
-        final ExecutionOptions options =
-                new ExecutionOptions() {
-                    @Override
-                    public Map<String, Object> getConfigurationValues() {
-                        return configValues;
-                    }
+        final ExecutionOptions options = new ExecutionOptions() {
+            @Override
+            public Map<String, Object> getConfigurationValues() {
+                return configValues;
+            }
 
-                    @Override
-                    public boolean shouldManageNamespaces() {
-                        return true;
-                    }
+            @Override
+            public boolean shouldManageNamespaces() {
+                return true;
+            }
 
-                    @Override
-                    public ExceptionHandler getExceptionHandler() {
-                        return exception -> {
-                            throw exception;
-                        };
-                    }
+            @Override
+            public ExceptionHandler getExceptionHandler() {
+                return exception -> {
+                    throw exception;
                 };
+            }
+        };
         // 예외 없이 반환하면 검증 통과다.
-        tool.getSchemaValidator(configValues)
-                .doValidation(metadata, options, ContributableMatcher.ALL);
+        tool.getSchemaValidator(configValues).doValidation(metadata, options, ContributableMatcher.ALL);
     }
 
-    private void assertCrudAndUniqueConstraintWork(
-            final StandardServiceRegistry registry, final Metadata metadata) {
+    private void assertCrudAndUniqueConstraintWork(final StandardServiceRegistry registry, final Metadata metadata) {
         final SessionFactory sessionFactory = metadata.buildSessionFactory();
         try (Session session = sessionFactory.openSession()) {
             final Venue venueA = venue("Venue A");
@@ -175,11 +167,11 @@ class VenueModuleSlicingSchemaTest {
     }
 
     /**
-     * SEATS/VENUES는 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이다(venue의 V1은 기존 SEATS에
-     * venue_id를 더할 뿐이다, docs/operations.md 참고). V1이 정상 동작을 검증할 수 있도록 그 이전에 존재했을 법한 schema를 재현한다.
+     * SEATS/VENUES는 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이다(venue의 V1은 기존 SEATS에 venue_id를 더할 뿐이다,
+     * docs/operations.md 참고). V1이 정상 동작을 검증할 수 있도록 그 이전에 존재했을 법한 schema를 재현한다.
      *
-     * <p>SHOWS/SHOW_GRADES/SHOW_SEATS/PERFORMANCES/PERFORMANCE_SEATS/ORDER_SEATS는 venue의 migration이
-     * 직접 참조하지는 않지만, {@code __root}의 migration(다른 어떤 module을 지정해도 항상 함께 실행된다)이 참조하므로 최소 baseline으로
+     * <p>SHOWS/SHOW_GRADES/SHOW_SEATS/PERFORMANCES/PERFORMANCE_SEATS/ORDER_SEATS는 venue의 migration이 직접 참조하지는 않지만,
+     * {@code __root}의 migration(다른 어떤 module을 지정해도 항상 함께 실행된다)이 참조하므로 최소 baseline으로
      * 필요하다({@code LikeModuleMigrationTest}의 baseline과 같은 이유).
      */
     private void createLegacyBaselineSchema() throws Exception {
@@ -188,29 +180,23 @@ class VenueModuleSlicingSchemaTest {
             // __root의 V2(performance_queue_policies FK)~V4(order_seats 인덱스)는 다른 module의
             // schema에도 걸쳐 있으므로, 이 module만 적용하는 테스트에서도 최소 baseline으로 있어야
             // 한다(BookingModuleSlicingSchemaTest의 legacy baseline과 같은 이유).
-            statement.execute(
-                    "CREATE TABLE SHOWS (id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY)");
-            statement.execute(
-                    "CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
-            statement.execute(
-                    "CREATE TABLE SHOW_GRADES ("
-                            + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
-                            + "  show_id BIGINT NOT NULL, grade_code VARCHAR(20) NOT NULL, "
-                            + "  grade_name VARCHAR(255) NOT NULL, price DECIMAL(19,2) NOT NULL, sort_order INT NOT NULL"
-                            + ")");
-            statement.execute(
-                    "CREATE TABLE SHOW_SEATS ("
-                            + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
-                            + "  show_id BIGINT NOT NULL, seat_id BIGINT NOT NULL, show_grade_id BIGINT NOT NULL"
-                            + ")");
-            statement.execute(
-                    "CREATE TABLE PERFORMANCE_SEATS ("
-                            + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
-                            + "  performance_id BIGINT NOT NULL, seat_id BIGINT NOT NULL, price DECIMAL(19,2)"
-                            + ")");
+            statement.execute("CREATE TABLE SHOWS (id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY)");
+            statement.execute("CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE SHOW_GRADES ("
+                    + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
+                    + "  show_id BIGINT NOT NULL, grade_code VARCHAR(20) NOT NULL, "
+                    + "  grade_name VARCHAR(255) NOT NULL, price DECIMAL(19,2) NOT NULL, sort_order INT NOT NULL"
+                    + ")");
+            statement.execute("CREATE TABLE SHOW_SEATS ("
+                    + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
+                    + "  show_id BIGINT NOT NULL, seat_id BIGINT NOT NULL, show_grade_id BIGINT NOT NULL"
+                    + ")");
+            statement.execute("CREATE TABLE PERFORMANCE_SEATS ("
+                    + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
+                    + "  performance_id BIGINT NOT NULL, seat_id BIGINT NOT NULL, price DECIMAL(19,2)"
+                    + ")");
             statement.execute("CREATE TABLE ORDER_SEATS (order_id BIGINT NOT NULL)");
-            statement.execute(
-                    """
+            statement.execute("""
                     CREATE TABLE VENUES (
                       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
                       name VARCHAR(255), address VARCHAR(255), region VARCHAR(50),
@@ -223,8 +209,7 @@ class VenueModuleSlicingSchemaTest {
                       updated_at TIMESTAMP, updated_by VARCHAR(255)
                     )
                     """);
-            statement.execute(
-                    """
+            statement.execute("""
                     CREATE TABLE SEATS (
                       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
                       section VARCHAR(255) NOT NULL, row_no VARCHAR(255) NOT NULL,

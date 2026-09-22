@@ -28,16 +28,19 @@ import com.ticket.venue.api.VenueSnapshot;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class GetSaleOpeningSoonShowsPageUseCaseTest {
-    private static final ShowCursor NEXT_POSITION =
-            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowQuerydslRepository showQuerydslRepository;
-    @Mock private VenueLookupApi venueLookup;
+    private static final ShowCursor NEXT_POSITION = new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
+
+    @Mock
+    private ShowQuerydslRepository showQuerydslRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
 
     @Spy
-    private ShowCardImagePathConverter showCardImagePathConverter =
-            new ShowCardImagePathConverter();
+    private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
 
-    @InjectMocks private GetSaleOpeningSoonShowsPageUseCase useCase;
+    @InjectMocks
+    private GetSaleOpeningSoonShowsPageUseCase useCase;
 
     @Test
     void 커서_페이지_응답을_output으로_변환한다() {
@@ -48,55 +51,51 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         LocalDateTime saleStartDate = LocalDateTime.of(2026, 3, 27, 10, 0);
         LocalDateTime saleEndDate = LocalDateTime.of(2026, 3, 28, 10, 0);
 
-        Show show =
-                ShowFixture.show(
-                        1L,
-                        "concert",
-                        "subtitle",
-                        "image",
-                        7L,
-                        startDate,
-                        endDate,
-                        saleStartDate,
-                        saleEndDate,
-                        100L,
-                        LocalDateTime.of(2026, 3, 1, 10, 0));
+        Show show = ShowFixture.show(
+                1L,
+                "concert",
+                "subtitle",
+                "image",
+                7L,
+                startDate,
+                endDate,
+                saleStartDate,
+                saleEndDate,
+                100L,
+                LocalDateTime.of(2026, 3, 1, 10, 0));
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQuerydslRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
-                .thenReturn(
-                        Map.of(
+                .thenReturn(Map.of(
+                        7L,
+                        new VenueSnapshot(
                                 7L,
-                                new VenueSnapshot(
-                                        7L,
-                                        "venue",
-                                        "주소",
-                                        Region.SEOUL,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                                "venue",
+                                "주소",
+                                Region.SEOUL,
+                                null,
+                                null,
+                                null,
+                                null,
+                                new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         GetSaleOpeningSoonShowsPageUseCase.Output output =
-                useCase.execute(
-                        new GetSaleOpeningSoonShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
+                useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
 
         assertThat(output.items())
-                .containsExactly(
-                        new GetSaleOpeningSoonShowsPageUseCase.Item(
-                                1L,
-                                "concert",
-                                "subtitle",
-                                "image",
-                                "venue",
-                                Region.SEOUL,
-                                startDate,
-                                endDate,
-                                saleStartDate,
-                                saleEndDate,
-                                100L));
+                .containsExactly(new GetSaleOpeningSoonShowsPageUseCase.Item(
+                        1L,
+                        "concert",
+                        "subtitle",
+                        "image",
+                        "venue",
+                        Region.SEOUL,
+                        startDate,
+                        endDate,
+                        saleStartDate,
+                        saleEndDate,
+                        100L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
         verify(showQuerydslRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
@@ -111,8 +110,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 .thenReturn(result);
 
         GetSaleOpeningSoonShowsPageUseCase.Output output =
-                useCase.execute(
-                        new GetSaleOpeningSoonShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
+                useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
@@ -120,30 +118,24 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         verify(showQuerydslRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
-    /**
-     * 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다.
-     */
+    /** 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다. */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
         CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
         SaleOpeningSoonSearchParam noRegion =
                 new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
         SaleOpeningSoonSearchParam jeju =
-                new SaleOpeningSoonSearchParam(
-                        null, null, Region.JEJU, null, null, null, null, null);
+                new SaleOpeningSoonSearchParam(null, null, Region.JEJU, null, null, null, null, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
         when(showQuerydslRepository.findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);
         when(showQuerydslRepository.findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR))
                 .thenReturn(empty);
 
-        useCase.execute(
-                new GetSaleOpeningSoonShowsPageUseCase.Input(noRegion, 10, ShowSort.POPULAR));
+        useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(noRegion, 10, ShowSort.POPULAR));
         useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(jeju, 10, ShowSort.POPULAR));
 
-        verify(showQuerydslRepository)
-                .findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR);
-        verify(showQuerydslRepository)
-                .findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findSaleOpeningSoonPage(noRegion, null, 10, ShowSort.POPULAR);
+        verify(showQuerydslRepository).findSaleOpeningSoonPage(jeju, Set.of(), 10, ShowSort.POPULAR);
     }
 }

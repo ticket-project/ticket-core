@@ -21,8 +21,7 @@ public class PerformanceBookingModeController implements PerformanceBookingModeC
     @GetMapping("/{performanceId}/booking-mode")
     public ApiResponse<GetPerformanceBookingModeUseCase.Output> getPerformanceBookingMode(
             @PathVariable final Long performanceId) {
-        final GetPerformanceBookingModeUseCase.Input input =
-                new GetPerformanceBookingModeUseCase.Input(performanceId);
+        final GetPerformanceBookingModeUseCase.Input input = new GetPerformanceBookingModeUseCase.Input(performanceId);
         return ApiResponse.success(getPerformanceBookingModeUseCase.execute(input));
     }
 }

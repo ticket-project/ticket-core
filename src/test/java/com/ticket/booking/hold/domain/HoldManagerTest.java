@@ -22,7 +22,10 @@ import com.ticket.booking.exception.SeatAlreadyHeldException;
 @ExtendWith(MockitoExtension.class)
 class HoldManagerTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
-    @Mock private HoldStore holdStore;
+
+    @Mock
+    private HoldStore holdStore;
+
     private HoldManager holdManager;
 
     @BeforeEach
@@ -34,10 +37,7 @@ class HoldManagerTest {
     void 이미_hold된_좌석이_있으면_seatAlreadyHold예외를_던진다() {
         when(holdStore.isHeld(1L, 10L)).thenReturn(true);
 
-        assertThatThrownBy(
-                        () ->
-                                holdManager.createHold(
-                                        1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
+        assertThatThrownBy(() -> holdManager.createHold(1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
                 .isInstanceOf(SeatAlreadyHeldException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 1L)
                 .hasFieldOrPropertyWithValue("seatId", 10L);

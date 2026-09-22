@@ -44,7 +44,6 @@ public class RemoveLikeUseCase {
                 .findByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)
                 .ifPresent(likeRepository::delete);
 
-        return new Output(
-                targetId, false, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
+        return new Output(targetId, false, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
     }
 }

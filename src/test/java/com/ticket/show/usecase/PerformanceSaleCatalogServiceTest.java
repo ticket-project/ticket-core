@@ -35,19 +35,29 @@ import com.ticket.venue.api.VenueSeatSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class PerformanceSaleCatalogServiceTest {
-    @Mock private PerformanceRepository performanceRepository;
-    @Mock private ShowRepository showRepository;
-    @Mock private GradeRepository gradeRepository;
-    @Mock private VenueLookupApi venueLookup;
-    @Mock private VenueSeatLookupApi venueSeatLookup;
-    @InjectMocks private PerformanceSaleCatalogService service;
+    @Mock
+    private PerformanceRepository performanceRepository;
+
+    @Mock
+    private ShowRepository showRepository;
+
+    @Mock
+    private GradeRepository gradeRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
+
+    @Mock
+    private VenueSeatLookupApi venueSeatLookup;
+
+    @InjectMocks
+    private PerformanceSaleCatalogService service;
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
         when(performanceRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L)))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L))).isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -73,14 +83,14 @@ class PerformanceSaleCatalogServiceTest {
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 0.0, 0.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
-        when(gradeRepository.findGradeNames(Set.of(7L)))
-                .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+        when(gradeRepository.findGradeNames(Set.of(7L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
 
         assertThat(snapshot.seatInfoBySeatId()).containsKey(10L);
         assertThat(snapshot.seatInfoBySeatId().get(10L).label()).isEqualTo("1F 가구역 A열 1번");
-        assertThat(snapshot.gradeInfoByPerformanceGradeId().get(100L).gradeCode()).isEqualTo("VIP");
+        assertThat(snapshot.gradeInfoByPerformanceGradeId().get(100L).gradeCode())
+                .isEqualTo("VIP");
         assertThat(snapshot.gradeInfoByPerformanceGradeId().get(100L).gradeName())
                 .isEqualTo("VIP석");
         assertThat(snapshot.gradeInfoByPerformanceGradeId().get(100L).price())
@@ -98,8 +108,7 @@ class PerformanceSaleCatalogServiceTest {
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));
-        when(gradeRepository.findGradeNames(Set.of(7L, 8L)))
-                .thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+        when(gradeRepository.findGradeNames(Set.of(7L, 8L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
 

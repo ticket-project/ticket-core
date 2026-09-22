@@ -32,16 +32,14 @@ import com.ticket.TicketApplication;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재제출 mechanics를 {@link
- * Scenario} DSL로 검증한다.
+ * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재제출 mechanics를 {@link Scenario} DSL로 검증한다.
  *
- * <p>{@link EventPublicationMaintenance}가 실제로 쓰는 {@link FailedEventPublications#resubmit}
- * 정책(batchSize=100, maxInFlight=4, completionAttempts&lt;=10)을 그대로 재현해 호출하므로, 이 정책이 바뀌면 이 테스트도 갱신해야
- * 한다. booking 도메인 이벤트가 아니라 이 테스트 전용 {@link ProbeEvent}로 registry 자체의 동작만 격리해서 본다 — booking
- * listener의 업무 로직은 {@code com.ticket.booking} 아래의 다른 테스트가 고정한다.
+ * <p>{@link EventPublicationMaintenance}가 실제로 쓰는 {@link FailedEventPublications#resubmit} 정책(batchSize=100,
+ * maxInFlight=4, completionAttempts&lt;=10)을 그대로 재현해 호출하므로, 이 정책이 바뀌면 이 테스트도 갱신해야 한다. booking 도메인 이벤트가 아니라 이 테스트 전용
+ * {@link ProbeEvent}로 registry 자체의 동작만 격리해서 본다 — booking listener의 업무 로직은 {@code com.ticket.booking} 아래의 다른 테스트가 고정한다.
  *
- * <p>고정된 재시도 정책과 deterministic fake({@link ProbeListener})만 쓰고 {@code Thread.sleep}은 쓰지 않는다. 최초 비동기
- * 전달 완료는 {@link Scenario#andWaitForStateChange}의 Awaitility 기반 polling으로 기다린다.
+ * <p>고정된 재시도 정책과 deterministic fake({@link ProbeListener})만 쓰고 {@code Thread.sleep}은 쓰지 않는다. 최초 비동기 전달 완료는
+ * {@link Scenario#andWaitForStateChange}의 Awaitility 기반 polling으로 기다린다.
  */
 @Slf4j
 @SpringBootTest(
@@ -71,8 +69,7 @@ import lombok.extern.slf4j.Slf4j;
 class EventPublicationMaintenanceScenarioTest {
     private static final int REDIS_PORT = 6379;
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-                    .withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();
@@ -84,9 +81,14 @@ class EventPublicationMaintenanceScenarioTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired private ProbeListener probeListener;
-    @Autowired private CompletedEventPublications completedEventPublications;
-    @Autowired private FailedEventPublications failedEventPublications;
+    @Autowired
+    private ProbeListener probeListener;
+
+    @Autowired
+    private CompletedEventPublications completedEventPublications;
+
+    @Autowired
+    private FailedEventPublications failedEventPublications;
 
     @BeforeEach
     void resetProbe() {
@@ -99,19 +101,16 @@ class EventPublicationMaintenanceScenarioTest {
         probeListener.failNextInvocations(1);
 
         scenario.publish(new ProbeEvent(probeId))
-                .andWaitForStateChange(
-                        () -> probeListener.attempts(probeId), attempts -> attempts >= 1)
+                .andWaitForStateChange(() -> probeListener.attempts(probeId), attempts -> attempts >= 1)
                 .andVerify(attempts -> assertThat(attempts).isEqualTo(1));
 
         assertThat(probeListener.succeeded(probeId)).isFalse();
-        assertThat(completedEventPublications.findAll())
-                .noneMatch(publication -> matches(publication, probeId));
+        assertThat(completedEventPublications.findAll()).noneMatch(publication -> matches(publication, probeId));
 
         resubmitAndAwait(scenario, probeId, 2);
 
         assertThat(probeListener.succeeded(probeId)).isTrue();
-        assertThat(completedEventPublications.findAll())
-                .anyMatch(publication -> matches(publication, probeId));
+        assertThat(completedEventPublications.findAll()).anyMatch(publication -> matches(publication, probeId));
     }
 
     @Test
@@ -120,8 +119,7 @@ class EventPublicationMaintenanceScenarioTest {
         probeListener.alwaysFail(true);
 
         scenario.publish(new ProbeEvent(probeId))
-                .andWaitForStateChange(
-                        () -> probeListener.attempts(probeId), attempts -> attempts >= 1)
+                .andWaitForStateChange(() -> probeListener.attempts(probeId), attempts -> attempts >= 1)
                 .andVerify(attempts -> assertThat(attempts).isEqualTo(1));
         // 최초 시도(1) + resubmit 10회 = completionAttempts 11. 정책은 <=10까지만 재시도 대상이므로
         // 이 10번은 전부 재제출 대상에 포함돼 다시 실패한다.
@@ -136,34 +134,29 @@ class EventPublicationMaintenanceScenarioTest {
                 .atMost(Duration.ofSeconds(2))
                 .untilAsserted(() -> assertThat(probeListener.attempts(probeId)).isEqualTo(11));
 
-        assertThat(completedEventPublications.findAll())
-                .noneMatch(publication -> matches(publication, probeId));
+        assertThat(completedEventPublications.findAll()).noneMatch(publication -> matches(publication, probeId));
     }
 
     /**
-     * {@code resubmitFailedLikeMaintenance()}가 async listener를 다시 스케줄링만 하고 즉시 반환하므로, 다음 재제출을 걸기 전에
-     * 이번 시도가 실제로 끝나기를 기다린다.
+     * {@code resubmitFailedLikeMaintenance()}가 async listener를 다시 스케줄링만 하고 즉시 반환하므로, 다음 재제출을 걸기 전에 이번 시도가 실제로 끝나기를
+     * 기다린다.
      */
-    private void resubmitAndAwait(
-            final Scenario scenario, final UUID probeId, final int expectedAttempts) {
+    private void resubmitAndAwait(final Scenario scenario, final UUID probeId, final int expectedAttempts) {
         scenario.stimulate(this::resubmitFailedLikeMaintenance)
-                .andWaitForStateChange(
-                        () -> probeListener.attempts(probeId),
-                        attempts -> attempts >= expectedAttempts)
+                .andWaitForStateChange(() -> probeListener.attempts(probeId), attempts -> attempts >= expectedAttempts)
                 .andVerify(attempts -> assertThat(attempts).isEqualTo(expectedAttempts));
     }
 
     /**
-     * {@link EventPublicationMaintenance#resubmitFailed()}와 정확히 같은 {@link ResubmissionOptions}로
-     * 재제출한다. {@code EventPublicationMaintenance}는 package-private이라 이 테스트 패키지에서 직접 호출할 수 있지만, 정책 값
-     * 자체를 이중으로 못박아 두는 쪽이 두 코드가 갈라졌을 때 더 잘 보인다.
+     * {@link EventPublicationMaintenance#resubmitFailed()}와 정확히 같은 {@link ResubmissionOptions}로 재제출한다.
+     * {@code EventPublicationMaintenance}는 package-private이라 이 테스트 패키지에서 직접 호출할 수 있지만, 정책 값 자체를 이중으로 못박아 두는 쪽이 두 코드가
+     * 갈라졌을 때 더 잘 보인다.
      */
     private void resubmitFailedLikeMaintenance() {
-        failedEventPublications.resubmit(
-                ResubmissionOptions.defaults()
-                        .withBatchSize(100)
-                        .withMaxInFlight(4)
-                        .withFilter(it -> it.getCompletionAttempts() <= 10));
+        failedEventPublications.resubmit(ResubmissionOptions.defaults()
+                .withBatchSize(100)
+                .withMaxInFlight(4)
+                .withFilter(it -> it.getCompletionAttempts() <= 10));
     }
 
     private boolean matches(final EventPublication publication, final UUID probeId) {
@@ -207,11 +200,8 @@ class EventPublicationMaintenanceScenarioTest {
         void on(final ProbeEvent event) {
             attempts.computeIfAbsent(event.id(), __ -> new AtomicInteger(0)).incrementAndGet();
 
-            if (alwaysFail.get()
-                    || remainingFailures.getAndUpdate(current -> current > 0 ? current - 1 : 0)
-                            > 0) {
-                throw new IllegalStateException(
-                        "probe listener가 의도적으로 실패합니다. eventId=" + event.id());
+            if (alwaysFail.get() || remainingFailures.getAndUpdate(current -> current > 0 ? current - 1 : 0) > 0) {
+                throw new IllegalStateException("probe listener가 의도적으로 실패합니다. eventId=" + event.id());
             }
             succeeded.put(event.id(), true);
         }

@@ -12,8 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 새로운 주문·좌석 선택을 시작할 수 있는 접수 기간이다. Hold/Order의 {@code expiresAt}(이미 시작된 개별 주문의 완료 기한)과는 다른 개념이다 — 접수
- * 종료 직전에 생성된 Order/Hold의 {@code expiresAt}을 이 window의 {@code closesAt}으로 잘라내지 않는다.
+ * 새로운 주문·좌석 선택을 시작할 수 있는 접수 기간이다. Hold/Order의 {@code expiresAt}(이미 시작된 개별 주문의 완료 기한)과는 다른 개념이다 — 접수 종료 직전에 생성된
+ * Order/Hold의 {@code expiresAt}을 이 window의 {@code closesAt}으로 잘라내지 않는다.
  */
 @Getter
 @Embeddable

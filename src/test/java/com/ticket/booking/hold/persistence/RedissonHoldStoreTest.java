@@ -32,23 +32,20 @@ import com.ticket.booking.hold.domain.Hold;
 @ExtendWith(MockitoExtension.class)
 class RedissonHoldStoreTest {
 
-    @Mock private RedissonClient redissonClient;
+    @Mock
+    private RedissonClient redissonClient;
 
-    @Mock private HoldMetaCodec holdMetaCodec;
+    @Mock
+    private HoldMetaCodec holdMetaCodec;
 
-    @InjectMocks private RedissonHoldStore redissonHoldStore;
+    @InjectMocks
+    private RedissonHoldStore redissonHoldStore;
 
     @Test
     void 홀드를_저장하면_좌석키와_메타키를_저장한다() {
         // given
         Duration ttl = Duration.ofMinutes(5);
-        Hold hold =
-                new Hold(
-                        "hold-key",
-                        7L,
-                        1L,
-                        List.of(10L, 20L),
-                        LocalDateTime.of(2026, 3, 15, 19, 5));
+        Hold hold = new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
         RBucket<Object> seat10 = mock(RBucket.class);
         RBucket<Object> seat20 = mock(RBucket.class);
         RBucket<Object> meta = mock(RBucket.class);
@@ -80,13 +77,7 @@ class RedissonHoldStoreTest {
     void 홀드저장_중_예외가_나면_생성한_좌석키를_롤백한다() {
         // given
         Duration ttl = Duration.ofMinutes(5);
-        Hold hold =
-                new Hold(
-                        "hold-key",
-                        7L,
-                        1L,
-                        List.of(10L, 20L),
-                        LocalDateTime.of(2026, 3, 15, 19, 5));
+        Hold hold = new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
         RBucket<Object> seat10 = mock(RBucket.class);
         RBucket<Object> seat20 = mock(RBucket.class);
         RBucket<Object> meta = mock(RBucket.class);
@@ -141,17 +132,10 @@ class RedissonHoldStoreTest {
                         "{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}");
         when(holdMetaCodec.decode(
                         "{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}"))
-                .thenReturn(
-                        new Hold(
-                                "hold-key",
-                                7L,
-                                1L,
-                                List.of(10L, 20L),
-                                LocalDateTime.of(2026, 3, 15, 19, 5)));
+                .thenReturn(new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
 
         // when
-        List<Long> releasedSeatIds =
-                redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
+        List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
         // then
         verify(seat10).delete();
@@ -178,13 +162,7 @@ class RedissonHoldStoreTest {
                 .thenReturn(holdSeatIndex);
         when(meta.get()).thenReturn(payload);
         when(holdMetaCodec.decode(payload))
-                .thenReturn(
-                        new Hold(
-                                "hold-key",
-                                7L,
-                                1L,
-                                List.of(10L, 20L),
-                                LocalDateTime.of(2026, 3, 15, 19, 5)));
+                .thenReturn(new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
 
         List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(10L));
 

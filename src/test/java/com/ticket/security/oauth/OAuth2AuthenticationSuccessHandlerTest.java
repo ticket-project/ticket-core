@@ -21,35 +21,32 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class OAuth2AuthenticationSuccessHandlerTest {
-    @Mock private OAuth2AuthCodeStore oauth2AuthCodeStore;
+    @Mock
+    private OAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Test
     void 로컬_프론트에서_시작한_로그인은_로컬_프론트로_리다이렉트한다() throws Exception {
-        OAuth2FrontendRedirectResolver resolver =
-                new OAuth2FrontendRedirectResolver(
-                        "http://localhost:3000",
-                        "https://oneticket.site",
-                        "/auth/callback",
-                        "/auth/callback",
-                        "https://oneticket.site/auth/callback",
-                        "https://oneticket.site/auth/callback");
+        OAuth2FrontendRedirectResolver resolver = new OAuth2FrontendRedirectResolver(
+                "http://localhost:3000",
+                "https://oneticket.site",
+                "/auth/callback",
+                "/auth/callback",
+                "https://oneticket.site/auth/callback",
+                "https://oneticket.site/auth/callback");
         OAuth2AuthenticationSuccessHandler handler =
                 new OAuth2AuthenticationSuccessHandler(oauth2AuthCodeStore, resolver);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.getSession(true)
-                .setAttribute(
-                        OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
+                .setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_MEMBER"));
-        OAuth2User principal =
-                new DefaultOAuth2User(authorities, Map.of("memberId", 7L), "memberId");
+        OAuth2User principal = new DefaultOAuth2User(authorities, Map.of("memberId", 7L), "memberId");
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);
         when(oauth2AuthCodeStore.createCode(7L)).thenReturn("oauth-code");
 
         handler.onAuthenticationSuccess(request, response, authentication);
 
-        assertThat(response.getRedirectedUrl())
-                .isEqualTo("http://localhost:3000/auth/callback?code=oauth-code");
+        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/auth/callback?code=oauth-code");
     }
 }

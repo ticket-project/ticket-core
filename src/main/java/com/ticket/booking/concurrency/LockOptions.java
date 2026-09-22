@@ -13,10 +13,7 @@ import org.jspecify.annotations.Nullable;
  * @param failureMessage 획득 실패 시 사용할 메시지. 비어 있으면 기본 메시지를 쓴다
  */
 public record LockOptions(
-        Duration waitTime,
-        @Nullable Duration leaseTime,
-        boolean warnOnFailure,
-        String failureMessage) {
+        Duration waitTime, @Nullable Duration leaseTime, boolean warnOnFailure, String failureMessage) {
     private static final Duration DEFAULT_WAIT_TIME = Duration.ofSeconds(5);
 
     public static LockOptions defaults() {

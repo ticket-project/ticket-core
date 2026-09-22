@@ -16,15 +16,11 @@ import com.ticket.show.usecase.ShowSort;
 class ShowExceptionHandlerTest {
     private final ShowExceptionHandler handler = new ShowExceptionHandler();
 
-    /**
-     * 예외를 직접 만들지 않고 실제 파싱 경로에서 받는다. 상세 문구를 만드는 곳이 예외 안으로 옮겨졌으므로, 접두어가 정확히 한 번만 붙는지는 이 경로로만 확인할 수
-     * 있다.
-     */
+    /** 예외를 직접 만들지 않고 실제 파싱 경로에서 받는다. 상세 문구를 만드는 곳이 예외 안으로 옮겨졌으므로, 접두어가 정확히 한 번만 붙는지는 이 경로로만 확인할 수 있다. */
     @Test
     void 미지원_정렬_조건은_400과_E7002로_응답하고_원문에_접두어를_한_번_붙여_data에_싣는다() {
         final UnsupportedShowSortException exception =
-                catchThrowableOfType(
-                        () -> ShowSort.from("UNKNOWN_SORT"), UnsupportedShowSortException.class);
+                catchThrowableOfType(() -> ShowSort.from("UNKNOWN_SORT"), UnsupportedShowSortException.class);
 
         final ResponseEntity<ApiResponse<Object>> response = handler.handleShowException(exception);
 

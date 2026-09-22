@@ -25,8 +25,12 @@ import com.ticket.security.api.AccessTokenAuthenticator;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WebSocketAuthInterceptorTest {
-    @Mock private AccessTokenAuthenticator accessTokenAuthenticator;
-    @InjectMocks private WebSocketAuthInterceptor interceptor;
+    @Mock
+    private AccessTokenAuthenticator accessTokenAuthenticator;
+
+    @InjectMocks
+    private WebSocketAuthInterceptor interceptor;
+
     private final MessageChannel channel = mock(MessageChannel.class);
 
     @Test
@@ -53,8 +57,7 @@ class WebSocketAuthInterceptorTest {
 
     @Test
     void 토큰_검증에_실패하면_연결을_차단한다() {
-        when(accessTokenAuthenticator.authenticate("bad-token"))
-                .thenThrow(new UnauthenticatedException());
+        when(accessTokenAuthenticator.authenticate("bad-token")).thenThrow(new UnauthenticatedException());
 
         final StompHeaderAccessor accessor = connectAccessor("Bearer bad-token");
 

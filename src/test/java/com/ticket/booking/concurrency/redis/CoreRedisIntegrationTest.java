@@ -47,8 +47,7 @@ class CoreRedisIntegrationTest {
 
     @Container
     private static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
-                    .withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(REDIS_PORT);
 
     private static RedissonClient redissonClient;
 
@@ -56,8 +55,7 @@ class CoreRedisIntegrationTest {
     static void setUpRedisClient() {
         Config config = new Config();
         config.setCodec(StringCodec.INSTANCE);
-        config.useSingleServer()
-                .setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(REDIS_PORT));
+        config.useSingleServer().setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(REDIS_PORT));
         redissonClient = Redisson.create(config);
     }
 
@@ -78,11 +76,7 @@ class CoreRedisIntegrationTest {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
 
         List<Boolean> acquired =
-                runConcurrently(
-                        32,
-                        index ->
-                                store.selectIfAbsent(
-                                        1L, 10L, "member-" + index, Duration.ofSeconds(5)));
+                runConcurrently(32, index -> store.selectIfAbsent(1L, 10L, "member-" + index, Duration.ofSeconds(5)));
 
         assertThat(acquired.stream().filter(Boolean::booleanValue)).hasSize(1);
         String owner = store.getHolder(1L, 10L);
@@ -98,10 +92,13 @@ class CoreRedisIntegrationTest {
                 .isTrue();
         awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
         assertThat(store.getSelectingSeatIds(1L)).isEmpty();
-        assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1))).isTrue();
+        assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1)))
+                .isTrue();
         assertThat(store.getSelectingSeatIds(1L)).containsExactly(10L);
-        assertThat(store.selectIfAbsent(1L, 11L, "next-owner", Duration.ofSeconds(1))).isTrue();
-        assertThat(store.selectIfAbsent(1L, 12L, "other-owner", Duration.ofSeconds(1))).isTrue();
+        assertThat(store.selectIfAbsent(1L, 11L, "next-owner", Duration.ofSeconds(1)))
+                .isTrue();
+        assertThat(store.selectIfAbsent(1L, 12L, "other-owner", Duration.ofSeconds(1)))
+                .isTrue();
         assertThat(store.releaseAllByMember(1L, "next-owner")).containsExactlyInAnyOrder(10L, 11L);
         assertThat(store.getSelectingSeatIds(1L)).containsExactly(12L);
     }
@@ -111,12 +108,12 @@ class CoreRedisIntegrationTest {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
         String indexKey = SeatSelectionRedisKey.selectSeatIndex(1L);
 
-        assertThat(store.selectIfAbsent(1L, 10L, "owner", Duration.ofMillis(150))).isTrue();
+        assertThat(store.selectIfAbsent(1L, 10L, "owner", Duration.ofMillis(150)))
+                .isTrue();
         assertThat(redissonClient.getKeys().countExists(indexKey)).isEqualTo(1L);
 
         awaitCondition(
-                () -> redissonClient.getKeys().countExists(indexKey) == 0L,
-                "seat selection index did not expire");
+                () -> redissonClient.getKeys().countExists(indexKey) == 0L, "seat selection index did not expire");
     }
 
     @Test
@@ -127,8 +124,7 @@ class CoreRedisIntegrationTest {
         String token = store.createRefreshToken(7L, 60L);
         AuthRefreshToken refreshToken = AuthRefreshToken.from(token);
 
-        List<Optional<Long>> validated =
-                runConcurrently(16, ignored -> store.validate(refreshToken));
+        List<Optional<Long>> validated = runConcurrently(16, ignored -> store.validate(refreshToken));
 
         assertThat(validated.stream().flatMap(Optional::stream)).containsExactly(7L);
         assertThat(store.validateWithoutConsume(refreshToken)).isEmpty();
@@ -141,14 +137,10 @@ class CoreRedisIntegrationTest {
         CountDownLatch firstEntered = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         try {
-            Future<?> first =
-                    executor.submit(() -> proxy.execute(SAME_KEY, firstEntered, releaseFirst));
+            Future<?> first = executor.submit(() -> proxy.execute(SAME_KEY, firstEntered, releaseFirst));
             assertThat(firstEntered.await(2, TimeUnit.SECONDS)).isTrue();
 
-            assertThatThrownBy(
-                            () ->
-                                    proxy.execute(
-                                            SAME_KEY, new CountDownLatch(1), new CountDownLatch(0)))
+            assertThatThrownBy(() -> proxy.execute(SAME_KEY, new CountDownLatch(1), new CountDownLatch(0)))
                     .isInstanceOf(HoldBusyException.class);
 
             releaseFirst.countDown();
@@ -156,10 +148,8 @@ class CoreRedisIntegrationTest {
 
             CountDownLatch bothEntered = new CountDownLatch(2);
             CountDownLatch releaseBoth = new CountDownLatch(1);
-            Future<?> left =
-                    executor.submit(() -> proxy.execute(LEFT_KEY, bothEntered, releaseBoth));
-            Future<?> right =
-                    executor.submit(() -> proxy.execute(RIGHT_KEY, bothEntered, releaseBoth));
+            Future<?> left = executor.submit(() -> proxy.execute(LEFT_KEY, bothEntered, releaseBoth));
+            Future<?> right = executor.submit(() -> proxy.execute(RIGHT_KEY, bothEntered, releaseBoth));
             assertThat(bothEntered.await(2, TimeUnit.SECONDS)).isTrue();
             releaseBoth.countDown();
             left.get(5, TimeUnit.SECONDS);
@@ -172,12 +162,10 @@ class CoreRedisIntegrationTest {
     }
 
     private LockedService lockedService() {
-        return new LockedService(
-                new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
+        return new LockedService(new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
     }
 
-    private void awaitCondition(final CheckedBooleanSupplier condition, final String failureMessage)
-            throws Exception {
+    private void awaitCondition(final CheckedBooleanSupplier condition, final String failureMessage) throws Exception {
         long deadlineNanos = System.nanoTime() + Duration.ofSeconds(5).toNanos();
         while (!condition.getAsBoolean()) {
             if (System.nanoTime() >= deadlineNanos) {
@@ -187,8 +175,7 @@ class CoreRedisIntegrationTest {
         }
     }
 
-    private <T> List<T> runConcurrently(final int taskCount, final IntFunction<T> action)
-            throws Exception {
+    private <T> List<T> runConcurrently(final int taskCount, final IntFunction<T> action) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(taskCount);
         CountDownLatch ready = new CountDownLatch(taskCount);
         CountDownLatch start = new CountDownLatch(1);
@@ -196,16 +183,13 @@ class CoreRedisIntegrationTest {
         try {
             for (int index = 0; index < taskCount; index++) {
                 int taskIndex = index;
-                futures.add(
-                        executor.submit(
-                                () -> {
-                                    ready.countDown();
-                                    if (!start.await(5, TimeUnit.SECONDS)) {
-                                        throw new AssertionError(
-                                                "concurrent test did not start in time");
-                                    }
-                                    return action.apply(taskIndex);
-                                }));
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, TimeUnit.SECONDS)) {
+                        throw new AssertionError("concurrent test did not start in time");
+                    }
+                    return action.apply(taskIndex);
+                }));
             }
             assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
             start.countDown();
@@ -231,8 +215,7 @@ class CoreRedisIntegrationTest {
         private static final LockOptions OPTIONS =
                 LockOptions.waiting(Duration.ofMillis(100)).withLeaseTime(Duration.ofSeconds(5));
 
-        void execute(
-                final LockKey key, final CountDownLatch entered, final CountDownLatch release) {
+        void execute(final LockKey key, final CountDownLatch entered, final CountDownLatch release) {
             lockManager.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));
         }
 

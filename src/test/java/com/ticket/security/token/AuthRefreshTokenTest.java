@@ -18,7 +18,6 @@ class AuthRefreshTokenTest {
 
     @Test
     void 빈값이면_인증_예외를_던진다() {
-        assertThatThrownBy(() -> AuthRefreshToken.from("   "))
-                .isInstanceOf(UnauthenticatedException.class);
+        assertThatThrownBy(() -> AuthRefreshToken.from("   ")).isInstanceOf(UnauthenticatedException.class);
     }
 }

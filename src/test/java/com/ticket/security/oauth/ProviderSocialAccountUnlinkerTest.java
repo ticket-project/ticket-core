@@ -24,14 +24,14 @@ import com.ticket.shared.exception.InvalidRequestException;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class ProviderSocialAccountUnlinkerTest {
-    @Mock private KakaoUnlinkApiClient kakaoUnlinkApiClient;
+    @Mock
+    private KakaoUnlinkApiClient kakaoUnlinkApiClient;
 
     @Test
     void 사용자아이디가_비어있으면_예외를_던진다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("admin-key");
 
-        assertThatThrownBy(() -> unlinker.unlink(kakao(" ")))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> unlinker.unlink(kakao(" "))).isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(kakaoUnlinkApiClient);
     }
@@ -40,8 +40,7 @@ class ProviderSocialAccountUnlinkerTest {
     void 관리자키가_비어있으면_예외를_던진다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("");
 
-        assertThatThrownBy(() -> unlinker.unlink(kakao("123")))
-                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> unlinker.unlink(kakao("123"))).isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(kakaoUnlinkApiClient);
     }
@@ -54,8 +53,7 @@ class ProviderSocialAccountUnlinkerTest {
 
         unlinker.unlink(kakao("123"));
 
-        final ArgumentCaptor<MultiValueMap<String, String>> formCaptor =
-                ArgumentCaptor.forClass(MultiValueMap.class);
+        final ArgumentCaptor<MultiValueMap<String, String>> formCaptor = ArgumentCaptor.forClass(MultiValueMap.class);
         verify(kakaoUnlinkApiClient).unlink(eq("KakaoAK admin-key"), formCaptor.capture());
         assertThat(formCaptor.getValue().getFirst("target_id_type")).isEqualTo("user_id");
         assertThat(formCaptor.getValue().getFirst("target_id")).isEqualTo("123");
@@ -64,12 +62,9 @@ class ProviderSocialAccountUnlinkerTest {
     @Test
     void 카카오_API_실패는_기본오류로_변환한다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("admin-key");
-        doThrow(new IllegalStateException("boom"))
-                .when(kakaoUnlinkApiClient)
-                .unlink(anyString(), any());
+        doThrow(new IllegalStateException("boom")).when(kakaoUnlinkApiClient).unlink(anyString(), any());
 
-        assertThatThrownBy(() -> unlinker.unlink(kakao("123")))
-                .isInstanceOf(InternalErrorException.class);
+        assertThatThrownBy(() -> unlinker.unlink(kakao("123"))).isInstanceOf(InternalErrorException.class);
     }
 
     @Test

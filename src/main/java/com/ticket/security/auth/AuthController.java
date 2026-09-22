@@ -34,8 +34,7 @@ public class AuthController implements AuthControllerDocs {
 
     @Override
     @PostMapping("/signup")
-    public ApiResponse<RegisterMemberUseCase.Output> signUp(
-            @RequestBody final RegisterMemberRequest request) {
+    public ApiResponse<RegisterMemberUseCase.Output> signUp(@RequestBody final RegisterMemberRequest request) {
         return ApiResponse.success(registerMemberUseCase.execute(request.toInput()));
     }
 
@@ -51,13 +50,10 @@ public class AuthController implements AuthControllerDocs {
     @Override
     @PostMapping("/refresh")
     public ApiResponse<RefreshAuthTokenUseCase.Output> refresh(
-            @CookieValue(
-                            name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME,
-                            required = false)
+            @CookieValue(name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME, required = false)
                     final String refreshToken,
             final HttpServletResponse response) {
-        final RefreshAuthTokenUseCase.Input input =
-                RefreshAuthTokenUseCase.Input.from(refreshToken);
+        final RefreshAuthTokenUseCase.Input input = RefreshAuthTokenUseCase.Input.from(refreshToken);
         final RefreshAuthTokenUseCase.Result result = refreshAuthTokenUseCase.execute(input);
         addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
@@ -66,10 +62,8 @@ public class AuthController implements AuthControllerDocs {
     @Override
     @PostMapping("/oauth2/token")
     public ApiResponse<ExchangeOAuth2TokenUseCase.Output> exchangeOAuth2Token(
-            @RequestBody final ExchangeOAuth2TokenRequest request,
-            final HttpServletResponse response) {
-        final ExchangeOAuth2TokenUseCase.Result result =
-                exchangeOAuth2TokenUseCase.execute(request.toInput());
+            @RequestBody final ExchangeOAuth2TokenRequest request, final HttpServletResponse response) {
+        final ExchangeOAuth2TokenUseCase.Result result = exchangeOAuth2TokenUseCase.execute(request.toInput());
         addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
@@ -87,14 +81,11 @@ public class AuthController implements AuthControllerDocs {
     @PostMapping("/logout")
     public ApiResponse<LogoutUseCase.Output> logout(
             final AuthenticatedMember member,
-            @CookieValue(
-                            name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME,
-                            required = false)
+            @CookieValue(name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME, required = false)
                     final String refreshToken,
             final HttpServletResponse response) {
         try {
-            final LogoutUseCase.Input input =
-                    LogoutUseCase.Input.of(member.memberId(), refreshToken);
+            final LogoutUseCase.Input input = LogoutUseCase.Input.of(member.memberId(), refreshToken);
             final LogoutUseCase.Output output = logoutUseCase.execute(input);
             return ApiResponse.success(output);
         } finally {
@@ -104,9 +95,7 @@ public class AuthController implements AuthControllerDocs {
 
     /** 쿠키 만료는 토큰을 발급한 쪽이 정한 값을 그대로 쓴다. 설정을 다시 읽으면 저장소 TTL과 어긋날 수 있다. */
     private void addRefreshTokenCookie(
-            final HttpServletResponse response,
-            final String refreshToken,
-            final long maxAgeSeconds) {
+            final HttpServletResponse response, final String refreshToken, final long maxAgeSeconds) {
         RefreshTokenCookieWriter.addRefreshTokenCookie(response, refreshToken, maxAgeSeconds);
     }
 }

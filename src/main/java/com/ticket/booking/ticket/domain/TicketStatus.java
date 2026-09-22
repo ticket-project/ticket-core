@@ -1,8 +1,7 @@
 package com.ticket.booking.ticket.domain;
 
 /**
- * Ticket(입장 권리)의 상태다. 양도 모델은 존재하지 않는다 — {@code ownerMemberId}는 최초 발급 시 주문 구매자로 고정된다(CONTEXT.md의
- * Ticket).
+ * Ticket(입장 권리)의 상태다. 양도 모델은 존재하지 않는다 — {@code ownerMemberId}는 최초 발급 시 주문 구매자로 고정된다(CONTEXT.md의 Ticket).
  *
  * <p>허용 전이:
  *

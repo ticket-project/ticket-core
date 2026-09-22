@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.ticket.shared.exception.InvalidRequestException;
 
 /**
- * 오류 상세 문구는 {@code error.data}로 그대로 공개되는 계약이라 문자열까지 고정한다. null과 0 이하를 구분하는 것도 계약이다 — 둘을 같은 오류로 뭉개면
- * 클라이언트가 보던 사유가 바뀐다.
+ * 오류 상세 문구는 {@code error.data}로 그대로 공개되는 계약이라 문자열까지 고정한다. null과 0 이하를 구분하는 것도 계약이다 — 둘을 같은 오류로 뭉개면 클라이언트가 보던 사유가 바뀐다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class InputChecksTest {

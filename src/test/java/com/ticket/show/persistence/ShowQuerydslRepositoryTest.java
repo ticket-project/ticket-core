@@ -54,14 +54,11 @@ import com.ticket.venue.usecase.VenueLookupService;
 /**
  * {@link ShowQuerydslRepository}의 실제 DB 조회 동작을 고정한다.
  *
- * <p>정렬 키·tie breaker, 커서 형식 검증, 최신순의 마감 판정(TD-12: null 창은 CLOSED)은 예전에 {@code
- * QuerydslShowSortResolverTest} / {@code QuerydslShowCursorConditionBuilderTest} / {@code
- * SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그 helper들이 이 Repository 안으로 흡수되면서 같은
- * 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
+ * <p>정렬 키·tie breaker, 커서 형식 검증, 최신순의 마감 판정(TD-12: null 창은 CLOSED)은 예전에 {@code QuerydslShowSortResolverTest} /
+ * {@code QuerydslShowCursorConditionBuilderTest} / {@code SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그
+ * helper들이 이 Repository 안으로 흡수되면서 같은 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
  */
-@SpringBootTest(
-        webEnvironment = WebEnvironment.NONE,
-        classes = ShowQuerydslRepositoryTest.TestApplication.class)
+@SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = ShowQuerydslRepositoryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
             "spring.profiles.active=test",
@@ -94,9 +91,15 @@ import com.ticket.venue.usecase.VenueLookupService;
 })
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQuerydslRepositoryTest {
-    @Autowired private EntityManager entityManager;
-    @Autowired private ShowQuerydslRepository showQuerydslRepository;
-    @Autowired private VenueLookupApi venueLookup;
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private ShowQuerydslRepository showQuerydslRepository;
+
+    @Autowired
+    private VenueLookupApi venueLookup;
+
     private Venue seoulVenue;
     private Venue busanVenue;
 
@@ -139,8 +142,8 @@ class ShowQuerydslRepositoryTest {
     }
 
     /**
-     * 목록 query는 show x showGenre x genre x category를 leftJoin하므로 장르가 여러 개면 행이 늘어난다. 그것을 GROUP BY가
-     * 정확히 하나로 접는다 -- 접지 못하면 같은 공연이 목록에 여러 번 나오고 페이지 크기 계산도 어긋난다.
+     * 목록 query는 show x showGenre x genre x category를 leftJoin하므로 장르가 여러 개면 행이 늘어난다. 그것을 GROUP BY가 정확히 하나로 접는다 -- 접지 못하면
+     * 같은 공연이 목록에 여러 번 나오고 페이지 크기 계산도 어긋난다.
      *
      * <p>이 테스트가 없으면 {@code fetchShowPageRows}의 GROUP BY를 통째로 지워도 아무도 모른다.
      */
@@ -155,17 +158,13 @@ class ShowQuerydslRepositoryTest {
         // 늘어난 행이 접히지 않으면 그 3건이 전부 "Seoul Popular" 한 공연으로 채워져 두 번째 공연이
         // 페이지에서 밀려난다. size를 크게 잡으면 2단계의 IN 조회가 중복을 흡수해 버려 이 회귀를 놓친다.
         final CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null), 2, ShowSort.POPULAR);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 2, ShowSort.POPULAR);
 
-        assertThat(result.items())
-                .extracting(Show::getTitle)
-                .containsExactly("Seoul Popular", "Seoul Normal");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Seoul Popular", "Seoul Normal");
         assertThat(result.hasNext()).isTrue();
-        assertThat(
-                        showQuerydslRepository
-                                .findGenreNamesByShowIds(List.of(seoulPopular.getId()))
-                                .get(seoulPopular.getId()))
+        assertThat(showQuerydslRepository
+                        .findGenreNamesByShowIds(List.of(seoulPopular.getId()))
+                        .get(seoulPopular.getId()))
                 .containsExactlyInAnyOrder("뮤지컬", "연극", "콘서트");
     }
 
@@ -177,19 +176,17 @@ class ShowQuerydslRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        final long count =
-                countSearchShows(
-                        ShowSearchCriteria.of(null, null, null, null, null, "SEOUL", null));
+        final long count = countSearchShows(ShowSearchCriteria.of(null, null, null, null, null, "SEOUL", null));
 
         assertThat(count).isEqualTo(3);
     }
 
     /**
-     * 목록 조회는 2단계다 -- 1단계가 정렬·커서로 id를 뽑고 2단계가 그 id로 본문을 다시 읽는다. 2단계는 {@code IN (...)} 조회라 DB가 돌려주는
-     * 순서를 믿을 수 없어서, 1단계와 <b>같은 ORDER BY</b>를 다시 건다.
+     * 목록 조회는 2단계다 -- 1단계가 정렬·커서로 id를 뽑고 2단계가 그 id로 본문을 다시 읽는다. 2단계는 {@code IN (...)} 조회라 DB가 돌려주는 순서를 믿을 수 없어서, 1단계와
+     * <b>같은 ORDER BY</b>를 다시 건다.
      *
-     * <p>그래서 정렬 순서와 id 순서가 어긋나도록 데이터를 만든 뒤 순서를 확인한다. 등록 순서(id 오름차순)와 조회수 순서가 반대가 되게 배치했으므로, 2단계의
-     * ORDER BY가 빠지면 이 단언이 깨진다.
+     * <p>그래서 정렬 순서와 id 순서가 어긋나도록 데이터를 만든 뒤 순서를 확인한다. 등록 순서(id 오름차순)와 조회수 순서가 반대가 되게 배치했으므로, 2단계의 ORDER BY가 빠지면 이 단언이
+     * 깨진다.
      */
     @Test
     void 두_단계_조회에서도_정렬_순서가_유지된다() {
@@ -219,33 +216,24 @@ class ShowQuerydslRepositoryTest {
         entityManager.clear();
 
         final CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
                 .extracting(Show::getTitle)
-                .startsWith(
-                        "Seoul Popular",
-                        "Seoul Normal",
-                        "Closed Show",
-                        "Order C",
-                        "Order B",
-                        "Order A");
+                .startsWith("Seoul Popular", "Seoul Normal", "Closed Show", "Order C", "Order B", "Order A");
     }
 
     /**
      * region에 해당하는 공연장이 하나도 없으면 결과가 없다.
      *
-     * <p>{@code venueId} 조건이 빈 집합에도 {@code null}(조건 없음)이 아니라 {@code 1 = 2}에 해당하는 조건을 돌려주기 때문이다. 이것을
-     * "빈 집합이면 조건 없음"으로 바꾸면 필터가 통째로 사라져 <b>전체 목록이 나온다</b> — 조용히 틀리는 회귀라 목록과 집계 양쪽을 고정한다.
+     * <p>{@code venueId} 조건이 빈 집합에도 {@code null}(조건 없음)이 아니라 {@code 1 = 2}에 해당하는 조건을 돌려주기 때문이다. 이것을 "빈 집합이면 조건 없음"으로
+     * 바꾸면 필터가 통째로 사라져 <b>전체 목록이 나온다</b> — 조용히 틀리는 회귀라 목록과 집계 양쪽을 고정한다.
      */
     @Test
     void 지역에_공연장이_하나도_없으면_목록과_집계가_모두_비어_있다() {
         final CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.JEJU, null), 10, ShowSort.POPULAR);
-        final long count =
-                countSearchShows(ShowSearchCriteria.of(null, null, null, null, null, "JEJU", null));
+                findAllBySearch(new ShowListParam(null, null, Region.JEJU, null), 10, ShowSort.POPULAR);
+        final long count = countSearchShows(ShowSearchCriteria.of(null, null, null, null, null, "JEJU", null));
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
@@ -267,9 +255,7 @@ class ShowQuerydslRepositoryTest {
         CursorPage<Show, ShowCursor> result = findAllBySearch(param, 10, ShowSort.POPULAR);
         List<Show> slice = result.items();
 
-        assertThat(slice)
-                .extracting(Show::getTitle)
-                .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
+        assertThat(slice).extracting(Show::getTitle).containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
         assertThat(slice).extracting(Show::getViewCount).containsExactly(300L, 120L, 50L);
         assertThat(result.nextPosition()).isNull();
     }
@@ -277,13 +263,10 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 커서를_전달하면_다음_페이지를_조회한다() {
         ShowListParam firstPageParam = new ShowListParam(null, null, Region.SEOUL, null);
-        CursorPage<Show, ShowCursor> firstPage =
-                findAllBySearch(firstPageParam, 1, ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> firstPage = findAllBySearch(firstPageParam, 1, ShowSort.POPULAR);
 
-        ShowListParam secondPageParam =
-                new ShowListParam(null, null, Region.SEOUL, firstPage.nextPosition());
-        CursorPage<Show, ShowCursor> secondPage =
-                findAllBySearch(secondPageParam, 1, ShowSort.POPULAR);
+        ShowListParam secondPageParam = new ShowListParam(null, null, Region.SEOUL, firstPage.nextPosition());
+        CursorPage<Show, ShowCursor> secondPage = findAllBySearch(secondPageParam, 1, ShowSort.POPULAR);
 
         assertThat(firstPage.items()).extracting(Show::getTitle).containsExactly("Seoul Popular");
         assertThat(firstPage.nextPosition()).isNotNull();
@@ -293,8 +276,7 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 검색_조건에_맞는_공연만_집계한다() {
         ShowSearchCriteria request =
-                new ShowSearchCriteria(
-                        "Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
+                new ShowSearchCriteria("Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
 
         long count = countSearchShows(request);
 
@@ -304,14 +286,11 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 검색_api는_판매중인_서울_공연만_조회한다() {
         ShowSearchCriteria request =
-                new ShowSearchCriteria(
-                        "Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
+                new ShowSearchCriteria("Seoul", null, SaleDisplayStatus.ON_SALE, null, null, Region.SEOUL, null);
 
         CursorPage<Show, ShowCursor> result = searchShows(request, 10, ShowSort.POPULAR);
 
-        assertThat(result.items())
-                .extracting(Show::getTitle)
-                .containsExactly("Seoul Popular", "Seoul Normal");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Seoul Popular", "Seoul Normal");
     }
 
     @Test
@@ -322,8 +301,7 @@ class ShowQuerydslRepositoryTest {
         setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
 
         CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
 
         assertThat(result.items())
                 .extracting(Show::getTitle)
@@ -337,8 +315,7 @@ class ShowQuerydslRepositoryTest {
         setCreatedAt("Closed Show", LocalDateTime.now().minusDays(5));
 
         CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST);
 
         assertThat(result.items())
                 .extracting(Show::getTitle)
@@ -353,17 +330,9 @@ class ShowQuerydslRepositoryTest {
         setCreatedAt("Closed Show", sameInstant);
 
         List<String> first =
-                titlesOf(
-                        findAllBySearch(
-                                new ShowListParam(null, null, Region.SEOUL, null),
-                                10,
-                                ShowSort.LATEST));
+                titlesOf(findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST));
         List<String> second =
-                titlesOf(
-                        findAllBySearch(
-                                new ShowListParam(null, null, Region.SEOUL, null),
-                                10,
-                                ShowSort.LATEST));
+                titlesOf(findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.LATEST));
 
         assertThat(first).as("같은 등록일이어도 순서가 흔들리지 않는다").isEqualTo(second);
         assertThat(first).endsWith("Closed Show");
@@ -380,10 +349,7 @@ class ShowQuerydslRepositoryTest {
         ShowCursor cursor = null;
         for (int page = 0; page < 5; page++) {
             CursorPage<Show, ShowCursor> result =
-                    findAllBySearch(
-                            new ShowListParam(null, null, Region.SEOUL, cursor),
-                            1,
-                            ShowSort.LATEST);
+                    findAllBySearch(new ShowListParam(null, null, Region.SEOUL, cursor), 1, ShowSort.LATEST);
             paged.addAll(titlesOf(result));
             cursor = result.nextPosition();
             if (cursor == null) {
@@ -391,9 +357,7 @@ class ShowQuerydslRepositoryTest {
             }
         }
 
-        assertThat(paged)
-                .as("한 장에 다 담아 읽은 결과와 같아야 한다")
-                .containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
+        assertThat(paged).as("한 장에 다 담아 읽은 결과와 같아야 한다").containsExactly("Seoul Popular", "Seoul Normal", "Closed Show");
         assertThat(paged).doesNotHaveDuplicates();
     }
 
@@ -413,8 +377,7 @@ class ShowQuerydslRepositoryTest {
         setCreatedAt("Closed Show", LocalDateTime.now());
 
         CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
                 .extracting(Show::getTitle)
@@ -427,10 +390,7 @@ class ShowQuerydslRepositoryTest {
         setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
 
         CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.GYEONGSANG, null),
-                        10,
-                        ShowSort.LATEST);
+                findAllBySearch(new ShowListParam(null, null, Region.GYEONGSANG, null), 10, ShowSort.LATEST);
 
         assertThat(result.items()).extracting(Show::getTitle).containsExactly("Busan Hit");
     }
@@ -472,10 +432,7 @@ class ShowQuerydslRepositoryTest {
         entityManager.clear();
 
         CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null),
-                        10,
-                        ShowSort.SHOW_START_APPROACHING);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.SHOW_START_APPROACHING);
 
         // 같은 공연일(오늘 +5) 안에서는 등록 순서(id 오름차순)로 이어진다.
         assertThat(result.items())
@@ -504,8 +461,7 @@ class ShowQuerydslRepositoryTest {
         entityManager.clear();
 
         CursorPage<Show, ShowCursor> result =
-                findAllBySearch(
-                        new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
+                findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(titlesOf(result)).startsWith("Same B", "Same A");
     }
@@ -517,14 +473,13 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void cursor의_sort가_요청과_다르면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor =
-                new ShowCursor(
-                        ShowSort.LATEST,
-                        "DESC",
-                        LocalDateTime.now().toString(),
-                        1L,
-                        0,
-                        LocalDateTime.now().toString());
+        ShowCursor cursor = new ShowCursor(
+                ShowSort.LATEST,
+                "DESC",
+                LocalDateTime.now().toString(),
+                1L,
+                0,
+                LocalDateTime.now().toString());
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.POPULAR))
                 .isInstanceOf(InvalidRequestException.class);
@@ -556,14 +511,13 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void cursor의_lastValue가_정렬형식과_맞지_않으면_INVALID_INPUT_예외를_던진다() {
-        ShowCursor cursor =
-                new ShowCursor(
-                        ShowSort.LATEST,
-                        "DESC",
-                        "not-a-date",
-                        1L,
-                        0,
-                        LocalDateTime.now().toString());
+        ShowCursor cursor = new ShowCursor(
+                ShowSort.LATEST,
+                "DESC",
+                "not-a-date",
+                1L,
+                0,
+                LocalDateTime.now().toString());
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -582,13 +536,7 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 최신순_커서의_판정_시각_형식이_틀리면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor =
-                new ShowCursor(
-                        ShowSort.LATEST,
-                        "DESC",
-                        LocalDateTime.now().toString(),
-                        1L,
-                        0,
-                        "not-a-datetime");
+                new ShowCursor(ShowSort.LATEST, "DESC", LocalDateTime.now().toString(), 1L, 0, "not-a-datetime");
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -598,14 +546,13 @@ class ShowQuerydslRepositoryTest {
     void 최신순_커서에_마감여부가_없으면_INVALID_INPUT_예외를_던진다() {
         // 최신순이 마감 여부를 먼저 보기 전에 발급된 커서다. 그대로 이어 읽으면 마감 그룹 경계를
         // 무시하고 등록일만으로 잘라 중복·누락이 생긴다.
-        ShowCursor cursor =
-                new ShowCursor(
-                        ShowSort.LATEST,
-                        "DESC",
-                        LocalDateTime.now().toString(),
-                        1L,
-                        null,
-                        LocalDateTime.now().toString());
+        ShowCursor cursor = new ShowCursor(
+                ShowSort.LATEST,
+                "DESC",
+                LocalDateTime.now().toString(),
+                1L,
+                null,
+                LocalDateTime.now().toString());
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -628,8 +575,7 @@ class ShowQuerydslRepositoryTest {
         setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(1));
         setCreatedAt("Closed Show", LocalDateTime.now().minusDays(2));
 
-        CursorPage<Show, ShowCursor> firstPage =
-                findAllBySearch(seoulParam(null), 1, ShowSort.LATEST);
+        CursorPage<Show, ShowCursor> firstPage = findAllBySearch(seoulParam(null), 1, ShowSort.LATEST);
 
         assertThat(firstPage.nextPosition()).isNotNull();
         assertThat(firstPage.nextPosition().saleClosedRank()).isZero();
@@ -662,8 +608,8 @@ class ShowQuerydslRepositoryTest {
     }
 
     /**
-     * 표시 판매기간이 비어 있는 공연도 마감으로 본다 — {@code DisplaySaleWindow.statusAt}과 같은 규칙이다(TD-12). 필터 결과와 다음 커서
-     * 양쪽에서 같은 결론이 나와야 정렬 경계가 어긋나지 않는다.
+     * 표시 판매기간이 비어 있는 공연도 마감으로 본다 — {@code DisplaySaleWindow.statusAt}과 같은 규칙이다(TD-12). 필터 결과와 다음 커서 양쪽에서 같은 결론이 나와야 정렬
+     * 경계가 어긋나지 않는다.
      */
     @Test
     void 표시_판매기간이_비어있는_공연도_마감으로_본다() {
@@ -686,11 +632,8 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 판매_표시_상태를_주지_않으면_상태로_거르지_않는다() {
-        CursorPage<Show, ShowCursor> result =
-                searchShows(
-                        new ShowSearchCriteria(null, null, null, null, null, Region.SEOUL, null),
-                        10,
-                        ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> result = searchShows(
+                new ShowSearchCriteria(null, null, null, null, null, Region.SEOUL, null), 10, ShowSort.POPULAR);
 
         assertThat(result.items())
                 .extracting(Show::getTitle)
@@ -709,12 +652,10 @@ class ShowQuerydslRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        CursorPage<Show, ShowCursor> result =
-                searchShows(
-                        new ShowSearchCriteria(
-                                null, null, SaleDisplayStatus.BEFORE_OPEN, null, null, null, null),
-                        10,
-                        ShowSort.POPULAR);
+        CursorPage<Show, ShowCursor> result = searchShows(
+                new ShowSearchCriteria(null, null, SaleDisplayStatus.BEFORE_OPEN, null, null, null, null),
+                10,
+                ShowSort.POPULAR);
 
         assertThat(result.items()).extracting(Show::getTitle).containsExactly("Before Open");
     }
@@ -782,13 +723,10 @@ class ShowQuerydslRepositoryTest {
         entityManager.clear();
 
         final CursorPage<Show, ShowCursor> result =
-                findSaleOpeningSoonPage(
-                        saleOpeningSoon(null, null, null), 10, ShowSort.SALE_START_APPROACHING);
+                findSaleOpeningSoonPage(saleOpeningSoon(null, null, null), 10, ShowSort.SALE_START_APPROACHING);
 
         // 이미 판매가 시작된 setUp의 네 공연은 빠진다.
-        assertThat(result.items())
-                .extracting(Show::getTitle)
-                .containsExactly("Soon Earlier", "Soon Later");
+        assertThat(result.items()).extracting(Show::getTitle).containsExactly("Soon Earlier", "Soon Later");
         assertThat(result.hasNext()).isFalse();
         assertThat(result.nextPosition()).isNull();
     }
@@ -813,21 +751,14 @@ class ShowQuerydslRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(
-                        findSaleOpeningSoonPage(
-                                        saleOpeningSoon(null, null, Region.SEOUL),
-                                        10,
-                                        ShowSort.SALE_START_APPROACHING)
-                                .items())
+        assertThat(findSaleOpeningSoonPage(
+                                saleOpeningSoon(null, null, Region.SEOUL), 10, ShowSort.SALE_START_APPROACHING)
+                        .items())
                 .extracting(Show::getTitle)
                 .containsExactly("Soon Seoul");
 
-        assertThat(
-                        findSaleOpeningSoonPage(
-                                        saleOpeningSoon(null, "busan", null),
-                                        10,
-                                        ShowSort.SALE_START_APPROACHING)
-                                .items())
+        assertThat(findSaleOpeningSoonPage(saleOpeningSoon(null, "busan", null), 10, ShowSort.SALE_START_APPROACHING)
+                        .items())
                 .extracting(Show::getTitle)
                 .containsExactly("Soon Busan");
     }
@@ -852,37 +783,28 @@ class ShowQuerydslRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        final CursorPage<Show, ShowCursor> result =
-                findSaleOpeningSoonPage(
-                        new SaleOpeningSoonSearchParam(
-                                null,
-                                null,
-                                null,
-                                null,
-                                LocalDateTime.now().plusDays(10),
-                                null,
-                                null,
-                                null),
-                        10,
-                        ShowSort.SALE_START_APPROACHING);
+        final CursorPage<Show, ShowCursor> result = findSaleOpeningSoonPage(
+                new SaleOpeningSoonSearchParam(
+                        null, null, null, null, LocalDateTime.now().plusDays(10), null, null, null),
+                10,
+                ShowSort.SALE_START_APPROACHING);
 
         assertThat(result.items()).extracting(Show::getTitle).containsExactly("Soon Near");
     }
 
     /**
-     * 오픈 예정 요약(배너)만 GROUP BY가 아니라 {@code distinct}로 장르 조인의 행 중복을 없앤다. 두 방식을 통일하지 않는 이유는
-     * readability-guidelines 14항에 있다. 여기서는 지금 동작을 고정만 한다.
+     * 오픈 예정 요약(배너)만 GROUP BY가 아니라 {@code distinct}로 장르 조인의 행 중복을 없앤다. 두 방식을 통일하지 않는 이유는 readability-guidelines 14항에 있다.
+     * 여기서는 지금 동작을 고정만 한다.
      */
     @Test
     void 오픈_예정_요약은_장르가_여러_개여도_한_번만_나온다() {
-        final Show soon =
-                persistShow(
-                        "Soon Summary",
-                        10L,
-                        LocalDate.now().plusDays(40),
-                        seoulVenue,
-                        LocalDateTime.now().plusDays(3),
-                        LocalDateTime.now().plusDays(20));
+        final Show soon = persistShow(
+                "Soon Summary",
+                10L,
+                LocalDate.now().plusDays(40),
+                seoulVenue,
+                LocalDateTime.now().plusDays(3),
+                LocalDateTime.now().plusDays(20));
         entityManager.flush();
         attachGenres(soon, "뮤지컬", "연극", "콘서트");
         entityManager.flush();
@@ -895,10 +817,7 @@ class ShowQuerydslRepositoryTest {
 
     // 오름차순 정렬과 커서 ------------------------------------------------------
 
-    /**
-     * 커서 왕복은 그동안 LATEST와 POPULAR(둘 다 DESC)만 확인했다. ASC 정렬은 커서 비교가 반대 부등호로 뒤집히므로 별도 경로다. 한 건씩 끝까지 넘기며
-     * 중복도 누락도 없는지 본다.
-     */
+    /** 커서 왕복은 그동안 LATEST와 POPULAR(둘 다 DESC)만 확인했다. ASC 정렬은 커서 비교가 반대 부등호로 뒤집히므로 별도 경로다. 한 건씩 끝까지 넘기며 중복도 누락도 없는지 본다. */
     @Test
     void 판매_시작_임박순_커서를_끝까지_넘겨도_중복도_누락도_없다() {
         persistShow(
@@ -928,12 +847,10 @@ class ShowQuerydslRepositoryTest {
         final List<String> visited = new ArrayList<>();
         ShowCursor cursor = null;
         for (int page = 0; page < 5; page++) {
-            final CursorPage<Show, ShowCursor> result =
-                    findSaleOpeningSoonPage(
-                            new SaleOpeningSoonSearchParam(
-                                    null, null, null, null, null, null, null, cursor),
-                            1,
-                            ShowSort.SALE_START_APPROACHING);
+            final CursorPage<Show, ShowCursor> result = findSaleOpeningSoonPage(
+                    new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, cursor),
+                    1,
+                    ShowSort.SALE_START_APPROACHING);
             result.items().stream().map(Show::getTitle).forEach(visited::add);
             if (!result.hasNext()) {
                 break;
@@ -945,18 +862,16 @@ class ShowQuerydslRepositoryTest {
     }
 
     /**
-     * 공연 임박순 정렬은 <b>WHERE까지 바꾼다</b>. 이미 시작한 공연을 빼려고 startDate 하한을 더하는데, 집계는 정렬을 모르므로 그 조건이 붙지 않아 같은
-     * 검색의 목록 건수와 집계 건수가 어긋난다.
+     * 공연 임박순 정렬은 <b>WHERE까지 바꾼다</b>. 이미 시작한 공연을 빼려고 startDate 하한을 더하는데, 집계는 정렬을 모르므로 그 조건이 붙지 않아 같은 검색의 목록 건수와 집계 건수가
+     * 어긋난다.
      *
      * <p>이것은 <b>현재 동작</b>이고 이번 작업에서 고치지 않는다. 조건 조립을 옮기면서 이 비대칭을 잃지 않도록 먼저 고정한다.
      */
     @Test
     void 공연_임박순_정렬만_지난_공연을_빼고_집계는_빼지_않는다() {
-        final ShowSearchCriteria criteria =
-                ShowSearchCriteria.of(null, null, null, null, null, null, null);
+        final ShowSearchCriteria criteria = ShowSearchCriteria.of(null, null, null, null, null, null, null);
 
-        final CursorPage<Show, ShowCursor> approaching =
-                searchShows(criteria, 10, ShowSort.SHOW_START_APPROACHING);
+        final CursorPage<Show, ShowCursor> approaching = searchShows(criteria, 10, ShowSort.SHOW_START_APPROACHING);
         final CursorPage<Show, ShowCursor> popular = searchShows(criteria, 10, ShowSort.POPULAR);
 
         // "Closed Show"는 startDate가 어제라 임박순에서만 빠진다.
@@ -984,12 +899,8 @@ class ShowQuerydslRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(
-                        findAllBySearch(
-                                        new ShowListParam(null, null, null, null),
-                                        10,
-                                        ShowSort.POPULAR)
-                                .items())
+        assertThat(findAllBySearch(new ShowListParam(null, null, null, null), 10, ShowSort.POPULAR)
+                        .items())
                 .extracting(Show::getTitle)
                 .contains("No Venue");
     }
@@ -1007,20 +918,14 @@ class ShowQuerydslRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(
-                        findAllBySearch(
-                                        new ShowListParam(null, null, Region.SEOUL, null),
-                                        10,
-                                        ShowSort.POPULAR)
-                                .items())
+        assertThat(findAllBySearch(new ShowListParam(null, null, Region.SEOUL, null), 10, ShowSort.POPULAR)
+                        .items())
                 .extracting(Show::getTitle)
                 .doesNotContain("No Venue");
     }
 
-    private SaleOpeningSoonSearchParam saleOpeningSoon(
-            final String category, final String title, final Region region) {
-        return new SaleOpeningSoonSearchParam(
-                category, title, region, null, null, null, null, null);
+    private SaleOpeningSoonSearchParam saleOpeningSoon(final String category, final String title, final Region region) {
+        return new SaleOpeningSoonSearchParam(category, title, region, null, null, null, null, null);
     }
 
     // 지역 조건 해석은 application의 몫이다. 이 테스트도 use case와 같은 순서로 -- 지역을 venueId로 먼저
@@ -1028,14 +933,12 @@ class ShowQuerydslRepositoryTest {
 
     private CursorPage<Show, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        return showQuerydslRepository.findAllBySearch(
-                param, venueIdsOf(param.getRegion()), size, sort);
+        return showQuerydslRepository.findAllBySearch(param, venueIdsOf(param.getRegion()), size, sort);
     }
 
     private CursorPage<Show, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        return showQuerydslRepository.searchShows(
-                criteria, venueIdsOf(criteria.getRegion()), size, sort);
+        return showQuerydslRepository.searchShows(criteria, venueIdsOf(criteria.getRegion()), size, sort);
     }
 
     private long countSearchShows(final ShowSearchCriteria criteria) {
@@ -1044,8 +947,7 @@ class ShowQuerydslRepositoryTest {
 
     private CursorPage<Show, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        return showQuerydslRepository.findSaleOpeningSoonPage(
-                param, venueIdsOf(param.getRegion()), size, sort);
+        return showQuerydslRepository.findSaleOpeningSoonPage(param, venueIdsOf(param.getRegion()), size, sort);
     }
 
     /** {@code null}(지역 조건 없음)과 빈 집합(그 지역에 공연장 없음)을 구분해 넘긴다 — use case와 같은 규칙이다. */
@@ -1054,22 +956,21 @@ class ShowQuerydslRepositoryTest {
     }
 
     private Venue persistVenue(final String name, final Region region) throws Exception {
-        Venue venue =
-                Venue.create(
-                        name,
-                        name + " address",
-                        region,
-                        "detail",
-                        "12345",
-                        BigDecimal.valueOf(37.0),
-                        BigDecimal.valueOf(127.0),
-                        "010-0000-0000",
-                        "https://example.com/venue.png",
-                        1000,
-                        800,
-                        10.0,
-                        2.0,
-                        2.0);
+        Venue venue = Venue.create(
+                name,
+                name + " address",
+                region,
+                "detail",
+                "12345",
+                BigDecimal.valueOf(37.0),
+                BigDecimal.valueOf(127.0),
+                "010-0000-0000",
+                "https://example.com/venue.png",
+                1000,
+                800,
+                10.0,
+                2.0,
+                2.0);
         entityManager.persist(venue);
         return venue;
     }
@@ -1081,21 +982,20 @@ class ShowQuerydslRepositoryTest {
             final Venue venue,
             final LocalDateTime saleStartDate,
             final LocalDateTime saleEndDate) {
-        Show show =
-                new Show(
-                        title,
-                        title + " subtitle",
-                        title + " description",
-                        startDate,
-                        startDate.plusDays(30),
-                        viewCount,
-                        SaleType.GENERAL,
-                        saleStartDate,
-                        saleEndDate,
-                        "https://example.com/show.png",
-                        venue == null ? null : venue.getId(),
-                        null,
-                        120);
+        Show show = new Show(
+                title,
+                title + " subtitle",
+                title + " description",
+                startDate,
+                startDate.plusDays(30),
+                viewCount,
+                SaleType.GENERAL,
+                saleStartDate,
+                saleEndDate,
+                "https://example.com/show.png",
+                venue == null ? null : venue.getId(),
+                null,
+                120);
         entityManager.persist(show);
         return show;
     }
@@ -1105,8 +1005,7 @@ class ShowQuerydslRepositoryTest {
         final Category category = Category.of("CAT-" + show.getId(), "카테고리");
         entityManager.persist(category);
         for (final String genreName : genreNames) {
-            final Genre genre =
-                    new Genre("G-" + show.getId() + "-" + genreName, genreName, category.getId());
+            final Genre genre = new Genre("G-" + show.getId() + "-" + genreName, genreName, category.getId());
             entityManager.persist(genre);
             entityManager.persist(new ShowGenre(show.getId(), genre.getId()));
         }
@@ -1143,13 +1042,7 @@ class ShowQuerydslRepositoryTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @TestComponent
-    @EntityScan(
-            basePackages = {
-                "com.ticket.show",
-                "com.ticket.venue",
-                "com.ticket.member",
-                "com.ticket.booking"
-            })
+    @EntityScan(basePackages = {"com.ticket.show", "com.ticket.venue", "com.ticket.member", "com.ticket.booking"})
     // 이 슬라이스가 @Import하는 조회 Repository가 쓰는 Spring Data 인터페이스만 올린다. 명시하지 않으면
     // auto-configuration package(=이 클래스의 package)만 스캔해 venue 쪽 인터페이스가 빠진다.
     @EnableJpaRepositories(basePackages = {"com.ticket.show", "com.ticket.venue"})

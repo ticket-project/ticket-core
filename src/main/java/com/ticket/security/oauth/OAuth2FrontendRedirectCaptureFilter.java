@@ -17,9 +17,7 @@ public class OAuth2FrontendRedirectCaptureFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            final HttpServletRequest request,
-            final HttpServletResponse response,
-            final FilterChain filterChain)
+            final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
             throws ServletException, IOException {
         if (request.getRequestURI().startsWith(OAuth2EndpointConstants.AUTHORIZATION_BASE_URI)) {
             frontendRedirectResolver.storeFrontendBaseUrl(request);

@@ -13,8 +13,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * 회차의 대기열 진입 정책이다. 옛 {@code show.domain.performance.QueueActivation}의 판정 규칙을 의미 손실 없이 그대로 옮긴다 —
- * {@code queueMode}가 없으면(옛 queue policy row가 없던 회차) 대기열을 요구하지 않는다.
+ * 회차의 대기열 진입 정책이다. 옛 {@code show.domain.performance.QueueActivation}의 판정 규칙을 의미 손실 없이 그대로 옮긴다 — {@code queueMode}가
+ * 없으면(옛 queue policy row가 없던 회차) 대기열을 요구하지 않는다.
  */
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -74,9 +74,7 @@ public class BookingEntryPolicy {
         return reason;
     }
 
-    /**
-     * 대기열을 태워야 하는 시각인지 판정한다. {@code orderClosesAt}은 이 회차의 {@link OrderAcceptanceWindow#closesAt}이다.
-     */
+    /** 대기열을 태워야 하는 시각인지 판정한다. {@code orderClosesAt}은 이 회차의 {@link OrderAcceptanceWindow#closesAt}이다. */
     public boolean isRequiredAt(final LocalDateTime now, final LocalDateTime orderClosesAt) {
         if (queueMode == null || queueMode == QueueMode.FORCE_OFF) {
             return false;

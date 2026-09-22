@@ -38,7 +38,8 @@ public class SearchShowsUseCase {
         }
     }
 
-    public record Output(List<Item> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+    public record Output(
+            List<Item> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
 
     public record Item(
             Long id,
@@ -51,15 +52,10 @@ public class SearchShowsUseCase {
             long viewCount) {}
 
     public Output execute(final Input input) {
-        final CursorPage<Show, ShowCursor> page =
-                showQuerydslRepository.searchShows(
-                        input.criteria(),
-                        venueIdsOf(input.criteria().getRegion()),
-                        input.size(),
-                        input.sort());
-        final VenueDisplays venues =
-                VenueDisplays.load(
-                        venueLookup, page.items().stream().map(Show::getVenueId).toList());
+        final CursorPage<Show, ShowCursor> page = showQuerydslRepository.searchShows(
+                input.criteria(), venueIdsOf(input.criteria().getRegion()), input.size(), input.sort());
+        final VenueDisplays venues = VenueDisplays.load(
+                venueLookup, page.items().stream().map(Show::getVenueId).toList());
         final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venues));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
@@ -67,8 +63,8 @@ public class SearchShowsUseCase {
     /**
      * 지역 조건을 venueId 집합으로 해석한다.
      *
-     * <p><b>"지역 없음"과 "지역은 있으나 그 지역에 공연장이 없음"은 다른 결과다.</b> 그래서 {@code null}(지역 조건 자체가 없음)과 빈 집합(조건은
-     * 있는데 해당 공연장이 없으니 결과 0건)을 구분해 넘긴다. 이 둘을 뭉개면 "제주에 공연장이 하나도 없다"가 "전체 목록"으로 조용히 바뀐다.
+     * <p><b>"지역 없음"과 "지역은 있으나 그 지역에 공연장이 없음"은 다른 결과다.</b> 그래서 {@code null}(지역 조건 자체가 없음)과 빈 집합(조건은 있는데 해당 공연장이 없으니 결과
+     * 0건)을 구분해 넘긴다. 이 둘을 뭉개면 "제주에 공연장이 하나도 없다"가 "전체 목록"으로 조용히 바뀐다.
      */
     private @Nullable Set<Long> venueIdsOf(final @Nullable Region region) {
         return region == null ? null : venueLookup.findIdsByRegion(region);

@@ -33,10 +33,9 @@ import com.ticket.booking.seat.domain.PerformanceSeatState;
  * Modulith listener id가 package 이동 뒤에도 옛 값으로 유지되는지 고정한다.
  *
  * <p>{@code BookingEventListeners}는 capability 이전으로 {@code com.ticket.booking.application} 에서
- * {@code com.ticket.booking.order.application}으로 옮겨졌다. Spring의 기본 listener id는 선언 클래스의 FQCN을
- * 포함하므로(Spring Framework {@code ApplicationListenerMethodAdapter#getDefaultListenerId}), 아무것도 하지
- * 않으면 id가 바뀐다. 그러면 이동 전에 저장돼 아직 완료되지 않은 {@code EVENT_PUBLICATION} row는 어떤 listener의 것인지 매칭되지 않아 영원히
- * 재처리되지 않는다.
+ * {@code com.ticket.booking.order.application}으로 옮겨졌다. Spring의 기본 listener id는 선언 클래스의 FQCN을 포함하므로(Spring Framework
+ * {@code ApplicationListenerMethodAdapter#getDefaultListenerId}), 아무것도 하지 않으면 id가 바뀐다. 그러면 이동 전에 저장돼 아직 완료되지 않은
+ * {@code EVENT_PUBLICATION} row는 어떤 listener의 것인지 매칭되지 않아 영원히 재처리되지 않는다.
  *
  * <p>그래서 두 가지를 함께 고정한다.
  *
@@ -73,8 +72,7 @@ class BookingEventListenerIdContractTest {
     private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
     private static final int REDIS_PORT = 6379;
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-                    .withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();
@@ -86,10 +84,17 @@ class BookingEventListenerIdContractTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
     }
 
-    @Autowired private PendingOrderCreator pendingOrderCreator;
-    @Autowired private IncompleteEventPublications incompleteEventPublications;
-    @Autowired private PlatformTransactionManager transactionManager;
-    @Autowired private EntityManager entityManager;
+    @Autowired
+    private PendingOrderCreator pendingOrderCreator;
+
+    @Autowired
+    private IncompleteEventPublications incompleteEventPublications;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void OrderStarted_publication은_옛_package_경로의_listener_id로_저장된다() {
@@ -124,102 +129,77 @@ class BookingEventListenerIdContractTest {
     }
 
     private void insertIncompletePublication(final UUID id, final String holdKey) {
-        new TransactionTemplate(transactionManager)
-                .executeWithoutResult(
-                        status -> {
-                            final Object[] source =
-                                    (Object[])
-                                            entityManager
-                                                    .createNativeQuery(
-                                                            "select serialized_event, event_type from event_publication "
-                                                                    + "where serialized_event like ?1 "
-                                                                    + "union all "
-                                                                    + "select serialized_event, event_type from event_publication_archive "
-                                                                    + "where serialized_event like ?1")
-                                                    .setParameter(1, "%" + holdKey + "%")
-                                                    .setMaxResults(1)
-                                                    .getSingleResult();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            final Object[] source = (Object[]) entityManager
+                    .createNativeQuery("select serialized_event, event_type from event_publication "
+                            + "where serialized_event like ?1 "
+                            + "union all "
+                            + "select serialized_event, event_type from event_publication_archive "
+                            + "where serialized_event like ?1")
+                    .setParameter(1, "%" + holdKey + "%")
+                    .setMaxResults(1)
+                    .getSingleResult();
 
-                            entityManager
-                                    .createNativeQuery(
-                                            "insert into event_publication "
-                                                    + "(id, publication_date, listener_id, serialized_event, event_type, "
-                                                    + " completion_date, last_resubmission_date, completion_attempts, status) "
-                                                    + "values (?1, ?2, ?3, ?4, ?5, null, null, 0, 'PUBLISHED')")
-                                    .setParameter(1, id)
-                                    .setParameter(2, java.time.OffsetDateTime.now())
-                                    .setParameter(
-                                            3, BookingEventListeners.ORDER_STARTED_LISTENER_ID)
-                                    .setParameter(4, source[0])
-                                    .setParameter(5, source[1])
-                                    .executeUpdate();
-                        });
+            entityManager
+                    .createNativeQuery("insert into event_publication "
+                            + "(id, publication_date, listener_id, serialized_event, event_type, "
+                            + " completion_date, last_resubmission_date, completion_attempts, status) "
+                            + "values (?1, ?2, ?3, ?4, ?5, null, null, 0, 'PUBLISHED')")
+                    .setParameter(1, id)
+                    .setParameter(2, java.time.OffsetDateTime.now())
+                    .setParameter(3, BookingEventListeners.ORDER_STARTED_LISTENER_ID)
+                    .setParameter(4, source[0])
+                    .setParameter(5, source[1])
+                    .executeUpdate();
+        });
     }
 
     private boolean isCompleted(final UUID id) {
-        final Number count =
-                new TransactionTemplate(transactionManager)
-                        .execute(
-                                status ->
-                                        (Number)
-                                                entityManager
-                                                        .createNativeQuery(
-                                                                "select "
-                                                                        + "(select count(*) from event_publication "
-                                                                        + " where id = ?1 and completion_date is not null) + "
-                                                                        + "(select count(*) from event_publication_archive where id = ?1)")
-                                                        .setParameter(1, id)
-                                                        .getSingleResult());
+        final Number count = new TransactionTemplate(transactionManager).execute(status -> (Number) entityManager
+                .createNativeQuery("select "
+                        + "(select count(*) from event_publication "
+                        + " where id = ?1 and completion_date is not null) + "
+                        + "(select count(*) from event_publication_archive where id = ?1)")
+                .setParameter(1, id)
+                .getSingleResult());
         return count.longValue() > 0L;
     }
 
     @SuppressWarnings("unchecked")
     private List<String> listenerIdsFor(final String holdKey) {
         return new TransactionTemplate(transactionManager)
-                .execute(
-                        status ->
-                                entityManager
-                                        .createNativeQuery(
-                                                "select listener_id from event_publication where serialized_event like ?1 "
-                                                        + "union all "
-                                                        + "select listener_id from event_publication_archive "
-                                                        + "where serialized_event like ?1")
-                                        .setParameter(1, "%" + holdKey + "%")
-                                        .getResultList());
+                .execute(status -> entityManager
+                        .createNativeQuery("select listener_id from event_publication where serialized_event like ?1 "
+                                + "union all "
+                                + "select listener_id from event_publication_archive "
+                                + "where serialized_event like ?1")
+                        .setParameter(1, "%" + holdKey + "%")
+                        .getResultList());
     }
 
     private void createPendingOrder(final String holdKey) {
         final PerformanceSeat seat = persistSeat();
-        final Hold hold =
-                new Hold(
-                        holdKey,
-                        MEMBER_ID,
-                        PERFORMANCE_ID,
-                        List.of(seat.getSeatId()),
-                        LocalDateTime.now().plus(HOLD_DURATION));
+        final Hold hold = new Hold(
+                holdKey,
+                MEMBER_ID,
+                PERFORMANCE_ID,
+                List.of(seat.getSeatId()),
+                LocalDateTime.now().plus(HOLD_DURATION));
         final List<PerformanceSeat> performanceSeats = List.of(seat);
 
-        final String orderKey =
-                pendingOrderCreator.create(
-                        MEMBER_ID,
-                        PERFORMANCE_ID,
-                        HOLD_DURATION,
-                        hold,
-                        performanceSeats,
-                        saleSnapshotFor(performanceSeats));
+        final String orderKey = pendingOrderCreator.create(
+                MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, performanceSeats, saleSnapshotFor(performanceSeats));
 
         assertThat(orderKey).isNotBlank();
     }
 
-    private com.ticket.show.api.PerformanceSaleSnapshot saleSnapshotFor(
-            final List<PerformanceSeat> performanceSeats) {
-        final java.util.Map<Long, com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo>
-                seatInfoBySeatId = new java.util.HashMap<>();
+    private com.ticket.show.api.PerformanceSaleSnapshot saleSnapshotFor(final List<PerformanceSeat> performanceSeats) {
+        final java.util.Map<Long, com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
+                new java.util.HashMap<>();
         for (final PerformanceSeat seat : performanceSeats) {
             seatInfoBySeatId.put(
                     seat.getSeatId(),
-                    new com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo(
-                            seat.getSeatId(), 1, "가", "A", "1"));
+                    new com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo(seat.getSeatId(), 1, "가", "A", "1"));
         }
         return new com.ticket.show.api.PerformanceSaleSnapshot(
                 PERFORMANCE_ID,
@@ -236,19 +216,16 @@ class BookingEventListenerIdContractTest {
     }
 
     private PerformanceSeat persistSeat() {
-        return new TransactionTemplate(transactionManager)
-                .execute(
-                        status -> {
-                            final PerformanceSeat seat =
-                                    new PerformanceSeat(
-                                            PERFORMANCE_ID,
-                                            (long) (Math.random() * 1_000_000_000L),
-                                            1L,
-                                            PerformanceSeatState.AVAILABLE,
-                                            BigDecimal.valueOf(10_000));
-                            entityManager.persist(seat);
-                            entityManager.flush();
-                            return seat;
-                        });
+        return new TransactionTemplate(transactionManager).execute(status -> {
+            final PerformanceSeat seat = new PerformanceSeat(
+                    PERFORMANCE_ID,
+                    (long) (Math.random() * 1_000_000_000L),
+                    1L,
+                    PerformanceSeatState.AVAILABLE,
+                    BigDecimal.valueOf(10_000));
+            entityManager.persist(seat);
+            entityManager.flush();
+            return seat;
+        });
     }
 }

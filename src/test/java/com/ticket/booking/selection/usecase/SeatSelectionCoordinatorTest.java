@@ -38,26 +38,28 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionCoordinatorTest {
-    private static final Clock CLOCK =
-            Clock.fixed(Instant.parse("2026-08-04T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-04T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
-    @Mock private HoldManager holdManager;
-    @Mock private SeatSelectionService seatSelectionService;
-    @Mock private PerformanceSeatRepository performanceSeatRepository;
-    @Mock private SeatStatusEventPublisher seatEventPublisher;
+
+    @Mock
+    private HoldManager holdManager;
+
+    @Mock
+    private SeatSelectionService seatSelectionService;
+
+    @Mock
+    private PerformanceSeatRepository performanceSeatRepository;
+
+    @Mock
+    private SeatStatusEventPublisher seatEventPublisher;
+
     private final RecordingLockManager lockManager = new RecordingLockManager();
     private SeatSelectionCoordinator coordinator;
 
     @BeforeEach
     void setUp() {
-        coordinator =
-                new SeatSelectionCoordinator(
-                        lockManager,
-                        holdManager,
-                        seatSelectionService,
-                        performanceSeatRepository,
-                        seatEventPublisher,
-                        CLOCK);
+        coordinator = new SeatSelectionCoordinator(
+                lockManager, holdManager, seatSelectionService, performanceSeatRepository, seatEventPublisher, CLOCK);
     }
 
     @Test
@@ -122,9 +124,7 @@ class SeatSelectionCoordinatorTest {
         verifyNoInteractions(seatEventPublisher);
     }
 
-    /**
-     * 결함 재현: A의 선택이 만료되고 B가 같은 좌석을 다시 선택한 뒤 A의 만료 처리가 뒤늦게 실행되는 경우다. 그대로 발행하면 B가 잡고 있는 좌석이 비어 보인다.
-     */
+    /** 결함 재현: A의 선택이 만료되고 B가 같은 좌석을 다시 선택한 뒤 A의 만료 처리가 뒤늦게 실행되는 경우다. 그대로 발행하면 B가 잡고 있는 좌석이 비어 보인다. */
     @Test
     void 만료_알림_직전에_다른_사용자가_다시_선택했으면_발행하지_않는다() {
         givenPerformanceSeat();

@@ -20,8 +20,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * {@link VenueLookupApi}의 venue 소유 구현이다.
  *
- * <p>조회는 엔티티를 돌려주고 공개 계약 타입으로의 변환은 여기서 한 번만 한다({@code docs/readability-guidelines.md} §10-1). 다른
- * module은 계속 {@code venue.api}의 interface만 본다 — venue JPA entity를 노출하지 않는다.
+ * <p>조회는 엔티티를 돌려주고 공개 계약 타입으로의 변환은 여기서 한 번만 한다({@code docs/readability-guidelines.md} §10-1). 다른 module은 계속
+ * {@code venue.api}의 interface만 본다 — venue JPA entity를 노출하지 않는다.
  *
  * <p>물리 좌석은 {@link SeatLookupService}가 따로 갖는다 — Seat은 Venue와 다른 Aggregate다.
  */
@@ -63,8 +63,6 @@ public class VenueLookupService implements VenueLookupApi {
                 venue.getPhone(),
                 venue.getImageUrl(),
                 new VenueSnapshot.SeatMapLayout(
-                        venue.getViewBoxWidth(),
-                        venue.getViewBoxHeight(),
-                        venue.getSeatDiameter()));
+                        venue.getViewBoxWidth(), venue.getViewBoxHeight(), venue.getSeatDiameter()));
     }
 }

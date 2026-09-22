@@ -22,8 +22,7 @@ class AppSchemaTest {
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, "sa", "")) {
             final Set<String> tables = new LinkedHashSet<>();
-            try (ResultSet resultSet =
-                    connection.getMetaData().getTables(null, null, "%", new String[] {"TABLE"})) {
+            try (ResultSet resultSet = connection.getMetaData().getTables(null, null, "%", new String[] {"TABLE"})) {
                 while (resultSet.next()) {
                     tables.add(resultSet.getString("TABLE_NAME").toUpperCase(Locale.ROOT));
                 }
@@ -46,8 +45,7 @@ class AppSchemaTest {
                             "MEMBERS");
 
             final Set<String> memberColumns = new LinkedHashSet<>();
-            try (ResultSet resultSet =
-                    connection.getMetaData().getColumns(null, null, "MEMBERS", null)) {
+            try (ResultSet resultSet = connection.getMetaData().getColumns(null, null, "MEMBERS", null)) {
                 while (resultSet.next()) {
                     memberColumns.add(resultSet.getString("COLUMN_NAME").toUpperCase(Locale.ROOT));
                 }
@@ -55,14 +53,7 @@ class AppSchemaTest {
 
             assertThat(memberColumns)
                     .as("LoadTestMemberSeeder의 INSERT가 쓰는 컬럼")
-                    .contains(
-                            "EMAIL",
-                            "PASSWORD",
-                            "NAME",
-                            "ROLE",
-                            "CREATED_AT",
-                            "CREATED_BY",
-                            "DELETED_AT");
+                    .contains("EMAIL", "PASSWORD", "NAME", "ROLE", "CREATED_AT", "CREATED_BY", "DELETED_AT");
         }
     }
 }

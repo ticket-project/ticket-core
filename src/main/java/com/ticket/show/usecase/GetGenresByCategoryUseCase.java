@@ -32,13 +32,9 @@ public class GetGenresByCategoryUseCase {
             genres = genreRepository.findAllByCategoryCodeOrderByName(input.categoryCode);
         }
 
-        final List<GenreItem> items =
-                genres.stream()
-                        .map(
-                                genre ->
-                                        new GenreItem(
-                                                genre.getId(), genre.getCode(), genre.getName()))
-                        .toList();
+        final List<GenreItem> items = genres.stream()
+                .map(genre -> new GenreItem(genre.getId(), genre.getCode(), genre.getName()))
+                .toList();
 
         return new Output(items);
     }

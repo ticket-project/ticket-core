@@ -83,32 +83,33 @@ import com.ticket.venue.domain.Venue;
 /**
  * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다.
  *
- * <p>실제 JPA/Querydsl 조회를 검증하려면 Spring 컨텍스트와 EntityManager가 필요해서 이 클래스는 {@code src/test}에
- * {@code @DataJpaTest} 스타일(H2 + Hibernate 생성 스키마)로 둔다. 별도 {@code integrationTest} source set은
- * 없다(ADR 0003 §1). 도메인 단위 테스트는 이 클래스를 쓰지 않는다.
+ * <p>실제 JPA/Querydsl 조회를 검증하려면 Spring 컨텍스트와 EntityManager가 필요해서 이 클래스는 {@code src/test}에 {@code @DataJpaTest} 스타일(H2 +
+ * Hibernate 생성 스키마)로 둔다. 별도 {@code integrationTest} source set은 없다(ADR 0003 §1). 도메인 단위 테스트는 이 클래스를 쓰지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class ReadRepositoryTestSupport {
-    @Autowired protected EntityManager entityManager;
-    @Autowired protected Clock clock;
+    @Autowired
+    protected EntityManager entityManager;
+
+    @Autowired
+    protected Clock clock;
 
     protected Venue persistVenue(final String name, final Region region) throws Exception {
-        Venue venue =
-                Venue.create(
-                        name,
-                        name + " 주소",
-                        region,
-                        "상세",
-                        "12345",
-                        BigDecimal.valueOf(37.5),
-                        BigDecimal.valueOf(127.0),
-                        "02-0000-0000",
-                        "https://example.com/venue.png",
-                        1000,
-                        800,
-                        12.0,
-                        2.0,
-                        2.0);
+        Venue venue = Venue.create(
+                name,
+                name + " 주소",
+                region,
+                "상세",
+                "12345",
+                BigDecimal.valueOf(37.5),
+                BigDecimal.valueOf(127.0),
+                "02-0000-0000",
+                "https://example.com/venue.png",
+                1000,
+                800,
+                12.0,
+                2.0,
+                2.0);
         entityManager.persist(venue);
         return venue;
     }
@@ -138,21 +139,20 @@ public abstract class ReadRepositoryTestSupport {
             final long viewCount,
             final LocalDateTime saleStartDate,
             final LocalDateTime saleEndDate) {
-        Show show =
-                new Show(
-                        title,
-                        title + " 부제",
-                        title + " 소개",
-                        LocalDate.now(clock).plusDays(1),
-                        LocalDate.now(clock).plusDays(30),
-                        viewCount,
-                        SaleType.GENERAL,
-                        saleStartDate,
-                        saleEndDate,
-                        "https://example.com/show.png",
-                        venue == null ? null : venue.getId(),
-                        performer == null ? null : performer.getId(),
-                        120);
+        Show show = new Show(
+                title,
+                title + " 부제",
+                title + " 소개",
+                LocalDate.now(clock).plusDays(1),
+                LocalDate.now(clock).plusDays(30),
+                viewCount,
+                SaleType.GENERAL,
+                saleStartDate,
+                saleEndDate,
+                "https://example.com/show.png",
+                venue == null ? null : venue.getId(),
+                performer == null ? null : performer.getId(),
+                120);
         entityManager.persist(show);
         return show;
     }
@@ -164,20 +164,14 @@ public abstract class ReadRepositoryTestSupport {
     }
 
     protected Seat persistSeat(
-            final Venue venue,
-            final String section,
-            final String rowNo,
-            final String seatNo,
-            final int floor) {
+            final Venue venue, final String section, final String rowNo, final String seatNo, final int floor) {
         Seat seat = new Seat(venue.getId(), section, rowNo, seatNo, floor, 10.0, 20.0);
         entityManager.persist(seat);
         return seat;
     }
 
-    protected Performance persistPerformance(
-            final Show show, final long performanceNo, final LocalDateTime startTime) {
-        Performance performance =
-                new Performance(show.getId(), performanceNo, startTime, startTime.plusHours(2));
+    protected Performance persistPerformance(final Show show, final long performanceNo, final LocalDateTime startTime) {
+        Performance performance = new Performance(show.getId(), performanceNo, startTime, startTime.plusHours(2));
         entityManager.persist(performance);
         return performance;
     }
@@ -189,23 +183,15 @@ public abstract class ReadRepositoryTestSupport {
     }
 
     protected PerformanceGrade persistPerformanceGrade(
-            final Performance performance,
-            final Grade grade,
-            final BigDecimal price,
-            final int sortOrder) {
-        PerformanceGrade performanceGrade =
-                PerformanceGrade.assign(performance, grade.getId(), price, sortOrder);
+            final Performance performance, final Grade grade, final BigDecimal price, final int sortOrder) {
+        PerformanceGrade performanceGrade = PerformanceGrade.assign(performance, grade.getId(), price, sortOrder);
         entityManager.persist(performanceGrade);
         return performanceGrade;
     }
 
     protected PerformanceSeat persistPerformanceSeat(
-            final Performance performance,
-            final Seat seat,
-            final PerformanceSeatState state,
-            final BigDecimal price) {
-        PerformanceSeat performanceSeat =
-                new PerformanceSeat(performance.getId(), seat.getId(), 1L, state, price);
+            final Performance performance, final Seat seat, final PerformanceSeatState state, final BigDecimal price) {
+        PerformanceSeat performanceSeat = new PerformanceSeat(performance.getId(), seat.getId(), 1L, state, price);
         entityManager.persist(performanceSeat);
         return performanceSeat;
     }

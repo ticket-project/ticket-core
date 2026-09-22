@@ -51,10 +51,7 @@ public class OrderSeat extends AuditedEntity {
     @Column(name = "price", nullable = false, precision = 19, scale = 2)
     private BigDecimal unitPrice;
 
-    /**
-     * 주문 생성 시점의 표시 snapshot이다(ADR 0005). show의 등급·좌석 표시값이 나중에 바뀌어도 이미 만든 주문의 좌석 표시는 바뀌지 않아야 하므로 이
-     * 값을 그대로 쓴다.
-     */
+    /** 주문 생성 시점의 표시 snapshot이다(ADR 0005). show의 등급·좌석 표시값이 나중에 바뀌어도 이미 만든 주문의 좌석 표시는 바뀌지 않아야 하므로 이 값을 그대로 쓴다. */
     @Column(name = "grade_code_snapshot", nullable = false)
     private String gradeCodeSnapshot;
 

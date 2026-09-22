@@ -4,5 +4,4 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-interface SpringDataHoldReleaseProgressJpaRepository
-        extends JpaRepository<HoldReleaseProgress, UUID> {}
+interface SpringDataHoldReleaseProgressJpaRepository extends JpaRepository<HoldReleaseProgress, UUID> {}

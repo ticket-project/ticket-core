@@ -28,64 +28,62 @@ import com.ticket.venue.api.VenueSnapshot;
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SearchShowsUseCaseTest {
-    private static final ShowCursor NEXT_POSITION =
-            new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
-    @Mock private ShowQuerydslRepository showQuerydslRepository;
-    @Mock private VenueLookupApi venueLookup;
+    private static final ShowCursor NEXT_POSITION = new ShowCursor(ShowSort.POPULAR, "DESC", "10", 1L);
+
+    @Mock
+    private ShowQuerydslRepository showQuerydslRepository;
+
+    @Mock
+    private VenueLookupApi venueLookup;
 
     @Spy
-    private ShowCardImagePathConverter showCardImagePathConverter =
-            new ShowCardImagePathConverter();
+    private ShowCardImagePathConverter showCardImagePathConverter = new ShowCardImagePathConverter();
 
-    @InjectMocks private SearchShowsUseCase useCase;
+    @InjectMocks
+    private SearchShowsUseCase useCase;
 
     @Test
     void 검색_결과와_커서를_반환한다() {
-        ShowSearchCriteria request =
-                new ShowSearchCriteria("concert", null, null, null, null, null, null);
-        Show show =
-                ShowFixture.show(
-                        1L,
-                        "concert",
-                        7L,
-                        LocalDate.of(2026, 3, 27),
-                        LocalDate.of(2026, 3, 28),
-                        null,
-                        10L,
-                        LocalDateTime.of(2026, 3, 1, 10, 0));
+        ShowSearchCriteria request = new ShowSearchCriteria("concert", null, null, null, null, null, null);
+        Show show = ShowFixture.show(
+                1L,
+                "concert",
+                7L,
+                LocalDate.of(2026, 3, 27),
+                LocalDate.of(2026, 3, 28),
+                null,
+                10L,
+                LocalDateTime.of(2026, 3, 1, 10, 0));
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(show), true, NEXT_POSITION);
         when(showQuerydslRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
         when(venueLookup.getSummaries(Set.of(7L)))
-                .thenReturn(
-                        Map.of(
+                .thenReturn(Map.of(
+                        7L,
+                        new VenueSnapshot(
                                 7L,
-                                new VenueSnapshot(
-                                        7L,
-                                        "venue",
-                                        "주소",
-                                        Region.SEOUL,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                                "venue",
+                                "주소",
+                                Region.SEOUL,
+                                null,
+                                null,
+                                null,
+                                null,
+                                new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
 
         SearchShowsUseCase.Output output =
-                useCase.execute(
-                        new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
+                useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
         assertThat(output.items())
-                .containsExactly(
-                        new SearchShowsUseCase.Item(
-                                1L,
-                                "concert",
-                                "image",
-                                "venue",
-                                LocalDate.of(2026, 3, 27),
-                                LocalDate.of(2026, 3, 28),
-                                Region.SEOUL,
-                                10L));
+                .containsExactly(new SearchShowsUseCase.Item(
+                        1L,
+                        "concert",
+                        "image",
+                        "venue",
+                        LocalDate.of(2026, 3, 27),
+                        LocalDate.of(2026, 3, 28),
+                        Region.SEOUL,
+                        10L));
         assertThat(output.nextPosition()).isEqualTo(NEXT_POSITION);
         assertThat(output.hasNext()).isTrue();
         verify(showQuerydslRepository).searchShows(request, null, 20, ShowSort.POPULAR);
@@ -93,15 +91,13 @@ class SearchShowsUseCaseTest {
 
     @Test
     void 검색_결과가_없으면_빈_슬라이스와_null_커서를_반환한다() {
-        ShowSearchCriteria request =
-                new ShowSearchCriteria("missing", null, null, null, null, null, null);
+        ShowSearchCriteria request = new ShowSearchCriteria("missing", null, null, null, null, null, null);
         CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
         when(showQuerydslRepository.searchShows(request, null, 20, ShowSort.POPULAR))
                 .thenReturn(result);
 
         SearchShowsUseCase.Output output =
-                useCase.execute(
-                        new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
+                useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
         assertThat(output.items()).isEmpty();
         assertThat(output.nextPosition()).isNull();
@@ -109,16 +105,12 @@ class SearchShowsUseCaseTest {
         verify(showQuerydslRepository).searchShows(request, null, 20, ShowSort.POPULAR);
     }
 
-    /**
-     * 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다.
-     */
+    /** 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다. */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
         CursorPage<Show, ShowCursor> empty = new CursorPage<>(List.of(), false, null);
-        ShowSearchCriteria noRegion =
-                new ShowSearchCriteria(null, null, null, null, null, null, null);
-        ShowSearchCriteria jeju =
-                new ShowSearchCriteria(null, null, null, null, null, Region.JEJU, null);
+        ShowSearchCriteria noRegion = new ShowSearchCriteria(null, null, null, null, null, null, null);
+        ShowSearchCriteria jeju = new ShowSearchCriteria(null, null, null, null, null, Region.JEJU, null);
         when(venueLookup.findIdsByRegion(Region.JEJU)).thenReturn(Set.of());
         when(showQuerydslRepository.searchShows(noRegion, null, 10, ShowSort.POPULAR))
                 .thenReturn(empty);

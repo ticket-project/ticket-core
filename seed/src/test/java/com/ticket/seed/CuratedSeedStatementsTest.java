@@ -23,27 +23,23 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@code seed/sql/kopis-curated.sql}과 그 변환 결과가 지켜야 할 불변식을 고정한다. 예전 {@code
- * com.ticket.seed.SeedDataLoaderTest}가 reflection으로 확인했던 것을 그대로 옮겼고, 변환 계층이 DB를 모르는 순수 코드가 되면서
- * reflection이 필요 없어졌다.
+ * {@code seed/sql/kopis-curated.sql}과 그 변환 결과가 지켜야 할 불변식을 고정한다. 예전 {@code com.ticket.seed.SeedDataLoaderTest}가
+ * reflection으로 확인했던 것을 그대로 옮겼고, 변환 계층이 DB를 모르는 순수 코드가 되면서 reflection이 필요 없어졌다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class CuratedSeedStatementsTest {
 
-    private static final Pattern SHOW_PATTERN =
-            Pattern.compile(
-                    "INSERT INTO SHOWS .*?VALUES \\((\\d+), .*?, '([0-9]{4}-[0-9]{2}-[0-9]{2})', '([0-9]{4}-[0-9]{2}-[0-9]{2})', .*?, '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})',",
-                    Pattern.DOTALL);
-    private static final Pattern PERFORMANCE_PATTERN =
-            Pattern.compile(
-                    "INSERT INTO PERFORMANCES .*?VALUES \\((\\d+), (\\d+), (\\d+), '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})'",
-                    Pattern.DOTALL);
+    private static final Pattern SHOW_PATTERN = Pattern.compile(
+            "INSERT INTO SHOWS .*?VALUES \\((\\d+), .*?, '([0-9]{4}-[0-9]{2}-[0-9]{2})', '([0-9]{4}-[0-9]{2}-[0-9]{2})', .*?, '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})',",
+            Pattern.DOTALL);
+    private static final Pattern PERFORMANCE_PATTERN = Pattern.compile(
+            "INSERT INTO PERFORMANCES .*?VALUES \\((\\d+), (\\d+), (\\d+), '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})', '([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})'",
+            Pattern.DOTALL);
     private static final Pattern PERFORMANCE_SEAT_STATE_PATTERN =
             Pattern.compile("CASE\\s+WHEN.*'RESERVED'.*ELSE\\s+'AVAILABLE'\\s+END", Pattern.DOTALL);
-    private static final Pattern SHOW_IMAGE_PATTERN =
-            Pattern.compile(
-                    "INSERT INTO SHOWS .*? '(/api/images/shows/[^']+)'\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,",
-                    Pattern.DOTALL);
+    private static final Pattern SHOW_IMAGE_PATTERN = Pattern.compile(
+            "INSERT INTO SHOWS .*? '(/api/images/shows/[^']+)'\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,",
+            Pattern.DOTALL);
 
     private static List<String> statements;
 
@@ -56,8 +52,7 @@ class CuratedSeedStatementsTest {
     @Test
     void 회차가_둘_이상인_공연은_날짜가_하루에_몰리지_않는다() {
         final Map<Long, ShowPeriod> showPeriods = extractShowPeriods(statements);
-        final Map<Long, List<LocalDate>> performanceDatesByShow =
-                extractPerformanceDates(statements);
+        final Map<Long, List<LocalDate>> performanceDatesByShow = extractPerformanceDates(statements);
 
         final Map<Long, List<LocalDate>> singleDaySchedules = new LinkedHashMap<>();
         for (final Map.Entry<Long, List<LocalDate>> entry : performanceDatesByShow.entrySet()) {
@@ -82,60 +77,51 @@ class CuratedSeedStatementsTest {
                     .isNotNull();
 
             assertThat(entry.getValue())
-                    .allSatisfy(
-                            date ->
-                                    assertThat(date)
-                                            .withFailMessage(
-                                                    "회차 날짜가 공연 기간을 벗어났습니다. showId=%s, date=%s, period=%s",
-                                                    entry.getKey(), date, showPeriod)
-                                            .isBetween(
-                                                    showPeriod.startDate(), showPeriod.endDate()));
+                    .allSatisfy(date -> assertThat(date)
+                            .withFailMessage(
+                                    "회차 날짜가 공연 기간을 벗어났습니다. showId=%s, date=%s, period=%s",
+                                    entry.getKey(), date, showPeriod)
+                            .isBetween(showPeriod.startDate(), showPeriod.endDate()));
         }
     }
 
     @Test
     void 공연_표시_판매시작이_첫_회차_예매시작과_같다() {
         final Map<Long, ShowPeriod> showPeriods = extractShowPeriods(statements);
-        final Map<Long, LocalDateTime> earliestOrderOpenByShow =
-                extractEarliestOrderOpenByShow(statements);
+        final Map<Long, LocalDateTime> earliestOrderOpenByShow = extractEarliestOrderOpenByShow(statements);
 
         assertThat(showPeriods.keySet()).containsAll(earliestOrderOpenByShow.keySet());
 
-        earliestOrderOpenByShow.forEach(
-                (showId, earliestOrderOpen) ->
-                        assertThat(showPeriods.get(showId).saleStartDate())
-                                .withFailMessage(
-                                        "공연 판매 시작 시각이 첫 회차 예매 시작 시각과 다릅니다. showId=%s, saleStart=%s, earliestOrderOpen=%s",
-                                        showId,
-                                        showPeriods.get(showId).saleStartDate(),
-                                        earliestOrderOpen)
-                                .isEqualTo(earliestOrderOpen));
+        earliestOrderOpenByShow.forEach((showId, earliestOrderOpen) -> assertThat(
+                        showPeriods.get(showId).saleStartDate())
+                .withFailMessage(
+                        "공연 판매 시작 시각이 첫 회차 예매 시작 시각과 다릅니다. showId=%s, saleStart=%s, earliestOrderOpen=%s",
+                        showId, showPeriods.get(showId).saleStartDate(), earliestOrderOpen)
+                .isEqualTo(earliestOrderOpen));
     }
 
     @Test
     void 공연_표시_판매종료가_마지막_회차_예매마감과_같다() {
         final Map<Long, ShowPeriod> showPeriods = extractShowPeriods(statements);
-        final Map<Long, LocalDateTime> latestOrderCloseByShow =
-                extractLatestOrderCloseByShow(statements);
+        final Map<Long, LocalDateTime> latestOrderCloseByShow = extractLatestOrderCloseByShow(statements);
 
         assertThat(showPeriods.keySet()).containsAll(latestOrderCloseByShow.keySet());
 
         latestOrderCloseByShow.forEach(
-                (showId, latestOrderClose) ->
-                        assertThat(showPeriods.get(showId).saleEndDate())
-                                .withFailMessage(
-                                        "공연 판매 종료 시각이 마지막 회차 예매 마감 시각과 다릅니다. showId=%s, saleEnd=%s, latestOrderClose=%s",
-                                        showId,
-                                        showPeriods.get(showId).saleEndDate(),
-                                        latestOrderClose)
-                                .isEqualTo(latestOrderClose));
+                (showId, latestOrderClose) -> assertThat(showPeriods.get(showId).saleEndDate())
+                        .withFailMessage(
+                                "공연 판매 종료 시각이 마지막 회차 예매 마감 시각과 다릅니다. showId=%s, saleEnd=%s, latestOrderClose=%s",
+                                showId, showPeriods.get(showId).saleEndDate(), latestOrderClose)
+                        .isEqualTo(latestOrderClose));
     }
 
     @Test
     void 회차좌석_시드는_연속_RESERVED_블록을_만든다() {
         final String performanceSeatStatement = performanceSeatsStatement();
 
-        assertThat(PERFORMANCE_SEAT_STATE_PATTERN.matcher(performanceSeatStatement).find())
+        assertThat(PERFORMANCE_SEAT_STATE_PATTERN
+                        .matcher(performanceSeatStatement)
+                        .find())
                 .withFailMessage("PERFORMANCE_SEATS 시드가 AVAILABLE만 고정 생성하고 있습니다.")
                 .isTrue();
 
@@ -149,8 +135,7 @@ class CuratedSeedStatementsTest {
             final double reservedRatio = (double) blockSize / cycleSize;
 
             assertThat(reservedRatio)
-                    .withFailMessage(
-                            "연속 RESERVED 비율이 요청 범위(30%%~60%%) 밖입니다. ratio=%.4f", reservedRatio)
+                    .withFailMessage("연속 RESERVED 비율이 요청 범위(30%%~60%%) 밖입니다. ratio=%.4f", reservedRatio)
                     .isBetween(0.30d, 0.60d);
 
             assertThat(longestReservedRunLength(base, 20))
@@ -160,9 +145,8 @@ class CuratedSeedStatementsTest {
     }
 
     /**
-     * PERFORMANCE_SEATS는 {@code @Version} 낙관적 락 컬럼을 NOT NULL로 매핑한다. Hibernate {@code ddl-auto:
-     * create}(로컬 프로파일)는 DEFAULT 없이 NOT NULL만 만들므로 시드가 값을 직접 넣어야 한다 — Flyway migration(V3)의 {@code
-     * DEFAULT 0}에 의존할 수 없다.
+     * PERFORMANCE_SEATS는 {@code @Version} 낙관적 락 컬럼을 NOT NULL로 매핑한다. Hibernate {@code ddl-auto: create}(로컬 프로파일)는
+     * DEFAULT 없이 NOT NULL만 만들므로 시드가 값을 직접 넣어야 한다 — Flyway migration(V3)의 {@code DEFAULT 0}에 의존할 수 없다.
      */
     @Test
     void 회차좌석_시드가_낙관적_락_버전을_직접_채운다() {
@@ -173,14 +157,11 @@ class CuratedSeedStatementsTest {
     void 회차좌석_시드가_H2에서_실행된다() throws Exception {
         final String performanceSeatStatement = performanceSeatsStatement();
 
-        try (Connection connection =
-                        DriverManager.getConnection(
-                                "jdbc:h2:mem:curated_seed_statements;MODE=Oracle;DB_CLOSE_DELAY=-1");
+        try (Connection connection = DriverManager.getConnection(
+                        "jdbc:h2:mem:curated_seed_statements;MODE=Oracle;DB_CLOSE_DELAY=-1");
                 Statement statement = connection.createStatement()) {
-            statement.execute(
-                    "CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
-            statement.execute(
-                    "CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
             statement.execute(
                     "CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
             statement.execute("CREATE TABLE GRADES (id BIGINT PRIMARY KEY, code VARCHAR(10))");
@@ -200,9 +181,7 @@ class CuratedSeedStatementsTest {
 
             statement.executeUpdate(performanceSeatStatement);
 
-            try (var resultSet =
-                    statement.executeQuery(
-                            "SELECT COUNT(*) FROM PERFORMANCE_SEATS WHERE version = 0")) {
+            try (var resultSet = statement.executeQuery("SELECT COUNT(*) FROM PERFORMANCE_SEATS WHERE version = 0")) {
                 assertThat(resultSet.next()).isTrue();
                 assertThat(resultSet.getInt(1)).isEqualTo(1);
             }
@@ -211,22 +190,18 @@ class CuratedSeedStatementsTest {
 
     @Test
     void 좌석은_VENUE_1_템플릿을_공연장마다_복제한다() throws Exception {
-        final String replicationStatement =
-                statements.stream()
-                        .filter(
-                                statement ->
-                                        statement.startsWith("INSERT INTO SEATS")
-                                                && statement.contains("CROSS JOIN VENUES"))
-                        .findFirst()
-                        .orElseThrow();
+        final String replicationStatement = statements.stream()
+                .filter(statement ->
+                        statement.startsWith("INSERT INTO SEATS") && statement.contains("CROSS JOIN VENUES"))
+                .findFirst()
+                .orElseThrow();
 
         assertThat(statements)
                 .withFailMessage("PERFORMANCE_SEATS 시드가 여전히 venue 경계 없는 CROSS JOIN SEATS를 씁니다.")
                 .noneMatch(statement -> statement.contains("CROSS JOIN SEATS"));
 
-        try (Connection connection =
-                        DriverManager.getConnection(
-                                "jdbc:h2:mem:curated_seed_seat_replication;MODE=Oracle;DB_CLOSE_DELAY=-1");
+        try (Connection connection = DriverManager.getConnection(
+                        "jdbc:h2:mem:curated_seed_seat_replication;MODE=Oracle;DB_CLOSE_DELAY=-1");
                 Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE VENUES (id BIGINT PRIMARY KEY)");
             statement.execute(
@@ -251,9 +226,8 @@ class CuratedSeedStatementsTest {
                 // VENUE 3개 * 좌석 600석 = 1800석. VENUE 2/3이 VENUE 1의 template을 그대로 복제한다.
                 assertThat(resultSet.getInt(1)).isEqualTo(1800);
             }
-            try (var resultSet =
-                    statement.executeQuery(
-                            "SELECT COUNT(DISTINCT venue_id) FROM SEATS WHERE section = 'S' AND row_no = 'A' AND seat_no = '1'")) {
+            try (var resultSet = statement.executeQuery(
+                    "SELECT COUNT(DISTINCT venue_id) FROM SEATS WHERE section = 'S' AND row_no = 'A' AND seat_no = '1'")) {
                 assertThat(resultSet.next()).isTrue();
                 assertThat(resultSet.getInt(1)).isEqualTo(3);
             }
@@ -264,14 +238,11 @@ class CuratedSeedStatementsTest {
     void 회차좌석은_그_회차_공연장의_좌석만_조인한다() throws Exception {
         final String performanceSeatsStatement = performanceSeatsStatement();
 
-        try (Connection connection =
-                        DriverManager.getConnection(
-                                "jdbc:h2:mem:curated_seed_performance_seats_venue;MODE=Oracle;DB_CLOSE_DELAY=-1");
+        try (Connection connection = DriverManager.getConnection(
+                        "jdbc:h2:mem:curated_seed_performance_seats_venue;MODE=Oracle;DB_CLOSE_DELAY=-1");
                 Statement statement = connection.createStatement()) {
-            statement.execute(
-                    "CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
-            statement.execute(
-                    "CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
+            statement.execute("CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
             statement.execute(
                     "CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
             statement.execute("CREATE TABLE GRADES (id BIGINT PRIMARY KEY, code VARCHAR(10))");
@@ -298,9 +269,8 @@ class CuratedSeedStatementsTest {
 
             // Performance 1(Show 100)은 VENUE 1의 SEAT(10)만, Performance 2(Show 200)는 VENUE 2의
             // SEAT(20)만 갖는다 — 서로의 VENUE에 속하지 않은 좌석과는 절대 섞이지 않는다.
-            try (var resultSet =
-                    statement.executeQuery(
-                            "SELECT performance_id, seat_id FROM PERFORMANCE_SEATS ORDER BY performance_id")) {
+            try (var resultSet = statement.executeQuery(
+                    "SELECT performance_id, seat_id FROM PERFORMANCE_SEATS ORDER BY performance_id")) {
                 assertThat(resultSet.next()).isTrue();
                 assertThat(resultSet.getLong("performance_id")).isEqualTo(1L);
                 assertThat(resultSet.getLong("seat_id")).isEqualTo(10L);
@@ -317,9 +287,7 @@ class CuratedSeedStatementsTest {
         final String statement =
                 "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (1, 2, 3, '2026-03-01 19:00:00', '2026-03-01 21:00:00', '2026-02-20 10:00:00', '2026-03-01 20:00:00', NULL, 300, '2026-01-01 10:00:00', 'seed')";
 
-        final String rewritten =
-                CuratedSeedStatements.rewritePerformanceStatement(
-                        statement, LocalDate.of(2026, 3, 5));
+        final String rewritten = CuratedSeedStatements.rewritePerformanceStatement(statement, LocalDate.of(2026, 3, 5));
 
         assertThat(rewritten).contains(", NULL, 300,");
         assertThat(rewritten).contains("'2026-03-05 19:00:00'");
@@ -333,9 +301,7 @@ class CuratedSeedStatementsTest {
                 "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (1, 2, 3, '2026-03-01 19:00:00', '2026-03-01 21:00:00', '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, '2026-01-01 10:00:00', '시드')";
         final String unrelated = "INSERT INTO SHOWS (id) VALUES (1)";
 
-        final List<String> split =
-                CuratedSeedStatements.splitPerformancePolicyStatements(
-                        List.of(combined, unrelated));
+        final List<String> split = CuratedSeedStatements.splitPerformancePolicyStatements(List.of(combined, unrelated));
 
         assertThat(split).hasSize(3);
         final String performanceStatement = split.get(0);
@@ -346,16 +312,11 @@ class CuratedSeedStatementsTest {
                         "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, created_at, created_by)");
         assertThat(performanceStatement).doesNotContain("order_open_time");
         assertThat(performanceStatement)
-                .contains(
-                        "'2026-03-01 19:00:00'",
-                        "'2026-03-01 21:00:00'",
-                        "'2026-01-01 10:00:00'",
-                        "'시드'");
+                .contains("'2026-03-01 19:00:00'", "'2026-03-01 21:00:00'", "'2026-01-01 10:00:00'", "'시드'");
 
         assertThat(policyStatement).startsWith("INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES");
         assertThat(policyStatement)
-                .contains(
-                        "(1, '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, 0, '2026-01-01 10:00:00', '시드')");
+                .contains("(1, '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, 0, '2026-01-01 10:00:00', '시드')");
 
         assertThat(split.get(2)).isEqualTo(unrelated);
     }
@@ -367,53 +328,38 @@ class CuratedSeedStatementsTest {
 
         assertThat(executable)
                 .as("실행 문장에 예매 정책 컬럼이 섞인 PERFORMANCES INSERT가 남아 있으면 안 된다")
-                .noneMatch(
-                        statement ->
-                                statement.startsWith("INSERT INTO PERFORMANCES")
-                                        && statement.contains("order_open_time"));
-        assertThat(
-                        executable.stream()
-                                .filter(
-                                        statement ->
-                                                statement.startsWith(
-                                                        "INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES"))
-                                .count())
+                .noneMatch(statement ->
+                        statement.startsWith("INSERT INTO PERFORMANCES") && statement.contains("order_open_time"));
+        assertThat(executable.stream()
+                        .filter(statement -> statement.startsWith("INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES"))
+                        .count())
                 .as("회차 리터럴 INSERT마다 판매정책 INSERT가 하나씩 생겨야 한다")
-                .isEqualTo(
-                        executable.stream()
-                                .filter(
-                                        statement ->
-                                                statement.startsWith("INSERT INTO PERFORMANCES ("))
-                                .count());
+                .isEqualTo(executable.stream()
+                        .filter(statement -> statement.startsWith("INSERT INTO PERFORMANCES ("))
+                        .count());
     }
 
     @Test
     void 로컬_공연_이미지에_원본과_카드_에셋이_모두_있다() {
-        final Path staticRoot =
-                SeedTestPaths.projectDir().resolve(Path.of("src", "main", "resources", "static"));
+        final Path staticRoot = SeedTestPaths.projectDir().resolve(Path.of("src", "main", "resources", "static"));
         assertThat(staticRoot)
                 .withFailMessage("정적 이미지 루트를 찾을 수 없습니다: %s", staticRoot.toAbsolutePath())
                 .exists();
 
-        final List<String> localImagePaths =
-                statements.stream()
-                        .map(CuratedSeedStatementsTest::extractLocalShowImagePath)
-                        .filter(Objects::nonNull)
-                        .toList();
+        final List<String> localImagePaths = statements.stream()
+                .map(CuratedSeedStatementsTest::extractLocalShowImagePath)
+                .filter(Objects::nonNull)
+                .toList();
 
         assertThat(localImagePaths).isNotEmpty();
 
         for (final String imagePath : localImagePaths) {
-            final String relativePath =
-                    imagePath.startsWith("/") ? imagePath.substring(1) : imagePath;
+            final String relativePath = imagePath.startsWith("/") ? imagePath.substring(1) : imagePath;
             final Path originalPath = staticRoot.resolve(relativePath);
             final String fileName = originalPath.getFileName().toString();
             final int extensionIndex = fileName.lastIndexOf('.');
-            final String baseName =
-                    extensionIndex >= 0 ? fileName.substring(0, extensionIndex) : fileName;
-            final Path cardPath =
-                    staticRoot.resolve(
-                            Path.of("api", "images", "shows", "card", baseName + ".jpg"));
+            final String baseName = extensionIndex >= 0 ? fileName.substring(0, extensionIndex) : fileName;
+            final Path cardPath = staticRoot.resolve(Path.of("api", "images", "shows", "card", baseName + ".jpg"));
 
             assertThat(Files.exists(originalPath))
                     .withFailMessage("원본 공연 이미지가 없습니다: %s", originalPath.toAbsolutePath())
@@ -476,8 +422,7 @@ class CuratedSeedStatementsTest {
         return matcher.find() ? matcher.group(1) : null;
     }
 
-    private static Map<Long, List<LocalDate>> extractPerformanceDates(
-            final List<String> statements) {
+    private static Map<Long, List<LocalDate>> extractPerformanceDates(final List<String> statements) {
         final Map<Long, List<PerformanceDate>> performanceDates = new HashMap<>();
 
         for (final String statement : statements) {
@@ -488,32 +433,26 @@ class CuratedSeedStatementsTest {
 
             performanceDates
                     .computeIfAbsent(Long.parseLong(matcher.group(2)), ignored -> new ArrayList<>())
-                    .add(
-                            new PerformanceDate(
-                                    Integer.parseInt(matcher.group(3)),
-                                    LocalDateTime.parse(matcher.group(4).replace(' ', 'T'))
-                                            .toLocalDate()));
+                    .add(new PerformanceDate(
+                            Integer.parseInt(matcher.group(3)),
+                            LocalDateTime.parse(matcher.group(4).replace(' ', 'T'))
+                                    .toLocalDate()));
         }
 
         final Map<Long, List<LocalDate>> result = new LinkedHashMap<>();
         performanceDates.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .forEach(
-                        entry ->
-                                result.put(
-                                        entry.getKey(),
-                                        entry.getValue().stream()
-                                                .sorted(
-                                                        Comparator.comparingInt(
-                                                                PerformanceDate::performanceNo))
-                                                .map(PerformanceDate::date)
-                                                .toList()));
+                .forEach(entry -> result.put(
+                        entry.getKey(),
+                        entry.getValue().stream()
+                                .sorted(Comparator.comparingInt(PerformanceDate::performanceNo))
+                                .map(PerformanceDate::date)
+                                .toList()));
 
         return result;
     }
 
-    private static Map<Long, LocalDateTime> extractEarliestOrderOpenByShow(
-            final List<String> statements) {
+    private static Map<Long, LocalDateTime> extractEarliestOrderOpenByShow(final List<String> statements) {
         final Map<Long, LocalDateTime> earliest = new HashMap<>();
 
         for (final String statement : statements) {
@@ -530,8 +469,7 @@ class CuratedSeedStatementsTest {
         return earliest;
     }
 
-    private static Map<Long, LocalDateTime> extractLatestOrderCloseByShow(
-            final List<String> statements) {
+    private static Map<Long, LocalDateTime> extractLatestOrderCloseByShow(final List<String> statements) {
         final Map<Long, LocalDateTime> latest = new HashMap<>();
 
         for (final String statement : statements) {
@@ -549,10 +487,7 @@ class CuratedSeedStatementsTest {
     }
 
     private record ShowPeriod(
-            LocalDate startDate,
-            LocalDate endDate,
-            LocalDateTime saleStartDate,
-            LocalDateTime saleEndDate) {}
+            LocalDate startDate, LocalDate endDate, LocalDateTime saleStartDate, LocalDateTime saleEndDate) {}
 
     private record PerformanceDate(int performanceNo, LocalDate date) {}
 }

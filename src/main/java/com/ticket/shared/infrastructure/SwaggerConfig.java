@@ -15,19 +15,17 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .addSecurityItem(new SecurityRequirement().addList("Authorization"))
-                .components(
-                        new Components()
-                                .addSecuritySchemes(
-                                        "Authorization",
-                                        new SecurityScheme()
-                                                .name("Authorization")
-                                                .type(SecurityScheme.Type.HTTP)
-                                                .scheme("bearer")
-                                                .bearerFormat("JWT")))
-                .info(
-                        new Info()
-                                .title("ticket API")
-                                .description("API for managing ticket")
-                                .version("1.0"));
+                .components(new Components()
+                        .addSecuritySchemes(
+                                "Authorization",
+                                new SecurityScheme()
+                                        .name("Authorization")
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")))
+                .info(new Info()
+                        .title("ticket API")
+                        .description("API for managing ticket")
+                        .version("1.0"));
     }
 }

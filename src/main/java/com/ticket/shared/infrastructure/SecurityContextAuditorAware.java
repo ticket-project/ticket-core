@@ -14,8 +14,7 @@ public class SecurityContextAuditorAware implements AuditorAware<String> {
 
     @Override
     public Optional<String> getCurrentAuditor() {
-        final Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of(DEFAULT_AUDITOR);
         }

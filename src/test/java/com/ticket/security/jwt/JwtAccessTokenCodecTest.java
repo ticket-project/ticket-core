@@ -31,12 +31,10 @@ class JwtAccessTokenCodecTest {
         String token = jwtTokenService.createAccessToken(7L, "MEMBER");
 
         assertThat(jwtTokenService.read(token))
-                .isInstanceOfSatisfying(
-                        AccessTokenReadResult.Authenticated.class,
-                        authenticated -> {
-                            assertThat(authenticated.member().memberId()).isEqualTo(7L);
-                            assertThat(authenticated.member().role()).isEqualTo("MEMBER");
-                        });
+                .isInstanceOfSatisfying(AccessTokenReadResult.Authenticated.class, authenticated -> {
+                    assertThat(authenticated.member().memberId()).isEqualTo(7L);
+                    assertThat(authenticated.member().role()).isEqualTo("MEMBER");
+                });
         assertThat(jwtTokenService.getAccessTokenExpirationSeconds()).isEqualTo(1800L);
     }
 
@@ -44,73 +42,65 @@ class JwtAccessTokenCodecTest {
     void 만료된_토큰은_만료로_구분해_돌려준다() {
         String token = jwtTokenService().createAccessToken(7L, "MEMBER");
         JwtAccessTokenCodec laterService =
-                new JwtAccessTokenCodec(
-                        properties(), Clock.fixed(NOW.plusSeconds(3600), ZoneOffset.UTC));
+                new JwtAccessTokenCodec(properties(), Clock.fixed(NOW.plusSeconds(3600), ZoneOffset.UTC));
 
         assertThat(laterService.read(token)).isInstanceOf(AccessTokenReadResult.Expired.class);
     }
 
     @Test
     void 서명이_다른_토큰은_invalid로_돌려준다() {
-        String token =
-                Jwts.builder()
-                        .issuer(ISSUER)
-                        .subject("7")
-                        .claim("role", "MEMBER")
-                        .issuedAt(Date.from(NOW))
-                        .expiration(Date.from(NOW.plusSeconds(1800)))
-                        .signWith(
-                                Keys.hmacShaKeyFor(
-                                        OTHER_SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
-                        .compact();
+        String token = Jwts.builder()
+                .issuer(ISSUER)
+                .subject("7")
+                .claim("role", "MEMBER")
+                .issuedAt(Date.from(NOW))
+                .expiration(Date.from(NOW.plusSeconds(1800)))
+                .signWith(Keys.hmacShaKeyFor(OTHER_SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
+                .compact();
 
         assertThat(jwtTokenService().read(token)).isInstanceOf(AccessTokenReadResult.Invalid.class);
     }
 
     @Test
     void 형식이_아닌_문자열은_invalid로_돌려준다() {
-        assertThat(jwtTokenService().read("not-a-token"))
-                .isInstanceOf(AccessTokenReadResult.Invalid.class);
+        assertThat(jwtTokenService().read("not-a-token")).isInstanceOf(AccessTokenReadResult.Invalid.class);
     }
 
     @Test
     void exp가_없는_토큰은_invalid로_돌려준다() {
-        String token =
-                Jwts.builder()
-                        .issuer(ISSUER)
-                        .subject("7")
-                        .claim("role", "MEMBER")
-                        .issuedAt(Date.from(NOW))
-                        .signWith(secretKey())
-                        .compact();
+        String token = Jwts.builder()
+                .issuer(ISSUER)
+                .subject("7")
+                .claim("role", "MEMBER")
+                .issuedAt(Date.from(NOW))
+                .signWith(secretKey())
+                .compact();
 
         assertThat(jwtTokenService().read(token)).isInstanceOf(AccessTokenReadResult.Invalid.class);
     }
 
     @Test
     void role이_없는_토큰은_invalid로_돌려준다() {
-        String token =
-                Jwts.builder()
-                        .issuer(ISSUER)
-                        .subject("7")
-                        .issuedAt(Date.from(NOW))
-                        .expiration(Date.from(NOW.plusSeconds(1800)))
-                        .signWith(secretKey())
-                        .compact();
+        String token = Jwts.builder()
+                .issuer(ISSUER)
+                .subject("7")
+                .issuedAt(Date.from(NOW))
+                .expiration(Date.from(NOW.plusSeconds(1800)))
+                .signWith(secretKey())
+                .compact();
 
         assertThat(jwtTokenService().read(token)).isInstanceOf(AccessTokenReadResult.Invalid.class);
     }
 
     @Test
     void subject가_없는_토큰은_invalid로_돌려준다() {
-        String token =
-                Jwts.builder()
-                        .issuer(ISSUER)
-                        .claim("role", "MEMBER")
-                        .issuedAt(Date.from(NOW))
-                        .expiration(Date.from(NOW.plusSeconds(1800)))
-                        .signWith(secretKey())
-                        .compact();
+        String token = Jwts.builder()
+                .issuer(ISSUER)
+                .claim("role", "MEMBER")
+                .issuedAt(Date.from(NOW))
+                .expiration(Date.from(NOW.plusSeconds(1800)))
+                .signWith(secretKey())
+                .compact();
 
         assertThat(jwtTokenService().read(token)).isInstanceOf(AccessTokenReadResult.Invalid.class);
     }
