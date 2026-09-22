@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.ShowNotFoundException;
-import com.ticket.show.exception.ShowVenueNotFoundException;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -37,11 +36,7 @@ public class GetShowVenueLayoutUseCase {
         final Show show =
                 showRepository.findById(input.showId()).orElseThrow(() -> new ShowNotFoundException(input.showId()));
 
-        final Long venueId = show.getVenueId();
-        if (venueId == null) {
-            throw new ShowVenueNotFoundException();
-        }
-        final VenueSnapshot venue = venueLookup.getVenueSnapshot(venueId);
+        final VenueSnapshot venue = venueLookup.getVenueSnapshot(show.getVenueId());
 
         return new Output(
                 venue.name(),

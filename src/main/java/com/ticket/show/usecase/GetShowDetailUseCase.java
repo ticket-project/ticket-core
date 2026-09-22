@@ -79,7 +79,7 @@ public class GetShowDetailUseCase {
             @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
             @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
             @Nullable String image,
-            @Nullable VenueInfo venue,
+            VenueInfo venue,
             @Nullable PerformerInfo performer,
             List<String> genreNames,
             List<GradeInfo> grades,
@@ -202,10 +202,7 @@ public class GetShowDetailUseCase {
         return new PerformerInfo(performer.getId(), performer.getName(), performer.getProfileImageUrl());
     }
 
-    private @Nullable VenueInfo resolveVenue(final @Nullable Long venueId) {
-        if (venueId == null) {
-            return null;
-        }
+    private VenueInfo resolveVenue(final long venueId) {
         return toVenueInfo(venueLookup.getVenueSnapshot(venueId));
     }
 

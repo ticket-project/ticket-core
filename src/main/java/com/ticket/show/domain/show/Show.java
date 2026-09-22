@@ -66,8 +66,8 @@ public class Show extends AuditedEntity {
      * venue module이 소유한 Venue의 scalar 참조다. 모듈을 넘나드는 JPA 연관관계는 금지되므로 {@code @ManyToOne}이 아니라 id 컬럼만 갖는다(ADR 0003 §4).
      * 컬럼명은 옛 {@code @ManyToOne Venue venue} 암묵 매핑과 같은 {@code venue_id}를 그대로 써서 스키마가 바뀌지 않는다.
      */
-    @Column(name = "venue_id")
-    private @Nullable Long venueId;
+    @Column(name = "venue_id", nullable = false)
+    private Long venueId;
 
     private @Nullable Integer runningMinutes;
 
@@ -89,7 +89,7 @@ public class Show extends AuditedEntity {
             final @Nullable LocalDateTime displaySaleStartsAt,
             final @Nullable LocalDateTime displaySaleEndsAt,
             final String image,
-            final @Nullable Long venueId,
+            final Long venueId,
             final @Nullable Long performerId,
             final @Nullable Integer runningMinutes) {
         this.title = title;

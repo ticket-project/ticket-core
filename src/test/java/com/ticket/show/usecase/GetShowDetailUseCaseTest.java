@@ -3,7 +3,6 @@ package com.ticket.show.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -158,17 +157,6 @@ class GetShowDetailUseCaseTest {
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 
         assertThat(output.image()).isEqualTo("/api/images/shows/card/1.jpg");
-    }
-
-    @Test
-    void venueId가_없으면_venue_조회_없이_null을_반환한다() {
-        when(showRepository.findById(1L)).thenReturn(Optional.of(show(null, null)));
-        stubEmptyFragments();
-
-        GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
-
-        assertThat(output.venue()).isNull();
-        verifyNoInteractions(venueLookup);
     }
 
     @Test
