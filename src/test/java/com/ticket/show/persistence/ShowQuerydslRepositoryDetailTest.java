@@ -120,6 +120,28 @@ class ShowQuerydslRepositoryDetailTest extends InfraReadRepositoryTestSupport {
         assertThat(showRepository.findGenreNames(showId)).contains("케이팝");
     }
 
+    @Test
+    void 장르_일괄_조회는_빈_ID와_존재하지_않는_ID를_건너뛴다() {
+        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of())).isEmpty();
+        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(Long.MAX_VALUE)))
+                .isEmpty();
+        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(showId, showId, Long.MAX_VALUE)))
+                .containsOnlyKeys(showId)
+                .hasEntrySatisfying(showId, names -> assertThat(names).containsExactly("케이팝"));
+    }
+
+    @Test
+    void 장르가_없는_공연은_장르_일괄_조회_결과에_포함하지_않는다() {
+        entityManager
+                .createQuery("DELETE FROM ShowGenre sg WHERE sg.showId = :id")
+                .setParameter("id", showId)
+                .executeUpdate();
+        flushAndClear();
+
+        assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(showId)))
+                .isEmpty();
+    }
+
     /** ADR 0005: show-level 가격표는 없다 — 회차 전체의 min/max를 파생한다. */
     @Test
     void 가격_요약은_회차_전체의_최소_최대다() {

@@ -22,4 +22,7 @@ public interface ShowRepository {
 
     /** 이 show에 붙은 장르 이름을 반환한다. */
     List<String> findGenreNames(Long showId);
+
+    /** 장르 이름을 한 번에 조회한다. 장르가 없는 공연은 결과에 포함하지 않는다. */
+    Map<Long, List<String>> findGenreNamesByShowIds(List<Long> showIds);
 }

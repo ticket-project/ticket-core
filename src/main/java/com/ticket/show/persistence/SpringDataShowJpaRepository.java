@@ -2,6 +2,7 @@ package com.ticket.show.persistence;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,20 @@ interface SpringDataShowJpaRepository extends JpaRepository<Show, Long> {
             WHERE sg.showId = :showId
             """)
     List<String> findGenreNamesByShowId(@Param("showId") Long showId);
+
+    @Query("""
+            SELECT s.id AS showId, g.name AS genreName
+            FROM Show s
+            LEFT JOIN ShowGenre sg ON sg.showId = s.id
+            LEFT JOIN Genre g ON g.id = sg.genreId
+            WHERE s.id IN :showIds
+            """)
+    List<ShowGenreName> findGenreNamesByShowIds(@Param("showIds") List<Long> showIds);
+
+    interface ShowGenreName {
+        Long getShowId();
+
+        @Nullable
+        String getGenreName();
+    }
 }
