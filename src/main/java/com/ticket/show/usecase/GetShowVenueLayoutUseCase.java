@@ -38,11 +38,10 @@ public class GetShowVenueLayoutUseCase {
                 showRepository.findById(input.showId()).orElseThrow(() -> new ShowNotFoundException(input.showId()));
 
         final Long venueId = show.getVenueId();
-        final VenueSnapshot venue =
-                venueId == null ? null : venueLookup.findVenueSnapshot(venueId).orElse(null);
-        if (venue == null) {
+        if (venueId == null) {
             throw new ShowVenueNotFoundException();
         }
+        final VenueSnapshot venue = venueLookup.getVenueSnapshot(venueId);
 
         return new Output(
                 venue.name(),
