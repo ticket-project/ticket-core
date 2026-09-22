@@ -109,8 +109,8 @@ class GetShowDetailUseCaseTest {
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
-        when(venueLookup.findVenueSnapshot(5L))
-                .thenReturn(Optional.of(new VenueSnapshot(
+        when(venueLookup.getVenueSnapshot(5L))
+                .thenReturn(new VenueSnapshot(
                         5L,
                         "예술의전당",
                         "주소",
@@ -119,7 +119,7 @@ class GetShowDetailUseCaseTest {
                         null,
                         null,
                         null,
-                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0))));
+                        new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
 
         GetShowDetailUseCase.Output output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 
@@ -136,7 +136,7 @@ class GetShowDetailUseCaseTest {
         assertThat(output.venue().name()).isEqualTo("예술의전당");
         assertThat(output.performer()).isNull();
         verify(likeQuery).countByTarget(LikeType.SHOW, 1L);
-        verify(venueLookup).findVenueSnapshot(5L);
+        verify(venueLookup).getVenueSnapshot(5L);
     }
 
     /** 예매 상태는 저장된 값이 아니라 주입된 Clock 기준으로 계산한다. */

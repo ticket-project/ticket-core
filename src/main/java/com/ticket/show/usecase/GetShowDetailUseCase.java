@@ -203,7 +203,7 @@ public class GetShowDetailUseCase {
         return new PerformerInfo(performer.getId(), performer.getName(), performer.getProfileImageUrl());
     }
 
-    private VenueInfo resolveVenue(final Long venueId) {
+    private @Nullable VenueInfo resolveVenue(final @Nullable Long venueId) {
         if (venueId == null) {
             return null;
         }

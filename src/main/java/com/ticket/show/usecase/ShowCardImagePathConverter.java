@@ -1,4 +1,4 @@
-package com.ticket.show.domain.show;
+package com.ticket.show.usecase;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
