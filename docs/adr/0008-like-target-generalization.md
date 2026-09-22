@@ -7,6 +7,13 @@
 해제·찜 상태 조회는 like로 옮겼고, "내 찜 목록"만 show에 남는다. 이 문서의 나머지 결정
 (module 개명, 대상 일반화, 스키마)은 그대로 유효하다.
 
+**2026-09-22 갱신**: 아래 §2가 정한 **공개 계약의 모양**은 바뀌었다. `LikeType`은 LIKES 테이블에
+저장되는 like 내부 값이라 `like.domain`으로 내려갔고, `LikeQueryApi`는 종류를 값으로 받지 않고
+대상별 메서드로 나뉜다(`countShowLikes`, `findLikedShows`). 호출하는 module이 남의 값 집합을
+알아야 했고, 공연장 module이 "공연 찜"을 넘기는 것도 막지 못했기 때문이다. **대상 일반화 결정
+자체(하나의 module·하나의 LIKES 테이블·`Like(targetId, likeType)`)는 그대로 유효하다** — 새 대상은
+여전히 `LikeType`에 값을 더해 처리하고, 공개면에는 그 대상을 아는 module이 쓸 메서드를 더한다.
+
 ## 배경
 
 ADR 0006 §1·§2가 찜(당시 `ShowLike`) 데이터를 `favorite` module로 분리했다. 그 결정 자체(찜
@@ -84,8 +91,11 @@ module에 새로 작성해야 한다. 이 사실을 미리 적어 두는 이유�
 결정 §2가 든 공개 계약 중 **쓰기 계약 `LikeCommand.like/unlike`는 지금 없다.** 그 계약과 구현
 (`like.api.LikeCommandApi`, `like.usecase.LikeCommandService`)은 구현이 하나뿐인 경유 지점이라
 제거했고, `AddLikeUseCase`/`RemoveLikeUseCase`가 `LikeRepository`를 직접 쓴다. 대상 일반화
-(`LikeType`, `targetId`)와 조회 계약 `LikeQueryApi`(`countByTarget`/`get`/`findLiked`)·`LikeCountSnapshot`은
-결정 그대로 유효하다.
+(`LikeType`, `targetId`)은 결정 그대로 유효하다.
+
+2026-09-22에는 조회 공개면을 대상별 메서드(`countShowLikes`/`findLikedShows`)로 좁혔다.
+`LikeType`과 회원별 상태를 묶는 `LikeCountSnapshot`은 like 내부 구현으로 이동했다. 저장 모델은
+대상을 일반화한 채 유지하면서, 다른 module이 like 내부 분류 값을 알 필요는 없앴다.
 
 §4가 말한 배치도 지금은 일부만 맞는다 — 찜 등록·해제 use case와 endpoint는 `like` module에 있고
 (`like.usecase.AddLikeUseCase`/`RemoveLikeUseCase`, `like.endpoint.LikeController`), `show`에는

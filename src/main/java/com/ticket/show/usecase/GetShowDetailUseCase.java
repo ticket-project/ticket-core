@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.like.api.LikeQueryApi;
-import com.ticket.like.api.LikeType;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.Performer;
@@ -130,7 +129,7 @@ public class GetShowDetailUseCase {
                 show.getEndDate(),
                 show.getRunningMinutes(),
                 show.getViewCount(),
-                likeQueryApi.countByTarget(LikeType.SHOW, showId),
+                likeQueryApi.countShowLikes(showId),
                 show.saleDisplayStatusAt(LocalDateTime.now(clock)),
                 show.getDisplaySaleType(),
                 show.getDisplaySaleStartsAt(),

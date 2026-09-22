@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeSnapshot;
-import com.ticket.like.api.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -70,7 +69,7 @@ public class GetMyShowLikesUseCase {
         memberLookup.requireActive(input.memberId());
 
         final CursorPage<LikeSnapshot, Long> page =
-                likeQuery.findLiked(LikeType.SHOW, input.memberId(), input.cursorLikeId(), input.size());
+                likeQuery.findLikedShows(input.memberId(), input.cursorLikeId(), input.size());
 
         if (page.items().isEmpty()) {
             return new Output(List.of(), page.hasNext(), page.nextPosition());

@@ -16,9 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.like.api.LikeCountSnapshot;
-import com.ticket.like.api.LikeQueryApi;
-import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.LikeType;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
@@ -29,7 +27,7 @@ class GetLikeStatusUseCaseTest {
     private MemberLookupApi memberLookup;
 
     @Mock
-    private LikeQueryApi likeQuery;
+    private LikeQueryService likeQuery;
 
     @InjectMocks
     private GetLikeStatusUseCase useCase;

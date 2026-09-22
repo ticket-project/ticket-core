@@ -1,4 +1,4 @@
-package com.ticket.like.api;
+package com.ticket.like.domain;
 
 /**
  * 찜 대상의 종류다. 지금은 공연(Show) 하나뿐이라 {@code SHOW}만 있다.

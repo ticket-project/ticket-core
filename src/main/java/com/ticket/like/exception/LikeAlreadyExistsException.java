@@ -1,6 +1,6 @@
 package com.ticket.like.exception;
 
-import com.ticket.like.api.LikeType;
+import com.ticket.like.domain.LikeType;
 
 /**
  * 이미 찜한 대상을 다시 찜하려 했다(동시 요청 race).
