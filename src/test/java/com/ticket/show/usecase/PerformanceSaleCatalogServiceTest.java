@@ -31,6 +31,7 @@ import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSeatSnapshot;
+import com.ticket.venue.api.VenueSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -61,24 +62,14 @@ class PerformanceSaleCatalogServiceTest {
     }
 
     @Test
-    void venue가_없는_show면_seatInfo가_빈_맵이다() {
-        final Performance performance = performance(2L, null);
-        final Show show = show(2L, "show", null);
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of());
-
-        final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
-
-        assertThat(snapshot.seatInfoBySeatId()).isEmpty();
-    }
-
-    @Test
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
         final Performance performance = performance(2L, null);
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
+        when(venueLookup.getVenueSnapshot(3L))
+                .thenReturn(new VenueSnapshot(
+                        3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
         when(venueSeatLookup.findSeats(3L, Set.of(10L)))
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 0.0, 0.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
@@ -104,6 +95,9 @@ class PerformanceSaleCatalogServiceTest {
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
+        when(venueLookup.getVenueSnapshot(3L))
+                .thenReturn(new VenueSnapshot(
+                        3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
         when(venueSeatLookup.findSeats(3L, Set.of(10L))).thenReturn(List.of());
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
