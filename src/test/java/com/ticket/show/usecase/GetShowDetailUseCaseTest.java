@@ -30,7 +30,6 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.ShowCardImagePathConverter;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
@@ -110,7 +109,7 @@ class GetShowDetailUseCaseTest {
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
         when(likeQuery.countByTarget(LikeType.SHOW, 1L)).thenReturn(10L);
-        when(venueLookup.findSummary(5L))
+        when(venueLookup.findVenueSnapshot(5L))
                 .thenReturn(Optional.of(new VenueSnapshot(
                         5L,
                         "예술의전당",
@@ -137,7 +136,7 @@ class GetShowDetailUseCaseTest {
         assertThat(output.venue().name()).isEqualTo("예술의전당");
         assertThat(output.performer()).isNull();
         verify(likeQuery).countByTarget(LikeType.SHOW, 1L);
-        verify(venueLookup).findSummary(5L);
+        verify(venueLookup).findVenueSnapshot(5L);
     }
 
     /** 예매 상태는 저장된 값이 아니라 주입된 Clock 기준으로 계산한다. */

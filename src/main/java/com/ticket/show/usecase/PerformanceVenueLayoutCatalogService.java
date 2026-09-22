@@ -55,7 +55,7 @@ public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLay
         final Long venueId = show.getVenueId();
 
         final VenueSnapshot venue =
-                venueId == null ? null : venueLookup.findSummary(venueId).orElse(null);
+                venueId == null ? null : venueLookup.findVenueSnapshot(venueId).orElse(null);
 
         final Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayoutBySeatId = venueId == null
                 ? Map.of()

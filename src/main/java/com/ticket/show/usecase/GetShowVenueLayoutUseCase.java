@@ -39,7 +39,7 @@ public class GetShowVenueLayoutUseCase {
 
         final Long venueId = show.getVenueId();
         final VenueSnapshot venue =
-                venueId == null ? null : venueLookup.getVenueSnapshot(venueId).orElse(null);
+                venueId == null ? null : venueLookup.findVenueSnapshot(venueId).orElse(null);
         if (venue == null) {
             throw new ShowVenueNotFoundException();
         }

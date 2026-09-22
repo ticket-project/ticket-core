@@ -48,7 +48,7 @@ public class GetPerformanceSummaryUseCase {
         final String region = show.getVenueId() == null
                 ? null
                 : venueLookup
-                        .findSummary(show.getVenueId())
+                        .findVenueSnapshot(show.getVenueId())
                         .map(v -> v.region() == null ? null : v.region().getDescription())
                         .orElse(null);
 

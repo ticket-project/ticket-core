@@ -14,6 +14,7 @@ import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 import com.ticket.venue.domain.Venue;
 import com.ticket.venue.domain.VenueRepository;
+import com.ticket.venue.exception.VenueNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +33,12 @@ public class VenueLookupService implements VenueLookupApi {
     private final VenueRepository venueRepository;
 
     @Override
-    public Optional<VenueSnapshot> findSummary(final long venueId) {
+    public VenueSnapshot getVenueSnapshot(final long venueId) {
+        return findVenueSnapshot(venueId).orElseThrow(() -> new VenueNotFoundException(venueId));
+    }
+
+    @Override
+    public Optional<VenueSnapshot> findVenueSnapshot(final long venueId) {
         return venueRepository.findById(venueId).map(VenueLookupService::toSummary);
     }
 

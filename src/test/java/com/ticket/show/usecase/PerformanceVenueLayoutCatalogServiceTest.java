@@ -88,7 +88,7 @@ class PerformanceVenueLayoutCatalogServiceTest {
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
         when(showRepository.findById(2L)).thenReturn(Optional.of(show));
-        when(venueLookup.findSummary(3L))
+        when(venueLookup.findVenueSnapshot(3L))
                 .thenReturn(Optional.of(new VenueSnapshot(
                         3L,
                         "venue",

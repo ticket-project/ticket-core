@@ -54,7 +54,7 @@ public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi 
 
         final String venueName = venueId == null
                 ? null
-                : venueLookup.findSummary(venueId).map(v -> v.name()).orElse(null);
+                : venueLookup.findVenueSnapshot(venueId).map(v -> v.name()).orElse(null);
 
         final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId = venueId == null
                 ? Map.of()
