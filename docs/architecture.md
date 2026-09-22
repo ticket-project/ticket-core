@@ -209,15 +209,13 @@ member                 like                venue           payment        show
 ├─ api                 ├─ api              ├─ api          ├─ domain      ├─ api
 ├─ usecase             ├─ usecase          ├─ domain       └─ persistence ├─ usecase
 ├─ domain              ├─ domain           └─ persistence                 ├─ domain
-├─ password            ├─ persistence                                     ├─ persistence
-├─ persistence         ├─ endpoint                                        ├─ endpoint
-├─ endpoint            └─ exception                                       └─ exception
-└─ exception
+├─ persistence         ├─ persistence                                     ├─ persistence
+├─ endpoint            ├─ endpoint                                        ├─ endpoint
+└─ exception           └─ exception                                       └─ exception
 ```
 
-`member.password`는 Spring Security `PasswordEncoder` bean 설정(`PasswordHashingConfig`)만 두는
-작은 기능 폴더다. 해싱은 저장 기술이 아니라 보안 기술이라 `persistence`가 받지 않는다. 옛
-`PasswordHasher` 래퍼는 걷어냈고 `member`가 `PasswordEncoder`를 직접 쓴다.
+`PasswordHashingConfig`는 업무 규칙이 없는 공통 Spring Security bean 설정이므로
+`shared.config`가 소유한다. `member`는 등록된 `PasswordEncoder`를 직접 쓴다.
 
 `venue`는 공개 계약(`venue.api`)을 Aggregate별 use case가 구현한다 — `VenueLookupService implements
 VenueLookupApi`, `SeatLookupService implements VenueSeatLookupApi`다. Venue와 Seat이 다른
