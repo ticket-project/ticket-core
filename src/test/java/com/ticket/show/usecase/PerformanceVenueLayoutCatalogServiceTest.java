@@ -101,9 +101,12 @@ class PerformanceVenueLayoutCatalogServiceTest {
                 .isEqualTo("VIP");
     }
 
-    /** 옛 {@code join grade}가 inner join이라 조용히 빠뜨리던 동작을 조립 쪽에서 그대로 유지한다. */
+    /**
+     * 대응 Grade가 없는 PerformanceGrade는 {@code fk_performance_grades_grade}가 막는 데이터 깨짐이다. 조용히 빼면 booking의 좌석 맵·잔여석 집계가 그
+     * 등급만 통째로 빠진 채로 사용자에게 나간다 — 공개 계약이 "모든 PerformanceGrade를 담는다"이므로 여기서 터뜨린다.
+     */
     @Test
-    void 등급_이름을_찾지_못한_편성은_layout에서_빠진다() {
+    void 등급을_찾지_못한_편성이_있으면_layout을_만들지_않고_터진다() {
         final Performance performance = performance(2L, null);
         final Show show = show(2L, "show", 3L);
         when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
@@ -116,9 +119,9 @@ class PerformanceVenueLayoutCatalogServiceTest {
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));
         when(gradeRepository.findGradeNames(Set.of(7L, 8L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
 
-        final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
-
-        assertThat(layout.gradeLayoutByPerformanceGradeId()).containsOnlyKeys(100L);
+        assertThatThrownBy(() -> service.getVenueLayout(1L))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("gradeId=8");
     }
 
     private static PerformanceGrade performanceGrade(

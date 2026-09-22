@@ -16,7 +16,7 @@ public record PerformanceSaleSnapshot(
         long performanceId,
         long showId,
         @Nullable String showTitle,
-        @Nullable Long venueId,
+        Long venueId,
         @Nullable String venueName,
         @Nullable LocalDateTime performanceStartTime,
         Map<Long, SeatInfo> seatInfoBySeatId,
