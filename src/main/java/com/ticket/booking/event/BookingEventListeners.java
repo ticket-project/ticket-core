@@ -51,7 +51,6 @@ class BookingEventListeners {
     static final String ORDER_STARTED_LISTENER_ID =
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderStarted)";
 
-    /** @see #ORDER_STARTED_LISTENER_ID */
     static final String ORDER_TERMINATED_LISTENER_ID =
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderTerminated)";
 
@@ -61,7 +60,6 @@ class BookingEventListeners {
     private final HoldReleaseProgressRecorder holdReleaseProgressRecorder;
     private final Clock clock;
 
-    /** @see #ORDER_STARTED_LISTENER_ID */
     @ApplicationModuleListener(id = ORDER_STARTED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderStarted event) {
         final OrderHoldSnapshot snapshot =
@@ -75,7 +73,6 @@ class BookingEventListeners {
         holdCreationCoordinator.clearSelectionsAndPublishHeld(hold);
     }
 
-    /** @see #ORDER_TERMINATED_LISTENER_ID */
     @ApplicationModuleListener(id = ORDER_TERMINATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderTerminated event) {
         final OrderHoldSnapshot snapshot =
