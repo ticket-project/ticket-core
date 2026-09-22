@@ -68,8 +68,12 @@ class AddLikeUseCaseTest {
         verify(likeRepository, never()).like(anyLong(), any(), anyLong());
     }
 
+    /**
+     * 실제 동시 요청을 재현하지 않는다 — repository가 무결성 위반을 던졌을 때의 <b>예외 매핑</b>만 본다. 그 위반이 실제로 중복 찜에서만 생긴다는 사실은
+     * {@code LikeRepositoryPagingTest}가 실제 DB로 고정한다.
+     */
     @Test
-    void 동시_요청이_먼저_저장을_끝내_unique_제약을_위반하면_찜_중복_예외로_바꿔_던진다() {
+    void unique_제약을_위반하면_찜_중복_예외로_바꿔_던진다() {
         when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
                 .thenReturn(false);
         when(likeRepository.like(1L, LikeType.SHOW, 2L))
