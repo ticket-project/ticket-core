@@ -56,9 +56,9 @@ module에 공개하는 계약만 담는 `api`가 더해진다) 각
 `shared.exception`/`shared.jpa` 네 named interface에 나눠 두고, 실행 배선은 `shared.config`에
 둔다.
 
-**cross-module 공개 계약은 module root가 아니라 `<module>.api`에 둔다.** 다른 module이
-호출하는 행위 계약에만 `Api` 접미사를 붙이고(`MemberLookupApi`, `VenueLookupApi`), record·snapshot·
-event·enum 같은 데이터에는 붙이지 않는다. 배경은
+**cross-module 공개 계약은 module root가 아니라 `<module>.api`에 둔다.** 이 package의 interface에는
+예외 없이 `Api` 접미사를 붙이고(`MemberLookupApi`, `VenueLookupApi`, `AuditorPrincipalApi`),
+record·snapshot·event·enum 같은 데이터에는 붙이지 않는다. 배경은
 [ADR 0014](adr/0014-module-public-contracts-live-in-api-packages.md)다.
 
 배치의 단일 기준은 [architecture.md](architecture.md#module-structure)이고 배경은

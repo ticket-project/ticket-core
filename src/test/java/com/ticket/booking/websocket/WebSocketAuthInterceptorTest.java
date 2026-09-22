@@ -20,13 +20,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.UnauthenticatedException;
-import com.ticket.security.api.AccessTokenAuthenticator;
+import com.ticket.security.api.AccessTokenAuthenticationApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class WebSocketAuthInterceptorTest {
     @Mock
-    private AccessTokenAuthenticator accessTokenAuthenticator;
+    private AccessTokenAuthenticationApi accessTokenAuthenticator;
 
     @InjectMocks
     private WebSocketAuthInterceptor interceptor;
