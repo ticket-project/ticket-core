@@ -1,7 +1,19 @@
 package com.ticket.member;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.modulith.test.ApplicationModuleTest;
+
+import com.ticket.member.usecase.AuthenticateMemberUseCase;
+import com.ticket.member.usecase.GetActiveMemberIdentityUseCase;
+import com.ticket.member.usecase.MemberAccountFacade;
+import com.ticket.member.usecase.OAuth2MemberProvisioningService;
+import com.ticket.member.usecase.RegisterMemberUseCase;
+import com.ticket.member.usecase.WithdrawMemberUseCase;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -13,6 +25,19 @@ import org.springframework.modulith.test.ApplicationModuleTest;
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class MemberModuleTests {
+    @Autowired
+    private ApplicationContext context;
+
     @Test
     void bootstraps() {}
+
+    @Test
+    void 계정_연산은_각_유스케이스의_트랜잭션_프록시를_통과한다() {
+        assertThat(AopUtils.isAopProxy(context.getBean(RegisterMemberUseCase.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(AuthenticateMemberUseCase.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(GetActiveMemberIdentityUseCase.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class))).isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountFacade.class))).isFalse();
+    }
 }
