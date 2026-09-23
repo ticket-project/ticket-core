@@ -46,15 +46,15 @@ import com.ticket.show.usecase.ShowSort;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세·요약 배치가 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그 조각이고, venue 표시값
- * 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
+ * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세 가격 요약이 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그 조각이고, venue
+ * 표시값 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
  *
  * <p>밖으로 내보내는 것은 show 자기 엔티티와 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
  *
- * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다(use case가 {@code VenueLookupApi}로 해석한다). {@code null}은 지역 조건 없음이고, <b>빈 집합은
- * 조건은 있으나 해당 공연장이 없다는 뜻이라 결과가 0건</b>이다 — 둘을 같게 다루면 안 된다.
+ * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다(use case가 {@code VenueLookupApi}로 해석한다) — {@code null}과 빈 집합의 차이는
+ * {@link #venueIdIn}에 적었다.
  *
- * <p>정렬 정의·마감 판정 시각·커서 비교 규칙은 이 클래스 안에 한 벌만 둔다. 정렬이 마감 여부를 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12가 남긴 교훈).
+ * <p>정렬 정의·마감 판정 시각·커서 비교 규칙은 이 클래스 안에 한 벌만 둔다. 정렬이 마감 여부를 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12).
  */
 @Repository
 @RequiredArgsConstructor
@@ -161,16 +161,6 @@ public class ShowQuerydslRepository {
                 .fetchOne();
         return count != null ? count : 0L;
     }
-
-    // 공연 상세 ----------------------------------------------------------------
-    //
-    // 상세 응답 조립은 여기서 하지 않는다 -- show 자기 DB의 조각(엔티티와 조회 결과)만 돌려주고,
-    // venue 표시값 조합과 최종 Output 구성은 GetShowDetailUseCase(application)가 한다.
-
-    // 공연 요약 배치 ------------------------------------------------------------
-    //
-    // 내 찜 목록처럼 show 내부의 다른 use case가 자기 show 데이터를 조회할 때 쓴다. 여기서도 venue
-    // 표시값 조합은 하지 않고 venueId scalar만 담아 넘긴다.
 
     // 검색 조건 조립 ------------------------------------------------------------
     //
@@ -284,8 +274,7 @@ public class ShowQuerydslRepository {
     /**
      * 마감(={@code CLOSED})이면 1, 아니면 0. 최신순 정렬에서 마감된 공연을 뒤로 보내는 데 쓴다 (ORDER BY 이 값 ASC -> 마감되지 않은 공연이 먼저).
      *
-     * <p>판정은 {@link #saleDisplayStatusCondition}의 {@code CLOSED}와 같은 식이다 — 마감 여부를 정렬이 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12가
-     * 남긴 교훈).
+     * <p>판정은 {@link #saleDisplayStatusCondition}의 {@code CLOSED}와 같은 식이다.
      */
     private static NumberExpression<Integer> saleClosedRank(final LocalDateTime now) {
         return new CaseBuilder()
