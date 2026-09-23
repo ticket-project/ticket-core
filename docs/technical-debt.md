@@ -76,7 +76,7 @@ TD·PD와 성격이 다르다. 결정을 기다리는 항목이 아니라 **지�
 |---|---|---|---|---|---|
 | OE-01 | yagni | `*/domain/*Repository.java`, `*/persistence/*RepositoryAdapter.java`, `SpringData*JpaRepository` | 저장소 하나에 타입 3개 ×13벌. Adapter는 1:1 위임이다 — `LikeRepositoryAdapter`는 5개 메서드 중 4개가 시그니처까지 그대로 전달한다 | Spring Data 인터페이스가 이미 포트다. `SpringData*JpaRepository`만 남긴다 | −724줄, 파일 −26 |
 | OE-02 | yagni | `*/exception/**` | 오류 코드 1개당 예외 클래스 1개(31개 — `TicketException`과 module 공통 base 4개 포함). `*ErrorCode` enum이 이미 가진 목록을 클래스 이름으로 한 번, `sealed ... permits` 목록으로 또 한 번 적는다 | HTTP 상태를 `ErrorCode` enum에 올리고 module당 예외 1개 + 진단 필드 | −500줄 |
-| OE-03 | native | `*ControllerDocs` 전부 | 인터페이스 14개(`*/endpoint/docs/**`에 12개, 나머지 2개는 계층 package를 쓰지 않는 `security.auth`에 flat), 각각 구현 1개, 합계 1,176줄 | 애너테이션을 controller 메서드에 직접 붙인다 | 순 −300줄, 파일 −14 |
+| OE-03 | native | `*ControllerDocs` 전부 | 인터페이스 13개(`*/endpoint/docs/**`에 11개, 나머지 2개는 계층 package를 쓰지 않는 `security.auth`에 flat), 각각 구현 1개, 합계 918줄 | 애너테이션을 controller 메서드에 직접 붙인다 | 순 −300줄, 파일 −13 |
 | OE-06 | native | `build.gradle`, `shared/infrastructure/P6SpyConfig.java` | SQL 파라미터 로깅에 p6spy 의존성 + 47줄 설정 | Hibernate 자체 `org.hibernate.orm.jdbc.bind=TRACE` | −47줄, 의존성 −1 |
 | OE-07 | delete | `build.gradle`의 `dumpEpArgs` task | 참조 0개인 디버그 task | 없음 | −20줄 |
 | OE-10 | native | `build.gradle` | `spring-context`·`spring-tx`·`spring-core`·`spring-beans`·`slf4j-api`·`spring-data-jpa`·`jakarta.persistence-api`를 명시 선언 | starter가 전이로 가져온다. 선언만 지운다(산출물 변화 없음) | −7줄 |
