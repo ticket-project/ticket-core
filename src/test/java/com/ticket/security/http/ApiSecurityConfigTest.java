@@ -152,6 +152,17 @@ class ApiSecurityConfigTest {
     }
 
     @Test
+    void 내_찜_목록은_인증을_요구한다() throws Exception {
+        mockMvc.perform(get("/api/v1/members/me/likes")).andExpect(status().isUnauthorized());
+
+        Mockito.when(accessTokenReader.read("access-token"))
+                .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
+        mockMvc.perform(get("/api/v1/members/me/likes").header(HttpHeaders.AUTHORIZATION, "Bearer access-token"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("7"));
+    }
+
+    @Test
     void 공개_api에_유효하지_않은_token이_있어도_기존처럼_접근할_수_있다() throws Exception {
         Mockito.when(accessTokenReader.read("invalid-token")).thenReturn(AccessTokenReadResult.invalid());
 
@@ -199,6 +210,11 @@ class ApiSecurityConfigTest {
         @GetMapping("/api/v1/shows/1")
         public String show() {
             return "show";
+        }
+
+        @GetMapping("/api/v1/members/me/likes")
+        public String myLikes(final AuthenticatedMember member) {
+            return member.memberId().toString();
         }
 
         @GetMapping("/api/v1/performances/1")

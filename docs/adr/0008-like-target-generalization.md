@@ -98,5 +98,8 @@ module에 새로 작성해야 한다. 이 사실을 미리 적어 두는 이유�
 
 §4가 말한 배치도 지금은 일부만 맞는다 — 찜 등록·해제 use case와 endpoint는 `like` module에 있고
 (`like.usecase.AddLikeUseCase`/`RemoveLikeUseCase`, `like.endpoint.LikeController`), `show`에는
-찜 목록·상세 표시값 쪽(`MyShowLikesController`, `GetMyShowLikesUseCase`)이 남아 있다. §4가 든
+찜 목록·상세 표시값 쪽(`ShowController.getMyLikes`, `GetMyShowLikesUseCase`)이 남아 있다. §4가 든
 판단 근거(사실의 소유자 기준)는 그대로다.
+
+**2026-09-23 갱신**: 내 찜 목록의 별도 컨트롤러는 `ShowController`로 통합했다. 기존
+`/api/v1/members/me/likes` HTTP 계약과 `GetMyShowLikesUseCase`의 소유권은 유지한다.

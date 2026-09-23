@@ -2,6 +2,7 @@ package com.ticket.show.endpoint;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -15,9 +16,17 @@ import java.util.Base64;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.member.exception.handler.MemberExceptionHandler;
+import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.SaleType;
@@ -25,6 +34,7 @@ import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 import com.ticket.show.exception.handler.ShowExceptionHandler;
 import com.ticket.show.usecase.CountSearchShowsUseCase;
 import com.ticket.show.usecase.GetLatestShowsUseCase;
+import com.ticket.show.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsPageUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
@@ -49,6 +59,115 @@ class ShowControllerContractTest {
                     .getBytes(StandardCharsets.UTF_8));
 
     @Test
+    void 찜_커서는_십진수_문자열로_주고받고_인증된_회원_id를_사용한다() throws Exception {
+        GetMyShowLikesUseCase likes = mock(GetMyShowLikesUseCase.class);
+        when(likes.execute(any())).thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, 9L));
+        MockMvc mockMvc = likesMockMvc(likes);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(
+                        new AuthenticatedMember(1L, "MEMBER"), null, List.of()));
+        try {
+            mockMvc.perform(get("/api/v1/members/me/likes")
+                            .param("memberId", "2")
+                            .param("cursor", "9"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.nextCursor").value("9"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        ArgumentCaptor<GetMyShowLikesUseCase.Input> captor = ArgumentCaptor.forClass(GetMyShowLikesUseCase.Input.class);
+        verify(likes).execute(captor.capture());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().memberId()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().cursorLikeId())
+                .isEqualTo(9L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().size()).isEqualTo(20);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void 찜_커서가_비어있으면_첫_페이지로_본다(final String cursor) throws Exception {
+        GetMyShowLikesUseCase likes = mock(GetMyShowLikesUseCase.class);
+        when(likes.execute(any())).thenReturn(new GetMyShowLikesUseCase.Output(List.of(), false, null));
+        MockMvc mockMvc = likesMockMvc(likes);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(
+                        new AuthenticatedMember(1L, "MEMBER"), null, List.of()));
+        try {
+            mockMvc.perform(get("/api/v1/members/me/likes").param("cursor", cursor))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.nextCursor").doesNotExist());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+        ArgumentCaptor<GetMyShowLikesUseCase.Input> captor = ArgumentCaptor.forClass(GetMyShowLikesUseCase.Input.class);
+        verify(likes).execute(captor.capture());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().cursorLikeId())
+                .isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"abc", "1.5", "9999999999999999999999"})
+    void 찜_커서가_숫자가_아니면_400을_반환한다(final String cursor) throws Exception {
+        GetMyShowLikesUseCase likes = mock(GetMyShowLikesUseCase.class);
+        MockMvc mockMvc = likesMockMvc(likes);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(
+                        new AuthenticatedMember(1L, "MEMBER"), null, List.of()));
+        try {
+            mockMvc.perform(get("/api/v1/members/me/likes").param("cursor", cursor))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("E400"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+        verifyNoInteractions(likes);
+    }
+
+    @Test
+    void 찜_목록_size가_양수가_아니면_400을_반환한다() throws Exception {
+        GetMyShowLikesUseCase likes = mock(GetMyShowLikesUseCase.class);
+        MockMvc mockMvc = likesMockMvc(likes);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken(
+                        new AuthenticatedMember(1L, "MEMBER"), null, List.of()));
+        try {
+            mockMvc.perform(get("/api/v1/members/me/likes").param("size", "0"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("E400"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+        verifyNoInteractions(likes);
+    }
+
+    @Test
+    void 찜_목록은_인증_정보가_없으면_401을_반환한다() throws Exception {
+        GetMyShowLikesUseCase likes = mock(GetMyShowLikesUseCase.class);
+        SecurityContextHolder.clearContext();
+        likesMockMvc(likes).perform(get("/api/v1/members/me/likes")).andExpect(status().isUnauthorized());
+        verifyNoInteractions(likes);
+    }
+
+    private MockMvc likesMockMvc(final GetMyShowLikesUseCase likes) {
+        ShowController controller = new ShowController(
+                mock(GetShowsUseCase.class),
+                mock(GetLatestShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsUseCase.class),
+                mock(GetSaleOpeningSoonShowsPageUseCase.class),
+                mock(SearchShowsUseCase.class),
+                mock(CountSearchShowsUseCase.class),
+                mock(GetShowDetailUseCase.class),
+                likes,
+                new ShowCursorCodec(JsonMapper.builder().build()));
+        return MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new ShowExceptionHandler(), new MemberExceptionHandler())
+                .build();
+    }
+
+    @Test
     void 공연_목록_api는_슬라이스_응답_계약을_유지한다() throws Exception {
         GetShowsUseCase getShowsUseCase = mock(GetShowsUseCase.class);
         ShowController controller = new ShowController(
@@ -59,6 +178,7 @@ class ShowControllerContractTest {
                 mock(SearchShowsUseCase.class),
                 mock(CountSearchShowsUseCase.class),
                 mock(GetShowDetailUseCase.class),
+                mock(GetMyShowLikesUseCase.class),
                 new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
@@ -102,6 +222,7 @@ class ShowControllerContractTest {
                 searchShowsUseCase,
                 mock(CountSearchShowsUseCase.class),
                 mock(GetShowDetailUseCase.class),
+                mock(GetMyShowLikesUseCase.class),
                 new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
@@ -119,6 +240,39 @@ class ShowControllerContractTest {
     }
 
     @Test
+    void 나머지_공연_조회_경로도_기존_유스케이스에_연결된다() throws Exception {
+        GetLatestShowsUseCase latest = mock(GetLatestShowsUseCase.class);
+        GetSaleOpeningSoonShowsUseCase soon = mock(GetSaleOpeningSoonShowsUseCase.class);
+        GetSaleOpeningSoonShowsPageUseCase soonPage = mock(GetSaleOpeningSoonShowsPageUseCase.class);
+        CountSearchShowsUseCase count = mock(CountSearchShowsUseCase.class);
+        when(latest.execute(any())).thenReturn(new GetLatestShowsUseCase.Output(List.of()));
+        when(soon.execute(any())).thenReturn(new GetSaleOpeningSoonShowsUseCase.Output(List.of()));
+        when(soonPage.execute(any()))
+                .thenReturn(new GetSaleOpeningSoonShowsPageUseCase.Output(List.of(), false, null));
+        when(count.execute(any())).thenReturn(new CountSearchShowsUseCase.Output(0));
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new ShowController(
+                        mock(GetShowsUseCase.class),
+                        latest,
+                        soon,
+                        soonPage,
+                        mock(SearchShowsUseCase.class),
+                        count,
+                        mock(GetShowDetailUseCase.class),
+                        mock(GetMyShowLikesUseCase.class),
+                        new ShowCursorCodec(JsonMapper.builder().build())))
+                .build();
+
+        mockMvc.perform(get("/api/v1/shows/latest")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/shows/sale-opening-soon")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/shows/sale-opening-soon/page")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/shows/search/count")).andExpect(status().isOk());
+        verify(latest).execute(any());
+        verify(soon).execute(any());
+        verify(soonPage).execute(any());
+        verify(count).execute(any());
+    }
+
+    @Test
     void show_detail_response의_회차는_일정만_담고_예매_정책_필드를_노출하지_않는다() throws Exception {
         GetShowDetailUseCase getShowDetailUseCase = mock(GetShowDetailUseCase.class);
         ShowController controller = new ShowController(
@@ -129,6 +283,7 @@ class ShowControllerContractTest {
                 mock(SearchShowsUseCase.class),
                 mock(CountSearchShowsUseCase.class),
                 getShowDetailUseCase,
+                mock(GetMyShowLikesUseCase.class),
                 new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
@@ -227,6 +382,7 @@ class ShowControllerContractTest {
                 mock(SearchShowsUseCase.class),
                 mock(CountSearchShowsUseCase.class),
                 getShowDetailUseCase,
+                mock(GetMyShowLikesUseCase.class),
                 new ShowCursorCodec(JsonMapper.builder().build()));
     }
 
@@ -239,6 +395,7 @@ class ShowControllerContractTest {
                 mock(SearchShowsUseCase.class),
                 mock(CountSearchShowsUseCase.class),
                 mock(GetShowDetailUseCase.class),
+                mock(GetMyShowLikesUseCase.class),
                 new ShowCursorCodec(JsonMapper.builder().build()));
     }
 }

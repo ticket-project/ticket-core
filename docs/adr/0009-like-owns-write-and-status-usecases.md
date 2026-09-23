@@ -60,7 +60,7 @@ ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있�
 정보"에 더 가깝다 — 회원 한 명의 여러 BC 데이터(주문 내역, 찜 목록, 프로필 등)를 한 화면에
 모으는 성격이다. 지금은 그런 조합을 전담하는 module이 없어서 가장 가까운 BC(show)에 둔다.
 여러 BC의 "내 것"을 모으는 module(가칭 mypage)이 생기면 `GetMyShowLikesUseCase`와
-`MyShowLikesController`는 그쪽으로 옮길 첫 번째 후보다. 지금 그 module을 만들지 않는 이유는
+`ShowController.getMyLikes`는 그쪽으로 옮길 첫 번째 후보다. 지금 그 module을 만들지 않는 이유는
 이 화면 하나만으로는 새 BC를 둘 근거(여러 use case가 반복해서 같은 조합 패턴을 필요로 하는가)가
 아직 없기 때문이다 — ADR 0005 §2·ADR 0008 "결정하지 않는 것"과 같은 판단 방식이다.
 
