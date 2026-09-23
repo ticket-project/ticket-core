@@ -13,8 +13,6 @@ import java.util.UUID;
  *
  * @param eventId 이 발행의 고유 식별자. listener 멱등성 판단에 쓴다
  * @param schemaVersion 이벤트 payload 스키마 버전. 초기값은 1이다
- * @param orderId 시작된 주문의 식별자
- * @param memberId 주문을 시작한 회원의 식별자
  * @param holdKey 이 주문이 잡은 hold의 key
  * @param performanceSeatIds 이 주문이 잡은 PerformanceSeat 식별자 목록
  * @param occurredAt hold가 시작된 시각

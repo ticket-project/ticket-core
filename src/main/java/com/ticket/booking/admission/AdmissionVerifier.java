@@ -14,8 +14,6 @@ public interface AdmissionVerifier {
      * {@code AdmissionTokenRequiredException}(E8000), 만료면 {@code AdmissionTokenExpiredException}(E8001), 그 밖의 검증 실패는
      * {@code AdmissionTokenException}(E8002)이다. 셋 다 HTTP 403이다.
      *
-     * @param performanceId 예매하려는 회차 id
-     * @param memberId 요청한 회원 id
      * @param admissionToken 요청이 전달한 입장 토큰. null 또는 빈 문자열일 수 있다
      */
     void verify(long performanceId, long memberId, @Nullable String admissionToken);
