@@ -34,11 +34,14 @@ class OrderHoldHistoryRecorderTest {
 
     @Test
     void 선택한_좌석마다_created_hold_history를_기록한다() {
+        // given
         PerformanceSeat first = createPerformanceSeat(100L, 10L);
         PerformanceSeat second = createPerformanceSeat(101L, 20L);
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
+        // when
         orderHoldHistoryRecorder.recordCreated(1L, 2L, "hold-key", occurredAt, expiresAt, List.of(first, second));
+        // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(2);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.CREATED);
@@ -50,9 +53,12 @@ class OrderHoldHistoryRecorderTest {
 
     @Test
     void 주문취소시_좌석마다_canceled_hold_history를_기록한다() {
+        // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 10);
         Order order = createOrder(createOrderSeat(100L, 10L), createOrderSeat(101L, 20L));
+        // when
         orderHoldHistoryRecorder.recordCanceled(order, occurredAt);
+        // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(2);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.CANCELED);
@@ -62,9 +68,12 @@ class OrderHoldHistoryRecorderTest {
 
     @Test
     void 주문만료시_좌석마다_expired_hold_history를_기록한다() {
+        // given
         LocalDateTime occurredAt = LocalDateTime.of(2026, 3, 15, 12, 30);
         Order order = createOrder(createOrderSeat(100L, 10L));
+        // when
         orderHoldHistoryRecorder.recordExpired(order, occurredAt);
+        // then
         List<HoldHistory> histories = captureHistories();
         assertThat(histories).hasSize(1);
         assertThat(histories.get(0).getEventType()).isEqualTo(HoldHistoryEventType.EXPIRED);

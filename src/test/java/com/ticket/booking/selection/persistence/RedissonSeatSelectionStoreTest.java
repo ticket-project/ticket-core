@@ -81,6 +81,7 @@ class RedissonSeatSelectionStoreTest {
 
     @Test
     void 공연별_인덱스로_선택좌석을_조회하고_전체키를_SCAN하지_않는다() {
+        // given
         doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
         doReturn(List.of("20", "21"))
                 .when(script)

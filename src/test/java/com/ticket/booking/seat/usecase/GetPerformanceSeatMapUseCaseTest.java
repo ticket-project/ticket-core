@@ -34,6 +34,7 @@ class GetPerformanceSeatMapUseCaseTest {
 
     @Test
     void 편성된_좌석만_venue_배치와_등급을_조합해_반환한다() {
+        // given
         PerformanceLayoutSnapshot layout = new PerformanceLayoutSnapshot(
                 10L,
                 3L,
@@ -52,7 +53,9 @@ class GetPerformanceSeatMapUseCaseTest {
 
         when(performanceVenueLayoutCatalogApi.getVenueLayout(10L)).thenReturn(layout);
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(rows);
+        // when
         GetPerformanceSeatMapUseCase.Output output = useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
+        // then
         assertThat(output.venue().venueId()).isEqualTo(3L);
         assertThat(output.seats()).hasSize(1);
         GetPerformanceSeatMapUseCase.SeatMapEntry entry = output.seats().get(0);
@@ -68,6 +71,7 @@ class GetPerformanceSeatMapUseCaseTest {
 
     @Test
     void 같은_venue라도_회차마다_다른_좌석과_가격을_반환한다() {
+        // given
         PerformanceLayoutSnapshot layoutA = new PerformanceLayoutSnapshot(
                 10L,
                 3L,
@@ -92,8 +96,10 @@ class GetPerformanceSeatMapUseCaseTest {
                 .thenReturn(List.of(PerformanceSeatFixture.seat(501L, 101L, 31L, BigDecimal.valueOf(170000))));
         when(performanceSeatRepository.findAllByPerformanceId(20L))
                 .thenReturn(List.of(PerformanceSeatFixture.seat(601L, 101L, 32L, BigDecimal.valueOf(90000))));
+        // when
         GetPerformanceSeatMapUseCase.Output outputA = useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
         GetPerformanceSeatMapUseCase.Output outputB = useCase.execute(new GetPerformanceSeatMapUseCase.Input(20L));
+        // then
         assertThat(outputA.seats().get(0).gradeCode()).isEqualTo("VIP");
         assertThat(outputA.seats().get(0).price()).isEqualByComparingTo(BigDecimal.valueOf(170000));
         assertThat(outputB.seats().get(0).gradeCode()).isEqualTo("R");
@@ -102,6 +108,7 @@ class GetPerformanceSeatMapUseCaseTest {
 
     @Test
     void 좌석_수와_무관하게_show와_booking_조회는_각각_한_번씩만_한다() {
+        // given
         Map<Long, PerformanceLayoutSnapshot.SeatLayout> seatLayouts = new java.util.HashMap<>();
         List<PerformanceSeat> rows = new java.util.ArrayList<>();
         for (long seatId = 1; seatId <= 50; seatId++) {
@@ -122,7 +129,9 @@ class GetPerformanceSeatMapUseCaseTest {
                 Map.of(31L, new PerformanceLayoutSnapshot.GradeLayout(31L, "VIP", "VIP석", 1)));
         when(performanceVenueLayoutCatalogApi.getVenueLayout(10L)).thenReturn(layout);
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(rows);
+        // when
         GetPerformanceSeatMapUseCase.Output output = useCase.execute(new GetPerformanceSeatMapUseCase.Input(10L));
+        // then
         assertThat(output.seats()).hasSize(50);
         verify(performanceVenueLayoutCatalogApi, times(1)).getVenueLayout(10L);
         verify(performanceSeatRepository, times(1)).findAllByPerformanceId(10L);

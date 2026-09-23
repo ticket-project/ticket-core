@@ -30,13 +30,16 @@ class GetCurrentMemberUseCaseTest {
 
     @Test
     void 현재_회원_정보를_반환한다() {
+        // given
         Member member = mock(Member.class);
         when(member.getId()).thenReturn(3L);
         when(member.getEmail()).thenReturn(Email.create("user@example.com"));
         when(member.getName()).thenReturn("홍길동");
         when(member.getRole()).thenReturn(Role.MEMBER);
         when(memberRepository.findActiveById(3L)).thenReturn(Optional.of(member));
+        // when
         GetCurrentMemberUseCase.Output output = useCase.execute(new GetCurrentMemberUseCase.Input(3L));
+        // then
         assertThat(output.memberId()).isEqualTo(3L);
         assertThat(output.email()).isEqualTo("user@example.com");
         assertThat(output.name()).isEqualTo("홍길동");
@@ -45,6 +48,9 @@ class GetCurrentMemberUseCaseTest {
 
     @Test
     void memberId가_유효하지_않으면_Input_생성에서_예외를_던진다() {
+        // given
+        // when
+        // then
         assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(null)).isInstanceOf(InvalidRequestException.class);
         assertThatThrownBy(() -> new GetCurrentMemberUseCase.Input(0L)).isInstanceOf(InvalidRequestException.class);
     }
