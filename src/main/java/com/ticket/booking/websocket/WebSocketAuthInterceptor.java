@@ -34,6 +34,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private final AccessTokenAuthenticationApi accessTokenAuthenticationApi;
+    private final MemberWebSocketSessions memberWebSocketSessions;
 
     @Override
     public Message<?> preSend(final Message<?> message, final MessageChannel channel) {
@@ -53,6 +54,17 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 }
                 accessor.setUser(new UsernamePasswordAuthenticationToken(
                         member, null, List.of(new SimpleGrantedAuthority("ROLE_" + member.role()))));
+                final String sessionId = accessor.getSessionId();
+                if (sessionId == null || !memberWebSocketSessions.bind(sessionId, member.memberId())) {
+                    throw new MessageDeliveryException("WebSocket 세션을 찾을 수 없습니다");
+                }
+                // A withdrawal can commit between the first authentication and session binding.
+                try {
+                    accessTokenAuthenticationApi.authenticate(token);
+                } catch (final TicketException exception) {
+                    memberWebSocketSessions.close(member.memberId());
+                    throw new MessageDeliveryException("JWT 인증 실패");
+                }
                 log.info("웹소켓 인증에 성공했습니다. memberId={}", member.memberId());
             } else {
                 log.warn("웹소켓 CONNECT 요청에 Authorization 헤더가 없어 연결을 차단합니다.");

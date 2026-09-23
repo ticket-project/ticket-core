@@ -569,6 +569,13 @@ CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독 인터셉터�
 처리로 끝나지 않고 커밋 뒤 외부 provider 연결 해제와 SecurityContext 정리가 이어지는 인증
 조립이기 때문이다. 같은 URL을 두 모듈이 메서드로 나눠 갖는다.
 
+회원 탈퇴 시 member가 `MemberWithdrawn` 이벤트를 발행한다. booking은 탈퇴 트랜잭션이 커밋된 뒤
+현재 프로세스에 연결된 해당 회원의 STOMP/WebSocket 세션을 닫는다. 롤백된 탈퇴로 정상 연결이
+끊기지 않게 하고, 이미 연결된 클라이언트가 다음 HTTP 요청 전에도 좌석 알림을 계속 받지 않게 하기
+위함이다. CONNECT는 HTTP 필터를 거치지 않으므로 활성 회원을 별도로 확인하며, 인증과 탈퇴가
+경합할 때 빠져나가는 연결을 막기 위해 세션 등록 직후 한 번 더 확인한다. 이 연결 종료는 단일
+프로세스 범위다. 여러 인스턴스에 걸친 즉시 종료가 필요해지면 탈퇴 이벤트를 인스턴스 간에 전달해야 한다.
+
 OAuth provider raw attribute는 `security.oauth.OAuth2UserInfoMapper`가 `member.api.SocialIdentity`로
 정규화한 뒤 member의 공개 계약에 넘긴다. 기존 계정에 같은 이메일로 자동 연결하는 것은 provider가
 이메일 검증을 명시한 경우에만 허용하고, 검증되지 않은 이메일은 provider ID 기반 대체 주소로

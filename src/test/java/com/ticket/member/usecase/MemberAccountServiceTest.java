@@ -19,11 +19,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.MemberWithdrawn;
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialIdentity;
@@ -53,9 +55,13 @@ class MemberAccountServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private MemberAccountService service() {
         return new MemberAccountService(
-                memberRepository, passwordEncoder, new OAuth2MemberProvisioningService(memberRepository), CLOCK);
+                memberRepository, passwordEncoder, new OAuth2MemberProvisioningService(memberRepository), CLOCK,
+                eventPublisher);
     }
 
     // ── 등록 ────────────────────────────────────────────────────────────────
@@ -163,6 +169,7 @@ class MemberAccountServiceTest {
         assertThat(member.isDeleted()).isTrue();
         assertThat(member.getDeletedAt()).isEqualTo(LocalDateTime.now(CLOCK));
         assertThat(member.activeSocialAccounts()).isEmpty();
+        verify(eventPublisher).publishEvent(new MemberWithdrawn(5L));
     }
 
     @Test

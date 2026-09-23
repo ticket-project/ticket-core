@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 import com.ticket.shared.config.CorsProperties;
 
@@ -13,11 +14,24 @@ class WebSocketConfigTest {
     void server_events_are_published_to_each_session_in_order() {
         final MessageBrokerRegistry registry = mock(MessageBrokerRegistry.class);
         final WebSocketConfig config =
-                new WebSocketConfig(mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class));
+                new WebSocketConfig(mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class),
+                        mock(MemberWebSocketSessions.class));
 
         config.configureMessageBroker(registry);
 
         verify(registry).enableSimpleBroker("/topic");
         verify(registry).setPreservePublishOrder(true);
+    }
+
+    @Test
+    void withdrawal_session_tracker_decorates_websocket_transports() {
+        final MemberWebSocketSessions sessions = mock(MemberWebSocketSessions.class);
+        final WebSocketTransportRegistration registration = mock(WebSocketTransportRegistration.class);
+        final WebSocketConfig config = new WebSocketConfig(
+                mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class), sessions);
+
+        config.configureWebSocketTransport(registration);
+
+        verify(registration).addDecoratorFactory(sessions);
     }
 }
