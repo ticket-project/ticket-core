@@ -35,6 +35,7 @@ class GetShowVenueLayoutUseCaseTest {
 
     @Test
     void 공연장_레이아웃을_반환한다() {
+        // given
         Show show = mock(Show.class);
         when(show.getVenueId()).thenReturn(200L);
         when(showRepository.findById(100L)).thenReturn(Optional.of(show));
@@ -49,7 +50,9 @@ class GetShowVenueLayoutUseCaseTest {
                         "02-0000-0000",
                         "image",
                         new VenueSnapshot.SeatMapLayout(1000, 800, 12.0)));
+        // when
         GetShowVenueLayoutUseCase.Output output = useCase.execute(new GetShowVenueLayoutUseCase.Input(100L));
+        // then
         assertThat(output.name()).isEqualTo("올림픽홀");
         assertThat(output.viewBoxWidth()).isEqualTo(1000);
         assertThat(output.viewBoxHeight()).isEqualTo(800);
