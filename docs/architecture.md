@@ -682,7 +682,7 @@ Modulith `Documenter`로 만든다.
 | 로컬 초기 데이터 적재 | [seed/README.md](../seed/README.md) |
 | 운영·Flyway·배포 | `docs/operations.md` |
 | 미결 기술 부채·제품 결정 | `docs/technical-debt.md` |
-| agent workflow | `AGENTS.md` + `.agents/skills/` |
+| agent workflow | `AGENTS.md` + `.agents/skills/`(저장소 고유) + `mattpocock-skills` 플러그인(범용) |
 
 같은 사실을 여러 문서에 반복해 적지 않는다 — 이 표가 가리키는 문서 하나에만 적고 나머지는
 링크한다.

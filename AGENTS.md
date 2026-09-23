@@ -6,7 +6,8 @@
 **이 파일은 어디를 볼지만 정한다.** 규칙 본문은 아래 표가 가리키는 문서·스킬·테스트가
 원본이다. 옮겨 적지 않는다 — 옮겨 적는 순간 원본과 어긋나고, 어긋난 쪽을 사람이 먼저 믿는다.
 
-**클론 직후 한 번** `bash scripts/link-agent-skills.sh`(Windows `scripts\link-agent-skills.cmd`).
+**클론 직후 한 번** `claude plugin install mattpocock-skills@mattpocock`(범용 workflow 스킬)와
+`bash scripts/link-agent-skills.sh`(Windows `scripts\link-agent-skills.cmd`, 저장소 고유 스킬).
 
 ## 기본 원칙
 
@@ -21,7 +22,7 @@
   의미로 쓰며 업무 어휘가 없을 때만 승격한다. `common`/`util`/`helper` package는 만들지 않는다.
 - **코드 형식은 `.editorconfig`와 Gradle Spotless 설정이 정한다.** 포맷터 이름과 세부 옵션을
   여기 적지 않는다 — `build.gradle`과 이중 관리하게 된다.
-- **범용 설계·질문·구현·리뷰 workflow는 Matt Pocock Skills(`.agents/skills/`)가 담당한다.**
+- **범용 설계·질문·구현·리뷰 workflow는 `mattpocock-skills` 플러그인이 담당한다.**
   이 저장소에만 있는 사실은 아래 표가 가리키는 곳에만 둔다 — Skill에 다시 복사하지 않는다.
 - 에이전트가 틀린 것을 발견하면 `docs/agents/observed-failures.md`에 적고 테스트·훅·규칙 중
   하나로 옮긴다. 대화에서만 고치고 끝내지 않는다.
@@ -71,7 +72,8 @@
 
 ## Agent skills
 
-Matt Pocock 엔지니어링 스킬(`.agents/skills/`)이 이 저장소에서 쓸 설정이다. 이슈 트래커는
+범용 스킬은 `mattpocock-skills` 플러그인에서 온다(저장소에 사본을 두지 않는다 — 상류와
+갈라진다). `.agents/skills/`에는 저장소 고유인 `loadtest`·`verify`만 둔다. 이슈 트래커는
 `ticket-project/ticket-core`의 GitHub Issues + `gh` CLI(`docs/agents/issue-tracker.md`), 트리아지
 라벨은 표준 다섯 개(`docs/agents/triage-labels.md`), 도메인 문서는 `CONTEXT.md`와 `docs/adr/`
 (`docs/agents/domain.md`)다.
