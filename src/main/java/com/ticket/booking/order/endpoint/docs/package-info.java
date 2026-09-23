@@ -1,4 +1,4 @@
-/** 주문 endpoint의 OpenAPI 문서 인터페이스. 파라미터 제약은 여기에만 선언한다. */
+/** 주문 endpoint의 OpenAPI 문서 인터페이스다. */
 @NullMarked
 package com.ticket.booking.order.endpoint.docs;
 

@@ -19,6 +19,9 @@
  *
  * <p>{@code security} 의존은 WebSocket 인증 하나뿐이다 — STOMP CONNECT는 HTTP filter chain을 타지 않아 좌석 상태 구독 인터셉터가
  * {@code AccessTokenAuthenticationApi}로 토큰을 직접 검증한다.
+ *
+ * <p><b>하위 package는 Application Module이 아니다.</b> {@code order}·{@code seat}·{@code hold}처럼 업무 단위로 탐색하기 위한 ordinary
+ * package일 뿐이라 {@code @ApplicationModule}도 {@code @NamedInterface}도 붙이지 않는다. module 경계와 의존 DAG는 이 package 하나가 그대로 갖는다.
  */
 @NullMarked
 @org.springframework.modulith.ApplicationModule(
