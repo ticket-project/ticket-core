@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ticket.TicketApplication;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.token.AccessTokenReadResult;
-import com.ticket.security.token.AccessTokenReader;
+import com.ticket.security.token.AccessTokenAuthenticatorService;
 
 /**
  * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가 없으면 같은 package에서 가장 가까운
@@ -44,7 +44,7 @@ class ApiSecurityConfigTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AccessTokenReader accessTokenReader;
+    private AccessTokenAuthenticatorService accessTokenAuthenticatorService;
 
     @MockitoBean
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
@@ -100,7 +100,7 @@ class ApiSecurityConfigTest {
 
     @Test
     void 일반_api는_유효한_internal_auth_token으로_접근할_수_있다() throws Exception {
-        Mockito.when(accessTokenReader.read("access-token"))
+        Mockito.when(accessTokenAuthenticatorService.read("access-token"))
                 .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
 
         mockMvc.perform(get("/api/v1/private-test").header("Authorization", "Bearer access-token"))
@@ -113,7 +113,7 @@ class ApiSecurityConfigTest {
 
     @Test
     void 일반_api는_유효하지_않은_internal_auth_token이면_401을_반환한다() throws Exception {
-        Mockito.when(accessTokenReader.read("not-a-valid-token")).thenReturn(AccessTokenReadResult.invalid());
+        Mockito.when(accessTokenAuthenticatorService.read("not-a-valid-token")).thenReturn(AccessTokenReadResult.invalid());
 
         mockMvc.perform(get("/api/v1/private-test").header("Authorization", "Bearer not-a-valid-token"))
                 .andExpect(status().isUnauthorized());
@@ -121,7 +121,7 @@ class ApiSecurityConfigTest {
 
     @Test
     void 만료된_token이면_보호_api가_401을_반환한다() throws Exception {
-        Mockito.when(accessTokenReader.read("expired-token")).thenReturn(AccessTokenReadResult.expired());
+        Mockito.when(accessTokenAuthenticatorService.read("expired-token")).thenReturn(AccessTokenReadResult.expired());
 
         mockMvc.perform(get("/api/v1/private-test").header(HttpHeaders.AUTHORIZATION, "Bearer expired-token"))
                 .andExpect(status().isUnauthorized());
@@ -155,7 +155,7 @@ class ApiSecurityConfigTest {
     void 내_찜_목록은_인증을_요구한다() throws Exception {
         mockMvc.perform(get("/api/v1/members/me/likes")).andExpect(status().isUnauthorized());
 
-        Mockito.when(accessTokenReader.read("access-token"))
+        Mockito.when(accessTokenAuthenticatorService.read("access-token"))
                 .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
         mockMvc.perform(get("/api/v1/members/me/likes").header(HttpHeaders.AUTHORIZATION, "Bearer access-token"))
                 .andExpect(status().isOk())
@@ -164,7 +164,7 @@ class ApiSecurityConfigTest {
 
     @Test
     void 공개_api에_유효하지_않은_token이_있어도_기존처럼_접근할_수_있다() throws Exception {
-        Mockito.when(accessTokenReader.read("invalid-token")).thenReturn(AccessTokenReadResult.invalid());
+        Mockito.when(accessTokenAuthenticatorService.read("invalid-token")).thenReturn(AccessTokenReadResult.invalid());
 
         mockMvc.perform(get("/api/v1/shows/1").header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
                 .andExpect(status().isOk())
