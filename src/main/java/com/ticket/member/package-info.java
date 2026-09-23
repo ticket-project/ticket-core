@@ -17,10 +17,8 @@
  *       role만 가진다
  * </ul>
  *
- * <p>찜(Like)의 데이터·HTTP endpoint·use case는 이 module이 아니라 like module이 소유한다. 찜하기/찜 해제/찜 상태 조회 시 회원 활성
- * 확인({@link com.ticket.member.api.MemberLookupApi#requireActive})은 like가 이 module의 공개 계약을 직접 호출해 수행한다 — JWT 인증만으로는 탈퇴
- * 회원을 걸러낼 수 없어서다(인증 필터는 서명·만료만 보고, 탈퇴가 access token을 무효화하지 않는다). {@code like -> member}는 순환을 만들지 않는다 — member는 어떤 업무
- * module도 참조하지 않는 leaf이기 때문이다(ADR 0006 §2, ADR 0008).
+ * <p>찜(Like)의 데이터·HTTP endpoint·use case는 like module이 소유한다. 요청자의 활성 상태는 security가 이 module의
+ * {@code MemberAccountApi.getActiveIdentity}로 인증 단계에서 확인한다. like가 회원 상태를 다시 조회하지 않는다.
  */
 @NullMarked
 @org.springframework.modulith.ApplicationModule(

@@ -22,7 +22,6 @@ import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
@@ -57,7 +56,6 @@ public class StartBookingUseCase {
     private final LockManager lockManager;
     private final PerformanceSaleFinder performanceSaleFinder;
     private final AdmissionGuard admissionGuard;
-    private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
     private final HoldManager holdManager;
@@ -96,24 +94,21 @@ public class StartBookingUseCase {
         policy.ensureWithinHoldLimit(requestedSeatIds.size());
         admissionGuard.verifyIfRequired(policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
-        // 2. 예매할 수 있는 회원인가. JWT는 서명·만료만 보므로 탈퇴 회원은 여기서 걸러진다.
-        memberLookupApi.requireActive(input.memberId());
-
-        // 3. 예매할 수 있는 좌석인가. booking local DB만 보는 짧은 읽기 트랜잭션이다.
+        // 2. 예매할 수 있는 좌석인가. booking local DB만 보는 짧은 읽기 트랜잭션이다.
         final List<PerformanceSeat> performanceSeats =
                 bookingAvailabilityChecker.check(input.memberId(), input.performanceId(), requestedSeatIds);
 
-        // 4. 주문에 남길 표시값(공연·공연장 이름, 등급, 좌석 라벨). 금액은 여기서 오지 않는다 -- 좌석 단가만 쓴다(ADR 0005).
+        // 3. 주문에 남길 표시값(공연·공연장 이름, 등급, 좌석 라벨). 금액은 여기서 오지 않는다 -- 좌석 단가만 쓴다(ADR 0005).
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
 
-        // 5. 좌석을 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
+        // 4. 좌석을 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
         //    connection 경합이 좌석 경합으로 번진다.
         final Duration holdDuration = policy.holdDuration();
         final List<LockKey> seatLocks = LockKey.seats(input.performanceId(), requestedSeatIds.toList());
         final Hold hold = holdSeats(seatLocks, input, requestedSeatIds, holdDuration, now);
 
-        // 6. PENDING 주문을 만든다(DB 한 트랜잭션). 실패하면 5의 선점을 되돌린다.
+        // 5. PENDING 주문을 만든다(DB 한 트랜잭션). 실패하면 4의 선점을 되돌린다.
         final String orderKey;
         try {
             orderKey = pendingOrderCreator.create(

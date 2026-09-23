@@ -31,11 +31,6 @@ public class MemberRepositoryAdapter implements MemberRepository {
     }
 
     @Override
-    public boolean existsActiveById(final Long id) {
-        return jpaRepository.existsByIdAndDeletedAtIsNull(id);
-    }
-
-    @Override
     public Optional<Member> findActiveBySocialAccount(final SocialProvider socialProvider, final String socialId) {
         return jpaRepository.findActiveBySocialAccount(socialProvider, socialId);
     }

@@ -24,16 +24,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
 import com.ticket.like.exception.LikeAlreadyExistsException;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class AddLikeUseCaseTest {
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     @Mock
     private LikeRepository likeRepository;
 
@@ -51,7 +47,6 @@ class AddLikeUseCaseTest {
         assertThat(output.targetId()).isEqualTo(2L);
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(5L);
-        verify(memberLookupApi).requireActive(1L);
         verify(likeRepository).like(1L, LikeType.SHOW, 2L);
     }
 
@@ -93,16 +88,6 @@ class AddLikeUseCaseTest {
 
         assertThat(output.liked()).isTrue();
         verify(likeRepository).like(1L, LikeType.SHOW, 999L);
-    }
-
-    @Test
-    void 탈퇴_회원이면_저장하지_않는다() {
-        doThrow(new NotFoundException("탈퇴한 회원입니다.")).when(memberLookupApi).requireActive(1L);
-
-        assertThatThrownBy(() -> useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
-                .isInstanceOf(NotFoundException.class);
-
-        verify(likeRepository, never()).like(anyLong(), any(), anyLong());
     }
 
     @ParameterizedTest

@@ -22,7 +22,6 @@ import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,14 +32,11 @@ class GetOrderStatusUseCaseTest {
     @Mock
     private OrderRepository repository;
 
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     private GetOrderStatusUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GetOrderStatusUseCase(repository, memberLookupApi, CLOCK);
+        useCase = new GetOrderStatusUseCase(repository, CLOCK);
     }
 
     @Test
@@ -51,7 +47,6 @@ class GetOrderStatusUseCaseTest {
 
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
         assertThat(output.remainingSeconds()).isEqualTo(600L);
-        verify(memberLookupApi).requireActive(1L);
     }
 
     @Test
@@ -61,17 +56,6 @@ class GetOrderStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("missing", 1L)))
                 .isInstanceOf(OrderNotOwnedException.class)
                 .hasFieldOrPropertyWithValue("orderKey", "missing")
-                .hasFieldOrPropertyWithValue("memberId", 1L);
-    }
-
-    @Test
-    void 탈퇴한_회원의_주문상태는_조회하지_않는다() {
-        when(repository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(order()));
-        doThrow(new NotFoundException()).when(memberLookupApi).requireActive(1L);
-
-        assertThatThrownBy(() -> useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L)))
-                .isInstanceOf(OrderNotOwnedException.class)
-                .hasFieldOrPropertyWithValue("orderKey", "order-key")
                 .hasFieldOrPropertyWithValue("memberId", 1L);
     }
 

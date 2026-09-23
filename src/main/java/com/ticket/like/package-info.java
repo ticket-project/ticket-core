@@ -8,9 +8,7 @@
  *
  * <p><b>이 module은 다른 BC의 entity 존재 여부를 자기 invariant로 잡지 않는다.</b> {@code targetId}는 값으로만 다루고, 존재하지 않는 targetId를 찜해도 막지
  * 않는다 — {@code show -> like}(공연 상세의 찜 개수 조회)는 지울 수 없는 의존이라, 이 module이 대상 존재를 확인하려면 {@code like -> show}가 생겨 순환이 된다(ADR
- * 0006 §2가 없앤 순환). 회원 활성 확인은 다르다 — JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어({@code member} BC의 인증 필터는 서명·만료만 검사하고 탈퇴 후에도 access
- * token은 만료 전까지 유효하다) 이 module이 {@link com.ticket.member.api.MemberLookupApi}을 직접 불러 다시 확인한다. {@code member}는 아무 업무
- * module도 참조하지 않는 leaf라 이 방향은 순환을 만들지 않는다.
+ * 0006 §2가 없앤 순환). 요청 회원의 활성 상태는 security의 공통 인증 단계에서 확인한다.
  *
  * <p>공개 계약: - LikeQueryApi (대상별 찜 개수·내 찜 목록 조회) - LikeSnapshot (그 결과 값). 찜하기·찜 해제·찜 상태 조회는 이 module의 HTTP endpoint와 use
  * case로만 쓰고 밖에 노출하지 않는다. {@code LikeType}도 공개하지 않는다 — 호출 module은 대상 종류를 문자열로 넘기고 like가 domain 값으로 변환한다.

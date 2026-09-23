@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeSnapshot;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
@@ -39,7 +38,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetMyShowLikesUseCase {
     private static final int MAX_SIZE = 100;
-    private final MemberLookupApi memberLookupApi;
     private final LikeQueryApi likeQueryApi;
     private final ShowRepository showRepository;
     private final VenueLookupApi venueLookupApi;
@@ -67,7 +65,6 @@ public class GetMyShowLikesUseCase {
             LocalDateTime likedAt) {}
 
     public Output execute(final Input input) {
-        memberLookupApi.requireActive(input.memberId());
 
         final CursorPage<LikeSnapshot, Long> page =
                 likeQueryApi.findLiked("show", input.memberId(), input.cursorLikeId(), input.size());

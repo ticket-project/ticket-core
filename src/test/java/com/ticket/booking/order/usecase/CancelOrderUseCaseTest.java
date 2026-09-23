@@ -11,14 +11,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.member.api.MemberLookupApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class CancelOrderUseCaseTest {
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     @Mock
     private CancelOrderTransactionService cancelOrderTransactionService;
 
@@ -33,13 +29,10 @@ class CancelOrderUseCaseTest {
 
     @Test
     void 회원_활성_확인_후_booking_local_취소를_위임한다() {
-        final CancelOrderUseCase useCase = new CancelOrderUseCase(memberLookupApi, cancelOrderTransactionService);
+        final CancelOrderUseCase useCase = new CancelOrderUseCase(cancelOrderTransactionService);
 
         useCase.execute(new CancelOrderUseCase.Input("order-key", 1L));
 
-        final InOrder order = inOrder(memberLookupApi, cancelOrderTransactionService);
-        order.verify(memberLookupApi).requireActive(1L);
-        order.verify(cancelOrderTransactionService).cancel("order-key", 1L);
         verify(cancelOrderTransactionService).cancel("order-key", 1L);
     }
 }

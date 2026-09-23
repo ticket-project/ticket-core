@@ -13,9 +13,7 @@ import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class GetOrderStatusUseCase {
     private final OrderRepository orderRepository;
-    private final MemberLookupApi memberLookupApi;
     private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {
@@ -42,21 +39,10 @@ public class GetOrderStatusUseCase {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
-        // 탈퇴한 회원은 자신의 주문 상태도 조회할 수 없다 — 기존에는 상태 조회의 member join이
-        // deletedAt으로 걸러냈다. member 조회가 booking 밖으로 빠졌으므로 여기서 같은 결과를 낸다.
-        requireActiveMember(input.orderKey(), input.memberId());
-
         final long remainingSeconds =
                 OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), LocalDateTime.now(clock));
 
         return new Output(order.getOrderKey(), order.getStatus(), order.getExpiresAt(), remainingSeconds);
     }
 
-    private void requireActiveMember(final String orderKey, final Long memberId) {
-        try {
-            memberLookupApi.requireActive(memberId);
-        } catch (final NotFoundException e) {
-            throw new OrderNotOwnedException(orderKey, memberId);
-        }
-    }
 }

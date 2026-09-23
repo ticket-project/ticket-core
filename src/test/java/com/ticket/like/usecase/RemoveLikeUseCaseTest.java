@@ -23,16 +23,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RemoveLikeUseCaseTest {
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     @Mock
     private LikeRepository likeRepository;
 
@@ -51,7 +47,6 @@ class RemoveLikeUseCaseTest {
         assertThat(output.targetId()).isEqualTo(2L);
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
-        verify(memberLookupApi).requireActive(1L);
         verify(likeRepository).delete(like);
     }
 
@@ -65,16 +60,6 @@ class RemoveLikeUseCaseTest {
 
         assertThat(output.liked()).isFalse();
         assertThat(output.likeCount()).isEqualTo(4L);
-        verify(likeRepository, never()).delete(any());
-    }
-
-    @Test
-    void 탈퇴_회원이면_삭제하지_않는다() {
-        doThrow(new NotFoundException("탈퇴한 회원입니다.")).when(memberLookupApi).requireActive(1L);
-
-        assertThatThrownBy(() -> useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
-                .isInstanceOf(NotFoundException.class);
-
         verify(likeRepository, never()).delete(any());
     }
 
