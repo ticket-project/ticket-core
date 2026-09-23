@@ -50,8 +50,8 @@ import com.tngtech.archunit.lang.CompositeArchRule;
  * 대신 {@code ..usecase..}/{@code ..persistence..} 같은 역할 패턴으로 검사한다. 새 capability가 생겨도 규칙 목록을 고칠 일이 없고, 어느 깊이에 두든 같은 방향
  * 규칙이 걸린다.
  *
- * <p><b>여기 있는 규칙은 "어느 module에서든 같은 뜻인 것"뿐이다</b> — 계층 방향, 공개면 순수성, module 경계. 특정 BC의 사정을 아는 규칙은 그 BC의 테스트에 남고,
- * 이미 다른 테스트가 덮는 것(BC 사이 domain 격리, package cycle)은 여기 두지 않는다. 어느 테스트가 무엇을 덮는지는 {@code docs/testing.md}에 있다.
+ * <p><b>여기 있는 규칙은 "어느 module에서든 같은 뜻인 것"뿐이다</b> — 계층 방향, 공개면 순수성, module 경계. 특정 BC의 사정을 아는 규칙은 그 BC의 테스트에 남고, 이미 다른
+ * 테스트가 덮는 것(BC 사이 domain 격리, package cycle)은 여기 두지 않는다. 어느 테스트가 무엇을 덮는지는 {@code docs/testing.md}에 있다.
  *
  * <p>역할 package가 없는 곳({@code security}, {@code booking.admission})은 방향 규칙의 대상이 아니다 — 근거는
  * {@code docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.

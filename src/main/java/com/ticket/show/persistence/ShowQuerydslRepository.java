@@ -46,8 +46,8 @@ import com.ticket.show.usecase.ShowSort;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세 가격 요약이 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그 조각이고, venue
- * 표시값 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
+ * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세 가격 요약이 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그 조각이고, venue 표시값
+ * 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
  *
  * <p>밖으로 내보내는 것은 show 자기 엔티티와 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
  *

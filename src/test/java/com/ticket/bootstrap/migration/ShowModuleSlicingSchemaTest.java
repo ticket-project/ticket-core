@@ -13,8 +13,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * show의 V8이 {@code SHOWS.venue_id}에 남아 있을 수 있는 FK CONSTRAINT를 제거하는지 검증한다. 물리 공연장·좌석({@code Seat}/{@code Venue}) 매핑
- * 검증은 {@code VenueModuleSlicingSchemaTest}에 있다.
+ * show의 V8이 {@code SHOWS.venue_id}에 남아 있을 수 있는 FK CONSTRAINT를 제거하는지 검증한다. 물리 공연장·좌석({@code Seat}/{@code Venue}) 매핑 검증은
+ * {@code VenueModuleSlicingSchemaTest}에 있다.
  *
  * <p>{@code show}의 {@code Show} entity는 {@code venue_id}를 값으로만 갖고(ADR 0003 §4, 모듈을 넘나드는 JPA 연관관계 금지) DB의 FK CONSTRAINT는
  * 만들지 않는다. 하지만 옛 매핑(Hibernate ddl-auto=create가 {@code @ManyToOne Venue venue}로 만든 FK)이 남아있는 환경이 있을 수 있어, show의 V8이
