@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.TicketApplication;
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.token.AccessTokenReadResult;
 import com.ticket.security.token.AccessTokenAuthenticatorService;
+import com.ticket.security.token.AccessTokenReadResult;
 
 /**
  * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가 없으면 같은 package에서 가장 가까운
@@ -113,7 +113,8 @@ class ApiSecurityConfigTest {
 
     @Test
     void 일반_api는_유효하지_않은_internal_auth_token이면_401을_반환한다() throws Exception {
-        Mockito.when(accessTokenAuthenticatorService.read("not-a-valid-token")).thenReturn(AccessTokenReadResult.invalid());
+        Mockito.when(accessTokenAuthenticatorService.read("not-a-valid-token"))
+                .thenReturn(AccessTokenReadResult.invalid());
 
         mockMvc.perform(get("/api/v1/private-test").header("Authorization", "Bearer not-a-valid-token"))
                 .andExpect(status().isUnauthorized());

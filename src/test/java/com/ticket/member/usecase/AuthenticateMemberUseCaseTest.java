@@ -69,10 +69,11 @@ class AuthenticateMemberUseCaseTest {
     @Test
     void 비밀번호가_없는_소셜_회원은_일반_로그인에_실패한다() {
         when(memberRepository.findActiveByEmail("social@example.com"))
-                .thenReturn(Optional.of(Member.createSocialMember(
-                        Email.create("social@example.com"), "홍길동", Role.MEMBER)));
+                .thenReturn(
+                        Optional.of(Member.createSocialMember(Email.create("social@example.com"), "홍길동", Role.MEMBER)));
 
-        assertThat(catchUnauthenticated("social@example.com", "password123!").getData()).isNull();
+        assertThat(catchUnauthenticated("social@example.com", "password123!").getData())
+                .isNull();
     }
 
     private AuthenticateMemberUseCase useCase() {

@@ -2,9 +2,9 @@ package com.ticket.security.token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,8 +63,7 @@ class AccessTokenAuthenticatorServiceTest {
         when(memberAccountApi.getActiveIdentity(7L)).thenThrow(new NotFoundException());
 
         assertThat(service.read("withdrawn-token")).isInstanceOf(AccessTokenReadResult.Invalid.class);
-        assertThatThrownBy(() -> service.authenticate("withdrawn-token"))
-                .isInstanceOf(UnauthenticatedException.class);
+        assertThatThrownBy(() -> service.authenticate("withdrawn-token")).isInstanceOf(UnauthenticatedException.class);
     }
 
     @Test

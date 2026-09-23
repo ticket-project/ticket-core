@@ -42,8 +42,8 @@ class WithdrawMemberUseCaseTest {
 
     @Test
     void 탈퇴는_식별자가_바뀌기_전의_소셜_연결을_돌려주고_회원을_탈퇴_처리한다() {
-        final Member member = new Member(
-                Email.create("user@example.com"), EncodedPassword.create("encoded"), "홍길동", Role.MEMBER);
+        final Member member =
+                new Member(Email.create("user@example.com"), EncodedPassword.create("encoded"), "홍길동", Role.MEMBER);
         ReflectionTestUtils.setField(member, "id", 5L);
         member.addSocialAccount(SocialProvider.KAKAO, "kakao-1");
         when(memberRepository.findActiveById(5L)).thenReturn(Optional.of(member));

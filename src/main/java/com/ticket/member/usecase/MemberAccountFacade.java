@@ -41,7 +41,8 @@ public class MemberAccountFacade implements MemberAccountApi {
     @Override
     public MemberStatus resolveSocialAccount(final SocialIdentity identity) {
         final Member member = oauth2MemberProvisioningService.getOrCreateMember(identity);
-        return new MemberStatus(member.getId(), !member.isDeleted(), member.getRole().name());
+        return new MemberStatus(
+                member.getId(), !member.isDeleted(), member.getRole().name());
     }
 
     @Override
