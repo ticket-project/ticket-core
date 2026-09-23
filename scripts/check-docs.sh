@@ -6,9 +6,7 @@
 #
 # 검사 항목
 #   1. AGENTS.md 줄 수 상한 (진입점이 다시 불어나는 것을 막는다)
-#   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다).
-#      vendored Matt Pocock 스킬(skills-lock.json에 등록된 것)의 예시 링크는 상류
-#      문서 내용이라 제외한다.
+#   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다)
 #   3. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   4. UTF-8 BOM이 섞이지 않았는지
 #   5. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
@@ -45,16 +43,8 @@ if [ "$SCOPE" = "changed" ]; then
     exit 0
   fi
 else
-  # skills-lock.json에 등록된 vendored 스킬(Matt Pocock skills 원본)의 예시 링크는 이
-  # 저장소가 고칠 대상이 아니다 -- 그 디렉터리의 .md는 링크 검사에서 뺀다.
-  VENDORED=$(node -e 'try{console.log(Object.keys(JSON.parse(require("fs").readFileSync("skills-lock.json","utf8")).skills).join("|"))}catch(e){}' 2>/dev/null)
-  if [ -n "${VENDORED:-}" ]; then
-    DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
-            | grep -vE "^\.(claude|agents)/skills/(${VENDORED})/" | sort -u )
-  else
-    DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
-            | sort -u )
-  fi
+  DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
+          | sort -u )
 fi
 
 # 1 ─ AGENTS.md 줄 수
