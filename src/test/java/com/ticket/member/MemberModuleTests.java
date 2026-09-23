@@ -2,11 +2,18 @@ package com.ticket.member;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Method;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.modulith.test.ApplicationModuleTest;
+import org.springframework.transaction.interceptor.TransactionAttribute;
+import org.springframework.transaction.interceptor.TransactionAttributeSource;
+
+import com.ticket.member.api.RawPassword;
+import com.ticket.member.api.SocialIdentity;
 
 import com.ticket.member.usecase.AuthenticateMemberUseCase;
 import com.ticket.member.usecase.GetActiveMemberIdentityUseCase;
@@ -39,5 +46,30 @@ class MemberModuleTests {
         assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class))).isTrue();
         assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class))).isTrue();
         assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountFacade.class))).isFalse();
+    }
+
+    @Test
+    void 계정_연산마다_읽기와_쓰기_트랜잭션을_구분한다() throws NoSuchMethodException {
+        assertThat(transactionAttribute(RegisterMemberUseCase.class, "execute", String.class, RawPassword.class,
+                        String.class).isReadOnly())
+                .isFalse();
+        assertThat(transactionAttribute(AuthenticateMemberUseCase.class, "execute", String.class, RawPassword.class)
+                        .isReadOnly())
+                .isTrue();
+        assertThat(transactionAttribute(GetActiveMemberIdentityUseCase.class, "execute", long.class).isReadOnly())
+                .isTrue();
+        assertThat(transactionAttribute(WithdrawMemberUseCase.class, "execute", long.class).isReadOnly()).isFalse();
+        assertThat(transactionAttribute(OAuth2MemberProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
+                        .isReadOnly())
+                .isFalse();
+    }
+
+    private TransactionAttribute transactionAttribute(final Class<?> type, final String methodName,
+            final Class<?>... parameterTypes) throws NoSuchMethodException {
+        final Method method = type.getMethod(methodName, parameterTypes);
+        final TransactionAttribute attribute =
+                context.getBean(TransactionAttributeSource.class).getTransactionAttribute(method, type);
+        assertThat(attribute).as("%s.%s transaction", type.getSimpleName(), methodName).isNotNull();
+        return attribute;
     }
 }
