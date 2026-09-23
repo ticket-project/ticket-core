@@ -2,7 +2,7 @@
 # 에이전트 문서 구조를 검증한다. CI와 로컬에서 같은 명령으로 돌린다.
 #
 #   bash scripts/check-docs.sh             전체 (CI)
-#   bash scripts/check-docs.sh --changed   미커밋 .md만, 저장소 전체 검사는 건너뜀 (Stop 훅)
+#   bash scripts/check-docs.sh --changed   미커밋 .md만 본다 (Stop 훅)
 #
 # 검사 항목
 #   1. AGENTS.md 줄 수 상한 (진입점이 다시 불어나는 것을 막는다)
@@ -13,7 +13,6 @@
 #   4. UTF-8 BOM이 섞이지 않았는지
 #   5. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
 #   6. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
-#   7. 오래 손대지 않은 문서 보고 (실패시키지 않음)
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
 # 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. Stop 훅이 매 턴 이 스크립트를 돌리므로
@@ -33,7 +32,7 @@ fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 미커밋 .md만 본다. git 이력을 훑는 검사 7은 건너뛴다.
+# --changed: 미커밋 .md만 본다.
 # Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
 SCOPE="all"
 [ "${1:-}" = "--changed" ] && SCOPE="changed"
@@ -181,39 +180,6 @@ if [ "$SCOPE" = "changed" ]; then
   if [ "$fail" -ne 0 ]; then echo "문서 검사 실패"; exit 1; fi
   echo "문서 검사 통과 (바뀜 문서만)"
   exit 0
-fi
-
-echo
-# 7 ─ 신선도 보고 (실패시키지 않는다)
-# 손으로 적는 "기준일" 프론트매터는 반드시 실제와 어긋난다. git 이력을 신선도 신호로 쓴다.
-# git log는 최신순이므로 파일을 처음 만난 시점이 그 파일의 최신 커밋이다.
-STALE_DAYS=${STALE_DAYS:-120}
-now=$(date +%s)
-
-# git log는 삭제된 파일의 과거 경로도 준다. 현재 추적 중인 문서만 남기려고 DOCS로 거른다.
-stale_list=$(
-  { printf '%s\n' "$DOCS" | sed 's/^/KEEP /'
-    git log --format='C %ct' --name-only -- '*.md' 2>/dev/null; } \
-  | awk -v now="$now" -v limit="$STALE_DAYS" '
-      /^KEEP / { keep[substr($0, 6)] = 1; next }
-      /^C /    { ts = $2; next }
-      NF == 0  { next }
-      !($0 in keep) { next }
-      $0 ~ /ISSUE_TEMPLATE/ { next }
-      seen[$0]++ { next }
-      {
-        days = int((now - ts) / 86400)
-        if (days > limit) printf "  %d일  %s\n", days, $0
-      }
-    ' \
-  | sort -rn
-)
-
-if [ -n "$stale_list" ]; then
-  printf 'note  %s일 넘게 손대지 않은 문서 (실패 아님, 사실 확인 대상)\n' "$STALE_DAYS"
-  printf '%s\n' "$stale_list"
-else
-  ok "모든 문서가 ${STALE_DAYS}일 안에 갱신됨"
 fi
 
 if [ "$fail" -ne 0 ]; then
