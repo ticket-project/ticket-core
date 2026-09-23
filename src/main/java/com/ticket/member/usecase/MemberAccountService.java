@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.MemberWithdrawn;
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialIdentity;
@@ -50,6 +52,7 @@ public class MemberAccountService implements MemberAccountApi {
     private final PasswordEncoder passwordEncoder;
     private final OAuth2MemberProvisioningService oauth2MemberProvisioningService;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -125,6 +128,7 @@ public class MemberAccountService implements MemberAccountApi {
                 .toList();
 
         member.withdraw(now);
+        eventPublisher.publishEvent(new MemberWithdrawn(memberId));
 
         return socialAccounts;
     }

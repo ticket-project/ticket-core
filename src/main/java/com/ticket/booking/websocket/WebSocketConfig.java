@@ -7,6 +7,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 import com.ticket.shared.config.CorsProperties;
 
@@ -33,6 +34,12 @@ import lombok.RequiredArgsConstructor;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
     private final CorsProperties corsProperties;
+    private final MemberWebSocketSessions memberWebSocketSessions;
+
+    @Override
+    public void configureWebSocketTransport(final WebSocketTransportRegistration registration) {
+        registration.addDecoratorFactory(memberWebSocketSessions);
+    }
 
     @Override
     public void configureMessageBroker(final MessageBrokerRegistry registry) {
