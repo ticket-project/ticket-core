@@ -50,20 +50,11 @@ import com.tngtech.archunit.lang.CompositeArchRule;
  * 대신 {@code ..usecase..}/{@code ..persistence..} 같은 역할 패턴으로 검사한다. 새 capability가 생겨도 규칙 목록을 고칠 일이 없고, 어느 깊이에 두든 같은 방향
  * 규칙이 걸린다.
  *
- * <p><b>여기 두는 것과 두지 않는 것.</b> 여기 있는 규칙은 "어느 module에서든 같은 뜻인 것"뿐이다 — 계층 방향, 공개면 순수성, module 경계. 특정 BC의 사정을 아는 규칙은 그 BC의
- * 테스트에 남는다({@code com.ticket.booking.BookingLayerDependencyTest}의 락 계약 규칙,
- * {@code com.ticket.shared.SharedModulePurityTest}의 shared 내부 배치 규칙). 같은 검사를 두 곳에 두지 않는다.
+ * <p><b>여기 있는 규칙은 "어느 module에서든 같은 뜻인 것"뿐이다</b> — 계층 방향, 공개면 순수성, module 경계. 특정 BC의 사정을 아는 규칙은 그 BC의 테스트에 남고,
+ * 이미 다른 테스트가 덮는 것(BC 사이 domain 격리, package cycle)은 여기 두지 않는다. 어느 테스트가 무엇을 덮는지는 {@code docs/testing.md}에 있다.
  *
- * <p><b>BC 사이 domain 격리는 여기 없다.</b> {@code com.ticket.DomainIsolationTest}가 이미 6개 BC 전부를 팩토리 하나로 덮고 있다. 옮겨 오면 규칙이 아니라
- * 파일만 움직이고, AGENTS.md와 {@code /verify} 스킬이 가리키는 이름만 깨진다.
- *
- * <p><b>package cycle 규칙도 여기 없다.</b> Spring Modulith {@code verify()}가 module 사이 순환을 이미 거부하고, 그 검증은
- * {@code com.ticket.ModularityTests.verifiesModuleStructure()}가 돌린다. ArchUnit {@code slices().beFreeOfCycles()}를 더해도 같은
- * 사실을 두 번 확인할 뿐이라 두지 않는다.
- *
- * <p><b>역할 package가 없는 곳은 규칙 대상이 아니다.</b> {@code security}는 기능으로
- * 나뉘고({@code auth}/{@code jwt}/{@code oauth}/{@code token}/{@code http}), {@code booking.admission}도 파일이 적어 flat이다. 역할
- * 이름이 없으면 방향 규칙이 말할 것도 없다 — 근거는 {@code docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.
+ * <p>역할 package가 없는 곳({@code security}, {@code booking.admission})은 방향 규칙의 대상이 아니다 — 근거는
+ * {@code docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.
  *
  * <p><b>Querydsl Q-type 주의.</b> Q-type은 {@code build/generated/sources/annotationProcessor} 아래에 생성되지만 package는 원본
  * entity와 같아서({@code com.ticket.booking.order.domain.QOrder}) 여기 분석 대상에 그대로 들어온다. 지금 규칙들은 "무엇을 참조하면 안 되는가" 형태라 Q-type이
