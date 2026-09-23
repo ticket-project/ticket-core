@@ -31,7 +31,6 @@ public class RegisterMemberUseCase {
     public record Output(Long memberId) {}
 
     public Output execute(final Input input) {
-        return new Output(
-                memberAccountApi.register(input.email(), RawPassword.create(input.password()), input.name()));
+        return new Output(memberAccountApi.register(input.email(), RawPassword.create(input.password()), input.name()));
     }
 }

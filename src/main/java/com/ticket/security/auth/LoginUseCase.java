@@ -18,8 +18,7 @@ public class LoginUseCase {
     private final AuthTokenIssuer authTokenIssuer;
 
     public Result execute(final Input input) {
-        final MemberStatus member =
-                memberAccountApi.authenticate(input.email(), RawPassword.create(input.password()));
+        final MemberStatus member = memberAccountApi.authenticate(input.email(), RawPassword.create(input.password()));
         final IssuedAuthTokens tokens = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return toResult(tokens);
     }

@@ -29,7 +29,8 @@ class GetShowSeatMapUseCaseTest {
 
     @Test
     void 공연의_첫_회차_좌석을_기존_프론트_형식으로_변환한다() {
-        when(performanceVenueLayoutCatalogApi.findRepresentativePerformanceId(1L)).thenReturn(Optional.of(10L));
+        when(performanceVenueLayoutCatalogApi.findRepresentativePerformanceId(1L))
+                .thenReturn(Optional.of(10L));
         when(getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(10L)))
                 .thenReturn(new GetPerformanceSeatMapUseCase.Output(
                         new GetPerformanceSeatMapUseCase.VenueView(2L, "공연장", 500, 356, 4.8),

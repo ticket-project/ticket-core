@@ -72,7 +72,8 @@ public class ApiSecurityConfig {
                         .authenticated());
 
         http.addFilterBefore(
-                new AccessTokenAuthenticationFilter(accessTokenAuthenticatorService), UsernamePasswordAuthenticationFilter.class);
+                new AccessTokenAuthenticationFilter(accessTokenAuthenticatorService),
+                UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

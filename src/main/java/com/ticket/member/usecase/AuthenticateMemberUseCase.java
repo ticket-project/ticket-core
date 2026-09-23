@@ -38,6 +38,7 @@ public class AuthenticateMemberUseCase {
                         password.getPassword(), member.getEncodedPassword().getPassword())) {
             throw new UnauthenticatedException();
         }
-        return new MemberStatus(member.getId(), !member.isDeleted(), member.getRole().name());
+        return new MemberStatus(
+                member.getId(), !member.isDeleted(), member.getRole().name());
     }
 }

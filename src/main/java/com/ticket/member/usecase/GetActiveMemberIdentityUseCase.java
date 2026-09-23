@@ -20,6 +20,7 @@ public class GetActiveMemberIdentityUseCase {
     public MemberStatus execute(final long memberId) {
         final Member member =
                 memberRepository.findActiveById(memberId).orElseThrow(() -> new MemberNotFoundException());
-        return new MemberStatus(member.getId(), !member.isDeleted(), member.getRole().name());
+        return new MemberStatus(
+                member.getId(), !member.isDeleted(), member.getRole().name());
     }
 }

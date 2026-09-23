@@ -247,8 +247,7 @@ class ShowControllerContractTest {
         CountSearchShowsUseCase count = mock(CountSearchShowsUseCase.class);
         when(latest.execute(any())).thenReturn(new GetLatestShowsUseCase.Output(List.of()));
         when(soon.execute(any())).thenReturn(new GetSaleOpeningSoonShowsUseCase.Output(List.of()));
-        when(soonPage.execute(any()))
-                .thenReturn(new GetSaleOpeningSoonShowsPageUseCase.Output(List.of(), false, null));
+        when(soonPage.execute(any())).thenReturn(new GetSaleOpeningSoonShowsPageUseCase.Output(List.of(), false, null));
         when(count.execute(any())).thenReturn(new CountSearchShowsUseCase.Output(0));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new ShowController(
                         mock(GetShowsUseCase.class),

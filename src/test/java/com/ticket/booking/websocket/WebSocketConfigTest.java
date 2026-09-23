@@ -13,9 +13,8 @@ class WebSocketConfigTest {
     @Test
     void server_events_are_published_to_each_session_in_order() {
         final MessageBrokerRegistry registry = mock(MessageBrokerRegistry.class);
-        final WebSocketConfig config =
-                new WebSocketConfig(mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class),
-                        mock(MemberWebSocketSessions.class));
+        final WebSocketConfig config = new WebSocketConfig(
+                mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class), mock(MemberWebSocketSessions.class));
 
         config.configureMessageBroker(registry);
 
@@ -27,8 +26,8 @@ class WebSocketConfigTest {
     void withdrawal_session_tracker_decorates_websocket_transports() {
         final MemberWebSocketSessions sessions = mock(MemberWebSocketSessions.class);
         final WebSocketTransportRegistration registration = mock(WebSocketTransportRegistration.class);
-        final WebSocketConfig config = new WebSocketConfig(
-                mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class), sessions);
+        final WebSocketConfig config =
+                new WebSocketConfig(mock(WebSocketAuthInterceptor.class), mock(CorsProperties.class), sessions);
 
         config.configureWebSocketTransport(registration);
 

@@ -14,7 +14,6 @@ import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialIdentity;
-
 import com.ticket.member.usecase.AuthenticateMemberUseCase;
 import com.ticket.member.usecase.GetActiveMemberIdentityUseCase;
 import com.ticket.member.usecase.MemberAccountFacade;
@@ -40,36 +39,50 @@ class MemberModuleTests {
 
     @Test
     void 계정_연산은_각_유스케이스의_트랜잭션_프록시를_통과한다() {
-        assertThat(AopUtils.isAopProxy(context.getBean(RegisterMemberUseCase.class))).isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(AuthenticateMemberUseCase.class))).isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(GetActiveMemberIdentityUseCase.class))).isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class))).isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class))).isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountFacade.class))).isFalse();
+        assertThat(AopUtils.isAopProxy(context.getBean(RegisterMemberUseCase.class)))
+                .isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(AuthenticateMemberUseCase.class)))
+                .isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(GetActiveMemberIdentityUseCase.class)))
+                .isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class)))
+                .isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class)))
+                .isTrue();
+        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountFacade.class)))
+                .isFalse();
     }
 
     @Test
     void 계정_연산마다_읽기와_쓰기_트랜잭션을_구분한다() throws NoSuchMethodException {
-        assertThat(transactionAttribute(RegisterMemberUseCase.class, "execute", String.class, RawPassword.class,
-                        String.class).isReadOnly())
+        assertThat(transactionAttribute(
+                                RegisterMemberUseCase.class, "execute", String.class, RawPassword.class, String.class)
+                        .isReadOnly())
                 .isFalse();
         assertThat(transactionAttribute(AuthenticateMemberUseCase.class, "execute", String.class, RawPassword.class)
                         .isReadOnly())
                 .isTrue();
-        assertThat(transactionAttribute(GetActiveMemberIdentityUseCase.class, "execute", long.class).isReadOnly())
+        assertThat(transactionAttribute(GetActiveMemberIdentityUseCase.class, "execute", long.class)
+                        .isReadOnly())
                 .isTrue();
-        assertThat(transactionAttribute(WithdrawMemberUseCase.class, "execute", long.class).isReadOnly()).isFalse();
-        assertThat(transactionAttribute(OAuth2MemberProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
+        assertThat(transactionAttribute(WithdrawMemberUseCase.class, "execute", long.class)
+                        .isReadOnly())
+                .isFalse();
+        assertThat(transactionAttribute(
+                                OAuth2MemberProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
                         .isReadOnly())
                 .isFalse();
     }
 
-    private TransactionAttribute transactionAttribute(final Class<?> type, final String methodName,
-            final Class<?>... parameterTypes) throws NoSuchMethodException {
+    private TransactionAttribute transactionAttribute(
+            final Class<?> type, final String methodName, final Class<?>... parameterTypes)
+            throws NoSuchMethodException {
         final Method method = type.getMethod(methodName, parameterTypes);
         final TransactionAttribute attribute =
                 context.getBean(TransactionAttributeSource.class).getTransactionAttribute(method, type);
-        assertThat(attribute).as("%s.%s transaction", type.getSimpleName(), methodName).isNotNull();
+        assertThat(attribute)
+                .as("%s.%s transaction", type.getSimpleName(), methodName)
+                .isNotNull();
         return attribute;
     }
 }

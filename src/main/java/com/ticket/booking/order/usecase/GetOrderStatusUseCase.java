@@ -44,5 +44,4 @@ public class GetOrderStatusUseCase {
 
         return new Output(order.getOrderKey(), order.getStatus(), order.getExpiresAt(), remainingSeconds);
     }
-
 }
