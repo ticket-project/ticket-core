@@ -29,16 +29,12 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
 /**
- * BC(Bounded Context) 재편으로 물리 공연장·좌석(Venue/Seat)이 show(옛 catalog)에서 venue module로 분리됐다. 이 테스트는 {@code venue} module이
- * {@code __root} + 자신의 migration(V1 Seat-Venue 관계 추가, 옛 catalog/show V3가 이 module의 새 Flyway 이력으로 옮겨오며 번호가 재시작됐다)만으로
- * (booking·member·show 등 다른 module의 migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는 schema를 만들고, Venue별 좌석 주소
- * unique 제약이 실제로 동작하는지 검증한다. Show가 소유한 {@code SHOWS.venue_id} scalar 컬럼 매핑과 그 FK 제거는
- * {@code ShowModuleSlicingSchemaTest}가 검증한다. 옛 catalog V1(SHOW_LIKES member FK 제거)은 찜이 like module(옛 favorite)로 분리되며
- * {@code like}의 migration으로 옮겨갔다 — {@code LikeModuleMigrationTest}가 검증한다.
+ * {@code venue} module이 {@code __root} + 자신의 migration(V1 Seat-Venue 관계 추가)만으로(booking·member·show 등 다른 module의
+ * migration 없이) {@link Seat}/{@link Venue} 매핑과 실제로 맞는 schema를 만들고, Venue별 좌석 주소 unique 제약이 실제로 동작하는지 검증한다.
+ * {@code SHOWS.venue_id}의 FK 제거는 {@code ShowModuleSlicingSchemaTest}가 본다.
  *
- * <p>{@code BookingModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수 Hibernate로 {@code ddl-auto=validate}와 같은
- * 검증, 그리고 CRUD/제약 위반을 확인한다. {@code SEATS}/{@code VENUES}는 어떤 Flyway migration도 만들지 않는 pre-Flyway baseline이므로(V1은 기존
- * SEATS에 컬럼을 더할 뿐이다) legacy baseline schema를 먼저 만든 뒤 module migration을 적용한다.
+ * <p>기법은 {@link BookingModuleSlicingSchemaTest}를 따른다. {@code SEATS}/{@code VENUES}는 어떤 Flyway migration도 만들지 않는
+ * pre-Flyway baseline이므로(V1은 기존 SEATS에 컬럼을 더할 뿐이다) legacy baseline schema를 먼저 만든 뒤 module migration을 적용한다.
  */
 class VenueModuleSlicingSchemaTest {
     private static final String URL =

@@ -26,21 +26,13 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 
 /**
- * Task 11 Step 6: {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이) 실제
- * schema를 만들고, {@code booking}의 JPA 매핑({@link PerformanceSeat})이 그 schema에 대해 {@code ddl-auto=validate}를 통과하며, CRUD가
- * 동작하는지 검증한다.
+ * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이) 실제 schema를 만들고,
+ * {@code booking}의 JPA 매핑({@link PerformanceSeat})이 그 schema에 대해 {@code ddl-auto=validate}를 통과하며, CRUD가 동작하는지 검증한다.
  *
- * <p>이상적으로는 {@code @DataJpaTest @ModuleSlicing}(plan 원문)으로 Spring context 수준에서 검증하고 싶었다. 최초 구현 시도에서 이 조합이 깨진다고 판단해
- * Hibernate 단독 검증으로 우회했는데, 이후 리뷰에서 그 진단이 부정확했다는 게 밝혀졌다 — 실제 원인은 프레임워크 비호환이 아니라 {@code @ModuleSlicing}의 기본값
- * {@code verifyAutomatically = true}가 {@code com.ticket.ModularityTests}의 legacy package 제외 predicate 없이 전체 구조를 검증하며
- * "show → core → show" 같은 (이미 알려진) legacy 오탐 순환을 잡아내는 것이었다. {@code BookingModuleTests}가 이미 같은 이유로
- * {@code verifyAutomatically = false}를 쓰고 있으므로, {@code @DataJpaTest @ModuleSlicing(module = "booking",
- * verifyAutomatically = false)} 조합도 실제로 context가 뜨고 module-scoped entity/repository scan이 동작하는 것까지는 리뷰에서 재현됐다(Flyway
- * 통합까지 마저 배선하는 작업은 남아 있다). 즉 plan 원문의 API가 불가능한 것은 아니다 — 이 클래스는 그 배선을 마치기 전 임시 대안으로 남아 있다.
- *
- * <p>지금은 Spring context 없이 순수 Hibernate로 같은 목표(root+module migration만으로 만든 schema가 module의 JPA 매핑과 실제로 맞고 CRUD가 되는지)를
- * 검증한다 — 이 저장소의 {@link EventPublicationRegistrySchemaValidationTest}와 같은, 이미 검증된 기법이며 그 자체로 유효한 검증이다.
- * {@code @DataJpaTest @ModuleSlicing}로의 전환은 별도 후속 작업이다.
+ * <p><b>module slicing schema 테스트의 기준 구현이다.</b> Spring context 없이 순수 Hibernate로 검증한다 —
+ * {@link EventPublicationRegistrySchemaValidationTest}와 같은 기법이다. {@code @DataJpaTest @ModuleSlicing}을 쓰려면
+ * {@code verifyAutomatically = false}가 필요하다({@code BookingModuleTests}가 같은 이유로 쓴다) — 기본값은 legacy package 제외 predicate
+ * 없이 전체 구조를 검증해 이미 알려진 오탐 순환을 잡아낸다. 전환은 별도 작업이다.
  */
 class BookingModuleSlicingSchemaTest {
     private static final String URL =

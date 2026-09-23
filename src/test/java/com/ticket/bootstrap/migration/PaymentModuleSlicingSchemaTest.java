@@ -27,16 +27,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.ticket.payment.domain.Payment;
 
 /**
- * ticket-domain-module-redesign Phase 5 Task 11(ADR 0005): {@code payment} module이 {@code __root} + 자신의 migration(V1
- * {@code PAYMENTS} 생성)만으로(booking 등 다른 module의 migration 없이) {@link Payment} 매핑과 실제로 맞는 schema를 만들고,
- * {@code payment_key}/{@code (order_id, attempt_no)}/{@code provider_payment_key} unique 제약과 {@code amount >= 0} CHECK
- * 제약이 실제로 동작하는지 검증한다.
+ * {@code payment} module이 {@code __root} + 자신의 migration(V1 {@code PAYMENTS} 생성)만으로(booking 등 다른 module의 migration 없이)
+ * {@link Payment} 매핑과 실제로 맞는 schema를 만들고, {@code payment_key}/{@code (order_id, attempt_no)}/
+ * {@code provider_payment_key} unique 제약과 {@code amount >= 0} CHECK 제약이 실제로 동작하는지 검증한다.
  *
- * <p>{@code BookingModuleSlicingSchemaTest}/{@code ShowModuleSlicingSchemaTest}와 같은 기법이다 — Spring context 없이 순수
- * Hibernate로 {@code ddl-auto=validate}와 같은 검증, 그리고 CRUD/제약 위반을 확인한다. {@code PAYMENTS} 자체는 이번에 새로 생기는 table이지만,
- * {@code __root} 이력의 기존 V2(`PERFORMANCE_QUEUE_POLICIES`)가 pre-Flyway baseline인 {@code PERFORMANCES}를 이미 전제하므로 (payment와
- * 무관하게 __root가 항상 요구한다), {@link BookingModuleSlicingSchemaTest}/ {@link ShowModuleSlicingSchemaTest}와 같은 최소 legacy
- * baseline을 재현한다.
+ * <p>기법은 {@link BookingModuleSlicingSchemaTest}를 따른다. {@code PAYMENTS}는 새 table이지만 {@code __root} 이력의 V2
+ * ({@code PERFORMANCE_QUEUE_POLICIES})가 pre-Flyway baseline인 {@code PERFORMANCES}를 payment와 무관하게 항상 전제하므로, 최소 legacy
+ * baseline을 같이 재현한다.
  */
 class PaymentModuleSlicingSchemaTest {
     private static final String URL =
