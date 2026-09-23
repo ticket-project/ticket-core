@@ -46,7 +46,7 @@ import com.ticket.shared.exception.NotFoundException;
  */
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class MemberAccountServiceTest {
+class MemberAccountFacadeTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-09-15T02:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Mock
@@ -58,10 +58,13 @@ class MemberAccountServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
-    private MemberAccountService service() {
-        return new MemberAccountService(
-                memberRepository, passwordEncoder, new OAuth2MemberProvisioningService(memberRepository), CLOCK,
-                eventPublisher);
+    private MemberAccountFacade service() {
+        return new MemberAccountFacade(
+                new RegisterMemberUseCase(memberRepository, passwordEncoder),
+                new AuthenticateMemberUseCase(memberRepository, passwordEncoder),
+                new GetActiveMemberIdentityUseCase(memberRepository),
+                new OAuth2MemberProvisioningService(memberRepository),
+                new WithdrawMemberUseCase(memberRepository, CLOCK, eventPublisher));
     }
 
     // ── 등록 ────────────────────────────────────────────────────────────────
@@ -181,19 +184,15 @@ class MemberAccountServiceTest {
 
     // ── 트랜잭션 경계 ─────────────────────────────────────────────────────────
 
-    /**
-     * 계정 연산마다 트랜잭션을 <b>누가</b> 소유하는지를 고정한다. 협력자를 흡수하는 리팩터링에서 가장 조용히 깨지는 것이 이 경계다 — 같은 클래스 안에서 부르면 Spring proxy가 적용되지 않아
-     * {@code @Transactional}이 아예 걸리지 않는데, 결과 값은 그대로라 행동 테스트로는 드러나지 않는다.
-     */
+    /** 계정 연산의 트랜잭션은 공개 계약 연결부가 아닌 각 유스케이스가 소유한다. */
     @Test
     void 계정_연산의_트랜잭션_경계를_고정한다() throws NoSuchMethodException {
-        assertWriteTransaction(MemberAccountService.class, "register", String.class, RawPassword.class, String.class);
+        assertWriteTransaction(RegisterMemberUseCase.class, "execute", String.class, RawPassword.class, String.class);
         assertReadOnlyTransaction(
-                MemberAccountService.class.getMethod("authenticate", String.class, RawPassword.class));
-        assertReadOnlyTransaction(MemberAccountService.class.getMethod("getActiveIdentity", long.class));
-        assertWriteTransaction(MemberAccountService.class, "withdraw", long.class);
-        // 소셜 연결만 흡수하지 않았다 — 트랜잭션도 그대로 provisioning service가 소유한다.
-        assertThat(MemberAccountService.class
+                AuthenticateMemberUseCase.class.getMethod("execute", String.class, RawPassword.class));
+        assertReadOnlyTransaction(GetActiveMemberIdentityUseCase.class.getMethod("execute", long.class));
+        assertWriteTransaction(WithdrawMemberUseCase.class, "execute", long.class);
+        assertThat(MemberAccountFacade.class
                         .getMethod("resolveSocialAccount", SocialIdentity.class)
                         .isAnnotationPresent(Transactional.class))
                 .isFalse();

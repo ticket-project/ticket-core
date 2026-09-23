@@ -9,7 +9,7 @@
 업무 코드의 배치 기준은 하나다 — **작은 모듈은 역할을 바로 보여주고, 큰 모듈은 업무를 먼저
 보여준다.** 모든 모듈을 같은 모양으로 만들지 않는다.
 
-작은/중간 모듈은 `com.ticket.<module>.<role>`이다 — `member.usecase.MemberAccountService`,
+작은/중간 모듈은 `com.ticket.<module>.<role>`이다 — `member.usecase.RegisterMemberUseCase`,
 `show.persistence.ShowRepositoryAdapter`, `member.endpoint.MemberController`처럼 읽는다.
 `booking`만 `com.ticket.booking.<capability>.<role>`이다 —
 `booking.order.usecase.CancelOrderUseCase`, `booking.selection.persistence.RedissonSeatSelectionStore`.
