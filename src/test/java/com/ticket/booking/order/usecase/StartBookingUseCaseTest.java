@@ -52,7 +52,6 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
@@ -79,9 +78,6 @@ class StartBookingUseCaseTest {
     private AdmissionVerifier admissionVerifier;
 
     @Mock
-    private MemberLookupApi memberLookupApi;
-
-    @Mock
     private BookingAvailabilityChecker bookingAvailabilityChecker;
 
     @Mock
@@ -106,7 +102,6 @@ class StartBookingUseCaseTest {
                         lockManager,
                         new PerformanceSaleFinder(performanceSalesPolicyRepository),
                         new AdmissionGuard(admissionVerifier),
-                        memberLookupApi,
                         bookingAvailabilityChecker,
                         performanceSaleCatalogApi,
                         holdManager,
@@ -124,7 +119,6 @@ class StartBookingUseCaseTest {
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
                 admissionVerifier,
-                memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
                 holdManager,
@@ -141,7 +135,6 @@ class StartBookingUseCaseTest {
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
                 admissionVerifier,
-                memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
                 holdManager,
@@ -175,13 +168,11 @@ class StartBookingUseCaseTest {
 
         final InOrder inOrder = inOrder(
                 performanceSalesPolicyRepository,
-                memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
                 holdManager,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
-        inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
         inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
         inOrder.verify(performanceSaleCatalogApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdManager).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
@@ -204,7 +195,6 @@ class StartBookingUseCaseTest {
 
         startBookingUseCase.execute(input);
 
-        verify(memberLookupApi).requireActive(MEMBER_ID);
         verify(pendingOrderCreator)
                 .create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), same(seats), any());
     }
@@ -217,7 +207,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, PerformanceIsPastException.class);
 
-        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(admissionVerifier, bookingAvailabilityChecker);
     }
 
     @Test
@@ -227,7 +217,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, HoldLimitExceededException.class);
 
-        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(admissionVerifier, bookingAvailabilityChecker);
     }
 
     @Test
@@ -256,7 +246,7 @@ class StartBookingUseCaseTest {
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(memberLookupApi, bookingAvailabilityChecker);
+        verifyNoInteractions(bookingAvailabilityChecker);
     }
 
     @Test

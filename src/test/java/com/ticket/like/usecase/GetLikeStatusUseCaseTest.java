@@ -18,15 +18,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetLikeStatusUseCaseTest {
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     @Mock
     private LikeRepository likeRepository;
 
@@ -43,7 +39,6 @@ class GetLikeStatusUseCaseTest {
 
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(7L);
-        verify(memberLookupApi).requireActive(1L);
     }
 
     @ParameterizedTest

@@ -6,13 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.InputChecks;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 대상 존재 확인은 하지 않는다 — {@link AddLikeUseCase}의 설명과 같은 이유다. 회원 활성 확인만 직접 재확인한다.
+ * 대상 존재 확인은 하지 않는다 — {@link AddLikeUseCase}의 설명과 같은 이유다. 요청 회원의 활성 상태는 공통 인증에서 확인한다.
  *
  * <p>찜하지 않은 상태로 불러도 예외 없이 현재 상태(liked=false)를 돌려준다(멱등).
  */
@@ -20,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 @RequiredArgsConstructor
 public class RemoveLikeUseCase {
-    private final MemberLookupApi memberLookupApi;
     private final LikeRepository likeRepository;
 
     public record Input(Long memberId, LikeType likeType, Long targetId) {
@@ -38,7 +36,6 @@ public class RemoveLikeUseCase {
         final Long memberId = input.memberId();
         final LikeType likeType = input.likeType();
         final Long targetId = input.targetId();
-        memberLookupApi.requireActive(memberId);
 
         likeRepository
                 .findByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)

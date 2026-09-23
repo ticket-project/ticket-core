@@ -22,8 +22,6 @@ public interface MemberRepository {
 
     Optional<Member> findActiveById(Long id);
 
-    boolean existsActiveById(Long id);
-
     /** 소셜 로그인 진입점이다. 회원과 소셜 계정 <b>양쪽 모두</b> 탈퇴 처리되지 않은 경우에만 찾는다. */
     Optional<Member> findActiveBySocialAccount(SocialProvider socialProvider, String socialId);
 }

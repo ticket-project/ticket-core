@@ -23,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeSnapshot;
-import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
@@ -34,9 +33,6 @@ import com.ticket.venue.api.VenueSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class GetMyShowLikesUseCaseTest {
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     @Mock
     private LikeQueryApi likeQueryApi;
 
@@ -79,7 +75,6 @@ class GetMyShowLikesUseCaseTest {
                 .containsExactly(new GetMyShowLikesUseCase.Item(2L, "공연", "image", startDate, endDate, "장소", likedAt));
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
-        verify(memberLookupApi).requireActive(1L);
         verify(likeQueryApi).findLiked("show", 1L, 10L, 20);
     }
 

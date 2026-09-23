@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.member.api.MemberLookupApi;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class DeselectAllSeatsUseCase {
-    private final MemberLookupApi memberLookupApi;
     private final SeatSelectionService seatSelectionService;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
@@ -36,7 +34,6 @@ public class DeselectAllSeatsUseCase {
     }
 
     public void execute(final Input input) {
-        memberLookupApi.requireActive(input.memberId());
         final List<Long> seatIds = seatSelectionService.deselectAll(input.performanceId(), input.memberId());
         final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(input.performanceId(), seatIds);
         // 실제로 해제된 좌석만 돌려받지만, 알리기 전에 좌석 락 안에서 현재 상태를 다시 확인한다 — 해제와 발행

@@ -19,14 +19,10 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.member.api.MemberLookupApi;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class DeselectAllSeatsUseCaseTest {
-    @Mock
-    private MemberLookupApi memberLookupApi;
-
     @Mock
     private SeatSelectionService seatSelectionService;
 
@@ -51,7 +47,6 @@ class DeselectAllSeatsUseCaseTest {
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
-        verify(memberLookupApi).requireActive(1L);
         verify(seatSelectionService).deselectAll(10L, 1L);
         verify(seatSelectionCoordinator).notifyReleasedIfFree(10L, 20L, 501L);
         verify(seatSelectionCoordinator).notifyReleasedIfFree(10L, 21L, 502L);

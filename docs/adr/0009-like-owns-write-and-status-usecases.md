@@ -75,6 +75,10 @@ ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있�
 
 ## 영향
 
+**2026-09-23 갱신**: 요청 회원의 활성 상태 검사는 공통 인증으로 이동했다. 아래의
+`like` use case별 `MemberLookup.requireActive` 호출 설명은 당시 결정의 기록이다. 주문 상세의
+회원 프로필 조회처럼 응답 데이터를 만드는 조회는 그대로 유지한다.
+
 - `show.application.usecase`에서 `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/
   `GetShowLikeStatusUseCase`가 없어지고, `like.application.usecase`에
   `AddLikeUseCase`/`RemoveLikeUseCase`/`GetLikeStatusUseCase`가 생긴다.

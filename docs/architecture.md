@@ -68,12 +68,10 @@
 - `security -> member`는 Authorization header의 access token을 member의 공개 계약으로 검증하고
   `AuthenticatedMember`를 SecurityContext에 넣기 위한 단방향 의존이다. security는 전역 API URL
   접근 정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
-- `show -> member`는 찜 use case의 회원 확인, `show -> venue`는 표시값 조립, `show -> like`는
+- `show -> venue`는 표시값 조립, `show -> like`는
   공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
-- `like -> member`가 있다. 찜하기·찜 해제·찜 상태 조회를 like가 소유하면서(ADR 0009) 탈퇴 회원을
-  걸러내기 위해 `MemberLookupApi.requireActive`를 직접 부르기 때문이다. **like는 업무 모듈 의존이
-  없는 leaf가 아니다** — ADR 0006 시점의 설명(당시 `favorite`가 leaf였다)은 그 ADR의 역사적
-  기록이고 현재 구조가 아니다.
+- 요청 회원의 활성 여부는 security가 member의 공개 계약으로 인증 시 확인한다. like의 찜 연산과
+  show의 찜 목록은 같은 확인을 반복하지 않는다.
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
   `PerformanceSaleCatalogApi`/`PerformanceVenueLayoutCatalogApi`를 show가 façade로 유지하기
   때문이다.
@@ -148,9 +146,8 @@ case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니
 목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain.show`는
 like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회 API(`LikeQueryApi`)를 주입받아
 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
-않는 대상을 찜해도 막지 않는다. 회원 활성 확인은 예외다 — `member`는 leaf라 `like -> member`가
-순환을 만들지 않고, JWT 인증만으로는 탈퇴 회원을 걸러낼 수 없어 like가 직접
-`MemberLookupApi.requireActive`를 부른다. 이 규칙은 `com.ticket.DomainIsolationTest`(ArchUnit,
+않는 대상을 찜해도 막지 않는다. 요청 회원의 활성 상태는 security가 공통 인증에서 확인한다.
+이 규칙은 `com.ticket.DomainIsolationTest`(ArchUnit,
 6개 BC 전체의 모든 `domain` 계층)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을, 찜 모듈 개명과 대상 일반화는
 [ADR 0008](adr/0008-like-target-generalization.md)을, use case 소유권을 존재/표시 기준으로
