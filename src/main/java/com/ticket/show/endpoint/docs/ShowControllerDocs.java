@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Positive;
 
 import org.springdoc.core.annotations.ParameterObject;
 
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.shared.web.SliceResponse;
 import com.ticket.show.endpoint.request.SaleOpeningSoonRequest;
@@ -11,6 +12,7 @@ import com.ticket.show.endpoint.request.ShowListRequest;
 import com.ticket.show.endpoint.request.ShowSearchRequest;
 import com.ticket.show.usecase.CountSearchShowsUseCase;
 import com.ticket.show.usecase.GetLatestShowsUseCase;
+import com.ticket.show.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsPageUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
@@ -33,6 +35,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @Tag(name = "공연(Show)", description = "공연 정보 조회 API")
 public interface ShowControllerDocs {
+    @Operation(summary = "내 찜 목록 조회", description = "로그인한 회원의 찜 목록을 커서 기반 페이지네이션으로 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패")
+            })
+    ApiResponse<SliceResponse<GetMyShowLikesUseCase.Item>> getMyLikes(
+            @Parameter(hidden = true) AuthenticatedMember member,
+            @Parameter(description = "커서(마지막 찜 ID)", example = "123") String cursor,
+            @Parameter(description = "페이지 크기", example = "20") @Positive int size);
+
     // ========== 상세 조회 API ==========
     @Operation(summary = "공연 상세 조회", description = """
                     공연 ID로 상세 정보를 조회합니다.
