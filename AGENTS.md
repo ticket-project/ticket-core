@@ -63,7 +63,8 @@
 - 작업 브랜치에서 작업한다. **`master` push는 곧 운영 배포다**(`.github/workflows/deploy.yml`,
   자동 롤백 없음) — `scripts/hooks/guard-branch.sh`가 기본 브랜치 커밋·push를 막는다.
 - 형식은 `<type>(<scope>): <한국어 설명>`(예: `fix(performanceseat): 만료된 좌석 선택 상태 정리`).
-  `scope`는 도메인 > 모듈 > 생략 순으로 가장 좁게. type은 표준 11종 + `security`.
+  `scope`는 도메인 > 모듈 > 생략 순으로 가장 좁게. 허용 `type`은 `feat`, `fix`, `refactor`,
+  `perf`, `test`, `docs`, `chore`, `build`, `ci`, `security`, `revert`다(형제 저장소와 같다).
 - 반영 전 `git merge-tree --write-tree origin/HEAD HEAD`로 충돌을 미리 확인한다.
 - **하나의 커밋에 하나의 목적만 담고 항상 잘게 나눈다.** 전부 끝낸 뒤 몰아서 커밋하지 않는다.
   각 커밋은 그 자체로 컴파일되고 테스트를 통과해야 한다.
