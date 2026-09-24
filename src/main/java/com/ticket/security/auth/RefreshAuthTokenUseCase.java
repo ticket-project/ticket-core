@@ -9,6 +9,7 @@ import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +24,12 @@ public class RefreshAuthTokenUseCase {
         final Long memberId = refreshTokenStore
                 .validate(input.refreshToken())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
-        final MemberStatus member = memberAccountApi.getActiveIdentity(memberId);
+        final MemberStatus member;
+        try {
+            member = memberAccountApi.getActiveIdentity(memberId);
+        } catch (final NotFoundException exception) {
+            throw new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다.");
+        }
         final IssuedAuthTokens tokens =
                 authTokenIssuer.rotateTokens(member.memberId(), member.role(), input.refreshToken());
         return toResult(tokens);
