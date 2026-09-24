@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 
 @SuppressWarnings("NonAsciiCharacters")
 class AuthRefreshTokenTest {

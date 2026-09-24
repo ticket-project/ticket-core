@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;

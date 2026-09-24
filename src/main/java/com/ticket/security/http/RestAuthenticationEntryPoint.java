@@ -13,7 +13,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             throws IOException, ServletException {
         final String jwtError = (String) request.getAttribute(AccessTokenFailure.REQUEST_ATTRIBUTE);
         final UnauthenticatedException error = new UnauthenticatedException(resolveMessage(jwtError));
-        // MemberExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
+        // SecurityExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
         // 거치지 않으므로 여기서 다시 정한다.
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

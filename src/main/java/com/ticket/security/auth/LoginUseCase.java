@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.RawPassword;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -18,7 +19,9 @@ public class LoginUseCase {
     private final AuthTokenIssuer authTokenIssuer;
 
     public Result execute(final Input input) {
-        final MemberStatus member = memberAccountApi.authenticate(input.email(), RawPassword.create(input.password()));
+        final MemberStatus member = memberAccountApi
+                .authenticate(input.email(), RawPassword.create(input.password()))
+                .orElseThrow(UnauthenticatedException::new);
         final IssuedAuthTokens tokens = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return toResult(tokens);
     }

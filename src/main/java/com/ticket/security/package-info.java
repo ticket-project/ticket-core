@@ -21,7 +21,6 @@
         displayName = "Security",
         allowedDependencies = {
             "member :: api",
-            "member :: exception",
             "shared :: api",
             "shared :: config",
             "shared :: web",

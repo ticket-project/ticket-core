@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;

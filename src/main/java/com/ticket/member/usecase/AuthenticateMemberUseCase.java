@@ -10,7 +10,6 @@ import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
-import com.ticket.member.exception.UnauthenticatedException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,21 +23,21 @@ public class AuthenticateMemberUseCase {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public MemberStatus execute(final String email, final RawPassword password) {
+    public Optional<MemberStatus> execute(final String email, final RawPassword password) {
         final Optional<Member> activeMember = memberRepository.findActiveByEmail(email);
 
         if (activeMember.isEmpty()) {
             passwordEncoder.encode(TIMING_GUARD_DUMMY_PASSWORD);
-            throw new UnauthenticatedException();
+            return Optional.empty();
         }
 
         final Member member = activeMember.get();
         if (member.getEncodedPassword() == null
                 || !passwordEncoder.matches(
                         password.getPassword(), member.getEncodedPassword().getPassword())) {
-            throw new UnauthenticatedException();
+            return Optional.empty();
         }
-        return new MemberStatus(
-                member.getId(), !member.isDeleted(), member.getRole().name());
+        return Optional.of(new MemberStatus(
+                member.getId(), !member.isDeleted(), member.getRole().name()));
     }
 }
