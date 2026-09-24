@@ -46,7 +46,7 @@
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점부터 주문·발권까지. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
-| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태). 인증 흐름의 **조립**(가입·로그인·갱신·로그아웃·탈퇴 절차, JWT, OAuth2 provider)은 `security`가 갖고, member는 `MemberAccountApi` 공개 계약만 제공한다 |
+| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태), 회원가입. 로그인·갱신·로그아웃·탈퇴 조립과 JWT·OAuth2 provider 처리는 `security`가 소유한다 |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
@@ -204,6 +204,7 @@ port interface와 adapter를 한 쌍씩 만들지 않는다 — 구현이 하나
 ```text
 member                 like                venue           payment        show
 ├─ api                 ├─ api              ├─ api          ├─ domain      ├─ api
+├─ config
 ├─ usecase             ├─ usecase          ├─ usecase      └─ persistence ├─ usecase
 ├─ domain              ├─ domain           ├─ domain                      ├─ domain
 ├─ persistence         ├─ persistence      ├─ persistence                 ├─ persistence
@@ -211,8 +212,7 @@ member                 like                venue           payment        show
 └─ exception           └─ exception                                       └─ exception
 ```
 
-`PasswordHashingConfig`는 업무 규칙이 없는 공통 Spring Security bean 설정이므로
-`shared.config`가 소유한다. `member`는 등록된 `PasswordEncoder`를 직접 쓴다.
+`PasswordHashingConfig`는 비밀번호를 저장·검증하는 `member`만 사용하므로 `member.config`가 소유한다.
 
 `venue`는 공개 계약(`venue.api`)을 Aggregate별 use case가 구현한다 — `VenueLookupService implements
 VenueLookupApi`, `SeatLookupService implements VenueSeatLookupApi`다. Venue와 Seat이 다른
@@ -289,10 +289,11 @@ Module은 여덟 개(`booking`/`show`/`member`/`like`/`venue`/`payment`/`securit
 ### security와 shared
 
 **`security`만 역할 대신 기능으로 나눈다.** 여기 있는 것은 업무가 아니라 인증 기술이라 "무엇에
-관한 코드인가"가 더 나은 탐색 단위다. `auth`(가입·로그인·갱신·로그아웃·탈퇴 조립과 인증
+관한 코드인가"가 더 나은 탐색 단위다. `auth`(로그인·갱신·OAuth2 코드 교환·로그아웃·탈퇴 조립과 인증
 Controller), `jwt`(JWT 생성·검증·서명키·설정), `oauth`(filter chain·handler·provider 통신·응답
 해석·인증 코드·외부 unlink), `token`(토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성
-기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키) 다섯이다. 여기에
+기반), `http`(API 보안 설정·필터·SecurityContext·MVC 인증 주체·401/403·쿠키),
+`exception`(인증·인가 오류와 MVC 응답 변환) 여섯이다. 여기에
 다른 모듈에 공개하는 계약만 담는 `api`(`AccessTokenAuthenticationApi`)가 더해진다 — **각 폴더
 안에 역할 폴더를 다시 만들지 않는다.** 클래스가 많다는 이유만으로 기능마다 façade를 더하지 않고,
 하나의 Controller가 여러 기능 폴더를 호출하는 것도 허용한다.
@@ -513,11 +514,9 @@ Repository는 "없다"는 사실만 알려주고 오류는 유스케이스가 �
 ```text
 com/ticket/<module>/exception/
   <Module>ErrorCode.java          enum implements com.ticket.shared.exception.ErrorCode
-  <Module>Exception.java          abstract sealed extends com.ticket.shared.exception.TicketException
-                                  (errorCode·message·data만) -- permits로 하위 타입을 닫는다
+  <Module>Exception.java          여러 오류가 한 계층을 이룰 때만 sealed base 타입을 둔다
   <구체 예외>.java                 final. errorCode·메시지·data를 생성자에서 확정(상태는 없다)
-  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), 자기 module의 base 타입만 잡고
-                                          구체 타입 -> HTTP 상태를 exhaustive switch로 정한다
+  handler/<Module>ExceptionHandler.java   @Order(HIGHEST_PRECEDENCE), 자기 module의 오류 타입만 잡는다
 ```
 
 한 module이 성격이 다른 오류 계층을 둘 가질 수 있다. `booking`이 그렇다 — `BookingErrorCode`와
@@ -525,19 +524,18 @@ com/ticket/<module>/exception/
 `BookingExceptionHandler` 하나가 둘 다 잡는다. 대기열 입장 실패는 예매 업무 실패와 원인이 달라
 코드 공간을 나누고, handler는 module에 하나라는 규칙은 지킨다.
 
-**module base 예외는 sealed다.** `permits` 목록이 곧 handler switch가 덮어야 할 집합이라, 새 예외를
-추가하면서 HTTP 매핑을 빠뜨리면 runtime이 아니라 컴파일이 실패한다. 그래서 handler switch에
-`default` 분기를 두지 않는다. 하위 타입은 전부 같은 package에 있어야 한다(JPMS named module이
-아니므로). `TicketException` 자체는 sealed로 만들지 않는다 — 직접 하위 타입이 다섯 package에 흩어져
-있고, 억지로 맞추면 module별 오류 소유권이 깨진다. 배경은
+**base 예외가 필요한 module에서는 sealed로 닫는다.** `permits` 목록이 handler switch가 덮어야 할 집합이라, 새 예외를
+추가하면서 HTTP 매핑을 빠뜨리면 컴파일이 실패한다. 단일 오류만 소유하는 `member`는
+`DuplicateEmailException`이 `TicketException`을 직접 상속하고, `security`도 인증·인가 구체 예외를
+각각 처리한다. `TicketException` 자체는 sealed로 만들지 않는다. 배경은
 [ADR 0015](adr/0015-null-contracts-are-explicit-and-enforced.md)다.
 
 **모듈의 예외는 `<module>.exception` 하나에 둔다.** base 타입, `<Module>ErrorCode`, 구체 예외,
 `handler`가 모두 여기에 속한다. 공통 오류 계약은 `shared.exception`, 공통 HTTP 응답 봉투는
 `shared.web`이 소유한다. 예외를 계층이나 업무별로 다시 쪼개지 않는다.
 
-`member.exception`은 E1000/E1001 응답을 전역 security와 공유해야 하므로
-`member :: exception` named interface로 최소 공개한다. handler 하위 구현은 공개 계약이 아니다.
+E1000/E1001 인증·인가 오류는 `security.exception`이 소유한다. `member.exception`은 회원 오류 E2000과
+회원 부재 오류를 소유하며 다른 모듈에 공개하지 않는다.
 
 오류 계약 소유 기준(모듈별 오류 vs `com.ticket.shared.exception`의 공통 오류), 응답 봉투가 `web`에 있는
 이유, `ProblemDetail`을 채택하지 않은 이유는 [ADR 0002](adr/0002-module-owned-error-contracts.md)가
@@ -549,14 +547,15 @@ E-code(외부 계약, `gatling-test`가 하드코딩) 전역 유일성은 `Error
 코드만 봐서는 알기 어려운 정책·설계 결정만 다룬다. 엔드포인트 목록은 Swagger(`/api/api-docs`)가,
 예매 실행 순서는 [core-booking-lifecycle.md](core-booking-lifecycle.md)가 원본이다.
 
-**인증**: 인증·인가와 그 조립은 전부 `security`가 소유한다 — 가입·로그인·갱신·로그아웃·탈퇴
+**인증**: 인증·인가와 그 조립은 `security`가 소유한다 — 로그인·갱신·OAuth2 코드 교환·로그아웃·탈퇴
 절차(`security.auth`), JWT 발급·검증(`security.jwt`), provider 응답 해석과 세션이 필요한
 `@Order(1)` OAuth2 filter chain(`security.oauth`), 토큰 계약과 refresh token 저장
 (`security.token`), stateless `@Order(2)` API filter chain·URL별 접근 정책·Authorization header
 해석·SecurityContext·MVC argument resolver(`security.http`)가 그렇다.
 
-**회원 테이블과 인증 데이터의 소유권은 member에 있다.** security는 `MemberAccountApi`
-공개 계약으로만 계정을 만진다 — 등록·자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴 다섯 가지이며,
+**회원 테이블과 인증 데이터의 소유권은 member에 있다.** 회원가입은 기존 URL인
+`POST /api/v1/auth/signup`에서 `member.endpoint`가 직접 받는다. security는 `MemberAccountApi`
+공개 계약으로만 계정을 만진다 — 자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴 네 가지이며,
 **비밀번호 해시는 member 밖으로 나가지 않는다.** 해싱과 일치 확인을 member가 직접 수행하므로
 `member -> security` 의존이 생기지 않는다. 의존 방향은 `security -> member -> shared`다.
 

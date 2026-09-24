@@ -127,10 +127,10 @@ bean, 검증 인터페이스, `Input`별 Validator, Bean Validation 교체, 커�
 `SeatStateSnapshotReader`가 첫 줄에 해당해 사라졌고
 (`PerformanceSeatRepositoryAdapter.findSeatStates`가 경계를 가져갔다),
 `SeatAvailabilitySnapshotReader`와 `OrderHoldSnapshotReader`는 둘째·셋째 줄에 해당해 남았다.
-회원 계정의 등록·비밀번호 인증·활성 조회·탈퇴는 각각 독립적인 트랜잭션 경계와 변경 이유가 있어
-`member.usecase`의 유스케이스가 소유한다. `MemberAccountFacade`는 다른 모듈에 공개한
-`MemberAccountApi`의 메서드를 해당 유스케이스에 연결하고 트랜잭션을 열지 않는다. 소셜 계정
-해석의 정책과 쓰기 트랜잭션은 `OAuth2MemberProvisioningService`가 소유한다.
+회원가입은 `RegisterMemberUseCase`가 쓰기 트랜잭션을 소유한다. 비밀번호 인증과 활성 조회는
+`MemberAccountService`가 각각 읽기 전용 트랜잭션에서 처리하고 `MemberAccountApi`를 구현한다.
+탈퇴의 쓰기 트랜잭션은 `WithdrawMemberUseCase`, 소셜 계정 연결의 정책과 쓰기 트랜잭션은
+`SocialAccountProvisioningService`가 소유하며, `MemberAccountService`가 두 서비스에 위임한다.
 
 **옮기기 전에 경계가 실제로 적용되는지 테스트로 확인한다.** 결과 값은 경계가 무너져도 그대로라
 행동 테스트로는 드러나지 않는다 — 실제 컨텍스트에서 Spring의 `TransactionAttributeSource`에 물어
