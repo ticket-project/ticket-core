@@ -1,5 +1,8 @@
 # 업무 예외는 HTTP 상태를 모른다 — 웹 계층이 상태를 정한다
 
+> 2026-09-24 갱신: E1000/E1001은 `security.exception`과 `SecurityExceptionHandler`가 소유한다.
+> `MemberExceptionHandler`는 회원 중복 이메일 오류만 처리한다. 예외가 HTTP 상태를 모르는 원칙은 유지한다.
+
 > 2026-09-19 갱신: 본문이 예로 든 `AdmissionExceptionHandler`는 없다. `booking`은 오류 계층 둘
 > (`BookingException`·`AdmissionTokenException`)을 갖지만 handler는 `BookingExceptionHandler` 하나가
 > 둘 다 잡는다 — "handler는 module에 하나"라는 규칙이 이겼다. 원칙 자체는 그대로다.

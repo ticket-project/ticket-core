@@ -4,6 +4,10 @@
 
 채택됨 (2026-09-15)
 
+> 2026-09-24 갱신: sealed module base 예외는 여러 구체 오류를 하나의 계층으로 묶을 때 유지한다.
+> `member`의 단일 중복 이메일 오류와 `security`의 인증·인가 오류는 `TicketException`을 직접 상속한다.
+> 아래 타입 수와 `MemberException` 설명은 당시 기록이다. JSpecify·NullAway 정책은 유지한다.
+
 > 2026-09-19 갱신: `TicketException`의 직접 하위 타입은 일곱이 아니라 여덟이다(흩어진 package가
 > 다섯인 것은 그대로). sealed와 exhaustive switch 결정 자체는 그대로다.
 

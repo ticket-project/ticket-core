@@ -4,6 +4,10 @@
 
 채택됨 (2026-09-14)
 
+> 2026-09-24 갱신: 회원가입은 `member.endpoint`와 `RegisterMemberUseCase`가 소유한다. 인증·활성 확인은
+> `MemberAccountService`가 `MemberAccountApi`를 직접 구현하며 읽기 전용 트랜잭션을 연다. 소셜 계정
+> 연결은 `SocialAccountProvisioningService`가 수행한다. 아래 2026-09-23 상태 설명은 당시 기록이다.
+
 > 2026-09-23 갱신: 아래의 `MemberAccountService` 얇은 위임 계층 설명은 당시 결정이다. 이후 계정
 > 연산이 한 클래스에 쌓여, 등록·비밀번호 인증·활성 조회·탈퇴의 정책과 트랜잭션을 각각의
 > `member.usecase`로 옮겼다. 공개 `MemberAccountApi` 계약은 유지하고 구현 이름은
