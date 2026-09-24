@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class GetSocialLoginUrlsUseCase {
-    private static final String AUTHORIZATION_BASE_URI = "/api/v1/auth/oauth2/authorize";
     private static final String GOOGLE_REGISTRATION_ID = "google";
     private static final String KAKAO_REGISTRATION_ID = "kakao";
 
@@ -27,7 +26,7 @@ public class GetSocialLoginUrlsUseCase {
     }
 
     private String buildSocialLoginUrl(final String baseUrl, final String registrationId) {
-        return baseUrl + AUTHORIZATION_BASE_URI + "/" + registrationId;
+        return baseUrl + OAuth2EndpointConstants.AUTHORIZATION_BASE_URI + "/" + registrationId;
     }
 
     /** baseUrl은 설정 값이 아니라 호출자가 현재 요청에서 만들어 넘기는 값이다({@code AuthController}). */
