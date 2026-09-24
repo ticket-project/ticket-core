@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.handler.MemberExceptionHandler;
 import com.ticket.member.usecase.GetCurrentMemberUseCase;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -30,7 +31,8 @@ class MemberControllerContractTest {
         MemberController controller = new MemberController(getCurrentMemberUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new MemberExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new MemberExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext()
