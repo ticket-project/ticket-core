@@ -21,6 +21,7 @@ import com.ticket.booking.selection.usecase.DeselectAllSeatsUseCase;
 import com.ticket.booking.selection.usecase.DeselectSeatUseCase;
 import com.ticket.booking.selection.usecase.SelectSeatUseCase;
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -38,7 +39,8 @@ class SeatSelectionControllerContractTest {
                 Mockito.mock(DeselectAllSeatsUseCase.class));
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new BookingExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));

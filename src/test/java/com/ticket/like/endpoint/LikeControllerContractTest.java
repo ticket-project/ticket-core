@@ -22,6 +22,7 @@ import com.ticket.like.usecase.AddLikeUseCase;
 import com.ticket.like.usecase.GetLikeStatusUseCase;
 import com.ticket.like.usecase.RemoveLikeUseCase;
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -38,7 +39,8 @@ class LikeControllerContractTest {
                 new LikeController(addLikeUseCase, Mockito.mock(RemoveLikeUseCase.class), getLikeStatusUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new LikeExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new LikeExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));

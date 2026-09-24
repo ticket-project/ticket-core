@@ -24,6 +24,7 @@ import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -38,7 +39,8 @@ class HoldControllerContractTest {
         HoldController controller = new HoldController(startBookingUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new BookingExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));
