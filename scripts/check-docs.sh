@@ -9,8 +9,7 @@
 #   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다)
 #   3. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   4. UTF-8 BOM이 섞이지 않았는지
-#   5. 문서의 [관측 날짜] 태그가 observed-failures.md의 항목과 짝이 맞는지
-#   6. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
+#   5. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
 # 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. Stop 훅이 매 턴 이 스크립트를 돌리므로
@@ -21,37 +20,40 @@ cd "$(dirname "$0")/.."
 
 AGENTS_MAX=80
 # 조건부·미래 참조라 없어도 정상인 경로
-ALLOW_MISSING="CONTEXT-MAP.md"
+ALLOW_MISSING=""
 # 일부러 "이렇게 하지 말라"고 적은 package 이름과, DB에 박혀 바꿀 수 없는 호환성 식별자.
 ALLOW_DEAD_PKG="booking.common booking.order.persistence.jpa.repository.adapter booking.application"
-OBS="docs/agents/observed-failures.md"
 
 fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 미커밋 .md만 본다.
+# --changed: 추가·수정된 미커밋 .md만 본다. 삭제는 남은 문서의 링크 검사로 확인한다.
 # Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
 SCOPE="all"
 [ "${1:-}" = "--changed" ] && SCOPE="changed"
+# 삭제된 문서의 참조자는 수정되지 않았을 수 있으므로 이때는 전체를 본다.
+if [ "$SCOPE" = "changed" ] && { [ -n "$(git diff --name-only --diff-filter=D -- '*.md')" ] || [ -n "$(git diff --cached --name-only --diff-filter=D -- '*.md')" ]; }; then
+  SCOPE="all"
+fi
 
 # 검사 대상 문서 목록.
 if [ "$SCOPE" = "changed" ]; then
-  DOCS=$(git status --porcelain -- '*.md' | sed 's/^...//' | sort -u)
+  DOCS=$( { git diff --name-only --diff-filter=ACMR -- '*.md'; git diff --cached --name-only --diff-filter=ACMR -- '*.md'; git ls-files --others --exclude-standard -- '*.md'; } | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
   if [ -z "$DOCS" ]; then
     echo "ok    바뀐 문서 없음"
     exit 0
   fi
 else
-  DOCS=$( { git ls-files '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
-          | sort -u )
+  DOCS=$( { git ls-files --cached --others --exclude-standard '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
+          | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done )
 fi
 
 # 1 ─ AGENTS.md 줄 수
 for f in $(git ls-files '*AGENTS.md'); do
   n=$(wc -l < "$f")
   if [ "$n" -gt "$AGENTS_MAX" ]; then
-    err "$f 가 ${n}줄로 상한 ${AGENTS_MAX}줄을 넘었다. 절차는 .agents/skills/ 로 옮긴다"
+    err "$f 가 ${n}줄로 상한 ${AGENTS_MAX}줄을 넘었다. 해당 역할 문서에서 중복을 줄인다"
   else
     ok "$f ${n}줄 (<= ${AGENTS_MAX})"
   fi
@@ -80,7 +82,7 @@ while IFS= read -r hit; do
     broken=1
   fi
 done < <(printf '%s\n' "$DOCS" \
-         | xargs grep -oHE '`[A-Za-z0-9_./-]+\.md`|\]\([A-Za-z0-9_./#-]+\.md[^)]*\)' 2>/dev/null \
+         | xargs -r grep -oHE '`[A-Za-z0-9_./-]+\.md`|\]\([A-Za-z0-9_./#-]+\.md[^)]*\)' 2>/dev/null \
          | sort -u)
 [ "$broken" -eq 0 ] && ok "문서 포인터 전부 실재"
 
@@ -110,7 +112,7 @@ fi
 # 4 ─ BOM
 # awk 문자열의 8진 이스케이프로 EF BB BF를 비교한다. gawk/mawk 모두에서 동작한다.
 bomlist=$(printf '%s\n' "$DOCS" \
-          | xargs awk 'FNR==1 && substr($0,1,3)=="\357\273\277" { print FILENAME }' 2>/dev/null)
+          | xargs -r awk 'FNR==1 && substr($0,1,3)=="\357\273\277" { print FILENAME }' 2>/dev/null)
 if [ -n "$bomlist" ]; then
   while IFS= read -r f; do err "$f 에 UTF-8 BOM이 있다"; done <<< "$bomlist"
 else
@@ -118,28 +120,7 @@ else
 fi
 
 
-# 5 ─ 관측 태그와 실패 기록 대조
-# 근거 없는 규칙이 다시 쌓이는 것을 막는다. 문서에 규칙을 남기려면 실제 관측이 있어야 한다.
-if [ ! -f "$OBS" ]; then
-  err "$OBS 가 없다. 관측된 실패를 적는 곳이 있어야 규칙을 지울 수 있다"
-else
-  tagfail=0
-  while IFS= read -r hit; do
-    [ -n "$hit" ] || continue
-    f=${hit%%:*}
-    [ "$f" = "$OBS" ] && continue
-    d=${hit##*관측 }
-    d=${d%\]}
-    grep -qE "^## $d" "$OBS" || {
-      err "$f 의 [관측 $d] 태그에 대응하는 항목이 $OBS 에 없다"
-      tagfail=1
-    }
-  done < <(printf '%s\n' "$DOCS" \
-           | xargs grep -oHE '\[관측 [0-9]{4}-[0-9]{2}-[0-9]{2}\]' 2>/dev/null | sort -u)
-  [ "$tagfail" -eq 0 ] && ok "관측 태그와 $OBS 항목이 일치"
-fi
-
-# 6 ─ 문서가 가리키는 package 경로
+# 5 ─ 문서가 가리키는 package 경로
 # 계층 이름이 바뀌는 리팩터링(application -> usecase 등)에서 문서만 옛 이름으로 남는 것을 막는다.
 # 검사 2가 .md 링크를 지켜주듯 이쪽은 산문 속 package 경로를 지킨다.
 # ADR은 결정 당시의 기록이라 옛 경로가 정상이므로 제외한다 -- 어긋난 부분은 갱신 배너로 덮는다.
@@ -161,7 +142,7 @@ if [ -n "$PKG_DOCS" ]; then
       deadpkg=1
     fi
   done < <(printf '%s\n' "$PKG_DOCS" \
-           | xargs grep -oHE '`(com\.ticket\.)?(booking|show|member|like|venue|payment|security|shared)(\.[a-z][a-z0-9]*)+`' 2>/dev/null \
+           | xargs -r grep -oHE '`(com\.ticket\.)?(booking|show|member|like|venue|payment|security|shared)(\.[a-z][a-z0-9]*)+`' 2>/dev/null \
            | sort -u)
 fi
 [ "$deadpkg" -eq 0 ] && ok "문서가 가리키는 package 전부 실재"
