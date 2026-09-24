@@ -5,7 +5,7 @@
  * 관한 코드인가"가 더 나은 탐색 단위다. 각 폴더 안에는 계층 폴더를 다시 만들지 않는다.
  *
  * <ul>
- *   <li>{@code auth} — 로그인·갱신·로그아웃·탈퇴 조립과 인증 Controller·요청·문서 타입
+ *   <li>{@code auth} — 로그인·갱신·OAuth2 코드 교환·로그아웃·탈퇴 조립과 인증 Controller·요청·문서 타입
  *   <li>{@code jwt} — JWT 생성·검증·서명키·설정
  *   <li>{@code oauth} — OAuth filter chain·handler·provider 통신·응답 해석·인증 코드·외부 unlink
  *   <li>{@code token} — 토큰 발급·검증 계약과 결과, refresh token 저장, UUID 생성 기반

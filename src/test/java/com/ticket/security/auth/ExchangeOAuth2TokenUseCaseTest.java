@@ -1,4 +1,4 @@
-package com.ticket.security.oauth;
+package com.ticket.security.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,6 +17,7 @@ import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.exception.MemberNotFoundException;
 import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.oauth.OAuth2AuthCodeStore;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 

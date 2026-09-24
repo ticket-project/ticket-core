@@ -6,8 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.oauth.ExchangeOAuth2TokenRequest;
-import com.ticket.security.oauth.ExchangeOAuth2TokenUseCase;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
