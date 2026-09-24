@@ -60,8 +60,7 @@ class MemberModuleTests {
 
     @Test
     void 계정_연산마다_읽기와_쓰기_트랜잭션을_구분한다() throws NoSuchMethodException {
-        assertThat(transactionAttribute(
-                                RegisterMemberUseCase.class, "execute", String.class, RawPassword.class, String.class)
+        assertThat(transactionAttribute(RegisterMemberUseCase.class, "execute", RegisterMemberUseCase.Input.class)
                         .isReadOnly())
                 .isFalse();
         assertThat(transactionAttribute(AuthenticateMemberUseCase.class, "execute", String.class, RawPassword.class)

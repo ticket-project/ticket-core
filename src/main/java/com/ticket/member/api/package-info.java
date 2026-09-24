@@ -1,7 +1,7 @@
 /**
  * member가 다른 module에 공개하는 계약이다.
  *
- * <p>행위 계약 둘: {@link com.ticket.member.api.MemberAccountApi}(등록·자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴)와
+ * <p>행위 계약 둘: {@link com.ticket.member.api.MemberAccountApi}(자격 증명 확인·활성 확인·소셜 계정 해석·탈퇴)와
  * {@link com.ticket.member.api.MemberLookupApi}(entity 대신 쓰는 회원 조회·활성 검증). 나머지는 그 계약이 주고받는 값이다.
  *
  * <p><b>비밀번호 해시는 이 계약을 통과하지 않는다.</b> 오가는 것은 {@link com.ticket.member.api.RawPassword}뿐이고 해싱과 일치 확인은 member 안에서 끝난다.

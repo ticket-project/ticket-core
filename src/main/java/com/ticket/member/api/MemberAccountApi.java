@@ -16,13 +16,6 @@ import java.util.Optional;
  * {@code NotFoundException}(404, E404)이다.
  */
 public interface MemberAccountApi {
-    /**
-     * 이메일·비밀번호 회원을 등록한다.
-     *
-     * @return 만들어진 회원 번호
-     */
-    Long register(String email, RawPassword password, String name);
-
     /** 이메일·비밀번호 자격 증명을 확인한다. 비밀번호 해시는 member 밖으로 나가지 않는다. */
     Optional<MemberStatus> authenticate(String email, RawPassword password);
 

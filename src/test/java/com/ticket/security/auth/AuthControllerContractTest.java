@@ -39,7 +39,6 @@ class AuthControllerContractTest {
     @BeforeEach
     void setUp() {
         AuthController controller = new AuthController(
-                Mockito.mock(RegisterMemberUseCase.class),
                 loginUseCase,
                 refreshAuthTokenUseCase,
                 exchangeOAuth2TokenUseCase,
