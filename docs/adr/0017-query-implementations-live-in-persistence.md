@@ -70,7 +70,7 @@ package-private helper 세 개(`QuerydslShowSortResolver`, `QuerydslShowCursorCo
   조회가 어디서 실행되는지만 한 단계 더 멀어진다.
 - **범용 조회 프레임워크(`BaseQuerydslRepository`, `QueryExecutor`)를 만든다.** 지금 문제는
   abstraction 부족이 아니라 경유 지점 과잉이다
-  ([readability-guidelines.md](../readability-guidelines.md) §11).
+  ([coding-guidelines.md](../coding-guidelines.md) §11).
 
 세 대안 모두 **경유 지점만 늘리고 "이 화면 값이 어느 query에서 나오는가"라는 물음에는 답을 더하지
 않는다.**
@@ -103,7 +103,7 @@ Repository에도 그대로 걸린다. `endpoint`가 use case를 건너뛰고 Rep
 ## 후속 메모 (2026-09-19)
 
 위 결정은 그대로 유효하다. 다만 그 뒤 조회 방침이 바뀌면서(Querydsl을 기본 선택으로 두지 않고,
-엔티티로 충분한 조회는 엔티티를 반환한다 — `docs/readability-guidelines.md` §10) 본문이 든 예시
+엔티티로 충분한 조회는 엔티티를 반환한다 — `docs/coding-guidelines.md` §10) 본문이 든 예시
 중 일부는 현재 코드에 없다.
 
 - **`ShowDetailView`(§배경)가 사라졌다.** `ShowQueryRepository`는 `findShow`(`Show` 엔티티)·

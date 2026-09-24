@@ -19,7 +19,7 @@ ADR 0006(A2)이 회차(Performance) 단위 예매 접수 기간·Hold 한도·�
   `SHOWS.sale_start_date`를 보지 않았으므로 처음부터 서로 다른 값이었다.
 
 어떤 ADR도 이 Show 단위 필드의 소유권을 다루지 않았다. 유일한 추적 지점은
-`docs/technical-debt.md`의 TD-12였고, 그마저도 "예매 가능 여부 판정 로직이 두 곳(실제로는 세
+과거 기술 부채 목록의 TD-12였고, 그마저도 "예매 가능 여부 판정 로직이 두 곳(실제로는 세
 곳)에 중복 구현됐다"는 증상만 기록했지 "왜 Show가 이 값을 갖는가"는 다루지 않았다.
 
 ## 결정
@@ -60,7 +60,7 @@ Show read model이 표현한다.** 이 둘은 이미 다른 데이터였으므�
 
 ## 근거
 
-- CONTEXT.md의 `PerformanceSalesPolicy` 정의가 이미 `_Avoid_: 이 정책을 Show가 갖는다는 서술`을
+- 당시 용어집(현재 [glossary.md](../glossary.md))의 `PerformanceSalesPolicy` 정의가 이미 `_Avoid_: 이 정책을 Show가 갖는다는 서술`을
   명시했다 — 이 ADR은 그 경계를 Show 쪽 이름에도 반영하는 것뿐이다.
 - `docs/architecture.md`의 View 규칙("조회 전용 `...View` 타입에 비즈니스 로직을 두지 않는다 —
   판정은 별도 validator/policy가 맡는다")에 따라 판정을 `DisplaySaleWindow`라는 값 객체로
@@ -70,4 +70,4 @@ Show read model이 표현한다.** 이 둘은 이미 다른 데이터였으므�
 
 - **행동 변화 1건**: `SaleDisplayStatus.CLOSED` 검색 필터에 표시 창이 null인 Show가 새로
   포함된다. seed·fixture 데이터는 두 값이 항상 채워져 있어 계약 테스트 응답 값은 바뀌지 않는다.
-- `docs/technical-debt.md`의 TD-12를 해소 처리한다.
+- 당시 기술 부채 목록의 TD-12를 해소 처리한다.

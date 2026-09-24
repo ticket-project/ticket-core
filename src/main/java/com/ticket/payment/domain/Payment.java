@@ -23,7 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Order에 대한 한 번의 결제 시도다(CONTEXT.md의 Payment, ADR 0005).
+ * Order에 대한 한 번의 결제 시도다(docs/glossary.md의 Payment, ADR 0005).
  *
  * <p>Order 하나에는 여러 Payment가 있을 수 있고(`1:0..N`), Payment 한 건이 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있다. {@code orderId}는
  * booking {@code Order}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다(ADR 0003, ADR 0005 §4).
