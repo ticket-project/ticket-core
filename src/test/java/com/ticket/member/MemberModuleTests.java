@@ -17,8 +17,8 @@ import org.springframework.transaction.interceptor.TransactionAttributeSource;
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.usecase.MemberAccountService;
-import com.ticket.member.usecase.OAuth2MemberProvisioningService;
 import com.ticket.member.usecase.RegisterMemberUseCase;
+import com.ticket.member.usecase.SocialAccountProvisioningService;
 import com.ticket.member.usecase.WithdrawMemberUseCase;
 
 /**
@@ -48,7 +48,7 @@ class MemberModuleTests {
                 .isTrue();
         assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class)))
                 .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class)))
+        assertThat(AopUtils.isAopProxy(context.getBean(SocialAccountProvisioningService.class)))
                 .isTrue();
     }
 
@@ -67,7 +67,7 @@ class MemberModuleTests {
                         .isReadOnly())
                 .isFalse();
         assertThat(transactionAttribute(
-                                OAuth2MemberProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
+                                SocialAccountProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
                         .isReadOnly())
                 .isFalse();
     }

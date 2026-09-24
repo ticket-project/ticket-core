@@ -26,7 +26,7 @@ public class MemberAccountService implements MemberAccountApi {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final OAuth2MemberProvisioningService oauth2MemberProvisioningService;
+    private final SocialAccountProvisioningService socialAccountProvisioningService;
     private final WithdrawMemberUseCase withdrawMemberUseCase;
 
     @Override
@@ -57,7 +57,7 @@ public class MemberAccountService implements MemberAccountApi {
 
     @Override
     public MemberStatus resolveSocialAccount(final SocialIdentity identity) {
-        final Member member = oauth2MemberProvisioningService.getOrCreateMember(identity);
+        final Member member = socialAccountProvisioningService.getOrCreateMember(identity);
         return statusOf(member);
     }
 

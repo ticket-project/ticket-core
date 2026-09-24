@@ -35,7 +35,7 @@ class MemberAccountServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private OAuth2MemberProvisioningService oauth2MemberProvisioningService;
+    private SocialAccountProvisioningService socialAccountProvisioningService;
 
     @Mock
     private WithdrawMemberUseCase withdrawMemberUseCase;
@@ -46,7 +46,7 @@ class MemberAccountServiceTest {
                 new SocialIdentity(SocialProvider.KAKAO, "kakao-1", "user@example.com", true, "홍길동");
         final Member member = Member.createSocialMember(Email.create("user@example.com"), "홍길동", Role.MEMBER);
         ReflectionTestUtils.setField(member, "id", 7L);
-        when(oauth2MemberProvisioningService.getOrCreateMember(identity)).thenReturn(member);
+        when(socialAccountProvisioningService.getOrCreateMember(identity)).thenReturn(member);
 
         final MemberStatus status = service().resolveSocialAccount(identity);
 
@@ -105,7 +105,7 @@ class MemberAccountServiceTest {
 
     private MemberAccountService service() {
         return new MemberAccountService(
-                memberRepository, passwordEncoder, oauth2MemberProvisioningService, withdrawMemberUseCase);
+                memberRepository, passwordEncoder, socialAccountProvisioningService, withdrawMemberUseCase);
     }
 
     private Member passwordMember() {
