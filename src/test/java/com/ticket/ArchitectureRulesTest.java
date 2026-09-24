@@ -91,7 +91,6 @@ class ArchitectureRulesTest {
     private static final Set<String> EXPOSED_NAMED_INTERFACES = Set.of(
             "like :: api",
             "member :: api",
-            "member :: exception",
             "security :: api",
             "shared :: api",
             "shared :: config",

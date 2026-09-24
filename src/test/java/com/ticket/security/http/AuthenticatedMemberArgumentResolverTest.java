@@ -11,7 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 
 class AuthenticatedMemberArgumentResolverTest {
     private final AuthenticatedMemberArgumentResolver resolver = new AuthenticatedMemberArgumentResolver();

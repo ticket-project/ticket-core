@@ -1,6 +1,7 @@
 package com.ticket.member.api;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 다른 module이 회원 계정을 다룰 때 쓰는 공개 계약이다. 회원 테이블과 인증 데이터의 소유권은 member에 있고, 인증 흐름을 조립하는 {@code security}는 이 계약으로만 계정을 만진다.
@@ -11,8 +12,8 @@ import java.util.List;
  * <p>entity·저장소·프레임워크 타입도 노출하지 않는다. 여기 오가는 값은 {@link RawPassword}, {@link SocialIdentity}, {@link MemberStatus},
  * {@link SocialAccountSnapshot}처럼 member가 소유한 공개 값뿐이다.
  *
- * <p>실패는 기존 오류 계약 그대로다 — 자격 증명 불일치·비활성 회원은 {@code UnauthenticatedException}(401, E1000), 중복 이메일은
- * {@code DuplicateEmailException}, 없는 회원은 {@code NotFoundException}(404, E404)이다.
+ * <p>자격 증명 불일치는 빈 결과로 돌려준다. 로그인 경계가 이를 인증 오류로 표현한다. 중복 이메일은 {@code DuplicateEmailException}, 없는 회원은
+ * {@code NotFoundException}(404, E404)이다.
  */
 public interface MemberAccountApi {
     /**
@@ -23,7 +24,7 @@ public interface MemberAccountApi {
     Long register(String email, RawPassword password, String name);
 
     /** 이메일·비밀번호 자격 증명을 확인한다. 비밀번호 해시는 member 밖으로 나가지 않는다. */
-    MemberStatus authenticate(String email, RawPassword password);
+    Optional<MemberStatus> authenticate(String email, RawPassword password);
 
     /** 지금도 활성 회원인지 확인하고 그 신원을 반환한다. 토큰만 유효하고 계정이 사라진 경우를 걸러내기 위해 토큰 갱신·코드 교환 흐름이 부른다. 존재하지 않거나 탈퇴한 회원이면 던진다. */
     MemberStatus getActiveIdentity(long memberId);

@@ -1,6 +1,7 @@
 package com.ticket.member.usecase;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,7 @@ public class MemberAccountFacade implements MemberAccountApi {
     }
 
     @Override
-    public MemberStatus authenticate(final String email, final RawPassword password) {
+    public Optional<MemberStatus> authenticate(final String email, final RawPassword password) {
         return authenticateMemberUseCase.execute(email, password);
     }
 

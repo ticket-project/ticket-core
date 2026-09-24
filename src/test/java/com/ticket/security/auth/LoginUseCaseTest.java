@@ -1,8 +1,11 @@
 package com.ticket.security.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.RawPassword;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 
@@ -35,7 +39,7 @@ class LoginUseCaseTest {
                 new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 1L);
 
         when(memberAccountApi.authenticate("user@example.com", RawPassword.create("password")))
-                .thenReturn(member);
+                .thenReturn(Optional.of(member));
         when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         LoginUseCase.Result result = useCase.execute(new LoginUseCase.Input("user@example.com", "password"));
@@ -49,5 +53,15 @@ class LoginUseCaseTest {
         assertThat(result.toString()).doesNotContain("access-token-value").doesNotContain("refresh-token-value");
         verify(memberAccountApi).authenticate("user@example.com", RawPassword.create("password"));
         verify(authTokenIssuer).issueTokens(1L, "MEMBER");
+    }
+
+    @Test
+    void credential_mismatch_is_authentication_failure() {
+        when(memberAccountApi.authenticate("user@example.com", RawPassword.create("wrong")))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> useCase.execute(new LoginUseCase.Input("user@example.com", "wrong")))
+                .isInstanceOf(UnauthenticatedException.class)
+                .hasMessage(UnauthenticatedException.MESSAGE);
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 
 public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
     @Override

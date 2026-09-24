@@ -20,7 +20,6 @@ import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
-import com.ticket.member.exception.UnauthenticatedException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +38,7 @@ class AuthenticateMemberUseCaseTest {
         when(passwordEncoder.matches("password123!", "encoded")).thenReturn(true);
 
         assertThat(useCase().execute("user@example.com", RawPassword.create("password123!")))
-                .isEqualTo(new MemberStatus(42L, true, "MEMBER"));
+                .contains(new MemberStatus(42L, true, "MEMBER"));
     }
 
     @Test
@@ -48,20 +47,18 @@ class AuthenticateMemberUseCaseTest {
         when(memberRepository.findActiveByEmail("user@example.com")).thenReturn(Optional.of(passwordMember()));
         when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
-        final UnauthenticatedException unknownAccount = catchUnauthenticated("missing@example.com", "wrong");
-        final UnauthenticatedException wrongPassword = catchUnauthenticated("user@example.com", "wrong");
-
-        assertThat(unknownAccount.getErrorCode()).isEqualTo(wrongPassword.getErrorCode());
-        assertThat(unknownAccount.getMessage()).isEqualTo(wrongPassword.getMessage());
-        assertThat(unknownAccount.getData()).isNull();
-        assertThat(wrongPassword.getData()).isNull();
+        assertThat(useCase().execute("missing@example.com", RawPassword.create("wrong")))
+                .isEmpty();
+        assertThat(useCase().execute("user@example.com", RawPassword.create("wrong")))
+                .isEmpty();
     }
 
     @Test
     void 없는_계정에도_타이밍_가드용_해싱을_수행한다() {
         when(memberRepository.findActiveByEmail("missing@example.com")).thenReturn(Optional.empty());
 
-        catchUnauthenticated("missing@example.com", "password123!");
+        assertThat(useCase().execute("missing@example.com", RawPassword.create("password123!")))
+                .isEmpty();
 
         verify(passwordEncoder).encode("timing-guard-dummy-password");
     }
@@ -72,17 +69,12 @@ class AuthenticateMemberUseCaseTest {
                 .thenReturn(
                         Optional.of(Member.createSocialMember(Email.create("social@example.com"), "홍길동", Role.MEMBER)));
 
-        assertThat(catchUnauthenticated("social@example.com", "password123!").getData())
-                .isNull();
+        assertThat(useCase().execute("social@example.com", RawPassword.create("password123!")))
+                .isEmpty();
     }
 
     private AuthenticateMemberUseCase useCase() {
         return new AuthenticateMemberUseCase(memberRepository, passwordEncoder);
-    }
-
-    private UnauthenticatedException catchUnauthenticated(final String email, final String password) {
-        return (UnauthenticatedException) org.assertj.core.api.Assertions.catchThrowable(
-                () -> useCase().execute(email, RawPassword.create(password)));
     }
 
     private Member passwordMember() {

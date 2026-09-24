@@ -20,8 +20,8 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
+import com.ticket.security.exception.UnauthenticatedException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")

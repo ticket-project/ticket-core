@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.exception.MemberNotFoundException;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 
