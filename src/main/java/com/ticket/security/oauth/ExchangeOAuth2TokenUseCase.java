@@ -8,6 +8,7 @@ import com.ticket.member.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,7 +61,12 @@ public class ExchangeOAuth2TokenUseCase {
         final Long memberId = oauth2AuthCodeStore
                 .consumeCode(input.code())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다."));
-        final MemberStatus member = memberAccountApi.getActiveIdentity(memberId);
+        final MemberStatus member;
+        try {
+            member = memberAccountApi.getActiveIdentity(memberId);
+        } catch (final NotFoundException exception) {
+            throw new UnauthenticatedException("유효하지 않거나 만료된 인증 코드입니다.");
+        }
         final IssuedAuthTokens result = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return new Result(
                 new Output(result.accessToken(), result.tokenType(), result.expiresIn(), result.memberId()),
