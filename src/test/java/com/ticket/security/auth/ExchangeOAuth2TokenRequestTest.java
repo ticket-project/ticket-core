@@ -1,4 +1,4 @@
-package com.ticket.security.oauth;
+package com.ticket.security.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

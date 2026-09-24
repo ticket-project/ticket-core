@@ -23,7 +23,6 @@ import com.ticket.member.exception.handler.MemberExceptionHandler;
 import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
-import com.ticket.security.oauth.ExchangeOAuth2TokenUseCase;
 import com.ticket.security.oauth.GetSocialLoginUrlsUseCase;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 

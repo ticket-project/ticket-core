@@ -1,10 +1,11 @@
-package com.ticket.security.oauth;
+package com.ticket.security.auth;
 
 import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.oauth.OAuth2AuthCodeStore;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 import com.ticket.shared.exception.InvalidRequestException;

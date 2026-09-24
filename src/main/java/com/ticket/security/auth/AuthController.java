@@ -14,8 +14,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.http.RefreshTokenCookieWriter;
-import com.ticket.security.oauth.ExchangeOAuth2TokenRequest;
-import com.ticket.security.oauth.ExchangeOAuth2TokenUseCase;
 import com.ticket.security.oauth.GetSocialLoginUrlsUseCase;
 import com.ticket.shared.web.ApiResponse;
 
