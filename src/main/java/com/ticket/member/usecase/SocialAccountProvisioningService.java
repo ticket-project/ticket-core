@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OAuth2MemberProvisioningService {
+public class SocialAccountProvisioningService {
     private final MemberRepository memberRepository;
 
     /**
