@@ -16,9 +16,7 @@ import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialIdentity;
-import com.ticket.member.usecase.AuthenticateMemberUseCase;
-import com.ticket.member.usecase.GetActiveMemberIdentityUseCase;
-import com.ticket.member.usecase.MemberAccountFacade;
+import com.ticket.member.usecase.MemberAccountService;
 import com.ticket.member.usecase.OAuth2MemberProvisioningService;
 import com.ticket.member.usecase.RegisterMemberUseCase;
 import com.ticket.member.usecase.WithdrawMemberUseCase;
@@ -46,16 +44,12 @@ class MemberModuleTests {
     void 계정_연산은_각_유스케이스의_트랜잭션_프록시를_통과한다() {
         assertThat(AopUtils.isAopProxy(context.getBean(RegisterMemberUseCase.class)))
                 .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(AuthenticateMemberUseCase.class)))
-                .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(GetActiveMemberIdentityUseCase.class)))
+        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountService.class)))
                 .isTrue();
         assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class)))
                 .isTrue();
         assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class)))
                 .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountFacade.class)))
-                .isFalse();
     }
 
     @Test
@@ -63,10 +57,10 @@ class MemberModuleTests {
         assertThat(transactionAttribute(RegisterMemberUseCase.class, "execute", RegisterMemberUseCase.Input.class)
                         .isReadOnly())
                 .isFalse();
-        assertThat(transactionAttribute(AuthenticateMemberUseCase.class, "execute", String.class, RawPassword.class)
+        assertThat(transactionAttribute(MemberAccountService.class, "authenticate", String.class, RawPassword.class)
                         .isReadOnly())
                 .isTrue();
-        assertThat(transactionAttribute(GetActiveMemberIdentityUseCase.class, "execute", long.class)
+        assertThat(transactionAttribute(MemberAccountService.class, "getActiveIdentity", long.class)
                         .isReadOnly())
                 .isTrue();
         assertThat(transactionAttribute(WithdrawMemberUseCase.class, "execute", long.class)
