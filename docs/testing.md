@@ -7,8 +7,7 @@
 [architecture.md](architecture.md), 예매 흐름은 [core-booking-lifecycle.md](core-booking-lifecycle.md),
 실행 환경은 [operations.md](operations.md)를 함께 본다.
 
-**무엇을 돌릴지 고르는 기준과 실행 명령, 결과 보고 규칙은 `/verify` 스킬이 원본이다**
-(`.agents/skills/verify/SKILL.md`). 핵심 규칙 하나 — 전체를 돌리는 것은 기본값이 아니다.
+검증 선택·실행 명령·결과 보고의 공통 기준은 이 문서다. 전체 테스트는 기본값이 아니며 변경 영향으로 선택한다.
 
 ## 단일 source set
 
@@ -60,7 +59,7 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 ## 구조 테스트
 
 모듈 경계와 의존 방향을 **실제로 강제하는** 테스트다. 구조를 건드렸다면 이것부터 돌린다
-(명령은 `/verify`).
+(명령은 아래 [변경별 검증](#변경별-검증)을 본다).
 
 | 테스트 | 고정하는 것 |
 | --- | --- |
@@ -159,8 +158,7 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 
 ## 통합 테스트와 E2E
 
-실제 인프라나 전체 컨텍스트가 필요한 검증이 여기 온다. 실행 조건과 Docker 주의는 `/verify`를
-본다.
+실제 인프라나 전체 컨텍스트가 필요한 검증이다. Testcontainers는 Docker가 필요하다.
 
 - `com.ticket.booking.concurrency.redis.CoreRedisIntegrationTest`: Redis key·TTL·expiration
   listener·분산락(Testcontainers)
@@ -227,7 +225,7 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   섞지 않는다.
 - 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `endpoint`,
   `UseCase.Input` 계약은 `usecase`, 업무 불변식은 `domain` 테스트다. 같은
-  규칙을 두 계층에서 동시에 고정하지 않는다. 기준은 [architecture.md의 계층별 검증 책임](architecture.md#계층별-검증-책임)을 본다.
+  규칙을 두 계층에서 동시에 고정하지 않는다. 계층의 책임은 [architecture.md](architecture.md#module-structure)를 본다.
 - 외부 오류 계약의 변경 영향을 분석할 때는 응답 구조·HTTP 상태·`error.code` 값에 대한 의존을
   구분하고, 소비자 소스의 실제 사용 지점을 확인한다. 응답 봉투를 사용한다는 사실만으로 특정
   오류 코드 값에 의존한다고 판단하지 않는다.
@@ -238,11 +236,27 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   `주문_생성_메서드는_트랜잭션으로_실행된다`(`PendingOrderCreatorTest`)가
   있다.
 
-## 무엇을 돌릴지
+## 변경별 검증
 
-이 결정은 `/verify` 스킬이 원본이다.
+실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을 실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
 
-## 결과를 보고할 때
+| 변경 범위 | 실행 기준 |
+| --- | --- |
+| 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*' -x seedTest`로 해당 모듈부터 |
+| 모듈·계층·Aggregate 경계 | `./gradlew test --tests 'com.ticket.ModularityTests' --tests 'com.ticket.ArchitectureRulesTest' --tests 'com.ticket.DomainIsolationTest' --tests 'com.ticket.AggregateAssociationTest' -x seedTest`와 관련 module test |
+| Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
+| 주문·hold·이벤트 흐름 | 관련 단위·Scenario·`com.ticket.bootstrap.booking.*E2ETest`(Docker 필요) |
+| DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트와 [운영 전환 조건](operations.md#db-마이그레이션) |
+| seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
+| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck test bootJar verifySeedNotInBootJar`(CI 기준) |
+| 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
 
-`/verify` 스킬의 "결과를 보고할 때"를 따른다. 돌리지 않은 범위를 밝히는 것과, 검증 실패 상태로
-커밋하지 않는 것이 핵심이다.
+`test`는 `seedTest`를 `finalizedBy`로 함께 실행한다. 서비스 테스트만 좁힐 때만 `-x seedTest`를 쓴다. `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
+
+## Core 부하 검증
+
+Core 용량은 `BookingCapacitySimulation`으로 좌석 상태 조회·선택·주문 생성을, 좌석 경합은 `SeatContentionSimulation`으로 같은 좌석의 hold/order 정합성을 측정한다. 전체 흐름은 `TicketOpenEndToEndSimulation`으로 Queue join/state/enter부터 admission token을 거쳐 확인한다. 실제 시나리오·feeder CSV·옵션·분산 실행 명령은 형제 [gatling-test README](../../gatling-test/README.md)가 원본이다. 이 저장소 단독 checkout에서는 형제 링크를 직접 확인해야 한다.
+
+전용 회차·좌석·회원과 중복 없는 토큰/feeder를 준비하고 [seed 사용법](../seed/README.md)을 확인한다. Ticket/Queue Redis를 분리하고 양쪽 access/admission secret을 일치시킨다. DIRECT/QUEUE 정책과 token 경로를 확인한다. `coreBaseUrl`·`queueBaseUrl`을 따로 지정해 잘못된 서버 호출을 막는다. 연속 실행 전 PENDING 주문 만료, hold TTL, 미완료 event publication, Queue entered marker가 정리됐는지 확인한다.
+
+성능 목표는 현재 Core에 대해 승인된 값이 없어 **미정**이다. 테스트 시작 전에 대상 URL·사용자 수·투입 시간·전용 performanceId와 판단 기준을 승인받는다. 운영 환경에는 직접 부하를 주지 않는다. 실패율·p95/p99·500 응답뿐 아니라 성공한 hold/order 수가 좌석 수를 넘지 않는지, admission 경로가 맞는지 확인한다. [운영 관측](operations.md#core-용량-관측)의 DB pool·Redis 지연·executor backlog도 함께 본다. 측정 가정, 예시 값, 실제 결과, 승인된 운영 설정을 구분한다. 개별 결과는 원본 리포트와 Issue/PR에 연결하고 중요한 설계 결정에만 ADR 근거로 쓴다. 비추적 리포트는 사용자 확인 없이 삭제·이동하지 않는다.

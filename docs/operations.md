@@ -1,9 +1,8 @@
 # 운영과 실행 기준
 
-이 문서는 로컬 실행, 프로파일, DB 마이그레이션, 배포, 관측 기준을 정리한다. 결정 배경은
+이 문서는 프로파일, DB 마이그레이션, 배포, 관측 기준을 정리한다. 기본 로컬 실행은 [README.md](../README.md)를 본다. 결정 배경은
 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)과
-[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md), 검증
-명령은 `/verify` 스킬이 원본이다.
+[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)다. 검증 선택과 명령은 [testing.md](testing.md#변경별-검증)를 본다.
 
 ## 기본 환경
 
@@ -15,56 +14,7 @@
 
 ## 로컬 실행
 
-Redis 실행:
-
-```bash
-docker run --name ticket-redis -p 6379:6379 -d redis:7
-```
-
-애플리케이션 실행:
-
-```bash
-./gradlew bootRun --args='--spring.profiles.active=local'
-```
-
-Windows PowerShell:
-
-```powershell
-.\gradlew.bat bootRun --args='--spring.profiles.active=local'
-```
-
-초기 데이터 적재(기동 완료 후):
-
-```powershell
-.\gradlew.bat seedLocal
-```
-
-```bash
-./gradlew seedLocal
-```
-
-**기동은 데이터를 넣지 않는다.** 순서는 `서버 기동 완료 → seedLocal → 개발·부하 테스트`이고,
-local 프로파일은 `ddl-auto: create`라 서버를 재시작하면 `seedLocal`을 다시 실행해야 한다.
-적재 대상·기본값·반복 실행 규칙은 [seed/README.md](../seed/README.md)가 원본이다.
-
-운영 Oracle에 같은 공용 시드를 넣는 명령은 `seedProd`다. 사람이 자기 PC에서 직접 실행하며
-접속 설정은 환경변수로만 넘긴다 — 사용법과 IntelliJ 실행 설정도 같은 문서가 원본이다.
-
-**단일 Gradle Spring Boot 프로젝트다.** `@SpringBootApplication`(`@Modulith`)과 `application*.yml`이
-루트 `src/main/resources`에 있으므로 `:core:core-api:bootRun` 같은 subproject 실행 명령은 없다.
-`application.yml`에 기본 프로파일이 없어 프로파일을 지정하지 않으면 datasource 설정이 비어
-기동에 실패한다. 시드는 애플리케이션 밖의 별도 source set(`seed/`)이라 `bootJar`에 들어가지
-않는다.
-
-Swagger:
-
-- `/api/swagger-ui.html`
-- `/api/api-docs`
-
-## 검증
-
-무엇을 돌릴지 고르는 표, 구조 테스트 명령, 통합 테스트 조건, 결과 보고 규칙은
-**`/verify` 스킬**이 원본이다. 여기 옮겨 적지 않는다.
+기본 기동·seed·접속 확인은 [README.md](../README.md), seed 상세 옵션은 [seed/README.md](../seed/README.md)를 따른다.
 
 ## 프로파일
 
@@ -145,7 +95,7 @@ admission token의 서명 secret, issuer, audience는 Core와 `ticket-queue` 두
 **분산락 작업 규칙**
 
 분산락은 `com.ticket.booking.concurrency.LockManager` 같은 명시적 포트 호출로 처리한다.
-포트·구현 클래스는 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드)를
+포트·구현 클래스는 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드와-운영-연결)를
 본다.
 
 - 락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다. 좌석 락은 Redis
@@ -355,7 +305,7 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 애플리케이�
 Redis 만료 처리와 달리 `applicationTaskExecutor`(Spring Boot 기본 비동기 executor)를 쓰므로
 위 executor 태그 목록에 잡히지 않는다. 이 경로의 적체는 `EVENT_PUBLICATION` 테이블의 PENDING/
 PROCESSING 건수와 `EventPublicationMaintenance`가 남기는 재시도 초과 로그로 확인한다. 상세는
-[core-booking-lifecycle.md](core-booking-lifecycle.md#운영-확인)를 본다.
+[core-booking-lifecycle.md](core-booking-lifecycle.md#이벤트-재시도와-보정)를 본다.
 
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`, `DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
 
@@ -395,25 +345,17 @@ ORDER BY waiting_sessions DESC;
 
 `v$session` 조회 권한은 애플리케이션 계정에 추가하지 말고 관측 전용 계정에만 부여한다.
 
-## 부하 테스트
+## 이벤트 publication 조사와 재처리
 
-예매 오픈 부하 테스트의 목적과 실행 절차는 [load-test.md](load-test.md)에 있다.
+`application.yml`은 publication 완료 기록을 archive하고 재시작 시 미완료 이벤트를 일괄 재발행하지 않는다. staleness 확인은 1분 간격이며 published 5분, processing·resubmitted 10분이 기준이다. `EventPublicationMaintenance`는 실패 건을 1분마다 batch 100건·동시 4건으로 재제출하고 `completionAttempts <= 10`만 자동 대상으로 삼는다. 완료 archive는 매일 03:00 KST에 30일 이전 기록을 정리한다. 실제 값 변경 시 설정과 구현을 함께 확인한다.
 
-실제 실행 프로젝트:
+`EventPublicationMaintenance`는 실패 publication을 주기적으로 재제출한다. 재시도 상한을 넘긴 `ERROR` 로그와 `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `COMPLETION_ATTEMPTS > 10`을 감시한다. `event_type`·`serialized_event`의 `orderId`/`holdKey`를 주문·좌석 상태와 대조해 코드 오류, Redis 장애, 과거 스키마의 payload 잘림 가능성을 구분한다. root V9 이전 `VARCHAR(255)`로 기록된 행은 잘렸을 수 있어 payload만 신뢰하지 않는다.
 
-- 형제 저장소 `../gatling-test/README.md`
-- 로컬 콘솔 `../gatling-test/console/README.md`
+원인이 해소되기 전에는 재제출을 강행하지 않는다. 이 저장소에는 재처리 전용 endpoint가 없다. DB 직접 수정 또는 임시 운영 스크립트가 필요할 수 있으나, 검증된 자동 복구 절차로 제공하지 않는다. 적용 전 대상 publication과 현재 주문·hold 상태, 백업·재시도·중복 처리 영향을 확인하고 운영 절차를 별도로 승인받는다. 업무 처리·멱등성 범위는 [예매 수명주기](core-booking-lifecycle.md#이벤트-재시도와-보정)를 본다.
 
-현재 Gatling 시나리오는 이 저장소가 아니라 형제 `gatling-test` 저장소에서 관리한다.
+## 부하 결과 관측
 
-연속 부하 테스트는 회차 ID만 바꾸는 것으로 격리되지 않는다. 다음 실행 전에는
-이전 실행의 PENDING 주문이 만료됐는지, Redis hold TTL이 끝났는지,
-`EVENT_PUBLICATION`의 PENDING/FAILED 건이 정리됐는지 같은 시간축으로 확인한다.
-
-```powershell
-cd ..\gatling-test
-.\gradlew.bat -p load-tests/gatling gatlingClasses
-```
+부하 목적·격리·판정은 [testing.md](testing.md#core-부하-검증), Gatling 옵션과 리포트 원본은 형제 [gatling-test README](../../gatling-test/README.md)를 따른다. 개별 측정은 Issue/PR과 원본 리포트에 남긴다. 부하 잔재와 비추적 결과 파일은 사용자 확인 없이 지우거나 옮기지 않는다.
 
 ## 운영 반영 시 주의점
 

@@ -167,53 +167,7 @@ WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새
 ## 이벤트 재시도와 보정
 
 `BookingEventListeners`의 실패는 Spring Modulith의 JPA Event Publication Registry가 관리한다.
-운영 정책(모든 profile 공통, `application.yml`):
-
-```yaml
-spring:
-  modulith:
-    events:
-      completion-mode: archive
-      republish-outstanding-events-on-restart: false
-      staleness:
-        check-interval: 1m
-        published: 5m
-        processing: 10m
-        resubmitted: 10m
-```
-
-`EventPublicationMaintenance`(`com.ticket.shared.config`)가 두 가지 주기 작업을 한다.
-
-| 작업 | 주기 | 동작 |
-| --- | --- | --- |
-| `resubmitFailed` | 1분(`fixedDelayString = "PT1M"`) | `FailedEventPublications.resubmit`을 batch 100건·동시 4건(`withMaxInFlight(4)`)으로 실행한다. `completionAttempts <= 10`인 publication만 대상이다 |
-| `purgeArchive` | 매일 03:00 KST(`cron = "0 0 3 * * *"`) | `CompletedEventPublications.deletePublicationsOlderThan(Duration.ofDays(30))`으로 30일이 지난 완료 publication을 지운다 |
-
-**10회를 초과해 계속 실패하는 publication은 자동 재제출 대상에서 제외되고 `ERROR` 레벨 구조화
-로그**(`eventPublicationId`, `completionAttempts`, `event` 포함)로 남는다. 이 로그가 수동 개입이
-필요하다는 신호다. 알림 채널에서 이 로그 패턴을 감시하고, 발견하면 수동 재처리 절차로 넘어간다.
-
-### 수동 재처리 절차
-
-1. `EventPublicationMaintenance.isRetryable`이 남긴 `ERROR` 로그 또는 `EVENT_PUBLICATION` /
-   `EVENT_PUBLICATION_ARCHIVE` 테이블에서 `COMPLETION_ATTEMPTS > 10`인 행을 찾는다.
-2. `event_type`과 `serialized_event`로 어떤 `OrderStarted`/`OrderTerminated`가 실패했는지, 어떤
-   `orderId`/`holdKey`에 해당하는지 확인한다. `serialized_event`는 root V9로 넓혀
-   (H2 `VARCHAR(4000)`, Oracle `VARCHAR2(4000 CHAR)`) 현실적인 주문 이벤트를 자르지 않고 담는다.
-   V9 이전에 저장된 행은 옛 `VARCHAR(255)`에서 잘렸을 수 있다 — 이 경우 `orderId`만으로도 booking
-   테이블에서 실제 주문/좌석 상태를 다시 조회할 수 있다(리스너 자체도 payload를 신뢰하지 않고
-   재조회한다).
-3. 근본 원인을 판단한다: listener 예외(코드 결함), 외부 의존성 장애(Redis 연결 등), 또는
-   `serialized_event` 크기 초과(V9 이전 스키마에서 다중 좌석 주문이면 발생했다. 배경은
-   [ADR 0003 §5](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry))로
-   나눈다.
-4. 원인이 해소됐다면 해당 publication의 `completion_attempts`를 초기화하거나 애플리케이션의
-   `FailedEventPublications` API를 관리 스크립트/actuator 경로로 다시 호출해 재제출 대상에
-   포함시킨다. 이 저장소는 아직 이 재처리를 자동화하는 전용 endpoint를 두지 않았다 — DB 직접
-   조작 또는 임시 운영 스크립트로 수행하고, 좌석/주문의 최종 상태와 어긋나지 않는지 반드시
-   확인한 뒤 반영한다.
-5. 원인이 해소되지 않았다면(예: payload 크기 초과가 반복되는 구조적 문제) 재제출을 강행하지
-   않고 별도 결정을 먼저 내린다.
+`EventPublicationMaintenance`가 실패 publication을 제한된 횟수로 재제출한다. 상한을 넘긴 건은 자동 처리에서 빠져 수동 조사가 필요하다. 동일 이벤트 재전달은 예상 경로이며, Redis 해제는 holdKey 소유권을 확인하고 발행은 최신 hold/selection을 재확인한다. 주기·상한·로그·수동 조사 조건은 [operations.md](operations.md#이벤트-publication-조사와-재처리)를 본다.
 
 ## TTL 폭주와 보정
 
@@ -240,48 +194,6 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
 **주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 이름이 붙은 전용 executor가 없다.**
 상세(어떤 executor를 쓰는지, 관측 지표)는 [operations.md의 Core 용량 관측](operations.md#core-용량-관측)를 본다.
 
-## 주요 코드
+## 주요 코드와 운영 연결
 
-- 예매 시작: `booking.order.usecase.StartBookingUseCase`(정책·입장·회원 확인부터 Redis
-  선점, 주문 생성, 실패 시 보상까지의 workflow를 조율한다. 검증 순서가 이 클래스에서 그대로 읽힌다)
-- 좌석 판매 가능 확인: `booking.order.usecase.BookingAvailabilityChecker`(짧은 읽기 트랜잭션)
-- 주문 DB 생성: `booking.order.usecase.PendingOrderCreator`(조립·저장·이력·이벤트가 한 트랜잭션)
-- 선점 이력 조립: `booking.order.usecase.OrderHoldHistoryRecorder`. `HoldHistory`와 저장 계약은
-  `booking.hold.domain`이 그대로 소유한다
-- 예매 정책 조회: `booking.salespolicy.domain.PerformanceSalesPolicy`(booking local
-  aggregate) / 표시 snapshot 조회: `show.api.PerformanceSaleCatalogApi`
-- 판매 좌석과 가격 원본: `booking.seat.domain.PerformanceSeat`
-  (`unitPrice`, `performanceGradeId`, `@Version`)
-- 주문 종료: `booking.order.usecase.OrderTerminationService`
-- 상태 전이 규칙: `booking.order.domain.Order`(confirm, expire, cancel),
-  `OrderState`(PENDING/CONFIRMED/EXPIRED/CANCELED)
-- 공개 이벤트: `booking.OrderStarted`, `booking.OrderTerminated`
-- 커밋 후 리스너: `booking.event.BookingEventListeners`,
-  `booking.order.usecase.OrderHoldSnapshotReader`(리스너가 쓸 DB 값을 짧은 읽기 트랜잭션에서 완성)
-- hold 생성/해제 후속 처리: `booking.event.HoldCreationCoordinator`,
-  `booking.event.HoldReleaseCoordinator`, `booking.event.HoldReleaseProgressRecorder`
-- 좌석 선택 조율과 발행: `booking.selection.usecase.SeatSelectionCoordinator`
-- 예매 정책 조회: `booking.salespolicy.usecase.PerformanceSaleFinder`
-- 대기열 입장 검증: `booking.admission.AdmissionGuard`(실제 token 검증은 `AdmissionVerifier`에 위임)
-- 취소 쓰기 트랜잭션: `booking.order.usecase.CancelOrderTransactionService`
-- hold 만료 키 처리: `booking.hold.persistence.HoldKeyExpirationHandler`
-- 만료 보정: `booking.order.usecase.ExpirePendingOrdersUseCase`
-- background 트리거: `booking.order.usecase.OrderExpirationTrigger`
-- Redis TTL 진입 제한: `booking.redis.RedisExpirationListenerConfig`
-- event publication 운영: `shared.config.EventPublicationMaintenance`
-- 분산락 포트: `booking.concurrency.LockManager`(잠글 대상은 `LockKey`/`LockScope` — 업무
-  의미만 담고 key 문자열은 담지 않는다, 획득 방식은 `LockOptions` — 대기 시간·임대 시간·실패 로그
-  수준), 구현: `booking.concurrency.redis.RedissonLockManager`(key 형식은
-  `RedissonLockKeyFormatter`). 적용 예: 동일 회원/공연 조합의 중복 주문 시작 방지
-  (`LockScope.ORDER_START`), 동일 좌석 동시 점유 방지(`LockScope.SEAT`)
-
-## 운영 확인
-
-- hikaricp_connections_pending이 지속적으로 0인지 확인한다.
-- redisExpirationSubscriptionExecutor, redisExpirationTaskExecutor의 active/queued 값을 본다.
-- `EventPublicationMaintenance.isRetryable`이 남기는 `ERROR` 로그(최대 재시도 초과)를 alert로
-  감시한다.
-- `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE` 테이블에서 오래 남아 있는 미완료 publication이
-  없는지 확인한다.
-- 같은 조건의 연속 부하 테스트 전에는 이전 회차의 PENDING 주문, hold TTL, 미완료 event
-  publication이 모두 정리됐는지 확인한다.
+`StartBookingUseCase`·`PendingOrderCreator`가 시작·저장과 실패 보상을, `OrderTerminationService`가 취소·만료를, `BookingEventListeners`가 커밋 후 처리를 맡는다. `SeatSelectionCoordinator`는 좌석 락 안에서 선택과 알림을 조율한다. `EventPublicationMaintenance`는 실패 publication 재시도를 맡는다. 상태·경합·재시도 검증은 [testing.md](testing.md), 수동 조사·복구와 상세 설정은 [operations.md](operations.md#이벤트-publication-조사와-재처리), 결정 배경은 [ADR](adr/README.md)을 본다.

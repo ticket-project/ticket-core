@@ -1,10 +1,10 @@
-# Ticket
+# 용어집
 
 공연·전시 티켓 예매 서비스의 도메인 용어집이다. 좌석을 고르고 잡아두고 주문으로 넘기는 과정의
-말을 여기서 정한다. 대기열 자체의 운영은 형제 저장소 `ticket-queue`가 맡는다.
+말을 여기서 정한다. 대기열 자체의 운영은 형제 저장소 `ticket-queue`가 맡는다. Payment·Ticket은 현재 모델과 스키마가 있으나 결제 승인·발권 실행 흐름은 아직 없다. 용어 정의는 구현 완료를 뜻하지 않는다.
 
 Bounded Context·Aggregate 경계, 모듈 경계와 코드 배치 기준은 전부
-[docs/architecture.md](docs/architecture.md)에 있다. 이 문서는 용어만 다룬다.
+[architecture.md](architecture.md)에 있다. 이 문서는 용어만 다룬다.
 
 ## Language
 
@@ -125,15 +125,6 @@ _Avoid_: 좋아요(도메인 용어는 찜으로 통일), Selection과 혼동, S
 서비스에 가입한 사용자다. 이메일 가입과 소셜 로그인 두 경로로 만들어진다. Member 1명은 Order
 여러 건(`1:0..N`)과 Ticket 여러 장(`1:0..N`)을 가질 수 있으며, 탈퇴해도 Order/Ticket은 삭제하지
 않는다.
-
-**회원 데이터의 소유자는 member 모듈이다.** 이메일, 비밀번호 해시, 역할, 소셜 연결
-(MemberSocialAccount), 탈퇴 상태가 여기에 속한다. **비밀번호 해시는 member 밖으로 나가지
-않는다** — 해싱과 일치 확인을 member가 직접 수행한다.
-
-**그 계정을 쓰는 인증 절차의 소유자는 security 모듈이다.** 가입·로그인·토큰 갱신·로그아웃·탈퇴
-절차, JWT 발급과 검증, OAuth2 provider 통신, refresh token 저장이 그렇다. security는 member가
-공개한 계정 연산(`MemberAccountApi`)으로만 계정을 만진다 — 등록, 자격 증명 확인, 활성
-확인, 소셜 신원 해석, 탈퇴 다섯 가지다.
 
 _Avoid_: 사용자, 고객, User, Customer, Account
 

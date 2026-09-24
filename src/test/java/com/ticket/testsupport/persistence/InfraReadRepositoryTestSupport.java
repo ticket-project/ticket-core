@@ -13,7 +13,7 @@ import com.ticket.venue.usecase.VenueLookupService;
  * Querydsl 조회 Repository 테스트의 베이스다.
  *
  * <p>venue 공개 계약({@code VenueLookupApi}/{@code VenueSeatLookupApi})의 구현을 빈으로 올린다 — 이 베이스를 쓰는 테스트가 그 계약을 주입받으면 없을 때 컨텍스트
- * 기동부터 실패한다(observed-failures 참고). 두 계약은 이제 {@link VenueRepositoryAdapter} 하나가 함께 구현한다.
+ * 기동부터 실패한다(관련 회귀 테스트 참고). 두 계약은 이제 {@link VenueRepositoryAdapter} 하나가 함께 구현한다.
  *
  * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQuerydslRepository}가 private 메서드로 갖는다.
  */

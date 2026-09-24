@@ -14,12 +14,11 @@ token을 검증해 예매 API 진입을 제어한다.
 - 주 저장소: RDB(로컬 H2 file, 운영 Oracle)와 Redis
 - Redis 용도: 좌석 선택, 좌석 hold, refresh token, OAuth2 1회용 code
 - 대기열 상태는 이 저장소가 아니라 `ticket-queue`가 관리한다
-- 모듈 경계, DAG, cross-module 참조 규칙은 [ADR 0003](docs/adr/0003-spring-modulith-application-module-boundaries.md)이 원본이다
+- 현재 구조와 모듈 경계는 [architecture.md](docs/architecture.md)를 본다
 
 ## 문서
 
-사람은 **[`CONTRIBUTING.md`](CONTRIBUTING.md)**, AI 에이전트와 코딩 도구는
-**[`AGENTS.md`](AGENTS.md)**에서 시작한다. 둘 다 규칙을 담지 않고 원본 문서를 가리키기만 한다.
+[기여 절차](CONTRIBUTING.md) · [에이전트 안내](AGENTS.md) · [용어집](docs/glossary.md) · [아키텍처](docs/architecture.md) · [코드 작성](docs/coding-guidelines.md) · [테스트](docs/testing.md) · [예매 수명주기](docs/core-booking-lifecycle.md) · [운영](docs/operations.md) · [ADR](docs/adr/README.md)
 
 ## 로컬 실행
 
@@ -68,4 +67,4 @@ Swagger UI: `/api/swagger-ui.html`, OpenAPI: `/api/api-docs`
 루트 `Dockerfile`은 `build/libs/*.jar`를 `app.jar`로 복사해 Java 25 JRE 이미지에서
 실행한다. 배포 워크플로는 `.github/workflows/deploy.yml`에 있다.
 
-`master` push는 곧 운영 배포다. 절차는 [`docs/operations.md`](docs/operations.md)를 따른다.
+`master`에 배포 workflow의 경로 무시 대상 외 변경을 push하면 운영 배포가 시작된다. `workflow_dispatch`도 배포를 시작할 수 있다. 절차는 [`docs/operations.md`](docs/operations.md)를 따른다.

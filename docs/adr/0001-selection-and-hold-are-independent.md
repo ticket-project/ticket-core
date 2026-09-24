@@ -1,5 +1,9 @@
 # Selection과 Hold를 독립으로 둔다
 
+## 상태
+
+채택·구현됨. Selection과 Hold의 독립성은 유지된다. 현재 예매 실행 흐름은 [예매 수명주기](../core-booking-lifecycle.md)를 본다. 아래 클래스 이름은 당시 구현 기록이며 갱신 메모가 현재 진입점을 가리킨다.
+
 > **구현 참조 갱신(2026-09-15):** `HoldSeatAvailabilityValidator`는
 > `com.ticket.booking.order.usecase.BookingAvailabilityChecker`로 흡수됐고, 주문 생성은
 > `com.ticket.booking.order.usecase.StartBookingUseCase` +
