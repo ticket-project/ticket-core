@@ -1,4 +1,4 @@
-package com.ticket.security.auth;
+package com.ticket.member.endpoint;
 
 import java.util.Objects;
 
@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.ticket.member.usecase.RegisterMemberUseCase;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

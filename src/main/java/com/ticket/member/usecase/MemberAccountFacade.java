@@ -18,16 +18,10 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class MemberAccountFacade implements MemberAccountApi {
-    private final RegisterMemberUseCase registerMemberUseCase;
     private final AuthenticateMemberUseCase authenticateMemberUseCase;
     private final GetActiveMemberIdentityUseCase getActiveMemberIdentityUseCase;
     private final OAuth2MemberProvisioningService oauth2MemberProvisioningService;
     private final WithdrawMemberUseCase withdrawMemberUseCase;
-
-    @Override
-    public Long register(final String email, final RawPassword password, final String name) {
-        return registerMemberUseCase.execute(email, password, name);
-    }
 
     @Override
     public Optional<MemberStatus> authenticate(final String email, final RawPassword password) {

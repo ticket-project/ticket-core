@@ -20,9 +20,6 @@ import com.ticket.member.domain.Role;
 @ExtendWith(MockitoExtension.class)
 class MemberAccountFacadeTest {
     @Mock
-    private RegisterMemberUseCase registerMemberUseCase;
-
-    @Mock
     private AuthenticateMemberUseCase authenticateMemberUseCase;
 
     @Mock
@@ -43,7 +40,6 @@ class MemberAccountFacadeTest {
         when(oauth2MemberProvisioningService.getOrCreateMember(identity)).thenReturn(member);
 
         final MemberStatus status = new MemberAccountFacade(
-                        registerMemberUseCase,
                         authenticateMemberUseCase,
                         getActiveMemberIdentityUseCase,
                         oauth2MemberProvisioningService,

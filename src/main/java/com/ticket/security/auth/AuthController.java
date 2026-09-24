@@ -25,18 +25,11 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController implements AuthControllerDocs {
-    private final RegisterMemberUseCase registerMemberUseCase;
     private final LoginUseCase loginUseCase;
     private final RefreshAuthTokenUseCase refreshAuthTokenUseCase;
     private final ExchangeOAuth2TokenUseCase exchangeOAuth2TokenUseCase;
     private final GetSocialLoginUrlsUseCase getSocialLoginUrlsUseCase;
     private final LogoutUseCase logoutUseCase;
-
-    @Override
-    @PostMapping("/signup")
-    public ApiResponse<RegisterMemberUseCase.Output> signUp(@RequestBody final RegisterMemberRequest request) {
-        return ApiResponse.success(registerMemberUseCase.execute(request.toInput()));
-    }
 
     @Override
     @PostMapping("/login")
