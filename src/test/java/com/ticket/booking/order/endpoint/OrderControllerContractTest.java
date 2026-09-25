@@ -29,6 +29,7 @@ import com.ticket.booking.order.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.order.usecase.GetOrderStatusUseCase;
 import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -47,7 +48,8 @@ class OrderControllerContractTest {
                 startBookingUseCase, getOrderDetailUseCase, cancelOrderUseCase, getOrderStatusUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new BookingExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));

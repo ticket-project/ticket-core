@@ -22,6 +22,7 @@ import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase.SeatStatus;
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -40,7 +41,8 @@ class PerformanceSeatQueryControllerContractTest {
                 getSeatAvailabilityUseCase, getSeatStatusUseCase, getPerformanceSeatMapUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new BookingExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new BookingExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER, null, java.util.List.of()));

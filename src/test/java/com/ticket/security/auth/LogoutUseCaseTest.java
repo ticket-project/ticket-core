@@ -12,8 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.member.exception.AuthorizationException;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthorizationException;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RefreshTokenStore;
 

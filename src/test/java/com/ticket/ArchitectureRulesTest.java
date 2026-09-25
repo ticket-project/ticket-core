@@ -91,7 +91,6 @@ class ArchitectureRulesTest {
     private static final Set<String> EXPOSED_NAMED_INTERFACES = Set.of(
             "like :: api",
             "member :: api",
-            "member :: exception",
             "security :: api",
             "shared :: api",
             "shared :: config",
@@ -273,7 +272,7 @@ class ArchitectureRulesTest {
      * 업무 쪽 코드가 <b>HTTP 표현·문서화 기술</b>을 직접 알지 않게 한다. 그 관심사는 {@code endpoint}가 소유한다.
      *
      * <p><b>Jackson({@code com.fasterxml.jackson..})은 일부러 뺐다.</b> 이 저장소는 use case의 중첩 record가 곧 최종 응답
-     * 항목이고({@code docs/readability-guidelines.md} §10-2), endpoint에 응답 DTO를 따로 두지 않는다. 그래서 공개 JSON 이름을 고정하는
+     * 항목이고({@code docs/coding-guidelines.md} §10-2), endpoint에 응답 DTO를 따로 두지 않는다. 그래서 공개 JSON 이름을 고정하는
      * {@code @JsonProperty}가 use case record에 붙는다 — show 5건, like 3건이 그렇고 전부 ADR 0007·0008이 "옛 JSON 이름을 유지한다"고 기록한 결정의
      * 결과다. 여기서 막으면 계층마다 DTO를 만들게 되어 §10-2를 정면으로 거스른다. Jackson을 걷어내려면 그 구조 결정을 먼저 뒤집어야 하고, 그것은 별도 결정이다.
      *

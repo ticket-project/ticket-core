@@ -15,7 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.exception.MemberNotFoundException;
+import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
@@ -68,5 +69,16 @@ class RefreshAuthTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
                 .isInstanceOf(UnauthenticatedException.class);
+    }
+
+    @Test
+    void withdrawn_member_cannot_refresh_tokens() {
+        AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
+        when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
+        when(memberAccountApi.getActiveIdentity(3L)).thenThrow(new MemberNotFoundException());
+
+        assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
+                .isInstanceOf(UnauthenticatedException.class)
+                .hasMessage(UnauthenticatedException.MESSAGE);
     }
 }

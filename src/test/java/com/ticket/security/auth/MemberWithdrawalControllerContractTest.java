@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.handler.MemberExceptionHandler;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
@@ -32,7 +33,8 @@ class MemberWithdrawalControllerContractTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new MemberWithdrawalController(withdrawCurrentMemberUseCase))
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
-                .setControllerAdvice(new GlobalExceptionHandler(), new MemberExceptionHandler())
+                .setControllerAdvice(
+                        new GlobalExceptionHandler(), new MemberExceptionHandler(), new SecurityExceptionHandler())
                 .build();
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(

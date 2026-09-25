@@ -12,12 +12,6 @@
 
 순차 번호를 쓴다. 새 ADR을 쓰기 전에 `docs/adr/`에서 가장 큰 번호를 찾아 그 다음 번호를 쓴다.
 
-## ADR 0004가 없는 이유
+## 탐색과 상태
 
-병렬 워크트리 하나가 2026-09-04 무렵 "ADR 0004(공통 코드/common codes)"를 작성하며 그 번호와
-untracked Flyway `V2__create_common_codes.sql`을 선점했다. 이후 다른 동시 작업과 충돌해 이 작업은
-중단됐고, 번호와 파일 모두 저장소에 반영되지 않았다. 남은 흔적은
-`docs/agents/observed-failures.md`의 "병렬 워크트리가 같은 module Flyway 버전 번호를 잡았다"
-기록뿐이다 — 무관하게 진행 중이던 Task 3/4의 `catalog` 모듈 `V2` 충돌을 다루며 "ADR 0004, 공통
-코드"의 untracked `V2__create_common_codes.sql`과도 겹쳤다고 적혀 있다. 다음 ADR은 0004를 건너뛰고
-0005부터 다시 쓴다.
+번호는 기존 기록을 유지한다(0004는 발행된 기록이 없다). 개별 ADR의 제안·채택·대체 상태와 대체 범위를 본문 근거로 확인한다. 채택은 구현 완료를 뜻하지 않는다. 현재 구조는 [architecture.md](../architecture.md), 현재 예매 동작은 [core-booking-lifecycle.md](../core-booking-lifecycle.md)를 확인한다. 과거 타입 이름과 당시 판단은 기록으로 남긴다.

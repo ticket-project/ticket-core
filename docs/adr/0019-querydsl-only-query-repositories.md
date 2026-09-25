@@ -11,7 +11,7 @@
 
 ADR 0017은 조회 구현을 `persistence`의 `*QueryRepository`로 모으고, 그 판별을 "`persistence`
 package + 이름이 `QueryRepository`로 끝남 + `JPAQueryFactory` 필드 보유"로 정했다. 그 뒤
-`docs/readability-guidelines.md` §10이 "Querydsl은 기본 선택이 아니다"를 세우면서 고정 조회가
+`docs/coding-guidelines.md` §10이 "Querydsl은 기본 선택이 아니다"를 세우면서 고정 조회가
 차례로 `@Query`와 파생 메서드로 내려갔다.
 
 그러자 **이름이 내용과 어긋났다.** 다섯 개의 `*QueryRepository` 중 셋에

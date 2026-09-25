@@ -4,6 +4,9 @@
 
 채택됨 (2026-09-15)
 
+> 2026-09-24 갱신: 인증·인가 오류를 security가 소유하면서 `member :: exception` named interface는
+> 제거했다. 공개면의 현재 목록은 `com.ticket.ArchitectureRulesTest`가 고정한다.
+
 > 2026-09-19 갱신: 공개된 named interface는 아홉이 아니라 열이다 — ADR 0018이 `shared :: jpa`를
 > 더했다. 목록의 원본은 `com.ticket.ArchitectureRulesTest`다.
 

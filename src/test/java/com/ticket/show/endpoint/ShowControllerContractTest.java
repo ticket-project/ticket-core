@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.handler.MemberExceptionHandler;
+import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 import com.ticket.show.domain.show.SaleDisplayStatus;
@@ -163,7 +164,10 @@ class ShowControllerContractTest {
         return MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(
-                        new GlobalExceptionHandler(), new ShowExceptionHandler(), new MemberExceptionHandler())
+                        new GlobalExceptionHandler(),
+                        new ShowExceptionHandler(),
+                        new MemberExceptionHandler(),
+                        new SecurityExceptionHandler())
                 .build();
     }
 

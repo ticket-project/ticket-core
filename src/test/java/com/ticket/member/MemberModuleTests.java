@@ -5,20 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.modulith.test.ApplicationModuleTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
 import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialIdentity;
-import com.ticket.member.usecase.AuthenticateMemberUseCase;
-import com.ticket.member.usecase.GetActiveMemberIdentityUseCase;
-import com.ticket.member.usecase.MemberAccountFacade;
-import com.ticket.member.usecase.OAuth2MemberProvisioningService;
+import com.ticket.member.usecase.MemberAccountService;
 import com.ticket.member.usecase.RegisterMemberUseCase;
+import com.ticket.member.usecase.SocialAccountProvisioningService;
 import com.ticket.member.usecase.WithdrawMemberUseCase;
 
 /**
@@ -31,6 +31,9 @@ import com.ticket.member.usecase.WithdrawMemberUseCase;
  */
 @ApplicationModuleTest(verifyAutomatically = false)
 class MemberModuleTests {
+    @MockitoBean
+    private RedissonClient redissonClient;
+
     @Autowired
     private ApplicationContext context;
 
@@ -41,35 +44,30 @@ class MemberModuleTests {
     void 계정_연산은_각_유스케이스의_트랜잭션_프록시를_통과한다() {
         assertThat(AopUtils.isAopProxy(context.getBean(RegisterMemberUseCase.class)))
                 .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(AuthenticateMemberUseCase.class)))
-                .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(GetActiveMemberIdentityUseCase.class)))
+        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountService.class)))
                 .isTrue();
         assertThat(AopUtils.isAopProxy(context.getBean(WithdrawMemberUseCase.class)))
                 .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(OAuth2MemberProvisioningService.class)))
+        assertThat(AopUtils.isAopProxy(context.getBean(SocialAccountProvisioningService.class)))
                 .isTrue();
-        assertThat(AopUtils.isAopProxy(context.getBean(MemberAccountFacade.class)))
-                .isFalse();
     }
 
     @Test
     void 계정_연산마다_읽기와_쓰기_트랜잭션을_구분한다() throws NoSuchMethodException {
-        assertThat(transactionAttribute(
-                                RegisterMemberUseCase.class, "execute", String.class, RawPassword.class, String.class)
+        assertThat(transactionAttribute(RegisterMemberUseCase.class, "execute", RegisterMemberUseCase.Input.class)
                         .isReadOnly())
                 .isFalse();
-        assertThat(transactionAttribute(AuthenticateMemberUseCase.class, "execute", String.class, RawPassword.class)
+        assertThat(transactionAttribute(MemberAccountService.class, "authenticate", String.class, RawPassword.class)
                         .isReadOnly())
                 .isTrue();
-        assertThat(transactionAttribute(GetActiveMemberIdentityUseCase.class, "execute", long.class)
+        assertThat(transactionAttribute(MemberAccountService.class, "getActiveIdentity", long.class)
                         .isReadOnly())
                 .isTrue();
         assertThat(transactionAttribute(WithdrawMemberUseCase.class, "execute", long.class)
                         .isReadOnly())
                 .isFalse();
         assertThat(transactionAttribute(
-                                OAuth2MemberProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
+                                SocialAccountProvisioningService.class, "getOrCreateMember", SocialIdentity.class)
                         .isReadOnly())
                 .isFalse();
     }

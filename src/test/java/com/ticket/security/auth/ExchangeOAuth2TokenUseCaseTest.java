@@ -1,4 +1,4 @@
-package com.ticket.security.oauth;
+package com.ticket.security.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -15,7 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.member.exception.MemberNotFoundException;
+import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.oauth.OAuth2AuthCodeStore;
 import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
 
@@ -64,5 +66,15 @@ class ExchangeOAuth2TokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(new ExchangeOAuth2TokenUseCase.Input("invalid")))
                 .isInstanceOf(UnauthenticatedException.class);
+    }
+
+    @Test
+    void withdrawn_member_cannot_exchange_code() {
+        when(oauth2AuthCodeStore.consumeCode("oauth-code")).thenReturn(Optional.of(7L));
+        when(memberAccountApi.getActiveIdentity(7L)).thenThrow(new MemberNotFoundException());
+
+        assertThatThrownBy(() -> useCase.execute(new ExchangeOAuth2TokenUseCase.Input("oauth-code")))
+                .isInstanceOf(UnauthenticatedException.class)
+                .hasMessage(UnauthenticatedException.MESSAGE);
     }
 }

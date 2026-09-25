@@ -1,10 +1,11 @@
-package com.ticket.security.auth;
+package com.ticket.member.endpoint;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticket.member.usecase.RegisterMemberUseCase;
 
 class RegisterMemberRequestTest {
     private final ObjectMapper objectMapper = new ObjectMapper();

@@ -1,6 +1,7 @@
 package com.ticket.member.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,12 +14,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.api.RawPassword;
 import com.ticket.member.domain.Email;
 import com.ticket.member.domain.EncodedPassword;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
+import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -38,15 +39,25 @@ class RegisterMemberUseCaseTest {
             return member;
         });
 
-        final Long memberId = new RegisterMemberUseCase(memberRepository, passwordEncoder)
-                .execute("  user@example.com  ", RawPassword.create("password123!"), "홍길동");
+        final RegisterMemberUseCase.Output output = new RegisterMemberUseCase(memberRepository, passwordEncoder)
+                .execute(new RegisterMemberUseCase.Input("  user@example.com  ", "password123!", "홍길동"));
 
         final ArgumentCaptor<Member> saved = ArgumentCaptor.forClass(Member.class);
         verify(memberRepository).save(saved.capture());
-        assertThat(memberId).isEqualTo(11L);
+        assertThat(output.memberId()).isEqualTo(11L);
         assertThat(saved.getValue().getEmail()).isEqualTo(Email.create("user@example.com"));
         assertThat(saved.getValue().getEncodedPassword()).isEqualTo(EncodedPassword.create("encoded-password"));
         assertThat(saved.getValue().getName()).isEqualTo("홍길동");
         assertThat(saved.getValue().getRole()).isEqualTo(Role.MEMBER);
+    }
+
+    @Test
+    void 필수값이_없으면_회원가입_입력을_거부한다() {
+        assertThatThrownBy(() -> new RegisterMemberUseCase.Input("", "password123!", "홍길동"))
+                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new RegisterMemberUseCase.Input("user@example.com", "", "홍길동"))
+                .isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> new RegisterMemberUseCase.Input("user@example.com", "password123!", ""))
+                .isInstanceOf(InvalidRequestException.class);
     }
 }

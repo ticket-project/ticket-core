@@ -13,7 +13,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
-import com.ticket.member.exception.AuthorizationException;
+import com.ticket.security.exception.AuthorizationException;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
             final AccessDeniedException accessDeniedException)
             throws IOException, ServletException {
         final AuthorizationException error = new AuthorizationException();
-        // MemberExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
+        // SecurityExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
         // 거치지 않으므로 여기서 다시 정한다.
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

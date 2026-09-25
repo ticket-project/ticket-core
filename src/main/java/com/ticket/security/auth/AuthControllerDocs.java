@@ -6,8 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.oauth.ExchangeOAuth2TokenRequest;
-import com.ticket.security.oauth.ExchangeOAuth2TokenUseCase;
 import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,17 +21,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @Tag(name = "인증(Auth)", description = "회원가입, 로그인, 토큰 재발급, 로그아웃, 소셜 로그인 관련 API")
 public interface AuthControllerDocs {
-    @Operation(summary = "회원가입", description = "이메일, 비밀번호, 이름으로 회원가입합니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "요청값이 올바르지 않음"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 가입된 이메일")
-            })
-    ApiResponse<RegisterMemberUseCase.Output> signUp(@Valid RegisterMemberRequest request);
-
     @Operation(
             summary = "로그인",
             description = "이메일과 비밀번호로 로그인하고 Access Token을 응답으로 반환합니다. Refresh Token은 HttpOnly " + "쿠키로 설정됩니다.")

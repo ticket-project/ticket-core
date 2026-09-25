@@ -4,6 +4,10 @@
 
 채택됨 (2026-09-13)
 
+> 2026-09-24 갱신: E1000/E1001은 `security.exception`으로 옮겼고 `member :: exception` 공개면은
+> 제거했다. 비밀번호 인코더 설정은 사용처를 따라 `member.config`가 소유한다. 아래의 옛 경로와
+> 공개면 설명은 당시 기록이다.
+
 > 2026-09-14 갱신: "JWT 발급·검증, 로그인·로그아웃·refresh, OAuth2 provider 구현은 member가
 > 소유한다"는 부분은 [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이
 > 대체한다 — 인증 흐름의 조립은 모두 security가 소유하고, member는 회원 데이터와

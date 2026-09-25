@@ -1,6 +1,6 @@
 package com.ticket.security.token;
 
-import com.ticket.member.exception.UnauthenticatedException;
+import com.ticket.security.exception.UnauthenticatedException;
 
 import lombok.EqualsAndHashCode;
 

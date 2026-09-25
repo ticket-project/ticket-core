@@ -848,10 +848,7 @@ class ShowQuerydslRepositoryTest {
         assertThat(result.items()).extracting(Show::getTitle).containsExactly("Soon Near");
     }
 
-    /**
-     * 오픈 예정 요약(배너)만 GROUP BY가 아니라 {@code distinct}로 장르 조인의 행 중복을 없앤다. 두 방식을 통일하지 않는 이유는 readability-guidelines 14항에 있다.
-     * 여기서는 지금 동작을 고정만 한다.
-     */
+    /** 오픈 예정 요약은 {@code distinct}로 장르 조인 중복을 제거한다. GROUP BY와 교체하지 않고 현재 동작을 고정한다({@code docs/coding-guidelines.md}). */
     @Test
     void 오픈_예정_요약은_장르가_여러_개여도_한_번만_나온다() {
         final Show soon = persistShow(
