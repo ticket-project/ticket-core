@@ -2,11 +2,12 @@
 # 에이전트 문서 구조를 검증한다. CI와 로컬에서 같은 명령으로 돌린다.
 #
 #   bash scripts/check-docs.sh             전체 (CI)
-#   bash scripts/check-docs.sh --changed   미커밋 .md만 본다 (Stop 훅)
+#   bash scripts/check-docs.sh --changed   미커밋 .md를 본다. 삭제·rename이면 전체 참조 검사 (Stop 훅)
 #
 # 검사 항목
 #   1. AGENTS.md 줄 수 상한 (진입점이 다시 불어나는 것을 막는다)
-#   2. 문서가 가리키는 다른 문서(.md)가 실재하는지 (없는 파일을 읽으라는 지시를 막는다)
+#   2. Markdown 클릭 링크는 문서 위치 기준, backtick 저장소 경로는 문서·루트 기준으로 실재하는지
+#      (.md 파일 대상만 검사하며 #anchor와 외부 URL은 검사하지 않는다)
 #   3. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
 #   4. UTF-8 BOM이 섞이지 않았는지
 #   5. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
@@ -28,12 +29,12 @@ fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 추가·수정된 미커밋 .md만 본다. 삭제는 남은 문서의 링크 검사로 확인한다.
+# --changed: 추가·수정된 미커밋 .md만 본다. 삭제·rename은 남은 문서의 링크 검사로 확인한다.
 # Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
 SCOPE="all"
 [ "${1:-}" = "--changed" ] && SCOPE="changed"
-# 삭제된 문서의 참조자는 수정되지 않았을 수 있으므로 이때는 전체를 본다.
-if [ "$SCOPE" = "changed" ] && { [ -n "$(git diff --name-only --diff-filter=D -- '*.md')" ] || [ -n "$(git diff --cached --name-only --diff-filter=D -- '*.md')" ]; }; then
+# 삭제·rename된 문서의 참조자는 수정되지 않았을 수 있으므로 staged/unstaged 모두 전체를 본다.
+if [ "$SCOPE" = "changed" ] && { [ -n "$(git diff -M --name-only --diff-filter=DR -- '*.md')" ] || [ -n "$(git diff --cached -M --name-only --diff-filter=DR -- '*.md')" ]; }; then
   SCOPE="all"
 fi
 
@@ -61,61 +62,110 @@ done
 
 # 2 ─ 문서 포인터
 broken=0
+mapfile -t doc_files <<< "$DOCS"
+if ! hits=$(awk '
+  FNR==1 { fenced=0 }
+  /^[[:space:]]*(```|~~~)/ { fenced=!fenced; next }
+  !fenced {
+    line=$0
+    if (FILENAME !~ /^docs\/adr\//) while (match(line, /`[A-Za-z0-9_./-]+\.md`/)) {
+      print FILENAME ":" substr(line, RSTART, RLENGTH)
+      line=substr(line, RSTART + RLENGTH)
+    }
+    line=$0
+    while (match(line, /\]\([A-Za-z0-9_./#-]+\.md[^)]*\)/)) {
+      print FILENAME ":" substr(line, RSTART, RLENGTH)
+      line=substr(line, RSTART + RLENGTH)
+    }
+  }
+' "${doc_files[@]}" | sort -u); then
+  err "문서 포인터 검사 도구 실행 실패"
+  broken=1
+  hits=""
+fi
 while IFS= read -r hit; do
   [ -n "$hit" ] || continue
   f=${hit%%:*}
   p=${hit#*:}
+  case "$p" in "]("*) is_link=1 ;; *) is_link=0 ;; esac
   p=${p#\`}; p=${p%\`}
   p=${p#](}; p=${p%)}
   p=${p%%#*}
   [ -n "$p" ] || continue
   case " $ALLOW_MISSING " in *" $p "*) continue ;; esac
-  # 형제 저장소 문서는 통합 workspace에서는 확인할 수 있지만, 이 저장소만 checkout하는 CI에는 없다.
-  case "$p" in
-    ../gatling-test/*|../../gatling-test/*|../../../gatling-test/*) continue ;;
-    ../ticket-queue/*|../../ticket-queue/*|../../../ticket-queue/*) continue ;;
-  esac
+  # backtick의 형제 저장소 경로 안내는 단독 checkout에서 확인할 수 없다. 클릭 링크에는 예외를 두지 않는다.
+  if [ "$is_link" -eq 0 ]; then
+    case "$p" in
+      ../gatling-test/*|../../gatling-test/*|../../../gatling-test/*) continue ;;
+      ../ticket-queue/*|../../ticket-queue/*|../../../ticket-queue/*) continue ;;
+    esac
+  fi
   # dirname을 부르지 않는다. 히트 102개 기준으로 프로세스 생성만 22초가 든다.
   if [ "${f#*/}" = "$f" ]; then d="."; else d="${f%/*}"; fi
-  if [ ! -e "$d/$p" ] && [ ! -e "$p" ]; then
+  if { [ "$is_link" -eq 1 ] && [ ! -e "$d/$p" ]; } || { [ "$is_link" -eq 0 ] && [ ! -e "$d/$p" ] && [ ! -e "$p" ]; }; then
     err "$f 가 없는 경로를 가리킨다 -> $p"
     broken=1
   fi
-done < <(printf '%s\n' "$DOCS" \
-         | xargs -r grep -oHE '`[A-Za-z0-9_./-]+\.md`|\]\([A-Za-z0-9_./#-]+\.md[^)]*\)' 2>/dev/null \
-         | sort -u)
+done <<< "$hits"
 [ "$broken" -eq 0 ] && ok "문서 포인터 전부 실재"
 
 # 3 ─ 스킬 프론트매터
 if [ -d .agents/skills ]; then
-  skills=$(find -L .agents/skills -name 'SKILL.md')
-  skillcount=$(printf '%s\n' "$skills" | grep -c . )
-  # 파일마다 head/sed/grep을 부르는 대신 awk 한 번으로 프론트매터를 본다.
-  fmbad=$(printf '%s\n' "$skills" | xargs awk '
-      FNR==1 { infm=0; hasname=0; hasdesc=0; opened=($0=="---") }
-      FNR==1 && !opened { print FILENAME "\t프론트매터가 없다"; nextfile }
-      FNR>1 && $0=="---" && !infm { infm=1 }
-      FNR>1 && !infm && /^name:/ { hasname=1 }
-      FNR>1 && !infm && /^description:/ { hasdesc=1 }
-      ENDFILE {
-        if (opened && !hasname) print FILENAME "\t프론트매터에 name이 없다"
-        if (opened && !hasdesc) print FILENAME "\t프론트매터에 description이 없다"
+  skill_list_failed=0
+  if ! skills=$(find -L .agents/skills -name 'SKILL.md'); then
+    err "스킬 목록 검사 도구 실행 실패"
+    skill_list_failed=1
+    skills=""
+  fi
+  if [ -n "$skills" ]; then
+    mapfile -t skill_files <<< "$skills"
+    skillcount=${#skill_files[@]}
+    for f in "${skill_files[@]}"; do [ -s "$f" ] || err "$f 프론트매터가 없다"; done
+    # ENDFILE은 awk 구현마다 다르므로 다음 파일의 첫 줄과 END에서 직전 파일을 판정한다.
+    skill_tool_failed=0
+    if ! fmbad=$(awk '
+      function finish() {
+        if (!opened) { print previous "\t프론트매터가 없다"; return }
+        if (!closed) print previous "\t프론트매터 닫힘 구분자가 없다"
+        if (!hasname) print previous "\t프론트매터에 name이 없다"
+        if (!hasdesc) print previous "\t프론트매터에 description이 없다"
       }
-    ' 2>/dev/null)
+      FNR==1 {
+        if (seen) finish()
+        seen=1; previous=FILENAME; opened=($0=="---"); closed=0; hasname=0; hasdesc=0
+        next
+      }
+      opened && !closed && $0=="---" { closed=1; next }
+      opened && !closed && /^name:[[:space:]]*[^[:space:]]/ { hasname=1 }
+      opened && !closed && /^description:[[:space:]]*[^[:space:]]/ { hasdesc=1 }
+      END { if (seen) finish() }
+    ' "${skill_files[@]}"); then
+      err "스킬 프론트매터 검사 도구 실행 실패"
+      skill_tool_failed=1
+      fmbad=""
+    fi
+  else
+    skillcount=0
+    fmbad=""
+    skill_tool_failed=0
+  fi
   if [ -n "$fmbad" ]; then
     while IFS=$'\t' read -r f msg; do err "$f $msg"; done <<< "$fmbad"
-  else
+  elif [ "$skill_tool_failed" -eq 0 ] && [ "$skill_list_failed" -eq 0 ]; then
     ok "스킬 프론트매터 검사 완료 (${skillcount}개)"
   fi
 fi
 
 # 4 ─ BOM
 # awk 문자열의 8진 이스케이프로 EF BB BF를 비교한다. gawk/mawk 모두에서 동작한다.
-bomlist=$(printf '%s\n' "$DOCS" \
-          | xargs -r awk 'FNR==1 && substr($0,1,3)=="\357\273\277" { print FILENAME }' 2>/dev/null)
+if ! bomlist=$(awk 'FNR==1 && substr($0,1,3)=="\357\273\277" { print FILENAME }' "${doc_files[@]}"); then
+  err "BOM 검사 도구 실행 실패"
+  bom_error=1
+  bomlist=""
+fi
 if [ -n "$bomlist" ]; then
   while IFS= read -r f; do err "$f 에 UTF-8 BOM이 있다"; done <<< "$bomlist"
-else
+elif [ "${bom_error:-0}" -eq 0 ]; then
   ok "BOM 없음"
 fi
 
@@ -127,8 +177,24 @@ fi
 # ponytail: package 경로만 본다. 타입 이름은 stdlib/enum 값/역할 이름 오탐이 많아 allowlist 관리 비용이
 # 검사 가치를 넘는다. 필요해지면 그때 넓힌다.
 deadpkg=0
-PKG_DOCS=$(printf '%s\n' "$DOCS" | grep -v '^docs/adr/')
-if [ -n "$PKG_DOCS" ]; then
+pkg_files=()
+for f in "${doc_files[@]}"; do
+  case "$f" in docs/adr/*) ;; *) pkg_files+=("$f") ;; esac
+done
+if [ "${#pkg_files[@]}" -gt 0 ]; then
+  if ! pkg_hits=$(awk '
+    {
+      line=$0
+      while (match(line, /`(com\.ticket\.)?(booking|show|member|like|venue|payment|security|shared)(\.[a-z][a-z0-9]*)+`/)) {
+        print FILENAME ":" substr(line, RSTART, RLENGTH)
+        line=substr(line, RSTART + RLENGTH)
+      }
+    }
+  ' "${pkg_files[@]}" | sort -u); then
+    err "package 경로 검사 도구 실행 실패"
+    deadpkg=1
+    pkg_hits=""
+  fi
   while IFS= read -r hit; do
     [ -n "$hit" ] || continue
     f=${hit%%:*}
@@ -141,9 +207,7 @@ if [ -n "$PKG_DOCS" ]; then
       err "$f 가 없는 package를 가리킨다 -> $p"
       deadpkg=1
     fi
-  done < <(printf '%s\n' "$PKG_DOCS" \
-           | xargs -r grep -oHE '`(com\.ticket\.)?(booking|show|member|like|venue|payment|security|shared)(\.[a-z][a-z0-9]*)+`' 2>/dev/null \
-           | sort -u)
+  done <<< "$pkg_hits"
 fi
 [ "$deadpkg" -eq 0 ] && ok "문서가 가리키는 package 전부 실재"
 
