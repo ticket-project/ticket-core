@@ -35,14 +35,14 @@
 
 ~~~text
 StartBookingUseCase          (POST /api/v1/orders)
-  -> LockScope.ORDER_START 락(같은 회원·회차 직렬화)
+  -> LockScope.ORDER_START 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
   -> salespolicy PerformanceSaleFinder.requirePolicy: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) 조회 (밖)
   -> admission AdmissionGuard.verifyIfRequired: 대기열 필요 회차만 token 검증 (밖)
   -> member MemberLookupApi: active member 확인 (밖)
   -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
   -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
      show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
-  -> LockScope.SEAT 락 안에서 HoldManager로 Redis 좌석 hold 생성 (밖)
+  -> LockScope.SEAT 락 안에서 HoldManager로 Redis 좌석 hold 생성 후 락 해제 (밖)
   -> PendingOrderCreator
        -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
           단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (ADR 0005, 다른 값을 섞지 않는다)
@@ -62,8 +62,11 @@ StartBookingUseCase          (POST /api/v1/orders)
             -> HELD 상태 발행             (WebSocket)
 ~~~
 
-DB 저장이 실패하면 `StartBookingUseCase`가 이미 만든 Redis hold를 보상 해제한다(같은 스레드에서
-`LockScope.SEAT` 락을 다시 잡고 해제).
+`ORDER_START` 락은 `StartBookingUseCase.execute`의 전체 시작 흐름을 감싸므로 DB 주문 생성의
+커밋이 끝난 뒤 풀린다. `SEAT` 락은 Redis hold 생성 구간에서만 잡고 DB 트랜잭션 전 해제한다.
+DB 저장이 실패하면 `StartBookingUseCase`가 `SEAT` 락을 다시 잡고 이미 만든 Redis hold를 보상 해제한다.
+좌석 선택과 알림도 별도의 `SEAT` 락 구간에서 처리한다. 락 안의 외부 I/O는 필요한 작업으로 제한하고,
+락 키를 변경할 때는 보호 대상을 검증한다.
 
 이 시점의 동시성 방어는 여전히 `LockScope.SEAT` 분산락과 `BookingAvailabilityChecker`의 좌석 판매
 상태 확인이다. `PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만, 현재
@@ -74,7 +77,7 @@ DB 저장이 실패하면 `StartBookingUseCase`가 이미 만든 Redis hold를 �
 
 커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
 `OrderStarted` publication은 Event Publication Registry에 FAILED로 남는다.
-`EventPublicationMaintenance`가 1분마다 재제출한다(아래 [이벤트 재시도와 보정](#이벤트-재시도와-보정)).
+`EventPublicationMaintenance`가 실패 publication을 재제출한다(아래 [이벤트 재시도와 보정](#이벤트-재시도와-보정)).
 따라서 프로세스가 재시작되거나 즉시 처리가 실패해도 후속 처리 입력은 DB(publication row)에
 남는다. hold가 실제 점유의 기준이며 selection은 UX 보조 상태다.
 
@@ -175,12 +178,10 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
 `booking.hold.persistence.HoldKeyExpirationHandler`가 키를 해석해
 `ExpireOrderUseCase.expireByHoldKey`를 호출한다.
 
-- `redisExpirationSubscriptionExecutor`: Redis 구독 전용 worker 1~2개
-- `redisExpirationTaskExecutor`: 만료 handler worker 2개, queue 256개, 공유 permit 2개
-- queue가 가득 차면 Redis 수신 스레드도 같은 permit을 얻은 뒤 처리해 유입 속도를 늦춘다.
-- `OrderExpirationTrigger`(`com.ticket.booking.order.usecase`) →
-  `ExpirePendingOrdersUseCase`: `worker.order-expiration.fixed-delay`(기본 5분)마다 만료 주문을
-  보정한다. **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
+- 만료 이벤트의 handler와 queue 포화 시 수신 스레드는 같은 permit으로 DB 동시 진입을 제한한다.
+  worker·queue·permit 설정과 적체 관측은 [operations.md](operations.md#core-용량-관측)를 본다.
+- `OrderExpirationTrigger` → `ExpirePendingOrdersUseCase`가 누락된 만료를 보정한다.
+  **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
   무관하게 앞으로만 가므로, 앞의 주문이 계속 실패해도 뒤의 정상 만료 대상이 같은 순회에서
   처리된다. 실패 항목은 지우지도 처리 완료로 치지도 않고 PENDING으로 남아 다음 순회에서 다시
   시도되며, 그 건수는 `Output.failedCount`와 경고 로그로 드러난다.

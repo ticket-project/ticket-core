@@ -9,6 +9,23 @@
 
 검증 선택·실행 명령·결과 보고의 공통 기준은 이 문서다. 전체 테스트는 기본값이 아니며 변경 영향으로 선택한다.
 
+## 변경별 검증
+
+실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을 실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
+
+| 변경 범위 | 실행 기준 |
+| --- | --- |
+| 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*' -x seedTest`로 해당 모듈부터 |
+| 모듈·계층·Aggregate 경계 | `./gradlew test --tests 'com.ticket.ModularityTests' --tests 'com.ticket.ArchitectureRulesTest' --tests 'com.ticket.DomainIsolationTest' --tests 'com.ticket.AggregateAssociationTest' -x seedTest`와 관련 module test |
+| Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
+| 주문·hold·이벤트 흐름 | 관련 단위·Scenario·`com.ticket.bootstrap.booking.*E2ETest`(Docker 필요) |
+| DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트와 [운영 전환 조건](operations.md#db-마이그레이션) |
+| seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
+| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck test bootJar verifySeedNotInBootJar`(CI 기준) |
+| 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
+
+`test`는 `seedTest`를 `finalizedBy`로 함께 실행한다. 서비스 테스트만 좁힐 때만 `-x seedTest`를 쓴다. `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
+
 ## 단일 source set
 
 별도 `integrationTest` Gradle source set과 subproject는 없다. 서비스 테스트는 모두 `src/test`에
@@ -76,11 +93,6 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | `com.ticket.shared.exception.ErrorCodeUniquenessTest` | E-code(외부 계약, `gatling-test`가 하드코딩)가 전역에서 유일한 것 |
 | `com.ticket.seed.ServiceSourceSeparationTest`(`seedTest`) | 시드 실행 코드·시드 SQL이 서비스 소스로 다시 섞이지 않는 것. 실제 jar는 `verifySeedNotInBootJar`가 확인한다 |
 
-`com.ticket.bootstrap`을 검사하던 `BootstrapArchitectureTest`는 `src/main/java`에 그 패키지가
-남지 않아(ADR 0003 §8·§9, 전역 기술 설정이 `shared`/`config`로 옮겨져) ArchUnit이 검사 대상
-없는 rule을 실패로 보는 것을 실측 확인해 지웠다 — `src/test/java/com/ticket/bootstrap`의 통합
-테스트는 그대로 있고, `src/main/java`에 다시 class가 생기면 그때 필요한 규칙을 다시 만든다.
-
 새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 규칙 전체 목록은
 [architecture.md의 Enforcement](architecture.md#enforcement)에 정리돼 있다.
 
@@ -141,12 +153,10 @@ show 경로 호환 endpoint만 `ShowSeatMapControllerContractTest`가 따로 덮
 - `GET /api/v1/performances/{id}/seats/status` — 동적 판매 상태(`performanceSeatId` 기준)
 - `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
 
-**N+1 회귀**는 `GetPerformanceSeatMapUseCaseTest`가 고정한다. `GetPerformanceSeatMapUseCase`는
-Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값을 show `PerformanceVenueLayoutCatalogApi`에서
-(내부적으로 venue의 `VenueSeatLookupApi`을 호출), 판매 편성된 좌석과 확정 가격을 booking
-`PerformanceSeatRepository`에서 각각 정확히 한 번만 조회해 조합한다(N+1 없이 고정된
-query 수). 테스트는 `verify(..., times(1))`로 두 조회가 각각 한 번만 호출되는지 확인한다 — 회차 좌석
-수가 늘어나도 호출 횟수가 늘지 않는지가 회귀 지점이다.
+`GetPerformanceSeatMapUseCaseTest`는 50좌석 fixture에서 show의 `PerformanceVenueLayoutCatalogApi`와
+booking의 `PerformanceSeatRepository`를 각각 한 번 호출하는지 Mockito `times(1)`로 확인한다.
+이는 유스케이스의 반복 조회 호출에 대한 회귀 검증이다. 공개 API와 Repository 구현 내부의 실제 SQL 수,
+JPA 지연 로딩으로 발생하는 N+1은 이 테스트의 검증 범위가 아니다.
 
 **가격 snapshot 불변성**은 두 단계로 고정된다. `PendingOrderCreatorTest`는 주문 금액이 오직
 `PerformanceSeat.unitPrice` 합계로만 계산되고(`Order.addOrderSeat`가 `totalAmount`에 누적한다 —
@@ -236,26 +246,9 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   `주문_생성_메서드는_트랜잭션으로_실행된다`(`PendingOrderCreatorTest`)가
   있다.
 
-## 변경별 검증
-
-실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을 실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
-
-| 변경 범위 | 실행 기준 |
-| --- | --- |
-| 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*' -x seedTest`로 해당 모듈부터 |
-| 모듈·계층·Aggregate 경계 | `./gradlew test --tests 'com.ticket.ModularityTests' --tests 'com.ticket.ArchitectureRulesTest' --tests 'com.ticket.DomainIsolationTest' --tests 'com.ticket.AggregateAssociationTest' -x seedTest`와 관련 module test |
-| Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
-| 주문·hold·이벤트 흐름 | 관련 단위·Scenario·`com.ticket.bootstrap.booking.*E2ETest`(Docker 필요) |
-| DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트와 [운영 전환 조건](operations.md#db-마이그레이션) |
-| seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
-| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck test bootJar verifySeedNotInBootJar`(CI 기준) |
-| 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
-
-`test`는 `seedTest`를 `finalizedBy`로 함께 실행한다. 서비스 테스트만 좁힐 때만 `-x seedTest`를 쓴다. `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
-
 ## Core 부하 검증
 
-Core 용량은 `BookingCapacitySimulation`으로 좌석 상태 조회·선택·주문 생성을, 좌석 경합은 `SeatContentionSimulation`으로 같은 좌석의 hold/order 정합성을 측정한다. 전체 흐름은 `TicketOpenEndToEndSimulation`으로 Queue join/state/enter부터 admission token을 거쳐 확인한다. 실제 시나리오·feeder CSV·옵션·분산 실행 명령은 형제 [gatling-test README](../../gatling-test/README.md)가 원본이다. 이 저장소 단독 checkout에서는 형제 링크를 직접 확인해야 한다.
+Core 용량은 `BookingCapacitySimulation`으로 좌석 상태 조회·선택·주문 생성을, 좌석 경합은 `SeatContentionSimulation`으로 같은 좌석의 hold/order 정합성을 측정한다. 전체 흐름은 `TicketOpenEndToEndSimulation`으로 Queue join/state/enter부터 admission token을 거쳐 확인한다. 실제 시나리오·feeder CSV·옵션·분산 실행 명령은 형제 [gatling-test README](https://github.com/ticket-project/gatling-test/blob/main/README.md)가 원본이다. 로컬 workspace에서는 ticket-core와 나란히 둔 `../gatling-test`에서 실행한다.
 
 전용 회차·좌석·회원과 중복 없는 토큰/feeder를 준비하고 [seed 사용법](../seed/README.md)을 확인한다. Ticket/Queue Redis를 분리하고 양쪽 access/admission secret을 일치시킨다. DIRECT/QUEUE 정책과 token 경로를 확인한다. `coreBaseUrl`·`queueBaseUrl`을 따로 지정해 잘못된 서버 호출을 막는다. 연속 실행 전 PENDING 주문 만료, hold TTL, 미완료 event publication, Queue entered marker가 정리됐는지 확인한다.
 

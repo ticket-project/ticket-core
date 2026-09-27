@@ -20,12 +20,9 @@ _Avoid_: 공연장(Show를 가리키는 말과 혼동), 복합 시설 전체를 
 여러 개를 가지며(`1:0..N`), Performance는 정확히 하나의 Show에 속한다. 좌석 편성·등급·가격은
 회차(Performance)마다 다를 수 있어 Show가 아니라 그 단위로 붙는다.
 
-Show는 `displaySaleType`/`displaySaleWindow`(옛 `saleType`/`saleStartDate`/`saleEndDate`)로
-판매 상태를 **화면에 표시**하지만, 실제 주문 접수 가능 여부를 판단하지는 않는다 — 그건
-`PerformanceSalesPolicy`가 회차 단위로 한다(ADR 0007). 이 둘은 정합성 검증 없이 독립적인
-데이터라 서로 어긋날 수 있고, 그건 버그가 아니라 허용된 결과다.
-_Avoid_: 공연물, Event, Product, `ShowGrade`(쓰지 않는다 — Show 단위 가격이라는 개념 자체를
-쓰지 않는다), Show가 판매 가능 여부를 판단한다는 서술(표시와 판단은 다르다 — ADR 0007)
+Show의 판매 표시는 화면용이며 실제 주문 접수 판단은 회차별 `PerformanceSalesPolicy`가 한다.
+상세 규칙과 결정 배경은 [ADR 0007](adr/0007-show-sale-fields-are-display-only.md)을 본다.
+_Avoid_: 공연물, Event, Product, `ShowGrade`, Show가 판매 가능 여부를 판단한다는 서술
 
 **Category / Genre**:
 장르 분류 체계다. Category 1개는 Genre 여러 개를 가지며(`1:0..N`), Genre는 정확히 하나의
@@ -51,7 +48,8 @@ _Avoid_: 좌석 등급 자체에 가격이 고정된 것처럼 다루는 서술
 
 **PerformanceGrade**:
 특정 Performance에서 사용할 Grade다. 회차별 가격과 표시 순서를 가진 연결 개념이며, 가격의
-원본(source of truth)이다. 판매 오픈 전에만 가격을 바꿀 수 있다는 것이 업무 규칙이다.
+원본(source of truth)이다. 가격 변경 정책과 현재 강제 범위는
+[아키텍처의 가격 snapshot](architecture.md#aggregate-rules)을 본다.
 _Avoid_: `ShowGrade`(쓰지 않는다 — Show 단위 가격이라는 개념 자체를 쓰지 않는다)
 
 **PerformanceSeat**:
@@ -74,7 +72,8 @@ _Avoid_: 예약, 구매, Reservation, Purchase, Booking
 **OrderSeat**:
 Order에 포함된 한 좌석이다. 정확히 하나의 PerformanceSeat를 가리키지만, 하나의 PerformanceSeat는
 취소·만료된 주문도 이력으로 남기기 때문에 시간에 따라 여러 OrderSeat와 연결될 수 있다(`1:0..N`).
-같은 PerformanceSeat를 두 Order가 동시에 확정할 수 없다는 보장은 PerformanceSeat의 상태 전이가 맡는다.
+주문 시점의 좌석·등급·가격 snapshot을 보존한다. 중복 확정 방지 요구와 현재 구현 범위는
+[예매 수명주기](core-booking-lifecycle.md#주문-생성예매-시작)를 본다.
 _Avoid_: TicketInfo(결제 전 좌석을 이 이름으로 부르지 않는다)
 
 **Selection**:
@@ -114,10 +113,8 @@ _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
 **Like**:
 회원이 어떤 대상을 찜한 기록이다. `(memberId, likeType, targetId)` 조합이 유일하며, 같은 회원이
 같은 대상을 두 번 찜할 수 없다. 대상 종류는 `LikeType`으로 값화돼 있고 지금은 SHOW(공연) 하나뿐
-이다 — 옛 이름 `ShowLike`가 가리키던 것과 같은 개념이며, 대상을 값으로 일반화하며 개명했다
-(ADR 0008). 개명은 영어 식별자 어휘일 뿐이다 — 한국어 도메인 용어 "찜"과 아래 `_Avoid_`는 이
-개명으로 뒤집히지 않는다.
-_Avoid_: 좋아요(도메인 용어는 찜으로 통일), Selection과 혼동, ShowLike(개명 전 이름)
+이다. Selection(예매 중 임시 좌석 선택)과는 다르다.
+_Avoid_: 좋아요(도메인 용어는 찜), Selection과 혼동, ShowLike(현재 명칭은 Like)
 
 ### 회원
 
@@ -131,6 +128,8 @@ _Avoid_: 사용자, 고객, User, Customer, Account
 **SocialIdentity**:
 외부 provider의 응답 형식을 제거한 정규화된 소셜 신원이다. provider, provider 사용자 ID, 이메일,
 이메일 검증 여부, 이름으로 이루어진다. provider 응답을 이 형태로 해석하는 일은 security가 하고,
-이 값으로 계정을 찾거나 만드는 일은 member가 한다. **검증된 이메일만** 기존 계정 연결에 쓰고,
-검증되지 않은 이메일은 provider ID 기반 대체 주소로 격리한다.
-_Avoid_: OAuth2UserInfo(개명 전 이름), 소셜 계정(연결된 결과를 뜻하는 MemberSocialAccount와 구분)
+이 값으로 계정을 찾거나 만드는 일은 member가 한다. 연결된 계정 기록인
+`MemberSocialAccount`와 구분한다. 기존 계정 연결에는 검증된 이메일만 쓴다
+([MemberAccountApi](../src/main/java/com/ticket/member/api/MemberAccountApi.java)). 검증되지 않은 이메일의
+처리는 [SocialAccountProvisioningService](../src/main/java/com/ticket/member/usecase/SocialAccountProvisioningService.java)를 본다.
+_Avoid_: provider 응답 타입이나 연결된 소셜 계정 기록과 혼동

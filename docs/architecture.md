@@ -46,7 +46,7 @@
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점·주문과 발권 모델을 소유한다. 결제 승인·발권 실행 경로는 아직 없다. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
-| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태), 회원가입. 로그인·갱신·로그아웃·탈퇴 조립과 JWT·OAuth2 provider 처리는 `security`가 소유한다 |
+| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태), 회원가입. 회원 자격 증명과 활성 상태 확인은 member의 공개 계약이 맡고, 로그인·갱신·로그아웃·탈퇴 조립과 JWT·OAuth2 provider 처리는 `security`가 소유한다 |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
@@ -65,9 +65,10 @@
 - `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 `shared :: api`,
   `shared :: web`, `shared :: exception`, `shared :: jpa` 넷을 필요한 만큼 명시해 참조한다 — `shared :: *`
   와일드카드는 쓰지 않는다.
-- `security -> member`는 Authorization header의 access token을 member의 공개 계약으로 검증하고
-  `AuthenticatedMember`를 SecurityContext에 넣기 위한 단방향 의존이다. security는 전역 API URL
-  접근 정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
+- `security -> member`는 security가 access token을 해석·검증한 뒤, 토큰의 회원 ID로 member의
+  공개 계약을 호출해 현재 활성 상태를 확인하기 위한 단방향 의존이다. security는 인증 흐름과
+  전역 API URL 접근 정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를
+  참조하지 않는다.
 - `show -> venue`는 표시값 조립, `show -> like`는
   공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - 요청 회원의 활성 여부는 security가 member의 공개 계약으로 인증 시 확인한다. like의 찜 연산과
@@ -79,6 +80,9 @@
   하나를 참조한다(ADR 0018) — controller가 없어 `shared :: web`이, 자기 오류 타입을 던지지 않아
   `shared :: exception`이 필요 없다.
 - 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
+
+비밀번호 해싱과 일치 확인은 member가 수행하고, 비밀번호 해시는 모듈 공개 계약으로 반환하지
+않는다. 상세 입력·반환 계약은 `MemberAccountApi`를 본다.
 
 ## Aggregates
 
@@ -179,7 +183,14 @@ Repository는 Aggregate 저장·복원 계약이므로 `domain`이 소유하고 
 
 ## 저장소와 동시성
 
-Aggregate를 변경하려고 읽으면 domain Repository, 화면 조회는 자기 모듈 조회 Repository를 쓴다. 하나의 모듈 안에서도 서로 다른 Aggregate는 scalar ID로 참조한다. DB 읽기는 짧은 트랜잭션에서 끝내고 다른 모듈 호출·Redis·WebSocket 작업 중 DB connection을 불필요하게 보유하지 않는다. 선점과 선택의 순서·실패 보상은 [예매 수명주기](core-booking-lifecycle.md)가 원본이다. Redis key·TTL·이벤트 publication·Flyway 데이터 전환의 운영 조건은 [operations.md](operations.md)를 본다.
+Aggregate를 변경하려고 읽으면 domain Repository, 화면 조회는 자기 모듈 조회 Repository를 쓴다.
+하나의 모듈 안에서도 서로 다른 Aggregate는 scalar ID로 참조한다. DB 읽기는 짧은 트랜잭션에서
+끝내고 다른 모듈 호출·Redis·WebSocket 작업 중 DB connection을 불필요하게 보유하지 않는다.
+
+Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡고 `usecase`·`domain`은 저장 기술
+중립 계약을 사용한다. 분산락은 `booking.concurrency.LockManager` 계약으로 사용한다. 락 수명과
+선점·선택의 순서·실패 보상은 [예매 수명주기](core-booking-lifecycle.md)가 원본이다. 기존 Redis
+key·TTL·이벤트 publication·Flyway 데이터 전환의 운영 조건은 [operations.md](operations.md)를 본다.
 
 ## 오류 처리
 
