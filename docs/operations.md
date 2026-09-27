@@ -81,28 +81,15 @@ admission token의 서명 secret, issuer, audience는 Core와 `ticket-queue` 두
 
 현재 Core는 주문 생성·취소·만료 시 Queue Server에 session 완료 요청을 보내지 않는다. Queue 입장 후 shopping session은 Queue Server의 TTL로 만료된다. 따라서 운영 시에는 Queue의 entered marker 수와 TTL 만료 추이를 관측해야 하며, 조기 반환이나 동시 active session 상한은 별도 프로토콜 설계 후 도입한다.
 
-## 분산락과 Redis 작업 규칙
+## Redis 운영과 전환
 
-**Redis 작업 규칙**
-
-- key 조립과 물리 TTL은 소유 모듈의 `persistence` adapter가 소유한다. `usecase`/`domain`은
-  Redis 타입이나 key가 아니라 저장 기술 중립 계약만 본다.
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차를 함께 설계한다.
 - TTL, expiration listener, scheduler 보정 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을
   함께 지킨다.
 
-**분산락 작업 규칙**
-
-분산락은 `com.ticket.booking.concurrency.LockManager` 같은 명시적 포트 호출로 처리한다.
-포트·구현 클래스는 [core-booking-lifecycle.md의 주요 코드](core-booking-lifecycle.md#주요-코드와-운영-연결)를
-본다.
-
-- 락을 먼저 잡고 그 안에서 트랜잭션을 시작한다. 커밋이 끝난 뒤에 락이 풀린다. 좌석 락은 Redis
-  hold를 만드는 구간에만 건다 — DB 트랜잭션 동안 좌석 락을 쥐고 있으면 connection 경합이 좌석
-  경합으로 번진다.
-- 락 범위 안에서 외부 I/O를 늘리지 않는다. 임계 구역은 짧게 유지한다.
-- 락 키를 바꾸면 보호 대상이 그대로인지 테스트로 고정한다.
+key·TTL 구현의 계층 소유권은 [architecture.md](architecture.md#저장소와-동시성),
+주문 시작 락과 좌석 락의 수명은 [예매 수명주기](core-booking-lifecycle.md#주문-생성예매-시작)를 본다.
 
 ## 좌석 선택 Redis 인덱스 전환
 
@@ -325,8 +312,12 @@ max(hikaricp_connections_pending{service="ticket-core"})
 
 Hikari pending이 0보다 커지면 애플리케이션 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. 다만 pending이 0이어도 이미 빌린 연결이 DB lock에서 멈출 수 있으므로 DB wait를 별도로 확인해야 한다.
 
-redisExpirationTaskExecutor는 TTL 만료 DB 진입을 최대 2개로 제한한다. queued 값이 256에 오래
-머물거나 queue 포화 경고가 반복되면 이전 회차 작업이 현재 부하와 겹친 것이다. 이벤트 리스너
+Redis 만료 구독용 `redisExpirationSubscriptionExecutor`는 worker 1~2개, handler용
+`redisExpirationTaskExecutor`는 worker 2개·queue 256개·공유 permit 2개로 설정돼 있다.
+queue가 가득 차면 수신 스레드도 같은 permit으로 진입한다. queued 값이 256에 오래
+머물거나 queue 포화 경고가 반복되면 이전 회차 작업이 현재 부하와 겹친 것이다.
+`OrderExpirationTrigger`는 `worker.order-expiration.fixed-delay`(기본 5분)마다 보정을 시작하며
+`worker.enabled=false`면 등록되지 않는다. 이벤트 리스너
 처리는 명시적 concurrency 상한이 없으므로(위 참고), 즉시 처리가 누락되거나 실패해도 1분 주기의
 `EventPublicationMaintenance.resubmitFailed`(batch 100·동시 4)가 보정하지만, backlog가
 해소되기 전에는 다음 부하를 넣지 않는다.
@@ -349,13 +340,23 @@ ORDER BY waiting_sessions DESC;
 
 `application.yml`은 publication 완료 기록을 archive하고 재시작 시 미완료 이벤트를 일괄 재발행하지 않는다. staleness 확인은 1분 간격이며 published 5분, processing·resubmitted 10분이 기준이다. `EventPublicationMaintenance`는 실패 건을 1분마다 batch 100건·동시 4건으로 재제출하고 `completionAttempts <= 10`만 자동 대상으로 삼는다. 완료 archive는 매일 03:00 KST에 30일 이전 기록을 정리한다. 실제 값 변경 시 설정과 구현을 함께 확인한다.
 
-`EventPublicationMaintenance`는 실패 publication을 주기적으로 재제출한다. 재시도 상한을 넘긴 `ERROR` 로그와 `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `COMPLETION_ATTEMPTS > 10`을 감시한다. `event_type`·`serialized_event`의 `orderId`/`holdKey`를 주문·좌석 상태와 대조해 코드 오류, Redis 장애, 과거 스키마의 payload 잘림 가능성을 구분한다. root V9 이전 `VARCHAR(255)`로 기록된 행은 잘렸을 수 있어 payload만 신뢰하지 않는다.
+재시도 상한을 넘긴 `ERROR` 로그와 `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의
+`COMPLETION_ATTEMPTS > 10`을 감시한다. `event_type`·`serialized_event`의 `orderId`/`holdKey`를
+주문·좌석 상태와 대조해 코드 오류와 Redis 장애를 조사한다.
+
+저장소의 root V8은 두 테이블의 `serialized_event`를 H2 `VARCHAR(255)`, Oracle
+`VARCHAR2(255 CHAR)`로 정의했다. 이 크기에서는 실제 `OrderTerminated` 직렬화 결과의 publication
+**저장이 실패할 수 있음**을 `EventPublicationSerializedEventLengthTest`가 확인한다. root V9 migration은
+각각 H2 `VARCHAR(4000)`, Oracle `VARCHAR2(4000 CHAR)`로 확장한다. 환경별 적용 여부는 Flyway 이력과
+실제 컬럼 정의를 확인해야 하며, 저장소에 V9 파일이 있다는 사실만으로 운영 적용을 단정하지 않는다.
+과거 장애를 조사할 때는 당시 스키마와 publication 저장 실패를 먼저 확인한다. 기존 payload가
+잘려 저장됐을 가능성은 별도 데이터 근거가 필요한 조사 가설이다.
 
 원인이 해소되기 전에는 재제출을 강행하지 않는다. 이 저장소에는 재처리 전용 endpoint가 없다. DB 직접 수정 또는 임시 운영 스크립트가 필요할 수 있으나, 검증된 자동 복구 절차로 제공하지 않는다. 적용 전 대상 publication과 현재 주문·hold 상태, 백업·재시도·중복 처리 영향을 확인하고 운영 절차를 별도로 승인받는다. 업무 처리·멱등성 범위는 [예매 수명주기](core-booking-lifecycle.md#이벤트-재시도와-보정)를 본다.
 
 ## 부하 결과 관측
 
-부하 목적·격리·판정은 [testing.md](testing.md#core-부하-검증), Gatling 옵션과 리포트 원본은 형제 [gatling-test README](../../gatling-test/README.md)를 따른다. 개별 측정은 Issue/PR과 원본 리포트에 남긴다. 부하 잔재와 비추적 결과 파일은 사용자 확인 없이 지우거나 옮기지 않는다.
+부하 목적·격리·판정은 [testing.md](testing.md#core-부하-검증), Gatling 옵션과 리포트 원본은 형제 [gatling-test README](https://github.com/ticket-project/gatling-test/blob/main/README.md)를 따른다. 로컬 workspace에서는 ticket-core와 나란히 둔 `../gatling-test`에서 실행한다. 개별 측정은 Issue/PR과 원본 리포트에 남긴다. 부하 잔재와 비추적 결과 파일은 사용자 확인 없이 지우거나 옮기지 않는다.
 
 ## 운영 반영 시 주의점
 
@@ -364,7 +365,5 @@ ORDER BY waiting_sessions DESC;
   migration 폴더에 둘지 먼저 정한다.
 - Redis key, TTL, expiration listener 변경은 장애 복구와 scheduler 보정 흐름까지 같이 검토한다.
 - 인증/인가 변경은 공개 API 노출 여부와 토큰 만료/재발급 흐름을 함께 확인한다.
-- 다중 좌석 주문 트래픽을 늘리기 전에는 `EVENT_PUBLICATION.serialized_event`
-  (`VARCHAR(255)`) 크기 리스크를 먼저 검토한다 — 상세는
-  [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md#5-spring-modulith-이벤트와-jpa-event-publication-registry)을
-  본다.
+- 다중 좌석 주문 트래픽을 늘리기 전에는 환경별 publication 컬럼과 V9 적용 여부를
+  [이벤트 publication 조사](#이벤트-publication-조사와-재처리)의 기준으로 확인한다.
