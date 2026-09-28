@@ -32,7 +32,7 @@ import com.ticket.TicketApplication;
 import com.ticket.security.http.ApiSecurityConfig;
 import com.ticket.security.http.RestAccessDeniedHandler;
 import com.ticket.security.http.RestAuthenticationEntryPoint;
-import com.ticket.security.token.AccessTokenAuthenticatorService;
+import com.ticket.security.token.AccessTokenReader;
 
 @WebMvcTest(controllers = OAuth2SecurityConfigTest.TestController.class)
 @ContextConfiguration(classes = TicketApplication.class)
@@ -61,7 +61,7 @@ class OAuth2SecurityConfigTest {
     private OAuth2AuthenticationFailureHandler authenticationFailureHandler;
 
     @MockitoBean
-    private AccessTokenAuthenticatorService accessTokenAuthenticatorService;
+    private AccessTokenReader accessTokenReader;
 
     @MockitoBean
     private RestAuthenticationEntryPoint authenticationEntryPoint;

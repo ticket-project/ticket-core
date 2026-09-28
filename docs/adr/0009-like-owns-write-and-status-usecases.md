@@ -79,6 +79,12 @@ ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있�
 `like` use case별 `MemberLookup.requireActive` 호출 설명은 당시 결정의 기록이다. 주문 상세의
 회원 프로필 조회처럼 응답 데이터를 만드는 조회는 그대로 유지한다.
 
+**2026-09-28 갱신**: 공통 인증의 회원 조회를 뺐다. 모든 인증 요청이 DB 왕복을 하나씩 더 써서
+부하 때 연결 풀을 먼저 채웠고, 이 조회가 실제로 막던 것은 탈퇴 회원의 남은 access token뿐이었다
+(로그아웃은 원래 access token을 무효화하지 않고, 토큰 재발급은 따로 활성 회원을 확인한다).
+지금은 좌석을 점유하는 주문 생성(`StartBookingUseCase`)만 `MemberLookupApi.requireActive`로
+확인한다. 찜 연산은 여전히 확인하지 않는다 — 탈퇴 회원의 남은 토큰으로 생긴 찜은 막을 가치가 작다.
+
 - `show.application.usecase`에서 `AddShowLikeUseCase`/`RemoveShowLikeUseCase`/
   `GetShowLikeStatusUseCase`가 없어지고, `like.application.usecase`에
   `AddLikeUseCase`/`RemoveLikeUseCase`/`GetLikeStatusUseCase`가 생긴다.

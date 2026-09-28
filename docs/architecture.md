@@ -65,14 +65,15 @@
 - `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 `shared :: api`,
   `shared :: web`, `shared :: exception`, `shared :: jpa` 넷을 필요한 만큼 명시해 참조한다 — `shared :: *`
   와일드카드는 쓰지 않는다.
-- `security -> member`는 security가 access token을 해석·검증한 뒤, 토큰의 회원 ID로 member의
-  공개 계약을 호출해 현재 활성 상태를 확인하기 위한 단방향 의존이다. security는 인증 흐름과
-  전역 API URL 접근 정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를
-  참조하지 않는다.
+- `security -> member`는 로그인·토큰 재발급·OAuth2 코드 교환에서 member의 공개 계약으로
+  자격 증명과 현재 활성 상태를 확인하기 위한 단방향 의존이다. 요청마다 도는 access token 인증은
+  토큰의 서명·만료만 보고 member를 조회하지 않는다. security는 인증 흐름과 전역 API URL 접근
+  정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
 - `show -> venue`는 표시값 조립, `show -> like`는
   공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
-- 요청 회원의 활성 여부는 security가 member의 공개 계약으로 인증 시 확인한다. like의 찜 연산과
-  show의 찜 목록은 같은 확인을 반복하지 않는다.
+- 탈퇴 회원의 access token은 만료 전까지 인증을 통과한다. 그 사이 막아야 하는 것은 좌석을 실제로
+  점유하는 주문 생성뿐이라, booking의 `StartBookingUseCase`가 `MemberLookupApi.requireActive`로
+  확인한다. 조회·좌석 선택·찜 연산은 확인하지 않는다(2026-09-28, 요청마다 하던 회원 조회를 뺐다).
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
   `PerformanceSaleCatalogApi`/`PerformanceVenueLayoutCatalogApi`를 show가 façade로 유지하기
   때문이다.
@@ -151,7 +152,8 @@ case는 무엇이 필요한지에 따라 갈린다 — **다른 BC의 예/아니
 목록"의 공연 제목·이미지·공연장 이름)은 그 데이터를 가진 show가 소유한다. `show.domain.show`는
 like를 모른다 — `show.usecase`의 조회 use case가 like의 공개 조회 API(`LikeQueryApi`)를 주입받아
 조합한다(직접 데이터 JOIN 아님). 반대로 like는 존재 확인을 하지 않는다 — 존재하지
-않는 대상을 찜해도 막지 않는다. 요청 회원의 활성 상태는 security가 공통 인증에서 확인한다.
+않는 대상을 찜해도 막지 않는다. 회원 활성 상태도 확인하지 않는다 — 탈퇴 회원의 남은 토큰으로
+생긴 찜은 막을 가치가 작다.
 이 규칙은 `com.ticket.DomainIsolationTest`(ArchUnit,
 6개 BC 전체의 모든 `domain` 계층)가 강제한다. 왜 catalog 흡수 대신 이 형태가 됐는지는
 [ADR 0006](adr/0006-bounded-context-module-boundaries.md)을, 찜 모듈 개명과 대상 일반화는

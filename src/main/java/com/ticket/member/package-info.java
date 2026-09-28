@@ -17,8 +17,8 @@
  *       role만 가진다
  * </ul>
  *
- * <p>찜(Like)의 데이터·HTTP endpoint·use case는 like module이 소유한다. 요청자의 활성 상태는 security가 이 module의
- * {@code MemberAccountApi.getActiveIdentity}로 인증 단계에서 확인한다. like가 회원 상태를 다시 조회하지 않는다.
+ * <p>찜(Like)의 데이터·HTTP endpoint·use case는 like module이 소유한다. 요청마다 도는 인증은 토큰만 보고 이 module을 조회하지 않는다. 활성 상태는 로그인·토큰
+ * 재발급({@code MemberAccountApi.getActiveIdentity})과 주문 생성({@code MemberLookupApi.requireActive})에서만 확인한다.
  */
 @NullMarked
 @org.springframework.modulith.ApplicationModule(
