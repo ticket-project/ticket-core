@@ -484,7 +484,7 @@ final class CuratedSeedStatements {
     }
 
     private static String toSalesPolicyStatement(final Matcher matcher) {
-        return "INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES (performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds, version, created_at, created_by) VALUES ("
+        return "INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES (performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds, queue_mode, queue_level, version, created_at, created_by) VALUES ("
                 + matcher.group(1)
                 + ", '"
                 + matcher.group(8)
@@ -498,7 +498,7 @@ final class CuratedSeedStatements {
                 + matcher.group(12)
                 + ", "
                 + matcher.group(13)
-                + ", 0"
+                + ", 'FORCE_OFF', 'LEVEL_1', 0"
                 + matcher.group(14);
     }
 

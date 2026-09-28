@@ -81,6 +81,11 @@ class SeedLocalTest {
         final long curatedPerformances = curatedCount("PERFORMANCES", "id");
         assertThat(curatedCount("BOOKING_PERFORMANCE_SALES_POLICIES", "performance_id"))
                 .isEqualTo(curatedPerformances);
+        assertThat(count(
+                        "BOOKING_PERFORMANCE_SALES_POLICIES",
+                        "performance_id < " + FIXTURE_ID_BASE
+                                + " AND queue_mode = 'FORCE_OFF' AND queue_level = 'LEVEL_1'"))
+                .isEqualTo(curatedPerformances);
         assertThat(curatedCount("PERFORMANCE_GRADES", "performance_id")).isEqualTo(curatedPerformances * 4);
         // 부하 테스트 전용 고정 ID 대역: 회차 8개, 물리 좌석 2,000석.
         assertThat(count(
@@ -92,7 +97,8 @@ class SeedLocalTest {
                 .isEqualTo((long) FIXTURE_PERFORMANCE_COUNT * FIXTURE_SEAT_COUNT);
         assertThat(count(
                         "BOOKING_PERFORMANCE_SALES_POLICIES",
-                        "performance_id >= " + FIXTURE_ID_BASE + " AND queue_mode = 'FORCE_OFF'"))
+                        "performance_id >= " + FIXTURE_ID_BASE
+                                + " AND queue_mode = 'FORCE_OFF' AND queue_level = 'LEVEL_1'"))
                 .isEqualTo(FIXTURE_PERFORMANCE_COUNT);
         assertThat(count("MEMBERS", "email LIKE 'loadtest%@test.com'")).isEqualTo(MEMBER_COUNT);
     }
