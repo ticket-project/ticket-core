@@ -19,6 +19,11 @@ public class MemberLookupService implements MemberLookupApi {
     private final MemberRepository memberRepository;
 
     @Override
+    public void requireActive(final long memberId) {
+        findActiveOrThrow(memberId);
+    }
+
+    @Override
     public MemberSnapshot getProfile(final long memberId) {
         final Member member = findActiveOrThrow(memberId);
         return new MemberSnapshot(

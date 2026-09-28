@@ -52,7 +52,9 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
+import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
@@ -76,6 +78,9 @@ class StartBookingUseCaseTest {
 
     @Mock
     private AdmissionVerifier admissionVerifier;
+
+    @Mock
+    private MemberLookupApi memberLookupApi;
 
     @Mock
     private BookingAvailabilityChecker bookingAvailabilityChecker;
@@ -102,6 +107,7 @@ class StartBookingUseCaseTest {
                         lockManager,
                         new PerformanceSaleFinder(performanceSalesPolicyRepository),
                         new AdmissionGuard(admissionVerifier),
+                        memberLookupApi,
                         bookingAvailabilityChecker,
                         performanceSaleCatalogApi,
                         holdManager,
@@ -119,6 +125,7 @@ class StartBookingUseCaseTest {
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
                 admissionVerifier,
+                memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
                 holdManager,
@@ -135,6 +142,7 @@ class StartBookingUseCaseTest {
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
                 admissionVerifier,
+                memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
                 holdManager,
@@ -168,11 +176,13 @@ class StartBookingUseCaseTest {
 
         final InOrder inOrder = inOrder(
                 performanceSalesPolicyRepository,
+                memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
                 holdManager,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
+        inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
         inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
         inOrder.verify(performanceSaleCatalogApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdManager).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
@@ -207,7 +217,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, PerformanceIsPastException.class);
 
-        verifyNoInteractions(admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
     }
 
     @Test
@@ -217,7 +227,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, HoldLimitExceededException.class);
 
-        verifyNoInteractions(admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
     }
 
     @Test
@@ -246,7 +256,19 @@ class StartBookingUseCaseTest {
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, bookingAvailabilityChecker);
+    }
+
+    /** 인증은 토큰만 보므로 탈퇴 회원도 여기까지 온다. 좌석을 점유하기 전에 끊겨야 한다. */
+    @Test
+    void 탈퇴했거나_없는_회원이면_좌석을_선점하지_않는다() {
+        final List<Long> seatIds = List.of(1L, 2L);
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
+        doThrow(new NotFoundException()).when(memberLookupApi).requireActive(MEMBER_ID);
+
+        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds))).isInstanceOf(NotFoundException.class);
+
+        verifyNoInteractions(bookingAvailabilityChecker, performanceSaleCatalogApi, holdManager, pendingOrderCreator);
     }
 
     @Test
