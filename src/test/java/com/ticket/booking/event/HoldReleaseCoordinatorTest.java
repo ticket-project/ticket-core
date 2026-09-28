@@ -4,17 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,9 +34,6 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 class HoldReleaseCoordinatorTest {
-    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 25, 12, 0);
-    private static final UUID EVENT_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
-
     @Mock
     private HoldManager holdManager;
 
@@ -55,61 +49,41 @@ class HoldReleaseCoordinatorTest {
     @Mock
     private SeatStatusEventPublisher seatStatusEventPublisher;
 
-    @Mock
-    private HoldReleaseProgressRecorder progressRecorder;
-
     @InjectMocks
     private HoldReleaseCoordinator coordinator;
 
     @Test
-    void recordsHoldReleaseBeforePublishingCurrentlyAvailableSeats() {
-        final HoldReleaseTask task = task(false);
+    void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
         when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of());
         when(holdManager.isHeld(1L, 10L)).thenReturn(false);
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();
 
-        coordinator.releaseAndPublish(EVENT_ID, task, FIXED_NOW);
+        coordinator.releaseAndPublish(task());
 
-        final InOrder inOrder = inOrder(holdManager, progressRecorder, seatStatusEventPublisher);
+        final InOrder inOrder = inOrder(holdManager, seatStatusEventPublisher);
         inOrder.verify(holdManager).release(1L, "old-hold", List.of(10L, 20L));
-        inOrder.verify(progressRecorder).recordHoldReleased(EVENT_ID, FIXED_NOW);
         inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
         inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test
-    void retrySkipsRedisReleaseAndRepublishesWhenSeatsAreStillAvailable() {
-        final HoldReleaseTask task = task(true);
-        when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of());
-        when(holdManager.isHeld(1L, 10L)).thenReturn(false);
-        when(holdManager.isHeld(1L, 20L)).thenReturn(false);
-        stubPerformanceSeats();
-
-        coordinator.releaseAndPublish(EVENT_ID, task, FIXED_NOW.plusSeconds(30));
-
-        verify(holdManager, never()).release(1L, "old-hold", List.of(10L, 20L));
-        verify(progressRecorder, never()).recordHoldReleased(EVENT_ID, FIXED_NOW.plusSeconds(30));
-        verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
-        verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
-    }
-
-    @Test
-    void retryDoesNotPublishOverANewerHoldOrSelection() {
-        final HoldReleaseTask task = task(true);
+    void doesNotPublishOverANewerHoldOrSelection() {
         when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of(20L));
         when(holdManager.isHeld(1L, 10L)).thenReturn(true);
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
 
-        coordinator.releaseAndPublish(EVENT_ID, task, FIXED_NOW.plusSeconds(30));
+        coordinator.releaseAndPublish(task());
 
         verifyNoInteractions(seatStatusEventPublisher);
     }
 
+    /**
+     * 발행이 실패해 이벤트가 재전달되면 해제부터 다시 수행한다. 해제는 좌석에 아직 이 holdKey가 남아 있을 때만 지우므로 반복해도 안전하다 ({@code RedissonHoldStoreTest}가 그
+     * 소유권 확인을 고정한다).
+     */
     @Test
-    void publicationFailureCanBeRetriedAfterReleaseWasPersisted() {
-        final HoldReleaseTask firstAttempt = task(false);
-        final HoldReleaseTask retry = task(true);
+    void publicationFailureIsRetriedFromRelease() {
         when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of());
         when(holdManager.isHeld(1L, 10L)).thenReturn(false);
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
@@ -119,14 +93,19 @@ class HoldReleaseCoordinatorTest {
                 .when(seatStatusEventPublisher)
                 .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
 
-        assertThatThrownBy(() -> coordinator.releaseAndPublish(EVENT_ID, firstAttempt, FIXED_NOW))
-                .hasMessage("publish failed");
-        coordinator.releaseAndPublish(EVENT_ID, retry, FIXED_NOW.plusSeconds(30));
+        assertThatThrownBy(() -> coordinator.releaseAndPublish(task())).hasMessage("publish failed");
+        coordinator.releaseAndPublish(task());
 
-        verify(holdManager, times(1)).release(1L, "old-hold", List.of(10L, 20L));
-        verify(progressRecorder, times(1)).recordHoldReleased(EVENT_ID, FIXED_NOW);
+        verify(holdManager, times(2)).release(1L, "old-hold", List.of(10L, 20L));
         verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
         verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
+    }
+
+    @Test
+    void holdsSeatLocksAcrossReleaseAndPublication() {
+        coordinator.releaseAndPublish(task());
+
+        assertThat(lockManager.lastAcquisition().keys()).containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
     }
 
     private void stubPerformanceSeats() {
@@ -140,14 +119,7 @@ class HoldReleaseCoordinatorTest {
         return seat;
     }
 
-    @Test
-    void holdsSeatLocksAcrossReleaseAndPublication() {
-        coordinator.releaseAndPublish(EVENT_ID, task(false), LocalDateTime.of(2026, 3, 15, 12, 0));
-
-        assertThat(lockManager.lastAcquisition().keys()).containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
-    }
-
-    private HoldReleaseTask task(final boolean holdReleased) {
-        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L), holdReleased);
+    private HoldReleaseTask task() {
+        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L));
     }
 }

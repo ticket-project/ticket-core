@@ -174,8 +174,6 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
   listener·분산락(Testcontainers)
 - `com.ticket.booking.hold.persistence.RedissonHoldStoreIntegrationTest`: hold 생성의 부분 실패
   보상이 좌석 키·회차별 점유 인덱스·메타데이터를 실제로 어떤 상태로 남기는지(Testcontainers)
-- `com.ticket.booking.event.persistence.HoldReleaseProgressRecorderAdapterIntegrationTest`:
-  선점 해제 완료 기록의 커밋 경계와 멱등성(H2)
 - `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
   HTTP로 관통
