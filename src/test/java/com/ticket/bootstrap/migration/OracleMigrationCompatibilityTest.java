@@ -48,6 +48,7 @@ class OracleMigrationCompatibilityTest {
     @Test
     void root_and_booking_oracle_migrations_apply_without_syntax_errors() throws Exception {
         createLegacyBaselineSchema();
+        ModulithFlywayTestSupport.baselineRootLikeProd(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword());
         applyRootOnlyForQueuePoliciesTable();
 
         final Flyway baseFlyway = Flyway.configure()

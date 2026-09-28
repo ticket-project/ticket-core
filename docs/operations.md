@@ -149,8 +149,8 @@ migration은 `db/migration-vendor/oracle`, `db/migration-vendor/h2`에 같은 �
 운영 DB는 이미 테이블이 존재한다는 전제로 도입했다. 이력 테이블이 아직 없을 때의 baseline은
 설정이 아니라 Spring Modulith가 정한다. `SpringModulithFlywayMigrationStrategy`는 `__root`와
 module마다 Flyway를 새로 만들면서 `baselineOnMigrate=true`, `baselineVersion=0`을 강제한다. 그래서
-이력 테이블이 없는 폴더는 version `0` baseline을 만든 뒤 가장 낮은 버전(module은 `V1`, `__root`는
-`V2`)부터 적용된다. `spring.flyway.baseline-on-migrate`/`baseline-version`은 이 동작을 바꾸지 못하므로
+이력 테이블이 없는 폴더는 version `0` baseline을 만든 뒤 가장 낮은 버전(`V1`)부터 적용된다.
+`spring.flyway.baseline-on-migrate`/`baseline-version`은 이 동작을 바꾸지 못하므로
 두지 않는다(`FlywayConfigurationTest`가 고정한다). 새 module 폴더를 처음 배포하거나 새 DB에 처음
 적용하기 전에는 다음을 확인한다.
 
@@ -162,7 +162,15 @@ module마다 Flyway를 새로 만들면서 `baselineOnMigrate=true`, `baselineVe
    확인한다. Oracle에서 이력 테이블과 컬럼은 소문자로 만들어지므로 따옴표로 감싸 조회한다
    (`SELECT "version", "success" FROM "flyway_schema_history_booking"`).
 
-기존 운영 스키마를 다시 만드는 `V1__...sql`은 추가하지 않는다. 이후 테이블 구조 변경은 새 파일로만
+`__root` V1(`V1__create_pre_flyway_baseline_schema.sql`)은 Flyway 도입 전 스키마를 빈 DB에 다시 만든다.
+운영 `flyway_schema_history`에는 Modulith 전환 전에 기록된 version `1` BASELINE이 있어서 운영은 이 파일을
+건너뛴다. 로컬과 테스트처럼 빈 DB만 V1을 실행한다. V1은 **도입 당시 모양**이라 지금 entity와 다르다 —
+뒤 migration이 그 모양을 전제로 컬럼·제약을 더한다. 그래서 V1을 지금 entity에 맞춰 고치지 않는다.
+빈 DB에서 전체 migration이 entity와 맞는지는 `MigrationChainSchemaTest`(H2)와
+`OracleMigrationChainSchemaTest`(Oracle, Docker 필요)가 확인한다. 옛 스키마를 직접 만드는 migration
+테스트는 `ModulithFlywayTestSupport.migrate`가 운영과 같은 version `1` BASELINE을 먼저 남긴다.
+
+이후 테이블 구조 변경은 새 파일로만
 추가한다. `__root`에 남는 변경(어떤 module에도 속하지 않는 순수 기술 테이블)과 module 소유
 변경(module의 aggregate/schema 경계 안)을 먼저 구분한 뒤 폴더를 고른다.
 
@@ -254,11 +262,7 @@ local 프로파일은 H2 file DB(`~/ticket-local`)의 스키마를 Hibernate `dd
 기동마다 다시 만든다. 초기 데이터는 기동에 포함되지 않으므로 기동 후 `seedLocal`을 실행한다
 ([seed/README.md](../seed/README.md)). dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동
 DDL을 끄고 Flyway만 활성화한다. 이력 테이블이 없으면 운영과 같이 Spring Modulith가 version `0`
-baseline을 만들고, `__root`는 `V2__...sql`부터, module 폴더는 `V1__...sql`부터 적용한다.
-
-주의: 현재 운영 baseline 방식은 기존 스키마를 다시 만드는 `V1__...sql`을 `__root`에 두지
-않는다. 따라서 완전히 빈 dev DB에서 Flyway만으로 애플리케이션을 띄우려면 먼저 local 프로파일로
-H2 DB를 생성하거나, 별도 스키마 생성 migration 전략을 정해야 한다.
+baseline을 만들고 `V1__...sql`부터 적용한다. 빈 DB면 `__root` V1이 Flyway 도입 전 스키마를 만든다.
 
 ## 배포 workflow
 
