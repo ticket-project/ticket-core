@@ -66,9 +66,7 @@ class FlywayConfigurationTest {
                 .isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
         assertThat(dev.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         assertThat(dev.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertThat(dev.getProperty("spring.flyway.baseline-on-migrate"))
-                .isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
-        assertThat(dev.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
+        assertNoIgnoredBaselineSettings(dev);
         assertThat(dev.getProperty("spring.flyway.baseline-description"))
                 .isEqualTo("existing local schema before Flyway");
     }
@@ -79,11 +77,19 @@ class FlywayConfigurationTest {
 
         assertThat(prod.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         assertThat(prod.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertThat(prod.getProperty("spring.flyway.baseline-on-migrate"))
-                .isEqualTo("${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}");
-        assertThat(prod.getProperty("spring.flyway.baseline-version")).isEqualTo("1");
+        assertNoIgnoredBaselineSettings(prod);
         assertThat(prod.getProperty("spring.flyway.baseline-description")).isEqualTo("existing schema before Flyway");
         assertThat(prod.getProperty("spring.flyway.clean-disabled")).isEqualTo(true);
+    }
+
+    /**
+     * {@code SpringModulithFlywayMigrationStrategy}는 {@code __root}와 module마다 Flyway를 새로 만들면서
+     * {@code baselineOnMigrate=true}, {@code baselineVersion=0}을 강제한다. 이 두 값을 yml에 적어도 적용되지 않으므로, 적용되는 것처럼 보이는 설정이 다시
+     * 들어오지 않게 막는다.
+     */
+    private void assertNoIgnoredBaselineSettings(final PropertySource<?> profile) {
+        assertThat(profile.getProperty("spring.flyway.baseline-on-migrate")).isNull();
+        assertThat(profile.getProperty("spring.flyway.baseline-version")).isNull();
     }
 
     /**

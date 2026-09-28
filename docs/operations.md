@@ -146,15 +146,21 @@ migration은 `db/migration-vendor/oracle`, `db/migration-vendor/h2`에 같은 �
 `application-dev.yml`은 H2 경로를, `application-prod.yml`은 Oracle 경로를 명시해 현재 DB에
 맞는 migration만 선택한다.
 
-운영 DB는 이미 테이블이 존재한다는 전제로 도입한다. 최초 반영 전에는 다음 순서를 지킨다.
+운영 DB는 이미 테이블이 존재한다는 전제로 도입했다. 이력 테이블이 아직 없을 때의 baseline은
+설정이 아니라 Spring Modulith가 정한다. `SpringModulithFlywayMigrationStrategy`는 `__root`와
+module마다 Flyway를 새로 만들면서 `baselineOnMigrate=true`, `baselineVersion=0`을 강제한다. 그래서
+이력 테이블이 없는 폴더는 version `0` baseline을 만든 뒤 가장 낮은 버전(module은 `V1`, `__root`는
+`V2`)부터 적용된다. `spring.flyway.baseline-on-migrate`/`baseline-version`은 이 동작을 바꾸지 못하므로
+두지 않는다(`FlywayConfigurationTest`가 고정한다). 새 module 폴더를 처음 배포하거나 새 DB에 처음
+적용하기 전에는 다음을 확인한다.
 
 1. 운영 DB 백업 또는 복구 지점을 확보한다.
 2. 애플리케이션 DB 계정이 `flyway_schema_history`(와 module별
    `flyway_schema_history_{module}`) 테이블을 생성하고 이후 DDL을 실행할 권한이 있는지
    확인한다.
-3. 최초 도입 배포에서만 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 설정한다.
-4. 애플리케이션 기동 후 `flyway_schema_history`에 version `1` baseline 기록이 생성됐는지 확인한다.
-5. baseline 확인 후에는 `SPRING_FLYWAY_BASELINE_ON_MIGRATE=false`로 되돌리거나 환경 변수를 제거한다.
+3. 기동 후 해당 이력 테이블에 version `0` baseline과 적용된 버전이 모두 `success`로 기록됐는지
+   확인한다. Oracle에서 이력 테이블과 컬럼은 소문자로 만들어지므로 따옴표로 감싸 조회한다
+   (`SELECT "version", "success" FROM "flyway_schema_history_booking"`).
 
 기존 운영 스키마를 다시 만드는 `V1__...sql`은 추가하지 않는다. 이후 테이블 구조 변경은 새 파일로만
 추가한다. `__root`에 남는 변경(어떤 module에도 속하지 않는 순수 기술 테이블)과 module 소유
@@ -247,10 +253,8 @@ Venue 데이터를 복구한다.
 local 프로파일은 H2 file DB(`~/ticket-local`)의 스키마를 Hibernate `ddl-auto:create`로 매
 기동마다 다시 만든다. 초기 데이터는 기동에 포함되지 않으므로 기동 후 `seedLocal`을 실행한다
 ([seed/README.md](../seed/README.md)). dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동
-DDL을 끄고 Flyway만 활성화한다. 기존 local DB를 dev에서 처음 Flyway에 편입할 때만
-`SPRING_FLYWAY_BASELINE_ON_MIGRATE=true`를 지정해 version `1` baseline을 만들고, 평소에는
-기본값(`false`)을 유지한다. 이후 변경은 `__root`의 `V2__...sql`부터, module 소유 변경은 해당
-module 폴더의 `V1__...sql`부터 검증한다.
+DDL을 끄고 Flyway만 활성화한다. 이력 테이블이 없으면 운영과 같이 Spring Modulith가 version `0`
+baseline을 만들고, `__root`는 `V2__...sql`부터, module 폴더는 `V1__...sql`부터 적용한다.
 
 주의: 현재 운영 baseline 방식은 기존 스키마를 다시 만드는 `V1__...sql`을 `__root`에 두지
 않는다. 따라서 완전히 빈 dev DB에서 Flyway만으로 애플리케이션을 띄우려면 먼저 local 프로파일로
