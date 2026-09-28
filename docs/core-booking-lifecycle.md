@@ -18,7 +18,9 @@
 
 ## 지켜야 할 원칙
 
-- Redis 또는 WebSocket 호출 중에는 DB connection을 점유하지 않는다.
+- Redis 또는 WebSocket 호출 중에는 DB connection을 점유하지 않는다. HTTP 요청에서는
+  `spring.jpa.open-in-view: false`가 이를 보장한다 — 켜 두면 요청이 첫 DB 접근부터 응답 끝까지
+  connection을 쥔다(`SeatStatusTransactionBoundaryTest`가 꺼져 있음을 고정한다).
 - Redis TTL 이벤트가 한꺼번에 들어와도 DB로 진입하는 작업 수는 제한한다.
 - 주문 저장 또는 상태 변경과 그에 대응하는 이벤트 발행은 같은 DB 트랜잭션에서 처리한다.
 - 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고

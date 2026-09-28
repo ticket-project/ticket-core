@@ -4,6 +4,8 @@ spring:
   datasource:
     hikari:
       pool-name: ticket-core
+  jpa:
+    open-in-view: false
   config:
     import:
       - logging.yml
