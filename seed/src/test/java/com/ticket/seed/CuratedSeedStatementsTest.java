@@ -316,7 +316,8 @@ class CuratedSeedStatementsTest {
 
         assertThat(policyStatement).startsWith("INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES");
         assertThat(policyStatement)
-                .contains("(1, '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, 0, '2026-01-01 10:00:00', '시드')");
+                .contains(
+                        "(1, '2026-02-20 10:00:00', '2026-03-01 20:00:00', 4, 600, 'FORCE_OFF', 'LEVEL_1', 0, '2026-01-01 10:00:00', '시드')");
 
         assertThat(split.get(2)).isEqualTo(unrelated);
     }
@@ -337,6 +338,9 @@ class CuratedSeedStatementsTest {
                 .isEqualTo(executable.stream()
                         .filter(statement -> statement.startsWith("INSERT INTO PERFORMANCES ("))
                         .count());
+        assertThat(executable.stream()
+                        .filter(statement -> statement.startsWith("INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES")))
+                .allMatch(statement -> statement.contains("'FORCE_OFF', 'LEVEL_1'"));
     }
 
     @Test

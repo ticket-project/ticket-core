@@ -202,6 +202,11 @@ class SeedProdOracleTest {
         assertThat(curatedCount("PERFORMANCE_GRADES", "performance_id")).isEqualTo(performances * 4);
         assertThat(curatedCount("BOOKING_PERFORMANCE_SALES_POLICIES", "performance_id"))
                 .isEqualTo(performances);
+        assertThat(count(
+                        "BOOKING_PERFORMANCE_SALES_POLICIES",
+                        "performance_id < " + FIXTURE_ID_BASE
+                                + " AND queue_mode = 'FORCE_OFF' AND queue_level = 'LEVEL_1'"))
+                .isEqualTo(performances);
 
         assertThat(count("MEMBERS")).as("운영 기본값은 테스트 회원을 만들지 않는다").isZero();
         assertThat(count("PERFORMANCES", "id >= " + FIXTURE_ID_BASE))
