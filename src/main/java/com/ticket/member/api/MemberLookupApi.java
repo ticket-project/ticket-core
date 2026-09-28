@@ -7,6 +7,9 @@ package com.ticket.member.api;
  * 계약이 아니라 전역 오류 계약을 그대로 따른다 — member가 별도 exception 타입을 만들지 않는다.
  */
 public interface MemberLookupApi {
+    /** 활성 회원인지 검증한다. 존재하지 않거나 탈퇴한 회원이면 던진다. 인증은 토큰만 보므로 탈퇴 회원을 막아야 하는 쓰기 경로가 부른다. */
+    void requireActive(long memberId);
+
     /** 다른 module이 화면에 표시할 회원 이름·이메일을 조회한다. 존재하지 않거나 탈퇴한 회원이면 던진다. */
     MemberSnapshot getProfile(long memberId);
 }
