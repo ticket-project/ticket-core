@@ -18,7 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.ticket.security.token.AccessTokenAuthenticatorService;
+import com.ticket.security.token.AccessTokenReader;
 import com.ticket.shared.config.CorsProperties;
 
 @Configuration
@@ -28,7 +28,7 @@ public class ApiSecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
-            final AccessTokenAuthenticatorService accessTokenAuthenticatorService,
+            final AccessTokenReader accessTokenReader,
             final RestAuthenticationEntryPoint restAuthenticationEntryPoint,
             final RestAccessDeniedHandler restAccessDeniedHandler)
             throws Exception {
@@ -72,8 +72,7 @@ public class ApiSecurityConfig {
                         .authenticated());
 
         http.addFilterBefore(
-                new AccessTokenAuthenticationFilter(accessTokenAuthenticatorService),
-                UsernamePasswordAuthenticationFilter.class);
+                new AccessTokenAuthenticationFilter(accessTokenReader), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

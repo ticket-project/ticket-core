@@ -16,18 +16,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.token.AccessTokenAuthenticatorService;
 import com.ticket.security.token.AccessTokenReadResult;
+import com.ticket.security.token.AccessTokenReader;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
-    private final AccessTokenAuthenticatorService accessTokenAuthenticatorService;
+    private final AccessTokenReader accessTokenReader;
 
-    public AccessTokenAuthenticationFilter(final AccessTokenAuthenticatorService accessTokenAuthenticatorService) {
-        this.accessTokenAuthenticatorService = Objects.requireNonNull(accessTokenAuthenticatorService);
+    public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
+        this.accessTokenReader = Objects.requireNonNull(accessTokenReader);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
         AccessTokenReadResult readResult;
         try {
             final String token = extractBearerToken(authorizationHeader);
-            readResult = accessTokenAuthenticatorService.read(token);
+            readResult = accessTokenReader.read(token);
         } catch (final IllegalArgumentException exception) {
             // Bearer 형식 자체가 잘못된 경우다. 토큰 검증까지 가지 않는다.
             readResult = AccessTokenReadResult.invalid();
