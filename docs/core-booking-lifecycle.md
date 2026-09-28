@@ -147,20 +147,14 @@ CancelOrderUseCase -> CancelOrderTransactionService / ExpireOrderUseCase
   -> DB 커밋 및 connection 반환
   -> BookingEventListeners.on(OrderTerminated) (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
-       -> HoldReleaseProgressRecorder로 이미 Redis 해제가 끝난 event인지 확인
        -> HoldReleaseCoordinator
-            -> (아직이면) 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
-            -> Redis 해제 완료를 eventId 기준으로 기록      (HoldReleaseProgressRecorder,
-               자기 트랜잭션에서 곧바로 커밋한다 — 뒤이은 발행이 실패해도 되돌아가지 않는다)
+            -> 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
             -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket)
 ~~~
 
-같은 `OrderTerminated` publication이 재시도로 다시 전달돼도 `HoldReleaseProgressRecorder`가
-`eventId` 단위로 Redis 해제 완료 여부를 기억하므로 Redis 해제 자체는 반복되지 않는다. 이 기록은
-listener의 트랜잭션에 묶이지 않고 `REQUIRES_NEW`로 곧바로 커밋된다 — 예전에는 Redis 해제 뒤
-WebSocket 발행이 실패하면 완료 기록까지 함께 롤백돼 재시도에서 Redis 해제를 다시 수행했다. 반대로
-Redis 해제와 완료 기록 사이에서 실패하면 기록이 남지 않아 다음 재시도가 해제를 다시 시도하는데,
-해제는 좌석별 현재 holdKey를 확인하고 일치할 때만 지우므로 남의 선점을 건드리지 않는다. 다만
+같은 `OrderTerminated` publication이 재시도로 다시 전달되면 Redis 해제도 다시 수행한다. 해제는
+좌석별 현재 holdKey를 확인하고 일치할 때만 지우므로, 이미 풀린 좌석은 그대로 지나가고 그사이
+다른 사용자가 잡은 선점도 건드리지 않는다. 그래서 해제 완료 여부를 따로 기록하지 않는다.
 WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새 hold나 selection이 생긴
 좌석에는 오래된 해제 알림을 보내지 않는다. 발행 자체가 다시 실패하면 같은 RELEASED가 다시
 발행될 수 있다 — 이 이벤트는 좌석을 특정 상태로 맞추는 멱등 상태 알림으로 취급하며 전달

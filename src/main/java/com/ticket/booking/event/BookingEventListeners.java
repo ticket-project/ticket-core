@@ -1,8 +1,5 @@
 package com.ticket.booking.event;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,9 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  * hold 생성 후처리({@link HoldCreationCoordinator})와 hold 해제 후처리 ({@link HoldReleaseCoordinator})는 기존 멱등 로직을 그대로 재사용한다.
  *
  * <p><b>listener 자체는 DB 트랜잭션을 열지 않는다({@code propagation = NOT_SUPPORTED}).</b> 기본값인 {@code REQUIRES_NEW}에서는 Redis 락
- * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 되돌림 의미는 더 나빴다 — Redis 해제 뒤 남긴 완료
- * 기록({@code HoldReleaseProgress})이 뒤이은 WebSocket 실패로 함께 롤백돼, 재시도에서 Redis 해제를 다시 수행했다. 지금은 필요한 DB 데이터를
- * {@link OrderHoldSnapshotReader}의 짧은 읽기 트랜잭션에서 값으로 완성한 뒤 그 밖에서 외부 작업을 하고, 완료 기록은 자기 트랜잭션에서 곧바로 커밋된다.
+ * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 지금은 필요한 DB 데이터를
+ * {@link OrderHoldSnapshotReader}의 짧은 읽기 트랜잭션에서 값으로 완성한 뒤 그 밖에서 외부 작업을 한다.
  *
  * <p>트랜잭션을 열지 않아도 publication 계약은 그대로다 — 발행·완료·실패 기록은 Modulith registry가 자기 트랜잭션에서 수행하고, 여기서 던진 예외는 FAILED로 남아 재제출된다. 이
  * listener는 예외를 삼키지 않는다.
@@ -57,8 +53,6 @@ class BookingEventListeners {
     private final OrderHoldSnapshotReader orderHoldSnapshotReader;
     private final HoldCreationCoordinator holdCreationCoordinator;
     private final HoldReleaseCoordinator holdReleaseCoordinator;
-    private final HoldReleaseProgressRecorder holdReleaseProgressRecorder;
-    private final Clock clock;
 
     @ApplicationModuleListener(id = ORDER_STARTED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderStarted event) {
@@ -81,9 +75,7 @@ class BookingEventListeners {
             log.debug("hold 해제 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        final boolean alreadyReleased = holdReleaseProgressRecorder.isReleased(event.eventId());
-        final HoldReleaseTask task =
-                new HoldReleaseTask(snapshot.performanceId(), event.holdKey(), snapshot.seatIds(), alreadyReleased);
-        holdReleaseCoordinator.releaseAndPublish(event.eventId(), task, LocalDateTime.now(clock));
+        holdReleaseCoordinator.releaseAndPublish(
+                new HoldReleaseTask(snapshot.performanceId(), event.holdKey(), snapshot.seatIds()));
     }
 }
