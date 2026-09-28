@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
@@ -48,6 +49,13 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     void 트랜잭션_경계를_소유한_빈은_실제로_proxy로_감싸진다() {
         assertThat(AopUtils.isAopProxy(context.getBean(PerformanceSeatRepository.class)))
                 .isTrue();
+    }
+
+    /** 위 두 검사는 트랜잭션 속성만 본다. OSIV는 트랜잭션 없이 요청 끝까지 connection을 쥐므로 그 검사를 통과하면서도 경계를 무너뜨린다 — 그래서 OSIV 인터셉터가 없는지를 따로 본다. */
+    @Test
+    void OSIV가_꺼져_있어_요청이_connection을_끝까지_쥐지_않는다() {
+        assertThat(context.getBeanNamesForType(OpenEntityManagerInViewInterceptor.class))
+                .isEmpty();
     }
 
     /** use case가 트랜잭션을 소유하면 Redis 조회까지 DB connection을 쥔 채로 하게 된다. */
