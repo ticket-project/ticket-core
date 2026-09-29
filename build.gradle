@@ -26,7 +26,6 @@ spotless {
         target '*.gradle', '*.md', '*.toml', '*.yaml', '*.yml', '.editorconfig',
                 'docs/**/*.md', '.github/**/*.md', '.github/**/*.yaml', '.github/**/*.yml',
                 'scripts/**/*.sh', 'scripts/**/*.cmd'
-        targetExclude 'docs/plans/**'
         trimTrailingWhitespace()
         endWithNewline()
     }
@@ -96,7 +95,7 @@ dependencies {
     runtimeOnly libs.jjwt.impl
     runtimeOnly libs.jjwt.jackson
     runtimeOnly 'org.flywaydb:flyway-database-oracle'
-    // prod/dev는 Oracle, local/test는 h2 파일 DB를 쓴다.
+    // prod는 Oracle, local/dev는 H2 file DB를 쓴다.
     runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
     runtimeOnly 'com.h2database:h2'
     runtimeOnly libs.oracle.security.osdt.cert
@@ -140,18 +139,15 @@ dependencies {
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    // ActuatorSecurityConfigTest 등 @WebMvcTest + Import(SecurityConfig)가 실제 Security filter chain을
-    // MockMvc에 적용하려면 spring-security-test가 classpath에 있어야 한다(@ConditionalOnClass로
-    // SecurityMockMvcConfigurer가 자동 등록됨). 코드에서 org.springframework.security.test.*를 직접
-    // import하지 않아 겉보기엔 미사용처럼 보이지만 제거하면 해당 테스트의 ApplicationContext 로딩이
-    // 깨진다 — 2026-09-02 Task 13에서 실측 확인.
+    // ApiSecurityConfigTest 등 @WebMvcTest가 실제 Security filter chain을 MockMvc에 적용하려면
+    // spring-security-test가 classpath에 있어야 한다(@ConditionalOnClass로 SecurityMockMvcConfigurer가
+    // 자동 등록된다). 테스트 코드가 직접 import하지 않아도 지우면 안 된다.
     testImplementation 'org.springframework.boot:spring-boot-security-test'
     testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-resttestclient'
     testImplementation libs.archunit.junit5
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
-    // Task 11 Step 7: 저장소에 Oracle Testcontainers 인프라가 없어 CI에서 Oracle 방언 migration을
-    // 실제로 검증할 수 있는 유일한 수단으로 새로 추가한다.
+    // Oracle 방언 migration을 실제 Oracle(gvenzl/oracle-free 컨테이너)에서 검증한다.
     testImplementation 'org.testcontainers:testcontainers-oracle-free'
     // 제약 위반 원인 예외를 실제 타입으로 만들어 테스트한다. 프로덕션은 쓰지 않는다.
     testImplementation 'org.hibernate.orm:hibernate-core'
@@ -160,7 +156,7 @@ dependencies {
     // module-aware Flyway 분기(SpringModulithFlywayMigrationStrategy)를 실제 운영과 같은 class로
     // 검증한다. 둘 다 spring-modulith-starter-jpa가 runtime scope로 이미 가져오는 module이다.
     testCompileOnly 'org.springframework.modulith:spring-modulith-runtime'
-    // Task 12 Step 4: /actuator/modulith endpoint 빈과 module observability(AOP 계측) 빈이
+    // /actuator/modulith endpoint 빈과 module observability(AOP 계측) 빈이
     // 실제로 등록되는지를 타입으로 확인한다. 둘 다 spring-modulith-starter-insight가 runtime
     // scope로 이미 가져오는 module이다.
     testCompileOnly 'org.springframework.modulith:spring-modulith-actuator'
@@ -200,8 +196,8 @@ dependencies {
  * 정적 분석: Error Prone + NullAway.
  *
  * 이 저장소가 Error Prone에서 원하는 것은 <b>null 계약 검증</b> 하나다. Error Prone이 기본으로 켜는
- * 수백 개의 rule을 한꺼번에 들이면 이번 작업과 무관한 지적이 빌드를 막는다. 그래서 Iced-Latte와 같은
- * 방식으로 전체를 끈 뒤 필요한 것만 되켠다.
+ * 수백 개의 rule을 한꺼번에 들이면 이번 작업과 무관한 지적이 빌드를 막는다. 그래서 전체를 끈 뒤
+ * 필요한 것만 되켠다.
  *
  *   - NullAway            ERROR  -- 빌드를 막는다. null 계약 위반은 CI 실패다.
  *   - 그 외 소수의 rule    WARN   -- 실수는 알려주되 막지 않는다.
@@ -263,12 +259,6 @@ tasks.named('test') {
     // CI는 `clean test bootJar`만 돌린다. 시드 테스트가 누락되지 않게 test에 매단다.
     // 좁은 범위만 확인할 때는 `-x seedTest`로 뺀다.
     finalizedBy 'seedTest'
-}
-
-tasks.withType(Javadoc).configureEach {
-    options.encoding = 'UTF-8'
-    options.charSet = 'UTF-8'
-    options.docEncoding = 'UTF-8'
 }
 
 tasks.register('seedTest', Test) {
@@ -368,11 +358,5 @@ static void configureSeedExecution(JavaExec task, Project project) {
         if (key.toString().startsWith('seed.')) {
             task.systemProperty key.toString(), value
         }
-    }
-}
-
-tasks.register('dumpEpArgs') {
-    doLast {
-        println tasks.named('compileJava').get().options.allCompilerArgs.join('\n')
     }
 }
