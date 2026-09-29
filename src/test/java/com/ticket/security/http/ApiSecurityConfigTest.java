@@ -49,9 +49,6 @@ class ApiSecurityConfigTest {
     @MockitoBean
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
-    @MockitoBean
-    private RestAccessDeniedHandler restAccessDeniedHandler;
-
     @BeforeEach
     void setUp() throws Exception {
         Mockito.doAnswer(invocation -> {
@@ -61,14 +58,6 @@ class ApiSecurityConfigTest {
                 })
                 .when(restAuthenticationEntryPoint)
                 .commence(Mockito.any(), Mockito.any(), Mockito.any());
-
-        Mockito.doAnswer(invocation -> {
-                    HttpServletResponse response = invocation.getArgument(1);
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    return null;
-                })
-                .when(restAccessDeniedHandler)
-                .handle(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
