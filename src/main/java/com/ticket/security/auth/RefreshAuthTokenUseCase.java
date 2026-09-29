@@ -22,7 +22,7 @@ public class RefreshAuthTokenUseCase {
 
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore
-                .validate(input.refreshToken())
+                .consume(input.refreshToken())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
         final MemberStatus member;
         try {
@@ -30,8 +30,7 @@ public class RefreshAuthTokenUseCase {
         } catch (final NotFoundException exception) {
             throw new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다.");
         }
-        final IssuedAuthTokens tokens =
-                authTokenIssuer.rotateTokens(member.memberId(), member.role(), input.refreshToken());
+        final IssuedAuthTokens tokens = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return toResult(tokens);
     }
 
