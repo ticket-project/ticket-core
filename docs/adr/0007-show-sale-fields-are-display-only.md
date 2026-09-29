@@ -21,7 +21,7 @@ ADR 0006(A2)이 회차(Performance) 단위 예매 접수 기간·Hold 한도·�
   `SHOWS.sale_start_date`를 보지 않았으므로 처음부터 서로 다른 값이었다.
 
 어떤 ADR도 이 Show 단위 필드의 소유권을 다루지 않았다. 유일한 추적 지점은
-과거 기술 부채 목록의 TD-12였고, 그마저도 "예매 가능 여부 판정 로직이 두 곳(실제로는 세
+과거 기술 부채 목록의 한 항목이었고, 그마저도 "예매 가능 여부 판정 로직이 두 곳(실제로는 세
 곳)에 중복 구현됐다"는 증상만 기록했지 "왜 Show가 이 값을 갖는가"는 다루지 않았다.
 
 ## 결정
@@ -35,7 +35,7 @@ Show read model이 표현한다.** 이 둘은 이미 다른 데이터였으므�
    `displaySaleWindow`(`@Embeddable DisplaySaleWindow`)의 `startsAt`/`endsAt`,
    `getBookingStatus(now)` → `saleDisplayStatusAt(now)`(내부적으로
    `DisplaySaleWindow.statusAt(now)`에 위임), `BookingStatus` → `SaleDisplayStatus`.
-2. 판정 규칙은 `DisplaySaleWindow.statusAt(now)` 한 곳에만 둔다(TD-12 해소). 이전에는 도메인
+2. 판정 규칙은 `DisplaySaleWindow.statusAt(now)` 한 곳에만 둔다. 이전에는 도메인
    (`Show.getBookingStatus`), Querydsl 술어(`BookingStatusPredicateFactory`), 하드코딩된 조건
    (`QuerydslShowConditionBuilder`)이 각자 구현했고, 그중 도메인과 Querydsl 술어의 **null
    처리가 서로 달랐다**(창이 null이면 도메인은 CLOSED로 보는데 Querydsl 필터는 세 조건 어디에도
@@ -52,10 +52,10 @@ Show read model이 표현한다.** 이 둘은 이미 다른 데이터였으므�
 
 ## 결정하지 않는 것
 
-- **가격 잠금 규칙의 소유자**(TD-15) — "판매 오픈 전에만 가격을 바꿀 수 있다"는 불변식의 판단
+- **가격 잠금 규칙의 소유자**([#269](https://github.com/ticket-project/ticket-core/issues/269)) — "판매 오픈 전에만 가격을 바꿀 수 있다"는 불변식의 판단
   근거(접수 시각·좌석 편성 여부)가 Booking BC에 있다는 문제는 이 ADR의 범위가 아니다. 가격
   변경 기능이 아직 없어 드러나지 않으므로 관리자 CRUD 착수 시점에 따로 결정한다.
-- **판매 오픈 예정 목록의 상한**(PD-03), **`viewCount` 정렬 키 문제**(TD-13) — 무관한 별개
+- **판매 오픈 예정 목록의 상한**([#256](https://github.com/ticket-project/ticket-core/issues/256)), **`viewCount` 정렬 키 문제**([#268](https://github.com/ticket-project/ticket-core/issues/268)) — 무관한 별개
   제품 결정이다.
 - Show와 Booking의 표시-판단 불일치를 사용자에게 어떻게 보여줄지(예: 상세 화면에서 "표시상
   판매중이지만 예매가 마감됐을 수 있음" 안내) — 프론트엔드 UX 결정이라 이 ADR이 다루지 않는다.
@@ -64,12 +64,11 @@ Show read model이 표현한다.** 이 둘은 이미 다른 데이터였으므�
 
 - 당시 용어집(현재 [glossary.md](../glossary.md))의 `PerformanceSalesPolicy` 정의가 이미 `_Avoid_: 이 정책을 Show가 갖는다는 서술`을
   명시했다 — 이 ADR은 그 경계를 Show 쪽 이름에도 반영하는 것뿐이다.
-- `docs/architecture.md`의 View 규칙("조회 전용 `...View` 타입에 비즈니스 로직을 두지 않는다 —
-  판정은 별도 validator/policy가 맡는다")에 따라 판정을 `DisplaySaleWindow`라는 값 객체로
+- 당시 규칙("조회 전용 `...View` 타입에 비즈니스 로직을 두지 않는다 — 판정은 별도
+  validator/policy가 맡는다")에 따라 판정을 `DisplaySaleWindow`라는 값 객체로
   분리했다.
 
 ## 영향
 
 - **행동 변화 1건**: `SaleDisplayStatus.CLOSED` 검색 필터에 표시 창이 null인 Show가 새로
   포함된다. seed·fixture 데이터는 두 값이 항상 채워져 있어 계약 테스트 응답 값은 바뀌지 않는다.
-- 당시 기술 부채 목록의 TD-12를 해소 처리한다.

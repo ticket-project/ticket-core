@@ -10,7 +10,7 @@
 > 2026-09-24 갱신: E1000/E1001은 `security.exception`과 `SecurityExceptionHandler`가 소유한다.
 > `MemberExceptionHandler`는 회원 중복 이메일 오류만 처리한다. 예외가 HTTP 상태를 모르는 원칙은 유지한다.
 
-> 2026-09-19 갱신: 본문이 예로 든 `AdmissionExceptionHandler`는 없다. `booking`은 오류 계층 둘
+> 2026-09-19 갱신: 본문이 예로 든 `AdmissionExceptionHandler`는 없다(커밋 `2c89428c`에서 사라졌다). `booking`은 오류 계층 둘
 > (`BookingException`·`AdmissionTokenException`)을 갖지만 handler는 `BookingExceptionHandler` 하나가
 > 둘 다 잡는다 — "handler는 module에 하나"라는 규칙이 이겼다. 원칙 자체는 그대로다.
 
@@ -40,8 +40,8 @@ ADR 0002가 확정한 모듈 소유 오류 계약에서 `TicketException`은 `Ht
    않는 두 경로(`RestAuthenticationEntryPoint`/`RestAccessDeniedHandler`)는 각자 알고 있는 상태
    상수(401/403)를 직접 쓴다 — `MemberExceptionHandler`의 판단과 같은 값이다.
 3. **E-code 값·공개 메시지·`error.data`는 바꾸지 않는다.** 외부에 노출되는 것은 그대로다.
-   `com.ticket.error.ExceptionHandlerScopeTest`(module handler가 자기 module 오류만 잡는지)와
-   `com.ticket.error.ErrorCodeUniquenessTest`(E-code 전역 유일성)는 수정 없이 그대로 강제한다 —
+   `com.ticket.shared.exception.ExceptionHandlerScopeTest`(module handler가 자기 module 오류만 잡는지)와
+   `com.ticket.shared.exception.ErrorCodeUniquenessTest`(E-code 전역 유일성)는 수정 없이 그대로 강제한다 —
    전자는 handler 패키지에서 module 접두어를 동적으로 유도하므로 handler가 어디로 옮겨가도
    유효하다.
 4. **모듈 handler를 새 오류 타입마다 고쳐야 한다는 비용이 생긴다.** ADR 0002의 "예외를 추가할
@@ -67,7 +67,7 @@ ADR 0002가 확정한 모듈 소유 오류 계약에서 `TicketException`은 `Ht
   `TicketException` 하나로 넓게 잡아 `MessageDeliveryException`으로 바꾼다. base 타입을 캐치
   대상으로 실제로 쓰는 사례라 `TicketException`을 없앨 수 없다.
 - **`AdmissionTokenException`의 `reason`/전용 handler**: `reason`은 응답에 노출되지 않는
-  진단 전용 필드이자 `AdmissionExceptionHandler`의 로그에만 쓰인다 — 다른 예외가 갖지 않는
+  진단 전용 필드이자 `BookingExceptionHandler`의 로그에만 쓰인다 — 다른 예외가 갖지 않는
   고유한 사실 정보라 유지한다. 별도 handler를 두는 이유(검증 실패 사유를 admission 어휘로
   로깅)도 그대로다.
 - **트랜잭션 rollback/retry 설정의 예외 타입 지정**: `noRollbackFor`/`rollbackFor`/`@Retryable`
@@ -89,7 +89,7 @@ ADR 0002가 확정한 모듈 소유 오류 계약에서 `TicketException`은 `Ht
 
 ## 영향
 
-- `com.ticket.error.TicketException`이 `HttpStatus`/`getStatus()`를 잃는다. `error`,
+- `TicketException`이 `HttpStatus`/`getStatus()`를 잃는다. `error`,
   `booking`/`member`/`show`/`like`의 base 예외(4개)와 concrete 예외(20개) 생성자 시그니처가
   한 인수씩 짧아진다.
 - 각 module handler(`BookingExceptionHandler` 등)가 구체 타입 → HTTP 상태 switch(또는 타입이
@@ -104,6 +104,6 @@ ADR 0002가 확정한 모듈 소유 오류 계약에서 `TicketException`은 `Ht
   않는다는 원칙(ADR 0002·`docs/architecture.md`)은 그대로다 — 다만 그 패키지가 이제
   `<module>` 바로 아래가 아니라 `<module>.<capability>` 또는 `<module>.support` 아래에 있다.
 - 외부에 노출되는 값(URL·HTTP 상태·E-code·공개 메시지·`error.data`의 형태)은 전부 그대로다 —
-  `BookingExceptionHandlerTest`/`AdmissionExceptionHandlerTest`/`MemberExceptionHandlerTest`/
+  `BookingExceptionHandlerTest`/`MemberExceptionHandlerTest`/
   `ShowExceptionHandlerTest`/`LikeExceptionHandlerTest`/`GlobalExceptionHandlerTest`가 이
   변경 전후로 값이 같음을 고정한다.

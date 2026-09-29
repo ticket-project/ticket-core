@@ -68,7 +68,7 @@ ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있�
 
 ## 근거
 
-- `docs/architecture.md`의 Repository vs Query Port 절: "행동시키기 위해 Aggregate를 가져오면
+- 당시 `docs/architecture.md`의 Repository vs Query Port 절: "행동시키기 위해 Aggregate를 가져오면
   Domain Repository를, 보여주기 위해 데이터를 가져오면 Application Query Port를 쓴다"는
   기준과 같은 방식으로, "이 use case가 실제로 필요로 하는 게 다른 BC의 예/아니오(존재)인지,
   다른 BC의 실제 데이터(표시값)인지"로 소유 module을 갈랐다.
