@@ -14,8 +14,8 @@
 | 모듈 경계·코드 배치 | [아키텍처](docs/architecture.md)와 관련 [ADR](docs/adr/README.md) |
 | 이름·코드 작성 판단 | [코드 작성 기준](docs/coding-guidelines.md) |
 | 예매 상태·선택·선점·실패 처리 | [예매 수명주기](docs/core-booking-lifecycle.md) |
-| 테스트 선택·결과 보고 | [테스트 기준](docs/testing.md), 실행 보조는 `/verify` |
+| 테스트 선택·결과 보고 | [테스트 기준](docs/testing.md) |
 | 배포·DB·Redis 전환·관측 | [운영](docs/operations.md) |
-| 부하 실행 | [테스트의 부하 검증](docs/testing.md#core-부하-검증), 실행 보조는 `/loadtest` |
+| 부하 실행 | [테스트의 부하 검증](docs/testing.md#core-부하-검증) |
 
 모든 문서를 매 작업마다 읽을 필요는 없다. 현재 코드와 테스트가 문서와 다르면 정책을 자동으로 바꾸지 않고 불일치를 확인한다.
