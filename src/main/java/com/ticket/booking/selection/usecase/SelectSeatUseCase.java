@@ -5,6 +5,7 @@ import static com.ticket.shared.api.InputChecks.requirePositiveId;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.admission.AdmissionGuard;
@@ -30,7 +31,11 @@ public class SelectSeatUseCase {
     private final AdmissionGuard admissionGuard;
     private final Clock clock;
 
-    public record Input(Long performanceId, Long seatId, Long memberId, String admissionToken) {
+    public record Input(
+            Long performanceId,
+            Long seatId,
+            Long memberId,
+            @Nullable String admissionToken) {
         public Input {
             performanceId = requirePositiveId(performanceId, "performanceId");
             seatId = requirePositiveId(seatId, "seatId");
