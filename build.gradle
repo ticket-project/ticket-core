@@ -25,7 +25,17 @@ spotless {
     format 'misc', {
         target '*.gradle', 'gradle/*.gradle', '*.md', '*.toml', '*.yaml', '*.yml', '.editorconfig',
                 'docs/**/*.md', '.github/**/*.md', '.github/**/*.yaml', '.github/**/*.yml',
-                'scripts/**/*.sh', 'scripts/**/*.cmd'
+                'scripts/**/*.cmd'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    // shell script는 .gitattributes가 eol=lf로 고정한다. misc에 두면 기본 줄끝 정책
+    // (GIT_ATTRIBUTES_FAST_ALLSAME)이 format의 첫 파일 규칙을 전체에 적용해, Windows(core.autocrlf=true)의
+    // spotlessApply가 작업 트리의 .sh를 CRLF로 바꿔 bash에서 실행이 깨졌다.
+    format 'shell', {
+        target 'scripts/**/*.sh'
+        lineEndings = com.diffplug.spotless.LineEnding.UNIX
         trimTrailingWhitespace()
         endWithNewline()
     }
