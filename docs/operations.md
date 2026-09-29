@@ -282,11 +282,11 @@ version `0` baseline을 만든 뒤 V1이 이미 있는 테이블과 부딪혀 �
 ## 배포 workflow
 
 GitHub Actions CI(`ci.yml`)는 root project 하나만 있는 단일 Gradle build로 전체 테스트를 통과한
-뒤 bootJar를 만든다. `test`는 `seed/` 소스 집합의 `seedTest`를 함께 돌리고,
+뒤 bootJar를 만든다. `seed/` 소스 집합의 `seedTest`도 명시해서 돌리고,
 `verifySeedNotInBootJar`는 만들어진 jar에 시드 산출물이 섞이지 않았는지 확인한다.
 
 ```bash
-./gradlew clean test bootJar verifySeedNotInBootJar
+./gradlew clean spotlessCheck test seedTest bootJar verifySeedNotInBootJar
 ```
 
 `.github/workflows/deploy.yml`은 `master` push에서 위 CI(`ci.yml`)를 호출해 통과한 jar를 받아
