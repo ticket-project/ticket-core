@@ -60,7 +60,7 @@ class GetSaleOpeningSoonShowsUseCaseTest {
 
         assertThat(output.shows())
                 .containsExactly(
-                        new GetSaleOpeningSoonShowsUseCase.Item(1L, "concert", "image", "venue", saleStartDate));
+                        new GetSaleOpeningSoonShowsUseCase.ShowResponse(1L, "concert", "image", "venue", saleStartDate));
         verify(showQuerydslRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
 

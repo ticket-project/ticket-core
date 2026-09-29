@@ -42,12 +42,12 @@ public class GetSaleOpeningSoonShowsPageUseCase {
     }
 
     public record Output(
-            List<Item> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+            List<ShowResponse> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
 
     /**
      * 컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름 {@code saleStartDate}/{@code saleEndDate}는 그대로 고정한다.
      */
-    public record Item(
+    public record ShowResponse(
             Long id,
             @Nullable String title,
             @Nullable String subTitle,
@@ -65,7 +65,7 @@ public class GetSaleOpeningSoonShowsPageUseCase {
                 input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
-        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, venuesById));
+        final CursorPage<ShowResponse, ShowCursor> view = page.map(show -> toResponse(show, venuesById));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -79,9 +79,9 @@ public class GetSaleOpeningSoonShowsPageUseCase {
         return region == null ? null : venueLookupApi.findIdsByRegion(region);
     }
 
-    private Item toItem(final Show show, final Map<Long, VenueSnapshot> venuesById) {
+    private ShowResponse toResponse(final Show show, final Map<Long, VenueSnapshot> venuesById) {
         final VenueSnapshot venue = venuesById.get(show.getVenueId());
-        return new Item(
+        return new ShowResponse(
                 show.getId(),
                 show.getTitle(),
                 show.getSubTitle(),

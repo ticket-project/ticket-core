@@ -73,7 +73,7 @@ class SearchShowsUseCaseTest {
                 useCase.execute(new SearchShowsUseCase.Input(request, 20, ShowSort.from("popular")));
 
         assertThat(output.items())
-                .containsExactly(new SearchShowsUseCase.Item(
+                .containsExactly(new SearchShowsUseCase.ShowResponse(
                         1L,
                         "concert",
                         "image",

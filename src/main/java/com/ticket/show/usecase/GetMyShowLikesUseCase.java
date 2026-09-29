@@ -53,9 +53,9 @@ public class GetMyShowLikesUseCase {
     }
 
     public record Output(
-            List<Item> items, boolean hasNext, @Nullable Long nextPosition) {}
+            List<ShowLikeResponse> items, boolean hasNext, @Nullable Long nextPosition) {}
 
-    public record Item(
+    public record ShowLikeResponse(
             Long showId,
             @Nullable String title,
             @Nullable String image,
@@ -79,8 +79,8 @@ public class GetMyShowLikesUseCase {
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.values().stream().map(Show::getVenueId).toList()));
 
-        final List<Item> items = page.items().stream()
-                .map(entry -> toItem(entry, shows.get(entry.targetId()), venuesById))
+        final List<ShowLikeResponse> items = page.items().stream()
+                .map(entry -> toResponse(entry, shows.get(entry.targetId()), venuesById))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -88,13 +88,13 @@ public class GetMyShowLikesUseCase {
     }
 
     /** 찜 목록의 이미지는 원본 경로 그대로다 — 목록 카드용 변환({@code ShowCardImagePathConverter})을 쓰지 않는 기존 계약이다. */
-    private @Nullable Item toItem(
+    private @Nullable ShowLikeResponse toResponse(
             final LikeSnapshot entry, final @Nullable Show show, final Map<Long, VenueSnapshot> venuesById) {
         if (show == null) {
             return null;
         }
         final VenueSnapshot venue = venuesById.get(show.getVenueId());
-        return new Item(
+        return new ShowLikeResponse(
                 show.getId(),
                 show.getTitle(),
                 show.getImage(),

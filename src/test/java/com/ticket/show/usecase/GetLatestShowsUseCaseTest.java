@@ -63,7 +63,7 @@ class GetLatestShowsUseCaseTest {
 
         assertThat(output.shows())
                 .containsExactly(
-                        new GetLatestShowsUseCase.Item(1L, "concert", "image", startDate, endDate, "venue", createdAt));
+                        new GetLatestShowsUseCase.ShowResponse(1L, "concert", "image", startDate, endDate, "venue", createdAt));
         verify(showQuerydslRepository).findLatestShows("CONCERT", GetLatestShowsUseCase.LATEST_SHOWS_MAX_COUNT);
     }
 
