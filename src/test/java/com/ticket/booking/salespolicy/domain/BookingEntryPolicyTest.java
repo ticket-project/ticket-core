@@ -6,7 +6,10 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 
-/** 옛 {@code show.domain.performance.QueueActivation}의 판정 규칙을 이 aggregate로 옮겨 온 테스트다 — 케이스는 그대로 보존한다. */
+/**
+ * 옛 {@code show.domain.performance.QueueActivation}의 판정 규칙을 이 aggregate로 옮겨 온 테스트다. now·마감 시각이 null인 케이스는 뺐다 — 호출자가 현재
+ * 시각과 not null 열인 마감 시각을 넘기므로 Core에서 생기지 않는다.
+ */
 @SuppressWarnings("NonAsciiCharacters")
 class BookingEntryPolicyTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 4, 10, 0);
@@ -28,7 +31,7 @@ class BookingEntryPolicyTest {
 
     @Test
     void force_on이면_시각과_무관하게_대기열을_요구한다() {
-        assertThat(new BookingEntryPolicy(QueueMode.FORCE_ON, null).isRequiredAt(NOW, null))
+        assertThat(new BookingEntryPolicy(QueueMode.FORCE_ON, null).isRequiredAt(NOW, CLOSE))
                 .isTrue();
         assertThat(new BookingEntryPolicy(QueueMode.FORCE_ON, null).isRequiredAt(NOW, NOW.minusHours(1)))
                 .isTrue();
@@ -58,13 +61,6 @@ class BookingEntryPolicyTest {
     }
 
     @Test
-    void auto는_now가_없으면_대기열을_요구하지_않는다() {
-        BookingEntryPolicy policy = new BookingEntryPolicy(QueueMode.AUTO, NOW.minusMinutes(5));
-
-        assertThat(policy.isRequiredAt(null, CLOSE)).isFalse();
-    }
-
-    @Test
     void auto는_마감_이후에는_대기열을_요구하지_않는다() {
         BookingEntryPolicy policy = new BookingEntryPolicy(QueueMode.AUTO, NOW.minusHours(3));
 
@@ -76,13 +72,6 @@ class BookingEntryPolicyTest {
         BookingEntryPolicy policy = new BookingEntryPolicy(QueueMode.AUTO, NOW.minusHours(1));
 
         assertThat(policy.isRequiredAt(NOW, NOW)).isTrue();
-    }
-
-    @Test
-    void auto는_마감_시각이_없으면_preopen_이후_계속_대기열을_요구한다() {
-        BookingEntryPolicy policy = new BookingEntryPolicy(QueueMode.AUTO, NOW.minusMinutes(5));
-
-        assertThat(policy.isRequiredAt(NOW, null)).isTrue();
     }
 
     @Test

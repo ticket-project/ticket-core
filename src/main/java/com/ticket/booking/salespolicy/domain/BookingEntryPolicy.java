@@ -55,9 +55,9 @@ public class BookingEntryPolicy {
         if (queueMode == QueueMode.FORCE_ON) {
             return true;
         }
-        if (preopenQueueStartAt == null || now == null || now.isBefore(preopenQueueStartAt)) {
+        if (preopenQueueStartAt == null || now.isBefore(preopenQueueStartAt)) {
             return false;
         }
-        return orderClosesAt == null || !now.isAfter(orderClosesAt);
+        return !now.isAfter(orderClosesAt);
     }
 }
