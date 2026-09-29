@@ -54,17 +54,7 @@ import com.ticket.testsupport.persistence.MigratedSchema;
             "spring.datasource.url=jdbc:h2:mem:listener-id-contract-test;MODE=Oracle;DB_CLOSE_DELAY=-1",
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
-            "spring.datasource.password=",
-            "JWT_SECRET=0123456789abcdef0123456789abcdef",
-            "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
-            "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
-            "GOOGLE_CLIENT_ID=listener-id-contract-test",
-            "GOOGLE_CLIENT_SECRET=listener-id-contract-test",
-            "KAKAO_CLIENT_ID=listener-id-contract-test",
-            "KAKAO_CLIENT_SECRET=listener-id-contract-test",
-            "KAKAO_ADMIN_KEY=listener-id-contract-test",
-            "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
-            "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
+            "spring.datasource.password="
         })
 class BookingEventListenerIdContractTest {
     private static final long MEMBER_ID = 940L;

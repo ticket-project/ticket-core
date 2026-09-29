@@ -52,17 +52,7 @@ import tools.jackson.databind.JsonNode;
             "spring.datasource.url=jdbc:h2:mem:booking-e2e;MODE=Oracle;DB_CLOSE_DELAY=-1",
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
-            "spring.datasource.password=",
-            "JWT_SECRET=0123456789abcdef0123456789abcdef",
-            "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
-            "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
-            "GOOGLE_CLIENT_ID=booking-e2e",
-            "GOOGLE_CLIENT_SECRET=booking-e2e",
-            "KAKAO_CLIENT_ID=booking-e2e",
-            "KAKAO_CLIENT_SECRET=booking-e2e",
-            "KAKAO_ADMIN_KEY=booking-e2e",
-            "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
-            "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
+            "spring.datasource.password="
         })
 // Spring Boot 4에서 TestRestTemplate 빈은 RANDOM_PORT만으로 등록되지 않는다. 명시적으로 켠다.
 @AutoConfigureTestRestTemplate

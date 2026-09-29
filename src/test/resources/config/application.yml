@@ -8,3 +8,16 @@ decorator:
   datasource:
     p6spy:
       enable-logging: false
+
+# 운영이 환경변수로 받는 값(application.yml의 ${...})을 테스트에서 채운다. 전체 컨텍스트와
+# security 모듈 테스트가 기동하려면 모두 있어야 한다.
+JWT_SECRET: 0123456789abcdef0123456789abcdef
+JWT_ACCESS_TOKEN_EXPIRATION_SECONDS: 1800
+JWT_REFRESH_TOKEN_EXPIRATION_SECONDS: 1209600
+GOOGLE_CLIENT_ID: test
+GOOGLE_CLIENT_SECRET: test
+KAKAO_CLIENT_ID: test
+KAKAO_CLIENT_SECRET: test
+KAKAO_ADMIN_KEY: test
+OAUTH2_SUCCESS_REDIRECT_URI: http://localhost:3000/auth/callback
+OAUTH2_FAILURE_REDIRECT_URI: http://localhost:3000/auth/callback
