@@ -84,7 +84,7 @@ public class RedisExpirationListenerConfig {
                 connection = redisConnectionFactory.getConnection();
                 final Properties config = connection.serverCommands().getConfig(NOTIFY_KEYSPACE_EVENTS);
                 final String current = config.getProperty(NOTIFY_KEYSPACE_EVENTS, "");
-                if (supportsExpiredEvents(current)) {
+                if (isExpiredEventsEnabled(current)) {
                     return;
                 }
 
@@ -100,7 +100,7 @@ public class RedisExpirationListenerConfig {
         };
     }
 
-    private boolean supportsExpiredEvents(final String current) {
+    private boolean isExpiredEventsEnabled(final String current) {
         return current.contains("E") && current.contains("x");
     }
 }

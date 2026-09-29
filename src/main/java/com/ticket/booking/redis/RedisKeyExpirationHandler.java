@@ -1,7 +1,7 @@
 package com.ticket.booking.redis;
 
 public interface RedisKeyExpirationHandler {
-    boolean supports(String expiredKey);
+    boolean canHandle(String expiredKey);
 
     void handle(String expiredKey);
 }

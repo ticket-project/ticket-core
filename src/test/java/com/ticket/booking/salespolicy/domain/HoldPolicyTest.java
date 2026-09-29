@@ -16,15 +16,15 @@ class HoldPolicyTest {
         HoldPolicy policy = new HoldPolicy(null, Duration.ofSeconds(600));
 
         assertThat(policy.maxSeatCount()).isNull();
-        assertThat(policy.exceeds(1_000)).isFalse();
+        assertThat(policy.isOverMaxSeatCount(1_000)).isFalse();
     }
 
     @Test
     void maxSeatCount가_2이면_경계값을_허용한다() {
         HoldPolicy policy = new HoldPolicy(2, Duration.ofSeconds(600));
 
-        assertThat(policy.exceeds(2)).isFalse();
-        assertThat(policy.exceeds(3)).isTrue();
+        assertThat(policy.isOverMaxSeatCount(2)).isFalse();
+        assertThat(policy.isOverMaxSeatCount(3)).isTrue();
     }
 
     @Test

@@ -30,7 +30,7 @@ class HoldKeyExpirationHandlerTest {
 
         String expiredKey = HoldRedisKey.holdMeta("hold-key");
 
-        assertThat(handler.supports(expiredKey)).isTrue();
+        assertThat(handler.canHandle(expiredKey)).isTrue();
 
         handler.handle(expiredKey);
 
@@ -41,7 +41,7 @@ class HoldKeyExpirationHandlerTest {
     void hold_meta_키가_아니면_지원하지_않는다() {
         HoldKeyExpirationHandler handler = new HoldKeyExpirationHandler(expireOrderUseCase, fixedClock);
 
-        assertThat(handler.supports("unknown:key")).isFalse();
+        assertThat(handler.canHandle("unknown:key")).isFalse();
         verifyNoInteractions(expireOrderUseCase);
     }
 }

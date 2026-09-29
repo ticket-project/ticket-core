@@ -67,7 +67,7 @@ public class SocialAccountProvisioningService {
 
     private String resolveEmail(final SocialIdentity identity) {
         final String email = identity.email();
-        if (identity.emailVerified() && StringUtils.hasText(email)) {
+        if (identity.isEmailVerified() && StringUtils.hasText(email)) {
             // StringUtils.hasText가 null과 공백을 모두 걸러 낸 뒤이므로 여기서 email은 null일 수 없다.
             return Objects.requireNonNull(email).trim().toLowerCase();
         }

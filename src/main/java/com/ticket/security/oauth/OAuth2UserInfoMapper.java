@@ -35,7 +35,7 @@ public final class OAuth2UserInfoMapper {
     private static SocialIdentity mapKakao(final Map<String, Object> attributes) {
         final Map<String, Object> account = getMap(attributes, "kakao_account");
         final Map<String, Object> profile = account == null ? null : getMap(account, "profile");
-        final boolean emailVerified = account != null
+        final boolean isEmailVerified = account != null
                 && Boolean.TRUE.equals(account.get("is_email_valid"))
                 && Boolean.TRUE.equals(account.get("is_email_verified"));
 
@@ -43,7 +43,7 @@ public final class OAuth2UserInfoMapper {
                 SocialProvider.KAKAO,
                 String.valueOf(attributes.get("id")),
                 account == null ? null : (String) account.get("email"),
-                emailVerified,
+                isEmailVerified,
                 Optional.ofNullable(profile)
                         .map(value -> (String) value.get("nickname"))
                         .orElse(null));

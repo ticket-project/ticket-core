@@ -56,7 +56,7 @@ public class HoldPolicy {
         return Duration.ofSeconds(holdDurationSeconds);
     }
 
-    public boolean exceeds(final long requestedSeatCount) {
+    public boolean isOverMaxSeatCount(final long requestedSeatCount) {
         return maxSeatCount != null && requestedSeatCount > maxSeatCount;
     }
 }
