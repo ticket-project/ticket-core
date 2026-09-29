@@ -201,7 +201,6 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 - `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
   HTTP로 관통
 - `com.ticket.bootstrap.booking.SeatContentionE2ETest`: 같은 좌석 동시 주문에서 하나만 성공
-- `com.ticket.PlatformCompatibilityTest`: Spring Boot/Modulith 플랫폼 조합의 context 기동 smoke test
 
 ### 예매 E2E를 쓸 때
 
