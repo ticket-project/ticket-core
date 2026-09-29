@@ -13,13 +13,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 회원 조회 endpoint다. 탈퇴({@code DELETE /api/v1/members})는 인증 조립이라 security.auth의 {@code MemberWithdrawalController}가 갖는다 —
  * member가 그 조립을 참조하면 module 순환이 생긴다.
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/members")
 @RequiredArgsConstructor
