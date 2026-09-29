@@ -11,66 +11,45 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.modulith.events.CompletedEventPublications;
 import org.springframework.modulith.events.EventPublication;
-import org.springframework.modulith.events.FailedEventPublications;
-import org.springframework.modulith.events.ResubmissionOptions;
 import org.springframework.modulith.test.EnableScenarios;
 import org.springframework.modulith.test.Scenario;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
+import org.springframework.test.context.TestPropertySource;
 
-import com.ticket.TicketApplication;
-import com.ticket.testsupport.TestContainerImages;
-import com.ticket.testsupport.persistence.MigratedSchema;
+import com.ticket.testsupport.CoreApplicationTestSupport;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재제출 mechanics를 {@link Scenario} DSL로 검증한다.
  *
- * <p>{@link EventPublicationMaintenance}가 실제로 쓰는 {@link FailedEventPublications#resubmit} 정책(batchSize=100,
- * maxInFlight=4, completionAttempts&lt;=10)을 그대로 재현해 호출하므로, 이 정책이 바뀌면 이 테스트도 갱신해야 한다. booking 도메인 이벤트가 아니라 이 테스트 전용
- * {@link ProbeEvent}로 registry 자체의 동작만 격리해서 본다 — booking listener의 업무 로직은 {@code com.ticket.booking} 아래의 다른 테스트가 고정한다.
+ * <p>재제출은 운영 코드 {@link EventPublicationMaintenance#resubmitFailed()}를 그대로 부른다. 그래서 재시도 정책(batchSize, maxInFlight,
+ * completionAttempts&lt;=10)이 바뀌면 이 테스트가 그 정책으로 검증한다. 운영 스케줄러가 같은 메서드를 1분마다 불러 테스트와 겹치지 않도록
+ * {@code worker.enabled=false}로 스케줄링을 끈다. booking 도메인 이벤트가 아니라 이 테스트 전용 {@link ProbeEvent}로 registry 자체의 동작만 격리해서 본다 —
+ * booking listener의 업무 로직은 {@code com.ticket.booking} 아래의 다른 테스트가 고정한다.
  *
- * <p>고정된 재시도 정책과 deterministic fake({@link ProbeListener})만 쓰고 {@code Thread.sleep}은 쓰지 않는다. 최초 비동기 전달 완료는
+ * <p>deterministic fake({@link ProbeListener})만 쓰고 {@code Thread.sleep}은 쓰지 않는다. 최초 비동기 전달 완료는
  * {@link Scenario#andWaitForStateChange}의 Awaitility 기반 polling으로 기다린다.
  */
 @Slf4j
-@MigratedSchema
-@SpringBootTest(classes = TicketApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = "worker.enabled=false")
 @Import(EventPublicationMaintenanceScenarioTest.ProbeConfig.class)
 @EnableScenarios
-@SuppressWarnings({"NonAsciiCharacters", "resource"})
-class EventPublicationMaintenanceScenarioTest {
-    private static final int REDIS_PORT = 6379;
-    static final GenericContainer<?> REDIS =
-            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
-
-    static {
-        REDIS.start();
-    }
-
-    @DynamicPropertySource
-    static void redisProperties(final DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
-    }
+@SuppressWarnings("NonAsciiCharacters")
+class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport {
+    @Autowired
+    private EventPublicationMaintenance eventPublicationMaintenance;
 
     @Autowired
     private ProbeListener probeListener;
 
     @Autowired
     private CompletedEventPublications completedEventPublications;
-
-    @Autowired
-    private FailedEventPublications failedEventPublications;
 
     @BeforeEach
     void resetProbe() {
@@ -110,7 +89,7 @@ class EventPublicationMaintenanceScenarioTest {
         }
         // completionAttempts가 11이 된 뒤에는 필터(<=10)가 더 이상 이 publication을 포함하지 않는다.
         // async listener가 뒤늦게라도 다시 불리지 않는지 짧게 확인한 뒤, count가 그대로인지 본다.
-        resubmitFailedLikeMaintenance();
+        eventPublicationMaintenance.resubmitFailed();
         org.awaitility.Awaitility.await()
                 .pollDelay(Duration.ofMillis(300))
                 .atMost(Duration.ofSeconds(2))
@@ -120,25 +99,13 @@ class EventPublicationMaintenanceScenarioTest {
     }
 
     /**
-     * {@code resubmitFailedLikeMaintenance()}가 async listener를 다시 스케줄링만 하고 즉시 반환하므로, 다음 재제출을 걸기 전에 이번 시도가 실제로 끝나기를
-     * 기다린다.
+     * {@code eventPublicationMaintenance.resubmitFailed()}가 async listener를 다시 스케줄링만 하고 즉시 반환하므로, 다음 재제출을 걸기 전에 이번 시도가
+     * 실제로 끝나기를 기다린다.
      */
     private void resubmitAndAwait(final Scenario scenario, final UUID probeId, final int expectedAttempts) {
-        scenario.stimulate(this::resubmitFailedLikeMaintenance)
+        scenario.stimulate(eventPublicationMaintenance::resubmitFailed)
                 .andWaitForStateChange(() -> probeListener.attempts(probeId), attempts -> attempts >= expectedAttempts)
                 .andVerify(attempts -> assertThat(attempts).isEqualTo(expectedAttempts));
-    }
-
-    /**
-     * {@link EventPublicationMaintenance#resubmitFailed()}와 정확히 같은 {@link ResubmissionOptions}로 재제출한다.
-     * {@code EventPublicationMaintenance}는 package-private이라 이 테스트 패키지에서 직접 호출할 수 있지만, 정책 값 자체를 이중으로 못박아 두는 쪽이 두 코드가
-     * 갈라졌을 때 더 잘 보인다.
-     */
-    private void resubmitFailedLikeMaintenance() {
-        failedEventPublications.resubmit(ResubmissionOptions.defaults()
-                .withBatchSize(100)
-                .withMaxInFlight(4)
-                .withFilter(it -> it.getCompletionAttempts() <= 10));
     }
 
     private boolean matches(final EventPublication publication, final UUID probeId) {
