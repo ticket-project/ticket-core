@@ -58,7 +58,7 @@ public class Payment extends AuditedEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private PaymentStatus status;
+    private PaymentState status;
 
     @Column(name = "provider_payment_key", length = 64)
     private @Nullable String providerPaymentKey;
@@ -95,7 +95,7 @@ public class Payment extends AuditedEntity {
         this.provider = provider;
         this.method = method;
         this.amount = amount;
-        this.status = PaymentStatus.READY;
+        this.status = PaymentState.READY;
         this.requestedAt = requestedAt;
     }
 
@@ -111,22 +111,22 @@ public class Payment extends AuditedEntity {
     }
 
     public void process() {
-        if (status != PaymentStatus.READY) {
+        if (status != PaymentState.READY) {
             throw new IllegalStateException("READY 상태의 Payment만 process 할 수 있습니다. currentStatus=" + status);
         }
-        this.status = PaymentStatus.PROCESSING;
+        this.status = PaymentState.PROCESSING;
     }
 
     public void approve(final String providerPaymentKey, final LocalDateTime approvedAt) {
         validateRetryableTransition("approve");
-        this.status = PaymentStatus.SUCCEEDED;
+        this.status = PaymentState.SUCCEEDED;
         this.providerPaymentKey = providerPaymentKey;
         this.approvedAt = approvedAt;
     }
 
     public void fail(final String failureCode, final String failureMessage, final LocalDateTime failedAt) {
         validateRetryableTransition("fail");
-        this.status = PaymentStatus.FAILED;
+        this.status = PaymentState.FAILED;
         this.failureCode = failureCode;
         this.failureMessage = failureMessage;
         this.failedAt = failedAt;
@@ -134,16 +134,16 @@ public class Payment extends AuditedEntity {
 
     public void cancel(final LocalDateTime canceledAt) {
         validateRetryableTransition("cancel");
-        this.status = PaymentStatus.CANCELED;
+        this.status = PaymentState.CANCELED;
         this.canceledAt = canceledAt;
     }
 
     public boolean isTerminal() {
-        return status == PaymentStatus.SUCCEEDED || status == PaymentStatus.FAILED || status == PaymentStatus.CANCELED;
+        return status == PaymentState.SUCCEEDED || status == PaymentState.FAILED || status == PaymentState.CANCELED;
     }
 
     private void validateRetryableTransition(final String action) {
-        if (status != PaymentStatus.READY && status != PaymentStatus.PROCESSING) {
+        if (status != PaymentState.READY && status != PaymentState.PROCESSING) {
             throw new IllegalStateException(
                     "READY/PROCESSING 상태의 Payment만 " + action + " 할 수 있습니다. currentStatus=" + status);
         }
