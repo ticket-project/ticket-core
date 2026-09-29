@@ -31,7 +31,7 @@ import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
@@ -60,7 +60,7 @@ class SelectSeatUseCaseTest {
     private PerformanceSeatRepository performanceSeatRepository;
 
     @Mock
-    private HoldManager holdManager;
+    private HoldRegistry holdRegistry;
 
     @Mock
     private AdmissionVerifier admissionVerifier;
@@ -75,7 +75,7 @@ class SelectSeatUseCaseTest {
                 new SelectSeatUseCase(
                         seatSelectionCoordinator,
                         performanceSeatRepository,
-                        holdManager,
+                        holdRegistry,
                         new BookingEntryGate(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         CLOCK);
@@ -90,10 +90,10 @@ class SelectSeatUseCaseTest {
         useCase.execute(INPUT);
 
         InOrder inOrder = inOrder(
-                performanceSalesPolicyRepository, performanceSeatRepository, holdManager, seatSelectionCoordinator);
+                performanceSalesPolicyRepository, performanceSeatRepository, holdRegistry, seatSelectionCoordinator);
         inOrder.verify(performanceSalesPolicyRepository).findById(10L);
         inOrder.verify(performanceSeatRepository).findSeatState(10L, 20L);
-        inOrder.verify(holdManager).isHeld(10L, 20L);
+        inOrder.verify(holdRegistry).isHeld(10L, 20L);
         // 검증에서 얻은 performanceSeatId와 회차 선점 한도를 넘긴다. SELECTED 발행은 coordinator가 좌석 락
         // 안에서 하므로 여기서 다시 발행하지 않는다.
         inOrder.verify(seatSelectionCoordinator)
@@ -117,7 +117,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(performanceSeatRepository, holdManager, seatSelectionCoordinator);
+        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionCoordinator);
     }
 
     @Test
@@ -127,7 +127,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(PerformanceIsPastException.class);
 
-        verifyNoInteractions(performanceSeatRepository, holdManager, seatSelectionCoordinator, admissionVerifier);
+        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionCoordinator, admissionVerifier);
     }
 
     @Test
@@ -137,7 +137,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatMismatchInPerformanceException.class);
 
-        verifyNoInteractions(holdManager, seatSelectionCoordinator);
+        verifyNoInteractions(holdRegistry, seatSelectionCoordinator);
     }
 
     @Test
@@ -148,7 +148,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(NoAvailableSeatException.class);
 
-        verifyNoInteractions(holdManager, seatSelectionCoordinator);
+        verifyNoInteractions(holdRegistry, seatSelectionCoordinator);
     }
 
     /** 락 밖의 사전 확인이다 — 락 안에서 coordinator가 다시 보는 것과 같은 검증이 아니다. */
@@ -156,7 +156,7 @@ class SelectSeatUseCaseTest {
     void 이미_선점된_좌석이면_선택하지_않는다() {
         openPerformance();
         when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.of(availableSeat()));
-        when(holdManager.isHeld(10L, 20L)).thenReturn(true);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatAlreadyHeldException.class);
 

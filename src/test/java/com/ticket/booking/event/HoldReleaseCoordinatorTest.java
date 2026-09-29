@@ -22,7 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -34,7 +34,7 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 @ExtendWith(MockitoExtension.class)
 class HoldReleaseCoordinatorTest {
     @Mock
-    private HoldManager holdManager;
+    private HoldRegistry holdRegistry;
 
     private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
 
@@ -53,22 +53,22 @@ class HoldReleaseCoordinatorTest {
     void setUp() {
         coordinator = new HoldReleaseCoordinator(
                 distributedLock,
-                holdManager,
-                new SeatOccupancy(seatSelectionService, holdManager),
+                holdRegistry,
+                new SeatOccupancy(seatSelectionService, holdRegistry),
                 performanceSeatRepository,
                 seatStatusEventPublisher);
     }
 
     @Test
     void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
-        when(holdManager.isHeld(1L, 10L)).thenReturn(false);
-        when(holdManager.isHeld(1L, 20L)).thenReturn(false);
+        when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
+        when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();
 
         coordinator.releaseAndPublish(task());
 
-        final InOrder inOrder = inOrder(holdManager, seatStatusEventPublisher);
-        inOrder.verify(holdManager).release(1L, "old-hold", List.of(10L, 20L));
+        final InOrder inOrder = inOrder(holdRegistry, seatStatusEventPublisher);
+        inOrder.verify(holdRegistry).release(1L, "old-hold", List.of(10L, 20L));
         inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
         inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
@@ -76,7 +76,7 @@ class HoldReleaseCoordinatorTest {
     @Test
     void doesNotPublishOverANewerHoldOrSelection() {
         when(seatSelectionService.isSelected(1L, 10L)).thenReturn(false);
-        when(holdManager.isHeld(1L, 10L)).thenReturn(true);
+        when(holdRegistry.isHeld(1L, 10L)).thenReturn(true);
         when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
 
         coordinator.releaseAndPublish(task());
@@ -90,8 +90,8 @@ class HoldReleaseCoordinatorTest {
      */
     @Test
     void publicationFailureIsRetriedFromRelease() {
-        when(holdManager.isHeld(1L, 10L)).thenReturn(false);
-        when(holdManager.isHeld(1L, 20L)).thenReturn(false);
+        when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
+        when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
@@ -101,7 +101,7 @@ class HoldReleaseCoordinatorTest {
         assertThatThrownBy(() -> coordinator.releaseAndPublish(task())).hasMessage("publish failed");
         coordinator.releaseAndPublish(task());
 
-        verify(holdManager, times(2)).release(1L, "old-hold", List.of(10L, 20L));
+        verify(holdRegistry, times(2)).release(1L, "old-hold", List.of(10L, 20L));
         verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
         verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }

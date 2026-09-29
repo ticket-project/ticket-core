@@ -28,7 +28,7 @@ import com.ticket.booking.admission.BookingEntryGate;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingNotOpenYetException;
 import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
@@ -59,7 +59,7 @@ class GetSeatStatusUseCaseTest {
     private SeatSelectionService seatSelectionService;
 
     @Mock
-    private HoldManager holdManager;
+    private HoldRegistry holdRegistry;
 
     @Mock
     private AdmissionVerifier admissionVerifier;
@@ -73,7 +73,7 @@ class GetSeatStatusUseCaseTest {
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new GetSeatStatusUseCase(
                         performanceSeatRepository,
-                        new SeatOccupancy(seatSelectionService, holdManager),
+                        new SeatOccupancy(seatSelectionService, holdRegistry),
                         new BookingEntryGate(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         CLOCK);
@@ -87,7 +87,7 @@ class GetSeatStatusUseCaseTest {
                         PerformanceSeatFixture.seat(101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
                         PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED)));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
-        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output =
                 useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
@@ -107,7 +107,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findSeatStates(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output =
                 useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
@@ -130,7 +130,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findSeatStates(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output =
                 useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
@@ -152,7 +152,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(PerformanceIsPastException.class);
 
-        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdManager);
+        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
     }
 
     @Test
@@ -163,7 +163,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(BookingNotOpenYetException.class);
 
-        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdManager);
+        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
     }
 
     @Test
@@ -171,7 +171,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findSeatStates(10L)).thenReturn(List.of());
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdManager.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
@@ -186,7 +186,7 @@ class GetSeatStatusUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdManager);
+        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
     }
 
     private PerformanceSalesPolicy openPolicy() {
