@@ -3,35 +3,18 @@ package com.ticket.show.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.EntityManager;
-
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.context.TestComponent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.Category;
@@ -46,12 +29,10 @@ import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowListParam;
 import com.ticket.show.usecase.ShowSearchCriteria;
 import com.ticket.show.usecase.ShowSort;
-import com.ticket.testsupport.persistence.MigratedSchema;
+import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.persistence.VenueRepositoryAdapter;
-import com.ticket.venue.usecase.VenueLookupService;
 
 /**
  * {@link ShowQuerydslRepository}의 실제 DB 조회 동작을 고정한다.
@@ -60,37 +41,9 @@ import com.ticket.venue.usecase.VenueLookupService;
  * {@code QuerydslShowCursorConditionBuilderTest} / {@code SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그
  * helper들이 이 Repository 안으로 흡수되면서 같은 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
  */
-@MigratedSchema
-@SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = ShowQuerydslRepositoryTest.TestApplication.class)
-@TestPropertySource(
-        properties = {
-            // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
-            // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication
-            // main class가 없어 그 런타임을 만들 수 없으므로 tracing 관측 자체를 끈다.
-            "management.tracing.enabled=false",
-            "spring.autoconfigure.exclude="
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
-                    + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
-                    + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
-        })
-@Transactional
-@Import({
-    ShowQuerydslRepositoryTest.QuerydslTestConfig.class,
-    ShowQuerydslRepositoryTest.TestConfig.class,
-    ShowQuerydslRepositoryTest.AuditingTestConfig.class,
-    ShowQuerydslRepository.class,
-    ShowRepositoryAdapter.class,
-    VenueRepositoryAdapter.class,
-    VenueLookupService.class
-})
+@Import({ShowQuerydslRepository.class, ShowRepositoryAdapter.class})
 @SuppressWarnings("NonAsciiCharacters")
-class ShowQuerydslRepositoryTest {
-    @Autowired
-    private EntityManager entityManager;
-
+class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
     @Autowired
     private ShowQuerydslRepository showQuerydslRepository;
 
@@ -111,31 +64,31 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Seoul Popular",
                 300L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         persistShow(
                 "Seoul Normal",
                 120L,
-                LocalDate.now().plusDays(10),
+                LocalDate.now(clock).plusDays(10),
                 seoulVenue,
-                LocalDateTime.now().minusDays(2),
-                LocalDateTime.now().plusDays(8));
+                LocalDateTime.now(clock).minusDays(2),
+                LocalDateTime.now(clock).plusDays(8));
         persistShow(
                 "Busan Hit",
                 999L,
-                LocalDate.now().plusDays(3),
+                LocalDate.now(clock).plusDays(3),
                 busanVenue,
-                LocalDateTime.now().minusDays(3),
-                LocalDateTime.now().plusDays(7));
+                LocalDateTime.now(clock).minusDays(3),
+                LocalDateTime.now(clock).plusDays(7));
         persistShow(
                 "Closed Show",
                 50L,
-                LocalDate.now().minusDays(1),
+                LocalDate.now(clock).minusDays(1),
                 seoulVenue,
-                LocalDateTime.now().minusDays(10),
-                LocalDateTime.now().minusDays(2));
+                LocalDateTime.now(clock).minusDays(10),
+                LocalDateTime.now(clock).minusDays(2));
 
         entityManager.flush();
         entityManager.clear();
@@ -194,24 +147,24 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Order A",
                 10L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         persistShow(
                 "Order B",
                 20L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         persistShow(
                 "Order C",
                 30L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         entityManager.flush();
         entityManager.clear();
 
@@ -296,9 +249,9 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 최신순은_마감된_공연을_아무리_최근에_등록해도_뒤로_보낸다() {
         // 가장 최근에 등록된 공연이 마감된 공연이다. 그래도 예매 가능한 공연이 먼저 나와야 한다.
-        setCreatedAt("Closed Show", LocalDateTime.now());
-        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
-        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
+        setCreatedAt("Closed Show", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock).minusDays(1));
+        setCreatedAt("Seoul Normal", LocalDateTime.now(clock).minusDays(2));
 
         CursorPage<Show, ShowCursor> result =
                 findAllBySearch(new ShowListParam(null, null, "SEOUL", null), 10, ShowSort.LATEST);
@@ -310,9 +263,9 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 최신순은_마감되지_않은_그룹_안에서_등록일_내림차순이다() {
-        setCreatedAt("Seoul Normal", LocalDateTime.now());
-        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
-        setCreatedAt("Closed Show", LocalDateTime.now().minusDays(5));
+        setCreatedAt("Seoul Normal", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock).minusDays(1));
+        setCreatedAt("Closed Show", LocalDateTime.now(clock).minusDays(5));
 
         CursorPage<Show, ShowCursor> result =
                 findAllBySearch(new ShowListParam(null, null, "SEOUL", null), 10, ShowSort.LATEST);
@@ -324,7 +277,7 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 최신순은_등록일이_같으면_id_내림차순으로_안정적이다() {
-        LocalDateTime sameInstant = LocalDateTime.now().minusHours(1);
+        LocalDateTime sameInstant = LocalDateTime.now(clock).minusHours(1);
         setCreatedAt("Seoul Popular", sameInstant);
         setCreatedAt("Seoul Normal", sameInstant);
         setCreatedAt("Closed Show", sameInstant);
@@ -341,9 +294,9 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 최신순을_여러_페이지로_나눠_읽어도_중복이나_누락이_없다() {
-        setCreatedAt("Closed Show", LocalDateTime.now());
-        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
-        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(2));
+        setCreatedAt("Closed Show", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock).minusDays(1));
+        setCreatedAt("Seoul Normal", LocalDateTime.now(clock).minusDays(2));
 
         List<String> paged = new ArrayList<>();
         ShowCursor cursor = null;
@@ -363,8 +316,8 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 상단_최신_공연_배너도_마감된_공연을_뒤로_보낸다() {
-        setCreatedAt("Closed Show", LocalDateTime.now());
-        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Closed Show", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock).minusDays(1));
 
         List<Show> rows = showQuerydslRepository.findLatestShows(null, 10);
 
@@ -381,11 +334,11 @@ class ShowQuerydslRepositoryTest {
         attachGenres(findShowByTitle("Seoul Popular"), "뮤지컬", "연극", "콘서트");
         entityManager.flush();
         entityManager.clear();
-        setCreatedAt("Seoul Popular", LocalDateTime.now());
-        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(1));
-        setCreatedAt("Busan Hit", LocalDateTime.now().minusDays(2));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Normal", LocalDateTime.now(clock).minusDays(1));
+        setCreatedAt("Busan Hit", LocalDateTime.now(clock).minusDays(2));
         // 마감 공연이 가장 최신이어도 맨 뒤다 -- 마감 여부가 등록일보다 먼저다.
-        setCreatedAt("Closed Show", LocalDateTime.now().plusDays(1));
+        setCreatedAt("Closed Show", LocalDateTime.now(clock).plusDays(1));
 
         List<Show> rows = showQuerydslRepository.findLatestShows(null, 10);
 
@@ -397,7 +350,7 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 최신_공연_배너는_등록일이_같으면_id_내림차순으로_정렬한다() {
-        LocalDateTime sameMoment = LocalDateTime.now();
+        LocalDateTime sameMoment = LocalDateTime.now(clock);
         setCreatedAt("Seoul Popular", sameMoment);
         setCreatedAt("Seoul Normal", sameMoment);
         setCreatedAt("Busan Hit", sameMoment);
@@ -426,7 +379,7 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 인기순은_마감_여부를_정렬에_넣지_않는다() {
         // 사용자가 명시적으로 고른 정렬의 의미는 바꾸지 않는다.
-        setCreatedAt("Closed Show", LocalDateTime.now());
+        setCreatedAt("Closed Show", LocalDateTime.now(clock));
 
         CursorPage<Show, ShowCursor> result =
                 findAllBySearch(new ShowListParam(null, null, "SEOUL", null), 10, ShowSort.POPULAR);
@@ -438,8 +391,8 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 최신순도_지역_필터와_함께_동작한다() {
-        setCreatedAt("Busan Hit", LocalDateTime.now());
-        setCreatedAt("Seoul Popular", LocalDateTime.now().minusDays(1));
+        setCreatedAt("Busan Hit", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock).minusDays(1));
 
         CursorPage<Show, ShowCursor> result =
                 findAllBySearch(new ShowListParam(null, null, "GYEONGSANG", null), 10, ShowSort.LATEST);
@@ -469,17 +422,17 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Tie A",
                 10L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         persistShow(
                 "Tie B",
                 20L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         entityManager.flush();
         entityManager.clear();
 
@@ -498,17 +451,17 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Same A",
                 777L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         persistShow(
                 "Same B",
                 777L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10));
+                LocalDateTime.now(clock).minusDays(1),
+                LocalDateTime.now(clock).plusDays(10));
         entityManager.flush();
         entityManager.clear();
 
@@ -528,10 +481,10 @@ class ShowQuerydslRepositoryTest {
         ShowCursor cursor = new ShowCursor(
                 ShowSort.LATEST,
                 "DESC",
-                LocalDateTime.now().toString(),
+                LocalDateTime.now(clock).toString(),
                 1L,
                 0,
-                LocalDateTime.now().toString());
+                LocalDateTime.now(clock).toString());
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.POPULAR))
                 .isInstanceOf(InvalidRequestException.class);
@@ -569,7 +522,7 @@ class ShowQuerydslRepositoryTest {
                 "not-a-date",
                 1L,
                 0,
-                LocalDateTime.now().toString());
+                LocalDateTime.now(clock).toString());
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -579,7 +532,7 @@ class ShowQuerydslRepositoryTest {
     void 최신순_커서에_판정_시각이_없으면_INVALID_INPUT_예외를_던진다() {
         // 정렬 규칙이 바뀌기 전에 발급된 커서다. 조용히 섞인 순서를 내놓는 것보다 거부가 낫다.
         ShowCursor legacyCursor =
-                new ShowCursor(ShowSort.LATEST, "DESC", LocalDateTime.now().toString(), 1L);
+                new ShowCursor(ShowSort.LATEST, "DESC", LocalDateTime.now(clock).toString(), 1L);
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(legacyCursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -588,7 +541,7 @@ class ShowQuerydslRepositoryTest {
     @Test
     void 최신순_커서의_판정_시각_형식이_틀리면_INVALID_INPUT_예외를_던진다() {
         ShowCursor cursor =
-                new ShowCursor(ShowSort.LATEST, "DESC", LocalDateTime.now().toString(), 1L, 0, "not-a-datetime");
+                new ShowCursor(ShowSort.LATEST, "DESC", LocalDateTime.now(clock).toString(), 1L, 0, "not-a-datetime");
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -601,10 +554,10 @@ class ShowQuerydslRepositoryTest {
         ShowCursor cursor = new ShowCursor(
                 ShowSort.LATEST,
                 "DESC",
-                LocalDateTime.now().toString(),
+                LocalDateTime.now(clock).toString(),
                 1L,
                 null,
-                LocalDateTime.now().toString());
+                LocalDateTime.now(clock).toString());
 
         assertThatThrownBy(() -> findAllBySearch(seoulParam(cursor), 10, ShowSort.LATEST))
                 .isInstanceOf(InvalidRequestException.class);
@@ -623,9 +576,9 @@ class ShowQuerydslRepositoryTest {
 
     @Test
     void 최신순_다음_커서에_마감여부와_판정_시각을_담고_다음_페이지도_그_시각을_그대로_쓴다() {
-        setCreatedAt("Seoul Popular", LocalDateTime.now());
-        setCreatedAt("Seoul Normal", LocalDateTime.now().minusDays(1));
-        setCreatedAt("Closed Show", LocalDateTime.now().minusDays(2));
+        setCreatedAt("Seoul Popular", LocalDateTime.now(clock));
+        setCreatedAt("Seoul Normal", LocalDateTime.now(clock).minusDays(1));
+        setCreatedAt("Closed Show", LocalDateTime.now(clock).minusDays(2));
 
         CursorPage<Show, ShowCursor> firstPage = findAllBySearch(seoulParam(null), 1, ShowSort.LATEST);
 
@@ -646,10 +599,10 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Closed Later",
                 10L,
-                LocalDate.now().plusDays(5),
+                LocalDate.now(clock).plusDays(5),
                 seoulVenue,
-                LocalDateTime.now().minusDays(20),
-                LocalDateTime.now().minusDays(15));
+                LocalDateTime.now(clock).minusDays(20),
+                LocalDateTime.now(clock).minusDays(15));
         entityManager.flush();
         entityManager.clear();
 
@@ -665,10 +618,10 @@ class ShowQuerydslRepositoryTest {
      */
     @Test
     void 표시_판매기간이_비어있는_공연도_마감으로_본다() {
-        persistShow("No Window", 10L, LocalDate.now().plusDays(5), seoulVenue, null, null);
+        persistShow("No Window", 10L, LocalDate.now(clock).plusDays(5), seoulVenue, null, null);
         entityManager.flush();
         entityManager.clear();
-        setCreatedAt("No Window", LocalDateTime.now());
+        setCreatedAt("No Window", LocalDateTime.now(clock));
 
         CursorPage<Show, ShowCursor> result = searchShows(closedCriteria(), 1, ShowSort.LATEST);
 
@@ -697,10 +650,10 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Before Open",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         entityManager.flush();
         entityManager.clear();
 
@@ -760,17 +713,17 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Soon Later",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(9),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(9),
+                LocalDateTime.now(clock).plusDays(20));
         persistShow(
                 "Soon Earlier",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         entityManager.flush();
         entityManager.clear();
 
@@ -789,17 +742,17 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Soon Seoul",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         persistShow(
                 "Soon Busan",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 busanVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         entityManager.flush();
         entityManager.clear();
 
@@ -820,23 +773,23 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Soon Near",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         persistShow(
                 "Soon Far",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(30),
-                LocalDateTime.now().plusDays(40));
+                LocalDateTime.now(clock).plusDays(30),
+                LocalDateTime.now(clock).plusDays(40));
         entityManager.flush();
         entityManager.clear();
 
         final CursorPage<Show, ShowCursor> result = findSaleOpeningSoonPage(
                 new SaleOpeningSoonSearchParam(
-                        null, null, null, null, LocalDateTime.now().plusDays(10), null, null, null),
+                        null, null, null, null, LocalDateTime.now(clock).plusDays(10), null, null, null),
                 10,
                 ShowSort.SALE_START_APPROACHING);
 
@@ -849,10 +802,10 @@ class ShowQuerydslRepositoryTest {
         final Show soon = persistShow(
                 "Soon Summary",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         entityManager.flush();
         attachGenres(soon, "뮤지컬", "연극", "콘서트");
         entityManager.flush();
@@ -871,24 +824,24 @@ class ShowQuerydslRepositoryTest {
         persistShow(
                 "Soon C",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(7),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(7),
+                LocalDateTime.now(clock).plusDays(20));
         persistShow(
                 "Soon A",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(3),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(3),
+                LocalDateTime.now(clock).plusDays(20));
         persistShow(
                 "Soon B",
                 10L,
-                LocalDate.now().plusDays(40),
+                LocalDate.now(clock).plusDays(40),
                 seoulVenue,
-                LocalDateTime.now().plusDays(5),
-                LocalDateTime.now().plusDays(20));
+                LocalDateTime.now(clock).plusDays(5),
+                LocalDateTime.now(clock).plusDays(20));
         entityManager.flush();
         entityManager.clear();
 
@@ -961,22 +914,6 @@ class ShowQuerydslRepositoryTest {
         return regionCode == null ? null : venueLookupApi.findIdsByRegion(regionCode);
     }
 
-    private Venue persistVenue(final String name, final Region region) throws Exception {
-        Venue venue = Venue.create(
-                name,
-                name + " address",
-                region,
-                BigDecimal.valueOf(37.0),
-                BigDecimal.valueOf(127.0),
-                "010-0000-0000",
-                "https://example.com/venue.png",
-                1000,
-                800,
-                10.0);
-        entityManager.persist(venue);
-        return venue;
-    }
-
     private Show persistShow(
             final String title,
             final long viewCount,
@@ -1012,42 +949,4 @@ class ShowQuerydslRepositoryTest {
             entityManager.persist(new ShowGenre(show.getId(), genre.getId()));
         }
     }
-
-    static class TestConfig {
-        @Bean
-        Clock clock() {
-            return Clock.systemDefaultZone();
-        }
-    }
-
-    static class QuerydslTestConfig {
-        @Bean
-        JPAQueryFactory jpaQueryFactory(final EntityManager entityManager) {
-            return new JPAQueryFactory(entityManager);
-        }
-    }
-
-    @EnableJpaAuditing
-    static class AuditingTestConfig {
-        @Bean
-        AuditorAware<String> auditorAware() {
-            return () -> java.util.Optional.of("test-auditor");
-        }
-    }
-
-    // @TestComponent는 이 클래스를 다른 @SpringBootTest 컨텍스트(TicketApplication 등)의
-    // component scan에서 제외시킨다. 단일 프로젝트로 합쳐지며 같은 com.ticket 패키지 트리에
-    // 놓이게 된 이 테스트 전용 설정이 실제 앱의 component scan에 섞여 들어가는 것을 막는다.
-    // @TestConfiguration을 쓰면 안 된다 — SpringBootTestContextBootstrapper가 classes=...로
-    // 명시한 설정을 전부 @TestConfiguration으로 보고 "명시하지 않은 것"처럼 취급해, 패키지를
-    // 거슬러 올라가며 다른 @SpringBootConfiguration을 찾아 잘못 병합해버린다.
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show", "com.ticket.venue", "com.ticket.member", "com.ticket.booking"})
-    // 이 슬라이스가 @Import하는 조회 Repository가 쓰는 Spring Data 인터페이스만 올린다. 명시하지 않으면
-    // auto-configuration package(=이 클래스의 package)만 스캔해 venue 쪽 인터페이스가 빠진다.
-    @EnableJpaRepositories(basePackages = {"com.ticket.show", "com.ticket.venue"})
-    @Import({TestConfig.class, AuditingTestConfig.class})
-    static class TestApplication {}
 }

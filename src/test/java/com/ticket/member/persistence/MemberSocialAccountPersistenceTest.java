@@ -9,17 +9,7 @@ import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestComponent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.SocialProvider;
@@ -27,7 +17,7 @@ import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
-import com.ticket.testsupport.persistence.MigratedSchema;
+import com.ticket.testsupport.persistence.JpaSliceTestSupport;
 
 /**
  * 소셜 계정이 회원 aggregate의 자식 컬렉션으로 바뀐 뒤에도 <b>soft delete가 유지되는지</b>를 실제 H2에 붙여 고정한다.
@@ -35,27 +25,11 @@ import com.ticket.testsupport.persistence.MigratedSchema;
  * <p>이 테스트가 지키는 것은 하나다 — {@code Member.socialAccounts}에 {@code orphanRemoval = true}나 {@code CascadeType.REMOVE}가 붙으면
  * 탈퇴 시 {@code MEMBER_SOCIAL_ACCOUNTS} row가 실제로 지워져 연결 이력이 사라진다. 그 실수를 잡으려고 JPA 컬렉션이 아니라 <b>native count</b>로 row 존재를 직접
  * 확인한다.
- *
- * <p>member module만으로 컨텍스트가 서는 좁은 슬라이스라 공용 테스트 베이스를 상속하지 않는다.
  */
-@MigratedSchema
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        classes = MemberSocialAccountPersistenceTest.TestApplication.class)
-@TestPropertySource(
-        properties = {
-            "management.tracing.enabled=false",
-            "spring.autoconfigure.exclude="
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
-                    + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
-                    + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
-        })
 @Transactional
+@Import(MemberRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class MemberSocialAccountPersistenceTest {
+class MemberSocialAccountPersistenceTest extends JpaSliceTestSupport {
     @Autowired
     private MemberRepository memberRepository;
 
@@ -165,20 +139,4 @@ class MemberSocialAccountPersistenceTest {
         entityManager.flush();
         entityManager.clear();
     }
-
-    static class AuditingTestConfig {
-        @Bean
-        AuditorAware<String> auditorAware() {
-            return () -> Optional.of("test-auditor");
-        }
-    }
-
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    @TestComponent
-    @EntityScan(basePackages = "com.ticket.member")
-    @EnableJpaRepositories(basePackages = "com.ticket.member")
-    @EnableJpaAuditing
-    @Import({MemberRepositoryAdapter.class, AuditingTestConfig.class})
-    static class TestApplication {}
 }
