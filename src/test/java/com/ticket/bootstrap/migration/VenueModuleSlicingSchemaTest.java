@@ -132,17 +132,13 @@ class VenueModuleSlicingSchemaTest {
                 name,
                 name + " 주소",
                 Region.SEOUL,
-                "상세",
-                "12345",
                 BigDecimal.valueOf(37.5),
                 BigDecimal.valueOf(127.0),
                 "02-0000-0000",
                 "https://example.com/venue.png",
                 500,
                 356,
-                4.8,
-                2.5,
-                2.5);
+                4.8);
     }
 
     private void persist(final Session session, final Object entity) {
@@ -200,7 +196,7 @@ class VenueModuleSlicingSchemaTest {
                       latitude DECIMAL(10,8), longitude DECIMAL(11,8),
                       phone VARCHAR(255), image_url VARCHAR(255),
                       view_box_width INT NOT NULL, view_box_height INT NOT NULL,
-                      seat_diameter DOUBLE NOT NULL, gap_x DOUBLE NOT NULL, gap_y DOUBLE NOT NULL,
+                      seat_diameter DOUBLE NOT NULL, gap_x DOUBLE, gap_y DOUBLE,
                       created_at TIMESTAMP NOT NULL, created_by VARCHAR(255) NOT NULL,
                       updated_at TIMESTAMP, updated_by VARCHAR(255)
                     )

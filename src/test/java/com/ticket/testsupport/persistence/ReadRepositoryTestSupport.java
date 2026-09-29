@@ -99,17 +99,13 @@ public abstract class ReadRepositoryTestSupport {
                 name,
                 name + " 주소",
                 region,
-                "상세",
-                "12345",
                 BigDecimal.valueOf(37.5),
                 BigDecimal.valueOf(127.0),
                 "02-0000-0000",
                 "https://example.com/venue.png",
                 1000,
                 800,
-                12.0,
-                2.0,
-                2.0);
+                12.0);
         entityManager.persist(venue);
         return venue;
     }

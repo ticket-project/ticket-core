@@ -972,17 +972,13 @@ class ShowQuerydslRepositoryTest {
                 name,
                 name + " address",
                 region,
-                "detail",
-                "12345",
                 BigDecimal.valueOf(37.0),
                 BigDecimal.valueOf(127.0),
                 "010-0000-0000",
                 "https://example.com/venue.png",
                 1000,
                 800,
-                10.0,
-                2.0,
-                2.0);
+                10.0);
         entityManager.persist(venue);
         return venue;
     }
