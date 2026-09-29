@@ -43,6 +43,7 @@ import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
+@MigratedSchema
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         classes = ReadRepositoryTestSupport.TestApplication.class)
@@ -53,7 +54,6 @@ import com.ticket.venue.domain.Venue;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
             "spring.jpa.show-sql=false",
             // Spring Modulith의 ModuleObservabilityAutoConfiguration은 기본으로 켜져(matchIfMissing=true)
             // ApplicationModulesRuntime을 즉시(non-lazy) 요구하는 BeanPostProcessor를 등록한다. 이 좁은

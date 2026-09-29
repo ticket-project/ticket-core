@@ -28,6 +28,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  * {@link Scenario#andWaitForStateChange}의 Awaitility 기반 polling으로 기다린다.
  */
 @Slf4j
+@MigratedSchema
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -50,8 +52,6 @@ import lombok.extern.slf4j.Slf4j;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
-            "spring.flyway.enabled=false",
             "JWT_SECRET=0123456789abcdef0123456789abcdef",
             "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
             "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",

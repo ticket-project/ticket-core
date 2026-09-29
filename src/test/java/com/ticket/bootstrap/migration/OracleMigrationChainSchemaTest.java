@@ -12,6 +12,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.oracle.OracleContainer;
 
+import com.ticket.testsupport.persistence.MigratedSchema;
+
 /**
  * {@link MigrationChainSchemaTest}의 Oracle 판이다. 운영과 같은 방언의 migration이 빈 Oracle에서 V1부터 끝까지 적용되고, 그 결과가 entity 매핑과 맞는지
  * 본다. Docker가 없으면 건너뛴다 — 그때는 Oracle 경로가 미검증이다.
@@ -29,7 +31,7 @@ class OracleMigrationChainSchemaTest {
                 .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
                 .load();
         final ApplicationModuleIdentifiers identifiers =
-                ApplicationModuleIdentifiers.of(MigrationChainSchemaTest.MODULES_IN_RUNTIME_ORDER.stream()
+                ApplicationModuleIdentifiers.of(MigratedSchema.MODULES_IN_RUNTIME_ORDER.stream()
                         .map(ApplicationModuleIdentifier::of)
                         .toList());
 

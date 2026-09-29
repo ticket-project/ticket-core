@@ -11,10 +11,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import com.ticket.testsupport.persistence.MigratedSchema;
+
 /**
  * H2(Oracle 모드)와 Testcontainers Redis로 실제에 가까운 인프라 위에서 애플리케이션 컨텍스트가 정상 기동하는지 확인하는 platform smoke test다. Modulith 구조 검증은
  * {@code com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
  */
+@MigratedSchema
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -23,8 +26,6 @@ import org.testcontainers.utility.DockerImageName;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
-            "spring.flyway.enabled=false",
             "JWT_SECRET=0123456789abcdef0123456789abcdef",
             "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
             "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
