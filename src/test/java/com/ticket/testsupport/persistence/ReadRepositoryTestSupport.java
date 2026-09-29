@@ -49,11 +49,6 @@ import com.ticket.venue.domain.Venue;
         classes = ReadRepositoryTestSupport.TestApplication.class)
 @TestPropertySource(
         properties = {
-            "spring.datasource.url=jdbc:h2:mem:query-repository-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            "spring.datasource.driver-class-name=org.h2.Driver",
-            "spring.datasource.username=sa",
-            "spring.datasource.password=",
-            "spring.jpa.show-sql=false",
             // Spring Modulith의 ModuleObservabilityAutoConfiguration은 기본으로 켜져(matchIfMissing=true)
             // ApplicationModulesRuntime을 즉시(non-lazy) 요구하는 BeanPostProcessor를 등록한다. 이 좁은
             // 슬라이스 컨텍스트는 실제 main class(@SpringBootApplication)가 없어 그 런타임을 만들 수
