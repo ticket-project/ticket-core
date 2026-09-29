@@ -12,8 +12,9 @@
 --   - 좌석 주소 유니크(venue V1), 찜 유니크(like V3), 회차좌석 유니크(root V3), 주문좌석 order_id 인덱스(root V4)는 각 migration이 만든다.
 --   - GRADES·PERFORMANCE_GRADES(show V4), TICKETS(booking V5), BOOKING_PERFORMANCE_SALES_POLICIES(booking V6),
 --     PAYMENTS(payment V1), EVENT_PUBLICATION(root V8)은 여기 없다.
--- 원본은 현재 entity 매핑에서 Hibernate schema export로 뽑은 DDL이다. 이 파일만이 아니라 전체 migration을 거친
--- 결과가 entity와 맞는지를 MigrationChainSchemaTest가 고정한다.
+-- 처음 DDL은 Hibernate schema export로 뽑았지만 위 항목을 손으로 뺐으므로 지금 entity 매핑과 같지 않다.
+-- 보조(non-unique) 인덱스는 두지 않는다. 운영은 이 파일을 건너뛰므로 여기에만 있는 인덱스는 운영에 없다.
+-- 이 파일만이 아니라 전체 migration을 거친 결과가 entity와 맞는지를 MigrationChainSchemaTest가 고정한다.
 
 create table categories (
         created_at timestamp(6) not null,
@@ -241,18 +242,6 @@ create table venues (
         region enum ('CHUNGCHEONG','GANGWON','GYEONGGI','GYEONGSANG','INCHEON','JEJU','JEOLLA','SEOUL'),
         primary key (id)
     );
-
-create index IDX_HOLD_HISTORY_HOLD_KEY
-       on hold_history (hold_key);
-
-create index IDX_LIKES_MEMBER_ID_ID
-       on likes (member_id, id);
-
-create index IDX_LIKES_TARGET
-       on likes (like_type, target_id);
-
-create index IDX_ORDERS_MEMBER_PERFORMANCE_STATUS
-       on orders (member_id, performance_id, status);
 
 alter table member_social_accounts
        add constraint FK_MEMBER_SOCIAL_ACCOUNTS_MEMBER
