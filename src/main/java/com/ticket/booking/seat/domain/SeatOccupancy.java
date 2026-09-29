@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,12 +20,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SeatOccupancy {
     private final SeatSelectionService seatSelectionService;
-    private final HoldManager holdManager;
+    private final HoldRegistry holdRegistry;
 
     /** 회차 전체의 점유 좌석이다. 좌석마다 묻지 않고 선택·선점 index를 한 번씩 읽는다. */
     public Set<Long> occupiedSeatIds(final Long performanceId) {
         final Set<Long> selectingSeatIds = seatSelectionService.getSelectingSeatIds(performanceId);
-        final Set<Long> holdingSeatIds = holdManager.getHoldingSeatIds(performanceId);
+        final Set<Long> holdingSeatIds = holdRegistry.getHoldingSeatIds(performanceId);
 
         final Set<Long> occupiedSeatIds = HashSet.newHashSet(selectingSeatIds.size() + holdingSeatIds.size());
         occupiedSeatIds.addAll(selectingSeatIds);
@@ -35,6 +35,6 @@ public class SeatOccupancy {
 
     /** 좌석 한 자리가 지금 점유돼 있는지. 좌석 key를 직접 읽으므로 좌석 락 안의 재확인에 쓴다. */
     public boolean isOccupied(final Long performanceId, final Long seatId) {
-        return seatSelectionService.isSelected(performanceId, seatId) || holdManager.isHeld(performanceId, seatId);
+        return seatSelectionService.isSelected(performanceId, seatId) || holdRegistry.isHeld(performanceId, seatId);
     }
 }

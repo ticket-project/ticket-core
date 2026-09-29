@@ -16,7 +16,7 @@ import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
@@ -59,7 +59,7 @@ public class StartBookingUseCase {
     private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
-    private final HoldManager holdManager;
+    private final HoldRegistry holdRegistry;
     private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
     private final Clock clock;
@@ -144,7 +144,7 @@ public class StartBookingUseCase {
             final LocalDateTime now) {
         return distributedLock.withLock(seatLocks, LockOptions.defaults(), () -> {
             seatSelectionService.requireSelectedBy(input.performanceId(), input.memberId(), requestedSeatIds.toList());
-            return holdManager.createHold(
+            return holdRegistry.createHold(
                     input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now);
         });
     }
@@ -155,7 +155,7 @@ public class StartBookingUseCase {
             distributedLock.withLock(
                     seatLocks,
                     LockOptions.defaults(),
-                    () -> holdManager.release(hold.performanceId(), hold.holdKey(), hold.seatIds()));
+                    () -> holdRegistry.release(hold.performanceId(), hold.holdKey(), hold.seatIds()));
         } catch (final RuntimeException releaseException) {
             originalException.addSuppressed(releaseException);
             log.warn("hold 해제에 실패했습니다. holdKey={}", hold.holdKey(), releaseException);

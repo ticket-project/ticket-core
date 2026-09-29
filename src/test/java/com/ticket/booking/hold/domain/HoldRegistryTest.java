@@ -20,24 +20,24 @@ import com.ticket.booking.exception.SeatAlreadyHeldException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class HoldManagerTest {
+class HoldRegistryTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
 
     @Mock
     private HoldStore holdStore;
 
-    private HoldManager holdManager;
+    private HoldRegistry holdRegistry;
 
     @BeforeEach
     void setUp() {
-        this.holdManager = new HoldManager(holdStore);
+        this.holdRegistry = new HoldRegistry(holdStore);
     }
 
     @Test
     void 이미_hold된_좌석이_있으면_seatAlreadyHold예외를_던진다() {
         when(holdStore.isHeld(1L, 10L)).thenReturn(true);
 
-        assertThatThrownBy(() -> holdManager.createHold(1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
+        assertThatThrownBy(() -> holdRegistry.createHold(1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
                 .isInstanceOf(SeatAlreadyHeldException.class);
     }
 
@@ -45,7 +45,7 @@ class HoldManagerTest {
     void hold를_생성하면_snapshot을_저장하고_반환한다() {
         Duration ttl = Duration.ofMinutes(5);
 
-        Hold hold = holdManager.createHold(7L, 1L, List.of(10L, 20L), ttl, FIXED_NOW);
+        Hold hold = holdRegistry.createHold(7L, 1L, List.of(10L, 20L), ttl, FIXED_NOW);
 
         assertThat(hold.holdKey()).startsWith("HOLD-");
         assertThat(hold.memberId()).isEqualTo(7L);
@@ -58,7 +58,7 @@ class HoldManagerTest {
     /** 없어진 {@code HoldKeyGeneratorTest}가 고정하던 hold 키 형식이다. */
     @Test
     void hold키는_HOLD_접두사와_하이픈없는_uuid로_생성한다() {
-        Hold hold = holdManager.createHold(7L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW);
+        Hold hold = holdRegistry.createHold(7L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW);
 
         assertThat(hold.holdKey()).startsWith("HOLD-");
         assertThat(hold.holdKey().substring("HOLD-".length())).hasSize(32).doesNotContain("-");
@@ -69,8 +69,8 @@ class HoldManagerTest {
         List<Long> seatIds = List.of(10L);
         Duration ttl = Duration.ofMinutes(5);
 
-        Hold first = holdManager.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
-        Hold second = holdManager.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
+        Hold first = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
+        Hold second = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
 
         assertThat(first.holdKey()).isNotEqualTo(second.holdKey());
     }
@@ -79,7 +79,7 @@ class HoldManagerTest {
     void release는_중복좌석을_정렬해_전달한다() {
         when(holdStore.release(1L, "hold-key", List.of(10L, 20L))).thenReturn(List.of(10L));
 
-        List<Long> releasedSeatIds = holdManager.release(1L, "hold-key", List.of(20L, 10L, 10L));
+        List<Long> releasedSeatIds = holdRegistry.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
         verify(holdStore).release(1L, "hold-key", List.of(10L, 20L));
         assertThat(releasedSeatIds).containsExactly(10L);
@@ -89,7 +89,7 @@ class HoldManagerTest {
     void 현재_hold중인_좌석아이디를_조회한다() {
         when(holdStore.getHoldingSeatIds(1L)).thenReturn(Set.of(10L, 30L));
 
-        Set<Long> result = holdManager.getHoldingSeatIds(1L);
+        Set<Long> result = holdRegistry.getHoldingSeatIds(1L);
 
         assertThat(result).containsExactlyInAnyOrder(10L, 30L);
     }
@@ -98,7 +98,7 @@ class HoldManagerTest {
     void isHeld는_hold여부를_반환한다() {
         when(holdStore.isHeld(1L, 10L)).thenReturn(true);
 
-        boolean result = holdManager.isHeld(1L, 10L);
+        boolean result = holdRegistry.isHeld(1L, 10L);
 
         assertThat(result).isTrue();
     }

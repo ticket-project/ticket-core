@@ -13,7 +13,7 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.SeatOccupancy;
@@ -43,7 +43,7 @@ public class SeatSelectionCoordinator {
     private static final LockOptions NOTIFY_LOCK = LockOptions.defaults();
 
     private final DistributedLock distributedLock;
-    private final HoldManager holdManager;
+    private final HoldRegistry holdRegistry;
     private final SeatSelectionService seatSelectionService;
     private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
@@ -61,7 +61,7 @@ public class SeatSelectionCoordinator {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
                 throw new PerformanceIsPastException();
             }
-            if (holdManager.isHeld(performanceId, seatId)) {
+            if (holdRegistry.isHeld(performanceId, seatId)) {
                 throw new SeatAlreadyHeldException();
             }
             seatSelectionService.select(performanceId, seatId, memberId, maxSeatCount);

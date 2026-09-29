@@ -27,7 +27,7 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -43,7 +43,7 @@ class SeatSelectionCoordinatorTest {
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
-    private HoldManager holdManager;
+    private HoldRegistry holdRegistry;
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -61,9 +61,9 @@ class SeatSelectionCoordinatorTest {
     void setUp() {
         coordinator = new SeatSelectionCoordinator(
                 distributedLock,
-                holdManager,
+                holdRegistry,
                 seatSelectionService,
-                new SeatOccupancy(seatSelectionService, holdManager),
+                new SeatOccupancy(seatSelectionService, holdRegistry),
                 performanceSeatRepository,
                 seatEventPublisher,
                 CLOCK);
@@ -71,7 +71,7 @@ class SeatSelectionCoordinatorTest {
 
     @Test
     void 락_내부에서_홀드를_다시_확인하고_좌석을_선점한다() {
-        when(holdManager.isHeld(10L, 20L)).thenReturn(false);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
         coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
@@ -81,7 +81,7 @@ class SeatSelectionCoordinatorTest {
     /** 발행이 락 밖에 있으면 뒤늦은 만료 알림이 이 SELECTED 뒤에 끼어들 수 있다. */
     @Test
     void SELECTED_발행은_좌석_락_안에서_한다() {
-        when(holdManager.isHeld(10L, 20L)).thenReturn(false);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
         coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
@@ -91,7 +91,7 @@ class SeatSelectionCoordinatorTest {
 
     @Test
     void DB검증_후_홀드된_좌석이면_선점을_중단한다() {
-        when(holdManager.isHeld(10L, 20L)).thenReturn(true);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
                 .isInstanceOf(SeatAlreadyHeldException.class);
@@ -104,7 +104,7 @@ class SeatSelectionCoordinatorTest {
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
                 .isInstanceOf(PerformanceIsPastException.class);
 
-        verifyNoInteractions(holdManager, seatSelectionService, seatEventPublisher);
+        verifyNoInteractions(holdRegistry, seatSelectionService, seatEventPublisher);
     }
 
     @Test
@@ -144,7 +144,7 @@ class SeatSelectionCoordinatorTest {
     void 만료_알림_직전에_선점으로_넘어갔으면_발행하지_않는다() {
         givenPerformanceSeat();
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdManager.isHeld(10L, 20L)).thenReturn(true);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
         coordinator.notifyReleasedIfFree(10L, 20L);
 
@@ -155,7 +155,7 @@ class SeatSelectionCoordinatorTest {
     void 만료된_좌석이_여전히_비어_있으면_DESELECTED를_발행한다() {
         givenPerformanceSeat();
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdManager.isHeld(10L, 20L)).thenReturn(false);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
         coordinator.notifyReleasedIfFree(10L, 20L);
 
@@ -166,7 +166,7 @@ class SeatSelectionCoordinatorTest {
     @Test
     void performanceSeatId를_받으면_좌석을_다시_조회하지_않는다() {
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdManager.isHeld(10L, 20L)).thenReturn(false);
+        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
         coordinator.notifyReleasedIfFree(10L, 20L, 501L);
 

@@ -41,7 +41,7 @@ StartBookingUseCase          (POST /api/v1/orders)
      show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
      그 밖은 E4006)하고
-     HoldManager로 Redis 좌석 hold 생성 후 락 해제 (밖)
+     HoldRegistry로 Redis 좌석 hold 생성 후 락 해제 (밖)
   -> PendingOrderCreator
        -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
           단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (다른 값을 섞지 않는다)
