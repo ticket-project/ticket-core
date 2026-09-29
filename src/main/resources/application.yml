@@ -98,6 +98,12 @@ management:
       maximum-expected-value:
         http.server.requests: 10s
 
+# p6spy SQL 로그는 모든 JDBC 호출을 가로채 포맷한다. 기본은 끄고 local 프로파일에서만 켠다.
+# P6SpyConfig도 같은 property로 켜진다.
+decorator:
+  datasource:
+    enabled: false
+
 springdoc:
   use-fqn: true
   default-consumes-media-type: application/json;charset=UTF-8

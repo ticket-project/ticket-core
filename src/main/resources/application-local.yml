@@ -25,6 +25,11 @@ spring:
       # 구조를 검증해 배포 전에 문제를 조기에 드러낸다. production에서는 끈다(application-prod.yml).
       verification-enabled: true
 
+# SQL 로그(p6spy). 기본은 꺼져 있다(application.yml).
+decorator:
+  datasource:
+    enabled: true
+
 # 초기 데이터는 기동 시 자동으로 들어가지 않는다. 서버 기동이 끝난 뒤
 # `.\gradlew.bat seedLocal`을 따로 실행한다 -- 자세한 내용은 seed/README.md.
 app:
