@@ -25,8 +25,7 @@ public record SliceResponse<T>(
                         다음 페이지 요청을 위한 커서 값
                         - 다음 요청 시 `cursor` 파라미터에 이 값을 전달
                         - `hasNext`가 false이면 null
-                        """, example = "e" + "yJzb3J0IjoiUE9QVUxBUiIsImRpciI6IkRFU0MifQ") @Nullable
-        String nextCursor) {
+                        """) @Nullable String nextCursor) {
     /** app 조회 결과를 응답으로 옮긴다. {@code size}는 요청한 페이지 크기이고 {@code numberOfElements}는 실제 반환된 개수다. */
     public static <T> SliceResponse<T> of(
             final List<T> items, final boolean hasNext, final int size, final @Nullable String nextCursor) {
