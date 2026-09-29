@@ -53,7 +53,9 @@ public class GetMyShowLikesUseCase {
     }
 
     public record Output(
-            List<ShowLikeResponse> items, boolean hasNext, @Nullable Long nextPosition) {}
+            List<ShowLikeResponse> items,
+            boolean hasNext,
+            @Nullable Long nextPosition) {}
 
     public record ShowLikeResponse(
             Long showId,

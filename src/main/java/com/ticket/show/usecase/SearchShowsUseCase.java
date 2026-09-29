@@ -40,7 +40,9 @@ public class SearchShowsUseCase {
     }
 
     public record Output(
-            List<ShowResponse> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+            List<ShowResponse> items,
+            boolean hasNext,
+            @Nullable ShowCursor nextPosition) {}
 
     public record ShowResponse(
             Long id,

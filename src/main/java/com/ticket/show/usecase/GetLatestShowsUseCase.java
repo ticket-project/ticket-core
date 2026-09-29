@@ -44,7 +44,8 @@ public class GetLatestShowsUseCase {
         final List<Show> shows = showQuerydslRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
-        return new Output(shows.stream().map(show -> toResponse(show, venuesById)).toList());
+        return new Output(
+                shows.stream().map(show -> toResponse(show, venuesById)).toList());
     }
 
     private ShowResponse toResponse(final Show show, final Map<Long, VenueSnapshot> venuesById) {

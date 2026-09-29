@@ -139,7 +139,9 @@ class GetSeatStatusUseCaseTest {
         assertThat(output.seats())
                 .extracting(GetSeatStatusUseCase.SeatResponse::performanceSeatId)
                 .containsExactly(101L, 102L, 103L);
-        assertThat(output.seats()).extracting(GetSeatStatusUseCase.SeatResponse::seatId).containsExactly(1L, 2L, 3L);
+        assertThat(output.seats())
+                .extracting(GetSeatStatusUseCase.SeatResponse::seatId)
+                .containsExactly(1L, 2L, 3L);
     }
 
     @Test

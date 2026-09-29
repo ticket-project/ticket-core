@@ -49,7 +49,8 @@ public class GetSaleOpeningSoonShowsUseCase {
         final List<Show> shows = showQuerydslRepository.findSaleOpeningSoonSummaries(input.category(), input.size());
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
-        return new Output(shows.stream().map(show -> toResponse(show, venuesById)).toList());
+        return new Output(
+                shows.stream().map(show -> toResponse(show, venuesById)).toList());
     }
 
     private ShowResponse toResponse(final Show show, final Map<Long, VenueSnapshot> venuesById) {

@@ -19,7 +19,8 @@ public class GetGenresByCategoryUseCase {
 
     public record Input(String categoryCode) {}
 
-    public record GenreResponse(Long id, String code, @Nullable String name) {}
+    public record GenreResponse(
+            Long id, String code, @Nullable String name) {}
 
     public record Output(List<GenreResponse> genres) {}
 
