@@ -15,8 +15,6 @@ import java.util.Set;
 public interface ShowRepository {
     Optional<Show> findById(Long showId);
 
-    boolean existsById(Long showId);
-
     /** 찜 목록처럼 id 집합으로 show를 한 번에 복원한다. 빈 {@code showIds}는 빈 map을 반환한다. */
     Map<Long, Show> findSummaries(Set<Long> showIds);
 
