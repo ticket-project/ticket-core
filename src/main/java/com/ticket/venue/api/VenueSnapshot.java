@@ -15,7 +15,7 @@ public record VenueSnapshot(
         @Nullable String phone,
         @Nullable String imageUrl,
         SeatMapLayout seatMapLayout) {
-    /** 좌석 맵 SVG 렌더링에 필요한 배치값이다. {@code gapX}/{@code gapY}는 현재 소비자가 없어 담지 않는다(관련 GitHub Issue 참고). */
+    /** 좌석 맵 SVG 렌더링에 필요한 배치값이다. DB의 {@code gap_x}/{@code gap_y}는 소비자가 없어 entity도 매핑하지 않는다(Issue #252). */
     public record SeatMapLayout(int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
 
     /**
