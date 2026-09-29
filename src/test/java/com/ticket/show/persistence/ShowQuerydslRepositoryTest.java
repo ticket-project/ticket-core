@@ -622,6 +622,8 @@ class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
         entityManager.flush();
         entityManager.clear();
         setCreatedAt("No Window", LocalDateTime.now(clock));
+        // 등록일은 auditing이 넣는 실제 시각이라 고정 clock보다 뒤다. 최신순 기준을 명시해 No Window가 먼저 나오게 한다.
+        setCreatedAt("Closed Show", LocalDateTime.now(clock).minusDays(1));
 
         CursorPage<Show, ShowCursor> result = searchShows(closedCriteria(), 1, ShowSort.LATEST);
 
