@@ -27,7 +27,7 @@
 package-private helper 세 개(`QuerydslShowSortResolver`, `QuerydslShowCursorConditionBuilder`,
 `SaleDisplayStatusPredicates`)를 또 만들어야 했다. `RegionVenueIds`처럼 값 하나를 감싼 타입,
 `SeatStateSnapshotRow`처럼 `SeatStateView`와 필드가 같은 중복 row 타입도 그 부산물이다. 앞선
-정리(OE-04)로 `*QueryPort`/`*QueryAdapter` 쌍은 이미 없앴지만, 남은 구체 class 자체는 14개였다.
+앞선 정리로 `*QueryPort`/`*QueryAdapter` 쌍은 이미 없앴지만, 남은 구체 class 자체는 14개였다.
 
 ## 결정
 
@@ -56,13 +56,13 @@ package-private helper 세 개(`QuerydslShowSortResolver`, `QuerydslShowCursorCo
 
 ## 대안과 버린 이유
 
-- **조회마다 port + adapter를 유지한다.** 구현이 하나뿐인 1:1 위임이다. 이미 OE-04에서 걷어낸
+- **조회마다 port + adapter를 유지한다.** 구현이 하나뿐인 1:1 위임이다. 이미 걷어낸
   경유 지점을 되살릴 이유가 없다.
 - **`Finder`/`Reader` 계층을 하나 더 둔다.** use case와 조회 사이에 이름만 다른 층을 넣는 것이라,
   조회가 어디서 실행되는지만 한 단계 더 멀어진다.
 - **범용 조회 프레임워크(`BaseQuerydslRepository`, `QueryExecutor`)를 만든다.** 지금 문제는
   abstraction 부족이 아니라 경유 지점 과잉이다
-  ([coding-guidelines.md](../coding-guidelines.md) §11).
+  (옛 `docs/readability-guidelines.md` §11, 커밋 `e31b5bea^`의 본문).
 
 세 대안 모두 **경유 지점만 늘리고 "이 화면 값이 어느 query에서 나오는가"라는 물음에는 답을 더하지
 않는다.**
@@ -84,8 +84,7 @@ package-private helper 세 개(`QuerydslShowSortResolver`, `QuerydslShowCursorCo
 VenueSeatLookupApi`가 직접 구현한다. "DB를 읽는 코드는 `persistence`에 있다"가 예외 없는 문장이 됐다.
 
 **잃은 것.** `*QueryRepository` 한 class가 커졌다. Domain Repository와 이름이 비슷해져, 둘의 차이는
-package(`domain` vs `persistence`)와 접미사로만 드러난다 —
-[architecture.md의 "Repository와 조회 Repository"](../architecture.md)가 그 구분의 원본이다.
+package(`domain` vs `persistence`)와 접미사로만 드러난다.
 
 **규칙의 보호 범위는 줄지 않았다.** "DB를 읽는 구현이 다른 업무 module을 조합하지 않는다"는 검사
 대상이 `..query..`에서 **module 전체 + `JPAQueryFactory` 보유 클래스**로 넓어져, 옮겨진 조회
@@ -95,7 +94,7 @@ Repository에도 그대로 걸린다. `endpoint`가 use case를 건너뛰고 Rep
 ## 후속 메모 (2026-09-19)
 
 위 결정은 그대로 유효하다. 다만 그 뒤 조회 방침이 바뀌면서(Querydsl을 기본 선택으로 두지 않고,
-엔티티로 충분한 조회는 엔티티를 반환한다 — `docs/coding-guidelines.md` §10) 본문이 든 예시
+엔티티로 충분한 조회는 엔티티를 반환한다 — 옛 `docs/readability-guidelines.md` §10, 커밋 `e31b5bea^`의 본문) 본문이 든 예시
 중 일부는 현재 코드에 없다.
 
 - **`ShowDetailView`(§배경)가 사라졌다.** `ShowQueryRepository`는 `findShow`(`Show` 엔티티)·

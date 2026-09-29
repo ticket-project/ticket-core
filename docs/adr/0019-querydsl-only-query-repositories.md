@@ -11,7 +11,7 @@
 
 ADR 0017은 조회 구현을 `persistence`의 `*QueryRepository`로 모으고, 그 판별을 "`persistence`
 package + 이름이 `QueryRepository`로 끝남 + `JPAQueryFactory` 필드 보유"로 정했다. 그 뒤
-`docs/coding-guidelines.md` §10이 "Querydsl은 기본 선택이 아니다"를 세우면서 고정 조회가
+옛 `docs/readability-guidelines.md` §10(커밋 `e31b5bea^`의 본문)이 "Querydsl은 기본 선택이 아니다"를 세우면서 고정 조회가
 차례로 `@Query`와 파생 메서드로 내려갔다.
 
 그러자 **이름이 내용과 어긋났다.** 다섯 개의 `*QueryRepository` 중 셋에
@@ -55,7 +55,7 @@ Querydsl을 쓰는 것은 아니다"라고 적고 있었다. 규칙이 이름을
 ## 대안과 버린 이유
 
 - **이름을 그대로 두고 내용만 맞춘다.** 즉 고정 조회에도 `JPAQueryFactory`를 다시 들인다.
-  규칙을 만족시키려고 코드를 늘리는 일이고, §10이 세운 방침을 정면으로 거스른다.
+  규칙을 만족시키려고 코드를 늘리는 일이고, 옛 §10이 세운 방침을 정면으로 거스른다.
 - **`*QueryRepository`를 유지하고 Querydsl 여부는 묻지 않는다.** 지금까지의 상태다. 이름이
   기술을 말하지 않으니 `READS_DB` 같은 예외 술어가 계속 필요하고, use case에 열리는 범위가
   이름만으로는 읽히지 않는다.
@@ -84,4 +84,4 @@ use case가 보는 타입이 `persistence` 구체 클래스에서 domain 계약�
 - `ArchitectureRulesTest`에서 술어 하나(`READS_DB`)와 그 예외 설명이 사라졌다.
 - venue module에 Aggregate당 adapter 하나라는 모양이 생겼다.
 - 외부 계약은 바뀌지 않았다. HTTP 응답 JSON, DB schema, Redis key, 이벤트 payload 그대로다.
-  projection·정렬·null 처리·join·query 개수도 그대로다(§14).
+  projection·정렬·null 처리·join·query 개수도 그대로다(옛 readability-guidelines §14).

@@ -166,7 +166,7 @@ Flyway)은 그대로 유효하다 — 이 ADR은 그 메커니즘을 바꾸지 �
 **이 ADR이 supersede하는 것은 §3(승인된 의존 DAG)의 module set과 DAG 값뿐이다.** ADR 0003이
 기록한 시점의 DAG는 `payment`/`ticketing`을 몰랐고, 이 ADR의 4번 결정이 그 자리를 채운다. §1(단일
 Gradle 프로젝트), §2(패키지 기반 닫힌 모듈), §4(scalar ID와 공개 API), §5(Modulith 이벤트), §6~10(각
-공유/전역 모듈의 존재 이유), §11(showlike 흡수)은 이 ADR과 무관하며 계속 유효하다.
+공유/전역 모듈의 존재 이유), 옛 §11(showlike 흡수, `6d014b52^`의 ADR 0003 본문)은 이 ADR과 무관하며 계속 유효하다.
 
 ## ADR 0001과의 관계
 

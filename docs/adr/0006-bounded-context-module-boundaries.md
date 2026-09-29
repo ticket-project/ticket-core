@@ -7,7 +7,7 @@
 > 2026-09-19 갱신: 본문의 package 경로와 타입 이름은 그 뒤 리팩터링으로 거의 다 바뀌었다 —
 > `PerformanceSalesPolicy`는 `booking.salespolicy.domain`, cross-module 계약은 `<module>.api`에서
 > `...Api` 접미사를 갖고(`PerformanceSaleCatalogApi`, `VenueLookupApi`), `VenueDisplays`는
-> `show.usecase`에 있다. `QuerydslShowPredicates`·`QuerydslShowConditionBuilder`·`shared.UuidSupplier`는
+> 없어졌다(커밋 `23da415b`). `QuerydslShowPredicates`·`QuerydslShowConditionBuilder`·`shared.UuidSupplier`는
 > 없다. `favorite`는 `like`로 개명됐다(ADR 0008) — 본문이 현재형으로 적은 `favorite`는 그 시점의
 > 기록이다. BC 경계 결정 자체는 그대로 유효하다.
 
@@ -26,8 +26,7 @@
 의존은 추가되지 않았다(순환 없음 유지). booking이 `GET /api/v1/booking/performances/{id}/booking-mode`로
 회차 예매 방식을 인증 없이 공개한다. DB는 booking V6 migration이 옛 show/`__root` 소유
 `PERFORMANCE_QUEUE_POLICIES`/`PERFORMANCES` 정책 컬럼 4개를 backfill 후 제거했다(정책 소유권 이관
-예외, `docs/operations.md`의 "DB 마이그레이션" 절 참고 — 그 절은 `docs/architecture.md`가 아니라
-`docs/operations.md`에만 있다). 아래 "결정하지 않는 것" 절의 본문은 그 이전 결정 시점의 기록으로
+예외, `src/main/resources/db/README.md`의 안전 규칙 참고). 아래 "결정하지 않는 것" 절의 본문은 그 이전 결정 시점의 기록으로
 남긴다.
 
 **2026-09-08 갱신(원칙 완화)**: 아래 "Application Module(기술 모듈 제외)은 곧 BC다"라는 원칙을
@@ -56,7 +55,7 @@ BC다.** `catalog` 하나가 물리 시설(Venue/Seat), 작품·회차(Show/Perf
 
 ## 배경
 
-ADR 0003 §11은 찜(showlike)을 `catalog`가 흡수하게 했다 — 당시 근거는 `catalog -> showlike`(공연
+옛 ADR 0003 §11(`6d014b52^`의 본문)은 찜(showlike)을 `catalog`가 흡수하게 했다 — 당시 근거는 `catalog -> showlike`(공연
 상세의 찜 개수)와 `showlike -> catalog`(공연 존재 확인, 내 찜 목록 표시값) 두 방향이 만나 순환이
 생긴다는 것이었고, 좋아요를 `Show.viewCount`와 같은 파생 지표로 보고 흡수를 택했다. 그 결과
 `catalog`가 Venue/Seat/Show/Performance/ShowLike를 한 module에 모두 담게 됐다.
@@ -105,7 +104,7 @@ noClasses().that().resideInAPackage("com.ticket.show.domain..")
 
 ### 2. 순환은 흡수가 아니라 한 방향을 없애 해소한다
 
-ADR 0003 §11이 만난 순환의 두 방향 중 **`favorite -> show`(공연 존재 확인, 표시값 조회) 방향만
+옛 ADR 0003 §11(`6d014b52^`의 본문)이 만난 순환의 두 방향 중 **`favorite -> show`(공연 존재 확인, 표시값 조회) 방향만
 show 쪽 로컬 조회로 되돌린다.**
 
 - 찜 추가·삭제·상태 조회: `ShowLookup.requireExisting(showId)` 호출 대신 show의 use case가 자기
@@ -130,7 +129,7 @@ show가 검색 파라미터·응답 필드로 그대로 쓰는 공용 어휘라,
 
 **패턴 1 — 표시값 decorate.** `show`의 Querydsl read repository는 `show.venueId`(scalar 컬럼)만
 select하고, 그 결과를 조립하던 클래스가 `VenueLookup.getSummaries(Set<Long>)`를 배치 호출해
-공연장 이름·주소 같은 표시값을 채운다. `show/application/support/VenueDisplays`가 그 batch 결과와
+공연장 이름·주소 같은 표시값을 채운다. `show/application/support/VenueDisplays`(이후 삭제, 커밋 `23da415b`)가 그 batch 결과와
 null-safe 접근을 한 곳에 모은다 — dangling venueId(참조하는 Venue가 없는 경우)는 어디서든 "venue
 없는 show"와 같은 결과(표시값 null, 좌석 빈 목록)를 낸다.
 
@@ -175,7 +174,7 @@ filter chain)다. `Member` entity 자체도 신원(email, name) + 자격증명(e
 
 ## 되돌린 것 (ADR 0003·0005와의 관계)
 
-- **ADR 0003 §11 "showlike 흡수"를 되돌린다.** 흡수 자체가 틀린 결정은 아니었다 — 당시 순환을
+- **옛 ADR 0003 §11(`6d014b52^`의 본문) "showlike 흡수"를 되돌린다.** 흡수 자체가 틀린 결정은 아니었다 — 당시 순환을
   해소하는 유일한 실용적 방법이었다. 이번엔 순환의 두 방향 중 하나만 없애는 더 정밀한 해법이
   가능해져(§2) 다시 분리했다. §11 본문은 그 이전 결정의 기록으로 남긴다.
 - **ADR 0003 §3 / ADR 0005 §4의 module set·DAG**를 이 ADR의 "승인된 의존 DAG"가 다시 supersede한다.
@@ -196,7 +195,7 @@ filter chain)다. `Member` entity 자체도 신원(email, name) + 자격증명(e
 module-aware Flyway(`SpringModulithFlywayMigrationStrategy`)는 module 식별자마다 독립된
 `flyway_schema_history_{module}` 이력을 갖는다. `catalog` → `show` 개명, `venue`/`favorite` 신설은
 모두 **새 이력 이름**이므로 그 폴더의 migration 전부가 처음부터 다시 실행된다.
-`docs/operations.md`의 "이미 운영에 적용된 migration 파일은 수정하지 않는다" 원칙에 대한 예외를
+`src/main/resources/db/README.md`의 "이미 적용된 migration 파일은 수정하지 않는다" 원칙에 대한 예외를
 여기 명문화한다: **module 개명·분리로 이력이 재시작될 때는, 새 이력으로 옮겨가는 파일에 한해
 멱등화 수정(존재 확인 가드)을 허용한다.** 이미 적용이 끝나 그대로 남는 이력의 파일은 여전히
 고치지 않는다.
