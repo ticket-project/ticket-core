@@ -2,34 +2,17 @@ package com.ticket.testsupport.persistence;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 import jakarta.persistence.EntityManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestComponent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.like.domain.Like;
-import com.ticket.like.domain.LikeType;
-import com.ticket.member.domain.Email;
-import com.ticket.member.domain.Member;
-import com.ticket.member.domain.Role;
 import com.ticket.show.domain.Category;
 import com.ticket.show.domain.Genre;
 import com.ticket.show.domain.Grade;
@@ -42,46 +25,23 @@ import com.ticket.show.domain.show.ShowGenre;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
+import com.ticket.venue.persistence.SeatRepositoryAdapter;
+import com.ticket.venue.persistence.VenueRepositoryAdapter;
+import com.ticket.venue.usecase.SeatLookupService;
+import com.ticket.venue.usecase.VenueLookupService;
 
-@MigratedSchema
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        classes = ReadRepositoryTestSupport.TestApplication.class)
-@TestPropertySource(
-        properties = {
-            // Spring Modulith의 ModuleObservabilityAutoConfiguration은 기본으로 켜져(matchIfMissing=true)
-            // ApplicationModulesRuntime을 즉시(non-lazy) 요구하는 BeanPostProcessor를 등록한다. 이 좁은
-            // 슬라이스 컨텍스트는 실제 main class(@SpringBootApplication)가 없어 그 런타임을 만들 수
-            // 없으므로, 이 슬라이스에서는 tracing 관측을 꺼서 그 자동설정 자체가 활성화되지 않게 한다.
-            "management.tracing.enabled=false",
-            "spring.autoconfigure.exclude="
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
-                    // spring-modulith-actuator의 이 자동설정도 (tracing과 무관하게) ApplicationModulesRuntime을
-                    // ObjectProvider.getObject()로 즉시 resolve한다. management.tracing.enabled와는 별개
-                    // 원인이라 따로 꺼야 한다.
-                    + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
-                    // spring-modulith-runtime 자체의 이 자동설정은 항상 ApplicationModulesBootstrap을
-                    // 만들며 classpath에서 @SpringBootApplication 애노테이션 클래스를 찾는다. 이 좁은
-                    // 슬라이스는 그런 main class가 없으므로 이 자동설정 자체를 꺼서 부트스트랩 실패를 막는다.
-                    + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
-        })
-@Transactional
-@Import({
-    ReadRepositoryTestSupport.QuerydslTestConfig.class,
-    ReadRepositoryTestSupport.TestConfig.class,
-    ReadRepositoryTestSupport.AuditingTestConfig.class
-})
 /**
- * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다.
+ * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다. 테스트마다 트랜잭션을 롤백한다.
  *
- * <p>실제 JPA/Querydsl 조회를 검증하려면 Spring 컨텍스트와 EntityManager가 필요해서 이 클래스는 {@code src/test}에 {@code @DataJpaTest} 스타일(H2 +
- * Hibernate 생성 스키마)로 둔다. 별도 {@code integrationTest} source set은 없다(ADR 0003 §1). 도메인 단위 테스트는 이 클래스를 쓰지 않는다.
+ * <p>venue 공개 계약({@code VenueLookupApi}/{@code VenueSeatLookupApi})의 구현을 빈으로 올린다 — 이 베이스를 쓰는 테스트가 그 계약을 주입받으면 없을 때 컨텍스트
+ * 기동부터 실패한다. 두 계약은 {@link VenueRepositoryAdapter} 하나가 함께 구현한다.
+ *
+ * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQuerydslRepository}가 private 메서드로 갖는다.
  */
+@Transactional
+@Import({VenueRepositoryAdapter.class, SeatRepositoryAdapter.class, VenueLookupService.class, SeatLookupService.class})
 @SuppressWarnings("NonAsciiCharacters")
-public abstract class ReadRepositoryTestSupport {
+public abstract class ReadRepositoryTestSupport extends JpaSliceTestSupport {
     @Autowired
     protected EntityManager entityManager;
 
@@ -186,67 +146,8 @@ public abstract class ReadRepositoryTestSupport {
         return performanceSeat;
     }
 
-    protected Member persistMember(final String email, final String name) {
-        Member member = Member.createSocialMember(Email.create(email), name, Role.MEMBER);
-        entityManager.persist(member);
-        return member;
-    }
-
-    protected Like persistLike(final Member member, final Show show) {
-        Like like = new Like(member.getId(), LikeType.SHOW, show.getId());
-        entityManager.persist(like);
-        return like;
-    }
-
     protected void flushAndClear() {
         entityManager.flush();
         entityManager.clear();
     }
-
-    static class TestConfig {
-        @Bean
-        Clock clock() {
-            return Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
-        }
-    }
-
-    static class QuerydslTestConfig {
-        @Bean
-        JPAQueryFactory jpaQueryFactory(final EntityManager entityManager) {
-            return new JPAQueryFactory(entityManager);
-        }
-    }
-
-    @EnableJpaAuditing
-    static class AuditingTestConfig {
-        @Bean
-        AuditorAware<String> auditorAware() {
-            return () -> java.util.Optional.of("test-auditor");
-        }
-    }
-
-    // @TestComponent는 Spring Boot의 TypeExcludeFilter(TestTypeExcludeFilter)가 다른
-    // @SpringBootTest 컨텍스트(TicketApplication 등)의 component scan에서 이 클래스를 제외하게
-    // 한다. 단일 Gradle 프로젝트로 합쳐지면서 이 테스트 전용 클래스가 실제 앱과 같은 com.ticket
-    // 패키지 트리 아래 놓이게 됐고, 그 결과 @Modulith(=@SpringBootApplication)의 기본 component
-    // scan이 이 클래스까지 주워 담아 clock() 같은 테스트 전용 빈이 실제 앱 빈과 충돌했다.
-    // 주의: 여기 @TestConfiguration을 쓰면 안 된다 — SpringBootTestContextBootstrapper는
-    // classes=... 로 명시한 설정이 전부 @TestConfiguration이면 "명시하지 않은 것"으로 보고
-    // 패키지를 거슬러 올라가며 다른 @SpringBootConfiguration을 추가로 찾아 병합해버린다(이 클래스
-    // 자신이 바로 그 classes=... 값이라 자기 자신도 걸린다). @TestComponent만 쓰면 TypeExcludeFilter
-    // 적용은 그대로 받으면서 그 자동 탐색-병합은 피한다.
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    @TestComponent
-    @EntityScan(
-            basePackages = {
-                "com.ticket.show",
-                "com.ticket.venue",
-                "com.ticket.like",
-                "com.ticket.member",
-                "com.ticket.booking",
-                "com.ticket.payment"
-            })
-    @Import({TestConfig.class, AuditingTestConfig.class})
-    static class TestApplication {}
 }
