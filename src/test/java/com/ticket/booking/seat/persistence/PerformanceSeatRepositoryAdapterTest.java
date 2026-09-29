@@ -17,7 +17,7 @@ import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
-import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
+import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
@@ -33,7 +33,7 @@ import com.ticket.venue.domain.Venue;
  */
 @Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceSeatRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
+class PerformanceSeatRepositoryAdapterTest extends ReadRepositoryTestSupport {
     @Autowired
     private PerformanceSeatRepository performanceSeatRepository;
 

@@ -18,14 +18,14 @@ import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.Show;
-import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
+import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 
 /** 옛 {@code PerformanceQueryTest}와 {@code PerformanceGradeQueryTest}가 고정하던 동작이 그대로 들어 있다. */
 @Import(PerformanceRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
+class PerformanceRepositoryAdapterTest extends ReadRepositoryTestSupport {
     @Autowired
     private PerformanceRepository repository;
 
