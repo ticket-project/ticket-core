@@ -2,14 +2,9 @@ package com.ticket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModule;
@@ -41,9 +36,8 @@ import org.springframework.modulith.core.ApplicationModules;
  * — {@code com.ticket.seed} package가 다시 생기면 위 두 assertion이 곧바로 실패한다.
  */
 class ModularityTests {
-    /** 파일시스템 기준으로 선언된 8개 module package다. */
-    private static final Set<String> DECLARED_MODULE_PACKAGES =
-            Set.of("booking", "show", "venue", "like", "member", "security", "shared", "payment");
+    /** 모든 테스트가 같은 분석 결과를 본다. */
+    private static final ApplicationModules MODULES = ApplicationModules.of(TicketApplication.class);
 
     /**
      * 승인된 module 의존 DAG다. 각 module이 실제로 직접 참조하는 module 이름 집합이며, {@code @ApplicationModule(allowedDependencies = ...)}가
@@ -62,39 +56,21 @@ class ModularityTests {
 
     @Test
     void verifiesModuleStructure() {
-        ApplicationModules.of(TicketApplication.class).verify();
-    }
-
-    @Test
-    void 모듈_package가_com_ticket_직속에_선언된_목록과_일치한다() {
-        final Path ticketRoot = Path.of("src", "main", "java", "com", "ticket");
-
-        try (Stream<Path> children = Files.list(ticketRoot)) {
-            final Set<String> declaredModulePackages = children.filter(Files::isDirectory)
-                    .filter(dir -> Files.exists(dir.resolve("package-info.java")))
-                    .map(dir -> dir.getFileName().toString())
-                    .collect(Collectors.toSet());
-
-            assertThat(declaredModulePackages).containsExactlyInAnyOrderElementsOf(DECLARED_MODULE_PACKAGES);
-        } catch (final IOException exception) {
-            throw new UncheckedIOException(exception);
-        }
+        MODULES.verify();
     }
 
     @Test
     void module_dependency는_승인된_DAG와_일치한다() {
-        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class);
-
-        final Set<String> moduleNames = modules.stream()
+        final Set<String> moduleNames = MODULES.stream()
                 .map(module -> module.getIdentifier().toString())
                 .collect(Collectors.toSet());
         assertThat(moduleNames)
                 .as("Modulith가 실제로 찾아낸 module 집합 (shared는 클래스 javadoc 참고)")
                 .containsExactlyInAnyOrderElementsOf(APPROVED_DEPENDENCY_DAG.keySet());
 
-        for (final ApplicationModule module : modules) {
+        for (final ApplicationModule module : MODULES) {
             final String moduleName = module.getIdentifier().toString();
-            final Set<String> actualDependencies = module.getDirectDependencies(modules)
+            final Set<String> actualDependencies = module.getDirectDependencies(MODULES)
                     .uniqueModules()
                     .map(dependency -> dependency.getIdentifier().toString())
                     .collect(Collectors.toSet());
@@ -107,9 +83,7 @@ class ModularityTests {
 
     @Test
     void open_module은_하나도_없다() {
-        final ApplicationModules modules = ApplicationModules.of(TicketApplication.class);
-
-        assertThat(modules.stream().filter(ApplicationModule::isOpen))
+        assertThat(MODULES.stream().filter(ApplicationModule::isOpen))
                 .as("모든 module은 CLOSED(하위 package 캡슐화)여야 한다")
                 .isEmpty();
     }
