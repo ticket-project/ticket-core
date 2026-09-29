@@ -9,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -25,10 +24,6 @@ import lombok.Getter;
             @UniqueConstraint(
                     name = "UK_LIKES_MEMBER_TARGET",
                     columnNames = {"member_id", "like_type", "target_id"})
-        },
-        indexes = {
-            @Index(name = "IDX_LIKES_MEMBER_ID_ID", columnList = "member_id,id"),
-            @Index(name = "IDX_LIKES_TARGET", columnList = "like_type,target_id")
         })
 public class Like extends AuditedEntity {
     @Id

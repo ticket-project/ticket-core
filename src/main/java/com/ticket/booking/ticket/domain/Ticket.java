@@ -9,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -39,8 +38,7 @@ import lombok.NoArgsConstructor;
         uniqueConstraints = {
             @UniqueConstraint(name = "UK_TICKETS_TICKET_KEY", columnNames = "ticket_key"),
             @UniqueConstraint(name = "UK_TICKETS_ORDER_SEAT_ID", columnNames = "order_seat_id")
-        },
-        indexes = {@Index(name = "IDX_TICKETS_OWNER_MEMBER_STATUS", columnList = "owner_member_id,status")})
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Ticket extends AuditedEntity {
     @Id

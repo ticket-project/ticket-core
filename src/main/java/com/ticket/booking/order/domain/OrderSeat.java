@@ -8,7 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -27,11 +26,7 @@ import lombok.NoArgsConstructor;
         uniqueConstraints =
                 @UniqueConstraint(
                         name = "UK_ORDER_SEATS_ORDER_PERFORMANCE_SEAT",
-                        columnNames = {"order_id", "performance_seat_id"}),
-        indexes = {
-            @Index(name = "IDX_ORDER_SEATS_ORDER_ID", columnList = "order_id"),
-            @Index(name = "IDX_ORDER_SEATS_PERFORMANCE_SEAT_ID", columnList = "performance_seat_id")
-        })
+                        columnNames = {"order_id", "performance_seat_id"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderSeat extends AuditedEntity {
     @Id
