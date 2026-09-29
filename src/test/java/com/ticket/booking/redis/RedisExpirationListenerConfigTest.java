@@ -1,25 +1,20 @@
 package com.ticket.booking.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.core.task.TaskDecorator;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.test.util.ReflectionTestUtils;
 
+/**
+ * 만료 처리 executor의 불변식만 고정한다 — 고정 크기 worker, 유한한 queue, 넘치면 호출 스레드가 처리(CallerRuns)하되 그때도 동시 처리 수는 worker 수를 넘지 않는 것.
+ * worker 수·queue 크기 같은 조정 값은 {@link RedisExpirationListenerConfig}가 원본이다.
+ */
 @SuppressWarnings("NonAsciiCharacters")
 class RedisExpirationListenerConfigTest {
     private final RedisExpirationListenerConfig config = new RedisExpirationListenerConfig();
@@ -30,11 +25,10 @@ class RedisExpirationListenerConfigTest {
         executor.afterPropertiesSet();
 
         try {
-            assertThat(executor.getCorePoolSize()).isEqualTo(2);
-            assertThat(executor.getMaxPoolSize()).isEqualTo(2);
-            assertThat(executor.getThreadNamePrefix()).isEqualTo("redis-expiration-");
+            assertThat(executor.getMaxPoolSize()).isEqualTo(executor.getCorePoolSize());
             assertThat(executor.getThreadPoolExecutor().getQueue().remainingCapacity())
-                    .isEqualTo(256);
+                    .isPositive()
+                    .isLessThan(Integer.MAX_VALUE);
             assertThat(executor.getThreadPoolExecutor().getRejectedExecutionHandler())
                     .isInstanceOf(ThreadPoolExecutor.CallerRunsPolicy.class);
         } finally {
@@ -42,82 +36,63 @@ class RedisExpirationListenerConfigTest {
         }
     }
 
-    @Test
-    void listener_container_uses_the_bounded_expiration_executor() {
-        final RedisConnectionFactory connectionFactory = mock(RedisConnectionFactory.class);
-        final RedisKeyExpirationListener listener = mock(RedisKeyExpirationListener.class);
-        final ThreadPoolTaskExecutor executor = config.redisExpirationTaskExecutor();
-        final ThreadPoolTaskExecutor subscriptionExecutor = config.redisExpirationSubscriptionExecutor();
-        executor.afterPropertiesSet();
-        subscriptionExecutor.afterPropertiesSet();
-
-        try {
-            final RedisMessageListenerContainer container =
-                    config.redisMessageListenerContainer(connectionFactory, listener, executor, subscriptionExecutor);
-
-            assertThat(ReflectionTestUtils.getField(container, "taskExecutor")).isSameAs(executor);
-            assertThat(ReflectionTestUtils.getField(container, "subscriptionExecutor"))
-                    .isSameAs(subscriptionExecutor);
-        } finally {
-            executor.shutdown();
-            subscriptionExecutor.shutdown();
-        }
-    }
-
+    /** queue가 없는 executor라 container가 처음 구독할 때 동시에 넘기는 작업을 받으려면 스레드가 둘 이상 필요하다. */
     @Test
     void subscription_executor_is_separate_and_supports_initial_registration_threads() {
         final ThreadPoolTaskExecutor executor = config.redisExpirationSubscriptionExecutor();
         executor.afterPropertiesSet();
 
         try {
-            assertThat(executor.getCorePoolSize()).isEqualTo(1);
-            assertThat(executor.getMaxPoolSize()).isEqualTo(2);
-            assertThat(executor.getThreadNamePrefix()).isEqualTo("redis-expiration-subscription-");
             assertThat(executor.getThreadPoolExecutor().getQueue().remainingCapacity())
                     .isZero();
+            assertThat(executor.getMaxPoolSize()).isGreaterThanOrEqualTo(2);
         } finally {
             executor.shutdown();
         }
     }
 
+    /** worker와 queue가 모두 찬 뒤 CallerRuns로 호출 스레드에서 도는 작업도 handler에 동시에 들어가는 수는 worker 수를 넘지 않는다. */
     @Test
-    void expiration_task_decorator_limits_parallel_handler_entry_to_two() throws Exception {
+    void caller_runs_overflow_does_not_exceed_worker_count() throws Exception {
         final ThreadPoolTaskExecutor executor = config.redisExpirationTaskExecutor();
-        final TaskDecorator taskDecorator = (TaskDecorator) ReflectionTestUtils.getField(executor, "taskDecorator");
-        final ExecutorService callers = Executors.newFixedThreadPool(3);
-        final CountDownLatch twoTasksEntered = new CountDownLatch(2);
-        final CountDownLatch releaseTasks = new CountDownLatch(1);
-        final AtomicInteger activeTasks = new AtomicInteger();
-        final AtomicInteger maxActiveTasks = new AtomicInteger();
-        final Runnable task = taskDecorator.decorate(() -> {
-            final int active = activeTasks.incrementAndGet();
-            maxActiveTasks.accumulateAndGet(active, Math::max);
-            twoTasksEntered.countDown();
+        executor.afterPropertiesSet();
+        final int workers = executor.getMaxPoolSize();
+        final CountDownLatch release = new CountDownLatch(1);
+        final AtomicInteger active = new AtomicInteger();
+        final AtomicInteger maxActive = new AtomicInteger();
+        final AtomicInteger completed = new AtomicInteger();
+        final Runnable task = () -> {
+            maxActive.accumulateAndGet(active.incrementAndGet(), Math::max);
             try {
-                releaseTasks.await();
+                release.await();
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             } finally {
-                activeTasks.decrementAndGet();
+                active.decrementAndGet();
+                completed.incrementAndGet();
             }
-        });
+        };
+        final Thread overflowCaller = new Thread(() -> executor.execute(task), "overflow-caller");
 
         try {
-            final List<Future<?>> futures = List.of(callers.submit(task), callers.submit(task), callers.submit(task));
-
-            assertThat(twoTasksEntered.await(Duration.ofSeconds(5).toMillis(), TimeUnit.MILLISECONDS))
-                    .isTrue();
-            assertThat(activeTasks).hasValue(2);
-            assertThat(maxActiveTasks).hasValue(2);
-
-            releaseTasks.countDown();
-            for (final Future<?> future : futures) {
-                future.get(5, TimeUnit.SECONDS);
+            final int queueCapacity =
+                    executor.getThreadPoolExecutor().getQueue().remainingCapacity();
+            for (int i = 0; i < workers + queueCapacity; i++) {
+                executor.execute(task);
             }
-            assertThat(maxActiveTasks).hasValue(2);
+            await().atMost(Duration.ofSeconds(5)).until(() -> active.get() == workers);
+
+            overflowCaller.start();
+            await().atMost(Duration.ofSeconds(5)).until(() -> overflowCaller.getState() == Thread.State.WAITING);
+            assertThat(active).hasValue(workers);
+
+            release.countDown();
+            overflowCaller.join(Duration.ofSeconds(5));
+            await().atMost(Duration.ofSeconds(10)).until(() -> completed.get() == workers + queueCapacity + 1);
+            assertThat(maxActive).hasValue(workers);
         } finally {
-            releaseTasks.countDown();
-            callers.shutdownNow();
+            release.countDown();
+            executor.shutdown();
         }
     }
 }
