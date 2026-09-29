@@ -9,6 +9,10 @@
 #      (.md 파일 대상만 검사하며 #anchor와 외부 URL은 검사하지 않는다)
 #   3. UTF-8 BOM이 섞이지 않았는지
 #   4. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
+#   5. .java/.yaml/.yml/.toml/.json이 가리키는 docs/*.md, AGENTS.md, CONTRIBUTING.md가 실재하는지
+#   6. 문서(ADR 본문 제외)에 절 번호(§) 참조가 없는지
+#   7. gatling-test 링크가 blob/master인지(기본 브랜치는 master)
+#   8. package-info.java가 {@code com.ticket...}로 가리키는 package·클래스가 실재하는지
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
 # 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. 파일별 루프 대신 목록을 한 번에 넘기는 방식을 쓴다.
@@ -27,8 +31,8 @@ err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
 # 검사 대상 문서 목록.
-DOCS=$(git ls-files --cached --others --exclude-standard '*.md'         | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s
-' "$f"; done)
+DOCS=$(git ls-files --cached --others --exclude-standard '*.md' \
+        | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
 
 # 1 ─ AGENTS.md 줄 수
 for f in $(git ls-files '*AGENTS.md'); do
@@ -143,6 +147,61 @@ if [ "${#pkg_files[@]}" -gt 0 ]; then
   done <<< "$pkg_hits"
 fi
 [ "$deadpkg" -eq 0 ] && ok "문서가 가리키는 package 전부 실재"
+
+# 5 ─ 코드·설정이 가리키는 문서 경로
+# 주석·설정이 `docs/....md`, AGENTS.md, CONTRIBUTING.md를 가리키는데 문서를 옮기거나 지우면 조용히 어긋난다.
+# .sql은 Flyway checksum 때문에 주석도 고칠 수 없으므로 대상에서 뺀다.
+codepath=0
+if ! code_hits=$(git grep -noE '(docs/[A-Za-z0-9_./-]+\.md|AGENTS\.md|CONTRIBUTING\.md)' -- '*.java' '*.yaml' '*.yml' '*.toml' '*.json'); then
+  code_hits=""
+fi
+if [ -n "$code_hits" ]; then
+  while IFS= read -r hit; do
+    f=${hit%%:*}
+    p=${hit##*:}
+    [ -e "$p" ] || { err "$f 가 없는 문서를 가리킨다 -> $p"; codepath=1; }
+  done < <(printf '%s\n' "$code_hits" | sed -E 's/^([^:]+):[0-9]+:/\1:/' | sort -u)
+fi
+[ "$codepath" -eq 0 ] && ok "코드·설정이 가리키는 문서 전부 실재"
+
+# 6 ─ 문서의 절 번호(§) 참조
+# 절 번호는 문서가 바뀌면 조용히 틀린다. 이름이나 커밋 해시로 가리킨다.
+# ADR은 각자 결정에 번호를 붙여 서로를 인용하는 동결된 기록이라 본문은 제외한다.
+sect=0
+sect_files=()
+for f in "${doc_files[@]}"; do
+  case "$f" in docs/adr/0*) ;; *) sect_files+=("$f") ;; esac
+done
+if [ "${#sect_files[@]}" -gt 0 ] && sect_hits=$(grep -n '§' "${sect_files[@]}"); then
+  while IFS= read -r hit; do err "절 번호(§) 참조가 있다 -> ${hit:0:80}"; sect=1; done <<< "$sect_hits"
+fi
+[ "$sect" -eq 0 ] && ok "문서에 절 번호(§) 참조 없음"
+
+# 7 ─ gatling-test 링크의 브랜치
+# gatling-test의 기본 브랜치는 master다. blob/main 링크는 깨진다.
+badlink=0
+if bad_hits=$(git grep -n 'gatling-test/blob/main' -- . ':!scripts/check-docs.sh'); then
+  while IFS= read -r hit; do err "gatling-test 링크는 blob/master여야 한다 -> ${hit:0:80}"; badlink=1; done <<< "$bad_hits"
+fi
+[ "$badlink" -eq 0 ] && ok "gatling-test 링크 브랜치 정상"
+
+# 8 ─ package-info.java가 {@code com.ticket...}로 가리키는 package·클래스
+# 패키지를 옮기거나 지웠는데 package-info의 설명만 옛 이름으로 남는 것을 막는다.
+# 소문자로 시작하는 segment까지는 package, 처음 나오는 대문자 segment는 최상위 클래스(뒤는 멤버)로 본다.
+pi=0
+if pi_hits=$(git grep -hoE '\{@code com\.ticket\.[A-Za-z0-9_.]*[A-Za-z0-9_]\}' -- 'src/main/java/**/package-info.java' | sort -u); then
+  while IFS= read -r hit; do
+    name=${hit#\{@code }
+    name=${name%\}}
+    if [[ $name =~ ^(com\.ticket(\.[a-z][a-z0-9]*)*)\.([A-Z][A-Za-z0-9_]*) ]]; then
+      path=${BASH_REMATCH[1]//./\/}/${BASH_REMATCH[3]}.java
+      [ -f "src/main/java/$path" ] || [ -f "src/test/java/$path" ] || { err "package-info.java 가 없는 클래스를 가리킨다 -> $name"; pi=1; }
+    else
+      [ -d "src/main/java/${name//./\/}" ] || { err "package-info.java 가 없는 package를 가리킨다 -> $name"; pi=1; }
+    fi
+  done <<< "$pi_hits"
+fi
+[ "$pi" -eq 0 ] && ok "package-info.java가 가리키는 package·클래스 전부 실재"
 
 if [ "$fail" -ne 0 ]; then
   echo "문서 검사 실패"
