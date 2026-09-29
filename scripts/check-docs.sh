@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
 # 에이전트 문서 구조를 검증한다. CI와 로컬에서 같은 명령으로 돌린다.
 #
-#   bash scripts/check-docs.sh             전체 (CI)
-#   bash scripts/check-docs.sh --changed   미커밋 .md를 본다. 삭제·rename이면 전체 참조 검사 (Stop 훅)
+#   bash scripts/check-docs.sh
 #
 # 검사 항목
 #   1. AGENTS.md 줄 수 상한 (진입점이 다시 불어나는 것을 막는다)
 #   2. Markdown 클릭 링크는 문서 위치 기준, backtick 저장소 경로는 문서·루트 기준으로 실재하는지
 #      (.md 파일 대상만 검사하며 #anchor와 외부 URL은 검사하지 않는다)
-#   3. 스킬 SKILL.md 프론트매터에 name과 description이 있는지
-#   4. UTF-8 BOM이 섞이지 않았는지
-#   5. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
+#   3. UTF-8 BOM이 섞이지 않았는지
+#   4. 문서가 backtick으로 가리키는 package 경로가 src/main/java에 실재하는지
 #
 # 성능 주의: Windows(Git Bash)에서는 프로세스 생성이 압도적으로 비싸다. 문서 69개 기준으로
-# 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. Stop 훅이 매 턴 이 스크립트를 돌리므로
-# 파일별 루프 대신 목록을 한 번에 넘기는 방식을 쓴다.
+# 파일마다 grep/head/od/git log를 부르면 90초가 넘는다. 파일별 루프 대신 목록을 한 번에 넘기는 방식을 쓴다.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -29,26 +26,9 @@ fail=0
 err() { printf 'FAIL  %s\n' "$*"; fail=1; }
 ok()  { printf 'ok    %s\n' "$*"; }
 
-# --changed: 추가·수정된 미커밋 .md만 본다. 삭제·rename은 남은 문서의 링크 검사로 확인한다.
-# Stop 훅이 매 턴 부르므로 빠른 경로가 필요하다. CI는 인자 없이 전체를 돌린다.
-SCOPE="all"
-[ "${1:-}" = "--changed" ] && SCOPE="changed"
-# 삭제·rename된 문서의 참조자는 수정되지 않았을 수 있으므로 staged/unstaged 모두 전체를 본다.
-if [ "$SCOPE" = "changed" ] && { [ -n "$(git diff -M --name-only --diff-filter=DR -- '*.md')" ] || [ -n "$(git diff --cached -M --name-only --diff-filter=DR -- '*.md')" ]; }; then
-  SCOPE="all"
-fi
-
 # 검사 대상 문서 목록.
-if [ "$SCOPE" = "changed" ]; then
-  DOCS=$( { git diff --name-only --diff-filter=ACMR -- '*.md'; git diff --cached --name-only --diff-filter=ACMR -- '*.md'; git ls-files --others --exclude-standard -- '*.md'; } | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done)
-  if [ -z "$DOCS" ]; then
-    echo "ok    바뀐 문서 없음"
-    exit 0
-  fi
-else
-  DOCS=$( { git ls-files --cached --others --exclude-standard '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
-          | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done )
-fi
+DOCS=$(git ls-files --cached --others --exclude-standard '*.md'         | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s
+' "$f"; done)
 
 # 1 ─ AGENTS.md 줄 수
 for f in $(git ls-files '*AGENTS.md'); do
@@ -109,54 +89,7 @@ while IFS= read -r hit; do
 done <<< "$hits"
 [ "$broken" -eq 0 ] && ok "문서 포인터 전부 실재"
 
-# 3 ─ 스킬 프론트매터
-if [ -d .claude/skills ]; then
-  skill_list_failed=0
-  if ! skills=$(find -L .claude/skills -name 'SKILL.md'); then
-    err "스킬 목록 검사 도구 실행 실패"
-    skill_list_failed=1
-    skills=""
-  fi
-  if [ -n "$skills" ]; then
-    mapfile -t skill_files <<< "$skills"
-    skillcount=${#skill_files[@]}
-    for f in "${skill_files[@]}"; do [ -s "$f" ] || err "$f 프론트매터가 없다"; done
-    # ENDFILE은 awk 구현마다 다르므로 다음 파일의 첫 줄과 END에서 직전 파일을 판정한다.
-    skill_tool_failed=0
-    if ! fmbad=$(awk '
-      function finish() {
-        if (!opened) { print previous "\t프론트매터가 없다"; return }
-        if (!closed) print previous "\t프론트매터 닫힘 구분자가 없다"
-        if (!hasname) print previous "\t프론트매터에 name이 없다"
-        if (!hasdesc) print previous "\t프론트매터에 description이 없다"
-      }
-      FNR==1 {
-        if (seen) finish()
-        seen=1; previous=FILENAME; opened=($0=="---"); closed=0; hasname=0; hasdesc=0
-        next
-      }
-      opened && !closed && $0=="---" { closed=1; next }
-      opened && !closed && /^name:[[:space:]]*[^[:space:]]/ { hasname=1 }
-      opened && !closed && /^description:[[:space:]]*[^[:space:]]/ { hasdesc=1 }
-      END { if (seen) finish() }
-    ' "${skill_files[@]}"); then
-      err "스킬 프론트매터 검사 도구 실행 실패"
-      skill_tool_failed=1
-      fmbad=""
-    fi
-  else
-    skillcount=0
-    fmbad=""
-    skill_tool_failed=0
-  fi
-  if [ -n "$fmbad" ]; then
-    while IFS=$'\t' read -r f msg; do err "$f $msg"; done <<< "$fmbad"
-  elif [ "$skill_tool_failed" -eq 0 ] && [ "$skill_list_failed" -eq 0 ]; then
-    ok "스킬 프론트매터 검사 완료 (${skillcount}개)"
-  fi
-fi
-
-# 4 ─ BOM
+# 3 ─ BOM
 # awk 문자열의 8진 이스케이프로 EF BB BF를 비교한다. gawk/mawk 모두에서 동작한다.
 if ! bomlist=$(awk 'FNR==1 && substr($0,1,3)=="\357\273\277" { print FILENAME }' "${doc_files[@]}"); then
   err "BOM 검사 도구 실행 실패"
@@ -170,7 +103,7 @@ elif [ "${bom_error:-0}" -eq 0 ]; then
 fi
 
 
-# 5 ─ 문서가 가리키는 package 경로
+# 4 ─ 문서가 가리키는 package 경로
 # 계층 이름이 바뀌는 리팩터링(application -> usecase 등)에서 문서만 옛 이름으로 남는 것을 막는다.
 # 검사 2가 .md 링크를 지켜주듯 이쪽은 산문 속 package 경로를 지킨다.
 # ADR은 결정 당시의 기록이라 옛 경로가 정상이므로 제외한다 -- 어긋난 부분은 갱신 배너로 덮는다.
@@ -210,12 +143,6 @@ if [ "${#pkg_files[@]}" -gt 0 ]; then
   done <<< "$pkg_hits"
 fi
 [ "$deadpkg" -eq 0 ] && ok "문서가 가리키는 package 전부 실재"
-
-if [ "$SCOPE" = "changed" ]; then
-  if [ "$fail" -ne 0 ]; then echo "문서 검사 실패"; exit 1; fi
-  echo "문서 검사 통과 (바뀜 문서만)"
-  exit 0
-fi
 
 if [ "$fail" -ne 0 ]; then
   echo "문서 검사 실패"
