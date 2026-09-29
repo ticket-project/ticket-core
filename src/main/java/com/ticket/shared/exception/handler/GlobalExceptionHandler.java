@@ -9,11 +9,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.method.ParameterValidationResult;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.ticket.shared.exception.CommonErrorCode;
 import com.ticket.shared.exception.ErrorCode;
@@ -84,12 +90,62 @@ public class GlobalExceptionHandler {
         return toResponse(HttpStatus.BAD_REQUEST, new InvalidRequestException());
     }
 
-    /** 없는 API 경로다. 데이터 없음(E404)과 코드는 같고 공개 문구만 다르므로 예외 타입을 두지 않는다. */
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(final NoHandlerFoundException exception) {
+    /** path·query 값을 선언한 타입으로 바꿀 수 없다(예: {@code /api/v1/shows/abc}). 어느 파라미터인지만 공개한다. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMethodArgumentTypeMismatchException(
+            final MethodArgumentTypeMismatchException exception) {
+        log.debug("요청 파라미터 형식 오류: {}", exception.getMessage());
+        return toResponse(
+                HttpStatus.BAD_REQUEST, new InvalidRequestException(exception.getName() + ": 형식이 올바르지 않습니다."));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMissingServletRequestParameterException(
+            final MissingServletRequestParameterException exception) {
+        log.debug("필수 요청 파라미터 누락: {}", exception.getMessage());
+        return toResponse(
+                HttpStatus.BAD_REQUEST, new InvalidRequestException(exception.getParameterName() + ": 값이 필요합니다."));
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMissingRequestHeaderException(
+            final MissingRequestHeaderException exception) {
+        log.debug("필수 요청 header 누락: {}", exception.getMessage());
+        return toResponse(
+                HttpStatus.BAD_REQUEST, new InvalidRequestException(exception.getHeaderName() + ": 값이 필요합니다."));
+    }
+
+    /**
+     * 없는 경로다. 데이터 없음(E404)과 코드는 같고 공개 문구만 다르므로 예외 타입을 두지 않는다.
+     *
+     * <p>정적 리소스({@code /api/images/**}) 처리가 켜져 있어 mapping이 없는 경로는 {@link NoHandlerFoundException}이 아니라 마지막 resource
+     * handler의 {@link NoResourceFoundException}으로 끝난다. 둘 다 같은 404다.
+     */
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ApiResponse<Object>> handleNoHandlerFoundException(final Exception exception) {
+        log.debug("없는 경로 요청: {}", exception.getMessage());
         return toResponse(HttpStatus.NOT_FOUND, CommonErrorCode.E404, "요청한 API를 찾을 수 없습니다.", null);
     }
 
+    /** 경로는 있으나 method가 다르다. 프레임워크 요청 오류라 E400을 쓰고, 구분은 HTTP 상태가 한다. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleHttpRequestMethodNotSupportedException(
+            final HttpRequestMethodNotSupportedException exception) {
+        log.debug("지원하지 않는 method: {}", exception.getMessage());
+        return toResponse(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                new InvalidRequestException(exception.getMethod() + " method를 지원하지 않습니다."));
+    }
+
+    /** body의 Content-Type을 받지 않는다. 405와 같은 이유로 E400을 쓴다. */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleHttpMediaTypeNotSupportedException(
+            final HttpMediaTypeNotSupportedException exception) {
+        log.debug("지원하지 않는 Content-Type: {}", exception.getMessage());
+        return toResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, new InvalidRequestException());
+    }
+
+    /** 위에서 잡지 못한 예외는 서버 결함으로 본다. 클라이언트 입력 오류를 여기로 흘리면 4xx가 500과 ERROR 로그가 된다. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleException(final Exception exception) {
         log.error("예외가 발생했습니다. message={} ", exception.getMessage(), exception);
