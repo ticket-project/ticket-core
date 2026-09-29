@@ -2,8 +2,7 @@ package com.ticket;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -42,32 +41,18 @@ import com.tngtech.archunit.lang.ArchRule;
 @SuppressWarnings("NonAsciiCharacters")
 class DomainIsolationTest {
     /** 기술 모듈을 제외한 6개 BC다. {@code docs/architecture.md}의 "Bounded Context" 절이 원본이다. */
-    private static final Set<String> BOUNDED_CONTEXTS = Set.of("booking", "show", "venue", "like", "member", "payment");
+    private static final List<String> BOUNDED_CONTEXTS =
+            List.of("booking", "show", "venue", "like", "member", "payment");
 
     @ArchTest
-    static final ArchRule booking_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("booking");
-
-    @ArchTest
-    static final ArchRule show_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("show");
-
-    @ArchTest
-    static final ArchRule venue_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("venue");
-
-    @ArchTest
-    static final ArchRule like_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("like");
-
-    @ArchTest
-    static final ArchRule member_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("member");
-
-    @ArchTest
-    static final ArchRule payment_domain은_다른_BC를_참조하지_않는다 = domainDoesNotDependOnOtherBc("payment");
+    static final ArchRule BC_domain은_다른_BC를_참조하지_않는다 =
+            ArchitectureRulesTest.combine(BOUNDED_CONTEXTS, DomainIsolationTest::domainDoesNotDependOnOtherBc);
 
     private static ArchRule domainDoesNotDependOnOtherBc(final String bc) {
-        final Set<String> others = new LinkedHashSet<>(BOUNDED_CONTEXTS);
-        others.remove(bc);
-
-        final String[] otherBcPackages =
-                others.stream().map(other -> "com.ticket." + other + "..").toArray(String[]::new);
+        final String[] otherBcPackages = BOUNDED_CONTEXTS.stream()
+                .filter(other -> !other.equals(bc))
+                .map(other -> "com.ticket." + other + "..")
+                .toArray(String[]::new);
 
         return noClasses()
                 .that()
