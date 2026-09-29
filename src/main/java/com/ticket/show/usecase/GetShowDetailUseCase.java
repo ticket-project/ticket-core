@@ -144,8 +144,8 @@ public class GetShowDetailUseCase {
     }
 
     /**
-     * 대표 회차의 등급 배정과 그 등급 이름을 조합한다. 표시 순서는 {@code PerformanceGrade.sortOrder}이고, 이름을 찾지 못한 등급은 제외한다 — 예전 {@code join
-     * grade}가 그랬듯 조용히 빠진다.
+     * 대표 회차의 등급 배정과 그 등급 이름을 조합한다. 표시 순서는 {@code PerformanceGrade.sortOrder}다. {@code grade_id}는 NOT NULL FK
+     * ({@code fk_performance_grades_grade})라 등급은 항상 있다.
      */
     private List<GradeInfo> resolveGrades(final Long showId) {
         final List<PerformanceGrade> performanceGrades =
@@ -155,16 +155,14 @@ public class GetShowDetailUseCase {
 
         return performanceGrades.stream()
                 .map(performanceGrade -> toGradeInfo(performanceGrade, gradesById))
-                .filter(Objects::nonNull)
                 .toList();
     }
 
-    private @Nullable GradeInfo toGradeInfo(
-            final PerformanceGrade performanceGrade, final Map<Long, Grade> gradesById) {
-        final Grade grade = gradesById.get(performanceGrade.getGradeId());
-        if (grade == null) {
-            return null;
-        }
+    private GradeInfo toGradeInfo(final PerformanceGrade performanceGrade, final Map<Long, Grade> gradesById) {
+        final Grade grade = Objects.requireNonNull(
+                gradesById.get(performanceGrade.getGradeId()),
+                () -> "PerformanceGrade %d의 Grade를 찾을 수 없습니다: gradeId=%d"
+                        .formatted(performanceGrade.getId(), performanceGrade.getGradeId()));
         return new GradeInfo(performanceGrade.getGradeId(), grade.getName(), performanceGrade.getPrice());
     }
 
