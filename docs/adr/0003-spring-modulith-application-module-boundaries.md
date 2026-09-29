@@ -15,8 +15,7 @@
 module set과 의존 DAG는 이후 ADR 0005·ADR 0006이 각각 다시 supersede했다. 의존 DAG의 원본은
 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`와 `docs/architecture.md`다 — 아래 §3은 이
 ADR이 정한 원칙만 남기고 값은 담지 않는다. `catalog`가 `show`로 개명되고 물리 공연장·좌석
-(Venue/Seat)이 `venue`로 분리된 것(ADR 0006), §11(showlike 흡수)이 그 뒤 되돌려진 것(ADR 0006
-§2)도 최신 값은 아래에서 원본 문서로만 가리킨다.
+(Venue/Seat)이 `venue`로 분리된 것(ADR 0006), showlike 흡수(옛 §11, `6d014b52^`의 본문)가 그 뒤 되돌려진 것(ADR 0006)도 최신 값은 아래에서 원본 문서로만 가리킨다.
 
 ## 배경
 
@@ -168,7 +167,7 @@ V3~V7)은 byte-for-byte 그대로 `db/migration/__root`,
 `db/migration-vendor/{h2,oracle}/__root`로 옮겨 checksum을 보존했다. 모듈이 소유하는 새 schema
 변경(cross-module FK 제거, scalar column 전환 등)은 `db/migration/{module}`,
 `db/migration-vendor/{h2,oracle}/{module}`에 module별로 1부터 새로 버전을 매겨 추가한다. 상세
-절차는 [`docs/operations.md`](../operations.md)를 따른다.
+규칙은 `src/main/resources/db/README.md`를 따른다.
 
 ### 8. bootstrap: 영구 composition-root 예외 자리
 
@@ -266,7 +265,7 @@ ADR 0001이 예시로 든 구현 클래스는 이 전환으로 이름이 최신�
 
 이 ADR의 module 경계 원칙(패키지 기반 닫힌 module, 공개 계약은 작은 interface + 불변 record
 snapshot, cross-module JPA 금지, Spring Modulith 이벤트, module-aware Flyway, §6~10의 각
-공유/전역 모듈 존재 이유)은 그대로 유효하다. **§3(의존 DAG)의 module set·값과 §11(showlike
-흡수)만 이후 ADR 0005·ADR 0006이 순차로 supersede했다** — ADR 0006이 §2가 그 되돌림까지
+공유/전역 모듈 존재 이유)은 그대로 유효하다. **§3(의존 DAG)의 module set·값과 옛 §11(showlike
+흡수, `6d014b52^`의 본문)만 이후 ADR 0005·ADR 0006이 순차로 supersede했다** — ADR 0006이 §2가 그 되돌림까지
 포함해 최종 상태를 기록한다. 최신 module set·DAG의 원본은 항상 ADR 0006과
 `com.ticket.ModularityTests.APPROVED_DEPENDENCY_DAG`다.

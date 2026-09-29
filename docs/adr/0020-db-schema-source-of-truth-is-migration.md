@@ -54,4 +54,4 @@ Hibernate `validate`는 테이블·컬럼·타입만 본다. 인덱스·유니�
   스키마라서, 중복 거절에 기대는 시드 검증을 추가할 때는 migration으로 옮긴다.
 - H2의 Oracle 호환 모드는 `DATE`를 `TIMESTAMP(0)`으로 저장한다. 그래서 H2 `validate`는
   `H2OracleModeDialect`를 쓴다.
-- 절차와 확인 방법은 [operations.md의 DB 마이그레이션](../operations.md#db-마이그레이션)이 원본이다.
+- 규칙은 `src/main/resources/db/README.md`가 원본이다.

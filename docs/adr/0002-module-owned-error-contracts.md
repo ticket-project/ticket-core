@@ -30,7 +30,7 @@ module handler가 정한다.
   단방향만 있고 반대로 `web`이 오류 타입을 알면 순환이 된다 — `ApiResponse`는 완성된
   code·message·data만 받고 오류 타입을 모른다. **HTTP 상태는 `ApiResponse`가 아니라 각
   handler가 결정해 `ResponseEntity`에 싣는다** — 예외 자신은 상태를 모른다(ADR 0010).
-- 강제 장치는 `com.ticket.error.ErrorCodeUniquenessTest`(E-code 전역 유일성)와
+- 강제 장치는 `com.ticket.shared.exception.ErrorCodeUniquenessTest`(E-code 전역 유일성)와
   `ExceptionHandlerScopeTest`(모듈 handler가 자기 오류만 잡는지)다.
 
 ## 검토한 대안

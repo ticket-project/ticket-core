@@ -14,11 +14,11 @@
 
 > 2026-09-23 갱신: 아래의 `MemberAccountService` 얇은 위임 계층 설명은 당시 결정이다. 이후 계정
 > 연산이 한 클래스에 쌓여, 등록·비밀번호 인증·활성 조회·탈퇴의 정책과 트랜잭션을 각각의
-> `member.usecase`로 옮겼다. 공개 `MemberAccountApi` 계약은 유지하고 구현 이름은
-> `MemberAccountFacade`로 바꿨다.
+> `member.usecase`로 옮겼다. 공개 `MemberAccountApi` 계약은 유지했다. 구현 이름은 이후
+> 다시 바뀌었다(커밋 `c2407f0e`).
 
 > 2026-09-22 갱신: 본문이 적은 `shared.config` → `shared.infrastructure` 개명은 되돌렸다
-> (ADR 0011 머리말 참조). 계층형 배치와 security가 인증 조립을 소유한다는 결정은 그대로다.
+> (ADR 0011은 `shared.config`라고 적는다). 계층형 배치와 security가 인증 조립을 소유한다는 결정은 그대로다.
 
 > 2026-09-19 갱신: 아래 2026-09-17 갱신이 적은 `application` → `usecase`/`query`/`port` 중 `query`는
 > [ADR 0017](0017-query-implementations-live-in-persistence.md) 이후 없어졌다 — 읽기 모델과 조회
