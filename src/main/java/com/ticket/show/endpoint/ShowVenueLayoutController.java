@@ -1,14 +1,19 @@
 package com.ticket.show.endpoint;
 
+import jakarta.validation.constraints.Positive;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.shared.web.ApiResponse;
-import com.ticket.show.endpoint.docs.ShowVenueLayoutControllerDocs;
 import com.ticket.show.usecase.GetShowVenueLayoutUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -23,12 +28,18 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/shows")
 @RequiredArgsConstructor
-public class ShowVenueLayoutController implements ShowVenueLayoutControllerDocs {
+@Tag(name = "공연(Show)", description = "공연 정보·공연장 레이아웃 조회 API")
+public class ShowVenueLayoutController {
     private final GetShowVenueLayoutUseCase getShowVenueLayoutUseCase;
 
-    @Override
+    @Operation(summary = "공연장 레이아웃 조회", description = """
+            공연 ID로 해당 공연장의 레이아웃(SVG viewBox, 무대 위치)을 조회합니다.
+            공연장 정보는 거의 변하지 않으므로 캐싱에 적합합니다.
+            """)
+    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/{showId}/venue-layout")
-    public ApiResponse<GetShowVenueLayoutUseCase.Output> getVenueLayout(@PathVariable final Long showId) {
+    public ApiResponse<GetShowVenueLayoutUseCase.Output> getVenueLayout(
+            @Parameter(description = "공연 ID", example = "1") @PathVariable @Positive final Long showId) {
         final GetShowVenueLayoutUseCase.Input input = new GetShowVenueLayoutUseCase.Input(showId);
         return ApiResponse.success(getShowVenueLayoutUseCase.execute(input));
     }
