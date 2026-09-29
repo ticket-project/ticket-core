@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.tuple;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,17 +17,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestComponent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -36,28 +25,11 @@ import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.testsupport.persistence.MigratedSchema;
+import com.ticket.testsupport.persistence.JpaSliceTestSupport;
 
-@MigratedSchema
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        classes = OrderRepositoryAdapterIntegrationTest.TestApplication.class)
-@TestPropertySource(
-        properties = {
-            // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
-            // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication
-            // main class가 없어 그 런타임을 만들 수 없으므로 tracing 관측 자체를 끈다.
-            "management.tracing.enabled=false",
-            "spring.autoconfigure.exclude="
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration,"
-                    + "org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV2,"
-                    + "org.redisson.spring.starter.RedissonAutoConfigurationV4,"
-                    + "org.springframework.modulith.actuator.autoconfigure.ApplicationModulesEndpointConfiguration,"
-                    + "org.springframework.modulith.runtime.autoconfigure.SpringModulithRuntimeAutoConfiguration"
-        })
+@Import(OrderRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class OrderRepositoryAdapterIntegrationTest {
+class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
     private static final long MEMBER_ID = 100L;
     private static final long PERFORMANCE_ID = 200L;
     private static final int BATCH_SIZE = 100;
@@ -286,27 +258,6 @@ class OrderRepositoryAdapterIntegrationTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for the lock test latch", e);
-        }
-    }
-
-    // @TestComponent는 이 클래스를 다른 @SpringBootTest 컨텍스트(TicketApplication 등)의
-    // component scan에서 제외시킨다. 단일 프로젝트로 합쳐지며 같은 com.ticket 패키지 트리에
-    // 놓이게 된 이 테스트 전용 설정이 실제 앱의 component scan에 섞여 들어가는 것을 막는다.
-    // @TestConfiguration을 쓰면 안 된다 — SpringBootTestContextBootstrapper가 classes=...로
-    // 명시한 설정을 전부 @TestConfiguration으로 보고 "명시하지 않은 것"처럼 취급해, 패키지를
-    // 거슬러 올라가며 다른 @SpringBootConfiguration(예: 형제 테스트의 TestApplication)을 찾아
-    // 잘못 병합해버린다.
-    @SpringBootConfiguration
-    @EnableAutoConfiguration
-    @TestComponent
-    @EntityScan(basePackages = {"com.ticket.show", "com.ticket.member", "com.ticket.booking"})
-    @EnableJpaRepositories(basePackageClasses = SpringDataOrderJpaRepository.class)
-    @EnableJpaAuditing
-    @Import(OrderRepositoryAdapter.class)
-    static class TestApplication {
-        @Bean
-        AuditorAware<String> auditorAware() {
-            return () -> Optional.of("integration-test");
         }
     }
 }
