@@ -26,24 +26,13 @@ reviews:
   in_progress_fortune: true
   poem: false
   enable_prompt_for_ai_agents: true
-  path_filters:
-    - "**/*"
-    - "!storage/images/**"
-    - "!**/build/**"
-    - "!.gradle/**"
-    - "!.gradle-user-home/**"
-    - "!.gradle-user-home-hold-fix/**"
-    - "!.tmp/**"
-    - "!mysql-data/**"
-    - "!.idea/**"
-    - "!.backup/**"
   path_instructions:
     - path: "src/main/java/com/ticket/**/endpoint/**"
       instructions: |
-        - Controller, config, security, websocket 계층에서 비즈니스 규칙이나 직접적인 저장소 접근이 섞였는지 집중 확인하세요.
+        - Controller에 비즈니스 규칙이나 직접적인 저장소 접근이 섞였는지 집중 확인하세요.
         - 인증/인가 누락, 공개 API 노출, 요청 검증 누락, 응답 스키마 호환성 문제를 우선 찾으세요.
         - 단순 스타일보다 실제 장애 시나리오와 회귀 위험을 중심으로 지적하세요.
-    - path: "src/main/java/com/ticket/**/application/**"
+    - path: "src/main/java/com/ticket/**/usecase/**"
       instructions: |
         - 트랜잭션 경계가 use case 안에서 올바르게 시작·종료되는지, 락을 먼저 잡고 그 안에서 트랜잭션을
           시작하는 순서를 지키는지 확인하세요.
@@ -56,17 +45,25 @@ reviews:
     - path: "src/main/java/com/ticket/**/domain/**"
       instructions: |
         - 이 경로는 가장 엄격하게 심층 리뷰하세요.
-        - hold, order, performanceseat(booking 모듈), 인증(member 모듈), admission token 검증(booking 모듈) 등
-          도메인의 상태 전이, 동시성, 분산 락, Redis TTL/expiration, scheduler/listener 정합성을 우선 확인하세요.
+        - hold, order, seat, selection, salespolicy(booking 모듈) 등 도메인의 상태 전이, 동시성, 분산 락,
+          Redis TTL/expiration, scheduler/listener 정합성을 우선 확인하세요.
         - 트랜잭션 경계 오류, 부분 저장, 이벤트 누락, 만료 처리 불일치를 집중적으로 찾으세요.
         - 관련 테스트가 충분한지도 함께 보세요.
-    - path: "src/main/java/com/ticket/**/infrastructure/**"
+    - path: "src/main/java/com/ticket/**/persistence/**"
       instructions: |
-        - infrastructure는 domain과 application이 정의한 포트(Repository 계약, 분산락·발행·외부 client 등)의
-          구현체를 둔다. 업무 판단이나 상태 전이 결정이 섞였는지 확인하세요.
-        - Redis 명령과 key 조립, TTL 설정, expiration listener, WebSocket 발행, scheduler, 분산락 AOP를 우선 확인하세요.
+        - persistence는 domain이 정의한 Repository 계약의 JPA/Querydsl·Redis 구현과 자기 모듈 조회 구현을 둔다.
+          업무 판단이나 상태 전이 결정이 섞였는지 확인하세요.
+        - Redis 명령과 key 조립, TTL 설정을 우선 확인하세요.
         - DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드, background executor 한도를 늘리는 변경은 특히 엄격하게 보세요.
         - Redis key·TTL·전환 절차의 세부 규칙은 docs/operations.md의 "분산락과 Redis 작업 규칙"이 원본입니다.
+    - path: "src/main/java/com/ticket/**/redis/**"
+      instructions: |
+        - Redis key expiration listener와 Redisson 분산락 구현이다. 만료 이벤트 누락·중복 처리, 락 수명과
+          해제 누락, 트랜잭션과 락의 순서를 우선 확인하세요.
+    - path: "src/main/java/com/ticket/{security,booking/admission}/**"
+      instructions: |
+        - 인증·JWT·refresh token(security 모듈)과 admission token 검증(booking.admission) 변경은 경쟁 상태,
+          만료 처리 누락, secret·issuer·audience 설정 불일치를 집중적으로 보세요.
     - path: ".github/**"
       instructions: |
         - workflow, review 설정, 배포 설정 변경은 CI 실패, 보안 노출, 잘못된 자동화 동작을 중심으로 확인하세요.
