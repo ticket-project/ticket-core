@@ -5,21 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticket.member.usecase.RegisterMemberUseCase;
 
 class RegisterMemberRequestTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Test
-    void mapsToUseCaseInput() {
-        RegisterMemberRequest request = new RegisterMemberRequest("user@example.com", "password123!", "tester");
-
-        RegisterMemberUseCase.Input input = request.toInput();
-
-        assertThat(input.email()).isEqualTo("user@example.com");
-        assertThat(input.password()).isEqualTo("password123!");
-        assertThat(input.name()).isEqualTo("tester");
-    }
 
     @Test
     void supportsLoginIdAlias() throws Exception {

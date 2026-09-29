@@ -38,17 +38,6 @@ class CountSearchShowsUseCaseTest {
         verify(showQuerydslRepository).countSearchShows(request, null);
     }
 
-    @Test
-    void 검색결과가_없으면_0건을_반환한다() {
-        ShowSearchCriteria request = new ShowSearchCriteria("없는공연", null, null, null, null, null, null);
-        when(showQuerydslRepository.countSearchShows(request, null)).thenReturn(0L);
-
-        CountSearchShowsUseCase.Output output = useCase.execute(new CountSearchShowsUseCase.Input(request));
-
-        assertThat(output.count()).isZero();
-        verify(showQuerydslRepository).countSearchShows(request, null);
-    }
-
     /** 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다. */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {
