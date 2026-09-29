@@ -15,9 +15,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.connection.Message;
 
+import com.ticket.booking.selection.persistence.SeatSelectionRedisKey;
+
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class RedisKeyExpirationListenerTest {
+    private static final String SELECT_KEY = SeatSelectionRedisKey.select(10L, 20L);
+
     @Mock
     private RedisKeyExpirationHandler firstHandler;
 
@@ -28,12 +32,12 @@ class RedisKeyExpirationListenerTest {
     void 만료_키를_처리할_수_있는_첫번째_핸들러에만_위임한다() {
         RedisKeyExpirationListener listener = new RedisKeyExpirationListener(List.of(firstHandler, secondHandler));
 
-        when(firstHandler.supports("seat:select:10:20")).thenReturn(true);
+        when(firstHandler.supports(SELECT_KEY)).thenReturn(true);
 
-        listener.onMessage(message("seat:select:10:20"), new byte[0]);
+        listener.onMessage(message(SELECT_KEY), new byte[0]);
 
-        verify(firstHandler).supports("seat:select:10:20");
-        verify(firstHandler).handle("seat:select:10:20");
+        verify(firstHandler).supports(SELECT_KEY);
+        verify(firstHandler).handle(SELECT_KEY);
         verify(secondHandler, never()).supports(anyString());
         verifyNoInteractions(secondHandler);
     }
