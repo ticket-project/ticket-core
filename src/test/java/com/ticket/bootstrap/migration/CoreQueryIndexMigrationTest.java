@@ -30,6 +30,7 @@ class CoreQueryIndexMigrationTest {
 
         try (Connection connection = ModulithFlywayTestSupport.connect(url)) {
             assertThat(indexNames(connection, "PERFORMANCE_SEATS")).contains("UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT");
+            // root V4가 만든다. 최종 스키마에서는 booking V7이 지운다(MigrationChainSchemaTest 참고).
             assertThat(indexNames(connection, "ORDER_SEATS")).contains("IDX_ORDER_SEATS_ORDER_ID");
             // root 혼자서는 V5/V6이 만드는 custom outbox table을 만들기만 한다 — 제거하는 V2는
             // booking module 소유(BookingModuleMigrationTest 참고)라 여기서는 돌지 않는다.
