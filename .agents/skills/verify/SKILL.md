@@ -6,6 +6,8 @@ allowed-tools: Bash(./gradlew:*) PowerShell(.\gradlew.bat:*) Bash(rg:*) Bash(git
 
 # 검증 실행
 
+실행 시점은 [testing.md](../../../docs/testing.md#테스트를-돌리는-시점)를 따른다 — 작업 중·커밋마다 돌리지 않고, 모든 커밋이 끝난 뒤 완료 보고 전에 전체를 한 번 돌린다. 사용자가 특정 범위만 요청하면 아래 순서로 좁힌다.
+
 1. 변경 범위와 실제 테스트 위치를 확인한다.
 2. [testing.md](../../../docs/testing.md#변경별-검증)의 기준으로 필요한 검증을 선택한다.
 3. Docker 등 실행 환경과 명령의 테스트 패턴이 실제 테스트를 찾는지 확인한다.
