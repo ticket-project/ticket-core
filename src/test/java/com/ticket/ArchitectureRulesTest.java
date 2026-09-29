@@ -129,7 +129,7 @@ class ArchitectureRulesTest {
      * <ol>
      *   <li><b>Querydsl Q-type</b>: entity와 같은 package에 생성되므로 {@code ..domain..}에 그대로 들어오지만 사람이 쓴 코드가 아니고 당연히 Querydsl을
      *       참조한다. {@code @Generated}는 SOURCE retention이라 bytecode에 남지 않아 이름으로 가른다 — {@code Q} 다음이 대문자인 것만 잡으므로
-     *       {@code QueueLevel} 같은 실제 타입은 걸리지 않는다.
+     *       {@code QueueMode} 같은 실제 타입은 걸리지 않는다.
      *   <li><b>바깥 역할 package 안의 클래스</b>: {@code ..event.persistence}처럼 안쪽 역할 package 아래에 구현이 있으면, 그 구현이 자기 package를
      *       참조한다며 규칙이 항상 실패한다. 구현은 구현 규칙으로 본다.
      * </ol>

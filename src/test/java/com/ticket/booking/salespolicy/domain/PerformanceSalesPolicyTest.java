@@ -85,8 +85,6 @@ class PerformanceSalesPolicyTest {
                 1L,
                 new OrderAcceptanceWindow(OPENS_AT, CLOSES_AT),
                 new HoldPolicy(maxSeatCount, Duration.ofSeconds(holdSeconds)),
-                queueMode == null
-                        ? BookingEntryPolicy.none()
-                        : new BookingEntryPolicy(queueMode, null, null, null, null));
+                queueMode == null ? BookingEntryPolicy.none() : new BookingEntryPolicy(queueMode, null));
     }
 }

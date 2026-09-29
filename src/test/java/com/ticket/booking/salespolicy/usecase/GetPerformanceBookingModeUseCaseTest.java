@@ -106,8 +106,6 @@ class GetPerformanceBookingModeUseCaseTest {
                 10L,
                 new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(4, Duration.ofSeconds(300)),
-                queueRequired
-                        ? new BookingEntryPolicy(QueueMode.FORCE_ON, null, null, null, null)
-                        : BookingEntryPolicy.none());
+                queueRequired ? new BookingEntryPolicy(QueueMode.FORCE_ON, null) : BookingEntryPolicy.none());
     }
 }
