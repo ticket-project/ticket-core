@@ -26,6 +26,11 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
+import com.ticket.member.api.MemberAccountApi;
+import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.SocialIdentity;
+import com.ticket.member.api.SocialProvider;
+import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
 import tools.jackson.databind.JsonNode;
@@ -101,6 +106,12 @@ public abstract class BookingE2ETestSupport {
     @Autowired
     private RedisConnectionFactory redisConnectionFactory;
 
+    @Autowired
+    private MemberAccountApi memberAccountApi;
+
+    @Autowired
+    private AuthTokenIssuer authTokenIssuer;
+
     /** 좌석 선택과 hold는 Redis에 남는다. DB만 되돌리면 이전 테스트의 점유가 다음 테스트의 좌석 상태 조회에 그대로 보인다. */
     @BeforeEach
     void flushRedis() {
@@ -111,40 +122,18 @@ public abstract class BookingE2ETestSupport {
 
     // 인증 -----------------------------------------------------------------
 
-    /** 회원가입과 로그인을 실제 API로 수행해 access token을 얻는다. 테스트가 JWT를 직접 발급하면 인증 경로가 검증 대상에서 빠진다. */
-    protected String signUpAndLogin(final String email) {
-        final String password = "password1234";
+    /**
+     * 새 소셜 회원을 만들고 앱의 토큰 발급기로 access token을 얻는다. 회원 가입·로그인은 OAuth2 provider 왕복이 필요해 E2E가 재현할 수 없으므로, 그 끝에서 부르는 member
+     * 공개 계약과 토큰 발급기를 그대로 쓴다. 발급된 토큰은 실제 인증 필터가 검증한다.
+     */
+    protected String loginAsNewMember(final String email) {
         final String name = email.substring(0, email.indexOf('@'));
-
-        final ResponseEntity<JsonNode> signUp =
-                restTemplate.postForEntity("/api/v1/auth/signup", json(bodyOf(email, password, name)), JsonNode.class);
-        if (!signUp.getStatusCode().is2xxSuccessful()) {
-            fail("회원가입 실패: status=" + signUp.getStatusCode() + " body=" + signUp.getBody());
-        }
-
-        final ResponseEntity<JsonNode> login =
-                restTemplate.postForEntity("/api/v1/auth/login", json(bodyOf(email, password, null)), JsonNode.class);
-        if (!login.getStatusCode().is2xxSuccessful()) {
-            fail("로그인 실패: status=" + login.getStatusCode() + " body=" + login.getBody());
-        }
-
-        return requireData(login.getBody(), "로그인").get("accessToken").asText();
-    }
-
-    private String bodyOf(final String email, final String password, final String name) {
-        if (name == null) {
-            return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
-        }
-        return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\",\"name\":\"" + name + "\"}";
+        final MemberStatus member = memberAccountApi.resolveSocialAccount(
+                new SocialIdentity(SocialProvider.GOOGLE, "e2e-" + email, email, true, name));
+        return authTokenIssuer.issueTokens(member.memberId(), member.role()).accessToken();
     }
 
     // HTTP 헬퍼 -------------------------------------------------------------
-
-    protected HttpEntity<String> json(final String body) {
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return new HttpEntity<>(body, headers);
-    }
 
     protected HttpEntity<Void> authed(final String accessToken) {
         return new HttpEntity<>(authHeaders(accessToken));
