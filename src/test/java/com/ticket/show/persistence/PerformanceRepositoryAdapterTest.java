@@ -25,7 +25,7 @@ import com.ticket.venue.domain.Venue;
 /** 옛 {@code PerformanceQueryTest}와 {@code PerformanceGradeQueryTest}가 고정하던 동작이 그대로 들어 있다. */
 @Import(PerformanceRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceRepositoryTest extends InfraReadRepositoryTestSupport {
+class PerformanceRepositoryAdapterTest extends InfraReadRepositoryTestSupport {
     @Autowired
     private PerformanceRepository repository;
 
