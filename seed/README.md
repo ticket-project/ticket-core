@@ -222,17 +222,7 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 
 `seedTest`는 서비스 `test`에 딸려 돌지 않는다. `check`와 CI(`ci.yml`)가 함께 돌린다.
 
-| 테스트 | 고정하는 것 |
-| --- | --- |
-| `SeedLocalTest` | 실제 시드 SQL 전체를 실제 앱 스키마(H2)에 적재 → 관계 정합성 → 재실행 멱등성 → 비밀번호 없는 활성 회원 → 부분 적재 감지 |
-| `SeedProdOracleTest` | `seedProd`의 실제 실행 경로를 임시 Oracle에서 통째로 검증 — 환경변수 누락 실패, `USER_TABLES` 기준 스키마 판정, `NLS_DATE_FORMAT` 비의존, 운영 기본값(테스트 회원·부하 회차 0), 옵션 지정 적재, 재실행 멱등성, 부분 적재 감지, 비밀번호 비노출 |
-| `SeedSeatCoverageTest` | 좌석 누락 회귀 — 마커 앞에 추가한 공연장은 좌석·회차좌석을 받고, 마커 뒤에 붙이면 적재 전에 실패하며, 좌석 없는 공연장이 남으면 커밋하지 않는다 |
-| `SeedFastRunTest` | 실행 순서, 트랜잭션 롤백, 동시 접속, 준비되지 않은 DB 실패, 회원 중복 건너뛰기 |
-| `CuratedSeedStatementsTest` | 시드 SQL의 날짜 다변화·회차/판매정책 분리·좌석 복제·회차좌석 불변식 |
-| `SeedSettingsTest` | 로컬 접속 설정 원본과 기본값 |
-| `SeedProdSettingsTest` | 운영 접속 설정 원본(환경변수)과 기본값, 누락 시 실패, URL 마스킹, 드라이버 선택 |
-| `ServiceSourceSeparationTest` | 시드가 서비스 소스로 다시 섞이지 않는 것 |
-| `AppSchemaTest` | `support.AppSchema`가 만든 테스트 스키마가 적재 전 점검(`SeedPreconditions`)을 통과하는 것 |
+각 테스트가 고정하는 것은 `seed/src/test/java`의 테스트와 그 Javadoc이 원본이다.
 
 테스트는 **실제 개발 DB(`~/ticket-local`)도, 실제 운영 DB도 건드리지 않는다.** 임시 디렉터리의 H2
 파일 DB와 임시 Oracle 컨테이너에 운영과 같은 Flyway migration(H2는 `db/migration-vendor/h2`, Oracle은
