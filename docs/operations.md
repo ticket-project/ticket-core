@@ -274,6 +274,9 @@ H2의 Oracle 호환 모드는 `DATE`를 `TIMESTAMP(0)`으로 저장한다. 기�
 version `0` baseline을 만든 뒤 V1이 이미 있는 테이블과 부딪혀 실패한다. 서버를 끄고
 `~/ticket-local*.db` 파일을 지운 뒤 다시 기동하고 `seedLocal`을 실행한다.
 
+`__root` V1을 고친 뒤(2026-09-29 보조 인덱스 제거)에는 그 전에 V1을 실행한 로컬 H2 파일이 Flyway checksum
+검증에서 실패한다. 같은 방법으로 파일을 지우고 다시 만든다.
+
 ## 배포 workflow
 
 GitHub Actions CI(`ci.yml`)는 root project 하나만 있는 단일 Gradle build로 전체 테스트를 통과한
