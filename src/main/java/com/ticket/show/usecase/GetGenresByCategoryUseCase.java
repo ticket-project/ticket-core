@@ -19,9 +19,9 @@ public class GetGenresByCategoryUseCase {
 
     public record Input(String categoryCode) {}
 
-    public record GenreItem(Long id, String code, @Nullable String name) {}
+    public record GenreResponse(Long id, String code, @Nullable String name) {}
 
-    public record Output(List<GenreItem> genres) {}
+    public record Output(List<GenreResponse> genres) {}
 
     public Output execute(final Input input) {
         final List<Genre> genres;
@@ -32,8 +32,8 @@ public class GetGenresByCategoryUseCase {
             genres = genreRepository.findAllByCategoryCodeOrderByName(input.categoryCode);
         }
 
-        final List<GenreItem> items = genres.stream()
-                .map(genre -> new GenreItem(genre.getId(), genre.getCode(), genre.getName()))
+        final List<GenreResponse> items = genres.stream()
+                .map(genre -> new GenreResponse(genre.getId(), genre.getCode(), genre.getName()))
                 .toList();
 
         return new Output(items);

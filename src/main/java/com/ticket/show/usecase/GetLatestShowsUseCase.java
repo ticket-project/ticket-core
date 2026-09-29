@@ -29,9 +29,9 @@ public class GetLatestShowsUseCase {
 
     public record Input(String category) {}
 
-    public record Output(List<Item> shows) {}
+    public record Output(List<ShowResponse> shows) {}
 
-    public record Item(
+    public record ShowResponse(
             Long id,
             @Nullable String title,
             @Nullable String image,
@@ -44,12 +44,12 @@ public class GetLatestShowsUseCase {
         final List<Show> shows = showQuerydslRepository.findLatestShows(input.category(), LATEST_SHOWS_MAX_COUNT);
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(shows.stream().map(Show::getVenueId).toList()));
-        return new Output(shows.stream().map(show -> toItem(show, venuesById)).toList());
+        return new Output(shows.stream().map(show -> toResponse(show, venuesById)).toList());
     }
 
-    private Item toItem(final Show show, final Map<Long, VenueSnapshot> venuesById) {
+    private ShowResponse toResponse(final Show show, final Map<Long, VenueSnapshot> venuesById) {
         final VenueSnapshot venue = venuesById.get(show.getVenueId());
-        return new Item(
+        return new ShowResponse(
                 show.getId(),
                 show.getTitle(),
                 showCardImagePathConverter.toCardImage(show.getImage()),

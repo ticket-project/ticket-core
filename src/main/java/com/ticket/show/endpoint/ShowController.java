@@ -50,7 +50,7 @@ public class ShowController implements ShowControllerDocs {
 
     @Override
     @GetMapping("/api/v1/shows")
-    public ApiResponse<SliceResponse<GetShowsUseCase.Item>> getShowsPage(
+    public ApiResponse<SliceResponse<GetShowsUseCase.ShowResponse>> getShowsPage(
             @ParameterObject final ShowListRequest request,
             @RequestParam(defaultValue = "5") final int size,
             @RequestParam(defaultValue = "popular") final String sort) {
@@ -80,7 +80,7 @@ public class ShowController implements ShowControllerDocs {
 
     @Override
     @GetMapping("/api/v1/shows/sale-opening-soon/page")
-    public ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.Item>> getShowsSaleOpeningSoonPage(
+    public ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.ShowResponse>> getShowsSaleOpeningSoonPage(
             @ParameterObject final SaleOpeningSoonRequest request,
             @RequestParam(defaultValue = "16") final int size,
             @RequestParam(defaultValue = "saleStartApproaching") final String sort) {
@@ -93,7 +93,7 @@ public class ShowController implements ShowControllerDocs {
 
     @Override
     @GetMapping("/api/v1/shows/search")
-    public ApiResponse<SliceResponse<SearchShowsUseCase.Item>> searchShows(
+    public ApiResponse<SliceResponse<SearchShowsUseCase.ShowResponse>> searchShows(
             @ParameterObject final ShowSearchRequest request,
             @RequestParam(defaultValue = "20") final int size,
             @RequestParam(defaultValue = "popular") final String sort) {
@@ -115,7 +115,7 @@ public class ShowController implements ShowControllerDocs {
     /** 찜 항목의 공연·공연장 표시값은 show가 조립한다. 기존 회원 URL을 유지한다. */
     @Override
     @GetMapping("/api/v1/members/me/likes")
-    public ApiResponse<SliceResponse<GetMyShowLikesUseCase.Item>> getMyLikes(
+    public ApiResponse<SliceResponse<GetMyShowLikesUseCase.ShowLikeResponse>> getMyLikes(
             final AuthenticatedMember member,
             @RequestParam(required = false) final String cursor,
             @RequestParam(defaultValue = "20") final int size) {

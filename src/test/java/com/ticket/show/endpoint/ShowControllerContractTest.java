@@ -186,7 +186,7 @@ class ShowControllerContractTest {
                 new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        GetShowsUseCase.Item show = new GetShowsUseCase.Item(
+        GetShowsUseCase.ShowResponse show = new GetShowsUseCase.ShowResponse(
                 1L,
                 "공연",
                 "부제",
@@ -230,7 +230,7 @@ class ShowControllerContractTest {
                 new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        SearchShowsUseCase.Item item = new SearchShowsUseCase.Item(
+        SearchShowsUseCase.ShowResponse item = new SearchShowsUseCase.ShowResponse(
                 1L, "공연", "image", "장소", LocalDate.of(2026, 3, 20), LocalDate.of(2026, 3, 21), "SEOUL", 10L);
         when(searchShowsUseCase.execute(any(SearchShowsUseCase.Input.class)))
                 .thenReturn(new SearchShowsUseCase.Output(List.of(item), true, NEXT_POSITION));

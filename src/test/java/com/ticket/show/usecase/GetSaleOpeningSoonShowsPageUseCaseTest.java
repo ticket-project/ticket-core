@@ -82,7 +82,7 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
                 useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
 
         assertThat(output.items())
-                .containsExactly(new GetSaleOpeningSoonShowsPageUseCase.Item(
+                .containsExactly(new GetSaleOpeningSoonShowsPageUseCase.ShowResponse(
                         1L,
                         "concert",
                         "subtitle",

@@ -48,13 +48,13 @@ public class GetShowsUseCase {
     }
 
     public record Output(
-            List<Item> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+            List<ShowResponse> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
 
     /**
      * 컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름
      * {@code saleType}/{@code saleStartDate}/{@code saleEndDate}는 그대로 고정한다.
      */
-    public record Item(
+    public record ShowResponse(
             Long id,
             @Nullable String title,
             @Nullable String subTitle,
@@ -77,7 +77,7 @@ public class GetShowsUseCase {
                 page.items().stream().map(Show::getId).toList());
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
-        final CursorPage<Item, ShowCursor> view = page.map(show -> toItem(show, genreNames, venuesById));
+        final CursorPage<ShowResponse, ShowCursor> view = page.map(show -> toResponse(show, genreNames, venuesById));
         return new Output(view.items(), view.hasNext(), view.nextPosition());
     }
 
@@ -91,10 +91,10 @@ public class GetShowsUseCase {
         return region == null ? null : venueLookupApi.findIdsByRegion(region);
     }
 
-    private Item toItem(
+    private ShowResponse toResponse(
             final Show show, final Map<Long, List<String>> genreNames, final Map<Long, VenueSnapshot> venuesById) {
         final VenueSnapshot venue = venuesById.get(show.getVenueId());
-        return new Item(
+        return new ShowResponse(
                 show.getId(),
                 show.getTitle(),
                 show.getSubTitle(),

@@ -41,7 +41,7 @@ public interface ShowControllerDocs {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패")
             })
-    ApiResponse<SliceResponse<GetMyShowLikesUseCase.Item>> getMyLikes(
+    ApiResponse<SliceResponse<GetMyShowLikesUseCase.ShowLikeResponse>> getMyLikes(
             @Parameter(hidden = true) AuthenticatedMember member,
             @Parameter(description = "커서(마지막 찜 ID)", example = "123") String cursor,
             @Parameter(description = "페이지 크기", example = "20") @Positive int size);
@@ -111,7 +111,7 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<SliceResponse<GetShowsUseCase.Item>> getShowsPage(
+    ApiResponse<SliceResponse<GetShowsUseCase.ShowResponse>> getShowsPage(
             @ParameterObject ShowListRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 5, 최대: 100)", example = "5") @Positive int size,
             @Parameter(
@@ -227,7 +227,7 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.Item>> getShowsSaleOpeningSoonPage(
+    ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.ShowResponse>> getShowsSaleOpeningSoonPage(
             @ParameterObject SaleOpeningSoonRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 16)", example = "16") @Positive int size,
             @Parameter(
@@ -283,7 +283,7 @@ public interface ShowControllerDocs {
                                             }
                                             """)))
             })
-    ApiResponse<SliceResponse<SearchShowsUseCase.Item>> searchShows(
+    ApiResponse<SliceResponse<SearchShowsUseCase.ShowResponse>> searchShows(
             @ParameterObject ShowSearchRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 20)", example = "20") @Positive int size,
             @Parameter(description = "정렬 기준 [popular(조회순), showStartApproaching(공연임박순)]", example = "popular")

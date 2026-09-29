@@ -23,7 +23,7 @@ public class GenreController implements GenreControllerDocs {
     /** 카테고리별 장르 목록 조회 - categoryCode가 없으면 전체 장르 조회 - categoryCode가 있으면 해당 카테고리에 속한 장르만 조회 */
     @Override
     @GetMapping
-    public ApiResponse<List<GetGenresByCategoryUseCase.GenreItem>> getGenres(
+    public ApiResponse<List<GetGenresByCategoryUseCase.GenreResponse>> getGenres(
             @RequestParam(required = false) final String category) {
         final GetGenresByCategoryUseCase.Input input = new GetGenresByCategoryUseCase.Input(category);
         final GetGenresByCategoryUseCase.Output output = getGenresByCategoryUseCase.execute(input);
