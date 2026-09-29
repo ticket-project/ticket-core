@@ -26,6 +26,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 import tools.jackson.databind.JsonNode;
 
@@ -38,6 +39,7 @@ import tools.jackson.databind.JsonNode;
  * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 2분이라 초 단위로 끝나는 테스트를
  * 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
  */
+@MigratedSchema
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -46,8 +48,6 @@ import tools.jackson.databind.JsonNode;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
-            "spring.flyway.enabled=false",
             "JWT_SECRET=0123456789abcdef0123456789abcdef",
             "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
             "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",

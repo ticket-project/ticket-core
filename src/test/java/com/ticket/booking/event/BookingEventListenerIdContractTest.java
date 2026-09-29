@@ -28,6 +28,7 @@ import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.usecase.PendingOrderCreator;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * Modulith listener id가 package 이동 뒤에도 옛 값으로 유지되는지 고정한다.
@@ -45,6 +46,7 @@ import com.ticket.booking.seat.domain.PerformanceSeatState;
  * </ol>
  */
 @SuppressWarnings({"NonAsciiCharacters", "resource"})
+@MigratedSchema
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -53,8 +55,6 @@ import com.ticket.booking.seat.domain.PerformanceSeatState;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
-            "spring.flyway.enabled=false",
             "JWT_SECRET=0123456789abcdef0123456789abcdef",
             "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
             "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",

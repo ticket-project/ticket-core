@@ -27,6 +27,7 @@ import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * 소셜 계정이 회원 aggregate의 자식 컬렉션으로 바뀐 뒤에도 <b>soft delete가 유지되는지</b>를 실제 H2에 붙여 고정한다.
@@ -37,6 +38,7 @@ import com.ticket.member.domain.Role;
  *
  * <p>member module만으로 컨텍스트가 서는 좁은 슬라이스라 공용 테스트 베이스를 상속하지 않는다.
  */
+@MigratedSchema
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         classes = MemberSocialAccountPersistenceTest.TestApplication.class)
@@ -48,7 +50,6 @@ import com.ticket.member.domain.Role;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
             "spring.jpa.show-sql=false",
             "management.tracing.enabled=false",
             "spring.autoconfigure.exclude="

@@ -46,6 +46,7 @@ import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowListParam;
 import com.ticket.show.usecase.ShowSearchCriteria;
 import com.ticket.show.usecase.ShowSort;
+import com.ticket.testsupport.persistence.MigratedSchema;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
@@ -59,6 +60,7 @@ import com.ticket.venue.usecase.VenueLookupService;
  * {@code QuerydslShowCursorConditionBuilderTest} / {@code SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그
  * helper들이 이 Repository 안으로 흡수되면서 같은 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
  */
+@MigratedSchema
 @SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = ShowQuerydslRepositoryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
@@ -67,7 +69,6 @@ import com.ticket.venue.usecase.VenueLookupService;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
             "spring.jpa.show-sql=false",
             // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
             // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication

@@ -36,7 +36,9 @@ import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
+@MigratedSchema
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         classes = OrderRepositoryAdapterIntegrationTest.TestApplication.class)
@@ -46,7 +48,6 @@ import com.ticket.booking.order.domain.OrderState;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
             "spring.jpa.show-sql=false",
             // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
             // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication

@@ -26,6 +26,7 @@ import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderStarted} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
@@ -36,6 +37,7 @@ import com.ticket.booking.seat.domain.PerformanceSeatState;
  * entity-scan하지 않아 이 계약을 재현하지 못한다.
  */
 @SuppressWarnings({"NonAsciiCharacters", "resource"})
+@MigratedSchema
 @SpringBootTest(
         classes = TicketApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -44,8 +46,6 @@ import com.ticket.booking.seat.domain.PerformanceSeatState;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
             "spring.datasource.password=",
-            "spring.jpa.hibernate.ddl-auto=create-drop",
-            "spring.flyway.enabled=false",
             "JWT_SECRET=0123456789abcdef0123456789abcdef",
             "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
             "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",

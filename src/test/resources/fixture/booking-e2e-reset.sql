@@ -3,7 +3,7 @@
 -- 컨텍스트는 테스트 클래스 사이에 재사용되고 @Sql은 메서드마다 돌기 때문에, 이전 테스트가
 -- 만든 주문과 회원이 남아 있다. 특히 좌석 경합 테스트는 깨끗한 좌석을 전제로 한다.
 --
--- FK 역순으로 지운다. 스키마는 Hibernate가 ddl-auto=create-drop으로 만든 것을 따른다.
+-- FK 역순으로 지운다. 스키마는 @MigratedSchema가 Flyway migration으로 만든 것을 따른다.
 
 DELETE FROM event_publication;
 DELETE FROM event_publication_archive;
