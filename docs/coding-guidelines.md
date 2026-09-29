@@ -30,7 +30,8 @@ Redis key, JPA 쿼리, 토큰 서명 같은 기술 구현은 해당 구현체에
 - `Context`는 여러 application 단계 사이의 내부 처리 정보다. 외부 요청이 아닌 검증 결과에
   `Request`를 붙이지 않는다. 다만 한 use case 안에서만 오가는 값이면 `Context` 타입을 만들기 전에
   지역 변수로 충분한지 먼저 본다.
-- 응답 항목은 그 use case의 중첩 record가 소유하고(`GetShowsUseCase.Item`), DB 집계 결과도
+- 응답 항목은 그 use case의 중첩 record가 소유하고 이름은 `<Target>Response`로 짓는다
+  (`GetShowsUseCase.ShowResponse`). 엔티티와 같은 이름(`Seat`)이나 `Item`은 쓰지 않는다. DB 집계 결과도
   마찬가지다(`GetShowDetailUseCase.PriceSummary`). 여러 use case가 함께 쓰는 조회 파라미터·커서·정렬은
   `usecase` package 최상위에 둔다(`ShowSearchCriteria`, `ShowCursor`, `ShowSort`). `Snapshot`은 특정
   시점에 고정한 상태다. `Criteria`는 검색·판정 조건, `Param`은 목록·커서 조회 실행 파라미터에 쓴다.
