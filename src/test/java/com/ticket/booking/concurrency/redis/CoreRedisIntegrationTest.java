@@ -2,6 +2,7 @@ package com.ticket.booking.concurrency.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
+import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,7 +94,7 @@ class CoreRedisIntegrationTest {
 
         assertThat(store.selectIfAbsent(1L, 10L, "expiring-owner", Duration.ofMillis(150), null))
                 .isEqualTo(SelectResult.SELECTED);
-        awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
+        awaitExpiry("seat selection did not expire").until(() -> store.getHolder(1L, 10L) == null);
         assertThat(store.getSelectingSeatIds(1L)).isEmpty();
         assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1), null))
                 .isEqualTo(SelectResult.SELECTED);
@@ -134,7 +136,7 @@ class CoreRedisIntegrationTest {
         assertThat(store.selectIfAbsent(1L, 11L, "member", Duration.ofSeconds(5), 1))
                 .isEqualTo(SelectResult.LIMIT_EXCEEDED);
 
-        awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
+        awaitExpiry("seat selection did not expire").until(() -> store.getHolder(1L, 10L) == null);
         assertThat(store.getSelectedSeatIdsByMember(1L, "member")).isEmpty();
         assertThat(store.selectIfAbsent(1L, 11L, "member", Duration.ofSeconds(5), 1))
                 .isEqualTo(SelectResult.SELECTED);
@@ -150,7 +152,7 @@ class CoreRedisIntegrationTest {
                 .isEqualTo(SelectResult.SELECTED);
         assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "member")).isEmpty();
 
-        awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
+        awaitExpiry("seat selection did not expire").until(() -> store.getHolder(1L, 10L) == null);
         assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "member")).containsExactly(10L);
         assertThat(store.getSelectedSeatIdsByMember(1L, "member")).containsExactly(11L);
         assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "other")).isEmpty();
@@ -174,8 +176,8 @@ class CoreRedisIntegrationTest {
                 .isEqualTo(SelectResult.SELECTED);
         assertThat(redissonClient.getKeys().countExists(indexKey)).isEqualTo(1L);
 
-        awaitCondition(
-                () -> redissonClient.getKeys().countExists(indexKey) == 0L, "seat selection index did not expire");
+        awaitExpiry("seat selection index did not expire")
+                .until(() -> redissonClient.getKeys().countExists(indexKey) == 0L);
     }
 
     @Test
@@ -227,14 +229,9 @@ class CoreRedisIntegrationTest {
         return new LockedService(new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
     }
 
-    private void awaitCondition(final CheckedBooleanSupplier condition, final String failureMessage) throws Exception {
-        long deadlineNanos = System.nanoTime() + Duration.ofSeconds(5).toNanos();
-        while (!condition.getAsBoolean()) {
-            if (System.nanoTime() >= deadlineNanos) {
-                throw new AssertionError(failureMessage);
-            }
-            Thread.sleep(25L);
-        }
+    /** 만료는 Redis가 비동기로 처리하므로 조건이 참이 될 때까지 기다린다. */
+    private static ConditionFactory awaitExpiry(final String failureMessage) {
+        return await(failureMessage).atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(25));
     }
 
     private <T> List<T> runConcurrently(final int taskCount, final IntFunction<T> action) throws Exception {
@@ -265,11 +262,6 @@ class CoreRedisIntegrationTest {
             executor.shutdownNow();
             executor.awaitTermination(5, TimeUnit.SECONDS);
         }
-    }
-
-    @FunctionalInterface
-    private interface CheckedBooleanSupplier {
-        boolean getAsBoolean() throws Exception;
     }
 
     /** 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다. */
