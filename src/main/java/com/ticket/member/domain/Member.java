@@ -17,7 +17,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import org.jspecify.annotations.Nullable;
 
@@ -30,9 +29,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-        name = "MEMBERS",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
+@Table(name = "MEMBERS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends AuditedEntity {
     @Id

@@ -171,9 +171,11 @@ module마다 Flyway를 새로 만들면서 `baselineOnMigrate=true`, `baselineVe
 `OracleMigrationChainSchemaTest`(Oracle, Docker 필요)가 확인한다. 옛 스키마를 직접 만드는 migration
 테스트는 `ModulithFlywayTestSupport.migrate`가 운영과 같은 version `1` BASELINE을 먼저 남긴다.
 
-인덱스는 entity(`@Table(indexes)`)에 적지 않고 migration으로만 관리한다. Hibernate `validate`는
-인덱스를 보지 않아서, entity에 적어도 운영에는 만들어지지 않고 맞는지 확인도 되지 않는다. 유니크
-제약은 무결성 규칙이라 entity에도 그대로 둔다. 이후 테이블 구조 변경은 새 파일로만
+**DB 스키마의 원본은 `db/migration/`이다**(방언별 SQL은 같은 규칙의 `db/migration-vendor/{h2,oracle}/`,
+[ADR 0020](adr/0020-db-schema-source-of-truth-is-migration.md)). 테이블·컬럼·인덱스·유니크 제약·FK는
+migration에만 적고, entity의 `@Table`에는 테이블 이름만 둔다. Hibernate `validate`는 인덱스·유니크 제약을
+보지 않아서, entity에 적어도 운영에는 만들어지지 않고 어긋나도 드러나지 않는다. Spring context를 띄우는
+H2 테스트도 `@MigratedSchema`로 같은 migration을 적용해 스키마를 만든다. 이후 테이블 구조 변경은 새 파일로만
 추가한다. `__root`에 남는 변경(어떤 module에도 속하지 않는 순수 기술 테이블)과 module 소유
 변경(module의 aggregate/schema 경계 안)을 먼저 구분한 뒤 폴더를 고른다.
 

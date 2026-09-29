@@ -10,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import com.ticket.shared.jpa.AuditedEntity;
 
@@ -18,13 +17,7 @@ import lombok.Getter;
 
 @Getter
 @Entity
-@Table(
-        name = "LIKES",
-        uniqueConstraints = {
-            @UniqueConstraint(
-                    name = "UK_LIKES_MEMBER_TARGET",
-                    columnNames = {"member_id", "like_type", "target_id"})
-        })
+@Table(name = "LIKES")
 public class Like extends AuditedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

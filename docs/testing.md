@@ -45,6 +45,11 @@ Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면
 `com.ticket.testsupport.persistence`에 둔다. 특정 모듈만 쓰는 fixture와 support는 해당 모듈 테스트
 패키지 아래에 둔다.
 
+H2에 붙는 Spring context 테스트는 `@MigratedSchema`(`com.ticket.testsupport.persistence`)를 붙여 운영과 같은
+Flyway migration으로 스키마를 만든다. `ddl-auto=create`로 entity에서 만들지 않는다 — 스키마 원본은
+migration이고 entity에는 유니크 제약·인덱스가 없어서, entity로 만든 스키마는 DB의 중복 거절을 재현하지 못한다
+([ADR 0020](adr/0020-db-schema-source-of-truth-is-migration.md)).
+
 | 실행 특성 | 두는 것 | 두지 않는 것 |
 | --- | --- | --- |
 | Spring 컨텍스트 없는 단위 테스트 | 엔티티, 값 객체, 상태 전이, 정책, 불변식, use case(외부 port는 mock/fake) | Spring 컨텍스트, DB, Redis |

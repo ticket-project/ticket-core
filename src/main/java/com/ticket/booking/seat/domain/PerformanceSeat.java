@@ -10,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
 import com.ticket.shared.jpa.AuditedEntity;
@@ -29,12 +28,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(
-        name = "PERFORMANCE_SEATS",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT",
-                        columnNames = {"performance_id", "seat_id"}))
+@Table(name = "PERFORMANCE_SEATS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PerformanceSeat extends AuditedEntity {
     @Id

@@ -11,7 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import org.jspecify.annotations.Nullable;
 
@@ -32,15 +31,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(
-        name = "PAYMENTS",
-        uniqueConstraints = {
-            @UniqueConstraint(name = "UK_PAYMENTS_PAYMENT_KEY", columnNames = "payment_key"),
-            @UniqueConstraint(
-                    name = "UK_PAYMENTS_ORDER_ATTEMPT",
-                    columnNames = {"order_id", "attempt_no"}),
-            @UniqueConstraint(name = "UK_PAYMENTS_PROVIDER_PAYMENT_KEY", columnNames = "provider_payment_key")
-        })
+@Table(name = "PAYMENTS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment extends AuditedEntity {
     @Id

@@ -10,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import org.jspecify.annotations.Nullable;
 
@@ -33,12 +32,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(
-        name = "TICKETS",
-        uniqueConstraints = {
-            @UniqueConstraint(name = "UK_TICKETS_TICKET_KEY", columnNames = "ticket_key"),
-            @UniqueConstraint(name = "UK_TICKETS_ORDER_SEAT_ID", columnNames = "order_seat_id")
-        })
+@Table(name = "TICKETS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Ticket extends AuditedEntity {
     @Id
