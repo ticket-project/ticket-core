@@ -33,8 +33,8 @@ class GetShowSeatMapUseCaseTest {
                 .thenReturn(Optional.of(10L));
         when(getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(10L)))
                 .thenReturn(new GetPerformanceSeatMapUseCase.Output(
-                        new GetPerformanceSeatMapUseCase.VenueView(2L, "공연장", 500, 356, 4.8),
-                        List.of(new GetPerformanceSeatMapUseCase.SeatMapEntry(
+                        new GetPerformanceSeatMapUseCase.VenueResponse(2L, "공연장", 500, 356, 4.8),
+                        List.of(new GetPerformanceSeatMapUseCase.SeatResponse(
                                 1001L,
                                 101L,
                                 1,
@@ -51,7 +51,7 @@ class GetShowSeatMapUseCaseTest {
         GetShowSeatMapUseCase.Output output = useCase.execute(new GetShowSeatMapUseCase.Input(1L));
 
         assertThat(output.seats())
-                .containsExactly(new GetShowSeatMapUseCase.SeatMapEntry(
+                .containsExactly(new GetShowSeatMapUseCase.SeatResponse(
                         101L, 1, "가", "A", "1", 10.0, 20.0, "VIP", "VIP석", BigDecimal.valueOf(170000)));
     }
 }
