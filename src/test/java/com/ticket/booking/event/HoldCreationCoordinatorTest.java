@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.concurrency.RecordingLockManager;
+import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -80,7 +80,7 @@ class HoldCreationCoordinatorTest {
 
     private HoldCreationCoordinator coordinator() {
         return new HoldCreationCoordinator(
-                new RecordingLockManager(),
+                new RecordingDistributedLock(),
                 holdStore,
                 seatSelectionService,
                 performanceSeatRepository,

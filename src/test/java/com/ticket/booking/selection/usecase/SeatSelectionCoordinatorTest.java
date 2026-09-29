@@ -24,7 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.RecordingLockManager;
+import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.hold.domain.HoldManager;
@@ -54,13 +54,13 @@ class SeatSelectionCoordinatorTest {
     @Mock
     private SeatStatusEventPublisher seatEventPublisher;
 
-    private final RecordingLockManager lockManager = new RecordingLockManager();
+    private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
     private SeatSelectionCoordinator coordinator;
 
     @BeforeEach
     void setUp() {
         coordinator = new SeatSelectionCoordinator(
-                lockManager,
+                distributedLock,
                 holdManager,
                 seatSelectionService,
                 new SeatOccupancy(seatSelectionService, holdManager),
@@ -86,7 +86,7 @@ class SeatSelectionCoordinatorTest {
         coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.SELECTED);
-        assertThat(lockManager.allKeys()).containsExactly(LockKey.seat(10L, 20L));
+        assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
     }
 
     @Test
@@ -137,7 +137,7 @@ class SeatSelectionCoordinatorTest {
         coordinator.notifyReleasedIfFree(10L, 20L);
 
         verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
-        assertThat(lockManager.allKeys()).containsExactly(LockKey.seat(10L, 20L));
+        assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
     }
 
     @Test

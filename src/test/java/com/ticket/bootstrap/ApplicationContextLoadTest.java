@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-import com.ticket.booking.concurrency.LockManager;
+import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.usecase.ExpirePendingOrdersUseCase;
@@ -30,7 +30,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
         assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
         assertThat(context.getBean(OrderRepository.class)).isNotNull();
-        assertThat(context.getBean(LockManager.class)).isNotNull();
+        assertThat(context.getBean(DistributedLock.class)).isNotNull();
         // 아래 둘은 package-private이라 타입으로 참조할 수 없다. component scan이 붙이는 기본 bean 이름으로 찾는다.
         assertThat(context.containsBean("bookingEventListeners")).isTrue();
         assertThat(context.containsBean("eventPublicationMaintenance")).isTrue();
@@ -43,7 +43,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
                 .startsWith("com.ticket.booking.order.persistence.");
         assertThat(context.getBean(HoldStore.class).getClass().getName())
                 .startsWith("com.ticket.booking.hold.persistence.");
-        assertThat(context.getBean(LockManager.class).getClass().getName())
+        assertThat(context.getBean(DistributedLock.class).getClass().getName())
                 .startsWith("com.ticket.booking.concurrency.redis.");
     }
 

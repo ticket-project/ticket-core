@@ -8,8 +8,8 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
+import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
@@ -42,7 +42,7 @@ public class SeatSelectionCoordinator {
     /** 만료·일괄 해제 알림은 사용자 요청 경로가 아니라 조금 더 기다린다. */
     private static final LockOptions NOTIFY_LOCK = LockOptions.defaults();
 
-    private final LockManager lockManager;
+    private final DistributedLock distributedLock;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
     private final SeatOccupancy seatOccupancy;
@@ -57,7 +57,7 @@ public class SeatSelectionCoordinator {
             final Long performanceSeatId,
             final LocalDateTime orderCloseTime,
             final @Nullable Integer maxSeatCount) {
-        lockManager.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
+        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
                 throw new PerformanceIsPastException();
             }
@@ -72,7 +72,7 @@ public class SeatSelectionCoordinator {
     /** 실제로 해제된 경우에만 알린다 — 이미 만료됐거나 없는 선택을 해제 요청했다고 해서 알림을 내보내지 않는다. */
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
-        lockManager.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
+        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (!seatSelectionService.deselect(performanceId, seatId, memberId)) {
                 return;
             }
@@ -88,7 +88,7 @@ public class SeatSelectionCoordinator {
     /** performanceSeatId를 이미 알고 있을 때 쓴다. 여러 좌석을 한꺼번에 알릴 때 좌석마다 DB를 다시 읽지 않도록 호출자가 한 번에 조회한 값을 넘긴다. */
     public void notifyReleasedIfFree(
             final Long performanceId, final Long seatId, final @Nullable Long performanceSeatId) {
-        lockManager.withLock(List.of(LockKey.seat(performanceId, seatId)), NOTIFY_LOCK, () -> {
+        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), NOTIFY_LOCK, () -> {
             if (seatOccupancy.isOccupied(performanceId, seatId)) {
                 return;
             }
