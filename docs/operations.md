@@ -293,6 +293,12 @@ GitHub Actions CI(`ci.yml`)는 root project 하나만 있는 단일 Gradle build
 Docker 이미지를 빌드하고 배포한다. `bootstrap/build/libs` 경로는 더 이상 없다 — 산출물은 루트
 `build/libs/*.jar`다.
 
+서버에서 `docker compose up` 뒤 `ticket-be` 컨테이너 안의 `/actuator/health`가 5분 안에 UP이 되는지
+확인한다. UP이 되지 않으면 배포 직전에 돌던 이미지로 되돌리고 job을 실패시킨다. nginx는 Core
+컨테이너가 새로 만들어졌을 때만 재시작한다. 서버의 `docker-compose.yml`은 저장소 밖에 있으므로
+컨테이너 이름(`ticket-be`), 컨테이너 안 포트(8080), `DOCKER_IMAGE` 변수는 workflow 주석에 적은
+가정이다. compose가 바뀌면 workflow도 함께 고친다.
+
 관련 파일:
 
 - `.github/workflows/ci.yml`(전체 테스트 + `bash scripts/check-docs.sh`)

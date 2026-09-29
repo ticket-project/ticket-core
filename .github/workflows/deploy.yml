@@ -32,12 +32,13 @@ jobs:
   build-and-deploy:
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download verified application jar
         uses: actions/download-artifact@v4
@@ -64,26 +65,77 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # 서버의 docker-compose.yml은 저장소 밖에 있다. 이 script는 다음을 가정한다.
+      #   - Core 컨테이너 이름은 ticket-be다(ticket-fe의 deploy.yml도 이 이름으로 현재 이미지를 읽는다).
+      #   - Core는 컨테이너 안 8080에서 /actuator/health를 연다. 호스트 포트 매핑은 모르므로
+      #     docker exec로 컨테이너 안에서 확인한다(eclipse-temurin alpine 이미지의 busybox wget).
+      #   - compose는 DOCKER_IMAGE 환경변수로 Core 이미지를 받는다.
+      # 새 이미지가 제한 시간 안에 UP이 되지 않으면 직전 이미지로 되돌리고 job을 실패시킨다.
       - name: Deploy to Ubuntu server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_KEY }}
+          command_timeout: 20m
           script: |
             set -e
             IMAGE="${{ secrets.DOCKER_USERNAME }}/ticket-be:${{ github.sha }}"
             DEPLOY_DIR="/home/ubuntu"
+            HEALTH_TIMEOUT_SECONDS=300
             CURRENT_FE_IMAGE="$(sudo docker inspect ticket-fe --format '{{.Config.Image}}' 2>/dev/null || true)"
+            PREVIOUS_IMAGE="$(sudo docker inspect ticket-be --format '{{.Config.Image}}' 2>/dev/null || true)"
+            PREVIOUS_CONTAINER_ID="$(sudo docker inspect ticket-be --format '{{.Id}}' 2>/dev/null || true)"
 
             if [ -z "$CURRENT_FE_IMAGE" ]; then
               CURRENT_FE_IMAGE="${{ secrets.DOCKER_USERNAME }}/ticket-fe:latest"
               sudo docker pull "$CURRENT_FE_IMAGE"
             fi
 
+            compose_up() {
+              sudo DOCKER_IMAGE="$1" FRONTEND_DOCKER_IMAGE="$CURRENT_FE_IMAGE" DD_VERSION="$2"                 docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d --remove-orphans
+            }
+
+            wait_healthy() {
+              deadline=$(( $(date +%s) + HEALTH_TIMEOUT_SECONDS ))
+              while [ "$(date +%s)" -lt "$deadline" ]; do
+                if sudo docker exec ticket-be wget -q -O /dev/null http://localhost:8080/actuator/health 2>/dev/null; then
+                  return 0
+                fi
+                sleep 5
+              done
+              return 1
+            }
+
+            # nginx는 upstream 컨테이너 주소를 기동 시점에 한 번만 풀어 둔다. Core 컨테이너가
+            # 새로 만들어졌을 때만(ID가 바뀌었을 때만) 다시 읽게 재시작한다.
+            restart_nginx_if_recreated() {
+              if [ "$(sudo docker inspect ticket-be --format '{{.Id}}' 2>/dev/null || true)" != "$PREVIOUS_CONTAINER_ID" ]; then
+                sudo docker restart ticket-nginx
+              fi
+            }
+
             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             sudo docker pull "$IMAGE"
-            sudo DOCKER_IMAGE="$IMAGE" FRONTEND_DOCKER_IMAGE="$CURRENT_FE_IMAGE" DD_VERSION="${{ github.sha }}" \
-              docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d --remove-orphans
-            sudo docker restart ticket-nginx
+            compose_up "$IMAGE" "${{ github.sha }}"
+
+            if ! wait_healthy; then
+              echo "::error::새 이미지 $IMAGE 가 ${HEALTH_TIMEOUT_SECONDS}초 안에 /actuator/health UP이 되지 않았다"
+              sudo docker logs --tail 200 ticket-be || true
+              if [ -z "$PREVIOUS_IMAGE" ]; then
+                echo "::error::되돌릴 직전 이미지가 없다(ticket-be 컨테이너가 없었다)"
+                exit 1
+              fi
+              echo "직전 이미지 $PREVIOUS_IMAGE 로 되돌린다"
+              compose_up "$PREVIOUS_IMAGE" "${PREVIOUS_IMAGE##*:}"
+              if wait_healthy; then
+                restart_nginx_if_recreated
+                echo "::error::배포 실패. 직전 이미지로 되돌렸다"
+              else
+                echo "::error::배포 실패. 직전 이미지로 되돌렸지만 그것도 UP이 되지 않았다. 서버를 직접 확인한다"
+              fi
+              exit 1
+            fi
+
+            restart_nginx_if_recreated
             sudo docker image prune -f
