@@ -41,6 +41,7 @@ import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderState;
@@ -52,6 +53,7 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
@@ -92,6 +94,9 @@ class StartBookingUseCaseTest {
     private HoldManager holdManager;
 
     @Mock
+    private SeatSelectionService seatSelectionService;
+
+    @Mock
     private PendingOrderCreator pendingOrderCreator;
 
     private final RecordingLockManager lockManager = new RecordingLockManager();
@@ -111,8 +116,13 @@ class StartBookingUseCaseTest {
                         bookingAvailabilityChecker,
                         performanceSaleCatalogApi,
                         holdManager,
+                        seatSelectionService,
                         pendingOrderCreator,
                         fixedClock);
+        // 테스트가 쓰는 좌석을 모두 이 회원이 선택해 둔 상태를 기본으로 한다.
+        lenient()
+                .when(seatSelectionService.getSelectedSeatIds(PERFORMANCE_ID, MEMBER_ID))
+                .thenReturn(Set.of(1L, 2L, 3L, 4L, 5L, 7L));
     }
 
     @Test
@@ -295,6 +305,22 @@ class StartBookingUseCaseTest {
         startBookingUseCase.execute(input);
 
         verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
+    }
+
+    /** 선택하지 않았거나, 선택이 만료됐거나, 남이 선택한 좌석은 선점하지 않는다(ADR 0001). */
+    @Test
+    void 본인이_선택하지_않은_좌석이_섞여_있으면_선점하지_않는다() {
+        final List<Long> seatIds = List.of(1L, 2L);
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
+        when(seatSelectionService.getSelectedSeatIds(PERFORMANCE_ID, MEMBER_ID)).thenReturn(Set.of(1L));
+
+        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
+                .isInstanceOf(SeatNotSelectedException.class)
+                .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID)
+                .hasFieldOrPropertyWithValue("memberId", MEMBER_ID);
+
+        verify(holdManager, never()).createHold(any(), any(), any(), any(), any());
+        verifyNoInteractions(pendingOrderCreator);
     }
 
     @Test

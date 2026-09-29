@@ -78,7 +78,9 @@ _Avoid_: TicketInfo(결제 전 좌석을 이 이름으로 부르지 않는다)
 
 **Selection**:
 회원이 좌석을 살펴보며 임시로 골라 둔 표시다. 짧은 시간만 유지되고 다른 회원 화면에는 점유로
-보이지만, 예매를 보장하지 않는다. Hold와 독립이며 Selection 없이도 Order를 만들 수 있다.
+보이지만, 예매를 보장하지 않는다. Hold와 따로 저장되지만 Order는 본인이 선택 중인 좌석으로만 만들 수
+있다([ADR 0021](adr/0021-order-requires-own-selection.md)). 한 회원이 동시에 선택할 수 있는 좌석 수는
+회차의 Hold 좌석 수 한도를 따른다.
 _Avoid_: 선점, 임시 예약, Reservation, 찜(Like와 혼동)
 
 **Hold**:

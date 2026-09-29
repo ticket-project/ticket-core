@@ -89,12 +89,9 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
         pollUntil("취소한 좌석이 판매 가능으로 복귀", ASYNC_TIMEOUT, () -> SEAT_AVAILABLE.equals(seatStatus(token, seatId)));
     }
 
-    /**
-     * 선택 없이도 주문할 수 있어야 한다. selection은 UX 보조 상태이고 hold의 선행 조건이 아니다
-     * (docs/adr/0001-selection-and-hold-are-independent.md).
-     */
+    /** 본인이 선택하지 않은 좌석으로는 주문할 수 없다(docs/adr/0001-selection-and-hold-are-independent.md). */
     @Test
-    void 좌석을_고르지_않아도_주문할_수_있다() {
+    void 좌석을_고르지_않으면_주문할_수_없다() {
         final String token = signUpAndLogin("no-selection@e2e.test");
         final long seatId = SEAT_IDS.get(2);
 
@@ -102,9 +99,8 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
                 "/api/v1/orders", HttpMethod.POST, authedJson(token, createOrderBody(seatId)), JsonNode.class);
 
         assertThat(create.getStatusCode())
-                .as("선택 없이 주문이 거부됐다. ADR 0001과 어긋난다. 응답: %s", create.getBody())
-                .isEqualTo(HttpStatus.CREATED);
-
-        pollUntil("주문한 좌석이 점유로 보임", ASYNC_TIMEOUT, () -> SEAT_OCCUPIED.equals(seatStatus(token, seatId)));
+                .as("선택 없이 주문이 받아들여졌다. 응답: %s", create.getBody())
+                .isEqualTo(HttpStatus.CONFLICT);
+        assertThat(create.getBody().get("error").get("code").asText()).isEqualTo("E4006");
     }
 }

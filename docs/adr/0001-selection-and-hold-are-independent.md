@@ -2,7 +2,10 @@
 
 ## 상태
 
-채택·구현됨. Selection과 Hold의 독립성은 유지된다. 현재 예매 실행 흐름은 [예매 수명주기](../core-booking-lifecycle.md)를 본다. 아래 클래스 이름은 당시 구현 기록이며 갱신 메모가 현재 진입점을 가리킨다.
+일부 대체됨 (2026-09-29) — "주문 생성은 Selection을 보지 않는다"는 [ADR 0021](0021-order-requires-own-selection.md)이
+대체한다. 이제 주문은 본인이 선택 중인 좌석으로만 시작하므로 아래 Consequences의 "B가 성공한다"와
+"Selection 검사가 없는 것은 누락이 아니다"는 더 이상 현재 동작이 아니다. Selection을 Hold로 승격하지
+않고 두 상태를 따로 두는 결정은 유지된다. 현재 예매 실행 흐름은 [예매 수명주기](../core-booking-lifecycle.md)를 본다. 아래 클래스 이름은 당시 구현 기록이며 갱신 메모가 현재 진입점을 가리킨다.
 
 > **구현 참조 갱신(2026-09-15):** `HoldSeatAvailabilityValidator`는
 > `com.ticket.booking.order.usecase.BookingAvailabilityChecker`로 흡수됐고, 주문 생성은
