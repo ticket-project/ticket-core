@@ -12,7 +12,7 @@
 - 제목은 `<type>(<scope>): <한국어 설명>`이다. type은 `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`, `ci`, `security`, `revert` 중 고른다. scope는 가장 좁은 도메인·모듈 단위로 쓴다.
 - 본문에는 변경 배경과 선택 이유, 계약·동작의 변화, 실제 검증과 미실행 범위를 남긴다. 작은 변경은 짧게 써도 된다. 중요한 구조 결정은 [ADR 기준](docs/adr/README.md)에 따라 별도로 기록한다.
 - PR은 목적, 주요 변경, 검증 결과, 호환성·운영 영향과 남은 위험을 적는다. 관련 Issue를 연결하고, 반영 전 대상 브랜치와 충돌을 확인한다.
-- `master` push는 [배포 workflow](.github/workflows/deploy.yml) 조건에 맞으면 운영 배포를 시작한다. 문서만의 push는 경로 무시 조건에 해당하지만 `scripts/**` 변경은 무시 대상이 아니다.
+- `master` push는 [배포 workflow](.github/workflows/deploy.yml) 조건에 맞으면 운영 배포를 시작한다. 문서, `seed/**`, `scripts/**`, 에이전트·편집기 설정만 바꾼 push는 경로 무시 조건에 해당해 배포되지 않는다. 목록은 workflow의 `paths-ignore`가 원본이다.
 
 ## 이슈와 라벨
 

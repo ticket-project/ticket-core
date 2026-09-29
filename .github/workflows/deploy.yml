@@ -3,20 +3,22 @@ name: Backend CI/CD (Docker Hub)
 on:
   push:
     branches: [ "master" ]
-    # 배포 산출물에 들어가지 않는 파일만 무시한다. Dockerfile은 jar만 COPY하므로
-    # 문서와 에이전트·리뷰 설정 변경은 이미지 내용을 바꾸지 않는다.
+    # 배포 산출물에 들어가지 않는 파일만 무시한다. Dockerfile은 build/libs의 jar만 COPY하고,
+    # jar에는 src/main만 들어간다(seed/는 verifySeedNotInBootJar가 확인한다). 그래서 문서, 시드,
+    # 보조 script, 에이전트·리뷰·편집기 설정 변경은 이미지 내용을 바꾸지 않는다.
     # 무시 대상만 담긴 push는 workflow가 아예 실행되지 않으므로 운영 재시작도 일어나지 않는다.
     # 필요하면 workflow_dispatch로 언제든 수동 배포할 수 있다.
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
+      - 'seed/**'
+      - 'scripts/**'
       - '.claude/**'
-      - '.agents/**'
       - '.codex/**'
-      - '.codescene/**'
       - '.github/ISSUE_TEMPLATE/**'
       - '.coderabbit.yaml'
-      - '.pr_agent.toml'
+      - '.editorconfig'
+      - '.git-blame-ignore-revs'
       - '.gitignore'
       - '.gitattributes'
   workflow_dispatch:
