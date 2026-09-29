@@ -8,13 +8,12 @@ import java.time.LocalDateTime;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.AdmissionGuard;
+import com.ticket.booking.admission.BookingEntryGate;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -24,11 +23,10 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class SelectSeatUseCase {
-    private final PerformanceSaleFinder performanceSaleFinder;
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final HoldManager holdManager;
-    private final AdmissionGuard admissionGuard;
+    private final BookingEntryGate bookingEntryGate;
     private final Clock clock;
 
     public record Input(
@@ -46,9 +44,8 @@ public class SelectSeatUseCase {
     public void execute(final Input input) {
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceSalesPolicy policy = performanceSaleFinder.requirePolicy(input.performanceId());
-        policy.ensureAcceptingOrders(now);
-        admissionGuard.verifyIfRequired(policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
+        final PerformanceSalesPolicy policy =
+                bookingEntryGate.enter(input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         final Long performanceSeatId = requireSelectableSeat(input.performanceId(), input.seatId());
 

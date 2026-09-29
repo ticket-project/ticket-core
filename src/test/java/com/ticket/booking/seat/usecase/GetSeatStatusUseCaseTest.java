@@ -23,8 +23,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.admission.AdmissionVerifier;
+import com.ticket.booking.admission.BookingEntryGate;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingNotOpenYetException;
 import com.ticket.booking.exception.PerformanceIsPastException;
@@ -72,10 +72,10 @@ class GetSeatStatusUseCaseTest {
                 // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new GetSeatStatusUseCase(
-                        new PerformanceSaleFinder(performanceSalesPolicyRepository),
                         performanceSeatRepository,
                         new SeatOccupancy(seatSelectionService, holdManager),
-                        new AdmissionGuard(admissionVerifier),
+                        new BookingEntryGate(
+                                new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         CLOCK);
     }
 
