@@ -18,9 +18,4 @@ public class HoldHistoryRepositoryAdapter implements HoldHistoryRepository {
     public List<HoldHistory> saveAll(final List<HoldHistory> holdHistories) {
         return jpaRepository.saveAll(holdHistories);
     }
-
-    @Override
-    public List<HoldHistory> findAllByHoldKeyOrderByIdAsc(final String holdKey) {
-        return jpaRepository.findAllByHoldKeyOrderByIdAsc(holdKey);
-    }
 }
