@@ -141,7 +141,6 @@ app:
     frontend:
       local-base-url: ${APP_AUTH_FRONTEND_LOCAL_BASE_URL:http://localhost:3000}
       prod-base-url: ${APP_AUTH_FRONTEND_PROD_BASE_URL:https://oneticket.site}
-    public-base-url: ${APP_AUTH_PUBLIC_BASE_URL:http://localhost:8080}
     oauth2-success-redirect-uri: ${OAUTH2_SUCCESS_REDIRECT_URI}
     oauth2-failure-redirect-uri: ${OAUTH2_FAILURE_REDIRECT_URI}
     oauth2-success-redirect-path: ${APP_AUTH_OAUTH2_SUCCESS_REDIRECT_PATH:/auth/callback}
