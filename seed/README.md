@@ -248,7 +248,9 @@ $env:SEED_LOAD_TEST_MEMBER_PASSWORD = "..."; .\gradlew.bat seedLocal
 | `support.AppSchemaTest` | 테스트 스키마를 실제 앱 entity 매핑으로 만드는 것 |
 
 테스트는 **실제 개발 DB(`~/ticket-local`)도, 실제 운영 DB도 건드리지 않는다.** 임시 디렉터리의 H2
-파일 DB와 임시 Oracle 컨테이너에 앱 entity 매핑으로 스키마를 만들어 쓴다. 테스트용 스키마 생성은
+파일 DB와 임시 Oracle 컨테이너에 운영과 같은 Flyway migration(H2는 `db/migration-vendor/h2`, Oracle은
+`oracle`)으로 스키마를 만들어 쓴다. 시드 SQL은 entity가 읽지 않는 컬럼도 직접 INSERT하므로, entity 매핑으로
+만든 스키마로는 실제 DB와 어긋난다. 테스트용 스키마 생성은
 테스트 소스(`support.AppSchema`)에만 있다 — 시드 프로그램에는 테이블을 만드는 기능이 없다.
 
 `SeedProdOracleTest`는 Docker가 필요하다(`gvenzl/oracle-free:23-slim`). Docker가 없으면 이 클래스
