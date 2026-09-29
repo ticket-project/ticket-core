@@ -12,8 +12,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.admission.BookingEntryGate;
+import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
@@ -54,7 +54,7 @@ public class StartBookingUseCase {
     private static final LockOptions START_BOOKING_LOCK =
             LockOptions.defaults().withFailureMessage("주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요.");
 
-    private final LockManager lockManager;
+    private final DistributedLock distributedLock;
     private final BookingEntryGate bookingEntryGate;
     private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
@@ -80,7 +80,7 @@ public class StartBookingUseCase {
 
     /** 같은 회원이 같은 회차의 예매를 동시에 시작하는 것을 직렬화한다. */
     public Output execute(final Input input) {
-        return lockManager.withLock(
+        return distributedLock.withLock(
                 List.of(LockKey.orderStart(input.memberId(), input.performanceId())),
                 START_BOOKING_LOCK,
                 () -> startBooking(input));
@@ -142,7 +142,7 @@ public class StartBookingUseCase {
             final RequestedSeatIds requestedSeatIds,
             final Duration holdDuration,
             final LocalDateTime now) {
-        return lockManager.withLock(seatLocks, LockOptions.defaults(), () -> {
+        return distributedLock.withLock(seatLocks, LockOptions.defaults(), () -> {
             seatSelectionService.requireSelectedBy(input.performanceId(), input.memberId(), requestedSeatIds.toList());
             return holdManager.createHold(
                     input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now);
@@ -152,7 +152,7 @@ public class StartBookingUseCase {
     /** 보상 실패가 원래 주문 생성 실패를 가리지 않도록, 해제 예외는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다. */
     private void releaseHold(final List<LockKey> seatLocks, final Hold hold, final RuntimeException originalException) {
         try {
-            lockManager.withLock(
+            distributedLock.withLock(
                     seatLocks,
                     LockOptions.defaults(),
                     () -> holdManager.release(hold.performanceId(), hold.holdKey(), hold.seatIds()));

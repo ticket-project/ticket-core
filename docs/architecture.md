@@ -156,7 +156,7 @@ adapter·Spring Data 인터페이스·Redis 구현은 직접 부르지 않는다
 공개 API를 통해 한다.
 
 Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡고 `usecase`·`domain`은 저장 기술 중립
-계약을 사용한다. 분산락은 `booking.concurrency`의 `LockManager` 계약으로 쓴다. 여러 capability를
+계약을 사용한다. 분산락은 `booking.concurrency`의 `DistributedLock` 계약으로 쓴다. 여러 capability를
 조율하는 코드는 결과를 책임지는 곳에 둔다. `common`/`util`/`helper` 같은 소유권 없는 패키지는 만들지
 않는다.
 

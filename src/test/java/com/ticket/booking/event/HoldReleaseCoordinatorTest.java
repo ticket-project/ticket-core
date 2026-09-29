@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.RecordingLockManager;
+import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -36,7 +36,7 @@ class HoldReleaseCoordinatorTest {
     @Mock
     private HoldManager holdManager;
 
-    private final RecordingLockManager lockManager = new RecordingLockManager();
+    private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -52,7 +52,7 @@ class HoldReleaseCoordinatorTest {
     @BeforeEach
     void setUp() {
         coordinator = new HoldReleaseCoordinator(
-                lockManager,
+                distributedLock,
                 holdManager,
                 new SeatOccupancy(seatSelectionService, holdManager),
                 performanceSeatRepository,
@@ -110,7 +110,8 @@ class HoldReleaseCoordinatorTest {
     void holdsSeatLocksAcrossReleaseAndPublication() {
         coordinator.releaseAndPublish(task());
 
-        assertThat(lockManager.lastAcquisition().keys()).containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
+        assertThat(distributedLock.lastAcquisition().keys())
+                .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
     }
 
     private void stubPerformanceSeats() {

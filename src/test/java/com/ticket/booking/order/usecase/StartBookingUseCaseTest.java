@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGate;
-import com.ticket.booking.concurrency.RecordingLockManager;
+import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.exception.HoldLimitExceededException;
@@ -99,7 +99,7 @@ class StartBookingUseCaseTest {
     @Mock
     private PendingOrderCreator pendingOrderCreator;
 
-    private final RecordingLockManager lockManager = new RecordingLockManager();
+    private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private StartBookingUseCase startBookingUseCase;
 
@@ -109,7 +109,7 @@ class StartBookingUseCaseTest {
                 // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new StartBookingUseCase(
-                        lockManager,
+                        distributedLock,
                         new BookingEntryGate(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         memberLookupApi,
