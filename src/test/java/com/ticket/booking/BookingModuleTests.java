@@ -3,6 +3,8 @@ package com.ticket.booking;
 import java.time.Clock;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -12,6 +14,7 @@ import com.ticket.member.api.MemberLookupApi;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -31,8 +34,16 @@ import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
  * 범위 안이지만, wiring smoke test에서 실제 STOMP 브로커 배선까지 띄울 이유가 없어 계속 {@code @MockitoBean}으로 대체한다({@code @MockitoBean}은 같은 타입의
  * 실제 bean 정의를 대체한다).
  */
+@MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
 class BookingModuleTests {
+    @MockitoBean
+    private RedissonClient redissonClient;
+
+    /** 시작하면 Redis에 구독 연결을 맺는다. wiring smoke test라 실제 구독은 필요 없다. */
+    @MockitoBean
+    private RedisMessageListenerContainer redisMessageListenerContainer;
+
     @MockitoBean
     private PerformanceSaleCatalogApi performanceSaleCatalogApi;
 

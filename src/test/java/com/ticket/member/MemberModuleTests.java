@@ -18,6 +18,7 @@ import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.usecase.MemberAccountService;
 import com.ticket.member.usecase.SocialAccountProvisioningService;
 import com.ticket.member.usecase.WithdrawMemberUseCase;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증({@code ApplicationModules.verify()})은
@@ -27,6 +28,7 @@ import com.ticket.member.usecase.WithdrawMemberUseCase;
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.member} package tree만 component-scan한다. JWT·OAuth2 provider·refresh
  * token 저장이 security로 옮겨간 뒤로 member는 그 설정 없이 기동한다 — 이 테스트에 JWT secret이나 OAuth2 client 설정이 더 필요 없다는 사실 자체가 소유권 이동의 증거다.
  */
+@MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
 class MemberModuleTests {
     @MockitoBean
