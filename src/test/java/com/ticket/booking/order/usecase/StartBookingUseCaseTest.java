@@ -43,7 +43,7 @@ import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.hold.domain.HoldManager;
+import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
@@ -91,7 +91,7 @@ class StartBookingUseCaseTest {
     private PerformanceSaleCatalogApi performanceSaleCatalogApi;
 
     @Mock
-    private HoldManager holdManager;
+    private HoldRegistry holdRegistry;
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -115,7 +115,7 @@ class StartBookingUseCaseTest {
                         memberLookupApi,
                         bookingAvailabilityChecker,
                         performanceSaleCatalogApi,
-                        holdManager,
+                        holdRegistry,
                         seatSelectionService,
                         pendingOrderCreator,
                         fixedClock);
@@ -134,7 +134,7 @@ class StartBookingUseCaseTest {
                 memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
-                holdManager,
+                holdRegistry,
                 pendingOrderCreator);
     }
 
@@ -151,7 +151,7 @@ class StartBookingUseCaseTest {
                 memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
-                holdManager,
+                holdRegistry,
                 pendingOrderCreator);
     }
 
@@ -168,7 +168,7 @@ class StartBookingUseCaseTest {
                 .thenReturn(seats);
         when(performanceSaleCatalogApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
                 .thenReturn(saleSnapshot);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
                 .thenReturn("order-key");
@@ -185,13 +185,13 @@ class StartBookingUseCaseTest {
                 memberLookupApi,
                 bookingAvailabilityChecker,
                 performanceSaleCatalogApi,
-                holdManager,
+                holdRegistry,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
         inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
         inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
         inOrder.verify(performanceSaleCatalogApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
-        inOrder.verify(holdManager).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
+        inOrder.verify(holdRegistry).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
         inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
     }
 
@@ -206,7 +206,7 @@ class StartBookingUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
 
         startBookingUseCase.execute(input);
@@ -274,7 +274,7 @@ class StartBookingUseCaseTest {
 
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds))).isInstanceOf(NotFoundException.class);
 
-        verifyNoInteractions(bookingAvailabilityChecker, performanceSaleCatalogApi, holdManager, pendingOrderCreator);
+        verifyNoInteractions(bookingAvailabilityChecker, performanceSaleCatalogApi, holdRegistry, pendingOrderCreator);
     }
 
     @Test
@@ -286,7 +286,7 @@ class StartBookingUseCaseTest {
 
         assertError(seatIds, PendingOrderAlreadyExistsException.class);
 
-        verifyNoInteractions(holdManager, pendingOrderCreator);
+        verifyNoInteractions(holdRegistry, pendingOrderCreator);
     }
 
     @Test
@@ -315,7 +315,7 @@ class StartBookingUseCaseTest {
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
                 .isInstanceOf(SeatNotSelectedException.class);
 
-        verify(holdManager, never()).createHold(any(), any(), any(), any(), any());
+        verify(holdRegistry, never()).createHold(any(), any(), any(), any(), any());
         verifyNoInteractions(pendingOrderCreator);
     }
 
@@ -329,7 +329,7 @@ class StartBookingUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
                         eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
@@ -339,7 +339,7 @@ class StartBookingUseCaseTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed");
 
-        verify(holdManager).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
+        verify(holdRegistry).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
     }
 
     @Test
@@ -353,13 +353,13 @@ class StartBookingUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
         when(pendingOrderCreator.create(
                         eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
                 .thenThrow(originalException);
         doThrow(new RuntimeException("release failed"))
-                .when(holdManager)
+                .when(holdRegistry)
                 .release(PERFORMANCE_ID, "hold-key", seatIds.toList());
 
         assertThatThrownBy(() -> startBookingUseCase.execute(input))
@@ -396,7 +396,7 @@ class StartBookingUseCaseTest {
 
     private void stubHold(final RequestedSeatIds seatIds) {
         lenient()
-                .when(holdManager.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+                .when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold(seatIds.toList()));
     }
 
