@@ -21,10 +21,6 @@ import org.yaml.snakeyaml.Yaml;
  *
  * <p>검증용으로 임시 DB를 쓸 때만 {@code -Dseed.jdbc-url}(그리고 필요하면 {@code -Dseed.jdbc-username} / {@code -Dseed.jdbc-password})로
  * 덮어쓴다. 두 대상 모두에서 이 프로퍼티가 가장 우선이다 — 명시적으로 준 값이기 때문이다.
- *
- * <p>회원 비밀번호는 {@code SEED_LOAD_TEST_MEMBER_PASSWORD} 환경변수로 넘긴다. 로컬 기본값 {@code password1234}는 형제 저장소
- * {@code gatling-test}의 {@code loginPassword} 기본값과 같은 로컬 전용 값이며, 운영 자격증명이 아니다. <b>운영에 테스트 회원을 만들 때는 기본값을 쓰지 않고 반드시 이
- * 환경변수를 명시해야 한다.</b>
  */
 record SeedSettings(
         SeedTarget target,
@@ -34,7 +30,6 @@ record SeedSettings(
         Path sqlPath,
         int batchSize,
         int loadTestMemberCount,
-        String loadTestMemberPassword,
         int loadTestPerformanceCount) {
     /** 로컬 프로파일의 회원 2,000명·부하 테스트 회차 8개를 기본 동작으로 삼는다. */
     static final int DEFAULT_LOAD_TEST_MEMBER_COUNT = 2000;
@@ -46,20 +41,14 @@ record SeedSettings(
 
     static final int PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT = 0;
     static final int DEFAULT_BATCH_SIZE = 500;
-    static final String DEFAULT_LOAD_TEST_MEMBER_PASSWORD = "password1234";
     static final String DATASOURCE_URL_ENV = "SPRING_DATASOURCE_URL";
     static final String DATASOURCE_USERNAME_ENV = "SPRING_DATASOURCE_USERNAME";
     static final String DATASOURCE_PASSWORD_ENV = "SPRING_DATASOURCE_PASSWORD";
-    static final String MEMBER_PASSWORD_ENV = "SEED_LOAD_TEST_MEMBER_PASSWORD";
     private static final String LOCAL_PROFILE_YAML = "src/main/resources/application-local.yml";
     private static final String SEED_SQL_RELATIVE_PATH = "seed/sql/kopis-curated.sql";
 
     /** 로컬 설정이다. 기존 {@code seedLocal} 동작과 기본값을 그대로 유지한다. */
     static SeedSettings load() {
-        return forLocal(System.getenv());
-    }
-
-    static SeedSettings forLocal(final Map<String, String> environment) {
         final Path projectDir = projectDir();
         final Datasource datasource = resolveLocalDatasource(projectDir);
         final int memberCount = intProperty("seed.load-test-members.count", DEFAULT_LOAD_TEST_MEMBER_COUNT);
@@ -72,7 +61,6 @@ record SeedSettings(
                 resolveSqlPath(projectDir),
                 intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
                 memberCount,
-                localMemberPassword(environment),
                 intProperty("seed.load-test-fixture.performance-count", DEFAULT_LOAD_TEST_PERFORMANCE_COUNT));
     }
 
@@ -90,7 +78,6 @@ record SeedSettings(
                 resolveSqlPath(projectDir),
                 intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
                 memberCount,
-                prodMemberPassword(environment, memberCount),
                 intProperty("seed.load-test-fixture.performance-count", PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT));
     }
 
@@ -196,33 +183,6 @@ record SeedSettings(
             current = map.get(key);
         }
         return current;
-    }
-
-    private static String localMemberPassword(final Map<String, String> environment) {
-        final String configured =
-                propertyOrEnvironment("seed.load-test-member-password", MEMBER_PASSWORD_ENV, environment);
-        return configured == null ? DEFAULT_LOAD_TEST_MEMBER_PASSWORD : configured;
-    }
-
-    /**
-     * 운영에 테스트 회원을 만들 때는 기본값을 쓰지 않는다. 저장소에 적힌 값으로 운영 계정이 만들어지면 그 계정은 사실상 공개 계정이다.
-     *
-     * <p>회원을 만들지 않는 기본 실행({@code count=0})에서는 비밀번호가 필요 없으므로 요구하지 않는다.
-     */
-    private static String prodMemberPassword(final Map<String, String> environment, final int memberCount) {
-        final String configured =
-                propertyOrEnvironment("seed.load-test-member-password", MEMBER_PASSWORD_ENV, environment);
-        if (memberCount <= 0) {
-            return configured == null ? "" : configured;
-        }
-        if (configured == null) {
-            throw new SeedFailure("""
-                    운영에 테스트 회원을 만들려면 %s를 명시해야 합니다.
-                      -> 저장소에 적힌 기본 비밀번호는 로컬 전용입니다. 운영에서는 쓰지 않습니다.
-                         회원을 만들지 않으려면 -Dseed.load-test-members.count=0(운영 기본값)으로 두세요.
-                    """.formatted(MEMBER_PASSWORD_ENV));
-        }
-        return configured;
     }
 
     /** 명시적으로 준 시스템 프로퍼티가 환경변수보다 우선한다. 둘 다 없거나 공백이면 {@code null}이다. */

@@ -1,7 +1,6 @@
 package com.ticket.seed;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -27,11 +26,7 @@ public final class SeedLocalMain {
 
     /** 테스트가 실제 실행 경로를 그대로 밟을 수 있도록 package 범위로 둔다. */
     static int execute() {
-        return execute(System.getenv());
-    }
-
-    static int execute(final Map<String, String> environment) {
-        return SeedProgram.execute(SeedTarget.LOCAL, () -> SeedSettings.forLocal(environment));
+        return SeedProgram.execute(SeedTarget.LOCAL, SeedSettings::load);
     }
 
     /** 실행 순서를 고정하는 테스트가 쓴다. 실제 목록은 {@link SeedProgram#tasks}가 만든다. */

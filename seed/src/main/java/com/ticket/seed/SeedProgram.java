@@ -73,11 +73,7 @@ final class SeedProgram {
         return List.of(
                 new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
                 new LoadTestFixtureSeeder(jdbcTemplate, transactionTemplate, settings.loadTestPerformanceCount()),
-                new LoadTestMemberSeeder(
-                        jdbcTemplate,
-                        transactionTemplate,
-                        settings.loadTestMemberCount(),
-                        settings.loadTestMemberPassword()));
+                new LoadTestMemberSeeder(jdbcTemplate, transactionTemplate, settings.loadTestMemberCount()));
     }
 
     private static int report(final List<SeedRunner.Report> reports) {

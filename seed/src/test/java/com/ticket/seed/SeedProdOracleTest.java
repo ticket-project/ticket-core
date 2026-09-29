@@ -61,7 +61,6 @@ class SeedProdOracleTest {
     private static final int FIXTURE_PERFORMANCE_COUNT = 2;
     private static final int FIXTURE_SEAT_COUNT = 2000;
     private static final int MEMBER_COUNT = 5;
-    private static final String MEMBER_PASSWORD = "운영에서만-주는-비밀번호";
 
     /** 좌석 템플릿 1벌의 크기다. 공연장마다 이만큼 복제된다. */
     private static final long SEATS_PER_VENUE = 600L;
@@ -85,7 +84,6 @@ class SeedProdOracleTest {
         System.clearProperty("seed.sql-path");
         System.clearProperty("seed.load-test-members.count");
         System.clearProperty("seed.load-test-fixture.performance-count");
-        System.clearProperty("seed.load-test-member-password");
     }
 
     @AfterAll
@@ -278,27 +276,12 @@ class SeedProdOracleTest {
                 "seed.load-test-fixture.performance-count",
                 String.valueOf(FIXTURE_PERFORMANCE_COUNT)));
         try {
-            assertThat(SeedProdMain.execute(environmentWith(SeedSettings.MEMBER_PASSWORD_ENV, MEMBER_PASSWORD)))
-                    .isZero();
+            assertThat(SeedProdMain.execute(prodEnvironment())).isZero();
 
             assertThat(count("MEMBERS", "email LIKE 'loadtest%@test.com'")).isEqualTo(MEMBER_COUNT);
             assertThat(count("PERFORMANCES", "id >= " + FIXTURE_ID_BASE)).isEqualTo(FIXTURE_PERFORMANCE_COUNT);
             assertThat(count("PERFORMANCE_SEATS", "performance_id >= " + FIXTURE_ID_BASE))
                     .isEqualTo((long) FIXTURE_PERFORMANCE_COUNT * FIXTURE_SEAT_COUNT);
-        } finally {
-            SeedSystemProperties.restore(previous);
-        }
-    }
-
-    @Test
-    @Order(8)
-    void 운영에_테스트_회원을_만들려면_비밀번호_환경변수가_필요하다() {
-        final Map<String, String> previous = SeedSystemProperties.set(Map.of("seed.load-test-members.count", "3"));
-        try {
-            final Output output = captureOutput(() -> SeedProdMain.execute(prodEnvironment()));
-
-            assertThat(output.exitCode()).isEqualTo(1);
-            assertThat(output.text()).contains(SeedSettings.MEMBER_PASSWORD_ENV);
         } finally {
             SeedSystemProperties.restore(previous);
         }
@@ -327,12 +310,6 @@ class SeedProdOracleTest {
 
     private static Map<String, String> prodEnvironment() {
         return environment(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword());
-    }
-
-    private static Map<String, String> environmentWith(final String name, final String value) {
-        final Map<String, String> environment = new HashMap<>(prodEnvironment());
-        environment.put(name, value);
-        return environment;
     }
 
     private static Map<String, String> environment(final String url, final String username, final String password) {

@@ -64,49 +64,23 @@ class SeedProdSettingsTest {
     void 로컬_기본값은_그대로_유지된다() {
         withCleanProperties(() -> {
             System.setProperty("seed.jdbc-url", "jdbc:h2:mem:seed-prod-settings");
-            final SeedSettings settings = SeedSettings.forLocal(Map.of());
+            final SeedSettings settings = SeedSettings.load();
 
             assertThat(settings.target()).isEqualTo(SeedTarget.LOCAL);
             assertThat(settings.loadTestMemberCount()).isEqualTo(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_COUNT);
             assertThat(settings.loadTestPerformanceCount()).isEqualTo(SeedSettings.DEFAULT_LOAD_TEST_PERFORMANCE_COUNT);
-            assertThat(settings.loadTestMemberPassword()).isEqualTo(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_PASSWORD);
         });
     }
 
     @Test
-    void 운영에_테스트_회원을_만들려면_비밀번호_환경변수가_필요하다() {
-        withCleanProperties(() -> {
-            System.setProperty("seed.load-test-members.count", "10");
-
-            assertThatThrownBy(() -> SeedSettings.forProd(PROD_ENVIRONMENT))
-                    .isInstanceOf(SeedFailure.class)
-                    .hasMessageContaining(SeedSettings.MEMBER_PASSWORD_ENV);
-        });
-    }
-
-    @Test
-    void 운영에_비밀번호를_명시하면_테스트_회원_수를_지정할_수_있다() {
+    void 운영에서도_옵션으로_테스트_회원_수를_지정할_수_있다() {
         withCleanProperties(() -> {
             System.setProperty("seed.load-test-members.count", "10");
             System.setProperty("seed.load-test-fixture.performance-count", "2");
-            final Map<String, String> environment = Map.of(
-                    SeedSettings.DATASOURCE_URL_ENV,
-                    "jdbc:oracle:thin:@ticketdb_high",
-                    SeedSettings.DATASOURCE_USERNAME_ENV,
-                    "TICKET",
-                    SeedSettings.DATASOURCE_PASSWORD_ENV,
-                    "super-secret",
-                    SeedSettings.MEMBER_PASSWORD_ENV,
-                    "명시한-비밀번호");
-
-            final SeedSettings settings = SeedSettings.forProd(environment);
+            final SeedSettings settings = SeedSettings.forProd(PROD_ENVIRONMENT);
 
             assertThat(settings.loadTestMemberCount()).isEqualTo(10);
             assertThat(settings.loadTestPerformanceCount()).isEqualTo(2);
-            assertThat(settings.loadTestMemberPassword()).isEqualTo("명시한-비밀번호");
-            assertThat(settings.loadTestMemberPassword())
-                    .as("운영에서는 저장소에 적힌 로컬 기본 비밀번호를 쓰지 않는다")
-                    .isNotEqualTo(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_PASSWORD);
         });
     }
 
@@ -135,13 +109,11 @@ class SeedProdSettingsTest {
         final String username = System.getProperty("seed.jdbc-username");
         final String password = System.getProperty("seed.jdbc-password");
         final String memberCount = System.getProperty("seed.load-test-members.count");
-        final String memberPassword = System.getProperty("seed.load-test-member-password");
         final String performanceCount = System.getProperty("seed.load-test-fixture.performance-count");
         System.clearProperty("seed.jdbc-url");
         System.clearProperty("seed.jdbc-username");
         System.clearProperty("seed.jdbc-password");
         System.clearProperty("seed.load-test-members.count");
-        System.clearProperty("seed.load-test-member-password");
         System.clearProperty("seed.load-test-fixture.performance-count");
         try {
             body.run();
@@ -150,7 +122,6 @@ class SeedProdSettingsTest {
             restore("seed.jdbc-username", username);
             restore("seed.jdbc-password", password);
             restore("seed.load-test-members.count", memberCount);
-            restore("seed.load-test-member-password", memberPassword);
             restore("seed.load-test-fixture.performance-count", performanceCount);
             SeedSystemProperties.restore(previous);
         }

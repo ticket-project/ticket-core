@@ -119,13 +119,8 @@ seedProd -Dseed.load-test-members.count=100
 `seed.load-test-fixture.performance-count=0`). 필요할 때만 명시해서 켠다.
 
 ```powershell
-$env:SEED_LOAD_TEST_MEMBER_PASSWORD = "<이번에 쓸 비밀번호>"
 .\gradlew.bat seedProd -Dseed.load-test-members.count=100 -Dseed.load-test-fixture.performance-count=2
 ```
-
-**운영에서 테스트 회원을 만들 때는 `SEED_LOAD_TEST_MEMBER_PASSWORD`가 반드시 있어야 한다.**
-없으면 실패한다 — 저장소에 적힌 로컬 기본 비밀번호로 운영 계정을 만들면 그 계정은 사실상 공개
-계정이다.
 
 ### 적재하는 것
 
@@ -138,15 +133,10 @@ $env:SEED_LOAD_TEST_MEMBER_PASSWORD = "<이번에 쓸 비밀번호>"
 | 부하 테스트 픽스처 | 고정 ID 대역(`910000001~`)의 전용 공연 1개, 회차, 전용 물리 좌석(회차당 2,000석) | 회차 8개 | **0개(만들지 않음)** |
 | 부하 테스트 회원 | `loadtest{n}@test.com` | 2,000명 | **0명(만들지 않음)** |
 
-부하 테스트 회원의 비밀번호 로컬 기본값은 형제 저장소 `gatling-test`의 `loginPassword` 기본값과
-같은 **로컬 전용** 값이다. 바꿀 때는 환경변수로 넘긴다 — 저장소에 새로 적지 않는다.
-
-```powershell
-$env:SEED_LOAD_TEST_MEMBER_PASSWORD = "..."; .\gradlew.bat seedLocal
-```
-
-비밀번호는 앱이 쓰는 것과 같은 `DelegatingPasswordEncoder`로 해싱해 저장하므로, 적재된 회원은
-실제 로그인 경로로 그대로 인증된다.
+부하 테스트 회원은 **비밀번호 없이** 만든다. 앱의 가입·로그인은 소셜(OAuth2) 전용이고, 형제 저장소
+`gatling-test`는 로그인 대신 회원 ID를 `sub`로 서명한 합성 access token(`JWT_SECRET`)을 쓴다. 회원 ID는
+DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 조회한 실제 ID를 넘긴다. 이미 있는
+이메일은 건너뛰므로 다시 실행해도 기존 회원의 ID는 바뀌지 않는다.
 
 ### 조정할 수 있는 값
 
@@ -159,9 +149,6 @@ $env:SEED_LOAD_TEST_MEMBER_PASSWORD = "..."; .\gradlew.bat seedLocal
 | `seed.batch-size` | 공용 시드 batch 크기 |
 | `seed.sql-path` | 공용 시드 SQL 경로 |
 | `seed.jdbc-url` / `seed.jdbc-username` / `seed.jdbc-password` | **검증용 임시 DB에만 쓴다.** 지정하면 로컬 프로파일·환경변수 대신 이 값으로 접속한다 |
-
-비밀번호는 `-D`가 아니라 환경변수로 넘긴다(`SEED_LOAD_TEST_MEMBER_PASSWORD`). `-D`로 넘긴 값은
-프로세스 목록과 Gradle 로그에 그대로 남는다.
 
 ```powershell
 .\gradlew.bat seedLocal -Dseed.load-test-members.count=200
@@ -237,13 +224,13 @@ $env:SEED_LOAD_TEST_MEMBER_PASSWORD = "..."; .\gradlew.bat seedLocal
 
 | 테스트 | 고정하는 것 |
 | --- | --- |
-| `SeedLocalTest` | 실제 시드 SQL 전체를 실제 앱 스키마(H2)에 적재 → 관계 정합성 → 재실행 멱등성 → 회원 인증 호환성 → 부분 적재 감지 |
+| `SeedLocalTest` | 실제 시드 SQL 전체를 실제 앱 스키마(H2)에 적재 → 관계 정합성 → 재실행 멱등성 → 비밀번호 없는 활성 회원 → 부분 적재 감지 |
 | `SeedProdOracleTest` | `seedProd`의 실제 실행 경로를 임시 Oracle에서 통째로 검증 — 환경변수 누락 실패, `USER_TABLES` 기준 스키마 판정, `NLS_DATE_FORMAT` 비의존, 운영 기본값(테스트 회원·부하 회차 0), 옵션 지정 적재, 재실행 멱등성, 부분 적재 감지, 비밀번호 비노출 |
 | `SeedSeatCoverageTest` | 좌석 누락 회귀 — 마커 앞에 추가한 공연장은 좌석·회차좌석을 받고, 마커 뒤에 붙이면 적재 전에 실패하며, 좌석 없는 공연장이 남으면 커밋하지 않는다 |
 | `SeedFastRunTest` | 실행 순서, 트랜잭션 롤백, 동시 접속, 준비되지 않은 DB 실패, 회원 중복 건너뛰기 |
 | `CuratedSeedStatementsTest` | 시드 SQL의 날짜 다변화·회차/판매정책 분리·좌석 복제·회차좌석 불변식 |
 | `SeedSettingsTest` | 로컬 접속 설정 원본과 기본값 |
-| `SeedProdSettingsTest` | 운영 접속 설정 원본(환경변수)과 기본값, 누락 시 실패, 운영 회원 비밀번호 강제, URL 마스킹, 드라이버 선택 |
+| `SeedProdSettingsTest` | 운영 접속 설정 원본(환경변수)과 기본값, 누락 시 실패, URL 마스킹, 드라이버 선택 |
 | `ServiceSourceSeparationTest` | 시드가 서비스 소스로 다시 섞이지 않는 것 |
 | `support.AppSchemaTest` | 테스트 스키마를 실제 앱 entity 매핑으로 만드는 것 |
 
