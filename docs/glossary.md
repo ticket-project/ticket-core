@@ -1,19 +1,17 @@
 # 용어집
 
 공연·전시 티켓 예매 서비스의 도메인 용어집이다. 좌석을 고르고 잡아두고 주문으로 넘기는 과정의
-말을 여기서 정한다. 대기열 자체의 운영은 형제 저장소 `ticket-queue`가 맡는다. Payment·Ticket은 현재 모델과 스키마가 있으나 결제 승인·발권 실행 흐름은 아직 없다. 용어 정의는 구현 완료를 뜻하지 않는다.
-
-Bounded Context·Aggregate 경계, 모듈 경계와 코드 배치 기준은 전부
-[architecture.md](architecture.md)에 있다. 이 문서는 용어만 다룬다.
+말을 여기서 정한다. 대기열 자체의 운영은 형제 저장소 `ticket-queue`가 맡는다. 용어 정의는 구현 완료를
+뜻하지 않는다. 이 문서는 용어만 다룬다.
 
 ## Language
 
 ### 상품
 
 **Venue**:
-실제 좌석 배치 하나를 가진 개별 홀이다. 복합 문화시설 전체가 아니라 그 안의 특정 홀 하나를
-가리킨다. Venue 1개는 Seat 여러 개를 가지며(`1:0..N`), Seat는 정확히 하나의 Venue에 속한다.
-_Avoid_: 공연장(Show를 가리키는 말과 혼동), 복합 시설 전체를 가리키는 서술
+실제 좌석 배치 하나를 가진 개별 홀이다. 한글로는 공연장이라 부른다. 복합 문화시설 전체가 아니라 그 안의
+특정 홀 하나를 가리킨다. Venue 1개는 Seat 여러 개를 가지며(`1:0..N`), Seat는 정확히 하나의 Venue에 속한다.
+_Avoid_: 복합 시설 전체를 가리키는 서술
 
 **Show**:
 판매 단위가 되는 작품이다. 공연 기간과 Venue, 여러 Genre를 가진다. Show 1개는 Performance
@@ -21,7 +19,6 @@ _Avoid_: 공연장(Show를 가리키는 말과 혼동), 복합 시설 전체를 
 회차(Performance)마다 다를 수 있어 Show가 아니라 그 단위로 붙는다.
 
 Show의 판매 표시는 화면용이며 실제 주문 접수 판단은 회차별 `PerformanceSalesPolicy`가 한다.
-상세 규칙과 결정 배경은 [ADR 0007](adr/0007-show-sale-fields-are-display-only.md)을 본다.
 _Avoid_: 공연물, Event, Product, `ShowGrade`, Show가 판매 가능 여부를 판단한다는 서술
 
 **Category / Genre**:
@@ -48,8 +45,7 @@ _Avoid_: 좌석 등급 자체에 가격이 고정된 것처럼 다루는 서술
 
 **PerformanceGrade**:
 특정 Performance에서 사용할 Grade다. 회차별 가격과 표시 순서를 가진 연결 개념이며, 가격의
-원본(source of truth)이다. 가격 변경 정책과 현재 강제 범위는
-[아키텍처의 가격 snapshot](architecture.md#aggregate-rules)을 본다.
+원본(source of truth)이다.
 _Avoid_: `ShowGrade`(쓰지 않는다 — Show 단위 가격이라는 개념 자체를 쓰지 않는다)
 
 **PerformanceSeat**:
@@ -72,21 +68,21 @@ _Avoid_: 예약, 구매, Reservation, Purchase, Booking
 **OrderSeat**:
 Order에 포함된 한 좌석이다. 정확히 하나의 PerformanceSeat를 가리키지만, 하나의 PerformanceSeat는
 취소·만료된 주문도 이력으로 남기기 때문에 시간에 따라 여러 OrderSeat와 연결될 수 있다(`1:0..N`).
-주문 시점의 좌석·등급·가격 snapshot을 보존한다. 중복 확정 방지 요구와 현재 구현 범위는
-[예매 수명주기](core-booking-lifecycle.md#주문-생성예매-시작)를 본다.
-_Avoid_: TicketInfo(결제 전 좌석을 이 이름으로 부르지 않는다)
+주문 시점의 좌석·등급·가격 snapshot을 보존한다.
+_Avoid_: 결제 전 좌석을 Ticket이라 부르는 서술(주문 상세 응답의 `TicketInfo`는 OrderSeat 목록을 담는 응답 항목
+이름일 뿐 Ticket과 다른 것이다)
 
 **Selection**:
 회원이 좌석을 살펴보며 임시로 골라 둔 표시다. 짧은 시간만 유지되고 다른 회원 화면에는 점유로
 보이지만, 예매를 보장하지 않는다. Hold와 따로 저장되지만 Order는 본인이 선택 중인 좌석으로만 만들 수
-있다([ADR 0021](adr/0021-order-requires-own-selection.md)). 한 회원이 동시에 선택할 수 있는 좌석 수는
+있다. 한 회원이 동시에 선택할 수 있는 좌석 수는
 회차의 Hold 좌석 수 한도를 따른다.
 _Avoid_: 선점, 임시 예약, Reservation, 찜(Like와 혼동)
 
 **Hold**:
 진행 중인 Order가 좌석을 붙잡아 둔 상태다. 판매 정합성을 지키는 쪽은 Selection이 아니라 이것이다.
-Order와 1:1이며 같은 holdKey로 이어지고, Order가 살아 있는 동안만 유지된다.
-_Avoid_: 점유, Lock, Reservation
+Order와 1:1이며 같은 holdKey로 이어지고, Order가 살아 있는 동안만 유지된다. 한글로는 선점이라 부른다.
+_Avoid_: Lock, Reservation
 
 **PerformanceSalesPolicy**:
 회차 하나의 예매 접수 기간·Hold 좌석 수 한도·대기열 진입 정책을 갖는 개념이다. 예매 가능 여부
@@ -101,7 +97,7 @@ _Avoid_: 입장권, Entry, Ticket
 **Payment**:
 Order에 대한 한 번의 결제 시도다. Order 하나에는 Payment 여러 건이 있을 수 있고(`1:0..N`), 한
 건이 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있다. Payment 실패는 Order를 끝내는
-사건이 아니다 — Order 상태는 `PENDING -> CONFIRMED/EXPIRED/CANCELED`뿐이다.
+사건이 아니다.
 _Avoid_: 결제(Payment 자체가 결제 완료가 아니라 시도라는 사실을 흐린다), 결제내역이 Order와 1:1이라는 전제
 
 **Ticket**:
@@ -116,7 +112,8 @@ _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
 회원이 어떤 대상을 찜한 기록이다. `(memberId, likeType, targetId)` 조합이 유일하며, 같은 회원이
 같은 대상을 두 번 찜할 수 없다. 대상 종류는 `LikeType`으로 값화돼 있고 지금은 SHOW(공연) 하나뿐
 이다. Selection(예매 중 임시 좌석 선택)과는 다르다.
-_Avoid_: 좋아요(도메인 용어는 찜), Selection과 혼동, ShowLike(현재 명칭은 Like)
+화면과 API 문서에서는 좋아요라고도 쓴다.
+_Avoid_: Selection과 혼동, ShowLike(현재 명칭은 Like)
 
 ### 회원
 
@@ -131,7 +128,5 @@ _Avoid_: 사용자, 고객, User, Customer, Account
 외부 provider의 응답 형식을 제거한 정규화된 소셜 신원이다. provider, provider 사용자 ID, 이메일,
 이메일 검증 여부, 이름으로 이루어진다. provider 응답을 이 형태로 해석하는 일은 security가 하고,
 이 값으로 계정을 찾거나 만드는 일은 member가 한다. 연결된 계정 기록인
-`MemberSocialAccount`와 구분한다. 기존 계정 연결에는 검증된 이메일만 쓴다
-([MemberAccountApi](../src/main/java/com/ticket/member/api/MemberAccountApi.java)). 검증되지 않은 이메일의
-처리는 [SocialAccountProvisioningService](../src/main/java/com/ticket/member/usecase/SocialAccountProvisioningService.java)를 본다.
+`MemberSocialAccount`와 구분한다. 기존 계정 연결에는 검증된 이메일만 쓴다.
 _Avoid_: provider 응답 타입이나 연결된 소셜 계정 기록과 혼동
