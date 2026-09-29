@@ -3,6 +3,7 @@ package com.ticket.security.auth;
 import java.util.Map;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,49 +18,81 @@ import com.ticket.security.http.RefreshTokenCookieWriter;
 import com.ticket.security.oauth.GetSocialLoginUrlsUseCase;
 import com.ticket.shared.web.ApiResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController implements AuthControllerDocs {
+@Tag(name = "인증(Auth)", description = "회원가입, 로그인, 토큰 재발급, 로그아웃, 소셜 로그인 관련 API")
+public class AuthController {
     private final LoginUseCase loginUseCase;
     private final RefreshAuthTokenUseCase refreshAuthTokenUseCase;
     private final ExchangeOAuth2TokenUseCase exchangeOAuth2TokenUseCase;
     private final GetSocialLoginUrlsUseCase getSocialLoginUrlsUseCase;
     private final LogoutUseCase logoutUseCase;
 
-    @Override
+    @Operation(summary = "로그인", description = """
+            이메일과 비밀번호로 로그인하고 Access Token을 응답으로 반환합니다.
+            Refresh Token은 HttpOnly 쿠키로 설정됩니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "이메일 또는 비밀번호 불일치")
+    })
     @PostMapping("/login")
     public ApiResponse<LoginUseCase.Output> login(
-            @RequestBody final LoginRequest request, final HttpServletResponse response) {
+            @RequestBody @Valid final LoginRequest request,
+            @Parameter(hidden = true) final HttpServletResponse response) {
         final LoginUseCase.Result result = loginUseCase.execute(request.toInput());
         addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
-    @Override
+    @Operation(summary = "토큰 재발급", description = """
+            HttpOnly 쿠키의 Refresh Token으로 Access Token을 재발급하고,
+            새로운 Refresh Token으로 쿠키를 교체합니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 재발급 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "유효하지 않거나 만료된 Refresh Token")
+    })
     @PostMapping("/refresh")
     public ApiResponse<RefreshAuthTokenUseCase.Output> refresh(
-            @CookieValue(name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME, required = false)
+            @Parameter(hidden = true)
+                    @CookieValue(name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME, required = false)
                     final String refreshToken,
-            final HttpServletResponse response) {
+            @Parameter(hidden = true) final HttpServletResponse response) {
         final RefreshAuthTokenUseCase.Input input = RefreshAuthTokenUseCase.Input.from(refreshToken);
         final RefreshAuthTokenUseCase.Result result = refreshAuthTokenUseCase.execute(input);
         addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
-    @Override
+    @Operation(summary = "OAuth2 토큰 교환", description = """
+            소셜 로그인 성공 후 발급된 1회용 인증 코드를 Access Token으로 교환합니다.
+            Refresh Token은 HttpOnly 쿠키로 설정됩니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 교환 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 인증 코드")
+    })
     @PostMapping("/oauth2/token")
     public ApiResponse<ExchangeOAuth2TokenUseCase.Output> exchangeOAuth2Token(
-            @RequestBody final ExchangeOAuth2TokenRequest request, final HttpServletResponse response) {
+            @RequestBody @Valid final ExchangeOAuth2TokenRequest request,
+            @Parameter(hidden = true) final HttpServletResponse response) {
         final ExchangeOAuth2TokenUseCase.Result result = exchangeOAuth2TokenUseCase.execute(request.toInput());
         addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
-    @Override
+    @Operation(summary = "소셜 로그인 URL 조회", description = "Google, Kakao 소셜 로그인 진입 URL을 반환합니다.")
+    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/social/urls")
     public ApiResponse<Map<String, String>> getSocialLoginUrls() {
         final String baseUrl =
@@ -68,13 +101,18 @@ public class AuthController implements AuthControllerDocs {
         return ApiResponse.success(getSocialLoginUrlsUseCase.execute(input).urls());
     }
 
-    @Override
+    @Operation(summary = "로그아웃", description = "Refresh Token을 무효화하고 쿠키를 삭제합니다. Access Token은 만료 시간까지 자연스럽게 무효화됩니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
     @PostMapping("/logout")
     public ApiResponse<LogoutUseCase.Output> logout(
-            final AuthenticatedMember member,
-            @CookieValue(name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME, required = false)
+            @Parameter(hidden = true) final AuthenticatedMember member,
+            @Parameter(hidden = true)
+                    @CookieValue(name = RefreshTokenCookieWriter.REFRESH_TOKEN_COOKIE_NAME, required = false)
                     final String refreshToken,
-            final HttpServletResponse response) {
+            @Parameter(hidden = true) final HttpServletResponse response) {
         try {
             final LogoutUseCase.Input input = LogoutUseCase.Input.of(member.memberId(), refreshToken);
             final LogoutUseCase.Output output = logoutUseCase.execute(input);
