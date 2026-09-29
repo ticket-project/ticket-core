@@ -28,6 +28,10 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetShowsUseCase {
+    /** 판매 시작 임박순은 받지 않는다. 이 목록은 판매 시작 시각이 없는 공연도 거르지 않아 정렬 키가 null일 수 있다. 공연 임박순은 정렬할 때 시작일이 오늘 이후인 공연만 남기므로 키가 있다. */
+    private static final Set<ShowSort> SUPPORTED_SORTS =
+            Set.of(ShowSort.POPULAR, ShowSort.LATEST, ShowSort.SHOW_START_APPROACHING);
+
     private final ShowQuerydslRepository showQuerydslRepository;
     private final ShowRepository showRepository;
     private final VenueLookupApi venueLookupApi;
@@ -36,7 +40,7 @@ public class GetShowsUseCase {
     public record Input(ShowListParam param, int size, ShowSort sort) {
         public Input {
             param = requireProvided(param, "param");
-            sort = requireProvided(sort, "sort");
+            sort = requireProvided(sort, "sort").requireOneOf(SUPPORTED_SORTS);
             ShowPageSize.require(size);
         }
     }

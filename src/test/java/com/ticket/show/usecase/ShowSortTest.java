@@ -3,6 +3,8 @@ package com.ticket.show.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import com.ticket.show.exception.UnsupportedShowSortException;
@@ -34,5 +36,18 @@ class ShowSortTest {
         assertThatThrownBy(() -> ShowSort.from("UNKNOWN_SORT"))
                 .isInstanceOf(UnsupportedShowSortException.class)
                 .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: UNKNOWN_SORT");
+    }
+
+    @Test
+    void 허용한_정렬이면_그대로_돌려준다() {
+        assertThat(ShowSort.LATEST.requireOneOf(Set.of(ShowSort.POPULAR, ShowSort.LATEST)))
+                .isEqualTo(ShowSort.LATEST);
+    }
+
+    @Test
+    void 허용하지_않은_정렬이면_apiValue를_담은_예외를_던진다() {
+        assertThatThrownBy(() -> ShowSort.SALE_START_APPROACHING.requireOneOf(Set.of(ShowSort.POPULAR)))
+                .isInstanceOf(UnsupportedShowSortException.class)
+                .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: saleStartApproaching");
     }
 }

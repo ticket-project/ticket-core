@@ -490,10 +490,11 @@ public class ShowQuerydslRepository {
         return switch (sortOrder.key()) {
             case POPULAR -> String.valueOf(required(lastRow, show.viewCount));
             case LATEST -> required(lastRow, show.createdAt).toString();
-            // 이 정렬의 키가 startDate라 마지막 행에는 값이 있다.
+            // 이 정렬이면 조건에 startDate >= 오늘이 붙어(appendShowStartApproachingCondition) 값이 있다.
+            // 그 조건이 없는 오픈 예정 목록은 아직 이 정렬을 받는다(GetSaleOpeningSoonShowsPageUseCase 참고).
             case SHOW_START_APPROACHING ->
                 Objects.requireNonNull(lastRow.get(show.startDate)).toString();
-            // 이 정렬은 판매 시작이 있는 행만 대상으로 하므로 마지막 행에도 값이 있다.
+            // 판매 시작이 있는 행만 거르는 오픈 예정 목록만 이 정렬을 받는다(ShowSort#requireOneOf).
             case SALE_START_APPROACHING ->
                 Objects.requireNonNull(lastRow.get(show.displaySaleWindow.startsAt))
                         .toString();
