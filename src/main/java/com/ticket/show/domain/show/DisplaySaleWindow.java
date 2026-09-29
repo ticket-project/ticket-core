@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
  * API는 다르게 판단할 수 있고, 이는 버그가 아니라 허용된 결과다.
  *
  * <p>{@link SaleDisplayStatus} 판정은 이 타입 하나가 소유한다({@link #statusAt}) — 예전에는 {@code Show.getBookingStatus}와 Querydsl 조건이
- * 각자 구현해 null 처리가 서로 달랐다(TD-12).
+ * 각자 구현해 null 처리가 서로 달랐다.
  */
 @Getter
 @Embeddable
