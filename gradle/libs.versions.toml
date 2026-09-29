@@ -11,7 +11,6 @@
 spring-boot = "4.1.1"
 spring-modulith = "2.1.1"
 spring-dependency-management = "1.1.7"
-querydsl = "5.1.0"
 jjwt = "0.13.0"
 archunit = "1.4.1"
 error-prone = "2.50.0"
@@ -19,7 +18,8 @@ nullaway = "0.14.1"
 p6spy = "2.0.0"
 redisson = "4.7.0"
 springdoc = "3.0.1"
-oracle-security = "21.3.0.0"
+# spotless의 Java formatter. spotless plugin이 이 버전의 palantir-java-format을 받아 쓴다.
+palantir-java-format = "2.91.0"
 
 [libraries]
 spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "spring-modulith" }
@@ -28,8 +28,9 @@ spring-modulith-starter-insight = { module = "org.springframework.modulith:sprin
 spring-modulith-starter-test = { module = "org.springframework.modulith:spring-modulith-starter-test" }
 
 # Querydsl은 jakarta classifier 변형을 쓴다. 모듈 build.gradle의 variantOf가 이를 붙인다.
-querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
-querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+# 버전은 Spring Boot BOM(querydsl-bom)이 관리한다.
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt" }
 
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
@@ -46,17 +47,18 @@ p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-bo
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
-# ojdbc8 버전은 Spring Boot BOM이 관리한다. 서버와 seedProd가 같은 좌표를 쓰도록 bundle로 묶는다.
+# ojdbc8과 Wallet용 oraclepki 버전은 Spring Boot BOM(oracle-database.version)이 함께 관리한다.
+# 23부터 osdt_cert/osdt_core는 oraclepki에 합쳐져 따로 두지 않는다.
+# 서버와 seedProd가 같은 좌표를 쓰도록 bundle로 묶는다.
 oracle-ojdbc8 = { module = "com.oracle.database.jdbc:ojdbc8" }
-oracle-security-osdt-cert = { module = "com.oracle.database.security:osdt_cert", version.ref = "oracle-security" }
-oracle-security-oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "oracle-security" }
-oracle-security-osdt-core = { module = "com.oracle.database.security:osdt_core", version.ref = "oracle-security" }
+oracle-security-oraclepki = { module = "com.oracle.database.security:oraclepki" }
 
 [bundles]
-oracle-jdbc = ["oracle-ojdbc8", "oracle-security-osdt-cert", "oracle-security-oraclepki", "oracle-security-osdt-core"]
+oracle-jdbc = ["oracle-ojdbc8", "oracle-security-oraclepki"]
 
 [plugins]
 errorprone = { id = "net.ltgt.errorprone", version = "5.1.1" }
 nullaway = { id = "net.ltgt.nullaway", version = "3.2.0" }
+spotless = { id = "com.diffplug.spotless", version = "8.9.0" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
