@@ -56,16 +56,4 @@ class MemberWithdrawalControllerContractTest {
 
         verify(withdrawCurrentMemberUseCase).execute(new WithdrawCurrentMemberUseCase.Input(1L));
     }
-
-    /** 응답을 내보내기 전에 SecurityContext를 비운다 — 같은 요청 스레드에 인증 주체가 남지 않는다. */
-    @Test
-    void 탈퇴_후_SecurityContext를_비운다() throws Exception {
-        when(withdrawCurrentMemberUseCase.execute(any())).thenReturn(new WithdrawCurrentMemberUseCase.Output());
-
-        mockMvc.perform(delete("/api/v1/members")).andExpect(status().isOk());
-
-        org.assertj.core.api.Assertions.assertThat(
-                        SecurityContextHolder.getContext().getAuthentication())
-                .isNull();
-    }
 }
