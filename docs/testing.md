@@ -7,9 +7,24 @@
 [architecture.md](architecture.md), 예매 흐름은 [core-booking-lifecycle.md](core-booking-lifecycle.md),
 실행 환경은 [operations.md](operations.md)를 함께 본다.
 
-검증 선택·실행 명령·결과 보고의 공통 기준은 이 문서다. 전체 테스트는 기본값이 아니며 변경 영향으로 선택한다.
+검증 선택·실행 명령·결과 보고의 공통 기준은 이 문서다.
+
+## 테스트를 돌리는 시점
+
+- **작업 중에는 테스트를 돌리지 않는다.** 고칠 때마다, 커밋마다 돌리지 않는다.
+- **모든 커밋이 끝나고 사용자에게 완료를 알리기 전에 전체 테스트를 한 번 돌린다.** 명령은
+  `./gradlew spotlessJavaCheck test -x seedTest`다. 문서를 바꿨으면 `bash scripts/check-docs.sh`와
+  `git diff --check`도 이때 돌린다. 실패하면 고치는 커밋을 더한 뒤 전체를 다시 한 번 돌린다.
+- **seed 테스트는 seed 코드(`seed/`)를 바꿨을 때만 돌린다.** 그때는 `-x seedTest` 없이 `./gradlew test`를
+  쓴다. `SeedProdOracleTest`가 Oracle 컨테이너를 띄워 seed 테스트만 5분 가까이 걸린다.
+- **테스트를 중간에 끊었다면 다음 실행 전에 이전 실행이 멈췄는지 확인한다.** 셸을 끊어도 Gradle
+  데몬의 테스트 JVM과 Testcontainers 컨테이너는 남을 수 있다(`docker ps`, `./gradlew --status`). 겹쳐 돌면
+  서로 느려져 멈춘 것처럼 보인다.
+- 사용자가 특정 테스트를 요청하거나 테스트하지 말라고 하면 그 말을 따른다.
 
 ## 변경별 검증
+
+아래 표는 사용자가 특정 범위만 요청했거나, 전체 테스트 실패를 좁혀 볼 때 쓴다.
 
 실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을 실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
 
