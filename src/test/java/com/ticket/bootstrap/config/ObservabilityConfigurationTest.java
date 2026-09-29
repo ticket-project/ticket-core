@@ -9,6 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
 
+/**
+ * 용량 판정이 기대는 관측 전제만 고정한다 — prometheus 노출, 서비스 구분 tag, 요청 지연 histogram, Tomcat·Hikari 지표. 기본값 문자열이나 SLO 구간 같은 조정 값은 yml이
+ * 원본이라 여기서 다시 적지 않는다.
+ */
 class ObservabilityConfigurationTest {
     @Test
     void exposesCapacityMetricsWithStableTagsAndHistograms() {
@@ -16,16 +20,16 @@ class ObservabilityConfigurationTest {
         yaml.setResources(new ClassPathResource("application.yml"));
         final Properties properties = Objects.requireNonNull(yaml.getObject());
 
+        assertThat(properties.getProperty("management.endpoints.web.exposure.include"))
+                .contains("prometheus");
         assertThat(properties)
-                .containsEntry("spring.application.name", "ticket-core")
-                .containsEntry("spring.datasource.hikari.pool-name", "ticket-core")
+                .containsKeys(
+                        "spring.datasource.hikari.pool-name",
+                        "management.metrics.tags.service",
+                        "management.metrics.tags.environment",
+                        "management.metrics.tags.version",
+                        "management.metrics.distribution.slo.http.server.requests")
                 .containsEntry("server.tomcat.mbeanregistry.enabled", true)
-                .containsEntry("management.endpoints.web.exposure.include", "health,info,prometheus")
-                .containsEntry("management.metrics.tags.service", "${DD_SERVICE:ticket-core}")
-                .containsEntry("management.metrics.tags.environment", "${DD_ENV:local}")
-                .containsEntry("management.metrics.tags.version", "${DD_VERSION:unknown}")
-                .containsEntry("management.metrics.distribution.percentiles-histogram.http.server.requests", true)
-                .containsEntry(
-                        "management.metrics.distribution.slo.http.server.requests", "100ms,300ms,500ms,1s,2s,3s,5s");
+                .containsEntry("management.metrics.distribution.percentiles-histogram.http.server.requests", true);
     }
 }
