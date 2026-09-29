@@ -9,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
@@ -22,9 +21,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-        name = "HOLD_HISTORY",
-        indexes = {@Index(name = "IDX_HOLD_HISTORY_HOLD_KEY", columnList = "hold_key")})
+@Table(name = "HOLD_HISTORY")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HoldHistory extends AuditedEntity {
     @Id

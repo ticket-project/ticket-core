@@ -10,7 +10,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -41,8 +40,7 @@ import lombok.NoArgsConstructor;
                     name = "UK_PAYMENTS_ORDER_ATTEMPT",
                     columnNames = {"order_id", "attempt_no"}),
             @UniqueConstraint(name = "UK_PAYMENTS_PROVIDER_PAYMENT_KEY", columnNames = "provider_payment_key")
-        },
-        indexes = {@Index(name = "IDX_PAYMENTS_ORDER_STATUS", columnList = "order_id,status")})
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment extends AuditedEntity {
     @Id
