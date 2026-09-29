@@ -4,4 +4,7 @@
 # (GitHub blame은 이 파일을 자동으로 읽는다)
 
 # style: 포맷터를 palantir-java-format으로 바꾸고 전체를 재포맷한다
-b3d2365e3eecdcb8395d6b4c9fb1dfce101262a6
+ec574e91cef0ebd0ec8da6a4c053d47b7cb71f89
+
+# style: 주석 정리 뒤 palantir 포맷을 다시 적용한다
+6556d1384b04552bb5a62b36b9a530521952a3f7
