@@ -37,7 +37,7 @@ import com.ticket.seed.support.AppSchema;
  * 형식({@code NLS_DATE_FORMAT}) 의존성. 저장소에 이미 있는 {@code gvenzl/oracle-free:23-slim}을 그대로
  * 쓴다({@code com.ticket.bootstrap.migration.OracleMigrationCompatibilityTest} 참고).
  *
- * <p>스키마는 손으로 쓴 DDL이 아니라 <b>실제 앱 entity 매핑</b>으로 만든다({@link AppSchema#createOn}). 그 기능은 테스트 소스에만 있다 — 테이블 생성은
+ * <p>스키마는 손으로 쓴 DDL이 아니라 <b>운영과 같은 Oracle migration</b>으로 만든다({@link AppSchema#createOn}). 그 기능은 테스트 소스에만 있다 — 테이블 생성은
  * {@code seedProd}의 범위가 아니다.
  *
  * <p>공용 시드 전체 적재는 90만 행이 넘어 한 번만 돌린다. 그래서 하나의 스키마를 공유하며 순서를 고정한다. 마지막 테스트는 일부러 데이터를 지우므로 반드시 끝에 둔다.

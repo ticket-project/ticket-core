@@ -145,9 +145,8 @@ class CuratedSeedStatementsTest {
     }
 
     /**
-     * PERFORMANCE_SEATS는 {@code @Version} 낙관적 락 컬럼을 NOT NULL로 매핑한다. Hibernate {@code ddl-auto: create}(시드 테스트의
-     * {@code AppSchema})는 DEFAULT 없이 NOT NULL만 만들므로 시드가 값을 직접 넣어야 한다 — Flyway migration(V3)의 {@code DEFAULT 0}에 의존할 수
-     * 없다.
+     * PERFORMANCE_SEATS는 {@code @Version} 낙관적 락 컬럼을 NOT NULL로 매핑한다. 시드는 Flyway migration(V3)의 {@code DEFAULT 0}에 기대지 않고
+     * 값을 직접 넣는다 — entity 매핑만 보는 다른 도구가 만든 스키마에도 적재가 성립해야 한다.
      */
     @Test
     void 회차좌석_시드가_낙관적_락_버전을_직접_채운다() {
