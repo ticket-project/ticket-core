@@ -28,7 +28,8 @@
   붙이지 않는다. 한 use case 안에서만 오가는 값이면 타입을 만들기 전에 지역 변수로 충분한지 먼저 본다.
   [검사 없음]
 - 응답 항목은 그 use case의 중첩 record가 소유하고 이름은 `<Target>Response`로 짓는다. 엔티티와 같은
-  이름(`Seat`)이나 `Item`은 쓰지 않는다. DB 집계 결과도 마찬가지다. 여러 use case가 함께 쓰는 조회
+  이름(`Seat`)이나 `Item`·`Info`·`View`·`Entry`는 쓰지 않는다. DB 집계 결과도 마찬가지다
+  (`GetShowDetailUseCase.PriceSummaryResponse`). 여러 use case가 함께 쓰는 조회
   파라미터·커서·정렬은 `usecase` package 최상위에 둔다. `Snapshot`은 특정 시점에 고정한 상태, `Criteria`는
   검색·판정 조건, `Param`은 목록·커서 조회 실행 파라미터에 쓴다. [검사 없음]
 - **중간 타입을 계층마다 만들지 않는다.** 같은 값을 다른 응답 DTO로 그대로 복사하기만 하는 타입은 두지
@@ -40,13 +41,16 @@
 ### 그 밖의 이름
 
 - 별도 클래스의 역할이 분명할 때 `Reader`, `Writer`, `Validator`, `Registrar`, `Authenticator` 등을 쓰고,
-  범용적인 `Manager`/`Helper` 이름은 피한다. [검사 없음]
+  범용적인 `Manager`/`Helper` 이름은 피하고 역할을 그대로 쓴다(`DistributedLock`, `HoldRegistry`). [검사 없음]
 - `find...`는 부재 가능 조회, `findAll...`은 빈 목록 가능 조회, `require...`는 실패 가능한 필수 조건,
-  `exists...`는 존재 판정이다. Boolean은 `is`/`has`/`can`으로 표현한다. 생성은 `create`, 변환은
-  `from`/`to...`, 단순 조립은 `of`가 기본이다. [검사 없음]
+  `exists...`는 존재 판정이다. 조건만 판정하는 boolean 메서드는 `is`/`has`/`can`으로 표현한다. 동작한 뒤 성공
+  여부를 돌려주는 메서드는 조건을 이름에 붙이고(`releaseIfOwned`) `is`/`has`/`can`을 붙이지 않는다. 프레임워크
+  재정의(`supportsParameter`, `equals`)와 JSON·설정에 묶인 이름(`liked`, `enforcementEnabled`)은 예외다.
+  생성은 `create`, 변환은 `from`/`to...`, 단순 조립은 `of`가 기본이다. [검사 없음]
 - 예외 이름은 `[Subject][Condition]Exception`으로 읽히게 한다. `@ConfigurationProperties` 바인딩은
   `Properties`, 검증을 끝낸 설정 값은 `Settings`다. [검사 없음]
-- 도메인 생명주기는 `State`, 외부 표시 상태는 `Status`를 쓴다. [검사 없음]
+- 도메인 생명주기는 `State`, 외부 표시 상태는 `Status`를 쓴다. 둘 다 아닌 값 묶음은 그 역할을 이름으로 쓴다
+  (`MemberIdentity`). [검사 없음]
 - 이름 변경만으로 JSON·DB·오류 계약을 바꾸지 않는다. 오류 코드(`E`-code)는 외부 계약이라 공개 code·status·
   message를 이름 정리를 이유로 바꾸지 않는다. [검사 없음. E-code 전역 유일성은 `ErrorCodeUniquenessTest`]
 - Production package마다 `package-info.java`의 `@NullMarked`가 필요하며 실제 nullable만 `@Nullable`로
