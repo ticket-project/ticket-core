@@ -56,7 +56,6 @@ class SeedSettingsTest {
             assertThat(settings.loadTestMemberCount()).isEqualTo(2000);
             assertThat(settings.loadTestPerformanceCount()).isEqualTo(8);
             assertThat(settings.batchSize()).isEqualTo(500);
-            assertThat(settings.loadTestMemberPassword()).isEqualTo("password1234");
             assertThat(settings.sqlPath()).endsWith(java.nio.file.Path.of("seed", "sql", "kopis-curated.sql"));
             assertThat(Files.isRegularFile(settings.sqlPath())).isTrue();
         } finally {

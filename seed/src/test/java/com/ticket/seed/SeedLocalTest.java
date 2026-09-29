@@ -15,8 +15,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.ticket.seed.support.AppSchema;
 
@@ -211,7 +209,7 @@ class SeedLocalTest {
 
     @Test
     @Order(4)
-    void 생성된_테스트_회원이_실제_앱_인증_경로와_호환된다() {
+    void 생성된_테스트_회원은_비밀번호_없는_활성_회원이다() {
         final String email = "loadtest1@test.com";
         final Map<String, Object> row =
                 jdbcTemplate.queryForMap("SELECT password, name, role, deleted_at FROM MEMBERS WHERE email = ?", email);
@@ -219,17 +217,8 @@ class SeedLocalTest {
         assertThat(row.get("ROLE")).isEqualTo("MEMBER");
         assertThat(row.get("NAME")).isEqualTo("loadtest1");
         assertThat(row.get("DELETED_AT")).isNull();
-
-        final String stored = (String) row.get("PASSWORD");
-        assertThat(stored).as("앱의 DelegatingPasswordEncoder가 읽는 접두사 형식이어야 한다").startsWith("{bcrypt}$2");
-        // 앱이 실제로 로그인 검증에 쓰는 구현으로 그대로 검증한다.
-        final PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        assertThat(passwordEncoder.matches(SeedSettings.DEFAULT_LOAD_TEST_MEMBER_PASSWORD, stored))
-                .as("시드가 넣은 해시가 앱이 쓰는 PasswordEncoder로 검증돼야 한다")
-                .isTrue();
-        assertThat(passwordEncoder.matches("wrong-password", stored))
-                .as("틀린 비밀번호는 통과하지 않아야 한다")
-                .isFalse();
+        // 로그인은 소셜 전용이고 부하 테스트는 합성 access token을 쓰므로 비밀번호를 만들지 않는다.
+        assertThat(row.get("PASSWORD")).isNull();
     }
 
     @Test
@@ -247,7 +236,6 @@ class SeedLocalTest {
 
                 assertThat(member.getRole()).isEqualTo(com.ticket.member.domain.Role.MEMBER);
                 assertThat(member.isDeleted()).isFalse();
-                assertThat(member.getEncodedPassword().getPassword()).startsWith("{bcrypt}$2");
                 assertThat(member.getCreatedAt()).isNotNull();
                 assertThat(member.getCreatedBy()).isNotBlank();
             }
