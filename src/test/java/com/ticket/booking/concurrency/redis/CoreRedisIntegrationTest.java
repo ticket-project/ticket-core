@@ -274,8 +274,7 @@ class CoreRedisIntegrationTest {
 
     /** 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다. */
     record LockedService(LockManager lockManager) {
-        private static final LockOptions OPTIONS =
-                LockOptions.waiting(Duration.ofMillis(100)).withLeaseTime(Duration.ofSeconds(5));
+        private static final LockOptions OPTIONS = LockOptions.waiting(Duration.ofMillis(100));
 
         void execute(final LockKey key, final CountDownLatch entered, final CountDownLatch release) {
             lockManager.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));

@@ -1,7 +1,6 @@
 package com.ticket.booking.concurrency.redis;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -39,8 +38,9 @@ public class RedissonLockManager implements LockManager {
 
         final RLock lock = generateLock(lockNames);
         try {
-            if (!tryLock(lock, options)) {
-                logLockFailure(options, lockNames);
+            // leaseTime 없이 잡는다 — Redisson watchdog이 실행 중인 락을 자동 연장한다.
+            if (!lock.tryLock(options.waitTime().toMillis(), TimeUnit.MILLISECONDS)) {
+                log.warn("분산 락 획득에 실패했습니다. reason=lock_not_acquired keys={}", lockNames);
                 throw new HoldBusyException(resolveMessage(options));
             }
             return action.get();
@@ -53,29 +53,8 @@ public class RedissonLockManager implements LockManager {
         }
     }
 
-    private boolean tryLock(final RLock lock, final LockOptions options) throws InterruptedException {
-        if (options.autoExtends()) {
-            return lock.tryLock(options.waitTime().toMillis(), TimeUnit.MILLISECONDS);
-        }
-        // autoExtends()가 false라는 것은 leaseTime이 지정됐다는 뜻이다(autoExtends는 leaseTime == null).
-        return lock.tryLock(
-                options.waitTime().toMillis(),
-                Objects.requireNonNull(options.leaseTime(), "leaseTime").toMillis(),
-                TimeUnit.MILLISECONDS);
-    }
-
     private String resolveMessage(final LockOptions options) {
-        return options.failureMessage() == null || options.failureMessage().isBlank()
-                ? HoldBusyException.MESSAGE
-                : options.failureMessage();
-    }
-
-    private void logLockFailure(final LockOptions options, final List<String> lockNames) {
-        if (options.warnOnFailure()) {
-            log.warn("분산 락 획득에 실패했습니다. reason=lock_not_acquired keys={}", lockNames);
-            return;
-        }
-        log.debug("분산 락 경합으로 실행을 건너뜁니다. reason=lock_not_acquired keys={}", lockNames);
+        return options.failureMessage().isBlank() ? HoldBusyException.MESSAGE : options.failureMessage();
     }
 
     private RLock generateLock(final List<String> lockNames) {
