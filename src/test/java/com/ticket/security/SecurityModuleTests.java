@@ -16,20 +16,7 @@ import com.ticket.member.api.MemberAccountApi;
  * module의 발급기가 쓰는 실제 codec까지 사라진다.
  */
 @ApplicationModuleTest(verifyAutomatically = false)
-@TestPropertySource(
-        properties = {
-            "app.cors.allowed-origins=http://localhost:3000",
-            "JWT_SECRET=0123456789abcdef0123456789abcdef",
-            "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
-            "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
-            "GOOGLE_CLIENT_ID=security-module-test",
-            "GOOGLE_CLIENT_SECRET=security-module-test",
-            "KAKAO_CLIENT_ID=security-module-test",
-            "KAKAO_CLIENT_SECRET=security-module-test",
-            "KAKAO_ADMIN_KEY=security-module-test",
-            "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
-            "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
-        })
+@TestPropertySource(properties = {"app.cors.allowed-origins=http://localhost:3000"})
 class SecurityModuleTests {
     @MockitoBean
     private MemberAccountApi memberAccountApi;

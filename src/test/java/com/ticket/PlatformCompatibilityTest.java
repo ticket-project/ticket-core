@@ -25,17 +25,7 @@ import com.ticket.testsupport.persistence.MigratedSchema;
             "spring.datasource.url=jdbc:h2:mem:platform-compat;MODE=Oracle;DB_CLOSE_DELAY=-1",
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",
-            "spring.datasource.password=",
-            "JWT_SECRET=0123456789abcdef0123456789abcdef",
-            "JWT_ACCESS_TOKEN_EXPIRATION_SECONDS=1800",
-            "JWT_REFRESH_TOKEN_EXPIRATION_SECONDS=1209600",
-            "GOOGLE_CLIENT_ID=platform-compat",
-            "GOOGLE_CLIENT_SECRET=platform-compat",
-            "KAKAO_CLIENT_ID=platform-compat",
-            "KAKAO_CLIENT_SECRET=platform-compat",
-            "KAKAO_ADMIN_KEY=platform-compat",
-            "OAUTH2_SUCCESS_REDIRECT_URI=http://localhost:3000/auth/callback",
-            "OAUTH2_FAILURE_REDIRECT_URI=http://localhost:3000/auth/callback"
+            "spring.datasource.password="
         })
 @SuppressWarnings({"NonAsciiCharacters", "resource"})
 class PlatformCompatibilityTest {
