@@ -70,7 +70,8 @@ class BookingExceptionHandlerTest {
                         "이미 진행 중인 결제 대기 주문이 있습니다."),
                 Arguments.of(new SeatAlreadyHeldException(), HttpStatus.CONFLICT, "E6000", "좌석이 이미 선점되었습니다."),
                 Arguments.of(new HoldLimitExceededException(), HttpStatus.CONFLICT, "E6001", "선점 가능한 좌석 수를 초과하였습니다."),
-                Arguments.of(new HoldBusyException(), HttpStatus.CONFLICT, "E6003", "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
+                Arguments.of(
+                        new HoldBusyException(null), HttpStatus.CONFLICT, "E6003", "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
     }
 
     @ParameterizedTest
