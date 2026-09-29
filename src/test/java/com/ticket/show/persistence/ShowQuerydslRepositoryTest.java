@@ -64,7 +64,6 @@ import com.ticket.venue.usecase.VenueLookupService;
 @SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = ShowQuerydslRepositoryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
-            "spring.profiles.active=test",
             "spring.datasource.url=jdbc:h2:mem:show-query-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.datasource.username=sa",

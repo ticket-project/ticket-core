@@ -37,7 +37,7 @@ import com.ticket.security.token.AccessTokenReader;
 @WebMvcTest(controllers = ApiSecurityConfigTest.TestController.class)
 @ContextConfiguration(classes = TicketApplication.class)
 @Import({ApiSecurityConfig.class, SecurityWebMvcConfig.class, ApiSecurityConfigTest.TestController.class})
-@TestPropertySource(properties = {"spring.profiles.active=test", "app.cors.allowed-origins=http://localhost:3000"})
+@TestPropertySource(properties = "app.cors.allowed-origins=http://localhost:3000")
 @SuppressWarnings("NonAsciiCharacters")
 class ApiSecurityConfigTest {
     @Autowired
