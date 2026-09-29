@@ -39,7 +39,7 @@ class RefreshAuthTokenUseCaseTest {
 
     @Test
     void valid_refresh_token_issues_new_tokens() {
-        MemberStatus member = new MemberStatus(1L, true, "MEMBER");
+        MemberStatus member = new MemberStatus(1L, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens("access-token-value", "new-refresh-token-value", "Bearer", 1800L, 1209600L, 3L);
 

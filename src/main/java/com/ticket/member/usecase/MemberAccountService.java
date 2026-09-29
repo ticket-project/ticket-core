@@ -67,7 +67,6 @@ public class MemberAccountService implements MemberAccountApi {
     }
 
     private MemberStatus statusOf(final Member member) {
-        return new MemberStatus(
-                member.getId(), !member.isDeleted(), member.getRole().name());
+        return new MemberStatus(member.getId(), member.getRole().name());
     }
 }
