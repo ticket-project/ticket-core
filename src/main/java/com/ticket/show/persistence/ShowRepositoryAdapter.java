@@ -26,11 +26,6 @@ public class ShowRepositoryAdapter implements ShowRepository {
     }
 
     @Override
-    public boolean existsById(final Long showId) {
-        return jpaRepository.existsById(showId);
-    }
-
-    @Override
     public Map<Long, Show> findSummaries(final Set<Long> showIds) {
         if (showIds.isEmpty()) {
             return Map.of();

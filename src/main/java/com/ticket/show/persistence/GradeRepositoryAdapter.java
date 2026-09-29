@@ -1,9 +1,7 @@
 package com.ticket.show.persistence;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
@@ -17,16 +15,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GradeRepositoryAdapter implements GradeRepository {
     private final SpringDataGradeJpaRepository jpaRepository;
-
-    @Override
-    public Optional<Grade> findById(final Long gradeId) {
-        return jpaRepository.findById(gradeId);
-    }
-
-    @Override
-    public List<Grade> findAllOrderByCodeAsc() {
-        return jpaRepository.findAllByOrderByCodeAsc();
-    }
 
     @Override
     public Map<Long, Grade> findGradeNames(final Collection<Long> gradeIds) {
