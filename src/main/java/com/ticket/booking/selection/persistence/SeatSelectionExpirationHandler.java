@@ -19,7 +19,7 @@ public class SeatSelectionExpirationHandler implements RedisKeyExpirationHandler
     private final SeatSelectionCoordinator seatSelectionCoordinator;
 
     @Override
-    public boolean supports(final String expiredKey) {
+    public boolean canHandle(final String expiredKey) {
         return SeatSelectionRedisKey.tryParseSelectKey(expiredKey).isPresent();
     }
 

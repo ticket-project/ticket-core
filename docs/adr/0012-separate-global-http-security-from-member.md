@@ -63,7 +63,7 @@ filter의 `IllegalArgumentException`을 token 오류로 오인해 chain을 두 �
 
 Google/Kakao raw attribute 해석은 domain이 아니라
 `member.oauth.infrastructure.OAuth2UserInfoMapper`가 담당한다. application에는 provider,
-providerId, email, emailVerified, name만 담은 정규화된 `OAuth2UserInfo`를 넘긴다.
+providerId, email, isEmailVerified, name만 담은 정규화된 `OAuth2UserInfo`를 넘긴다.
 
 동일 이메일 자동 연결은 provider가 이메일 검증을 명시한 경우에만 허용한다. Google은
 `email_verified=true`, Kakao는 `is_email_valid=true`와 `is_email_verified=true`를 모두 요구한다.

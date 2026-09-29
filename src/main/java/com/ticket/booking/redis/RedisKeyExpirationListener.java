@@ -20,7 +20,7 @@ public class RedisKeyExpirationListener implements MessageListener {
         final String expiredKey = new String(message.getBody(), StandardCharsets.UTF_8);
 
         handlers.stream()
-                .filter(handler -> handler.supports(expiredKey))
+                .filter(handler -> handler.canHandle(expiredKey))
                 .findFirst()
                 .ifPresent(handler -> handler.handle(expiredKey));
     }

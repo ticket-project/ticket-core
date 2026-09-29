@@ -19,7 +19,7 @@ public class HoldKeyExpirationHandler implements RedisKeyExpirationHandler {
     private final Clock clock;
 
     @Override
-    public boolean supports(final String expiredKey) {
+    public boolean canHandle(final String expiredKey) {
         return HoldRedisKey.tryParseHoldMetaKey(expiredKey).isPresent();
     }
 
