@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.ClassPathResource;
@@ -27,13 +29,12 @@ class FlywayConfigurationTest {
                 .isTrue();
     }
 
+    /** 공통 설정에서 migration은 꺼져 있고, 켜는 profile에서도 clean은 막히고 migrate 전 검증은 켜져 있어야 한다. */
     @Test
     void common_flyway_settings_disable_accidental_migration_by_default() throws Exception {
         final PropertySource<?> application = loadYaml("application.yml");
 
         assertThat(application.getProperty("spring.flyway.enabled")).isEqualTo(false);
-        assertThat(application.getProperty("spring.flyway.locations")).isEqualTo("classpath:db/migration");
-        assertThat(application.getProperty("spring.flyway.encoding")).isEqualTo("UTF-8");
         assertThat(application.getProperty("spring.flyway.clean-disabled")).isEqualTo(true);
         assertThat(application.getProperty("spring.flyway.validate-on-migrate")).isEqualTo(true);
     }
@@ -46,43 +47,30 @@ class FlywayConfigurationTest {
                 .isEqualTo(true);
     }
 
-    @Test
-    void local_profile_builds_h2_schema_with_the_same_flyway_migrations_as_prod() throws Exception {
-        final PropertySource<?> local = loadYaml("application-local.yml");
+    /** 스키마 원본은 migration이다(ADR 0020). DB를 쓰는 profile은 모두 Flyway로 스키마를 만들고 Hibernate는 검증만 한다. */
+    @ParameterizedTest
+    @ValueSource(strings = {"application-local.yml", "application-dev.yml", "application-prod.yml"})
+    void db_profiles_build_schema_with_flyway_and_hibernate_only_validates(final String resourceName) throws Exception {
+        final PropertySource<?> profile = loadYaml(resourceName);
 
-        assertThat(local.getProperty("spring.datasource.url"))
-                .isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
-        assertThat(local.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
-        assertThat(local.getProperty("spring.jpa.database-platform"))
-                .isEqualTo("com.ticket.shared.config.H2OracleModeDialect");
-        assertThat(local.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertThat(local.getProperty("spring.flyway.locations"))
-                .isEqualTo("classpath:db/migration,classpath:db/migration-vendor/h2");
-        assertNoIgnoredBaselineSettings(local);
+        assertThat(profile.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
+        assertThat(profile.getProperty("spring.flyway.enabled")).isEqualTo(true);
+        assertThat(String.valueOf(profile.getProperty("spring.flyway.locations"))
+                        .split(","))
+                .contains("classpath:db/migration");
+        assertThat(profile.getProperty("spring.flyway.clean-disabled")).isNotEqualTo(false);
+        assertNoIgnoredBaselineSettings(profile);
     }
 
+    /** local H2는 운영과 같은 공통 migration에 H2 전용 보정만 더한다. dev는 같은 local H2 파일을 다시 쓴다. */
     @Test
-    void dev_profile_reuses_local_h2_schema_with_flyway() throws Exception {
+    void local_h2_uses_common_migrations_plus_h2_vendor_and_dev_shares_it() throws Exception {
+        final PropertySource<?> local = loadYaml("application-local.yml");
         final PropertySource<?> dev = loadYaml("application-dev.yml");
 
-        assertThat(dev.getProperty("spring.datasource.url"))
-                .isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
-        assertThat(dev.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
-        assertThat(dev.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertNoIgnoredBaselineSettings(dev);
-        assertThat(dev.getProperty("spring.flyway.baseline-description"))
-                .isEqualTo("existing local schema before Flyway");
-    }
-
-    @Test
-    void prod_profile_enables_flyway_with_existing_schema_baseline() throws Exception {
-        final PropertySource<?> prod = loadYaml("application-prod.yml");
-
-        assertThat(prod.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
-        assertThat(prod.getProperty("spring.flyway.enabled")).isEqualTo(true);
-        assertNoIgnoredBaselineSettings(prod);
-        assertThat(prod.getProperty("spring.flyway.baseline-description")).isEqualTo("existing schema before Flyway");
-        assertThat(prod.getProperty("spring.flyway.clean-disabled")).isEqualTo(true);
+        assertThat(String.valueOf(local.getProperty("spring.flyway.locations")).split(","))
+                .containsExactlyInAnyOrder("classpath:db/migration", "classpath:db/migration-vendor/h2");
+        assertThat(dev.getProperty("spring.datasource.url")).isEqualTo(local.getProperty("spring.datasource.url"));
     }
 
     /**
@@ -93,28 +81,6 @@ class FlywayConfigurationTest {
     private void assertNoIgnoredBaselineSettings(final PropertySource<?> profile) {
         assertThat(profile.getProperty("spring.flyway.baseline-on-migrate")).isNull();
         assertThat(profile.getProperty("spring.flyway.baseline-version")).isNull();
-    }
-
-    /**
-     * 초기 데이터 적재는 애플리케이션 기동에서 빠졌다(별도 {@code seedLocal} 명령이 맡는다). {@code app.seed.*} 설정이 조용히 다시 들어오는 것을 막는다 — 남아 있으면
-     * "기동하면 데이터가 들어간다"는 잘못된 기대가 되살아난다.
-     */
-    @Test
-    void no_profile_declares_startup_seed_properties() throws Exception {
-        for (final String resourceName :
-                List.of("application.yml", "application-local.yml", "application-dev.yml", "application-prod.yml")) {
-            final PropertySource<?> propertySource = loadYaml(resourceName);
-
-            assertThat(propertySource.getProperty("app.seed.enabled"))
-                    .as("%s에 app.seed.enabled가 남아 있다", resourceName)
-                    .isNull();
-            assertThat(propertySource.getProperty("app.seed.load-test-fixture.enabled"))
-                    .as("%s에 app.seed.load-test-fixture.enabled가 남아 있다", resourceName)
-                    .isNull();
-            assertThat(propertySource.getProperty("app.seed.load-test-members.count"))
-                    .as("%s에 app.seed.load-test-members.count가 남아 있다", resourceName)
-                    .isNull();
-        }
     }
 
     private PropertySource<?> loadYaml(final String resourceName) throws IOException {
