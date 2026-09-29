@@ -19,12 +19,8 @@ public interface PerformanceSeatRepository {
 
     List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(Long performanceId, Collection<Long> seatIds);
 
-    /**
-     * 좌석 선택 판정에 필요한 좌석 한 건의 상태만 반환한다.
-     *
-     * <p>고빈도 경로라 엔티티 전체를 적재하지 않고 유니크 인덱스를 그대로 타도록 좁혀 조회한다.
-     */
-    Optional<PerformanceSeatStateSnapshot> findSeatState(Long performanceId, Long seatId);
+    /** 좌석 선택 판정에 쓰는 좌석 한 건을 UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스로 조회한다. */
+    Optional<PerformanceSeat> findSeatState(Long performanceId, Long seatId);
 
     /**
      * 회차 정적 seat-map에 필요한 판매 편성을 조회한다. 이 회차에 실제로 판매 편성된 좌석만 반환한다 — 편성되지 않은 물리 Seat는 여기 나타나지 않으므로 seat-map 응답에서도 자연히
