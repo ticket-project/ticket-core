@@ -2,33 +2,27 @@
 
 이 문서는 주문 생성, 취소, 만료와 Redis hold 후처리의 실행 순서를 설명한다. 핵심 목적은 DB
 트랜잭션과 외부 I/O의 경계, 그리고 Spring Modulith 이벤트가 어떻게 이어지는지 한눈에 확인하는
-것이다. 모듈 경계 결정 배경은 [ADR 0003](adr/0003-spring-modulith-application-module-boundaries.md)을,
-가격 책임과 Payment/Order 관계의 결정 배경은
-[ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)를 본다.
+것이다.
 
-**ADR 0005 적용 범위**: `payment` module과 booking의 `Ticket`은 entity/schema/repository까지만 존재하는 entity-only
-단계다(ADR 0005의 `ticketing` module은 booking으로 흡수됐다). PG 승인, `OrderConfirmed` listener, 실제 결제 정산 서비스는 아직 구현되지 않았다
-— 현재 코드에서 `Order.confirm()`을 호출하는 곳은 없다(`rg -n "\.confirm\(" src/main`로 확인 가능).
-아래 수명주기는 지금 실제로 동작하는 PENDING 생성·취소·만료 경로를 설명하고, 결제 확정 흐름은
-아직 존재하지 않는 후속 작업임을 명시한다.
-
-이 문서가 설명하는 코드는 대부분 `booking` Application Module 소유다(`com.ticket.booking.**`).
-커밋 후 처리를 관리하는 `EventPublicationMaintenance`만 전역 배선 module
-(`com.ticket.shared.config`)에 있다.
+**구현 범위**: `payment` module과 booking의 `Ticket`은 entity/schema/repository까지만 있는 entity-only
+단계다. PG 승인, `OrderConfirmed` listener, 결제 정산 서비스는 아직 없고 `Order.confirm()`을 호출하는 곳도
+없다. 그래서 `PENDING` 주문은 만료(`ExpireOrderUseCase`) 또는 취소(`CancelOrderUseCase`)로만 종료된다. 아래
+수명주기는 지금 실제로 동작하는 PENDING 생성·취소·만료 경로만 설명한다. 결제 승인·재시도·Hold 만료 경쟁 정책은
+아직 설계되지 않았다.
 
 ## 지켜야 할 원칙
 
 - Redis 또는 WebSocket 호출 중에는 DB connection을 점유하지 않는다. HTTP 요청에서는
   `spring.jpa.open-in-view: false`가 이를 보장한다 — 켜 두면 요청이 첫 DB 접근부터 응답 끝까지
-  connection을 쥔다(`SeatStatusTransactionBoundaryTest`가 꺼져 있음을 고정한다).
+  connection을 쥔다.
 - Redis TTL 이벤트가 한꺼번에 들어와도 DB로 진입하는 작업 수는 제한한다.
 - 주문 저장 또는 상태 변경과 그에 대응하는 이벤트 발행은 같은 DB 트랜잭션에서 처리한다.
 - 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고
   throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
 - 예매 정책 조회(booking-local `PerformanceSalesPolicy`), show 표시값 조회, member 회원 확인,
   admission token 검증은 booking DB 트랜잭션 밖에서 끝낸다.
-- 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다(ADR 0005). 클라이언트가 보낸 가격도,
-  show가 다시 계산한 가격도 금액 계산 근거로 쓰지 않는다.
+- 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다. 클라이언트가 보낸 가격도, show가 다시 계산한
+  가격도 금액 계산 근거로 쓰지 않는다.
 - Order/OrderSeat에 남긴 표시 snapshot(show/performance/venue 이름, 등급 코드·이름, 좌석 라벨,
   가격)은 생성 이후 다시 조회하지 않는다. show 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
   주문 상세는 바뀌지 않는다.
@@ -46,11 +40,11 @@ StartBookingUseCase          (POST /api/v1/orders)
   -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
      show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
-     그 밖은 E4006, ADR 0021)하고
+     그 밖은 E4006)하고
      HoldManager로 Redis 좌석 hold 생성 후 락 해제 (밖)
   -> PendingOrderCreator
        -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
-          단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (ADR 0005, 다른 값을 섞지 않는다)
+          단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (다른 값을 섞지 않는다)
        -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
             Order에는 show/performance/venue 표시 snapshot을, OrderSeat에는 등급·좌석 라벨·unitPrice
             snapshot을 함께 저장한다 — 둘 다 생성 후 불변이다.
@@ -73,19 +67,17 @@ DB 저장이 실패하면 `StartBookingUseCase`가 `SEAT` 락을 다시 잡고 �
 좌석 선택과 알림도 별도의 `SEAT` 락 구간에서 처리한다. 락 안의 외부 I/O는 필요한 작업으로 제한하고,
 락 키를 변경할 때는 보호 대상을 검증한다.
 
-이 시점의 동시성 방어는 여전히 `LockScope.SEAT` 분산락과 `BookingAvailabilityChecker`의 좌석 판매
-상태 확인이다. `PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만, 현재
-주문 생성 경로 어디에서도 호출되지 않는다 — 결제 승인 시점에 `PerformanceSeat`를 `RESERVED`로
-전이하는 정산 흐름은 아직 구현되지 않은 후속 작업이다(ADR 0005 "이 ADR이 결정하지 않는 것" 참고).
-지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
+현재 동시성 방어는 `LockScope.SEAT` 분산락과 `BookingAvailabilityChecker`의 좌석 판매 상태 확인이다.
+`PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만 현재 주문 생성 경로 어디에서도
+호출되지 않는다 — 결제 승인 시점에 `PerformanceSeat`를 `RESERVED`로 전이하는 정산 흐름이 아직 없다. 지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
 나타낼 뿐 주문 확정으로 바뀌지 않는다.
 
 커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
 `OrderStarted` publication은 Event Publication Registry에 FAILED로 남는다.
-`EventPublicationMaintenance`가 실패 publication을 재제출한다(아래 [이벤트 재시도와 보정](#이벤트-재시도와-보정)).
+`EventPublicationMaintenance`가 실패 publication을 재제출한다(아래 "이벤트 재시도와 보정").
 따라서 프로세스가 재시작되거나 즉시 처리가 실패해도 후속 처리 입력은 DB(publication row)에
 남는다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
-본인이 선택 중인 좌석으로만 주문을 시작할 수 있다([ADR 0021](adr/0021-order-requires-own-selection.md)).
+본인이 선택 중인 좌석으로만 주문을 시작할 수 있다.
 
 주문 시작, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
 만료 시각이고, `remainingSeconds`는 응답을 만드는 서버 시각부터 `expiresAt`까지 남은
@@ -126,23 +118,12 @@ DB 저장이 실패하면 `StartBookingUseCase`가 `SEAT` 락을 다시 잡고 �
 ## 결제 시도와 Order 상태
 
 `Order`의 상태 전이는 `PENDING -> CONFIRMED`, `PENDING -> EXPIRED`, `PENDING -> CANCELED` 세 가지뿐이다
-(`booking.order.domain.OrderState`). 과거 있었던 `PAYMENT_FAILED`는 ADR 0005로
-제거됐다 — `rg -n "PAYMENT_FAILED|failPayment" --type java`로 확인해도 `Order`/`OrderState`에는
-남아 있지 않다(`HoldReleaseReason.PAYMENT_FAILED`는 hold 해제 사유를 기록하는 별개의 enum이고
-Order 상태가 아니다).
+(`booking.order.domain.OrderState`). 결제 실패 상태는 없다(`HoldReleaseReason.PAYMENT_FAILED`는 hold 해제 사유를
+기록하는 별개의 enum이고 Order 상태가 아니다).
 
-이렇게 바뀐 이유는 Payment가 결제 완료 건이 아니라 **결제 시도**이기 때문이다(`Order 1 : 0..N
-Payment`, ADR 0005). 결제 시도 한 번이 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있어야
-하므로, 결제 실패는 Payment 자신의 상태(`READY/PROCESSING -> FAILED`)로만 표현하고 Order를 끝내는
-사건으로 취급하지 않는다.
-
-**현재 구현 범위**: `payment` Application Module은 지금 entity/schema/repository까지만 있는
-entity-only 단계다(ADR 0005 §3). PG 연동, 결제 승인/실패 API, `Order.confirm()`을 호출하는 정산
-서비스, `OrderConfirmed` listener는 아직 코드에 없다 — `rg -n "\.confirm\("`로 확인해도 main
-소스에서 `Order.confirm()`을 호출하는 곳이 없다. 즉 지금은 Order가 결제 승인으로 `CONFIRMED`가
-되는 실제 경로 자체가 아직 배선되지 않았고, `PENDING` 주문은 만료(`ExpireOrderUseCase`) 또는
-취소(`CancelOrderUseCase`)로만 종료된다. 결제 승인·재시도·Hold 만료 경쟁 정책은 ADR 0005가 명시적으로
-범위 밖으로 남긴 별도 설계 대상이다.
+결제 실패를 Order 상태로 두지 않는 이유는 Payment가 결제 완료 건이 아니라 **결제 시도**이기 때문이다(`Order 1 : 0..N Payment`). 결제 시도 한 번이
+실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있어야 하므로, 결제 실패는 Payment 자신의 상태
+(`READY/PROCESSING -> FAILED`)로만 표현하고 Order를 끝내는 사건으로 취급하지 않는다.
 
 ## 주문 취소와 만료
 
@@ -178,7 +159,9 @@ WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새
 ## 이벤트 재시도와 보정
 
 `BookingEventListeners`의 실패는 Spring Modulith의 JPA Event Publication Registry가 관리한다.
-`EventPublicationMaintenance`가 실패 publication을 제한된 횟수로 재제출한다. 상한을 넘긴 건은 자동 처리에서 빠져 수동 조사가 필요하다. 동일 이벤트 재전달은 예상 경로이며, Redis 해제는 holdKey 소유권을 확인하고 발행은 최신 hold/selection을 재확인한다. 주기·상한·로그·수동 조사 조건은 [operations.md](operations.md#이벤트-publication-조사와-재처리)를 본다.
+`EventPublicationMaintenance`가 실패 publication을 제한된 횟수로 재제출한다. 상한을 넘긴 건은 자동 처리에서 빠져 수동
+조사가 필요하다. 동일 이벤트 재전달은 예상 경로이고, 그래서 후속 처리는 멱등하게 짠다(위 "주문 취소와 만료"의
+재전달 설명).
 
 ## TTL 폭주와 보정
 
@@ -187,7 +170,6 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
 `ExpireOrderUseCase.expireByHoldKey`를 호출한다.
 
 - 만료 이벤트의 handler와 queue 포화 시 수신 스레드는 같은 permit으로 DB 동시 진입을 제한한다.
-  worker·queue·permit 설정과 적체 관측은 [operations.md](operations.md#core-용량-관측)를 본다.
 - `OrderExpirationTrigger` → `ExpirePendingOrdersUseCase`가 누락된 만료를 보정한다.
   **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
   무관하게 앞으로만 가므로, 앞의 주문이 계속 실패해도 뒤의 정상 만료 대상이 같은 순회에서
@@ -197,12 +179,4 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
   경로로 들어오면 그대로 EXPIRED가 되던 문제를 막는다. "지금 만료 처리 대상인가"는
   `Order.isExpirable(now)`가 답한다.
 
-`@Scheduled` 트리거(`OrderExpirationTrigger`)는 `booking`이 소유한다. `worker.enabled=false`면
-이 트리거 자체가 등록되지 않는다.
-
-**주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 이름이 붙은 전용 executor가 없다.**
-상세(어떤 executor를 쓰는지, 관측 지표)는 [operations.md의 Core 용량 관측](operations.md#core-용량-관측)를 본다.
-
-## 주요 코드와 운영 연결
-
-`StartBookingUseCase`·`PendingOrderCreator`가 시작·저장과 실패 보상을, `OrderTerminationService`가 취소·만료를, `BookingEventListeners`가 커밋 후 처리를 맡는다. `SeatSelectionCoordinator`는 좌석 락 안에서 선택과 알림을 조율한다. `EventPublicationMaintenance`는 실패 publication 재시도를 맡는다. 상태·경합·재시도 검증은 [testing.md](testing.md), 수동 조사·복구와 상세 설정은 [operations.md](operations.md#이벤트-publication-조사와-재처리), 결정 배경은 [ADR](adr/README.md)을 본다.
+`@Scheduled` 트리거(`OrderExpirationTrigger`)는 `worker.enabled=false`면 등록되지 않는다.
