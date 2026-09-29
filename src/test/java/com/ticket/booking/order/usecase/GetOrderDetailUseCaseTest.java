@@ -74,7 +74,7 @@ class GetOrderDetailUseCaseTest {
 
         assertThat(output.tickets().count()).isEqualTo(2);
         assertThat(output.tickets().seats())
-                .extracting(GetOrderDetailUseCase.TicketSeat::performanceSeatId)
+                .extracting(GetOrderDetailUseCase.TicketSeatResponse::performanceSeatId)
                 .containsExactly(501L, 502L);
         assertThat(output.price().ticketAmount()).isEqualByComparingTo("220000");
         assertThat(output.price().totalAmount()).isEqualByComparingTo("220000");
