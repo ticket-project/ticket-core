@@ -11,14 +11,12 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -28,6 +26,7 @@ import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -37,8 +36,7 @@ class HoldReleaseCoordinatorTest {
     @Mock
     private HoldManager holdManager;
 
-    @Spy
-    private RecordingLockManager lockManager = new RecordingLockManager();
+    private final RecordingLockManager lockManager = new RecordingLockManager();
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -49,12 +47,20 @@ class HoldReleaseCoordinatorTest {
     @Mock
     private SeatStatusEventPublisher seatStatusEventPublisher;
 
-    @InjectMocks
     private HoldReleaseCoordinator coordinator;
+
+    @BeforeEach
+    void setUp() {
+        coordinator = new HoldReleaseCoordinator(
+                lockManager,
+                holdManager,
+                new SeatOccupancy(seatSelectionService, holdManager),
+                performanceSeatRepository,
+                seatStatusEventPublisher);
+    }
 
     @Test
     void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
-        when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of());
         when(holdManager.isHeld(1L, 10L)).thenReturn(false);
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();
@@ -69,9 +75,8 @@ class HoldReleaseCoordinatorTest {
 
     @Test
     void doesNotPublishOverANewerHoldOrSelection() {
-        when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of(20L));
         when(holdManager.isHeld(1L, 10L)).thenReturn(true);
-        when(holdManager.isHeld(1L, 20L)).thenReturn(false);
+        when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
 
         coordinator.releaseAndPublish(task());
 
@@ -84,7 +89,6 @@ class HoldReleaseCoordinatorTest {
      */
     @Test
     void publicationFailureIsRetriedFromRelease() {
-        when(seatSelectionService.getSelectingSeatIds(1L)).thenReturn(Set.of());
         when(holdManager.isHeld(1L, 10L)).thenReturn(false);
         when(holdManager.isHeld(1L, 20L)).thenReturn(false);
         stubPerformanceSeats();

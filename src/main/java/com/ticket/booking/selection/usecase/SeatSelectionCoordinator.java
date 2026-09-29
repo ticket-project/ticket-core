@@ -16,6 +16,7 @@ import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -44,6 +45,7 @@ public class SeatSelectionCoordinator {
     private final LockManager lockManager;
     private final HoldManager holdManager;
     private final SeatSelectionService seatSelectionService;
+    private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatEventPublisher;
     private final Clock clock;
@@ -87,10 +89,7 @@ public class SeatSelectionCoordinator {
     public void notifyReleasedIfFree(
             final Long performanceId, final Long seatId, final @Nullable Long performanceSeatId) {
         lockManager.withLock(List.of(LockKey.seat(performanceId, seatId)), NOTIFY_LOCK, () -> {
-            if (seatSelectionService.isSelected(performanceId, seatId)) {
-                return;
-            }
-            if (holdManager.isHeld(performanceId, seatId)) {
+            if (seatOccupancy.isOccupied(performanceId, seatId)) {
                 return;
             }
             seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);

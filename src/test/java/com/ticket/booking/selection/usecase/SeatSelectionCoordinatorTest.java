@@ -31,6 +31,7 @@ import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -59,7 +60,13 @@ class SeatSelectionCoordinatorTest {
     @BeforeEach
     void setUp() {
         coordinator = new SeatSelectionCoordinator(
-                lockManager, holdManager, seatSelectionService, performanceSeatRepository, seatEventPublisher, CLOCK);
+                lockManager,
+                holdManager,
+                seatSelectionService,
+                new SeatOccupancy(seatSelectionService, holdManager),
+                performanceSeatRepository,
+                seatEventPublisher,
+                CLOCK);
     }
 
     @Test
