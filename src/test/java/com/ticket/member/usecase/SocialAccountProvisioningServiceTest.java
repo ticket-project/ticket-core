@@ -188,13 +188,13 @@ class SocialAccountProvisioningServiceTest {
     private void socialUserWithEmailAndName(final String providerId, final String email, final String name) {
         socialProviderAndId(providerId);
         when(userInfo.email()).thenReturn(email);
-        when(userInfo.emailVerified()).thenReturn(true);
+        when(userInfo.isEmailVerified()).thenReturn(true);
         when(userInfo.name()).thenReturn(name);
     }
 
     private void socialUserWithEmail(final String providerId, final String email) {
         socialProviderAndId(providerId);
         when(userInfo.email()).thenReturn(email);
-        when(userInfo.emailVerified()).thenReturn(true);
+        when(userInfo.isEmailVerified()).thenReturn(true);
     }
 }

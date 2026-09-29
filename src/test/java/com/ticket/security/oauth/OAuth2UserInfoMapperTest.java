@@ -23,7 +23,7 @@ class OAuth2UserInfoMapperTest {
         assertThat(result.provider()).isEqualTo(SocialProvider.GOOGLE);
         assertThat(result.providerId()).isEqualTo("sub-1");
         assertThat(result.email()).isEqualTo("user@example.com");
-        assertThat(result.emailVerified()).isTrue();
+        assertThat(result.isEmailVerified()).isTrue();
         assertThat(result.name()).isEqualTo("사용자");
     }
 
@@ -50,7 +50,7 @@ class OAuth2UserInfoMapperTest {
         assertThat(result.provider()).isEqualTo(SocialProvider.KAKAO);
         assertThat(result.providerId()).isEqualTo("1");
         assertThat(result.email()).isEqualTo("user@example.com");
-        assertThat(result.emailVerified()).isTrue();
+        assertThat(result.isEmailVerified()).isTrue();
         assertThat(result.name()).isEqualTo("사용자");
     }
 
@@ -64,7 +64,7 @@ class OAuth2UserInfoMapperTest {
                         "kakao_account",
                         Map.of("email", "user@example.com", "is_email_valid", false, "is_email_verified", true)));
 
-        assertThat(result.emailVerified()).isFalse();
+        assertThat(result.isEmailVerified()).isFalse();
     }
 
     @Test

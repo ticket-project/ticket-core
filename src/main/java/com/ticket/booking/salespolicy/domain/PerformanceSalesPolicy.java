@@ -76,7 +76,7 @@ public class PerformanceSalesPolicy extends AuditedEntity {
 
     /** 한도가 없는 회차는 좌석 수를 제한하지 않는다. 옛 {@code BookingPolicyGuard.ensureWithinHoldLimit}와 같은 오류(E6001)를 그대로 던진다. */
     public void ensureWithinHoldLimit(final long requestedSeatCount) {
-        if (holdPolicy.exceeds(requestedSeatCount)) {
+        if (holdPolicy.isOverMaxSeatCount(requestedSeatCount)) {
             throw new HoldLimitExceededException();
         }
     }
