@@ -39,8 +39,10 @@ public class Member extends AuditedEntity {
     @Embedded
     private Email email;
 
-    @Embedded
-    private @Nullable EncodedPassword encodedPassword;
+    /** 이메일 가입 시절에 저장된 비밀번호 해시다. 가입·로그인이 소셜 전용이 된 뒤로 읽거나 쓰지 않고, 탈퇴 때 남은 해시를 지우려고만 매핑한다. 새 회원은 항상 null이다. */
+    @Getter(AccessLevel.NONE)
+    @Column(name = "password")
+    private @Nullable String legacyPasswordHash;
 
     private String name;
 
@@ -66,16 +68,14 @@ public class Member extends AuditedEntity {
             cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<MemberSocialAccount> socialAccounts = new ArrayList<>();
 
-    public Member(
-            final Email email, final @Nullable EncodedPassword encodedPassword, final String name, final Role role) {
+    private Member(final Email email, final String name, final Role role) {
         this.email = email;
-        this.encodedPassword = encodedPassword;
         this.name = name;
         this.role = role;
     }
 
     public static Member createSocialMember(final Email email, final String name, final Role role) {
-        return new Member(email, null, name, role);
+        return new Member(email, name, role);
     }
 
     /** 소셜 계정을 연결한다. 양방향 연관관계를 Root가 한곳에서 맞춘다 — 자식을 직접 만들어 컬렉션에 넣지 않는다. */
@@ -103,7 +103,7 @@ public class Member extends AuditedEntity {
         activeSocialAccounts().forEach(socialAccount -> socialAccount.withdraw(deletedAt));
         this.deletedAt = deletedAt;
         this.email = Email.create(buildWithdrawnEmail());
-        this.encodedPassword = null;
+        this.legacyPasswordHash = null;
     }
 
     public boolean isDeleted() {
