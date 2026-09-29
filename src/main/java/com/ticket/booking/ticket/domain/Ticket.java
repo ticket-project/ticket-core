@@ -50,7 +50,7 @@ public class Ticket extends AuditedEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private TicketStatus status;
+    private TicketState status;
 
     @Column(name = "issued_at", nullable = false)
     private LocalDateTime issuedAt;
@@ -67,7 +67,7 @@ public class Ticket extends AuditedEntity {
         this.ticketKey = ticketKey;
         this.orderSeatId = orderSeatId;
         this.ownerMemberId = ownerMemberId;
-        this.status = TicketStatus.ISSUED;
+        this.status = TicketState.ISSUED;
         this.issuedAt = issuedAt;
     }
 
@@ -78,22 +78,22 @@ public class Ticket extends AuditedEntity {
 
     public void use(final LocalDateTime usedAt) {
         validateIssued("use");
-        this.status = TicketStatus.USED;
+        this.status = TicketState.USED;
         this.usedAt = usedAt;
     }
 
     public void cancel(final LocalDateTime canceledAt) {
         validateIssued("cancel");
-        this.status = TicketStatus.CANCELED;
+        this.status = TicketState.CANCELED;
         this.canceledAt = canceledAt;
     }
 
     public boolean isTerminal() {
-        return status == TicketStatus.USED || status == TicketStatus.CANCELED;
+        return status == TicketState.USED || status == TicketState.CANCELED;
     }
 
     private void validateIssued(final String action) {
-        if (status != TicketStatus.ISSUED) {
+        if (status != TicketState.ISSUED) {
             throw new IllegalStateException("ISSUED 상태의 Ticket만 " + action + " 할 수 있습니다. currentStatus=" + status);
         }
     }

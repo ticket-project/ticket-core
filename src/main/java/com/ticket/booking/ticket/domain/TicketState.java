@@ -10,7 +10,7 @@ package com.ticket.booking.ticket.domain;
  * ISSUED -> CANCELED
  * </pre>
  */
-public enum TicketStatus {
+public enum TicketState {
     ISSUED,
     USED,
     CANCELED
