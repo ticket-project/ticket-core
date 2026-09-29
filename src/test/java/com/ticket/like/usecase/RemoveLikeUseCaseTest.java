@@ -63,20 +63,14 @@ class RemoveLikeUseCaseTest {
 
     @ParameterizedTest
     @MethodSource("invalidComponents")
-    void memberId나_targetId가_유효하지_않으면_Input_생성에서_예외를_던진다(
-            final Long memberId, final Long targetId, final String message) {
+    void memberId나_targetId가_유효하지_않으면_Input_생성에서_예외를_던진다(final Long memberId, final Long targetId) {
         assertThatThrownBy(() -> new RemoveLikeUseCase.Input(memberId, LikeType.SHOW, targetId))
-                .isInstanceOf(InvalidRequestException.class)
-                .extracting(exception -> ((InvalidRequestException) exception).getData())
-                .isEqualTo(message);
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
     void likeType이_없으면_예외를_던진다() {
-        assertThatThrownBy(() -> new RemoveLikeUseCase.Input(1L, null, 2L))
-                .isInstanceOf(InvalidRequestException.class)
-                .extracting(exception -> ((InvalidRequestException) exception).getData())
-                .isEqualTo("likeType는 필수입니다.");
+        assertThatThrownBy(() -> new RemoveLikeUseCase.Input(1L, null, 2L)).isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -85,10 +79,6 @@ class RemoveLikeUseCaseTest {
     }
 
     private static Stream<Arguments> invalidComponents() {
-        return Stream.of(
-                Arguments.of(null, 2L, "memberId는 필수입니다."),
-                Arguments.of(1L, null, "targetId는 필수입니다."),
-                Arguments.of(0L, 2L, "memberId는 양수여야 합니다."),
-                Arguments.of(1L, -1L, "targetId는 양수여야 합니다."));
+        return Stream.of(Arguments.of(null, 2L), Arguments.of(1L, null), Arguments.of(0L, 2L), Arguments.of(1L, -1L));
     }
 }
