@@ -1,0 +1,10 @@
+# 테스트 전용 기본 설정이다. main의 classpath:application.yml에 덧붙는다.
+#
+# classpath 루트에 application.yml을 두면 main의 같은 이름 파일을 가려 버린다. Spring Boot는
+# classpath:/config/application.yml을 따로 읽고 루트보다 우선하므로 여기에 둔다.
+
+# p6spy는 기본으로 SQL을 작업 디렉터리의 spy.log에 쌓는다. 테스트마다 파일이 커지기만 한다.
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false
