@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.HttpEntity;
@@ -19,19 +18,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.jdbc.Sql;
-import org.testcontainers.containers.GenericContainer;
 
-import com.ticket.TicketApplication;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.security.token.AuthTokenIssuer;
-import com.ticket.testsupport.TestContainerImages;
-import com.ticket.testsupport.persistence.MigratedSchema;
+import com.ticket.testsupport.CoreApplicationTestSupport;
 
 import tools.jackson.databind.JsonNode;
 
@@ -41,18 +35,16 @@ import tools.jackson.databind.JsonNode;
  * <p>단위 테스트는 계층마다 mock을 끼우므로 각 층이 자기 mock에 대해 맞으면 통과한다. 층 사이를 이어 붙였을 때 어긋나는 것(Redis key 불일치, 커밋과 커밋 후 처리의 순서, 트랜잭션 경계)은
  * 진짜 HTTP로 진짜 스택을 두드려야 드러난다.
  *
+ * <p>H2·Redis·기동 설정은 {@link CoreApplicationTestSupport}가 소유한다. 이 클래스는 실제 HTTP 호출과 fixture를 더한다.
+ *
  * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 2분이라 초 단위로 끝나는 테스트를
  * 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
  */
-@MigratedSchema
-@SpringBootTest(classes = TicketApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // Spring Boot 4에서 TestRestTemplate 빈은 RANDOM_PORT만으로 등록되지 않는다. 명시적으로 켠다.
 @AutoConfigureTestRestTemplate
 @Sql(scripts = {"/fixture/booking-e2e-reset.sql", "/fixture/booking-e2e-fixture.sql"})
-@SuppressWarnings({"NonAsciiCharacters", "resource"})
-public abstract class BookingE2ETestSupport {
-
-    private static final int REDIS_PORT = 6379;
+@SuppressWarnings("NonAsciiCharacters")
+public abstract class BookingE2ETestSupport extends CoreApplicationTestSupport {
 
     /** fixture SQL이 쓰는 고정 ID 대역. seed/의 부하 테스트 전용 대역(910000000)과 겹치지 않는다. */
     protected static final long ID_BASE = 920000000L;
@@ -64,23 +56,6 @@ public abstract class BookingE2ETestSupport {
 
     protected static final String SEAT_AVAILABLE = "AVAILABLE";
     protected static final String SEAT_OCCUPIED = "OCCUPIED";
-
-    /**
-     * JVM 하나에 컨테이너 하나를 쓴다. @Testcontainers의 @Container는 테스트 클래스마다 컨테이너를 띄우고 클래스가 끝나면 멈추는데, Spring 컨텍스트는 클래스 사이에 재사용된다.
-     * 그러면 두 번째 테스트 클래스가 이미 멈춘 컨테이너의 포트를 가리킨 컨텍스트를 그대로 물려받아 실패한다. 정리는 Testcontainers의 Ryuk이 JVM 종료 시 맡는다.
-     */
-    static final GenericContainer<?> REDIS =
-            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
-
-    static {
-        REDIS.start();
-    }
-
-    @DynamicPropertySource
-    static void redisProperties(final DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
-    }
 
     @Autowired
     protected TestRestTemplate restTemplate;
