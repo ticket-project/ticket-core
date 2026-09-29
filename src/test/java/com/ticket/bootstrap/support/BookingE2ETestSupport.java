@@ -21,7 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.MemberStatus;
+import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.security.token.AuthTokenIssuer;
@@ -85,7 +85,7 @@ public abstract class BookingE2ETestSupport extends CoreApplicationTestSupport {
      */
     protected String loginAsNewMember(final String email) {
         final String name = email.substring(0, email.indexOf('@'));
-        final MemberStatus member = memberAccountApi.resolveSocialAccount(
+        final MemberIdentity member = memberAccountApi.resolveSocialAccount(
                 new SocialIdentity(SocialProvider.GOOGLE, "e2e-" + email, email, true, name));
         return authTokenIssuer.issueTokens(member.memberId(), member.role()).accessToken();
     }
