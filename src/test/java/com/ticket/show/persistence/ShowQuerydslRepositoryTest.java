@@ -37,7 +37,7 @@ import com.ticket.venue.domain.Venue;
 /**
  * {@link ShowQuerydslRepository}의 실제 DB 조회 동작을 고정한다.
  *
- * <p>정렬 키·tie breaker, 커서 형식 검증, 최신순의 마감 판정(TD-12: null 창은 CLOSED)은 예전에 {@code QuerydslShowSortResolverTest} /
+ * <p>정렬 키·tie breaker, 커서 형식 검증, 최신순의 마감 판정(null 창은 CLOSED)은 예전에 {@code QuerydslShowSortResolverTest} /
  * {@code QuerydslShowCursorConditionBuilderTest} / {@code SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그
  * helper들이 이 Repository 안으로 흡수되면서 같은 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
  */
@@ -613,8 +613,8 @@ class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
     }
 
     /**
-     * 표시 판매기간이 비어 있는 공연도 마감으로 본다 — {@code DisplaySaleWindow.statusAt}과 같은 규칙이다(TD-12). 필터 결과와 다음 커서 양쪽에서 같은 결론이 나와야 정렬
-     * 경계가 어긋나지 않는다.
+     * 표시 판매기간이 비어 있는 공연도 마감으로 본다 — {@code DisplaySaleWindow.statusAt}과 같은 규칙이다. 필터 결과와 다음 커서 양쪽에서 같은 결론이 나와야 정렬 경계가
+     * 어긋나지 않는다.
      */
     @Test
     void 표시_판매기간이_비어있는_공연도_마감으로_본다() {
