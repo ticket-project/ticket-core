@@ -1,6 +1,13 @@
 package com.ticket.bootstrap.migration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.Banner;
@@ -36,6 +43,31 @@ class MigrationChainSchemaTest {
         assertThatCode(() ->
                         validate(url, "sa", "", "spring.jpa.database-platform=" + H2OracleModeDialect.class.getName()))
                 .doesNotThrowAnyException();
+    }
+
+    /** 당분간 PK·유니크가 아닌 보조 인덱스를 두지 않는다. 옛 migration이 만든 것은 booking V7·payment V2·show V11이 지운다. */
+    @Test
+    void 빈_H2에_migration을_모두_적용하면_옛_보조_인덱스가_남지_않는다() throws Exception {
+        final String url = "jdbc:h2:mem:migration-chain-indexes;MODE=Oracle;DB_CLOSE_DELAY=-1";
+
+        ModulithFlywayTestSupport.migrateFromEmpty(url, MigratedSchema.MODULES_IN_RUNTIME_ORDER);
+
+        final List<String> names = new ArrayList<>();
+        try (Connection connection = ModulithFlywayTestSupport.connect(url);
+                Statement statement = connection.createStatement();
+                ResultSet indexes = statement.executeQuery("SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES")) {
+            while (indexes.next()) {
+                names.add(indexes.getString(1));
+            }
+        }
+        assertThat(names)
+                .doesNotContain(
+                        "IDX_ORDER_SEATS_ORDER_ID",
+                        "IDX_ORDER_SEATS_PERF_SEAT_ID",
+                        "IDX_PERFORMANCE_SEATS_GRADE",
+                        "IDX_TICKETS_OWNER_MEMBER_STATUS",
+                        "IDX_PAYMENTS_ORDER_STATUS",
+                        "IDX_PERFORMANCE_GRADES_PERF_SORT");
     }
 
     /** entity 매핑으로 context를 띄워 Hibernate {@code validate}를 거친다. 스키마가 다르면 context 생성이 실패한다. */
