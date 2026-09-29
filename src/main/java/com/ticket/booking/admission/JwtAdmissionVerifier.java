@@ -32,10 +32,6 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         this(settings, Clock.systemUTC(), enforcementEnabled);
     }
 
-    JwtAdmissionVerifier(final AdmissionTokenSettings settings, final Clock clock) {
-        this(settings, clock, true);
-    }
-
     JwtAdmissionVerifier(final AdmissionTokenSettings settings, final Clock clock, final boolean enforcementEnabled) {
         this.settings = Objects.requireNonNull(settings, "settings must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
@@ -55,41 +51,23 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         if (admissionToken == null || admissionToken.isBlank()) {
             throw new AdmissionTokenRequiredException();
         }
-        verifyFor(admissionToken, memberId, performanceId);
-    }
-
-    AdmissionClaims verify(final String token) {
-        Claims claims = parse(token);
+        final Claims claims = parse(admissionToken);
         validateAudience(claims);
         validateScope(claims);
         validateTimestamps(claims);
 
-        return new AdmissionClaims(
-                claims.getSubject(),
-                parseMemberId(claims),
-                readLongClaim(claims, PERFORMANCE_ID_CLAIM),
-                claims.getIssuedAt().toInstant(),
-                claims.getExpiration().toInstant(),
-                claims.getId(),
-                claims.get(SCOPE_CLAIM, String.class));
-    }
-
-    AdmissionClaims verifyFor(final String token, final long memberId, final long performanceId) {
-        AdmissionClaims claims = verify(token);
-        if (!Objects.equals(claims.memberId(), memberId)) {
+        // 토큰이 가리키는 회원·회차가 이 요청과 같아야 한다. 둘 다 읽은 뒤에 비교한다 — 형식 오류가 불일치보다 먼저 드러난다.
+        final long tokenMemberId = parseMemberId(claims);
+        final long tokenPerformanceId = readLongClaim(claims, PERFORMANCE_ID_CLAIM);
+        if (tokenMemberId != memberId) {
             throw new AdmissionTokenException("admission token member mismatch");
         }
-        if (!Objects.equals(claims.performanceId(), performanceId)) {
+        if (tokenPerformanceId != performanceId) {
             throw new AdmissionTokenException("admission token performance mismatch");
         }
-        return claims;
     }
 
     private Claims parse(final String token) {
-        if (token == null || token.isBlank()) {
-            throw new AdmissionTokenException("admission token invalid");
-        }
-
         try {
             return Jwts.parser()
                     .requireIssuer(settings.issuer())
@@ -123,7 +101,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         }
     }
 
-    private Long parseMemberId(final Claims claims) {
+    private long parseMemberId(final Claims claims) {
         try {
             return Long.parseLong(claims.getSubject());
         } catch (NumberFormatException exception) {
@@ -131,7 +109,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         }
     }
 
-    private Long readLongClaim(final Claims claims, final String claimName) {
+    private long readLongClaim(final Claims claims, final String claimName) {
         Object value = claims.get(claimName);
         if (value instanceof Number number) {
             return number.longValue();
