@@ -204,8 +204,10 @@ snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 
 
 ### 예매 E2E를 쓸 때
 
-`com.ticket.bootstrap.support.BookingE2ETestSupport`를 상속한다. Testcontainers Redis와 H2,
-인증 헬퍼, 좌석 상태 조회, 커밋 후 처리를 기다리는 `pollUntil`이 여기 있다. 데이터는
+`com.ticket.bootstrap.support.BookingE2ETestSupport`를 상속한다. 인증 헬퍼, 좌석 상태 조회, 커밋 후
+처리를 기다리는 `pollUntil`이 여기 있고, Testcontainers Redis와 H2·기동 설정은 상위
+`com.ticket.testsupport.CoreApplicationTestSupport`가 갖는다. 기동에 필요한 환경변수 값은
+`src/test/resources/config/application.yml`에 있다. 데이터는
 `fixture/booking-e2e-*.sql`이 만들고 `@Sql`이 메서드마다 초기화한다.
 
 **모듈 사이 연결을 보는 테스트다.** 응답 코드만 확인하면 단위 테스트와 다를 게 없다. 좌석 상태를
