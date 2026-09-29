@@ -23,7 +23,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
 import com.ticket.member.api.MemberAccountApi;
@@ -31,6 +30,7 @@ import com.ticket.member.api.MemberStatus;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.security.token.AuthTokenIssuer;
+import com.ticket.testsupport.TestContainerImages;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
 import tools.jackson.databind.JsonNode;
@@ -88,7 +88,7 @@ public abstract class BookingE2ETestSupport {
      * 그러면 두 번째 테스트 클래스가 이미 멈춘 컨테이너의 포트를 가리킨 컨텍스트를 그대로 물려받아 실패한다. 정리는 Testcontainers의 Ryuk이 JVM 종료 시 맡는다.
      */
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();

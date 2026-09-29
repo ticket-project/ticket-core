@@ -18,7 +18,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
 import com.ticket.booking.hold.domain.Hold;
@@ -26,6 +25,7 @@ import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.testsupport.TestContainerImages;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
@@ -63,7 +63,7 @@ class OrderStartedPublicationAtomicityTest {
     private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
     private static final int REDIS_PORT = 6379;
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();

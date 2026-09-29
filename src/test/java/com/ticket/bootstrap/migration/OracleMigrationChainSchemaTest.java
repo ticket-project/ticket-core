@@ -12,6 +12,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.oracle.OracleContainer;
 
+import com.ticket.testsupport.TestContainerImages;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
@@ -22,7 +23,7 @@ import com.ticket.testsupport.persistence.MigratedSchema;
 @SuppressWarnings("NonAsciiCharacters")
 class OracleMigrationChainSchemaTest {
     @Container
-    private static final OracleContainer ORACLE = new OracleContainer("gvenzl/oracle-free:23-slim");
+    private static final OracleContainer ORACLE = new OracleContainer(TestContainerImages.ORACLE);
 
     @Test
     void 빈_Oracle에_migration만_적용한_스키마가_entity_매핑과_맞다() {
