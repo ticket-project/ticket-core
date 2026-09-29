@@ -80,7 +80,7 @@ class PerformanceSeatQueryControllerContractTest {
     void seat_status는_admission_token_validator를_거친다() throws Exception {
         when(getSeatStatusUseCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .thenReturn(new GetSeatStatusUseCase.Output(
-                        List.of(new GetSeatStatusUseCase.Seat(1001L, 101L, SeatStatus.OCCUPIED))));
+                        List.of(new GetSeatStatusUseCase.SeatResponse(1001L, 101L, SeatStatus.OCCUPIED))));
 
         mockMvc.perform(get("/api/v1/performances/10/seats/status").header("X-Admission-Token", "admission-token"))
                 .andExpect(status().isOk())

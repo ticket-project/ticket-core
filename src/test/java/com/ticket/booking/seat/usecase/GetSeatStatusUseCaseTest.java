@@ -94,8 +94,8 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats())
                 .containsExactly(
-                        new GetSeatStatusUseCase.Seat(101L, 1L, SeatStatus.OCCUPIED),
-                        new GetSeatStatusUseCase.Seat(102L, 2L, SeatStatus.OCCUPIED));
+                        new GetSeatStatusUseCase.SeatResponse(101L, 1L, SeatStatus.OCCUPIED),
+                        new GetSeatStatusUseCase.SeatResponse(102L, 2L, SeatStatus.OCCUPIED));
         verify(performanceSalesPolicyRepository).findById(10L);
     }
 
@@ -114,8 +114,8 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats())
                 .containsExactly(
-                        new GetSeatStatusUseCase.Seat(101L, 1L, SeatStatus.AVAILABLE),
-                        new GetSeatStatusUseCase.Seat(102L, 2L, SeatStatus.OCCUPIED));
+                        new GetSeatStatusUseCase.SeatResponse(101L, 1L, SeatStatus.AVAILABLE),
+                        new GetSeatStatusUseCase.SeatResponse(102L, 2L, SeatStatus.OCCUPIED));
         verify(performanceSeatRepository).findSeatStates(10L);
     }
 
@@ -137,9 +137,9 @@ class GetSeatStatusUseCaseTest {
 
         assertThat(output.seats()).hasSize(dbStates.size());
         assertThat(output.seats())
-                .extracting(GetSeatStatusUseCase.Seat::performanceSeatId)
+                .extracting(GetSeatStatusUseCase.SeatResponse::performanceSeatId)
                 .containsExactly(101L, 102L, 103L);
-        assertThat(output.seats()).extracting(GetSeatStatusUseCase.Seat::seatId).containsExactly(1L, 2L, 3L);
+        assertThat(output.seats()).extracting(GetSeatStatusUseCase.SeatResponse::seatId).containsExactly(1L, 2L, 3L);
     }
 
     @Test
