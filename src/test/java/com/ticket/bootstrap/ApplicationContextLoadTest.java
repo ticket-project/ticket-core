@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.ticket.booking.concurrency.LockManager;
+import com.ticket.booking.hold.domain.HoldStore;
+import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.order.usecase.OrderExpirationTrigger;
 import com.ticket.booking.order.usecase.StartBookingUseCase;
@@ -27,33 +29,22 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     @Test
     void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
         assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
-        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository")).isNotNull();
+        assertThat(context.getBean(OrderRepository.class)).isNotNull();
         assertThat(context.getBean(LockManager.class)).isNotNull();
-        assertThat(beanOf("com.ticket.booking.event.BookingEventListeners")).isNotNull();
-        assertThat(beanOf("com.ticket.shared.config.EventPublicationMaintenance"))
-                .isNotNull();
+        // 아래 둘은 package-private이라 타입으로 참조할 수 없다. component scan이 붙이는 기본 bean 이름으로 찾는다.
+        assertThat(context.containsBean("bookingEventListeners")).isTrue();
+        assertThat(context.containsBean("eventPublicationMaintenance")).isTrue();
     }
 
     /** 도메인 Repository는 포트이고 실제 빈은 저장 기술 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */
     @Test
     void 도메인_Repository는_저장_기술_어댑터로_구현된다() {
-        assertThat(beanOf("com.ticket.booking.order.domain.OrderRepository")
-                        .getClass()
-                        .getName())
+        assertThat(context.getBean(OrderRepository.class).getClass().getName())
                 .startsWith("com.ticket.booking.order.persistence.");
-        assertThat(beanOf("com.ticket.booking.hold.domain.HoldStore").getClass().getName())
+        assertThat(context.getBean(HoldStore.class).getClass().getName())
                 .startsWith("com.ticket.booking.hold.persistence.");
         assertThat(context.getBean(LockManager.class).getClass().getName())
                 .startsWith("com.ticket.booking.concurrency.redis.");
-    }
-
-    /** bootstrap은 도메인을 컴파일 타임에 보지 않는다. 런타임 클래스패스에만 있으므로 이름으로 찾는다. */
-    private Object beanOf(final String typeName) {
-        try {
-            return context.getBean(Class.forName(typeName));
-        } catch (final ClassNotFoundException exception) {
-            throw new IllegalStateException("런타임 클래스패스에 없습니다: " + typeName, exception);
-        }
     }
 
     @Test
