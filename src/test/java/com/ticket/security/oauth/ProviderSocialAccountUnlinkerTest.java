@@ -1,7 +1,7 @@
 package com.ticket.security.oauth;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,8 +18,6 @@ import org.springframework.util.MultiValueMap;
 
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
-import com.ticket.shared.exception.InternalErrorException;
-import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -28,19 +26,19 @@ class ProviderSocialAccountUnlinkerTest {
     private KakaoUnlinkApiClient kakaoUnlinkApiClient;
 
     @Test
-    void 사용자아이디가_비어있으면_예외를_던진다() {
+    void 사용자아이디가_비어있으면_호출하지_않고_넘어간다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("admin-key");
 
-        assertThatThrownBy(() -> unlinker.unlink(kakao(" "))).isInstanceOf(InvalidRequestException.class);
+        assertThatCode(() -> unlinker.unlink(kakao(" "))).doesNotThrowAnyException();
 
         verifyNoInteractions(kakaoUnlinkApiClient);
     }
 
     @Test
-    void 관리자키가_비어있으면_예외를_던진다() {
+    void 관리자키가_비어있으면_호출하지_않고_넘어간다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("");
 
-        assertThatThrownBy(() -> unlinker.unlink(kakao("123"))).isInstanceOf(InvalidRequestException.class);
+        assertThatCode(() -> unlinker.unlink(kakao("123"))).doesNotThrowAnyException();
 
         verifyNoInteractions(kakaoUnlinkApiClient);
     }
@@ -60,11 +58,11 @@ class ProviderSocialAccountUnlinkerTest {
     }
 
     @Test
-    void 카카오_API_실패는_기본오류로_변환한다() {
+    void 카카오_API_실패는_던지지_않는다() {
         final ProviderSocialAccountUnlinker unlinker = unlinker("admin-key");
         doThrow(new IllegalStateException("boom")).when(kakaoUnlinkApiClient).unlink(anyString(), any());
 
-        assertThatThrownBy(() -> unlinker.unlink(kakao("123"))).isInstanceOf(InternalErrorException.class);
+        assertThatCode(() -> unlinker.unlink(kakao("123"))).doesNotThrowAnyException();
     }
 
     @Test
