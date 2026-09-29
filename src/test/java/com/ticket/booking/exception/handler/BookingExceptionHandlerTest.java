@@ -2,7 +2,6 @@ package com.ticket.booking.exception.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.exception.SeatNotOwnedException;
 import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.exception.SeatSelectionExpiredException;
-import com.ticket.booking.order.domain.OrderState;
 import com.ticket.shared.web.ApiResponse;
 
 /**
@@ -47,50 +45,31 @@ class BookingExceptionHandlerTest {
 
     static Stream<Arguments> 오류_계약() {
         return Stream.of(
+                Arguments.of(new PerformanceIsPastException(), HttpStatus.BAD_REQUEST, "E3001", "과거 공연은 예매할 수 없습니다."),
+                Arguments.of(new BookingNotOpenYetException(), HttpStatus.BAD_REQUEST, "E3002", "아직 예매가 오픈되지 않았습니다."),
+                Arguments.of(new NoAvailableSeatException(), HttpStatus.BAD_REQUEST, "E3003", "이용 가능한 좌석이 없습니다."),
                 Arguments.of(
-                        new PerformanceIsPastException(10L), HttpStatus.BAD_REQUEST, "E3001", "과거 공연은 예매할 수 없습니다."),
-                Arguments.of(
-                        new BookingNotOpenYetException(10L), HttpStatus.BAD_REQUEST, "E3002", "아직 예매가 오픈되지 않았습니다."),
-                Arguments.of(new NoAvailableSeatException(10L), HttpStatus.BAD_REQUEST, "E3003", "이용 가능한 좌석이 없습니다."),
-                Arguments.of(
-                        new SeatMismatchInPerformanceException(10L),
+                        new SeatMismatchInPerformanceException(),
                         HttpStatus.BAD_REQUEST,
                         "E4000",
                         "요청한 좌석 정보와 일치하지 않습니다."),
-                Arguments.of(new SeatAlreadySelectedException(10L, 20L), HttpStatus.CONFLICT, "E4001", "이미 선택된 좌석입니다."),
+                Arguments.of(new SeatAlreadySelectedException(), HttpStatus.CONFLICT, "E4001", "이미 선택된 좌석입니다."),
+                Arguments.of(new SeatNotOwnedException(), HttpStatus.FORBIDDEN, "E4002", "본인이 선택한 좌석만 해제할 수 있습니다."),
+                Arguments.of(new SeatNotSelectedException(), HttpStatus.CONFLICT, "E4006", "선택한 좌석만 예매할 수 있습니다."),
                 Arguments.of(
-                        new SeatNotOwnedException(10L, 20L, 30L),
-                        HttpStatus.FORBIDDEN,
-                        "E4002",
-                        "본인이 선택한 좌석만 해제할 수 있습니다."),
-                Arguments.of(
-                        new SeatNotSelectedException(10L, 30L, List.of(20L)),
-                        HttpStatus.CONFLICT,
-                        "E4006",
-                        "선택한 좌석만 예매할 수 있습니다."),
-                Arguments.of(
-                        new SeatSelectionExpiredException(10L, 30L, List.of(20L)),
+                        new SeatSelectionExpiredException(),
                         HttpStatus.CONFLICT,
                         "E4007",
                         "좌석 선택 시간이 지났습니다. 좌석을 다시 선택해 주세요."),
+                Arguments.of(new OrderNotPendingException(), HttpStatus.CONFLICT, "E5002", "결제 대기 주문만 처리할 수 있습니다."),
+                Arguments.of(new OrderNotOwnedException(), HttpStatus.FORBIDDEN, "E5003", "본인 주문만 처리할 수 있습니다."),
                 Arguments.of(
-                        new OrderNotPendingException(OrderState.CANCELED),
-                        HttpStatus.CONFLICT,
-                        "E5002",
-                        "결제 대기 주문만 처리할 수 있습니다."),
-                Arguments.of(
-                        new OrderNotOwnedException("order-key", 30L),
-                        HttpStatus.FORBIDDEN,
-                        "E5003",
-                        "본인 주문만 처리할 수 있습니다."),
-                Arguments.of(
-                        new PendingOrderAlreadyExistsException(30L, 10L),
+                        new PendingOrderAlreadyExistsException(),
                         HttpStatus.CONFLICT,
                         "E5004",
                         "이미 진행 중인 결제 대기 주문이 있습니다."),
-                Arguments.of(new SeatAlreadyHeldException(10L, 20L), HttpStatus.CONFLICT, "E6000", "좌석이 이미 선점되었습니다."),
-                Arguments.of(
-                        new HoldLimitExceededException(5L, 4), HttpStatus.CONFLICT, "E6001", "선점 가능한 좌석 수를 초과하였습니다."),
+                Arguments.of(new SeatAlreadyHeldException(), HttpStatus.CONFLICT, "E6000", "좌석이 이미 선점되었습니다."),
+                Arguments.of(new HoldLimitExceededException(), HttpStatus.CONFLICT, "E6001", "선점 가능한 좌석 수를 초과하였습니다."),
                 Arguments.of(new HoldBusyException(), HttpStatus.CONFLICT, "E6003", "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
     }
 

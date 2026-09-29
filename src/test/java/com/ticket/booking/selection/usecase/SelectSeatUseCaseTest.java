@@ -135,9 +135,7 @@ class SelectSeatUseCaseTest {
         openPerformance();
         when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(SeatMismatchInPerformanceException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L);
+        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatMismatchInPerformanceException.class);
 
         verifyNoInteractions(holdManager, seatSelectionCoordinator);
     }
@@ -148,9 +146,7 @@ class SelectSeatUseCaseTest {
         when(performanceSeatRepository.findSeatState(10L, 20L))
                 .thenReturn(Optional.of(seat(PerformanceSeatState.RESERVED)));
 
-        assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(NoAvailableSeatException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L);
+        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(NoAvailableSeatException.class);
 
         verifyNoInteractions(holdManager, seatSelectionCoordinator);
     }
@@ -162,10 +158,7 @@ class SelectSeatUseCaseTest {
         when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.of(availableSeat()));
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.execute(INPUT))
-                .isInstanceOf(SeatAlreadyHeldException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L)
-                .hasFieldOrPropertyWithValue("seatId", 20L);
+        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatAlreadyHeldException.class);
 
         verifyNoInteractions(seatSelectionCoordinator);
     }

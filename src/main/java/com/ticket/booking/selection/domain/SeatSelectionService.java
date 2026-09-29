@@ -2,7 +2,6 @@ package com.ticket.booking.selection.domain;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -33,12 +32,10 @@ public class SeatSelectionService {
                 seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL, maxSeatCount);
         if (result == SelectResult.ALREADY_SELECTED) {
             log.warn("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
-            throw new SeatAlreadySelectedException(performanceId, seatId);
+            throw new SeatAlreadySelectedException();
         }
         if (result == SelectResult.LIMIT_EXCEEDED) {
-            // 한도가 있을 때만 LIMIT_EXCEEDED가 나온다.
-            final int limit = Objects.requireNonNull(maxSeatCount);
-            throw new HoldLimitExceededException(limit + 1L, limit);
+            throw new HoldLimitExceededException();
         }
         log.debug("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
     }
@@ -96,9 +93,9 @@ public class SeatSelectionService {
         if (seatSelectionStore
                 .getRecentlyExpiredSeatIdsByMember(performanceId, memberKey)
                 .containsAll(missing)) {
-            throw new SeatSelectionExpiredException(performanceId, memberId, missing);
+            throw new SeatSelectionExpiredException();
         }
-        throw new SeatNotSelectedException(performanceId, memberId, missing);
+        throw new SeatNotSelectedException();
     }
 
     private String memberKeyOf(final Long memberId) {
@@ -115,7 +112,7 @@ public class SeatSelectionService {
             return;
         }
         logNotOwned(performanceId, seatId, memberId, holder);
-        throw new SeatNotOwnedException(performanceId, seatId, memberId);
+        throw new SeatNotOwnedException();
     }
 
     private boolean releaseSeat(
@@ -140,7 +137,7 @@ public class SeatSelectionService {
             return;
         }
         logNotOwned(performanceId, seatId, memberId, currentHolder);
-        throw new SeatNotOwnedException(performanceId, seatId, memberId);
+        throw new SeatNotOwnedException();
     }
 
     private void logNotOwned(final Long performanceId, final Long seatId, final Long memberId, final String holder) {

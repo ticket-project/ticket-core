@@ -1,19 +1,10 @@
 package com.ticket.booking.exception;
 
-import lombok.Getter;
-
-/**
- * 아직 예매 오픈 시각 전이다.
- *
- * <p>{@code performanceId}는 진단 정보다. 공개 {@code error.data}에는 싣지 않는다.
- */
-@Getter
+/** 아직 예매 오픈 시각 전이다. */
 public final class BookingNotOpenYetException extends BookingException {
     private static final String MESSAGE = "아직 예매가 오픈되지 않았습니다.";
-    private final Long performanceId;
 
-    public BookingNotOpenYetException(final Long performanceId) {
+    public BookingNotOpenYetException() {
         super(BookingErrorCode.E3002, MESSAGE, null);
-        this.performanceId = performanceId;
     }
 }

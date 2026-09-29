@@ -282,7 +282,7 @@ class StartBookingUseCaseTest {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, RequestedSeatIds.from(seatIds)))
-                .thenThrow(new PendingOrderAlreadyExistsException(MEMBER_ID, PERFORMANCE_ID));
+                .thenThrow(new PendingOrderAlreadyExistsException());
 
         assertError(seatIds, PendingOrderAlreadyExistsException.class);
 
@@ -308,7 +308,7 @@ class StartBookingUseCaseTest {
     void 본인이_선택하지_않은_좌석이_섞여_있으면_선점하지_않는다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        doThrow(new SeatNotSelectedException(PERFORMANCE_ID, MEMBER_ID, List.of(2L)))
+        doThrow(new SeatNotSelectedException())
                 .when(seatSelectionService)
                 .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
 

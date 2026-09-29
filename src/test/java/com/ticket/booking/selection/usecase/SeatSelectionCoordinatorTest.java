@@ -94,9 +94,7 @@ class SeatSelectionCoordinatorTest {
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
-                .isInstanceOf(SeatAlreadyHeldException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L)
-                .hasFieldOrPropertyWithValue("seatId", 20L);
+                .isInstanceOf(SeatAlreadyHeldException.class);
 
         verifyNoInteractions(seatSelectionService, seatEventPublisher);
     }
@@ -104,8 +102,7 @@ class SeatSelectionCoordinatorTest {
     @Test
     void 락_획득_시점에_예매가_마감됐으면_선점을_중단한다() {
         assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
-                .isInstanceOf(PerformanceIsPastException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L);
+                .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(holdManager, seatSelectionService, seatEventPublisher);
     }

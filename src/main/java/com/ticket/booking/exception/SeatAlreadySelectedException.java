@@ -1,21 +1,10 @@
 package com.ticket.booking.exception;
 
-import lombok.Getter;
-
-/**
- * 다른 회원이 이미 선택 중인 좌석이다.
- *
- * <p>{@code performanceId}·{@code seatId}는 진단 정보다. 공개 {@code error.data}에는 싣지 않는다.
- */
-@Getter
+/** 다른 회원이 이미 선택 중인 좌석이다. */
 public final class SeatAlreadySelectedException extends BookingException {
     private static final String MESSAGE = "이미 선택된 좌석입니다.";
-    private final Long performanceId;
-    private final Long seatId;
 
-    public SeatAlreadySelectedException(final Long performanceId, final Long seatId) {
+    public SeatAlreadySelectedException() {
         super(BookingErrorCode.E4001, MESSAGE, null);
-        this.performanceId = performanceId;
-        this.seatId = seatId;
     }
 }

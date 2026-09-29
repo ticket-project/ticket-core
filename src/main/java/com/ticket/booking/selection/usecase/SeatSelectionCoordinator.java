@@ -59,10 +59,10 @@ public class SeatSelectionCoordinator {
             final @Nullable Integer maxSeatCount) {
         lockManager.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
-                throw new PerformanceIsPastException(performanceId);
+                throw new PerformanceIsPastException();
             }
             if (holdManager.isHeld(performanceId, seatId)) {
-                throw new SeatAlreadyHeldException(performanceId, seatId);
+                throw new SeatAlreadyHeldException();
             }
             seatSelectionService.select(performanceId, seatId, memberId, maxSeatCount);
             seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED);

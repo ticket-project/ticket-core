@@ -46,7 +46,7 @@ public class BookingAvailabilityChecker {
 
     private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {
         if (orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
-            throw new PendingOrderAlreadyExistsException(memberId, performanceId);
+            throw new PendingOrderAlreadyExistsException();
         }
     }
 
@@ -55,13 +55,13 @@ public class BookingAvailabilityChecker {
         final List<PerformanceSeat> performanceSeats =
                 performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, requestedSeatIds.toList());
         if (performanceSeats.size() != requestedSeatIds.size()) {
-            throw new SeatMismatchInPerformanceException(performanceId);
+            throw new SeatMismatchInPerformanceException();
         }
 
         final boolean hasUnavailableSeat =
                 performanceSeats.stream().anyMatch(seat -> seat.getState() != PerformanceSeatState.AVAILABLE);
         if (hasUnavailableSeat) {
-            throw new NoAvailableSeatException(performanceId);
+            throw new NoAvailableSeatException();
         }
         return performanceSeats;
     }
