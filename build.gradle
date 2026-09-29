@@ -197,5 +197,18 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// 구조 테스트만 돌린다. DB·Redis·Docker 없이 끝나서 CI가 전체 test 전에 먼저 돌려 빨리 실패하게 한다.
+// 대상은 @Tag("architecture")(ArchUnit @AnalyzeClasses 클래스는 @ArchTag("architecture"))가 붙은 클래스다.
+// 같은 클래스는 test에도 그대로 포함된다.
+tasks.register('architectureTest', Test) {
+    group = 'verification'
+    description = '구조 테스트(architecture 태그)만 실행한다.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'architecture'
+    }
+}
+
 // 시드 source set, 의존성, 실행·검증 task는 따로 둔다.
 apply from: 'gradle/seed.gradle'

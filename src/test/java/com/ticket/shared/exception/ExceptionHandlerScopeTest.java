@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,6 +28,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
  * 역할이고, {@code LOWEST_PRECEDENCE}라 module handler를 가리지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
+@Tag("architecture")
 class ExceptionHandlerScopeTest {
     private static final JavaClasses MAIN_CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)

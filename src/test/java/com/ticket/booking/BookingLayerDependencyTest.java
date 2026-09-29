@@ -4,6 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTag;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
@@ -21,6 +22,7 @@ import com.tngtech.archunit.lang.ArchRule;
         packages = "com.ticket.booking",
         importOptions = {ImportOption.DoNotIncludeTests.class})
 @SuppressWarnings("NonAsciiCharacters")
+@ArchTag("architecture")
 class BookingLayerDependencyTest {
     /**
      * 잠글 대상을 업무 의미로 표현하는 계약이 사는 package다. 저장 기술을 드러내지 않는다.

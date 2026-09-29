@@ -233,8 +233,7 @@ $env:SEED_LOAD_TEST_MEMBER_PASSWORD = "..."; .\gradlew.bat seedLocal
 .\gradlew.bat seedTest
 ```
 
-`seedTest`는 서비스 `test`에 딸려 돌지 않는다. `check`와 CI(`clean spotlessCheck test seedTest bootJar
-verifySeedNotInBootJar`)가 함께 돌린다.
+`seedTest`는 서비스 `test`에 딸려 돌지 않는다. `check`와 CI(`ci.yml`)가 함께 돌린다.
 
 | 테스트 | 고정하는 것 |
 | --- | --- |

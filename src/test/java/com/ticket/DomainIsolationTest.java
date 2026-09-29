@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTag;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
@@ -39,6 +40,7 @@ import com.tngtech.archunit.lang.ArchRule;
         packages = "com.ticket",
         importOptions = {ImportOption.DoNotIncludeTests.class})
 @SuppressWarnings("NonAsciiCharacters")
+@ArchTag("architecture")
 class DomainIsolationTest {
     /** 기술 모듈을 제외한 6개 BC다. {@code docs/architecture.md}의 "Bounded Context" 절이 원본이다. */
     private static final List<String> BOUNDED_CONTEXTS =

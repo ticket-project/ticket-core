@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import jakarta.persistence.Entity;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.modulith.core.ApplicationModules;
@@ -66,6 +67,7 @@ import com.tngtech.archunit.lang.CompositeArchRule;
         packages = "com.ticket",
         importOptions = {ImportOption.DoNotIncludeTests.class})
 @SuppressWarnings("NonAsciiCharacters")
+@Tag("architecture")
 class ArchitectureRulesTest {
 
     /** 업무 module이다. {@code security}·{@code shared}는 기술 module이라 따로 다룬다. */
