@@ -44,7 +44,6 @@ import com.ticket.testsupport.persistence.MigratedSchema;
         classes = MemberSocialAccountPersistenceTest.TestApplication.class)
 @TestPropertySource(
         properties = {
-            "spring.profiles.active=test",
             "spring.datasource.url=jdbc:h2:mem:member-social-account-persistence;MODE=Oracle;DB_CLOSE_"
                     + "DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
             "spring.datasource.driver-class-name=org.h2.Driver",
