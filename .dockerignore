@@ -1,0 +1,3 @@
+# Dockerfile은 build/libs의 bootJar 하나만 COPY한다. 나머지는 build context로 보내지 않는다.
+*
+!build/libs/*.jar
