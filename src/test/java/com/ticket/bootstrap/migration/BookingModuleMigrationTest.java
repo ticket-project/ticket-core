@@ -28,13 +28,14 @@ import org.junit.jupiter.api.Test;
 class BookingModuleMigrationTest {
     @Test
     void drops_legacy_fk_and_outbox_tables_when_present() throws Exception {
-        final String url = databaseUrl("present");
+        final String url = ModulithFlywayTestSupport.h2Url("booking-module-migration-present");
         createSchemaWithLegacyFkAndOutboxDependencies(url);
 
         ModulithFlywayTestSupport.migrate(url, List.of("booking"));
 
         try (Connection connection = ModulithFlywayTestSupport.connect(url)) {
-            assertThat(importedKeyTables(connection, "PERFORMANCE_SEATS")).isEmpty();
+            assertThat(ModulithFlywayTestSupport.foreignKeyNames(connection, "PERFORMANCE_SEATS"))
+                    .isEmpty();
             assertThat(ModulithFlywayTestSupport.tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX"))
                     .isFalse();
             assertThat(ModulithFlywayTestSupport.tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX"))
@@ -48,7 +49,7 @@ class BookingModuleMigrationTest {
 
     @Test
     void no_op_when_legacy_fk_already_absent() throws Exception {
-        final String url = databaseUrl("absent");
+        final String url = ModulithFlywayTestSupport.h2Url("booking-module-migration-absent");
         createSchemaWithoutLegacyFk(url);
         // FK가 전혀 없어도 예외 없이 끝나야 한다.
         ModulithFlywayTestSupport.migrate(url, List.of("booking"));
@@ -95,19 +96,5 @@ class BookingModuleMigrationTest {
                     "CREATE TABLE performance_seats (id BIGINT PRIMARY KEY, performance_id BIGINT NOT NULL, seat_id BIGINT NOT NULL)");
             statement.execute("CREATE TABLE order_seats (order_id BIGINT NOT NULL)");
         }
-    }
-
-    private Set<String> importedKeyTables(final Connection connection, final String tableName) throws SQLException {
-        final Set<String> names = new HashSet<>();
-        try (ResultSet keys = connection.getMetaData().getImportedKeys(null, null, tableName)) {
-            while (keys.next()) {
-                names.add(keys.getString("FK_NAME"));
-            }
-        }
-        return names;
-    }
-
-    private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:booking-module-migration-" + name + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     }
 }
