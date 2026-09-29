@@ -1,13 +1,7 @@
 # 테스트 기준
 
-> 아래 모듈 테스트·구조 테스트·module별 migration slice 테스트 표는 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
-> [ADR 0006](adr/0006-bounded-context-module-boundaries.md)이 구현된 현재 구조를 반영한다.
-
-이 문서는 **새 테스트를 쓸 때의 관례와 각 테스트가 무엇을 고정하는지**를 정리한다. 모듈 경계는
-[architecture.md](architecture.md), 예매 흐름은 [core-booking-lifecycle.md](core-booking-lifecycle.md),
-실행 환경은 [operations.md](operations.md)를 함께 본다.
-
-검증 선택·실행 명령·결과 보고의 공통 기준은 이 문서다.
+**테스트를 언제 돌리는지, 변경마다 무엇을 검증하는지, 새 테스트를 어떻게 쓰는지, 부하 테스트를 어떻게 안전하게
+하는지**의 단일 기준이다. 각 테스트가 무엇을 고정하는지는 테스트 코드가 원본이라 여기 목록으로 옮기지 않는다.
 
 ## 테스트를 돌리는 시점
 
@@ -27,209 +21,89 @@
 
 아래 표는 사용자가 특정 범위만 요청했거나, 전체 테스트 실패를 좁혀 볼 때 쓴다.
 
-실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을 실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
+실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을
+실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
 
 | 변경 범위 | 실행 기준 |
 | --- | --- |
 | 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*'`로 해당 모듈부터 |
-| 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`(아래 [구조 테스트](#구조-테스트))와 관련 module test |
+| 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`와 관련 module test |
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
-| 주문·hold·이벤트 흐름 | 관련 단위·Scenario·`com.ticket.bootstrap.booking.*E2ETest`(Docker 필요) |
-| DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트와 [운영 전환 조건](operations.md#db-마이그레이션) |
+| 주문·hold·이벤트 흐름 | 관련 단위·Scenario·예매 E2E 테스트(Docker 필요) |
+| 빈을 모듈 사이로 옮기는 변경 | 위에 더해 `ApplicationContextLoadTest`. 단위 테스트는 각 클래스를 직접 만들어 빈 배선이 깨져도 통과한다 |
+| DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트(Oracle은 Docker 필요) |
 | seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
-| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck compileJava architectureTest test seedTest bootJar verifySeedNotInBootJar`(CI 기준) |
+| 배포 산출물·push 전 전체 | `ci.yml`의 `Test and build` 단계 명령 |
 | 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
 
-`test`는 서비스 테스트만 돌리고 `seedTest`는 따로 실행한다(`check`와 CI는 둘 다 돌린다). `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
+`test`는 서비스 테스트만 돌리고 `seedTest`는 따로 실행한다(`check`와 CI는 둘 다 돌린다). `compileJava`는
+NullAway를 함께 실행한다.
 
-## 단일 source set
+**결과 보고**: 실제로 실행한 명령과 통과·실패, 실행하지 않은 범위와 이유를 구분해 보고한다. Docker 부재 등
+환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. Docker가 없어 Testcontainers 기반
+테스트를 돌리지 못했다면 미검증으로 보고한다. 실패한 검증을 통과로 보고하거나 테스트를 건너뛰어 완료로
+처리하지 않는다. Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트만으로 확인했다고 보지
+않는다.
 
-별도 `integrationTest` Gradle source set과 subproject는 없다. 서비스 테스트는 모두 `src/test`에
-있고, **source set이 아니라 실행 특성**으로 종류를 나눈다.
+## 테스트를 두는 곳
 
-**예외는 시드다.** 애플리케이션 밖에서 도는 초기 데이터 적재 프로그램(`seed/`)은 별도 source
-set(`seedMain`/`seedTest`)이고 테스트도 `seed/src/test/java`에 둔다 — 시드 코드가 서비스
-classpath에 올라가면 `bootJar`에 섞이고 Modulith가 업무 모듈로 다시 탐지한다. 실행은
-`./gradlew seedTest`이며 `test`에 딸려 돌지 않는다. `check`와 CI가 함께 돌린다. 무엇을 고정하는지는
-[seed/README.md](../seed/README.md)가 원본이다.
+별도 `integrationTest` Gradle source set과 subproject는 없다. 서비스 테스트는 모두 `src/test`에 있고,
+**source set이 아니라 실행 특성**으로 종류를 나눈다. 예외는 초기 데이터 적재 프로그램(`seed/`)이다. 시드 코드가
+서비스 classpath에 올라가면 `bootJar`에 섞이고 Modulith가 업무 모듈로 다시 탐지하므로 별도 source set
+(`seedMain`/`seedTest`)이고 테스트도 `seed/src/test/java`에 둔다.
 
-Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면
-`@DataJpaTest`/`@SpringBootTest`/Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
-클래스 이름에 `Integration`이나 `E2E`가 붙어 있어도 판정 기준은 실행 특성이다.
-
-여러 모듈의 JPA/Querydsl 테스트가 공유하는 기반 클래스는 과거 module 이름을 쓰지 않고
-`com.ticket.testsupport.persistence`에 둔다. 특정 모듈만 쓰는 fixture와 support는 해당 모듈 테스트
-패키지 아래에 둔다.
-
-H2에 붙는 Spring context 테스트는 `@MigratedSchema`(`com.ticket.testsupport.persistence`)를 붙여 운영과 같은
-Flyway migration으로 스키마를 만든다. `ddl-auto=create`로 entity에서 만들지 않는다 — 스키마 원본은
-migration이고 entity에는 유니크 제약·인덱스가 없어서, entity로 만든 스키마는 DB의 중복 거절을 재현하지 못한다
-([ADR 0020](adr/0020-db-schema-source-of-truth-is-migration.md)).
+Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면 `@DataJpaTest`/`@SpringBootTest`/
+Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다. 클래스 이름에 `Integration`이나 `E2E`가 붙어
+있어도 판정 기준은 실행 특성이다. Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.**
 
 | 실행 특성 | 두는 것 | 두지 않는 것 |
 | --- | --- | --- |
 | Spring 컨텍스트 없는 단위 테스트 | 엔티티, 값 객체, 상태 전이, 정책, 불변식, use case(외부 port는 mock/fake) | Spring 컨텍스트, DB, Redis |
-| `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인 | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
+| `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인. 모듈마다 최소 하나 | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
 | `@DataJpaTest` | `*QuerydslRepository`의 Querydsl 조회, `*RepositoryAdapter` | 업무 규칙 단위 테스트 |
-| Spring context 없는 Hibernate 단독 검증 | 해당 모듈 소유 migration만으로 schema가 만들어지고 그 모듈 JPA 매핑이 `validate`를 통과하는지(`*SlicingSchemaTest`) | 업무 규칙 단위 테스트 |
+| Spring context 없는 Hibernate 단독 검증 | 해당 모듈 소유 migration만으로 schema가 만들어지고 그 모듈 JPA 매핑이 `validate`를 통과하는지(`*SlicingSchemaTest`). 다른 모듈의 migration이 있어야만 통과하면 실패다 | 업무 규칙 단위 테스트 |
 | `@SpringBootTest`(+ Testcontainers) | 전체 컨텍스트 기동, Redis/Redisson 실제 연동, 실제 HTTP로 스택을 관통하는 예매 E2E | 개별 클래스 단위 검증 |
 
-Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** Docker가 없으면 실패의 원인이
-코드가 아니다.
+- 구조 테스트는 DB·Redis·Docker 없이 도는 것에 `@Tag("architecture")`(ArchUnit `@AnalyzeClasses`
+  클래스는 `@ArchTag("architecture")`)를 붙인다. `./gradlew architectureTest`가 그 태그만 실행하고 CI도
+  전체 `test` 전에 이것을 먼저 돌린다. 새 구조 테스트를 만들면 태그를 붙인다.
+- 모듈 테스트에서 구조 assertion을 중복하지 않는다. 모듈 구조 검증은 `ModularityTests` 한 곳의 책임이다.
+- 외부 모듈의 공개 API는 `@MockitoBean`으로 대체하는 것이 기본이다. 실제 의존 모듈을 함께 띄워야 하면
+  `@ApplicationModuleTest`의 `DIRECT_DEPENDENCIES`로 범위를 좁히고, `ALL_DEPENDENCIES`는 이유가 있을 때만
+  쓴다.
+- 여러 모듈의 JPA/Querydsl 테스트가 공유하는 기반 클래스는 과거 module 이름을 쓰지 않고
+  `com.ticket.testsupport.persistence`에 둔다. 특정 모듈만 쓰는 fixture와 support는 해당 모듈 테스트
+  패키지 아래에 둔다.
+- H2에 붙는 Spring context 테스트는 `@MigratedSchema`(`com.ticket.testsupport.persistence`)를 붙여 운영과
+  같은 Flyway migration으로 스키마를 만든다. `ddl-auto=create`로 entity에서 만들지 않는다 — entity에는
+  유니크 제약·인덱스가 없어서 entity로 만든 스키마는 DB의 중복 거절을 재현하지 못한다.
 
-## 모듈 테스트
-
-각 Application Module에 `@ApplicationModuleTest(verifyAutomatically = false)` 기반 STANDALONE
-테스트를 최소 하나씩 둔다(`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`,
-`LikeModuleTests`, `MemberModuleTests`, `SecurityModuleTests`, 그리고 ADR 0005로 신설된
-`PaymentModuleTests`). 찜은
-`like`가 데이터와 찜하기·찜 해제·찜 상태 조회 endpoint를 소유하고, 공연 표시값을 조합하는
-"내 찜 목록"만 `show`가 소유한다(ADR 0006, ADR 0008, ADR 0009) — `ShowModuleTests`가 like의
-공개 API를 `@MockitoBean`으로 대체해 그 조합을 검증한다.
-`verifyAutomatically = false`인
-이유는 전체 애플리케이션 구조 검증이 각 모듈 테스트가 아니라 `com.ticket.ModularityTests` 한
-곳의 책임이기 때문이다 — 모듈 테스트에서 구조 assertion을 중복하지 않는다.
-
-외부 모듈의 공개 API는 `@MockitoBean`으로 대체하는 것이 기본이다. 지금은 예외가 없다 — 실제 의존
-모듈을 함께 띄우는 테스트는 하나도 없다. 꼭 필요해지면 `@ApplicationModuleTest`의
-`DIRECT_DEPENDENCIES`로 범위를 좁혀 쓰고 `ALL_DEPENDENCIES`는 이유가 있을 때만 쓴다.
-
-## 구조 테스트
-
-모듈 경계와 의존 방향을 **실제로 강제하는** 테스트다. 구조를 건드렸다면 이것부터 돌린다.
-DB·Redis·Docker 없이 도는 것에는 `@Tag("architecture")`(ArchUnit `@AnalyzeClasses` 클래스는
-`@ArchTag("architecture")`)를 붙이고, `./gradlew architectureTest`가 그 태그만 실행한다. CI도 전체
-`test` 전에 이것을 먼저 돌린다. 새 구조 테스트를 만들면 태그를 붙인다. 아래 표에서 `*ModuleTests`(Spring
-부트스트랩), `DocumentationTests`(문서 생성), `ServiceSourceSeparationTest`(`seedTest`)는 태그가 없다.
-
-| 테스트 | 고정하는 것 |
-| --- | --- |
-| `com.ticket.ArchitectureRulesTest` | 역할 package 이름으로 검사하는 전역 구조 규칙 열(`domain`·`usecase`·`endpoint`·출력 port의 의존 방향, 업무 코드의 Querydsl/Redisson 차단, DB를 읽는 class가 다른 업무 module을 조합하지 않는 것, `api`에 구현 bean 금지)과, 규칙이 쓰는 역할 package 실재·공개 named interface 목록·production package의 `@NullMarked` 선언. **구조를 바꿨으면 이것부터 돌린다** |
-| `com.ticket.ModularityTests` | Application Module 경계 전체(`ApplicationModules.of(...).verify()` + 승인된 DAG와 정확히 일치하는지) |
-| `com.ticket.*.*ModuleTests` (`BookingModuleTests`, `ShowModuleTests`, `VenueModuleTests`, `LikeModuleTests` 등) | 각 모듈이 STANDALONE으로 부트스트랩되는지 |
-| `com.ticket.shared.SharedModulePurityTest` | 공개 shared 계약에 bean을 등록하지 않고, 공통 실행 코드를 `shared.config`와 `shared.exception.handler`에만 두는 것 |
-| `com.ticket.DomainIsolationTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — `booking.order.domain`처럼 capability 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.usecase`가 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
-| `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules"). **`domain` 아래 묶음 폴더는 Aggregate 경계가 아니다** — 경계는 이 테스트가 FQCN으로 강제한다 |
-| `com.ticket.booking.BookingLayerDependencyTest` | `booking.concurrency`의 락 계약이 Redis 기술과 `endpoint` 계층을 모르는 것 두 가지. 옛 `booking.common`이 사라지며 그 의존 규칙을 이어받았다. booking의 계층 방향 자체는 `ArchitectureRulesTest`가 전역 규칙으로 덮는다 |
-| `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것. 생성물 목록과 CI artifact는 [architecture.md의 생성 문서](architecture.md#생성-문서)가 원본이다 |
-| `com.ticket.shared.exception.ExceptionHandlerScopeTest` | module handler가 다른 module의 오류까지 삼키지 않는 것 |
-| `com.ticket.shared.exception.ErrorCodeUniquenessTest` | E-code(외부 계약, `gatling-test`가 하드코딩)가 전역에서 유일한 것 |
-| `com.ticket.seed.ServiceSourceSeparationTest`(`seedTest`) | 시드 실행 코드·시드 SQL이 서비스 소스로 다시 섞이지 않는 것. 실제 jar는 `verifySeedNotInBootJar`가 확인한다 |
-
-새 코드의 위치가 의심스러우면 `ModularityTests`부터 돌린다. 규칙 전체 목록은
-[architecture.md의 Enforcement](architecture.md#enforcement)에 정리돼 있다.
-
-## Modulith 이벤트 테스트
+### Modulith 이벤트 테스트
 
 주문 생성/종료 후속 처리는 Spring Modulith의 `PublishedEvents`와 `Scenario`로 검증한다.
 
-- `PublishedEvents`와 실제 publication 상태로 booking DB 트랜잭션 성공 시 이벤트/publication이
-  함께 저장되고, rollback 시 둘 다 없는지 고정한다(예:
-  `OrderStartedPublicationAtomicityTest`).
+- `PublishedEvents`와 실제 publication 상태로 booking DB 트랜잭션 성공 시 이벤트/publication이 함께
+  저장되고, rollback 시 둘 다 없는지 고정한다.
 - `Scenario`로 listener 완료를 기다리고, 첫 시도 실패 후 publication FAILED, 재제출 성공 후
-  COMPLETED/ARCHIVED, 재시도 상한 초과 시 자동 제외를 검증한다(예:
-  `EventPublicationMaintenanceScenarioTest`). 고정 clock과 deterministic fake를 쓰고
+  COMPLETED/ARCHIVED, 재시도 상한 초과 시 자동 제외를 검증한다. 고정 clock과 deterministic fake를 쓰고
   `Thread.sleep`을 쓰지 않는다.
-- 동일 `eventId`가 여러 번 전달돼도 최종 상태와 WebSocket 의미가 한 번 처리한 것과 같은지
-  고정한다(멱등성 테스트). 상세 흐름은
-  [core-booking-lifecycle.md](core-booking-lifecycle.md)를 본다.
+- 동일 `eventId`가 여러 번 전달돼도 최종 상태와 WebSocket 의미가 한 번 처리한 것과 같은지 고정한다(멱등성).
 
-## 모듈별 migration slice 테스트
+### 예매 E2E
 
-각 모듈이 자신의 Flyway 이력(`db/migration/__root` + `db/migration/{module}`)만으로 schema가
-만들어지고 CRUD가 동작하는지 Spring context 없이 Hibernate 단독으로 검증한다(`@DataJpaTest`
-`@ModuleSlicing` 조합으로의 전환은 남은 후속 작업이다 — 사정은 `BookingModuleSlicingSchemaTest`의
-클래스 JavaDoc이 원본이다). 지금 존재하는
-것은 `BookingModuleSlicingSchemaTest`, `ShowModuleSlicingSchemaTest`(SHOWS.venue_id scalar 매핑과
-그 FK 제거), `VenueModuleSlicingSchemaTest`(Venue/Seat 매핑, ADR 0006으로 show에서 분리),
-`LikeModuleMigrationTest`(SHOW_LIKES의 옛 member/show FK 제거, LIKES로의 대상 일반화), `PaymentModuleSlicingSchemaTest`,
-`BookingTicketSlicingSchemaTest`(TICKETS는 booking V5)(`src/test/java/com/ticket/bootstrap/migration/`)다.
-다른 모듈의 migration이 있어야만 통과하면 실패로 간주한다.
-
-`BookingPerformanceSalesPolicyMigrationTest`(booking V6)는 ADR 0006 "Performance의 책임 혼재" A2
-정책 소유권 이관 migration을 검증한다 — 옛 show/`__root` 소유 `PERFORMANCE_QUEUE_POLICIES`/
-`PERFORMANCES` 정책 컬럼 4개를 `BOOKING_PERFORMANCE_SALES_POLICIES`로 손실 없이 backfill하는지,
-접수 기간이 해석 불가한 데이터(한쪽만 null, opens>=closes)는 migration을 실패시키는지, hold_time이
-null이면 600초 기본값을 적용하는지, 정책 컬럼이 아예 없는 최소 baseline에서는 no-op인지를
-고정한다. `OracleMigrationCompatibilityTest`도 이 backfill을 실제 Oracle에서 확인한다(Docker 필요).
-
-`payment`는 ADR 0005의 entity-only 단계라 `PaymentModuleSlicingSchemaTest`가 검증하는 범위도 그만큼
-좁다 — payment migration만으로 `PAYMENTS` 테이블이 만들어지고 entity가 저장·조회되는지, 그리고 다른
-업무 모듈(booking 등)의 migration 없이도 그 자체로 성립하는지만(`TICKETS`는 booking V5라
-`BookingTicketSlicingSchemaTest`가 booking migration 안에서 검증한다)
-고정한다. controller나 PG/QR 연동은 이 범위가 아니다.
-
-H2와 Oracle 호환성은 각각의 migration 검증 테스트(`OracleMigrationCompatibilityTest` 등)로
-확인한다. 상세는 [operations.md의 DB 마이그레이션](operations.md#db-마이그레이션)을 본다.
-
-## performance 기준 API와 가격 snapshot 회귀
-
-ADR 0005로 좌석·등급·가격 조회 기준이 showId에서 performanceId로 바뀌면서 추가된 세 API의 계약
-테스트는 `src/test/java/com/ticket/booking/seat/endpoint/`에 있다.
-`PerformanceSeatQueryControllerContractTest`가 `/api/v1/performances` 셋을 덮고,
-show 경로 호환 endpoint만 `ShowSeatMapControllerContractTest`가 따로 덮는다
-(서빙하는 controller가 `ShowSeatMapController`로 갈라져 있다).
-
-- `GET /api/v1/performances/{id}/seat-map` — 정적 좌석 배치·등급·가격
-- `GET /api/v1/shows/{id}/seats` — 기존 프론트 호환용 대표 회차 좌석 배치·등급·가격
-  (`ShowSeatMapController`)
-- `GET /api/v1/performances/{id}/seats/status` — 동적 판매 상태(`performanceSeatId` 기준)
-- `GET /api/v1/performances/{id}/seats/availability` — 등급별 잔여석
-
-`GetPerformanceSeatMapUseCaseTest`는 50좌석 fixture에서 show의 `PerformanceVenueLayoutCatalogApi`와
-booking의 `PerformanceSeatRepository`를 각각 한 번 호출하는지 Mockito `times(1)`로 확인한다.
-이는 유스케이스의 반복 조회 호출에 대한 회귀 검증이다. 공개 API와 Repository 구현 내부의 실제 SQL 수,
-JPA 지연 로딩으로 발생하는 N+1은 이 테스트의 검증 범위가 아니다.
-
-**가격 snapshot 불변성**은 두 단계로 고정된다. `PendingOrderCreatorTest`는 주문 금액이 오직
-`PerformanceSeat.unitPrice` 합계로만 계산되고(`Order.addOrderSeat`가 `totalAmount`에 누적한다 —
-`좌석_단가_합계로_pending_주문과_orderSeat를_조립한다`), show snapshot
-(`PerformanceSaleCatalogApi`)은 표시값(등급 코드/이름, 좌석 라벨, show/venue 이름)에만 쓰인다는 것을
-고정한다. `GetOrderDetailUseCaseTest`는 주문 상세 조회가 Order/OrderSeat에 생성 시점에 남긴
-snapshot만 쓰고 show를 다시 조회하지 않는다는 것을 고정한다 — show 쪽 가격·표시값이 나중에
-바뀌어도 기존 주문 상세가 그대로임을 보장하는 지점이 이 테스트다.
-
-## 통합 테스트와 E2E
-
-실제 인프라나 전체 컨텍스트가 필요한 검증이다. Testcontainers는 Docker가 필요하다.
-
-- `com.ticket.booking.concurrency.redis.CoreRedisIntegrationTest`: Redis key·TTL·expiration
-  listener·분산락(Testcontainers)
-- `com.ticket.booking.hold.persistence.RedissonHoldStoreIntegrationTest`: hold 생성의 부분 실패
-  보상이 좌석 키·회차별 점유 인덱스·메타데이터를 실제로 어떤 상태로 남기는지(Testcontainers)
-- `com.ticket.bootstrap.ApplicationContextLoadTest`: 전체 컨텍스트가 실제로 조립되는지
-- `com.ticket.bootstrap.booking.BookingHappyPathE2ETest`: 좌석 조회부터 주문 취소까지 실제
-  HTTP로 관통
-- `com.ticket.bootstrap.booking.SeatContentionE2ETest`: 같은 좌석 동시 주문에서 하나만 성공
-
-### 예매 E2E를 쓸 때
-
-`com.ticket.bootstrap.support.BookingE2ETestSupport`를 상속한다. 인증 헬퍼, 좌석 상태 조회, 커밋 후
-처리를 기다리는 `pollUntil`이 여기 있고, Testcontainers Redis와 H2·기동 설정은 상위
-`com.ticket.testsupport.CoreApplicationTestSupport`가 갖는다. 기동에 필요한 환경변수 값은
-`src/test/resources/config/application.yml`에 있다. 데이터는
+`BookingE2ETestSupport`를 상속한다. 인증 헬퍼, 좌석 상태 조회, 커밋 후 처리를 기다리는 `pollUntil`이 여기
+있고, Testcontainers Redis와 H2·기동 설정은 상위 `CoreApplicationTestSupport`가 갖는다. 데이터는
 `fixture/booking-e2e-*.sql`이 만들고 `@Sql`이 메서드마다 초기화한다.
 
-**모듈 사이 연결을 보는 테스트다.** 응답 코드만 확인하면 단위 테스트와 다를 게 없다. 좌석 상태를
-다시 조회해 DB와 Redis가 함께 맞는지 본다.
+**모듈 사이 연결을 보는 테스트다.** 응답 코드만 확인하면 단위 테스트와 다를 게 없다. 좌석 상태를 다시 조회해
+DB와 Redis가 함께 맞는지 본다.
 
-주의 두 가지.
-- 회차당 같은 회원은 `PENDING` 주문을 하나만 가질 수 있다. 한 테스트에서 주문을 여러 번 만들면
-  앞 주문을 취소해야 한다.
-- 커밋 후 처리는 `@ApplicationModuleListener`가 요청 스레드 밖에서 비동기로 끝낸다. 고정 sleep
-  대신 `pollUntil`을 쓴다.
-
-Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트만으로 확인했다고 보지 않는다.
-**Docker가 없어 Testcontainers 기반 테스트를 돌리지 못했다면 단위 테스트 통과로 대체하지 않고
-미검증으로 보고한다.**
-
-**모듈 사이로 빈을 옮기는 변경은 `ApplicationContextLoadTest`까지 돌린다.** 단위 테스트는 각
-클래스를 직접 생성하므로 빈 배선이 깨져도 통과한다. 기동 실패는 컨텍스트를 통째로 띄워야
-드러난다.
+- 회차당 같은 회원은 `PENDING` 주문을 하나만 가질 수 있다. 한 테스트에서 주문을 여러 번 만들면 앞 주문을
+  취소해야 한다.
+- 커밋 후 처리는 `@ApplicationModuleListener`가 요청 스레드 밖에서 비동기로 끝낸다. 고정 sleep 대신
+  `pollUntil`을 쓴다.
 
 ## 새 테스트를 추가할 때
-
-이 저장소의 관례는 아래와 같다. 테스트 파일 대부분이 이 형태다.
 
 - 테스트 클래스에 `@SuppressWarnings("NonAsciiCharacters")`를 붙이고 **메서드 이름을 한국어로** 쓴다.
 
@@ -246,32 +120,35 @@ Redis key, TTL, expiration listener, Redisson 관련 변경은 단위 테스트�
   ```
 
 - `@DisplayName`과 `@Nested`는 사용하지 않는다. 저장소 전체에서 사용 사례가 없다.
-- 테스트 클래스 이름은 대상 클래스 이름 + `Test`로 맞춘다. Controller 계약 테스트는
-  `...ContractTest`, 모듈 STANDALONE 테스트는 `...ModuleTests`, Modulith 시나리오 테스트는
-  `...ScenarioTest`를 쓴다.
+- 테스트 클래스 이름은 대상 클래스 이름 + `Test`로 맞춘다. Controller 계약 테스트는 `...ContractTest`, 모듈
+  STANDALONE 테스트는 `...ModuleTests`, Modulith 시나리오 테스트는 `...ScenarioTest`를 쓴다.
 - 도메인 규칙과 use case는 Spring 컨텍스트 없이 검증한다. port와 구체 `*QuerydslRepository`는 fake나
-  mock으로 대체한다(`*QuerydslRepository`는 interface가 아니지만 Mockito가 class도 mock한다). 다른
-  모듈의 공개 API도 마찬가지로 mock/fake로 대체하고, 실제 모듈 조합이 필요하면 그 사실을 테스트
-  이름과 애노테이션(`DIRECT_DEPENDENCIES`)으로 드러낸다.
-- Redis나 DB에 실제로 붙어야 하는 검증은 `@DataJpaTest`/Testcontainers로 분리한다. 단위 테스트에
-  섞지 않는다.
-- 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `endpoint`,
-  `UseCase.Input` 계약은 `usecase`, 업무 불변식은 `domain` 테스트다. 같은
-  규칙을 두 계층에서 동시에 고정하지 않는다. 계층의 책임은 [architecture.md](architecture.md#module-structure)를 본다.
-- 외부 오류 계약의 변경 영향을 분석할 때는 응답 구조·HTTP 상태·`error.code` 값에 대한 의존을
-  구분하고, 소비자 소스의 실제 사용 지점을 확인한다. 응답 봉투를 사용한다는 사실만으로 특정
-  오류 코드 값에 의존한다고 판단하지 않는다.
-- 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 이벤트 재시도, 순서 역전**을
-  함께 고정한다.
-- 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다. 기존 예시로
-  `execute는_DB_트랜잭션을_직접_시작하지_않는다`(`StartBookingUseCaseTest`),
-  `주문_생성_메서드는_트랜잭션으로_실행된다`(`PendingOrderCreatorTest`)가
-  있다.
+  mock으로 대체한다(`*QuerydslRepository`는 interface가 아니지만 Mockito가 class도 mock한다). 다른 모듈의
+  공개 API도 마찬가지로 mock/fake로 대체하고, 실제 모듈 조합이 필요하면 그 사실을 테스트 이름과
+  애노테이션(`DIRECT_DEPENDENCIES`)으로 드러낸다.
+- Redis나 DB에 실제로 붙어야 하는 검증은 `@DataJpaTest`/Testcontainers로 분리한다. 단위 테스트에 섞지 않는다.
+- 검증 규칙을 고정할 때는 계층을 맞춘다. API DTO와 Controller 계약은 `endpoint`, `UseCase.Input` 계약은
+  `usecase`, 업무 불변식은 `domain` 테스트다. 같은 규칙을 두 계층에서 동시에 고정하지 않는다.
+- 외부 오류 계약의 변경 영향을 분석할 때는 응답 구조·HTTP 상태·`error.code` 값에 대한 의존을 구분하고,
+  소비자 소스의 실제 사용 지점을 확인한다. 응답 봉투를 사용한다는 사실만으로 특정 오류 코드 값에 의존한다고
+  판단하지 않는다.
+- 주문·hold 흐름을 바꿨다면 성공 경로만 두지 않고 **취소, 만료, 이벤트 재시도, 순서 역전**을 함께 고정한다.
+- 트랜잭션 경계 자체가 계약인 지점은 그 사실을 테스트로 고정한다.
 
 ## Core 부하 검증
 
-Core 용량은 `BookingCapacitySimulation`으로 좌석 상태 조회·선택·주문 생성을, 좌석 경합은 `SeatContentionSimulation`으로 같은 좌석의 hold/order 정합성을 측정한다. 전체 흐름은 `TicketOpenEndToEndSimulation`으로 Queue join/state/enter부터 admission token을 거쳐 확인한다. 실제 시나리오·feeder CSV·옵션·분산 실행 명령은 형제 [gatling-test README](https://github.com/ticket-project/gatling-test/blob/main/README.md)가 원본이다. 로컬 workspace에서는 ticket-core와 나란히 둔 `../gatling-test`에서 실행한다.
+부하 시나리오·feeder CSV·옵션·분산 실행 명령·리포트의 원본은 형제 저장소
+[gatling-test README](https://github.com/ticket-project/gatling-test/blob/master/README.md)다. 로컬 workspace에서는
+ticket-core와 나란히 둔 `../gatling-test`에서 실행한다. 아래는 Core 쪽에서 지킬 안전 수칙이다.
 
-전용 회차·좌석·회원과 중복 없는 토큰/feeder를 준비하고 [seed 사용법](../seed/README.md)을 확인한다. Ticket/Queue Redis를 분리하고 양쪽 access/admission secret을 일치시킨다. DIRECT/QUEUE 정책과 token 경로를 확인한다. `coreBaseUrl`·`queueBaseUrl`을 따로 지정해 잘못된 서버 호출을 막는다. 연속 실행 전 PENDING 주문 만료, hold TTL, 미완료 event publication, Queue entered marker가 정리됐는지 확인한다.
-
-성능 목표는 현재 Core에 대해 승인된 값이 없어 **미정**이다. 테스트 시작 전에 대상 URL·사용자 수·투입 시간·전용 performanceId와 판단 기준을 승인받는다. 운영 환경에는 직접 부하를 주지 않는다. 실패율·p95/p99·500 응답뿐 아니라 성공한 hold/order 수가 좌석 수를 넘지 않는지, admission 경로가 맞는지 확인한다. [운영 관측](operations.md#core-용량-관측)의 DB pool·Redis 지연·executor backlog도 함께 본다. 측정 가정, 예시 값, 실제 결과, 승인된 운영 설정을 구분한다. 개별 결과는 원본 리포트와 Issue/PR에 연결하고 중요한 설계 결정에만 ADR 근거로 쓴다. 비추적 리포트는 사용자 확인 없이 삭제·이동하지 않는다.
+- 전용 회차·좌석·회원과 중복 없는 토큰/feeder를 준비하고, Ticket/Queue Redis를 분리하고, 양쪽 access/admission
+  secret을 일치시킨다. DIRECT/QUEUE 정책과 token 경로를 확인한다. `coreBaseUrl`·`queueBaseUrl`을 따로
+  지정해 잘못된 서버 호출을 막는다.
+- 연속 실행 전에 PENDING 주문 만료, hold TTL, 미완료 event publication, Queue entered marker가 정리됐는지
+  확인한다.
+- 성능 목표는 현재 Core에 대해 승인된 값이 없어 **미정**이다. 테스트 시작 전에 대상 URL·사용자 수·투입 시간·
+  전용 performanceId와 판단 기준을 승인받는다. **운영 환경에는 직접 부하를 주지 않는다.**
+- 판정은 실패율·p95/p99·500 응답뿐 아니라 성공한 hold/order 수가 좌석 수를 넘지 않는지, admission 경로가
+  맞는지까지 본다. DB pool·Redis 지연·executor backlog 같은 서버 지표는 운영 관측 지표와 함께 본다.
+- 측정 가정, 예시 값, 실제 결과, 승인된 운영 설정을 구분한다. 개별 결과는 원본 리포트와 Issue/PR에 남기고
+  중요한 설계 결정에만 ADR 근거로 쓴다. 부하 잔재와 비추적 결과 파일은 사용자 확인 없이 삭제·이동하지 않는다.
