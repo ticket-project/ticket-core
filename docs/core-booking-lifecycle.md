@@ -38,8 +38,9 @@
 ~~~text
 StartBookingUseCase          (POST /api/v1/orders)
   -> LockScope.ORDER_START 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
-  -> salespolicy PerformanceSaleFinder.requirePolicy: 예매 정책(오픈 여부, hold 상한, 대기열 필요 여부) 조회 (밖)
-  -> admission AdmissionGuard.verifyIfRequired: 대기열 필요 회차만 token 검증 (밖)
+  -> admission BookingEntryGate.enter: 예매 정책 조회, 접수 기간 확인, 대기열 필요 회차만 token 검증 (밖)
+     — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
+  -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
   -> member MemberLookupApi: active member 확인 (밖)
   -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
   -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,

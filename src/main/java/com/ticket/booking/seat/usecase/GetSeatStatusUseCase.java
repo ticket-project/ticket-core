@@ -10,9 +10,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.AdmissionGuard;
-import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
+import com.ticket.booking.admission.BookingEntryGate;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -23,10 +21,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class GetSeatStatusUseCase {
-    private final PerformanceSaleFinder performanceSaleFinder;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatOccupancy seatOccupancy;
-    private final AdmissionGuard admissionGuard;
+    private final BookingEntryGate bookingEntryGate;
     private final Clock clock;
 
     public record Input(
@@ -69,9 +66,7 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        final PerformanceSalesPolicy policy = performanceSaleFinder.requirePolicy(performanceId);
-        policy.ensureAcceptingOrders(now);
-        admissionGuard.verifyIfRequired(policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
+        bookingEntryGate.enter(performanceId, input.memberId(), input.admissionToken(), now);
 
         final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findSeatStates(performanceId);
 

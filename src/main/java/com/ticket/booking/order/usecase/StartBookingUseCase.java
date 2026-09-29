@@ -11,7 +11,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.AdmissionGuard;
+import com.ticket.booking.admission.BookingEntryGate;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
@@ -20,7 +20,6 @@ import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
@@ -56,8 +55,7 @@ public class StartBookingUseCase {
             LockOptions.defaults().withFailureMessage("주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요.");
 
     private final LockManager lockManager;
-    private final PerformanceSaleFinder performanceSaleFinder;
-    private final AdmissionGuard admissionGuard;
+    private final BookingEntryGate bookingEntryGate;
     private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
@@ -93,10 +91,9 @@ public class StartBookingUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         // 1. 지금 이 회차의 예매를 받을 수 있는가.
-        final PerformanceSalesPolicy policy = performanceSaleFinder.requirePolicy(input.performanceId());
-        policy.ensureAcceptingOrders(now);
+        final PerformanceSalesPolicy policy =
+                bookingEntryGate.enter(input.performanceId(), input.memberId(), input.admissionToken(), now);
         policy.ensureWithinHoldLimit(requestedSeatIds.size());
-        admissionGuard.verifyIfRequired(policy, input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         // 2. 예매할 수 있는 회원인가. 인증은 토큰의 서명·만료만 보므로 탈퇴 회원은 여기서 걸러진다 --
         //    좌석을 실제로 점유하는 첫 지점이라 요청 입구가 아니라 여기서 한 번만 확인한다.
