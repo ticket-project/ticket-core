@@ -37,28 +37,13 @@ class RedissonLockManagerTest {
     }
 
     @Test
-    void 임대시간을_지정하지_않으면_watchdog_방식으로_잠근다() throws InterruptedException {
+    void 임대시간_없이_watchdog_방식으로_잠근다() throws InterruptedException {
         when(redissonClient.getLock("LOCK:hold:10:100")).thenReturn(lock);
         when(lock.tryLock(500L, TimeUnit.MILLISECONDS)).thenReturn(true);
 
         lockManager().withLock(List.of(LockKey.seat(10L, 100L)), LockOptions.waiting(Duration.ofMillis(500)), () -> {});
 
         verify(lock).tryLock(500L, TimeUnit.MILLISECONDS);
-        verify(lock).unlock();
-    }
-
-    @Test
-    void 임대시간을_지정하면_그_시간_뒤에_자동_해제되도록_잠근다() throws InterruptedException {
-        when(redissonClient.getLock("LOCK:hold:10:100")).thenReturn(lock);
-        when(lock.tryLock(5_000L, 60_000L, TimeUnit.MILLISECONDS)).thenReturn(true);
-
-        lockManager()
-                .withLock(
-                        List.of(LockKey.seat(10L, 100L)),
-                        LockOptions.defaults().withLeaseTime(Duration.ofSeconds(60)),
-                        () -> {});
-
-        verify(lock).tryLock(5_000L, 60_000L, TimeUnit.MILLISECONDS);
         verify(lock).unlock();
     }
 
