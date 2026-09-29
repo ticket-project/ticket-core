@@ -3,12 +3,14 @@ package com.ticket.show;
 import java.time.Clock;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.member.api.MemberLookupApi;
+import com.ticket.testsupport.persistence.MigratedSchema;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 
@@ -28,8 +30,12 @@ import com.ticket.venue.api.VenueSeatLookupApi;
  * {@link VenueLookupApi}/ {@link VenueSeatLookupApi}도 참조한다(목록·상세의 공연장 표시값 조립, region 검색 조건 해석, 좌석 주소·좌석 배치 조회). 전부 이
  * STANDALONE 스캔 범위 밖이라 {@code @MockitoBean}으로 대체한다.
  */
+@MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
 class ShowModuleTests {
+    @MockitoBean
+    private RedissonClient redissonClient;
+
     @MockitoBean
     private JPAQueryFactory jpaQueryFactory;
 

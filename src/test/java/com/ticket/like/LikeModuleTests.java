@@ -1,11 +1,13 @@
 package com.ticket.like;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.member.api.MemberLookupApi;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증은 {@code com.ticket.ModularityTests}가 전담한다(다른 module 테스트와 같은 이유).
@@ -15,8 +17,12 @@ import com.ticket.member.api.MemberLookupApi;
  * {@code JPAQueryFactory}는 {@code @MockitoBean}으로 대체한다. like는 찜하기/찜 해제/찜 상태 조회의 회원 활성 확인을 위해 {@code member}의 공개 계약
  * {@link MemberLookupApi}을 직접 부르므로(대상 존재는 확인하지 않는다 — package-info 참고) 이것도 같은 이유로 mock한다.
  */
+@MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
 class LikeModuleTests {
+    @MockitoBean
+    private RedissonClient redissonClient;
+
     @MockitoBean
     private JPAQueryFactory jpaQueryFactory;
 
