@@ -23,7 +23,7 @@ class PaymentTest {
         assertThat(payment.getProvider()).isEqualTo("TOSS");
         assertThat(payment.getMethod()).isEqualTo("CARD");
         assertThat(payment.getAmount()).isEqualByComparingTo("15000");
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+        assertThat(payment.getStatus()).isEqualTo(PaymentState.READY);
         assertThat(payment.getRequestedAt()).isEqualTo(requestedAt);
         assertThat(payment.isTerminal()).isFalse();
     }
@@ -35,7 +35,7 @@ class PaymentTest {
         // when
         payment.process();
         // then
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PROCESSING);
+        assertThat(payment.getStatus()).isEqualTo(PaymentState.PROCESSING);
     }
 
     @Test
@@ -58,7 +58,7 @@ class PaymentTest {
         // when
         payment.approve("provider-payment-key", approvedAt);
         // then
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCEEDED);
+        assertThat(payment.getStatus()).isEqualTo(PaymentState.SUCCEEDED);
         assertThat(payment.getProviderPaymentKey()).isEqualTo("provider-payment-key");
         assertThat(payment.getApprovedAt()).isEqualTo(approvedAt);
         assertThat(payment.isTerminal()).isTrue();
@@ -73,7 +73,7 @@ class PaymentTest {
         // when
         payment.fail("PG_DECLINED", "한도 초과", failedAt);
         // then
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+        assertThat(payment.getStatus()).isEqualTo(PaymentState.FAILED);
         assertThat(payment.getFailureCode()).isEqualTo("PG_DECLINED");
         assertThat(payment.getFailureMessage()).isEqualTo("한도 초과");
         assertThat(payment.getFailedAt()).isEqualTo(failedAt);
@@ -88,7 +88,7 @@ class PaymentTest {
         // when
         payment.cancel(canceledAt);
         // then
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.CANCELED);
+        assertThat(payment.getStatus()).isEqualTo(PaymentState.CANCELED);
         assertThat(payment.getCanceledAt()).isEqualTo(canceledAt);
         assertThat(payment.isTerminal()).isTrue();
     }
