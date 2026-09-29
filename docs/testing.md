@@ -5,13 +5,20 @@
 
 ## 테스트를 돌리는 시점
 
-- **작업 중에는 테스트를 돌리지 않는다.** 고칠 때마다, 커밋마다 돌리지 않는다.
-- **모든 커밋이 끝나고 사용자에게 완료를 알리기 전에 전체 테스트를 한 번 돌린다.** 명령은
-  `./gradlew spotlessJavaCheck test`다. 문서를 바꿨으면 `bash scripts/check-docs.sh`와
-  `git diff --check`도 이때 돌린다. 실패하면 고치는 커밋을 더한 뒤 전체를 다시 한 번 돌린다.
-- **문서만 바꿨으면 전체 테스트 대신 문서 검사(`bash scripts/check-docs.sh`, `git diff --check`)만 한다.**
-- **seed 테스트는 seed 코드(`seed/`)를 바꿨을 때만 돌린다.** 그때는 `./gradlew test seedTest`를
-  쓴다. `SeedProdOracleTest`가 Oracle 컨테이너를 띄워 seed 테스트만 5분 가까이 걸린다.
+- **변경에 직접 닿는 검증부터 작업 중 실행한다.** 작은 변경은 관련 테스트 클래스부터 고르고,
+  Java 변경은 `./gradlew spotlessJavaCheck`를 함께 확인한다. production 컴파일에는 NullAway 검사도 포함된다.
+- **위험에 따라 범위를 넓힌다.** 모듈 경계는 구조·관련 모듈 테스트, Redis·이벤트·DB 변경은 해당
+  통합·Scenario·migration 테스트, 모듈 간 조립은 컨텍스트·E2E까지 확인한다. 공통 설정·의존성·
+  여러 모듈 영향이나 원인 불명 회귀는 전체 테스트(`./gradlew spotlessCheck test`)로 넓히고,
+  배포 산출물까지 확인할 때는 아래 CI 기준 명령을 쓴다. 전체 빌드·테스트는 매번 강제하지 않는다.
+- **필요한 검증을 마친 뒤 커밋한다.** 완료 전 최종 diff가 검증한 범위와 일치하는지 확인한다.
+  실패하면 원인을 해결하고 관련 검증을 다시 실행한다. 새 변경·실패·미해결 우려가 없으면 같은
+  검증을 커밋마다 반복하지 않는다.
+- **문서만 바꿨으면 문서 검사만 한다.** `bash scripts/check-docs.sh`, 변경 링크·anchor·명령 근거와
+  `git diff --check`를 확인한다. Java 포맷·전체 테스트는 요구하지 않는다.
+- **seed는 별도로 검증한다.** seed 변경은 `./gradlew seedTest`부터 시작하고 서비스와 함께 영향을
+  받으면 `./gradlew test seedTest`로 넓힌다. CI·산출물 전체 검증에도 포함한다. `SeedProdOracleTest`는
+  Oracle 컨테이너가 필요하다.
 - **테스트를 중간에 끊었다면 다음 실행 전에 이전 실행이 멈췄는지 확인한다.** 셸을 끊어도 Gradle
   데몬의 테스트 JVM과 Testcontainers 컨테이너는 남을 수 있다(`docker ps`, `./gradlew --status`). 겹쳐 돌면
   서로 느려져 멈춘 것처럼 보인다.
@@ -19,22 +26,22 @@
 
 ## 변경별 검증
 
-아래 표는 사용자가 특정 범위만 요청했거나, 전체 테스트 실패를 좁혀 볼 때 쓴다.
+아래 표로 변경에 맞는 최소 검증과 확대 범위를 고른다. 좁은 테스트의 통과를 다른 모듈·실제 인프라 검증의 통과로 대신하지 않는다.
 
 실제 테스트 클래스와 패키지를 먼저 `rg --files src/test seed/src/test`로 확인한다. `--tests` 패턴이 0건을
 실행해도 성공으로 오인하지 않는다. Windows PowerShell은 `./gradlew` 대신 `.\gradlew.bat`을 쓴다.
 
 | 변경 범위 | 실행 기준 |
 | --- | --- |
-| 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*'`로 해당 모듈부터 |
+| 특정 업무 코드(booking 예시) | `./gradlew spotlessJavaCheck test --tests 'com.ticket.booking.order.usecase.StartBookingUseCaseTest'`부터; 관련 모듈 전체는 `--tests 'com.ticket.booking.*'` |
 | 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`와 관련 module test |
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
 | 주문·hold·이벤트 흐름 | 관련 단위·Scenario·예매 E2E 테스트(Docker 필요) |
 | 빈을 모듈 사이로 옮기는 변경 | 위에 더해 `ApplicationContextLoadTest`. 단위 테스트는 각 클래스를 직접 만들어 빈 배선이 깨져도 통과한다 |
 | DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트(Oracle은 Docker 필요) |
 | seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
-| 배포 산출물·push 전 전체 | `ci.yml`의 `Test and build` 단계 명령 |
-| 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
+| 배포 산출물·push 전 전체 | [CI workflow](../.github/workflows/ci.yml)의 `Test and build` 단계 명령 |
+| 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor·명령 근거 확인, `git diff --check` |
 
 `test`는 서비스 테스트만 돌리고 `seedTest`는 따로 실행한다(`check`와 CI는 둘 다 돌린다). `compileJava`는
 NullAway를 함께 실행한다.
