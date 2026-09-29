@@ -65,7 +65,7 @@ class GetSeatAvailabilityUseCaseTest {
         // then
         assertThat(output.grades())
                 .containsExactly(
-                        new GetSeatAvailabilityUseCase.GradeAvailability(31L, "VIP", "VIP석", BigDecimal.TEN, 1, 0L));
+                        new GetSeatAvailabilityUseCase.GradeResponse(31L, "VIP", "VIP석", BigDecimal.TEN, 1, 0L));
     }
 
     /** 옛 {@code SeatAvailabilityCalculatorTest}에서 옮겨 온다 — 집계가 use case의 private method가 됐다. */
@@ -84,7 +84,7 @@ class GetSeatAvailabilityUseCaseTest {
         final GetSeatAvailabilityUseCase.Output output = useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
 
         assertThat(output.grades())
-                .extracting(GetSeatAvailabilityUseCase.GradeAvailability::availableSeats)
+                .extracting(GetSeatAvailabilityUseCase.GradeResponse::availableSeats)
                 .containsExactly(1L);
     }
 
@@ -103,7 +103,7 @@ class GetSeatAvailabilityUseCaseTest {
         final GetSeatAvailabilityUseCase.Output output = useCase.execute(new GetSeatAvailabilityUseCase.Input(10L));
 
         assertThat(output.grades())
-                .extracting(GetSeatAvailabilityUseCase.GradeAvailability::availableSeats)
+                .extracting(GetSeatAvailabilityUseCase.GradeResponse::availableSeats)
                 .containsExactly(0L);
     }
 
@@ -136,7 +136,7 @@ class GetSeatAvailabilityUseCaseTest {
         // then
         assertThat(output.grades()).hasSize(2);
         assertThat(output.grades())
-                .extracting(GetSeatAvailabilityUseCase.GradeAvailability::performanceGradeId)
+                .extracting(GetSeatAvailabilityUseCase.GradeResponse::performanceGradeId)
                 .containsExactlyInAnyOrder(31L, 32L);
     }
 

@@ -36,16 +36,16 @@ public class GetPerformanceSeatMapUseCase {
         }
     }
 
-    public record Output(VenueView venue, List<SeatMapEntry> seats) {}
+    public record Output(VenueResponse venue, List<SeatResponse> seats) {}
 
-    public record VenueView(
+    public record VenueResponse(
             @Nullable Long venueId,
             @Nullable String venueName,
             int viewBoxWidth,
             int viewBoxHeight,
             double seatDiameter) {}
 
-    public record SeatMapEntry(
+    public record SeatResponse(
             Long performanceSeatId,
             Long seatId,
             int floor,
@@ -64,16 +64,16 @@ public class GetPerformanceSeatMapUseCase {
         final List<PerformanceSeat> performanceSeats =
                 performanceSeatRepository.findAllByPerformanceId(input.performanceId());
 
-        final List<SeatMapEntry> seats = performanceSeats.stream()
-                .map(performanceSeat -> toSeatMapEntry(performanceSeat, layout))
+        final List<SeatResponse> seats = performanceSeats.stream()
+                .map(performanceSeat -> toSeatResponse(performanceSeat, layout))
                 .filter(Objects::nonNull)
                 .toList();
 
-        return new Output(toVenueView(layout), seats);
+        return new Output(toVenueResponse(layout), seats);
     }
 
-    private VenueView toVenueView(final PerformanceLayoutSnapshot layout) {
-        return new VenueView(
+    private VenueResponse toVenueResponse(final PerformanceLayoutSnapshot layout) {
+        return new VenueResponse(
                 layout.venueId(),
                 layout.venueName(),
                 layout.viewBoxWidth(),
@@ -82,7 +82,7 @@ public class GetPerformanceSeatMapUseCase {
     }
 
     /** show 쪽 좌표·등급 표시값이 이 좌석과 매칭되지 않으면(데이터 불일치) 조용히 제외한다 — 어떤 오류로 다룰지는 이 조합 시점에서 판정하지 않는다. */
-    private @Nullable SeatMapEntry toSeatMapEntry(
+    private @Nullable SeatResponse toSeatResponse(
             final PerformanceSeat performanceSeat, final PerformanceLayoutSnapshot layout) {
         final PerformanceLayoutSnapshot.SeatLayout seatLayout =
                 layout.seatLayoutBySeatId().get(performanceSeat.getSeatId());
@@ -91,7 +91,7 @@ public class GetPerformanceSeatMapUseCase {
         if (seatLayout == null || gradeLayout == null) {
             return null;
         }
-        return new SeatMapEntry(
+        return new SeatResponse(
                 performanceSeat.getId(),
                 performanceSeat.getSeatId(),
                 seatLayout.floor(),

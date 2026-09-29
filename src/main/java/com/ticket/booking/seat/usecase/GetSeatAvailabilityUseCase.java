@@ -41,10 +41,10 @@ public class GetSeatAvailabilityUseCase {
         }
     }
 
-    public record Output(List<GradeAvailability> grades) {}
+    public record Output(List<GradeResponse> grades) {}
 
     /** 그룹 key는 {@code performanceGradeId}다 — 변경 가능한 {@code gradeName}이 같아도 ID가 다르면 별개의 grade로 취급한다. */
-    public record GradeAvailability(
+    public record GradeResponse(
             Long performanceGradeId,
             String gradeCode,
             String gradeName,
@@ -66,10 +66,10 @@ public class GetSeatAvailabilityUseCase {
         final Map<Long, Long> availableCountsByGrade =
                 countAvailableSeatsByGrade(performanceSeats, seatOccupancy.occupiedSeatIds(input.performanceId()));
 
-        final List<GradeAvailability> grades = availableCountsByGrade.entrySet().stream()
-                .map(entry -> toGradeAvailability(entry.getKey(), entry.getValue(), saleSnapshot))
+        final List<GradeResponse> grades = availableCountsByGrade.entrySet().stream()
+                .map(entry -> toGradeResponse(entry.getKey(), entry.getValue(), saleSnapshot))
                 .filter(Objects::nonNull)
-                .sorted(Comparator.comparingInt(GradeAvailability::sortOrder))
+                .sorted(Comparator.comparingInt(GradeResponse::sortOrder))
                 .toList();
 
         return new Output(grades);
@@ -99,14 +99,14 @@ public class GetSeatAvailabilityUseCase {
         return availableSeatCounts;
     }
 
-    private @Nullable GradeAvailability toGradeAvailability(
+    private @Nullable GradeResponse toGradeResponse(
             final Long performanceGradeId, final Long availableSeats, final PerformanceSaleSnapshot saleSnapshot) {
         final PerformanceSaleSnapshot.GradeInfo gradeInfo =
                 saleSnapshot.gradeInfoByPerformanceGradeId().get(performanceGradeId);
         if (gradeInfo == null) {
             return null;
         }
-        return new GradeAvailability(
+        return new GradeResponse(
                 performanceGradeId,
                 gradeInfo.gradeCode(),
                 gradeInfo.gradeName(),

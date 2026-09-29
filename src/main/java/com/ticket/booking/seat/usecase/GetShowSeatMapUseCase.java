@@ -28,9 +28,9 @@ public class GetShowSeatMapUseCase {
         }
     }
 
-    public record Output(List<SeatMapEntry> seats) {}
+    public record Output(List<SeatResponse> seats) {}
 
-    public record SeatMapEntry(
+    public record SeatResponse(
             Long seatId,
             int floor,
             String section,
@@ -50,11 +50,11 @@ public class GetShowSeatMapUseCase {
                 getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(performanceId));
 
         return new Output(
-                performanceSeatMap.seats().stream().map(this::toSeatMapEntry).toList());
+                performanceSeatMap.seats().stream().map(this::toSeatResponse).toList());
     }
 
-    private SeatMapEntry toSeatMapEntry(final GetPerformanceSeatMapUseCase.SeatMapEntry seat) {
-        return new SeatMapEntry(
+    private SeatResponse toSeatResponse(final GetPerformanceSeatMapUseCase.SeatResponse seat) {
+        return new SeatResponse(
                 seat.seatId(),
                 seat.floor(),
                 seat.section(),
