@@ -26,13 +26,13 @@ class ShowSortTest {
     void 지원하지_않는_sort면_원문을_담은_예외를_던진다() {
         assertThatThrownBy(() -> ShowSort.from("unknown"))
                 .isInstanceOf(UnsupportedShowSortException.class)
-                .hasFieldOrPropertyWithValue("sortValue", "unknown");
+                .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: unknown");
     }
 
     @Test
     void 대소문자를_정규화하지_않고_원문_그대로_담는다() {
         assertThatThrownBy(() -> ShowSort.from("UNKNOWN_SORT"))
                 .isInstanceOf(UnsupportedShowSortException.class)
-                .hasFieldOrPropertyWithValue("sortValue", "UNKNOWN_SORT");
+                .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: UNKNOWN_SORT");
     }
 }
