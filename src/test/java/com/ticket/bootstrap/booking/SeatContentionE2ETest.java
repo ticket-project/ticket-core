@@ -25,6 +25,9 @@ import tools.jackson.databind.JsonNode;
  *
  * <p>티켓 예매에서 이중 판매보다 큰 사고가 없는데, 이 성질을 실제 분산락과 실제 Redis로 검증하는 테스트가 없었다. 단위 테스트는 LockManager를 mock으로 바꾸므로 락이 실제로 상호 배제하는지
  * 알 수 없고, 락 범위가 잘못 잡혀도 통과한다.
+ *
+ * <p>주문은 본인이 선택 중인 좌석으로만 시작할 수 있으므로(ADR 0001) 각 경쟁자는 실제 사용자처럼 선택한 뒤 주문한다. 경합은 선택과 선점 두 단계에서 모두 일어날 수 있고, 어느 쪽에서 갈리든 주문
+ * 성공은 하나여야 한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeatContentionE2ETest extends BookingE2ETestSupport {
@@ -98,6 +101,11 @@ class SeatContentionE2ETest extends BookingE2ETestSupport {
             final CountDownLatch startLine, final String token, final long seatId) {
         return () -> {
             startLine.await();
+            final ResponseEntity<JsonNode> select =
+                    post("/api/v1/performances/" + PERFORMANCE_ID + "/seats/" + seatId + "/select", token);
+            if (select.getStatusCode() != HttpStatus.OK) {
+                return select;
+            }
             return restTemplate.exchange(
                     "/api/v1/orders", HttpMethod.POST, authedJson(token, createOrderBody(seatId)), JsonNode.class);
         };

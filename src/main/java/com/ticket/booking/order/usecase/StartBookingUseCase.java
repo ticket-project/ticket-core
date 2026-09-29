@@ -15,6 +15,7 @@ import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
+import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderRemainingTime;
@@ -22,6 +23,7 @@ import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
@@ -61,6 +63,7 @@ public class StartBookingUseCase {
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
     private final HoldManager holdManager;
+    private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
     private final Clock clock;
 
@@ -108,7 +111,7 @@ public class StartBookingUseCase {
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
 
-        // 5. 좌석을 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
+        // 5. 본인이 선택 중인 좌석만 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
         //    connection 경합이 좌석 경합으로 번진다.
         final Duration holdDuration = policy.holdDuration();
         final List<LockKey> seatLocks = LockKey.seats(input.performanceId(), requestedSeatIds.toList());
@@ -131,18 +134,27 @@ public class StartBookingUseCase {
                 OrderRemainingTime.seconds(OrderState.PENDING, hold.expiresAt(), LocalDateTime.now(clock)));
     }
 
-    /** 좌석 락을 건 구간 안에서만 Redis 선점을 만든다. 락은 이 구간을 벗어나지 않는다. */
+    /**
+     * 좌석 락을 건 구간 안에서만 Redis 선점을 만든다. 락은 이 구간을 벗어나지 않는다.
+     *
+     * <p>본인이 선택 중인 좌석으로만 선점한다(ADR 0001). 선택·해제도 같은 좌석 락을 잡으므로 확인과 선점 사이에 선택이 바뀌지 않는다 — 락 밖에서 확인하면 그 사이 선택이 해제되고 남이 다시
+     * 고른 좌석을 선점할 수 있다.
+     */
     private Hold holdSeats(
             final List<LockKey> seatLocks,
             final Input input,
             final RequestedSeatIds requestedSeatIds,
             final Duration holdDuration,
             final LocalDateTime now) {
-        return lockManager.withLock(
-                seatLocks,
-                LockOptions.defaults(),
-                () -> holdManager.createHold(
-                        input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now));
+        return lockManager.withLock(seatLocks, LockOptions.defaults(), () -> {
+            if (!seatSelectionService
+                    .getSelectedSeatIds(input.performanceId(), input.memberId())
+                    .containsAll(requestedSeatIds.toList())) {
+                throw new SeatNotSelectedException(input.performanceId(), input.memberId());
+            }
+            return holdManager.createHold(
+                    input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now);
+        });
     }
 
     /** 보상 실패가 원래 주문 생성 실패를 가리지 않도록, 해제 예외는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다. */

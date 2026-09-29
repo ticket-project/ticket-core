@@ -29,6 +29,7 @@ import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.exception.SeatVenueMismatchException;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.shared.web.ApiResponse;
@@ -78,6 +79,8 @@ class BookingExceptionHandlerTest {
                         HttpStatus.BAD_REQUEST,
                         "E4005",
                         "이미 편성된 좌석입니다."),
+                Arguments.of(
+                        new SeatNotSelectedException(10L, 30L), HttpStatus.CONFLICT, "E4006", "선택한 좌석만 예매할 수 있습니다."),
                 Arguments.of(
                         new OrderNotPendingException(OrderState.CANCELED),
                         HttpStatus.CONFLICT,
