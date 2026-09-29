@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ticket.shared.exception.CommonErrorCode;
 import com.ticket.shared.exception.InvalidRequestException;
-import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
+import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSeatSnapshot;
@@ -29,7 +29,7 @@ import com.ticket.venue.exception.VenueNotFoundException;
  * 검사까지 계약을 부르는 쪽에서 보이는 동작을 그대로 고정한다. 테스트는 구현 클래스가 아니라 계약 타입을 주입받으므로, 구현이 바뀌어도 보는 것은 달라지지 않는다.
  */
 @SuppressWarnings("NonAsciiCharacters")
-class VenueLookupServiceTest extends InfraReadRepositoryTestSupport {
+class VenueLookupServiceTest extends ReadRepositoryTestSupport {
     @Autowired
     private VenueLookupApi venueLookupApi;
 

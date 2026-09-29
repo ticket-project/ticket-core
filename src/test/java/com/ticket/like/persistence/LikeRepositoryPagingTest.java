@@ -13,7 +13,7 @@ import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
 import com.ticket.shared.api.CursorPage;
-import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
+import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 
 /**
  * 찜 페이징과 중복 방지의 실제 DB 동작을 고정한다.
@@ -23,7 +23,7 @@ import com.ticket.testsupport.persistence.InfraReadRepositoryTestSupport;
  */
 @Import(LikeRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class LikeRepositoryPagingTest extends InfraReadRepositoryTestSupport {
+class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
     private static final long MEMBER_ID = 1L;
     private static final long TARGET_1 = 101L;
     private static final long TARGET_2 = 102L;
