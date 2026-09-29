@@ -1,10 +1,12 @@
 package com.ticket.venue;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
  * {@code verifyAutomatically = false}: 전체 애플리케이션 구조 검증은 {@code com.ticket.ModularityTests}가 전담한다(다른 module 테스트와 같은 이유).
@@ -14,8 +16,12 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
  * {@code JPAQueryFactory}는 {@code @MockitoBean}으로 대체한다. venue는 업무 module을 하나도 참조하지 않는 leaf(payment와 같은 형태)라 다른 module의
  * 공개 계약을 mock할 필요가 없다.
  */
+@MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
 class VenueModuleTests {
+    @MockitoBean
+    private RedissonClient redissonClient;
+
     @MockitoBean
     private JPAQueryFactory jpaQueryFactory;
 
