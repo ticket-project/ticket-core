@@ -1,24 +1,6 @@
 /**
- * Member BC: Member, MemberSocialAccount, 이메일·역할·탈퇴 상태를 소유한다. 회원 테이블과 인증 데이터의 소유권은 계속 여기에 있다.
- *
- * <p>인증 흐름의 <b>조립</b>은 security가 한다 — 소셜 로그인·토큰 교환·갱신·로그아웃·탈퇴 절차, JWT 발급·검증, OAuth2 provider 통신과 응답 해석, refresh token
- * 저장이 그렇다. member는 그 절차가 필요로 하는 계정 연산만 공개 계약으로 제공하므로 {@code member -> security} 의존이 없다. 회원 가입과 로그인은 소셜(OAuth2) 전용이라
- * 비밀번호를 다루지 않는다.
- *
- * <p>공개 계약:
- *
- * <ul>
- *   <li>{@link com.ticket.member.api.MemberAccountApi} — 활성 확인·소셜 계정 해석·탈퇴. 오가는 값은
- *       {@link com.ticket.member.api.SocialIdentity}, {@link com.ticket.member.api.SocialProvider},
- *       {@link com.ticket.member.api.SocialAccountSnapshot}이다
- *   <li>{@link com.ticket.member.api.MemberLookupApi} / {@link com.ticket.member.api.MemberStatus} /
- *       {@link com.ticket.member.api.MemberSnapshot} — entity 대신 쓰는 회원 조회·활성 검증 계약
- *   <li>{@link com.ticket.member.api.AuthenticatedMember} — 다른 module controller가 parameter로 받는 인증 principal. memberId와
- *       role만 가진다
- * </ul>
- *
- * <p>찜(Like)의 데이터·HTTP endpoint·use case는 like module이 소유한다. 요청마다 도는 인증은 토큰만 보고 이 module을 조회하지 않는다. 활성 상태는 로그인·토큰
- * 재발급({@code MemberAccountApi.getActiveIdentity})과 주문 생성({@code MemberLookupApi.requireActive})에서만 확인한다.
+ * Member BC. 회원 생성은 소셜 첫 로그인 때 member의 {@code MemberAccountApi.resolveSocialAccount}가 한다. 인증 흐름의 조립은 security가 소유하고
+ * member는 security를 참조하지 않는다.
  */
 @NullMarked
 @org.springframework.modulith.ApplicationModule(
