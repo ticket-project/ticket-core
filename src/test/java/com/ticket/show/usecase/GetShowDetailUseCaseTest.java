@@ -33,7 +33,7 @@ import com.ticket.show.domain.show.SaleType;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.persistence.ShowQuerydslRepository;
-import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
+import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummaryResponse;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -109,7 +109,7 @@ class GetShowDetailUseCaseTest {
         when(showRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
         when(performanceRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(showQuerydslRepository.findPriceSummary(1L))
-                .thenReturn(new PriceSummary(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
+                .thenReturn(new PriceSummaryResponse(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
         when(likeQueryApi.countByTarget("show", 1L)).thenReturn(10L);
@@ -153,7 +153,7 @@ class GetShowDetailUseCaseTest {
         var output = useCase().execute(new GetShowDetailUseCase.Input(1L));
 
         assertThat(output.performer())
-                .isEqualTo(new GetShowDetailUseCase.PerformerInfo(7L, "아이유", "/performers/7.png"));
+                .isEqualTo(new GetShowDetailUseCase.PerformerResponse(7L, "아이유", "/performers/7.png"));
     }
 
     @Test

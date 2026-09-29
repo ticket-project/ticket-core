@@ -80,15 +80,15 @@ public class GetShowDetailUseCase {
             @JsonProperty("saleStartDate") @Nullable LocalDateTime displaySaleStartsAt,
             @JsonProperty("saleEndDate") @Nullable LocalDateTime displaySaleEndsAt,
             @Nullable String image,
-            VenueInfo venue,
-            @Nullable PerformerInfo performer,
+            VenueResponse venue,
+            @Nullable PerformerResponse performer,
             List<String> genreNames,
-            List<GradeInfo> grades,
-            @Nullable PriceSummary priceSummary,
-            List<PerformanceDateInfo> performanceDates) {}
+            List<GradeResponse> grades,
+            @Nullable PriceSummaryResponse priceSummary,
+            List<PerformanceDateResponse> performanceDates) {}
 
     /** show 상세에 쓰는 venue 표시값 조합 결과다. venue module의 {@code VenueSnapshot}를 이 응답 모양(좌석 배치 등 여기서 쓰지 않는 필드는 뺀)으로 옮겨 담는다. */
-    public record VenueInfo(
+    public record VenueResponse(
             Long id,
             @Nullable String name,
             @Nullable String address,
@@ -98,14 +98,14 @@ public class GetShowDetailUseCase {
             @Nullable String phone,
             @Nullable String imageUrl) {}
 
-    public record PerformerInfo(Long id, String name, String profileImageUrl) {}
+    public record PerformerResponse(Long id, String name, String profileImageUrl) {}
 
     /** 기존 공연 상세 응답에서 사용하는 대표 회차의 등급별 가격이다. {@code id}는 등급 id다. */
-    public record GradeInfo(Long id, String gradeName, BigDecimal price) {}
+    public record GradeResponse(Long id, String gradeName, BigDecimal price) {}
 
-    public record PerformanceDateInfo(LocalDate date, List<PerformanceInfo> performances) {}
+    public record PerformanceDateResponse(LocalDate date, List<PerformanceResponse> performances) {}
 
-    public record PerformanceInfo(Long id, Long performanceNo, LocalDateTime startTime, LocalDateTime endTime) {}
+    public record PerformanceResponse(Long id, Long performanceNo, LocalDateTime startTime, LocalDateTime endTime) {}
 
     /**
      * ADR 0005: show-level 가격표(과거 ShowGrade)는 폐기됐다. 등급·가격은 회차(Performance)마다 다를 수 있어 show 상세는 그 회차들의
@@ -114,7 +114,7 @@ public class GetShowDetailUseCase {
      *
      * <p>DB가 계산한 집계 결과다 — 가격 전체를 메모리로 읽어 세지 않는다. 그래서 {@code ShowQuerydslRepository}가 이 타입으로 돌려준다.
      */
-    public record PriceSummary(BigDecimal minPrice, BigDecimal maxPrice) {}
+    public record PriceSummaryResponse(BigDecimal minPrice, BigDecimal maxPrice) {}
 
     public Output execute(final Input input) {
         final Long showId = input.showId();
@@ -147,66 +147,66 @@ public class GetShowDetailUseCase {
      * 대표 회차의 등급 배정과 그 등급 이름을 조합한다. 표시 순서는 {@code PerformanceGrade.sortOrder}다. {@code grade_id}는 NOT NULL FK
      * ({@code fk_performance_grades_grade})라 등급은 항상 있다.
      */
-    private List<GradeInfo> resolveGrades(final Long showId) {
+    private List<GradeResponse> resolveGrades(final Long showId) {
         final List<PerformanceGrade> performanceGrades =
                 performanceRepository.findRepresentativePerformanceGrades(showId);
         final Map<Long, Grade> gradesById = gradeRepository.findGradeNames(
                 performanceGrades.stream().map(PerformanceGrade::getGradeId).collect(Collectors.toSet()));
 
         return performanceGrades.stream()
-                .map(performanceGrade -> toGradeInfo(performanceGrade, gradesById))
+                .map(performanceGrade -> toGradeResponse(performanceGrade, gradesById))
                 .toList();
     }
 
-    private GradeInfo toGradeInfo(final PerformanceGrade performanceGrade, final Map<Long, Grade> gradesById) {
+    private GradeResponse toGradeResponse(final PerformanceGrade performanceGrade, final Map<Long, Grade> gradesById) {
         final Grade grade = Objects.requireNonNull(
                 gradesById.get(performanceGrade.getGradeId()),
                 () -> "PerformanceGrade %d의 Grade를 찾을 수 없습니다: gradeId=%d"
                         .formatted(performanceGrade.getId(), performanceGrade.getGradeId()));
-        return new GradeInfo(performanceGrade.getGradeId(), grade.getName(), performanceGrade.getPrice());
+        return new GradeResponse(performanceGrade.getGradeId(), grade.getName(), performanceGrade.getPrice());
     }
 
     /** 회차를 날짜별로 묶는다. 조회가 이미 시작 시각·회차 번호 순으로 주므로 그 순서를 그대로 유지한다. */
-    private List<PerformanceDateInfo> resolvePerformanceDates(final Long showId) {
+    private List<PerformanceDateResponse> resolvePerformanceDates(final Long showId) {
         return performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(showId).stream()
                 .collect(Collectors.groupingBy(
                         performance -> performance.getStartTime().toLocalDate(),
                         LinkedHashMap::new,
-                        Collectors.mapping(this::toPerformanceInfo, Collectors.toList())))
+                        Collectors.mapping(this::toPerformanceResponse, Collectors.toList())))
                 .entrySet()
                 .stream()
-                .map(entry -> new PerformanceDateInfo(entry.getKey(), entry.getValue()))
+                .map(entry -> new PerformanceDateResponse(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
-    private PerformanceInfo toPerformanceInfo(final Performance performance) {
-        return new PerformanceInfo(
+    private PerformanceResponse toPerformanceResponse(final Performance performance) {
+        return new PerformanceResponse(
                 performance.getId(),
                 performance.getPerformanceNo(),
                 performance.getStartTime(),
                 performance.getEndTime());
     }
 
-    private @Nullable PerformerInfo resolvePerformer(final @Nullable Long performerId) {
+    private @Nullable PerformerResponse resolvePerformer(final @Nullable Long performerId) {
         if (performerId == null) {
             return null;
         }
         return performerRepository
                 .findById(performerId)
-                .map(this::toPerformerInfo)
+                .map(this::toPerformerResponse)
                 .orElse(null);
     }
 
-    private PerformerInfo toPerformerInfo(final Performer performer) {
-        return new PerformerInfo(performer.getId(), performer.getName(), performer.getProfileImageUrl());
+    private PerformerResponse toPerformerResponse(final Performer performer) {
+        return new PerformerResponse(performer.getId(), performer.getName(), performer.getProfileImageUrl());
     }
 
-    private VenueInfo resolveVenue(final long venueId) {
-        return toVenueInfo(venueLookupApi.getVenueSnapshot(venueId));
+    private VenueResponse resolveVenue(final long venueId) {
+        return toVenueResponse(venueLookupApi.getVenueSnapshot(venueId));
     }
 
-    private VenueInfo toVenueInfo(final VenueSnapshot venue) {
-        return new VenueInfo(
+    private VenueResponse toVenueResponse(final VenueSnapshot venue) {
+        return new VenueResponse(
                 venue.venueId(),
                 venue.name(),
                 venue.address(),

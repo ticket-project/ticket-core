@@ -39,7 +39,7 @@ import com.ticket.show.usecase.GetMyShowLikesUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsPageUseCase;
 import com.ticket.show.usecase.GetSaleOpeningSoonShowsUseCase;
 import com.ticket.show.usecase.GetShowDetailUseCase;
-import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
+import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummaryResponse;
 import com.ticket.show.usecase.GetShowsUseCase;
 import com.ticket.show.usecase.SearchShowsUseCase;
 import com.ticket.show.usecase.ShowCursor;
@@ -290,7 +290,7 @@ class ShowControllerContractTest {
                 new ShowCursorCodec(JsonMapper.builder().build()));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-        GetShowDetailUseCase.PerformanceInfo performance = new GetShowDetailUseCase.PerformanceInfo(
+        GetShowDetailUseCase.PerformanceResponse performance = new GetShowDetailUseCase.PerformanceResponse(
                 10L, 1L, LocalDateTime.of(2026, 3, 20, 19, 0), LocalDateTime.of(2026, 3, 20, 21, 0));
         GetShowDetailUseCase.Output detail = new GetShowDetailUseCase.Output(
                 1L,
@@ -310,9 +310,10 @@ class ShowControllerContractTest {
                 null,
                 null,
                 List.of("콘서트"),
-                List.of(new GetShowDetailUseCase.GradeInfo(1L, "VIP석", java.math.BigDecimal.valueOf(170000))),
-                new PriceSummary(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
-                List.of(new GetShowDetailUseCase.PerformanceDateInfo(LocalDate.of(2026, 3, 20), List.of(performance))));
+                List.of(new GetShowDetailUseCase.GradeResponse(1L, "VIP석", java.math.BigDecimal.valueOf(170000))),
+                new PriceSummaryResponse(java.math.BigDecimal.valueOf(100000), java.math.BigDecimal.valueOf(200000)),
+                List.of(new GetShowDetailUseCase.PerformanceDateResponse(
+                        LocalDate.of(2026, 3, 20), List.of(performance))));
 
         when(getShowDetailUseCase.execute(new GetShowDetailUseCase.Input(1L))).thenReturn(detail);
 
