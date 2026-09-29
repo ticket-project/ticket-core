@@ -24,6 +24,10 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class SearchShowsUseCase {
+    /** 판매 시작 임박순은 받지 않는다. 검색은 판매 시작 시각이 없는 공연도 거르지 않아 정렬 키가 null일 수 있다. */
+    private static final Set<ShowSort> SUPPORTED_SORTS =
+            Set.of(ShowSort.POPULAR, ShowSort.LATEST, ShowSort.SHOW_START_APPROACHING);
+
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
     private final ShowCardImagePathConverter showCardImagePathConverter;
@@ -31,7 +35,7 @@ public class SearchShowsUseCase {
     public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
         public Input {
             criteria = requireProvided(criteria, "request");
-            sort = requireProvided(sort, "sort");
+            sort = requireProvided(sort, "sort").requireOneOf(SUPPORTED_SORTS);
             ShowPageSize.require(size);
         }
     }

@@ -33,6 +33,9 @@ public class GetSaleOpeningSoonShowsPageUseCase {
     public record Input(SaleOpeningSoonSearchParam param, int size, ShowSort sort) {
         public Input {
             param = requireProvided(param, "param");
+            // ponytail: 공연 임박순은 이 목록에서 정렬 키(start_date)가 null일 수 있어 막아야 하지만, ticket-fe의
+            // "오픈임박순"이 지금 showStartApproaching을 보낸다. FE가 saleStartApproaching으로 바뀐 뒤
+            // requireOneOf(POPULAR, LATEST, SALE_START_APPROACHING)을 건다.
             sort = requireProvided(sort, "sort");
             ShowPageSize.require(size);
         }
