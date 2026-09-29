@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.jpa.AuditedEntity;
@@ -29,12 +28,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(
-        name = "PERFORMANCE_GRADES",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "UK_PERFORMANCE_GRADES_PERFORMANCE_" + "GRADE",
-                        columnNames = {"performance_id", "grade_id"}))
+@Table(name = "PERFORMANCE_GRADES")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PerformanceGrade extends AuditedEntity {
     @Id

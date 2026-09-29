@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import com.ticket.shared.jpa.AuditedEntity;
 
@@ -21,12 +20,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-        name = "ORDER_SEATS",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "UK_ORDER_SEATS_ORDER_PERFORMANCE_SEAT",
-                        columnNames = {"order_id", "performance_seat_id"}))
+@Table(name = "ORDER_SEATS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderSeat extends AuditedEntity {
     @Id

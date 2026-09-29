@@ -15,7 +15,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import org.jspecify.annotations.Nullable;
 
@@ -28,12 +27,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-        name = "MEMBER_SOCIAL_ACCOUNTS",
-        uniqueConstraints = {
-            @UniqueConstraint(columnNames = {"social_provider", "social_id"}),
-            @UniqueConstraint(columnNames = {"member_id", "social_provider"})
-        })
+@Table(name = "MEMBER_SOCIAL_ACCOUNTS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberSocialAccount extends AuditedEntity {
     @Id
