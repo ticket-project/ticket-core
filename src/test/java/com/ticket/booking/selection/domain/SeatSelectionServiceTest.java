@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.exception.SeatNotSelectedException;
+import com.ticket.booking.exception.SeatSelectionExpiredException;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -120,6 +123,35 @@ class SeatSelectionServiceTest {
                 .hasFieldOrPropertyWithValue("performanceId", 10L)
                 .hasFieldOrPropertyWithValue("seatId", 20L)
                 .hasFieldOrPropertyWithValue("memberId", 3L);
+    }
+
+    @Test
+    void 주문할_좌석을_모두_선택_중이면_통과하고_만료_기록은_읽지_않는다() {
+        when(seatSelectionStore.getSelectedSeatIdsByMember(10L, "3")).thenReturn(Set.of(20L, 21L));
+
+        seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L));
+
+        verify(seatSelectionStore, never()).getRecentlyExpiredSeatIdsByMember(10L, "3");
+    }
+
+    @Test
+    void 빠진_좌석이_모두_최근에_만료됐으면_선택_시간_만료로_거절한다() {
+        when(seatSelectionStore.getSelectedSeatIdsByMember(10L, "3")).thenReturn(Set.of(20L));
+        when(seatSelectionStore.getRecentlyExpiredSeatIdsByMember(10L, "3")).thenReturn(Set.of(21L));
+
+        assertThatThrownBy(() -> seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L)))
+                .isInstanceOf(SeatSelectionExpiredException.class)
+                .hasFieldOrPropertyWithValue("seatIds", List.of(21L));
+    }
+
+    @Test
+    void 선택한_적_없는_좌석이_섞여_있으면_선택하지_않은_좌석으로_거절한다() {
+        when(seatSelectionStore.getSelectedSeatIdsByMember(10L, "3")).thenReturn(Set.of());
+        when(seatSelectionStore.getRecentlyExpiredSeatIdsByMember(10L, "3")).thenReturn(Set.of(20L));
+
+        assertThatThrownBy(() -> seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L)))
+                .isInstanceOf(SeatNotSelectedException.class)
+                .hasFieldOrPropertyWithValue("seatIds", List.of(20L, 21L));
     }
 
     @Test

@@ -44,7 +44,8 @@ StartBookingUseCase          (POST /api/v1/orders)
   -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
   -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
      show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
-  -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(아니면 E4006, ADR 0021)하고
+  -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
+     그 밖은 E4006, ADR 0021)하고
      HoldManager로 Redis 좌석 hold 생성 후 락 해제 (밖)
   -> PendingOrderCreator
        -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
@@ -112,7 +113,9 @@ DB 저장이 실패하면 `StartBookingUseCase`가 `SEAT` 락을 다시 잡고 �
 좌석 키가 TTL로 사라지면 인덱스에서도 같은 시각에 빠진다. 선택할 때 회원별 인덱스로 선택 좌석 수를
 세어, 회차 선점 한도(`max_hold_seat_count`)에 이미 닿았으면 `E6001`로 거절한다 — 좌석 확인·한도
 확인·기록이 Lua 한 번이라 같은 회원의 동시 선택도 한도를 넘지 않는다. 한도가 없는(null) 회차는 제한하지
-않는다. 전체 해제(`DELETE /seats/select`)도 회원별 인덱스로 그 회원의 좌석만 돈다.
+않는다. 전체 해제(`DELETE /seats/select`)도 회원별 인덱스로 그 회원의 좌석만 돈다. 회원별 인덱스는
+만료된 선택을 10분 더 남겨 주문이 "선택 시간 만료(E4007)"를 알아보게 한다 — 한도와 활성 조회는 만료
+시각이 지나지 않은 것만 센다.
 
 **서버가 보장하는 것은 발행 순서까지다.** 클라이언트 수신 순서는 WebSocket 전송 계층의 문제이며 이
 락의 범위가 아니다. 그래서 좌석 상태 이벤트는 계속 "그 좌석을 특정 상태로 맞추는" 멱등 알림으로

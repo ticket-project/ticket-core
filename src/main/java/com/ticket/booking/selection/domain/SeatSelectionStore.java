@@ -26,6 +26,9 @@ public interface SeatSelectionStore {
     /** 이 회원이 지금 선택 중인 좌석. 만료된 선택은 포함하지 않는다. */
     Set<Long> getSelectedSeatIdsByMember(Long performanceId, String memberId);
 
+    /** 이 회원의 선택 중 최근에 시간이 지나 풀린 좌석. 직접 해제했거나 오래전에 만료된 좌석은 포함하지 않는다. */
+    Set<Long> getRecentlyExpiredSeatIdsByMember(Long performanceId, String memberId);
+
     enum SelectResult {
         SELECTED,
         ALREADY_SELECTED,

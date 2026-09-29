@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.exception.SeatNotSelectedException;
+import com.ticket.booking.exception.SeatSelectionExpiredException;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 import lombok.RequiredArgsConstructor;
@@ -77,9 +79,26 @@ public class SeatSelectionService {
         return seatSelectionStore.getSelectingSeatIds(performanceId);
     }
 
-    /** 이 회원이 지금 선택 중인 좌석. 주문은 이 좌석으로만 시작할 수 있다. */
-    public Set<Long> getSelectedSeatIds(final Long performanceId, final Long memberId) {
-        return seatSelectionStore.getSelectedSeatIdsByMember(performanceId, memberKeyOf(memberId));
+    /**
+     * 주문하려는 좌석이 모두 이 회원이 지금 선택 중인 좌석인지 확인한다(ADR 0021).
+     *
+     * <p>빠진 좌석이 모두 최근에 선택 시간이 지나 풀린 것이면 {@link SeatSelectionExpiredException}, 하나라도 선택한 적 없거나 남이 선택한 좌석이면
+     * {@link SeatNotSelectedException}이다. 만료 기록은 실패한 경우에만 읽는다 — 정상 주문은 Redis를 한 번만 부른다.
+     */
+    public void requireSelectedBy(final Long performanceId, final Long memberId, final List<Long> seatIds) {
+        final String memberKey = memberKeyOf(memberId);
+        final Set<Long> selected = seatSelectionStore.getSelectedSeatIdsByMember(performanceId, memberKey);
+        final List<Long> missing =
+                seatIds.stream().filter(seatId -> !selected.contains(seatId)).toList();
+        if (missing.isEmpty()) {
+            return;
+        }
+        if (seatSelectionStore
+                .getRecentlyExpiredSeatIdsByMember(performanceId, memberKey)
+                .containsAll(missing)) {
+            throw new SeatSelectionExpiredException(performanceId, memberId, missing);
+        }
+        throw new SeatNotSelectedException(performanceId, memberId, missing);
     }
 
     private String memberKeyOf(final Long memberId) {
