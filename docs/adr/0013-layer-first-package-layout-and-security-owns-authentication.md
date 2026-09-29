@@ -2,7 +2,7 @@
 
 ## 상태
 
-채택됨 (2026-09-14)
+대체됨 → architecture.md (현재 구조)
 
 > 2026-09-29 갱신: 회원 가입·로그인은 소셜(OAuth2) 전용이다. `RegisterMemberUseCase`(이메일 가입),
 > `LoginUseCase`(이메일 로그인)와 `MemberAccountApi.authenticate`를 지웠다. 소셜 회원은 첫 로그인 때
@@ -25,15 +25,6 @@
 > 타입도 `usecase`가 갖는다. 본문의 `MemberAccountOperations`는 `member.api.MemberAccountApi`,
 > `AccessTokenAuthenticator`는 `security.api`에 있고(ADR 0014), 감사 base entity는 `booking.domain`이
 > 아니라 `shared.jpa.AuditedEntity`다(ADR 0018).
-
-> 2026-09-17 갱신: "모듈 → 계층" 배치는
-> [ADR 0016](0016-capability-first-layout-inside-modules.md)이 대체했다. 계층 이름은 역할 이름이 되고
-> (`application` → `usecase`/`query`/`port`, `infrastructure` → `persistence`), `booking`은 역할보다
-> 업무(capability)를 먼저 드러낸다. **`security`만 기능으로 나눈다는 결정은 그대로 유효하다.**
->
-> 2026-09-15 갱신: 계층 이름 `web`은 [ADR 0014](0014-module-public-contracts-live-in-api-packages.md)가
-> `endpoint`로 바꿨다. 모듈 → 계층 배치와 `security`만 기능으로 나눈다는 결정은 그대로 유효하고,
-> `shared.web`(응답 봉투)과 `security.http`(HTTP 보안 adapter)도 이름을 유지한다.
 
 [ADR 0003](0003-spring-modulith-application-module-boundaries.md)의 capability 축 배치와
 [ADR 0011](0011-shared-technical-package-layout.md)의 `shared.config`,

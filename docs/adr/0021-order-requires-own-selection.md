@@ -2,8 +2,9 @@
 
 ## 상태
 
-채택·구현됨 (2026-09-29). [ADR 0001](0001-selection-and-hold-are-independent.md)의 "Selection 없이도,
-남이 선택 중인 좌석으로도 주문할 수 있다"를 대체한다. Selection과 Hold를 다른 저장소·다른 수명으로
+채택
+
+[ADR 0001](0001-selection-and-hold-are-independent.md)의 "Selection 없이도, 남이 선택 중인 좌석으로도 주문할 수 있다"를 대체한다. Selection과 Hold를 다른 저장소·다른 수명으로
 두는 구조는 그대로다.
 
 ## 배경

@@ -2,7 +2,7 @@
 
 ## 상태
 
-채택됨 (2026-09-13)
+일부 대체 → 0013
 
 > 2026-09-29 갱신: 회원 가입·로그인을 소셜(OAuth2) 전용으로 바꾸면서 이메일 가입·로그인과
 > `PasswordEncoder` 설정(`member.config`)을 지웠다. 아래의 비밀번호 해싱 설명은 당시 기록이다.
@@ -10,13 +10,6 @@
 > 2026-09-24 갱신: E1000/E1001은 `security.exception`으로 옮겼고 `member :: exception` 공개면은
 > 제거했다. 비밀번호 인코더 설정은 사용처를 따라 `member.config`가 소유한다. 아래의 옛 경로와
 > 공개면 설명은 당시 기록이다.
-
-> 2026-09-14 갱신: "JWT 발급·검증, 로그인·로그아웃·refresh, OAuth2 provider 구현은 member가
-> 소유한다"는 부분은 [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이
-> 대체한다 — 인증 흐름의 조립은 모두 security가 소유하고, member는 회원 데이터와
-> `MemberAccountOperations` 공개 계약만 갖는다. 전역 HTTP 접근 정책을 member에서 떼어낸 이 ADR의
-> 핵심 결정과, `account`/`auth`/`oauth`를 각각 Application Module로 올리지 않은 판단은 그대로
-> 유효하다. 본문의 옛 패키지 경로 표기는 당시 기록으로 남긴다.
 
 ## 배경
 

@@ -2,7 +2,7 @@
 
 ## 상태
 
-채택됨 (2026-09-19)
+채택
 
 6개 업무 module이 각자 복제해 쓰던 `<Module>AuditedEntity`를 없애고
 `com.ticket.shared.jpa.AuditedEntity` 하나로 합친다. [ADR 0016](0016-capability-first-layout-inside-modules.md)

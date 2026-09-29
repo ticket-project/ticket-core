@@ -1,6 +1,8 @@
 # 가격은 PerformanceGrade가 원본이고, Payment/Ticketing은 entity-only 모듈로 시작한다
 
-## 상태(2026-09-04): 채택·구현됨. ADR 0003을 module set/DAG 범위에서 부분적으로 supersede한다.
+## 상태
+
+일부 대체 → 0006
 
 > 2026-09-19 갱신: 이 ADR이 적은 module 12개는 ADR 0006 이후 8개다
 > (`com.ticket.ModularityTests`가 원본). `Ticket`의 자리도 `booking.domain.ticket`이 아니라

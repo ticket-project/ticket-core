@@ -1,6 +1,8 @@
 # 찜하기·찜 해제·찜 상태 조회는 like가 소유하고, "내 찜 목록"만 show에 남는다
 
-## 상태(2026-09-09): 채택·구현됨. ADR 0008 §4를 supersede
+## 상태
+
+채택
 
 > 2026-09-19 갱신: 본문의 package 경로는 그 뒤 리팩터링으로 바뀌었다 — `like.preference.web`은
 > `like.endpoint`, `show.application.usecase`/`like.application.usecase`는 각각 `show.usecase`/
