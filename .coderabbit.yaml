@@ -4,7 +4,7 @@ language: ko-KR
 tone_instructions: >
   모든 리뷰, 요약, 제안은 한국어로 작성하세요.
   리뷰 기준(패치 밖 관련 코드·테스트·설정까지 확인, 스타일보다 결함 가능성 우선, 근거 약한 코멘트 금지)은
-  AGENTS.md의 "코드 리뷰" 절과 같습니다. 이 저장소에서는 특히 동시성 문제, 트랜잭션 경계, Redis TTL/만료
+  CONTRIBUTING.md의 "코드 리뷰" 절과 같습니다. 이 저장소에서는 특히 동시성 문제, 트랜잭션 경계, Redis TTL/만료
   처리, 보안, 테스트 공백을 우선 지적하세요.
 
 reviews:
@@ -55,7 +55,6 @@ reviews:
           업무 판단이나 상태 전이 결정이 섞였는지 확인하세요.
         - Redis 명령과 key 조립, TTL 설정을 우선 확인하세요.
         - DB 트랜잭션 안에서 Redis나 WebSocket을 호출하는 코드, background executor 한도를 늘리는 변경은 특히 엄격하게 보세요.
-        - Redis key·TTL·전환 절차의 세부 규칙은 docs/operations.md의 "분산락과 Redis 작업 규칙"이 원본입니다.
     - path: "src/main/java/com/ticket/**/redis/**"
       instructions: |
         - Redis key expiration listener와 Redisson 분산락 구현이다. 만료 이벤트 누락·중복 처리, 락 수명과
@@ -69,7 +68,7 @@ reviews:
         - workflow, review 설정, 배포 설정 변경은 CI 실패, 보안 노출, 잘못된 자동화 동작을 중심으로 확인하세요.
     - path: "**/*"
       instructions: |
-        - 이 저장소의 규칙은 루트 AGENTS.md와 docs/가 기준입니다. 리뷰 기준은 AGENTS.md의 "코드 리뷰" 절과
+        - 이 저장소의 규칙은 루트 AGENTS.md와 docs/가 기준입니다. 리뷰 기준은 CONTRIBUTING.md의 "코드 리뷰" 절과
           같습니다.
   tools:
     gitleaks:
