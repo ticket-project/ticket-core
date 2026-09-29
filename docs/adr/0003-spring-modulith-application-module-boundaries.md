@@ -1,27 +1,15 @@
 # Spring Modulith Application Module 경계로 전환한다
 
-## Status
+## 상태
+
+일부 대체 → 0005, 0006, 0011, 0013, 0014
 
 > 2026-09-19 갱신: §8의 `com.ticket.bootstrap`과 §9의 `com.ticket.config` module은 둘 다 없어졌다 —
 > 전역 기술 설정은 `shared.config`가 갖고 `@Modulith(sharedModules = "shared")` 하나만
 > 선언한다. 본문이 예로 든 `UuidSupplier`도 `java.util.function.Supplier<UUID>`로 대체됐다.
 > Application Module 경계와 이벤트·publication registry에 대한 결정은 그대로 유효하다.
 
-> 2026-09-15 갱신: "모듈 root = cross-module 공개 계약"은
-> [ADR 0014](0014-module-public-contracts-live-in-api-packages.md)가 대체한다 — 공개 계약은 이제
-> `<module>.api`에 있고 `@NamedInterface("api")`로 선언한다. `Type.OPEN` 금지, cross-module JPA
-> 연관관계 금지, Application Module 경계 자체는 그대로 유효하다.
-
-> 2026-09-14 갱신: 패키지 배치를 모듈 → capability → 계층으로 정한 부분은
-> [ADR 0013](0013-layer-first-package-layout-and-security-owns-authentication.md)이 모듈 → 계층으로
-> 대체한다. Application Module 경계와 이벤트·publication registry에 대한 결정은 그대로 유효하다.
-> 본문의 옛 패키지 경로 표기는 당시 기록으로 남긴다.
-
-> 2026-09-10 갱신: 최상위 `config`·`web`·`error` 모듈의 패키지 배치와 모듈 수는
-> [ADR 0011](0011-shared-technical-package-layout.md)으로 대체한다. 이 문서의 경계 도입
-> 배경과 나머지 결정은 유지한다.
-
-채택·구현됨. 이 ADR은 모듈 경계 메커니즘(단일 Gradle 프로젝트, 패키지 기반 닫힌 모듈, 모듈 간
+이 ADR은 모듈 경계 메커니즘(단일 Gradle 프로젝트, 패키지 기반 닫힌 모듈, 모듈 간
 참조 방식, 이벤트, Flyway 소유권)을 다룬다. **오류 계약은 범위 밖이다** — ADR 0002가 다룬다.
 
 module set과 의존 DAG는 이후 ADR 0005·ADR 0006이 각각 다시 supersede했다. 의존 DAG의 원본은

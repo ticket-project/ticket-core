@@ -1,22 +1,18 @@
 # 업무 예외는 HTTP 상태를 모른다 — 웹 계층이 상태를 정한다
 
+## 상태
+
+일부 대체 → 0011
+
+패키지 배치와 `support` 관련 서술은 0011이 대체했다. 이 ADR은 ADR 0002의 "예외가 완성된 HTTP 응답 계약을 스스로
+갖는다"는 서술을 수정한다 — 모듈이 자기 오류를 소유한다는 원칙 자체는 유지한다.
+
 > 2026-09-24 갱신: E1000/E1001은 `security.exception`과 `SecurityExceptionHandler`가 소유한다.
 > `MemberExceptionHandler`는 회원 중복 이메일 오류만 처리한다. 예외가 HTTP 상태를 모르는 원칙은 유지한다.
 
 > 2026-09-19 갱신: 본문이 예로 든 `AdmissionExceptionHandler`는 없다. `booking`은 오류 계층 둘
 > (`BookingException`·`AdmissionTokenException`)을 갖지만 handler는 `BookingExceptionHandler` 하나가
 > 둘 다 잡는다 — "handler는 module에 하나"라는 규칙이 이겼다. 원칙 자체는 그대로다.
-
-> 2026-09-15 갱신: [ADR 0015](0015-null-contracts-are-explicit-and-enforced.md)가 이 결정을 강화했다 —
-> module base 예외를 sealed로 만들어 handler switch를 exhaustive하게 하고 `default` 분기를 없앴다.
-> "예외는 HTTP를 모르고 웹 계층이 상태를 정한다"는 원칙 자체는 그대로다.
-
-## 상태(2026-09-10): 채택·구현됨. ADR 0002를 수정(모듈 소유 원칙 자체는 유지, "예외가 완성된
-HTTP 응답 계약을 스스로 갖는다"는 서술만 대체)
-
-> 2026-09-10 갱신: 패키지 배치와 `support` 관련 서술은
-> [ADR 0011](0011-shared-technical-package-layout.md)으로 대체한다. 모듈이 자기 오류를
-> 소유하고 웹 계층이 HTTP 상태를 정한다는 원칙은 유지한다.
 
 ## 배경
 

@@ -1,11 +1,8 @@
 # favorite module을 like로 개명하고 찜 대상을 LikeType으로 일반화한다
 
-## 상태(2026-09-09): 채택·구현됨. ADR 0006 §1·§2를 module 이름 범위에서만 supersede
+## 상태
 
-**2026-09-09 갱신**: 아래 §4("show 쪽 배치는 바꾸지 않는다")는
-[ADR 0009](0009-like-owns-write-and-status-usecases.md)가 supersede했다 — 찜하기·찜
-해제·찜 상태 조회는 like로 옮겼고, "내 찜 목록"만 show에 남는다. 이 문서의 나머지 결정
-(module 개명, 대상 일반화, 스키마)은 그대로 유효하다.
+일부 대체 → 0009
 
 **2026-09-22 갱신**: 아래 §2가 정한 **공개 계약의 타입**은 바뀌었다. `LikeType`은 LIKES 테이블에
 저장되는 like 내부 값이라 `like.domain`으로 내려갔다. `LikeQueryApi`는 호출자가 대상 종류 문자열

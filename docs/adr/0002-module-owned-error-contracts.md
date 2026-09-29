@@ -1,8 +1,10 @@
 # 오류 계약을 모듈별로 소유하고 API에서 공통 처리한다
 
-## Status
+## 상태
 
-채택됨. 2026-09-02에 한 번 전역 카탈로그로 되돌려졌다가, Spring Modulith 이동 이후 모듈 소유로
+일부 대체 → 0010
+
+2026-09-02에 한 번 전역 카탈로그로 되돌려졌다가, Spring Modulith 이동 이후 모듈 소유로
 다시 확정됐다. **2026-09-10, [ADR 0010](0010-exceptions-do-not-own-http-status.md)이 "예외가
 HTTP 상태까지 스스로 갖는다"는 아래 서술을 수정했다** — 모듈이 자기 오류를 소유한다는 원칙
 자체는 그대로다. `TicketException`은 이제 errorCode·message·data만 갖고, HTTP 상태는 각
