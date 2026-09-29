@@ -39,6 +39,7 @@ import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase.SeatStatus;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
@@ -73,8 +74,7 @@ class GetSeatStatusUseCaseTest {
                 new GetSeatStatusUseCase(
                         new PerformanceSaleFinder(performanceSalesPolicyRepository),
                         performanceSeatRepository,
-                        seatSelectionService,
-                        holdManager,
+                        new SeatOccupancy(seatSelectionService, holdManager),
                         new AdmissionGuard(admissionVerifier),
                         CLOCK);
     }

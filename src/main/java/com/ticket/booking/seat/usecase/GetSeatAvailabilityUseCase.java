@@ -4,7 +4,6 @@ import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +13,9 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
@@ -35,8 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class GetSeatAvailabilityUseCase {
     private final SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
     private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
-    private final HoldManager holdManager;
-    private final SeatSelectionService seatSelectionService;
+    private final SeatOccupancy seatOccupancy;
 
     public record Input(Long performanceId) {
         public Input {
@@ -67,7 +64,7 @@ public class GetSeatAvailabilityUseCase {
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.of());
         final Map<Long, Long> availableCountsByGrade =
-                countAvailableSeatsByGrade(performanceSeats, mergeRedisOccupiedIds(input.performanceId()));
+                countAvailableSeatsByGrade(performanceSeats, seatOccupancy.occupiedSeatIds(input.performanceId()));
 
         final List<GradeAvailability> grades = availableCountsByGrade.entrySet().stream()
                 .map(entry -> toGradeAvailability(entry.getKey(), entry.getValue(), saleSnapshot))
@@ -116,21 +113,5 @@ public class GetSeatAvailabilityUseCase {
                 gradeInfo.price(),
                 gradeInfo.sortOrder(),
                 availableSeats);
-    }
-
-    /**
-     * Redis가 점유로 보는 좌석을 합친다 -- 다른 회원이 고르는 중(selection)이거나 이미 선점(hold)한 좌석이다.
-     *
-     * <p>{@code GetSeatStatusUseCase}에 같은 모양의 method가 있다. 둘을 공통 collaborator로 묶지 않는 이유는 각자 합친 결과를 쓰는 방식이 다르기 때문이다 --
-     * 여기서는 등급별 개수를 세고, 저기서는 좌석마다 상태를 매긴다. <b>다만 "무엇을 점유로 보는가"는 같아야 하므로 모양을 일부러 똑같이 맞춰 둔다.</b> 한쪽에 조건이 붙으면 다른 쪽도 함께 본다.
-     */
-    private Set<Long> mergeRedisOccupiedIds(final Long performanceId) {
-        final Set<Long> selectingSeatIds = seatSelectionService.getSelectingSeatIds(performanceId);
-        final Set<Long> holdingSeatIds = holdManager.getHoldingSeatIds(performanceId);
-
-        final Set<Long> occupiedSeatIds = HashSet.newHashSet(selectingSeatIds.size() + holdingSeatIds.size());
-        occupiedSeatIds.addAll(selectingSeatIds);
-        occupiedSeatIds.addAll(holdingSeatIds);
-        return occupiedSeatIds;
     }
 }

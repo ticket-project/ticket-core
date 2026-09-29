@@ -2,7 +2,6 @@ package com.ticket.booking.event;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -13,9 +12,9 @@ import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
-import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.selection.usecase.SeatSelectionCoordinator;
 
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class HoldReleaseCoordinator {
     private final LockManager lockManager;
     private final HoldManager holdManager;
-    private final SeatSelectionService seatSelectionService;
+    private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
@@ -64,10 +63,8 @@ public class HoldReleaseCoordinator {
     }
 
     private List<Long> findCurrentlyAvailableSeats(final HoldReleaseTask task) {
-        final Set<Long> selectedSeatIds = seatSelectionService.getSelectingSeatIds(task.performanceId());
         return task.seatIds().stream()
-                .filter(seatId -> !holdManager.isHeld(task.performanceId(), seatId))
-                .filter(seatId -> !selectedSeatIds.contains(seatId))
+                .filter(seatId -> !seatOccupancy.isOccupied(task.performanceId(), seatId))
                 .toList();
     }
 }

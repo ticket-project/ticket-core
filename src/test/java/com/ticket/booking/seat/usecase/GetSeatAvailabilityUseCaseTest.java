@@ -9,15 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.show.api.PerformanceSaleCatalogApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
@@ -37,8 +38,15 @@ class GetSeatAvailabilityUseCaseTest {
     @Mock
     private SeatSelectionService seatSelectionService;
 
-    @InjectMocks
     private GetSeatAvailabilityUseCase useCase;
+
+    @BeforeEach
+    void setUp() {
+        useCase = new GetSeatAvailabilityUseCase(
+                seatAvailabilitySnapshotReader,
+                performanceSaleCatalogApi,
+                new SeatOccupancy(seatSelectionService, holdManager));
+    }
 
     @Test
     void DB와_redis_점유좌석을_합쳐_잔여석을_계산한다() {
