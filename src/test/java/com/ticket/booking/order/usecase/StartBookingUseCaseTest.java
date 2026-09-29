@@ -119,10 +119,6 @@ class StartBookingUseCaseTest {
                         seatSelectionService,
                         pendingOrderCreator,
                         fixedClock);
-        // 테스트가 쓰는 좌석을 모두 이 회원이 선택해 둔 상태를 기본으로 한다.
-        lenient()
-                .when(seatSelectionService.getSelectedSeatIds(PERFORMANCE_ID, MEMBER_ID))
-                .thenReturn(Set.of(1L, 2L, 3L, 4L, 5L, 7L));
     }
 
     @Test
@@ -307,17 +303,17 @@ class StartBookingUseCaseTest {
         verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
     }
 
-    /** 선택하지 않았거나, 선택이 만료됐거나, 남이 선택한 좌석은 선점하지 않는다(ADR 0001). */
+    /** 선택 확인은 좌석 락 안에서 선점 직전에 한다. 거절되면 선점하지 않는다(ADR 0021). */
     @Test
     void 본인이_선택하지_않은_좌석이_섞여_있으면_선점하지_않는다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        when(seatSelectionService.getSelectedSeatIds(PERFORMANCE_ID, MEMBER_ID)).thenReturn(Set.of(1L));
+        doThrow(new SeatNotSelectedException(PERFORMANCE_ID, MEMBER_ID, List.of(2L)))
+                .when(seatSelectionService)
+                .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
 
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
-                .isInstanceOf(SeatNotSelectedException.class)
-                .hasFieldOrPropertyWithValue("performanceId", PERFORMANCE_ID)
-                .hasFieldOrPropertyWithValue("memberId", MEMBER_ID);
+                .isInstanceOf(SeatNotSelectedException.class);
 
         verify(holdManager, never()).createHold(any(), any(), any(), any(), any());
         verifyNoInteractions(pendingOrderCreator);

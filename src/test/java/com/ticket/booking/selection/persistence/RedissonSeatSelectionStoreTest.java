@@ -54,7 +54,8 @@ class RedissonSeatSelectionStoreTest {
                         eq(Duration.ofMinutes(5).toMillis()),
                         eq("3"),
                         eq("20"),
-                        eq("4"));
+                        eq("4"),
+                        eq(Duration.ofMinutes(10).toMillis()));
 
         SelectResult result = redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4);
 

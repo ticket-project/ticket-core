@@ -15,7 +15,6 @@ import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.order.domain.OrderRemainingTime;
@@ -137,7 +136,7 @@ public class StartBookingUseCase {
     /**
      * 좌석 락을 건 구간 안에서만 Redis 선점을 만든다. 락은 이 구간을 벗어나지 않는다.
      *
-     * <p>본인이 선택 중인 좌석으로만 선점한다(ADR 0001). 선택·해제도 같은 좌석 락을 잡으므로 확인과 선점 사이에 선택이 바뀌지 않는다 — 락 밖에서 확인하면 그 사이 선택이 해제되고 남이 다시
+     * <p>본인이 선택 중인 좌석으로만 선점한다(ADR 0021). 선택·해제도 같은 좌석 락을 잡으므로 확인과 선점 사이에 선택이 바뀌지 않는다 — 락 밖에서 확인하면 그 사이 선택이 해제되고 남이 다시
      * 고른 좌석을 선점할 수 있다.
      */
     private Hold holdSeats(
@@ -147,11 +146,7 @@ public class StartBookingUseCase {
             final Duration holdDuration,
             final LocalDateTime now) {
         return lockManager.withLock(seatLocks, LockOptions.defaults(), () -> {
-            if (!seatSelectionService
-                    .getSelectedSeatIds(input.performanceId(), input.memberId())
-                    .containsAll(requestedSeatIds.toList())) {
-                throw new SeatNotSelectedException(input.performanceId(), input.memberId());
-            }
+            seatSelectionService.requireSelectedBy(input.performanceId(), input.memberId(), requestedSeatIds.toList());
             return holdManager.createHold(
                     input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now);
         });

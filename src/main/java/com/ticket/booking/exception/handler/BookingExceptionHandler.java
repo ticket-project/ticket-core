@@ -24,6 +24,7 @@ import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.exception.SeatNotOwnedException;
 import com.ticket.booking.exception.SeatNotSelectedException;
+import com.ticket.booking.exception.SeatSelectionExpiredException;
 import com.ticket.booking.exception.SeatVenueMismatchException;
 import com.ticket.shared.web.ApiResponse;
 
@@ -74,6 +75,7 @@ public class BookingExceptionHandler {
             case SeatAlreadySelectedException e -> HttpStatus.CONFLICT;
             case SeatNotOwnedException e -> HttpStatus.FORBIDDEN;
             case SeatNotSelectedException e -> HttpStatus.CONFLICT;
+            case SeatSelectionExpiredException e -> HttpStatus.CONFLICT;
             case SeatVenueMismatchException e -> HttpStatus.BAD_REQUEST;
             case PerformanceGradeMismatchException e -> HttpStatus.BAD_REQUEST;
             case PerformanceSeatAlreadyExistsException e -> HttpStatus.BAD_REQUEST;

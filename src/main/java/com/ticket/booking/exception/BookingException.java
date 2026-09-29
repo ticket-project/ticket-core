@@ -17,6 +17,7 @@ public abstract sealed class BookingException extends TicketException
                 SeatAlreadySelectedException,
                 SeatNotOwnedException,
                 SeatNotSelectedException,
+                SeatSelectionExpiredException,
                 SeatVenueMismatchException,
                 PerformanceGradeMismatchException,
                 PerformanceSeatAlreadyExistsException,

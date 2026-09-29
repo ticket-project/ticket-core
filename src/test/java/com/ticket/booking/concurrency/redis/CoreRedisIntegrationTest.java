@@ -141,6 +141,31 @@ class CoreRedisIntegrationTest {
     }
 
     @Test
+    void member_index_remembers_expired_selection_but_forgets_explicit_release() throws Exception {
+        RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
+
+        assertThat(store.selectIfAbsent(1L, 10L, "member", Duration.ofMillis(150), null))
+                .isEqualTo(SelectResult.SELECTED);
+        assertThat(store.selectIfAbsent(1L, 11L, "member", Duration.ofSeconds(5), null))
+                .isEqualTo(SelectResult.SELECTED);
+        assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "member")).isEmpty();
+
+        awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
+        assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "member")).containsExactly(10L);
+        assertThat(store.getSelectedSeatIdsByMember(1L, "member")).containsExactly(11L);
+        assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "other")).isEmpty();
+
+        assertThat(store.releaseIfOwned(1L, 11L, "member")).isTrue();
+        assertThat(store.getSelectedSeatIdsByMember(1L, "member")).isEmpty();
+        assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "member")).containsExactly(10L);
+
+        // 만료 뒤 다시 고르면 만료 기록이 아니라 선택 중으로 돌아온다.
+        assertThat(store.selectIfAbsent(1L, 10L, "member", Duration.ofSeconds(5), null))
+                .isEqualTo(SelectResult.SELECTED);
+        assertThat(store.getRecentlyExpiredSeatIdsByMember(1L, "member")).isEmpty();
+    }
+
+    @Test
     void seat_selection_index_expires_without_read_cleanup() throws Exception {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
         String indexKey = SeatSelectionRedisKey.selectSeatIndex(1L);
