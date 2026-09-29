@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.admission.AdmissionGuard;
 import com.ticket.booking.admission.AdmissionVerifier;
@@ -37,9 +39,9 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -144,7 +146,7 @@ class SelectSeatUseCaseTest {
     void 이미_판매된_좌석이면_hold를_보지_않고_실패한다() {
         openPerformance();
         when(performanceSeatRepository.findSeatState(10L, 20L))
-                .thenReturn(Optional.of(new PerformanceSeatStateSnapshot(501L, PerformanceSeatState.RESERVED)));
+                .thenReturn(Optional.of(seat(PerformanceSeatState.RESERVED)));
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(NoAvailableSeatException.class)
@@ -172,8 +174,14 @@ class SelectSeatUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(false)));
     }
 
-    private PerformanceSeatStateSnapshot availableSeat() {
-        return new PerformanceSeatStateSnapshot(501L, PerformanceSeatState.AVAILABLE);
+    private PerformanceSeat availableSeat() {
+        return seat(PerformanceSeatState.AVAILABLE);
+    }
+
+    private PerformanceSeat seat(final PerformanceSeatState state) {
+        final PerformanceSeat seat = new PerformanceSeat(10L, 20L, 1L, state, BigDecimal.ZERO);
+        ReflectionTestUtils.setField(seat, "id", 501L);
+        return seat;
     }
 
     private PerformanceSalesPolicy openPolicy(final boolean queueRequired) {

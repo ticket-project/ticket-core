@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,8 +36,8 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
 
     /** 좌석 한 건만 조회한다. 회차 존재와 예매 가능 시각은 회차 정책이 판정하므로 조인이 필요 없고, UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스를 그대로 탄다. */
     @Override
-    public Optional<PerformanceSeatStateSnapshot> findSeatState(final Long performanceId, final Long seatId) {
-        return jpaRepository.findSeatState(performanceId, seatId);
+    public Optional<PerformanceSeat> findSeatState(final Long performanceId, final Long seatId) {
+        return jpaRepository.findByPerformanceIdAndSeatId(performanceId, seatId);
     }
 
     @Override

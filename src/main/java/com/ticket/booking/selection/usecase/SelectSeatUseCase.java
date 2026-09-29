@@ -14,9 +14,9 @@ import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.domain.PerformanceSeatStateSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -67,16 +67,16 @@ public class SelectSeatUseCase {
      *     필요 없다.
      */
     private Long requireSelectableSeat(final Long performanceId, final Long seatId) {
-        final PerformanceSeatStateSnapshot seat = performanceSeatRepository
+        final PerformanceSeat seat = performanceSeatRepository
                 .findSeatState(performanceId, seatId)
                 .orElseThrow(() -> new SeatMismatchInPerformanceException(performanceId));
 
-        if (seat.state() != PerformanceSeatState.AVAILABLE) {
+        if (seat.getState() != PerformanceSeatState.AVAILABLE) {
             throw new NoAvailableSeatException(performanceId);
         }
         if (holdManager.isHeld(performanceId, seatId)) {
             throw new SeatAlreadyHeldException(performanceId, seatId);
         }
-        return seat.performanceSeatId();
+        return seat.getId();
     }
 }
