@@ -7,6 +7,7 @@ import com.ticket.shared.exception.ErrorCode;
  *
  * <p>E3xxx(회차 예매 정책)·E4xxx(회차 좌석)·E5xxx(주문)·E6xxx(선점)를 모두 이 module이 갖는다. E3xxx는 회차 판매 정책 판정(예매 가능 여부)의 오류다 — 그 정책 데이터와
  * 판정 모두 {@code booking.domain.salespolicy.PerformanceSalesPolicy}가 소유하므로 booking의 오류다. 코드 값은 외부 계약이라 재번호하지 않는다.
+ * E4003~E4005는 던지는 곳이 없어 지웠다 — 다른 뜻으로 다시 쓰지 않는다.
  */
 public enum BookingErrorCode implements ErrorCode {
     E3001("지난 회차"),
@@ -15,9 +16,6 @@ public enum BookingErrorCode implements ErrorCode {
     E4000("회차 좌석 불일치"),
     E4001("이미 선택된 좌석"),
     E4002("좌석 선택 해제 권한 없음"),
-    E4003("다른 공연장의 좌석"),
-    E4004("다른 회차의 등급"),
-    E4005("이미 편성된 좌석"),
     E4006("선택하지 않은 좌석"),
     E4007("좌석 선택 시간 만료"),
     E5002("결제 대기 주문만 처리 가능"),

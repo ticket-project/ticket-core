@@ -11,12 +11,6 @@ import java.util.Optional;
  * 스스로 경계를 갖는지는 각 메서드의 Javadoc에 있다.
  */
 public interface PerformanceSeatRepository {
-    /**
-     * 판매 좌석 편성(PerformanceSeat 생성)을 저장한다. 이미 존재하는 (performanceId, seatId) 조합은 호출하는 유스케이스가 저장 전에 걸러낸다 — 이 메서드는 DB unique
-     * 제약을 최후 방어선으로만 둔다.
-     */
-    List<PerformanceSeat> saveAll(List<PerformanceSeat> performanceSeats);
-
     List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(Long performanceId, Collection<Long> seatIds);
 
     /** 좌석 선택 판정에 쓰는 좌석 한 건을 UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스로 조회한다. */
