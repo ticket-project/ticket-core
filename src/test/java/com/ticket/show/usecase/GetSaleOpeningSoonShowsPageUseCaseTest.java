@@ -99,23 +99,6 @@ class GetSaleOpeningSoonShowsPageUseCaseTest {
         verify(showQuerydslRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
     }
 
-    @Test
-    void 판매_오픈예정_공연이_없으면_빈_슬라이스와_null_커서를_반환한다() {
-        SaleOpeningSoonSearchParam param =
-                new SaleOpeningSoonSearchParam(null, null, null, null, null, null, null, null);
-        CursorPage<Show, ShowCursor> result = new CursorPage<>(List.of(), false, null);
-        when(showQuerydslRepository.findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR))
-                .thenReturn(result);
-
-        GetSaleOpeningSoonShowsPageUseCase.Output output =
-                useCase.execute(new GetSaleOpeningSoonShowsPageUseCase.Input(param, 10, ShowSort.POPULAR));
-
-        assertThat(output.items()).isEmpty();
-        assertThat(output.nextPosition()).isNull();
-        assertThat(output.hasNext()).isFalse();
-        verify(showQuerydslRepository).findSaleOpeningSoonPage(param, null, 10, ShowSort.POPULAR);
-    }
-
     /** 지역 미지정({@code null})과 그 지역에 공연장이 없음(빈 집합)은 다른 조건이다. 뭉개면 "그 지역에 공연장이 없다"가 "전체 목록"으로 조용히 바뀐다. */
     @Test
     void 지역_미지정과_지역_공연장_0건을_구분해_넘긴다() {

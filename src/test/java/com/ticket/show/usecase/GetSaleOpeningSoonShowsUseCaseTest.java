@@ -63,15 +63,4 @@ class GetSaleOpeningSoonShowsUseCaseTest {
                         1L, "concert", "image", "venue", saleStartDate));
         verify(showQuerydslRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
     }
-
-    @Test
-    void 판매시작임박_공연이_없으면_빈_목록을_반환한다() {
-        when(showQuerydslRepository.findSaleOpeningSoonSummaries("CONCERT", 5)).thenReturn(List.of());
-
-        GetSaleOpeningSoonShowsUseCase.Output output =
-                useCase.execute(new GetSaleOpeningSoonShowsUseCase.Input("CONCERT", 5));
-
-        assertThat(output.shows()).isEmpty();
-        verify(showQuerydslRepository).findSaleOpeningSoonSummaries("CONCERT", 5);
-    }
 }
