@@ -75,6 +75,7 @@ class HoldReleaseCoordinatorTest {
 
     @Test
     void doesNotPublishOverANewerHoldOrSelection() {
+        when(seatSelectionService.isSelected(1L, 10L)).thenReturn(false);
         when(holdManager.isHeld(1L, 10L)).thenReturn(true);
         when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
 
