@@ -51,7 +51,7 @@ import org.springframework.test.context.TestPropertySource;
             "spring.modulith.runtime.flyway-enabled=false"
         })
 public @interface MigratedSchema {
-    /** 운영 기동 순서와 같다(jar의 application-modules.json). */
+    /** 운영 기동 순서와 같다(jar의 application-modules.json). {@code MigratedSchemaTest}가 Modulith의 순서와 대조한다. */
     List<String> MODULES_IN_RUNTIME_ORDER =
             List.of("shared", "member", "payment", "venue", "like", "security", "show", "booking");
 
