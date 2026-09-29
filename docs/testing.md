@@ -15,6 +15,7 @@
 - **모든 커밋이 끝나고 사용자에게 완료를 알리기 전에 전체 테스트를 한 번 돌린다.** 명령은
   `./gradlew spotlessJavaCheck test -x seedTest`다. 문서를 바꿨으면 `bash scripts/check-docs.sh`와
   `git diff --check`도 이때 돌린다. 실패하면 고치는 커밋을 더한 뒤 전체를 다시 한 번 돌린다.
+- **문서만 바꿨으면 전체 테스트 대신 문서 검사(`bash scripts/check-docs.sh`, `git diff --check`)만 한다.**
 - **seed 테스트는 seed 코드(`seed/`)를 바꿨을 때만 돌린다.** 그때는 `-x seedTest` 없이 `./gradlew test`를
   쓴다. `SeedProdOracleTest`가 Oracle 컨테이너를 띄워 seed 테스트만 5분 가까이 걸린다.
 - **테스트를 중간에 끊었다면 다음 실행 전에 이전 실행이 멈췄는지 확인한다.** 셸을 끊어도 Gradle
