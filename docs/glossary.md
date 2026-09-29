@@ -121,7 +121,7 @@ _Avoid_: 좋아요(도메인 용어는 찜), Selection과 혼동, ShowLike(현�
 ### 회원
 
 **Member**:
-서비스에 가입한 사용자다. 이메일 가입과 소셜 로그인 두 경로로 만들어진다. Member 1명은 Order
+서비스에 가입한 사용자다. 소셜 로그인(Google·Kakao)으로만 만들어진다. Member 1명은 Order
 여러 건(`1:0..N`)과 Ticket 여러 장(`1:0..N`)을 가질 수 있으며, 탈퇴해도 Order/Ticket은 삭제하지
 않는다.
 

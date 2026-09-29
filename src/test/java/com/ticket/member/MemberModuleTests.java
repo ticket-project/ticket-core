@@ -14,7 +14,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
-import com.ticket.member.api.RawPassword;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.usecase.MemberAccountService;
 import com.ticket.member.usecase.SocialAccountProvisioningService;
@@ -51,9 +50,6 @@ class MemberModuleTests {
 
     @Test
     void 계정_연산마다_읽기와_쓰기_트랜잭션을_구분한다() throws NoSuchMethodException {
-        assertThat(transactionAttribute(MemberAccountService.class, "authenticate", String.class, RawPassword.class)
-                        .isReadOnly())
-                .isTrue();
         assertThat(transactionAttribute(MemberAccountService.class, "getActiveIdentity", long.class)
                         .isReadOnly())
                 .isTrue();

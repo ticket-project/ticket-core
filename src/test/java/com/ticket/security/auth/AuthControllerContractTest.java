@@ -29,7 +29,6 @@ import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 @SuppressWarnings("NonAsciiCharacters")
 class AuthControllerContractTest {
     private MockMvc mockMvc;
-    private final LoginUseCase loginUseCase = Mockito.mock(LoginUseCase.class);
     private final RefreshAuthTokenUseCase refreshAuthTokenUseCase = Mockito.mock(RefreshAuthTokenUseCase.class);
     private final ExchangeOAuth2TokenUseCase exchangeOAuth2TokenUseCase =
             Mockito.mock(ExchangeOAuth2TokenUseCase.class);
@@ -38,7 +37,6 @@ class AuthControllerContractTest {
     @BeforeEach
     void setUp() {
         AuthController controller = new AuthController(
-                loginUseCase,
                 refreshAuthTokenUseCase,
                 exchangeOAuth2TokenUseCase,
                 Mockito.mock(GetSocialLoginUrlsUseCase.class),
@@ -53,32 +51,6 @@ class AuthControllerContractTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
-    }
-
-    @Test
-    void 로그인_API는_성공_응답과_refresh_cookie를_내린다() throws Exception {
-        when(loginUseCase.execute(any(LoginUseCase.Input.class)))
-                .thenReturn(new LoginUseCase.Result(
-                        new LoginUseCase.Output("access-token", "Bearer", 1800L, 1L), "refresh-token", 1209600L));
-
-        mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "email": "user@example.com",
-                                  "password": "password"
-                                }
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
-                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.data.memberId").value(1))
-                .andExpect(header().string(
-                                "Set-Cookie", org.hamcrest.Matchers.containsString("refresh_token=refresh-token")))
-                // 쿠키 만료는 발급 결과가 알려 준 값을 그대로 쓴다
-                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=1209600")))
-                .andExpect(jsonPath("$.error").isEmpty());
     }
 
     @Test
