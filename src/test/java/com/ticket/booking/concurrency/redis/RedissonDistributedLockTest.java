@@ -25,15 +25,15 @@ import com.ticket.booking.exception.HoldBusyException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class RedissonLockManagerTest {
+class RedissonDistributedLockTest {
     @Mock
     private RedissonClient redissonClient;
 
     @Mock
     private RLock lock;
 
-    private RedissonLockManager lockManager() {
-        return new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter());
+    private RedissonDistributedLock distributedLock() {
+        return new RedissonDistributedLock(redissonClient, new RedissonLockKeyFormatter());
     }
 
     @Test
@@ -41,7 +41,8 @@ class RedissonLockManagerTest {
         when(redissonClient.getLock("LOCK:hold:10:100")).thenReturn(lock);
         when(lock.tryLock(500L, TimeUnit.MILLISECONDS)).thenReturn(true);
 
-        lockManager().withLock(List.of(LockKey.seat(10L, 100L)), LockOptions.waiting(Duration.ofMillis(500)), () -> {});
+        distributedLock()
+                .withLock(List.of(LockKey.seat(10L, 100L)), LockOptions.waiting(Duration.ofMillis(500)), () -> {});
 
         verify(lock).tryLock(500L, TimeUnit.MILLISECONDS);
         verify(lock).unlock();
@@ -53,7 +54,7 @@ class RedissonLockManagerTest {
         when(lock.tryLock(any(Long.class), any(TimeUnit.class))).thenReturn(false);
         final AtomicBoolean executed = new AtomicBoolean(false);
 
-        assertThatThrownBy(() -> lockManager()
+        assertThatThrownBy(() -> distributedLock()
                         .withLock(
                                 List.of(LockKey.seat(10L, 100L)),
                                 LockOptions.defaults().withFailureMessage("좌석 처리 중입니다."),
@@ -78,7 +79,7 @@ class RedissonLockManagerTest {
         when(redissonClient.getMultiLock(any(RLock[].class))).thenReturn(multiLock);
         when(multiLock.tryLock(5_000L, TimeUnit.MILLISECONDS)).thenReturn(true);
 
-        lockManager().withLock(LockKey.seats(10L, List.of(100L, 20L)), LockOptions.defaults(), () -> {});
+        distributedLock().withLock(LockKey.seats(10L, List.of(100L, 20L)), LockOptions.defaults(), () -> {});
 
         verify(multiLock).tryLock(5_000L, TimeUnit.MILLISECONDS);
         verify(multiLock).unlock();
@@ -87,7 +88,7 @@ class RedissonLockManagerTest {
 
     @Test
     void 잠글_대상이_없으면_실행하지_않는다() {
-        assertThatThrownBy(() -> lockManager().withLock(List.of(), LockOptions.defaults(), () -> {}))
+        assertThatThrownBy(() -> distributedLock().withLock(List.of(), LockOptions.defaults(), () -> {}))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

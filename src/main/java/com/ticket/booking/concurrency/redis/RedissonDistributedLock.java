@@ -8,8 +8,8 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
+import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
 
@@ -17,14 +17,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * {@link LockManager}의 Redisson 구현이다.
+ * {@link DistributedLock}의 Redisson 구현이다.
  *
  * <p>여러 key를 잠글 때는 정렬한 뒤 multi lock으로 한 번에 잡아 데드락을 피한다. 획득에 실패하면 {@code action}을 실행하지 않고 예외를 던진다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedissonLockManager implements LockManager {
+public class RedissonDistributedLock implements DistributedLock {
     private final RedissonClient redissonClient;
     private final RedissonLockKeyFormatter keyFormatter;
 

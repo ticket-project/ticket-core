@@ -31,8 +31,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
@@ -226,7 +226,7 @@ class CoreRedisIntegrationTest {
     }
 
     private LockedService lockedService() {
-        return new LockedService(new RedissonLockManager(redissonClient, new RedissonLockKeyFormatter()));
+        return new LockedService(new RedissonDistributedLock(redissonClient, new RedissonLockKeyFormatter()));
     }
 
     /** 만료는 Redis가 비동기로 처리하므로 조건이 참이 될 때까지 기다린다. */
@@ -265,11 +265,11 @@ class CoreRedisIntegrationTest {
     }
 
     /** 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다. */
-    record LockedService(LockManager lockManager) {
+    record LockedService(DistributedLock distributedLock) {
         private static final LockOptions OPTIONS = LockOptions.waiting(Duration.ofMillis(100));
 
         void execute(final LockKey key, final CountDownLatch entered, final CountDownLatch release) {
-            lockManager.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));
+            distributedLock.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));
         }
 
         private void holdUntilReleased(final CountDownLatch entered, final CountDownLatch release) {

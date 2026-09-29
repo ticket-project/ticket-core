@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.HoldManager;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -31,14 +31,14 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class HoldReleaseCoordinator {
-    private final LockManager lockManager;
+    private final DistributedLock distributedLock;
     private final HoldManager holdManager;
     private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
     public void releaseAndPublish(final HoldReleaseTask task) {
-        lockManager.withLock(
+        distributedLock.withLock(
                 LockKey.seats(task.performanceId(), task.seatIds()),
                 LockOptions.defaults(),
                 () -> releaseAndPublishLocked(task));
