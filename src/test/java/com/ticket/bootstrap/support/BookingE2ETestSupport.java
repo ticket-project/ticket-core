@@ -45,15 +45,7 @@ import tools.jackson.databind.JsonNode;
  * 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
  */
 @MigratedSchema
-@SpringBootTest(
-        classes = TicketApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {
-            "spring.datasource.url=jdbc:h2:mem:booking-e2e;MODE=Oracle;DB_CLOSE_DELAY=-1",
-            "spring.datasource.driver-class-name=org.h2.Driver",
-            "spring.datasource.username=sa",
-            "spring.datasource.password="
-        })
+@SpringBootTest(classes = TicketApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // Spring Boot 4에서 TestRestTemplate 빈은 RANDOM_PORT만으로 등록되지 않는다. 명시적으로 켠다.
 @AutoConfigureTestRestTemplate
 @Sql(scripts = {"/fixture/booking-e2e-reset.sql", "/fixture/booking-e2e-fixture.sql"})

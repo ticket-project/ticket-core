@@ -64,11 +64,6 @@ import com.ticket.venue.usecase.VenueLookupService;
 @SpringBootTest(webEnvironment = WebEnvironment.NONE, classes = ShowQuerydslRepositoryTest.TestApplication.class)
 @TestPropertySource(
         properties = {
-            "spring.datasource.url=jdbc:h2:mem:show-query-test;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            "spring.datasource.driver-class-name=org.h2.Driver",
-            "spring.datasource.username=sa",
-            "spring.datasource.password=",
-            "spring.jpa.show-sql=false",
             // ModuleObservabilityAutoConfiguration이 기본으로(matchIfMissing=true) 활성화되어
             // ApplicationModulesRuntime을 즉시 요구한다. 이 좁은 슬라이스는 @SpringBootApplication
             // main class가 없어 그 런타임을 만들 수 없으므로 tracing 관측 자체를 끈다.

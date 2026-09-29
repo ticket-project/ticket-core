@@ -18,15 +18,7 @@ import com.ticket.testsupport.persistence.MigratedSchema;
  * {@code com.ticket.ModularityTests}가 담당하므로 여기서는 다루지 않는다.
  */
 @MigratedSchema
-@SpringBootTest(
-        classes = TicketApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {
-            "spring.datasource.url=jdbc:h2:mem:platform-compat;MODE=Oracle;DB_CLOSE_DELAY=-1",
-            "spring.datasource.driver-class-name=org.h2.Driver",
-            "spring.datasource.username=sa",
-            "spring.datasource.password="
-        })
+@SpringBootTest(classes = TicketApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @SuppressWarnings({"NonAsciiCharacters", "resource"})
 class PlatformCompatibilityTest {
     private static final int REDIS_PORT = 6379;

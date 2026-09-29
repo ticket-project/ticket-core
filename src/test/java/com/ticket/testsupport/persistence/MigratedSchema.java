@@ -26,6 +26,9 @@ import org.springframework.test.context.TestPropertySource;
  * <p>스키마의 원본은 {@code db/migration}이다. {@code ddl-auto=create}로 entity에서 만든 스키마에는 migration에만 있는 유니크 제약·인덱스가 없어서 운영과 다르다
  * — 중복 거절 같은 DB 동작을 테스트할 수 없다.
  *
+ * <p>datasource도 이 애노테이션이 정한다(Oracle 모드 H2). {@code @TestPropertySource}라 {@code @SpringBootTest(properties)}보다 우선하므로
+ * 붙이는 테스트는 datasource를 따로 적지 않는다.
+ *
  * <p>context가 뜰 때마다 H2를 비운 뒤 모든 module migration을 운영 순서로 적용한다. {@code create-drop}처럼 context마다 새 스키마에서 시작한다. H2 전용이다.
  */
 @Target(ElementType.TYPE)
@@ -34,6 +37,12 @@ import org.springframework.test.context.TestPropertySource;
 @Import(MigratedSchema.Migration.class)
 @TestPropertySource(
         properties = {
+            // context마다 이름이 다른 in-memory DB를 쓴다. 이름이 같으면 캐시된 다른 context의 스키마를 이 context의 DROP ALL OBJECTS가 지운다.
+            // DataSourceProperties가 한 번만 바인딩하므로 context 하나 안에서는 이름이 고정된다.
+            "spring.datasource.url=jdbc:h2:mem:${random.uuid};MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+            "spring.datasource.driver-class-name=org.h2.Driver",
+            "spring.datasource.username=sa",
+            "spring.datasource.password=",
             "spring.jpa.hibernate.ddl-auto=validate",
             "spring.jpa.database-platform=com.ticket.shared.config.H2OracleModeDialect",
             "spring.flyway.enabled=true",
