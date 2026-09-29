@@ -195,9 +195,6 @@ tasks.named('compileJava') {
 
 tasks.named('test') {
     useJUnitPlatform()
-    // CI는 `clean test bootJar`만 돌린다. 시드 테스트가 누락되지 않게 test에 매단다.
-    // 좁은 범위만 확인할 때는 `-x seedTest`로 뺀다.
-    finalizedBy 'seedTest'
 }
 
 // 시드 source set, 의존성, 실행·검증 task는 따로 둔다.

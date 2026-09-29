@@ -37,12 +37,11 @@ jobs:
           cache: gradle
 
       # compileJava가 NullAway를 함께 돌린다. null 계약 위반은 여기서 빌드를 막는다.
-      # seedTest는 100만 행 가까이 적재해 "빠른 gate"의 뜻을 없애므로 뺀다 -- ci.yml이 돌린다.
       - name: Check structure
         run: |
           chmod +x ./gradlew
           ./gradlew spotlessCheck compileJava --no-daemon
-          ./gradlew test --no-daemon -x seedTest \
+          ./gradlew test --no-daemon \
             --tests "com.ticket.ArchitectureRulesTest" \
             --tests "com.ticket.ModularityTests" \
             --tests "com.ticket.DomainIsolationTest" \

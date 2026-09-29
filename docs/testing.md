@@ -13,10 +13,10 @@
 
 - **작업 중에는 테스트를 돌리지 않는다.** 고칠 때마다, 커밋마다 돌리지 않는다.
 - **모든 커밋이 끝나고 사용자에게 완료를 알리기 전에 전체 테스트를 한 번 돌린다.** 명령은
-  `./gradlew spotlessJavaCheck test -x seedTest`다. 문서를 바꿨으면 `bash scripts/check-docs.sh`와
+  `./gradlew spotlessJavaCheck test`다. 문서를 바꿨으면 `bash scripts/check-docs.sh`와
   `git diff --check`도 이때 돌린다. 실패하면 고치는 커밋을 더한 뒤 전체를 다시 한 번 돌린다.
 - **문서만 바꿨으면 전체 테스트 대신 문서 검사(`bash scripts/check-docs.sh`, `git diff --check`)만 한다.**
-- **seed 테스트는 seed 코드(`seed/`)를 바꿨을 때만 돌린다.** 그때는 `-x seedTest` 없이 `./gradlew test`를
+- **seed 테스트는 seed 코드(`seed/`)를 바꿨을 때만 돌린다.** 그때는 `./gradlew test seedTest`를
   쓴다. `SeedProdOracleTest`가 Oracle 컨테이너를 띄워 seed 테스트만 5분 가까이 걸린다.
 - **테스트를 중간에 끊었다면 다음 실행 전에 이전 실행이 멈췄는지 확인한다.** 셸을 끊어도 Gradle
   데몬의 테스트 JVM과 Testcontainers 컨테이너는 남을 수 있다(`docker ps`, `./gradlew --status`). 겹쳐 돌면
@@ -31,16 +31,16 @@
 
 | 변경 범위 | 실행 기준 |
 | --- | --- |
-| 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*' -x seedTest`로 해당 모듈부터 |
-| 모듈·계층·Aggregate 경계 | `./gradlew test --tests 'com.ticket.ModularityTests' --tests 'com.ticket.ArchitectureRulesTest' --tests 'com.ticket.DomainIsolationTest' --tests 'com.ticket.AggregateAssociationTest' -x seedTest`와 관련 module test |
+| 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*'`로 해당 모듈부터 |
+| 모듈·계층·Aggregate 경계 | `./gradlew test --tests 'com.ticket.ModularityTests' --tests 'com.ticket.ArchitectureRulesTest' --tests 'com.ticket.DomainIsolationTest' --tests 'com.ticket.AggregateAssociationTest'`와 관련 module test |
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
 | 주문·hold·이벤트 흐름 | 관련 단위·Scenario·`com.ticket.bootstrap.booking.*E2ETest`(Docker 필요) |
 | DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트와 [운영 전환 조건](operations.md#db-마이그레이션) |
 | seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
-| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck test bootJar verifySeedNotInBootJar`(CI 기준) |
+| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck test seedTest bootJar verifySeedNotInBootJar`(CI 기준) |
 | 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
 
-`test`는 `seedTest`를 `finalizedBy`로 함께 실행한다. 서비스 테스트만 좁힐 때만 `-x seedTest`를 쓴다. `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
+`test`는 서비스 테스트만 돌리고 `seedTest`는 따로 실행한다(`check`와 CI는 둘 다 돌린다). `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
 
 ## 단일 source set
 
@@ -50,7 +50,7 @@
 **예외는 시드다.** 애플리케이션 밖에서 도는 초기 데이터 적재 프로그램(`seed/`)은 별도 source
 set(`seedMain`/`seedTest`)이고 테스트도 `seed/src/test/java`에 둔다 — 시드 코드가 서비스
 classpath에 올라가면 `bootJar`에 섞이고 Modulith가 업무 모듈로 다시 탐지한다. 실행은
-`./gradlew seedTest`이며 `test`가 이를 함께 돌린다(좁게 볼 때는 `-x seedTest`). 무엇을 고정하는지는
+`./gradlew seedTest`이며 `test`에 딸려 돌지 않는다. `check`와 CI가 함께 돌린다. 무엇을 고정하는지는
 [seed/README.md](../seed/README.md)가 원본이다.
 
 Spring 컨텍스트, `EntityManager`, 실제 DB/Redis가 필요하면
