@@ -36,7 +36,7 @@ import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
-import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummary;
+import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummaryResponse;
 import com.ticket.show.usecase.SaleOpeningSoonSearchParam;
 import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowListParam;
@@ -599,7 +599,7 @@ public class ShowQuerydslRepository {
      * ADR 0005: show-level 가격표는 없다. 이 show의 모든 Performance에 배정된 PerformanceGrade.price 중 최소/최대만 파생한다 — 대표 회차 하나의 가격을
      * show 전체 가격처럼 보여주지 않는다.
      */
-    public @Nullable PriceSummary findPriceSummary(final Long showId) {
+    public @Nullable PriceSummaryResponse findPriceSummary(final Long showId) {
         final Tuple result = queryFactory
                 .select(performanceGrade.price.min(), performanceGrade.price.max())
                 .from(performanceGrade)
@@ -614,7 +614,7 @@ public class ShowQuerydslRepository {
         if (minPrice == null || maxPrice == null) {
             return null;
         }
-        return new PriceSummary(minPrice, maxPrice);
+        return new PriceSummaryResponse(minPrice, maxPrice);
     }
 
     static <T> T required(final Tuple tuple, final Expression<T> column) {
