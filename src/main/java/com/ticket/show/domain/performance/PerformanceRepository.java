@@ -22,8 +22,7 @@ public interface PerformanceRepository {
     /**
      * 이 회차에 배정된 모든 PerformanceGrade를 반환한다.
      *
-     * <p>등급 코드·이름은 담기지 않는다 — Grade는 다른 aggregate라 {@code GradeRepository}로 따로 읽어 use case가 조합한다. 조합할 때 Grade를 찾지 못한 편성은
-     * 제외한다.
+     * <p>등급 코드·이름은 담기지 않는다 — Grade는 다른 aggregate라 {@code GradeRepository}로 따로 읽어 use case가 조합한다.
      */
     List<PerformanceGrade> findPerformanceGrades(long performanceId);
 }
