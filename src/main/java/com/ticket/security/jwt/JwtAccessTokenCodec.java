@@ -82,8 +82,4 @@ public class JwtAccessTokenCodec implements AccessTokenReader {
 
         return new AuthenticatedMember(Long.parseLong(subject), role);
     }
-
-    public long getAccessTokenExpirationSeconds() {
-        return jwtProperties.getAccessTokenExpirationSeconds();
-    }
 }

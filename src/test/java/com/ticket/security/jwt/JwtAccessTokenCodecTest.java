@@ -35,7 +35,6 @@ class JwtAccessTokenCodecTest {
                     assertThat(authenticated.member().memberId()).isEqualTo(7L);
                     assertThat(authenticated.member().role()).isEqualTo("MEMBER");
                 });
-        assertThat(jwtTokenService.getAccessTokenExpirationSeconds()).isEqualTo(1800L);
     }
 
     @Test

@@ -26,7 +26,7 @@ public class JwtAuthTokenIssuer implements AuthTokenIssuer {
                 accessToken,
                 refreshToken,
                 TOKEN_TYPE_BEARER,
-                jwtAccessTokenCodec.getAccessTokenExpirationSeconds(),
+                jwtProperties.getAccessTokenExpirationSeconds(),
                 refreshTokenExpiresIn,
                 memberId);
     }

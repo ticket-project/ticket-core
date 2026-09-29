@@ -31,7 +31,7 @@ class JwtAuthTokenIssuerTest {
     @Test
     void issue_tokens_returns_access_and_refresh_tokens() {
         when(jwtAccessTokenCodec.createAccessToken(any(), any())).thenReturn("access-token");
-        when(jwtAccessTokenCodec.getAccessTokenExpirationSeconds()).thenReturn(1800L);
+        when(jwtProperties.getAccessTokenExpirationSeconds()).thenReturn(1800L);
         when(jwtProperties.getRefreshTokenExpirationSeconds()).thenReturn(1209600L);
         when(refreshTokenStore.createRefreshToken(7L, 1209600L)).thenReturn("refresh-token");
 
