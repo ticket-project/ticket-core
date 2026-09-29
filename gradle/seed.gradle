@@ -26,7 +26,6 @@ dependencies {
     // Seed (별도 source set) -- 실행에 필요한 최소한만 쓴다. 웹 서버, Redis, OAuth, JPA는 쓰지 않는다.
     seedMainImplementation 'org.springframework:spring-jdbc'
     seedMainImplementation 'org.springframework:spring-tx'
-    seedMainImplementation 'org.springframework.security:spring-security-crypto'
     seedMainImplementation 'org.yaml:snakeyaml'
     seedMainRuntimeOnly 'com.h2database:h2'
     // seedProd는 운영 Oracle에 직접 붙는다. 서버(runtimeOnly)가 쓰는 것과 같은 좌표여야 Wallet 기반

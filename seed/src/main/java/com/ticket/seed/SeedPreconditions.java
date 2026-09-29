@@ -47,7 +47,7 @@ final class SeedPreconditions {
      * 낫다.
      */
     private static final List<String> REQUIRED_MEMBER_COLUMNS =
-            List.of("EMAIL", "PASSWORD", "NAME", "ROLE", "CREATED_AT", "CREATED_BY", "DELETED_AT");
+            List.of("EMAIL", "NAME", "ROLE", "CREATED_AT", "CREATED_BY", "DELETED_AT");
 
     private SeedPreconditions() {}
 
