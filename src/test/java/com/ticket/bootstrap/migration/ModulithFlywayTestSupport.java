@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.flywaydb.core.Flyway;
 import org.springframework.modulith.core.ApplicationModuleIdentifier;
@@ -60,6 +62,22 @@ public final class ModulithFlywayTestSupport {
         if (rootFlyway.info().current() == null) {
             rootFlyway.baseline();
         }
+    }
+
+    /** 이름이 {@code name}인 Oracle 모드 H2 in-memory DB의 URL이다. 연결이 모두 닫혀도 DB는 JVM이 끝날 때까지 남는다. */
+    public static String h2Url(final String name) {
+        return "jdbc:h2:mem:" + name + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+    }
+
+    /** {@code tableName}에 걸린 외래 키 이름들이다. cross-module FK 제거 migration을 확인할 때 쓴다. */
+    public static Set<String> foreignKeyNames(final Connection connection, final String tableName) throws SQLException {
+        final Set<String> names = new HashSet<>();
+        try (ResultSet keys = connection.getMetaData().getImportedKeys(null, null, tableName)) {
+            while (keys.next()) {
+                names.add(keys.getString("FK_NAME"));
+            }
+        }
+        return names;
     }
 
     public static boolean tableExists(final Connection connection, final String tableName) throws SQLException {

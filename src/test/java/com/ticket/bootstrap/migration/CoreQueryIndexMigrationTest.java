@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class CoreQueryIndexMigrationTest {
     @Test
     void applies_query_indexes_after_existing_schema_baseline() throws Exception {
-        String url = databaseUrl("success");
+        String url = ModulithFlywayTestSupport.h2Url("core-query-index-success");
         createExistingSchema(url, false);
 
         ModulithFlywayTestSupport.migrateRootOnly(url);
@@ -48,7 +48,7 @@ class CoreQueryIndexMigrationTest {
 
     @Test
     void stops_migration_when_performance_seats_have_duplicates() throws Exception {
-        String url = databaseUrl("duplicates");
+        String url = ModulithFlywayTestSupport.h2Url("core-query-index-duplicates");
         createExistingSchema(url, true);
 
         assertThatThrownBy(() -> ModulithFlywayTestSupport.migrateRootOnly(url)).isInstanceOf(FlywayException.class);
@@ -78,9 +78,5 @@ class CoreQueryIndexMigrationTest {
             }
         }
         return names;
-    }
-
-    private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:core-query-index-" + name + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     }
 }

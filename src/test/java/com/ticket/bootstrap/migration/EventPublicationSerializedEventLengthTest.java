@@ -44,7 +44,7 @@ class EventPublicationSerializedEventLengthTest {
 
     @Test
     void 옛_255자_컬럼에는_저장이_실패한다() throws Exception {
-        final String url = databaseUrl("legacy");
+        final String url = ModulithFlywayTestSupport.h2Url("event-publication-length-legacy");
         try (Connection connection = ModulithFlywayTestSupport.connect(url);
                 Statement statement = connection.createStatement()) {
             statement.execute(legacyPublicationTableDdl("EVENT_PUBLICATION"));
@@ -60,7 +60,7 @@ class EventPublicationSerializedEventLengthTest {
 
     @Test
     void V9_적용_후에는_활성과_보관_테이블에_저장하고_완료_조회할_수_있다() throws Exception {
-        final String url = databaseUrl("widened");
+        final String url = ModulithFlywayTestSupport.h2Url("event-publication-length-widened");
         createBaseline(url);
         ModulithFlywayTestSupport.migrateRootOnly(url);
 
@@ -153,9 +153,5 @@ class EventPublicationSerializedEventLengthTest {
                 + " CONSTRAINT pk_"
                 + table.toLowerCase()
                 + " PRIMARY KEY (id))";
-    }
-
-    private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:event-publication-length-" + name + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=TRUE";
     }
 }
