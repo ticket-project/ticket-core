@@ -31,7 +31,7 @@ import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
 
 /**
- * Task 8 Step 5: listener 멱등성과 stale-event 방어를 고정한다.
+ * listener 멱등성과 stale-event 방어를 고정한다.
  *
  * <p>{@link BookingEventListeners}는 event payload를 그대로 믿지 않고 {@code orderId}로 현재 저장된 order·orderSeat를 다시 읽는다. hold
  * 생성·해제 자체의 멱등 로직은 {@code HoldCreationCoordinatorTest}/{@code HoldReleaseCoordinatorTest}가 이미 고정하므로, 여기서는 listener가 그

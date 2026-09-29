@@ -203,9 +203,10 @@ class ArchitectureRulesTest {
     /**
      * 조립은 저장 구현과 HTTP를 모른다. <b>예외는 같은 module의 조회 Repository 하나다</b>({@link #QUERY_REPOSITORY}).
      *
-     * <p>읽기 경로에는 계약을 한 겹 더 둘 이유가 없다 — 조회는 구현을 바꿔 끼울 일이 아니라 화면이 요구하는 SQL 그 자체이고, port interface와 adapter를 한 쌍씩 만들면 use
-     * case에서 SQL까지 읽을 것 없는 경유 지점만 늘어난다. 반면 <b>저장 adapter·Spring Data 인터페이스·Redis 구현에 대한 직접 접근 금지는 그대로다</b> — aggregate
-     * 복원·저장은 domain repository 계약 뒤에 있어야 한다.
+     * <p>Querydsl 동적 조회는 구현을 바꿔 끼울 일이 아니라 화면이 요구하는 SQL 그 자체라 계약 없이 use case에 연다. Spring Data/JPQL로 끝나는 고정 조회는 이 예외가 아니다
+     * — 저장과 같은 3단(계약 {@code *Repository} → {@code *RepositoryAdapter} → Spring Data)으로 내려간다(ADR 0019). <b>저장
+     * adapter·Spring Data 인터페이스·Redis 구현에 대한 직접 접근 금지는 그대로다</b> — aggregate 복원·저장과 고정 조회는 domain repository 계약 뒤에 있어야
+     * 한다.
      *
      * <p>다른 module의 조회 Repository는 여기서 열리지 않는다. {@link #다른_module의_공개면_밖을_참조하지_않는다}가 공개면 밖을 이미 전부 막는다.
      */
@@ -256,8 +257,7 @@ class ArchitectureRulesTest {
      * auditing도 Spring Data가 준다 — 여기서 막으면 지금 구조를 통째로 부정하게 된다. 반면 Querydsl과 Redisson은 조회 표현과 락 임대 방식이라, 업무 코드가 알면 그 선택에
      * 묶인다.
      *
-     * <p><b>{@code persistence}는 대상이 아니다.</b> 조회 Repository가 local DB 조회 구현을 소유하므로 Querydsl·JPA를 직접 쓴다. 여기까지 막으면 조회마다
-     * port interface와 adapter를 한 쌍씩 만들어야 하고, 그 경유 지점은 기능을 이해하는 데 아무것도 보태지 않는다. 대신
+     * <p><b>{@code persistence}는 대상이 아니다.</b> 저장 adapter와 Querydsl 조회가 local DB 접근 구현을 소유하므로 Querydsl·JPA를 직접 쓴다. 대신
      * {@link #query는_다른_업무_module을_조합하지_않는다}가 조회가 다른 module을 조합하는 것을 막는다.
      */
     @ArchTest
@@ -272,9 +272,9 @@ class ArchitectureRulesTest {
      * 업무 쪽 코드가 <b>HTTP 표현·문서화 기술</b>을 직접 알지 않게 한다. 그 관심사는 {@code endpoint}가 소유한다.
      *
      * <p><b>Jackson({@code com.fasterxml.jackson..})은 일부러 뺐다.</b> 이 저장소는 use case의 중첩 record가 곧 최종 응답
-     * 항목이고({@code docs/coding-guidelines.md} §10-2), endpoint에 응답 DTO를 따로 두지 않는다. 그래서 공개 JSON 이름을 고정하는
-     * {@code @JsonProperty}가 use case record에 붙는다 — show 5건, like 3건이 그렇고 전부 ADR 0007·0008이 "옛 JSON 이름을 유지한다"고 기록한 결정의
-     * 결과다. 여기서 막으면 계층마다 DTO를 만들게 되어 §10-2를 정면으로 거스른다. Jackson을 걷어내려면 그 구조 결정을 먼저 뒤집어야 하고, 그것은 별도 결정이다.
+     * 항목이고({@code docs/coding-guidelines.md}의 "Use case와 중간 타입"), endpoint에 응답 DTO를 따로 두지 않는다. 그래서 공개 JSON 이름을 고정하는
+     * {@code @JsonProperty}가 show·like의 use case record에 붙는다 — ADR 0007·0008이 "옛 JSON 이름을 유지한다"고 기록한 결정의 결과다. 여기서 막으면
+     * 계층마다 DTO를 만들게 되어 그 기준을 정면으로 거스른다. Jackson을 걷어내려면 그 구조 결정을 먼저 뒤집어야 하고, 그것은 별도 결정이다.
      *
      * <p>나머지 넷은 지금 업무 계층에 한 건도 없다 — 규칙이 새로 막는 것이 아니라 이미 지켜진 상태를 고정한다.
      */

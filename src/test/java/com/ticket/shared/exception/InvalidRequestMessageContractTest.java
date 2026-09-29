@@ -18,14 +18,15 @@ import org.junit.jupiter.api.Test;
  * 400 응답 {@code error.data}에 실리는 필수 입력 위반 문구를 고정한다.
  *
  * <p>이 판정은 예전에 {@code com.ticket.shared.RequiredInput} 한 곳이 소유했다. 그 클래스가 {@code shared -> error} 순환을 만들어(봉투가 shared에 있고
- * handler가 error에 있다) 지워지고 판정이 각 {@code UseCase.Input}의 compact constructor로 인라인됐다. 소유자가 없어졌으므로 문구가 파일마다 갈라지는 것을 막을 것이
- * 필요하다 — 그것이 이 테스트다.
+ * handler가 error에 있다) 지워지고 판정이 각 {@code UseCase.Input}의 compact constructor로 인라인됐다. 지금은 반복되던 필수·양수 판정을
+ * {@code com.ticket.shared.api.InputChecks}가 다시 한 벌로 갖고 그 문구는 {@code InputChecksTest}가 고정하지만, 1 이상·범위 같은 판정은 여전히 각 호출부가
+ * 문자열로 직접 쓴다. 그 문구가 파일마다 갈라지는 것을 막는 것이 이 테스트다.
  *
  * <p>대표 몇 개를 호출해 보는 방식으로는 나머지 호출부의 표류를 잡지 못하므로, {@code src/main} 전체에서 문자열 리터럴을 인자로 받는 {@code new
  * InvalidRequestException("...")}를 모아 검사한다. {@code InvalidRequestException}은 필수 입력 위반 외에도 쓰이므로(예: "orderSeats는 빈 order를
  * 만들어야 합니다.") 전부를 승인 목록에 묶을 수는 없다. 그래서 <b>필수 입력 계열로 보이는 문구</b> (필수·양수·1 이상 중 하나를 담은 것)만 골라 승인된 네 형태와 정확히 일치하는지 본다.
  *
- * <p><b>이 테스트가 잡지 못하는 것</b>: 같은 규칙을 완전히 다른 어휘로 쓴 경우 (예: "memberId가 필요합니다.")는 계열 필터에 걸리지 않아 통과한다. 다섯 규칙의 문구를 바꿀 때는 이 파일의
+ * <p><b>이 테스트가 잡지 못하는 것</b>: 같은 규칙을 완전히 다른 어휘로 쓴 경우 (예: "memberId가 필요합니다.")는 계열 필터에 걸리지 않아 통과한다. 네 형태의 문구를 바꿀 때는 이 파일의
  * 표를 먼저 고치는 것이 원본이다.
  */
 @SuppressWarnings("NonAsciiCharacters")

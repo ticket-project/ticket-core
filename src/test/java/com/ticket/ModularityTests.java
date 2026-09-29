@@ -33,8 +33,8 @@ import org.springframework.modulith.core.ApplicationModules;
  * <p><b>legacy package 제외 predicate는 두지 않는다.</b> {@code com.ticket.core}/{@code bootstrap}/
  * {@code storage}/{@code support}는 {@code src/main/java}에 더 이상 존재하지 않는다(이동 완료). 미래에 실수로 그런 이름의 package가 다시 생겨도 이 테스트가
  * 곧바로 잡게 두는 편이, 조용히 제외돼 숨는 것보다 안전하다. {@code ApplicationModules.of(TicketApplication.class)}는 기본값으로
- * {@code ImportOption.DoNotIncludeTests}를 적용해 test class는 애초에 이 분석 대상이 아니다 — {@code src/test/java/com/ticket/core},
- * {@code com/ticket/bootstrap} 아래 test 지원 클래스가 여전히 있는 것과 무관하다.
+ * {@code ImportOption.DoNotIncludeTests}를 적용해 test class는 애초에 이 분석 대상이 아니다 — {@code src/test/java/com/ticket/bootstrap}
+ * 아래 test 지원 클래스가 있는 것과 무관하다.
  *
  * <p><b>{@code seed}는 더 이상 module이 아니다.</b> 초기 데이터 적재는 애플리케이션 밖의 독립 실행 프로그램({@code seed/src/main/java}, Gradle
  * {@code seedLocal} 작업)으로 옮겼다. 그 source set 산출물은 {@code main}/{@code test} 어느 classpath에도 올라가지 않으므로 여기 분석 대상에 들어오지 않는다
