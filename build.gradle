@@ -2,7 +2,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
     id 'java'
-    id 'com.diffplug.spotless' version '8.9.0'
+    alias(libs.plugins.spotless)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     // 정적 분석: Error Prone을 javac plugin으로 붙이고 그 위에서 NullAway를 돌린다.
@@ -14,7 +14,7 @@ plugins {
 spotless {
     java {
         target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'seed/src/**/*.java'
-        palantirJavaFormat('2.91.0').style('PALANTIR').formatJavadoc(true)
+        palantirJavaFormat(libs.versions.palantir.java.format.get()).style('PALANTIR').formatJavadoc(true)
         removeUnusedImports()
         importOrder('java', 'javax', 'jakarta', 'org', 'com', '')
         forbidWildcardImports()
