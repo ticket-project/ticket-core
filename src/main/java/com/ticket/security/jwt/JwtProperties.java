@@ -14,8 +14,8 @@ import lombok.Setter;
 public class JwtProperties {
     private String issuer = "ticket";
     private @Nullable String secretKey;
-    private long accessTokenExpirationSeconds = 1800L;
-    private long refreshTokenExpirationSeconds = 86400L;
+    private long accessTokenExpirationSeconds;
+    private long refreshTokenExpirationSeconds;
 
     /** security.jwt.secret-key는 기본값이 없는 필수 설정이라 바인딩되지 않으면 이 값을 쓰는 bean 생성에서 애플리케이션이 뜨지 않는다. */
     public String getSecretKey() {
