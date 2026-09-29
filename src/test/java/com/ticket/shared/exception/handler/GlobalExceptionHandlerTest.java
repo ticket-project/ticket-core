@@ -1,5 +1,6 @@
 package com.ticket.shared.exception.handler;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -14,8 +15,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -100,6 +103,47 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void path_값의_타입이_맞지_않으면_400과_E400을_반환한다() throws Exception {
+        mockMvc.perform(get("/test/typed-path/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("E400"))
+                .andExpect(jsonPath("$.error.data").value("id: 형식이 올바르지 않습니다."));
+    }
+
+    @Test
+    void 필수_query_파라미터가_없으면_400과_E400을_반환한다() throws Exception {
+        mockMvc.perform(get("/test/validated-param"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("E400"))
+                .andExpect(jsonPath("$.error.data").value("name: 값이 필요합니다."));
+    }
+
+    @Test
+    void 필수_header가_없으면_400과_E400을_반환한다() throws Exception {
+        mockMvc.perform(get("/test/required-header"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("E400"))
+                .andExpect(jsonPath("$.error.data").value("X-Test: 값이 필요합니다."));
+    }
+
+    @Test
+    void 지원하지_않는_method면_405와_E400을_반환한다() throws Exception {
+        mockMvc.perform(delete("/test/business-error"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.result").value("ERROR"))
+                .andExpect(jsonPath("$.error.code").value("E400"));
+    }
+
+    @Test
+    void 지원하지_않는_content_type이면_415와_E400을_반환한다() throws Exception {
+        mockMvc.perform(post("/test/validated-body")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("name"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.error.code").value("E400"));
+    }
+
+    @Test
     void 예상하지_못한_예외는_500과_E500을_반환하고_내부_정보를_노출하지_않는다() throws Exception {
         mockMvc.perform(get("/test/unexpected-error"))
                 .andExpect(status().isInternalServerError())
@@ -140,6 +184,16 @@ class GlobalExceptionHandlerTest {
         @Validated
         @GetMapping("/test/validated-param")
         String validatedParam(@RequestParam @NotBlank String name) {
+            return "ok";
+        }
+
+        @GetMapping("/test/typed-path/{id}")
+        String typedPath(@PathVariable Long id) {
+            return "ok";
+        }
+
+        @GetMapping("/test/required-header")
+        String requiredHeader(@RequestHeader("X-Test") String value) {
             return "ok";
         }
 
