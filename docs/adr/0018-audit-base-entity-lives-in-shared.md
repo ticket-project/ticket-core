@@ -76,7 +76,7 @@
 main 파일 −5, 약 −190줄. 새 module을 만들 때 복사할 기반 클래스가 없다.
 
 `venue`·`payment`가 leaf가 아니게 되면서 `ModularityTests.APPROVED_DEPENDENCY_DAG`의 두 항목이
-`Set.of("shared")`로 바뀐다. `shared`가 leaf라는 성질(`shared는_업무_module을_모른다`)은 그대로다.
+`Set.of("shared")`로 바뀐다. `shared`가 leaf라는 성질(당시 `shared는_업무_module을_모른다`, 지금은 `shared`의 `allowedDependencies = {}`를 Modulith `verify()`가 강제)은 그대로다.
 
 공개면이 셋에서 넷으로 늘었다. `ArchitectureRulesTest.EXPOSED_NAMED_INTERFACES` 스냅샷이 그
 사실을 고정한다 — 다음에 `shared`에 무언가를 열려는 PR은 이 목록에서 먼저 걸린다.

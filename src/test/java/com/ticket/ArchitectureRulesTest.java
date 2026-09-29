@@ -51,7 +51,9 @@ import com.tngtech.archunit.lang.CompositeArchRule;
  * 규칙이 걸린다.
  *
  * <p><b>여기 있는 규칙은 "어느 module에서든 같은 뜻인 것"뿐이다</b> — 계층 방향, 공개면 순수성, module 경계. 특정 BC의 사정을 아는 규칙은 그 BC의 테스트에 남고, 이미 다른
- * 테스트가 덮는 것(BC 사이 domain 격리, package cycle)은 여기 두지 않는다. 어느 테스트가 무엇을 덮는지는 {@code docs/testing.md}에 있다.
+ * 테스트가 덮는 것(BC 사이 domain 격리, package cycle, 공개면 밖 참조와 shared의 업무 module 역참조 — 뒤의 둘은 각 module의
+ * {@code allowedDependencies}를 Modulith {@code verify()}가 강제한다)은 여기 두지 않는다. 어느 테스트가 무엇을 덮는지는 {@code docs/testing.md}에
+ * 있다.
  *
  * <p>역할 package가 없는 곳({@code security}, {@code booking.admission})은 방향 규칙의 대상이 아니다 — 근거는
  * {@code docs/adr/0013-layer-first-package-layout-and-security-owns-authentication.md}다.
@@ -70,9 +72,6 @@ class ArchitectureRulesTest {
     private static final List<String> BUSINESS_MODULES =
             List.of("booking", "show", "venue", "like", "member", "payment");
 
-    /** 기술 module이다. 업무 module을 역참조하면 안 된다. */
-    private static final String SHARED = "shared";
-
     private static final Path MAIN_SOURCE_ROOT = Path.of("src", "main", "java", "com", "ticket");
 
     /** 규칙 회귀 검증용 fixture다. 운영 규칙 평가({@code @AnalyzeClasses})는 test class를 빼므로 여기에만 들어온다. */
@@ -86,7 +85,8 @@ class ArchitectureRulesTest {
      * <p>{@code allowedDependencies}는 "무엇을 열어도 되는가"의 상한이고 이 목록은 "지금 실제로 무엇이 열려 있는가"다. 새 {@code @NamedInterface}가 PR에서
      * 조용히 추가되면 여기서 실패한다 — 공개면이 늘어나는 것은 의식적인 결정이어야 한다.
      *
-     * <p>{@link #다른_module의_공개면_밖을_참조하지_않는다}도 이 목록을 그대로 읽는다 — 공개면의 정의가 두 벌이 되지 않게 한다.
+     * <p>공개면 밖 참조 금지 자체는 이 목록이 아니라 각 module의 {@code allowedDependencies}와 {@code ModularityTests}의 Modulith
+     * {@code verify()}가 강제한다.
      */
     private static final Set<String> EXPOSED_NAMED_INTERFACES = Set.of(
             "like :: api",
@@ -208,7 +208,8 @@ class ArchitectureRulesTest {
      * adapter·Spring Data 인터페이스·Redis 구현에 대한 직접 접근 금지는 그대로다</b> — aggregate 복원·저장과 고정 조회는 domain repository 계약 뒤에 있어야
      * 한다.
      *
-     * <p>다른 module의 조회 Repository는 여기서 열리지 않는다. {@link #다른_module의_공개면_밖을_참조하지_않는다}가 공개면 밖을 이미 전부 막는다.
+     * <p>다른 module의 조회 Repository는 여기서 열리지 않는다. 공개면 밖 참조는 {@code ModularityTests}의 Modulith {@code verify()}가 이미 전부
+     * 막는다.
      */
     @ArchTest
     static final ArchRule usecase와_event는_저장_구현과_HTTP를_모른다 = noClasses()
@@ -290,26 +291,6 @@ class ArchitectureRulesTest {
     // ---------------------------------------------------------------- module 경계
 
     /**
-     * 다른 module은 공개면({@link #EXPOSED_NAMED_INTERFACES})으로만 부른다.
-     *
-     * <p>예전에는 "{@code <module>.domain}/{@code application}/{@code infrastructure}/{@code endpoint}를 참조하지 않는다"로 썼다. 계층
-     * 이름이 module마다 달라진 지금은 그 목록이 곧 구멍이 된다 — 새 package 이름 하나가 규칙 밖으로 빠진다. 그래서 반대로 뒤집어 "공개면 <b>밖</b>은 전부 금지"로 쓴다. 공개면 목록은
-     * 아래 스냅샷 하나가 원본이다.
-     */
-    @ArchTest
-    static final ArchRule 다른_module의_공개면_밖을_참조하지_않는다 = combine(
-            modulesWithExposedSurface(),
-            module -> noClasses()
-                    .that()
-                    .resideOutsideOfPackage("com.ticket." + module + "..")
-                    .should()
-                    .dependOnClassesThat(insideButNotExposed(module))
-                    .because(module
-                            + "의 구현은 밖에서 보이지 않는다 — cross-module 호출은 "
-                            + module
-                            + "이 의도적으로 공개한 named interface로만 한다"));
-
-    /**
      * DB 조회 구현은 자기 module의 DB만 본다.
      *
      * <p>조회가 다른 module의 공개 API를 불러 결과를 합치기 시작하면 그 조합이 어디서 일어나는지가 조회 구현 안으로 숨는다. 표시값 조합은 use case·service가 한다 —
@@ -343,17 +324,6 @@ class ArchitectureRulesTest {
                 // member·payment처럼 DB 조회 구현이 없는 module도 목록에 있다. 없는 것은 위반이 아니다.
                 .allowEmptyShould(true);
     }
-
-    @ArchTest
-    static final ArchRule shared는_업무_module을_모른다 = noClasses()
-            .that()
-            .resideInAPackage("com.ticket." + SHARED + "..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage(BUSINESS_MODULES.stream()
-                    .map(module -> "com.ticket." + module + "..")
-                    .toArray(String[]::new))
-            .because("shared는 아무 업무 module도 참조하지 않는 leaf다 — 역참조가 생기면 모든 module이 서로 묶인다");
 
     // ---------------------------------------------------------------- 공개면 순수성
 
@@ -556,28 +526,10 @@ class ArchitectureRulesTest {
 
     // ---------------------------------------------------------------- helper
 
-    /** 공개면을 하나라도 가진 module이다. 공개면이 없는 module은 "밖에서 아무것도 못 본다"가 아니라 아예 참조가 없어 규칙이 비어 버린다. */
-    private static List<String> modulesWithExposedSurface() {
-        return EXPOSED_NAMED_INTERFACES.stream()
-                .map(entry -> entry.substring(0, entry.indexOf(" :: ")))
-                .distinct()
-                .sorted()
-                .toList();
-    }
-
-    /** {@code com.ticket.<module>}의 내부이면서 공개 named interface package가 아닌 것. */
-    private static com.tngtech.archunit.base.DescribedPredicate<JavaClass> insideButNotExposed(final String module) {
-        final String[] exposedPackages = EXPOSED_NAMED_INTERFACES.stream()
-                .filter(entry -> entry.startsWith(module + " :: "))
-                .map(entry -> "com.ticket." + module + "." + entry.split(" :: ")[1] + "..")
-                .toArray(String[]::new);
-
-        return resideInAPackage("com.ticket." + module + "..")
-                .and(not(resideInAnyPackage(exposedPackages)))
-                .as(module + "의 공개면 밖");
-    }
-
-    /** module마다 같은 모양의 규칙을 만들어 하나로 합친다. 규칙을 module 수만큼 손으로 복사하면 module이 늘 때 조용히 빠진다 — 목록 상수 하나만 고치면 되게 한다. */
+    /**
+     * module마다 같은 모양의 규칙을 만들어 하나로 합친다. 규칙을 module 수만큼 손으로 복사하면 module이 늘 때 조용히 빠진다 —
+     * 목록 상수 하나만 고치면 되게 한다.
+     */
     private static ArchRule combine(final List<String> modules, final Function<String, ArchRule> factory) {
         CompositeArchRule composite = null;
         for (final String module : new LinkedHashSet<>(modules)) {
