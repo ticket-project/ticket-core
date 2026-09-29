@@ -40,7 +40,7 @@ class CustomOAuth2UserServiceTest {
         when(delegate.loadUser(userRequest)).thenReturn(oauth2User);
         final SocialIdentity userInfo =
                 new SocialIdentity(SocialProvider.GOOGLE, "google-user-1", "user@example.com", true, "사용자");
-        when(memberAccountApi.resolveSocialAccount(userInfo)).thenReturn(new MemberStatus(7L, true, "MEMBER"));
+        when(memberAccountApi.resolveSocialAccount(userInfo)).thenReturn(new MemberStatus(7L, "MEMBER"));
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
         // getName()이 회원 식별자를 돌려주어야 로그인 성공 처리에서 auth code를 만들 수 있다.

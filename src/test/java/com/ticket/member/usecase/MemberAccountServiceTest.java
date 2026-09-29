@@ -50,7 +50,7 @@ class MemberAccountServiceTest {
 
         final MemberStatus status = service().resolveSocialAccount(identity);
 
-        assertThat(status).isEqualTo(new MemberStatus(7L, true, "MEMBER"));
+        assertThat(status).isEqualTo(new MemberStatus(7L, "MEMBER"));
     }
 
     @Test
@@ -61,7 +61,7 @@ class MemberAccountServiceTest {
         when(passwordEncoder.matches("password123!", "encoded")).thenReturn(true);
 
         assertThat(service().authenticate("user@example.com", RawPassword.create("password123!")))
-                .contains(new MemberStatus(42L, true, "MEMBER"));
+                .contains(new MemberStatus(42L, "MEMBER"));
     }
 
     @Test
@@ -100,7 +100,7 @@ class MemberAccountServiceTest {
         ReflectionTestUtils.setField(member, "id", 42L);
         when(memberRepository.findActiveById(42L)).thenReturn(Optional.of(member));
 
-        assertThat(service().getActiveIdentity(42L)).isEqualTo(new MemberStatus(42L, true, "MEMBER"));
+        assertThat(service().getActiveIdentity(42L)).isEqualTo(new MemberStatus(42L, "MEMBER"));
     }
 
     private MemberAccountService service() {

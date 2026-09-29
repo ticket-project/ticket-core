@@ -38,7 +38,7 @@ class ExchangeOAuth2TokenUseCaseTest {
 
     @Test
     void valid_code_issues_tokens() {
-        MemberStatus member = new MemberStatus(1L, true, "MEMBER");
+        MemberStatus member = new MemberStatus(1L, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 7L);
 
