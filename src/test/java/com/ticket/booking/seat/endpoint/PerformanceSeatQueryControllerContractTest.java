@@ -57,7 +57,7 @@ class PerformanceSeatQueryControllerContractTest {
     void seat_map은_admission_token_없이_조회한다() throws Exception {
         when(getPerformanceSeatMapUseCase.execute(new GetPerformanceSeatMapUseCase.Input(10L)))
                 .thenReturn(new GetPerformanceSeatMapUseCase.Output(
-                        new GetPerformanceSeatMapUseCase.VenueView(1L, "venue", 500, 356, 4.8), List.of()));
+                        new GetPerformanceSeatMapUseCase.VenueResponse(1L, "venue", 500, 356, 4.8), List.of()));
         SecurityContextHolder.clearContext();
 
         mockMvc.perform(get("/api/v1/performances/10/seat-map"))

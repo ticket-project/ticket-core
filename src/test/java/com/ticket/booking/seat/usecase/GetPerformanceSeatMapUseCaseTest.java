@@ -58,14 +58,14 @@ class GetPerformanceSeatMapUseCaseTest {
         // then
         assertThat(output.venue().venueId()).isEqualTo(3L);
         assertThat(output.seats()).hasSize(1);
-        GetPerformanceSeatMapUseCase.SeatMapEntry entry = output.seats().get(0);
+        GetPerformanceSeatMapUseCase.SeatResponse entry = output.seats().get(0);
         assertThat(entry.performanceSeatId()).isEqualTo(501L);
         assertThat(entry.seatId()).isEqualTo(101L);
         assertThat(entry.performanceGradeId()).isEqualTo(31L);
         assertThat(entry.gradeCode()).isEqualTo("VIP");
         assertThat(entry.price()).isEqualByComparingTo(BigDecimal.valueOf(170000));
         assertThat(output.seats())
-                .extracting(GetPerformanceSeatMapUseCase.SeatMapEntry::seatId)
+                .extracting(GetPerformanceSeatMapUseCase.SeatResponse::seatId)
                 .doesNotContain(102L);
     }
 
