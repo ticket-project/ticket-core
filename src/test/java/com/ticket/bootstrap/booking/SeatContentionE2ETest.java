@@ -40,7 +40,7 @@ class SeatContentionE2ETest extends BookingE2ETestSupport {
     void 같은_좌석에_동시_주문이_들어와도_하나만_성공한다() throws Exception {
         final List<String> tokens = new ArrayList<>();
         for (int contender = 0; contender < CONTENDERS; contender++) {
-            tokens.add(signUpAndLogin("contender" + contender + "@e2e.test"));
+            tokens.add(loginAsNewMember("contender" + contender + "@e2e.test"));
         }
         // 판마다 다른 좌석을 쓴다. 앞 판의 hold가 남아 다음 판을 오염시키지 않는다.
         for (int round = 0; round < ROUNDS; round++) {

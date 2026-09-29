@@ -43,7 +43,7 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
 
     @Test
     void 좌석을_고르고_주문했다가_취소하면_좌석이_돌아온다() {
-        final String token = signUpAndLogin("happy-path@e2e.test");
+        final String token = loginAsNewMember("happy-path@e2e.test");
         final long seatId = SEAT_IDS.get(0);
         // 1. 시작 상태: fixture의 좌석 넷이 모두 판매 가능하다.
         assertThat(seatStatus(token, seatId)).isEqualTo(SEAT_AVAILABLE);
@@ -92,7 +92,7 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
     /** 본인이 선택하지 않은 좌석으로는 주문할 수 없다(docs/adr/0001-selection-and-hold-are-independent.md). */
     @Test
     void 좌석을_고르지_않으면_주문할_수_없다() {
-        final String token = signUpAndLogin("no-selection@e2e.test");
+        final String token = loginAsNewMember("no-selection@e2e.test");
         final long seatId = SEAT_IDS.get(2);
 
         final ResponseEntity<JsonNode> create = restTemplate.exchange(
