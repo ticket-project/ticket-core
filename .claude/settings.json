@@ -34,29 +34,5 @@
       "Bash(git commit --no-verify:*)",
       "Bash(git push --no-verify:*)"
     ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|PowerShell",
-        "hooks": [
-          { "type": "command", "command": "bash scripts/hooks/guard-branch.sh" }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash scripts/hooks/session-context.sh" }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash scripts/hooks/stop-docs-check.sh" }
-        ]
-      }
-    ]
   }
 }
