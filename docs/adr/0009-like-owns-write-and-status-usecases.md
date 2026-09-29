@@ -92,5 +92,5 @@ ADR 0008 §4는 "찜의 HTTP endpoint·use case는 여전히 show module에 있�
   `AddLikeUseCase`/`RemoveLikeUseCase`/`GetLikeStatusUseCase`가 생긴다.
 - `like`의 `allowedDependencies`가 `{}`에서 `{"member"}`로 바뀐다(`ModularityTests.
   APPROVED_DEPENDENCY_DAG`도 함께 갱신).
-- API 문서(`LikeControllerDocs`)에서 "404 공연 없음" 응답 설명을 뺀다 — 이제 존재하지 않는
+- 찜 API 문서에서 "404 공연 없음" 응답 설명을 뺀다 — 이제 존재하지 않는
   공연 id로 찜을 요청해도 성공한다.
