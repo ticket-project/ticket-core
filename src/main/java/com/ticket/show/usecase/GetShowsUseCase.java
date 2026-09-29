@@ -48,7 +48,9 @@ public class GetShowsUseCase {
     }
 
     public record Output(
-            List<ShowResponse> items, boolean hasNext, @Nullable ShowCursor nextPosition) {}
+            List<ShowResponse> items,
+            boolean hasNext,
+            @Nullable ShowCursor nextPosition) {}
 
     /**
      * 컴포넌트 이름은 {@code display} 어휘를 쓰지만(ADR 0007), 공개 API JSON 이름

@@ -72,7 +72,8 @@ class GetMyShowLikesUseCaseTest {
         GetMyShowLikesUseCase.Output output = useCase.execute(new GetMyShowLikesUseCase.Input(1L, 10L, 20));
 
         assertThat(output.items())
-                .containsExactly(new GetMyShowLikesUseCase.ShowLikeResponse(2L, "공연", "image", startDate, endDate, "장소", likedAt));
+                .containsExactly(new GetMyShowLikesUseCase.ShowLikeResponse(
+                        2L, "공연", "image", startDate, endDate, "장소", likedAt));
         assertThat(output.hasNext()).isTrue();
         assertThat(output.nextPosition()).isEqualTo(9L);
         verify(likeQueryApi).findLiked("show", 1L, 10L, 20);
