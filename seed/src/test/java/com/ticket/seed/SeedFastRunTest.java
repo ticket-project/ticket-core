@@ -33,7 +33,7 @@ import com.ticket.seed.support.AppSchema;
 @SuppressWarnings("NonAsciiCharacters")
 class SeedFastRunTest {
 
-    private static final long FIXTURE_ID_BASE = 910000000L;
+    private static final long FIXTURE_ID_BASE = LoadTestFixtureSeeder.ID_BASE;
 
     @TempDir
     Path tempDir;
@@ -103,7 +103,8 @@ class SeedFastRunTest {
 
         final Map<String, Long> afterFirstRun = snapshot();
         assertThat(afterFirstRun.get("CATEGORIES")).isEqualTo(1L);
-        assertThat(afterFirstRun.get("SEATS")).isEqualTo(6L + 2000L); // 템플릿 3 x 공연장 2 + 부하 픽스처 2000
+        assertThat(afterFirstRun.get("SEATS"))
+                .isEqualTo(6L + LoadTestFixtureSeeder.SEAT_COUNT); // 템플릿 3 x 공연장 2 + 부하 픽스처
         assertThat(afterFirstRun.get("GRADES")).isEqualTo(4L);
         assertThat(afterFirstRun.get("MEMBERS")).isEqualTo(3L);
 

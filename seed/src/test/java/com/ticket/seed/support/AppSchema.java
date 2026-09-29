@@ -15,8 +15,12 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 임시 H2 파일 DB에 <b>실제 애플리케이션 스키마</b>를 만든다.
  *
- * <p>시드 테스트가 손으로 쓴 DDL을 쓰면 앱의 매핑이 바뀌어도 통과한다 — 그 순간 테스트는 "시드가 실제 앱 DB에서 동작한다"를 더 이상 보장하지 않는다. 여기서는 로컬 프로파일과 같은 방식
- * (Hibernate {@code ddl-auto: create})으로 앱 entity 매핑에서 스키마를 직접 생성한다.
+ * <p>시드 테스트가 손으로 쓴 DDL을 쓰면 앱의 매핑이 바뀌어도 통과한다 — 그 순간 테스트는 "시드가 실제 앱 DB에서 동작한다"를 더 이상 보장하지 않는다. 여기서는 앱 entity 매핑에서
+ * Hibernate {@code ddl-auto: create}로 스키마를 직접 생성한다.
+ *
+ * <p><b>로컬·운영과 같은 스키마는 아니다.</b> 로컬 프로파일과 운영은 Flyway migration으로 스키마를 만든다(ADR 0020). entity에는 migration에만 있는 유니크 제약·인덱스·
+ * {@code DEFAULT}가 없으므로 이 스키마에서 통과한 적재가 중복 거절이나 기본값에 기대는지는 드러나지 않는다. migration으로 바꾸려면 seedTest compile classpath에
+ * {@code spring-modulith-runtime}(SpringModulithFlywayMigrationStrategy)이 필요하다.
  *
  * <p>DataSource와 Hibernate JPA auto-configuration <b>둘만</b> 올린다. 웹 서버·Redis·OAuth·Modulith event registry는 올리지 않는다 — 시드
  * 검증에 필요하지 않고, 시드 때문에 그런 인프라가 필요해지는 구조를 만들지 않기 위해서다. 스키마를 만든 뒤 컨텍스트는 곧바로 닫는다(파일 DB라 스키마는 디스크에 남는다).
