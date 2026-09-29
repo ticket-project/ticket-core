@@ -48,11 +48,11 @@ class RedisRefreshTokenStoreTest {
     }
 
     @Test
-    void validate_consumes_token_and_returns_member_id() {
+    void consume_deletes_token_and_returns_member_id() {
         doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
         when(bucket.getAndDelete()).thenReturn("3");
 
-        assertThat(refreshTokenStore.validate(AuthRefreshToken.from("token-value")))
+        assertThat(refreshTokenStore.consume(AuthRefreshToken.from("token-value")))
                 .contains(3L);
     }
 
@@ -66,11 +66,11 @@ class RedisRefreshTokenStoreTest {
     }
 
     @Test
-    void validate_returns_empty_when_stored_member_id_is_not_number() {
+    void consume_returns_empty_when_stored_member_id_is_not_number() {
         doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
         when(bucket.getAndDelete()).thenReturn("not-a-number");
 
-        assertThat(refreshTokenStore.validate(AuthRefreshToken.from("token-value")))
+        assertThat(refreshTokenStore.consume(AuthRefreshToken.from("token-value")))
                 .isEmpty();
     }
 

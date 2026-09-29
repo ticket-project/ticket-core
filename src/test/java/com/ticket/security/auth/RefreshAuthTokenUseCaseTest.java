@@ -38,15 +38,15 @@ class RefreshAuthTokenUseCaseTest {
     private RefreshAuthTokenUseCase useCase;
 
     @Test
-    void valid_refresh_token_rotates_tokens() {
+    void valid_refresh_token_issues_new_tokens() {
         MemberStatus member = new MemberStatus(1L, true, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens("access-token-value", "new-refresh-token-value", "Bearer", 1800L, 1209600L, 3L);
 
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
-        when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
+        when(refreshTokenStore.consume(refreshToken)).thenReturn(Optional.of(3L));
         when(memberAccountApi.getActiveIdentity(3L)).thenReturn(member);
-        when(authTokenIssuer.rotateTokens(1L, "MEMBER", refreshToken)).thenReturn(response);
+        when(authTokenIssuer.issueTokens(1L, "MEMBER")).thenReturn(response);
 
         RefreshAuthTokenUseCase.Result result = useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken));
         RefreshAuthTokenUseCase.Output output = result.output();
@@ -57,15 +57,15 @@ class RefreshAuthTokenUseCaseTest {
         assertThat(output.memberId()).isEqualTo(response.memberId());
         assertThat(result.refreshToken()).isEqualTo("new-refresh-token-value");
         assertThat(result.toString()).doesNotContain("access-token-value").doesNotContain("new-refresh-token-value");
-        verify(refreshTokenStore).validate(refreshToken);
+        verify(refreshTokenStore).consume(refreshToken);
         verify(memberAccountApi).getActiveIdentity(3L);
-        verify(authTokenIssuer).rotateTokens(1L, "MEMBER", refreshToken);
+        verify(authTokenIssuer).issueTokens(1L, "MEMBER");
     }
 
     @Test
     void invalid_refresh_token_throws_auth_exception() {
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
-        when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.empty());
+        when(refreshTokenStore.consume(refreshToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
                 .isInstanceOf(UnauthenticatedException.class);
@@ -74,7 +74,7 @@ class RefreshAuthTokenUseCaseTest {
     @Test
     void withdrawn_member_cannot_refresh_tokens() {
         AuthRefreshToken refreshToken = AuthRefreshToken.from("refresh-token");
-        when(refreshTokenStore.validate(refreshToken)).thenReturn(Optional.of(3L));
+        when(refreshTokenStore.consume(refreshToken)).thenReturn(Optional.of(3L));
         when(memberAccountApi.getActiveIdentity(3L)).thenThrow(new MemberNotFoundException());
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))

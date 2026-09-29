@@ -186,9 +186,9 @@ class CoreRedisIntegrationTest {
         String token = store.createRefreshToken(7L, 60L);
         AuthRefreshToken refreshToken = AuthRefreshToken.from(token);
 
-        List<Optional<Long>> validated = runConcurrently(16, ignored -> store.validate(refreshToken));
+        List<Optional<Long>> consumed = runConcurrently(16, ignored -> store.consume(refreshToken));
 
-        assertThat(validated.stream().flatMap(Optional::stream)).containsExactly(7L);
+        assertThat(consumed.stream().flatMap(Optional::stream)).containsExactly(7L);
         assertThat(store.validateWithoutConsume(refreshToken)).isEmpty();
     }
 

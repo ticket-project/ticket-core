@@ -27,7 +27,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     @Override
-    public Optional<Long> validate(final AuthRefreshToken refreshToken) {
+    public Optional<Long> consume(final AuthRefreshToken refreshToken) {
         final String memberId = bucketOf(refreshToken).getAndDelete();
         return parseMemberId(memberId);
     }
@@ -38,19 +38,8 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     @Override
-    public void revoke(final AuthRefreshToken refreshToken) {
-        bucketOf(refreshToken).delete();
-    }
-
-    @Override
     public boolean revokeIfOwned(final AuthRefreshToken refreshToken, final Long memberId) {
         return bucketOf(refreshToken).compareAndSet(String.valueOf(memberId), null);
-    }
-
-    @Override
-    public String rotate(final AuthRefreshToken refreshToken, final Long memberId, final long expirationSeconds) {
-        revoke(refreshToken);
-        return createRefreshToken(memberId, expirationSeconds);
     }
 
     private RBucket<String> bucketOf(final AuthRefreshToken refreshToken) {
