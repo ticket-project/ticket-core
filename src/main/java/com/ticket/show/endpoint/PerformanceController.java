@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/performances")
 @RequiredArgsConstructor
-@Tag(name = "Performance", description = "Performance APIs")
+@Tag(name = "Performance", description = "회차 요약·좌석 조회 API")
 public class PerformanceController {
     private final GetPerformanceSummaryUseCase getPerformanceSummaryUseCase;
 
