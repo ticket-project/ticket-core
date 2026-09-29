@@ -203,8 +203,10 @@ db/migration/__root/V9__...sql           # 어떤 module에도 속하지 않는 
 `PerformanceSeat`의 cross-module FK(과거 Performance/Seat 테이블 참조)를 제거했고,
 `db/migration-vendor/{h2,oracle}/__root/V8__create_event_publication_registry.sql`이 Spring Modulith
 2.1.1의 `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE` registry table을 만들었다(과거 custom
-outbox 테이블은 이 시점에 별도 booking migration으로 제거됐다). 기존 V3(`add_performance_seat_unique_index`)~V4(`add_order_seat_order_index`)의 조회 인덱스는 그대로 `__root`
-이력에 남아 있다.
+outbox 테이블은 이 시점에 별도 booking migration으로 제거됐다). 기존 V3(`add_performance_seat_unique_index`)~V4(`add_order_seat_order_index`)는 그대로 `__root`
+이력에 남아 있다. 다만 V4가 만든 `idx_order_seats_order_id`는 booking V7이 지운다 — PK·유니크가 아닌 보조
+인덱스는 당분간 두지 않는다(booking V7, payment V2, show V11이 옛 보조 인덱스를 지웠다). 필요해지면 새
+migration으로 다시 만든다.
 
 배포 전에는 `PERFORMANCE_SEATS`에 `(performance_id, seat_id)` 중복이 있는지 확인한다 —
 `SELECT performance_id, seat_id, COUNT(*) FROM performance_seats GROUP BY performance_id, seat_id
