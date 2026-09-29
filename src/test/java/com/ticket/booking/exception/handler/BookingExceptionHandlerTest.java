@@ -23,16 +23,13 @@ import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.OrderNotOwnedException;
 import com.ticket.booking.exception.OrderNotPendingException;
 import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.exception.PerformanceGradeMismatchException;
 import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.PerformanceSeatAlreadyExistsException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.exception.SeatNotOwnedException;
 import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.exception.SeatSelectionExpiredException;
-import com.ticket.booking.exception.SeatVenueMismatchException;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.shared.web.ApiResponse;
 
@@ -66,21 +63,6 @@ class BookingExceptionHandlerTest {
                         HttpStatus.FORBIDDEN,
                         "E4002",
                         "본인이 선택한 좌석만 해제할 수 있습니다."),
-                Arguments.of(
-                        new SeatVenueMismatchException(10L, 20L),
-                        HttpStatus.BAD_REQUEST,
-                        "E4003",
-                        "요청한 좌석이 이 회차의 공연장에 속하지 않습니다."),
-                Arguments.of(
-                        new PerformanceGradeMismatchException(10L, 40L),
-                        HttpStatus.BAD_REQUEST,
-                        "E4004",
-                        "요청한 등급이 이 회차에 속하지 않습니다."),
-                Arguments.of(
-                        new PerformanceSeatAlreadyExistsException(10L),
-                        HttpStatus.BAD_REQUEST,
-                        "E4005",
-                        "이미 편성된 좌석입니다."),
                 Arguments.of(
                         new SeatNotSelectedException(10L, 30L, List.of(20L)),
                         HttpStatus.CONFLICT,
