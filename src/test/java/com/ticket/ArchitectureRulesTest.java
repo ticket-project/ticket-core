@@ -527,10 +527,10 @@ class ArchitectureRulesTest {
     // ---------------------------------------------------------------- helper
 
     /**
-     * module마다 같은 모양의 규칙을 만들어 하나로 합친다. 규칙을 module 수만큼 손으로 복사하면 module이 늘 때 조용히 빠진다 —
+     * module마다 같은 모양의 규칙을 만들어 하나로 합친다({@code DomainIsolationTest}도 쓴다). 규칙을 module 수만큼 손으로 복사하면 module이 늘 때 조용히 빠진다 —
      * 목록 상수 하나만 고치면 되게 한다.
      */
-    private static ArchRule combine(final List<String> modules, final Function<String, ArchRule> factory) {
+    static ArchRule combine(final List<String> modules, final Function<String, ArchRule> factory) {
         CompositeArchRule composite = null;
         for (final String module : new LinkedHashSet<>(modules)) {
             final ArchRule rule = factory.apply(module);
