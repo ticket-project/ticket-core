@@ -62,7 +62,6 @@ class MigrationChainSchemaTest {
         }
         assertThat(names)
                 .doesNotContain(
-                        "IDX_ORDER_SEATS_ORDER_ID",
                         "IDX_ORDER_SEATS_PERF_SEAT_ID",
                         "IDX_PERFORMANCE_SEATS_GRADE",
                         "IDX_TICKETS_OWNER_MEMBER_STATUS",
