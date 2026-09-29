@@ -32,7 +32,7 @@ final class SeedDataSources {
             throw new SeedFailure("""
                     JDBC 드라이버를 초기화할 수 없습니다: %s
                       url=%s
-                      -> 시드 실행 classpath(build.gradle의 seedMain*)에 드라이버가 있는지 확인하세요.
+                      -> 시드 실행 classpath(gradle/seed.gradle의 seedMain*)에 드라이버가 있는지 확인하세요.
                     """.formatted(driverClassName, SeedConsole.maskedUrl(settings.jdbcUrl())), exception);
         }
     }
