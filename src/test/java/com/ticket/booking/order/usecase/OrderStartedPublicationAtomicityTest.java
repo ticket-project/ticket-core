@@ -12,12 +12,8 @@ import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.testcontainers.containers.GenericContainer;
 
 import com.ticket.TicketApplication;
 import com.ticket.booking.hold.domain.Hold;
@@ -25,8 +21,7 @@ import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.testsupport.TestContainerImages;
-import com.ticket.testsupport.persistence.MigratedSchema;
+import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
  * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderStarted} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
@@ -36,26 +31,11 @@ import com.ticket.testsupport.persistence.MigratedSchema;
  * serialization)에 의존하므로 전체 애플리케이션 컨텍스트({@link TicketApplication})로 확인한다 — 좁은 슬라이스 컨텍스트는 Modulith event entity를
  * entity-scan하지 않아 이 계약을 재현하지 못한다.
  */
-@SuppressWarnings({"NonAsciiCharacters", "resource"})
-@MigratedSchema
-@SpringBootTest(classes = TicketApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class OrderStartedPublicationAtomicityTest {
+@SuppressWarnings("NonAsciiCharacters")
+class OrderStartedPublicationAtomicityTest extends BookingE2ETestSupport {
     private static final long MEMBER_ID = 900L;
     private static final long PERFORMANCE_ID = 901L;
     private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
-    private static final int REDIS_PORT = 6379;
-    static final GenericContainer<?> REDIS =
-            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
-
-    static {
-        REDIS.start();
-    }
-
-    @DynamicPropertySource
-    static void redisProperties(final DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(REDIS_PORT));
-    }
 
     @Autowired
     private PendingOrderCreator pendingOrderCreator;
