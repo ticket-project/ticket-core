@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.admission.AdmissionGuard;
@@ -31,7 +32,8 @@ public class GetSeatStatusUseCase {
     private final AdmissionGuard admissionGuard;
     private final Clock clock;
 
-    public record Input(Long performanceId, Long memberId, String admissionToken) {
+    public record Input(
+            Long performanceId, Long memberId, @Nullable String admissionToken) {
         public Input {
             performanceId = requirePositiveId(performanceId, "performanceId");
             memberId = requirePositiveId(memberId, "memberId");
