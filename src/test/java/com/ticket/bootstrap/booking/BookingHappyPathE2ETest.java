@@ -89,7 +89,7 @@ class BookingHappyPathE2ETest extends BookingE2ETestSupport {
         pollUntil("취소한 좌석이 판매 가능으로 복귀", ASYNC_TIMEOUT, () -> SEAT_AVAILABLE.equals(seatStatus(token, seatId)));
     }
 
-    /** 본인이 선택하지 않은 좌석으로는 주문할 수 없다(docs/adr/0001-selection-and-hold-are-independent.md). */
+    /** 본인이 선택하지 않은 좌석으로는 주문할 수 없다(docs/adr/0021-order-requires-own-selection.md). */
     @Test
     void 좌석을_고르지_않으면_주문할_수_없다() {
         final String token = loginAsNewMember("no-selection@e2e.test");
