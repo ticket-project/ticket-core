@@ -232,7 +232,7 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 | `SeedSettingsTest` | 로컬 접속 설정 원본과 기본값 |
 | `SeedProdSettingsTest` | 운영 접속 설정 원본(환경변수)과 기본값, 누락 시 실패, URL 마스킹, 드라이버 선택 |
 | `ServiceSourceSeparationTest` | 시드가 서비스 소스로 다시 섞이지 않는 것 |
-| `support.AppSchemaTest` | 테스트 스키마를 실제 앱 entity 매핑으로 만드는 것 |
+| `AppSchemaTest` | `support.AppSchema`가 만든 테스트 스키마가 적재 전 점검(`SeedPreconditions`)을 통과하는 것 |
 
 테스트는 **실제 개발 DB(`~/ticket-local`)도, 실제 운영 DB도 건드리지 않는다.** 임시 디렉터리의 H2
 파일 DB와 임시 Oracle 컨테이너에 운영과 같은 Flyway migration(H2는 `db/migration-vendor/h2`, Oracle은

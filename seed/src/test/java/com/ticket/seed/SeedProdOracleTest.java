@@ -57,9 +57,9 @@ class SeedProdOracleTest {
 
     private static final OracleContainer ORACLE =
             new OracleContainer("gvenzl/oracle-free:23-slim").withPassword(ORACLE_PASSWORD);
-    private static final long FIXTURE_ID_BASE = 910000000L;
+    private static final long FIXTURE_ID_BASE = LoadTestFixtureSeeder.ID_BASE;
     private static final int FIXTURE_PERFORMANCE_COUNT = 2;
-    private static final int FIXTURE_SEAT_COUNT = 2000;
+    private static final int FIXTURE_SEAT_COUNT = LoadTestFixtureSeeder.SEAT_COUNT;
     private static final int MEMBER_COUNT = 5;
 
     /** 좌석 템플릿 1벌의 크기다. 공연장마다 이만큼 복제된다. */
