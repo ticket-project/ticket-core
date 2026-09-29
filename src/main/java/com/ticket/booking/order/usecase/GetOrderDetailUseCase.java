@@ -45,9 +45,10 @@ public class GetOrderDetailUseCase {
         final MemberSnapshot member = memberLookupApi.getProfile(order.getMemberId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
-        final List<TicketSeat> seats =
-                order.getOrderSeats().stream().map(this::toTicketSeat).toList();
-        final BigDecimal ticketAmount = seats.stream().map(TicketSeat::price).reduce(BigDecimal.ZERO, BigDecimal::add);
+        final List<TicketSeatResponse> seats =
+                order.getOrderSeats().stream().map(this::toTicketSeatResponse).toList();
+        final BigDecimal ticketAmount =
+                seats.stream().map(TicketSeatResponse::price).reduce(BigDecimal.ZERO, BigDecimal::add);
         final long remainingSeconds = OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), now);
 
         return new Output(
@@ -55,16 +56,16 @@ public class GetOrderDetailUseCase {
                 order.getStatus(),
                 order.getExpiresAt(),
                 remainingSeconds,
-                new ShowInfo(order.getShowTitleSnapshot()),
-                new PerformanceInfo(
+                new ShowResponse(order.getShowTitleSnapshot()),
+                new PerformanceResponse(
                         order.getPerformanceId(), order.getPerformanceStartAtSnapshot(), order.getVenueNameSnapshot()),
-                new BookerInfo(member.memberId(), member.name(), member.email()),
-                new PriceInfo(ticketAmount, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, ticketAmount),
-                new TicketInfo(seats.size(), seats));
+                new BookerResponse(member.memberId(), member.name(), member.email()),
+                new PriceResponse(ticketAmount, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, ticketAmount),
+                new TicketResponse(seats.size(), seats));
     }
 
-    private TicketSeat toTicketSeat(final OrderSeat orderSeat) {
-        return new TicketSeat(
+    private TicketSeatResponse toTicketSeatResponse(final OrderSeat orderSeat) {
+        return new TicketSeatResponse(
                 orderSeat.getPerformanceSeatId(),
                 orderSeat.getSeatId(),
                 orderSeat.getGradeCodeSnapshot(),
@@ -87,27 +88,27 @@ public class GetOrderDetailUseCase {
             OrderState status,
             LocalDateTime expiresAt,
             long remainingSeconds,
-            ShowInfo show,
-            PerformanceInfo performance,
-            BookerInfo booker,
-            PriceInfo price,
-            TicketInfo tickets) {}
+            ShowResponse show,
+            PerformanceResponse performance,
+            BookerResponse booker,
+            PriceResponse price,
+            TicketResponse tickets) {}
 
-    public record ShowInfo(String title) {}
+    public record ShowResponse(String title) {}
 
-    public record PerformanceInfo(Long performanceId, LocalDateTime startTime, String venueName) {}
+    public record PerformanceResponse(Long performanceId, LocalDateTime startTime, String venueName) {}
 
-    public record BookerInfo(Long memberId, String name, String email) {}
+    public record BookerResponse(Long memberId, String name, String email) {}
 
-    public record PriceInfo(
+    public record PriceResponse(
             BigDecimal ticketAmount,
             BigDecimal bookingFee,
             BigDecimal deliveryFee,
             BigDecimal discountAmount,
             BigDecimal totalAmount) {}
 
-    public record TicketInfo(int count, List<TicketSeat> seats) {}
+    public record TicketResponse(int count, List<TicketSeatResponse> seats) {}
 
-    public record TicketSeat(
+    public record TicketSeatResponse(
             Long performanceSeatId, Long seatId, String gradeCode, String gradeName, String label, BigDecimal price) {}
 }
