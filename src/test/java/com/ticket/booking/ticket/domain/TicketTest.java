@@ -19,7 +19,7 @@ class TicketTest {
         assertThat(ticket.getTicketKey()).isEqualTo("ticket-key");
         assertThat(ticket.getOrderSeatId()).isEqualTo(1L);
         assertThat(ticket.getOwnerMemberId()).isEqualTo(10L);
-        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.ISSUED);
+        assertThat(ticket.getStatus()).isEqualTo(TicketState.ISSUED);
         assertThat(ticket.getIssuedAt()).isEqualTo(issuedAt);
         assertThat(ticket.isTerminal()).isFalse();
     }
@@ -32,7 +32,7 @@ class TicketTest {
         // when
         ticket.use(usedAt);
         // then
-        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.USED);
+        assertThat(ticket.getStatus()).isEqualTo(TicketState.USED);
         assertThat(ticket.getUsedAt()).isEqualTo(usedAt);
         assertThat(ticket.isTerminal()).isTrue();
     }
@@ -45,7 +45,7 @@ class TicketTest {
         // when
         ticket.cancel(canceledAt);
         // then
-        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.CANCELED);
+        assertThat(ticket.getStatus()).isEqualTo(TicketState.CANCELED);
         assertThat(ticket.getCanceledAt()).isEqualTo(canceledAt);
         assertThat(ticket.isTerminal()).isTrue();
     }
