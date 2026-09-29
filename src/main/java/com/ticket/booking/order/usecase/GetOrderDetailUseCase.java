@@ -38,7 +38,7 @@ public class GetOrderDetailUseCase {
         // 좌석까지 join fetch로 함께 읽는다 — 쿼리는 한 개이고 트랜잭션 안에서 좌석 접근이 끝난다.
         final Order order = orderRepository
                 .findDetailByOrderKeyAndMemberId(input.orderKey(), input.memberId())
-                .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
+                .orElseThrow(OrderNotOwnedException::new);
 
         // memberLookupApi.getProfile()은 탈퇴하거나 존재하지 않는 회원이면 NOT_FOUND_DATA를 던진다 —
         // 탈퇴한 회원의 주문은 본인에게도 보이지 않는다는 기존 규칙을 그대로 잇는다.

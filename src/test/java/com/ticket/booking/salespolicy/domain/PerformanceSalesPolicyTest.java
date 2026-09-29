@@ -23,8 +23,7 @@ class PerformanceSalesPolicyTest {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
         assertThatThrownBy(() -> policy.ensureAcceptingOrders(OPENS_AT.minusMinutes(1)))
-                .isInstanceOf(BookingNotOpenYetException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 1L);
+                .isInstanceOf(BookingNotOpenYetException.class);
     }
 
     @Test
@@ -32,8 +31,7 @@ class PerformanceSalesPolicyTest {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
         assertThatThrownBy(() -> policy.ensureAcceptingOrders(CLOSES_AT.plusMinutes(1)))
-                .isInstanceOf(PerformanceIsPastException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 1L);
+                .isInstanceOf(PerformanceIsPastException.class);
     }
 
     @Test
@@ -47,10 +45,7 @@ class PerformanceSalesPolicyTest {
     void 한도를_초과하면_HoldLimitExceededException을_던진다() {
         PerformanceSalesPolicy policy = policy(2, 600, null);
 
-        assertThatThrownBy(() -> policy.ensureWithinHoldLimit(3))
-                .isInstanceOf(HoldLimitExceededException.class)
-                .hasFieldOrPropertyWithValue("requestedSeatCount", 3L)
-                .hasFieldOrPropertyWithValue("maxSeatCount", 2);
+        assertThatThrownBy(() -> policy.ensureWithinHoldLimit(3)).isInstanceOf(HoldLimitExceededException.class);
     }
 
     @Test

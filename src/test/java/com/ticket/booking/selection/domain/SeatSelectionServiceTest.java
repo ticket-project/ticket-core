@@ -51,9 +51,7 @@ class SeatSelectionServiceTest {
         // when
         // then
         assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, null))
-                .isInstanceOf(SeatAlreadySelectedException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L)
-                .hasFieldOrPropertyWithValue("seatId", 20L);
+                .isInstanceOf(SeatAlreadySelectedException.class);
     }
 
     @Test
@@ -62,9 +60,7 @@ class SeatSelectionServiceTest {
                 .thenReturn(SelectResult.LIMIT_EXCEEDED);
 
         assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, 4))
-                .isInstanceOf(HoldLimitExceededException.class)
-                .hasFieldOrPropertyWithValue("requestedSeatCount", 5L)
-                .hasFieldOrPropertyWithValue("maxSeatCount", 4);
+                .isInstanceOf(HoldLimitExceededException.class);
     }
 
     @Test
@@ -83,11 +79,7 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("4");
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
-                .isInstanceOf(SeatNotOwnedException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L)
-                .hasFieldOrPropertyWithValue("seatId", 20L)
-                .hasFieldOrPropertyWithValue("memberId", 3L);
+        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L)).isInstanceOf(SeatNotOwnedException.class);
     }
 
     @Test
@@ -118,11 +110,7 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(false);
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
-                .isInstanceOf(SeatNotOwnedException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 10L)
-                .hasFieldOrPropertyWithValue("seatId", 20L)
-                .hasFieldOrPropertyWithValue("memberId", 3L);
+        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L)).isInstanceOf(SeatNotOwnedException.class);
     }
 
     @Test
@@ -140,8 +128,7 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getRecentlyExpiredSeatIdsByMember(10L, "3")).thenReturn(Set.of(21L));
 
         assertThatThrownBy(() -> seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L)))
-                .isInstanceOf(SeatSelectionExpiredException.class)
-                .hasFieldOrPropertyWithValue("seatIds", List.of(21L));
+                .isInstanceOf(SeatSelectionExpiredException.class);
     }
 
     @Test
@@ -150,8 +137,7 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getRecentlyExpiredSeatIdsByMember(10L, "3")).thenReturn(Set.of(20L));
 
         assertThatThrownBy(() -> seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L)))
-                .isInstanceOf(SeatNotSelectedException.class)
-                .hasFieldOrPropertyWithValue("seatIds", List.of(20L, 21L));
+                .isInstanceOf(SeatNotSelectedException.class);
     }
 
     @Test

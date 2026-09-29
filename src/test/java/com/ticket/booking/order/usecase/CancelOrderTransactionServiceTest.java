@@ -69,10 +69,7 @@ class CancelOrderTransactionServiceTest {
     void 본인_주문이_없으면_권한예외를_던진다() {
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("missing", 1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.cancel("missing", 1L))
-                .isInstanceOf(OrderNotOwnedException.class)
-                .hasFieldOrPropertyWithValue("orderKey", "missing")
-                .hasFieldOrPropertyWithValue("memberId", 1L);
+        assertThatThrownBy(() -> service.cancel("missing", 1L)).isInstanceOf(OrderNotOwnedException.class);
     }
 
     @Test
@@ -82,9 +79,7 @@ class CancelOrderTransactionServiceTest {
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L))
                 .thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> service.cancel("order-key", 1L))
-                .isInstanceOf(OrderNotPendingException.class)
-                .hasFieldOrPropertyWithValue("currentStatus", OrderState.CANCELED);
+        assertThatThrownBy(() -> service.cancel("order-key", 1L)).isInstanceOf(OrderNotPendingException.class);
 
         verifyNoInteractions(orderTerminationService);
     }

@@ -69,9 +69,7 @@ class BookingAvailabilityCheckerTest {
                 .thenReturn(true);
 
         assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
-                .isInstanceOf(PendingOrderAlreadyExistsException.class)
-                .hasFieldOrPropertyWithValue("memberId", 20L)
-                .hasFieldOrPropertyWithValue("performanceId", 1L);
+                .isInstanceOf(PendingOrderAlreadyExistsException.class);
 
         verifyNoInteractions(performanceSeatRepository);
     }
@@ -84,8 +82,7 @@ class BookingAvailabilityCheckerTest {
                 .thenReturn(List.of(availableSeat));
 
         assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
-                .isInstanceOf(SeatMismatchInPerformanceException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 1L);
+                .isInstanceOf(SeatMismatchInPerformanceException.class);
     }
 
     @Test
@@ -96,9 +93,7 @@ class BookingAvailabilityCheckerTest {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(1L, List.of(10L, 20L)))
                 .thenReturn(List.of(availableSeat, reservedSeat));
 
-        assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
-                .isInstanceOf(NoAvailableSeatException.class)
-                .hasFieldOrPropertyWithValue("performanceId", 1L);
+        assertThatThrownBy(() -> checker.check(20L, 1L, seatIds)).isInstanceOf(NoAvailableSeatException.class);
     }
 
     @Test

@@ -38,7 +38,7 @@ public class GetOrderStatusUseCase {
     public Output execute(final Input input) {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
-                .orElseThrow(() -> new OrderNotOwnedException(input.orderKey(), input.memberId()));
+                .orElseThrow(OrderNotOwnedException::new);
         final long remainingSeconds =
                 OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), LocalDateTime.now(clock));
 

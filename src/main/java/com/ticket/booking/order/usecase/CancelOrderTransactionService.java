@@ -37,9 +37,9 @@ public class CancelOrderTransactionService {
     private Order getPendingOwnedOrder(final String orderKey, final Long memberId) {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberIdForUpdate(orderKey, memberId)
-                .orElseThrow(() -> new OrderNotOwnedException(orderKey, memberId));
+                .orElseThrow(OrderNotOwnedException::new);
         if (order.getStatus() != OrderState.PENDING) {
-            throw new OrderNotPendingException(order.getStatus());
+            throw new OrderNotPendingException();
         }
         return order;
     }

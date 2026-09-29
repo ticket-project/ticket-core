@@ -72,13 +72,13 @@ public class SelectSeatUseCase {
     private Long requireSelectableSeat(final Long performanceId, final Long seatId) {
         final PerformanceSeat seat = performanceSeatRepository
                 .findSeatState(performanceId, seatId)
-                .orElseThrow(() -> new SeatMismatchInPerformanceException(performanceId));
+                .orElseThrow(SeatMismatchInPerformanceException::new);
 
         if (seat.getState() != PerformanceSeatState.AVAILABLE) {
-            throw new NoAvailableSeatException(performanceId);
+            throw new NoAvailableSeatException();
         }
         if (holdManager.isHeld(performanceId, seatId)) {
-            throw new SeatAlreadyHeldException(performanceId, seatId);
+            throw new SeatAlreadyHeldException();
         }
         return seat.getId();
     }

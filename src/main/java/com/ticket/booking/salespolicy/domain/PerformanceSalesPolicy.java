@@ -67,17 +67,17 @@ public class PerformanceSalesPolicy extends AuditedEntity {
     public void ensureAcceptingOrders(final LocalDateTime now) {
         final OrderAcceptanceStatus status = acceptanceStatus(now);
         if (status == OrderAcceptanceStatus.BEFORE_OPEN) {
-            throw new BookingNotOpenYetException(performanceId);
+            throw new BookingNotOpenYetException();
         }
         if (status == OrderAcceptanceStatus.CLOSED) {
-            throw new PerformanceIsPastException(performanceId);
+            throw new PerformanceIsPastException();
         }
     }
 
     /** 한도가 없는 회차는 좌석 수를 제한하지 않는다. 옛 {@code BookingPolicyGuard.ensureWithinHoldLimit}와 같은 오류(E6001)를 그대로 던진다. */
     public void ensureWithinHoldLimit(final long requestedSeatCount) {
         if (holdPolicy.exceeds(requestedSeatCount)) {
-            throw new HoldLimitExceededException(requestedSeatCount, holdPolicy.maxSeatCount());
+            throw new HoldLimitExceededException();
         }
     }
 
