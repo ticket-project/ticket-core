@@ -5,6 +5,7 @@ import java.util.Locale;
 import jakarta.annotation.PostConstruct;
 
 import org.hibernate.engine.jdbc.internal.FormatStyle;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
 import com.p6spy.engine.logging.Category;
@@ -12,6 +13,7 @@ import com.p6spy.engine.spy.P6SpyOptions;
 import com.p6spy.engine.spy.appender.MessageFormattingStrategy;
 
 @Configuration
+@ConditionalOnProperty(prefix = "decorator.datasource", name = "enabled", havingValue = "true")
 public class P6SpyConfig implements MessageFormattingStrategy {
     @PostConstruct
     public void setLogMessageFormat() {
