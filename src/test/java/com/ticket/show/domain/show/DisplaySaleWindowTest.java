@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@link DisplaySaleWindow#statusAt}이 {@link SaleDisplayStatus} 판정의 유일한 원본이다(TD-12 해소). {@code ShowQuerydslRepository}의
- * SQL 조건이 같은 결론을 내는지는 {@code ShowQuerydslRepositoryTest}가 실제 조회 결과로 고정한다.
+ * {@link DisplaySaleWindow#statusAt}이 {@link SaleDisplayStatus} 판정의 유일한 원본이다. {@code ShowQuerydslRepository}의 SQL 조건이
+ * 같은 결론을 내는지는 {@code ShowQuerydslRepositoryTest}가 실제 조회 결과로 고정한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class DisplaySaleWindowTest {

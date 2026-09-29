@@ -54,7 +54,7 @@ import lombok.RequiredArgsConstructor;
  * <p>지역 조건은 {@code venueIds}로 이미 해석돼 들어온다(use case가 {@code VenueLookupApi}로 해석한다) — {@code null}과 빈 집합의 차이는
  * {@link #venueIdIn}에 적었다.
  *
- * <p>정렬 정의·마감 판정 시각·커서 비교 규칙은 이 클래스 안에 한 벌만 둔다. 정렬이 마감 여부를 따로 판단하면 필터 결과와 정렬 결과가 어긋난다(TD-12).
+ * <p>정렬 정의·마감 판정 시각·커서 비교 규칙은 이 클래스 안에 한 벌만 둔다. 정렬이 마감 여부를 따로 판단하면 필터 결과와 정렬 결과가 어긋난다.
  */
 @Repository
 @RequiredArgsConstructor
@@ -269,7 +269,7 @@ public class ShowQuerydslRepository {
     //
     // SaleDisplayStatus 판정의 유일한 원본은 DisplaySaleWindow.statusAt(now)다. 여기서는 그 판정과 같은
     // 결론을 내는 Querydsl 조건만 만든다 -- null 창(시작·종료 중 하나라도 없음)은 CLOSED로 본다
-    // (TD-12: 예전에는 이 null 처리가 도메인 판정과 달라서 필터 결과가 어긋났다).
+    // (예전에는 이 null 처리가 도메인 판정과 달라서 필터 결과가 어긋났다).
 
     /**
      * 마감(={@code CLOSED})이면 1, 아니면 0. 최신순 정렬에서 마감된 공연을 뒤로 보내는 데 쓴다 (ORDER BY 이 값 ASC -> 마감되지 않은 공연이 먼저).
