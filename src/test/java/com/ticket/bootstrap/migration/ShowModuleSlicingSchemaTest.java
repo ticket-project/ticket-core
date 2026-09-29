@@ -6,9 +6,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +22,7 @@ import org.junit.jupiter.api.Test;
 class ShowModuleSlicingSchemaTest {
     @Test
     void drops_legacy_venue_fk_when_present() throws Exception {
-        final String url = databaseUrl("present");
+        final String url = ModulithFlywayTestSupport.h2Url("show-module-slicing-schema-present");
         createSchemaWithLegacyVenueFk(url);
 
         ModulithFlywayTestSupport.migrate(url, List.of("show"));
@@ -33,20 +31,22 @@ class ShowModuleSlicingSchemaTest {
             assertThat(ModulithFlywayTestSupport.tableExists(connection, "SHOWS"))
                     .isTrue();
             assertThat(columnExists(connection, "SHOWS", "VENUE_ID")).isTrue();
-            assertThat(importedKeyTables(connection, "SHOWS")).isEmpty();
+            assertThat(ModulithFlywayTestSupport.foreignKeyNames(connection, "SHOWS"))
+                    .isEmpty();
         }
     }
 
     @Test
     void no_op_when_legacy_venue_fk_already_absent() throws Exception {
-        final String url = databaseUrl("absent");
+        final String url = ModulithFlywayTestSupport.h2Url("show-module-slicing-schema-absent");
         createSchemaWithoutLegacyVenueFk(url);
         // FK가 전혀 없어도 예외 없이 끝나야 한다.
         ModulithFlywayTestSupport.migrate(url, List.of("show"));
 
         try (Connection connection = ModulithFlywayTestSupport.connect(url)) {
             assertThat(columnExists(connection, "SHOWS", "VENUE_ID")).isTrue();
-            assertThat(importedKeyTables(connection, "SHOWS")).isEmpty();
+            assertThat(ModulithFlywayTestSupport.foreignKeyNames(connection, "SHOWS"))
+                    .isEmpty();
         }
     }
 
@@ -87,21 +87,5 @@ class ShowModuleSlicingSchemaTest {
         try (ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, columnName)) {
             return columns.next();
         }
-    }
-
-    private Set<String> importedKeyTables(final Connection connection, final String tableName) throws SQLException {
-        final Set<String> names = new HashSet<>();
-        try (ResultSet keys = connection.getMetaData().getImportedKeys(null, null, tableName)) {
-            while (keys.next()) {
-                names.add(keys.getString("FK_NAME"));
-            }
-        }
-        return names;
-    }
-
-    private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:show-module-slicing-schema-"
-                + name
-                + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     }
 }

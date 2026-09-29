@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class BookingPerformanceSalesPolicyMigrationTest {
     @Test
     void 둘_다_구성된_회차와_대기열_정책_없는_회차를_손실_없이_backfill하고_구_schema를_제거한다() throws Exception {
-        final String url = databaseUrl("happy-path");
+        final String url = ModulithFlywayTestSupport.h2Url("booking-performance-sales-policy-migration-happy-path");
         createLegacyBaselineSchema(url);
         ModulithFlywayTestSupport.migrateRootOnly(url);
 
@@ -88,7 +88,7 @@ class BookingPerformanceSalesPolicyMigrationTest {
 
     @Test
     void 접수_기간이_모두_null인_회차는_정책_row를_만들지_않는다() throws Exception {
-        final String url = databaseUrl("both-null-skip");
+        final String url = ModulithFlywayTestSupport.h2Url("booking-performance-sales-policy-migration-both-null-skip");
         createLegacyBaselineSchema(url);
         ModulithFlywayTestSupport.migrateRootOnly(url);
 
@@ -112,7 +112,7 @@ class BookingPerformanceSalesPolicyMigrationTest {
 
     @Test
     void 접수_시작만_있고_마감이_null이면_migration이_실패한다() throws Exception {
-        final String url = databaseUrl("one-null-fail");
+        final String url = ModulithFlywayTestSupport.h2Url("booking-performance-sales-policy-migration-one-null-fail");
         createLegacyBaselineSchema(url);
         ModulithFlywayTestSupport.migrateRootOnly(url);
 
@@ -130,7 +130,8 @@ class BookingPerformanceSalesPolicyMigrationTest {
 
     @Test
     void 접수_시작이_마감보다_늦으면_migration이_실패한다() throws Exception {
-        final String url = databaseUrl("invalid-window-fail");
+        final String url =
+                ModulithFlywayTestSupport.h2Url("booking-performance-sales-policy-migration-invalid-window-fail");
         createLegacyBaselineSchema(url);
         ModulithFlywayTestSupport.migrateRootOnly(url);
 
@@ -148,7 +149,8 @@ class BookingPerformanceSalesPolicyMigrationTest {
 
     @Test
     void hold_time이_null이면_600초_기본값을_적용한다() throws Exception {
-        final String url = databaseUrl("null-hold-time-default");
+        final String url =
+                ModulithFlywayTestSupport.h2Url("booking-performance-sales-policy-migration-null-hold-time-default");
         createLegacyBaselineSchema(url);
         ModulithFlywayTestSupport.migrateRootOnly(url);
 
@@ -178,7 +180,8 @@ class BookingPerformanceSalesPolicyMigrationTest {
      */
     @Test
     void 정책_컬럼이_없는_최소_baseline에서는_예외_없이_no_op이다() throws Exception {
-        final String url = databaseUrl("minimal-baseline-noop");
+        final String url =
+                ModulithFlywayTestSupport.h2Url("booking-performance-sales-policy-migration-minimal-baseline-noop");
         try (Connection connection = ModulithFlywayTestSupport.connect(url);
                 Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE performances (id BIGINT PRIMARY KEY)");
@@ -254,11 +257,5 @@ class BookingPerformanceSalesPolicyMigrationTest {
                     + ")");
             statement.execute("CREATE TABLE order_seats (order_id BIGINT NOT NULL)");
         }
-    }
-
-    private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:booking-performance-sales-policy-migration-"
-                + name
-                + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     }
 }

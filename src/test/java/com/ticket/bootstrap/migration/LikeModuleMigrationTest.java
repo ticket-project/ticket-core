@@ -30,13 +30,14 @@ import org.junit.jupiter.api.Test;
 class LikeModuleMigrationTest {
     @Test
     void drops_legacy_member_and_show_fk_when_present() throws Exception {
-        final String url = databaseUrl("present");
+        final String url = ModulithFlywayTestSupport.h2Url("like-module-migration-present");
         createSchemaWithLegacyFks(url);
 
         ModulithFlywayTestSupport.migrate(url, List.of("like"));
 
         try (Connection connection = ModulithFlywayTestSupport.connect(url)) {
-            assertThat(importedKeyTables(connection, "LIKES")).isEmpty();
+            assertThat(ModulithFlywayTestSupport.foreignKeyNames(connection, "LIKES"))
+                    .isEmpty();
             assertThat(schemaHistoryTableNames(connection))
                     .anyMatch(name -> name.equalsIgnoreCase("flyway_schema_history_like"));
         }
@@ -44,7 +45,7 @@ class LikeModuleMigrationTest {
 
     @Test
     void no_op_when_legacy_fk_already_absent() throws Exception {
-        final String url = databaseUrl("absent");
+        final String url = ModulithFlywayTestSupport.h2Url("like-module-migration-absent");
         createSchemaWithoutLegacyFks(url);
         // FK가 전혀 없어도 예외 없이 끝나야 한다.
         ModulithFlywayTestSupport.migrate(url, List.of("like"));
@@ -52,13 +53,14 @@ class LikeModuleMigrationTest {
         try (Connection connection = ModulithFlywayTestSupport.connect(url)) {
             assertThat(ModulithFlywayTestSupport.tableExists(connection, "LIKES"))
                     .isTrue();
-            assertThat(importedKeyTables(connection, "LIKES")).isEmpty();
+            assertThat(ModulithFlywayTestSupport.foreignKeyNames(connection, "LIKES"))
+                    .isEmpty();
         }
     }
 
     @Test
     void generalizes_show_likes_to_likes_when_legacy_table_present() throws Exception {
-        final String url = databaseUrl("generalize");
+        final String url = ModulithFlywayTestSupport.h2Url("like-module-migration-generalize");
         createLegacyShowLikesSchema(url);
 
         ModulithFlywayTestSupport.migrate(url, List.of("like"));
@@ -77,7 +79,7 @@ class LikeModuleMigrationTest {
 
     @Test
     void no_op_when_likes_table_already_generalized() throws Exception {
-        final String url = databaseUrl("already-generalized");
+        final String url = ModulithFlywayTestSupport.h2Url("like-module-migration-already-generalized");
         createGeneralizedLikesSchema(url);
         // Hibernate ddl-auto=create가 이미 LIKES를 만들어 둔 환경을 흉내낸다 — no-op이어야 한다.
         ModulithFlywayTestSupport.migrate(url, List.of("like"));
@@ -164,19 +166,5 @@ class LikeModuleMigrationTest {
             }
         }
         return names;
-    }
-
-    private Set<String> importedKeyTables(final Connection connection, final String tableName) throws SQLException {
-        final Set<String> names = new HashSet<>();
-        try (ResultSet keys = connection.getMetaData().getImportedKeys(null, null, tableName)) {
-            while (keys.next()) {
-                names.add(keys.getString("FK_NAME"));
-            }
-        }
-        return names;
-    }
-
-    private String databaseUrl(final String name) {
-        return "jdbc:h2:mem:like-module-migration-" + name + ";MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     }
 }
