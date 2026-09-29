@@ -63,7 +63,7 @@ body:
     attributes:
       label: 관련 API / 클래스 / 잡 이름
       description: 알고 있다면 가장 먼저 의심되는 진입점을 적어 주세요.
-      placeholder: POST /api/v1/performances/{performanceId}/holds, StartBookingUseCase, RedisKeyExpirationListener
+      placeholder: POST /api/v1/orders, StartBookingUseCase, RedisKeyExpirationListener
     validations:
       required: false
 
