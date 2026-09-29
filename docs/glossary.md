@@ -69,7 +69,7 @@ _Avoid_: 예약, 구매, Reservation, Purchase, Booking
 Order에 포함된 한 좌석이다. 정확히 하나의 PerformanceSeat를 가리키지만, 하나의 PerformanceSeat는
 취소·만료된 주문도 이력으로 남기기 때문에 시간에 따라 여러 OrderSeat와 연결될 수 있다(`1:0..N`).
 주문 시점의 좌석·등급·가격 snapshot을 보존한다.
-_Avoid_: 결제 전 좌석을 Ticket이라 부르는 서술(주문 상세 응답의 `TicketInfo`는 OrderSeat 목록을 담는 응답 항목
+_Avoid_: 결제 전 좌석을 Ticket이라 부르는 서술(주문 상세 응답의 `TicketResponse`는 OrderSeat 목록을 담는 응답 항목
 이름일 뿐 Ticket과 다른 것이다)
 
 **Selection**:
