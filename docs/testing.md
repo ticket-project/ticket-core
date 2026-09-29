@@ -32,12 +32,12 @@
 | 변경 범위 | 실행 기준 |
 | --- | --- |
 | 특정 업무 코드 | `./gradlew test --tests 'com.ticket.<module>.*'`로 해당 모듈부터 |
-| 모듈·계층·Aggregate 경계 | `./gradlew test --tests 'com.ticket.ModularityTests' --tests 'com.ticket.ArchitectureRulesTest' --tests 'com.ticket.DomainIsolationTest' --tests 'com.ticket.AggregateAssociationTest'`와 관련 module test |
+| 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`(아래 [구조 테스트](#구조-테스트))와 관련 module test |
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
 | 주문·hold·이벤트 흐름 | 관련 단위·Scenario·`com.ticket.bootstrap.booking.*E2ETest`(Docker 필요) |
 | DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트와 [운영 전환 조건](operations.md#db-마이그레이션) |
 | seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
-| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck test seedTest bootJar verifySeedNotInBootJar`(CI 기준) |
+| 배포 산출물·push 전 전체 | `./gradlew clean spotlessCheck compileJava architectureTest test seedTest bootJar verifySeedNotInBootJar`(CI 기준) |
 | 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor 확인, `git diff --check` |
 
 `test`는 서비스 테스트만 돌리고 `seedTest`는 따로 실행한다(`check`와 CI는 둘 다 돌린다). `compileJava`는 NullAway를 함께 실행한다. 결과는 실제 명령, 통과·실패, 실행하지 않은 범위와 이유를 구분한다. Docker 부재 등 환경 실패를 코드 결함으로 단정하거나 단위 테스트 통과로 대체하지 않는다. 실패한 검증 상태를 완료로 보고하지 않는다.
@@ -96,8 +96,11 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 
 ## 구조 테스트
 
-모듈 경계와 의존 방향을 **실제로 강제하는** 테스트다. 구조를 건드렸다면 이것부터 돌린다
-(명령은 아래 [변경별 검증](#변경별-검증)을 본다).
+모듈 경계와 의존 방향을 **실제로 강제하는** 테스트다. 구조를 건드렸다면 이것부터 돌린다.
+DB·Redis·Docker 없이 도는 것에는 `@Tag("architecture")`(ArchUnit `@AnalyzeClasses` 클래스는
+`@ArchTag("architecture")`)를 붙이고, `./gradlew architectureTest`가 그 태그만 실행한다. CI도 전체
+`test` 전에 이것을 먼저 돌린다. 새 구조 테스트를 만들면 태그를 붙인다. 아래 표에서 `*ModuleTests`(Spring
+부트스트랩), `DocumentationTests`(문서 생성), `ServiceSourceSeparationTest`(`seedTest`)는 태그가 없다.
 
 | 테스트 | 고정하는 것 |
 | --- | --- |

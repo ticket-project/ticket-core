@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -33,6 +34,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
  * ID 참조로 바꾼다 — 판단 절차는 docs/architecture.md의 Aggregate Rules가 원본이다.
  */
 @SuppressWarnings("NonAsciiCharacters")
+@Tag("architecture")
 class AggregateAssociationTest {
     private static final JavaClasses MAIN_CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)

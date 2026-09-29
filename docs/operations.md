@@ -286,7 +286,7 @@ GitHub Actions CI(`ci.yml`)는 root project 하나만 있는 단일 Gradle build
 `verifySeedNotInBootJar`는 만들어진 jar에 시드 산출물이 섞이지 않았는지 확인한다.
 
 ```bash
-./gradlew clean spotlessCheck test seedTest bootJar verifySeedNotInBootJar
+./gradlew clean spotlessCheck compileJava architectureTest test seedTest bootJar verifySeedNotInBootJar
 ```
 
 `.github/workflows/deploy.yml`은 `master` push에서 위 CI(`ci.yml`)를 호출해 통과한 jar를 받아
@@ -301,8 +301,7 @@ Docker 이미지를 빌드하고 배포한다. `bootstrap/build/libs` 경로는 
 
 관련 파일:
 
-- `.github/workflows/ci.yml`(전체 테스트 + `bash scripts/check-docs.sh`)
-- `.github/workflows/architecture.yml`(PR에서 구조 검사만 빠르게 돌리는 별도 gate)
+- `.github/workflows/ci.yml`(구조 테스트를 먼저 돌린 뒤 전체 테스트 + `bash scripts/check-docs.sh`)
 - `.github/workflows/deploy.yml`
 - `Dockerfile`(`build/libs/*.jar`를 `app.jar`로 복사)
 

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -24,6 +25,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
  * 있다.
  */
 @SuppressWarnings("NonAsciiCharacters")
+@Tag("architecture")
 class ErrorCodeUniquenessTest {
     private static final JavaClasses MAIN_CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)

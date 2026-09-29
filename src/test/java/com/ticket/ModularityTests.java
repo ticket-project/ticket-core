@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModule;
 import org.springframework.modulith.core.ApplicationModules;
@@ -35,6 +36,7 @@ import org.springframework.modulith.core.ApplicationModules;
  * {@code seedLocal} 작업)으로 옮겼다. 그 source set 산출물은 {@code main}/{@code test} 어느 classpath에도 올라가지 않으므로 여기 분석 대상에 들어오지 않는다
  * — {@code com.ticket.seed} package가 다시 생기면 위 두 assertion이 곧바로 실패한다.
  */
+@Tag("architecture")
 class ModularityTests {
     /** 모든 테스트가 같은 분석 결과를 본다. */
     private static final ApplicationModules MODULES = ApplicationModules.of(TicketApplication.class);

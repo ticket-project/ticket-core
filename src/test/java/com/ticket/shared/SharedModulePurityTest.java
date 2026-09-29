@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTag;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
@@ -19,6 +20,7 @@ import com.tngtech.archunit.lang.ArchRule;
         packages = "com.ticket.shared",
         importOptions = {ImportOption.DoNotIncludeTests.class})
 @SuppressWarnings("NonAsciiCharacters")
+@ArchTag("architecture")
 class SharedModulePurityTest {
     @ArchTest
     static final ArchRule shared의_공개_계약에는_bean을_등록하지_않는다 = noClasses()
