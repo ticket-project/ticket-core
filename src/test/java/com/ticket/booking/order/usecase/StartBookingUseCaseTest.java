@@ -425,9 +425,7 @@ class StartBookingUseCaseTest {
                 PERFORMANCE_ID,
                 new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(maxCanHoldCount, HOLD_DURATION),
-                queueRequired
-                        ? new BookingEntryPolicy(QueueMode.FORCE_ON, null, null, null, null)
-                        : BookingEntryPolicy.none());
+                queueRequired ? new BookingEntryPolicy(QueueMode.FORCE_ON, null) : BookingEntryPolicy.none());
     }
 
     private PerformanceSaleSnapshot saleSnapshot() {
