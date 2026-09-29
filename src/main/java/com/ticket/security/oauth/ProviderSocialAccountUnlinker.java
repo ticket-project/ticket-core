@@ -8,11 +8,10 @@ import org.springframework.util.StringUtils;
 
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
-import com.ticket.shared.exception.InternalErrorException;
-import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.extern.slf4j.Slf4j;
 
+/** 연결 해제 실패는 탈퇴를 막지 않는다. 호출자가 결과를 쓰지 않으므로 실패는 여기서 한 번 로그로 남기고 끝낸다. */
 @Slf4j
 @Component
 public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
@@ -37,11 +36,13 @@ public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
 
     private void unlinkKakao(final String kakaoUserId) {
         if (!StringUtils.hasText(kakaoUserId)) {
-            throw new InvalidRequestException("카카오 사용자 ID가 비어 있습니다.");
+            log.warn("카카오 unlink를 건너뜁니다. 카카오 사용자 ID가 비어 있습니다.");
+            return;
         }
 
         if (!StringUtils.hasText(adminKey)) {
-            throw new InvalidRequestException("KAKAO_ADMIN_KEY 설정이 필요합니다.");
+            log.warn("카카오 unlink를 건너뜁니다. KAKAO_ADMIN_KEY 설정이 필요합니다.");
+            return;
         }
 
         final MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
@@ -51,8 +52,7 @@ public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
         try {
             kakaoUnlinkApiClient.unlink(KAKAO_ADMIN_AUTH_PREFIX + adminKey, formData);
         } catch (Exception e) {
-            log.error("카카오 unlink 호출 실패", e);
-            throw new InternalErrorException("카카오 unlink 호출에 실패했습니다.");
+            log.warn("카카오 unlink 호출에 실패했습니다.", e);
         }
     }
 }
