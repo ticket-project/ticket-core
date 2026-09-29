@@ -193,6 +193,12 @@ tasks.named('compileJava') {
     }
 }
 
+// 배포 산출물은 bootJar 하나다. plain jar(-plain.jar)가 build/libs에 같이 생기면 Dockerfile의
+// `COPY build/libs/*.jar app.jar`가 파일 둘을 만나 실패한다.
+tasks.named('jar') {
+    enabled = false
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }

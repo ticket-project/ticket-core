@@ -303,7 +303,8 @@ Docker 이미지를 빌드하고 배포한다. `bootstrap/build/libs` 경로는 
 
 - `.github/workflows/ci.yml`(구조 테스트를 먼저 돌린 뒤 전체 테스트 + `bash scripts/check-docs.sh`)
 - `.github/workflows/deploy.yml`
-- `Dockerfile`(`build/libs/*.jar`를 `app.jar`로 복사)
+- `Dockerfile`(`build/libs/*.jar`를 `app.jar`로 복사. plain `jar` task는 꺼서 bootJar 하나만 남는다)
+- `.dockerignore`(build context에 bootJar만 보낸다)
 
 ## Core 용량 관측
 
