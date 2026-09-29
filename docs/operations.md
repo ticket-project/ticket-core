@@ -22,8 +22,9 @@
 
 - H2 file DB
 - Redis
-- `ddl-auto: create`
-- Flyway: disabled
+- `ddl-auto: validate`
+- Flyway: enabled. 스키마는 운영과 같은 migration으로 만든다(빈 DB면 `__root` V1부터)
+- 서버를 재시작해도 데이터가 남는다. 처음부터 다시 만들려면 서버를 끄고 `~/ticket-local*.db` 파일을 지운다
 - 초기 데이터: **기동 시 자동으로 넣지 않는다.** 기동이 끝난 뒤 `.\gradlew.bat seedLocal`을
   따로 실행한다 — [seed/README.md](../seed/README.md)
 
@@ -39,7 +40,7 @@
 - `ddl-auto: validate`
 - Flyway: enabled, module-aware(`spring.modulith.runtime.flyway-enabled: true`)
 - 초기 데이터: 넣지 않는다(`seedLocal`은 local 프로파일 설정을 읽는 로컬 전용 명령이다)
-- local 프로파일이 생성한 H2 DB를 대상으로 Flyway baseline/migration을 검증
+- local과 설정이 사실상 같다. 남아 있는 이유는 옛 local DB(ddl-auto로 만든 스키마)를 baseline하던 용도다
 
 관련 설정:
 
@@ -258,11 +259,16 @@ SELECT id FROM SHOWS WHERE venue_id NOT IN (SELECT id FROM VENUES);
 결과가 있으면 애플리케이션 오류가 아니라 데이터 정합성 문제다 — 해당 Show의 `venue_id`를 바로잡거나
 Venue 데이터를 복구한다.
 
-local 프로파일은 H2 file DB(`~/ticket-local`)의 스키마를 Hibernate `ddl-auto:create`로 매
-기동마다 다시 만든다. 초기 데이터는 기동에 포함되지 않으므로 기동 후 `seedLocal`을 실행한다
-([seed/README.md](../seed/README.md)). dev 프로파일은 같은 H2 file DB를 사용하되 Hibernate 자동
-DDL을 끄고 Flyway만 활성화한다. 이력 테이블이 없으면 운영과 같이 Spring Modulith가 version `0`
-baseline을 만들고 `V1__...sql`부터 적용한다. 빈 DB면 `__root` V1이 Flyway 도입 전 스키마를 만든다.
+local·dev 프로파일은 H2 file DB(`~/ticket-local`)의 스키마를 Flyway로 만들고 Hibernate `validate`로
+확인한다. 빈 DB면 `__root` V1부터 모든 migration을 적용하고, 이미 있으면 새 파일만 적용한다. 초기
+데이터는 기동에 포함되지 않으므로 처음 한 번 `seedLocal`을 실행한다([seed/README.md](../seed/README.md)).
+
+H2의 Oracle 호환 모드는 `DATE`를 `TIMESTAMP(0)`으로 저장한다. 기본 `H2Dialect`는 이것을 `LocalDate`
+매핑과 다르다고 판정하므로 local·dev는 `H2OracleModeDialect`로 두 타입을 같게 본다.
+
+`ddl-auto: create` 시절에 만든 로컬 H2 파일에는 Flyway 이력이 없다. 그 파일로 기동하면 Modulith가
+version `0` baseline을 만든 뒤 V1이 이미 있는 테이블과 부딪혀 실패한다. 서버를 끄고
+`~/ticket-local*.db` 파일을 지운 뒤 다시 기동하고 `seedLocal`을 실행한다.
 
 ## 배포 workflow
 

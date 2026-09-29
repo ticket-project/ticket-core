@@ -11,6 +11,7 @@ spring:
       path: /h2-console
 
   jpa:
+    database-platform: com.ticket.shared.config.H2OracleModeDialect
     hibernate:
       ddl-auto: validate
   flyway:

@@ -47,15 +47,18 @@ class FlywayConfigurationTest {
     }
 
     @Test
-    void local_profile_bootstraps_h2_database_with_hibernate_ddl() throws Exception {
+    void local_profile_builds_h2_schema_with_the_same_flyway_migrations_as_prod() throws Exception {
         final PropertySource<?> local = loadYaml("application-local.yml");
 
         assertThat(local.getProperty("spring.datasource.url"))
                 .isEqualTo("jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1");
-        assertThat(local.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("create");
-        assertThat(local.getProperty("spring.jpa.defer-datasource-initialization"))
-                .isEqualTo(true);
-        assertThat(local.getProperty("spring.flyway.enabled")).isEqualTo(false);
+        assertThat(local.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
+        assertThat(local.getProperty("spring.jpa.database-platform"))
+                .isEqualTo("com.ticket.shared.config.H2OracleModeDialect");
+        assertThat(local.getProperty("spring.flyway.enabled")).isEqualTo(true);
+        assertThat(local.getProperty("spring.flyway.locations"))
+                .isEqualTo("classpath:db/migration,classpath:db/migration-vendor/h2");
+        assertNoIgnoredBaselineSettings(local);
     }
 
     @Test

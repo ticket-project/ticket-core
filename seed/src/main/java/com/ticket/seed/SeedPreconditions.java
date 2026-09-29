@@ -18,8 +18,8 @@ import javax.sql.DataSource;
  *
  * <p>준비되지 않은 DB에서 적재를 시작하면 실패 원인이 "테이블 없음" 수백 개로 흩어진다. 여기서 먼저 막고, 무엇이 없는지와 무엇을 해야 하는지를 한 번에 알려준다.
  *
- * <p><b>스키마를 만들지 않는다.</b> 테이블 생성·삭제·초기화는 이 프로그램의 범위가 아니다. 로컬은 애플리케이션이 만들고(local 프로파일의 {@code ddl-auto: create}), 운영은
- * Flyway migration이 이미 만들어 둔 것을 전제로 한다.
+ * <p><b>스키마를 만들지 않는다.</b> 테이블 생성·삭제·초기화는 이 프로그램의 범위가 아니다. 로컬은 local 프로파일 기동이, 운영은 배포가 같은 Flyway migration으로 이미 만들어 둔 것을
+ * 전제로 한다.
  *
  * <p><b>확인 범위는 실제로 접속한 스키마다.</b> Oracle에서 {@link DatabaseMetaData#getTables}는 접속 계정이 볼 수 있는 다른 스키마의 동명 테이블까지 돌려준다 — 그것을
  * "준비됐다"고 읽으면 INSERT는 엉뚱한 곳을 보거나 권한 오류로 실패한다. 그래서 Oracle에서는 {@code USER_TABLES} / {@code USER_TAB_COLUMNS}로 접속 계정 소유

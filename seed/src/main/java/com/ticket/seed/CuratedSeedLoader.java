@@ -51,7 +51,7 @@ final class CuratedSeedLoader implements SeedTask {
 
                     %s
                     필요한 조치
-                      1. local 프로파일(ddl-auto: create)로 서버를 재기동해 스키마를 다시 만든 뒤
+                      1. 서버를 끄고 ~/ticket-local*.db 파일을 지운 뒤 local 프로파일로 재기동해 스키마를 다시 만들고
                       2. seedLocal을 다시 실행하세요.
                     """.formatted(inventory.describe()));
             case LOAD -> {
