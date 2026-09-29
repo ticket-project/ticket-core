@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.like.api.LikeQueryApi;
 import com.ticket.like.api.LikeSnapshot;
 import com.ticket.shared.api.CursorPage;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.venue.api.VenueLookupApi;
@@ -37,7 +36,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetMyShowLikesUseCase {
-    private static final int MAX_SIZE = 100;
     private final LikeQueryApi likeQueryApi;
     private final ShowRepository showRepository;
     private final VenueLookupApi venueLookupApi;
@@ -46,9 +44,7 @@ public class GetMyShowLikesUseCase {
     public record Input(Long memberId, @Nullable Long cursorLikeId, int size) {
         public Input {
             memberId = requirePositiveId(memberId, "memberId");
-            if (size <= 0 || size > MAX_SIZE) {
-                throw new InvalidRequestException("size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
-            }
+            ShowPageSize.require(size);
         }
     }
 
