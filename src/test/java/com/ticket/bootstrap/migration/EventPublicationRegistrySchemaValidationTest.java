@@ -8,16 +8,11 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.Map;
 
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.tool.schema.spi.ContributableMatcher;
-import org.hibernate.tool.schema.spi.ExceptionHandler;
-import org.hibernate.tool.schema.spi.ExecutionOptions;
-import org.hibernate.tool.schema.spi.SchemaManagementTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.events.jpa.archiving.ArchivedJpaEventPublication;
 import org.springframework.modulith.events.jpa.updating.DefaultJpaEventPublication;
@@ -40,47 +35,14 @@ class EventPublicationRegistrySchemaValidationTest {
                 url,
                 Path.of("src/main/resources/db/migration-vendor/h2/__root/V8__create_event_publication_registry.sql"));
 
-        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
-                .applySetting("hibernate.connection.url", url)
-                .applySetting("hibernate.connection.driver_class", "org.h2.Driver")
-                .applySetting("hibernate.connection.username", "sa")
-                .applySetting("hibernate.connection.password", "")
-                .applySetting(
-                        "hibernate.implicit_naming_strategy",
-                        "org.springframework.boot.hibernate.SpringImplicitNamingStrategy")
-                .applySetting(
-                        "hibernate.physical_naming_strategy",
-                        "org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl")
-                .build();
+        final StandardServiceRegistry registry = ModulithFlywayTestSupport.hibernateRegistry(url);
         try {
             final Metadata metadata = new MetadataSources(registry)
                     .addAnnotatedClass(DefaultJpaEventPublication.class)
                     .addAnnotatedClass(ArchivedJpaEventPublication.class)
                     .buildMetadata();
 
-            final SchemaManagementTool tool = registry.getService(SchemaManagementTool.class);
-            final Map<String, Object> configValues = Map.of();
-
-            final ExecutionOptions options = new ExecutionOptions() {
-                @Override
-                public Map<String, Object> getConfigurationValues() {
-                    return configValues;
-                }
-
-                @Override
-                public boolean shouldManageNamespaces() {
-                    return true;
-                }
-
-                @Override
-                public ExceptionHandler getExceptionHandler() {
-                    return exception -> {
-                        throw exception;
-                    };
-                }
-            };
-            // 예외 없이 반환하면 검증 통과다.
-            tool.getSchemaValidator(configValues).doValidation(metadata, options, ContributableMatcher.ALL);
+            ModulithFlywayTestSupport.validateSchema(registry, metadata);
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);
         }

@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -17,10 +16,6 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.exception.ConstraintViolationException;
-import org.hibernate.tool.schema.spi.ContributableMatcher;
-import org.hibernate.tool.schema.spi.ExceptionHandler;
-import org.hibernate.tool.schema.spi.ExecutionOptions;
-import org.hibernate.tool.schema.spi.SchemaManagementTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -47,18 +42,7 @@ class VenueModuleSlicingSchemaTest {
         // venue뿐이다.
         ModulithFlywayTestSupport.migrate(URL, List.of("venue"));
 
-        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
-                .applySetting("hibernate.connection.url", URL)
-                .applySetting("hibernate.connection.driver_class", "org.h2.Driver")
-                .applySetting("hibernate.connection.username", "sa")
-                .applySetting("hibernate.connection.password", "")
-                .applySetting(
-                        "hibernate.implicit_naming_strategy",
-                        "org.springframework.boot.hibernate.SpringImplicitNamingStrategy")
-                .applySetting(
-                        "hibernate.physical_naming_strategy",
-                        "org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl")
-                .build();
+        final StandardServiceRegistry registry = ModulithFlywayTestSupport.hibernateRegistry(URL);
         try {
             final Metadata metadata = new MetadataSources(registry)
                     .addAnnotatedClass(Venue.class)
@@ -66,38 +50,12 @@ class VenueModuleSlicingSchemaTest {
                     .buildMetadata();
             // (1) __root + show migration만으로 만든 schema가 Seat/Venue 매핑과 실제로 맞는지 —
             // 운영이 쓰는 ddl-auto=validate와 같은 검증이다.
-            validateSchema(registry, metadata);
+            ModulithFlywayTestSupport.validateSchema(registry, metadata);
             // (2) 그 schema에 대해 실제 CRUD와 unique 제약이 동작하는지.
             assertCrudAndUniqueConstraintWork(registry, metadata);
         } finally {
             StandardServiceRegistryBuilder.destroy(registry);
         }
-    }
-
-    private void validateSchema(final StandardServiceRegistry registry, final Metadata metadata) {
-        final SchemaManagementTool tool = registry.getService(SchemaManagementTool.class);
-        final Map<String, Object> configValues = Map.of();
-
-        final ExecutionOptions options = new ExecutionOptions() {
-            @Override
-            public Map<String, Object> getConfigurationValues() {
-                return configValues;
-            }
-
-            @Override
-            public boolean shouldManageNamespaces() {
-                return true;
-            }
-
-            @Override
-            public ExceptionHandler getExceptionHandler() {
-                return exception -> {
-                    throw exception;
-                };
-            }
-        };
-        // 예외 없이 반환하면 검증 통과다.
-        tool.getSchemaValidator(configValues).doValidation(metadata, options, ContributableMatcher.ALL);
     }
 
     private void assertCrudAndUniqueConstraintWork(final StandardServiceRegistry registry, final Metadata metadata) {
