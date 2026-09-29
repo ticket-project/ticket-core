@@ -96,26 +96,14 @@ dependencies {
     runtimeOnly libs.jjwt.jackson
     runtimeOnly 'org.flywaydb:flyway-database-oracle'
     // prod는 Oracle, local/dev는 H2 file DB를 쓴다.
-    runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
+    runtimeOnly libs.bundles.oracle.jdbc
     runtimeOnly 'com.h2database:h2'
-    runtimeOnly libs.oracle.security.osdt.cert
-    runtimeOnly libs.oracle.security.oraclepki
-    runtimeOnly libs.oracle.security.osdt.core
 
     // Data / Persistence
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation libs.p6spy.spring.boot.starter
     implementation libs.jjwt.api
     implementation variantOf(libs.querydsl.jpa) { classifier('jakarta') }
-    implementation 'jakarta.persistence:jakarta.persistence-api'
-    implementation 'org.springframework.data:spring-data-jpa'
-
-    // 유스케이스 계층에 필요한 최소 Spring
-    implementation 'org.springframework:spring-context'
-    implementation 'org.springframework:spring-tx'
-    implementation 'org.springframework:spring-core'
-    implementation 'org.springframework:spring-beans'
-    implementation 'org.slf4j:slf4j-api'
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -149,8 +137,6 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     // Oracle 방언 migration을 실제 Oracle(gvenzl/oracle-free 컨테이너)에서 검증한다.
     testImplementation 'org.testcontainers:testcontainers-oracle-free'
-    // 제약 위반 원인 예외를 실제 타입으로 만들어 테스트한다. 프로덕션은 쓰지 않는다.
-    testImplementation 'org.hibernate.orm:hibernate-core'
     // registry(EVENT_PUBLICATION/EVENT_PUBLICATION_ARCHIVE) DDL을 실제 엔티티 매핑으로 검증한다.
     testCompileOnly 'org.springframework.modulith:spring-modulith-events-jpa'
     // module-aware Flyway 분기(SpringModulithFlywayMigrationStrategy)를 실제 운영과 같은 class로
@@ -174,10 +160,7 @@ dependencies {
     seedMainRuntimeOnly 'com.h2database:h2'
     // seedProd는 운영 Oracle에 직접 붙는다. 서버(runtimeOnly)가 쓰는 것과 같은 좌표여야 Wallet 기반
     // jdbc:oracle:thin:@<tns_alias> URL과 TNS_ADMIN 설정을 서버와 동일하게 쓸 수 있다.
-    seedMainRuntimeOnly 'com.oracle.database.jdbc:ojdbc8'
-    seedMainRuntimeOnly libs.oracle.security.osdt.cert
-    seedMainRuntimeOnly libs.oracle.security.oraclepki
-    seedMainRuntimeOnly libs.oracle.security.osdt.core
+    seedMainRuntimeOnly libs.bundles.oracle.jdbc
 
     // 시드 테스트는 시드 코드와, 실제 앱 entity 매핑으로 스키마를 만들기 위한 서비스 classpath를
     // 함께 본다. 반대 방향(main/test가 시드를 보는 것)은 만들지 않는다.
@@ -188,7 +171,6 @@ dependencies {
     // gvenzl/oracle-free 컨테이너를 시드 테스트에서도 쓴다(Docker 없으면 자동으로 건너뛴다).
     seedTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     seedTestImplementation 'org.testcontainers:testcontainers-oracle-free'
-    seedTestRuntimeOnly 'com.oracle.database.jdbc:ojdbc8'
     seedTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
