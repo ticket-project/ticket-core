@@ -22,8 +22,8 @@ import com.ticket.seed.support.AppSchema;
  * {@code seedLocal}의 <b>실제 실행 경로</b>를 임시 H2 파일 DB에서 통째로 돌린다. ({@link SeedLocalMain#execute()}가 그 진입점이며, 여기서 호출하는 것이 운영
  * 명령과 같은 코드다.)
  *
- * <p>스키마는 손으로 쓴 DDL이 아니라 운영과 같은 Flyway migration으로 만든다({@link AppSchema}) — 그래서 유니크 제약·인덱스를 포함한 진짜 스키마 아래서 적재가 성립하는지를
- * 본다.
+ * <p>스키마는 손으로 쓴 DDL이 아니라 실제 앱 entity 매핑으로 만든다({@link AppSchema}) — 그래서 entity의 NOT NULL 제약 아래서 적재가 성립하는지를 본다.
+ * migration에만 있는 유니크 제약은 이 스키마에 없다.
  *
  * <p>공용 시드 전체 적재는 100만 행에 가까워 한 번만 돌린다. 그래서 이 클래스는 하나의 DB를 공유하며 순서를 고정한다: 빈 스키마 적재 → 관계 검증 → 재실행 멱등성 → 회원 인증 호환성 →
  * (마지막) 부분 적재 감지. 마지막 테스트는 일부러 데이터를 지우므로 반드시 끝에 둔다.
@@ -32,9 +32,9 @@ import com.ticket.seed.support.AppSchema;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeedLocalTest {
-    private static final long FIXTURE_ID_BASE = 910000000L;
+    private static final long FIXTURE_ID_BASE = LoadTestFixtureSeeder.ID_BASE;
     private static final int FIXTURE_PERFORMANCE_COUNT = 8;
-    private static final int FIXTURE_SEAT_COUNT = 2000;
+    private static final int FIXTURE_SEAT_COUNT = LoadTestFixtureSeeder.SEAT_COUNT;
     private static final int MEMBER_COUNT = 25;
 
     @TempDir
