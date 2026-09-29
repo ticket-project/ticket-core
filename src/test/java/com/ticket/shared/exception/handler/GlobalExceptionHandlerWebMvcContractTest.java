@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.ticket.TicketApplication;
 import com.ticket.security.http.ApiSecurityConfig;
-import com.ticket.security.http.RestAccessDeniedHandler;
 import com.ticket.security.http.RestAuthenticationEntryPoint;
 import com.ticket.security.token.AccessTokenReader;
 import com.ticket.show.endpoint.ShowController;
@@ -51,9 +50,6 @@ class GlobalExceptionHandlerWebMvcContractTest {
 
     @MockitoBean
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-
-    @MockitoBean
-    private RestAccessDeniedHandler restAccessDeniedHandler;
 
     @MockitoBean
     private GetShowsUseCase getShowsUseCase;
