@@ -125,7 +125,6 @@ security:
     issuer: ${ADMISSION_TOKEN_ISSUER:ticket-queue}
     audience: ${ADMISSION_TOKEN_AUDIENCE:ticket-api}
     secret-key: ${ADMISSION_TOKEN_SECRET_KEY:0123456789abcdef0123456789abcdef}
-    expiration-seconds: ${ADMISSION_TOKEN_EXPIRATION_SECONDS:300}
 
 # background worker(스케줄러) 실행 여부.
 # false면 같은 실행 모듈이 API만 제공한다.
