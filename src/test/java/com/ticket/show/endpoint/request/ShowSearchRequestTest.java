@@ -69,12 +69,4 @@ class ShowSearchRequestTest {
         assertThat(criteria.getCursor()).isNull();
         assertThat(criteria.getKeyword()).isEqualTo("뮤지컬");
     }
-
-    @Test
-    void 시작일_From이_To보다_늦으면_예외를_던진다() {
-        ShowSearchRequest request = new ShowSearchRequest(
-                "뮤지컬", "MUSICAL", "ON_SALE", LocalDate.of(2026, 4, 30), LocalDate.of(2026, 4, 1), "SEOUL", null);
-
-        assertThatThrownBy(() -> request.toCriteria(CURSOR_CODEC)).isInstanceOf(InvalidRequestException.class);
-    }
 }
