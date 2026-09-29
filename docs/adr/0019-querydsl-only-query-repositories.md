@@ -2,7 +2,7 @@
 
 ## 상태
 
-채택됨 (2026-09-21)
+대체됨 → architecture.md (현재 구조)
 
 [ADR 0017](0017-query-implementations-live-in-persistence.md)의 결정 §1·§2·§5를 대체한다. "조회
 구현은 `persistence`에 있다"는 뼈대는 그대로 두고, **어떤 이름을 어디에 붙이는가**만 바꾼다.

@@ -1,6 +1,8 @@
 # Application Module을 Bounded Context 단위로 재편한다
 
-## 상태(2026-09-07): 채택·구현됨. ADR 0003 §3·§11, ADR 0005 §4를 module set·DAG 범위에서 다시 supersede
+## 상태
+
+일부 대체 → 0008, 0012
 
 > 2026-09-19 갱신: 본문의 package 경로와 타입 이름은 그 뒤 리팩터링으로 거의 다 바뀌었다 —
 > `PerformanceSalesPolicy`는 `booking.salespolicy.domain`, cross-module 계약은 `<module>.api`에서
