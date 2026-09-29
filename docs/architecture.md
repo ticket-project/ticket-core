@@ -46,7 +46,7 @@
 | Booking | Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점·주문과 발권 모델을 소유한다. 결제 승인·발권 실행 경로는 아직 없다. admission token 검증도 소유 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다(ADR 0009) |
-| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(비밀번호 해시·이메일·역할·탈퇴 상태), 회원가입. 회원 자격 증명과 활성 상태 확인은 member의 공개 계약이 맡고, 로그인·갱신·로그아웃·탈퇴 조립과 JWT·OAuth2 provider 처리는 `security`가 소유한다 |
+| Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(이메일·역할·탈퇴 상태·소셜 연결). 가입·로그인은 소셜(OAuth2) 전용이라 소셜 신원 해석(없으면 회원 생성)과 활성 상태 확인을 member의 공개 계약이 맡고, 코드 교환·갱신·로그아웃·탈퇴 조립과 JWT·OAuth2 provider 처리는 `security`가 소유한다 |
 
 `Ticket`·admission token 검증이 별도 module에서 booking으로 흡수된 이력은
 [ADR 0005](adr/0005-performance-grade-price-ownership-and-payment-ticketing-modules.md)·
@@ -65,8 +65,8 @@
 - `shared`는 `@Modulith(sharedModules = "shared")`로 선언한다. 업무 모듈은 `shared :: api`,
   `shared :: web`, `shared :: exception`, `shared :: jpa` 넷을 필요한 만큼 명시해 참조한다 — `shared :: *`
   와일드카드는 쓰지 않는다.
-- `security -> member`는 로그인·토큰 재발급·OAuth2 코드 교환에서 member의 공개 계약으로
-  자격 증명과 현재 활성 상태를 확인하기 위한 단방향 의존이다. 요청마다 도는 access token 인증은
+- `security -> member`는 OAuth2 로그인·코드 교환·토큰 재발급에서 member의 공개 계약으로
+  소셜 신원을 회원으로 해석하고 현재 활성 상태를 확인하기 위한 단방향 의존이다. 요청마다 도는 access token 인증은
   토큰의 서명·만료만 보고 member를 조회하지 않는다. security는 인증 흐름과 전역 API URL 접근
   정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
 - `show -> venue`는 표시값 조립, `show -> like`는
@@ -82,8 +82,8 @@
   `shared :: exception`이 필요 없다.
 - 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
 
-비밀번호 해싱과 일치 확인은 member가 수행하고, 비밀번호 해시는 모듈 공개 계약으로 반환하지
-않는다. 상세 입력·반환 계약은 `MemberAccountApi`를 본다.
+회원 가입과 로그인은 소셜(OAuth2) 전용이라 member는 비밀번호를 받거나 검증하지 않는다. 상세
+입력·반환 계약은 `MemberAccountApi`를 본다.
 
 ## Aggregates
 

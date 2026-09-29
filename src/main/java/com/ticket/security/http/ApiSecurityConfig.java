@@ -48,10 +48,7 @@ public class ApiSecurityConfig {
                                 "/actuator/health", "/actuator/health/**", "/actuator/info", "/actuator/prometheus")
                         .permitAll()
                         .requestMatchers(
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/refresh",
-                                "/api/v1/auth/oauth2/token",
-                                "/api/v1/auth/social/urls")
+                                "/api/v1/auth/refresh", "/api/v1/auth/oauth2/token", "/api/v1/auth/social/urls")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/performances/*/seats/status")
                         .authenticated()
