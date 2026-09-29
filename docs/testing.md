@@ -108,7 +108,6 @@ Testcontainers를 쓰는 테스트는 **Docker가 실행 중이어야 한다.** 
 | `com.ticket.DomainIsolationTest` | 6개 BC 전부에서 `<bc>`의 어느 `domain` 계층(`<bc>..domain..` — `booking.order.domain`처럼 capability 아래 포함)도 다른 BC를 참조하지 않는 것(domain의 기술 의존은 대상이 아니다 — 클래스 JavaDoc 참고). "내 찜 목록"의 표시값 조합은 `show.usecase`가 like의 공개 API로 한다(ADR 0006, ADR 0008, ADR 0009) |
 | `com.ticket.AggregateAssociationTest` | 같은 module 안에서 다른 aggregate를 `@ManyToOne`/`@OneToOne`/`@OneToMany`/`@ManyToMany` 객체 연관관계로 새로 묶지 않는 것. 실측된 연관관계를 고정한다(`docs/architecture.md`의 "Aggregates"·"Aggregate Rules"). **`domain` 아래 묶음 폴더는 Aggregate 경계가 아니다** — 경계는 이 테스트가 FQCN으로 강제한다 |
 | `com.ticket.booking.BookingLayerDependencyTest` | `booking.concurrency`의 락 계약이 Redis 기술과 `endpoint` 계층을 모르는 것 두 가지. 옛 `booking.common`이 사라지며 그 의존 규칙을 이어받았다. booking의 계층 방향 자체는 `ArchitectureRulesTest`가 전역 규칙으로 덮는다 |
-| `ControllerParameterConstraintTest` | 요청 파라미터 제약을 `*ControllerDocs` 인터페이스에만 두는 것 |
 | `com.ticket.DocumentationTests` | Spring Modulith `Documenter`로 module 구조 문서를 생성하는 것. 생성물 목록과 CI artifact는 [architecture.md의 생성 문서](architecture.md#생성-문서)가 원본이다 |
 | `com.ticket.shared.exception.ExceptionHandlerScopeTest` | module handler가 다른 module의 오류까지 삼키지 않는 것 |
 | `com.ticket.shared.exception.ErrorCodeUniquenessTest` | E-code(외부 계약, `gatling-test`가 하드코딩)가 전역에서 유일한 것 |

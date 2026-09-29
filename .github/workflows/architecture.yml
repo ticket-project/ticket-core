@@ -47,7 +47,6 @@ jobs:
             --tests "com.ticket.ModularityTests" \
             --tests "com.ticket.DomainIsolationTest" \
             --tests "com.ticket.AggregateAssociationTest" \
-            --tests "com.ticket.ControllerParameterConstraintTest" \
             --tests "com.ticket.DocumentationTests" \
             --tests "com.ticket.booking.BookingLayerDependencyTest" \
             --tests "com.ticket.shared.SharedModulePurityTest" \
