@@ -55,7 +55,8 @@ OAuth2 값은 로컬 기동용 예시다. 실제 소셜 로그인을 확인하�
 .\gradlew.bat seedLocal
 ```
 
-local 프로파일은 `ddl-auto: create`라 서버를 재시작하면 다시 실행해야 한다. 적재 대상과
+local 프로파일은 Flyway migration으로 스키마를 만들어 재시작해도 데이터가 남는다. 처음 한 번만 실행하면 된다.
+옛 `ddl-auto: create` 시절 H2 파일(`~/ticket-local*.db`)이 있으면 서버를 끄고 지운 뒤 기동한다. 적재 대상과
 조정할 수 있는 값은 [`seed/README.md`](seed/README.md)를 본다.
 
 프로파일별 설정과 환경 변수 상세는 [`docs/operations.md`](docs/operations.md)를 본다.
