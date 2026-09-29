@@ -46,9 +46,14 @@ p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-bo
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
+# ojdbc8 버전은 Spring Boot BOM이 관리한다. 서버와 seedProd가 같은 좌표를 쓰도록 bundle로 묶는다.
+oracle-ojdbc8 = { module = "com.oracle.database.jdbc:ojdbc8" }
 oracle-security-osdt-cert = { module = "com.oracle.database.security:osdt_cert", version.ref = "oracle-security" }
 oracle-security-oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "oracle-security" }
 oracle-security-osdt-core = { module = "com.oracle.database.security:osdt_core", version.ref = "oracle-security" }
+
+[bundles]
+oracle-jdbc = ["oracle-ojdbc8", "oracle-security-osdt-cert", "oracle-security-oraclepki", "oracle-security-osdt-core"]
 
 [plugins]
 errorprone = { id = "net.ltgt.errorprone", version = "5.1.1" }
