@@ -46,7 +46,7 @@ if [ "$SCOPE" = "changed" ]; then
     exit 0
   fi
 else
-  DOCS=$( { git ls-files --cached --others --exclude-standard '*.md'; find -L .agents/skills -name '*.md' 2>/dev/null; } \
+  DOCS=$( { git ls-files --cached --others --exclude-standard '*.md'; find -L .claude/skills -name '*.md' 2>/dev/null; } \
           | sort -u | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done )
 fi
 
@@ -110,9 +110,9 @@ done <<< "$hits"
 [ "$broken" -eq 0 ] && ok "문서 포인터 전부 실재"
 
 # 3 ─ 스킬 프론트매터
-if [ -d .agents/skills ]; then
+if [ -d .claude/skills ]; then
   skill_list_failed=0
-  if ! skills=$(find -L .agents/skills -name 'SKILL.md'); then
+  if ! skills=$(find -L .claude/skills -name 'SKILL.md'); then
     err "스킬 목록 검사 도구 실행 실패"
     skill_list_failed=1
     skills=""

@@ -24,8 +24,6 @@ token을 검증해 예매 API 진입을 제어한다.
 
 전제: JDK 25, Redis 7, Gradle wrapper.
 
-클론 직후 `bash scripts/link-agent-skills.sh`(Windows는 `scripts\link-agent-skills.cmd`)를 한 번 실행한다.
-
 ```powershell
 docker run --name ticket-redis -p 6379:6379 -d redis:7
 ```
