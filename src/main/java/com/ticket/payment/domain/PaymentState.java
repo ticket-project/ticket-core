@@ -12,7 +12,7 @@ package com.ticket.payment.domain;
  * READY / PROCESSING -> CANCELED
  * </pre>
  */
-public enum PaymentStatus {
+public enum PaymentState {
     READY,
     PROCESSING,
     SUCCEEDED,
