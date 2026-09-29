@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -29,25 +32,36 @@ class SeatSelectionServiceTest {
     @Test
     void 빈_좌석이면_선택한다() {
         // given
-        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", java.time.Duration.ofMinutes(5)))
-                .thenReturn(true);
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4))
+                .thenReturn(SelectResult.SELECTED);
         // when
-        seatSelectionService.select(10L, 20L, 3L);
+        seatSelectionService.select(10L, 20L, 3L, 4);
         // then
-        verify(seatSelectionStore).selectIfAbsent(10L, 20L, "3", java.time.Duration.ofMinutes(5));
+        verify(seatSelectionStore).selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4);
     }
 
     @Test
     void 이미_선택된_좌석이면_예외를_던진다() {
         // given
-        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", java.time.Duration.ofMinutes(5)))
-                .thenReturn(false);
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), null))
+                .thenReturn(SelectResult.ALREADY_SELECTED);
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L))
+        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, null))
                 .isInstanceOf(SeatAlreadySelectedException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 10L)
                 .hasFieldOrPropertyWithValue("seatId", 20L);
+    }
+
+    @Test
+    void 회원_선택_한도를_넘으면_선점_한도_초과로_거절한다() {
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4))
+                .thenReturn(SelectResult.LIMIT_EXCEEDED);
+
+        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, 4))
+                .isInstanceOf(HoldLimitExceededException.class)
+                .hasFieldOrPropertyWithValue("requestedSeatCount", 5L)
+                .hasFieldOrPropertyWithValue("maxSeatCount", 4);
     }
 
     @Test
