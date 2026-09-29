@@ -53,7 +53,8 @@ public class SeatSelectionCoordinator {
             final Long seatId,
             final Long memberId,
             final Long performanceSeatId,
-            final LocalDateTime orderCloseTime) {
+            final LocalDateTime orderCloseTime,
+            final @Nullable Integer maxSeatCount) {
         lockManager.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
                 throw new PerformanceIsPastException(performanceId);
@@ -61,7 +62,7 @@ public class SeatSelectionCoordinator {
             if (holdManager.isHeld(performanceId, seatId)) {
                 throw new SeatAlreadyHeldException(performanceId, seatId);
             }
-            seatSelectionService.select(performanceId, seatId, memberId);
+            seatSelectionService.select(performanceId, seatId, memberId, maxSeatCount);
             seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED);
         });
     }

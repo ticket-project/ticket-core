@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -33,6 +34,7 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockManager;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 import com.ticket.booking.selection.persistence.RedissonSeatSelectionStore;
 import com.ticket.booking.selection.persistence.SeatSelectionRedisKey;
 import com.ticket.security.token.AuthRefreshToken;
@@ -75,10 +77,10 @@ class CoreRedisIntegrationTest {
     void concurrent_seat_selection_has_exactly_one_owner_and_expires_by_ttl() throws Exception {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
 
-        List<Boolean> acquired =
-                runConcurrently(32, index -> store.selectIfAbsent(1L, 10L, "member-" + index, Duration.ofSeconds(5)));
+        List<SelectResult> acquired = runConcurrently(
+                32, index -> store.selectIfAbsent(1L, 10L, "member-" + index, Duration.ofSeconds(5), null));
 
-        assertThat(acquired.stream().filter(Boolean::booleanValue)).hasSize(1);
+        assertThat(acquired).filteredOn(SelectResult.SELECTED::equals).hasSize(1);
         String owner = store.getHolder(1L, 10L);
         assertThat(owner).isNotBlank();
         assertThat(store.getSelectingSeatIds(1L)).containsExactly(10L);
@@ -88,19 +90,54 @@ class CoreRedisIntegrationTest {
         assertThat(store.getHolder(1L, 10L)).isNull();
         assertThat(store.getSelectingSeatIds(1L)).isEmpty();
 
-        assertThat(store.selectIfAbsent(1L, 10L, "expiring-owner", Duration.ofMillis(150)))
-                .isTrue();
+        assertThat(store.selectIfAbsent(1L, 10L, "expiring-owner", Duration.ofMillis(150), null))
+                .isEqualTo(SelectResult.SELECTED);
         awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
         assertThat(store.getSelectingSeatIds(1L)).isEmpty();
-        assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1)))
-                .isTrue();
+        assertThat(store.selectIfAbsent(1L, 10L, "next-owner", Duration.ofSeconds(1), null))
+                .isEqualTo(SelectResult.SELECTED);
         assertThat(store.getSelectingSeatIds(1L)).containsExactly(10L);
-        assertThat(store.selectIfAbsent(1L, 11L, "next-owner", Duration.ofSeconds(1)))
-                .isTrue();
-        assertThat(store.selectIfAbsent(1L, 12L, "other-owner", Duration.ofSeconds(1)))
-                .isTrue();
+        assertThat(store.selectIfAbsent(1L, 11L, "next-owner", Duration.ofSeconds(1), null))
+                .isEqualTo(SelectResult.SELECTED);
+        assertThat(store.selectIfAbsent(1L, 12L, "other-owner", Duration.ofSeconds(1), null))
+                .isEqualTo(SelectResult.SELECTED);
         assertThat(store.releaseAllByMember(1L, "next-owner")).containsExactlyInAnyOrder(10L, 11L);
         assertThat(store.getSelectingSeatIds(1L)).containsExactly(12L);
+    }
+
+    @Test
+    void member_selection_limit_holds_under_concurrency_and_frees_on_release() throws Exception {
+        RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
+
+        List<SelectResult> results = runConcurrently(
+                16, index -> store.selectIfAbsent(1L, 100L + index, "member", Duration.ofSeconds(5), 2));
+
+        assertThat(results).filteredOn(SelectResult.SELECTED::equals).hasSize(2);
+        assertThat(results).filteredOn(SelectResult.LIMIT_EXCEEDED::equals).hasSize(14);
+        Set<Long> selected = store.getSelectedSeatIdsByMember(1L, "member");
+        assertThat(selected).hasSize(2);
+        assertThat(store.getSelectedSeatIdsByMember(1L, "other")).isEmpty();
+
+        Long released = selected.iterator().next();
+        assertThat(store.releaseIfOwned(1L, released, "member")).isTrue();
+        assertThat(store.getSelectedSeatIdsByMember(1L, "member")).hasSize(1);
+        assertThat(store.selectIfAbsent(1L, 200L, "member", Duration.ofSeconds(5), 2))
+                .isEqualTo(SelectResult.SELECTED);
+    }
+
+    @Test
+    void expired_selection_no_longer_counts_toward_member_limit() throws Exception {
+        RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
+
+        assertThat(store.selectIfAbsent(1L, 10L, "member", Duration.ofMillis(150), 1))
+                .isEqualTo(SelectResult.SELECTED);
+        assertThat(store.selectIfAbsent(1L, 11L, "member", Duration.ofSeconds(5), 1))
+                .isEqualTo(SelectResult.LIMIT_EXCEEDED);
+
+        awaitCondition(() -> store.getHolder(1L, 10L) == null, "seat selection did not expire");
+        assertThat(store.getSelectedSeatIdsByMember(1L, "member")).isEmpty();
+        assertThat(store.selectIfAbsent(1L, 11L, "member", Duration.ofSeconds(5), 1))
+                .isEqualTo(SelectResult.SELECTED);
     }
 
     @Test
@@ -108,8 +145,8 @@ class CoreRedisIntegrationTest {
         RedissonSeatSelectionStore store = new RedissonSeatSelectionStore(redissonClient);
         String indexKey = SeatSelectionRedisKey.selectSeatIndex(1L);
 
-        assertThat(store.selectIfAbsent(1L, 10L, "owner", Duration.ofMillis(150)))
-                .isTrue();
+        assertThat(store.selectIfAbsent(1L, 10L, "owner", Duration.ofMillis(150), null))
+                .isEqualTo(SelectResult.SELECTED);
         assertThat(redissonClient.getKeys().countExists(indexKey)).isEqualTo(1L);
 
         awaitCondition(

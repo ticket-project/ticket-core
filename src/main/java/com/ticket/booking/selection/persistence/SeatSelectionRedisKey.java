@@ -15,6 +15,7 @@ public final class SeatSelectionRedisKey {
 
     private static final String SELECT_KEY = "seat:select:{perf:%d}:%d";
     private static final String SELECT_SEAT_INDEX_KEY = "seat:select:index:{perf:%d}";
+    private static final String SELECT_MEMBER_INDEX_KEY = "seat:select:member:{perf:%d}:%s";
 
     private static final Pattern SELECT_KEY_PATTERN = Pattern.compile("^seat:select:\\{perf:(\\d+)}:(\\d+)$");
 
@@ -26,6 +27,11 @@ public final class SeatSelectionRedisKey {
 
     public static String selectSeatIndex(final Long perfId) {
         return String.format(SELECT_SEAT_INDEX_KEY, perfId);
+    }
+
+    /** 회원 한 명이 이 회차에서 선택 중인 좌석 인덱스. 좌석 키와 같은 hash slot({perf:N})에 두어야 Lua 한 번으로 함께 바꿀 수 있다. */
+    public static String selectMemberIndex(final Long perfId, final String memberId) {
+        return String.format(SELECT_MEMBER_INDEX_KEY, perfId, memberId);
     }
 
     public static Optional<SelectKey> tryParseSelectKey(final String key) {

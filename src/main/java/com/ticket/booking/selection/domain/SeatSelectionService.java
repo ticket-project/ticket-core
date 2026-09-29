@@ -2,12 +2,16 @@ package com.ticket.booking.selection.domain;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
+import com.ticket.booking.exception.HoldLimitExceededException;
 import com.ticket.booking.exception.SeatAlreadySelectedException;
 import com.ticket.booking.exception.SeatNotOwnedException;
+import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +23,20 @@ public class SeatSelectionService {
     private static final Duration SELECT_TTL = Duration.ofMinutes(5);
     private final SeatSelectionStore seatSelectionStore;
 
-    public void select(final Long performanceId, final Long seatId, final Long memberId) {
+    /** @param maxSeatCount 회차의 1인 선점 좌석 수 한도. 동시에 선택할 수 있는 좌석 수도 이 한도를 따른다. null이면 제한하지 않는다 */
+    public void select(
+            final Long performanceId, final Long seatId, final Long memberId, final @Nullable Integer maxSeatCount) {
         final String memberKey = memberKeyOf(memberId);
-        final boolean locked = seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL);
-        if (!locked) {
+        final SelectResult result =
+                seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL, maxSeatCount);
+        if (result == SelectResult.ALREADY_SELECTED) {
             log.warn("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
             throw new SeatAlreadySelectedException(performanceId, seatId);
+        }
+        if (result == SelectResult.LIMIT_EXCEEDED) {
+            // 한도가 있을 때만 LIMIT_EXCEEDED가 나온다.
+            final int limit = Objects.requireNonNull(maxSeatCount);
+            throw new HoldLimitExceededException(limit + 1L, limit);
         }
         log.debug("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
     }
@@ -63,6 +75,11 @@ public class SeatSelectionService {
 
     public Set<Long> getSelectingSeatIds(final Long performanceId) {
         return seatSelectionStore.getSelectingSeatIds(performanceId);
+    }
+
+    /** 이 회원이 지금 선택 중인 좌석. 주문은 이 좌석으로만 시작할 수 있다. */
+    public Set<Long> getSelectedSeatIds(final Long performanceId, final Long memberId) {
+        return seatSelectionStore.getSelectedSeatIdsByMember(performanceId, memberKeyOf(memberId));
     }
 
     private String memberKeyOf(final Long memberId) {

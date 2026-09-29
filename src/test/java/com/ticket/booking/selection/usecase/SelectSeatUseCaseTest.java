@@ -94,10 +94,10 @@ class SelectSeatUseCaseTest {
         inOrder.verify(performanceSalesPolicyRepository).findById(10L);
         inOrder.verify(performanceSeatRepository).findSeatState(10L, 20L);
         inOrder.verify(holdManager).isHeld(10L, 20L);
-        // 검증에서 얻은 performanceSeatId를 그대로 넘긴다. SELECTED 발행은 coordinator가 좌석 락
+        // 검증에서 얻은 performanceSeatId와 회차 선점 한도를 넘긴다. SELECTED 발행은 coordinator가 좌석 락
         // 안에서 하므로 여기서 다시 발행하지 않는다.
         inOrder.verify(seatSelectionCoordinator)
-                .select(10L, 20L, 1L, 501L, policy.getOrderAcceptanceWindow().getClosesAt());
+                .select(10L, 20L, 1L, 501L, policy.getOrderAcceptanceWindow().getClosesAt(), 4);
     }
 
     @Test

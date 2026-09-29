@@ -21,6 +21,8 @@ import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 
+import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
+
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RedissonSeatSelectionStoreTest {
@@ -37,7 +39,7 @@ class RedissonSeatSelectionStoreTest {
     private RedissonSeatSelectionStore redissonSeatSelectionStore;
 
     @Test
-    void 비어있는_좌석이면_selectIfAbsent가_true다() {
+    void 비어있는_좌석이면_selectIfAbsent가_SELECTED다() {
         doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
         doReturn(1L)
                 .when(script)
@@ -46,14 +48,17 @@ class RedissonSeatSelectionStoreTest {
                         anyString(),
                         eq(RScript.ReturnType.LONG),
                         eq(List.<Object>of(
-                                SeatSelectionRedisKey.select(10L, 20L), SeatSelectionRedisKey.selectSeatIndex(10L))),
+                                SeatSelectionRedisKey.select(10L, 20L),
+                                SeatSelectionRedisKey.selectSeatIndex(10L),
+                                SeatSelectionRedisKey.selectMemberIndex(10L, "3"))),
                         eq(Duration.ofMinutes(5).toMillis()),
                         eq("3"),
-                        eq("20"));
+                        eq("20"),
+                        eq("4"));
 
-        boolean result = redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5));
+        SelectResult result = redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4);
 
-        assertThat(result).isTrue();
+        assertThat(result).isEqualTo(SelectResult.SELECTED);
     }
 
     @Test
@@ -68,7 +73,9 @@ class RedissonSeatSelectionStoreTest {
                         anyString(),
                         eq(RScript.ReturnType.LONG),
                         eq(List.<Object>of(
-                                SeatSelectionRedisKey.select(10L, 20L), SeatSelectionRedisKey.selectSeatIndex(10L))),
+                                SeatSelectionRedisKey.select(10L, 20L),
+                                SeatSelectionRedisKey.selectSeatIndex(10L),
+                                SeatSelectionRedisKey.selectMemberIndex(10L, "3"))),
                         eq("3"),
                         eq("20"));
 

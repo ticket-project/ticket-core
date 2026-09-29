@@ -66,9 +66,9 @@ class SeatSelectionCoordinatorTest {
     void 락_내부에서_홀드를_다시_확인하고_좌석을_선점한다() {
         when(holdManager.isHeld(10L, 20L)).thenReturn(false);
 
-        coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1));
+        coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
-        verify(seatSelectionService).select(10L, 20L, 1L);
+        verify(seatSelectionService).select(10L, 20L, 1L, 4);
     }
 
     /** 발행이 락 밖에 있으면 뒤늦은 만료 알림이 이 SELECTED 뒤에 끼어들 수 있다. */
@@ -76,7 +76,7 @@ class SeatSelectionCoordinatorTest {
     void SELECTED_발행은_좌석_락_안에서_한다() {
         when(holdManager.isHeld(10L, 20L)).thenReturn(false);
 
-        coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1));
+        coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.SELECTED);
         assertThat(lockManager.allKeys()).containsExactly(LockKey.seat(10L, 20L));
@@ -86,7 +86,7 @@ class SeatSelectionCoordinatorTest {
     void DB검증_후_홀드된_좌석이면_선점을_중단한다() {
         when(holdManager.isHeld(10L, 20L)).thenReturn(true);
 
-        assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1)))
+        assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
                 .isInstanceOf(SeatAlreadyHeldException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 10L)
                 .hasFieldOrPropertyWithValue("seatId", 20L);
@@ -96,7 +96,7 @@ class SeatSelectionCoordinatorTest {
 
     @Test
     void 락_획득_시점에_예매가_마감됐으면_선점을_중단한다() {
-        assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.minusNanos(1)))
+        assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
                 .isInstanceOf(PerformanceIsPastException.class)
                 .hasFieldOrPropertyWithValue("performanceId", 10L);
 

@@ -59,7 +59,8 @@ public class SelectSeatUseCase {
                 input.seatId(),
                 input.memberId(),
                 performanceSeatId,
-                policy.getOrderAcceptanceWindow().getClosesAt());
+                policy.getOrderAcceptanceWindow().getClosesAt(),
+                policy.maxSeatCount());
     }
 
     /**
