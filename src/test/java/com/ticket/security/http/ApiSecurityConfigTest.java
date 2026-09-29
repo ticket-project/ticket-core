@@ -123,10 +123,10 @@ class ApiSecurityConfigTest {
     }
 
     @Test
-    void 로그인과_공연_조회_api는_인증_없이_접근할_수_있다() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/login"))
+    void 토큰_재발급과_공연_조회_api는_인증_없이_접근할_수_있다() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("login"));
+                .andExpect(content().string("refresh"));
         mockMvc.perform(get("/api/v1/shows/1"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("show"));
@@ -191,9 +191,9 @@ class ApiSecurityConfigTest {
             return memberPrincipal.memberId() + ":" + memberPrincipal.role();
         }
 
-        @PostMapping("/api/v1/auth/login")
-        public String login() {
-            return "login";
+        @PostMapping("/api/v1/auth/refresh")
+        public String refresh() {
+            return "refresh";
         }
 
         @GetMapping("/api/v1/shows/1")

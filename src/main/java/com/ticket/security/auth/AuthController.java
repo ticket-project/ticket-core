@@ -27,30 +27,12 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "인증(Auth)", description = "회원가입, 로그인, 토큰 재발급, 로그아웃, 소셜 로그인 관련 API")
+@Tag(name = "인증(Auth)", description = "토큰 재발급, 로그아웃, 소셜 로그인 관련 API")
 public class AuthController {
-    private final LoginUseCase loginUseCase;
     private final RefreshAuthTokenUseCase refreshAuthTokenUseCase;
     private final ExchangeOAuth2TokenUseCase exchangeOAuth2TokenUseCase;
     private final GetSocialLoginUrlsUseCase getSocialLoginUrlsUseCase;
     private final LogoutUseCase logoutUseCase;
-
-    @Operation(summary = "로그인", description = """
-            이메일과 비밀번호로 로그인하고 Access Token을 응답으로 반환합니다.
-            Refresh Token은 HttpOnly 쿠키로 설정됩니다.
-            """)
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "이메일 또는 비밀번호 불일치")
-    })
-    @PostMapping("/login")
-    public ApiResponse<LoginUseCase.Output> login(
-            @RequestBody @Valid final LoginRequest request,
-            @Parameter(hidden = true) final HttpServletResponse response) {
-        final LoginUseCase.Result result = loginUseCase.execute(request.toInput());
-        addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
-        return ApiResponse.success(result.output());
-    }
 
     @Operation(summary = "토큰 재발급", description = """
             HttpOnly 쿠키의 Refresh Token으로 Access Token을 재발급하고,

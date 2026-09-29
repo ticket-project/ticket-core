@@ -58,9 +58,9 @@ CLOSED 모듈의 하위 패키지를 이미 막아 주므로 안전 자체는 �
 | --- | --- | --- |
 | 다른 모듈이 호출하는 행위 계약 | `XxxApi` | `MemberLookupApi`, `VenueLookupApi` |
 | 나가는 읽기 뷰 | `~Snapshot` | `PerformanceSaleSnapshot`, `MemberSnapshot`, `VenueSnapshot` |
-| 들어오는 입력·principal | 도메인 이름 그대로 | `RawPassword`, `SocialIdentity`, `AuthenticatedMember` |
+| 들어오는 입력·principal | 도메인 이름 그대로 | `SocialIdentity`, `AuthenticatedMember` |
 | 이벤트 | 발생한 사실의 이름 | `OrderStarted` |
-| enum·value object | 그대로 | `Region`, `LikeType`, `RawPassword` |
+| enum·value object | 그대로 | `Region`, `LikeType`, `SocialProvider` |
 
 접미사를 붙일지 말지는 타입의 **종류**로 정한다 — interface면 붙이고 record·enum·class면 붙이지
 않는다. 이름이 이미 충분히 명확해 보여도 예외를 두지 않는다. 예외가 있으면 "이건 왜 안 붙었나"를

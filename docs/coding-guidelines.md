@@ -26,7 +26,7 @@ Redis key, JPA 쿼리, 토큰 서명 같은 기술 구현은 해당 구현체에
 - `Request`는 `endpoint`의 HTTP 등 외부 adapter 입력에 쓴다.
 - `Input`과 `Output`은 use case 호출 계약이다. 의미 있는 값 객체나 `void`를 억지로 감싸지 않는다.
 - `Result`는 일반 출력 외에 cookie/token처럼 adapter가 별도로 소비할 값이 있을 때만 쓴다.
-  `LoginUseCase.Result`가 그 예다.
+  `ExchangeOAuth2TokenUseCase.Result`가 그 예다.
 - `Context`는 여러 application 단계 사이의 내부 처리 정보다. 외부 요청이 아닌 검증 결과에
   `Request`를 붙이지 않는다. 다만 한 use case 안에서만 오가는 값이면 `Context` 타입을 만들기 전에
   지역 변수로 충분한지 먼저 본다.

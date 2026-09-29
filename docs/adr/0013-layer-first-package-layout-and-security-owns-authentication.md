@@ -4,6 +4,10 @@
 
 채택됨 (2026-09-14)
 
+> 2026-09-29 갱신: 회원 가입·로그인은 소셜(OAuth2) 전용이다. `RegisterMemberUseCase`(이메일 가입),
+> `LoginUseCase`(이메일 로그인)와 `MemberAccountApi.authenticate`를 지웠다. 소셜 회원은 첫 로그인 때
+> `SocialAccountProvisioningService`가 만든다. 아래 가입·비밀번호 인증 설명은 당시 기록이다.
+
 > 2026-09-24 갱신: 회원가입은 `member.endpoint`와 `RegisterMemberUseCase`가 소유한다. 인증·활성 확인은
 > `MemberAccountService`가 `MemberAccountApi`를 직접 구현하며 읽기 전용 트랜잭션을 연다. 소셜 계정
 > 연결은 `SocialAccountProvisioningService`가 수행한다. 아래 2026-09-23 상태 설명은 당시 기록이다.
