@@ -7,18 +7,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.modulith.core.ApplicationModuleIdentifier;
-import org.springframework.modulith.core.ApplicationModuleIdentifiers;
-import org.springframework.modulith.runtime.flyway.MigrationFilter;
-import org.springframework.modulith.runtime.flyway.SpringModulithFlywayMigrationStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.oracle.OracleContainer;
 
@@ -53,32 +46,31 @@ class OracleMigrationCompatibilityTest {
         ModulithFlywayTestSupport.baselineRootLikeProd(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword());
         applyRootOnlyForQueuePoliciesTable();
 
-        final Flyway baseFlyway = Flyway.configure()
-                .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
-                .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
-                .load();
-
-        final ApplicationModuleIdentifiers identifiers =
-                ApplicationModuleIdentifiers.of(List.of(ApplicationModuleIdentifier.of("booking")));
-
-        new SpringModulithFlywayMigrationStrategy(identifiers, MigrationFilter.USE_ALL).migrate(baseFlyway);
+        ModulithFlywayTestSupport.applyMigrations(
+                ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword(), "oracle", List.of("booking"));
 
         try (Connection connection = connect()) {
-            assertThat(tableExists(connection, "EVENT_PUBLICATION")).isTrue();
-            assertThat(tableExists(connection, "EVENT_PUBLICATION_ARCHIVE")).isTrue();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "EVENT_PUBLICATION"))
+                    .isTrue();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "EVENT_PUBLICATION_ARCHIVE"))
+                    .isTrue();
             // root V9: OrderTerminated 직렬화 결과가 옛 VARCHAR2(255 CHAR)를 넘어 저장에 실패하던
             // 문제를 실제 Oracle 방언에서 확인한다. CLOB이 아니라 VARCHAR2로 넓혔으므로 Modulith가
             // 완료 처리에 쓰는 serialized_event 동등 비교도 그대로 성립해야 한다.
             assertSerializedEventHoldsLongPayload(connection, "EVENT_PUBLICATION");
             assertSerializedEventHoldsLongPayload(connection, "EVENT_PUBLICATION_ARCHIVE");
-            assertThat(tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX")).isFalse();
-            assertThat(tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX")).isFalse();
-            assertThat(importedKeyTables(connection, "PERFORMANCE_SEATS")).isEmpty();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "ORDER_HOLD_RELEASE_OUTBOX"))
+                    .isFalse();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "ORDER_HOLD_CREATION_OUTBOX"))
+                    .isFalse();
+            assertThat(ModulithFlywayTestSupport.foreignKeyNames(connection, "PERFORMANCE_SEATS"))
+                    .isEmpty();
             // ADR 0006 "Performance의 책임 혼재" A2: booking V6가 실제 Oracle 방언에서도 정책
             // 소유권 이관(backfill + drop)을 문법 오류 없이 수행하는지 확인한다.
-            assertThat(tableExists(connection, "BOOKING_PERFORMANCE_SALES_POLICIES"))
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "BOOKING_PERFORMANCE_SALES_POLICIES"))
                     .isTrue();
-            assertThat(tableExists(connection, "PERFORMANCE_QUEUE_POLICIES")).isFalse();
+            assertThat(ModulithFlywayTestSupport.tableExists(connection, "PERFORMANCE_QUEUE_POLICIES"))
+                    .isFalse();
             assertThat(hasColumn(connection, "PERFORMANCES", "ORDER_OPEN_TIME")).isFalse();
             try (Statement statement = connection.createStatement();
                     ResultSet row = statement.executeQuery(
@@ -138,12 +130,8 @@ class OracleMigrationCompatibilityTest {
     }
 
     private void applyRootOnlyForQueuePoliciesTable() throws SQLException {
-        final Flyway rootOnlyFlyway = Flyway.configure()
-                .dataSource(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword())
-                .locations("classpath:db/migration", "classpath:db/migration-vendor/oracle")
-                .load();
-        new SpringModulithFlywayMigrationStrategy(ApplicationModuleIdentifiers.of(List.of()), MigrationFilter.USE_ALL)
-                .migrate(rootOnlyFlyway);
+        ModulithFlywayTestSupport.applyMigrations(
+                ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword(), "oracle", List.of());
 
         try (Connection connection = connect();
                 Statement statement = connection.createStatement()) {
@@ -157,26 +145,10 @@ class OracleMigrationCompatibilityTest {
         return DriverManager.getConnection(ORACLE.getJdbcUrl(), ORACLE.getUsername(), ORACLE.getPassword());
     }
 
-    private boolean tableExists(final Connection connection, final String tableName) throws SQLException {
-        try (ResultSet tables = connection.getMetaData().getTables(null, null, tableName, new String[] {"TABLE"})) {
-            return tables.next();
-        }
-    }
-
     private boolean hasColumn(final Connection connection, final String table, final String column)
             throws SQLException {
         try (ResultSet columns = connection.getMetaData().getColumns(null, null, table, column)) {
             return columns.next();
         }
-    }
-
-    private Set<String> importedKeyTables(final Connection connection, final String tableName) throws SQLException {
-        final Set<String> names = new HashSet<>();
-        try (ResultSet keys = connection.getMetaData().getImportedKeys(null, null, tableName)) {
-            while (keys.next()) {
-                names.add(keys.getString("FK_NAME"));
-            }
-        }
-        return names;
     }
 }

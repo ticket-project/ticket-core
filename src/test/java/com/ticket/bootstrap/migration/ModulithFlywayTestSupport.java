@@ -48,9 +48,22 @@ public final class ModulithFlywayTestSupport {
 
     /** 빈 DB에 {@code __root} V1부터 migration을 적용한다. 로컬 H2가 처음 만들어질 때와 같다. */
     public static void migrateFromEmpty(final String url, final List<String> moduleIdentifiers) {
+        applyMigrations(url, "sa", "", "h2", moduleIdentifiers);
+    }
+
+    /**
+     * {@code db/migration}과 {@code db/migration-vendor/{vendor}}의 {@code __root}와 주어진 module migration을 운영과 같은
+     * module-aware 전략으로 적용한다. {@code vendor}는 {@code h2} 또는 {@code oracle}이다.
+     */
+    public static void applyMigrations(
+            final String url,
+            final String username,
+            final String password,
+            final String vendor,
+            final List<String> moduleIdentifiers) {
         final Flyway baseFlyway = Flyway.configure()
-                .dataSource(url, "sa", "")
-                .locations("classpath:db/migration", "classpath:db/migration-vendor/h2")
+                .dataSource(url, username, password)
+                .locations("classpath:db/migration", "classpath:db/migration-vendor/" + vendor)
                 .load();
 
         final ApplicationModuleIdentifiers identifiers = ApplicationModuleIdentifiers.of(
