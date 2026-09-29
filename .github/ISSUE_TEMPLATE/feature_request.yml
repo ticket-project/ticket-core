@@ -120,7 +120,7 @@ body:
       label: API / 도메인 영향
       description: 바뀌는 요청/응답, 도메인 규칙, 이벤트, 배치가 있다면 적어 주세요.
       placeholder: |
-        - `POST /api/v1/performances/{performanceId}/holds` 요청에 결제 수단 정보가 필요할 수 있음
+        - `POST /api/v1/orders` 요청에 결제 수단 정보가 필요할 수 있음
         - 주문 만료 계산 규칙 변경
         - Redis hold meta 저장 구조 변경 가능
     validations:
