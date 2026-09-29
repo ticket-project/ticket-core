@@ -18,10 +18,6 @@ public abstract class TicketException extends RuntimeException {
     private final ErrorCode errorCode;
     private final transient @Nullable Object data;
 
-    protected TicketException(final ErrorCode errorCode, final String message) {
-        this(errorCode, message, null);
-    }
-
     protected TicketException(final ErrorCode errorCode, final String message, final @Nullable Object data) {
         this(errorCode, message, data, null);
     }
