@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.TicketApplication;
 import com.ticket.security.http.ApiSecurityConfig;
-import com.ticket.security.http.RestAccessDeniedHandler;
 import com.ticket.security.http.RestAuthenticationEntryPoint;
 import com.ticket.security.token.AccessTokenReader;
 
@@ -65,9 +64,6 @@ class OAuth2SecurityConfigTest {
 
     @MockitoBean
     private RestAuthenticationEntryPoint authenticationEntryPoint;
-
-    @MockitoBean
-    private RestAccessDeniedHandler accessDeniedHandler;
 
     @BeforeEach
     void setUp() throws Exception {

@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,17 +28,14 @@ public class ApiSecurityConfig {
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
             final AccessTokenReader accessTokenReader,
-            final RestAuthenticationEntryPoint restAuthenticationEntryPoint,
-            final RestAccessDeniedHandler restAccessDeniedHandler)
+            final RestAuthenticationEntryPoint restAuthenticationEntryPoint)
             throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(restAuthenticationEntryPoint)
-                        .accessDeniedHandler(restAccessDeniedHandler))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                                 "/",
                                 "/api/swagger-ui.html",
@@ -82,7 +78,6 @@ public class ApiSecurityConfig {
         corsConfiguration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setExposedHeaders(List.of(HttpHeaders.AUTHORIZATION));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setMaxAge(3600L);
 
