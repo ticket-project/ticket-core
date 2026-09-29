@@ -22,6 +22,8 @@ import org.springframework.modulith.runtime.flyway.SpringModulithFlywayMigration
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.oracle.OracleContainer;
 
+import com.ticket.testsupport.TestContainerImages;
+
 /**
  * Task 11 Step 7: 저장소에 기존 Oracle Testcontainers/profile 인프라가 없어(확인함: {@code build.gradle}에 Oracle Testcontainers 모듈이 전혀
  * 없었다) 이 Task에서 새로 추가한다. 실제 Oracle(Testcontainers {@code gvenzl/oracle-free}) 위에서 {@code __root}(V2~V8, 특히 V8의
@@ -33,7 +35,7 @@ import org.testcontainers.oracle.OracleContainer;
  */
 @Testcontainers(disabledWithoutDocker = true)
 class OracleMigrationCompatibilityTest {
-    private static final OracleContainer ORACLE = new OracleContainer("gvenzl/oracle-free:23-slim");
+    private static final OracleContainer ORACLE = new OracleContainer(TestContainerImages.ORACLE);
 
     @BeforeAll
     static void startContainer() {

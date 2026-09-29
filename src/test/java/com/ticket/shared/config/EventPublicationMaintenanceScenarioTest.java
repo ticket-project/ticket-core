@@ -25,9 +25,9 @@ import org.springframework.modulith.test.Scenario;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.TicketApplication;
+import com.ticket.testsupport.TestContainerImages;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +69,7 @@ import lombok.extern.slf4j.Slf4j;
 class EventPublicationMaintenanceScenarioTest {
     private static final int REDIS_PORT = 6379;
     static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
 
     static {
         REDIS.start();

@@ -30,7 +30,6 @@ import org.redisson.config.Config;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockManager;
@@ -41,6 +40,7 @@ import com.ticket.booking.selection.persistence.RedissonSeatSelectionStore;
 import com.ticket.booking.selection.persistence.SeatSelectionRedisKey;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RedisRefreshTokenStore;
+import com.ticket.testsupport.TestContainerImages;
 
 @Testcontainers
 class CoreRedisIntegrationTest {
@@ -51,7 +51,7 @@ class CoreRedisIntegrationTest {
 
     @Container
     private static final GenericContainer<?> REDIS =
-            new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(REDIS_PORT);
+            new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
 
     private static RedissonClient redissonClient;
 
