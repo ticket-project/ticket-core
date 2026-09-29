@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
@@ -29,9 +28,7 @@ public class GetSaleOpeningSoonShowsUseCase {
 
     public record Input(String category, int size) {
         public Input {
-            if (size <= 0) {
-                throw new InvalidRequestException("size는 1 이상이어야 합니다.");
-            }
+            ShowPageSize.require(size);
         }
     }
 

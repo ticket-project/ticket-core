@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.shared.api.CursorPage;
-import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
@@ -35,9 +34,7 @@ public class GetSaleOpeningSoonShowsPageUseCase {
         public Input {
             param = requireProvided(param, "param");
             sort = requireProvided(sort, "sort");
-            if (size <= 0) {
-                throw new InvalidRequestException("size는 1 이상이어야 합니다.");
-            }
+            ShowPageSize.require(size);
         }
     }
 
