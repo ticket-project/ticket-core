@@ -12,23 +12,20 @@ import com.ticket.show.usecase.GetPerformanceSummaryUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/performances")
 @RequiredArgsConstructor
-@Tag(name = "Performance", description = "회차 요약·좌석 조회 API")
+@Tag(name = "회차(Performance)", description = "회차 요약·좌석 조회 API")
 public class PerformanceController {
     private final GetPerformanceSummaryUseCase getPerformanceSummaryUseCase;
 
-    @Operation(summary = "Get performance summary")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")})
+    @Operation(summary = "회차 요약 조회")
     @GetMapping("/{performanceId}/summary")
     public ApiResponse<GetPerformanceSummaryUseCase.Output> getPerformanceSummary(
-            @Parameter(description = "Performance ID", example = "1") @PathVariable @Positive
-                    final Long performanceId) {
+            @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId) {
         final GetPerformanceSummaryUseCase.Input input = new GetPerformanceSummaryUseCase.Input(performanceId);
         return ApiResponse.success(getPerformanceSummaryUseCase.execute(input));
     }
