@@ -17,7 +17,7 @@ class MemberExceptionHandlerTest {
     @Test
     void 중복_이메일은_기존_상태와_코드로_응답한다() {
         final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleMemberException(new DuplicateEmailException());
+                handler.handleMemberException(new DuplicateEmailException(null));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
