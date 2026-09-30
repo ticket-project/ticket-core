@@ -39,14 +39,6 @@ public class BookingEntryPolicy {
         return new BookingEntryPolicy(null, null);
     }
 
-    public @Nullable QueueMode queueMode() {
-        return queueMode;
-    }
-
-    public @Nullable LocalDateTime preopenQueueStartAt() {
-        return preopenQueueStartAt;
-    }
-
     /** 대기열을 태워야 하는 시각인지 판정한다. {@code orderClosesAt}은 이 회차의 {@link OrderAcceptanceWindow#closesAt}이다. */
     public boolean isRequiredAt(final LocalDateTime now, final LocalDateTime orderClosesAt) {
         if (queueMode == null || queueMode == QueueMode.FORCE_OFF) {
