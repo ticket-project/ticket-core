@@ -17,8 +17,6 @@
 
 | 작업 | skill |
 | --- | --- |
-| 검증 선택·실행·보고 | [verify](../../.agents/skills/verify/SKILL.md) |
-| 명시적으로 요청한 부하 준비·실행·분석 | [loadtest](../../.agents/skills/loadtest/SKILL.md) |
 | 모듈 의존·공개면·코드 배치 | [modulith-boundaries](../../.agents/skills/modulith-boundaries/SKILL.md) |
 | HTTP·오류·모듈 공개 계약 변경 | [api-contract-change](../../.agents/skills/api-contract-change/SKILL.md) |
 | schema·JPA 매핑·migration 변경 | [database-change](../../.agents/skills/database-change/SKILL.md) |
