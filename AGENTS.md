@@ -30,6 +30,7 @@
 | DB migration | [migration 규칙](src/main/resources/db/README.md) |
 | 초기 데이터 적재 | [seed](seed/README.md) |
 | 배포·프로파일·Redis 전환·관측 | [운영](docs/operations.md) |
+| AI 자산·작업별 skill 관리 | [AI 작업 안내](docs/ai/README.md) |
 
 ## Durable Repo Facts
 
