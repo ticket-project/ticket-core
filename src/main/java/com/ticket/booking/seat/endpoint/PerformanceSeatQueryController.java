@@ -16,7 +16,6 @@ import com.ticket.shared.web.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -31,42 +30,34 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/performances")
 @RequiredArgsConstructor
-@Tag(name = "Performance", description = "회차 요약·좌석 조회 API")
+@Tag(name = "회차(Performance)", description = "회차 요약·좌석 조회 API")
 public class PerformanceSeatQueryController {
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase;
     private final GetSeatStatusUseCase getSeatStatusUseCase;
     private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase;
 
-    @Operation(
-            summary = "Get performance seat map",
-            description =
-                    "Returns the static seat map (venue layout, seat coordinates, grade and price) for a performance.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")})
+    @Operation(summary = "회차 좌석 배치도 조회", description = "회차의 정적 좌석 배치도(공연장 레이아웃, 좌석 좌표, 등급, 가격)를 반환합니다.")
     @GetMapping("/{performanceId}/seat-map")
     public ApiResponse<GetPerformanceSeatMapUseCase.Output> getSeatMap(
-            @Parameter(description = "Performance ID", example = "1") @PathVariable @Positive
-                    final Long performanceId) {
+            @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId) {
         final GetPerformanceSeatMapUseCase.Input input = new GetPerformanceSeatMapUseCase.Input(performanceId);
         return ApiResponse.success(getPerformanceSeatMapUseCase.execute(input));
     }
 
-    @Operation(summary = "Get seat availability by grade", description = "Returns available seat counts by grade.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")})
+    @Operation(summary = "등급별 잔여석 조회", description = "등급별 잔여석 수를 반환합니다.")
     @GetMapping("/{performanceId}/seats/availability")
     public ApiResponse<GetSeatAvailabilityUseCase.Output> getSeatAvailability(
-            @Parameter(description = "Performance ID", example = "1") @PathVariable @Positive
-                    final Long performanceId) {
+            @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId) {
         final GetSeatAvailabilityUseCase.Input input = new GetSeatAvailabilityUseCase.Input(performanceId);
         return ApiResponse.success(getSeatAvailabilityUseCase.execute(input));
     }
 
-    @Operation(summary = "Get seat status", description = "Returns current seat status for a performance.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Success")})
+    @Operation(summary = "좌석 상태 조회", description = "회차의 현재 좌석 상태를 반환합니다.")
     @GetMapping("/{performanceId}/seats/status")
     public ApiResponse<GetSeatStatusUseCase.Output> getSeatStatus(
-            @Parameter(description = "Performance ID", example = "1") @PathVariable @Positive final Long performanceId,
+            @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId,
             // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
-            @Parameter(description = "Admission token issued by Queue Server")
+            @Parameter(description = "Queue Server가 발급한 admission token")
                     @RequestHeader(value = "X-Admission-Token", required = false)
                     final String admissionToken,
             @Parameter(hidden = true) final AuthenticatedMember member) {
