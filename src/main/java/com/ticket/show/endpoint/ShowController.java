@@ -145,6 +145,7 @@ public class ShowController {
 
             ## 정렬 옵션
             - `popular` (기본값) - 조회순 (조회수 높은 순)
+            - `latest` - 최신순 (생성일 최신순)
             - `showStartApproaching` - 공연 임박순 (공연 시작일 가까운 순)
             """)
     @GetMapping("/api/v1/shows/search")
@@ -152,7 +153,7 @@ public class ShowController {
             @ParameterObject final ShowSearchRequest request,
             @Parameter(description = "한 번에 조회할 개수 (기본값: 20)") @RequestParam(defaultValue = "20") @Positive
                     final int size,
-            @Parameter(description = "정렬 기준 [popular(조회순), showStartApproaching(공연임박순)]")
+            @Parameter(description = "정렬 기준 [popular(조회순), latest(최신순), showStartApproaching(공연임박순)]")
                     @RequestParam(defaultValue = "popular")
                     final String sort) {
         final SearchShowsUseCase.Input input =
