@@ -15,11 +15,10 @@ import com.ticket.booking.order.domain.OrderState;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 주문 취소의 booking local DB 쓰기만 담당한다. {@link CancelOrderUseCase}가 member 공개 API를 트랜잭션 밖에서 호출한 뒤, 이 component가 짧은 쓰기 트랜잭션
- * 안에서 pending 주문 조회와 취소만 수행한다.
+ * 주문 취소의 booking local DB 쓰기만 담당한다. 짧은 쓰기 트랜잭션 안에서 pending 주문 조회와 취소만 수행하고, {@link CancelOrderUseCase}는 여기에 위임만 한다.
  *
- * <p>package-private component로 분리한 이유는 self-invocation을 피하기 위해서다. 같은 클래스 안에서 이 method를 호출하면 {@code @Transactional}
- * proxy가 적용되지 않는다 ({@link BookingAvailabilityChecker}와 같은 이유).
+ * <p>같은 클래스 안에서 {@code @Transactional} method를 호출하면 proxy가 적용되지 않는다 ({@link BookingAvailabilityChecker}와 같은 이유). 그래서
+ * 트랜잭션 경계를 이 component가 갖는다.
  */
 @Component
 @RequiredArgsConstructor

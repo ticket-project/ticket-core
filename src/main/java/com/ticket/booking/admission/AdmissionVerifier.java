@@ -5,8 +5,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * 대기열 입장 자격을 검증하는 booking의 출력 포트다(원래 별도 admission module의 공개 계약이었다).
  *
- * <p>호출자는 회차가 대기열 입장을 요구하는지 스스로 판단한 뒤에만 이 method를 호출한다. 토큰이 어떤 형식이고 어떻게 서명·해석되는지는 {@code infrastructure.admission} 구현만
- * 안다.
+ * <p>호출자는 회차가 대기열 입장을 요구하는지 스스로 판단한 뒤에만 이 method를 호출한다. 토큰이 어떤 형식이고 어떻게 서명·해석되는지는 {@code JwtAdmissionVerifier} 구현만 안다.
  */
 public interface AdmissionVerifier {
     /**
