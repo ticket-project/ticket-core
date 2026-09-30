@@ -23,9 +23,6 @@ public class SwaggerConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")))
-                .info(new Info()
-                        .title("ticket API")
-                        .description("API for managing ticket")
-                        .version("1.0"));
+                .info(new Info().title("ticket API").description("공연 티켓 예매 API").version("1.0"));
     }
 }
