@@ -5,20 +5,7 @@ package com.ticket.show.domain.show;
  * 판단한다({@code docs/glossary.md}의 Show 정의) — 이 enum은 목록·검색·상세에 쓰이는 표시 전용 값이다.
  */
 public enum SaleDisplayStatus {
-    BEFORE_OPEN("예매 오픈 전"),
-    ON_SALE("예매중"),
-    CLOSED("예매 종료");
-    private final String description;
-
-    SaleDisplayStatus(final String description) {
-        this.description = description;
-    }
-
-    public String getCode() {
-        return name();
-    }
-
-    public String getDescription() {
-        return description;
-    }
+    BEFORE_OPEN,
+    ON_SALE,
+    CLOSED
 }
