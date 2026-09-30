@@ -18,7 +18,6 @@ public record SeatStatusEvent(
         SELECTED,
         DESELECTED,
         HELD,
-        RELEASED,
-        RESERVED
+        RELEASED
     }
 }
