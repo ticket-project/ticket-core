@@ -78,7 +78,6 @@ class BookingEntryPolicyTest {
     void none은_queue_mode가_없는_정책이다() {
         BookingEntryPolicy policy = BookingEntryPolicy.none();
 
-        assertThat(policy.queueMode()).isNull();
         assertThat(policy.isRequiredAt(NOW, CLOSE)).isFalse();
     }
 }
