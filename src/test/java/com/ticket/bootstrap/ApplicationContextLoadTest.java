@@ -27,7 +27,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
     private ApplicationContext context;
 
     @Test
-    void 실행_모듈이_네_모듈을_한_컨텍스트로_조립한다() {
+    void 실행_모듈이_예매_핵심_빈을_한_컨텍스트로_조립한다() {
         assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
         assertThat(context.getBean(OrderRepository.class)).isNotNull();
         assertThat(context.getBean(DistributedLock.class)).isNotNull();
