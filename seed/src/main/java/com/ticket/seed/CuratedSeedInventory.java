@@ -58,10 +58,6 @@ final class CuratedSeedInventory {
         return new CuratedSeedInventory(tables);
     }
 
-    List<TableInventory> tables() {
-        return tables;
-    }
-
     Decision decision() {
         if (tables.stream().allMatch(table -> table.state() == TableState.EMPTY)) {
             return Decision.LOAD;
