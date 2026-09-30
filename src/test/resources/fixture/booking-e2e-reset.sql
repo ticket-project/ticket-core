@@ -19,7 +19,7 @@ DELETE FROM shows;
 DELETE FROM seats;
 DELETE FROM venues;
 
--- 회원은 테스트마다 새 이메일로 가입하므로 남겨도 되지만, 소셜 계정까지 쌓이면
+-- 회원은 테스트마다 새 소셜 회원을 발급하므로 남겨도 되지만, 소셜 계정까지 쌓이면
 -- 이메일 중복 판정이 흐려진다. 함께 지운다.
 DELETE FROM member_social_accounts;
 DELETE FROM members;

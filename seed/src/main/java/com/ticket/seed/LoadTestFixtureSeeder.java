@@ -15,8 +15,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * 로컬 부하 테스트 전용 회차·좌석 데이터를 만든다.
  *
- * <p>운영 Oracle의 {@code scripts/core-capacity/create-core-capacity-data.sql}과 같은 고정 ID 대역을 쓴다. 그래야 Gatling Console이 고정해서
- * 넘기는 좌석 시작 ID와 회차 배정표를 대상만 바꿔 그대로 쓸 수 있다.
+ * <p>운영 Oracle의 {@code gatling-test} 저장소 {@code scripts/core-capacity/create-core-capacity-data.sql}과 같은 고정 ID 대역을 쓴다.
+ * 그래야 Gatling Console이 고정해서 넘기는 좌석 시작 ID와 회차 배정표를 대상만 바꿔 그대로 쓸 수 있다.
  *
  * <p>공용 시드({@link CuratedSeedLoader})가 먼저 실행돼 GRADES에 VIP/R/S/A code를 만들어 두면 이 시더는 그 code를 재사용한다 — 같은 code로 GRADES row를
  * 중복 생성하지 않는다.
