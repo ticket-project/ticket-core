@@ -51,7 +51,6 @@ public class ShowController {
             공연 ID로 상세 정보를 조회합니다.
             출연자, 장르, 좌석 등급/가격, 공연 회차 등 모든 정보를 포함합니다.
             """)
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/api/v1/shows/{id}")
     public ApiResponse<GetShowDetailUseCase.Output> getShowDetail(
             @Parameter(description = "공연 ID", example = "1") @PathVariable @Positive final Long id) {
@@ -72,7 +71,6 @@ public class ShowController {
             - `latest` - 최신순 (생성일 최신순)
             - `showStartApproaching` - 공연 임박순 (공연 시작일 가까운 순)
             """)
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/api/v1/shows")
     public ApiResponse<SliceResponse<GetShowsUseCase.ShowResponse>> getShowsPage(
             @ParameterObject final ShowListRequest request,
@@ -89,7 +87,6 @@ public class ShowController {
     }
 
     @Operation(summary = "메인 홈 최신 공연 목록 조회", description = "특정 카테고리의 최신 등록된 공연 10개를 조회합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/api/v1/shows/latest")
     public ApiResponse<GetLatestShowsUseCase.Output> getLatestShows(
             @Parameter(description = "카테고리", example = "CONCERT") @RequestParam(defaultValue = "CONCERT")
@@ -99,7 +96,6 @@ public class ShowController {
     }
 
     @Operation(summary = "메인 홈 오픈예정 공연 목록 조회", description = "특정 카테고리의 예매오픈마감 임박 순 공연 5개를 조회합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/api/v1/shows/sale-opening-soon")
     public ApiResponse<GetSaleOpeningSoonShowsUseCase.Output> getShowsSaleOpeningSoon(
             @Parameter(description = "카테고리", example = "CONCERT") @RequestParam(defaultValue = "CONCERT")
@@ -122,7 +118,6 @@ public class ShowController {
             - `saleStartApproaching` (기본값) - 판매 시작일 오름차순
             - `popular` - 인기순 (조회수 높은 순)
             """)
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/api/v1/shows/sale-opening-soon/page")
     public ApiResponse<SliceResponse<GetSaleOpeningSoonShowsPageUseCase.ShowResponse>> getShowsSaleOpeningSoonPage(
             @ParameterObject final SaleOpeningSoonRequest request,
@@ -152,7 +147,6 @@ public class ShowController {
             - `popular` (기본값) - 조회순 (조회수 높은 순)
             - `showStartApproaching` - 공연 임박순 (공연 시작일 가까운 순)
             """)
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검색 성공")})
     @GetMapping("/api/v1/shows/search")
     public ApiResponse<SliceResponse<SearchShowsUseCase.ShowResponse>> searchShows(
             @ParameterObject final ShowSearchRequest request,
@@ -172,7 +166,6 @@ public class ShowController {
             필터 조건에 맞는 공연 개수만 조회합니다.
             필터 변경 시 실제 데이터 없이 개수만 빠르게 확인할 때 사용합니다.
             """)
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/api/v1/shows/search/count")
     public ApiResponse<CountSearchShowsUseCase.Output> countSearchShows(
             @ParameterObject final ShowSearchRequest request) {
