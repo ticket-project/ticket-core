@@ -11,16 +11,14 @@ import com.ticket.show.exception.UnsupportedShowSortException;
  * 구현은 이 타입만 주고받고, 문자열로 다시 되돌아가지 않는다.
  */
 public enum ShowSort {
-    POPULAR("popular", "인기순"),
-    LATEST("latest", "최신순"),
-    SHOW_START_APPROACHING("showStartApproaching", "공연 임박순"),
-    SALE_START_APPROACHING("saleStartApproaching", "판매 오픈 임박순");
+    POPULAR("popular"),
+    LATEST("latest"),
+    SHOW_START_APPROACHING("showStartApproaching"),
+    SALE_START_APPROACHING("saleStartApproaching");
     private final String apiValue;
-    private final String description;
 
-    ShowSort(final String apiValue, final String description) {
+    ShowSort(final String apiValue) {
         this.apiValue = apiValue;
-        this.description = description;
     }
 
     public static ShowSort from(final String apiValue) {
@@ -50,9 +48,5 @@ public enum ShowSort {
 
     public String apiValue() {
         return apiValue;
-    }
-
-    public String getDescription() {
-        return description;
     }
 }
