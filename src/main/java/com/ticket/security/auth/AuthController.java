@@ -74,7 +74,6 @@ public class AuthController {
     }
 
     @Operation(summary = "소셜 로그인 URL 조회", description = "Google, Kakao 소셜 로그인 진입 URL을 반환합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")})
     @GetMapping("/social/urls")
     public ApiResponse<Map<String, String>> getSocialLoginUrls() {
         final String baseUrl =
