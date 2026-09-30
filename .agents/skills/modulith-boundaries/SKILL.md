@@ -20,4 +20,4 @@ description: ticket-core의 모듈 의존, NamedInterface 공개면, package-inf
 
 ## Verification
 
-[testing.md](../../../docs/testing.md#변경별-검증)를 기준으로 `architectureTest`와 관련 모듈 테스트부터 선택한다. 모듈 간 빈 이동이면 컨텍스트 검증까지 넓힌다. 검증 실행·보고는 [verify](../verify/SKILL.md)를 따른다.
+[testing.md](../../../docs/testing.md#변경별-검증)를 기준으로 `architectureTest`와 관련 모듈 테스트부터 선택한다. 모듈 간 빈 이동이면 컨텍스트 검증까지 넓힌다. 검증 실행·보고도 testing.md를 따른다.

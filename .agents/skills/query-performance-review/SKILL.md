@@ -17,8 +17,8 @@ description: ticket-core의 JPA·Querydsl·SQL 조회에서 N+1, index, paginati
 - WHERE·join·GROUP BY/DISTINCT·ORDER BY·null·LIKE escaping·커서 tie breaker를 전후 대조해 정확성을 먼저 보존한다.
 - 저장 구현은 자기 모듈 데이터를 조회하고 다른 모듈 결과 조합은 use case의 공개 API에서 한다. N+1 해소를 다른 모듈 entity 직접 join으로 해결하지 않는다.
 - 자기 모듈의 승인된 조회 Repository 호출을 불필요한 1:1 port/adapter로 감싸지 않는다. 새 조회 공개면은 구조 테스트와 [modulith-boundaries](../modulith-boundaries/SKILL.md)를 대조한다.
-- index·schema 변경은 [database-change](../database-change/SKILL.md), 성능 측정용 부하 실행은 명시 요청 시 [loadtest](../loadtest/SKILL.md)를 따른다.
+- index·schema 변경은 [database-change](../database-change/SKILL.md), 성능 측정용 부하 실행은 명시 요청 시 [Core 부하 검증](../../../docs/testing.md#core-부하-검증)을 따른다.
 
 ## Verification
 
-검토만 했다면 확인한 코드·SQL·측정 근거와 미확인 가설을 보고한다. 쿼리를 수정했다면 관련 persistence/조회 테스트로 결과·정렬·페이지·query 수를 확인하고 구조 영향에 따라 넓힌다. [testing.md](../../../docs/testing.md#변경별-검증)와 [verify](../verify/SKILL.md)를 따른다.
+검토만 했다면 확인한 코드·SQL·측정 근거와 미확인 가설을 보고한다. 쿼리를 수정했다면 관련 persistence/조회 테스트로 결과·정렬·페이지·query 수를 확인하고 구조 영향에 따라 넓힌다. [testing.md](../../../docs/testing.md#변경별-검증)를 따른다.

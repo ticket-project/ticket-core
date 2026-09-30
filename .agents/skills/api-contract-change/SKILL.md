@@ -20,4 +20,4 @@ description: ticket-core의 endpoint, request/response, 오류 code·HTTP 상태
 
 ## Verification
 
-실제 해당 Controller/오류 계약 테스트와 새로 달라진 분기부터 확인한다. 구조 영향은 `architectureTest`, 모듈 조합 영향은 관련 통합/E2E로 넓힌다. 선택·실행·보고 기준은 [testing.md](../../../docs/testing.md#변경별-검증)와 [verify](../verify/SKILL.md)를 따른다.
+실제 해당 Controller/오류 계약 테스트와 새로 달라진 분기부터 확인한다. 구조 영향은 `architectureTest`, 모듈 조합 영향은 관련 통합/E2E로 넓힌다. 선택·실행·보고 기준은 [testing.md](../../../docs/testing.md#변경별-검증)를 따른다.
