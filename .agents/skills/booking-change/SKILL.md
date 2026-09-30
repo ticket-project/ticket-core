@@ -21,4 +21,4 @@ description: ticket-core의 selection·hold·order·ticket, 판매/진입 정책
 
 ## Verification
 
-[testing.md](../../../docs/testing.md#변경별-검증)를 기준으로 바뀐 분기의 단위 테스트부터 시작한다. Redis·이벤트·모듈 연결에 닿으면 관련 integration·Scenario·예매 E2E로 넓힌다. 실행과 미검증 범위 보고는 [verify](../verify/SKILL.md)를 따른다. 부하 실행이 필요하면 별도 요청 범위의 [loadtest](../loadtest/SKILL.md)로 연결한다.
+[testing.md](../../../docs/testing.md#변경별-검증)를 기준으로 바뀐 분기의 단위 테스트부터 시작한다. Redis·이벤트·모듈 연결에 닿으면 관련 integration·Scenario·예매 E2E로 넓힌다. 실행과 미검증 범위 보고도 testing.md를 따른다. 부하 실행은 명시적으로 요청된 범위에서 [Core 부하 검증](../../../docs/testing.md#core-부하-검증) 기준을 적용한다.

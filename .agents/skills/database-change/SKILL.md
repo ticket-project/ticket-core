@@ -20,4 +20,4 @@ description: ticket-core의 Flyway migration, JPA 매핑, schema·index·constra
 
 ## Verification
 
-[testing.md](../../../docs/testing.md#변경별-검증)에 따라 해당 slicing/변경 테스트와 H2·Oracle 호환 범위를 선택한다. DB 테스트는 운영 migration을 적용하는 `@MigratedSchema` 기준을 따른다. Oracle/Docker 미실행은 미검증으로 보고하며 실행·결과 정리는 [verify](../verify/SKILL.md)를 따른다.
+[testing.md](../../../docs/testing.md#변경별-검증)에 따라 해당 slicing/변경 테스트와 H2·Oracle 호환 범위를 선택한다. DB 테스트는 운영 migration을 적용하는 `@MigratedSchema` 기준을 따른다. Oracle/Docker 미실행은 미검증으로 보고하며 실행·결과 정리도 testing.md를 따른다.

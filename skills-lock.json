@@ -5,43 +5,31 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/api-contract-change/SKILL.md",
-      "computedHash": "9ee8b39a355ecff10c9143013eebb16341e7bdc18f31aae3bddcf6ebe35252b7"
+      "computedHash": "6bc60d707f588830012d5111776d605db3e73d9736e34427293279abf2c8909a"
     },
     "booking-change": {
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/booking-change/SKILL.md",
-      "computedHash": "1c30683c355d30074b5916a755fc4fb466dad46377f48acca59bbf157371e8ab"
+      "computedHash": "9629a98f290f2b256692f6896fe886b8a08e3ff7a045fdd39c62e4c137e5a890"
     },
     "database-change": {
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/database-change/SKILL.md",
-      "computedHash": "c755232715bbccb96c75585b5a7d3742ad50352314b38bd1f89b2d356854b462"
-    },
-    "loadtest": {
-      "source": "ticket-core",
-      "sourceType": "repo-local",
-      "path": ".agents/skills/loadtest/SKILL.md",
-      "computedHash": "1aa40298b09e4d3223858cb1b1050c45185ca99cfcb46de01a40d56fa229dc2e"
+      "computedHash": "0ad43dc79ac145cae77b8debcbdaeab60e6521bfb64f481eabec43c5eb64a7fa"
     },
     "modulith-boundaries": {
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/modulith-boundaries/SKILL.md",
-      "computedHash": "c15dd16b7140c96496b1959034304ba33cb7e1322c98e521a0146379e799c389"
+      "computedHash": "41104c24075713abfca0a9ea6302147f7223fa4af799ca14c60deb6f5a5cec59"
     },
     "query-performance-review": {
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/query-performance-review/SKILL.md",
-      "computedHash": "541b31d418b14ccf04d314c2c3745cca9de14e87c92ae91646c365b4e0df4bf6"
-    },
-    "verify": {
-      "source": "ticket-core",
-      "sourceType": "repo-local",
-      "path": ".agents/skills/verify/SKILL.md",
-      "computedHash": "df3bd1a15f7fb1d546964794234c5f14c6d6d8accc780a3d378516e2ac73be37"
+      "computedHash": "d003b93fa352b5f9f9bc05562847c1614486fd4beb5715158ba95c0c2136c636"
     }
   }
 }
