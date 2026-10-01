@@ -117,6 +117,21 @@ class SeatSelectionCoordinatorTest {
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
     }
 
+    @Test
+    void 주문_시작_후_선택을_해제해도_hold된_좌석은_발행하지_않는다() {
+        givenPerformanceSeat();
+        when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
+        when(holdRegistry.isHeld(10L, 20L)).thenAnswer(invocation -> {
+            assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
+            return true;
+        });
+
+        coordinator.deselect(10L, 20L, 1L);
+
+        verify(seatSelectionService).deselect(10L, 20L, 1L);
+        verifyNoInteractions(seatEventPublisher);
+    }
+
     /** 이미 만료된 선택을 해제 요청해도 아무 일도 일어나지 않았으므로 알리지 않는다. */
     @Test
     void 실제로_해제되지_않았으면_발행하지_않는다() {
