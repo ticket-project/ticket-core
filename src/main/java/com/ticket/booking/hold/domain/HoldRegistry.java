@@ -26,8 +26,9 @@ public class HoldRegistry {
             final LocalDateTime now) {
         final Hold hold = Hold.create(generateHoldKey(), memberId, performanceId, requestedSeatIds, now, ttl);
 
-        ensureSeatsNotHeld(performanceId, requestedSeatIds);
-        holdStore.save(hold, ttl);
+        if (!holdStore.saveIfAbsent(hold, ttl)) {
+            throw new SeatAlreadyHeldException();
+        }
         return hold;
     }
 
@@ -46,13 +47,5 @@ public class HoldRegistry {
 
     private String generateHoldKey() {
         return "HOLD-" + UUID.randomUUID().toString().replace("-", "");
-    }
-
-    private void ensureSeatsNotHeld(final Long performanceId, final List<Long> seatIds) {
-        for (final Long seatId : seatIds) {
-            if (isHeld(performanceId, seatId)) {
-                throw new SeatAlreadyHeldException();
-            }
-        }
     }
 }

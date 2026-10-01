@@ -2,7 +2,6 @@ package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,12 +56,15 @@ class RedissonHoldStoreTest {
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
 
+        when(seat10.setIfAbsent("hold-key", ttl)).thenReturn(true);
+        when(seat20.setIfAbsent("hold-key", ttl)).thenReturn(true);
+
         // when
-        redissonHoldStore.save(hold, ttl);
+        assertThat(redissonHoldStore.saveIfAbsent(hold, ttl)).isTrue();
 
         // then
-        verify(seat10).set("hold-key", ttl);
-        verify(seat20).set("hold-key", ttl);
+        verify(seat10).setIfAbsent("hold-key", ttl);
+        verify(seat20).setIfAbsent("hold-key", ttl);
         verify(meta).set("hold-key", ttl);
         verify(holdSeatIndex).add(10L, ttl.toMillis(), TimeUnit.MILLISECONDS);
         verify(holdSeatIndex).add(20L, ttl.toMillis(), TimeUnit.MILLISECONDS);
@@ -87,14 +89,15 @@ class RedissonHoldStoreTest {
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        doThrow(new RuntimeException("boom")).when(seat20).set("hold-key", ttl);
+        when(seat10.setIfAbsent("hold-key", ttl)).thenReturn(true);
+        when(seat20.setIfAbsent("hold-key", ttl)).thenThrow(new RuntimeException("boom"));
         // 보상은 소유 키를 확인하고 지운다.
         when(seat10.get()).thenReturn("hold-key");
         when(seat20.get()).thenReturn(null);
 
         // when
         // then
-        assertThatThrownBy(() -> redissonHoldStore.save(hold, ttl))
+        assertThatThrownBy(() -> redissonHoldStore.saveIfAbsent(hold, ttl))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hold Redis");
 

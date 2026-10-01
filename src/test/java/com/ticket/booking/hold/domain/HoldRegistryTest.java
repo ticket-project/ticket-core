@@ -2,6 +2,8 @@ package com.ticket.booking.hold.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,7 +37,7 @@ class HoldRegistryTest {
 
     @Test
     void 이미_hold된_좌석이_있으면_seatAlreadyHold예외를_던진다() {
-        when(holdStore.isHeld(1L, 10L)).thenReturn(true);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5)))).thenReturn(false);
 
         assertThatThrownBy(() -> holdRegistry.createHold(1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
                 .isInstanceOf(SeatAlreadyHeldException.class);
@@ -44,6 +46,7 @@ class HoldRegistryTest {
     @Test
     void hold를_생성하면_snapshot을_저장하고_반환한다() {
         Duration ttl = Duration.ofMinutes(5);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(ttl))).thenReturn(true);
 
         Hold hold = holdRegistry.createHold(7L, 1L, List.of(10L, 20L), ttl, FIXED_NOW);
 
@@ -52,12 +55,13 @@ class HoldRegistryTest {
         assertThat(hold.performanceId()).isEqualTo(1L);
         assertThat(hold.seatIds()).containsExactly(10L, 20L);
         assertThat(hold.expiresAt()).isEqualTo(FIXED_NOW.plus(ttl));
-        verify(holdStore).save(hold, ttl);
+        verify(holdStore).saveIfAbsent(hold, ttl);
     }
 
     /** 없어진 {@code HoldKeyGeneratorTest}가 고정하던 hold 키 형식이다. */
     @Test
     void hold키는_HOLD_접두사와_하이픈없는_uuid로_생성한다() {
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5)))).thenReturn(true);
         Hold hold = holdRegistry.createHold(7L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW);
 
         assertThat(hold.holdKey()).startsWith("HOLD-");
@@ -68,6 +72,7 @@ class HoldRegistryTest {
     void hold키를_두번_생성하면_서로_다르다() {
         List<Long> seatIds = List.of(10L);
         Duration ttl = Duration.ofMinutes(5);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(ttl))).thenReturn(true);
 
         Hold first = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
         Hold second = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
