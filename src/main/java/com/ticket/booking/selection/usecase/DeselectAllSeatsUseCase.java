@@ -4,6 +4,7 @@ import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,6 @@ public class DeselectAllSeatsUseCase {
             return Map.of();
         }
         return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, seatIds).stream()
-                .collect(java.util.stream.Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
+                .collect(Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
     }
 }
