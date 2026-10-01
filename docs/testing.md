@@ -153,8 +153,9 @@ ticket-core와 나란히 둔 `../gatling-test`에서 실행한다. 아래는 Cor
   지정해 잘못된 서버 호출을 막는다.
 - 연속 실행 전에 PENDING 주문 만료, hold TTL, 미완료 event publication, Queue entered marker가 정리됐는지
   확인한다.
-- 성능 목표는 현재 Core에 대해 승인된 값이 없어 **미정**이다. 테스트 시작 전에 대상 URL·사용자 수·투입 시간·
-  전용 performanceId와 판단 기준을 승인받는다. **운영 환경에는 직접 부하를 주지 않는다.**
+- 성능 목표(Queue 입장률)는 [Core 수용량](core-capacity.md)의 순서로 정하며 아직 확정값이 **없다**. 테스트 시작
+  전에 대상 URL·사용자 수·투입 시간·전용 performanceId와 판단 기준을 승인받는다. **운영 환경 부하는 그 문서의
+  수용량 측정에만**, 실사용자가 없는 시간에 전용 부하 회차로 준다.
 - 판정은 실패율·p95/p99·500 응답뿐 아니라 성공한 hold/order 수가 좌석 수를 넘지 않는지, admission 경로가
   맞는지까지 본다. DB pool·Redis 지연·executor backlog 같은 서버 지표는 운영 관측 지표와 함께 본다.
 - 측정 가정, 예시 값, 실제 결과, 승인된 운영 설정을 구분한다. 개별 결과는 원본 리포트와 Issue/PR에 남기고
