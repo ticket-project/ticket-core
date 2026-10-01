@@ -168,6 +168,13 @@ WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새
 조사가 필요하다. 동일 이벤트 재전달은 예상 경로이고, 그래서 후속 처리는 멱등하게 짠다(위 "주문 취소와 만료"의
 재전달 설명).
 
+탈퇴 회원 WebSocket 강제 종료와 `MemberWithdrawn` 이벤트는 제거했다. access token 인증은 회원 DB를
+보지 않으므로 탈퇴 후에도 토큰 만료 전 재접속이 가능하며, 주문 생성은 별도로 활성 회원을 확인한다.
+과거 `com.ticket.member.api.MemberWithdrawn` publication이 남아 있다면 배포 전 확인이 필요하다.
+일반 `AFTER_COMMIT` 리스너도 registry 저장 대상이며, JPA publication의 `eventType`은 `Class<?>`로
+읽힌다. 삭제된 클래스의 미완료 행을 조회하면 Hibernate 클래스 로딩에서 실패해 다른 이벤트의 재제출도
+막힐 수 있다. 운영 행의 존재는 별도 DB 확인이 필요하며, 이 정리 작업에서는 migration을 추가하지 않는다.
+
 ## TTL 폭주와 보정
 
 Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 핸들러 목록에 위임하고,
