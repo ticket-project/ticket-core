@@ -47,8 +47,7 @@ public class GetOrderDetailUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
         final List<TicketSeatResponse> seats =
                 order.getOrderSeats().stream().map(this::toTicketSeatResponse).toList();
-        final BigDecimal ticketAmount =
-                seats.stream().map(TicketSeatResponse::price).reduce(BigDecimal.ZERO, BigDecimal::add);
+        final BigDecimal ticketAmount = order.getTotalAmount();
         final long remainingSeconds = OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), now);
 
         return new Output(

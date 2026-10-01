@@ -76,12 +76,12 @@ class HoldRegistryTest {
     }
 
     @Test
-    void release는_중복좌석을_정렬해_전달한다() {
-        when(holdStore.release(1L, "hold-key", List.of(10L, 20L))).thenReturn(List.of(10L));
+    void release는_좌석_정규화를_store에_위임한다() {
+        when(holdStore.release(1L, "hold-key", List.of(20L, 10L, 10L))).thenReturn(List.of(10L));
 
         List<Long> releasedSeatIds = holdRegistry.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
-        verify(holdStore).release(1L, "hold-key", List.of(10L, 20L));
+        verify(holdStore).release(1L, "hold-key", List.of(20L, 10L, 10L));
         assertThat(releasedSeatIds).containsExactly(10L);
     }
 
