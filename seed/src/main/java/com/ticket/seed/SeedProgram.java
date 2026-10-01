@@ -36,7 +36,10 @@ final class SeedProgram {
         SeedConsole.info("  계정      : " + settings.jdbcUsername());
         SeedConsole.info("  시드 SQL  : " + settings.sqlPath());
         SeedConsole.info("  테스트 회원 : %d명".formatted(Math.max(0, settings.loadTestMemberCount())));
-        SeedConsole.info("  부하 회차  : %d개".formatted(Math.max(0, settings.loadTestPerformanceCount())));
+        SeedConsole.info("  부하 회차  : 2,000석 %d개, 15,000석 %d개"
+                .formatted(
+                        Math.max(0, settings.loadTestPerformanceCount()),
+                        Math.max(0, settings.largeLoadTestPerformanceCount())));
         SeedConsole.info("  배경 주문  : %,d건".formatted(Math.max(0, settings.backgroundOrderCount())));
 
         final DataSource dataSource;
@@ -73,7 +76,16 @@ final class SeedProgram {
             final SeedSettings settings) {
         return List.of(
                 new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
-                new LoadTestFixtureSeeder(jdbcTemplate, transactionTemplate, settings.loadTestPerformanceCount()),
+                new LoadTestFixtureSeeder(
+                        jdbcTemplate,
+                        transactionTemplate,
+                        LoadTestFixtureSeeder.STANDARD,
+                        settings.loadTestPerformanceCount()),
+                new LoadTestFixtureSeeder(
+                        jdbcTemplate,
+                        transactionTemplate,
+                        LoadTestFixtureSeeder.LARGE,
+                        settings.largeLoadTestPerformanceCount()),
                 new LoadTestMemberSeeder(jdbcTemplate, transactionTemplate, settings.loadTestMemberCount()),
                 new BackgroundOrderSeeder(
                         jdbcTemplate,

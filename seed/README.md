@@ -130,7 +130,8 @@ seedProd -Dseed.load-test-members.count=100
 | 작업 | 내용 | `seedLocal` 기본값 | `seedProd` 기본값 |
 | --- | --- | --- | --- |
 | 공용 시드 | `sql/kopis-curated.sql`의 카테고리·장르·공연자·공연장·공연·회차·좌석·등급·가격·회차좌석·판매정책 | 적재 | 적재 |
-| 부하 테스트 픽스처 | 고정 ID 대역(`910000001~`)의 전용 공연 1개, 회차, 전용 물리 좌석(회차당 2,000석) | 회차 8개 | **0개(만들지 않음)** |
+| 부하 테스트 픽스처(표준) | 고정 ID 대역(`910000001~`)의 전용 공연 1개, 회차, 전용 물리 좌석(회차당 2,000석) | 회차 8개 | **0개(만들지 않음)** |
+| 부하 테스트 픽스처(대형) | 고정 ID 대역(`920000001~`)의 전용 공연 1개, 회차, 전용 물리 좌석(회차당 15,000석, 체조경기장급). 수용량 측정 기준 | **0개** | **0개(만들지 않음)** |
 | 부하 테스트 회원 | `loadtest{n}@test.com` | 2,000명 | **0명(만들지 않음)** |
 | 배경 주문 이력 | 공용 회차에 나눠 붙이는 과거 주문(`ORDERS`·`ORDER_SEATS`). CONFIRMED·EXPIRED·CANCELED만 | **0건** | **0건** |
 
@@ -146,7 +147,8 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 | 프로퍼티 | 설명 |
 | --- | --- |
 | `seed.load-test-members.count` | 부하 테스트 회원 수 |
-| `seed.load-test-fixture.performance-count` | 부하 테스트 전용 회차 수(회차당 좌석 2,000행이 늘어난다) |
+| `seed.load-test-fixture.performance-count` | 표준 부하 회차 수(회차당 좌석 2,000행이 늘어난다) |
+| `seed.load-test-fixture.large-performance-count` | 대형 부하 회차 수(회차당 좌석 15,000행이 늘어난다) |
 | `seed.background-orders.count` | 배경 주문 수. 공용 회차마다 같은 수로 나눈다 |
 | `seed.batch-size` | 공용 시드 batch 크기 |
 | `seed.sql-path` | 공용 시드 SQL 경로 |
@@ -162,10 +164,12 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 (가정은 [Core 수용량](../docs/core-capacity.md)의 측정 조건이다).
 
 ```powershell
-.\gradlew.bat seedProd -Dseed.load-test-members.count=1000000 -Dseed.background-orders.count=5000000
+.\gradlew.bat seedProd -Dseed.load-test-members.count=1000000 -Dseed.background-orders.count=5000000 -Dseed.load-test-fixture.large-performance-count=20
 ```
 
-- **배경 주문은 공용 회차에만 붙는다.** 부하 픽스처 회차(`910000001~`)에 주문이 있으면 측정 사용자가 비즈니스 거절을 받는다.
+- 측정은 대형(15,000석) 회차로 한다. Queue batch는 회차마다 적용되므로 입장률은 가장 큰 회차에서도 버텨야 하고,
+  좌석 상태 응답은 좌석 수에 비례한다. 회차 20개는 사다리 7단계·좁히기·재실행분이다. 모자라면 숫자를 올려 다시 실행한다.
+- **배경 주문은 공용 회차에만 붙는다.** 부하 픽스처 회차(`910000001~`, `920000001~`)에 주문이 있으면 측정 사용자가 비즈니스 거절을 받는다.
 - **PENDING을 만들지 않는다.** 만료 worker가 배경 주문을 처리하면 측정과 무관한 쓰기가 섞인다.
 - **CONFIRMED는 RESERVED 좌석에만 붙는다.** RESERVED 좌석 하나에 확정 주문 하나다. 나머지는 만료 65%·취소 35%다.
 - 주문 ID는 `800000000000 + 회차ID × 100000 + n`이고 `created_by = 'LOAD_TEST_BACKGROUND'`다. 정리할 때 이 기준을 쓴다.
@@ -186,7 +190,9 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 
 - **공용 시드**: 시드 SQL의 리터럴 INSERT 개수에서 테이블별 기대 행 수를 계산해 전부 비교한다.
   전부 비었으면 적재하고, 전부 기대값과 같으면 건너뛴다.
-- **부하 테스트 픽스처**: 전용 공연(`shows.id = 910000001`)이 있으면 건너뛴다.
+- **부하 테스트 픽스처**: 공연장·공연·물리 좌석은 처음 한 번만 만들고, 회차는 요청 수까지 모자란 것만 더한다.
+  이미 있는 회차(쓴 회차 포함)는 건드리지 않는다. 더한 회차의 판매 기간은 더한 시각부터 30일이다.
+- **배경 주문**: 배경 주문이 이미 있는 회차는 건너뛴다.
 - **부하 테스트 회원**: 이미 있는 이메일만 건너뛰고 없는 것만 만든다.
 
 ### 일부만 적재된 상태
