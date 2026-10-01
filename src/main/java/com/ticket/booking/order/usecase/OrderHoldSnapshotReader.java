@@ -2,6 +2,7 @@ package com.ticket.booking.order.usecase;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +28,12 @@ public class OrderHoldSnapshotReader {
     public Optional<OrderHoldSnapshot> read(final Long orderId) {
         return orderRepository
                 .findById(orderId)
-                .map(order -> new OrderHoldSnapshot(order.getPerformanceId(), seatIdsOf(order), order.getExpiresAt()));
+                .map(order -> new OrderHoldSnapshot(
+                        order.getPerformanceId(),
+                        seatIdsOf(order),
+                        order.getExpiresAt(),
+                        order.getOrderSeats().stream()
+                                .collect(Collectors.toMap(OrderSeat::getSeatId, OrderSeat::getPerformanceSeatId))));
     }
 
     private List<Long> seatIdsOf(final Order order) {

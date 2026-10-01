@@ -55,7 +55,7 @@ StartBookingUseCase          (POST /api/v1/orders)
   -> DB 커밋 및 connection 반환
   -> BookingEventListeners.on(OrderStarted)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
-          (payload를 신뢰하지 않는다. 이후 Redis·WebSocket 작업은 DB connection을 쥐지 않는다)
+          (OrderSeat의 좌석 식별자 매핑도 담는다. 이후 좌석 락 안의 Redis·WebSocket 작업은 DB를 다시 읽지 않는다)
        -> HoldCreationCoordinator
             -> 주문 회원 소유 selection만 해제 (Redis)
             -> HELD 상태 발행             (WebSocket)
@@ -144,6 +144,7 @@ CancelOrderUseCase / ExpireOrderUseCase
   -> DB 커밋 및 connection 반환
   -> BookingEventListeners.on(OrderTerminated) (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
+          (seatId→performanceSeatId 매핑도 담아 좌석 락 안에서 DB를 재조회하지 않는다)
        -> HoldReleaseCoordinator
             -> 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
             -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket)
