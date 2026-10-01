@@ -40,7 +40,9 @@ final class SeedPreconditions {
             "PERFORMANCE_GRADES",
             "PERFORMANCE_SEATS",
             "BOOKING_PERFORMANCE_SALES_POLICIES",
-            "MEMBERS");
+            "MEMBERS",
+            "ORDERS",
+            "ORDER_SEATS");
 
     /**
      * 회원 적재가 쓰는 {@code MEMBERS} 컬럼이다. 앱의 회원 매핑이 바뀌면 여기서 먼저 드러난다 — {@link LoadTestMemberSeeder}의 INSERT가 조용히 어긋나는 것보다

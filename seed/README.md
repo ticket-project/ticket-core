@@ -124,14 +124,15 @@ seedProd -Dseed.load-test-members.count=100
 
 ### 적재하는 것
 
-작업은 셋이고 순서가 곧 계약이다(공용 시드가 먼저 `GRADES` 코드를 만들고 부하 픽스처가 그것을
-재사용한다). 작업마다 자기 트랜잭션이 있고, 앞 작업이 실패하면 뒤 작업은 실행하지 않는다.
+작업은 넷이고 순서가 곧 계약이다(공용 시드가 먼저 `GRADES` 코드를 만들고 부하 픽스처가 그것을
+재사용한다. 배경 주문은 공용 회차와 회원을 읽으므로 맨 끝이다). 작업마다 자기 트랜잭션이 있고, 앞 작업이 실패하면 뒤 작업은 실행하지 않는다.
 
 | 작업 | 내용 | `seedLocal` 기본값 | `seedProd` 기본값 |
 | --- | --- | --- | --- |
 | 공용 시드 | `sql/kopis-curated.sql`의 카테고리·장르·공연자·공연장·공연·회차·좌석·등급·가격·회차좌석·판매정책 | 적재 | 적재 |
 | 부하 테스트 픽스처 | 고정 ID 대역(`910000001~`)의 전용 공연 1개, 회차, 전용 물리 좌석(회차당 2,000석) | 회차 8개 | **0개(만들지 않음)** |
 | 부하 테스트 회원 | `loadtest{n}@test.com` | 2,000명 | **0명(만들지 않음)** |
+| 배경 주문 이력 | 공용 회차에 나눠 붙이는 과거 주문(`ORDERS`·`ORDER_SEATS`). CONFIRMED·EXPIRED·CANCELED만 | **0건** | **0건** |
 
 부하 테스트 회원은 **비밀번호 없이** 만든다. 앱의 가입·로그인은 소셜(OAuth2) 전용이고, 형제 저장소
 `gatling-test`는 로그인 대신 회원 ID를 `sub`로 서명한 합성 access token(`JWT_SECRET`)을 쓴다. 회원 ID는
@@ -146,6 +147,7 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 | --- | --- |
 | `seed.load-test-members.count` | 부하 테스트 회원 수 |
 | `seed.load-test-fixture.performance-count` | 부하 테스트 전용 회차 수(회차당 좌석 2,000행이 늘어난다) |
+| `seed.background-orders.count` | 배경 주문 수. 공용 회차마다 같은 수로 나눈다 |
 | `seed.batch-size` | 공용 시드 batch 크기 |
 | `seed.sql-path` | 공용 시드 SQL 경로 |
 | `seed.jdbc-url` / `seed.jdbc-username` / `seed.jdbc-password` | **검증용 임시 DB에만 쓴다.** 지정하면 로컬 프로파일·환경변수 대신 이 값으로 접속한다 |
@@ -153,6 +155,29 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 ```powershell
 .\gradlew.bat seedLocal -Dseed.load-test-members.count=200
 ```
+
+### 운영 규모를 가정한 적재(회원 100만·주문 500만)
+
+빈 주문 테이블로 재면 인덱스가 없는 조회도 빠르게 보인다. 그래서 수용량 측정 전에 운영 규모를 가정한 이력을 넣는다
+(가정은 [Core 수용량](../docs/core-capacity.md)의 측정 조건이다).
+
+```powershell
+.\gradlew.bat seedProd -Dseed.load-test-members.count=1000000 -Dseed.background-orders.count=5000000
+```
+
+- **배경 주문은 공용 회차에만 붙는다.** 부하 픽스처 회차(`910000001~`)에 주문이 있으면 측정 사용자가 비즈니스 거절을 받는다.
+- **PENDING을 만들지 않는다.** 만료 worker가 배경 주문을 처리하면 측정과 무관한 쓰기가 섞인다.
+- **CONFIRMED는 RESERVED 좌석에만 붙는다.** RESERVED 좌석 하나에 확정 주문 하나다. 나머지는 만료 65%·취소 35%다.
+- 주문 ID는 `800000000000 + 회차ID × 100000 + n`이고 `created_by = 'LOAD_TEST_BACKGROUND'`다. 정리할 때 이 기준을 쓴다.
+- 회차 하나가 한 트랜잭션이다. 배경 주문이 이미 있는 회차는 건너뛰므로, 끊기면 같은 명령을 다시 실행해 이어 넣는다.
+  **처음 넣은 뒤 주문 수를 바꿔도 이미 넣은 회차는 그대로다.**
+- Oracle에서는 적재 뒤 `ORDERS`·`ORDER_SEATS`·`MEMBERS` 통계를 다시 모은다(`DBMS_STATS`).
+- 결제·티켓·선점 이력은 만들지 않는다. 측정 경로가 읽지 않는 테이블이다.
+- 넣기 전에 DB 남은 용량을 확인한다.
+
+규모 측정(2026-10-01, 개발 PC 임시 H2, 공용 시드 포함 전체 실행): 133초, 파일 4.1GB. 공용 회차 1,809개에
+주문 500만 건(CONFIRMED 31만·EXPIRED 305만·CANCELED 164만), 주문 좌석 700만 행이 들어갔다. 운영 Oracle은
+네트워크 왕복이 회차마다 세 번 있어 더 오래 걸리고, 용량도 H2와 다르다.
 
 ## 반복 실행
 

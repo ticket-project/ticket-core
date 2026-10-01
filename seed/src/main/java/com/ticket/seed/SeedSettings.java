@@ -30,7 +30,8 @@ record SeedSettings(
         Path sqlPath,
         int batchSize,
         int loadTestMemberCount,
-        int loadTestPerformanceCount) {
+        int loadTestPerformanceCount,
+        int backgroundOrderCount) {
     /** 로컬 프로파일의 회원 2,000명·부하 테스트 회차 8개를 기본 동작으로 삼는다. */
     static final int DEFAULT_LOAD_TEST_MEMBER_COUNT = 2000;
 
@@ -61,7 +62,8 @@ record SeedSettings(
                 resolveSqlPath(projectDir),
                 intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
                 memberCount,
-                intProperty("seed.load-test-fixture.performance-count", DEFAULT_LOAD_TEST_PERFORMANCE_COUNT));
+                intProperty("seed.load-test-fixture.performance-count", DEFAULT_LOAD_TEST_PERFORMANCE_COUNT),
+                intProperty("seed.background-orders.count", 0));
     }
 
     /** 운영 설정이다. 접속 정보는 환경변수에서만 온다. */
@@ -78,7 +80,8 @@ record SeedSettings(
                 resolveSqlPath(projectDir),
                 intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
                 memberCount,
-                intProperty("seed.load-test-fixture.performance-count", PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT));
+                intProperty("seed.load-test-fixture.performance-count", PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT),
+                intProperty("seed.background-orders.count", 0));
     }
 
     private static Path projectDir() {
