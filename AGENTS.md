@@ -27,6 +27,7 @@
 | 이름·코드 작성·용어 | [코드 작성 기준](docs/coding-guidelines.md), [용어집](docs/glossary.md) |
 | 예매 상태·선택·선점·실패 처리 | [예매 수명주기](docs/core-booking-lifecycle.md) |
 | 테스트 선택·결과 보고·부하 실행 | [테스트 기준](docs/testing.md) |
+| Core 수용량·Queue 입장률 측정 | [Core 수용량](docs/core-capacity.md) |
 | DB migration | [migration 규칙](src/main/resources/db/README.md) |
 | 초기 데이터 적재 | [seed](seed/README.md) |
 | 배포·프로파일·Redis 전환·관측 | [운영](docs/operations.md) |
