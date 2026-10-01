@@ -165,8 +165,53 @@ class SeedFastRunTest {
                 .hasExactlyElementsOfTypes(
                         CuratedSeedLoader.class,
                         LoadTestFixtureSeeder.class,
+                        LoadTestFixtureSeeder.class,
                         LoadTestMemberSeeder.class,
                         BackgroundOrderSeeder.class);
+    }
+
+    @Test
+    void 부하_회차는_요청_수까지_모자란_것만_더한다() {
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).isZero();
+        jdbcTemplate.update(
+                "UPDATE PERFORMANCE_SEATS SET state = 'RESERVED' WHERE performance_id = ?", FIXTURE_ID_BASE + 1);
+
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.load-test-fixture.performance-count", "3")))
+                .isZero();
+
+        assertThat(count(
+                        "PERFORMANCES",
+                        "id > " + FIXTURE_ID_BASE + " AND id < " + LoadTestFixtureSeeder.LARGE.idBase()))
+                .isEqualTo(3L);
+        assertThat(count("SEATS", "venue_id = " + (FIXTURE_ID_BASE + 1)))
+                .as("물리 좌석은 처음 한 번만 만든다")
+                .isEqualTo(LoadTestFixtureSeeder.SEAT_COUNT);
+        assertThat(count("PERFORMANCE_SEATS", "performance_id = " + (FIXTURE_ID_BASE + 1) + " AND state = 'RESERVED'"))
+                .as("이미 쓴 회차는 건드리지 않는다")
+                .isEqualTo(LoadTestFixtureSeeder.SEAT_COUNT);
+        assertThat(count("PERFORMANCE_SEATS", "performance_id = " + (FIXTURE_ID_BASE + 3) + " AND state = 'AVAILABLE'"))
+                .isEqualTo(LoadTestFixtureSeeder.SEAT_COUNT);
+    }
+
+    @Test
+    void 대형_부하_회차는_별도_대역에_15000석으로_만든다() {
+        final long largeBase = LoadTestFixtureSeeder.LARGE.idBase();
+
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.load-test-fixture.large-performance-count", "1")))
+                .isZero();
+
+        assertThat(count("SEATS", "venue_id = " + (largeBase + 1))).isEqualTo(15_000L);
+        assertThat(count("PERFORMANCE_SEATS", "performance_id = " + (largeBase + 1) + " AND state = 'AVAILABLE'"))
+                .isEqualTo(15_000L);
+        assertThat(count("PERFORMANCE_SEATS", "performance_id = " + (FIXTURE_ID_BASE + 1)))
+                .as("표준 회차는 그대로 2,000석이다")
+                .isEqualTo(LoadTestFixtureSeeder.SEAT_COUNT);
+        assertThat(count(
+                        "PERFORMANCE_SEATS ps JOIN PERFORMANCE_GRADES pg ON pg.id = ps.performance_grade_id"
+                                + " JOIN GRADES g ON g.id = pg.grade_id",
+                        "ps.performance_id = " + (largeBase + 1) + " AND g.code = 'VIP'"))
+                .as("등급 비율은 좌석 수와 무관하게 VIP 20%다")
+                .isEqualTo(3_000L);
     }
 
     @Test
@@ -186,7 +231,8 @@ class SeedFastRunTest {
         assertThat(count("ORDERS", "status = 'PENDING'"))
                 .as("만료 worker가 배경 주문을 건드리지 않게 한다")
                 .isZero();
-        assertThat(count("ORDER_SEATS", "order_id NOT IN (SELECT id FROM ORDERS)")).isZero();
+        assertThat(count("ORDER_SEATS", "order_id NOT IN (SELECT id FROM ORDERS)"))
+                .isZero();
         assertThat(count(
                         "ORDER_SEATS os",
                         "os.order_id IN (SELECT id FROM ORDERS WHERE status = 'CONFIRMED')"
@@ -194,7 +240,8 @@ class SeedFastRunTest {
                                 + " (SELECT id FROM PERFORMANCE_SEATS WHERE state = 'RESERVED')"))
                 .as("확정 주문은 RESERVED 좌석에만 붙는다")
                 .isZero();
-        assertThat(count("ORDER_SEATS", "performance_seat_id = " + reservedSeatId)).isPositive();
+        assertThat(count("ORDER_SEATS", "performance_seat_id = " + reservedSeatId))
+                .isPositive();
 
         assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.background-orders.count", "10")))
                 .isZero();

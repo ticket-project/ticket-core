@@ -15,19 +15,18 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * 부하 측정 전에 쌓여 있어야 할 과거 주문 이력({@code ORDERS}·{@code ORDER_SEATS})을 만든다.
  *
- * <p>빈 주문 테이블로 재면 인덱스가 없는 조회도 빠르게 보인다. 2026-10-01 로컬 측정에서 같은 부하·같은 풀인데 주문이 3.6천 건일 때 p95 체류 80ms, 1.4만 건일 때
- * 1,103ms였다. 그래서 운영 규모를 가정한 양을 미리 넣는다.
+ * <p>빈 주문 테이블로 재면 인덱스가 없는 조회도 빠르게 보인다. 2026-10-01 로컬 측정에서 같은 부하·같은 풀인데 주문이 3.6천 건일 때 p95 체류 80ms, 1.4만 건일 때 1,103ms였다.
+ * 그래서 운영 규모를 가정한 양을 미리 넣는다.
  *
  * <ul>
  *   <li><b>공용 회차에만 넣는다.</b> 부하 픽스처 회차({@link LoadTestFixtureSeeder#ID_BASE} 이상)에 주문이 있으면 측정 사용자가 비즈니스 거절을 받는다.
  *   <li><b>PENDING을 만들지 않는다.</b> 만료 worker가 배경 주문을 처리하기 시작하면 측정과 무관한 쓰기가 섞인다. CONFIRMED·EXPIRED·CANCELED만 쓴다.
- *   <li><b>CONFIRMED는 RESERVED 좌석에만 붙인다.</b> 회차 좌석 상태와 주문이 어긋나지 않게 RESERVED 좌석 하나에 확정 주문 하나다. 나머지는 아무 좌석이나
- *       만료·취소로 만든다.
+ *   <li><b>CONFIRMED는 RESERVED 좌석에만 붙인다.</b> 회차 좌석 상태와 주문이 어긋나지 않게 RESERVED 좌석 하나에 확정 주문 하나다. 나머지는 아무 좌석이나 만료·취소로 만든다.
  *   <li>회원은 활성 회원 전체에서 고르고, 회차마다 같은 수를 나눈다.
  * </ul>
  *
- * <p>ID는 {@code ORDER_ID_BASE + performanceId × ORDERS_PER_PERFORMANCE_LIMIT + n}으로 직접 정한다. 주문 좌석이 주문 ID를 알아야 하는데 identity를
- * 쓰면 되돌려 받을 방법이 없기 때문이다. 이 대역은 정리 기준도 된다({@code created_by = 'LOAD_TEST_BACKGROUND'}와 같다).
+ * <p>ID는 {@code ORDER_ID_BASE + performanceId × ORDERS_PER_PERFORMANCE_LIMIT + n}으로 직접 정한다. 주문 좌석이 주문 ID를 알아야 하는데
+ * identity를 쓰면 되돌려 받을 방법이 없기 때문이다. 이 대역은 정리 기준도 된다({@code created_by = 'LOAD_TEST_BACKGROUND'}와 같다).
  *
  * <p>회차 하나가 한 트랜잭션이다. 배경 주문이 이미 있는 회차는 건너뛰므로 중간에 끊겨도 다시 실행하면 이어서 넣는다.
  *
@@ -75,18 +74,18 @@ final class BackgroundOrderSeeder implements SeedTask {
                         WHERE p.id < ?
                         ORDER BY p.id
                         """,
-                (rs, rowNum) -> new PerformanceRow(
-                        rs.getLong(1), rs.getTimestamp(2), rs.getString(3), rs.getString(4)),
+                (rs, rowNum) -> new PerformanceRow(rs.getLong(1), rs.getTimestamp(2), rs.getString(3), rs.getString(4)),
                 LoadTestFixtureSeeder.ID_BASE);
         if (performances.isEmpty()) {
             throw new SeedFailure("배경 주문을 붙일 공용 회차가 없습니다. 공용 시드를 먼저 적재하세요.");
         }
 
-        final long[] memberIds = jdbcTemplate
-                .queryForList("SELECT id FROM MEMBERS WHERE deleted_at IS NULL ORDER BY id", Long.class)
-                .stream()
-                .mapToLong(Long::longValue)
-                .toArray();
+        final long[] memberIds =
+                jdbcTemplate
+                        .queryForList("SELECT id FROM MEMBERS WHERE deleted_at IS NULL ORDER BY id", Long.class)
+                        .stream()
+                        .mapToLong(Long::longValue)
+                        .toArray();
         if (memberIds.length == 0) {
             throw new SeedFailure("배경 주문에 쓸 활성 회원이 없습니다. -Dseed.load-test-members.count로 회원을 먼저 만드세요.");
         }
@@ -122,6 +121,9 @@ final class BackgroundOrderSeeder implements SeedTask {
             }
         }
 
+        if (created == 0) {
+            return Outcome.skipped("공용 회차 %d개에 배경 주문이 이미 있습니다. 중복 생성하지 않습니다.".formatted(skipped));
+        }
         return Outcome.done("공용 회차 %d개에 주문 %,d건을 새로 만들었습니다(이미 있던 회차 %d개는 건너뜀, 회원 %,d명 사용)."
                 .formatted(performances.size() - skipped, created, skipped, memberIds.length));
     }
@@ -153,8 +155,7 @@ final class BackgroundOrderSeeder implements SeedTask {
         }
 
         final Random random = new Random(performance.id());
-        final List<SeatRow> reserved =
-                seats.stream().filter(SeatRow::reserved).toList();
+        final List<SeatRow> reserved = seats.stream().filter(SeatRow::reserved).toList();
         final LocalDateTime now = LocalDateTime.now();
         final LocalDateTime startTime =
                 performance.startTime() == null ? now : performance.startTime().toLocalDateTime();
@@ -182,7 +183,8 @@ final class BackgroundOrderSeeder implements SeedTask {
             }
 
             // 주문은 공연 전에 생긴다. 앞으로 열릴 회차라도 지금보다 미래 시각은 쓰지 않는다.
-            LocalDateTime createdAt = startTime.minusDays(1 + random.nextInt(60)).minusSeconds(random.nextInt(86_400));
+            LocalDateTime createdAt =
+                    startTime.minusDays(1 + random.nextInt(60)).minusSeconds(random.nextInt(86_400));
             if (createdAt.isAfter(now)) {
                 createdAt = now.minusSeconds(1 + random.nextInt(86_400));
             }
