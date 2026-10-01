@@ -69,7 +69,7 @@ class RedissonHoldStoreIntegrationTest {
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
         final Hold hold = hold("hold-ok", List.of(10L, 20L));
 
-        store.save(hold, TTL);
+        store.saveIfAbsent(hold, TTL);
 
         assertThat(store.isHeldBy(PERFORMANCE_ID, 10L, "hold-ok")).isTrue();
         assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "hold-ok")).isTrue();
@@ -87,7 +87,7 @@ class RedissonHoldStoreIntegrationTest {
         doThrow(new IllegalStateException("hold meta write failed")).when(meta).set("hold-meta-fail", TTL);
         final RedissonHoldStore store = storeWithMeta("hold-meta-fail", meta);
 
-        assertThatThrownBy(() -> store.save(hold("hold-meta-fail", List.of(10L, 20L)), TTL))
+        assertThatThrownBy(() -> store.saveIfAbsent(hold("hold-meta-fail", List.of(10L, 20L)), TTL))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hold Redis");
 
@@ -105,7 +105,7 @@ class RedissonHoldStoreIntegrationTest {
                 .set("wrong-type", TTL);
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
 
-        assertThatThrownBy(() -> store.save(hold("hold-single", List.of(10L)), TTL))
+        assertThatThrownBy(() -> store.saveIfAbsent(hold("hold-single", List.of(10L)), TTL))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
@@ -126,7 +126,7 @@ class RedissonHoldStoreIntegrationTest {
                 .set("hold-conflict", TTL);
         final RedissonHoldStore store = storeWithMeta("hold-conflict", meta);
 
-        assertThatThrownBy(() -> store.save(hold("hold-conflict", List.of(10L, 20L)), TTL))
+        assertThatThrownBy(() -> store.saveIfAbsent(hold("hold-conflict", List.of(10L, 20L)), TTL))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
@@ -137,7 +137,7 @@ class RedissonHoldStoreIntegrationTest {
     @Test
     void 기존_JSON_메타를_읽지_않고_남의_좌석을_보존하며_반복_해제한다() {
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
-        store.save(hold("hold-legacy", List.of(10L, 20L)), TTL);
+        store.saveIfAbsent(hold("hold-legacy", List.of(10L, 20L)), TTL);
         redissonClient
                 .getBucket(HoldRedisKey.holdMeta("hold-legacy"), StringCodec.INSTANCE)
                 .set("{legacy-json}", TTL);
@@ -153,6 +153,20 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(metaExists("hold-legacy")).isFalse();
         assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
         assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactly(20L);
+    }
+
+    @Test
+    void 이미_잡힌_좌석과_충돌하면_남의_선점은_보존하고_앞서_쓴_좌석은_보상한다() {
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        assertThat(store.saveIfAbsent(hold("other-hold", List.of(20L)), TTL)).isTrue();
+
+        assertThat(store.saveIfAbsent(hold("new-hold", List.of(10L, 20L)), TTL)).isFalse();
+
+        assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
+        assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
+        assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactly(20L);
+        assertThat(metaExists("new-hold")).isFalse();
+        assertThat(metaExists("other-hold")).isTrue();
     }
 
     private RedissonHoldStore storeWithMeta(final String holdKey, final RBucket<Object> meta) {

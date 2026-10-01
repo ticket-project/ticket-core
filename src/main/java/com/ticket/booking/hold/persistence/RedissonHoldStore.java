@@ -36,18 +36,24 @@ public class RedissonHoldStore implements HoldStore {
      * <p>보상은 반드시 <b>소유 키를 확인하고</b> 지운다. TTL 만료 뒤 다른 요청이 같은 좌석을 새로 확보했을 수 있으므로, 값이 이 hold의 key일 때만 삭제한다.
      */
     @Override
-    public void save(final Hold hold, final Duration ttl) {
+    public boolean saveIfAbsent(final Hold hold, final Duration ttl) {
         final List<Long> touchedSeatIds = new ArrayList<>();
         try {
             final RSetCache<Long> holdSeatIndex = holdSeatIndex(hold.performanceId());
             for (final Long seatId : hold.seatIds()) {
                 touchedSeatIds.add(seatId);
-                seatBucket(hold.performanceId(), seatId).set(hold.holdKey(), ttl);
+                if (!seatBucket(hold.performanceId(), seatId).setIfAbsent(hold.holdKey(), ttl)) {
+                    // 충돌한 좌석에는 쓰지 않았으므로 인덱스 등록과 보상 대상에서 제외한다.
+                    touchedSeatIds.removeLast();
+                    rollback(hold, touchedSeatIds);
+                    return false;
+                }
                 holdSeatIndex.add(seatId, ttl.toMillis(), TimeUnit.MILLISECONDS);
             }
             redissonClient
                     .getBucket(HoldRedisKey.holdMeta(hold.holdKey()), StringCodec.INSTANCE)
                     .set(hold.holdKey(), ttl);
+            return true;
         } catch (final Exception e) {
             rollback(hold, touchedSeatIds);
             throw new IllegalStateException("hold Redis 저장에 실패했습니다.", e);
