@@ -69,11 +69,12 @@ public class SeatSelectionCoordinator {
         });
     }
 
-    /** 실제로 해제된 경우에만 알린다 — 이미 만료됐거나 없는 선택을 해제 요청했다고 해서 알림을 내보내지 않는다. */
+    /** 실제로 해제됐고 hold가 없는 경우에만 알린다. 주문 시작 후 남아 있던 선택을 해제해도 HELD 상태를 덮어쓰지 않는다. */
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
         distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
-            if (!seatSelectionService.deselect(performanceId, seatId, memberId)) {
+            if (!seatSelectionService.deselect(performanceId, seatId, memberId)
+                    || holdRegistry.isHeld(performanceId, seatId)) {
                 return;
             }
             seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
