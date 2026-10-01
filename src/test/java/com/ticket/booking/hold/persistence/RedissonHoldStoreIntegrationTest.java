@@ -2,8 +2,10 @@ package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.redisson.Redisson;
+import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
@@ -62,10 +65,8 @@ class RedissonHoldStoreIntegrationTest {
     }
 
     @Test
-    void 정상_저장이면_좌석키와_인덱스와_메타가_함께_남는다() {
-        final HoldMetaCodec codec = mock(HoldMetaCodec.class);
-        when(codec.encode(org.mockito.ArgumentMatchers.any())).thenReturn("{}");
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, codec);
+    void 정상_저장이면_좌석키와_인덱스와_holdKey_메타가_함께_남는다() {
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
         final Hold hold = hold("hold-ok", List.of(10L, 20L));
 
         store.save(hold, TTL);
@@ -73,19 +74,20 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(store.isHeldBy(PERFORMANCE_ID, 10L, "hold-ok")).isTrue();
         assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "hold-ok")).isTrue();
         assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactlyInAnyOrder(10L, 20L);
-        assertThat(metaExists("hold-ok")).isTrue();
+        assertThat(redissonClient
+                        .getBucket(HoldRedisKey.holdMeta("hold-ok"), StringCodec.INSTANCE)
+                        .get())
+                .isEqualTo("hold-ok");
     }
 
-    /** 메타데이터 기록이 실패하면 앞서 쓴 좌석 키와 인덱스가 모두 사라져야 한다 — 유령 점유가 남으면 그 좌석은 TTL이 끝날 때까지 아무도 살 수 없다. */
     @Test
     void 메타_기록이_실패하면_좌석키와_점유_인덱스가_남지_않는다() {
-        final HoldMetaCodec codec = mock(HoldMetaCodec.class);
-        when(codec.encode(org.mockito.ArgumentMatchers.any()))
-                .thenThrow(new IllegalStateException("hold meta encode failed"));
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, codec);
-        final Hold hold = hold("hold-meta-fail", List.of(10L, 20L));
+        final RBucket<Object> meta =
+                spy(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-meta-fail"), StringCodec.INSTANCE));
+        doThrow(new IllegalStateException("hold meta write failed")).when(meta).set("hold-meta-fail", TTL);
+        final RedissonHoldStore store = storeWithMeta("hold-meta-fail", meta);
 
-        assertThatThrownBy(() -> store.save(hold, TTL))
+        assertThatThrownBy(() -> store.save(hold("hold-meta-fail", List.of(10L, 20L)), TTL))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hold Redis");
 
@@ -95,44 +97,68 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(metaExists("hold-meta-fail")).isFalse();
     }
 
-    /** 좌석 키를 쓴 직후 실패해도 그 좌석이 정리돼야 한다. 옛 구현은 인덱스 등록까지 끝난 뒤에야 정리 대상으로 기록해서, 좌석 키를 쓰고 인덱스 등록 전에 실패하면 그 좌석 키가 영영 남았다. */
     @Test
-    void 좌석_하나만_쓰고_실패해도_그_좌석이_남지_않는다() {
-        final HoldMetaCodec codec = mock(HoldMetaCodec.class);
-        when(codec.encode(org.mockito.ArgumentMatchers.any()))
-                .thenThrow(new IllegalStateException("hold meta encode failed"));
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, codec);
+    void 인덱스_등록이_실패해도_직전에_쓴_좌석이_남지_않는다() {
+        // 실제 Redis에 다른 자료형을 두어 좌석 키 쓰기 직후 인덱스 등록이 실패하도록 한다.
+        redissonClient
+                .getBucket(HoldRedisKey.holdSeatIndex(PERFORMANCE_ID), StringCodec.INSTANCE)
+                .set("wrong-type", TTL);
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
 
         assertThatThrownBy(() -> store.save(hold("hold-single", List.of(10L)), TTL))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
-        assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).isEmpty();
+        assertThat(metaExists("hold-single")).isFalse();
     }
 
-    /**
-     * 보상 도중 다른 요청이 같은 좌석을 새로 확보한 상황이다. 소유 키를 확인하지 않으면 보상이 남의 선점을 지운다.
-     *
-     * <p>메타 인코딩 시점에 좌석 20을 다른 holdKey가 가져가게 해 그 경합을 실제 Redis에서 만든다.
-     */
     @Test
     void 보상은_다른_요청이_새로_확보한_선점을_지우지_않는다() {
-        final HoldMetaCodec codec = mock(HoldMetaCodec.class);
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, codec);
-        when(codec.encode(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
-            redissonClient
-                    .getBucket(HoldRedisKey.hold(PERFORMANCE_ID, 20L), StringCodec.INSTANCE)
-                    .set("other-hold", TTL);
-            throw new IllegalStateException("hold meta encode failed");
-        });
+        final RBucket<Object> meta =
+                spy(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-conflict"), StringCodec.INSTANCE));
+        doAnswer(invocation -> {
+                    redissonClient
+                            .getBucket(HoldRedisKey.hold(PERFORMANCE_ID, 20L), StringCodec.INSTANCE)
+                            .set("other-hold", TTL);
+                    throw new IllegalStateException("hold meta write failed");
+                })
+                .when(meta)
+                .set("hold-conflict", TTL);
+        final RedissonHoldStore store = storeWithMeta("hold-conflict", meta);
 
         assertThatThrownBy(() -> store.save(hold("hold-conflict", List.of(10L, 20L)), TTL))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
         assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
-        // 20번은 다른 요청이 점유 중이므로 인덱스에도 그대로 남는다.
         assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactly(20L);
+    }
+
+    @Test
+    void 기존_JSON_메타를_읽지_않고_남의_좌석을_보존하며_반복_해제한다() {
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        store.save(hold("hold-legacy", List.of(10L, 20L)), TTL);
+        redissonClient
+                .getBucket(HoldRedisKey.holdMeta("hold-legacy"), StringCodec.INSTANCE)
+                .set("{legacy-json}", TTL);
+        redissonClient
+                .getBucket(HoldRedisKey.hold(PERFORMANCE_ID, 20L), StringCodec.INSTANCE)
+                .set("other-hold", TTL);
+
+        assertThat(store.release(PERFORMANCE_ID, "hold-legacy", List.of(20L, 10L, 10L)))
+                .containsExactly(10L);
+        assertThat(store.release(PERFORMANCE_ID, "hold-legacy", List.of(10L, 20L)))
+                .isEmpty();
+
+        assertThat(metaExists("hold-legacy")).isFalse();
+        assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
+        assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactly(20L);
+    }
+
+    private RedissonHoldStore storeWithMeta(final String holdKey, final RBucket<Object> meta) {
+        final RedissonClient client = spy(redissonClient);
+        doReturn(meta).when(client).getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE);
+        return new RedissonHoldStore(client);
     }
 
     private boolean metaExists(final String holdKey) {

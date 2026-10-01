@@ -150,6 +150,8 @@ CancelOrderUseCase / ExpireOrderUseCase
 같은 `OrderTerminated` publication이 재시도로 다시 전달되면 Redis 해제도 다시 수행한다. 해제는
 좌석별 현재 holdKey를 확인하고 일치할 때만 지우므로, 이미 풀린 좌석은 그대로 지나가고 그사이
 다른 사용자가 잡은 선점도 건드리지 않는다. 그래서 해제 완료 여부를 따로 기록하지 않는다.
+해제 호출자는 hold의 전체 좌석을 넘긴다. meta key(`hold:key:%s`)는 TTL 알림용으로 holdKey 문자열만
+저장하고, 좌석 해제 후 해당 meta를 항상 삭제한다. 기존 JSON meta 값은 읽지 않으므로 그대로 남아 있어도 무해하다.
 WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새 hold나 selection이 생긴
 좌석에는 오래된 해제 알림을 보내지 않는다. 발행 자체가 다시 실패하면 같은 RELEASED가 다시
 발행될 수 있다 — 이 이벤트는 좌석을 특정 상태로 맞추는 멱등 상태 알림으로 취급하며 전달

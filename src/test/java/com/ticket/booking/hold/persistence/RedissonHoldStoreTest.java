@@ -2,7 +2,6 @@ package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,9 +34,6 @@ class RedissonHoldStoreTest {
     @Mock
     private RedissonClient redissonClient;
 
-    @Mock
-    private HoldMetaCodec holdMetaCodec;
-
     @InjectMocks
     private RedissonHoldStore redissonHoldStore;
 
@@ -60,7 +56,6 @@ class RedissonHoldStoreTest {
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        when(holdMetaCodec.encode(any(Hold.class))).thenReturn("payload");
 
         // when
         redissonHoldStore.save(hold, ttl);
@@ -68,7 +63,7 @@ class RedissonHoldStoreTest {
         // then
         verify(seat10).set("hold-key", ttl);
         verify(seat20).set("hold-key", ttl);
-        verify(meta).set("payload", ttl);
+        verify(meta).set("hold-key", ttl);
         verify(holdSeatIndex).add(10L, ttl.toMillis(), TimeUnit.MILLISECONDS);
         verify(holdSeatIndex).add(20L, ttl.toMillis(), TimeUnit.MILLISECONDS);
     }
@@ -127,50 +122,36 @@ class RedissonHoldStoreTest {
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        when(meta.get())
-                .thenReturn(
-                        "{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}");
-        when(holdMetaCodec.decode(
-                        "{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}"))
-                .thenReturn(new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
-
         // when
         List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
         // then
         verify(seat10).delete();
         verify(holdSeatIndex).remove(10L);
-        verify(meta, org.mockito.Mockito.never()).delete();
+        verify(meta).delete();
         assertThat(releasedSeatIds).containsExactly(10L);
     }
 
     @Test
-    void release는_잠근_입력_좌석만_해제하고_snapshot_전체가_아니면_메타를_유지한다() {
+    void release는_입력_좌석만_해제하고_메타는_항상_삭제한다() {
         RBucket<Object> seat10 = bucketReturning("hold-key");
         RBucket<Object> seat20 = mock(RBucket.class);
         RBucket<Object> meta = mock(RBucket.class);
         @SuppressWarnings("unchecked")
         RSetCache<Object> holdSeatIndex = mock(RSetCache.class);
-        String payload =
-                "{\"holdKey\":\"hold-key\",\"memberId\":7,\"performanceId\":1,\"seatIds\":[10,20],\"expiresAt\":\"2026-03-15T19:05:00\"}";
-
         when(redissonClient.getBucket(HoldRedisKey.hold(1L, 10L), StringCodec.INSTANCE))
                 .thenReturn(seat10);
         when(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE))
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        when(meta.get()).thenReturn(payload);
-        when(holdMetaCodec.decode(payload))
-                .thenReturn(new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5)));
-
         List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(10L));
 
         verify(seat10).delete();
         verify(holdSeatIndex).remove(10L);
         verify(seat20, never()).delete();
         verify(holdSeatIndex, never()).remove(20L);
-        verify(meta, never()).delete();
+        verify(meta).delete();
         assertThat(releasedSeatIds).containsExactly(10L);
     }
 
