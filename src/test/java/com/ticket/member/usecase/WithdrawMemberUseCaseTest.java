@@ -2,7 +2,6 @@ package com.ticket.member.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -16,10 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.api.MemberWithdrawn;
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Email;
@@ -36,9 +33,6 @@ class WithdrawMemberUseCaseTest {
     @Mock
     private MemberRepository memberRepository;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     @Test
     void 탈퇴는_식별자가_바뀌기_전의_소셜_연결을_돌려주고_회원을_탈퇴_처리한다() {
         final Member member = Member.createSocialMember(Email.create("user@example.com"), "홍길동", Role.MEMBER);
@@ -52,7 +46,6 @@ class WithdrawMemberUseCaseTest {
         assertThat(member.isDeleted()).isTrue();
         assertThat(member.getDeletedAt()).isEqualTo(LocalDateTime.now(CLOCK));
         assertThat(member.activeSocialAccounts()).isEmpty();
-        verify(eventPublisher).publishEvent(new MemberWithdrawn(5L));
     }
 
     @Test
@@ -63,6 +56,6 @@ class WithdrawMemberUseCaseTest {
     }
 
     private WithdrawMemberUseCase useCase() {
-        return new WithdrawMemberUseCase(memberRepository, CLOCK, eventPublisher);
+        return new WithdrawMemberUseCase(memberRepository, CLOCK);
     }
 }

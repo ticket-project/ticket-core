@@ -29,9 +29,6 @@ class WebSocketAuthInterceptorTest {
     @Mock
     private AccessTokenAuthenticationApi accessTokenAuthenticationApi;
 
-    @Mock
-    private MemberWebSocketSessions memberWebSocketSessions;
-
     @InjectMocks
     private WebSocketAuthInterceptor interceptor;
 
@@ -41,7 +38,6 @@ class WebSocketAuthInterceptorTest {
     void 유효한_bearer_토큰이면_인증된_사용자를_STOMP_세션에_설정한다() {
         final AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
         when(accessTokenAuthenticationApi.authenticate("valid-token")).thenReturn(member);
-        when(memberWebSocketSessions.bind("session-1", 1L)).thenReturn(true);
 
         final StompHeaderAccessor accessor = connectAccessor("Bearer valid-token");
         final Message<?> message = interceptor.preSend(toMessage(accessor), channel);
@@ -50,6 +46,7 @@ class WebSocketAuthInterceptorTest {
         assertThat(result.getUser()).isInstanceOf(UsernamePasswordAuthenticationToken.class);
         assertThat(((UsernamePasswordAuthenticationToken) result.getUser()).getPrincipal())
                 .isEqualTo(member);
+        verify(accessTokenAuthenticationApi).authenticate("valid-token");
     }
 
     @Test
@@ -77,19 +74,6 @@ class WebSocketAuthInterceptorTest {
         final Message<?> message = interceptor.preSend(toMessage(accessor), channel);
 
         assertThat(message).isNotNull();
-    }
-
-    @Test
-    void withdrawal_between_authentication_and_binding_closes_the_session() {
-        final AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
-        when(accessTokenAuthenticationApi.authenticate("valid-token"))
-                .thenReturn(member)
-                .thenThrow(new UnauthenticatedException());
-        when(memberWebSocketSessions.bind("session-1", 1L)).thenReturn(true);
-
-        assertThatThrownBy(() -> interceptor.preSend(toMessage(connectAccessor("Bearer valid-token")), channel))
-                .isInstanceOf(MessageDeliveryException.class);
-        verify(memberWebSocketSessions).close(1L);
     }
 
     private static StompHeaderAccessor connectAccessor(final String authorizationHeader) {
