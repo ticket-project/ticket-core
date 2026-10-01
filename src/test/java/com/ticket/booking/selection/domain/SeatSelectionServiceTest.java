@@ -68,9 +68,9 @@ class SeatSelectionServiceTest {
         // given
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn(null);
         // when
-        seatSelectionService.deselect(10L, 20L, 3L);
+        assertThat(seatSelectionService.deselect(10L, 20L, 3L)).isFalse();
         // then
-        verify(seatSelectionStore, never()).releaseIfOwned(10L, 20L, "3");
+        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3");
     }
 
     @Test
@@ -85,12 +85,12 @@ class SeatSelectionServiceTest {
     @Test
     void 본인이_선택한_좌석은_해제한다() {
         // given
-        when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("3");
         when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(true);
         // when
-        seatSelectionService.deselect(10L, 20L, 3L);
+        assertThat(seatSelectionService.deselect(10L, 20L, 3L)).isTrue();
         // then
         verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3");
+        verify(seatSelectionStore, never()).getHolder(10L, 20L);
     }
 
     @Test
@@ -106,7 +106,7 @@ class SeatSelectionServiceTest {
     @Test
     void 해제_시점에_다른_회원이_점유중이면_예외를_던진다() {
         // given
-        when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("3", "4");
+        when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("4");
         when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(false);
         // when
         // then

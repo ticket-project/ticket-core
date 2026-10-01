@@ -31,7 +31,7 @@ public class SeatSelectionService {
         final SelectResult result =
                 seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL, maxSeatCount);
         if (result == SelectResult.ALREADY_SELECTED) {
-            log.warn("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
+            log.debug("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
             throw new SeatAlreadySelectedException();
         }
         if (result == SelectResult.LIMIT_EXCEEDED) {
@@ -46,13 +46,17 @@ public class SeatSelectionService {
      */
     public boolean deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final String memberKey = memberKeyOf(memberId);
+        if (seatSelectionStore.releaseIfOwned(performanceId, seatId, memberKey)) {
+            log.debug("좌석 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
+            return true;
+        }
         final String holder = seatSelectionStore.getHolder(performanceId, seatId);
         if (holder == null) {
             log.debug("좌석 선택 해제를 건너뜁니다. 이미 선택 정보가 없습니다. performanceId={}, seatId={}", performanceId, seatId);
             return false;
         }
-        validateOwner(performanceId, seatId, memberId, memberKey, holder);
-        return releaseSeat(performanceId, seatId, memberId, memberKey);
+        logNotOwned(performanceId, seatId, memberId, holder);
+        throw new SeatNotOwnedException();
     }
 
     /** 지금 이 좌석을 누군가 선택하고 있는지. 만료 알림 전에 락 안에서 다시 확인하는 용도다. */
@@ -100,44 +104,6 @@ public class SeatSelectionService {
 
     private String memberKeyOf(final Long memberId) {
         return memberId.toString();
-    }
-
-    private void validateOwner(
-            final Long performanceId,
-            final Long seatId,
-            final Long memberId,
-            final String memberKey,
-            final String holder) {
-        if (memberKey.equals(holder)) {
-            return;
-        }
-        logNotOwned(performanceId, seatId, memberId, holder);
-        throw new SeatNotOwnedException();
-    }
-
-    private boolean releaseSeat(
-            final Long performanceId, final Long seatId, final Long memberId, final String memberKey) {
-        final boolean released = seatSelectionStore.releaseIfOwned(performanceId, seatId, memberKey);
-        if (released) {
-            log.debug("좌석 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
-            return true;
-        }
-        handleReleaseFailure(performanceId, seatId, memberId);
-        return false;
-    }
-
-    private void handleReleaseFailure(final Long performanceId, final Long seatId, final Long memberId) {
-        final String currentHolder = seatSelectionStore.getHolder(performanceId, seatId);
-        if (currentHolder == null) {
-            log.debug(
-                    "좌석 선택 해제 시점에 이미 만료되었거나 해제되었습니다. performanceId={}, seatId={}, memberId={}",
-                    performanceId,
-                    seatId,
-                    memberId);
-            return;
-        }
-        logNotOwned(performanceId, seatId, memberId, currentHolder);
-        throw new SeatNotOwnedException();
     }
 
     private void logNotOwned(final Long performanceId, final Long seatId, final Long memberId, final String holder) {
