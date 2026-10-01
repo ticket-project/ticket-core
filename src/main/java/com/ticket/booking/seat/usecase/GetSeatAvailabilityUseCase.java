@@ -81,19 +81,13 @@ public class GetSeatAvailabilityUseCase {
      */
     private Map<Long, Long> countAvailableSeatsByGrade(
             final List<PerformanceSeat> performanceSeats, final Set<Long> redisOccupiedSeatIds) {
-        if (performanceSeats.isEmpty()) {
-            return Map.of();
-        }
-
         final Map<Long, Long> availableSeatCounts = new LinkedHashMap<>();
         for (final PerformanceSeat performanceSeat : performanceSeats) {
-            availableSeatCounts.putIfAbsent(performanceSeat.getPerformanceGradeId(), 0L);
-
-            if (performanceSeat.getState() == PerformanceSeatState.AVAILABLE
-                    && !redisOccupiedSeatIds.contains(performanceSeat.getSeatId())) {
-                availableSeatCounts.computeIfPresent(
-                        performanceSeat.getPerformanceGradeId(), (key, count) -> count + 1L);
-            }
+            final long available = performanceSeat.getState() == PerformanceSeatState.AVAILABLE
+                            && !redisOccupiedSeatIds.contains(performanceSeat.getSeatId())
+                    ? 1L
+                    : 0L;
+            availableSeatCounts.merge(performanceSeat.getPerformanceGradeId(), available, Long::sum);
         }
 
         return availableSeatCounts;

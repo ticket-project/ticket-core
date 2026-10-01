@@ -33,9 +33,7 @@ public class HoldRegistry {
 
     /** 선점을 해제한다. 좌석 단위 상호 배제는 호출하는 유스케이스가 락으로 보장한다. */
     public List<Long> release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
-        final List<Long> normalizedSeatIds =
-                seatIds.stream().distinct().sorted().toList();
-        return holdStore.release(performanceId, holdKey, normalizedSeatIds);
+        return holdStore.release(performanceId, holdKey, seatIds);
     }
 
     public Set<Long> getHoldingSeatIds(final Long performanceId) {
