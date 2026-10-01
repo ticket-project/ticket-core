@@ -2,8 +2,6 @@ package com.ticket.booking.redis;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
@@ -26,25 +24,15 @@ public class RedisExpirationListenerConfig {
     private static final String NOTIFY_KEYSPACE_EVENTS = "notify-keyspace-events";
     private static final String REQUIRED_NOTIFY_OPTIONS = "Ex";
     private static final int EXPIRATION_WORKER_COUNT = 2;
-    private static final int EXPIRATION_QUEUE_CAPACITY = 256;
 
     @Bean(name = REDIS_EXPIRATION_TASK_EXECUTOR)
     public ThreadPoolTaskExecutor redisExpirationTaskExecutor() {
-        final Semaphore permits = new Semaphore(EXPIRATION_WORKER_COUNT, true);
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(EXPIRATION_WORKER_COUNT);
         executor.setMaxPoolSize(EXPIRATION_WORKER_COUNT);
-        executor.setQueueCapacity(EXPIRATION_QUEUE_CAPACITY);
+        // 큐가 무제한이라 만료 폭주 때 처리 대기 작업이 메모리에 쌓인다.
+        executor.setQueueCapacity(Integer.MAX_VALUE);
         executor.setThreadNamePrefix("redis-expiration-");
-        executor.setTaskDecorator(task -> () -> {
-            permits.acquireUninterruptibly();
-            try {
-                task.run();
-            } finally {
-                permits.release();
-            }
-        });
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
         return executor;

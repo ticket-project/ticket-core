@@ -174,7 +174,8 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
 `booking.hold.persistence.HoldKeyExpirationHandler`가 키를 해석해
 `ExpireOrderUseCase.expireByHoldKey`를 호출한다.
 
-- 만료 이벤트의 handler와 queue 포화 시 수신 스레드는 같은 permit으로 DB 동시 진입을 제한한다.
+- 만료 이벤트 handler는 고정 worker 2개로 DB 동시 진입을 제한한다. 무제한 큐이므로 만료 폭주 때
+  대기 작업이 메모리에 쌓인다. Redisson 수신 경로도 채널별 무제한 큐를 사용해 Redis까지 역압을 전달하지 못한다.
 - `OrderExpirationTrigger` → `ExpirePendingOrdersUseCase`가 누락된 만료를 보정한다.
   **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
   무관하게 앞으로만 가므로, 앞의 주문이 계속 실패해도 뒤의 정상 만료 대상이 같은 순회에서
