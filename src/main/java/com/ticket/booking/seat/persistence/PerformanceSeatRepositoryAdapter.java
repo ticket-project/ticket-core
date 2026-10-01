@@ -12,12 +12,7 @@ import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * {@link PerformanceSeatRepository}의 JPA 구현이다.
- *
- * <p><b>클래스 전체에는 {@code @Transactional}을 붙이지 않는다</b> — 조회마다 경계가 다르다. {@link #findSeatStates(Long)}만 읽기 전용 트랜잭션을 갖는 이유는
- * 계약의 Javadoc에 있다. 같은 클래스 안에서 그 메서드를 호출하면 self-invocation이라 proxy가 적용되지 않아 경계가 사라진다 — 내부에서 부르지 않는다.
- */
+/** {@link PerformanceSeatRepository}의 JPA 구현이다. */
 @Repository
 @RequiredArgsConstructor
 public class PerformanceSeatRepositoryAdapter implements PerformanceSeatRepository {
@@ -36,18 +31,8 @@ public class PerformanceSeatRepositoryAdapter implements PerformanceSeatReposito
     }
 
     @Override
-    public List<PerformanceSeat> findAllByPerformanceId(final Long performanceId) {
-        return jpaRepository.findAllByPerformanceId(performanceId);
-    }
-
-    @Override
     @Transactional(readOnly = true)
-    public List<PerformanceSeat> findSeatStates(final Long performanceId) {
-        return jpaRepository.findAllByPerformanceIdOrderBySeatIdAsc(performanceId);
-    }
-
-    @Override
-    public List<PerformanceSeat> findSeatAvailabilities(final Long performanceId) {
+    public List<PerformanceSeat> findAllByPerformanceId(final Long performanceId) {
         return jpaRepository.findAllByPerformanceIdOrderBySeatIdAsc(performanceId);
     }
 }
