@@ -128,11 +128,11 @@ DB 저장이 실패하면 `StartBookingUseCase`가 `SEAT` 락을 다시 잡고 �
 ## 주문 취소와 만료
 
 취소는 소유권과 현재 상태를 검증하고, 만료는 orderId 또는 holdKey로 PENDING 주문을 잠근다.
-이후 공통 절차는 `OrderTerminationService`가 담당한다. 취소는 짧은 쓰기 트랜잭션을
-`CancelOrderTransactionService`가 따로 갖는다 — `CancelOrderUseCase`는 트랜잭션을 직접 열지 않는다.
+이후 공통 절차는 `OrderTerminationService`가 담당한다. `CancelOrderUseCase.execute`가 짧은 쓰기
+트랜잭션 안에서 주문 조회·소유권과 상태 검증·취소를 수행한다.
 
 ~~~text
-CancelOrderUseCase -> CancelOrderTransactionService / ExpireOrderUseCase
+CancelOrderUseCase / ExpireOrderUseCase
   -> PENDING 주문 row lock
   -> OrderTerminationService
        -> 주문 좌석 검증

@@ -2,17 +2,28 @@ package com.ticket.booking.order.usecase;
 
 import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
-import org.springframework.stereotype.Service;
+import java.time.Clock;
+import java.time.LocalDateTime;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.exception.OrderNotPendingException;
+import com.ticket.booking.order.domain.Order;
+import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.domain.OrderState;
 import com.ticket.shared.exception.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 
-/** booking local 취소 처리는 {@link CancelOrderTransactionService}의 짧은 쓰기 트랜잭션에서 수행한다. */
+/** booking local 주문 조회와 취소를 하나의 짧은 쓰기 트랜잭션에서 수행한다. */
 @Service
 @RequiredArgsConstructor
 public class CancelOrderUseCase {
-    private final CancelOrderTransactionService cancelOrderTransactionService;
+    private final OrderRepository orderRepository;
+    private final OrderTerminationService orderTerminationService;
+    private final Clock clock;
 
     public record Input(String orderKey, Long memberId) {
         public Input {
@@ -23,7 +34,14 @@ public class CancelOrderUseCase {
         }
     }
 
+    @Transactional
     public void execute(final Input input) {
-        cancelOrderTransactionService.cancel(input.orderKey(), input.memberId());
+        final Order order = orderRepository
+                .findByOrderKeyAndMemberIdForUpdate(input.orderKey(), input.memberId())
+                .orElseThrow(OrderNotOwnedException::new);
+        if (order.getStatus() != OrderState.PENDING) {
+            throw new OrderNotPendingException();
+        }
+        orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }
 }
