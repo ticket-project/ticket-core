@@ -1,8 +1,6 @@
 package com.ticket.booking.event;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -10,8 +8,6 @@ import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.HoldRegistry;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
@@ -34,7 +30,6 @@ public class HoldReleaseCoordinator {
     private final DistributedLock distributedLock;
     private final HoldRegistry holdRegistry;
     private final SeatOccupancy seatOccupancy;
-    private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
     public void releaseAndPublish(final HoldReleaseTask task) {
@@ -50,16 +45,13 @@ public class HoldReleaseCoordinator {
         if (publishableSeatIds.isEmpty()) {
             return;
         }
-        final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(task, publishableSeatIds);
         for (final Long seatId : publishableSeatIds) {
             seatStatusEventPublisher.publish(
-                    task.performanceId(), performanceSeatIdBySeatId.get(seatId), seatId, SeatStatusAction.RELEASED);
+                    task.performanceId(),
+                    task.performanceSeatIdBySeatId().get(seatId),
+                    seatId,
+                    SeatStatusAction.RELEASED);
         }
-    }
-
-    private Map<Long, Long> resolvePerformanceSeatIds(final HoldReleaseTask task, final List<Long> seatIds) {
-        return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(task.performanceId(), seatIds).stream()
-                .collect(Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
     }
 
     private List<Long> findCurrentlyAvailableSeats(final HoldReleaseTask task) {

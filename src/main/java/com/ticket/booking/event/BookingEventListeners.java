@@ -64,7 +64,7 @@ class BookingEventListeners {
         }
         final Hold hold = new Hold(
                 event.holdKey(), event.memberId(), snapshot.performanceId(), snapshot.seatIds(), snapshot.expiresAt());
-        holdCreationCoordinator.clearSelectionsAndPublishHeld(hold);
+        holdCreationCoordinator.clearSelectionsAndPublishHeld(hold, snapshot.performanceSeatIdBySeatId());
     }
 
     @ApplicationModuleListener(id = ORDER_TERMINATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
@@ -75,7 +75,7 @@ class BookingEventListeners {
             log.debug("hold 해제 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        holdReleaseCoordinator.releaseAndPublish(
-                new HoldReleaseTask(snapshot.performanceId(), event.holdKey(), snapshot.seatIds()));
+        holdReleaseCoordinator.releaseAndPublish(new HoldReleaseTask(
+                snapshot.performanceId(), event.holdKey(), snapshot.seatIds(), snapshot.performanceSeatIdBySeatId()));
     }
 }

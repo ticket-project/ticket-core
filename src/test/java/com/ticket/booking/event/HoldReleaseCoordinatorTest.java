@@ -9,8 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,14 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.HoldRegistry;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
@@ -42,9 +38,6 @@ class HoldReleaseCoordinatorTest {
     private SeatSelectionService seatSelectionService;
 
     @Mock
-    private PerformanceSeatRepository performanceSeatRepository;
-
-    @Mock
     private SeatStatusEventPublisher seatStatusEventPublisher;
 
     private HoldReleaseCoordinator coordinator;
@@ -55,7 +48,6 @@ class HoldReleaseCoordinatorTest {
                 distributedLock,
                 holdRegistry,
                 new SeatOccupancy(seatSelectionService, holdRegistry),
-                performanceSeatRepository,
                 seatStatusEventPublisher);
     }
 
@@ -63,7 +55,6 @@ class HoldReleaseCoordinatorTest {
     void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
         when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
         when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
-        stubPerformanceSeats();
 
         coordinator.releaseAndPublish(task());
 
@@ -92,7 +83,6 @@ class HoldReleaseCoordinatorTest {
     void publicationFailureIsRetriedFromRelease() {
         when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
         when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
-        stubPerformanceSeats();
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
                 .when(seatStatusEventPublisher)
@@ -114,18 +104,7 @@ class HoldReleaseCoordinatorTest {
                 .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
     }
 
-    private void stubPerformanceSeats() {
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(1L, List.of(10L, 20L)))
-                .thenReturn(List.of(performanceSeat(10L, 910L), performanceSeat(20L, 920L)));
-    }
-
-    private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {
-        PerformanceSeat seat = new PerformanceSeat(1L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
-        ReflectionTestUtils.setField(seat, "id", performanceSeatId);
-        return seat;
-    }
-
     private HoldReleaseTask task() {
-        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L));
+        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L), Map.of(10L, 910L, 20L, 920L));
     }
 }

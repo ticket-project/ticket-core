@@ -6,23 +6,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -36,9 +32,6 @@ class HoldCreationCoordinatorTest {
     private SeatSelectionService seatSelectionService;
 
     @Mock
-    private PerformanceSeatRepository performanceSeatRepository;
-
-    @Mock
     private SeatStatusEventPublisher seatStatusEventPublisher;
 
     @Test
@@ -46,10 +39,7 @@ class HoldCreationCoordinatorTest {
         final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(true);
         when(holdStore.isHeldBy(10L, 200L, "hold-key")).thenReturn(true);
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(100L, 200L)))
-                .thenReturn(List.of(performanceSeat(100L, 901L), performanceSeat(200L, 902L)));
-
-        coordinator().clearSelectionsAndPublishHeld(hold);
+        coordinator().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
 
         final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
@@ -65,26 +55,16 @@ class HoldCreationCoordinatorTest {
         final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(false);
 
-        coordinator().clearSelectionsAndPublishHeld(hold);
+        coordinator().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
-        verifyNoInteractions(seatSelectionService, seatStatusEventPublisher, performanceSeatRepository);
-    }
-
-    private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {
-        PerformanceSeat seat = new PerformanceSeat(10L, seatId, 30L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
-        ReflectionTestUtils.setField(seat, "id", performanceSeatId);
-        return seat;
+        verifyNoInteractions(seatSelectionService, seatStatusEventPublisher);
     }
 
     private HoldCreationCoordinator coordinator() {
         return new HoldCreationCoordinator(
-                new RecordingDistributedLock(),
-                holdStore,
-                seatSelectionService,
-                performanceSeatRepository,
-                seatStatusEventPublisher);
+                new RecordingDistributedLock(), holdStore, seatSelectionService, seatStatusEventPublisher);
     }
 
     private Hold hold() {

@@ -1,7 +1,6 @@
 package com.ticket.booking.event;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -10,8 +9,6 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -28,8 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p><b>좌석 락 안에서 상태 변경과 발행을 함께 한다</b> — {@link SeatSelectionCoordinator}와 같은 이유다. 선점 확정과 선택 정리, 그리고 그것을 알리는 발행이 같은 임계
  * 구역 안에 있어야 서버가 내보내는 순서가 상태 변화 순서와 같아진다.
  *
- * <p>이 후속 처리는 트랜잭션 없이 실행되는 listener에서 불린다({@link BookingEventListeners}). 그래서 여기서는 DB를 조회만 하고, 멱등 판정(이미 끝난 hold인가)을 락
- * 안에서 먼저 한다 — 이벤트가 재전달돼도 두 번 확정되지 않는다.
+ * <p>DB 읽기는 listener의 snapshot reader에서 끝낸다. 여기서는 좌석 락 안에서 현재 hold를 확인하고 Redis·WebSocket 작업만 수행한다.
  */
 @Slf4j
 @Component
@@ -38,17 +34,16 @@ public class HoldCreationCoordinator {
     private final DistributedLock distributedLock;
     private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
-    private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
-    public void clearSelectionsAndPublishHeld(final Hold hold) {
+    public void clearSelectionsAndPublishHeld(final Hold hold, final Map<Long, Long> performanceSeatIdBySeatId) {
         distributedLock.withLock(
                 LockKey.seats(hold.performanceId(), hold.seatIds()),
                 LockOptions.defaults(),
-                () -> clearSelectionsAndPublishHeldLocked(hold));
+                () -> clearSelectionsAndPublishHeldLocked(hold, performanceSeatIdBySeatId));
     }
 
-    private void clearSelectionsAndPublishHeldLocked(final Hold hold) {
+    private void clearSelectionsAndPublishHeldLocked(final Hold hold, final Map<Long, Long> performanceSeatIdBySeatId) {
         if (!isCurrentHold(hold)) {
             log.debug("주문 생성 후처리를 건너뜁니다. hold가 이미 종료되었습니다. holdKey={}", hold.holdKey());
             return;
@@ -57,18 +52,10 @@ public class HoldCreationCoordinator {
         for (final Long seatId : hold.seatIds()) {
             seatSelectionService.deselectIfOwned(hold.performanceId(), seatId, hold.memberId());
         }
-        final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(hold);
         for (final Long seatId : hold.seatIds()) {
             seatStatusEventPublisher.publish(
                     hold.performanceId(), performanceSeatIdBySeatId.get(seatId), seatId, SeatStatusAction.HELD);
         }
-    }
-
-    private Map<Long, Long> resolvePerformanceSeatIds(final Hold hold) {
-        return performanceSeatRepository
-                .findAllByPerformanceIdAndSeatIdIn(hold.performanceId(), hold.seatIds())
-                .stream()
-                .collect(Collectors.toMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
     }
 
     private boolean isCurrentHold(final Hold hold) {

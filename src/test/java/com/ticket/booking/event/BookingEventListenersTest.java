@@ -9,9 +9,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,7 +94,7 @@ class BookingEventListenersTest {
         listeners.on(event);
 
         final Hold expectedHold = new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
-        verify(holdCreationCoordinator).clearSelectionsAndPublishHeld(expectedHold);
+        verify(holdCreationCoordinator).clearSelectionsAndPublishHeld(expectedHold, Map.of(42L, 501L, 43L, 502L));
     }
 
     @Test
@@ -114,7 +116,8 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verify(holdReleaseCoordinator).releaseAndPublish(new HoldReleaseTask(200L, "hold-key", List.of(42L)));
+        verify(holdReleaseCoordinator)
+                .releaseAndPublish(new HoldReleaseTask(200L, "hold-key", List.of(42L), Map.of(42L, 501L)));
     }
 
     /** listener는 entity가 아니라 짧은 읽기 트랜잭션에서 완성된 값을 받는다. */
@@ -122,7 +125,9 @@ class BookingEventListenersTest {
         return new OrderHoldSnapshot(
                 order.getPerformanceId(),
                 order.getOrderSeats().stream().map(OrderSeat::getSeatId).toList(),
-                order.getExpiresAt());
+                order.getExpiresAt(),
+                order.getOrderSeats().stream()
+                        .collect(Collectors.toMap(OrderSeat::getSeatId, OrderSeat::getPerformanceSeatId)));
     }
 
     private OrderStarted orderStarted(final long orderId, final String holdKey) {
