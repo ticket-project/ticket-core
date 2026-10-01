@@ -11,26 +11,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-/**
- * 만료 처리 executor의 불변식만 고정한다 — 고정 크기 worker, 유한한 queue, 넘치면 호출 스레드가 처리(CallerRuns)하되 그때도 동시 처리 수는 worker 수를 넘지 않는 것.
- * worker 수·queue 크기 같은 조정 값은 {@link RedisExpirationListenerConfig}가 원본이다.
- */
+/** 만료 처리 executor는 worker 2개와 무제한 큐로 처리 동시성을 제한한다. */
 @SuppressWarnings("NonAsciiCharacters")
 class RedisExpirationListenerConfigTest {
     private final RedisExpirationListenerConfig config = new RedisExpirationListenerConfig();
 
     @Test
-    void expiration_executor_has_fixed_workers_and_a_bounded_queue() {
+    void 만료_executor는_고정_worker_2개와_무제한_큐를_갖는다() {
         final ThreadPoolTaskExecutor executor = config.redisExpirationTaskExecutor();
         executor.afterPropertiesSet();
 
         try {
-            assertThat(executor.getMaxPoolSize()).isEqualTo(executor.getCorePoolSize());
+            assertThat(executor.getCorePoolSize()).isEqualTo(2);
+            assertThat(executor.getMaxPoolSize()).isEqualTo(2);
             assertThat(executor.getThreadPoolExecutor().getQueue().remainingCapacity())
-                    .isPositive()
-                    .isLessThan(Integer.MAX_VALUE);
+                    .isEqualTo(Integer.MAX_VALUE);
             assertThat(executor.getThreadPoolExecutor().getRejectedExecutionHandler())
-                    .isInstanceOf(ThreadPoolExecutor.CallerRunsPolicy.class);
+                    .isInstanceOf(ThreadPoolExecutor.AbortPolicy.class);
         } finally {
             executor.shutdown();
         }
@@ -51,17 +48,21 @@ class RedisExpirationListenerConfigTest {
         }
     }
 
-    /** worker와 queue가 모두 찬 뒤 CallerRuns로 호출 스레드에서 도는 작업도 handler에 동시에 들어가는 수는 worker 수를 넘지 않는다. */
     @Test
-    void caller_runs_overflow_does_not_exceed_worker_count() throws Exception {
+    void 기존_큐_한도를_넘는_작업도_worker_2개에서만_실행된다() throws Exception {
         final ThreadPoolTaskExecutor executor = config.redisExpirationTaskExecutor();
         executor.afterPropertiesSet();
         final int workers = executor.getMaxPoolSize();
+        final int taskCount = 300;
         final CountDownLatch release = new CountDownLatch(1);
         final AtomicInteger active = new AtomicInteger();
         final AtomicInteger maxActive = new AtomicInteger();
         final AtomicInteger completed = new AtomicInteger();
+        final AtomicInteger outsideWorker = new AtomicInteger();
         final Runnable task = () -> {
+            if (!Thread.currentThread().getName().startsWith("redis-expiration-")) {
+                outsideWorker.incrementAndGet();
+            }
             maxActive.accumulateAndGet(active.incrementAndGet(), Math::max);
             try {
                 release.await();
@@ -72,24 +73,17 @@ class RedisExpirationListenerConfigTest {
                 completed.incrementAndGet();
             }
         };
-        final Thread overflowCaller = new Thread(() -> executor.execute(task), "overflow-caller");
-
         try {
-            final int queueCapacity =
-                    executor.getThreadPoolExecutor().getQueue().remainingCapacity();
-            for (int i = 0; i < workers + queueCapacity; i++) {
+            for (int i = 0; i < taskCount; i++) {
                 executor.execute(task);
             }
             await().atMost(Duration.ofSeconds(5)).until(() -> active.get() == workers);
-
-            overflowCaller.start();
-            await().atMost(Duration.ofSeconds(5)).until(() -> overflowCaller.getState() == Thread.State.WAITING);
-            assertThat(active).hasValue(workers);
+            assertThat(executor.getThreadPoolExecutor().getQueue()).hasSize(taskCount - workers);
 
             release.countDown();
-            overflowCaller.join(Duration.ofSeconds(5));
-            await().atMost(Duration.ofSeconds(10)).until(() -> completed.get() == workers + queueCapacity + 1);
-            assertThat(maxActive).hasValue(workers);
+            await().atMost(Duration.ofSeconds(10)).until(() -> completed.get() == taskCount);
+            assertThat(maxActive).hasValue(2);
+            assertThat(outsideWorker).hasValue(0);
         } finally {
             release.countDown();
             executor.shutdown();
