@@ -37,6 +37,7 @@ final class SeedProgram {
         SeedConsole.info("  시드 SQL  : " + settings.sqlPath());
         SeedConsole.info("  테스트 회원 : %d명".formatted(Math.max(0, settings.loadTestMemberCount())));
         SeedConsole.info("  부하 회차  : %d개".formatted(Math.max(0, settings.loadTestPerformanceCount())));
+        SeedConsole.info("  배경 주문  : %,d건".formatted(Math.max(0, settings.backgroundOrderCount())));
 
         final DataSource dataSource;
         try {
@@ -64,7 +65,7 @@ final class SeedProgram {
 
     /**
      * 실행 순서가 곧 계약이다. 공용 시드가 먼저 GRADES에 VIP/R/S/A code를 만들고, 부하 테스트 픽스처가 그 code를 재사용한다 — 순서가 바뀌면 같은 code가 중복 생성돼 실패한다.
-     * 회원은 다른 두 작업과 독립이지만 마지막에 둔다(가장 빠르게 다시 만들 수 있는 데이터다).
+     * 회원은 다른 두 작업과 독립이지만 뒤에 둔다(가장 빠르게 다시 만들 수 있는 데이터다). 배경 주문은 공용 회차와 회원을 둘 다 읽으므로 맨 마지막이다.
      */
     static List<SeedTask> tasks(
             final JdbcTemplate jdbcTemplate,
@@ -73,7 +74,12 @@ final class SeedProgram {
         return List.of(
                 new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
                 new LoadTestFixtureSeeder(jdbcTemplate, transactionTemplate, settings.loadTestPerformanceCount()),
-                new LoadTestMemberSeeder(jdbcTemplate, transactionTemplate, settings.loadTestMemberCount()));
+                new LoadTestMemberSeeder(jdbcTemplate, transactionTemplate, settings.loadTestMemberCount()),
+                new BackgroundOrderSeeder(
+                        jdbcTemplate,
+                        transactionTemplate,
+                        settings.backgroundOrderCount(),
+                        settings.jdbcUrl().startsWith("jdbc:oracle:")));
     }
 
     private static int report(final List<SeedRunner.Report> reports) {

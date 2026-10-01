@@ -154,7 +154,7 @@ class SeedFastRunTest {
     }
 
     @Test
-    void 작업_순서는_공용_시드_다음에_부하_픽스처_그다음_회원이다() {
+    void 작업_순서는_공용_시드_부하_픽스처_회원_배경_주문이다() {
         final DataSource dataSource = dataSource(jdbcUrl);
         final List<SeedTask> tasks = SeedLocalMain.tasks(
                 new JdbcTemplate(dataSource),
@@ -163,7 +163,42 @@ class SeedFastRunTest {
 
         assertThat(tasks)
                 .hasExactlyElementsOfTypes(
-                        CuratedSeedLoader.class, LoadTestFixtureSeeder.class, LoadTestMemberSeeder.class);
+                        CuratedSeedLoader.class,
+                        LoadTestFixtureSeeder.class,
+                        LoadTestMemberSeeder.class,
+                        BackgroundOrderSeeder.class);
+    }
+
+    @Test
+    void 배경_주문은_공용_회차에만_끝난_상태로_만들고_다시_실행해도_늘지_않는다() {
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).isZero();
+        final Long reservedSeatId = jdbcTemplate.queryForObject(
+                "SELECT MIN(id) FROM PERFORMANCE_SEATS WHERE performance_id = 1", Long.class);
+        jdbcTemplate.update("UPDATE PERFORMANCE_SEATS SET state = 'RESERVED' WHERE id = ?", reservedSeatId);
+
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.background-orders.count", "10")))
+                .isZero();
+
+        assertThat(count("ORDERS")).isEqualTo(10L);
+        assertThat(count("ORDERS", "performance_id >= " + FIXTURE_ID_BASE))
+                .as("부하 픽스처 회차에 주문이 있으면 측정 사용자가 비즈니스 거절을 받는다")
+                .isZero();
+        assertThat(count("ORDERS", "status = 'PENDING'"))
+                .as("만료 worker가 배경 주문을 건드리지 않게 한다")
+                .isZero();
+        assertThat(count("ORDER_SEATS", "order_id NOT IN (SELECT id FROM ORDERS)")).isZero();
+        assertThat(count(
+                        "ORDER_SEATS os",
+                        "os.order_id IN (SELECT id FROM ORDERS WHERE status = 'CONFIRMED')"
+                                + " AND os.performance_seat_id NOT IN"
+                                + " (SELECT id FROM PERFORMANCE_SEATS WHERE state = 'RESERVED')"))
+                .as("확정 주문은 RESERVED 좌석에만 붙는다")
+                .isZero();
+        assertThat(count("ORDER_SEATS", "performance_seat_id = " + reservedSeatId)).isPositive();
+
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl, "seed.background-orders.count", "10")))
+                .isZero();
+        assertThat(count("ORDERS")).as("이미 배경 주문이 있는 회차는 건너뛴다").isEqualTo(10L);
     }
 
     @Test
