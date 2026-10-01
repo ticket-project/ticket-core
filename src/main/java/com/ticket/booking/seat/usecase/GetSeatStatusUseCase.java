@@ -58,7 +58,7 @@ public class GetSeatStatusUseCase {
 
         bookingEntryGate.enter(performanceId, input.memberId(), input.admissionToken(), now);
 
-        final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findSeatStates(performanceId);
+        final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findAllByPerformanceId(performanceId);
 
         final Set<Long> redisOccupiedIds = seatOccupancy.occupiedSeatIds(performanceId);
 

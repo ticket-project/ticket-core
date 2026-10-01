@@ -82,7 +82,7 @@ class GetSeatStatusUseCaseTest {
     @Test
     void redis가_점유중인_available_좌석은_occupied로_변환한다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(performanceSeatRepository.findSeatStates(10L))
+        when(performanceSeatRepository.findAllByPerformanceId(10L))
                 .thenReturn(List.of(
                         PerformanceSeatFixture.seat(101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
                         PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED)));
@@ -105,7 +105,7 @@ class GetSeatStatusUseCaseTest {
                 PerformanceSeatFixture.seat(101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
                 PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(performanceSeatRepository.findSeatStates(10L)).thenReturn(dbStates);
+        when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -116,7 +116,7 @@ class GetSeatStatusUseCaseTest {
                 .containsExactly(
                         new GetSeatStatusUseCase.SeatResponse(101L, 1L, SeatStatus.AVAILABLE),
                         new GetSeatStatusUseCase.SeatResponse(102L, 2L, SeatStatus.OCCUPIED));
-        verify(performanceSeatRepository).findSeatStates(10L);
+        verify(performanceSeatRepository).findAllByPerformanceId(10L);
     }
 
     @Test
@@ -128,7 +128,7 @@ class GetSeatStatusUseCaseTest {
                 PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED),
                 PerformanceSeatFixture.seat(103L, 3L, 31L, PerformanceSeatState.AVAILABLE));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(performanceSeatRepository.findSeatStates(10L)).thenReturn(dbStates);
+        when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -169,7 +169,7 @@ class GetSeatStatusUseCaseTest {
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
-        when(performanceSeatRepository.findSeatStates(10L)).thenReturn(List.of());
+        when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(List.of());
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
 

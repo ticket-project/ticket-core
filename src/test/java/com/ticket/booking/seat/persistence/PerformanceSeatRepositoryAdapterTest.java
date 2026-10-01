@@ -23,8 +23,7 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
 /**
- * 회차 좌석 편성의 booking local 조회 세 가지(seat-map·좌석 상태·잔여석 원본)를 한 fixture로 검증한다. 물리 좌석 좌표·등급 표시값 조합은 show 쪽 조회가 소유하고 별도로
- * 검증한다.
+ * 회차 좌석 편성의 booking local 공통 조회(seat-map·좌석 상태·잔여석 원본)를 한 fixture로 검증한다. 물리 좌석 좌표·등급 표시값 조합은 show 쪽 조회가 소유하고 별도로 검증한다.
  *
  * <p>고정하는 것은 — 회차가 서로 섞이지 않는 것, 편성되지 않은 물리 좌석은 나타나지 않는 것, 주문 금액의 근거가 되는 {@code unitPrice}가 그대로 실리는 것, 그리고 상태 조회 결과가
  * {@code seatId} 오름차순이라는 것이다. DB 상태를 API 상태로 옮기는 일은 use case가 한다.
@@ -83,7 +82,7 @@ class PerformanceSeatRepositoryAdapterTest extends ReadRepositoryTestSupport {
 
         assertThat(seats)
                 .extracting(PerformanceSeat::getSeatId)
-                .containsExactlyInAnyOrder(seat1Id, seat2Id)
+                .containsExactly(seat1Id, seat2Id)
                 .doesNotContain(unassignedSeatId);
     }
 
@@ -117,7 +116,7 @@ class PerformanceSeatRepositoryAdapterTest extends ReadRepositoryTestSupport {
 
     @Test
     void 좌석_상태를_seatId_오름차순으로_반환한다() {
-        final List<PerformanceSeat> result = performanceSeatRepository.findSeatStates(performanceId);
+        final List<PerformanceSeat> result = performanceSeatRepository.findAllByPerformanceId(performanceId);
 
         assertThat(result)
                 .extracting(PerformanceSeat::getId, PerformanceSeat::getState)
@@ -127,13 +126,8 @@ class PerformanceSeatRepositoryAdapterTest extends ReadRepositoryTestSupport {
     }
 
     @Test
-    void 편성이_없는_회차는_좌석_상태도_비어_있다() {
-        assertThat(performanceSeatRepository.findSeatStates(999_999L)).isEmpty();
-    }
-
-    @Test
     void 좌석ID순으로_회차의_판매_상태를_조회한다() {
-        final List<PerformanceSeat> result = performanceSeatRepository.findSeatAvailabilities(performanceId);
+        final List<PerformanceSeat> result = performanceSeatRepository.findAllByPerformanceId(performanceId);
 
         assertThat(result)
                 .extracting(PerformanceSeat::getSeatId)

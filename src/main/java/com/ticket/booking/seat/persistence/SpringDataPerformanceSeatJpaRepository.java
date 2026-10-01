@@ -11,8 +11,6 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 interface SpringDataPerformanceSeatJpaRepository extends JpaRepository<PerformanceSeat, Long> {
     List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(Long performanceId, Collection<Long> seatIds);
 
-    List<PerformanceSeat> findAllByPerformanceId(Long performanceId);
-
     List<PerformanceSeat> findAllByPerformanceIdOrderBySeatIdAsc(Long performanceId);
 
     Optional<PerformanceSeat> findByPerformanceIdAndSeatId(Long performanceId, Long seatId);
