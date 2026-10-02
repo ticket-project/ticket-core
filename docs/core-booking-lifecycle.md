@@ -56,7 +56,7 @@ CreateOrderUseCase          (POST /api/v1/orders)
   -> BookingEventListeners.on(OrderCreated)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
           (OrderSeat의 좌석 식별자 매핑도 담는다. 이후 좌석 락 안의 Redis·WebSocket 작업은 DB를 다시 읽지 않는다)
-       -> HoldCreationCoordinator
+       -> HeldSeatPublisher
             -> 주문 회원 소유 selection만 해제 (Redis)
             -> HELD 상태 발행             (WebSocket)
 ~~~
@@ -89,7 +89,7 @@ Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않�
 
 ## 좌석 선택과 해제 알림 순서
 
-좌석 선택 상태(Redis)와 좌석 상태 알림(WebSocket)은 `SeatSelectionCoordinator`가 **같은 좌석 락
+좌석 선택 상태(Redis)와 좌석 상태 알림(WebSocket)은 `SeatSelectionWriter`가 **같은 좌석 락
 안에서** 함께 처리한다. 상태만 락 안에서 바꾸고 발행을 락 밖에서 하면 이런 역전이 생긴다 — A의
 선택이 TTL로 만료되고 B가 같은 좌석을 다시 선택한 뒤 A의 만료 처리가 뒤늦게 실행되면, B의
 `SELECTED` 뒤에 A의 `DESELECTED`가 나가 이미 B가 잡은 좌석이 비어 보인다.
@@ -145,7 +145,7 @@ CancelOrderUseCase / ExpireOrderUseCase
   -> BookingEventListeners.on(OrderTerminated) (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
           (seatId→performanceSeatId 매핑도 담아 좌석 락 안에서 DB를 재조회하지 않는다)
-       -> HoldReleaseCoordinator
+       -> HoldReleaser
             -> 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
             -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket)
 ~~~

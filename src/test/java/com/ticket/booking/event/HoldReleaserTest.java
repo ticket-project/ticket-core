@@ -28,7 +28,7 @@ import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
-class HoldReleaseCoordinatorTest {
+class HoldReleaserTest {
     @Mock
     private HoldRegistry holdRegistry;
 
@@ -40,11 +40,11 @@ class HoldReleaseCoordinatorTest {
     @Mock
     private SeatStatusEventPublisher seatStatusEventPublisher;
 
-    private HoldReleaseCoordinator coordinator;
+    private HoldReleaser releaser;
 
     @BeforeEach
     void setUp() {
-        coordinator = new HoldReleaseCoordinator(
+        releaser = new HoldReleaser(
                 distributedLock,
                 holdRegistry,
                 new SeatOccupancy(seatSelectionService, holdRegistry),
@@ -56,7 +56,7 @@ class HoldReleaseCoordinatorTest {
         when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
         when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
 
-        coordinator.releaseAndPublish(task());
+        releaser.releaseAndPublish(task());
 
         final InOrder inOrder = inOrder(holdRegistry, seatStatusEventPublisher);
         inOrder.verify(holdRegistry).release(1L, "old-hold", List.of(10L, 20L));
@@ -70,7 +70,7 @@ class HoldReleaseCoordinatorTest {
         when(holdRegistry.isHeld(1L, 10L)).thenReturn(true);
         when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
 
-        coordinator.releaseAndPublish(task());
+        releaser.releaseAndPublish(task());
 
         verifyNoInteractions(seatStatusEventPublisher);
     }
@@ -88,8 +88,8 @@ class HoldReleaseCoordinatorTest {
                 .when(seatStatusEventPublisher)
                 .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
 
-        assertThatThrownBy(() -> coordinator.releaseAndPublish(task())).hasMessage("publish failed");
-        coordinator.releaseAndPublish(task());
+        assertThatThrownBy(() -> releaser.releaseAndPublish(task())).hasMessage("publish failed");
+        releaser.releaseAndPublish(task());
 
         verify(holdRegistry, times(2)).release(1L, "old-hold", List.of(10L, 20L));
         verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
@@ -98,7 +98,7 @@ class HoldReleaseCoordinatorTest {
 
     @Test
     void holdsSeatLocksAcrossReleaseAndPublication() {
-        coordinator.releaseAndPublish(task());
+        releaser.releaseAndPublish(task());
 
         assertThat(distributedLock.lastAcquisition().keys())
                 .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));

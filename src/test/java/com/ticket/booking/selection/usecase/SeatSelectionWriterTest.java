@@ -38,7 +38,7 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class SeatSelectionCoordinatorTest {
+class SeatSelectionWriterTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-04T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
@@ -55,11 +55,11 @@ class SeatSelectionCoordinatorTest {
     private SeatStatusEventPublisher seatEventPublisher;
 
     private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
-    private SeatSelectionCoordinator coordinator;
+    private SeatSelectionWriter writer;
 
     @BeforeEach
     void setUp() {
-        coordinator = new SeatSelectionCoordinator(
+        writer = new SeatSelectionWriter(
                 distributedLock,
                 holdRegistry,
                 seatSelectionService,
@@ -73,7 +73,7 @@ class SeatSelectionCoordinatorTest {
     void 락_내부에서_홀드를_다시_확인하고_좌석을_선점한다() {
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
-        coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
+        writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
         verify(seatSelectionService).select(10L, 20L, 1L, 4);
     }
@@ -83,7 +83,7 @@ class SeatSelectionCoordinatorTest {
     void SELECTED_발행은_좌석_락_안에서_한다() {
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
-        coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
+        writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.SELECTED);
         assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
@@ -93,7 +93,7 @@ class SeatSelectionCoordinatorTest {
     void DB검증_후_홀드된_좌석이면_선점을_중단한다() {
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
-        assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
+        assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
                 .isInstanceOf(SeatAlreadyHeldException.class);
 
         verifyNoInteractions(seatSelectionService, seatEventPublisher);
@@ -101,7 +101,7 @@ class SeatSelectionCoordinatorTest {
 
     @Test
     void 락_획득_시점에_예매가_마감됐으면_선점을_중단한다() {
-        assertThatThrownBy(() -> coordinator.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
+        assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
                 .isInstanceOf(PerformanceIsPastException.class);
 
         verifyNoInteractions(holdRegistry, seatSelectionService, seatEventPublisher);
@@ -112,7 +112,7 @@ class SeatSelectionCoordinatorTest {
         givenPerformanceSeat();
         when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
 
-        coordinator.deselect(10L, 20L, 1L);
+        writer.deselect(10L, 20L, 1L);
 
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
     }
@@ -126,7 +126,7 @@ class SeatSelectionCoordinatorTest {
             return true;
         });
 
-        coordinator.deselect(10L, 20L, 1L);
+        writer.deselect(10L, 20L, 1L);
 
         verify(seatSelectionService).deselect(10L, 20L, 1L);
         verifyNoInteractions(seatEventPublisher);
@@ -138,7 +138,7 @@ class SeatSelectionCoordinatorTest {
         givenPerformanceSeat();
         when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(false);
 
-        coordinator.deselect(10L, 20L, 1L);
+        writer.deselect(10L, 20L, 1L);
 
         verifyNoInteractions(seatEventPublisher);
     }
@@ -149,7 +149,7 @@ class SeatSelectionCoordinatorTest {
         givenPerformanceSeat();
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(true);
 
-        coordinator.notifyReleasedIfFree(10L, 20L);
+        writer.notifyReleasedIfFree(10L, 20L);
 
         verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
         assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
@@ -161,7 +161,7 @@ class SeatSelectionCoordinatorTest {
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
-        coordinator.notifyReleasedIfFree(10L, 20L);
+        writer.notifyReleasedIfFree(10L, 20L);
 
         verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
     }
@@ -172,7 +172,7 @@ class SeatSelectionCoordinatorTest {
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
-        coordinator.notifyReleasedIfFree(10L, 20L);
+        writer.notifyReleasedIfFree(10L, 20L);
 
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
     }
@@ -183,7 +183,7 @@ class SeatSelectionCoordinatorTest {
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
 
-        coordinator.notifyReleasedIfFree(10L, 20L, 501L);
+        writer.notifyReleasedIfFree(10L, 20L, 501L);
 
         verifyNoInteractions(performanceSeatRepository);
         verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
