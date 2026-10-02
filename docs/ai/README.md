@@ -22,6 +22,7 @@
 | schema·JPA 매핑·migration 변경 | [database-change](../../.agents/skills/database-change/SKILL.md) |
 | 예매 상태·좌석 점유·판매 정책·동시성 변경 | [booking-change](../../.agents/skills/booking-change/SKILL.md) |
 | 조회 성능 검토 | [query-performance-review](../../.agents/skills/query-performance-review/SKILL.md) |
+| Core 수용량 측정 실행·병목 보고(사용자가 `/core-capacity`로 부를 때만) | [core-capacity](../../.agents/skills/core-capacity/SKILL.md) |
 
 AI 문서는 backend encyclopedia가 되지 않게 작게 유지한다. 읽는 순서는 `AGENTS → 가장 관련 있는 문서 → 가장 작은 관련 source/tests`이며, 실제 repo 문서·코드·테스트를 generic skill보다 우선한다. 불일치는 근거와 함께 보고하고 정책을 임의로 바꾸지 않는다.
 

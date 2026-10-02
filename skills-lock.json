@@ -13,6 +13,12 @@
       "path": ".agents/skills/booking-change/SKILL.md",
       "computedHash": "9c08c177952b2cf2bca2b9fa10a20c8b4af05c99a9116b6f2c4c8db0a5ff8c59"
     },
+    "core-capacity": {
+      "source": "ticket-core",
+      "sourceType": "repo-local",
+      "path": ".agents/skills/core-capacity/SKILL.md",
+      "computedHash": "7aaea5ea7cbf6c71e028f8138fd68b9bc3ba1f4f7e1017a566019272c22a0664"
+    },
     "database-change": {
       "source": "ticket-core",
       "sourceType": "repo-local",
