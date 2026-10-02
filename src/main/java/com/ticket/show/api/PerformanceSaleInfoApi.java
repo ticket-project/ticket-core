@@ -8,7 +8,7 @@ import java.util.Set;
  * <p>존재하지 않는 회차 ID는 공통 오류({@code com.ticket.shared.exception.NotFoundException})로 알린다. 요청한 좌석이 그 회차의 Venue에 속하지 않으면
  * {@link PerformanceSaleSnapshot#seatInfoBySeatId()}에서 조용히 빠진다 — 그 사실을 어떤 오류로 다룰지는 호출하는 booking 쪽 유스케이스가 정한다.
  */
-public interface PerformanceSaleCatalogApi {
+public interface PerformanceSaleInfoApi {
     /** @param seatIds 좌석 표시값을 함께 조회할 좌석 ID. 비어 있으면 {@link PerformanceSaleSnapshot#seatInfoBySeatId()}도 빈 맵이다. */
     PerformanceSaleSnapshot getSaleSnapshot(long performanceId, Set<Long> seatIds);
 }

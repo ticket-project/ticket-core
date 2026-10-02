@@ -12,14 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.show.api.PerformanceLayoutApi;
 import com.ticket.show.api.PerformanceLayoutSnapshot;
-import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 회차 정적 seat-map을 조합한다. Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값은 show {@link PerformanceVenueLayoutCatalogApi}에서, 이
- * 회차에 실제로 판매 편성된 좌석(PerformanceSeat)과 확정 가격은 booking local에서 각각 한 번씩만 조회해 N+1 없이 고정된 query 수로 조합한다.
+ * 회차 정적 seat-map을 조합한다. Venue 배치·물리 Seat 좌표·PerformanceGrade 표시값은 show {@link PerformanceLayoutApi}에서, 이 회차에 실제로 판매 편성된
+ * 좌석(PerformanceSeat)과 확정 가격은 booking local에서 각각 한 번씩만 조회해 N+1 없이 고정된 query 수로 조합한다.
  *
  * <p>Performance에 판매 편성되지 않은 물리 Seat는 {@link PerformanceSeatRepository}에 아예 나타나지 않으므로 응답에도 포함되지 않는다.
  */
@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSeatMapUseCase {
-    private final PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalogApi;
+    private final PerformanceLayoutApi performanceLayoutApi;
     private final PerformanceSeatRepository performanceSeatRepository;
 
     public record Input(Long performanceId) {
@@ -60,7 +60,7 @@ public class GetPerformanceSeatMapUseCase {
             BigDecimal price) {}
 
     public Output execute(final Input input) {
-        final PerformanceLayoutSnapshot layout = performanceVenueLayoutCatalogApi.getVenueLayout(input.performanceId());
+        final PerformanceLayoutSnapshot layout = performanceLayoutApi.getVenueLayout(input.performanceId());
         final List<PerformanceSeat> performanceSeats =
                 performanceSeatRepository.findAllByPerformanceId(input.performanceId());
 

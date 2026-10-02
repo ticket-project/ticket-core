@@ -57,7 +57,7 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
 import com.ticket.shared.exception.NotFoundException;
-import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleInfoApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
 /**
@@ -88,7 +88,7 @@ class StartBookingUseCaseTest {
     private BookingAvailabilityChecker bookingAvailabilityChecker;
 
     @Mock
-    private PerformanceSaleCatalogApi performanceSaleCatalogApi;
+    private PerformanceSaleInfoApi performanceSaleInfoApi;
 
     @Mock
     private HoldRegistry holdRegistry;
@@ -114,7 +114,7 @@ class StartBookingUseCaseTest {
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         memberLookupApi,
                         bookingAvailabilityChecker,
-                        performanceSaleCatalogApi,
+                        performanceSaleInfoApi,
                         holdRegistry,
                         seatSelectionService,
                         pendingOrderCreator,
@@ -133,7 +133,7 @@ class StartBookingUseCaseTest {
                 admissionVerifier,
                 memberLookupApi,
                 bookingAvailabilityChecker,
-                performanceSaleCatalogApi,
+                performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
     }
@@ -150,7 +150,7 @@ class StartBookingUseCaseTest {
                 admissionVerifier,
                 memberLookupApi,
                 bookingAvailabilityChecker,
-                performanceSaleCatalogApi,
+                performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
     }
@@ -166,7 +166,7 @@ class StartBookingUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(seats);
-        when(performanceSaleCatalogApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
+        when(performanceSaleInfoApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
                 .thenReturn(saleSnapshot);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
@@ -184,13 +184,13 @@ class StartBookingUseCaseTest {
                 performanceSalesPolicyRepository,
                 memberLookupApi,
                 bookingAvailabilityChecker,
-                performanceSaleCatalogApi,
+                performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
         inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
         inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
-        inOrder.verify(performanceSaleCatalogApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
+        inOrder.verify(performanceSaleInfoApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdRegistry).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
         inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
     }
@@ -274,7 +274,7 @@ class StartBookingUseCaseTest {
 
         assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds))).isInstanceOf(NotFoundException.class);
 
-        verifyNoInteractions(bookingAvailabilityChecker, performanceSaleCatalogApi, holdRegistry, pendingOrderCreator);
+        verifyNoInteractions(bookingAvailabilityChecker, performanceSaleInfoApi, holdRegistry, pendingOrderCreator);
     }
 
     @Test

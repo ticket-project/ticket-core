@@ -10,7 +10,7 @@ import java.util.Optional;
  * case)가 연달아 쓴다 — 공연 단위 요청은 대표 회차를 찾은 뒤 그 회차의 배치를 그린다. 계약을 둘로 나누면 구현 class 하나가 interface 둘을 달고 booking은 같은 목적의 의존을 둘
  * 주입받게 된다.
  */
-public interface PerformanceVenueLayoutCatalogApi {
+public interface PerformanceLayoutApi {
     /**
      * 존재하지 않는 회차 ID는 공통 오류({@code com.ticket.shared.exception.NotFoundException})로 알린다. venue가 없는 show는
      * {@link PerformanceLayoutSnapshot#seatLayoutBySeatId()}가 빈 맵이다.

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleInfoApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
@@ -27,14 +27,14 @@ import com.ticket.venue.api.VenueSeatSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link PerformanceSaleCatalogApi}의 show 소유 구현이다. 판매 좌석 편성과 주문 표시 snapshot에 필요한 회차·venue·좌석·등급 표시값을 한 번에 조회해 booking에게
+ * {@link PerformanceSaleInfoApi}의 show 소유 구현이다. 판매 좌석 편성과 주문 표시 snapshot에 필요한 회차·venue·좌석·등급 표시값을 한 번에 조회해 booking에게
  * scalar snapshot만 넘긴다.
  *
  * <p>venue 조합(venue 이름, 좌석 주소)은 이 application 계층이 한다 — local 조회({@code PerformanceRepository})는 show 자기 DB만 본다.
  */
 @Service
 @RequiredArgsConstructor
-public class PerformanceSaleCatalogService implements PerformanceSaleCatalogApi {
+public class PerformanceSaleInfoService implements PerformanceSaleInfoApi {
     private final PerformanceRepository performanceRepository;
     private final GradeRepository gradeRepository;
     private final ShowRepository showRepository;

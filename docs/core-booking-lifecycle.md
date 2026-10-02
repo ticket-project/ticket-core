@@ -37,7 +37,7 @@ StartBookingUseCase          (POST /api/v1/orders)
   -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
   -> member MemberLookupApi: active member 확인 (밖)
   -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
-  -> show PerformanceSaleCatalogApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
+  -> show PerformanceSaleInfoApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
      show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
      그 밖은 E4006)하고

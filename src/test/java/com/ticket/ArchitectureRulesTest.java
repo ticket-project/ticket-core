@@ -295,7 +295,7 @@ class ArchitectureRulesTest {
      * DB 조회 구현은 자기 module의 DB만 본다.
      *
      * <p>조회가 다른 module의 공개 API를 불러 결과를 합치기 시작하면 그 조합이 어디서 일어나는지가 조회 구현 안으로 숨는다. 표시값 조합은 use case·service가 한다 —
-     * {@code GetShowDetailUseCase}가 venue 이름을, {@code PerformanceSaleCatalogService}가 venue 좌석 주소를 붙이는 것이 그 자리다.
+     * {@code GetShowDetailUseCase}가 venue 이름을, {@code PerformanceSaleInfoService}가 venue 좌석 주소를 붙이는 것이 그 자리다.
      */
     @ArchTest
     static final ArchRule query는_다른_업무_module을_조합하지_않는다 = combine(
