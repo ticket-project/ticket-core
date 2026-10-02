@@ -17,13 +17,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
+import com.ticket.booking.salespolicy.domain.BookingWindow;
+import com.ticket.booking.salespolicy.domain.BookingWindowStatus;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
+import com.ticket.booking.salespolicy.domain.QueuePolicy;
 import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,7 +53,7 @@ class GetPerformanceBookingModeUseCaseTest {
         GetPerformanceBookingModeUseCase.Output output =
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
-        assertThat(output.acceptanceStatus()).isEqualTo(OrderAcceptanceStatus.OPEN);
+        assertThat(output.acceptanceStatus()).isEqualTo(BookingWindowStatus.OPEN);
         assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.DIRECT);
     }
 
@@ -76,7 +76,7 @@ class GetPerformanceBookingModeUseCaseTest {
         GetPerformanceBookingModeUseCase.Output output =
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
-        assertThat(output.acceptanceStatus()).isEqualTo(OrderAcceptanceStatus.BEFORE_OPEN);
+        assertThat(output.acceptanceStatus()).isEqualTo(BookingWindowStatus.BEFORE_OPEN);
         assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
     }
 
@@ -88,7 +88,7 @@ class GetPerformanceBookingModeUseCaseTest {
         GetPerformanceBookingModeUseCase.Output output =
                 useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
 
-        assertThat(output.acceptanceStatus()).isEqualTo(OrderAcceptanceStatus.CLOSED);
+        assertThat(output.acceptanceStatus()).isEqualTo(BookingWindowStatus.CLOSED);
         assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
     }
 
@@ -104,8 +104,8 @@ class GetPerformanceBookingModeUseCaseTest {
             final LocalDateTime orderOpenTime, final LocalDateTime orderCloseTime, final boolean queueRequired) {
         return new PerformanceSalesPolicy(
                 10L,
-                new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
+                new BookingWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(4, Duration.ofSeconds(300)),
-                queueRequired ? new BookingEntryPolicy(QueueMode.FORCE_ON, null) : BookingEntryPolicy.none());
+                queueRequired ? new QueuePolicy(QueueMode.FORCE_ON, null) : QueuePolicy.none());
     }
 }

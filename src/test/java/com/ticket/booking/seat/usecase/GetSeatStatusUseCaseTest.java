@@ -29,12 +29,12 @@ import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingNotOpenYetException;
 import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.hold.domain.HoldRegistry;
-import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
+import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
+import com.ticket.booking.salespolicy.domain.QueuePolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -201,8 +201,8 @@ class GetSeatStatusUseCaseTest {
             final LocalDateTime orderOpenTime, final LocalDateTime orderCloseTime, final boolean queueRequired) {
         return new PerformanceSalesPolicy(
                 10L,
-                new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
+                new BookingWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(4, Duration.ofSeconds(300)),
-                queueRequired ? new BookingEntryPolicy(QueueMode.FORCE_ON, null) : BookingEntryPolicy.none());
+                queueRequired ? new QueuePolicy(QueueMode.FORCE_ON, null) : QueuePolicy.none());
     }
 }

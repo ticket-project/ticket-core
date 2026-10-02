@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
+import com.ticket.booking.salespolicy.domain.BookingWindowStatus;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class GetPerformanceBookingModeUseCase {
 
     public record Output(
             Long performanceId,
-            OrderAcceptanceStatus acceptanceStatus,
+            BookingWindowStatus acceptanceStatus,
             BookingMode bookingMode,
             LocalDateTime opensAt,
             LocalDateTime closesAt,
@@ -49,22 +49,22 @@ public class GetPerformanceBookingModeUseCase {
         final PerformanceSalesPolicy policy = performanceSaleFinder.requirePolicy(input.performanceId());
 
         final LocalDateTime now = LocalDateTime.now(clock);
-        final OrderAcceptanceStatus status = policy.acceptanceStatus(now);
+        final BookingWindowStatus status = policy.bookingWindowStatus(now);
         final BookingMode bookingMode = toBookingMode(policy, status, now);
 
         return new Output(
                 input.performanceId(),
                 status,
                 bookingMode,
-                policy.getOrderAcceptanceWindow().getOpensAt(),
-                policy.getOrderAcceptanceWindow().getClosesAt(),
+                policy.getBookingWindow().getOpensAt(),
+                policy.getBookingWindow().getClosesAt(),
                 policy.maxSeatCount(),
                 policy.holdDuration().getSeconds());
     }
 
     private BookingMode toBookingMode(
-            final PerformanceSalesPolicy policy, final OrderAcceptanceStatus status, final LocalDateTime now) {
-        if (status != OrderAcceptanceStatus.OPEN) {
+            final PerformanceSalesPolicy policy, final BookingWindowStatus status, final LocalDateTime now) {
+        if (status != BookingWindowStatus.OPEN) {
             return BookingMode.UNAVAILABLE;
         }
         return policy.isQueueRequired(now) ? BookingMode.QUEUE : BookingMode.DIRECT;

@@ -56,7 +56,7 @@ public class SelectSeatUseCase {
                 input.seatId(),
                 input.memberId(),
                 performanceSeatId,
-                policy.getOrderAcceptanceWindow().getClosesAt(),
+                policy.getBookingWindow().getClosesAt(),
                 policy.maxSeatCount());
     }
 

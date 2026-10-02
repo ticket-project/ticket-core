@@ -45,12 +45,12 @@ import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
+import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
+import com.ticket.booking.salespolicy.domain.QueuePolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -423,9 +423,9 @@ class StartBookingUseCaseTest {
             final boolean queueRequired) {
         return new PerformanceSalesPolicy(
                 PERFORMANCE_ID,
-                new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
+                new BookingWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(maxCanHoldCount, HOLD_DURATION),
-                queueRequired ? new BookingEntryPolicy(QueueMode.FORCE_ON, null) : BookingEntryPolicy.none());
+                queueRequired ? new QueuePolicy(QueueMode.FORCE_ON, null) : QueuePolicy.none());
     }
 
     private PerformanceSaleSnapshot saleSnapshot() {

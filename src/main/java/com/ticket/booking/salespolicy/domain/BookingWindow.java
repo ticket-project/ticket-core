@@ -12,20 +12,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 새로운 주문·좌석 선택을 시작할 수 있는 접수 기간이다. Hold/Order의 {@code expiresAt}(이미 시작된 개별 주문의 완료 기한)과는 다른 개념이다 — 접수 종료 직전에 생성된
+ * 새로운 주문·좌석 선택을 시작할 수 있는 예매 기간이다. Hold/Order의 {@code expiresAt}(이미 시작된 개별 주문의 완료 기한)과는 다른 개념이다 — 접수 종료 직전에 생성된
  * Order/Hold의 {@code expiresAt}을 이 window의 {@code closesAt}으로 잘라내지 않는다.
  */
 @Getter
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OrderAcceptanceWindow {
+public class BookingWindow {
     @Column(name = "order_opens_at", nullable = false)
     private LocalDateTime opensAt;
 
     @Column(name = "order_closes_at", nullable = false)
     private LocalDateTime closesAt;
 
-    public OrderAcceptanceWindow(final LocalDateTime opensAt, final LocalDateTime closesAt) {
+    public BookingWindow(final LocalDateTime opensAt, final LocalDateTime closesAt) {
         if (opensAt == null) {
             throw new InvalidRequestException("opensAt는 필수입니다.");
         }
@@ -40,13 +40,13 @@ public class OrderAcceptanceWindow {
     }
 
     /** 마감 시각과 정확히 같은 순간은 접수 가능(OPEN)하다. */
-    public OrderAcceptanceStatus statusAt(final LocalDateTime now) {
+    public BookingWindowStatus statusAt(final LocalDateTime now) {
         if (now.isBefore(opensAt)) {
-            return OrderAcceptanceStatus.BEFORE_OPEN;
+            return BookingWindowStatus.BEFORE_OPEN;
         }
         if (now.isAfter(closesAt)) {
-            return OrderAcceptanceStatus.CLOSED;
+            return BookingWindowStatus.CLOSED;
         }
-        return OrderAcceptanceStatus.OPEN;
+        return BookingWindowStatus.OPEN;
     }
 }

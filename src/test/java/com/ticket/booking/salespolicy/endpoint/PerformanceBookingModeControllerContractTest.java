@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceStatus;
+import com.ticket.booking.salespolicy.domain.BookingWindowStatus;
 import com.ticket.booking.salespolicy.usecase.GetPerformanceBookingModeUseCase;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
@@ -39,7 +39,7 @@ class PerformanceBookingModeControllerContractTest {
         when(getPerformanceBookingModeUseCase.execute(new GetPerformanceBookingModeUseCase.Input(10L)))
                 .thenReturn(new GetPerformanceBookingModeUseCase.Output(
                         10L,
-                        OrderAcceptanceStatus.OPEN,
+                        BookingWindowStatus.OPEN,
                         GetPerformanceBookingModeUseCase.BookingMode.DIRECT,
                         LocalDateTime.of(2026, 1, 1, 0, 0),
                         LocalDateTime.of(2026, 12, 31, 23, 59),
@@ -60,7 +60,7 @@ class PerformanceBookingModeControllerContractTest {
         when(getPerformanceBookingModeUseCase.execute(new GetPerformanceBookingModeUseCase.Input(10L)))
                 .thenReturn(new GetPerformanceBookingModeUseCase.Output(
                         10L,
-                        OrderAcceptanceStatus.OPEN,
+                        BookingWindowStatus.OPEN,
                         GetPerformanceBookingModeUseCase.BookingMode.QUEUE,
                         LocalDateTime.of(2026, 1, 1, 0, 0),
                         LocalDateTime.of(2026, 12, 31, 23, 59),
@@ -78,7 +78,7 @@ class PerformanceBookingModeControllerContractTest {
         when(getPerformanceBookingModeUseCase.execute(new GetPerformanceBookingModeUseCase.Input(10L)))
                 .thenReturn(new GetPerformanceBookingModeUseCase.Output(
                         10L,
-                        OrderAcceptanceStatus.BEFORE_OPEN,
+                        BookingWindowStatus.BEFORE_OPEN,
                         GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE,
                         LocalDateTime.of(2026, 1, 1, 0, 0),
                         LocalDateTime.of(2026, 12, 31, 23, 59),

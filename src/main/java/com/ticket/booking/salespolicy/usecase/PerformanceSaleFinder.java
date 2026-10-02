@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
  * 쪽이 정한다"는 계약이다. 그 판단을 Repository로 내리면 다른 뜻으로 쓰고 싶은 호출자가 생겼을 때 되돌릴 자리가 없어진다. 그래서 결론은 application에 두고, Repository는
  * {@code Optional} 그대로 남긴다.
  *
- * <p><b>이 class는 조회만 한다.</b> 접수 기간·Hold 한도·대기열 요구 여부 같은 판정은 돌려받은 {@link PerformanceSalesPolicy}가 소유한다 -- 호출자가 필요한 판정을
+ * <p><b>이 class는 조회만 한다.</b> 예매 기간·Hold 한도·대기열 요구 여부 같은 판정은 돌려받은 {@link PerformanceSalesPolicy}가 소유한다 -- 호출자가 필요한 판정을
  * 직접 부른다. 그래야 use case를 읽을 때 무엇을 검증하는지가 보인다.
  */
 @Component
