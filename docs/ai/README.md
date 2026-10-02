@@ -10,7 +10,7 @@
 | [coding-guidelines.md](../coding-guidelines.md) | 코드 작성 기준 |
 | [testing.md](../testing.md) | 검증 선택·실행·보고 기준 |
 | [core-booking-lifecycle.md](../core-booking-lifecycle.md) | booking 정책과 현재 수명주기 |
-| [.agents/skills/](../../.agents/skills/) | 특정 작업에서만 읽는 repo-local 작업 매뉴얼 |
+| [.agents/skills/](../../.agents/skills/) | 특정 작업에서만 읽는 repo-local 작업 매뉴얼. Claude Code가 읽는 `.claude/skills`는 이 폴더를 가리키는 로컬 링크라 커밋하지 않는다. 클론 뒤 한 번 `scripts\link-agent-skills.cmd`(Windows 정션) 또는 `bash scripts/link-agent-skills.sh`(그 밖)를 실행한다 |
 | [.codex/](../../.codex/), [.claude/](../../.claude/) | tool-specific 설정; 공통 규칙은 복사하지 않고 AGENTS와 원본 문서로 연결 |
 
 ## 작업별 skill
