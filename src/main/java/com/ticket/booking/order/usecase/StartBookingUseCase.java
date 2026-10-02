@@ -11,7 +11,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.BookingEntryGate;
+import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
@@ -55,7 +55,7 @@ public class StartBookingUseCase {
             LockOptions.defaults().withFailureMessage("주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요.");
 
     private final DistributedLock distributedLock;
-    private final BookingEntryGate bookingEntryGate;
+    private final BookingEntryGuard bookingEntryGuard;
     private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
@@ -92,7 +92,7 @@ public class StartBookingUseCase {
 
         // 1. 지금 이 회차의 예매를 받을 수 있는가.
         final PerformanceSalesPolicy policy =
-                bookingEntryGate.enter(input.performanceId(), input.memberId(), input.admissionToken(), now);
+                bookingEntryGuard.check(input.performanceId(), input.memberId(), input.admissionToken(), now);
         policy.ensureWithinHoldLimit(requestedSeatIds.size());
 
         // 2. 예매할 수 있는 회원인가. 인증은 토큰의 서명·만료만 보므로 탈퇴 회원은 여기서 걸러진다 --

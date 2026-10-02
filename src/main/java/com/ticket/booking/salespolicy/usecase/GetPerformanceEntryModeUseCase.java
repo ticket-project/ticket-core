@@ -14,13 +14,13 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 인증 없이 회차의 예매 방식을 조회하는 booking 소유 use case다. 안내용 조회이므로 실제 좌석 선택·상태·주문 API는 이 결과와 무관하게 실행 시점에 정책을 다시 검사한다. FE 라우트나
+ * 인증 없이 회차의 진입 방식을 조회하는 booking 소유 use case다. 안내용 조회이므로 실제 좌석 선택·상태·주문 API는 이 결과와 무관하게 실행 시점에 정책을 다시 검사한다. FE 라우트나
  * ticket-queue HTTP 경로는 담지 않는다 — {@code bookingMode}는 업무 의미만 전달한다.
  */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class GetPerformanceBookingModeUseCase {
+public class GetPerformanceEntryModeUseCase {
     private final PerformanceSaleFinder performanceSaleFinder;
     private final Clock clock;
 
@@ -30,7 +30,7 @@ public class GetPerformanceBookingModeUseCase {
         }
     }
 
-    public enum BookingMode {
+    public enum EntryMode {
         DIRECT,
         QUEUE,
         UNAVAILABLE
@@ -39,7 +39,7 @@ public class GetPerformanceBookingModeUseCase {
     public record Output(
             Long performanceId,
             BookingWindowStatus acceptanceStatus,
-            BookingMode bookingMode,
+            EntryMode bookingMode,
             LocalDateTime opensAt,
             LocalDateTime closesAt,
             Integer maxSeatCount,
@@ -50,7 +50,7 @@ public class GetPerformanceBookingModeUseCase {
 
         final LocalDateTime now = LocalDateTime.now(clock);
         final BookingWindowStatus status = policy.bookingWindowStatus(now);
-        final BookingMode bookingMode = toBookingMode(policy, status, now);
+        final EntryMode bookingMode = toEntryMode(policy, status, now);
 
         return new Output(
                 input.performanceId(),
@@ -62,11 +62,11 @@ public class GetPerformanceBookingModeUseCase {
                 policy.holdDuration().getSeconds());
     }
 
-    private BookingMode toBookingMode(
+    private EntryMode toEntryMode(
             final PerformanceSalesPolicy policy, final BookingWindowStatus status, final LocalDateTime now) {
         if (status != BookingWindowStatus.OPEN) {
-            return BookingMode.UNAVAILABLE;
+            return EntryMode.UNAVAILABLE;
         }
-        return policy.isQueueRequired(now) ? BookingMode.QUEUE : BookingMode.DIRECT;
+        return policy.isQueueRequired(now) ? EntryMode.QUEUE : EntryMode.DIRECT;
     }
 }

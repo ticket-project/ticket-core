@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.admission.AdmissionVerifier;
-import com.ticket.booking.admission.BookingEntryGate;
+import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.PerformanceIsPastException;
@@ -76,7 +76,7 @@ class SelectSeatUseCaseTest {
                         seatSelectionCoordinator,
                         performanceSeatRepository,
                         holdRegistry,
-                        new BookingEntryGate(
+                        new BookingEntryGuard(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         CLOCK);
     }

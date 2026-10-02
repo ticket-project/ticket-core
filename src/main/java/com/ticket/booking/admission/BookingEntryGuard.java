@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
-public class BookingEntryGate {
+public class BookingEntryGuard {
     private final PerformanceSaleFinder performanceSaleFinder;
     private final AdmissionVerifier admissionVerifier;
 
@@ -31,7 +31,7 @@ public class BookingEntryGate {
      *
      * @return 통과한 회차의 판매 정책. 호출자가 hold 한도 같은 나머지 판정에 그대로 쓴다
      */
-    public PerformanceSalesPolicy enter(
+    public PerformanceSalesPolicy check(
             final Long performanceId,
             final Long memberId,
             final @Nullable String admissionToken,
