@@ -145,7 +145,7 @@ body:
       description: 일정, 기술, 운영 제약이나 선행 조건이 있으면 적어 주세요.
       placeholder: |
         - 현재 ArchUnit 규칙을 깨면 안 됨
-        - Redis TTL과 스케줄러 보정 로직이 함께 유지되어야 함
+        - Redis TTL과 스케줄러 누락 복구 로직이 함께 유지되어야 함
         - 외부 결제사 규격 확정 전까지 임시 정책일 수 있음
     validations:
       required: false

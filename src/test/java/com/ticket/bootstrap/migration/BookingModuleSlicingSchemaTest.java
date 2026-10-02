@@ -60,7 +60,7 @@ class BookingModuleSlicingSchemaTest {
                     new PerformanceSeat(1L, 1L, 1L, PerformanceSeatState.AVAILABLE, BigDecimal.TEN);
             // shared.jpa.AuditedEntity의 감사 필드는 Spring Data JPA auditing(AuditingEntityListener +
             // AuditorAware)이 채운다 — 이 테스트는 Spring context 없이 순수 Hibernate만 쓰므로 직접
-            // 채운다. Spring auditing 배선 자체는 다른 통합 테스트가 이미 고정한다.
+            // 채운다. Spring auditing 설정 자체는 다른 통합 테스트가 이미 고정한다.
             ReflectionTestUtils.setField(seat, "createdAt", LocalDateTime.now());
             ReflectionTestUtils.setField(seat, "createdBy", "booking-module-slicing-test");
 

@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 지금은 필요한 DB 데이터를
  * {@link OrderHoldSnapshotReader}의 짧은 읽기 트랜잭션에서 값으로 완성한 뒤 그 밖에서 외부 작업을 한다.
  *
- * <p>트랜잭션을 열지 않아도 publication 계약은 그대로다 — 발행·완료·실패 기록은 Modulith registry가 자기 트랜잭션에서 수행하고, 여기서 던진 예외는 FAILED로 남아 재제출된다. 이
+ * <p>트랜잭션을 열지 않아도 publication 계약은 그대로다 — 발행·완료·실패 기록은 Modulith registry가 자기 트랜잭션에서 수행하고, 여기서 던진 예외는 FAILED로 남아 재처리된다. 이
  * listener는 예외를 삼키지 않는다.
  *
  * <p><b>listener id는 옛 package 경로를 그대로 유지한다.</b> Spring의 기본 listener id는 {@code <선언 클래스 FQCN>.<메서드>(<파라미터 타입>)}(Spring

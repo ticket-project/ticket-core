@@ -76,7 +76,7 @@ Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않�
 
 커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
 `OrderStarted` publication은 Event Publication Registry에 FAILED로 남는다.
-`EventPublicationMaintenance`가 실패 publication을 재제출한다(아래 "이벤트 재시도와 보정").
+`EventPublicationMaintenance`가 실패 publication을 재처리한다(아래 "이벤트 재시도와 누락 복구").
 따라서 프로세스가 재시작되거나 즉시 처리가 실패해도 후속 처리 입력은 DB(publication row)에
 남는다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
 본인이 선택 중인 좌석으로만 주문을 시작할 수 있다.
@@ -85,7 +85,7 @@ Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않�
 만료 시각이고, `remainingSeconds`는 응답을 만드는 서버 시각부터 `expiresAt`까지 남은
 완전한 초다. PENDING이 아니거나 이미 만료 경계를 지났으면 0이다. 클라이언트는 로컬
 시계로 `expiresAt - now`를 다시 계산하지 않고 `remainingSeconds`로 카운트다운을 시작한 뒤,
-상태 조회 응답으로 주기적으로 보정한다.
+상태 조회 응답으로 주기적으로 다시 맞춘다.
 
 ## 좌석 선택과 해제 알림 순서
 
@@ -114,7 +114,7 @@ Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않�
 
 **서버가 보장하는 것은 발행 순서까지다.** 클라이언트 수신 순서는 WebSocket 전송 계층의 문제이며 이
 락의 범위가 아니다. 그래서 좌석 상태 이벤트는 계속 "그 좌석을 특정 상태로 맞추는" 멱등 알림으로
-취급하고, 클라이언트는 필요하면 좌석 상태 조회로 보정한다. payload(`performanceSeatId` + 물리
+취급하고, 클라이언트는 필요하면 좌석 상태 조회로 다시 맞춘다. payload(`performanceSeatId` + 물리
 `seatId`)는 바뀌지 않았다.
 
 ## 결제 시도와 Order 상태
@@ -161,10 +161,10 @@ WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새
 보장은 at-least-once다. 중복보다 누락을 피하되, 매 발행 직전 현재 상태 검증으로 더 최신
 상태를 덮어쓰지 않는 것이 기준이다.
 
-## 이벤트 재시도와 보정
+## 이벤트 재시도와 누락 복구
 
 `BookingEventListeners`의 실패는 Spring Modulith의 JPA Event Publication Registry가 관리한다.
-`EventPublicationMaintenance`가 실패 publication을 제한된 횟수로 재제출한다. 상한을 넘긴 건은 자동 처리에서 빠져 수동
+`EventPublicationMaintenance`가 실패 publication을 제한된 횟수로 재처리한다. 상한을 넘긴 건은 자동 처리에서 빠져 수동
 조사가 필요하다. 동일 이벤트 재전달은 예상 경로이고, 그래서 후속 처리는 멱등하게 짠다(위 "주문 취소와 만료"의
 재전달 설명).
 
@@ -172,10 +172,10 @@ WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새
 보지 않으므로 탈퇴 후에도 토큰 만료 전 재접속이 가능하며, 주문 생성은 별도로 활성 회원을 확인한다.
 과거 `com.ticket.member.api.MemberWithdrawn` publication이 남아 있다면 배포 전 확인이 필요하다.
 일반 `AFTER_COMMIT` 리스너도 registry 저장 대상이며, JPA publication의 `eventType`은 `Class<?>`로
-읽힌다. 삭제된 클래스의 미완료 행을 조회하면 Hibernate 클래스 로딩에서 실패해 다른 이벤트의 재제출도
+읽힌다. 삭제된 클래스의 미완료 행을 조회하면 Hibernate 클래스 로딩에서 실패해 다른 이벤트의 재처리도
 막힐 수 있다. 운영 행의 존재는 별도 DB 확인이 필요하며, 이 정리 작업에서는 migration을 추가하지 않는다.
 
-## TTL 폭주와 보정
+## TTL 폭주와 누락 복구
 
 Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 핸들러 목록에 위임하고,
 `booking.hold.persistence.HoldKeyExpirationHandler`가 키를 해석해
@@ -183,7 +183,7 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
 
 - 만료 이벤트 handler는 고정 worker 2개로 DB 동시 진입을 제한한다. 무제한 큐이므로 만료 폭주 때
   대기 작업이 메모리에 쌓인다. Redisson 수신 경로도 채널별 무제한 큐를 사용해 Redis까지 역압을 전달하지 못한다.
-- `OrderExpirationTrigger` → `ExpirePendingOrdersUseCase`가 누락된 만료를 보정한다.
+- `OrderExpirationTrigger` → `ExpirePendingOrdersUseCase`가 누락된 만료를 복구한다.
   **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
   무관하게 앞으로만 가므로, 앞의 주문이 계속 실패해도 뒤의 정상 만료 대상이 같은 순회에서
   처리된다. 실패 항목은 지우지도 처리 완료로 치지도 않고 PENDING으로 남아 다음 순회에서 다시

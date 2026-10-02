@@ -36,7 +36,7 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
  *
  * <ol>
  *   <li>새로 저장되는 publication의 {@code listener_id}가 여전히 옛 package 문자열이다.
- *   <li>그 옛 id로 저장된 미완료 publication을 재제출하면 실제로 listener가 돌아 완료된다 — 이동 전 남아 있던 publication의 회귀 사례다.
+ *   <li>그 옛 id로 저장된 미완료 publication을 재처리하면 실제로 listener가 돌아 완료된다 — 이동 전 남아 있던 publication의 회귀 사례다.
  * </ol>
  */
 @SuppressWarnings("NonAsciiCharacters")

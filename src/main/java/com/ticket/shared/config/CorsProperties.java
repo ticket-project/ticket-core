@@ -12,7 +12,7 @@ import lombok.Getter;
  * CORS 허용 origin이다. security의 {@code ApiSecurityConfig}(HTTP)와 booking의 {@code WebSocketConfig}(STOMP 핸드셰이크)가 같은 값을 읽어야
  * 해서 shared가 갖는다.
  *
- * <p>{@code @NamedInterface}를 package가 아니라 이 타입에 붙인다 — 같은 package의 전역 설정들은 shared 내부 배선이라 공개하지 않는다.
+ * <p>{@code @NamedInterface}를 package가 아니라 이 타입에 붙인다 — 같은 package의 전역 설정들은 shared 내부 설정이라 공개하지 않는다.
  */
 @NamedInterface("config")
 @Getter

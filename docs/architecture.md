@@ -11,7 +11,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   모듈이다.
 - **업무 Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다.** `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은
-  `shared.api`·`shared.web`·`shared.exception`·`shared.jpa`, 공통 실행 배선은 `shared.config`,
+  `shared.api`·`shared.web`·`shared.exception`·`shared.jpa`, 공통 실행 설정은 `shared.config`,
   인증·인가와 그 조립은 `security`에 둔다.
 - **다른 모듈이 쓰는 공개 계약은 `<module>.api`에 두고 `@NamedInterface("api")`로 선언한다.** 작은
   interface와 불변 `record` snapshot, enum만 두고 구현은 그 밖의 패키지에 둔다. 별도 `internal` 계층은
@@ -135,7 +135,7 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 물리적으로 별도 Gradle 모듈이 아니라 `<module>` 아래 패키지다. 작은/중간 업무 모듈은 `<module>.<role>`,
 큰 `booking`은 `<module>.<capability>.<role>`로 둔다. `booking`의 capability 하위 패키지는 별도 Application Module이
 아니다. `security`는 `auth`/`jwt`/
-`oauth`/`token`/`http` 등 기능별로, `shared`는 공개 계약 `api`/`web`/`exception`/`jpa`와 실행 배선 `config`로
+`oauth`/`token`/`http` 등 기능별로, `shared`는 공개 계약 `api`/`web`/`exception`/`jpa`와 실행 설정 `config`로
 나눈다. 쓰지 않는 역할 폴더를 미리 만들지 않는다.
 
 | 역할 | 책임 |

@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Spring Modulith의 JPA event publication registry를 운영 관점에서 관리한다.
  *
- * <p>완료된 publication은 일정 기간 뒤 archive에서 지우고, 실패한 publication은 주기적으로 재제출한다. 10회를 초과해 계속 실패하는 publication은 자동 재제출 대상에서
+ * <p>완료된 publication은 일정 기간 뒤 archive에서 지우고, 실패한 publication은 주기적으로 재처리한다. 10회를 초과해 계속 실패하는 publication은 자동 재처리 대상에서
  * 제외하고 구조화된 로그로 남겨, 수동 복구 runbook에서 해당 이벤트를 찾아 대응할 수 있게 한다.
  */
 @Slf4j
@@ -40,7 +40,7 @@ class EventPublicationMaintenance {
     }
 
     /**
-     * {@value #MAX_COMPLETION_ATTEMPTS}회를 초과해 실패한 publication은 자동 재제출에서 제외하고 alert 가능한 신호를 구조화된 로그로 남긴다. 이벤트 식별자는 수동 복구
+     * {@value #MAX_COMPLETION_ATTEMPTS}회를 초과해 실패한 publication은 자동 재처리에서 제외하고 alert 가능한 신호를 구조화된 로그로 남긴다. 이벤트 식별자는 수동 복구
      * runbook에서 조회 키로 쓴다.
      */
     private boolean isRetryable(final EventPublication publication) {
@@ -48,7 +48,7 @@ class EventPublicationMaintenance {
             return true;
         }
         log.error(
-                "event publication이 최대 재시도 횟수를 초과해 자동 재제출에서 제외됩니다. "
+                "event publication이 최대 재시도 횟수를 초과해 자동 재처리에서 제외됩니다. "
                         + "eventPublicationId={}, completionAttempts={}, event={}",
                 publication.getIdentifier(),
                 publication.getCompletionAttempts(),

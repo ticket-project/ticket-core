@@ -37,7 +37,7 @@
 | 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`와 관련 module test |
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
 | 주문·hold·이벤트 흐름 | 관련 단위·Scenario·예매 E2E 테스트(Docker 필요) |
-| 빈을 모듈 사이로 옮기는 변경 | 위에 더해 `ApplicationContextLoadTest`. 단위 테스트는 각 클래스를 직접 만들어 빈 배선이 깨져도 통과한다 |
+| 빈을 모듈 사이로 옮기는 변경 | 위에 더해 `ApplicationContextLoadTest`. 단위 테스트는 각 클래스를 직접 만들어 빈 연결이 깨져도 통과한다 |
 | DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트(Oracle은 Docker 필요) |
 | seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
 | 배포 산출물·push 전 전체 | [CI workflow](../.github/workflows/ci.yml)의 `Test and build` 단계 명령 |
@@ -91,7 +91,7 @@ Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
 
 - `PublishedEvents`와 실제 publication 상태로 booking DB 트랜잭션 성공 시 이벤트/publication이 함께
   저장되고, rollback 시 둘 다 없는지 고정한다.
-- `Scenario`로 listener 완료를 기다리고, 첫 시도 실패 후 publication FAILED, 재제출 성공 후
+- `Scenario`로 listener 완료를 기다리고, 첫 시도 실패 후 publication FAILED, 재처리 성공 후
   COMPLETED/ARCHIVED, 재시도 상한 초과 시 자동 제외를 검증한다. 고정 clock과 deterministic fake를 쓰고
   `Thread.sleep`을 쓰지 않는다.
 - 동일 `eventId`가 여러 번 전달돼도 최종 상태와 WebSocket 의미가 한 번 처리한 것과 같은지 고정한다(멱등성).

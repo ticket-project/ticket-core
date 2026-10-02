@@ -17,7 +17,7 @@ import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 
 /**
- * venue 공개 계약이 실제 컨텍스트에서 어떻게 배선되는지를 고정한다.
+ * venue 공개 계약이 실제 컨텍스트에서 어떻게 연결되는지를 고정한다.
  *
  * <p>공개 계약은 Aggregate별 use case가 하나씩 구현한다. 여기서 조용히 깨질 수 있는 것이 둘이다. 하나는 한 계약의 <b>구현이 둘</b>이 되어 주입이 모호해지는 것, 다른 하나는 use
  * case가 선언한 <b>읽기 전용 트랜잭션</b>이 proxy가 아니어서 실제로는 없는 것이다. 단위 테스트는 클래스를 직접 생성하므로 둘 다 잡지 못한다 — Spring 자신에게 물어본다.

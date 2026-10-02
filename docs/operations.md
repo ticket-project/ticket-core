@@ -32,8 +32,8 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차(신규 요청 차단 후 TTL 이상 대기,
   `SCAN`으로 옛 key가 0개인지 확인, 배포, 재개 — 무중단이면 백필 또는 호환 조회)를 함께 설계한다.
-- TTL, expiration listener, scheduler 보정 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을 함께 지킨다.
-- key·TTL·리스너 변경은 장애 복구와 scheduler 보정 흐름까지 같이 검토한다.
+- TTL, expiration listener, scheduler 누락 복구 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을 함께 지킨다.
+- key·TTL·리스너 변경은 장애 복구와 scheduler 누락 복구 흐름까지 같이 검토한다.
 
 ## DB 마이그레이션 적용
 
@@ -108,7 +108,7 @@ max(tomcat_threads_busy_threads{service="ticket-core"}) / max(tomcat_threads_con
 Hikari pending이 0보다 커지면 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. pending이 0이어도 이미 빌린 연결이 DB lock에서
 멈출 수 있으므로 DB wait를 별도로 확인한다. Redis 만료 처리 executor의 queued 값이 상한에 오래 머물거나 queue 포화
 경고가 반복되면 이전 회차 작업이 현재 부하와 겹친 것이다. 이벤트 후속 처리가 누락되거나 실패해도
-`EventPublicationMaintenance`가 주기적으로 재제출해 보정하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
+`EventPublicationMaintenance`가 주기적으로 재처리해 복구하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
 
 Oracle lock wait는 Actuator만으로 볼 수 없다. Oracle exporter·Datadog DBM 또는 DBA 권한이 있는 별도 관측 계정에서 다음
 정보를 수집한다. `v$session` 조회 권한은 애플리케이션 계정에 추가하지 말고 관측 전용 계정에만 부여한다.
@@ -130,7 +130,7 @@ ORDER BY waiting_sessions DESC;
 `orderId`/`holdKey`를 주문·좌석 상태와 대조해 코드 오류와 Redis 장애를 조사한다. 과거 장애를 조사할 때는 당시 스키마의
 publication 저장 실패를 먼저 확인한다. 기존 payload가 잘려 저장됐을 가능성은 별도 데이터 근거가 필요한 가설이다.
 
-원인이 해소되기 전에는 재제출을 강행하지 않는다. 이 저장소에는 재처리 전용 endpoint가 없다. DB 직접 수정 또는 임시 운영
+원인이 해소되기 전에는 재처리를 강행하지 않는다. 이 저장소에는 재처리 전용 endpoint가 없다. DB 직접 수정 또는 임시 운영
 스크립트가 필요할 수 있으나 검증된 자동 복구 절차로 제공하지 않는다. 적용 전 대상 publication과 현재 주문·hold 상태,
 백업·재시도·중복 처리 영향을 확인하고 운영 절차를 별도로 승인받는다.
 

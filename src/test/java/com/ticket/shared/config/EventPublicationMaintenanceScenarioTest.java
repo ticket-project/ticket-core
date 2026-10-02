@@ -26,9 +26,9 @@ import com.ticket.testsupport.CoreApplicationTestSupport;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재제출 mechanics를 {@link Scenario} DSL로 검증한다.
+ * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재처리 mechanics를 {@link Scenario} DSL로 검증한다.
  *
- * <p>재제출은 운영 코드 {@link EventPublicationMaintenance#resubmitFailed()}를 그대로 부른다. 그래서 재시도 정책(batchSize, maxInFlight,
+ * <p>재처리는 운영 코드 {@link EventPublicationMaintenance#resubmitFailed()}를 그대로 부른다. 그래서 재시도 정책(batchSize, maxInFlight,
  * completionAttempts&lt;=10)이 바뀌면 이 테스트가 그 정책으로 검증한다. 운영 스케줄러가 같은 메서드를 1분마다 불러 테스트와 겹치지 않도록
  * {@code worker.enabled=false}로 스케줄링을 끈다. booking 도메인 이벤트가 아니라 이 테스트 전용 {@link ProbeEvent}로 registry 자체의 동작만 격리해서 본다 —
  * booking listener의 업무 로직은 {@code com.ticket.booking} 아래의 다른 테스트가 고정한다.
@@ -57,7 +57,7 @@ class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport
     }
 
     @Test
-    void 첫_시도가_실패하면_FAILED로_기록되고_재제출이_성공하면_COMPLETED로_ARCHIVE된다(final Scenario scenario) {
+    void 첫_시도가_실패하면_FAILED로_기록되고_재처리가_성공하면_COMPLETED로_ARCHIVE된다(final Scenario scenario) {
         final UUID probeId = UUID.randomUUID();
         probeListener.failNextInvocations(1);
 
@@ -75,7 +75,7 @@ class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport
     }
 
     @Test
-    void 십일회_초과해_실패한_publication은_자동_재제출_대상에서_제외된다(final Scenario scenario) {
+    void 십일회_초과해_실패한_publication은_자동_재처리_대상에서_제외된다(final Scenario scenario) {
         final UUID probeId = UUID.randomUUID();
         probeListener.alwaysFail(true);
 
@@ -83,7 +83,7 @@ class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport
                 .andWaitForStateChange(() -> probeListener.attempts(probeId), attempts -> attempts >= 1)
                 .andVerify(attempts -> assertThat(attempts).isEqualTo(1));
         // 최초 시도(1) + resubmit 10회 = completionAttempts 11. 정책은 <=10까지만 재시도 대상이므로
-        // 이 10번은 전부 재제출 대상에 포함돼 다시 실패한다.
+        // 이 10번은 전부 재처리 대상에 포함돼 다시 실패한다.
         for (int expectedAttempts = 2; expectedAttempts <= 11; expectedAttempts++) {
             resubmitAndAwait(scenario, probeId, expectedAttempts);
         }
@@ -99,7 +99,7 @@ class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport
     }
 
     /**
-     * {@code eventPublicationMaintenance.resubmitFailed()}가 async listener를 다시 스케줄링만 하고 즉시 반환하므로, 다음 재제출을 걸기 전에 이번 시도가
+     * {@code eventPublicationMaintenance.resubmitFailed()}가 async listener를 다시 스케줄링만 하고 즉시 반환하므로, 다음 재처리를 걸기 전에 이번 시도가
      * 실제로 끝나기를 기다린다.
      */
     private void resubmitAndAwait(final Scenario scenario, final UUID probeId, final int expectedAttempts) {

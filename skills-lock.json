@@ -11,7 +11,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/booking-change/SKILL.md",
-      "computedHash": "9629a98f290f2b256692f6896fe886b8a08e3ff7a045fdd39c62e4c137e5a890"
+      "computedHash": "9c08c177952b2cf2bca2b9fa10a20c8b4af05c99a9116b6f2c4c8db0a5ff8c59"
     },
     "database-change": {
       "source": "ticket-core",
