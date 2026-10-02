@@ -34,7 +34,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 
 | BC | 소유 | 비고 |
 | --- | --- | --- |
-| Show | Show, ShowGenre, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 옛 `catalog`. 가격 원본은 `PerformanceGrade.price`. Show의 판매 필드(`displaySaleType`/`displaySaleWindow`)는 화면 표시 전용이고 실제 판단은 Booking의 `PerformanceSalesPolicy`가 한다 |
+| Show | Show, ShowGenre, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 가격 원본은 `PerformanceGrade.price`. Show의 판매 필드(`displaySaleType`/`displaySaleWindow`)는 화면 표시 전용이고 실제 판단은 Booking의 `PerformanceSalesPolicy`가 한다 |
 | Venue | Venue, Seat, Region | 물리 시설. 좌석은 회차와 무관하게 존재한다 |
 | Booking | PerformanceSeat, Selection, Hold, Order, OrderSeat, Ticket, PerformanceSalesPolicy | 좌석 선점·주문과 발권 모델을 소유한다. admission token 검증도 소유한다 |
 | Payment | Payment | 결제 시도. entity-only 단계 |
@@ -57,7 +57,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   확인한다. 조회·좌석 선택·찜 연산은 확인하지 않는다.
 - `show -> venue`는 표시값 조립, `show -> like`는 공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
-  `PerformanceSaleCatalogApi`/`PerformanceVenueLayoutCatalogApi`를 show가 façade로 유지하기
+  `PerformanceSaleInfoApi`/`PerformanceLayoutApi`를 show가 façade로 유지하기
   때문이다.
 - `booking -> security`는 WebSocket 인증 하나뿐이다. STOMP CONNECT는 HTTP filter chain을 타지 않아
   좌석 상태 구독 인터셉터가 access token을 직접 검증한다.

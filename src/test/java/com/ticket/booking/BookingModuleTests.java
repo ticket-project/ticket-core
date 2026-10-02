@@ -12,8 +12,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
-import com.ticket.show.api.PerformanceSaleCatalogApi;
-import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
+import com.ticket.show.api.PerformanceLayoutApi;
+import com.ticket.show.api.PerformanceSaleInfoApi;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
 /**
@@ -22,17 +22,17 @@ import com.ticket.testsupport.persistence.MigratedSchema;
  * 꺼서, 아직 {@code @ApplicationModule}을 붙이지 않은 미래 모듈이 조용히 검증에서 빠지는 위험을 피한다.
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.booking} package tree만 component-scan한다. show
- * {@code PerformanceSaleCatalogApi}·{@code PerformanceVenueLayoutCatalogApi}(booking local
- * {@code PerformanceSalesPolicy}가 예매 정책을 소유하므로 show의 정책 공개 계약은 더 이상 없다), member {@code MemberLookupApi}·
- * {@code AccessTokenAuthenticationApi}(WebSocket 인증이 참조)는 그 필터 밖이라 {@code @MockitoBean}으로 대체한다.
- * {@code JPAQueryFactory}도 {@code @MockitoBean}으로 대체한다 — 이 테스트는 booking bean들이 module 경계 안에서 서로 정상 연결되는지만 확인하는 wiring
- * smoke test이지 실제 DB 접근을 검증하지 않는다. 그 검증은 각 Querydsl repository의 통합 테스트가 담당한다. {@code Clock}도 같은 이유로
- * {@code @MockitoBean}이다 — {@code shared}는 {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에 포함되지만 이제 호출 대상 계약만 갖고
- * bean을 등록하지 않고, {@code Clock}을 만드는 {@code SystemClockConfig}는 {@code com.ticket.shared.config}가 소유해 STANDALONE 스캔 범위
- * 밖이다. {@code SimpMessagingTemplate}은 {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 한다. 이 bean을
- * 만드는 {@code @EnableWebSocketMessageBroker} 설정 ({@code booking.seat.infrastructure.WebSocketConfig})은 이제 booking 소유라 스캔
- * 범위 안이지만, wiring smoke test에서 실제 STOMP 브로커 설정까지 띄울 이유가 없어 계속 {@code @MockitoBean}으로 대체한다({@code @MockitoBean}은 같은 타입의
- * 실제 bean 정의를 대체한다).
+ * {@code PerformanceSaleInfoApi}·{@code PerformanceLayoutApi}(booking local {@code PerformanceSalesPolicy}가 예매 정책을
+ * 소유하므로 show의 정책 공개 계약은 더 이상 없다), member {@code MemberLookupApi}· {@code AccessTokenAuthenticationApi}(WebSocket 인증이
+ * 참조)는 그 필터 밖이라 {@code @MockitoBean}으로 대체한다. {@code JPAQueryFactory}도 {@code @MockitoBean}으로 대체한다 — 이 테스트는 booking
+ * bean들이 module 경계 안에서 서로 정상 연결되는지만 확인하는 wiring smoke test이지 실제 DB 접근을 검증하지 않는다. 그 검증은 각 Querydsl repository의 통합 테스트가
+ * 담당한다. {@code Clock}도 같은 이유로 {@code @MockitoBean}이다 — {@code shared}는 {@code @Modulith(sharedModules = "shared")} 덕에 이
+ * 테스트에 포함되지만 이제 호출 대상 계약만 갖고 bean을 등록하지 않고, {@code Clock}을 만드는 {@code SystemClockConfig}는
+ * {@code com.ticket.shared.config}가 소유해 STANDALONE 스캔 범위 밖이다. {@code SimpMessagingTemplate}은
+ * {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 한다. 이 bean을 만드는
+ * {@code @EnableWebSocketMessageBroker} 설정 ({@code booking.seat.infrastructure.WebSocketConfig})은 이제 booking 소유라 스캔 범위
+ * 안이지만, wiring smoke test에서 실제 STOMP 브로커 설정까지 띄울 이유가 없어 계속 {@code @MockitoBean}으로 대체한다({@code @MockitoBean}은 같은 타입의 실제
+ * bean 정의를 대체한다).
  */
 @MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
@@ -45,10 +45,10 @@ class BookingModuleTests {
     private RedisMessageListenerContainer redisMessageListenerContainer;
 
     @MockitoBean
-    private PerformanceSaleCatalogApi performanceSaleCatalogApi;
+    private PerformanceSaleInfoApi performanceSaleInfoApi;
 
     @MockitoBean
-    private PerformanceVenueLayoutCatalogApi performanceVenueLayoutCatalogApi;
+    private PerformanceLayoutApi performanceLayoutApi;
 
     @MockitoBean
     private MemberLookupApi memberLookupApi;

@@ -23,7 +23,7 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
-import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleInfoApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
@@ -58,7 +58,7 @@ public class StartBookingUseCase {
     private final BookingEntryGuard bookingEntryGuard;
     private final MemberLookupApi memberLookupApi;
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
-    private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
+    private final PerformanceSaleInfoApi performanceSaleInfoApi;
     private final HoldRegistry holdRegistry;
     private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
@@ -105,7 +105,7 @@ public class StartBookingUseCase {
 
         // 4. 주문에 남길 표시값(공연·공연장 이름, 등급, 좌석 라벨). 금액은 여기서 오지 않는다 -- 좌석 단가만 쓴다(ADR 0005).
         final PerformanceSaleSnapshot saleSnapshot =
-                performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
+                performanceSaleInfoApi.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
 
         // 5. 본인이 선택 중인 좌석만 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
         //    connection 경합이 좌석 경합으로 번진다.

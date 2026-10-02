@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.show.api.PerformanceLayoutApi;
 import com.ticket.show.api.PerformanceLayoutSnapshot;
-import com.ticket.show.api.PerformanceVenueLayoutCatalogApi;
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.GradeRepository;
 import com.ticket.show.domain.performance.Performance;
@@ -28,15 +28,15 @@ import com.ticket.venue.api.VenueSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link PerformanceVenueLayoutCatalogApi}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한 번에 조회해 booking에게
- * scalar snapshot만 넘긴다.
+ * {@link PerformanceLayoutApi}의 show 소유 구현이다. 회차 정적 seat-map에 필요한 venue·좌석 좌표·등급 표시값을 한 번에 조회해 booking에게 scalar
+ * snapshot만 넘긴다.
  *
  * <p>venue 조합(venue 이름·seat-map 좌표·좌석 배치)은 이 application 계층이 한다 — local 조회({@code PerformanceRepository})는 show 자기 DB만
  * 본다.
  */
 @Service
 @RequiredArgsConstructor
-public class PerformanceVenueLayoutCatalogService implements PerformanceVenueLayoutCatalogApi {
+public class PerformanceLayoutService implements PerformanceLayoutApi {
     private final PerformanceRepository performanceRepository;
     private final GradeRepository gradeRepository;
     private final ShowRepository showRepository;

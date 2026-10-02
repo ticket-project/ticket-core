@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.seat.domain.SeatOccupancy;
-import com.ticket.show.api.PerformanceSaleCatalogApi;
+import com.ticket.show.api.PerformanceSaleInfoApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GetSeatAvailabilityUseCase {
     private final SeatAvailabilitySnapshotReader seatAvailabilitySnapshotReader;
-    private final PerformanceSaleCatalogApi performanceSaleCatalogApi;
+    private final PerformanceSaleInfoApi performanceSaleInfoApi;
     private final SeatOccupancy seatOccupancy;
 
     public record Input(Long performanceId) {
@@ -62,7 +62,7 @@ public class GetSeatAvailabilityUseCase {
         // 여기부터는 DB 트랜잭션 밖이다 — Redis 점유 조회와 show 표시값 조회가 connection을 쥐지 않는다.
 
         final PerformanceSaleSnapshot saleSnapshot =
-                performanceSaleCatalogApi.getSaleSnapshot(input.performanceId(), Set.of());
+                performanceSaleInfoApi.getSaleSnapshot(input.performanceId(), Set.of());
         final Map<Long, Long> availableCountsByGrade =
                 countAvailableSeatsByGrade(performanceSeats, seatOccupancy.occupiedSeatIds(input.performanceId()));
 
