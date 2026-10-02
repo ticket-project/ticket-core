@@ -76,7 +76,7 @@ _Avoid_: 결제 전 좌석을 Ticket이라 부르는 서술(주문 상세 응답
 회원이 좌석을 살펴보며 임시로 골라 둔 표시다. 짧은 시간만 유지되고 다른 회원 화면에는 점유로
 보이지만, 예매를 보장하지 않는다. Hold와 따로 저장되지만 Order는 본인이 선택 중인 좌석으로만 만들 수
 있다. 한 회원이 동시에 선택할 수 있는 좌석 수는
-회차의 Hold 좌석 수 한도를 따른다.
+회차의 선점 한도를 따른다.
 _Avoid_: 선점, 임시 예약, Reservation, 찜(Like와 혼동)
 
 **Hold**:
@@ -84,15 +84,50 @@ _Avoid_: 선점, 임시 예약, Reservation, 찜(Like와 혼동)
 Order와 1:1이며 같은 holdKey로 이어지고, Order가 살아 있는 동안만 유지된다. 한글로는 선점이라 부른다.
 _Avoid_: Lock, Reservation
 
+**점유(Occupancy)**:
+선택 중이거나 선점된 좌석을 합쳐 부르는 말이다. 화면에서 막히는 좌석이고 좌석 상태 응답의 `OCCUPIED`다. DB의
+판매 상태(`PerformanceSeat.state`)는 포함하지 않는다. 무엇을 점유로 볼지는 `SeatOccupancy` 한 곳이 정한다.
+
+**holdKey / orderKey**:
+holdKey는 선점 한 건의 식별자로 주문과 선점을 잇는다. 선점이 TTL로 만료되면 holdKey로 주문을 찾아 만료시킨다.
+orderKey는 외부에 보이는 주문 번호로 URL에 쓰이고, 내부 숫자 id를 드러내지 않는다.
+
+**선점 이력(HoldHistory)**:
+선점은 Redis에서 사라지므로 좌석마다 언제 선점됐고 왜 풀렸는지를 DB에 남기는 기록이다.
+
+**선점 한도**:
+한 회원이 한 회차에서 동시에 잡을 수 있는 좌석 수 상한(`max_hold_seat_count`)이다. 이름은 선점 한도지만 좌석
+선택 개수에도 같은 값을 적용한다. null이면 제한하지 않는다.
+
 **PerformanceSalesPolicy**:
-회차 하나의 예매 기간·Hold 좌석 수 한도·대기열 정책을 갖는 개념이다. 예매 가능 여부
+회차 하나의 예매 기간·선점 한도·대기열 정책을 갖는 개념이다. 예매 가능 여부
 (BEFORE_OPEN/OPEN/CLOSED)와 대기열 필요 여부를 스스로 판정하며, 없는 회차는 판매 정책이 아직
 구성되지 않았다는 뜻이다.
 _Avoid_: 이 정책을 Show가 갖는다는 서술, BookingPolicySnapshot
 
+**예매 기간(BookingWindow)**:
+새 좌석 선택·주문 생성을 시작할 수 있는 기간(예매 오픈~마감)이다. 이미 만든 주문의 결제 기한(`expiresAt`)과는
+다르다. 마감 직전에 만든 주문의 `expiresAt`을 예매 마감으로 잘라내지 않는다.
+_Avoid_: 접수 기간, Show의 표시용 판매 기간과 같은 것처럼 다루는 서술
+
+**대기열 정책(QueuePolicy)**:
+회차가 대기열을 거쳐야 하는지 정하는 규칙이다. `QueueMode`가 `FORCE_ON`이면 항상, `FORCE_OFF`면 절대 쓰지
+않고, `AUTO`면 사전 대기열 시작 시각부터 예매 마감까지만 쓴다.
+_Avoid_: 대기열 진입 정책
+
+**진입 방식(EntryMode)**:
+프론트에 회차가 바로 예매(`DIRECT`)인지 대기열을 거치는지(`QUEUE`) 알려 주는 안내용 값이다. 실제 검사는 좌석 상태·
+선택·주문 생성 앞의 예매 진입 검사(`BookingEntryGuard`)가 매번 다시 한다. 응답 JSON 필드는 호환을 위해 `bookingMode`다.
+_Avoid_: 예매 방식
+
+**표시용 판매 정보**:
+Show의 `DisplaySaleWindow`·`SaleDisplayStatus`처럼 목록·상세 화면에만 보여 주는 판매 기간·상태다. 실제 예매 가능
+여부와 다를 수 있고 그것은 결함이 아니다. 실제 판단은 PerformanceSalesPolicy가 한다.
+
 **Admission**:
 대기열을 통과해 예매 API를 호출할 자격이다. `ticket-queue`가 토큰으로 발급하고 이 서비스가 검증한다.
-_Avoid_: 입장권, Entry, Ticket
+진입 방식(EntryMode)·예매 진입 검사는 이 자격을 요구할지 정하고 확인하는 쪽이고, Admission 자체가 아니다.
+_Avoid_: 입장권, Admission을 Entry로 부르는 것, Ticket
 
 **Payment**:
 Order에 대한 한 번의 결제 시도다. Order 하나에는 Payment 여러 건이 있을 수 있고(`1:0..N`), 한
@@ -105,6 +140,44 @@ _Avoid_: 결제(Payment 자체가 결제 완료가 아니라 시도라는 사실
 없고, 발급 후에는 최대 하나만 가진다(`1:0..1`). Member 1명은 Ticket 여러 장을 가질 수 있다
 (`1:0..N`). Admission(대기열 통과 자격)과는 다른 개념이다.
 _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
+
+### 예매 흐름
+
+**주문 생성**:
+고른 좌석으로 PENDING 주문을 만들고 좌석을 선점하는 한 번의 요청(`POST /orders`, `CreateOrderUseCase`)이다.
+커밋되면 `OrderCreated` 이벤트가 나간다.
+_Avoid_: 예매 시작, 주문 시작
+
+**PENDING 주문(결제 대기 주문)**:
+만들어졌지만 아직 결제되지 않은 주문이다. 결제 기한(`expiresAt`)이 지나면 만료되고, 회원은 회차당 하나만 가질 수 있다.
+
+**주문 종료**:
+취소와 만료를 합쳐 부르는 말이다. 둘 다 PENDING 주문을 끝내고 선점을 푸는 같은 뒤처리를 하며
+`OrderTerminated` 이벤트로 이어진다. 결제 확정은 포함하지 않는다.
+
+**보상 해제**:
+주문 생성 중 Redis 선점은 만들었는데 DB 저장이 실패하면, 만든 선점을 되돌려 푸는 것이다.
+
+**커밋 후 처리**:
+DB 커밋 뒤에 따로 하는 Redis·WebSocket 작업(선택 정리, 선점 해제, 좌석 상태 알림)이다. DB 연결을 쥔 채 외부
+I/O를 하지 않으려고 커밋 앞뒤를 나눈다.
+
+**누락 복구 / 재처리**:
+누락 복구는 원래 경로(Redis TTL 알림, 커밋 후 리스너)가 놓친 일을 주기 작업이 뒤늦게 다시 하는 것이다(만료되지 않은
+PENDING 주문 만료 등). 재처리는 실패로 남은 이벤트 publication을 다시 처리하도록 던지는 것이다.
+_Avoid_: 보정, 재제출
+
+**멱등 상태 알림**:
+좌석 상태 WebSocket 알림(`SELECTED`/`DESELECTED`/`HELD`/`RELEASED`)은 "좌석을 이 상태로 맞춰라"로 읽는다. 같은
+알림이 두 번 와도 결과가 같으므로 중복은 허용하고 누락만 피한다.
+
+**Snapshot**:
+어느 시점의 값을 복사해 고정한 것이다. 네 가지로 쓴다. (1) 가격 체인 `PerformanceGrade.price` →
+`PerformanceSeat.unitPrice` → `OrderSeat.unitPrice`, (2) 주문에 저장한 공연·공연장 이름과 좌석 라벨 같은 표시 snapshot,
+(3) 다른 모듈에 entity 대신 내보내는 `*Snapshot` 값, (4) 트랜잭션 안에서 읽어 밖으로 들고 나가는 값(`OrderHoldSnapshot`).
+
+**entity-only 단계**:
+테이블·entity·Repository만 있고 그걸 쓰는 업무 흐름은 아직 없는 상태다. 지금 `payment`와 `Ticket`이 그렇다.
 
 ### 찜
 
