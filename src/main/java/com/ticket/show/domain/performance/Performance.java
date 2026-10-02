@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Show의 특정 상영 회차다. 회차 정체성과 일정(startTime/endTime)만 소유한다. 예매 접수 기간·Hold 제한·대기열 진입 정책은 Booking BC의
+ * Show의 특정 상영 회차다. 회차 정체성과 일정(startTime/endTime)만 소유한다. 예매 기간·Hold 제한·대기열 정책은 Booking BC의
  * {@code PerformanceSalesPolicy}가 소유한다(ADR 0006 "Performance의 책임 혼재" A2, {@code performanceId} scalar로만 연결되고
  * cross-module JPA 연관관계·DB FK는 없다).
  */

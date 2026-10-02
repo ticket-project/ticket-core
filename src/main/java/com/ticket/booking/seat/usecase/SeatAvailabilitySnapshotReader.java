@@ -19,7 +19,7 @@ public class SeatAvailabilitySnapshotReader {
     private final PerformanceSeatRepository performanceSeatRepository;
 
     /**
-     * 회차 판매 정책 조회는 회차 존재 확인을 겸한다. 접수 기간 차단은 여기서 하지 않는다 — 잔여석 조회는 접수 종료 후에도 가능해야 한다.
+     * 회차 판매 정책 조회는 회차 존재 확인을 겸한다. 예매 기간 차단은 여기서 하지 않는다 — 잔여석 조회는 접수 종료 후에도 가능해야 한다.
      *
      * @return 회차 좌석 편성. Redis 점유는 반영하지 않은 DB 시점의 상태다
      */

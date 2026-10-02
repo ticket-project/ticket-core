@@ -28,7 +28,7 @@ _Avoid_: 태그, Tag
 
 **Performance**:
 Show의 특정 상영 회차다. 회차 번호와 시작 시각을 가지며, 좌석 편성·등급·가격은 이 단위로
-붙는다. 예매 접수 기간·Hold 좌석 수 한도·대기열 진입 여부는 Performance 자신이 아니라
+붙는다. 예매 기간·Hold 좌석 수 한도·대기열 진입 여부는 Performance 자신이 아니라
 PerformanceSalesPolicy가 별도로 갖는다.
 _Avoid_: 회차 공연, Schedule, Session
 
@@ -85,7 +85,7 @@ Order와 1:1이며 같은 holdKey로 이어지고, Order가 살아 있는 동안
 _Avoid_: Lock, Reservation
 
 **PerformanceSalesPolicy**:
-회차 하나의 예매 접수 기간·Hold 좌석 수 한도·대기열 진입 정책을 갖는 개념이다. 예매 가능 여부
+회차 하나의 예매 기간·Hold 좌석 수 한도·대기열 정책을 갖는 개념이다. 예매 가능 여부
 (BEFORE_OPEN/OPEN/CLOSED)와 대기열 필요 여부를 스스로 판정하며, 없는 회차는 판매 정책이 아직
 구성되지 않았다는 뜻이다.
 _Avoid_: 이 정책을 Show가 갖는다는 서술, BookingPolicySnapshot

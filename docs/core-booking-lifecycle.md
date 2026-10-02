@@ -32,7 +32,7 @@
 ~~~text
 StartBookingUseCase          (POST /api/v1/orders)
   -> LockScope.ORDER_START 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
-  -> admission BookingEntryGate.enter: 예매 정책 조회, 접수 기간 확인, 대기열 필요 회차만 token 검증 (밖)
+  -> admission BookingEntryGate.enter: 예매 정책 조회, 예매 기간 확인, 대기열 필요 회차만 token 검증 (밖)
      — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
   -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
   -> member MemberLookupApi: active member 확인 (밖)

@@ -73,7 +73,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 | Show | ShowGenre(Show↔Genre 연결 entity) | Show |
 | Performance | PerformanceGrade | Show |
 | Grade / Category / Genre / Performer | — | Show |
-| PerformanceSalesPolicy | OrderAcceptanceWindow · HoldPolicy · BookingEntryPolicy(값 객체) | Booking |
+| PerformanceSalesPolicy | BookingWindow · HoldPolicy · QueuePolicy(값 객체) | Booking |
 | PerformanceSeat | — | Booking |
 | Order | OrderSeat | Booking |
 | Ticket | — | Booking |

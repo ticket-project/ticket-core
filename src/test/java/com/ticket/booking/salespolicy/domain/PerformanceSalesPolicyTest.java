@@ -22,7 +22,7 @@ class PerformanceSalesPolicyTest {
     void 시작_전이면_BookingNotOpenYetException을_던진다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
-        assertThatThrownBy(() -> policy.ensureAcceptingOrders(OPENS_AT.minusMinutes(1)))
+        assertThatThrownBy(() -> policy.ensureWithinBookingWindow(OPENS_AT.minusMinutes(1)))
                 .isInstanceOf(BookingNotOpenYetException.class);
     }
 
@@ -30,7 +30,7 @@ class PerformanceSalesPolicyTest {
     void 마감_이후면_PerformanceIsPastException을_던진다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
-        assertThatThrownBy(() -> policy.ensureAcceptingOrders(CLOSES_AT.plusMinutes(1)))
+        assertThatThrownBy(() -> policy.ensureWithinBookingWindow(CLOSES_AT.plusMinutes(1)))
                 .isInstanceOf(PerformanceIsPastException.class);
     }
 
@@ -38,7 +38,8 @@ class PerformanceSalesPolicyTest {
     void 접수_기간_안이면_예외를_던지지_않는다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
-        assertThatCode(() -> policy.ensureAcceptingOrders(OPENS_AT.plusDays(1))).doesNotThrowAnyException();
+        assertThatCode(() -> policy.ensureWithinBookingWindow(OPENS_AT.plusDays(1)))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -63,7 +64,7 @@ class PerformanceSalesPolicyTest {
     }
 
     @Test
-    void 대기열_필요_여부는_bookingEntryPolicy에_위임한다() {
+    void 대기열_필요_여부는_queuePolicy에_위임한다() {
         PerformanceSalesPolicy forceOn = policy(4, 600, QueueMode.FORCE_ON);
         PerformanceSalesPolicy none = policy(4, 600, null);
 
@@ -83,8 +84,8 @@ class PerformanceSalesPolicyTest {
             final Integer maxSeatCount, final int holdSeconds, final QueueMode queueMode) {
         return new PerformanceSalesPolicy(
                 1L,
-                new OrderAcceptanceWindow(OPENS_AT, CLOSES_AT),
+                new BookingWindow(OPENS_AT, CLOSES_AT),
                 new HoldPolicy(maxSeatCount, Duration.ofSeconds(holdSeconds)),
-                queueMode == null ? BookingEntryPolicy.none() : new BookingEntryPolicy(queueMode, null));
+                queueMode == null ? QueuePolicy.none() : new QueuePolicy(queueMode, null));
     }
 }

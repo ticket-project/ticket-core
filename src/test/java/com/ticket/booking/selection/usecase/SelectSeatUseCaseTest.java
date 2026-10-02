@@ -32,12 +32,12 @@ import com.ticket.booking.exception.PerformanceIsPastException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
 import com.ticket.booking.hold.domain.HoldRegistry;
-import com.ticket.booking.salespolicy.domain.BookingEntryPolicy;
+import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
-import com.ticket.booking.salespolicy.domain.OrderAcceptanceWindow;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
+import com.ticket.booking.salespolicy.domain.QueuePolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -97,7 +97,7 @@ class SelectSeatUseCaseTest {
         // 검증에서 얻은 performanceSeatId와 회차 선점 한도를 넘긴다. SELECTED 발행은 coordinator가 좌석 락
         // 안에서 하므로 여기서 다시 발행하지 않는다.
         inOrder.verify(seatSelectionCoordinator)
-                .select(10L, 20L, 1L, 501L, policy.getOrderAcceptanceWindow().getClosesAt(), 4);
+                .select(10L, 20L, 1L, 501L, policy.getBookingWindow().getClosesAt(), 4);
     }
 
     @Test
@@ -185,8 +185,8 @@ class SelectSeatUseCaseTest {
             final LocalDateTime orderOpenTime, final LocalDateTime orderCloseTime, final boolean queueRequired) {
         return new PerformanceSalesPolicy(
                 10L,
-                new OrderAcceptanceWindow(orderOpenTime, orderCloseTime),
+                new BookingWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(4, Duration.ofSeconds(300)),
-                queueRequired ? new BookingEntryPolicy(QueueMode.FORCE_ON, null) : BookingEntryPolicy.none());
+                queueRequired ? new QueuePolicy(QueueMode.FORCE_ON, null) : QueuePolicy.none());
     }
 }

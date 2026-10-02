@@ -262,7 +262,7 @@ final class LoadTestFixtureSeeder implements SeedTask {
     }
 
     /**
-     * ADR 0006 "Performance의 책임 혼재" A2: 예매 접수 기간·Hold 한도·대기열 정책은 Booking BC의 BOOKING_PERFORMANCE_SALES_POLICIES가 소유한다.
+     * ADR 0006 "Performance의 책임 혼재" A2: 예매 기간·Hold 한도·대기열 정책은 Booking BC의 BOOKING_PERFORMANCE_SALES_POLICIES가 소유한다.
      * FORCE_OFF는 이 부하 테스트 전용 회차가 Queue 없이 Core를 직접 호출한다는 기존 의미를 그대로 보존한다. 판매 기간은 회차를 더한 시각부터 30일이다.
      */
     private void seedSalesPolicies(final LocalDateTime now, final List<Integer> performanceIndexes) {
