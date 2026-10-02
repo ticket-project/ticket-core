@@ -24,7 +24,7 @@ import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
-class HoldCreationCoordinatorTest {
+class HeldSeatPublisherTest {
     @Mock
     private HoldStore holdStore;
 
@@ -39,7 +39,7 @@ class HoldCreationCoordinatorTest {
         final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(true);
         when(holdStore.isHeldBy(10L, 200L, "hold-key")).thenReturn(true);
-        coordinator().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
+        publisher().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
 
         final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
@@ -55,15 +55,15 @@ class HoldCreationCoordinatorTest {
         final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(false);
 
-        coordinator().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
+        publisher().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
         verifyNoInteractions(seatSelectionService, seatStatusEventPublisher);
     }
 
-    private HoldCreationCoordinator coordinator() {
-        return new HoldCreationCoordinator(
+    private HeldSeatPublisher publisher() {
+        return new HeldSeatPublisher(
                 new RecordingDistributedLock(), holdStore, seatSelectionService, seatStatusEventPublisher);
     }
 

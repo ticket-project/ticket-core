@@ -30,14 +30,14 @@ class DeselectAllSeatsUseCaseTest {
     private PerformanceSeatRepository performanceSeatRepository;
 
     @Mock
-    private SeatSelectionCoordinator seatSelectionCoordinator;
+    private SeatSelectionWriter seatSelectionWriter;
 
     @InjectMocks
     private DeselectAllSeatsUseCase useCase;
 
     /**
-     * 실제로 해제된 좌석만 알린다. 발행 자체는 coordinator가 좌석 락 안에서 현재 상태를 다시 확인한 뒤 하므로, 해제와 발행 사이에 남이 다시 선택한 좌석은
-     * 걸러진다({@code SeatSelectionCoordinatorTest}).
+     * 실제로 해제된 좌석만 알린다. 발행 자체는 SeatSelectionWriter가 좌석 락 안에서 현재 상태를 다시 확인한 뒤 하므로, 해제와 발행 사이에 남이 다시 선택한 좌석은
+     * 걸러진다({@code SeatSelectionWriterTest}).
      */
     @Test
     void 해제된_좌석마다_미리_조회한_performanceSeatId로_알린다() {
@@ -48,15 +48,15 @@ class DeselectAllSeatsUseCaseTest {
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
         verify(seatSelectionService).deselectAll(10L, 1L);
-        verify(seatSelectionCoordinator).notifyReleasedIfFree(10L, 20L, 501L);
-        verify(seatSelectionCoordinator).notifyReleasedIfFree(10L, 21L, 502L);
+        verify(seatSelectionWriter).notifyReleasedIfFree(10L, 20L, 501L);
+        verify(seatSelectionWriter).notifyReleasedIfFree(10L, 21L, 502L);
         // 좌석마다 DB를 다시 읽지 않도록 한 번에 조회한 id를 넘긴다.
-        verify(seatSelectionCoordinator, times(2))
+        verify(seatSelectionWriter, times(2))
                 .notifyReleasedIfFree(
                         org.mockito.ArgumentMatchers.anyLong(),
                         org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.any());
-        verifyNoMoreInteractions(seatSelectionCoordinator);
+        verifyNoMoreInteractions(seatSelectionWriter);
     }
 
     @Test
@@ -68,7 +68,7 @@ class DeselectAllSeatsUseCaseTest {
         verify(performanceSeatRepository, times(0))
                 .findAllByPerformanceIdAndSeatIdIn(
                         org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyList());
-        verifyNoMoreInteractions(seatSelectionCoordinator);
+        verifyNoMoreInteractions(seatSelectionWriter);
     }
 
     private PerformanceSeat performanceSeat(final long seatId, final long performanceSeatId) {

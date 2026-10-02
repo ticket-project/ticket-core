@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * registry가 FAILED로 기록하게 하고, {@code com.ticket.shared.config.EventPublicationMaintenance}가 재시도한다.
  *
  * <p>event payload의 스냅샷을 그대로 믿지 않고 {@code orderId}로 현재 저장된 order를 다시 읽어 처리한다 — 좌석은 Order aggregate가 직접 들고 있어 함께 따라온다.
- * hold 생성 후처리({@link HoldCreationCoordinator})와 hold 해제 후처리 ({@link HoldReleaseCoordinator})는 기존 멱등 로직을 그대로 재사용한다.
+ * hold 생성 후처리({@link HeldSeatPublisher})와 hold 해제 후처리 ({@link HoldReleaser})는 기존 멱등 로직을 그대로 재사용한다.
  *
  * <p><b>listener 자체는 DB 트랜잭션을 열지 않는다({@code propagation = NOT_SUPPORTED}).</b> 기본값인 {@code REQUIRES_NEW}에서는 Redis 락
  * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 지금은 필요한 DB 데이터를
@@ -54,8 +54,8 @@ class BookingEventListeners {
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderTerminated)";
 
     private final OrderHoldSnapshotReader orderHoldSnapshotReader;
-    private final HoldCreationCoordinator holdCreationCoordinator;
-    private final HoldReleaseCoordinator holdReleaseCoordinator;
+    private final HeldSeatPublisher heldSeatPublisher;
+    private final HoldReleaser holdReleaser;
 
     @ApplicationModuleListener(id = ORDER_CREATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderCreated event) {
@@ -67,7 +67,7 @@ class BookingEventListeners {
         }
         final Hold hold = new Hold(
                 event.holdKey(), event.memberId(), snapshot.performanceId(), snapshot.seatIds(), snapshot.expiresAt());
-        holdCreationCoordinator.clearSelectionsAndPublishHeld(hold, snapshot.performanceSeatIdBySeatId());
+        heldSeatPublisher.clearSelectionsAndPublishHeld(hold, snapshot.performanceSeatIdBySeatId());
     }
 
     @ApplicationModuleListener(id = ORDER_TERMINATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
@@ -78,7 +78,7 @@ class BookingEventListeners {
             log.debug("hold 해제 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        holdReleaseCoordinator.releaseAndPublish(new HoldReleaseTask(
+        holdReleaser.releaseAndPublish(new HoldReleaseTask(
                 snapshot.performanceId(), event.holdKey(), snapshot.seatIds(), snapshot.performanceSeatIdBySeatId()));
     }
 }

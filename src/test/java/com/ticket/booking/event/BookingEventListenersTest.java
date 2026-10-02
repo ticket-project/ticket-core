@@ -36,8 +36,8 @@ import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
  * listener 멱등성과 stale-event 방어를 고정한다.
  *
  * <p>{@link BookingEventListeners}는 event payload를 그대로 믿지 않고 {@code orderId}로 현재 저장된 order·orderSeat를 다시 읽는다. hold
- * 생성·해제 자체의 멱등 로직은 {@code HoldCreationCoordinatorTest}/{@code HoldReleaseCoordinatorTest}가 이미 고정하므로, 여기서는 listener가 그
- * 로직에 올바른 입력을 넘기는지와 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를 본다.
+ * 생성·해제 자체의 멱등 로직은 {@code HeldSeatPublisherTest}/{@code HoldReleaserTest}가 이미 고정하므로, 여기서는 listener가 그 로직에 올바른 입력을 넘기는지와
+ * 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를 본다.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -46,16 +46,16 @@ class BookingEventListenersTest {
     private OrderHoldSnapshotReader orderHoldSnapshotReader;
 
     @Mock
-    private HoldCreationCoordinator holdCreationCoordinator;
+    private HeldSeatPublisher heldSeatPublisher;
 
     @Mock
-    private HoldReleaseCoordinator holdReleaseCoordinator;
+    private HoldReleaser holdReleaser;
 
     private BookingEventListeners listeners;
 
     @BeforeEach
     void setUp() {
-        listeners = new BookingEventListeners(orderHoldSnapshotReader, holdCreationCoordinator, holdReleaseCoordinator);
+        listeners = new BookingEventListeners(orderHoldSnapshotReader, heldSeatPublisher, holdReleaser);
     }
 
     /** listener 자체가 DB 트랜잭션을 열면 Redis·WebSocket 작업이 booking connection을 쥔 채로 실행된다. */
@@ -80,7 +80,7 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verifyNoInteractions(holdCreationCoordinator);
+        verifyNoInteractions(heldSeatPublisher);
     }
 
     @Test
@@ -94,7 +94,7 @@ class BookingEventListenersTest {
         listeners.on(event);
 
         final Hold expectedHold = new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
-        verify(holdCreationCoordinator).clearSelectionsAndPublishHeld(expectedHold, Map.of(42L, 501L, 43L, 502L));
+        verify(heldSeatPublisher).clearSelectionsAndPublishHeld(expectedHold, Map.of(42L, 501L, 43L, 502L));
     }
 
     @Test
@@ -104,7 +104,7 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verifyNoInteractions(holdReleaseCoordinator);
+        verifyNoInteractions(holdReleaser);
     }
 
     @Test
@@ -116,8 +116,7 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verify(holdReleaseCoordinator)
-                .releaseAndPublish(new HoldReleaseTask(200L, "hold-key", List.of(42L), Map.of(42L, 501L)));
+        verify(holdReleaser).releaseAndPublish(new HoldReleaseTask(200L, "hold-key", List.of(42L), Map.of(42L, 501L)));
     }
 
     /** listener는 entity가 아니라 짧은 읽기 트랜잭션에서 완성된 값을 받는다. */

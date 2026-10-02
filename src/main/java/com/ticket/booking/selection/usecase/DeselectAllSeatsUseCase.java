@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class DeselectAllSeatsUseCase {
     private final SeatSelectionService seatSelectionService;
     private final PerformanceSeatRepository performanceSeatRepository;
-    private final SeatSelectionCoordinator seatSelectionCoordinator;
+    private final SeatSelectionWriter seatSelectionWriter;
 
     public record Input(Long performanceId, Long memberId) {
         public Input {
@@ -39,7 +39,7 @@ public class DeselectAllSeatsUseCase {
         // 실제로 해제된 좌석만 돌려받지만, 알리기 전에 좌석 락 안에서 현재 상태를 다시 확인한다 — 해제와 발행
         // 사이에 다른 사용자가 같은 좌석을 다시 선택했을 수 있다. performanceSeatId는 위에서 한 번에
         // 조회한 값을 그대로 넘겨 좌석마다 DB를 다시 읽지 않는다.
-        seatIds.forEach(seatId -> seatSelectionCoordinator.notifyReleasedIfFree(
+        seatIds.forEach(seatId -> seatSelectionWriter.notifyReleasedIfFree(
                 input.performanceId(), seatId, performanceSeatIdBySeatId.get(seatId)));
     }
 

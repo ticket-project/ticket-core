@@ -54,7 +54,7 @@ class SelectSeatUseCaseTest {
     private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
 
     @Mock
-    private SeatSelectionCoordinator seatSelectionCoordinator;
+    private SeatSelectionWriter seatSelectionWriter;
 
     @Mock
     private PerformanceSeatRepository performanceSeatRepository;
@@ -73,7 +73,7 @@ class SelectSeatUseCaseTest {
                 // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new SelectSeatUseCase(
-                        seatSelectionCoordinator,
+                        seatSelectionWriter,
                         performanceSeatRepository,
                         holdRegistry,
                         new BookingEntryGuard(
@@ -89,14 +89,14 @@ class SelectSeatUseCaseTest {
 
         useCase.execute(INPUT);
 
-        InOrder inOrder = inOrder(
-                performanceSalesPolicyRepository, performanceSeatRepository, holdRegistry, seatSelectionCoordinator);
+        InOrder inOrder =
+                inOrder(performanceSalesPolicyRepository, performanceSeatRepository, holdRegistry, seatSelectionWriter);
         inOrder.verify(performanceSalesPolicyRepository).findById(10L);
         inOrder.verify(performanceSeatRepository).findSeatState(10L, 20L);
         inOrder.verify(holdRegistry).isHeld(10L, 20L);
-        // 검증에서 얻은 performanceSeatId와 회차 선점 한도를 넘긴다. SELECTED 발행은 coordinator가 좌석 락
+        // 검증에서 얻은 performanceSeatId와 회차 선점 한도를 넘긴다. SELECTED 발행은 SeatSelectionWriter가 좌석 락
         // 안에서 하므로 여기서 다시 발행하지 않는다.
-        inOrder.verify(seatSelectionCoordinator)
+        inOrder.verify(seatSelectionWriter)
                 .select(10L, 20L, 1L, 501L, policy.getBookingWindow().getClosesAt(), 4);
     }
 
@@ -117,7 +117,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(AdmissionTokenRequiredException.class);
 
-        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionCoordinator);
+        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionWriter);
     }
 
     @Test
@@ -127,7 +127,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(PerformanceIsPastException.class);
 
-        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionCoordinator, admissionVerifier);
+        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionWriter, admissionVerifier);
     }
 
     @Test
@@ -137,7 +137,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatMismatchInPerformanceException.class);
 
-        verifyNoInteractions(holdRegistry, seatSelectionCoordinator);
+        verifyNoInteractions(holdRegistry, seatSelectionWriter);
     }
 
     @Test
@@ -148,10 +148,10 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(NoAvailableSeatException.class);
 
-        verifyNoInteractions(holdRegistry, seatSelectionCoordinator);
+        verifyNoInteractions(holdRegistry, seatSelectionWriter);
     }
 
-    /** 락 밖의 사전 확인이다 — 락 안에서 coordinator가 다시 보는 것과 같은 검증이 아니다. */
+    /** 락 밖의 사전 확인이다 — 락 안에서 SeatSelectionWriter가 다시 보는 것과 같은 검증이 아니다. */
     @Test
     void 이미_선점된_좌석이면_선택하지_않는다() {
         openPerformance();
@@ -160,7 +160,7 @@ class SelectSeatUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatAlreadyHeldException.class);
 
-        verifyNoInteractions(seatSelectionCoordinator);
+        verifyNoInteractions(seatSelectionWriter);
     }
 
     private void openPerformance() {

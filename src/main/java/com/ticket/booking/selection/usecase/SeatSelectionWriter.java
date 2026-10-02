@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
-public class SeatSelectionCoordinator {
+public class SeatSelectionWriter {
     /** 좌석 선택은 고빈도 경로라 경합 시 오래 기다리지 않고 빨리 실패한다. */
     private static final LockOptions SELECT_LOCK = LockOptions.waiting(Duration.ofMillis(500));
 
