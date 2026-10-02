@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.modulith.actuator.ApplicationModulesEndpoint;
 import org.springframework.modulith.observability.support.ModuleObservabilityBeanPostProcessor;
 
-import com.ticket.booking.OrderStarted;
+import com.ticket.booking.OrderCreated;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -30,7 +30,7 @@ import io.micrometer.core.instrument.MeterRegistry;
  * <ul>
  *   <li><b>module API trace가 등록된다</b>: {@link ModuleObservabilityBeanPostProcessor} 빈이 context에 있으면 module 경계를 넘는 호출을
  *       Micrometer Observation으로 계측하는 AOP instrumentation이 활성화된 것이다.
- *   <li><b>event publication metric이 등록된다</b>: 실제 도메인 이벤트({@link OrderStarted})를 발행하면 {@code module.events.published}
+ *   <li><b>event publication metric이 등록된다</b>: 실제 도메인 이벤트({@link OrderCreated})를 발행하면 {@code module.events.published}
  *       계열 counter가 {@link MeterRegistry}에 생긴다. 이름은 구현 세부사항이라 접두어만 검사한다.
  * </ul>
  *
@@ -61,9 +61,9 @@ class ModulithInsightVerificationTest extends BookingE2ETestSupport {
 
     @Test
     void 도메인_이벤트를_발행하면_event_publication_metric이_등록된다() {
-        eventPublisher.publishEvent(new OrderStarted(
+        eventPublisher.publishEvent(new OrderCreated(
                 UUID.randomUUID(),
-                OrderStarted.SCHEMA_VERSION,
+                OrderCreated.SCHEMA_VERSION,
                 999_999L,
                 1L,
                 "insight-verification-hold",

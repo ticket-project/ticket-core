@@ -56,6 +56,6 @@ class DocumentationTests {
                 .contains("Bean references")
                 .contains("MemberLookupApi")
                 .contains("Events listened to")
-                .contains("OrderStarted");
+                .contains("OrderCreated");
     }
 }

@@ -33,7 +33,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.OrderStarted;
+import com.ticket.booking.OrderCreated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
@@ -43,7 +43,7 @@ import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
 /**
- * 예매 시작의 DB 구간을 고정한다.
+ * 주문 생성의 DB 구간을 고정한다.
  *
  * <p>옛 {@code OrderCreator}(주문 조립)와 옛 {@code CreatePendingOrderTransactionService}(저장·이력·event 발행과 트랜잭션 경계)가 이 한 클래스로
  * 합쳐졌다. 그래서 두 테스트가 각각 고정하던 것을 여기서 함께 본다 — 조립 결과(orderKey, PENDING, 표시 snapshot, 좌석 단가 합계)와 한 트랜잭션 안의 순서(저장 → 이력 →
@@ -78,7 +78,7 @@ class PendingOrderCreatorTest {
     }
 
     @Test
-    void 주문과_hold_이력을_같은_트랜잭션에_저장하고_OrderStarted를_발행한다() {
+    void 주문과_hold_이력을_같은_트랜잭션에_저장하고_OrderCreated를_발행한다() {
         final PerformanceSeat seat = performanceSeat(501L, 201L, 1L, BigDecimal.TEN);
         final List<PerformanceSeat> seats = List.of(seat);
         final Hold hold = hold();
@@ -92,14 +92,14 @@ class PendingOrderCreatorTest {
         inOrder.verify(orderRepository).save(any(Order.class));
         inOrder.verify(orderHoldHistoryRecorder)
                 .recordCreated(20L, 10L, "hold-key", EXPIRES_AT.minusSeconds(600), EXPIRES_AT, seats);
-        final ArgumentCaptor<OrderStarted> captor = ArgumentCaptor.forClass(OrderStarted.class);
+        final ArgumentCaptor<OrderCreated> captor = ArgumentCaptor.forClass(OrderCreated.class);
         inOrder.verify(eventPublisher).publishEvent(captor.capture());
-        final OrderStarted event = captor.getValue();
+        final OrderCreated event = captor.getValue();
         assertThat(event.orderId()).isEqualTo(55L);
         assertThat(event.memberId()).isEqualTo(20L);
         assertThat(event.holdKey()).isEqualTo("hold-key");
         assertThat(event.performanceSeatIds()).isEqualTo(Set.of(501L));
-        assertThat(event.schemaVersion()).isEqualTo(OrderStarted.SCHEMA_VERSION);
+        assertThat(event.schemaVersion()).isEqualTo(OrderCreated.SCHEMA_VERSION);
         assertThat(event.occurredAt())
                 .isEqualTo(EXPIRES_AT
                         .minusSeconds(600)

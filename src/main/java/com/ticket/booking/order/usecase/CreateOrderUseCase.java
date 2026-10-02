@@ -32,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 선택한 좌석으로 예매를 시작한다 — 좌석을 선점하고 결제를 기다리는 PENDING 주문을 만든다.
  *
- * <p>이 use case가 하는 일은 {@code Order} entity 하나를 만드는 것이 아니라 <b>예매 시작이라는 workflow를 조율</b>하는 것이다. 그래서
- * {@link #startBooking}을 읽으면 검증 → 좌석 선점 → 주문 생성 → 실패 시 보상이라는 업무 순서가 그대로 보인다. HTTP 계약은 {@code POST /api/v1/orders}로 예전과
+ * <p>이 use case가 하는 일은 {@code Order} entity 하나를 만드는 것이 아니라 <b>주문 생성이라는 workflow를 조율</b>하는 것이다. 그래서
+ * {@link #createOrder}을 읽으면 검증 → 좌석 선점 → 주문 생성 → 실패 시 보상이라는 업무 순서가 그대로 보인다. HTTP 계약은 {@code POST /api/v1/orders}로 예전과
  * 같다.
  *
  * <p><b>Redis 선점과 DB 주문은 하나의 트랜잭션이 아니다.</b> 이 method 전체에 {@code @Transactional}을 붙이지 않는다 — 그러면 다른 module 호출, 분산락, Redis
@@ -50,9 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StartBookingUseCase {
-    private static final LockOptions START_BOOKING_LOCK =
-            LockOptions.defaults().withFailureMessage("주문 시작 처리 중입니다. 잠시 후 다시 시도해 주세요.");
+public class CreateOrderUseCase {
+    private static final LockOptions CREATE_ORDER_LOCK =
+            LockOptions.defaults().withFailureMessage("주문 생성 처리 중입니다. 잠시 후 다시 시도해 주세요.");
 
     private final DistributedLock distributedLock;
     private final BookingEntryGuard bookingEntryGuard;
@@ -81,12 +81,12 @@ public class StartBookingUseCase {
     /** 같은 회원이 같은 회차의 예매를 동시에 시작하는 것을 직렬화한다. */
     public Output execute(final Input input) {
         return distributedLock.withLock(
-                List.of(LockKey.orderStart(input.memberId(), input.performanceId())),
-                START_BOOKING_LOCK,
-                () -> startBooking(input));
+                List.of(LockKey.orderCreate(input.memberId(), input.performanceId())),
+                CREATE_ORDER_LOCK,
+                () -> createOrder(input));
     }
 
-    private Output startBooking(final Input input) {
+    private Output createOrder(final Input input) {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
 

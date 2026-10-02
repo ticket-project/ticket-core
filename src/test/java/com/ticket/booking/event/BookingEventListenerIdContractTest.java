@@ -58,7 +58,7 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
     private EntityManager entityManager;
 
     @Test
-    void OrderStarted_publication은_옛_package_경로의_listener_id로_저장된다() {
+    void OrderCreated_publication은_옛_package_경로의_listener_id로_저장된다() {
         final String holdKey = "listener-id-" + System.nanoTime();
 
         createPendingOrder(holdKey);
@@ -69,7 +69,7 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
 
         assertThat(listenerIdsFor(holdKey))
                 .as("이동 전에 저장된 publication과 매칭되려면 옛 package 문자열이어야 한다")
-                .containsExactly(BookingEventListeners.ORDER_STARTED_LISTENER_ID);
+                .containsExactly(BookingEventListeners.ORDER_CREATED_LISTENER_ID);
     }
 
     @Test
@@ -108,7 +108,7 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
                             + "values (?1, ?2, ?3, ?4, ?5, null, null, 0, 'PUBLISHED')")
                     .setParameter(1, id)
                     .setParameter(2, java.time.OffsetDateTime.now())
-                    .setParameter(3, BookingEventListeners.ORDER_STARTED_LISTENER_ID)
+                    .setParameter(3, BookingEventListeners.ORDER_CREATED_LISTENER_ID)
                     .setParameter(4, source[0])
                     .setParameter(5, source[1])
                     .executeUpdate();

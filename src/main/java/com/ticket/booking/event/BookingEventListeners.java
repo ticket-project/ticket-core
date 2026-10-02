@@ -4,7 +4,7 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 
-import com.ticket.booking.OrderStarted;
+import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 주문 시작·종료 후속 처리(selection 정리, Redis hold 해제, WebSocket 발행)를 맡는 listener다.
+ * 주문 생성·종료 후속 처리(selection 정리, Redis hold 해제, WebSocket 발행)를 맡는 listener다.
  *
  * <p>Spring Modulith의 JPA event publication registry가 커밋 뒤 최소 한 번 전달을 보장한다. 여기서 실패를 catch-and-log로 삼키지 않고 그대로 던져
  * registry가 FAILED로 기록하게 하고, {@code com.ticket.shared.config.EventPublicationMaintenance}가 재시도한다.
@@ -43,8 +43,11 @@ class BookingEventListeners {
     /**
      * 이 클래스가 {@code com.ticket.booking.application}에 있던 시절의 기본 listener id다. 저장된 publication과 맞추기 위한 호환성 값이라 현재
      * package로 고치지 않는다.
+     *
+     * <p>이벤트 클래스가 {@code OrderStarted}에서 {@code OrderCreated}로 바뀐 뒤에도 같은 이유로 파라미터 타입 자리의 옛 이름을 남긴다. 저장된 publication의
+     * {@code event_type}은 migration {@code __root} V10이 새 이름으로 옮긴다.
      */
-    static final String ORDER_STARTED_LISTENER_ID =
+    static final String ORDER_CREATED_LISTENER_ID =
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderStarted)";
 
     static final String ORDER_TERMINATED_LISTENER_ID =
@@ -54,8 +57,8 @@ class BookingEventListeners {
     private final HoldCreationCoordinator holdCreationCoordinator;
     private final HoldReleaseCoordinator holdReleaseCoordinator;
 
-    @ApplicationModuleListener(id = ORDER_STARTED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
-    void on(final OrderStarted event) {
+    @ApplicationModuleListener(id = ORDER_CREATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
+    void on(final OrderCreated event) {
         final OrderHoldSnapshot snapshot =
                 orderHoldSnapshotReader.read(event.orderId()).orElse(null);
         if (snapshot == null) {

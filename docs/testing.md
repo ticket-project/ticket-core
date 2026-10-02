@@ -33,7 +33,7 @@
 
 | 변경 범위 | 실행 기준 |
 | --- | --- |
-| 특정 업무 코드(booking 예시) | `./gradlew spotlessJavaCheck test --tests 'com.ticket.booking.order.usecase.StartBookingUseCaseTest'`부터; 관련 모듈 전체는 `--tests 'com.ticket.booking.*'` |
+| 특정 업무 코드(booking 예시) | `./gradlew spotlessJavaCheck test --tests 'com.ticket.booking.order.usecase.CreateOrderUseCaseTest'`부터; 관련 모듈 전체는 `--tests 'com.ticket.booking.*'` |
 | 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`와 관련 module test |
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
 | 주문·hold·이벤트 흐름 | 관련 단위·Scenario·예매 E2E 테스트(Docker 필요) |
@@ -116,7 +116,7 @@ DB와 Redis가 함께 맞는지 본다.
 
   ```java
   @SuppressWarnings("NonAsciiCharacters")
-  class StartBookingUseCaseTest {
+  class CreateOrderUseCaseTest {
 
       @Test
       void 유효한_요청이면_hold와_주문을_생성한다() { }

@@ -69,7 +69,7 @@ public class SeatSelectionCoordinator {
         });
     }
 
-    /** 실제로 해제됐고 hold가 없는 경우에만 알린다. 주문 시작 후 남아 있던 선택을 해제해도 HELD 상태를 덮어쓰지 않는다. */
+    /** 실제로 해제됐고 hold가 없는 경우에만 알린다. 주문 생성 후 남아 있던 선택을 해제해도 HELD 상태를 덮어쓰지 않는다. */
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
         distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {

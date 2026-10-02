@@ -27,11 +27,11 @@
   가격)은 생성 이후 다시 조회하지 않는다. show 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
   주문 상세는 바뀌지 않는다.
 
-## 주문 생성(예매 시작)
+## 주문 생성
 
 ~~~text
-StartBookingUseCase          (POST /api/v1/orders)
-  -> LockScope.ORDER_START 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
+CreateOrderUseCase          (POST /api/v1/orders)
+  -> LockScope.ORDER_CREATE 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
   -> admission BookingEntryGuard.check: 예매 정책 조회, 예매 기간 확인, 대기열 필요 회차만 token 검증 (밖)
      — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
   -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
@@ -48,12 +48,12 @@ StartBookingUseCase          (POST /api/v1/orders)
        -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
             Order에는 show/performance/venue 표시 snapshot을, OrderSeat에는 등급·좌석 라벨·unitPrice
             snapshot을 함께 저장한다 — 둘 다 생성 후 불변이다.
-       -> 같은 트랜잭션 안에서 OrderStarted 이벤트 발행
+       -> 같은 트랜잭션 안에서 OrderCreated 이벤트 발행
        -> 트랜잭션이 돌려주는 것은 orderKey뿐이다(entity를 트랜잭션 밖으로 내보내지 않는다)
-  -> (이 구간이 실패하면 StartBookingUseCase가 위에서 만든 Redis hold를 보상 해제한다.
+  -> (이 구간이 실패하면 CreateOrderUseCase가 위에서 만든 Redis hold를 보상 해제한다.
       해제 실패는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다)
   -> DB 커밋 및 connection 반환
-  -> BookingEventListeners.on(OrderStarted)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
+  -> BookingEventListeners.on(OrderCreated)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
           (OrderSeat의 좌석 식별자 매핑도 담는다. 이후 좌석 락 안의 Redis·WebSocket 작업은 DB를 다시 읽지 않는다)
        -> HoldCreationCoordinator
@@ -61,9 +61,9 @@ StartBookingUseCase          (POST /api/v1/orders)
             -> HELD 상태 발행             (WebSocket)
 ~~~
 
-`ORDER_START` 락은 `StartBookingUseCase.execute`의 전체 시작 흐름을 감싸므로 DB 주문 생성의
+`ORDER_CREATE` 락은 `CreateOrderUseCase.execute`의 전체 시작 흐름을 감싸므로 DB 주문 생성의
 커밋이 끝난 뒤 풀린다. `SEAT` 락은 Redis hold 생성 구간에서만 잡고 DB 트랜잭션 전 해제한다.
-DB 저장이 실패하면 `StartBookingUseCase`가 `SEAT` 락을 다시 잡고 이미 만든 Redis hold를 보상 해제한다.
+DB 저장이 실패하면 `CreateOrderUseCase`가 `SEAT` 락을 다시 잡고 이미 만든 Redis hold를 보상 해제한다.
 좌석 선택과 알림도 별도의 `SEAT` 락 구간에서 처리한다. 락 안의 외부 I/O는 필요한 작업으로 제한하고,
 락 키를 변경할 때는 보호 대상을 검증한다.
 
@@ -75,13 +75,13 @@ Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않�
 나타낼 뿐 주문 확정으로 바뀌지 않는다.
 
 커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
-`OrderStarted` publication은 Event Publication Registry에 FAILED로 남는다.
+`OrderCreated` publication은 Event Publication Registry에 FAILED로 남는다.
 `EventPublicationMaintenance`가 실패 publication을 재처리한다(아래 "이벤트 재시도와 누락 복구").
 따라서 프로세스가 재시작되거나 즉시 처리가 실패해도 후속 처리 입력은 DB(publication row)에
 남는다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
 본인이 선택 중인 좌석으로만 주문을 시작할 수 있다.
 
-주문 시작, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
+주문 생성, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
 만료 시각이고, `remainingSeconds`는 응답을 만드는 서버 시각부터 `expiresAt`까지 남은
 완전한 초다. PENDING이 아니거나 이미 만료 경계를 지났으면 0이다. 클라이언트는 로컬
 시계로 `expiresAt - now`를 다시 계산하지 않고 `remainingSeconds`로 카운트다운을 시작한 뒤,
@@ -96,7 +96,7 @@ Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않�
 
 - `select` — 락 안에서 마감 시각과 hold를 다시 확인하고, 선택 기록과 `SELECTED` 발행을 함께 한다.
 - `deselect` — 락 안에서 해제하고, **실제로 해제됐고 hold가 없는 경우에만** 알린다. 이미 만료된
-  선택이나 주문 시작 후 HELD로 넘어간 좌석에 `DESELECTED`를 보내지 않는다.
+  선택이나 주문 생성 후 HELD로 넘어간 좌석에 `DESELECTED`를 보내지 않는다.
 - `notifyReleasedIfFree` — TTL 만료와 회원의 전체 선택 해제처럼 "이미 지난 사실"을 알리는 경로다.
   발행 직전에 락 안에서 현재 선택·선점 상태를 다시 확인해, 그 사이 남이 차지한 좌석은 알리지
   않는다. 상태를 한 번 더 읽는 것만으로는 부족하고 그 재확인이 락 안에 있어야 의미가 있다.

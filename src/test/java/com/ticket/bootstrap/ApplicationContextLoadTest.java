@@ -9,9 +9,9 @@ import org.springframework.context.ApplicationContext;
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.usecase.CreateOrderUseCase;
 import com.ticket.booking.order.usecase.ExpirePendingOrdersUseCase;
 import com.ticket.booking.order.usecase.OrderExpirationTrigger;
-import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -28,7 +28,7 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
 
     @Test
     void 실행_모듈이_예매_핵심_빈을_한_컨텍스트로_조립한다() {
-        assertThat(context.getBean(StartBookingUseCase.class)).isNotNull();
+        assertThat(context.getBean(CreateOrderUseCase.class)).isNotNull();
         assertThat(context.getBean(OrderRepository.class)).isNotNull();
         assertThat(context.getBean(DistributedLock.class)).isNotNull();
         // 아래 둘은 package-private이라 타입으로 참조할 수 없다. component scan이 붙이는 기본 bean 이름으로 찾는다.
