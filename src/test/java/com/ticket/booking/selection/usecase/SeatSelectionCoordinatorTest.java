@@ -118,7 +118,7 @@ class SeatSelectionCoordinatorTest {
     }
 
     @Test
-    void 주문_시작_후_선택을_해제해도_hold된_좌석은_발행하지_않는다() {
+    void 주문_생성_후_선택을_해제해도_hold된_좌석은_발행하지_않는다() {
         givenPerformanceSeat();
         when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
         when(holdRegistry.isHeld(10L, 20L)).thenAnswer(invocation -> {

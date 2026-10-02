@@ -67,6 +67,9 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `serialized_event` 컬럼 정의(migration `__root` V9 적용 여부)를
   환경별 Flyway 이력과 실제 컬럼으로 확인한다. 저장소에 파일이 있다는 사실만으로 운영 적용을 단정하지 않는다. V9 이전
   크기에서는 `OrderTerminated` publication 저장이 실패할 수 있으므로 다중 좌석 주문 트래픽을 늘리기 전에 확인한다.
+- `__root` V10은 저장된 publication의 `event_type`을 `com.ticket.booking.OrderStarted`에서 `OrderCreated`로 옮긴다. 적용 뒤
+  `OrderStarted`를 쓰던 이전 이미지로 되돌리면 그 행의 클래스를 읽지 못한다. 되돌려야 하면 미완료 `OrderCreated` 행이 없는지
+  먼저 확인하거나 `event_type`을 옛 이름으로 되돌린다.
 
 Oracle에서 migration이 실패한 뒤 재시도하기 전에는 `USER_IND_COLUMNS`와 `flyway_schema_history`(module 소유라면
 `flyway_schema_history_{module}`)를 함께 확인한다.

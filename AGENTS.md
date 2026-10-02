@@ -44,7 +44,7 @@
 ## Architecture Rules
 
 1. `com.ticket`의 직접 하위 패키지를 닫힌 Application Module로 유지한다. `Type.OPEN`과 순환 의존을 도입하지 않는다. `allowedDependencies`는 named interface 단위로 명시하고, 모듈 집합·승인 DAG는 `ModularityTests`와 대조한다.
-2. 모듈 간 조회·명령은 `<module>.api`의 `@NamedInterface("api")` 공개 계약만 사용한다. 다른 모듈 내부·Repository·JPA entity를 직접 참조하거나 공개 계약에 JPA/Redis/JWT/Spring Web 타입을 노출하지 않는다. `booking.OrderStarted`·`booking.OrderTerminated`는 DB publication에 FQCN이 저장되어 root에 유지한다.
+2. 모듈 간 조회·명령은 `<module>.api`의 `@NamedInterface("api")` 공개 계약만 사용한다. 다른 모듈 내부·Repository·JPA entity를 직접 참조하거나 공개 계약에 JPA/Redis/JWT/Spring Web 타입을 노출하지 않는다. `booking.OrderCreated`·`booking.OrderTerminated`는 DB publication에 FQCN이 저장되어 root에 유지한다.
 3. 다른 Aggregate는 scalar ID로 참조한다. 모듈 간 JPA 연관관계와 DB FK를 만들지 않고, 다른 BC 데이터는 공개 API로 조합한다. domain은 다른 BC를 참조하지 않는다.
 4. HTTP는 endpoint, 조립·트랜잭션은 usecase, 업무 규칙·저장 계약은 domain, 저장 구현은 persistence가 맡는다. domain·usecase·port·module api는 Spring Web/Swagger에 의존하지 않는다. usecase의 자기 모듈 조회 Repository 직접 호출과 일부 응답 record의 Jackson 표기는 현행 허용 범위다.
 5. 업무 로직은 소유 모듈에 둔다. `shared`·`security`는 기술 모듈이며 `shared`에 업무 의존을 넣지 않는다. `common`/`util`/`helper`처럼 소유권 없는 패키지를 만들지 않는다. 공개 shared 계약과 실행 설정의 배치는 [아키텍처](docs/architecture.md#module-structure)를 따른다.
@@ -59,7 +59,7 @@
 
 | 변경 범위 | 먼저 할 검증 |
 | --- | --- |
-| 특정 Java 클래스·기능(booking 예시) | `./gradlew spotlessJavaCheck test --tests 'com.ticket.booking.order.usecase.StartBookingUseCaseTest'`; 관련 모듈로 넓힐 때 `--tests 'com.ticket.booking.*'` |
+| 특정 Java 클래스·기능(booking 예시) | `./gradlew spotlessJavaCheck test --tests 'com.ticket.booking.order.usecase.CreateOrderUseCaseTest'`; 관련 모듈로 넓힐 때 `--tests 'com.ticket.booking.*'` |
 | 모듈·계층·Aggregate 경계 | `./gradlew architectureTest`와 관련 모듈 테스트; 모듈 간 빈 이동은 컨텍스트 기동 테스트도 실행 |
 | Redis·주문/hold·이벤트·migration | 관련 통합·Scenario·E2E·H2/Oracle 테스트까지 확대([선택 기준](docs/testing.md#변경별-검증)); Testcontainers는 Docker 필요 |
 | seed | `./gradlew seedTest`; 산출물 격리는 필요시 `./gradlew verifySeedNotInBootJar` |

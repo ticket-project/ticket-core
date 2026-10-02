@@ -61,14 +61,14 @@ import com.ticket.show.api.PerformanceSaleInfoApi;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 
 /**
- * 예매 시작 workflow 전체를 고정한다.
+ * 주문 생성 workflow 전체를 고정한다.
  *
  * <p>준비 단계(판매 정책 확인 → 입장 검사 → 회원 확인 → 좌석 확인 → 표시값 조회)는 이 use case의 private method다. 그래서 "어떤 조건에서 어떤
  * {@code BookingException}이 나오고, 그때 뒤 단계로 넘어가지 않는가"를 여기서 관찰 가능한 호출로 고정한다.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class StartBookingUseCaseTest {
+class CreateOrderUseCaseTest {
     private static final Duration HOLD_DURATION = Duration.ofSeconds(600);
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 3, 15, 19, 0);
     private static final long PERFORMANCE_ID = 10L;
@@ -101,14 +101,14 @@ class StartBookingUseCaseTest {
 
     private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
-    private StartBookingUseCase startBookingUseCase;
+    private CreateOrderUseCase createOrderUseCase;
 
     @BeforeEach
     void setUp() {
-        startBookingUseCase =
+        createOrderUseCase =
                 // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
-                new StartBookingUseCase(
+                new CreateOrderUseCase(
                         distributedLock,
                         new BookingEntryGuard(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
@@ -123,10 +123,10 @@ class StartBookingUseCaseTest {
 
     @Test
     void 중복된_좌석_ID가_있으면_예외를_던진다() {
-        final StartBookingUseCase.Input input =
-                new StartBookingUseCase.Input(PERFORMANCE_ID, List.of(3L, 1L, 3L), MEMBER_ID, ADMISSION_TOKEN);
+        final CreateOrderUseCase.Input input =
+                new CreateOrderUseCase.Input(PERFORMANCE_ID, List.of(3L, 1L, 3L), MEMBER_ID, ADMISSION_TOKEN);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input)).isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> createOrderUseCase.execute(input)).isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
@@ -140,10 +140,10 @@ class StartBookingUseCaseTest {
 
     @Test
     void 좌석_ID가_비어있으면_예외를_던진다() {
-        final StartBookingUseCase.Input input =
-                new StartBookingUseCase.Input(PERFORMANCE_ID, List.of(), MEMBER_ID, ADMISSION_TOKEN);
+        final CreateOrderUseCase.Input input =
+                new CreateOrderUseCase.Input(PERFORMANCE_ID, List.of(), MEMBER_ID, ADMISSION_TOKEN);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input)).isInstanceOf(InvalidRequestException.class);
+        assertThatThrownBy(() -> createOrderUseCase.execute(input)).isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(
                 performanceSalesPolicyRepository,
@@ -157,7 +157,7 @@ class StartBookingUseCaseTest {
 
     @Test
     void 유효한_요청이면_hold와_주문을_생성한다() {
-        final StartBookingUseCase.Input input = input(List.of(7L, 3L));
+        final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
@@ -173,7 +173,7 @@ class StartBookingUseCaseTest {
         when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
                 .thenReturn("order-key");
 
-        final StartBookingUseCase.Output output = startBookingUseCase.execute(input);
+        final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
 
         assertThat(output.orderKey()).isEqualTo("order-key");
         assertThat(output.status()).isEqualTo(OrderState.PENDING);
@@ -198,7 +198,7 @@ class StartBookingUseCaseTest {
     /** 확인한 정책과 좌석은 반환되지 않고 뒤 단계의 인자로만 관찰된다. */
     @Test
     void 확인한_정책의_선점_시간과_좌석을_그대로_뒤_단계로_넘긴다() {
-        final StartBookingUseCase.Input input = input(List.of(1L, 2L));
+        final CreateOrderUseCase.Input input = input(List.of(1L, 2L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
@@ -209,7 +209,7 @@ class StartBookingUseCaseTest {
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
 
-        startBookingUseCase.execute(input);
+        createOrderUseCase.execute(input);
 
         verify(pendingOrderCreator)
                 .create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), same(seats), any());
@@ -238,14 +238,14 @@ class StartBookingUseCaseTest {
 
     @Test
     void 대기열이_필요없는_회차는_입장_검사를_하지_않는다() {
-        final StartBookingUseCase.Input input = input(List.of(1L, 2L));
+        final CreateOrderUseCase.Input input = input(List.of(1L, 2L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(List.of());
         stubHold(seatIds);
 
-        startBookingUseCase.execute(input);
+        createOrderUseCase.execute(input);
 
         verify(admissionVerifier, never()).verify(PERFORMANCE_ID, MEMBER_ID, ADMISSION_TOKEN);
     }
@@ -259,7 +259,7 @@ class StartBookingUseCaseTest {
                 .when(admissionVerifier)
                 .verify(PERFORMANCE_ID, MEMBER_ID, ADMISSION_TOKEN);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
+        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds)))
                 .isInstanceOf(AdmissionTokenRequiredException.class);
 
         verifyNoInteractions(memberLookupApi, bookingAvailabilityChecker);
@@ -272,7 +272,7 @@ class StartBookingUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         doThrow(new NotFoundException()).when(memberLookupApi).requireActive(MEMBER_ID);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds))).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds))).isInstanceOf(NotFoundException.class);
 
         verifyNoInteractions(bookingAvailabilityChecker, performanceSaleInfoApi, holdRegistry, pendingOrderCreator);
     }
@@ -291,14 +291,14 @@ class StartBookingUseCaseTest {
 
     @Test
     void 좌석_수_한도가_없으면_요청_수량을_제한하지_않는다() {
-        final StartBookingUseCase.Input input = input(List.of(1L, 2L, 3L, 4L, 5L));
+        final CreateOrderUseCase.Input input = input(List.of(1L, 2L, 3L, 4L, 5L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(null)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
                 .thenReturn(List.of());
         stubHold(seatIds);
 
-        startBookingUseCase.execute(input);
+        createOrderUseCase.execute(input);
 
         verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
     }
@@ -312,7 +312,7 @@ class StartBookingUseCaseTest {
                 .when(seatSelectionService)
                 .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds)))
+        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds)))
                 .isInstanceOf(SeatNotSelectedException.class);
 
         verify(holdRegistry, never()).createHold(any(), any(), any(), any(), any());
@@ -321,7 +321,7 @@ class StartBookingUseCaseTest {
 
     @Test
     void 주문_저장_트랜잭션이_실패하면_hold를_해제한다() {
-        final StartBookingUseCase.Input input = input(List.of(7L, 3L));
+        final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
@@ -335,7 +335,7 @@ class StartBookingUseCaseTest {
                         eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
                 .thenThrow(new RuntimeException("order failed"));
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input))
+        assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed");
 
@@ -344,7 +344,7 @@ class StartBookingUseCaseTest {
 
     @Test
     void hold_해제에_실패해도_원래_예외를_유지한다() {
-        final StartBookingUseCase.Input input = input(List.of(7L, 3L));
+        final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
         final Hold hold = hold(seatIds.toList());
@@ -362,7 +362,7 @@ class StartBookingUseCaseTest {
                 .when(holdRegistry)
                 .release(PERFORMANCE_ID, "hold-key", seatIds.toList());
 
-        assertThatThrownBy(() -> startBookingUseCase.execute(input))
+        assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed")
                 .satisfies(exception -> {
@@ -373,8 +373,8 @@ class StartBookingUseCaseTest {
 
     @Test
     void execute는_DB_트랜잭션을_직접_시작하지_않는다() throws NoSuchMethodException {
-        assertThat(StartBookingUseCase.class
-                        .getDeclaredMethod("execute", StartBookingUseCase.Input.class)
+        assertThat(CreateOrderUseCase.class
+                        .getDeclaredMethod("execute", CreateOrderUseCase.Input.class)
                         .isAnnotationPresent(Transactional.class))
                 .isFalse();
     }
@@ -385,9 +385,9 @@ class StartBookingUseCaseTest {
      */
     @Test
     void 준비_단계는_트랜잭션_없이_다른_module_공개_API를_호출한다() {
-        assertThat(StartBookingUseCase.class.isAnnotationPresent(Transactional.class))
+        assertThat(CreateOrderUseCase.class.isAnnotationPresent(Transactional.class))
                 .isFalse();
-        for (final Method method : StartBookingUseCase.class.getDeclaredMethods()) {
+        for (final Method method : CreateOrderUseCase.class.getDeclaredMethods()) {
             assertThat(method.isAnnotationPresent(Transactional.class))
                     .as("%s는 트랜잭션을 직접 열지 않는다", method.getName())
                     .isFalse();
@@ -401,11 +401,11 @@ class StartBookingUseCaseTest {
     }
 
     private void assertError(final List<Long> seatIds, final Class<? extends BookingException> expected) {
-        assertThatThrownBy(() -> startBookingUseCase.execute(input(seatIds))).isInstanceOf(expected);
+        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds))).isInstanceOf(expected);
     }
 
-    private StartBookingUseCase.Input input(final List<Long> seatIds) {
-        return new StartBookingUseCase.Input(PERFORMANCE_ID, seatIds, MEMBER_ID, ADMISSION_TOKEN);
+    private CreateOrderUseCase.Input input(final List<Long> seatIds) {
+        return new CreateOrderUseCase.Input(PERFORMANCE_ID, seatIds, MEMBER_ID, ADMISSION_TOKEN);
     }
 
     private Hold hold(final List<Long> seatIds) {

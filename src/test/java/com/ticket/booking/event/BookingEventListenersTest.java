@@ -24,7 +24,7 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Propagation;
 
-import com.ticket.booking.OrderStarted;
+import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
@@ -62,7 +62,7 @@ class BookingEventListenersTest {
     @Test
     void listener는_자기_DB_트랜잭션을_열지_않는다() throws NoSuchMethodException {
         assertThat(BookingEventListeners.class
-                        .getDeclaredMethod("on", OrderStarted.class)
+                        .getDeclaredMethod("on", OrderCreated.class)
                         .getAnnotation(ApplicationModuleListener.class)
                         .propagation())
                 .isEqualTo(Propagation.NOT_SUPPORTED);
@@ -74,8 +74,8 @@ class BookingEventListenersTest {
     }
 
     @Test
-    void OrderStarted_주문이_없으면_아무_후처리도_하지_않는다() {
-        final OrderStarted event = orderStarted(10L, "hold-key");
+    void OrderCreated_주문이_없으면_아무_후처리도_하지_않는다() {
+        final OrderCreated event = orderCreated(10L, "hold-key");
         when(orderHoldSnapshotReader.read(10L)).thenReturn(Optional.empty());
 
         listeners.on(event);
@@ -84,8 +84,8 @@ class BookingEventListenersTest {
     }
 
     @Test
-    void OrderStarted는_현재_DB_상태로_Hold를_재구성해_생성_프로세서에_넘긴다() {
-        final OrderStarted event = orderStarted(10L, "hold-key");
+    void OrderCreated는_현재_DB_상태로_Hold를_재구성해_생성_프로세서에_넘긴다() {
+        final OrderCreated event = orderCreated(10L, "hold-key");
         final Order order = order(10L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
         addOrderSeat(order, 501L, 42L);
         addOrderSeat(order, 502L, 43L);
@@ -130,9 +130,9 @@ class BookingEventListenersTest {
                         .collect(Collectors.toMap(OrderSeat::getSeatId, OrderSeat::getPerformanceSeatId)));
     }
 
-    private OrderStarted orderStarted(final long orderId, final String holdKey) {
-        return new OrderStarted(
-                UUID.randomUUID(), OrderStarted.SCHEMA_VERSION, orderId, 20L, holdKey, Set.of(501L), Instant.now());
+    private OrderCreated orderCreated(final long orderId, final String holdKey) {
+        return new OrderCreated(
+                UUID.randomUUID(), OrderCreated.SCHEMA_VERSION, orderId, 20L, holdKey, Set.of(501L), Instant.now());
     }
 
     private OrderTerminated orderTerminated(final long orderId, final String holdKey) {

@@ -25,9 +25,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.usecase.CancelOrderUseCase;
+import com.ticket.booking.order.usecase.CreateOrderUseCase;
 import com.ticket.booking.order.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.order.usecase.GetOrderStatusUseCase;
-import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
@@ -36,7 +36,7 @@ import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 @SuppressWarnings("NonAsciiCharacters")
 class OrderControllerContractTest {
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
-    private final StartBookingUseCase startBookingUseCase = Mockito.mock(StartBookingUseCase.class);
+    private final CreateOrderUseCase createOrderUseCase = Mockito.mock(CreateOrderUseCase.class);
     private final GetOrderDetailUseCase getOrderDetailUseCase = Mockito.mock(GetOrderDetailUseCase.class);
     private final CancelOrderUseCase cancelOrderUseCase = Mockito.mock(CancelOrderUseCase.class);
     private final GetOrderStatusUseCase getOrderStatusUseCase = Mockito.mock(GetOrderStatusUseCase.class);
@@ -45,7 +45,7 @@ class OrderControllerContractTest {
     @BeforeEach
     void setUp() {
         OrderController controller = new OrderController(
-                startBookingUseCase, getOrderDetailUseCase, cancelOrderUseCase, getOrderStatusUseCase);
+                createOrderUseCase, getOrderDetailUseCase, cancelOrderUseCase, getOrderStatusUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(
@@ -61,9 +61,9 @@ class OrderControllerContractTest {
     }
 
     @Test
-    void 주문시작_성공시_201_헤더와_응답바디_계약을_지킨다() throws Exception {
-        when(startBookingUseCase.execute(new StartBookingUseCase.Input(10L, List.of(7L, 3L), 100L, "admission-token")))
-                .thenReturn(new StartBookingUseCase.Output(
+    void 주문생성_성공시_201_헤더와_응답바디_계약을_지킨다() throws Exception {
+        when(createOrderUseCase.execute(new CreateOrderUseCase.Input(10L, List.of(7L, 3L), 100L, "admission-token")))
+                .thenReturn(new CreateOrderUseCase.Output(
                         "ORD-20260324", OrderState.PENDING, LocalDateTime.of(2026, 3, 24, 14, 10), 600L));
 
         mockMvc.perform(post("/api/v1/orders")
@@ -87,7 +87,7 @@ class OrderControllerContractTest {
     }
 
     @Test
-    void 주문시작_실패시_검증오류를_응답_계약으로_내린다() throws Exception {
+    void 주문생성_실패시_검증오류를_응답_계약으로_내린다() throws Exception {
         mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -101,11 +101,11 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
-        verifyNoInteractions(startBookingUseCase);
+        verifyNoInteractions(createOrderUseCase);
     }
 
     @Test
-    void 주문시작_요청에_performanceId가_없으면_검증오류를_응답한다() throws Exception {
+    void 주문생성_요청에_performanceId가_없으면_검증오류를_응답한다() throws Exception {
         mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -118,7 +118,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.error.code").value("E400"));
 
-        verifyNoInteractions(startBookingUseCase);
+        verifyNoInteractions(createOrderUseCase);
     }
 
     @Test

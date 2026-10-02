@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
-@Schema(description = "주문 시작 요청")
+@Schema(description = "주문 생성 요청")
 public class CreateOrderRequest {
     // Jackson이 바인딩한 뒤 Bean Validation이 검사하므로 생성 직후에는 null이다.
     @NotNull(message = "performanceId는 null일 수 없습니다.")

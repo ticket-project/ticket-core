@@ -13,7 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.OrderStarted;
+import com.ticket.booking.OrderCreated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
@@ -23,9 +23,9 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 예매 시작의 DB 구간이다. 주문·주문 좌석·선점 이력·{@code OrderStarted} publication이 한 트랜잭션에서 함께 커밋되거나 함께 사라진다.
+ * 주문 생성의 DB 구간이다. 주문·주문 좌석·선점 이력·{@code OrderCreated} publication이 한 트랜잭션에서 함께 커밋되거나 함께 사라진다.
  *
- * <p>Redis 선점은 이 트랜잭션 밖에서 이미 끝났다. 여기서 실패하면 호출자({@link com.ticket.booking.order.usecase.StartBookingUseCase})가 그 선점을 보상
+ * <p>Redis 선점은 이 트랜잭션 밖에서 이미 끝났다. 여기서 실패하면 호출자({@link com.ticket.booking.order.usecase.CreateOrderUseCase})가 그 선점을 보상
  * 해제한다.
  *
  * <p>주문 금액은 show가 준 표시값이 아니라 오직 {@link PerformanceSeat#getUnitPrice()}로 계산한다(ADR 0005) — 클라이언트가 보낸 가격도, show가 다시 계산한
@@ -69,9 +69,9 @@ public class PendingOrderCreator {
         orderHoldHistoryRecorder.recordCreated(
                 memberId, performanceId, hold.holdKey(), startedAt, hold.expiresAt(), performanceSeats);
 
-        eventPublisher.publishEvent(new OrderStarted(
+        eventPublisher.publishEvent(new OrderCreated(
                 UUID.randomUUID(),
-                OrderStarted.SCHEMA_VERSION,
+                OrderCreated.SCHEMA_VERSION,
                 savedOrder.getId(),
                 memberId,
                 hold.holdKey(),

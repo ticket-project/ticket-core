@@ -17,7 +17,7 @@ import java.util.UUID;
  * @param performanceSeatIds 이 주문이 잡은 PerformanceSeat 식별자 목록
  * @param occurredAt hold가 시작된 시각
  */
-public record OrderStarted(
+public record OrderCreated(
         UUID eventId,
         int schemaVersion,
         long orderId,
@@ -27,7 +27,7 @@ public record OrderStarted(
         Instant occurredAt) {
     public static final int SCHEMA_VERSION = 1;
 
-    public OrderStarted {
+    public OrderCreated {
         performanceSeatIds = Set.copyOf(performanceSeatIds);
     }
 }

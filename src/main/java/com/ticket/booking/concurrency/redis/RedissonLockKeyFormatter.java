@@ -16,7 +16,8 @@ public class RedissonLockKeyFormatter {
     public String format(final LockKey key) {
         return switch (key.scope()) {
             case SEAT -> LOCK_PREFIX + "hold:" + join(key);
-            case ORDER_START -> LOCK_PREFIX + "start-order:" + join(key);
+            // key 문자열은 LockScope 이름과 별개다. 바꾸면 배포 중 옛 락과 겹치지 않으므로 그대로 둔다.
+            case ORDER_CREATE -> LOCK_PREFIX + "start-order:" + join(key);
         };
     }
 

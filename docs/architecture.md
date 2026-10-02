@@ -17,7 +17,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   interface와 불변 `record` snapshot, enum만 두고 구현은 그 밖의 패키지에 둔다. 별도 `internal` 계층은
   두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도
   `Type.OPEN`으로 선언하지 않는다. 공개할 계약이 없는 모듈에는 `api`를 만들지 않는다. `booking`의
-  `OrderStarted`/`OrderTerminated`만 root에 남는다 — FQCN이 `EVENT_PUBLICATION.event_type`에 저장된
+  `OrderCreated`/`OrderTerminated`만 root에 남는다 — FQCN이 `EVENT_PUBLICATION.event_type`에 저장된
   값이라 옮기면 미완료 publication이 재처리되지 않는다.
 - **`allowedDependencies`는 모듈 전체가 아니라 named interface 단위로 적는다**(`"show :: api"`).
   `shared :: *` 와일드카드는 쓰지 않는다. 무엇을 실제로 여는지가 선언에 남는다.
@@ -53,7 +53,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   인증은 토큰의 서명·만료만 보고 member를 조회하지 않는다. security는 인증 흐름과 전역 API URL 접근
   정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
 - 탈퇴 회원의 access token은 만료 전까지 인증을 통과한다. 그 사이 막아야 하는 것은 좌석을 실제로
-  점유하는 주문 생성뿐이라, booking의 `StartBookingUseCase`가 `MemberLookupApi.requireActive`로
+  점유하는 주문 생성뿐이라, booking의 `CreateOrderUseCase`가 `MemberLookupApi.requireActive`로
   확인한다. 조회·좌석 선택·찜 연산은 확인하지 않는다.
 - `show -> venue`는 표시값 조립, `show -> like`는 공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는

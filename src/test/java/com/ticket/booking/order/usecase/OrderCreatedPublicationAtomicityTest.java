@@ -24,7 +24,7 @@ import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
- * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderStarted} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
+ * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderCreated} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
  *
  * <p>Modulith의 JPA event publication registry는 {@code ApplicationEventPublisher.publishEvent}를 호출한 트랜잭션의
  * {@code EntityManager}를 그대로 타므로, 커밋되면 event_publication row가 남고 롤백되면 함께 사라진다. 이 계약은 실제 event 저장 방식(entity scan,
@@ -32,7 +32,7 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
  * entity-scan하지 않아 이 계약을 재현하지 못한다.
  */
 @SuppressWarnings("NonAsciiCharacters")
-class OrderStartedPublicationAtomicityTest extends BookingE2ETestSupport {
+class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
     private static final long MEMBER_ID = 900L;
     private static final long PERFORMANCE_ID = 901L;
     private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
@@ -50,7 +50,7 @@ class OrderStartedPublicationAtomicityTest extends BookingE2ETestSupport {
     private EntityManager entityManager;
 
     @Test
-    void 성공하면_주문과_OrderStarted_publication이_함께_저장된다() {
+    void 성공하면_주문과_OrderCreated_publication이_함께_저장된다() {
         final String holdKey = "atomicity-success-" + System.nanoTime();
         final Hold hold = holdWithPersistedSeat(holdKey);
         final List<PerformanceSeat> performanceSeats = persistedSeats(holdKey);
@@ -117,7 +117,7 @@ class OrderStartedPublicationAtomicityTest extends BookingE2ETestSupport {
     }
 
     /**
-     * 이 holdKey의 {@code OrderStarted} publication이 (완료 전이든, {@code completion-mode: archive}로 이미 archive로 옮겨졌든) 몇 건
+     * 이 holdKey의 {@code OrderCreated} publication이 (완료 전이든, {@code completion-mode: archive}로 이미 archive로 옮겨졌든) 몇 건
      * 존재하는지 센다.
      *
      * <p>listener가 매우 빨리(비동기로) 완료되면 이 테스트가 확인하기 전에 이미 {@code event_publication} 에서 {@code event_publication_archive}로

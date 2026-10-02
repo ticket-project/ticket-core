@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.booking.order.usecase.CancelOrderUseCase;
+import com.ticket.booking.order.usecase.CreateOrderUseCase;
 import com.ticket.booking.order.usecase.GetOrderDetailUseCase;
 import com.ticket.booking.order.usecase.GetOrderStatusUseCase;
-import com.ticket.booking.order.usecase.StartBookingUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
 
@@ -33,14 +33,14 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
-@Tag(name = "주문", description = "PENDING 주문 시작, 조회, 취소 API")
+@Tag(name = "주문", description = "PENDING 주문 생성, 조회, 취소 API")
 public class OrderController {
-    private final StartBookingUseCase startBookingUseCase;
+    private final CreateOrderUseCase createOrderUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
     private final GetOrderStatusUseCase getOrderStatusUseCase;
 
-    @Operation(summary = "주문 시작", description = """
+    @Operation(summary = "주문 생성", description = """
             요청한 좌석을 선점하고 결제 진입용 PENDING 주문을 생성합니다.
             동일 회원과 같은 공연에는 PENDING 주문을 1건만 가질 수 있습니다.
             expiresAt과 서버 기준 remainingSeconds를 함께 반환합니다.
@@ -50,7 +50,7 @@ public class OrderController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "201",
-                description = "주문 시작 성공",
+                description = "주문 생성 성공",
                 headers = {
                     @Header(name = "Location", description = "생성된 주문 조회 URI"),
                     @Header(name = "X-Order-Key", description = "생성된 주문 키")
@@ -60,7 +60,7 @@ public class OrderController {
                 description = "이미 선점된 좌석이 있거나 진행 중인 PENDING 주문이 존재")
     })
     @PostMapping
-    public ResponseEntity<ApiResponse<StartBookingUseCase.Output>> createOrder(
+    public ResponseEntity<ApiResponse<CreateOrderUseCase.Output>> createOrder(
             @RequestBody @Valid final CreateOrderRequest request,
             // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
             @Parameter(description = "Queue Server가 발급한 admission token")
@@ -68,12 +68,12 @@ public class OrderController {
                     final String admissionToken,
             @Parameter(hidden = true) final AuthenticatedMember member) {
         // @Valid가 performanceId·seatIds의 null을 이미 400으로 거른 뒤에야 여기에 닿는다.
-        final StartBookingUseCase.Input input = new StartBookingUseCase.Input(
+        final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
                 Objects.requireNonNull(request.getPerformanceId(), "performanceId"),
                 Objects.requireNonNull(request.getSeatIds(), "seatIds"),
                 member.memberId(),
                 admissionToken);
-        final StartBookingUseCase.Output output = startBookingUseCase.execute(input);
+        final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
         return ResponseEntity.created(URI.create("/api/v1/orders/" + output.orderKey()))
                 .header("X-Order-Key", output.orderKey())
                 .body(ApiResponse.success(output));
