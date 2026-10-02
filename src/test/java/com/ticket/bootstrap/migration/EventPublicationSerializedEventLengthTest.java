@@ -75,7 +75,7 @@ class EventPublicationSerializedEventLengthTest {
             insertPublication(connection, "EVENT_PUBLICATION", serialized);
             insertPublication(connection, "EVENT_PUBLICATION_ARCHIVE", serialized);
 
-            // Modulith의 JpaEventPublicationRepository는 완료·재제출에서 serialized_event를 동등
+            // Modulith의 JpaEventPublicationRepository는 완료·재처리에서 serialized_event를 동등
             // 비교한다. CLOB이 아니라 VARCHAR로 넓혔기 때문에 이 조회가 성립한다.
             assertThat(countBySerializedEvent(connection, "EVENT_PUBLICATION", serialized))
                     .isEqualTo(1);

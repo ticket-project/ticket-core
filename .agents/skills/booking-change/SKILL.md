@@ -15,7 +15,7 @@ description: ticket-core의 selection·hold·order·ticket, 판매/진입 정책
 
 - 현행 실행 경로와 설계만 있는 부분을 구분한다. payment/ticket entity-only 범위를 결제 승인·정산 구현 완료로 간주하지 않는다.
 - 성공·DB rollback·커밋 후 실패·취소/만료·재전달별로 DB, selection/hold, publication, 알림의 전후 상태를 정리한다.
-- 락 보호 대상·해제 시점과 트랜잭션 안팎의 Redis/WebSocket/다른 모듈 I/O를 대조한다. 보상·재시도·만료 보정의 소유권과 멱등성은 수명주기 문서 기준으로 확인한다.
+- 락 보호 대상·해제 시점과 트랜잭션 안팎의 Redis/WebSocket/다른 모듈 I/O를 대조한다. 보상·재시도·만료 누락 복구의 소유권과 멱등성은 수명주기 문서 기준으로 확인한다.
 - 판매/진입 정책, 본인 selection 전제, 좌석 단가·주문 snapshot·시간 계약 중 영향을 받는 항목을 확인한다. 상세 정책을 skill에 복제하지 않는다.
 - 외부 계약이나 schema도 바뀌면 [api-contract-change](../api-contract-change/SKILL.md) 또는 [database-change](../database-change/SKILL.md)를 함께 따른다.
 

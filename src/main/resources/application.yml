@@ -136,7 +136,7 @@ security:
 # false면 같은 실행 모듈이 API만 제공한다.
 worker:
   enabled: ${WORKER_ENABLED:true}
-  # 보정 주기는 실행 환경 설정이다. 업무 규칙(만료 시각, hold 유효시간)은 도메인이 소유한다.
+  # 누락 복구 주기는 실행 환경 설정이다. 업무 규칙(만료 시각, hold 유효시간)은 도메인이 소유한다.
   order-expiration:
     fixed-delay: 300000
 

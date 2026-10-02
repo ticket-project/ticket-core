@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 만료 보정 유스케이스를 주기적으로 깨운다.
+ * 만료 누락 복구 유스케이스를 주기적으로 깨운다.
  *
  * <p>여기에는 조회도 상태 판단도 두지 않는다. 실행 주기만 정하고 유스케이스를 한 번 부른다.
  */

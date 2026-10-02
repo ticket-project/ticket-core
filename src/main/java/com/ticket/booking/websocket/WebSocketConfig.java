@@ -13,7 +13,7 @@ import com.ticket.shared.config.CorsProperties;
 import lombok.RequiredArgsConstructor;
 
 /**
- * WebSocket STOMP 배선을 소유 module이 직접 한다.
+ * WebSocket STOMP 설정을 소유 module이 직접 한다.
  *
  * <p>이 앱에서 WebSocket을 쓰는 module은 booking 하나다 — 좌석 상태 변경을 {@code /topic}으로 발행하고, STOMP CONNECT 시
  * {@link WebSocketAuthInterceptor}로 인증한다. 그래서 브로커 활성화 ({@code @EnableWebSocketMessageBroker})까지 booking이 갖는다. 전역 설정

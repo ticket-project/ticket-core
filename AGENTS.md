@@ -47,7 +47,7 @@
 2. 모듈 간 조회·명령은 `<module>.api`의 `@NamedInterface("api")` 공개 계약만 사용한다. 다른 모듈 내부·Repository·JPA entity를 직접 참조하거나 공개 계약에 JPA/Redis/JWT/Spring Web 타입을 노출하지 않는다. `booking.OrderStarted`·`booking.OrderTerminated`는 DB publication에 FQCN이 저장되어 root에 유지한다.
 3. 다른 Aggregate는 scalar ID로 참조한다. 모듈 간 JPA 연관관계와 DB FK를 만들지 않고, 다른 BC 데이터는 공개 API로 조합한다. domain은 다른 BC를 참조하지 않는다.
 4. HTTP는 endpoint, 조립·트랜잭션은 usecase, 업무 규칙·저장 계약은 domain, 저장 구현은 persistence가 맡는다. domain·usecase·port·module api는 Spring Web/Swagger에 의존하지 않는다. usecase의 자기 모듈 조회 Repository 직접 호출과 일부 응답 record의 Jackson 표기는 현행 허용 범위다.
-5. 업무 로직은 소유 모듈에 둔다. `shared`·`security`는 기술 모듈이며 `shared`에 업무 의존을 넣지 않는다. `common`/`util`/`helper`처럼 소유권 없는 패키지를 만들지 않는다. 공개 shared 계약과 실행 배선의 배치는 [아키텍처](docs/architecture.md#module-structure)를 따른다.
+5. 업무 로직은 소유 모듈에 둔다. `shared`·`security`는 기술 모듈이며 `shared`에 업무 의존을 넣지 않는다. `common`/`util`/`helper`처럼 소유권 없는 패키지를 만들지 않는다. 공개 shared 계약과 실행 설정의 배치는 [아키텍처](docs/architecture.md#module-structure)를 따른다.
 6. DB 스키마의 원본은 module 소유 Flyway migration과 H2/Oracle 방언 migration이다. entity 변경만으로 스키마가 바뀐다고 가정하지 않는다. 스키마 변경은 migration·매핑·관련 테스트와 운영 전환 조건을 함께 검토한다([ADR 0020](docs/adr/0020-db-schema-source-of-truth-is-migration.md)).
 
 상세·예외는 [아키텍처](docs/architecture.md), 이름·null 계약·조회 구현은 [코드 작성 기준](docs/coding-guidelines.md)을 따른다. 이름 정리만을 이유로 JSON·HTTP 상태·오류 코드 등 공개 계약을 바꾸지 않는다.
