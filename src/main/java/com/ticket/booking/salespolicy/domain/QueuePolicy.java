@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
  * queue policy row가 없던 회차) 대기열을 요구하지 않는다.
  *
  * <p>테이블에는 {@code queue_level}·{@code waiting_room_message}·{@code queue_policy_reason} 열도 있지만 Core가 읽는 곳이 없어 매핑하지 않는다
- * — seed가 채우는 값이고, 대기열 판정과 예매 방식 응답에 들어가지 않는다.
+ * — seed가 채우는 값이고, 대기열 판정과 진입 방식 응답에 들어가지 않는다.
  */
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

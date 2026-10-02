@@ -28,21 +28,21 @@ import com.ticket.shared.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
-class GetPerformanceBookingModeUseCaseTest {
+class GetPerformanceEntryModeUseCaseTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-04T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
     private PerformanceSalesPolicyRepository performanceSalesPolicyRepository;
 
-    private GetPerformanceBookingModeUseCase useCase;
+    private GetPerformanceEntryModeUseCase useCase;
 
     @BeforeEach
     void setUp() {
         // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
         // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
-        useCase = new GetPerformanceBookingModeUseCase(
-                new PerformanceSaleFinder(performanceSalesPolicyRepository), CLOCK);
+        useCase =
+                new GetPerformanceEntryModeUseCase(new PerformanceSaleFinder(performanceSalesPolicyRepository), CLOCK);
     }
 
     @Test
@@ -50,11 +50,10 @@ class GetPerformanceBookingModeUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L))
                 .thenReturn(Optional.of(policy(NOW.minusHours(1), NOW.plusHours(1), false)));
 
-        GetPerformanceBookingModeUseCase.Output output =
-                useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
+        GetPerformanceEntryModeUseCase.Output output = useCase.execute(new GetPerformanceEntryModeUseCase.Input(10L));
 
         assertThat(output.acceptanceStatus()).isEqualTo(BookingWindowStatus.OPEN);
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.DIRECT);
+        assertThat(output.bookingMode()).isEqualTo(GetPerformanceEntryModeUseCase.EntryMode.DIRECT);
     }
 
     @Test
@@ -62,10 +61,9 @@ class GetPerformanceBookingModeUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L))
                 .thenReturn(Optional.of(policy(NOW.minusHours(1), NOW.plusHours(1), true)));
 
-        GetPerformanceBookingModeUseCase.Output output =
-                useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
+        GetPerformanceEntryModeUseCase.Output output = useCase.execute(new GetPerformanceEntryModeUseCase.Input(10L));
 
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.QUEUE);
+        assertThat(output.bookingMode()).isEqualTo(GetPerformanceEntryModeUseCase.EntryMode.QUEUE);
     }
 
     @Test
@@ -73,11 +71,10 @@ class GetPerformanceBookingModeUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L))
                 .thenReturn(Optional.of(policy(NOW.plusHours(1), NOW.plusHours(2), false)));
 
-        GetPerformanceBookingModeUseCase.Output output =
-                useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
+        GetPerformanceEntryModeUseCase.Output output = useCase.execute(new GetPerformanceEntryModeUseCase.Input(10L));
 
         assertThat(output.acceptanceStatus()).isEqualTo(BookingWindowStatus.BEFORE_OPEN);
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
+        assertThat(output.bookingMode()).isEqualTo(GetPerformanceEntryModeUseCase.EntryMode.UNAVAILABLE);
     }
 
     @Test
@@ -85,18 +82,17 @@ class GetPerformanceBookingModeUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L))
                 .thenReturn(Optional.of(policy(NOW.minusHours(2), NOW.minusHours(1), false)));
 
-        GetPerformanceBookingModeUseCase.Output output =
-                useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L));
+        GetPerformanceEntryModeUseCase.Output output = useCase.execute(new GetPerformanceEntryModeUseCase.Input(10L));
 
         assertThat(output.acceptanceStatus()).isEqualTo(BookingWindowStatus.CLOSED);
-        assertThat(output.bookingMode()).isEqualTo(GetPerformanceBookingModeUseCase.BookingMode.UNAVAILABLE);
+        assertThat(output.bookingMode()).isEqualTo(GetPerformanceEntryModeUseCase.EntryMode.UNAVAILABLE);
     }
 
     @Test
     void 판매_정책이_없으면_예외를_던진다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(new GetPerformanceBookingModeUseCase.Input(10L)))
+        assertThatThrownBy(() -> useCase.execute(new GetPerformanceEntryModeUseCase.Input(10L)))
                 .isInstanceOf(NotFoundException.class);
     }
 

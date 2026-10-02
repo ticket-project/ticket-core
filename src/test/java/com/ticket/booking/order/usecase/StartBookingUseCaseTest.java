@@ -34,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.admission.AdmissionVerifier;
-import com.ticket.booking.admission.BookingEntryGate;
+import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.AdmissionTokenRequiredException;
 import com.ticket.booking.exception.BookingException;
@@ -110,7 +110,7 @@ class StartBookingUseCaseTest {
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new StartBookingUseCase(
                         distributedLock,
-                        new BookingEntryGate(
+                        new BookingEntryGuard(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         memberLookupApi,
                         bookingAvailabilityChecker,

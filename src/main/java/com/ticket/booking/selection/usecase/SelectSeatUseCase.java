@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.BookingEntryGate;
+import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.exception.NoAvailableSeatException;
 import com.ticket.booking.exception.SeatAlreadyHeldException;
 import com.ticket.booking.exception.SeatMismatchInPerformanceException;
@@ -26,7 +26,7 @@ public class SelectSeatUseCase {
     private final SeatSelectionCoordinator seatSelectionCoordinator;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final HoldRegistry holdRegistry;
-    private final BookingEntryGate bookingEntryGate;
+    private final BookingEntryGuard bookingEntryGuard;
     private final Clock clock;
 
     public record Input(
@@ -45,7 +45,7 @@ public class SelectSeatUseCase {
         final LocalDateTime now = LocalDateTime.now(clock);
 
         final PerformanceSalesPolicy policy =
-                bookingEntryGate.enter(input.performanceId(), input.memberId(), input.admissionToken(), now);
+                bookingEntryGuard.check(input.performanceId(), input.memberId(), input.admissionToken(), now);
 
         final Long performanceSeatId = requireSelectableSeat(input.performanceId(), input.seatId());
 

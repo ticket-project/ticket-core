@@ -10,7 +10,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.BookingEntryGate;
+import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class GetSeatStatusUseCase {
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatOccupancy seatOccupancy;
-    private final BookingEntryGate bookingEntryGate;
+    private final BookingEntryGuard bookingEntryGuard;
     private final Clock clock;
 
     public record Input(
@@ -56,7 +56,7 @@ public class GetSeatStatusUseCase {
         final Long performanceId = input.performanceId();
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        bookingEntryGate.enter(performanceId, input.memberId(), input.admissionToken(), now);
+        bookingEntryGuard.check(performanceId, input.memberId(), input.admissionToken(), now);
 
         final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findAllByPerformanceId(performanceId);
 
