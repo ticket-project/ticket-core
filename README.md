@@ -9,7 +9,8 @@ admission token을 검증해 예매 API 진입을 제어한다.
 
 기획·개발·QA가 테스트 작성 전에 검토할 조건·결과는 [서비스 업무 규칙 초안](docs/service-rules.md)에 있다.
 현재 구현과 확정 정책을 구분하며, 미정 정책·Core/Queue/화면 불일치·수정 후보·QA 시나리오는
-[서비스 규칙 점검 결과](docs/service-rule-review.md)를 함께 읽는다. 두 문서는 정책 승인 전 초안이다.
+[서비스 규칙 점검 결과](docs/service-rule-review.md)를 함께 읽는다. 문답으로 확정한 항목은 업무 규칙의
+결정 기록에 표시하며, 나머지는 검토 중인 초안이다.
 
 ## 로컬 실행
 
