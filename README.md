@@ -5,6 +5,12 @@ Spring Modulith Application Module로 나눈 단일 Gradle Spring Boot 프로젝
 `8080`)로 다룬다. 대기열 처리는 `ticket-queue` 별도 서버가 담당하고, 이 서버는 Queue Server가 발급한
 admission token을 검증해 예매 API 진입을 제어한다.
 
+## 서비스 규칙 검토
+
+기획·개발·QA가 테스트 작성 전에 검토할 조건·결과는 [서비스 업무 규칙 초안](docs/service-rules.md)에 있다.
+현재 구현과 확정 정책을 구분하며, 미정 정책·Core/Queue/화면 불일치·수정 후보·QA 시나리오는
+[서비스 규칙 점검 결과](docs/service-rule-review.md)를 함께 읽는다. 두 문서는 정책 승인 전 초안이다.
+
 ## 로컬 실행
 
 전제: JDK 25, Redis 7, Gradle wrapper.
