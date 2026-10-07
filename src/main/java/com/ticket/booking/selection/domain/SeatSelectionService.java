@@ -7,11 +7,8 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.SeatAlreadySelectedException;
-import com.ticket.booking.exception.SeatNotOwnedException;
-import com.ticket.booking.exception.SeatNotSelectedException;
-import com.ticket.booking.exception.SeatSelectionExpiredException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 import lombok.RequiredArgsConstructor;
@@ -32,10 +29,10 @@ public class SeatSelectionService {
                 seatSelectionStore.selectIfAbsent(performanceId, seatId, memberKey, SELECT_TTL, maxSeatCount);
         if (result == SelectResult.ALREADY_SELECTED) {
             log.debug("좌석 선택에 실패했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
-            throw new SeatAlreadySelectedException();
+            throw new BookingException(BookingErrorCode.E4001);
         }
         if (result == SelectResult.LIMIT_EXCEEDED) {
-            throw new HoldLimitExceededException();
+            throw new BookingException(BookingErrorCode.E6001);
         }
         log.debug("좌석 선택에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
     }
@@ -56,7 +53,7 @@ public class SeatSelectionService {
             return false;
         }
         logNotOwned(performanceId, seatId, memberId, holder);
-        throw new SeatNotOwnedException();
+        throw new BookingException(BookingErrorCode.E4002);
     }
 
     /** 지금 이 좌석을 누군가 선택하고 있는지. 만료 알림 전에 락 안에서 다시 확인하는 용도다. */
@@ -83,8 +80,8 @@ public class SeatSelectionService {
     /**
      * 주문하려는 좌석이 모두 이 회원이 지금 선택 중인 좌석인지 확인한다(ADR 0021).
      *
-     * <p>빠진 좌석이 모두 최근에 선택 시간이 지나 풀린 것이면 {@link SeatSelectionExpiredException}, 하나라도 선택한 적 없거나 남이 선택한 좌석이면
-     * {@link SeatNotSelectedException}이다. 만료 기록은 실패한 경우에만 읽는다 — 정상 주문은 Redis를 한 번만 부른다.
+     * <p>빠진 좌석이 모두 최근에 선택 시간이 지나 풀린 것이면 E4007, 하나라도 선택한 적 없거나 남이 선택한 좌석이면 E4006이다. 만료 기록은 실패한 경우에만 읽는다 — 정상 주문은 Redis를
+     * 한 번만 부른다.
      */
     public void requireSelectedBy(final Long performanceId, final Long memberId, final List<Long> seatIds) {
         final String memberKey = memberKeyOf(memberId);
@@ -97,9 +94,9 @@ public class SeatSelectionService {
         if (seatSelectionStore
                 .getRecentlyExpiredSeatIdsByMember(performanceId, memberKey)
                 .containsAll(missing)) {
-            throw new SeatSelectionExpiredException();
+            throw new BookingException(BookingErrorCode.E4007);
         }
-        throw new SeatNotSelectedException();
+        throw new BookingException(BookingErrorCode.E4006);
     }
 
     private String memberKeyOf(final Long memberId) {

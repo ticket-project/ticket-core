@@ -20,8 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.booking.exception.OrderNotPendingException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
@@ -70,7 +70,8 @@ class CancelOrderUseCaseTest {
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("missing", 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.execute(new CancelOrderUseCase.Input("missing", 1L)))
-                .isInstanceOf(OrderNotOwnedException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E5003);
     }
 
     @Test
@@ -81,7 +82,8 @@ class CancelOrderUseCaseTest {
                 .thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> service.execute(new CancelOrderUseCase.Input("order-key", 1L)))
-                .isInstanceOf(OrderNotPendingException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E5002);
 
         verifyNoInteractions(orderTerminationService);
     }

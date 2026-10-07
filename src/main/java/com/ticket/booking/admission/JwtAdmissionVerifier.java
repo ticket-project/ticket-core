@@ -9,9 +9,8 @@ import javax.crypto.SecretKey;
 
 import org.jspecify.annotations.Nullable;
 
+import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
-import com.ticket.booking.exception.AdmissionTokenExpiredException;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -49,7 +48,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
             return;
         }
         if (admissionToken == null || admissionToken.isBlank()) {
-            throw new AdmissionTokenRequiredException();
+            throw new AdmissionTokenException(AdmissionErrorCode.E8000, "admission token missing");
         }
         final Claims claims = parse(admissionToken);
         validateAudience(claims);
@@ -60,10 +59,10 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         final long tokenMemberId = parseMemberId(claims);
         final long tokenPerformanceId = readLongClaim(claims, PERFORMANCE_ID_CLAIM);
         if (tokenMemberId != memberId) {
-            throw new AdmissionTokenException("admission token member mismatch");
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token member mismatch");
         }
         if (tokenPerformanceId != performanceId) {
-            throw new AdmissionTokenException("admission token performance mismatch");
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token performance mismatch");
         }
     }
 
@@ -77,27 +76,27 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException exception) {
-            throw new AdmissionTokenExpiredException("admission token expired", exception);
+            throw new AdmissionTokenException(AdmissionErrorCode.E8001, "admission token expired", exception);
         } catch (JwtException | IllegalArgumentException exception) {
-            throw new AdmissionTokenException("admission token invalid", exception);
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid", exception);
         }
     }
 
     private void validateAudience(final Claims claims) {
         if (claims.getAudience() == null || !claims.getAudience().contains(settings.audience())) {
-            throw new AdmissionTokenException("admission token invalid audience");
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid audience");
         }
     }
 
     private void validateScope(final Claims claims) {
         if (!SCOPE.equals(claims.get(SCOPE_CLAIM, String.class))) {
-            throw new AdmissionTokenException("admission token invalid scope");
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid scope");
         }
     }
 
     private void validateTimestamps(final Claims claims) {
         if (claims.getIssuedAt() == null || claims.getExpiration() == null) {
-            throw new AdmissionTokenException("admission token invalid timestamps");
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid timestamps");
         }
     }
 
@@ -105,7 +104,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         try {
             return Long.parseLong(claims.getSubject());
         } catch (NumberFormatException exception) {
-            throw new AdmissionTokenException("admission token invalid subject", exception);
+            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid subject", exception);
         }
     }
 
@@ -118,9 +117,10 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
             try {
                 return Long.parseLong(stringValue);
             } catch (NumberFormatException exception) {
-                throw new AdmissionTokenException("admission token invalid " + claimName, exception);
+                throw new AdmissionTokenException(
+                        AdmissionErrorCode.E8002, "admission token invalid " + claimName, exception);
             }
         }
-        throw new AdmissionTokenException("admission token invalid " + claimName);
+        throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid " + claimName);
     }
 }

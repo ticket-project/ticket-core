@@ -21,7 +21,8 @@ import org.redisson.api.RedissonClient;
 
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -59,12 +60,10 @@ class RedissonDistributedLockTest {
                                 List.of(LockKey.seat(10L, 100L)),
                                 LockOptions.defaults().withFailureMessage("좌석 처리 중입니다."),
                                 () -> executed.set(true)))
-                .isInstanceOf(HoldBusyException.class)
-                .satisfies(thrown -> {
-                    assertThat(thrown).isInstanceOf(HoldBusyException.class);
-                    // 응답 메시지는 오류 카탈로그가 정하고, 지정한 문구는 data로 함께 전달한다.
-                    assertThat(((HoldBusyException) thrown).getData()).isEqualTo("좌석 처리 중입니다.");
-                });
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6003)
+                // 응답 메시지는 오류 카탈로그가 정하고, 지정한 문구는 data로 함께 전달한다.
+                .hasFieldOrPropertyWithValue("data", "좌석 처리 중입니다.");
 
         assertThat(executed).isFalse();
     }

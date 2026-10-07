@@ -16,9 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -69,7 +68,8 @@ class BookingAvailabilityCheckerTest {
                 .thenReturn(true);
 
         assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
-                .isInstanceOf(PendingOrderAlreadyExistsException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E5004);
 
         verifyNoInteractions(performanceSeatRepository);
     }
@@ -82,7 +82,8 @@ class BookingAvailabilityCheckerTest {
                 .thenReturn(List.of(availableSeat));
 
         assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
-                .isInstanceOf(SeatMismatchInPerformanceException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4000);
     }
 
     @Test
@@ -93,7 +94,9 @@ class BookingAvailabilityCheckerTest {
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(1L, List.of(10L, 20L)))
                 .thenReturn(List.of(availableSeat, reservedSeat));
 
-        assertThatThrownBy(() -> checker.check(20L, 1L, seatIds)).isInstanceOf(NoAvailableSeatException.class);
+        assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3003);
     }
 
     @Test

@@ -7,6 +7,13 @@
 패키지 배치와 `support` 관련 서술은 0011이 대체했다. 이 ADR은 ADR 0002의 "예외가 완성된 HTTP 응답 계약을 스스로
 갖는다"는 서술을 수정한다 — 모듈이 자기 오류를 소유한다는 원칙 자체는 유지한다.
 
+> 2026-10-07 갱신(booking): 결정 5를 booking에서 뒤집었다. (고정 코드, 고정 메시지)만 다른 booking 예외 14종과
+> `AdmissionTokenExpired`/`RequiredException`은 별도 catch·재시도 대상이 아니어서, 공개 문구를 `BookingErrorCode`·
+> `AdmissionErrorCode`로 옮기고 `BookingException(BookingErrorCode)`·`AdmissionTokenException(AdmissionErrorCode, reason)`
+> 하나씩만 남겼다. `BookingExceptionHandler`는 오류 코드 enum의 exhaustive switch로 상태를 정하므로 새 코드를 추가하면
+> 컴파일이 분기 누락을 잡는다. HTTP 상태·E-code·메시지는 그대로이고 `BookingExceptionHandlerTest`가 고정한다.
+> member·show·like의 예외는 이 갱신의 범위가 아니다.
+
 > 2026-09-24 갱신: E1000/E1001은 `security.exception`과 `SecurityExceptionHandler`가 소유한다.
 > `MemberExceptionHandler`는 회원 중복 이메일 오류만 처리한다. 예외가 HTTP 상태를 모르는 원칙은 유지한다.
 

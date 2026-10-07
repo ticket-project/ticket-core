@@ -36,12 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.exception.AdmissionErrorCode;
+import com.ticket.booking.exception.AdmissionTokenException;
+import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatNotSelectedException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.order.domain.OrderState;
@@ -221,7 +219,7 @@ class CreateOrderUseCaseTest {
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
                 .thenReturn(Optional.of(policy(3, FIXED_NOW.minusHours(2), FIXED_NOW.minusHours(1), false)));
 
-        assertError(seatIds, PerformanceIsPastException.class);
+        assertError(seatIds, BookingErrorCode.E3001);
 
         verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
     }
@@ -231,7 +229,7 @@ class CreateOrderUseCaseTest {
         final List<Long> seatIds = List.of(1L, 2L, 3L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(2)));
 
-        assertError(seatIds, HoldLimitExceededException.class);
+        assertError(seatIds, BookingErrorCode.E6001);
 
         verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
     }
@@ -255,12 +253,13 @@ class CreateOrderUseCaseTest {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID))
                 .thenReturn(Optional.of(policy(3, FIXED_NOW.minusHours(1), FIXED_NOW.plusHours(3), true)));
-        doThrow(new AdmissionTokenRequiredException())
+        doThrow(new AdmissionTokenException(AdmissionErrorCode.E8000, "admission token missing"))
                 .when(admissionVerifier)
                 .verify(PERFORMANCE_ID, MEMBER_ID, ADMISSION_TOKEN);
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds)))
-                .isInstanceOf(AdmissionTokenRequiredException.class);
+                .isInstanceOf(AdmissionTokenException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8000);
 
         verifyNoInteractions(memberLookupApi, bookingAvailabilityChecker);
     }
@@ -282,9 +281,9 @@ class CreateOrderUseCaseTest {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, RequestedSeatIds.from(seatIds)))
-                .thenThrow(new PendingOrderAlreadyExistsException());
+                .thenThrow(new BookingException(BookingErrorCode.E5004));
 
-        assertError(seatIds, PendingOrderAlreadyExistsException.class);
+        assertError(seatIds, BookingErrorCode.E5004);
 
         verifyNoInteractions(holdRegistry, pendingOrderCreator);
     }
@@ -308,12 +307,13 @@ class CreateOrderUseCaseTest {
     void 본인이_선택하지_않은_좌석이_섞여_있으면_선점하지_않는다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        doThrow(new SeatNotSelectedException())
+        doThrow(new BookingException(BookingErrorCode.E4006))
                 .when(seatSelectionService)
                 .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds)))
-                .isInstanceOf(SeatNotSelectedException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4006);
 
         verify(holdRegistry, never()).createHold(any(), any(), any(), any(), any());
         verifyNoInteractions(pendingOrderCreator);
@@ -400,8 +400,10 @@ class CreateOrderUseCaseTest {
                 .thenReturn(hold(seatIds.toList()));
     }
 
-    private void assertError(final List<Long> seatIds, final Class<? extends BookingException> expected) {
-        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds))).isInstanceOf(expected);
+    private void assertError(final List<Long> seatIds, final BookingErrorCode expected) {
+        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds)))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", expected);
     }
 
     private CreateOrderUseCase.Input input(final List<Long> seatIds) {

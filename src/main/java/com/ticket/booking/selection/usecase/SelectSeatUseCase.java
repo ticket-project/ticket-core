@@ -9,9 +9,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.admission.BookingEntryGuard;
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.SeatAlreadyHeldException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -72,13 +71,13 @@ public class SelectSeatUseCase {
     private Long requireSelectableSeat(final Long performanceId, final Long seatId) {
         final PerformanceSeat seat = performanceSeatRepository
                 .findSeatState(performanceId, seatId)
-                .orElseThrow(SeatMismatchInPerformanceException::new);
+                .orElseThrow(() -> new BookingException(BookingErrorCode.E4000));
 
         if (seat.getState() != PerformanceSeatState.AVAILABLE) {
-            throw new NoAvailableSeatException();
+            throw new BookingException(BookingErrorCode.E3003);
         }
         if (holdRegistry.isHeld(performanceId, seatId)) {
-            throw new SeatAlreadyHeldException();
+            throw new BookingException(BookingErrorCode.E6000);
         }
         return seat.getId();
     }

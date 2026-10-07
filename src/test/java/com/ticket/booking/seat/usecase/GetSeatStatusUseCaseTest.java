@@ -25,9 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
-import com.ticket.booking.exception.BookingNotOpenYetException;
-import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.AdmissionErrorCode;
+import com.ticket.booking.exception.AdmissionTokenException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
@@ -150,7 +151,8 @@ class GetSeatStatusUseCaseTest {
                 .thenReturn(Optional.of(policy(NOW.minusHours(2), NOW.minusHours(1), false)));
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .isInstanceOf(PerformanceIsPastException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
         verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
     }
@@ -161,7 +163,8 @@ class GetSeatStatusUseCaseTest {
                 .thenReturn(Optional.of(policy(NOW.plusHours(1), NOW.plusHours(2), false)));
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .isInstanceOf(BookingNotOpenYetException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3002);
 
         verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
     }
@@ -181,10 +184,13 @@ class GetSeatStatusUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(queuePolicy()));
-        doThrow(new AdmissionTokenRequiredException()).when(admissionVerifier).verify(10L, 100L, "admission-token");
+        doThrow(new AdmissionTokenException(AdmissionErrorCode.E8000, "admission token missing"))
+                .when(admissionVerifier)
+                .verify(10L, 100L, "admission-token");
 
         assertThatThrownBy(() -> useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
-                .isInstanceOf(AdmissionTokenRequiredException.class);
+                .isInstanceOf(AdmissionTokenException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8000);
 
         verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
     }

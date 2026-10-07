@@ -11,24 +11,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
-import com.ticket.booking.exception.AdmissionTokenExpiredException;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
+import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.exception.BookingNotOpenYetException;
-import com.ticket.booking.exception.HoldBusyException;
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.booking.exception.OrderNotPendingException;
-import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatAlreadyHeldException;
-import com.ticket.booking.exception.SeatAlreadySelectedException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
-import com.ticket.booking.exception.SeatNotOwnedException;
-import com.ticket.booking.exception.SeatNotSelectedException;
-import com.ticket.booking.exception.SeatSelectionExpiredException;
 import com.ticket.shared.web.ApiResponse;
 
 /**
@@ -45,33 +31,70 @@ class BookingExceptionHandlerTest {
 
     static Stream<Arguments> 오류_계약() {
         return Stream.of(
-                Arguments.of(new PerformanceIsPastException(), HttpStatus.BAD_REQUEST, "E3001", "과거 공연은 예매할 수 없습니다."),
-                Arguments.of(new BookingNotOpenYetException(), HttpStatus.BAD_REQUEST, "E3002", "아직 예매가 오픈되지 않았습니다."),
-                Arguments.of(new NoAvailableSeatException(), HttpStatus.BAD_REQUEST, "E3003", "이용 가능한 좌석이 없습니다."),
                 Arguments.of(
-                        new SeatMismatchInPerformanceException(),
+                        new BookingException(BookingErrorCode.E3001),
+                        HttpStatus.BAD_REQUEST,
+                        "E3001",
+                        "과거 공연은 예매할 수 없습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E3002),
+                        HttpStatus.BAD_REQUEST,
+                        "E3002",
+                        "아직 예매가 오픈되지 않았습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E3003),
+                        HttpStatus.BAD_REQUEST,
+                        "E3003",
+                        "이용 가능한 좌석이 없습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E4000),
                         HttpStatus.BAD_REQUEST,
                         "E4000",
                         "요청한 좌석 정보와 일치하지 않습니다."),
-                Arguments.of(new SeatAlreadySelectedException(), HttpStatus.CONFLICT, "E4001", "이미 선택된 좌석입니다."),
-                Arguments.of(new SeatNotOwnedException(), HttpStatus.FORBIDDEN, "E4002", "본인이 선택한 좌석만 해제할 수 있습니다."),
-                Arguments.of(new SeatNotSelectedException(), HttpStatus.CONFLICT, "E4006", "선택한 좌석만 예매할 수 있습니다."),
                 Arguments.of(
-                        new SeatSelectionExpiredException(),
+                        new BookingException(BookingErrorCode.E4001), HttpStatus.CONFLICT, "E4001", "이미 선택된 좌석입니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E4002),
+                        HttpStatus.FORBIDDEN,
+                        "E4002",
+                        "본인이 선택한 좌석만 해제할 수 있습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E4006),
+                        HttpStatus.CONFLICT,
+                        "E4006",
+                        "선택한 좌석만 예매할 수 있습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E4007),
                         HttpStatus.CONFLICT,
                         "E4007",
                         "좌석 선택 시간이 지났습니다. 좌석을 다시 선택해 주세요."),
-                Arguments.of(new OrderNotPendingException(), HttpStatus.CONFLICT, "E5002", "결제 대기 주문만 처리할 수 있습니다."),
-                Arguments.of(new OrderNotOwnedException(), HttpStatus.FORBIDDEN, "E5003", "본인 주문만 처리할 수 있습니다."),
                 Arguments.of(
-                        new PendingOrderAlreadyExistsException(),
+                        new BookingException(BookingErrorCode.E5002),
+                        HttpStatus.CONFLICT,
+                        "E5002",
+                        "결제 대기 주문만 처리할 수 있습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E5003),
+                        HttpStatus.FORBIDDEN,
+                        "E5003",
+                        "본인 주문만 처리할 수 있습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E5004),
                         HttpStatus.CONFLICT,
                         "E5004",
                         "이미 진행 중인 결제 대기 주문이 있습니다."),
-                Arguments.of(new SeatAlreadyHeldException(), HttpStatus.CONFLICT, "E6000", "좌석이 이미 선점되었습니다."),
-                Arguments.of(new HoldLimitExceededException(), HttpStatus.CONFLICT, "E6001", "선점 가능한 좌석 수를 초과하였습니다."),
                 Arguments.of(
-                        new HoldBusyException(null), HttpStatus.CONFLICT, "E6003", "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
+                        new BookingException(BookingErrorCode.E6000), HttpStatus.CONFLICT, "E6000", "좌석이 이미 선점되었습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E6001),
+                        HttpStatus.CONFLICT,
+                        "E6001",
+                        "선점 가능한 좌석 수를 초과하였습니다."),
+                Arguments.of(
+                        new BookingException(BookingErrorCode.E6003, null),
+                        HttpStatus.CONFLICT,
+                        "E6003",
+                        "좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요."));
     }
 
     @ParameterizedTest
@@ -96,7 +119,7 @@ class BookingExceptionHandlerTest {
     @Test
     void 예외의_data는_error_data로_나가고_message를_덮지_않는다() {
         final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleBookingException(new HoldBusyException("좌석 처리 중입니다."));
+                handler.handleBookingException(new BookingException(BookingErrorCode.E6003, "좌석 처리 중입니다."));
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getError().getMessage()).isEqualTo("좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요.");
@@ -105,14 +128,18 @@ class BookingExceptionHandlerTest {
 
     static Stream<Arguments> admission_오류_계약() {
         return Stream.of(
-                Arguments.of(new AdmissionTokenRequiredException(), HttpStatus.FORBIDDEN, "E8000", "대기열 입장 토큰이 필요합니다."),
                 Arguments.of(
-                        new AdmissionTokenExpiredException("expired-reason", null),
+                        new AdmissionTokenException(AdmissionErrorCode.E8000, "admission token missing"),
+                        HttpStatus.FORBIDDEN,
+                        "E8000",
+                        "대기열 입장 토큰이 필요합니다."),
+                Arguments.of(
+                        new AdmissionTokenException(AdmissionErrorCode.E8001, "expired-reason", null),
                         HttpStatus.FORBIDDEN,
                         "E8001",
                         "대기열 입장 토큰이 만료되었습니다."),
                 Arguments.of(
-                        new AdmissionTokenException("bad-signature"),
+                        new AdmissionTokenException(AdmissionErrorCode.E8002, "bad-signature"),
                         HttpStatus.FORBIDDEN,
                         "E8002",
                         "대기열 입장 토큰이 올바르지 않습니다."));
@@ -135,7 +162,8 @@ class BookingExceptionHandlerTest {
 
     @Test
     void admission_검증_실패_사유는_응답에_노출되지_않는다() {
-        final AdmissionTokenException exception = new AdmissionTokenException("서명 불일치: 상세 진단 정보");
+        final AdmissionTokenException exception =
+                new AdmissionTokenException(AdmissionErrorCode.E8002, "서명 불일치: 상세 진단 정보");
 
         final ResponseEntity<ApiResponse<Object>> response = handler.handleAdmissionTokenException(exception);
 

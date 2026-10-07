@@ -12,9 +12,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이) {@code TICKETS} 테이블을 만들고,
- * {@code ticket_key}/{@code order_seat_id} unique 제약이 실제로 동작하는지 검증한다. {@code TICKETS} 생성 migration은 booking의 V5다. 발급 흐름이
- * 아직 없어 매핑 entity는 두지 않는다(ADR 0005).
+ * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이) {@code TICKETS} 테이블을
+ * 만들고, {@code ticket_key}/{@code order_seat_id} unique 제약이 실제로 동작하는지 검증한다. {@code TICKETS} 생성 migration은 booking의 V5다.
+ * 발급 흐름이 아직 없어 매핑 entity는 두지 않는다(ADR 0005).
  *
  * <p>기법은 {@link BookingModuleSlicingSchemaTest}를 따른다. booking의 V1(cross-module FK 제거)이 정상 동작하도록 legacy baseline도 같은 형태로
  * 재현한다.

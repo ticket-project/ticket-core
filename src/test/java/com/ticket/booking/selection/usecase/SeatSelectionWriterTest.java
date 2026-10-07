@@ -25,8 +25,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatAlreadyHeldException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -94,7 +94,8 @@ class SeatSelectionWriterTest {
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
-                .isInstanceOf(SeatAlreadyHeldException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6000);
 
         verifyNoInteractions(seatSelectionService, seatEventPublisher);
     }
@@ -102,7 +103,8 @@ class SeatSelectionWriterTest {
     @Test
     void 락_획득_시점에_예매가_마감됐으면_선점을_중단한다() {
         assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
-                .isInstanceOf(PerformanceIsPastException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
         verifyNoInteractions(holdRegistry, seatSelectionService, seatEventPublisher);
     }

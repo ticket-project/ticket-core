@@ -5,9 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -46,7 +45,7 @@ public class BookingAvailabilityChecker {
 
     private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {
         if (orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
-            throw new PendingOrderAlreadyExistsException();
+            throw new BookingException(BookingErrorCode.E5004);
         }
     }
 
@@ -55,13 +54,13 @@ public class BookingAvailabilityChecker {
         final List<PerformanceSeat> performanceSeats =
                 performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, requestedSeatIds.toList());
         if (performanceSeats.size() != requestedSeatIds.size()) {
-            throw new SeatMismatchInPerformanceException();
+            throw new BookingException(BookingErrorCode.E4000);
         }
 
         final boolean hasUnavailableSeat =
                 performanceSeats.stream().anyMatch(seat -> seat.getState() != PerformanceSeatState.AVAILABLE);
         if (hasUnavailableSeat) {
-            throw new NoAvailableSeatException();
+            throw new BookingException(BookingErrorCode.E3003);
         }
         return performanceSeats;
     }

@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.booking.exception.OrderNotPendingException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
@@ -38,9 +38,9 @@ public class CancelOrderUseCase {
     public void execute(final Input input) {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberIdForUpdate(input.orderKey(), input.memberId())
-                .orElseThrow(OrderNotOwnedException::new);
+                .orElseThrow(() -> new BookingException(BookingErrorCode.E5003));
         if (order.getStatus() != OrderState.PENDING) {
-            throw new OrderNotPendingException();
+            throw new BookingException(BookingErrorCode.E5002);
         }
         orderTerminationService.cancel(order, LocalDateTime.now(clock));
     }

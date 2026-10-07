@@ -9,9 +9,8 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.booking.exception.BookingNotOpenYetException;
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 
 @SuppressWarnings("NonAsciiCharacters")
 class PerformanceSalesPolicyTest {
@@ -19,19 +18,21 @@ class PerformanceSalesPolicyTest {
     private static final LocalDateTime CLOSES_AT = LocalDateTime.of(2026, 6, 1, 10, 0);
 
     @Test
-    void 시작_전이면_BookingNotOpenYetException을_던진다() {
+    void 시작_전이면_E3002를_던진다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
         assertThatThrownBy(() -> policy.ensureWithinBookingWindow(OPENS_AT.minusMinutes(1)))
-                .isInstanceOf(BookingNotOpenYetException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3002);
     }
 
     @Test
-    void 마감_이후면_PerformanceIsPastException을_던진다() {
+    void 마감_이후면_E3001을_던진다() {
         PerformanceSalesPolicy policy = policy(4, 600, null);
 
         assertThatThrownBy(() -> policy.ensureWithinBookingWindow(CLOSES_AT.plusMinutes(1)))
-                .isInstanceOf(PerformanceIsPastException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
     }
 
     @Test
@@ -43,10 +44,12 @@ class PerformanceSalesPolicyTest {
     }
 
     @Test
-    void 한도를_초과하면_HoldLimitExceededException을_던진다() {
+    void 한도를_초과하면_E6001을_던진다() {
         PerformanceSalesPolicy policy = policy(2, 600, null);
 
-        assertThatThrownBy(() -> policy.ensureWithinHoldLimit(3)).isInstanceOf(HoldLimitExceededException.class);
+        assertThatThrownBy(() -> policy.ensureWithinHoldLimit(3))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6001);
     }
 
     @Test

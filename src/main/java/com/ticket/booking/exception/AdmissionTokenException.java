@@ -5,34 +5,25 @@ import org.jspecify.annotations.Nullable;
 import com.ticket.shared.exception.TicketException;
 
 /**
- * admission token이 유효하지 않다. admission 검증 예외의 base이며 그 자체로 E8002 계약을 갖는다.
+ * admission token 검증 실패다. 없으면 E8000(대기열 진입), 만료면 E8001(대기열 재진입), 그 밖은 E8002(재발급)다 — 클라이언트의 다음 행동이 달라 코드를 나눈다.
  *
  * <p><b>{@code reason}은 응답에 노출되지 않는다.</b> 서명 불일치·audience 불일치·subject 파싱 실패처럼 검증이 어디서 깨졌는지는 공격자에게 알려줄 정보가 아니므로, 공개 메시지는
- * 사유와 무관하게 하나로 고정하고 진단 문구는 handler의 로그로만 나간다. 토큰 검증 실패를 세분화해 응답에 담지 않는 것이 기존 동작이기도 하다.
+ * 사유와 무관하게 코드마다 하나로 고정하고 진단 문구는 handler의 로그로만 나간다.
  */
-public sealed class AdmissionTokenException extends TicketException
-        permits AdmissionTokenExpiredException, AdmissionTokenRequiredException {
-    private static final String MESSAGE = "대기열 입장 토큰이 올바르지 않습니다.";
-    private final @Nullable String reason;
+public final class AdmissionTokenException extends TicketException {
+    private final String reason;
 
-    public AdmissionTokenException(final String reason) {
-        this(reason, null);
+    public AdmissionTokenException(final AdmissionErrorCode errorCode, final String reason) {
+        this(errorCode, reason, null);
     }
 
-    public AdmissionTokenException(final String reason, final @Nullable Throwable cause) {
-        this(AdmissionErrorCode.E8002, MESSAGE, reason, cause);
-    }
-
-    protected AdmissionTokenException(
-            final AdmissionErrorCode errorCode,
-            final String message,
-            final @Nullable String reason,
-            final @Nullable Throwable cause) {
-        super(errorCode, message, null, cause);
+    public AdmissionTokenException(
+            final AdmissionErrorCode errorCode, final String reason, final @Nullable Throwable cause) {
+        super(errorCode, errorCode.getMessage(), null, cause);
         this.reason = reason;
     }
 
-    public @Nullable String getReason() {
+    public String getReason() {
         return reason;
     }
 }
