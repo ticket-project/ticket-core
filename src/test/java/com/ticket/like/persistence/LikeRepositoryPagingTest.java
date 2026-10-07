@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.ticket.like.domain.Like;
@@ -20,7 +19,6 @@ import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
  * <p>fixture는 Like만 만든다 — LIKES에는 FK가 없고(모듈을 넘나드는 FK 제거, like V1·V2) like는 대상 존재도 확인하지 않으므로, member·venue·show entity를
  * 만들어 봐야 이 테스트가 보는 것에 아무 영향이 없다.
  */
-@Import(LikeRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
 class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
     private static final long MEMBER_ID = 1L;
