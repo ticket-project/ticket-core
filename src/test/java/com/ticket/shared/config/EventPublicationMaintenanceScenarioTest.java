@@ -23,8 +23,6 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.ticket.testsupport.CoreApplicationTestSupport;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재처리 mechanics를 {@link Scenario} DSL로 검증한다.
  *
@@ -36,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
  * <p>deterministic fake({@link ProbeListener})만 쓰고 {@code Thread.sleep}은 쓰지 않는다. 최초 비동기 전달 완료는
  * {@link Scenario#andWaitForStateChange}의 Awaitility 기반 polling으로 기다린다.
  */
-@Slf4j
 @TestPropertySource(properties = "worker.enabled=false")
 @Import(EventPublicationMaintenanceScenarioTest.ProbeConfig.class)
 @EnableScenarios
@@ -115,7 +112,6 @@ class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport
 
     record ProbeEvent(UUID id) {}
 
-    @Slf4j
     static class ProbeListener {
         private final ConcurrentHashMap<UUID, AtomicInteger> attempts = new ConcurrentHashMap<>();
         private final ConcurrentHashMap<UUID, Boolean> succeeded = new ConcurrentHashMap<>();

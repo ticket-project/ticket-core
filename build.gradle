@@ -136,9 +136,6 @@ dependencies {
     testCompileOnly 'org.springframework.modulith:spring-modulith-actuator'
     testCompileOnly 'org.springframework.modulith:spring-modulith-observability-core'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 /**
