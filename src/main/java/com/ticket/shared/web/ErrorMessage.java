@@ -2,6 +2,8 @@ package com.ticket.shared.web;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 /**
  * HTTP 오류 응답 본문이다. 클라이언트는 message가 아니라 code로 분기한다.
  *
@@ -10,5 +12,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>{@link ApiResponse}와 같은 이유로 오류 타입을 알지 않는다 — 완성된 문자열만 받는다.
  */
+// record로 바꾸기 전 getter 직렬화 순서(code, data, message)를 그대로 유지한다.
+@JsonPropertyOrder({"code", "data", "message"})
 public record ErrorMessage(
         String code, String message, @Nullable Object data) {}
