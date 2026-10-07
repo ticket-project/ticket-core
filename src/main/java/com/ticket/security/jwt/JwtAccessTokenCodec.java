@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ticket.member.api.AuthenticatedMember;
@@ -27,12 +26,7 @@ public class JwtAccessTokenCodec {
     private final Clock clock;
     private final SecretKey secretKey;
 
-    @Autowired
-    public JwtAccessTokenCodec(final JwtProperties jwtProperties) {
-        this(jwtProperties, Clock.systemUTC());
-    }
-
-    JwtAccessTokenCodec(final JwtProperties jwtProperties, final Clock clock) {
+    public JwtAccessTokenCodec(final JwtProperties jwtProperties, final Clock clock) {
         this.jwtProperties = Objects.requireNonNull(jwtProperties, "jwtProperties must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
