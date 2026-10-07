@@ -5,16 +5,17 @@
 
 ## 프로파일
 
-- **local**: Docker PostgreSQL. `docker compose -f compose.local.yml up -d`로 DB와 Redis를 실행한다.
-  스키마는 운영과 같은 PostgreSQL migration으로 만들며 데이터는 볼륨에 보존한다. 초기 데이터는 기동
+- **local**: 이미 실행 중인 PostgreSQL과 Redis를 사용한다. Ticket용 DB와 계정을 준비하고
+  `SPRING_DATASOURCE_*`로 실제 접속 정보를 지정한다. 스키마는 운영과 같은 PostgreSQL migration으로 만든다. 초기 데이터는 기동
   때 넣지 않으므로 처음 한 번 `seedLocal`을 실행한다. 기존 H2 파일은 자동 변환하거나 삭제하지 않는다.
 - **prod**: AWS RDS PostgreSQL. 초기 데이터는 기동 시 넣지 않는다. 테이블 생성(배포/Flyway)과 데이터 적재(`seedProd`)는 별개
   작업이다.
 
 ## AWS RDS PostgreSQL 전환
 
-로컬과 검증 컨테이너는 PostgreSQL 18을 사용한다. RDS에서도 같은 메이저 버전을 선택하고, 실제 리전에서
-지원하는 마이너 버전은 생성 전에 확인한다. 기존 운영 Oracle의 데이터는 이 코드 변경으로 자동 이관되지 않는다.
+자동화 검증 컨테이너는 PostgreSQL 18을 사용한다. 기존 로컬 컨테이너의 버전은 별도로 관리하며,
+RDS의 메이저 버전을 확정하면 자동화 검증 버전도 맞춘다. 실제 리전에서 지원하는 마이너 버전은 생성 전에 확인한다.
+기존 운영 Oracle의 데이터는 이 코드 변경으로 자동 이관되지 않는다.
 
 서버의 저장소 밖 compose와 환경변수에는 다음 값을 설정한다. 비밀번호는 별도 secret으로 주입한다.
 
