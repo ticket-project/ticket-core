@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -44,7 +43,7 @@ public class BookingAvailabilityChecker {
     }
 
     private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {
-        if (orderRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING)) {
+        if (orderRepository.existsPendingByMemberIdAndPerformanceId(memberId, performanceId)) {
             throw new BookingException(BookingErrorCode.E5004);
         }
     }

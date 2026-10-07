@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.order.domain.OrderState;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,14 +18,14 @@ public class ExpireOrderUseCase {
     @Transactional
     public void expireByOrderId(final Long orderId, final LocalDateTime now) {
         orderRepository
-                .findByIdAndStatusForUpdate(orderId, OrderState.PENDING)
+                .findPendingByIdForUpdate(orderId)
                 .ifPresent(order -> orderTerminationService.expire(order, now));
     }
 
     @Transactional
     public void expireByHoldKey(final String holdKey, final LocalDateTime now) {
         orderRepository
-                .findByHoldKeyAndStatusForUpdate(holdKey, OrderState.PENDING)
+                .findPendingByHoldKeyForUpdate(holdKey)
                 .ifPresent(order -> orderTerminationService.expire(order, now));
     }
 }

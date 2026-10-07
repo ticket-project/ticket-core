@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.order.domain.OrderState;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +43,7 @@ public class ExpirePendingOrdersUseCase {
         Long cursor = null;
 
         while (true) {
-            final List<Order> expirableOrders =
-                    orderRepository.findExpirable(OrderState.PENDING, now, cursor, BATCH_SIZE);
+            final List<Order> expirableOrders = orderRepository.findExpirable(now, cursor, BATCH_SIZE);
             if (expirableOrders.isEmpty()) {
                 break;
             }

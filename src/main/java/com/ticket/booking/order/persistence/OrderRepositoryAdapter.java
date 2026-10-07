@@ -47,30 +47,26 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public boolean existsByMemberIdAndPerformanceIdAndStatus(
-            final Long memberId, final Long performanceId, final OrderState status) {
-        return jpaRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, status);
+    public boolean existsPendingByMemberIdAndPerformanceId(final Long memberId, final Long performanceId) {
+        return jpaRepository.existsByMemberIdAndPerformanceIdAndStatus(memberId, performanceId, OrderState.PENDING);
     }
 
     @Override
-    public Optional<Order> findByHoldKeyAndStatusForUpdate(final String holdKey, final OrderState status) {
-        return jpaRepository.findByHoldKeyAndStatusForUpdate(holdKey, status);
+    public Optional<Order> findPendingByHoldKeyForUpdate(final String holdKey) {
+        return jpaRepository.findByHoldKeyAndStatusForUpdate(holdKey, OrderState.PENDING);
     }
 
     @Override
-    public Optional<Order> findByIdAndStatusForUpdate(final Long orderId, final OrderState status) {
-        return jpaRepository.findByIdAndStatusForUpdate(orderId, status);
+    public Optional<Order> findPendingByIdForUpdate(final Long orderId) {
+        return jpaRepository.findByIdAndStatusForUpdate(orderId, OrderState.PENDING);
     }
 
     @Override
     public List<Order> findExpirable(
-            final OrderState status,
-            final LocalDateTime expiresAt,
-            final @Nullable Long afterOrderId,
-            final int limit) {
+            final LocalDateTime expiresAt, final @Nullable Long afterOrderId, final int limit) {
         return jpaRepository
                 .findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(
-                        status,
+                        OrderState.PENDING,
                         expiresAt,
                         afterOrderId == null ? Long.MIN_VALUE : afterOrderId,
                         PageRequest.of(0, limit, Sort.by(Sort.Direction.ASC, "id")))
