@@ -47,15 +47,13 @@ class ErrorCodeUniquenessTest {
     }
 
     @Test
-    void 모든_E_code는_code와_description을_갖는다() {
+    void 모든_E_code는_code를_갖는다() {
         final List<ErrorCode> errorCodes = allErrorCodes();
 
         assertThat(errorCodes).as("ErrorCode 구현이 하나도 안 잡히면 이 테스트가 무의미하다").isNotEmpty();
 
-        assertThat(errorCodes).allSatisfy(errorCode -> {
-            assertThat(errorCode.getCode()).isNotBlank();
-            assertThat(errorCode.getDescription()).isNotBlank();
-        });
+        assertThat(errorCodes)
+                .allSatisfy(errorCode -> assertThat(errorCode.getCode()).isNotBlank());
     }
 
     private List<ErrorCode> allErrorCodes() {

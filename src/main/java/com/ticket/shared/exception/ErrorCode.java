@@ -9,9 +9,11 @@ package com.ticket.shared.exception;
  * <p>전역 유일성은 {@code com.ticket.shared.exception.ErrorCodeUniquenessTest}가 지킨다 — 분산 소유의 대가로 컴파일러가 중복을 잡아주지 못하기 때문이다.
  */
 public interface ErrorCode {
-    /** 응답 {@code error.code}에 그대로 실리는 값이다. */
-    String getCode();
+    /** enum 상수 이름이다. 구현은 enum이라 따로 정의하지 않는다. */
+    String name();
 
-    /** 백엔드 개발자가 코드의 의미를 찾기 위한 내부 설명이다. 응답에 노출되지 않는다. */
-    String getDescription();
+    /** 응답 {@code error.code}에 그대로 실리는 값이다. 상수 이름이 곧 코드다. */
+    default String getCode() {
+        return name();
+    }
 }
