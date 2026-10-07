@@ -13,7 +13,8 @@ import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.MemberSocialAccount;
 import com.ticket.member.domain.Role;
-import com.ticket.member.exception.DuplicateEmailException;
+import com.ticket.member.exception.MemberErrorCode;
+import com.ticket.member.exception.MemberException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,7 +61,7 @@ public class SocialAccountProvisioningService {
             return memberRepository.save(existingMember);
         }
         if (!linkedAccount.get().isSameSocialId(identity.providerId())) {
-            throw new DuplicateEmailException("Email is already linked to another social account.");
+            throw new MemberException(MemberErrorCode.E2000, "Email is already linked to another social account.");
         }
         return existingMember;
     }

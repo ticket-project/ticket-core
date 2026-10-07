@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.ticket.member.exception.DuplicateEmailException;
+import com.ticket.member.exception.MemberErrorCode;
+import com.ticket.member.exception.MemberException;
 import com.ticket.shared.web.ApiResponse;
 
 /** member 중복 이메일 오류의 외부 계약을 고정한다. */
@@ -17,7 +18,7 @@ class MemberExceptionHandlerTest {
     @Test
     void 중복_이메일은_기존_상태와_코드로_응답한다() {
         final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleMemberException(new DuplicateEmailException(null));
+                handler.handleMemberException(new MemberException(MemberErrorCode.E2000, null));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
