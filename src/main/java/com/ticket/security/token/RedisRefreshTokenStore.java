@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class RedisRefreshTokenStore {
 
     public String createRefreshToken(final Long memberId, final long expirationSeconds) {
         final String tokenValue = uuidSupplier.get().toString();
-        final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + tokenValue);
+        final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + tokenValue, StringCodec.INSTANCE);
         bucket.set(String.valueOf(memberId), Duration.ofSeconds(expirationSeconds));
         return tokenValue;
     }
@@ -39,7 +40,7 @@ public class RedisRefreshTokenStore {
     }
 
     private RBucket<String> bucketOf(final AuthRefreshToken refreshToken) {
-        return redissonClient.getBucket(KEY_PREFIX + refreshToken.value());
+        return redissonClient.getBucket(KEY_PREFIX + refreshToken.value(), StringCodec.INSTANCE);
     }
 
     private Optional<Long> parseMemberId(final String memberId) {

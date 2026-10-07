@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -21,13 +22,13 @@ public class RedisOAuth2AuthCodeStore {
 
     public String createCode(final Long memberId) {
         final String code = uuidSupplier.get().toString();
-        final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code);
+        final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code, StringCodec.INSTANCE);
         bucket.set(String.valueOf(memberId), CODE_TTL);
         return code;
     }
 
     public Optional<Long> consumeCode(final String code) {
-        final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code);
+        final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code, StringCodec.INSTANCE);
         final String memberId = bucket.getAndDelete();
         if (memberId == null) {
             return Optional.empty();

@@ -2,6 +2,7 @@ package com.ticket.security.oauth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 
 @ExtendWith(MockitoExtension.class)
 class RedisOAuth2AuthCodeStoreTest {
@@ -35,13 +37,13 @@ class RedisOAuth2AuthCodeStoreTest {
 
     @Test
     void creates_one_time_auth_code_and_stores_member_id() {
-        doReturn(bucket).when(redissonClient).getBucket(anyString());
+        doReturn(bucket).when(redissonClient).getBucket(anyString(), eq(StringCodec.INSTANCE));
         when(uuidSupplier.get()).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String code = oauth2AuthCodeStore.createCode(7L);
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(redissonClient).getBucket(keyCaptor.capture());
+        verify(redissonClient).getBucket(keyCaptor.capture(), eq(StringCodec.INSTANCE));
         verify(bucket).set("7", Duration.ofSeconds(30));
         assertThat(keyCaptor.getValue()).isEqualTo("oauth2_auth_code:123e4567-e89b-12d3-a456-426614174000");
         assertThat(code).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
@@ -49,7 +51,7 @@ class RedisOAuth2AuthCodeStoreTest {
 
     @Test
     void consume_code_deletes_code_and_returns_member_id() {
-        doReturn(bucket).when(redissonClient).getBucket("oauth2_auth_code:code");
+        doReturn(bucket).when(redissonClient).getBucket("oauth2_auth_code:code", StringCodec.INSTANCE);
         when(bucket.getAndDelete()).thenReturn("7");
 
         assertThat(oauth2AuthCodeStore.consumeCode("code")).contains(7L);
@@ -57,7 +59,7 @@ class RedisOAuth2AuthCodeStoreTest {
 
     @Test
     void consume_code_returns_empty_when_value_is_missing_or_not_number() {
-        doReturn(bucket).when(redissonClient).getBucket("oauth2_auth_code:code");
+        doReturn(bucket).when(redissonClient).getBucket("oauth2_auth_code:code", StringCodec.INSTANCE);
         when(bucket.getAndDelete()).thenReturn("not-a-number");
 
         assertThat(oauth2AuthCodeStore.consumeCode("code")).isEmpty();
