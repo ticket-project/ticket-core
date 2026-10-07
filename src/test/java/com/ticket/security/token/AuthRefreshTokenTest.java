@@ -20,4 +20,9 @@ class AuthRefreshTokenTest {
     void 빈값이면_인증_예외를_던진다() {
         assertThatThrownBy(() -> AuthRefreshToken.from("   ")).isInstanceOf(UnauthenticatedException.class);
     }
+
+    @Test
+    void 문자열로_바꿔도_토큰_값을_드러내지_않는다() {
+        assertThat(AuthRefreshToken.from("refresh-token").toString()).doesNotContain("refresh-token");
+    }
 }
