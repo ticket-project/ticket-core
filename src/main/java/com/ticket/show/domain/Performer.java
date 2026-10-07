@@ -24,12 +24,8 @@ public class Performer extends AuditedEntity {
     private String name;
     private String profileImageUrl;
 
-    private Performer(final String name, final String profileImageUrl) {
+    public Performer(final String name, final String profileImageUrl) {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
-    }
-
-    public static Performer create(final String name, final String profileImageUrl) {
-        return new Performer(name, profileImageUrl);
     }
 }

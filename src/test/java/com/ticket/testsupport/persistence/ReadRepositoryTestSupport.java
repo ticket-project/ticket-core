@@ -49,7 +49,7 @@ public abstract class ReadRepositoryTestSupport extends JpaSliceTestSupport {
     protected Clock clock;
 
     protected Venue persistVenue(final String name, final Region region) throws Exception {
-        Venue venue = Venue.create(
+        Venue venue = new Venue(
                 name,
                 name + " 주소",
                 region,
@@ -65,13 +65,13 @@ public abstract class ReadRepositoryTestSupport extends JpaSliceTestSupport {
     }
 
     protected Performer persistPerformer(final String name) throws Exception {
-        Performer performer = Performer.create(name, "https://example.com/performer.png");
+        Performer performer = new Performer(name, "https://example.com/performer.png");
         entityManager.persist(performer);
         return performer;
     }
 
     protected Category persistCategory(final String code, final String name) throws Exception {
-        Category category = Category.of(code, name);
+        Category category = new Category(code, name);
         entityManager.persist(category);
         return category;
     }
@@ -127,14 +127,14 @@ public abstract class ReadRepositoryTestSupport extends JpaSliceTestSupport {
     }
 
     protected Grade persistGrade(final String code, final String name) {
-        Grade grade = Grade.of(code, name);
+        Grade grade = new Grade(code, name);
         entityManager.persist(grade);
         return grade;
     }
 
     protected PerformanceGrade persistPerformanceGrade(
             final Performance performance, final Grade grade, final BigDecimal price, final int sortOrder) {
-        PerformanceGrade performanceGrade = PerformanceGrade.assign(performance, grade.getId(), price, sortOrder);
+        PerformanceGrade performanceGrade = new PerformanceGrade(performance, grade.getId(), price, sortOrder);
         entityManager.persist(performanceGrade);
         return performanceGrade;
     }

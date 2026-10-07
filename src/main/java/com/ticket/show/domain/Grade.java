@@ -34,12 +34,8 @@ public class Grade extends AuditedEntity {
     @Column(nullable = false)
     private String name;
 
-    private Grade(final String code, final String name) {
+    public Grade(final String code, final String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public static Grade of(final String code, final String name) {
-        return new Grade(code, name);
     }
 }

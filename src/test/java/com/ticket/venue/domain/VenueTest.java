@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class VenueTest {
     @Test
     void 공연장_정적팩토리로_필수정보를_생성한다() {
-        Venue venue = Venue.create(
+        Venue venue = new Venue(
                 "올림픽홀",
                 "서울시 송파구",
                 Region.SEOUL,
