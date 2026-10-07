@@ -47,12 +47,13 @@ public interface LikeRepository extends Repository<Like, Long> {
         return new CursorPage<>(pageRows, hasNext, nextPosition);
     }
 
-    @Query("SELECT l FROM Like l WHERE l.memberId = :memberId ORDER BY l.id DESC")
+    @Query(
+            "SELECT l FROM Like l WHERE l.memberId = :memberId AND l.likeType = com.ticket.like.domain.LikeType.SHOW ORDER BY l.id DESC")
     List<Like> findFirstPage(@Param("memberId") Long memberId, Pageable pageable);
 
     @Query("""
             SELECT l FROM Like l
-            WHERE l.memberId = :memberId AND l.id < :cursorLikeId
+            WHERE l.memberId = :memberId AND l.likeType = com.ticket.like.domain.LikeType.SHOW AND l.id < :cursorLikeId
             ORDER BY l.id DESC
             """)
     List<Like> findAfterId(
