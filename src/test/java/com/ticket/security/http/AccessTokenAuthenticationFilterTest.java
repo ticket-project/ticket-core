@@ -43,7 +43,7 @@ class AccessTokenAuthenticationFilterTest {
 
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer access-token");
         when(accessTokenReader.read("access-token"))
-                .thenReturn(AccessTokenReadResult.authenticated(new AuthenticatedMember(7L, "MEMBER")));
+                .thenReturn(new AccessTokenReadResult.Authenticated(new AuthenticatedMember(7L, "MEMBER")));
 
         assertThatThrownBy(() -> filter.doFilter(request, response, downstream))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -93,7 +93,7 @@ class AccessTokenAuthenticationFilterTest {
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final AtomicInteger invocations = new AtomicInteger();
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer expired-token");
-        when(accessTokenReader.read("expired-token")).thenReturn(AccessTokenReadResult.expired());
+        when(accessTokenReader.read("expired-token")).thenReturn(new AccessTokenReadResult.Expired());
 
         filter.doFilter(
                 request,
@@ -111,7 +111,7 @@ class AccessTokenAuthenticationFilterTest {
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final AuthenticatedMember member = new AuthenticatedMember(7L, "MEMBER");
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer access-token");
-        when(accessTokenReader.read("access-token")).thenReturn(AccessTokenReadResult.authenticated(member));
+        when(accessTokenReader.read("access-token")).thenReturn(new AccessTokenReadResult.Authenticated(member));
 
         filter.doFilter(
                 request,
