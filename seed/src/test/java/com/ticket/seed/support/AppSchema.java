@@ -39,7 +39,7 @@ public final class AppSchema {
      * 운영 기동 순서와 같다(jar의 application-modules.json). 서비스 테스트의 {@code MigratedSchema.MODULES_IN_RUNTIME_ORDER}와 같은 목록이다.
      */
     private static final List<String> MODULES_IN_RUNTIME_ORDER =
-            List.of("shared", "member", "payment", "venue", "like", "security", "show", "booking");
+            List.of("payment", "shared", "member", "venue", "like", "security", "show", "booking");
 
     private AppSchema() {}
 
