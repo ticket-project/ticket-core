@@ -7,7 +7,7 @@ admission token을 검증해 예매 API 진입을 제어한다.
 
 ## 로컬 실행
 
-전제: JDK 25, Docker Compose, Gradle wrapper. DB는 로컬·dev·운영 모두 PostgreSQL이다.
+전제: JDK 25, Docker Compose, Gradle wrapper. DB는 로컬·운영 모두 PostgreSQL이다.
 
 ```powershell
 docker compose -f compose.local.yml up -d postgres

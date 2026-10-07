@@ -37,7 +37,7 @@
 
 - Java 25 toolchain의 단일 Gradle Spring Boot 프로젝트다. Gradle subproject는 없고 경계는 Spring Modulith Application Module로 관리한다([build.gradle](build.gradle), [settings.gradle](settings.gradle)).
 - 빌드는 Gradle wrapper를 쓴다. wrapper 버전은 [wrapper 설정](gradle/wrapper/gradle-wrapper.properties), Spring Boot·Modulith와 도구 버전은 [version catalog](gradle/libs.versions.toml)가 원본이다.
-- RDB는 local/dev의 Docker PostgreSQL과 prod의 AWS RDS PostgreSQL이며 Redis를 함께 쓴다. Flyway가 스키마를 만들고 Hibernate는 `validate`한다. H2/Oracle은 과거 migration과 일부 테스트 검증용이다. 프로파일별 실제 값은 `src/main/resources/application*.yml`을 확인한다.
+- RDB는 local의 Docker PostgreSQL과 prod의 AWS RDS PostgreSQL이며 Redis를 함께 쓴다. Flyway가 스키마를 만들고 Hibernate는 `validate`한다. H2/Oracle은 과거 migration과 일부 테스트 검증용이다. 프로파일별 실제 값은 `src/main/resources/application*.yml`을 확인한다.
 - 서비스 테스트는 `src/test`의 JUnit Platform 기반 단위·Spring/Modulith·ArchUnit·Testcontainers 테스트다. 별도 `integrationTest` source set은 없고, `seed/src/test`는 [별도 seedTest](gradle/seed.gradle)이며 `test`에 포함되지 않는다.
 - 포맷은 Spotless와 Palantir Java Format, production null 계약 검사는 Error Prone + NullAway다. 검사 대상·옵션은 [build.gradle](build.gradle)이 원본이다.
 
