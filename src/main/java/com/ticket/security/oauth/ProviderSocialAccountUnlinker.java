@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 /** 연결 해제 실패는 탈퇴를 막지 않는다. 호출자가 결과를 쓰지 않으므로 실패는 여기서 한 번 로그로 남기고 끝낸다. */
 @Slf4j
 @Component
-public class ProviderSocialAccountUnlinker {
+public class ProviderSocialAccountUnlinker implements SocialAccountUnlinker {
     private static final String KAKAO_ADMIN_AUTH_PREFIX = "KakaoAK ";
     private static final String KAKAO_TARGET_ID_TYPE = "user_id";
     private final KakaoUnlinkApiClient kakaoUnlinkApiClient;
@@ -27,6 +27,7 @@ public class ProviderSocialAccountUnlinker {
         this.adminKey = adminKey;
     }
 
+    @Override
     public void unlink(final SocialAccountSnapshot connection) {
         if (connection.provider() == SocialProvider.KAKAO) {
             unlinkKakao(connection.providerId());
