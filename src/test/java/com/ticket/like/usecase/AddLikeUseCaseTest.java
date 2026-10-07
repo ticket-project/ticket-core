@@ -21,7 +21,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
-import com.ticket.like.exception.LikeAlreadyExistsException;
+import com.ticket.like.exception.LikeErrorCode;
+import com.ticket.like.exception.LikeException;
 import com.ticket.shared.exception.InvalidRequestException;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -68,7 +69,9 @@ class AddLikeUseCaseTest {
         when(likeRepository.like(1L, 2L)).thenThrow(new DataIntegrityViolationException("UK_LIKES_MEMBER_TARGET"));
 
         assertThatThrownBy(() -> useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
-                .isInstanceOf(LikeAlreadyExistsException.class);
+                .isInstanceOf(LikeException.class)
+                .hasFieldOrPropertyWithValue("errorCode", LikeErrorCode.E7001)
+                .hasFieldOrPropertyWithValue("data", "이미 찜한 대상입니다. memberId=1, likeType=SHOW, targetId=2");
     }
 
     @Test

@@ -7,7 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ticket.like.domain.LikeRepository;
 import com.ticket.like.domain.LikeType;
-import com.ticket.like.exception.LikeAlreadyExistsException;
+import com.ticket.like.exception.LikeErrorCode;
+import com.ticket.like.exception.LikeException;
 import com.ticket.shared.api.InputChecks;
 
 import lombok.RequiredArgsConstructor;
@@ -16,8 +17,8 @@ import lombok.RequiredArgsConstructor;
  * 대상 존재 확인은 이 use case의 책임이 아니다 — like는 다른 BC의 entity 존재 여부를 자기 invariant로 잡지 않는다(memberId·likeType·targetId 조합의 유일성만
  * 보장한다). 존재하지 않는 targetId를 찜해도 조용히 저장된다. 요청 회원의 활성 상태는 공통 인증에서 확인한다.
  *
- * <p>이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시 요청이 먼저 저장을 끝냈다면(unique 제약 위반)
- * {@link LikeAlreadyExistsException}(409, E7001)을 던진다.
+ * <p>이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시 요청이 먼저 저장을 끝냈다면(unique 제약 위반) {@link LikeException}(409,
+ * E7001)을 던진다. {@code error.data}에 memberId·likeType·targetId를 싣는 것은 기존 응답 계약이다.
  */
 @Service
 @Transactional
@@ -50,7 +51,10 @@ public class AddLikeUseCase {
                 // 제약 이름으로 좁히려면 벤더마다 다르게 장식된 문자열을 파싱해야 해서 오히려 약해진다
                 // (H2 "...UK_LIKES_MEMBER_TARGET_INDEX_n", Oracle "SCHEMA.UK_...").
                 // 이 전제는 LikeRepositoryPagingTest가 실제 DB로 고정한다.
-                throw new LikeAlreadyExistsException(memberId, targetId);
+                throw new LikeException(
+                        LikeErrorCode.E7001,
+                        LikeErrorCode.E7001.getMessage() + " memberId=" + memberId + ", likeType=" + LikeType.SHOW
+                                + ", targetId=" + targetId);
             }
         }
 
