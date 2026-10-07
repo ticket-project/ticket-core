@@ -168,4 +168,5 @@ Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡�
 ### 오류 처리
 
 모듈별 `*ErrorCode`와 예외가 업무 오류를 표현하고 예외는 HTTP 상태를 모른다 — HTTP 상태는 모듈의
-handler가 정한다. 어느 모듈의 것도 아닌 오류와 base 타입은 `shared.exception`이 소유한다.
+handler가 오류 코드 enum의 exhaustive switch로 정한다. 모듈마다 업무 예외는 `<Module>Exception(<Module>ErrorCode[, data])`
+하나이고 공개 문구는 오류 코드 enum이 갖는다([ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)). 어느 모듈의 것도 아닌 오류와 base 타입은 `shared.exception`이 소유한다.

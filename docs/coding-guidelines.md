@@ -47,8 +47,10 @@
   여부를 돌려주는 메서드는 조건을 이름에 붙이고(`releaseIfOwned`) `is`/`has`/`can`을 붙이지 않는다. 프레임워크
   재정의(`supportsParameter`, `equals`)와 JSON·설정에 묶인 이름(`liked`, `enforcementEnabled`)은 예외다.
   생성은 `create`, 변환은 `from`/`to...`, 단순 조립은 `of`가 기본이다. [검사 없음]
-- 예외 이름은 `[Subject][Condition]Exception`으로 읽히게 한다. `@ConfigurationProperties` 바인딩은
-  `Properties`, 검증을 끝낸 설정 값은 `Settings`다. [검사 없음]
+- 업무 오류는 하위 예외 클래스를 만들지 않고 모듈 예외에 오류 코드를 넘긴다
+  (`new BookingException(BookingErrorCode.E4001)`). 공통 `NotFoundException`의 하위 타입처럼 따로 두는 예외
+  이름은 `[Subject][Condition]Exception`으로 읽히게 한다. `@ConfigurationProperties` 바인딩은 `Properties`,
+  검증을 끝낸 설정 값은 `Settings`다. [검사 없음]
 - 도메인 생명주기는 `State`, 외부 표시 상태는 `Status`를 쓴다. 둘 다 아닌 값 묶음은 그 역할을 이름으로 쓴다
   (`SocialIdentity`). [검사 없음]
 - 이름 변경만으로 JSON·DB·오류 계약을 바꾸지 않는다. 오류 코드(`E`-code)는 외부 계약이라 공개 code·status·
