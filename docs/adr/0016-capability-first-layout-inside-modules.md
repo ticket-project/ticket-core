@@ -33,7 +33,7 @@ ADR 0013은 업무 모듈을 `<module>.<layer>`로 폈다. 모듈이 작을 때�
    `member.usecase.GetCurrentMemberUseCase`, `show.persistence.querydsl.QuerydslShowListQueryAdapter`.
 
 2. **`booking`만 모듈 바로 아래를 capability로 둔다.** `order`·`hold`·`selection`·`seat`·
-   `salespolicy`·`ticket`·`admission`이다. 역할 폴더는 그 아래에, **실제 파일이 있을 때만** 만든다.
+   `salespolicy`·`admission`이다. 역할 폴더는 그 아래에, **실제 파일이 있을 때만** 만든다.
 
 3. **폴더 깊이는 코드 규모와 책임 복잡도에 비례한다.** `booking.admission`은 파일 일곱이 서로만
    부르므로 평평하고, `booking.order`는 크므로 역할로 나눈다. 일반적인 최대는 모듈 → capability →
@@ -75,9 +75,7 @@ architecture rule을 고정 경로가 아니라 **역할 이름 패턴**으로 �
 규칙 목록을 고칠 일이 없다는 점에서 이전보다 덜 깨진다.
 
 **규칙의 보호 범위는 줄지 않았다.** cross-module 규칙은 "계층 목록 밖은 허용"에서 "공개 named
-interface 밖은 금지"로 뒤집어 오히려 넓어졌다. `booking.ticket`은 파일이 다섯뿐이라 평평하게 둘
-수도 있었지만, `domain`/`persistence`로 나눠야 `DomainIsolationTest`의 `..domain..` 패턴과 계층
-방향 규칙이 계속 걸리므로 나눈 쪽을 골랐다.
+interface 밖은 금지"로 뒤집어 오히려 넓어졌다. (2026-10 갱신: 호출자가 없던 `booking.ticket`은 삭제됐다. ADR 0005의 2026-10-07 갱신을 본다.)
 
 **남은 것.** `booking` 바로 아래에는 여러 capability가 함께 쓰는 것만 남았다 — `domain`(요청 좌석
 값), `exception`(module error code와 handler), `event`, `concurrency`, `redis`, `websocket`이다.
