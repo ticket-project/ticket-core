@@ -25,8 +25,6 @@ import com.ticket.show.domain.show.ShowGenre;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
-import com.ticket.venue.persistence.SeatRepositoryAdapter;
-import com.ticket.venue.persistence.VenueRepositoryAdapter;
 import com.ticket.venue.usecase.SeatLookupService;
 import com.ticket.venue.usecase.VenueLookupService;
 
@@ -34,12 +32,12 @@ import com.ticket.venue.usecase.VenueLookupService;
  * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다. 테스트마다 트랜잭션을 롤백한다.
  *
  * <p>venue 공개 계약({@code VenueLookupApi}/{@code VenueSeatLookupApi})의 구현을 빈으로 올린다 — 이 베이스를 쓰는 테스트가 그 계약을 주입받으면 없을 때 컨텍스트
- * 기동부터 실패한다. 두 계약은 {@link VenueRepositoryAdapter} 하나가 함께 구현한다.
+ * 기동부터 실패한다. 두 계약을 구현하는 use case service가 쓰는 {@code VenueRepository}·{@code SeatRepository}는 Spring Data 스캔이 올린다.
  *
  * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQuerydslRepository}가 private 메서드로 갖는다.
  */
 @Transactional
-@Import({VenueRepositoryAdapter.class, SeatRepositoryAdapter.class, VenueLookupService.class, SeatLookupService.class})
+@Import({VenueLookupService.class, SeatLookupService.class})
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class ReadRepositoryTestSupport extends JpaSliceTestSupport {
     @Autowired
