@@ -894,21 +894,21 @@ class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
 
     private CursorPage<Show, ShowCursor> findAllBySearch(
             final ShowListParam param, final int size, final ShowSort sort) {
-        return showQuerydslRepository.findAllBySearch(param, venueIdsOf(param.getRegion()), size, sort);
+        return showQuerydslRepository.findAllBySearch(param, venueIdsOf(param.region()), size, sort);
     }
 
     private CursorPage<Show, ShowCursor> searchShows(
             final ShowSearchCriteria criteria, final int size, final ShowSort sort) {
-        return showQuerydslRepository.searchShows(criteria, venueIdsOf(criteria.getRegion()), size, sort);
+        return showQuerydslRepository.searchShows(criteria, venueIdsOf(criteria.region()), size, sort);
     }
 
     private long countSearchShows(final ShowSearchCriteria criteria) {
-        return showQuerydslRepository.countSearchShows(criteria, venueIdsOf(criteria.getRegion()));
+        return showQuerydslRepository.countSearchShows(criteria, venueIdsOf(criteria.region()));
     }
 
     private CursorPage<Show, ShowCursor> findSaleOpeningSoonPage(
             final SaleOpeningSoonSearchParam param, final int size, final ShowSort sort) {
-        return showQuerydslRepository.findSaleOpeningSoonPage(param, venueIdsOf(param.getRegion()), size, sort);
+        return showQuerydslRepository.findSaleOpeningSoonPage(param, venueIdsOf(param.region()), size, sort);
     }
 
     /** {@code null}(지역 조건 없음)과 빈 집합(그 지역에 공연장 없음)을 구분해 넘긴다 — use case와 같은 규칙이다. */

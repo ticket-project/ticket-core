@@ -64,7 +64,7 @@ public class GetSaleOpeningSoonShowsPageUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<Show, ShowCursor> page = showQuerydslRepository.findSaleOpeningSoonPage(
-                input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
+                input.param(), venueIdsOf(input.param().region()), input.size(), input.sort());
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(
                 Set.copyOf(page.items().stream().map(Show::getVenueId).toList()));
         final CursorPage<ShowResponse, ShowCursor> view = page.map(show -> toResponse(show, venuesById));

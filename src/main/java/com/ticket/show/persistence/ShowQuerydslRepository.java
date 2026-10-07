@@ -66,10 +66,10 @@ public class ShowQuerydslRepository {
 
     public CursorPage<Show, ShowCursor> findAllBySearch(
             final ShowListParam param, final @Nullable Set<Long> venueIds, final int size, final ShowSort sort) {
-        final SortOrder sortOrder = resolveSortOrder(sort, param.getCursor());
+        final SortOrder sortOrder = resolveSortOrder(sort, param.cursor());
         final BooleanBuilder where = mainListCondition(param, venueIds, sortOrder);
 
-        return findCursorPage(size, param.getCursor(), where, sortOrder);
+        return findCursorPage(size, param.cursor(), where, sortOrder);
     }
 
     /**
@@ -129,10 +129,10 @@ public class ShowQuerydslRepository {
             final @Nullable Set<Long> venueIds,
             final int size,
             final ShowSort sort) {
-        final SortOrder sortOrder = resolveSortOrder(sort, param.getCursor());
+        final SortOrder sortOrder = resolveSortOrder(sort, param.cursor());
         final BooleanBuilder where = saleOpeningSoonCondition(param, venueIds);
 
-        return findCursorPage(size, param.getCursor(), where, sortOrder);
+        return findCursorPage(size, param.cursor(), where, sortOrder);
     }
 
     public CursorPage<Show, ShowCursor> searchShows(
@@ -140,10 +140,10 @@ public class ShowQuerydslRepository {
             final @Nullable Set<Long> venueIds,
             final int size,
             final ShowSort sort) {
-        final SortOrder sortOrder = resolveSortOrder(sort, criteria.getCursor());
+        final SortOrder sortOrder = resolveSortOrder(sort, criteria.cursor());
         final BooleanBuilder where = searchCondition(criteria, venueIds, sortOrder);
 
-        return findCursorPage(size, criteria.getCursor(), where, sortOrder);
+        return findCursorPage(size, criteria.cursor(), where, sortOrder);
     }
 
     public long countSearchShows(final ShowSearchCriteria criteria, final @Nullable Set<Long> venueIds) {
@@ -172,9 +172,9 @@ public class ShowQuerydslRepository {
     private BooleanBuilder mainListCondition(
             final ShowListParam param, final @Nullable Set<Long> venueIds, final SortOrder sortOrder) {
         final BooleanBuilder where = new BooleanBuilder();
-        where.and(categoryCodeEq(param.getCategory()));
+        where.and(categoryCodeEq(param.category()));
         where.and(venueIdIn(venueIds));
-        where.and(genreCodeEq(param.getGenre()));
+        where.and(genreCodeEq(param.genre()));
         appendShowStartApproachingCondition(where, sortOrder, LocalDate.now(clock));
         return where;
     }
@@ -192,17 +192,17 @@ public class ShowQuerydslRepository {
             final SaleOpeningSoonSearchParam param, final @Nullable Set<Long> venueIds) {
         final BooleanBuilder where = new BooleanBuilder();
         where.and(show.displaySaleWindow.startsAt.goe(LocalDateTime.now(clock)));
-        where.and(categoryCodeEq(param.getCategory()));
+        where.and(categoryCodeEq(param.category()));
         where.and(venueIdIn(venueIds));
-        where.and(titleContains(param.getTitle()));
+        where.and(titleContains(param.title()));
 
-        final LocalDateTime startsAtFrom = param.getDisplaySaleStartsAtFrom();
+        final LocalDateTime startsAtFrom = param.displaySaleStartsAtFrom();
         where.and(startsAtFrom != null ? show.displaySaleWindow.startsAt.goe(startsAtFrom) : null);
-        final LocalDateTime startsAtTo = param.getDisplaySaleStartsAtTo();
+        final LocalDateTime startsAtTo = param.displaySaleStartsAtTo();
         where.and(startsAtTo != null ? show.displaySaleWindow.startsAt.loe(startsAtTo) : null);
-        final LocalDateTime endsAtFrom = param.getDisplaySaleEndsAtFrom();
+        final LocalDateTime endsAtFrom = param.displaySaleEndsAtFrom();
         where.and(endsAtFrom != null ? show.displaySaleWindow.endsAt.goe(endsAtFrom) : null);
-        final LocalDateTime endsAtTo = param.getDisplaySaleEndsAtTo();
+        final LocalDateTime endsAtTo = param.displaySaleEndsAtTo();
         where.and(endsAtTo != null ? show.displaySaleWindow.endsAt.loe(endsAtTo) : null);
         return where;
     }
@@ -219,16 +219,16 @@ public class ShowQuerydslRepository {
             final @Nullable SortOrder sortOrder) {
         final BooleanBuilder where = new BooleanBuilder();
         final LocalDateTime now = LocalDateTime.now(clock);
-        where.and(titleContains(criteria.getKeyword()));
-        where.and(categoryCodeEq(criteria.getCategory()));
+        where.and(titleContains(criteria.keyword()));
+        where.and(categoryCodeEq(criteria.category()));
         where.and(venueIdIn(venueIds));
 
-        final LocalDate startDateFrom = criteria.getStartDateFrom();
+        final LocalDate startDateFrom = criteria.startDateFrom();
         where.and(startDateFrom != null ? show.startDate.goe(startDateFrom) : null);
-        final LocalDate startDateTo = criteria.getStartDateTo();
+        final LocalDate startDateTo = criteria.startDateTo();
         where.and(startDateTo != null ? show.startDate.loe(startDateTo) : null);
 
-        where.and(saleDisplayStatusCondition(criteria.getSaleDisplayStatus(), now));
+        where.and(saleDisplayStatusCondition(criteria.saleDisplayStatus(), now));
         appendShowStartApproachingCondition(where, sortOrder, now.toLocalDate());
         return where;
     }

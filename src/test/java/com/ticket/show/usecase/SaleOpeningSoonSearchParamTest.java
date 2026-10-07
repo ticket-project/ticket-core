@@ -32,12 +32,8 @@ class SaleOpeningSoonSearchParamTest {
 
     @Test
     void 지역_문자열은_목록_조회와_같은_규칙으로_변환한다() {
-        assertThat(param(null, null, null, null).getRegion()).isNull();
-        assertThat(SaleOpeningSoonSearchParam.of(null, null, " SEOUL ", null, null, null, null, null)
-                        .getRegion())
-                .isEqualTo("SEOUL");
-        assertThat(new SaleOpeningSoonSearchParam(null, null, " SEOUL ", null, null, null, null, null).getRegion())
-                .as("생성자로 만들어도 of()와 같아야 한다")
+        assertThat(param(null, null, null, null).region()).isNull();
+        assertThat(new SaleOpeningSoonSearchParam(null, null, " SEOUL ", null, null, null, null, null).region())
                 .isEqualTo("SEOUL");
     }
 
@@ -46,7 +42,7 @@ class SaleOpeningSoonSearchParamTest {
             final LocalDateTime saleStartTo,
             final LocalDateTime saleEndFrom,
             final LocalDateTime saleEndTo) {
-        return SaleOpeningSoonSearchParam.of(
+        return new SaleOpeningSoonSearchParam(
                 "CONCERT", null, null, saleStartFrom, saleStartTo, saleEndFrom, saleEndTo, null);
     }
 }

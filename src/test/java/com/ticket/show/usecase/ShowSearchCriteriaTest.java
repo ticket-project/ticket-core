@@ -21,9 +21,9 @@ class ShowSearchCriteriaTest {
     /** 지역 정규화는 {@link ShowListParam}과 같은 규칙이고, 생성 경로에 따라 달라지지 않는다. */
     @Test
     void 생성자도_of와_같게_지역을_정규화한다() {
-        assertThat(new ShowSearchCriteria(null, null, null, null, null, " SEOUL ", null).getRegion())
+        assertThat(new ShowSearchCriteria(null, null, null, null, null, " SEOUL ", null).region())
                 .isEqualTo("SEOUL");
-        assertThat(new ShowSearchCriteria(null, null, null, null, null, "   ", null).getRegion())
+        assertThat(new ShowSearchCriteria(null, null, null, null, null, "   ", null).region())
                 .isNull();
     }
 }

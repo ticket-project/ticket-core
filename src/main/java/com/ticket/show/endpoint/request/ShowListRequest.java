@@ -28,6 +28,6 @@ public class ShowListRequest {
     private @Nullable String cursor;
 
     public ShowListParam toParam(final ShowCursorCodec cursorCodec) {
-        return ShowListParam.of(category, genre, region, cursorCodec.decode(cursor));
+        return new ShowListParam(category, genre, region, cursorCodec.decode(cursor));
     }
 }
