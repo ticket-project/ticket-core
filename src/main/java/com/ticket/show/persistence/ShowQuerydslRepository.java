@@ -30,6 +30,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -77,16 +78,8 @@ public class ShowQuerydslRepository {
      * "최신"의 의미가 둘이 된다.
      */
     public List<Show> findLatestShows(final String categoryCode, final int limit) {
-        final SortOrder sortOrder = resolveSortOrder(ShowSort.LATEST);
-        final List<Long> showIds = queryFactory
-                .select(show.id)
-                .from(show)
-                .leftJoin(showGenre)
-                .on(showGenre.showId.eq(show.id))
-                .leftJoin(genre)
-                .on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category)
-                .on(genre.categoryId.eq(category.id))
+        final SortOrder sortOrder = resolveSortOrder(ShowSort.LATEST, null);
+        final List<Long> showIds = fromShowJoiningCategory(queryFactory.select(show.id))
                 .where(categoryCodeEq(categoryCode))
                 // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다. ORDER BY의 마감 여부
                 // CASE가 보는 판매 창 두 컬럼까지 GROUP BY에 넣는다 -- Oracle은 GROUP BY에 없는
@@ -102,17 +95,10 @@ public class ShowQuerydslRepository {
     }
 
     public List<Show> findSaleOpeningSoonSummaries(final String categoryCode, final int limit) {
-        final List<Long> showIds = queryFactory
-                // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(H2).
-                .select(show.id, show.displaySaleWindow.startsAt)
-                .distinct()
-                .from(show)
-                .leftJoin(showGenre)
-                .on(showGenre.showId.eq(show.id))
-                .leftJoin(genre)
-                .on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category)
-                .on(genre.categoryId.eq(category.id))
+        // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(H2).
+        final List<Long> showIds = fromShowJoiningCategory(queryFactory
+                        .select(show.id, show.displaySaleWindow.startsAt)
+                        .distinct())
                 .where(saleOpeningSoonSummaryCondition(categoryCode))
                 .orderBy(show.displaySaleWindow.startsAt.asc())
                 .limit(limit)
@@ -148,15 +134,7 @@ public class ShowQuerydslRepository {
 
     public long countSearchShows(final ShowSearchCriteria criteria, final @Nullable Set<Long> venueIds) {
         final BooleanBuilder where = searchCondition(criteria, venueIds, null);
-        final Long count = queryFactory
-                .select(show.id.countDistinct())
-                .from(show)
-                .leftJoin(showGenre)
-                .on(showGenre.showId.eq(show.id))
-                .leftJoin(genre)
-                .on(showGenre.genreId.eq(genre.id))
-                .leftJoin(category)
-                .on(genre.categoryId.eq(category.id))
+        final Long count = fromShowJoiningCategory(queryFactory.select(show.id.countDistinct()))
                 .where(where)
                 .fetchOne();
         return count != null ? count : 0L;
@@ -331,10 +309,6 @@ public class ShowQuerydslRepository {
                     case SHOW_START_APPROACHING, SALE_START_APPROACHING -> Sort.Direction.ASC;
                 };
         return new SortOrder(sort, direction, resolveSaleClosedEvaluatedAt(sort, cursor));
-    }
-
-    private SortOrder resolveSortOrder(final ShowSort sort) {
-        return resolveSortOrder(sort, null);
     }
 
     /** ORDER BY에 그대로 넘길 정렬 키 전체다. 페이지 조회와 결과 재조회가 같은 배열을 쓴다. */
@@ -530,17 +504,20 @@ public class ShowQuerydslRepository {
         return new CursorPage<>(List.copyOf(pageResults), hasNext, nextPosition);
     }
 
-    private List<Tuple> fetchShowPageRows(
-            final BooleanBuilder where, final OrderSpecifier<?>[] orderSpecifiers, final int size) {
-        return queryFactory
-                .select(pageRowColumns())
-                .from(show)
+    /** 공연 → 장르 연결 → 장르 → 카테고리 left join이다. 카테고리 조건과 결과 행 중복 제거(DISTINCT·GROUP BY)는 각 조회가 정한다. */
+    private <T> JPAQuery<T> fromShowJoiningCategory(final JPAQuery<T> query) {
+        return query.from(show)
                 .leftJoin(showGenre)
                 .on(showGenre.showId.eq(show.id))
                 .leftJoin(genre)
                 .on(showGenre.genreId.eq(genre.id))
                 .leftJoin(category)
-                .on(genre.categoryId.eq(category.id))
+                .on(genre.categoryId.eq(category.id));
+    }
+
+    private List<Tuple> fetchShowPageRows(
+            final BooleanBuilder where, final OrderSpecifier<?>[] orderSpecifiers, final int size) {
+        return fromShowJoiningCategory(queryFactory.select(pageRowColumns()))
                 .where(where)
                 // DISTINCT가 아니라 GROUP BY로 장르 조인의 행 중복을 없앤다. SELECT DISTINCT는
                 // ORDER BY에 쓴 식이 select 목록에 "그대로" 있어야 하는데(H2 / Oracle ORA-01791),
