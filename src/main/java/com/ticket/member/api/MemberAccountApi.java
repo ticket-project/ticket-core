@@ -10,7 +10,7 @@ import java.util.List;
  * <p>entity·저장소·프레임워크 타입은 노출하지 않는다. 여기 오가는 값은 {@link SocialIdentity}, {@link AuthenticatedMember},
  * {@link SocialAccountSnapshot}처럼 member가 소유한 공개 값뿐이다.
  *
- * <p>이미 다른 소셜 계정에 연결된 이메일은 {@code DuplicateEmailException}, 없는 회원은 {@code NotFoundException}(404, E404)이다.
+ * <p>이미 다른 소셜 계정에 연결된 이메일은 {@code MemberException}(409, E2000), 없는 회원은 {@code NotFoundException}(404, E404)이다.
  */
 public interface MemberAccountApi {
     /** 지금도 활성 회원인지 확인하고 그 신원을 반환한다. 토큰만 유효하고 계정이 사라진 경우를 걸러내기 위해 토큰 갱신·코드 교환 흐름이 부른다. 존재하지 않거나 탈퇴한 회원이면 던진다. */

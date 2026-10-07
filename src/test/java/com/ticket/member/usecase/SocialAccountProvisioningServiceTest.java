@@ -22,7 +22,8 @@ import com.ticket.member.domain.Email;
 import com.ticket.member.domain.Member;
 import com.ticket.member.domain.MemberRepository;
 import com.ticket.member.domain.Role;
-import com.ticket.member.exception.DuplicateEmailException;
+import com.ticket.member.exception.MemberErrorCode;
+import com.ticket.member.exception.MemberException;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -104,7 +105,8 @@ class SocialAccountProvisioningServiceTest {
         // when
         // then
         assertThatThrownBy(() -> socialAccountProvisioningService.getOrCreateMember(userInfo))
-                .isInstanceOf(DuplicateEmailException.class);
+                .isInstanceOf(MemberException.class)
+                .hasFieldOrPropertyWithValue("errorCode", MemberErrorCode.E2000);
     }
 
     @Test
