@@ -146,7 +146,7 @@ class GetShowDetailUseCaseTest {
     @Test
     void 출연자_ID로_조회한_정보를_응답에_담는다() {
         stubShowWithPerformer(7L);
-        Performer performer = Performer.create("아이유", "/performers/7.png");
+        Performer performer = new Performer("아이유", "/performers/7.png");
         ReflectionTestUtils.setField(performer, "id", 7L);
         when(performerRepository.findById(7L)).thenReturn(Optional.of(performer));
 

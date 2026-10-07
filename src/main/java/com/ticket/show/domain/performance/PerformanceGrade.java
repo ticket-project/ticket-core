@@ -52,17 +52,12 @@ public class PerformanceGrade extends AuditedEntity {
     @Column(nullable = false)
     private Integer sortOrder;
 
-    private PerformanceGrade(
+    public PerformanceGrade(
             final Performance performance, final Long gradeId, final BigDecimal price, final Integer sortOrder) {
         this.performance = performance;
         this.gradeId = gradeId;
         this.price = validatePrice(price);
         this.sortOrder = sortOrder;
-    }
-
-    public static PerformanceGrade assign(
-            final Performance performance, final Long gradeId, final BigDecimal price, final Integer sortOrder) {
-        return new PerformanceGrade(performance, gradeId, price, sortOrder);
     }
 
     private BigDecimal validatePrice(final BigDecimal price) {

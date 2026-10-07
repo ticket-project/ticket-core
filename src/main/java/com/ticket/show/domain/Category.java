@@ -28,12 +28,8 @@ public class Category extends AuditedEntity {
     @Column(nullable = false)
     private String name;
 
-    private Category(final String code, final String name) {
+    public Category(final String code, final String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public static Category of(final String code, final String name) {
-        return new Category(code, name);
     }
 }

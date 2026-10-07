@@ -86,7 +86,7 @@ class VenueModuleSlicingSchemaTest {
     }
 
     private Venue venue(final String name) {
-        return Venue.create(
+        return new Venue(
                 name,
                 name + " 주소",
                 Region.SEOUL,

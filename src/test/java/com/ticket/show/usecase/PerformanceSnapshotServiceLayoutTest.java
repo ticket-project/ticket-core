@@ -89,7 +89,7 @@ class PerformanceSnapshotServiceLayoutTest {
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 129.0, 101.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
-        when(gradeRepository.findGradeNames(Set.of(7L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+        when(gradeRepository.findGradeNames(Set.of(7L))).thenReturn(Map.of(7L, new Grade("VIP", "VIP석")));
 
         final PerformanceLayoutSnapshot layout = service.getVenueLayout(1L);
 
@@ -117,7 +117,7 @@ class PerformanceSnapshotServiceLayoutTest {
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
         when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));
-        when(gradeRepository.findGradeNames(Set.of(7L, 8L))).thenReturn(Map.of(7L, Grade.of("VIP", "VIP석")));
+        when(gradeRepository.findGradeNames(Set.of(7L, 8L))).thenReturn(Map.of(7L, new Grade("VIP", "VIP석")));
 
         assertThatThrownBy(() -> service.getVenueLayout(1L))
                 .isInstanceOf(NullPointerException.class)

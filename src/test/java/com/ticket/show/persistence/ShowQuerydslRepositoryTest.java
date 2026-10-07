@@ -943,7 +943,7 @@ class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
 
     /** 한 공연에 장르를 여러 개 붙인다. 목록 query가 장르 join으로 늘어난 행을 접는지 확인하기 위한 fixture다. */
     private void attachGenres(final Show show, final String... genreNames) {
-        final Category category = Category.of("CAT-" + show.getId(), "카테고리");
+        final Category category = new Category("CAT-" + show.getId(), "카테고리");
         entityManager.persist(category);
         for (final String genreName : genreNames) {
             final Genre genre = new Genre("G-" + show.getId() + "-" + genreName, genreName, category.getId());

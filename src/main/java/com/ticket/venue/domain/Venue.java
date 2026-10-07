@@ -46,7 +46,7 @@ public class Venue extends AuditedEntity {
     private int viewBoxHeight;
     private double seatDiameter;
 
-    private Venue(
+    public Venue(
             final String name,
             final String address,
             final Region region,
@@ -67,20 +67,5 @@ public class Venue extends AuditedEntity {
         this.viewBoxWidth = viewBoxWidth;
         this.viewBoxHeight = viewBoxHeight;
         this.seatDiameter = seatDiameter;
-    }
-
-    public static Venue create(
-            final String name,
-            final String address,
-            final Region region,
-            final BigDecimal latitude,
-            final BigDecimal longitude,
-            final String phone,
-            final String imageUrl,
-            final int viewBoxWidth,
-            final int viewBoxHeight,
-            final double seatDiameter) {
-        return new Venue(
-                name, address, region, latitude, longitude, phone, imageUrl, viewBoxWidth, viewBoxHeight, seatDiameter);
     }
 }
