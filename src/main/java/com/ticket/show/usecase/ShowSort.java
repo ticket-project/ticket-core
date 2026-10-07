@@ -44,16 +44,12 @@ public enum ShowSort {
      * 이 정렬을 {@code supported} 안에서만 받는다. 각 목록 use case가 자기 조회에서 정렬 키가 null이 될 수 없는 정렬만 넘긴다 — null 키 행이 페이지 끝에 오면 다음 커서를
      * 만들지 못해 500이 된다({@code ShowQuerydslRepository#resolveLastValue}).
      *
-     * @throws UnsupportedShowSortException 이 조회가 받지 않는 정렬일 때. {@code error.data}에는 {@link #apiValue()}가 실린다.
+     * @throws UnsupportedShowSortException 이 조회가 받지 않는 정렬일 때. {@code error.data}에는 이 정렬의 API 값이 실린다.
      */
     public ShowSort requireOneOf(final Set<ShowSort> supported) {
         if (!supported.contains(this)) {
             throw new UnsupportedShowSortException(apiValue);
         }
         return this;
-    }
-
-    public String apiValue() {
-        return apiValue;
     }
 }
