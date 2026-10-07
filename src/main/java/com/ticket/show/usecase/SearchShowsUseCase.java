@@ -5,7 +5,6 @@ import static com.ticket.shared.api.InputChecks.requireProvided;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -74,13 +73,10 @@ public class SearchShowsUseCase {
                 show.getId(),
                 show.getTitle(),
                 ShowCardImagePathConverter.toCardImage(show.getImage()),
-                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
+                venue == null ? null : venue.name(),
                 show.getStartDate(),
                 show.getEndDate(),
-                Optional.ofNullable(venue)
-                        .map(VenueSnapshot::region)
-                        .map(VenueSnapshot.RegionView::code)
-                        .orElse(null),
+                venue == null ? null : venue.regionCode(),
                 show.getViewCount());
     }
 }
