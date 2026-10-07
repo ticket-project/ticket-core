@@ -25,7 +25,6 @@ public class GetLatestShowsUseCase {
     public static final int LATEST_SHOWS_MAX_COUNT = 10;
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(String category) {}
 
@@ -53,7 +52,7 @@ public class GetLatestShowsUseCase {
         return new ShowResponse(
                 show.getId(),
                 show.getTitle(),
-                showCardImagePathConverter.toCardImage(show.getImage()),
+                ShowCardImagePathConverter.toCardImage(show.getImage()),
                 show.getStartDate(),
                 show.getEndDate(),
                 Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),

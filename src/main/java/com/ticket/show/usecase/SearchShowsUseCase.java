@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 public class SearchShowsUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(ShowSearchCriteria criteria, int size, ShowSort sort) {
         public Input {
@@ -74,7 +73,7 @@ public class SearchShowsUseCase {
         return new ShowResponse(
                 show.getId(),
                 show.getTitle(),
-                showCardImagePathConverter.toCardImage(show.getImage()),
+                ShowCardImagePathConverter.toCardImage(show.getImage()),
                 Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
                 show.getStartDate(),
                 show.getEndDate(),

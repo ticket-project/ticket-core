@@ -73,7 +73,6 @@ class GetShowDetailUseCaseTest {
                 performanceRepository,
                 likeQueryApi,
                 venueLookupApi,
-                new ShowCardImagePathConverter(),
                 FIXED_CLOCK);
     }
 

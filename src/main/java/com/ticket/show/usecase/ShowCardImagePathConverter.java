@@ -1,14 +1,15 @@
 package com.ticket.show.usecase;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Component;
 
-@Component
-public class ShowCardImagePathConverter {
+/** 공연 원본 이미지 경로를 목록 카드용 이미지 경로로 바꾼다. 상태가 없는 순수 함수다. */
+final class ShowCardImagePathConverter {
     private static final String SHOW_IMAGE_PREFIX = "/api/images/shows/";
     private static final String CARD_IMAGE_PREFIX = "/api/images/shows/card/";
 
-    public @Nullable String toCardImage(final @Nullable String imagePath) {
+    private ShowCardImagePathConverter() {}
+
+    static @Nullable String toCardImage(final @Nullable String imagePath) {
         if (imagePath == null || !imagePath.startsWith(SHOW_IMAGE_PREFIX)) {
             return imagePath;
         }
