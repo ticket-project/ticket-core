@@ -1,6 +1,5 @@
 package com.ticket.booking.order.usecase;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -9,8 +8,7 @@ import java.util.Map;
  *
  * @param seatIds 물리 좌석 id. OrderSeat의 {@code id ASC} 정렬을 그대로 유지한다 — hold 생성 후처리가 이 순서를 그대로 쓴다
  */
-public record OrderHoldSnapshot(
-        Long performanceId, List<Long> seatIds, LocalDateTime expiresAt, Map<Long, Long> performanceSeatIdBySeatId) {
+public record OrderHoldSnapshot(Long performanceId, List<Long> seatIds, Map<Long, Long> performanceSeatIdBySeatId) {
     public OrderHoldSnapshot {
         seatIds = List.copyOf(seatIds);
         performanceSeatIdBySeatId = Map.copyOf(performanceSeatIdBySeatId);

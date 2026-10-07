@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
@@ -56,7 +57,7 @@ class HoldReleaserTest {
         when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
         when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
 
-        releaser.releaseAndPublish(task());
+        releaser.releaseAndPublish("old-hold", snapshot());
 
         final InOrder inOrder = inOrder(holdRegistry, seatStatusEventPublisher);
         inOrder.verify(holdRegistry).release(1L, "old-hold", List.of(10L, 20L));
@@ -70,7 +71,7 @@ class HoldReleaserTest {
         when(holdRegistry.isHeld(1L, 10L)).thenReturn(true);
         when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
 
-        releaser.releaseAndPublish(task());
+        releaser.releaseAndPublish("old-hold", snapshot());
 
         verifyNoInteractions(seatStatusEventPublisher);
     }
@@ -88,8 +89,9 @@ class HoldReleaserTest {
                 .when(seatStatusEventPublisher)
                 .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
 
-        assertThatThrownBy(() -> releaser.releaseAndPublish(task())).hasMessage("publish failed");
-        releaser.releaseAndPublish(task());
+        assertThatThrownBy(() -> releaser.releaseAndPublish("old-hold", snapshot()))
+                .hasMessage("publish failed");
+        releaser.releaseAndPublish("old-hold", snapshot());
 
         verify(holdRegistry, times(2)).release(1L, "old-hold", List.of(10L, 20L));
         verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
@@ -98,13 +100,13 @@ class HoldReleaserTest {
 
     @Test
     void holdsSeatLocksAcrossReleaseAndPublication() {
-        releaser.releaseAndPublish(task());
+        releaser.releaseAndPublish("old-hold", snapshot());
 
         assertThat(distributedLock.lastAcquisition().keys())
                 .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
     }
 
-    private HoldReleaseTask task() {
-        return new HoldReleaseTask(1L, "old-hold", List.of(10L, 20L), Map.of(10L, 910L, 20L, 920L));
+    private OrderHoldSnapshot snapshot() {
+        return new OrderHoldSnapshot(1L, List.of(10L, 20L), Map.of(10L, 910L, 20L, 920L));
     }
 }

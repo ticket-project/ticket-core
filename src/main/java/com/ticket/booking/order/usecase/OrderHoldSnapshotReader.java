@@ -31,7 +31,6 @@ public class OrderHoldSnapshotReader {
                 .map(order -> new OrderHoldSnapshot(
                         order.getPerformanceId(),
                         seatIdsOf(order),
-                        order.getExpiresAt(),
                         order.getOrderSeats().stream()
                                 .collect(Collectors.toMap(OrderSeat::getSeatId, OrderSeat::getPerformanceSeatId))));
     }

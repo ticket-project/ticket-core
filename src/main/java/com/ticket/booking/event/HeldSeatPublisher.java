@@ -1,14 +1,12 @@
 package com.ticket.booking.event;
 
-import java.util.Map;
-
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
+import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -36,30 +34,33 @@ public class HeldSeatPublisher {
     private final SeatSelectionService seatSelectionService;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
-    public void clearSelectionsAndPublishHeld(final Hold hold, final Map<Long, Long> performanceSeatIdBySeatId) {
+    public void clearSelectionsAndPublishHeld(
+            final String holdKey, final Long memberId, final OrderHoldSnapshot snapshot) {
         distributedLock.withLock(
-                LockKey.seats(hold.performanceId(), hold.seatIds()),
+                LockKey.seats(snapshot.performanceId(), snapshot.seatIds()),
                 LockOptions.defaults(),
-                () -> clearSelectionsAndPublishHeldLocked(hold, performanceSeatIdBySeatId));
+                () -> clearSelectionsAndPublishHeldLocked(holdKey, memberId, snapshot));
     }
 
-    private void clearSelectionsAndPublishHeldLocked(final Hold hold, final Map<Long, Long> performanceSeatIdBySeatId) {
-        if (!isCurrentHold(hold)) {
-            log.debug("주문 생성 후처리를 건너뜁니다. hold가 이미 종료되었습니다. holdKey={}", hold.holdKey());
+    private void clearSelectionsAndPublishHeldLocked(
+            final String holdKey, final Long memberId, final OrderHoldSnapshot snapshot) {
+        final Long performanceId = snapshot.performanceId();
+        if (!isCurrentHold(holdKey, snapshot)) {
+            log.debug("주문 생성 후처리를 건너뜁니다. hold가 이미 종료되었습니다. holdKey={}", holdKey);
             return;
         }
 
-        for (final Long seatId : hold.seatIds()) {
-            seatSelectionService.deselectIfOwned(hold.performanceId(), seatId, hold.memberId());
+        for (final Long seatId : snapshot.seatIds()) {
+            seatSelectionService.deselectIfOwned(performanceId, seatId, memberId);
         }
-        for (final Long seatId : hold.seatIds()) {
+        for (final Long seatId : snapshot.seatIds()) {
             seatStatusEventPublisher.publish(
-                    hold.performanceId(), performanceSeatIdBySeatId.get(seatId), seatId, SeatStatusAction.HELD);
+                    performanceId, snapshot.performanceSeatIdBySeatId().get(seatId), seatId, SeatStatusAction.HELD);
         }
     }
 
-    private boolean isCurrentHold(final Hold hold) {
-        return hold.seatIds().stream()
-                .allMatch(seatId -> holdStore.isHeldBy(hold.performanceId(), seatId, hold.holdKey()));
+    private boolean isCurrentHold(final String holdKey, final OrderHoldSnapshot snapshot) {
+        return snapshot.seatIds().stream()
+                .allMatch(seatId -> holdStore.isHeldBy(snapshot.performanceId(), seatId, holdKey));
     }
 }
