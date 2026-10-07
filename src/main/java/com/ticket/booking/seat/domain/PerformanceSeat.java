@@ -66,12 +66,4 @@ public class PerformanceSeat extends AuditedEntity {
         this.state = state;
         this.unitPrice = unitPrice;
     }
-
-    public void reserve() {
-        this.state = PerformanceSeatState.RESERVED;
-    }
-
-    public void release() {
-        this.state = PerformanceSeatState.AVAILABLE;
-    }
 }
