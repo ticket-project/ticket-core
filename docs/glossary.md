@@ -177,7 +177,7 @@ _Avoid_: 보정, 재제출
 (3) 다른 모듈에 entity 대신 내보내는 `*Snapshot` 값, (4) 트랜잭션 안에서 읽어 밖으로 들고 나가는 값(`OrderHoldSnapshot`).
 
 **entity-only 단계**:
-테이블·entity·Repository만 있고 그걸 쓰는 업무 흐름은 아직 없는 상태다. 지금 해당하는 모듈은 없다. `payment`와 Ticket은 entity 없이 테이블(`PAYMENTS`, `TICKETS`)만 남겼다.
+테이블·entity·Repository만 있고 그걸 쓰는 업무 흐름은 아직 없는 상태다. 지금 `payment`가 그렇다. Ticket은 테이블(`TICKETS`)만 있고 entity도 없다.
 
 ### 찜
 

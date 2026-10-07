@@ -70,7 +70,8 @@ import com.tngtech.archunit.lang.CompositeArchRule;
 class ArchitectureRulesTest {
 
     /** 업무 module이다. {@code security}·{@code shared}는 기술 module이라 따로 다룬다. */
-    private static final List<String> BUSINESS_MODULES = List.of("booking", "show", "venue", "like", "member");
+    private static final List<String> BUSINESS_MODULES =
+            List.of("booking", "show", "venue", "like", "member", "payment");
 
     private static final Path MAIN_SOURCE_ROOT = Path.of("src", "main", "java", "com", "ticket");
 
@@ -321,7 +322,7 @@ class ArchitectureRulesTest {
                         .map(other -> "com.ticket." + other + "..")
                         .toArray(String[]::new))
                 .because(module + "의 조회 구현은 자기 DB만 조회한다 — 다른 module의 정보 조합은 use case가 한다")
-                // member처럼 DB 조회 구현이 없는 module도 목록에 있다. 없는 것은 위반이 아니다.
+                // member·payment처럼 DB 조회 구현이 없는 module도 목록에 있다. 없는 것은 위반이 아니다.
                 .allowEmptyShould(true);
     }
 
