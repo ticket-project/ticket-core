@@ -5,7 +5,7 @@ Flyway 소스 경로와 migration을 쓰는 규칙의 단일 기준이다. 어�
 
 ## 디렉터리 의미
 
-- `migration-vendor/postgresql/{module}`: 현재 local/dev/prod의 스키마 원본이다. 새 PostgreSQL DB에서
+- `migration-vendor/postgresql/{module}`: 현재 local/prod의 스키마 원본이다. 새 PostgreSQL DB에서
   module별 V1이 현재 스키마를 만들고 이후 변경은 해당 module의 다음 버전으로 추가한다.
   `__root`는 Spring Modulith publication registry만 소유한다. 기존 공통 경로에는 Oracle 문법도 있으므로
   PostgreSQL 프로파일은 이 경로만 읽는다. Oracle/H2의 Flyway 이력은 새 DB에 복사하지 않는다.

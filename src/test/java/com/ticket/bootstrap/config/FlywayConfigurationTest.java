@@ -49,7 +49,7 @@ class FlywayConfigurationTest {
 
     /** 스키마 원본은 migration이다(ADR 0020). DB를 쓰는 profile은 모두 Flyway로 스키마를 만들고 Hibernate는 검증만 한다. */
     @ParameterizedTest
-    @ValueSource(strings = {"application-local.yml", "application-dev.yml", "application-prod.yml"})
+    @ValueSource(strings = {"application-local.yml", "application-prod.yml"})
     void db_profiles_build_schema_with_flyway_and_hibernate_only_validates(final String resourceName) throws Exception {
         final PropertySource<?> profile = loadYaml(resourceName);
 
@@ -62,17 +62,6 @@ class FlywayConfigurationTest {
         assertThat(profile.getProperty("spring.jpa.database-platform")).isNull();
         assertThat(profile.getProperty("spring.flyway.clean-disabled")).isNotEqualTo(false);
         assertNoIgnoredBaselineSettings(profile);
-    }
-
-    /** local/dev/prod는 같은 PostgreSQL 스키마를 사용한다. */
-    @Test
-    void local_and_dev_share_postgresql_defaults() throws Exception {
-        final PropertySource<?> local = loadYaml("application-local.yml");
-        final PropertySource<?> dev = loadYaml("application-dev.yml");
-
-        assertThat(String.valueOf(local.getProperty("spring.flyway.locations")).split(","))
-                .containsExactly("classpath:db/migration-vendor/postgresql");
-        assertThat(dev.getProperty("spring.datasource.url")).isEqualTo(local.getProperty("spring.datasource.url"));
     }
 
     /**
