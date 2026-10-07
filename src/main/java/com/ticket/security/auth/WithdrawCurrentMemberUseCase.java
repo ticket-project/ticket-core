@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.SocialAccountSnapshot;
-import com.ticket.security.oauth.ProviderSocialAccountUnlinker;
+import com.ticket.security.oauth.SocialAccountUnlinker;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WithdrawCurrentMemberUseCase {
     private final MemberAccountApi memberAccountApi;
-    private final ProviderSocialAccountUnlinker socialAccountUnlinker;
+    private final SocialAccountUnlinker socialAccountUnlinker;
 
     public record Input(Long memberId) {
         public Input {

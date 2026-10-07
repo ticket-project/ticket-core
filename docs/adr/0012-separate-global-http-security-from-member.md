@@ -4,9 +4,9 @@
 
 일부 대체 → 0013
 
-> 2026-10-07 갱신: 구현이 하나뿐인 `AccessTokenReader`·`SocialAccountUnlinker` interface를 지우고
-> 구현인 `JwtAccessTokenCodec`·`ProviderSocialAccountUnlinker`를 직접 주입한다. 만료·무효를 구분하는
-> HTTP 경로와 탈퇴 뒤 외부 unlink 원칙은 그대로다. 아래의 두 이름은 당시 기록이다.
+> 2026-10-07 갱신: 구현이 하나뿐인 `AccessTokenReader` interface를 지우고 구현인 `JwtAccessTokenCodec`을
+> 직접 주입한다. 만료·무효를 구분하는 HTTP 경로는 그대로다. 아래의 `AccessTokenReader`는 당시 기록이다.
+> `SocialAccountUnlinker` port는 그대로 둔다. 탈퇴 use case가 provider별 프로토콜을 모르게 하는 경계다(아래 "회원 탈퇴").
 
 > 2026-09-29 갱신: 회원 가입·로그인을 소셜(OAuth2) 전용으로 바꾸면서 이메일 가입·로그인과
 > `PasswordEncoder` 설정(`member.config`)을 지웠다. 아래의 비밀번호 해싱 설명은 당시 기록이다.
