@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 
 import com.ticket.show.domain.Grade;
 import com.ticket.show.domain.performance.Performance;
@@ -23,9 +22,8 @@ import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 
 /** 옛 {@code PerformanceQueryTest}와 {@code PerformanceGradeQueryTest}가 고정하던 동작이 그대로 들어 있다. */
-@Import(PerformanceRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceRepositoryAdapterTest extends ReadRepositoryTestSupport {
+class PerformanceRepositoryTest extends ReadRepositoryTestSupport {
     @Autowired
     private PerformanceRepository repository;
 

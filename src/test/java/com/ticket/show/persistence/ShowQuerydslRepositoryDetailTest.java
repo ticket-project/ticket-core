@@ -28,13 +28,7 @@ import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
 
 /** 공연 상세 응답을 만들 때 쓰는 조회 조각들을 고정한다 — Querydsl 조각과 계약 조각이 함께 한 응답을 이룬다. */
-@Import({
-    ShowQuerydslRepository.class,
-    ShowRepositoryAdapter.class,
-    GradeRepositoryAdapter.class,
-    PerformerRepositoryAdapter.class,
-    PerformanceRepositoryAdapter.class
-})
+@Import(ShowQuerydslRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {
     @Autowired
