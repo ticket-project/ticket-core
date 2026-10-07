@@ -41,7 +41,7 @@ import com.ticket.venue.domain.Venue;
  * {@code QuerydslShowCursorConditionBuilderTest} / {@code SaleDisplayStatusPredicatesTest}가 조건식의 <b>형태</b>로 고정하던 것이다. 그
  * helper들이 이 Repository 안으로 흡수되면서 같은 행동을 <b>조회 결과</b>로 검증한다 — 조건식 문자열이 아니라 실제로 무엇이 나오고 무엇이 걸러지는지를 본다.
  */
-@Import({ShowQuerydslRepository.class, ShowRepositoryAdapter.class})
+@Import(ShowQuerydslRepository.class)
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
     @Autowired
