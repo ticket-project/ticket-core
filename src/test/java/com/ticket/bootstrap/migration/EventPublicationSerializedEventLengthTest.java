@@ -97,8 +97,6 @@ class EventPublicationSerializedEventLengthTest {
 
     private OrderTerminated realisticOrderTerminated() {
         return new OrderTerminated(
-                UUID.randomUUID(),
-                OrderTerminated.SCHEMA_VERSION,
                 1234567L,
                 7654321L,
                 "HOLD-" + UUID.randomUUID().toString().replace("-", ""),

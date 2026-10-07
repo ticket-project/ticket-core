@@ -99,7 +99,6 @@ class PendingOrderCreatorTest {
         assertThat(event.memberId()).isEqualTo(20L);
         assertThat(event.holdKey()).isEqualTo("hold-key");
         assertThat(event.performanceSeatIds()).isEqualTo(Set.of(501L));
-        assertThat(event.schemaVersion()).isEqualTo(OrderCreated.SCHEMA_VERSION);
         assertThat(event.occurredAt())
                 .isEqualTo(EXPIRES_AT
                         .minusSeconds(600)

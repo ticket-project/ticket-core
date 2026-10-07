@@ -70,8 +70,6 @@ public class PendingOrderCreator {
                 memberId, performanceId, hold.holdKey(), startedAt, hold.expiresAt(), performanceSeats);
 
         eventPublisher.publishEvent(new OrderCreated(
-                UUID.randomUUID(),
-                OrderCreated.SCHEMA_VERSION,
                 savedOrder.getId(),
                 memberId,
                 hold.holdKey(),
