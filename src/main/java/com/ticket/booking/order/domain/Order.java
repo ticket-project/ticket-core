@@ -137,6 +137,12 @@ public class Order extends AuditedEntity {
         return Collections.unmodifiableList(orderSeats);
     }
 
+    public void confirm(final LocalDateTime now) {
+        validatePending("confirm");
+        this.status = OrderState.CONFIRMED;
+        this.confirmedAt = now;
+    }
+
     /**
      * 만료로 종료한다. <b>만료 시각이 지나기 전에는 만료시킬 수 없다.</b> 옛 구현은 시각을 보지 않아, 아직 유효한 주문도 만료 경로로 들어오면 그대로 EXPIRED가 됐다 — 사용자가 보고 있는
      * 잔여 시간과 실제 상태가 어긋나는 지점이었다.
