@@ -97,12 +97,12 @@ class EventPublicationSerializedEventLengthTest {
 
     private OrderTerminated realisticOrderTerminated() {
         return new OrderTerminated(
+                UUID.randomUUID(),
+                OrderTerminated.SCHEMA_VERSION,
                 1234567L,
                 7654321L,
                 "HOLD-" + UUID.randomUUID().toString().replace("-", ""),
-                Set.copyOf(List.of(
-                        10000001L, 10000002L, 10000003L, 10000004L, 10000005L, 10000006L, 10000007L, 10000008L,
-                        10000009L, 10000010L)),
+                Set.copyOf(List.of(10000001L, 10000002L, 10000003L, 10000004L)),
                 "CANCELED",
                 Instant.parse("2026-09-14T12:34:56.123456789Z"));
     }

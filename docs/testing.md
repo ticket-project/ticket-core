@@ -94,7 +94,7 @@ Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
 - `Scenario`로 listener 완료를 기다리고, 첫 시도 실패 후 publication FAILED, 재처리 성공 후
   COMPLETED/ARCHIVED, 재시도 상한 초과 시 자동 제외를 검증한다. 고정 clock과 deterministic fake를 쓰고
   `Thread.sleep`을 쓰지 않는다.
-- 같은 이벤트가 여러 번 전달돼도 최종 상태와 WebSocket 의미가 한 번 처리한 것과 같은지 고정한다(멱등성).
+- 동일 `eventId`가 여러 번 전달돼도 최종 상태와 WebSocket 의미가 한 번 처리한 것과 같은지 고정한다(멱등성).
 
 ### 예매 E2E
 

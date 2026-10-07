@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -40,6 +41,8 @@ public class OrderTerminationService {
 
     private void publishTerminated(final Order order, final LocalDateTime now) {
         eventPublisher.publishEvent(new OrderTerminated(
+                UUID.randomUUID(),
+                OrderTerminated.SCHEMA_VERSION,
                 order.getId(),
                 order.getMemberId(),
                 order.getHoldKey(),
