@@ -65,7 +65,7 @@ public class GetMyShowLikesUseCase {
     public Output execute(final Input input) {
 
         final CursorPage<LikeSnapshot, Long> page =
-                likeQueryApi.findLiked("show", input.memberId(), input.cursorLikeId(), input.size());
+                likeQueryApi.findLiked(input.memberId(), input.cursorLikeId(), input.size());
 
         if (page.items().isEmpty()) {
             return new Output(List.of(), page.hasNext(), page.nextPosition());

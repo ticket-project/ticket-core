@@ -11,7 +11,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
-import com.ticket.like.domain.LikeType;
 import com.ticket.shared.api.CursorPage;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 
@@ -34,15 +33,15 @@ class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
 
     @BeforeEach
     void 찜_세_건을_저장한다() {
-        entityManager.persist(new Like(MEMBER_ID, LikeType.SHOW, TARGET_1));
-        entityManager.persist(new Like(MEMBER_ID, LikeType.SHOW, TARGET_2));
-        entityManager.persist(new Like(MEMBER_ID, LikeType.SHOW, TARGET_3));
+        entityManager.persist(new Like(MEMBER_ID, TARGET_1));
+        entityManager.persist(new Like(MEMBER_ID, TARGET_2));
+        entityManager.persist(new Like(MEMBER_ID, TARGET_3));
         flushAndClear();
     }
 
     @Test
     void 찜한_대상을_최신순으로_조회한다() {
-        CursorPage<Like, Long> result = likeRepository.findLiked(LikeType.SHOW, MEMBER_ID, null, 2);
+        CursorPage<Like, Long> result = likeRepository.findLiked(MEMBER_ID, null, 2);
 
         assertThat(result.items()).extracting(Like::getTargetId).containsExactly(TARGET_3, TARGET_2);
         assertThat(result.nextPosition()).isNotNull();
@@ -51,9 +50,8 @@ class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
 
     @Test
     void 커서_이후의_찜한_대상을_조회한다() {
-        CursorPage<Like, Long> firstPage = likeRepository.findLiked(LikeType.SHOW, MEMBER_ID, null, 1);
-        CursorPage<Like, Long> secondPage =
-                likeRepository.findLiked(LikeType.SHOW, MEMBER_ID, firstPage.nextPosition(), 1);
+        CursorPage<Like, Long> firstPage = likeRepository.findLiked(MEMBER_ID, null, 1);
+        CursorPage<Like, Long> secondPage = likeRepository.findLiked(MEMBER_ID, firstPage.nextPosition(), 1);
 
         assertThat(firstPage.items()).extracting(Like::getTargetId).containsExactly(TARGET_3);
         assertThat(secondPage.items()).extracting(Like::getTargetId).containsExactly(TARGET_2);
@@ -61,7 +59,7 @@ class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
 
     @Test
     void 찜한_대상이_없으면_빈_슬라이스를_반환한다() {
-        CursorPage<Like, Long> result = likeRepository.findLiked(LikeType.SHOW, -1L, null, 10);
+        CursorPage<Like, Long> result = likeRepository.findLiked(-1L, null, 10);
 
         assertThat(result.items()).isEmpty();
         assertThat(result.hasNext()).isFalse();
@@ -75,7 +73,7 @@ class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
     @Test
     void 같은_회원이_같은_대상을_두_번_찜하면_무결성_위반이다() {
         assertThatThrownBy(() -> {
-                    likeRepository.like(MEMBER_ID, LikeType.SHOW, TARGET_1);
+                    likeRepository.like(MEMBER_ID, TARGET_1);
                     flushAndClear();
                 })
                 .isInstanceOf(DataIntegrityViolationException.class);

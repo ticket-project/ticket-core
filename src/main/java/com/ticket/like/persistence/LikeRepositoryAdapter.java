@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import com.ticket.like.domain.Like;
 import com.ticket.like.domain.LikeRepository;
-import com.ticket.like.domain.LikeType;
 import com.ticket.shared.api.CursorPage;
 
 import lombok.RequiredArgsConstructor;
@@ -26,8 +25,8 @@ public class LikeRepositoryAdapter implements LikeRepository {
     private final SpringDataLikeJpaRepository jpaRepository;
 
     @Override
-    public Like like(final Long memberId, final LikeType likeType, final Long targetId) {
-        return jpaRepository.save(new Like(memberId, likeType, targetId));
+    public Like like(final Long memberId, final Long targetId) {
+        return jpaRepository.save(new Like(memberId, targetId));
     }
 
     @Override
@@ -36,29 +35,26 @@ public class LikeRepositoryAdapter implements LikeRepository {
     }
 
     @Override
-    public boolean existsByMemberIdAndLikeTypeAndTargetId(
-            final Long memberId, final LikeType likeType, final Long targetId) {
-        return jpaRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
+    public boolean existsByMemberIdAndTargetId(final Long memberId, final Long targetId) {
+        return jpaRepository.existsByMemberIdAndTargetId(memberId, targetId);
     }
 
     @Override
-    public Optional<Like> findByMemberIdAndLikeTypeAndTargetId(
-            final Long memberId, final LikeType likeType, final Long targetId) {
-        return jpaRepository.findByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId);
+    public Optional<Like> findByMemberIdAndTargetId(final Long memberId, final Long targetId) {
+        return jpaRepository.findByMemberIdAndTargetId(memberId, targetId);
     }
 
     @Override
-    public long countByLikeTypeAndTargetId(final LikeType likeType, final Long targetId) {
-        return jpaRepository.countByLikeTypeAndTargetId(likeType, targetId);
+    public long countByTargetId(final Long targetId) {
+        return jpaRepository.countByTargetId(targetId);
     }
 
     @Override
-    public CursorPage<Like, Long> findLiked(
-            final LikeType likeType, final Long memberId, final @Nullable Long cursorLikeId, final int size) {
+    public CursorPage<Like, Long> findLiked(final Long memberId, final @Nullable Long cursorLikeId, final int size) {
         final PageRequest page = PageRequest.of(0, size + 1);
         final List<Like> rows = cursorLikeId == null
-                ? jpaRepository.findFirstPage(likeType, memberId, page)
-                : jpaRepository.findAfterId(likeType, memberId, cursorLikeId, page);
+                ? jpaRepository.findFirstPage(memberId, page)
+                : jpaRepository.findAfterId(memberId, cursorLikeId, page);
         if (rows.isEmpty()) {
             return CursorPage.empty();
         }

@@ -11,10 +11,10 @@ import com.ticket.like.domain.LikeType;
 public final class LikeAlreadyExistsException extends LikeException {
     private static final String MESSAGE = "이미 찜한 대상입니다.";
 
-    public LikeAlreadyExistsException(final long memberId, final LikeType likeType, final long targetId) {
+    public LikeAlreadyExistsException(final long memberId, final long targetId) {
         super(
                 LikeErrorCode.E7001,
                 MESSAGE,
-                MESSAGE + " memberId=" + memberId + ", likeType=" + likeType + ", targetId=" + targetId);
+                MESSAGE + " memberId=" + memberId + ", likeType=" + LikeType.SHOW + ", targetId=" + targetId);
     }
 }

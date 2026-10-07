@@ -128,7 +128,7 @@ public class GetShowDetailUseCase {
                 show.getEndDate(),
                 show.getRunningMinutes(),
                 show.getViewCount(),
-                likeQueryApi.countByTarget("show", showId),
+                likeQueryApi.countByTarget(showId),
                 show.saleDisplayStatusAt(LocalDateTime.now(clock)),
                 show.getDisplaySaleType(),
                 show.getDisplaySaleStartsAt(),
