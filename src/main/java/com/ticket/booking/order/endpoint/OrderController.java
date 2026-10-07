@@ -69,8 +69,8 @@ public class OrderController {
             @Parameter(hidden = true) final AuthenticatedMember member) {
         // @Valid가 performanceId·seatIds의 null을 이미 400으로 거른 뒤에야 여기에 닿는다.
         final CreateOrderUseCase.Input input = new CreateOrderUseCase.Input(
-                Objects.requireNonNull(request.getPerformanceId(), "performanceId"),
-                Objects.requireNonNull(request.getSeatIds(), "seatIds"),
+                Objects.requireNonNull(request.performanceId(), "performanceId"),
+                Objects.requireNonNull(request.seatIds(), "seatIds"),
                 member.memberId(),
                 admissionToken);
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
