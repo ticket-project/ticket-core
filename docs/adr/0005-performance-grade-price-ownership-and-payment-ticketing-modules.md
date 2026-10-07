@@ -102,10 +102,6 @@ module 하나를 더 유지할 이유가 없고, 발급 트리거인 `OrderConfi
 두는 편이 단순하다는 판단이다. `Ticket`은 `booking.domain.ticket`, `TICKETS` migration은 booking V5로
 옮겼다. `ticketing`을 별도 module로 다루던 위 서술과 §3의 방안 C 서술 중 ticketing 부분은 그 이전 기록이다. payment 분리는 그대로다.
 
-**2026-10-07 갱신(Ticket entity 삭제)**: 호출자 없이 남아 있던 `Ticket` entity·`TicketState`·`TicketRepository`와
-저장 adapter를 삭제했다. 발급 흐름이 생길 때 그 요구에 맞춰 다시 만든다. `TICKETS` 테이블(booking V5)과 unique
-제약은 그대로 두고 `BookingTicketSlicingSchemaTest`가 migration 수준에서 검증한다.
-
 `payment`와 `ticketing`은 다른 업무 모듈을 import하지 않는다. 미래 의존 edge(`payment -> booking`,
 `ticketing -> booking`)는 실제 공개 계약(결제 정산, `OrderConfirmed` 구독)을 구현하는 후속
 단계에서만 추가한다 — 지금 빈 public contract나 가짜 호출로 미리 만들지 않는다. 그 시점의 목표
