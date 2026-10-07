@@ -35,11 +35,6 @@ public class ShowRepositoryAdapter implements ShowRepository {
     }
 
     @Override
-    public List<String> findGenreNames(final Long showId) {
-        return jpaRepository.findGenreNamesByShowId(showId);
-    }
-
-    @Override
     public Map<Long, List<String>> findGenreNamesByShowIds(final List<Long> showIds) {
         if (showIds.isEmpty()) {
             return Map.of();

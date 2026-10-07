@@ -114,11 +114,6 @@ class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {
     }
 
     @Test
-    void 장르_이름을_조회한다() {
-        assertThat(showRepository.findGenreNames(showId)).contains("케이팝");
-    }
-
-    @Test
     void 장르_일괄_조회는_빈_ID와_존재하지_않는_ID를_건너뛴다() {
         assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of())).isEmpty();
         assertThat(showRepository.findGenreNamesByShowIds(java.util.List.of(Long.MAX_VALUE)))
