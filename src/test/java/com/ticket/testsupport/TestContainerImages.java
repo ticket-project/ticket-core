@@ -9,6 +9,7 @@ import org.testcontainers.utility.DockerImageName;
  */
 public final class TestContainerImages {
     public static final DockerImageName REDIS = DockerImageName.parse("redis:7.4-alpine");
+    public static final DockerImageName POSTGRESQL = DockerImageName.parse("postgres:18");
     public static final DockerImageName ORACLE = DockerImageName.parse("gvenzl/oracle-free:23-slim");
 
     private TestContainerImages() {}

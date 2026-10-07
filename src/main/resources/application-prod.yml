@@ -3,6 +3,7 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -12,8 +13,7 @@ spring:
         use_sql_comments: true
   flyway:
     enabled: true
-    locations: classpath:db/migration,classpath:db/migration-vendor/oracle
-    baseline-description: existing schema before Flyway
+    locations: classpath:db/migration-vendor/postgresql
     clean-disabled: true
   modulith:
     runtime:
