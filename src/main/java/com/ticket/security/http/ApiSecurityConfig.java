@@ -71,7 +71,7 @@ public class ApiSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(final CorsProperties corsProperties) {
         final CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        corsConfiguration.setAllowedOrigins(corsProperties.allowedOrigins());
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
