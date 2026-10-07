@@ -4,6 +4,9 @@
 
 채택
 
+> 2026-10-07 갱신(이후): ADR 0010 결정 5를 뒤집으면서 module마다 예외 하나(`MemberException`·`ShowException`·
+> `LikeException`·`AuthException`)가 오류 코드를 들도록 다시 합쳤다. 아래 갱신의 구체 타입 이름은 당시 기록이다.
+
 > 2026-10-07 갱신: 구체 오류가 하나뿐이던 `ShowException`·`LikeException` base도 지웠다.
 > `UnsupportedShowSortException`·`LikeAlreadyExistsException`은 `TicketException`을 직접 상속하고 각 handler가
 > 그 타입을 직접 잡는다(응답 코드·상태·문구는 같다).

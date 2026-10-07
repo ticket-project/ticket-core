@@ -15,7 +15,7 @@ import com.ticket.shared.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * booking 오류를 응답으로 옮긴다. base 예외 하나만 잡는다 — 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
+ * booking 오류를 응답으로 옮긴다. 자기 module 예외만 잡는다 — 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
  *
  * <p>{@link BookingException}은 상태를 모른다 — 오류 코드별 HTTP 상태는 이 handler가 안다.
  * {@code com.ticket.booking.exception.handler.BookingExceptionHandlerTest}가 14종 전부의 상태·E-code·메시지를

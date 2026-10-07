@@ -7,6 +7,15 @@
 패키지 배치와 `support` 관련 서술은 0011이 대체했다. 이 ADR은 ADR 0002의 "예외가 완성된 HTTP 응답 계약을 스스로
 갖는다"는 서술을 수정한다 — 모듈이 자기 오류를 소유한다는 원칙 자체는 유지한다.
 
+> 2026-10-07 갱신(전체 module): 결정 5를 모든 module에서 뒤집었다. booking에 이어 member·show·like·security도
+> module마다 예외 하나(`MemberException`·`ShowException`·`LikeException`·`AuthException`)가 `<Module>ErrorCode`와
+> 선택적 `data`를 들고, 공개 문구는 오류 코드 enum의 `message`가 갖는다. 각 handler는 오류 코드 enum의 exhaustive
+> switch로 HTTP 상태를 고른다. security 예외 이름이 `SecurityException`이 아닌 것은 `java.lang.SecurityException`을
+> 가리기 때문이다. 공통 오류(`InvalidRequestException`/`NotFoundException`/`InternalErrorException`)와 `NotFoundException`
+> 하위 타입(`MemberNotFoundException` 등)은 그대로다 — 셋은 `GlobalExceptionHandler`가 타입으로 상태를 정하고,
+> `NotFoundException`은 호출부가 타입으로 catch한다(`GetOrderStatusUseCase` 등). 같은 날 `ErrorCode`에서 내부 설명
+> (`getDescription`)을 지워 `name()`/`getCode()`만 남겼다. HTTP 상태·E-code·메시지·`error.data`는 그대로다.
+
 > 2026-10-07 갱신(booking): 결정 5를 booking에서 뒤집었다. (고정 코드, 고정 메시지)만 다른 booking 예외 14종과
 > `AdmissionTokenExpired`/`RequiredException`은 별도 catch·재시도 대상이 아니어서, 공개 문구를 `BookingErrorCode`·
 > `AdmissionErrorCode`로 옮기고 `BookingException(BookingErrorCode)`·`AdmissionTokenException(AdmissionErrorCode, reason)`

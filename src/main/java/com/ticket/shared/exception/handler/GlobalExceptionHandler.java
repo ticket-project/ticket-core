@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p><b>{@link Ordered#LOWEST_PRECEDENCE}인 이유</b>: Spring은 advice를 order로 정렬한 뒤 매칭되는 메서드를 가진 <i>첫</i> advice에서 멈춘다. 여기
  * 있는 {@code Exception} fallback이 먼저 잡히면 각 module의 handler가 영영 호출되지 않는다. module handler는 반대로
- * {@link Ordered#HIGHEST_PRECEDENCE}를 쓰고 자기 module의 base 예외만 잡는다 - 그 범위는
+ * {@link Ordered#HIGHEST_PRECEDENCE}를 쓰고 자기 module 예외만 잡는다 - 그 범위는
  * {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
  */
 @RestControllerAdvice
