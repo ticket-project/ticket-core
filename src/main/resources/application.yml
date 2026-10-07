@@ -13,6 +13,7 @@ spring:
   modulith:
     events:
       completion-mode: archive
+      republish-outstanding-events-on-restart: false
       staleness:
         check-interval: 1m
         published: 5m
