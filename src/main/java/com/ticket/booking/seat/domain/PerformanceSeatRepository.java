@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 회차 좌석 aggregate의 복원과 booking local 조회를 담당한다. 응답 변환과 Redis 점유 반영은 use case가 한다. 구현은 Spring Data JPA가 만든다. */
@@ -25,5 +26,5 @@ public interface PerformanceSeatRepository extends Repository<PerformanceSeat, L
     /** 판매 편성된 좌석을 seatId 오름차순으로 읽는다. 짧은 읽기 트랜잭션을 열거나 호출자의 트랜잭션에 합류한다. */
     @Transactional(readOnly = true)
     @Query("select s from PerformanceSeat s where s.performanceId = :performanceId order by s.seatId")
-    List<PerformanceSeat> findAllByPerformanceId(Long performanceId);
+    List<PerformanceSeat> findAllByPerformanceId(@Param("performanceId") Long performanceId);
 }
