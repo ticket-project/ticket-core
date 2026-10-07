@@ -26,16 +26,14 @@ class SeatSelectionExpirationHandlerTest {
     void 좌석_select_키를_해석해_application에_넘긴다() {
         String expiredKey = SeatSelectionRedisKey.select(10L, 20L);
 
-        assertThat(handler.canHandle(expiredKey)).isTrue();
-
-        handler.handle(expiredKey);
+        assertThat(handler.handle(expiredKey)).isTrue();
 
         verify(seatSelectionWriter).notifyReleasedIfFree(10L, 20L);
     }
 
     @Test
     void 좌석_select_키가_아니면_지원하지_않는다() {
-        assertThat(handler.canHandle("unknown:key")).isFalse();
+        assertThat(handler.handle("unknown:key")).isFalse();
         verifyNoInteractions(seatSelectionWriter);
     }
 }

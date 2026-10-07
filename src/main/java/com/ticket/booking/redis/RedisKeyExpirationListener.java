@@ -19,9 +19,10 @@ public class RedisKeyExpirationListener implements MessageListener {
     public void onMessage(final Message message, final byte @Nullable [] pattern) {
         final String expiredKey = new String(message.getBody(), StandardCharsets.UTF_8);
 
-        handlers.stream()
-                .filter(handler -> handler.canHandle(expiredKey))
-                .findFirst()
-                .ifPresent(handler -> handler.handle(expiredKey));
+        for (final RedisKeyExpirationHandler handler : handlers) {
+            if (handler.handle(expiredKey)) {
+                return;
+            }
+        }
     }
 }

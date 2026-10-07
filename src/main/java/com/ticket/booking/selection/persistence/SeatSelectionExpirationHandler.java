@@ -1,5 +1,7 @@
 package com.ticket.booking.selection.persistence;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Component;
 
 import com.ticket.booking.redis.RedisKeyExpirationHandler;
@@ -19,16 +21,14 @@ public class SeatSelectionExpirationHandler implements RedisKeyExpirationHandler
     private final SeatSelectionWriter seatSelectionWriter;
 
     @Override
-    public boolean canHandle(final String expiredKey) {
-        return SeatSelectionRedisKey.tryParseSelectKey(expiredKey).isPresent();
-    }
-
-    @Override
-    public void handle(final String expiredKey) {
-        final SeatSelectionRedisKey.SelectKey selectKey = SeatSelectionRedisKey.tryParseSelectKey(expiredKey)
-                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 좌석 선택 만료 키입니다: " + expiredKey));
-
+    public boolean handle(final String expiredKey) {
+        final Optional<SeatSelectionRedisKey.SelectKey> parsed = SeatSelectionRedisKey.tryParseSelectKey(expiredKey);
+        if (parsed.isEmpty()) {
+            return false;
+        }
+        final SeatSelectionRedisKey.SelectKey selectKey = parsed.get();
         seatSelectionWriter.notifyReleasedIfFree(selectKey.performanceId(), selectKey.seatId());
         log.info("좌석 선택 만료 이벤트 처리: performanceId={}, seatId={}", selectKey.performanceId(), selectKey.seatId());
+        return true;
     }
 }

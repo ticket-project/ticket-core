@@ -2,6 +2,7 @@ package com.ticket.booking.hold.persistence;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
@@ -19,16 +20,13 @@ public class HoldKeyExpirationHandler implements RedisKeyExpirationHandler {
     private final Clock clock;
 
     @Override
-    public boolean canHandle(final String expiredKey) {
-        return HoldRedisKey.tryParseHoldMetaKey(expiredKey).isPresent();
-    }
-
-    @Override
-    public void handle(final String expiredKey) {
-        final HoldRedisKey.HoldMetaKey holdMetaKey = HoldRedisKey.tryParseHoldMetaKey(expiredKey)
-                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 홀드 만료 키입니다: " + expiredKey));
-
-        expireOrderUseCase.expireByHoldKey(holdMetaKey.holdKey(), LocalDateTime.now(clock));
-        log.info("홀드 만료 이벤트 처리: holdKey={}", holdMetaKey.holdKey());
+    public boolean handle(final String expiredKey) {
+        final Optional<String> holdKey = HoldRedisKey.tryParseHoldMetaKey(expiredKey);
+        if (holdKey.isEmpty()) {
+            return false;
+        }
+        expireOrderUseCase.expireByHoldKey(holdKey.get(), LocalDateTime.now(clock));
+        log.info("홀드 만료 이벤트 처리: holdKey={}", holdKey.get());
+        return true;
     }
 }
