@@ -25,16 +25,11 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
             final NativeWebRequest webRequest,
             final @Nullable WebDataBinderFactory binderFactory) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw unauthorized();
-        }
-        if (authentication.getPrincipal() instanceof AuthenticatedMember authenticatedMember) {
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof AuthenticatedMember authenticatedMember) {
             return authenticatedMember;
         }
-        throw unauthorized();
-    }
-
-    private UnauthenticatedException unauthorized() {
-        return new UnauthenticatedException();
+        throw new UnauthenticatedException();
     }
 }
