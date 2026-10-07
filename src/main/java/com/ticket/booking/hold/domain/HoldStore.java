@@ -9,7 +9,8 @@ public interface HoldStore {
     /** 좌석 키가 없을 때만 저장한다. 충돌하면 앞서 쓴 이 hold의 좌석을 보상하고 false를 반환한다. */
     boolean saveIfAbsent(Hold hold, Duration ttl);
 
-    List<Long> release(Long performanceId, String holdKey, List<Long> seatIds);
+    /** 좌석에 아직 이 holdKey가 남아 있을 때만 지운다. 반복해도 그사이 다른 hold가 잡은 좌석은 건드리지 않는다. */
+    void release(Long performanceId, String holdKey, List<Long> seatIds);
 
     Set<Long> getHoldingSeatIds(Long performanceId);
 

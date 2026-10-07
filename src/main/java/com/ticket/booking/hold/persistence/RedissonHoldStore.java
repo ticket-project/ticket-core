@@ -61,24 +61,18 @@ public class RedissonHoldStore implements HoldStore {
     }
 
     @Override
-    public List<Long> release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
-        final List<Long> normalizedSeatIds =
-                seatIds.stream().distinct().sorted().toList();
+    public void release(final Long performanceId, final String holdKey, final List<Long> seatIds) {
         final RSetCache<Long> holdSeatIndex = holdSeatIndex(performanceId);
-        final List<Long> releasedSeatIds = new ArrayList<>();
-        for (final Long seatId : normalizedSeatIds) {
+        for (final Long seatId : seatIds.stream().distinct().toList()) {
             final RBucket<String> bucket = seatBucket(performanceId, seatId);
-            final String storedHoldKey = bucket.get();
-            if (holdKey.equals(storedHoldKey)) {
+            if (holdKey.equals(bucket.get())) {
                 holdSeatIndex.remove(seatId);
                 bucket.delete();
-                releasedSeatIds.add(seatId);
             }
         }
         redissonClient
                 .getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE)
                 .delete();
-        return releasedSeatIds;
     }
 
     @Override

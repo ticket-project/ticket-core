@@ -126,13 +126,14 @@ class RedissonHoldStoreTest {
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
         // when
-        List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
+        redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
         // then
         verify(seat10).delete();
         verify(holdSeatIndex).remove(10L);
+        verify(seat20, never()).delete();
+        verify(holdSeatIndex, never()).remove(20L);
         verify(meta).delete();
-        assertThat(releasedSeatIds).containsExactly(10L);
     }
 
     @Test
@@ -148,14 +149,13 @@ class RedissonHoldStoreTest {
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        List<Long> releasedSeatIds = redissonHoldStore.release(1L, "hold-key", List.of(10L));
+        redissonHoldStore.release(1L, "hold-key", List.of(10L));
 
         verify(seat10).delete();
         verify(holdSeatIndex).remove(10L);
         verify(seat20, never()).delete();
         verify(holdSeatIndex, never()).remove(20L);
         verify(meta).delete();
-        assertThat(releasedSeatIds).containsExactly(10L);
     }
 
     @Test
