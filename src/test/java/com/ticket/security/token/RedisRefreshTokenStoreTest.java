@@ -2,6 +2,7 @@ package com.ticket.security.token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 
 @ExtendWith(MockitoExtension.class)
 class RedisRefreshTokenStoreTest {
@@ -35,13 +37,13 @@ class RedisRefreshTokenStoreTest {
 
     @Test
     void creates_refresh_token_and_stores_member_id() {
-        doReturn(bucket).when(redissonClient).getBucket(anyString());
+        doReturn(bucket).when(redissonClient).getBucket(anyString(), eq(StringCodec.INSTANCE));
         when(uuidSupplier.get()).thenReturn(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
 
         String token = refreshTokenStore.createRefreshToken(3L, 120L);
 
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(redissonClient).getBucket(keyCaptor.capture());
+        verify(redissonClient).getBucket(keyCaptor.capture(), eq(StringCodec.INSTANCE));
         verify(bucket).set("3", Duration.ofSeconds(120L));
         assertThat(keyCaptor.getValue()).isEqualTo("refresh_token:123e4567-e89b-12d3-a456-426614174000");
         assertThat(token).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
@@ -49,7 +51,7 @@ class RedisRefreshTokenStoreTest {
 
     @Test
     void consume_deletes_token_and_returns_member_id() {
-        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
+        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value", StringCodec.INSTANCE);
         when(bucket.getAndDelete()).thenReturn("3");
 
         assertThat(refreshTokenStore.consume(AuthRefreshToken.from("token-value")))
@@ -58,7 +60,7 @@ class RedisRefreshTokenStoreTest {
 
     @Test
     void validate_without_consume_returns_member_id() {
-        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
+        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value", StringCodec.INSTANCE);
         when(bucket.get()).thenReturn("3");
 
         assertThat(refreshTokenStore.validateWithoutConsume(AuthRefreshToken.from("token-value")))
@@ -67,7 +69,7 @@ class RedisRefreshTokenStoreTest {
 
     @Test
     void consume_returns_empty_when_stored_member_id_is_not_number() {
-        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
+        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value", StringCodec.INSTANCE);
         when(bucket.getAndDelete()).thenReturn("not-a-number");
 
         assertThat(refreshTokenStore.consume(AuthRefreshToken.from("token-value")))
@@ -76,7 +78,7 @@ class RedisRefreshTokenStoreTest {
 
     @Test
     void revoke_if_owned_deletes_only_matching_owner_token() {
-        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value");
+        doReturn(bucket).when(redissonClient).getBucket("refresh_token:token-value", StringCodec.INSTANCE);
         when(bucket.compareAndSet("3", null)).thenReturn(true);
 
         boolean revoked = refreshTokenStore.revokeIfOwned(AuthRefreshToken.from("token-value"), 3L);
