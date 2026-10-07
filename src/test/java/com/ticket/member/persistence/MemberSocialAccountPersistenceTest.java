@@ -9,7 +9,6 @@ import jakarta.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.member.api.SocialProvider;
@@ -27,7 +26,6 @@ import com.ticket.testsupport.persistence.JpaSliceTestSupport;
  * 확인한다.
  */
 @Transactional
-@Import(MemberRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
 class MemberSocialAccountPersistenceTest extends JpaSliceTestSupport {
     @Autowired
