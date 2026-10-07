@@ -7,7 +7,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.show.exception.UnsupportedShowSortException;
+import com.ticket.show.exception.ShowErrorCode;
+import com.ticket.show.exception.ShowException;
 
 @SuppressWarnings("NonAsciiCharacters")
 class ShowSortTest {
@@ -26,14 +27,16 @@ class ShowSortTest {
     @Test
     void 지원하지_않는_sort면_원문을_담은_예외를_던진다() {
         assertThatThrownBy(() -> ShowSort.from("unknown"))
-                .isInstanceOf(UnsupportedShowSortException.class)
+                .isInstanceOf(ShowException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ShowErrorCode.E7002)
                 .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: unknown");
     }
 
     @Test
     void 대소문자를_정규화하지_않고_원문_그대로_담는다() {
         assertThatThrownBy(() -> ShowSort.from("UNKNOWN_SORT"))
-                .isInstanceOf(UnsupportedShowSortException.class)
+                .isInstanceOf(ShowException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ShowErrorCode.E7002)
                 .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: UNKNOWN_SORT");
     }
 
@@ -46,7 +49,8 @@ class ShowSortTest {
     @Test
     void 허용하지_않은_정렬이면_apiValue를_담은_예외를_던진다() {
         assertThatThrownBy(() -> ShowSort.SALE_START_APPROACHING.requireOneOf(Set.of(ShowSort.POPULAR)))
-                .isInstanceOf(UnsupportedShowSortException.class)
+                .isInstanceOf(ShowException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ShowErrorCode.E7002)
                 .hasFieldOrPropertyWithValue("data", "지원하지 않는 sort: saleStartApproaching");
     }
 }

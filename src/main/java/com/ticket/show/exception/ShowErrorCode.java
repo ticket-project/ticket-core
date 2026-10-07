@@ -9,11 +9,18 @@ import com.ticket.shared.exception.ErrorCode;
  * 분리되며 {@code com.ticket.like.exception.LikeErrorCode}로 옮겨갔다.
  */
 public enum ShowErrorCode implements ErrorCode {
-    E7002("미지원 공연 정렬");
+    E7002("미지원 공연 정렬", "지원하지 않는 정렬 조건입니다.");
     private final String description;
+    private final String message;
 
-    ShowErrorCode(final String description) {
+    ShowErrorCode(final String description, final String message) {
         this.description = description;
+        this.message = message;
+    }
+
+    /** 응답 {@code error.message}로 나가는 공개 문구다. 외부 계약이라 바꾸지 않는다. */
+    public String getMessage() {
+        return message;
     }
 
     @Override
