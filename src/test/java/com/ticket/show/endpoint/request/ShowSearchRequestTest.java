@@ -36,20 +36,20 @@ class ShowSearchRequestTest {
 
         ShowSearchCriteria criteria = request.toCriteria(CURSOR_CODEC);
 
-        assertThat(criteria.getKeyword()).isEqualTo("뮤지컬");
-        assertThat(criteria.getCategory()).isEqualTo("MUSICAL");
-        assertThat(criteria.getSaleDisplayStatus()).isEqualTo(SaleDisplayStatus.ON_SALE);
-        assertThat(criteria.getStartDateFrom()).isEqualTo(LocalDate.of(2026, 4, 1));
-        assertThat(criteria.getStartDateTo()).isEqualTo(LocalDate.of(2026, 4, 30));
-        assertThat(criteria.getRegion()).isEqualTo("SEOUL");
-        assertThat(criteria.getCursor()).isEqualTo(CURSOR_POSITION);
+        assertThat(criteria.keyword()).isEqualTo("뮤지컬");
+        assertThat(criteria.category()).isEqualTo("MUSICAL");
+        assertThat(criteria.saleDisplayStatus()).isEqualTo(SaleDisplayStatus.ON_SALE);
+        assertThat(criteria.startDateFrom()).isEqualTo(LocalDate.of(2026, 4, 1));
+        assertThat(criteria.startDateTo()).isEqualTo(LocalDate.of(2026, 4, 30));
+        assertThat(criteria.region()).isEqualTo("SEOUL");
+        assertThat(criteria.cursor()).isEqualTo(CURSOR_POSITION);
     }
 
     @Test
     void cursor가_없으면_첫_페이지로_조회한다() {
         ShowSearchRequest request = new ShowSearchRequest("뮤지컬", "MUSICAL", "ON_SALE", null, null, "SEOUL", null);
 
-        assertThat(request.toCriteria(CURSOR_CODEC).getCursor()).isNull();
+        assertThat(request.toCriteria(CURSOR_CODEC).cursor()).isNull();
     }
 
     @Test
@@ -66,7 +66,7 @@ class ShowSearchRequestTest {
 
         ShowSearchCriteria criteria = request.toCountCriteria();
 
-        assertThat(criteria.getCursor()).isNull();
-        assertThat(criteria.getKeyword()).isEqualTo("뮤지컬");
+        assertThat(criteria.cursor()).isNull();
+        assertThat(criteria.keyword()).isEqualTo("뮤지컬");
     }
 }

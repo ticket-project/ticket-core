@@ -72,7 +72,7 @@ public class GetShowsUseCase {
 
     public Output execute(final Input input) {
         final CursorPage<Show, ShowCursor> page = showQuerydslRepository.findAllBySearch(
-                input.param(), venueIdsOf(input.param().getRegion()), input.size(), input.sort());
+                input.param(), venueIdsOf(input.param().region()), input.size(), input.sort());
         final Map<Long, List<String>> genreNames = showRepository.findGenreNamesByShowIds(
                 page.items().stream().map(Show::getId).toList());
         final Map<Long, VenueSnapshot> venuesById = venueLookupApi.getSummaries(

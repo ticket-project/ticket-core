@@ -31,7 +31,7 @@ public class CountSearchShowsUseCase {
 
     public Output execute(final Input input) {
         return new Output(showQuerydslRepository.countSearchShows(
-                input.criteria(), venueIdsOf(input.criteria().getRegion())));
+                input.criteria(), venueIdsOf(input.criteria().region())));
     }
 
     /**

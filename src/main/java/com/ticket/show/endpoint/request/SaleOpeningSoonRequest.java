@@ -43,7 +43,7 @@ public class SaleOpeningSoonRequest {
     private @Nullable String cursor;
 
     public SaleOpeningSoonSearchParam toParam(final ShowCursorCodec cursorCodec) {
-        return SaleOpeningSoonSearchParam.of(
+        return new SaleOpeningSoonSearchParam(
                 category,
                 title,
                 region,
