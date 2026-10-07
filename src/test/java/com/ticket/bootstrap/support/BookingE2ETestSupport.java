@@ -24,7 +24,7 @@ import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
-import com.ticket.security.token.AuthTokenIssuer;
+import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.testsupport.CoreApplicationTestSupport;
 
 import tools.jackson.databind.JsonNode;
@@ -67,7 +67,7 @@ public abstract class BookingE2ETestSupport extends CoreApplicationTestSupport {
     private MemberAccountApi memberAccountApi;
 
     @Autowired
-    private AuthTokenIssuer authTokenIssuer;
+    private JwtAuthTokenIssuer authTokenIssuer;
 
     /** 좌석 선택과 hold는 Redis에 남는다. DB만 되돌리면 이전 테스트의 점유가 다음 테스트의 좌석 상태 조회에 그대로 보인다. */
     @BeforeEach

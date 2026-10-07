@@ -17,21 +17,21 @@ import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.exception.MemberNotFoundException;
 import com.ticket.security.exception.UnauthenticatedException;
-import com.ticket.security.oauth.OAuth2AuthCodeStore;
-import com.ticket.security.token.AuthTokenIssuer;
+import com.ticket.security.jwt.JwtAuthTokenIssuer;
+import com.ticket.security.oauth.RedisOAuth2AuthCodeStore;
 import com.ticket.security.token.IssuedAuthTokens;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class ExchangeOAuth2TokenUseCaseTest {
     @Mock
-    private OAuth2AuthCodeStore oauth2AuthCodeStore;
+    private RedisOAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Mock
     private MemberAccountApi memberAccountApi;
 
     @Mock
-    private AuthTokenIssuer authTokenIssuer;
+    private JwtAuthTokenIssuer authTokenIssuer;
 
     @InjectMocks
     private ExchangeOAuth2TokenUseCase useCase;

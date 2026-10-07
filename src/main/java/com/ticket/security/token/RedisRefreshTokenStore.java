@@ -13,12 +13,11 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class RedisRefreshTokenStore implements RefreshTokenStore {
+public class RedisRefreshTokenStore {
     private static final String KEY_PREFIX = "refresh_token:";
     private final RedissonClient redissonClient;
     private final Supplier<UUID> uuidSupplier;
 
-    @Override
     public String createRefreshToken(final Long memberId, final long expirationSeconds) {
         final String tokenValue = uuidSupplier.get().toString();
         final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + tokenValue);
@@ -26,18 +25,15 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         return tokenValue;
     }
 
-    @Override
     public Optional<Long> consume(final AuthRefreshToken refreshToken) {
         final String memberId = bucketOf(refreshToken).getAndDelete();
         return parseMemberId(memberId);
     }
 
-    @Override
     public Optional<Long> validateWithoutConsume(final AuthRefreshToken refreshToken) {
         return parseMemberId(bucketOf(refreshToken).get());
     }
 
-    @Override
     public boolean revokeIfOwned(final AuthRefreshToken refreshToken, final Long memberId) {
         return bucketOf(refreshToken).compareAndSet(String.valueOf(memberId), null);
     }

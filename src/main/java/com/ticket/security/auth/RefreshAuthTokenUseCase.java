@@ -5,10 +5,10 @@ import org.springframework.stereotype.Service;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberIdentity;
 import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.security.token.AuthRefreshToken;
-import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
-import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.security.token.RedisRefreshTokenStore;
 import com.ticket.shared.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -16,9 +16,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class RefreshAuthTokenUseCase {
-    private final RefreshTokenStore refreshTokenStore;
+    private final RedisRefreshTokenStore refreshTokenStore;
     private final MemberAccountApi memberAccountApi;
-    private final AuthTokenIssuer authTokenIssuer;
+    private final JwtAuthTokenIssuer authTokenIssuer;
 
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore

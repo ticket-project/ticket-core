@@ -13,13 +13,12 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class RedisOAuth2AuthCodeStore implements OAuth2AuthCodeStore {
+public class RedisOAuth2AuthCodeStore {
     private static final String KEY_PREFIX = "oauth2_auth_code:";
     private static final Duration CODE_TTL = Duration.ofSeconds(30);
     private final RedissonClient redissonClient;
     private final Supplier<UUID> uuidSupplier;
 
-    @Override
     public String createCode(final Long memberId) {
         final String code = uuidSupplier.get().toString();
         final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code);
@@ -27,7 +26,6 @@ public class RedisOAuth2AuthCodeStore implements OAuth2AuthCodeStore {
         return code;
     }
 
-    @Override
     public Optional<Long> consumeCode(final String code) {
         final RBucket<String> bucket = redissonClient.getBucket(KEY_PREFIX + code);
         final String memberId = bucket.getAndDelete();

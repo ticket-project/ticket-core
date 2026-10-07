@@ -22,7 +22,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 @ExtendWith(MockitoExtension.class)
 class OAuth2AuthenticationSuccessHandlerTest {
     @Mock
-    private OAuth2AuthCodeStore oauth2AuthCodeStore;
+    private RedisOAuth2AuthCodeStore oauth2AuthCodeStore;
 
     @Test
     void 로컬_프론트에서_시작한_로그인은_로컬_프론트로_리다이렉트한다() throws Exception {

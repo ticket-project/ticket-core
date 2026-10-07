@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialProvider;
-import com.ticket.security.oauth.SocialAccountUnlinker;
+import com.ticket.security.oauth.ProviderSocialAccountUnlinker;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -25,7 +25,7 @@ class WithdrawCurrentMemberUseCaseTest {
     private MemberAccountApi memberAccountApi;
 
     @Mock
-    private SocialAccountUnlinker socialAccountUnlinker;
+    private ProviderSocialAccountUnlinker socialAccountUnlinker;
 
     @InjectMocks
     private WithdrawCurrentMemberUseCase useCase;

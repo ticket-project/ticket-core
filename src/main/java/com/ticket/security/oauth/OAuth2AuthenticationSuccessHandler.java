@@ -14,11 +14,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 /** OAuth2 로그인 성공 시 1회성 auth code를 발급하고 프론트엔드로 리다이렉트합니다. */
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    private final OAuth2AuthCodeStore oauth2AuthCodeStore;
+    private final RedisOAuth2AuthCodeStore oauth2AuthCodeStore;
     private final OAuth2FrontendRedirectResolver frontendRedirectResolver;
 
     public OAuth2AuthenticationSuccessHandler(
-            final OAuth2AuthCodeStore oauth2AuthCodeStore,
+            final RedisOAuth2AuthCodeStore oauth2AuthCodeStore,
             final OAuth2FrontendRedirectResolver frontendRedirectResolver) {
         this.oauth2AuthCodeStore = oauth2AuthCodeStore;
         this.frontendRedirectResolver = frontendRedirectResolver;

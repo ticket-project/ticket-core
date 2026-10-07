@@ -17,22 +17,22 @@ import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.exception.MemberNotFoundException;
 import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.security.token.AuthRefreshToken;
-import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
-import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.security.token.RedisRefreshTokenStore;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class RefreshAuthTokenUseCaseTest {
     @Mock
-    private RefreshTokenStore refreshTokenStore;
+    private RedisRefreshTokenStore refreshTokenStore;
 
     @Mock
     private MemberAccountApi memberAccountApi;
 
     @Mock
-    private AuthTokenIssuer authTokenIssuer;
+    private JwtAuthTokenIssuer authTokenIssuer;
 
     @InjectMocks
     private RefreshAuthTokenUseCase useCase;

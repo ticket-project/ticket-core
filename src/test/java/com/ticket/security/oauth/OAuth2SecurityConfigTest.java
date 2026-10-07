@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ticket.TicketApplication;
 import com.ticket.security.http.ApiSecurityConfig;
 import com.ticket.security.http.RestAuthenticationEntryPoint;
-import com.ticket.security.token.AccessTokenReader;
+import com.ticket.security.jwt.JwtAccessTokenCodec;
 
 @WebMvcTest(controllers = OAuth2SecurityConfigTest.TestController.class)
 @ContextConfiguration(classes = TicketApplication.class)
@@ -60,7 +60,7 @@ class OAuth2SecurityConfigTest {
     private OAuth2AuthenticationFailureHandler authenticationFailureHandler;
 
     @MockitoBean
-    private AccessTokenReader accessTokenReader;
+    private JwtAccessTokenCodec accessTokenReader;
 
     @MockitoBean
     private RestAuthenticationEntryPoint authenticationEntryPoint;

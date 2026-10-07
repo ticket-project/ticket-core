@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.ticket.TicketApplication;
 import com.ticket.security.http.ApiSecurityConfig;
 import com.ticket.security.http.RestAuthenticationEntryPoint;
-import com.ticket.security.token.AccessTokenReader;
+import com.ticket.security.jwt.JwtAccessTokenCodec;
 import com.ticket.show.endpoint.ShowController;
 import com.ticket.show.endpoint.cursor.ShowCursorCodec;
 import com.ticket.show.usecase.CountSearchShowsUseCase;
@@ -46,7 +46,7 @@ class GlobalExceptionHandlerWebMvcContractTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AccessTokenReader accessTokenReader;
+    private JwtAccessTokenCodec accessTokenReader;
 
     @MockitoBean
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;

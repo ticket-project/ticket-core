@@ -2,21 +2,19 @@ package com.ticket.security.jwt;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.security.token.AuthTokenIssuer;
 import com.ticket.security.token.IssuedAuthTokens;
-import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.security.token.RedisRefreshTokenStore;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class JwtAuthTokenIssuer implements AuthTokenIssuer {
+public class JwtAuthTokenIssuer {
     private static final String TOKEN_TYPE_BEARER = "Bearer";
     private final JwtAccessTokenCodec jwtAccessTokenCodec;
     private final JwtProperties jwtProperties;
-    private final RefreshTokenStore refreshTokenStore;
+    private final RedisRefreshTokenStore refreshTokenStore;
 
-    @Override
     public IssuedAuthTokens issueTokens(final Long memberId, final String role) {
         final long refreshTokenExpiresIn = jwtProperties.getRefreshTokenExpirationSeconds();
         final String accessToken = jwtAccessTokenCodec.createAccessToken(memberId, role);
