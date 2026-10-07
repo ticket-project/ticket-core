@@ -11,7 +11,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.jwt.JwtAccessTokenCodec;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,13 +38,17 @@ class AccessTokenAuthenticatorServiceTest {
     void 만료된_토큰이면_인증_예외를_던진다() {
         when(accessTokenReader.read("expired-token")).thenReturn(new AccessTokenReadResult.Expired());
 
-        assertThatThrownBy(() -> service.authenticate("expired-token")).isInstanceOf(UnauthenticatedException.class);
+        assertThatThrownBy(() -> service.authenticate("expired-token"))
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 
     @Test
     void 무효한_토큰이면_인증_예외를_던진다() {
         when(accessTokenReader.read("invalid-token")).thenReturn(new AccessTokenReadResult.Invalid());
 
-        assertThatThrownBy(() -> service.authenticate("invalid-token")).isInstanceOf(UnauthenticatedException.class);
+        assertThatThrownBy(() -> service.authenticate("invalid-token"))
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 }

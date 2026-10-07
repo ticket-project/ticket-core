@@ -10,7 +10,8 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 
 public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
@@ -30,6 +31,6 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
                 && authentication.getPrincipal() instanceof AuthenticatedMember authenticatedMember) {
             return authenticatedMember;
         }
-        throw new UnauthenticatedException();
+        throw new AuthException(SecurityErrorCode.E1000);
     }
 }

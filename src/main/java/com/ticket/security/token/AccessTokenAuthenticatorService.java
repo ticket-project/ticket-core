@@ -4,7 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.jwt.JwtAccessTokenCodec;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,6 @@ public class AccessTokenAuthenticatorService implements AccessTokenAuthenticatio
         if (accessTokenReader.read(accessToken) instanceof AccessTokenReadResult.Authenticated authenticated) {
             return authenticated.member();
         }
-        throw new UnauthenticatedException();
+        throw new AuthException(SecurityErrorCode.E1000);
     }
 }

@@ -11,7 +11,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.ticket.member.api.AuthenticatedMember;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 
 class AuthenticatedMemberArgumentResolverTest {
     private final AuthenticatedMemberArgumentResolver resolver = new AuthenticatedMemberArgumentResolver();
@@ -24,7 +25,8 @@ class AuthenticatedMemberArgumentResolverTest {
     @Test
     void 인증이_없으면_401을_던진다() {
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
-                .isInstanceOf(UnauthenticatedException.class);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 
     @Test
@@ -44,6 +46,7 @@ class AuthenticatedMemberArgumentResolverTest {
                 .setAuthentication(new UsernamePasswordAuthenticationToken("member", null, List.of()));
 
         assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
-                .isInstanceOf(UnauthenticatedException.class);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 }

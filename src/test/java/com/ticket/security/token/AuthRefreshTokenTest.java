@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 
 @SuppressWarnings("NonAsciiCharacters")
 class AuthRefreshTokenTest {
@@ -18,7 +19,9 @@ class AuthRefreshTokenTest {
 
     @Test
     void 빈값이면_인증_예외를_던진다() {
-        assertThatThrownBy(() -> AuthRefreshToken.from("   ")).isInstanceOf(UnauthenticatedException.class);
+        assertThatThrownBy(() -> AuthRefreshToken.from("   "))
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 
     @Test

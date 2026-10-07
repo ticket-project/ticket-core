@@ -20,7 +20,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.exception.handler.MemberExceptionHandler;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.security.oauth.GetSocialLoginUrlsUseCase;
@@ -126,7 +127,8 @@ class AuthControllerContractTest {
         AuthenticatedMember principal = new AuthenticatedMember(1L, "MEMBER");
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of()));
-        when(logoutUseCase.execute(any(LogoutUseCase.Input.class))).thenThrow(new UnauthenticatedException());
+        when(logoutUseCase.execute(any(LogoutUseCase.Input.class)))
+                .thenThrow(new AuthException(SecurityErrorCode.E1000));
 
         mockMvc.perform(post("/api/v1/auth/logout").cookie(new MockCookie("refresh_token", "refresh-token")))
                 .andExpect(status().isUnauthorized())

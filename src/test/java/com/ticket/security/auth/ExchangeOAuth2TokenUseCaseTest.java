@@ -16,7 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.exception.MemberNotFoundException;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.security.oauth.RedisOAuth2AuthCodeStore;
 import com.ticket.security.token.IssuedAuthTokens;
@@ -65,7 +66,8 @@ class ExchangeOAuth2TokenUseCaseTest {
         when(oauth2AuthCodeStore.consumeCode("invalid")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new ExchangeOAuth2TokenUseCase.Input("invalid")))
-                .isInstanceOf(UnauthenticatedException.class);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 
     @Test
@@ -74,7 +76,8 @@ class ExchangeOAuth2TokenUseCaseTest {
         when(memberAccountApi.getActiveIdentity(7L)).thenThrow(new MemberNotFoundException());
 
         assertThatThrownBy(() -> useCase.execute(new ExchangeOAuth2TokenUseCase.Input("oauth-code")))
-                .isInstanceOf(UnauthenticatedException.class)
-                .hasMessage(UnauthenticatedException.MESSAGE);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000)
+                .hasMessage(SecurityErrorCode.E1000.getMessage());
     }
 }

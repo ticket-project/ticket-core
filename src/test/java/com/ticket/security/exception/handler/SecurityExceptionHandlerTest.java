@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.ticket.security.exception.AuthorizationException;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.shared.web.ApiResponse;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -17,7 +17,7 @@ class SecurityExceptionHandlerTest {
     @Test
     void 인증_실패는_기존_상태와_코드로_응답한다() {
         final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleUnauthenticated(new UnauthenticatedException("토큰 오류"));
+                handler.handleSecurityException(new AuthException(SecurityErrorCode.E1000, "토큰 오류"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
@@ -29,7 +29,7 @@ class SecurityExceptionHandlerTest {
     @Test
     void 인가_실패는_기존_상태와_코드로_응답한다() {
         final ResponseEntity<ApiResponse<Object>> response =
-                handler.handleAuthorization(new AuthorizationException("권한 오류"));
+                handler.handleSecurityException(new AuthException(SecurityErrorCode.E1001, "권한 오류"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();

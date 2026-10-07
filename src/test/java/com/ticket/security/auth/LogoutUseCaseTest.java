@@ -12,8 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.security.exception.AuthorizationException;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RedisRefreshTokenStore;
 
@@ -43,7 +43,8 @@ class LogoutUseCaseTest {
         when(refreshTokenStore.validateWithoutConsume(refreshToken)).thenReturn(Optional.of(2L));
 
         assertThatThrownBy(() -> useCase.execute(new LogoutUseCase.Input(1L, refreshToken)))
-                .isInstanceOf(AuthorizationException.class);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1001);
     }
 
     @Test
@@ -53,6 +54,7 @@ class LogoutUseCaseTest {
         when(refreshTokenStore.validateWithoutConsume(refreshToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new LogoutUseCase.Input(1L, refreshToken)))
-                .isInstanceOf(UnauthenticatedException.class);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 }
