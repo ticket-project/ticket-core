@@ -1,23 +1,23 @@
 package com.ticket.booking.admission;
 
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.time.Clock;
 import java.util.Date;
-
-import javax.crypto.SecretKey;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 @Component
 @EnableConfigurationProperties(AdmissionTokenProperties.class)
@@ -27,13 +27,21 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     private static final String SCOPE_CLAIM = "scope";
     private final AdmissionTokenProperties properties;
     private final Clock clock;
-    private final SecretKey secretKey;
+    private final Set<JWSAlgorithm> acceptedAlgorithms;
+    private final MACVerifier verifier;
 
     public JwtAdmissionVerifier(final AdmissionTokenProperties properties, final Clock clock) {
         this.properties = properties;
         this.clock = clock;
-        // 32바이트(HS256) 미만이면 WeakKeyException으로 기동을 막는다.
-        this.secretKey = Keys.hmacShaKeyFor(properties.secretKey().getBytes(StandardCharsets.UTF_8));
+        final byte[] secret = properties.secretKey().getBytes(StandardCharsets.UTF_8);
+        // jjwt와 같게 secret 길이가 허용하는 HS 알고리즘만 받는다(32바이트 HS256, 48 HS384, 64 이상 HS512).
+        this.acceptedAlgorithms = MACSigner.getCompatibleAlgorithms(secret.length * 8);
+        try {
+            // 32바이트(HS256) 미만이면 KeyLengthException으로 기동을 막는다.
+            this.verifier = new MACVerifier(secret);
+        } catch (final JOSEException exception) {
+            throw new IllegalArgumentException("security.admission.secret-key must be at least 32 bytes", exception);
+        }
     }
 
     /**
@@ -48,7 +56,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         if (admissionToken == null || admissionToken.isBlank()) {
             throw new AdmissionTokenException(AdmissionErrorCode.E8000, "admission token missing");
         }
-        final Claims claims = parse(admissionToken);
+        final JWTClaimsSet claims = parse(admissionToken);
         validateAudience(claims);
         validateScope(claims);
         validateTimestamps(claims);
@@ -64,41 +72,57 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         }
     }
 
-    private Claims parse(final String token) {
+    /** 서명 → 만료 → nbf → issuer 순서로 본다. jjwt 파서와 같은 순서라 만료이면서 issuer가 틀린 토큰도 만료로 거부된다. */
+    private JWTClaimsSet parse(final String token) {
+        final JWTClaimsSet claims;
         try {
-            return Jwts.parser()
-                    .requireIssuer(properties.issuer())
-                    .clock(() -> Date.from(clock.instant()))
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (ExpiredJwtException exception) {
-            throw new AdmissionTokenException(AdmissionErrorCode.E8001, "admission token expired", exception);
-        } catch (JwtException | IllegalArgumentException exception) {
-            throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid", exception);
+            final SignedJWT jwt = SignedJWT.parse(token);
+            if (!acceptedAlgorithms.contains(jwt.getHeader().getAlgorithm()) || !jwt.verify(verifier)) {
+                throw invalid(null);
+            }
+            claims = jwt.getJWTClaimsSet();
+            // Nimbus는 숫자 sub를 문자열로 바꿔 읽지만 jjwt는 claim 해석 단계에서 거부했다.
+            final Object rawSubject = jwt.getPayload().toJSONObject().get("sub");
+            if (rawSubject != null && !(rawSubject instanceof String)) {
+                throw invalid(null);
+            }
+        } catch (ParseException | JOSEException | IllegalArgumentException exception) {
+            throw invalid(exception);
         }
+        final Date now = Date.from(clock.instant());
+        if (claims.getExpirationTime() != null && now.after(claims.getExpirationTime())) {
+            throw new AdmissionTokenException(AdmissionErrorCode.E8001, "admission token expired");
+        }
+        if ((claims.getNotBeforeTime() != null && now.before(claims.getNotBeforeTime()))
+                || !properties.issuer().equals(claims.getIssuer())) {
+            throw invalid(null);
+        }
+        return claims;
     }
 
-    private void validateAudience(final Claims claims) {
-        if (claims.getAudience() == null || !claims.getAudience().contains(properties.audience())) {
+    private static AdmissionTokenException invalid(final @Nullable Exception cause) {
+        return new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid", cause);
+    }
+
+    private void validateAudience(final JWTClaimsSet claims) {
+        if (!claims.getAudience().contains(properties.audience())) {
             throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid audience");
         }
     }
 
-    private void validateScope(final Claims claims) {
-        if (!SCOPE.equals(claims.get(SCOPE_CLAIM, String.class))) {
+    private void validateScope(final JWTClaimsSet claims) {
+        if (!SCOPE.equals(claims.getClaim(SCOPE_CLAIM))) {
             throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid scope");
         }
     }
 
-    private void validateTimestamps(final Claims claims) {
-        if (claims.getIssuedAt() == null || claims.getExpiration() == null) {
+    private void validateTimestamps(final JWTClaimsSet claims) {
+        if (claims.getIssueTime() == null || claims.getExpirationTime() == null) {
             throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid timestamps");
         }
     }
 
-    private long parseMemberId(final Claims claims) {
+    private long parseMemberId(final JWTClaimsSet claims) {
         try {
             return Long.parseLong(claims.getSubject());
         } catch (NumberFormatException exception) {
@@ -106,8 +130,8 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
         }
     }
 
-    private long readLongClaim(final Claims claims, final String claimName) {
-        Object value = claims.get(claimName);
+    private long readLongClaim(final JWTClaimsSet claims, final String claimName) {
+        Object value = claims.getClaim(claimName);
         if (value instanceof Number number) {
             return number.longValue();
         }

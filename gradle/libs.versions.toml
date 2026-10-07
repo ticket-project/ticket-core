@@ -11,7 +11,6 @@
 spring-boot = "4.1.1"
 spring-modulith = "2.1.1"
 spring-dependency-management = "1.1.7"
-jjwt = "0.13.0"
 archunit = "1.4.1"
 error-prone = "2.50.0"
 nullaway = "0.14.1"
@@ -31,10 +30,6 @@ spring-modulith-starter-test = { module = "org.springframework.modulith:spring-m
 # 버전은 Spring Boot BOM(querydsl-bom)이 관리한다.
 querydsl-jpa = { module = "com.querydsl:querydsl-jpa" }
 querydsl-apt = { module = "com.querydsl:querydsl-apt" }
-
-jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
-jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
-jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
