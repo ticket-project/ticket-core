@@ -6,10 +6,10 @@ spring:
       pool-name: ticket-core
   jpa:
     open-in-view: false
-  config:
-    import:
-      - logging.yml
-      - redis.yml
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
   modulith:
     events:
       completion-mode: archive
@@ -67,6 +67,12 @@ spring:
     encoding: UTF-8
     clean-disabled: true
     validate-on-migrate: true
+
+logging:
+  charset:
+    console: UTF-8
+  pattern:
+    console: '%clr(%d{HH:mm:ss.SSS}){faint}|%clr(%5p)|%32X{traceId:-},%16X{spanId:-}|%clr(%-40.40logger{39}){cyan}%clr(|){faint}%m%n%wEx'
 
 server:
   forward-headers-strategy: framework
