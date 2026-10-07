@@ -18,6 +18,11 @@ public record VenueSnapshot(
     /** 좌석 맵 SVG 렌더링에 필요한 배치값이다. DB의 {@code gap_x}/{@code gap_y}는 소비자가 없어 entity도 매핑하지 않는다(Issue #252). */
     public record SeatMapLayout(int viewBoxWidth, int viewBoxHeight, double seatDiameter) {}
 
+    /** 지역 코드다. 지역이 없는 공연장이면 null이다. */
+    public @Nullable String regionCode() {
+        return region == null ? null : region.code();
+    }
+
     /**
      * 공연장 소재 지역의 코드({@code "SEOUL"})와 표시명({@code "서울"}) 쌍이다.
      *

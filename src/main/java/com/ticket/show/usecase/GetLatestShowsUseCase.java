@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -55,7 +54,7 @@ public class GetLatestShowsUseCase {
                 ShowCardImagePathConverter.toCardImage(show.getImage()),
                 show.getStartDate(),
                 show.getEndDate(),
-                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
+                venue == null ? null : venue.name(),
                 show.getCreatedAt());
     }
 }

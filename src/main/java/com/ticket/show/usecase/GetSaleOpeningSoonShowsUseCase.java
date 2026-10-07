@@ -3,7 +3,6 @@ package com.ticket.show.usecase;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -55,7 +54,7 @@ public class GetSaleOpeningSoonShowsUseCase {
                 show.getId(),
                 show.getTitle(),
                 ShowCardImagePathConverter.toCardImage(show.getImage()),
-                Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
+                venue == null ? null : venue.name(),
                 show.getDisplaySaleStartsAt());
     }
 }
