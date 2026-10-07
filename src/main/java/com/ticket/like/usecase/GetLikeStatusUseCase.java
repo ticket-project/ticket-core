@@ -30,9 +30,8 @@ public class GetLikeStatusUseCase {
 
     public Output execute(final Input input) {
 
-        final boolean liked = likeRepository.existsByMemberIdAndLikeTypeAndTargetId(
-                input.memberId(), input.likeType(), input.targetId());
-        final long likeCount = likeRepository.countByLikeTypeAndTargetId(input.likeType(), input.targetId());
+        final boolean liked = likeRepository.existsByMemberIdAndTargetId(input.memberId(), input.targetId());
+        final long likeCount = likeRepository.countByTargetId(input.targetId());
         return new Output(input.targetId(), liked, likeCount);
     }
 }

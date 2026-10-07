@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.ticket.like.domain.LikeType;
 import com.ticket.like.exception.LikeAlreadyExistsException;
 import com.ticket.shared.web.ApiResponse;
 
@@ -17,7 +16,7 @@ class LikeExceptionHandlerTest {
 
     @Test
     void 이미_찜한_대상은_409와_E7001로_응답하고_data에_상세를_싣는다() {
-        final LikeAlreadyExistsException exception = new LikeAlreadyExistsException(1L, LikeType.SHOW, 7L);
+        final LikeAlreadyExistsException exception = new LikeAlreadyExistsException(1L, 7L);
 
         final ResponseEntity<ApiResponse<Object>> response = handler.handleLikeException(exception);
 

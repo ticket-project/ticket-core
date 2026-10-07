@@ -11,7 +11,7 @@ class LikeTest {
     void 회원_id와_대상_id가_있으면_찜을_생성한다() {
         // given
         // when
-        Like like = new Like(1L, LikeType.SHOW, 2L);
+        Like like = new Like(1L, 2L);
         // then
         assertThat(like.getMemberId()).isEqualTo(1L);
         assertThat(like.getLikeType()).isEqualTo(LikeType.SHOW);
@@ -22,25 +22,16 @@ class LikeTest {
     void 회원_id가_없으면_예외를_던진다() {
         // when
         // then
-        assertThatThrownBy(() -> new Like(null, LikeType.SHOW, 2L))
+        assertThatThrownBy(() -> new Like(null, 2L))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("memberId");
-    }
-
-    @Test
-    void 찜_대상_종류가_없으면_예외를_던진다() {
-        // when
-        // then
-        assertThatThrownBy(() -> new Like(1L, null, 2L))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("likeType");
     }
 
     @Test
     void 대상_id가_없으면_예외를_던진다() {
         // when
         // then
-        assertThatThrownBy(() -> new Like(1L, LikeType.SHOW, null))
+        assertThatThrownBy(() -> new Like(1L, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("targetId");
     }

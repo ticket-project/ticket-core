@@ -35,10 +35,9 @@ class RemoveLikeUseCaseTest {
 
     @Test
     void 찜한_상태면_삭제하고_갱신된_찜수를_돌려준다() {
-        Like like = new Like(1L, LikeType.SHOW, 2L);
-        when(likeRepository.findByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
-                .thenReturn(Optional.of(like));
-        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(4L);
+        Like like = new Like(1L, 2L);
+        when(likeRepository.findByMemberIdAndTargetId(1L, 2L)).thenReturn(Optional.of(like));
+        when(likeRepository.countByTargetId(2L)).thenReturn(4L);
 
         RemoveLikeUseCase.Output output = useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
@@ -50,9 +49,8 @@ class RemoveLikeUseCaseTest {
 
     @Test
     void 찜하지_않은_상태로_불러도_예외_없이_해제_상태를_돌려준다() {
-        when(likeRepository.findByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
-                .thenReturn(Optional.empty());
-        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(4L);
+        when(likeRepository.findByMemberIdAndTargetId(1L, 2L)).thenReturn(Optional.empty());
+        when(likeRepository.countByTargetId(2L)).thenReturn(4L);
 
         RemoveLikeUseCase.Output output = useCase.execute(new RemoveLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
