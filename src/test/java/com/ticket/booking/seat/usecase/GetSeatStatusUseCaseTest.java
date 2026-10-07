@@ -29,7 +29,7 @@ import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
@@ -60,7 +60,7 @@ class GetSeatStatusUseCaseTest {
     private SeatSelectionService seatSelectionService;
 
     @Mock
-    private HoldRegistry holdRegistry;
+    private HoldStore holdStore;
 
     @Mock
     private AdmissionVerifier admissionVerifier;
@@ -74,7 +74,7 @@ class GetSeatStatusUseCaseTest {
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new GetSeatStatusUseCase(
                         performanceSeatRepository,
-                        new SeatOccupancy(seatSelectionService, holdRegistry),
+                        new SeatOccupancy(seatSelectionService, holdStore),
                         new BookingEntryGuard(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         CLOCK);
@@ -88,7 +88,7 @@ class GetSeatStatusUseCaseTest {
                         PerformanceSeatFixture.seat(101L, 1L, 31L, PerformanceSeatState.AVAILABLE),
                         PerformanceSeatFixture.seat(102L, 2L, 31L, PerformanceSeatState.RESERVED)));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
-        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output =
                 useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
@@ -108,7 +108,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output =
                 useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
@@ -131,7 +131,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(dbStates);
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         GetSeatStatusUseCase.Output output =
                 useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
@@ -154,7 +154,7 @@ class GetSeatStatusUseCaseTest {
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
-        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
+        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdStore);
     }
 
     @Test
@@ -166,7 +166,7 @@ class GetSeatStatusUseCaseTest {
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3002);
 
-        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
+        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdStore);
     }
 
     @Test
@@ -174,7 +174,7 @@ class GetSeatStatusUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findAllByPerformanceId(10L)).thenReturn(List.of());
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
-        when(holdRegistry.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
         useCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token"));
 
@@ -192,7 +192,7 @@ class GetSeatStatusUseCaseTest {
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8000);
 
-        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdRegistry);
+        verifyNoInteractions(performanceSeatRepository, seatSelectionService, holdStore);
     }
 
     private PerformanceSalesPolicy openPolicy() {

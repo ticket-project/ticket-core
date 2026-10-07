@@ -30,7 +30,7 @@ import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
@@ -59,7 +59,7 @@ class SelectSeatUseCaseTest {
     private PerformanceSeatRepository performanceSeatRepository;
 
     @Mock
-    private HoldRegistry holdRegistry;
+    private HoldStore holdStore;
 
     @Mock
     private AdmissionVerifier admissionVerifier;
@@ -74,7 +74,7 @@ class SelectSeatUseCaseTest {
                 new SelectSeatUseCase(
                         seatSelectionWriter,
                         performanceSeatRepository,
-                        holdRegistry,
+                        holdStore,
                         new BookingEntryGuard(
                                 new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                         CLOCK);
@@ -89,10 +89,10 @@ class SelectSeatUseCaseTest {
         useCase.execute(INPUT);
 
         InOrder inOrder =
-                inOrder(performanceSalesPolicyRepository, performanceSeatRepository, holdRegistry, seatSelectionWriter);
+                inOrder(performanceSalesPolicyRepository, performanceSeatRepository, holdStore, seatSelectionWriter);
         inOrder.verify(performanceSalesPolicyRepository).findById(10L);
         inOrder.verify(performanceSeatRepository).findSeatState(10L, 20L);
-        inOrder.verify(holdRegistry).isHeld(10L, 20L);
+        inOrder.verify(holdStore).isHeld(10L, 20L);
         // 검증에서 얻은 performanceSeatId와 회차 선점 한도를 넘긴다. SELECTED 발행은 SeatSelectionWriter가 좌석 락
         // 안에서 하므로 여기서 다시 발행하지 않는다.
         inOrder.verify(seatSelectionWriter)
@@ -120,7 +120,7 @@ class SelectSeatUseCaseTest {
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8000);
 
-        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionWriter);
+        verifyNoInteractions(performanceSeatRepository, holdStore, seatSelectionWriter);
     }
 
     @Test
@@ -132,7 +132,7 @@ class SelectSeatUseCaseTest {
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
-        verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionWriter, admissionVerifier);
+        verifyNoInteractions(performanceSeatRepository, holdStore, seatSelectionWriter, admissionVerifier);
     }
 
     @Test
@@ -144,7 +144,7 @@ class SelectSeatUseCaseTest {
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4000);
 
-        verifyNoInteractions(holdRegistry, seatSelectionWriter);
+        verifyNoInteractions(holdStore, seatSelectionWriter);
     }
 
     @Test
@@ -157,7 +157,7 @@ class SelectSeatUseCaseTest {
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3003);
 
-        verifyNoInteractions(holdRegistry, seatSelectionWriter);
+        verifyNoInteractions(holdStore, seatSelectionWriter);
     }
 
     /** 락 밖의 사전 확인이다 — 락 안에서 SeatSelectionWriter가 다시 보는 것과 같은 검증이 아니다. */
@@ -165,7 +165,7 @@ class SelectSeatUseCaseTest {
     void 이미_선점된_좌석이면_선택하지_않는다() {
         openPerformance();
         when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.of(availableSeat()));
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> useCase.execute(INPUT))
                 .isInstanceOf(BookingException.class)

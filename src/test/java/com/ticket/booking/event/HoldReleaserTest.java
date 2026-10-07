@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
-import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
@@ -31,7 +31,7 @@ import com.ticket.booking.selection.domain.SeatSelectionService;
 @ExtendWith(MockitoExtension.class)
 class HoldReleaserTest {
     @Mock
-    private HoldRegistry holdRegistry;
+    private HoldStore holdStore;
 
     private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
 
@@ -47,20 +47,20 @@ class HoldReleaserTest {
     void setUp() {
         releaser = new HoldReleaser(
                 distributedLock,
-                holdRegistry,
-                new SeatOccupancy(seatSelectionService, holdRegistry),
+                holdStore,
+                new SeatOccupancy(seatSelectionService, holdStore),
                 seatStatusEventPublisher);
     }
 
     @Test
     void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
-        when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
-        when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 10L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 20L)).thenReturn(false);
 
         releaser.releaseAndPublish("old-hold", snapshot());
 
-        final InOrder inOrder = inOrder(holdRegistry, seatStatusEventPublisher);
-        inOrder.verify(holdRegistry).release(1L, "old-hold", List.of(10L, 20L));
+        final InOrder inOrder = inOrder(holdStore, seatStatusEventPublisher);
+        inOrder.verify(holdStore).release(1L, "old-hold", List.of(10L, 20L));
         inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
         inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
@@ -68,7 +68,7 @@ class HoldReleaserTest {
     @Test
     void doesNotPublishOverANewerHoldOrSelection() {
         when(seatSelectionService.isSelected(1L, 10L)).thenReturn(false);
-        when(holdRegistry.isHeld(1L, 10L)).thenReturn(true);
+        when(holdStore.isHeld(1L, 10L)).thenReturn(true);
         when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
 
         releaser.releaseAndPublish("old-hold", snapshot());
@@ -82,8 +82,8 @@ class HoldReleaserTest {
      */
     @Test
     void publicationFailureIsRetriedFromRelease() {
-        when(holdRegistry.isHeld(1L, 10L)).thenReturn(false);
-        when(holdRegistry.isHeld(1L, 20L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 10L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 20L)).thenReturn(false);
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
                 .when(seatStatusEventPublisher)
@@ -93,7 +93,7 @@ class HoldReleaserTest {
                 .hasMessage("publish failed");
         releaser.releaseAndPublish("old-hold", snapshot());
 
-        verify(holdRegistry, times(2)).release(1L, "old-hold", List.of(10L, 20L));
+        verify(holdStore, times(2)).release(1L, "old-hold", List.of(10L, 20L));
         verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
         verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }

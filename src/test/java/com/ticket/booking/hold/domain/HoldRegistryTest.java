@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,33 +79,5 @@ class HoldRegistryTest {
         Hold second = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
 
         assertThat(first.holdKey()).isNotEqualTo(second.holdKey());
-    }
-
-    @Test
-    void release는_좌석_정규화를_store에_위임한다() {
-        when(holdStore.release(1L, "hold-key", List.of(20L, 10L, 10L))).thenReturn(List.of(10L));
-
-        List<Long> releasedSeatIds = holdRegistry.release(1L, "hold-key", List.of(20L, 10L, 10L));
-
-        verify(holdStore).release(1L, "hold-key", List.of(20L, 10L, 10L));
-        assertThat(releasedSeatIds).containsExactly(10L);
-    }
-
-    @Test
-    void 현재_hold중인_좌석아이디를_조회한다() {
-        when(holdStore.getHoldingSeatIds(1L)).thenReturn(Set.of(10L, 30L));
-
-        Set<Long> result = holdRegistry.getHoldingSeatIds(1L);
-
-        assertThat(result).containsExactlyInAnyOrder(10L, 30L);
-    }
-
-    @Test
-    void isHeld는_hold여부를_반환한다() {
-        when(holdStore.isHeld(1L, 10L)).thenReturn(true);
-
-        boolean result = holdRegistry.isHeld(1L, 10L);
-
-        assertThat(result).isTrue();
     }
 }
