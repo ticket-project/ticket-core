@@ -4,7 +4,7 @@
 #   - 같은 제품의 여러 artifact는 하나의 version ref를 공유한다.
 #   - Spring Boot BOM이 관리하는 starter는 여기 두지 않는다. 버전을 중복 선언하면 BOM과 어긋난다.
 #   - 각 모듈이 무엇을 쓰는지는 모듈 build.gradle에 계속 명시한다. 이 파일은 버전만 정한다.
-#   - applicationVersion과 projectGroup은 gradle.properties가, wrapper 버전은
+#   - group과 version은 build.gradle이, wrapper 버전은
 #     gradle/wrapper/gradle-wrapper.properties가 소유한다.
 
 [versions]
