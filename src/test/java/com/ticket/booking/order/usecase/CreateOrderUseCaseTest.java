@@ -42,6 +42,7 @@ import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
@@ -92,6 +93,9 @@ class CreateOrderUseCaseTest {
     private HoldRegistry holdRegistry;
 
     @Mock
+    private HoldStore holdStore;
+
+    @Mock
     private SeatSelectionService seatSelectionService;
 
     @Mock
@@ -114,6 +118,7 @@ class CreateOrderUseCaseTest {
                         bookingAvailabilityChecker,
                         performanceSaleInfoApi,
                         holdRegistry,
+                        holdStore,
                         seatSelectionService,
                         pendingOrderCreator,
                         fixedClock);
@@ -339,7 +344,7 @@ class CreateOrderUseCaseTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed");
 
-        verify(holdRegistry).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
+        verify(holdStore).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
     }
 
     @Test
@@ -359,7 +364,7 @@ class CreateOrderUseCaseTest {
                         eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
                 .thenThrow(originalException);
         doThrow(new RuntimeException("release failed"))
-                .when(holdRegistry)
+                .when(holdStore)
                 .release(PERFORMANCE_ID, "hold-key", seatIds.toList());
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))

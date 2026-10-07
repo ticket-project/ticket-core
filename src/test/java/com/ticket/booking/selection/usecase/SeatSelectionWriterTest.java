@@ -27,7 +27,7 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -43,7 +43,7 @@ class SeatSelectionWriterTest {
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
-    private HoldRegistry holdRegistry;
+    private HoldStore holdStore;
 
     @Mock
     private SeatSelectionService seatSelectionService;
@@ -61,9 +61,9 @@ class SeatSelectionWriterTest {
     void setUp() {
         writer = new SeatSelectionWriter(
                 distributedLock,
-                holdRegistry,
+                holdStore,
                 seatSelectionService,
-                new SeatOccupancy(seatSelectionService, holdRegistry),
+                new SeatOccupancy(seatSelectionService, holdStore),
                 performanceSeatRepository,
                 seatEventPublisher,
                 CLOCK);
@@ -71,7 +71,7 @@ class SeatSelectionWriterTest {
 
     @Test
     void 락_내부에서_홀드를_다시_확인하고_좌석을_선점한다() {
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
 
         writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
@@ -81,7 +81,7 @@ class SeatSelectionWriterTest {
     /** 발행이 락 밖에 있으면 뒤늦은 만료 알림이 이 SELECTED 뒤에 끼어들 수 있다. */
     @Test
     void SELECTED_발행은_좌석_락_안에서_한다() {
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
 
         writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
@@ -91,7 +91,7 @@ class SeatSelectionWriterTest {
 
     @Test
     void DB검증_후_홀드된_좌석이면_선점을_중단한다() {
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
                 .isInstanceOf(BookingException.class)
@@ -106,7 +106,7 @@ class SeatSelectionWriterTest {
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
-        verifyNoInteractions(holdRegistry, seatSelectionService, seatEventPublisher);
+        verifyNoInteractions(holdStore, seatSelectionService, seatEventPublisher);
     }
 
     @Test
@@ -123,7 +123,7 @@ class SeatSelectionWriterTest {
     void 주문_생성_후_선택을_해제해도_hold된_좌석은_발행하지_않는다() {
         givenPerformanceSeat();
         when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
-        when(holdRegistry.isHeld(10L, 20L)).thenAnswer(invocation -> {
+        when(holdStore.isHeld(10L, 20L)).thenAnswer(invocation -> {
             assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
             return true;
         });
@@ -161,7 +161,7 @@ class SeatSelectionWriterTest {
     void 만료_알림_직전에_선점으로_넘어갔으면_발행하지_않는다() {
         givenPerformanceSeat();
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(true);
 
         writer.notifyReleasedIfFree(10L, 20L);
 
@@ -172,7 +172,7 @@ class SeatSelectionWriterTest {
     void 만료된_좌석이_여전히_비어_있으면_DESELECTED를_발행한다() {
         givenPerformanceSeat();
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
 
         writer.notifyReleasedIfFree(10L, 20L);
 
@@ -183,7 +183,7 @@ class SeatSelectionWriterTest {
     @Test
     void performanceSeatId를_받으면_좌석을_다시_조회하지_않는다() {
         when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdRegistry.isHeld(10L, 20L)).thenReturn(false);
+        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
 
         writer.notifyReleasedIfFree(10L, 20L, 501L);
 

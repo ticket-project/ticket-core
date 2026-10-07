@@ -17,6 +17,7 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
@@ -60,6 +61,7 @@ public class CreateOrderUseCase {
     private final BookingAvailabilityChecker bookingAvailabilityChecker;
     private final PerformanceSaleInfoApi performanceSaleInfoApi;
     private final HoldRegistry holdRegistry;
+    private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
     private final Clock clock;
@@ -155,7 +157,7 @@ public class CreateOrderUseCase {
             distributedLock.withLock(
                     seatLocks,
                     LockOptions.defaults(),
-                    () -> holdRegistry.release(hold.performanceId(), hold.holdKey(), hold.seatIds()));
+                    () -> holdStore.release(hold.performanceId(), hold.holdKey(), hold.seatIds()));
         } catch (final RuntimeException releaseException) {
             originalException.addSuppressed(releaseException);
             log.warn("hold 해제에 실패했습니다. holdKey={}", hold.holdKey(), releaseException);

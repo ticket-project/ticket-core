@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class SelectSeatUseCase {
     private final SeatSelectionWriter seatSelectionWriter;
     private final PerformanceSeatRepository performanceSeatRepository;
-    private final HoldRegistry holdRegistry;
+    private final HoldStore holdStore;
     private final BookingEntryGuard bookingEntryGuard;
     private final Clock clock;
 
@@ -76,7 +76,7 @@ public class SelectSeatUseCase {
         if (seat.getState() != PerformanceSeatState.AVAILABLE) {
             throw new BookingException(BookingErrorCode.E3003);
         }
-        if (holdRegistry.isHeld(performanceId, seatId)) {
+        if (holdStore.isHeld(performanceId, seatId)) {
             throw new BookingException(BookingErrorCode.E6000);
         }
         return seat.getId();

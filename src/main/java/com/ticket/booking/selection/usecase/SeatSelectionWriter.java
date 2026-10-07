@@ -13,7 +13,7 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.SeatOccupancy;
@@ -43,7 +43,7 @@ public class SeatSelectionWriter {
     private static final LockOptions NOTIFY_LOCK = LockOptions.defaults();
 
     private final DistributedLock distributedLock;
-    private final HoldRegistry holdRegistry;
+    private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
     private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
@@ -61,7 +61,7 @@ public class SeatSelectionWriter {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
                 throw new BookingException(BookingErrorCode.E3001);
             }
-            if (holdRegistry.isHeld(performanceId, seatId)) {
+            if (holdStore.isHeld(performanceId, seatId)) {
                 throw new BookingException(BookingErrorCode.E6000);
             }
             seatSelectionService.select(performanceId, seatId, memberId, maxSeatCount);
@@ -74,7 +74,7 @@ public class SeatSelectionWriter {
         final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
         distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (!seatSelectionService.deselect(performanceId, seatId, memberId)
-                    || holdRegistry.isHeld(performanceId, seatId)) {
+                    || holdStore.isHeld(performanceId, seatId)) {
                 return;
             }
             seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
