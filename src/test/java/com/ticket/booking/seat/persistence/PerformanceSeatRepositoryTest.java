@@ -10,7 +10,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -30,9 +29,8 @@ import com.ticket.venue.domain.Venue;
  *
  * <p>정렬을 실제로 검증하려면 저장 순서가 {@code seatId} 오름차순이면 안 된다 — 그래서 <b>seat2를 먼저 편성한다</b>.
  */
-@Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceSeatRepositoryAdapterTest extends ReadRepositoryTestSupport {
+class PerformanceSeatRepositoryTest extends ReadRepositoryTestSupport {
     @Autowired
     private PerformanceSeatRepository performanceSeatRepository;
 

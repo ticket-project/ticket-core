@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -20,9 +19,8 @@ import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 
-@Import(PerformanceSeatRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class PerformanceSeatRepositoryAdapterSelectionTest extends ReadRepositoryTestSupport {
+class PerformanceSeatRepositorySelectionTest extends ReadRepositoryTestSupport {
     @Autowired
     private PerformanceSeatRepository performanceSeatRepository;
 

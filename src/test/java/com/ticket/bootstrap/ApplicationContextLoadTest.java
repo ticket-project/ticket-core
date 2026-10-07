@@ -3,8 +3,10 @@ package com.ticket.bootstrap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.hold.domain.HoldStore;
@@ -36,11 +38,11 @@ class ApplicationContextLoadTest extends BookingE2ETestSupport {
         assertThat(context.containsBean("eventPublicationMaintenance")).isTrue();
     }
 
-    /** 도메인 Repository는 포트이고 실제 빈은 저장 기술 어댑터다. 어댑터가 빠지면 기동에서 바로 드러난다. */
+    /** JPA 도메인 Repository는 Spring Data가 직접 구현하고, Redis·락 계약은 저장 기술 어댑터가 구현한다. 구현이 빠지면 기동에서 바로 드러난다. */
     @Test
-    void 도메인_Repository는_저장_기술_어댑터로_구현된다() {
-        assertThat(context.getBean(OrderRepository.class).getClass().getName())
-                .startsWith("com.ticket.booking.order.persistence.");
+    void 도메인_Repository는_저장_기술로_구현된다() {
+        assertThat(AopUtils.getTargetClass(context.getBean(OrderRepository.class)))
+                .isEqualTo(SimpleJpaRepository.class);
         assertThat(context.getBean(HoldStore.class).getClass().getName())
                 .startsWith("com.ticket.booking.hold.persistence.");
         assertThat(context.getBean(DistributedLock.class).getClass().getName())
