@@ -13,8 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.exception.MemberNotFoundException;
 import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.jwt.JwtAuthTokenIssuer;
@@ -38,7 +38,7 @@ class ExchangeOAuth2TokenUseCaseTest {
 
     @Test
     void valid_code_issues_tokens() {
-        MemberIdentity member = new MemberIdentity(1L, "MEMBER");
+        AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens("access-token-value", "refresh-token-value", "Bearer", 1800L, 1209600L, 7L);
 

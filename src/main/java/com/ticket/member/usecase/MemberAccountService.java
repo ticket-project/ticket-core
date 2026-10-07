@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.api.SocialAccountSnapshot;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.domain.Member;
@@ -25,13 +25,13 @@ public class MemberAccountService implements MemberAccountApi {
 
     @Override
     @Transactional(readOnly = true)
-    public MemberIdentity getActiveIdentity(final long memberId) {
+    public AuthenticatedMember getActiveIdentity(final long memberId) {
         final Member member = memberRepository.findActiveById(memberId).orElseThrow(MemberNotFoundException::new);
         return identityOf(member);
     }
 
     @Override
-    public MemberIdentity resolveSocialAccount(final SocialIdentity identity) {
+    public AuthenticatedMember resolveSocialAccount(final SocialIdentity identity) {
         final Member member = socialAccountProvisioningService.getOrCreateMember(identity);
         return identityOf(member);
     }
@@ -41,7 +41,7 @@ public class MemberAccountService implements MemberAccountApi {
         return withdrawMemberUseCase.execute(memberId);
     }
 
-    private MemberIdentity identityOf(final Member member) {
-        return new MemberIdentity(member.getId(), member.getRole().name());
+    private AuthenticatedMember identityOf(final Member member) {
+        return new AuthenticatedMember(member.getId(), member.getRole().name());
     }
 }

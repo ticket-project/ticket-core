@@ -50,7 +50,7 @@
 - 예외 이름은 `[Subject][Condition]Exception`으로 읽히게 한다. `@ConfigurationProperties` 바인딩은
   `Properties`, 검증을 끝낸 설정 값은 `Settings`다. [검사 없음]
 - 도메인 생명주기는 `State`, 외부 표시 상태는 `Status`를 쓴다. 둘 다 아닌 값 묶음은 그 역할을 이름으로 쓴다
-  (`MemberIdentity`). [검사 없음]
+  (`SocialIdentity`). [검사 없음]
 - 이름 변경만으로 JSON·DB·오류 계약을 바꾸지 않는다. 오류 코드(`E`-code)는 외부 계약이라 공개 code·status·
   message를 이름 정리를 이유로 바꾸지 않는다. [검사 없음. E-code 전역 유일성은 `ErrorCodeUniquenessTest`]
 - Production package마다 `package-info.java`의 `@NullMarked`가 필요하며 실제 nullable만 `@Nullable`로

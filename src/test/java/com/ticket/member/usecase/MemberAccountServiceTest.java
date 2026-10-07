@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.member.api.MemberIdentity;
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 import com.ticket.member.domain.Email;
@@ -41,9 +41,9 @@ class MemberAccountServiceTest {
         ReflectionTestUtils.setField(member, "id", 7L);
         when(socialAccountProvisioningService.getOrCreateMember(identity)).thenReturn(member);
 
-        final MemberIdentity memberIdentity = service().resolveSocialAccount(identity);
+        final AuthenticatedMember memberIdentity = service().resolveSocialAccount(identity);
 
-        assertThat(memberIdentity).isEqualTo(new MemberIdentity(7L, "MEMBER"));
+        assertThat(memberIdentity).isEqualTo(new AuthenticatedMember(7L, "MEMBER"));
     }
 
     @Test
@@ -59,7 +59,7 @@ class MemberAccountServiceTest {
         ReflectionTestUtils.setField(member, "id", 42L);
         when(memberRepository.findActiveById(42L)).thenReturn(Optional.of(member));
 
-        assertThat(service().getActiveIdentity(42L)).isEqualTo(new MemberIdentity(42L, "MEMBER"));
+        assertThat(service().getActiveIdentity(42L)).isEqualTo(new AuthenticatedMember(42L, "MEMBER"));
     }
 
     private MemberAccountService service() {
