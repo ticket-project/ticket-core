@@ -8,6 +8,7 @@ import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.hold.domain.HoldRegistry;
+import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
@@ -32,31 +33,31 @@ public class HoldReleaser {
     private final SeatOccupancy seatOccupancy;
     private final SeatStatusEventPublisher seatStatusEventPublisher;
 
-    public void releaseAndPublish(final HoldReleaseTask task) {
+    public void releaseAndPublish(final String holdKey, final OrderHoldSnapshot snapshot) {
         distributedLock.withLock(
-                LockKey.seats(task.performanceId(), task.seatIds()),
+                LockKey.seats(snapshot.performanceId(), snapshot.seatIds()),
                 LockOptions.defaults(),
-                () -> releaseAndPublishLocked(task));
+                () -> releaseAndPublishLocked(holdKey, snapshot));
     }
 
-    private void releaseAndPublishLocked(final HoldReleaseTask task) {
-        holdRegistry.release(task.performanceId(), task.holdKey(), task.seatIds());
-        final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(task);
+    private void releaseAndPublishLocked(final String holdKey, final OrderHoldSnapshot snapshot) {
+        holdRegistry.release(snapshot.performanceId(), holdKey, snapshot.seatIds());
+        final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(snapshot);
         if (publishableSeatIds.isEmpty()) {
             return;
         }
         for (final Long seatId : publishableSeatIds) {
             seatStatusEventPublisher.publish(
-                    task.performanceId(),
-                    task.performanceSeatIdBySeatId().get(seatId),
+                    snapshot.performanceId(),
+                    snapshot.performanceSeatIdBySeatId().get(seatId),
                     seatId,
                     SeatStatusAction.RELEASED);
         }
     }
 
-    private List<Long> findCurrentlyAvailableSeats(final HoldReleaseTask task) {
-        return task.seatIds().stream()
-                .filter(seatId -> !seatOccupancy.isOccupied(task.performanceId(), seatId))
+    private List<Long> findCurrentlyAvailableSeats(final OrderHoldSnapshot snapshot) {
+        return snapshot.seatIds().stream()
+                .filter(seatId -> !seatOccupancy.isOccupied(snapshot.performanceId(), seatId))
                 .toList();
     }
 }

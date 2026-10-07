@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Propagation;
 
 import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
 
@@ -65,9 +64,7 @@ class BookingEventListeners {
             log.debug("주문 생성 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        final Hold hold = new Hold(
-                event.holdKey(), event.memberId(), snapshot.performanceId(), snapshot.seatIds(), snapshot.expiresAt());
-        heldSeatPublisher.clearSelectionsAndPublishHeld(hold, snapshot.performanceSeatIdBySeatId());
+        heldSeatPublisher.clearSelectionsAndPublishHeld(event.holdKey(), event.memberId(), snapshot);
     }
 
     @ApplicationModuleListener(id = ORDER_TERMINATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
@@ -78,7 +75,6 @@ class BookingEventListeners {
             log.debug("hold 해제 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;
         }
-        holdReleaser.releaseAndPublish(new HoldReleaseTask(
-                snapshot.performanceId(), event.holdKey(), snapshot.seatIds(), snapshot.performanceSeatIdBySeatId()));
+        holdReleaser.releaseAndPublish(event.holdKey(), snapshot);
     }
 }

@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -17,8 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.concurrency.RecordingDistributedLock;
-import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldStore;
+import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -36,10 +35,9 @@ class HeldSeatPublisherTest {
 
     @Test
     void current_hold_releases_only_the_owners_selection_before_publishing_held() {
-        final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(true);
         when(holdStore.isHeldBy(10L, 200L, "hold-key")).thenReturn(true);
-        publisher().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
+        publisher().clearSelectionsAndPublishHeld("hold-key", 20L, snapshot());
 
         final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
@@ -52,10 +50,9 @@ class HeldSeatPublisherTest {
 
     @Test
     void stale_hold_does_not_release_a_new_selection_or_publish_held() {
-        final Hold hold = hold();
         when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(false);
 
-        publisher().clearSelectionsAndPublishHeld(hold, Map.of(100L, 901L, 200L, 902L));
+        publisher().clearSelectionsAndPublishHeld("hold-key", 20L, snapshot());
 
         verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
@@ -67,7 +64,7 @@ class HeldSeatPublisherTest {
                 new RecordingDistributedLock(), holdStore, seatSelectionService, seatStatusEventPublisher);
     }
 
-    private Hold hold() {
-        return new Hold("hold-key", 20L, 10L, List.of(100L, 200L), LocalDateTime.of(2026, 3, 15, 12, 0));
+    private OrderHoldSnapshot snapshot() {
+        return new OrderHoldSnapshot(10L, List.of(100L, 200L), Map.of(100L, 901L, 200L, 902L));
     }
 }

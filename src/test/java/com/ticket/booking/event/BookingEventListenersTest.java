@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Propagation;
 
 import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
-import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
@@ -84,7 +83,7 @@ class BookingEventListenersTest {
     }
 
     @Test
-    void OrderCreated는_현재_DB_상태로_Hold를_재구성해_생성_프로세서에_넘긴다() {
+    void OrderCreated는_현재_DB_상태의_snapshot을_생성_프로세서에_넘긴다() {
         final OrderCreated event = orderCreated(10L, "hold-key");
         final Order order = order(10L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
         addOrderSeat(order, 501L, 42L);
@@ -93,8 +92,9 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        final Hold expectedHold = new Hold("hold-key", 20L, 200L, List.of(42L, 43L), order.getExpiresAt());
-        verify(heldSeatPublisher).clearSelectionsAndPublishHeld(expectedHold, Map.of(42L, 501L, 43L, 502L));
+        verify(heldSeatPublisher)
+                .clearSelectionsAndPublishHeld(
+                        "hold-key", 20L, new OrderHoldSnapshot(200L, List.of(42L, 43L), Map.of(42L, 501L, 43L, 502L)));
     }
 
     @Test
@@ -116,7 +116,8 @@ class BookingEventListenersTest {
 
         listeners.on(event);
 
-        verify(holdReleaser).releaseAndPublish(new HoldReleaseTask(200L, "hold-key", List.of(42L), Map.of(42L, 501L)));
+        verify(holdReleaser)
+                .releaseAndPublish("hold-key", new OrderHoldSnapshot(200L, List.of(42L), Map.of(42L, 501L)));
     }
 
     /** listener는 entity가 아니라 짧은 읽기 트랜잭션에서 완성된 값을 받는다. */
@@ -124,7 +125,6 @@ class BookingEventListenersTest {
         return new OrderHoldSnapshot(
                 order.getPerformanceId(),
                 order.getOrderSeats().stream().map(OrderSeat::getSeatId).toList(),
-                order.getExpiresAt(),
                 order.getOrderSeats().stream()
                         .collect(Collectors.toMap(OrderSeat::getSeatId, OrderSeat::getPerformanceSeatId)));
     }

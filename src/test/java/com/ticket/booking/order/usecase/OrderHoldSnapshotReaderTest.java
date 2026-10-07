@@ -38,7 +38,6 @@ class OrderHoldSnapshotReaderTest {
 
         assertThat(snapshot.performanceId()).isEqualTo(10L);
         assertThat(snapshot.seatIds()).containsExactly(20L, 10L);
-        assertThat(snapshot.expiresAt()).isEqualTo(expiresAt);
         assertThat(snapshot.performanceSeatIdBySeatId())
                 .containsExactlyInAnyOrderEntriesOf(Map.of(20L, 902L, 10L, 901L));
     }
