@@ -27,25 +27,23 @@ public class OrderTerminationService {
     private final Clock clock;
 
     public void cancel(final Order order, final LocalDateTime now) {
-        final List<OrderSeat> orderSeats = order.getOrderSeats();
         order.cancel(now);
         orderHoldHistoryRecorder.recordCanceled(order, now);
-        publishTerminated(order, orderSeats, now);
+        publishTerminated(order, now);
     }
 
     public void expire(final Order order, final LocalDateTime now) {
-        final List<OrderSeat> orderSeats = order.getOrderSeats();
         order.expire(now);
         orderHoldHistoryRecorder.recordExpired(order, now);
-        publishTerminated(order, orderSeats, now);
+        publishTerminated(order, now);
     }
 
-    private void publishTerminated(final Order order, final List<OrderSeat> orderSeats, final LocalDateTime now) {
+    private void publishTerminated(final Order order, final LocalDateTime now) {
         eventPublisher.publishEvent(new OrderTerminated(
                 order.getId(),
                 order.getMemberId(),
                 order.getHoldKey(),
-                performanceSeatIds(orderSeats),
+                performanceSeatIds(order.getOrderSeats()),
                 order.getStatus().name(),
                 now.atZone(clock.getZone()).toInstant()));
     }

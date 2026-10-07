@@ -42,11 +42,7 @@ public class HoldReleaser {
 
     private void releaseAndPublishLocked(final String holdKey, final OrderHoldSnapshot snapshot) {
         holdStore.release(snapshot.performanceId(), holdKey, snapshot.seatIds());
-        final List<Long> publishableSeatIds = findCurrentlyAvailableSeats(snapshot);
-        if (publishableSeatIds.isEmpty()) {
-            return;
-        }
-        for (final Long seatId : publishableSeatIds) {
+        for (final Long seatId : findCurrentlyAvailableSeats(snapshot)) {
             seatStatusEventPublisher.publish(
                     snapshot.performanceId(),
                     snapshot.performanceSeatIdBySeatId().get(seatId),
