@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -159,10 +158,7 @@ public class GetShowDetailUseCase {
     }
 
     private GradeResponse toGradeResponse(final PerformanceGrade performanceGrade, final Map<Long, Grade> gradesById) {
-        final Grade grade = Objects.requireNonNull(
-                gradesById.get(performanceGrade.getGradeId()),
-                () -> "PerformanceGrade %d의 Grade를 찾을 수 없습니다: gradeId=%d"
-                        .formatted(performanceGrade.getId(), performanceGrade.getGradeId()));
+        final Grade grade = PerformanceSnapshotService.gradeOf(gradesById, performanceGrade);
         return new GradeResponse(performanceGrade.getGradeId(), grade.getName(), performanceGrade.getPrice());
     }
 
