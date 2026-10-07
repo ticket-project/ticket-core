@@ -46,7 +46,7 @@ public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
             readResult = accessTokenReader.read(token);
         } catch (final IllegalArgumentException exception) {
             // Bearer 형식 자체가 잘못된 경우다. 토큰 검증까지 가지 않는다.
-            readResult = AccessTokenReadResult.invalid();
+            readResult = new AccessTokenReadResult.Invalid();
         }
 
         try {

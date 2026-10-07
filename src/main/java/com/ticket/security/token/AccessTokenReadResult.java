@@ -13,16 +13,4 @@ public sealed interface AccessTokenReadResult {
     record Expired() implements AccessTokenReadResult {}
 
     record Invalid() implements AccessTokenReadResult {}
-
-    static AccessTokenReadResult authenticated(final AuthenticatedMember member) {
-        return new Authenticated(member);
-    }
-
-    static AccessTokenReadResult expired() {
-        return new Expired();
-    }
-
-    static AccessTokenReadResult invalid() {
-        return new Invalid();
-    }
 }

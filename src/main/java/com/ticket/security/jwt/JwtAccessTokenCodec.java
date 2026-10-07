@@ -55,11 +55,11 @@ public class JwtAccessTokenCodec {
     /** JJWT 예외를 중립 결과로 바꾼다. 라이브러리 예외 타입이 이 모듈 밖으로 나가지 않게 한다. */
     public AccessTokenReadResult read(final String accessToken) {
         try {
-            return AccessTokenReadResult.authenticated(parse(accessToken));
+            return new AccessTokenReadResult.Authenticated(parse(accessToken));
         } catch (final ExpiredJwtException exception) {
-            return AccessTokenReadResult.expired();
+            return new AccessTokenReadResult.Expired();
         } catch (final JwtException | IllegalArgumentException exception) {
-            return AccessTokenReadResult.invalid();
+            return new AccessTokenReadResult.Invalid();
         }
     }
 

@@ -26,7 +26,7 @@ class AccessTokenAuthenticatorServiceTest {
     @Test
     void 유효한_토큰이면_인증된_회원을_반환한다() {
         AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
-        when(accessTokenReader.read("valid-token")).thenReturn(AccessTokenReadResult.authenticated(member));
+        when(accessTokenReader.read("valid-token")).thenReturn(new AccessTokenReadResult.Authenticated(member));
 
         AuthenticatedMember result = service.authenticate("valid-token");
 
@@ -35,14 +35,14 @@ class AccessTokenAuthenticatorServiceTest {
 
     @Test
     void 만료된_토큰이면_인증_예외를_던진다() {
-        when(accessTokenReader.read("expired-token")).thenReturn(AccessTokenReadResult.expired());
+        when(accessTokenReader.read("expired-token")).thenReturn(new AccessTokenReadResult.Expired());
 
         assertThatThrownBy(() -> service.authenticate("expired-token")).isInstanceOf(UnauthenticatedException.class);
     }
 
     @Test
     void 무효한_토큰이면_인증_예외를_던진다() {
-        when(accessTokenReader.read("invalid-token")).thenReturn(AccessTokenReadResult.invalid());
+        when(accessTokenReader.read("invalid-token")).thenReturn(new AccessTokenReadResult.Invalid());
 
         assertThatThrownBy(() -> service.authenticate("invalid-token")).isInstanceOf(UnauthenticatedException.class);
     }
