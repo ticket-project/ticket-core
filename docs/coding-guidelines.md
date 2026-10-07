@@ -61,7 +61,8 @@
 ## 조회 코드
 
 - Aggregate를 바꾸기 위한 저장·복원 계약은 domain `*Repository`에, 자기 모듈의 화면 조회 구현은
-  persistence에 둔다. 자기 모듈 DB 조회에 1:1 port/adapter를 기본으로 만들지 않는다. 외부 시스템·모듈
+  persistence에 둔다. JPA로 끝나는 domain `*Repository`는 Spring Data가 직접 구현한다 — adapter와
+  `SpringData*` 인터페이스를 따로 두지 않는다. 자기 모듈 DB 조회에 1:1 port/adapter를 기본으로 만들지 않는다. 외부 시스템·모듈
   공개 계약·도메인 보호 같은 실제 경계는 유지한다. [강제: `ArchitectureRulesTest`(use case가 부를 수 있는
   persistence 타입과 승인된 조회 Repository 목록). 1:1 port를 만들지 않는 것은 검사 없음]
 - 조회 결과와 중간 DTO의 기준은 위 "Use case와 중간 타입"을 따른다. 계층별 HTTP DTO를 일괄 도입하는

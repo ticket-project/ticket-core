@@ -117,7 +117,7 @@ class ArchitectureRulesTest {
     /** 밖을 부르는 출력 계약. */
     private static final String PORT = "com.ticket..port..";
 
-    /** 저장 adapter와 local DB 조회 Repository 구현. */
+    /** Spring Data가 구현하지 않는 저장 구현(Redis 등)과 local DB 조회 Repository 구현. */
     private static final String PERSISTENCE = "com.ticket..persistence..";
 
     /** HTTP 진입점. */
@@ -152,9 +152,10 @@ class ArchitectureRulesTest {
     /**
      * use case가 직접 불러도 되는 {@code persistence} 클래스다 — Querydsl 조회와 그 안에 중첩된 읽기 모델.
      *
-     * <p>{@code persistence}에는 두 종류가 있다. 하나는 aggregate를 복원·저장하고 고정 조회를 수행하는 adapter이고, 다른 하나는 동적 조건·커서 페이징·집계를
-     * Querydsl로 조립하는 조회다. 앞의 것은 domain repository 계약 뒤에 있어야 하고(구현 선택은 persistence가 갖는다), 뒤의 것은 화면이 요구하는 SQL 그 자체라 계약을 한
-     * 겹 더 두어도 읽을 것이 늘지 않는다.
+     * <p>{@code persistence}에는 두 종류가 있다. 하나는 Spring Data가 구현하지 않는 계약의 저장 구현(Redis 등)이고, 다른 하나는 동적 조건·커서 페이징·집계를
+     * Querydsl로 조립하는 조회다. 앞의 것은 domain 계약 뒤에 있어야 하고(구현 선택은 persistence가 갖는다), 뒤의 것은 화면이 요구하는 SQL 그 자체라 계약을 한 겹 더 두어도 읽을
+     * 것이 늘지 않는다. JPA로 끝나는 aggregate 저장과 고정 조회는 {@code persistence}에 없다 — domain {@code *Repository}를 Spring Data가 직접
+     * 구현한다.
      *
      * <p>둘을 <b>이름 하나로만</b> 가르지 않는다. {@code *QuerydslRepository}라는 이름과 {@code JPAQueryFactory}를 실제로 갖고 있다는
      * 사실({@link #DB_QUERY})을 함께 본다 — 이름만 보면 저장 adapter가 같은 이름을 달 때 조용히 열리고, 필드만 보면 Querydsl을 쓰는 저장 adapter까지 함께 열린다.
@@ -204,9 +205,8 @@ class ArchitectureRulesTest {
      * 조립은 저장 구현과 HTTP를 모른다. <b>예외는 같은 module의 조회 Repository 하나다</b>({@link #QUERY_REPOSITORY}).
      *
      * <p>Querydsl 동적 조회는 구현을 바꿔 끼울 일이 아니라 화면이 요구하는 SQL 그 자체라 계약 없이 use case에 연다. Spring Data/JPQL로 끝나는 고정 조회는 이 예외가 아니다
-     * — 저장과 같은 3단(계약 {@code *Repository} → {@code *RepositoryAdapter} → Spring Data)으로 내려간다(ADR 0019). <b>저장
-     * adapter·Spring Data 인터페이스·Redis 구현에 대한 직접 접근 금지는 그대로다</b> — aggregate 복원·저장과 고정 조회는 domain repository 계약 뒤에 있어야
-     * 한다.
+     * — domain {@code *Repository}가 Spring Data를 확장하고 Spring Data가 직접 구현하므로 애초에 {@code persistence}에 없다(2026-10-07, ADR
+     * 0019 갱신). <b>그 밖의 {@code persistence} 구현(Redis 등)에 대한 직접 접근 금지는 그대로다</b> — 저장은 domain 계약 뒤에 있어야 한다.
      *
      * <p>다른 module의 조회 Repository는 여기서 열리지 않는다. 공개면 밖 참조는 {@code ModularityTests}의 Modulith {@code verify()}가 이미 전부
      * 막는다.

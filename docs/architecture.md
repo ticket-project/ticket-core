@@ -147,11 +147,14 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 | `event` | booking의 커밋 후 후속 처리 조율 |
 | `exception` | 모듈 오류 코드·예외·처리기 |
 
-Repository는 Aggregate 저장·복원 계약이므로 `domain`이 소유하고 기술 구현은 `persistence`에 둔다. 자기
-모듈 화면 조회는 `persistence`의 구체 조회 Repository(`*QuerydslRepository`)가 담당하며, `usecase`가 검색
-조건·커서·결과 타입을 소유한다. use case는 자기 모듈 조회 Repository를 직접 부를 수 있지만 저장
-adapter·Spring Data 인터페이스·Redis 구현은 직접 부르지 않는다. 다른 모듈의 데이터 조합은 use case가
-공개 API를 통해 한다.
+Repository는 Aggregate 저장·복원 계약이므로 `domain`이 소유한다. JPA로 끝나는 `domain`의 `*Repository`는
+Spring Data `Repository<T, ID>`를 확장해 **Spring Data가 직접 구현한다** — 별도 adapter나 `SpringData*`
+인터페이스를 두지 않는다. `@Query`·`@Lock` 같은 JPA 표기는 그 인터페이스 메서드에 두고, 상태 고정 인자·빈
+입력 guard·map 변환 같은 작은 조립은 `default` 메서드로 둔다. Redis처럼 Spring Data가 구현하지 않는 계약의
+구현만 `persistence`에 둔다. 자기 모듈 화면 조회는 `persistence`의 구체 조회 Repository(`*QuerydslRepository`)가
+담당하며, `usecase`가 검색 조건·커서·결과 타입을 소유한다. use case는 자기 모듈 조회 Repository와 `domain`
+Repository를 부를 수 있지만 그 밖의 `persistence` 구현(Redis 등)은 직접 부르지 않는다. 다른 모듈의 데이터
+조합은 use case가 공개 API를 통해 한다.
 
 Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡고 `usecase`·`domain`은 저장 기술 중립
 계약을 사용한다. 분산락은 `booking.concurrency`의 `DistributedLock` 계약으로 쓴다. 여러 capability를
