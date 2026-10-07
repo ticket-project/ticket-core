@@ -22,10 +22,10 @@ public class OAuth2FrontendRedirectResolver {
     private final String defaultFailureRedirectUri;
 
     public OAuth2FrontendRedirectResolver(
-            @Value("${app.auth.frontend.local-base-url:http://localhost:3000}") final String localFrontendBaseUrl,
-            @Value("${app.auth.frontend.prod-base-url:https://oneticket.site}") final String prodFrontendBaseUrl,
-            @Value("${app.auth.oauth2-success-redirect-path:/auth/callback}") final String successRedirectPath,
-            @Value("${app.auth.oauth2-failure-redirect-path:/auth/callback}") final String failureRedirectPath,
+            @Value("${app.auth.frontend.local-base-url}") final String localFrontendBaseUrl,
+            @Value("${app.auth.frontend.prod-base-url}") final String prodFrontendBaseUrl,
+            @Value("${app.auth.oauth2-success-redirect-path}") final String successRedirectPath,
+            @Value("${app.auth.oauth2-failure-redirect-path}") final String failureRedirectPath,
             @Value("${app.auth.oauth2-success-redirect-uri}") final String defaultSuccessRedirectUri,
             @Value("${app.auth.oauth2-failure-redirect-uri}") final String defaultFailureRedirectUri) {
         this.localFrontendBaseUrl = normalizeBaseUrl(localFrontendBaseUrl);
@@ -70,7 +70,8 @@ public class OAuth2FrontendRedirectResolver {
         if (!(stored instanceof String frontendBaseUrl) || frontendBaseUrl.isBlank()) {
             return fallbackRedirectUri;
         }
-        return normalizeBaseUrl(frontendBaseUrl) + path;
+        // storeFrontendBaseUrl이 이미 정규화한 설정값만 저장한다.
+        return frontendBaseUrl + path;
     }
 
     private @Nullable String resolveFrontendBaseUrl(final HttpServletRequest request) {
