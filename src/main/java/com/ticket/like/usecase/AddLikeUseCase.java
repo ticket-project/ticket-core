@@ -39,11 +39,12 @@ public class AddLikeUseCase {
 
     public Output execute(final Input input) {
         final Long memberId = input.memberId();
+        final LikeType likeType = input.likeType();
         final Long targetId = input.targetId();
 
-        if (!likeRepository.existsByMemberIdAndTargetId(memberId, targetId)) {
+        if (!likeRepository.existsByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)) {
             try {
-                likeRepository.like(memberId, targetId);
+                likeRepository.like(memberId, likeType, targetId);
             } catch (final DataIntegrityViolationException e) {
                 // 이 catch가 중복 찜만 잡는 근거는 LIKES에 다른 무결성 제약이 없다는 것이다 -- FK는
                 // like V1·V2가 제거했고(모듈 간 FK 금지), NOT NULL 세 컬럼은 Like 생성자의
@@ -53,11 +54,11 @@ public class AddLikeUseCase {
                 // 이 전제는 LikeRepositoryPagingTest가 실제 DB로 고정한다.
                 throw new LikeException(
                         LikeErrorCode.E7001,
-                        LikeErrorCode.E7001.getMessage() + " memberId=" + memberId + ", likeType=" + LikeType.SHOW
+                        LikeErrorCode.E7001.getMessage() + " memberId=" + memberId + ", likeType=" + likeType
                                 + ", targetId=" + targetId);
             }
         }
 
-        return new Output(targetId, true, likeRepository.countByTargetId(targetId));
+        return new Output(targetId, true, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
     }
 }

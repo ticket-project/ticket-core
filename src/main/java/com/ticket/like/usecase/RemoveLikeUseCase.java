@@ -34,10 +34,13 @@ public class RemoveLikeUseCase {
 
     public Output execute(final Input input) {
         final Long memberId = input.memberId();
+        final LikeType likeType = input.likeType();
         final Long targetId = input.targetId();
 
-        likeRepository.findByMemberIdAndTargetId(memberId, targetId).ifPresent(likeRepository::delete);
+        likeRepository
+                .findByMemberIdAndLikeTypeAndTargetId(memberId, likeType, targetId)
+                .ifPresent(likeRepository::delete);
 
-        return new Output(targetId, false, likeRepository.countByTargetId(targetId));
+        return new Output(targetId, false, likeRepository.countByLikeTypeAndTargetId(likeType, targetId));
     }
 }

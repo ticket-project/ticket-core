@@ -2,6 +2,7 @@ package com.ticket.like.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,27 +37,29 @@ class AddLikeUseCaseTest {
 
     @Test
     void 처음_찜하면_저장하고_갱신된_찜수를_돌려준다() {
-        when(likeRepository.existsByMemberIdAndTargetId(1L, 2L)).thenReturn(false);
-        when(likeRepository.countByTargetId(2L)).thenReturn(5L);
+        when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(false);
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(5L);
 
         AddLikeUseCase.Output output = useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.targetId()).isEqualTo(2L);
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(5L);
-        verify(likeRepository).like(1L, 2L);
+        verify(likeRepository).like(1L, LikeType.SHOW, 2L);
     }
 
     @Test
     void 이미_찜한_상태면_다시_저장하지_않고_같은_상태를_돌려준다() {
-        when(likeRepository.existsByMemberIdAndTargetId(1L, 2L)).thenReturn(true);
-        when(likeRepository.countByTargetId(2L)).thenReturn(5L);
+        when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(true);
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(5L);
 
         AddLikeUseCase.Output output = useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L));
 
         assertThat(output.liked()).isTrue();
         assertThat(output.likeCount()).isEqualTo(5L);
-        verify(likeRepository, never()).like(anyLong(), anyLong());
+        verify(likeRepository, never()).like(anyLong(), any(), anyLong());
     }
 
     /**
@@ -65,8 +68,10 @@ class AddLikeUseCaseTest {
      */
     @Test
     void unique_제약을_위반하면_찜_중복_예외로_바꿔_던진다() {
-        when(likeRepository.existsByMemberIdAndTargetId(1L, 2L)).thenReturn(false);
-        when(likeRepository.like(1L, 2L)).thenThrow(new DataIntegrityViolationException("UK_LIKES_MEMBER_TARGET"));
+        when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(false);
+        when(likeRepository.like(1L, LikeType.SHOW, 2L))
+                .thenThrow(new DataIntegrityViolationException("UK_LIKES_MEMBER_TARGET"));
 
         assertThatThrownBy(() -> useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 2L)))
                 .isInstanceOf(LikeException.class)
@@ -76,13 +81,14 @@ class AddLikeUseCaseTest {
 
     @Test
     void 존재하지_않는_대상이어도_존재_확인_없이_그대로_저장한다() {
-        when(likeRepository.existsByMemberIdAndTargetId(1L, 999L)).thenReturn(false);
-        when(likeRepository.countByTargetId(999L)).thenReturn(1L);
+        when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 999L))
+                .thenReturn(false);
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 999L)).thenReturn(1L);
 
         AddLikeUseCase.Output output = useCase.execute(new AddLikeUseCase.Input(1L, LikeType.SHOW, 999L));
 
         assertThat(output.liked()).isTrue();
-        verify(likeRepository).like(1L, 999L);
+        verify(likeRepository).like(1L, LikeType.SHOW, 999L);
     }
 
     @ParameterizedTest

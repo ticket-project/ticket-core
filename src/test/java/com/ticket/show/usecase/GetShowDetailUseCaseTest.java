@@ -112,7 +112,7 @@ class GetShowDetailUseCaseTest {
                 .thenReturn(new PriceSummaryResponse(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
-        when(likeQueryApi.countByTarget(1L)).thenReturn(10L);
+        when(likeQueryApi.countByTarget("show", 1L)).thenReturn(10L);
         when(venueLookupApi.getVenueSnapshot(5L))
                 .thenReturn(new VenueSnapshot(
                         5L,
@@ -139,7 +139,7 @@ class GetShowDetailUseCaseTest {
         assertThat(output.likeCount()).isEqualTo(10L);
         assertThat(output.venue().name()).isEqualTo("예술의전당");
         assertThat(output.performer()).isNull();
-        verify(likeQueryApi).countByTarget(1L);
+        verify(likeQueryApi).countByTarget("show", 1L);
         verify(venueLookupApi).getVenueSnapshot(5L);
     }
 

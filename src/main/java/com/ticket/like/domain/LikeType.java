@@ -1,10 +1,26 @@
 package com.ticket.like.domain;
 
 /**
- * 찜 대상의 종류다. 지금은 공연(Show) 하나뿐이라 {@code SHOW}만 있고, {@link Like}는 항상 {@code SHOW}로 저장한다(ADR 0008의 2026-10-07 갱신).
+ * 찜 대상의 종류다. 지금은 공연(Show) 하나뿐이라 {@code SHOW}만 있다.
  *
- * <p>{@code like_type} 컬럼과 유니크 제약은 그대로 두었다. 공연장·출연자 찜처럼 새 대상이 실제로 생기면 값을 추가하고 Repository 조회에 종류 조건을 다시 넣는다.
+ * <p>공연장·출연자 찜처럼 새 대상이 생기면 여기에 값을 추가한다 — 새 module이나 새 테이블을 만들지 않는다. 다만 대상별 표시값 조립과 대상 존재 확인은 여전히 그 대상을 아는 module의 책임으로
+ * 남는다(이 열거형이 줄여주는 것은 테이블·리포지토리·중복 방지 불변식뿐이다).
  */
 public enum LikeType {
-    SHOW
+    SHOW("show");
+
+    private final String value;
+
+    LikeType(final String value) {
+        this.value = value;
+    }
+
+    public static LikeType from(final String value) {
+        for (LikeType likeType : values()) {
+            if (likeType.value.equals(value)) {
+                return likeType;
+            }
+        }
+        throw new IllegalArgumentException("지원하지 않는 찜 대상 종류입니다: " + value);
+    }
 }
