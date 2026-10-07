@@ -105,8 +105,7 @@ public class HoldHistory extends AuditedEntity {
             final Long performanceId,
             final Long performanceSeatId,
             final Long seatId,
-            final LocalDateTime occurredAt,
-            final HoldReleaseReason releaseReason) {
+            final LocalDateTime occurredAt) {
         return new HoldHistory(
                 holdKey,
                 memberId,
@@ -116,7 +115,7 @@ public class HoldHistory extends AuditedEntity {
                 HoldHistoryEventType.EXPIRED,
                 occurredAt,
                 null,
-                releaseReason);
+                HoldReleaseReason.TTL_EXPIRED);
     }
 
     public static HoldHistory canceled(
@@ -125,8 +124,7 @@ public class HoldHistory extends AuditedEntity {
             final Long performanceId,
             final Long performanceSeatId,
             final Long seatId,
-            final LocalDateTime occurredAt,
-            final HoldReleaseReason releaseReason) {
+            final LocalDateTime occurredAt) {
         return new HoldHistory(
                 holdKey,
                 memberId,
@@ -136,6 +134,6 @@ public class HoldHistory extends AuditedEntity {
                 HoldHistoryEventType.CANCELED,
                 occurredAt,
                 null,
-                releaseReason);
+                HoldReleaseReason.USER_CANCELED);
     }
 }
