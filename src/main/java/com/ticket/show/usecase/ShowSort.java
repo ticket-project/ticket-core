@@ -2,7 +2,8 @@ package com.ticket.show.usecase;
 
 import java.util.Set;
 
-import com.ticket.show.exception.UnsupportedShowSortException;
+import com.ticket.show.exception.ShowErrorCode;
+import com.ticket.show.exception.ShowException;
 
 /**
  * Show 목록/검색 정렬 기준의 단일 typed contract다.
@@ -37,19 +38,24 @@ public enum ShowSort {
                 return sort;
             }
         }
-        throw new UnsupportedShowSortException(apiValue);
+        throw unsupported(apiValue);
     }
 
     /**
      * 이 정렬을 {@code supported} 안에서만 받는다. 각 목록 use case가 자기 조회에서 정렬 키가 null이 될 수 없는 정렬만 넘긴다 — null 키 행이 페이지 끝에 오면 다음 커서를
      * 만들지 못해 500이 된다({@code ShowQuerydslRepository#resolveLastValue}).
      *
-     * @throws UnsupportedShowSortException 이 조회가 받지 않는 정렬일 때. {@code error.data}에는 이 정렬의 API 값이 실린다.
+     * @throws ShowException E7002, 이 조회가 받지 않는 정렬일 때. {@code error.data}에는 이 정렬의 API 값이 실린다.
      */
     public ShowSort requireOneOf(final Set<ShowSort> supported) {
         if (!supported.contains(this)) {
-            throw new UnsupportedShowSortException(apiValue);
+            throw unsupported(apiValue);
         }
         return this;
+    }
+
+    /** 정렬 <b>원문</b>을 대소문자·공백 정규화 없이 {@code error.data}에 싣는다(기존 응답 계약). 접두어를 여기 한 곳에서만 붙인다. */
+    private static ShowException unsupported(final String apiValue) {
+        return new ShowException(ShowErrorCode.E7002, "지원하지 않는 sort: " + apiValue);
     }
 }

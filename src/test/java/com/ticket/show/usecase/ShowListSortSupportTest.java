@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-import com.ticket.show.exception.UnsupportedShowSortException;
+import com.ticket.show.exception.ShowErrorCode;
+import com.ticket.show.exception.ShowException;
 
 /**
  * 목록 use case마다 정렬 키가 null이 될 수 없는 정렬만 받는지 고정한다. null 키 행이 페이지 끝에 오면 다음 커서를 만들지 못해 500이 된다.
@@ -21,7 +22,8 @@ class ShowListSortSupportTest {
     @Test
     void 전체_목록은_판매_시작_임박순을_받지_않는다() {
         assertThatThrownBy(() -> new GetShowsUseCase.Input(LIST_PARAM, 10, ShowSort.SALE_START_APPROACHING))
-                .isInstanceOf(UnsupportedShowSortException.class);
+                .isInstanceOf(ShowException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ShowErrorCode.E7002);
         assertThatCode(() -> new GetShowsUseCase.Input(LIST_PARAM, 10, ShowSort.SHOW_START_APPROACHING))
                 .doesNotThrowAnyException();
     }
@@ -29,7 +31,8 @@ class ShowListSortSupportTest {
     @Test
     void 검색은_판매_시작_임박순을_받지_않는다() {
         assertThatThrownBy(() -> new SearchShowsUseCase.Input(SEARCH_CRITERIA, 10, ShowSort.SALE_START_APPROACHING))
-                .isInstanceOf(UnsupportedShowSortException.class);
+                .isInstanceOf(ShowException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ShowErrorCode.E7002);
         assertThatCode(() -> new SearchShowsUseCase.Input(SEARCH_CRITERIA, 10, ShowSort.SHOW_START_APPROACHING))
                 .doesNotThrowAnyException();
     }
