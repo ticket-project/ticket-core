@@ -21,9 +21,9 @@ class SecurityExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo("E1000");
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("로그인이 필요합니다.");
-        assertThat(response.getBody().getError().getData()).isEqualTo("토큰 오류");
+        assertThat(response.getBody().error().code()).isEqualTo("E1000");
+        assertThat(response.getBody().error().message()).isEqualTo("로그인이 필요합니다.");
+        assertThat(response.getBody().error().data()).isEqualTo("토큰 오류");
     }
 
     @Test
@@ -33,8 +33,8 @@ class SecurityExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo("E1001");
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("권한이 없습니다.");
-        assertThat(response.getBody().getError().getData()).isEqualTo("권한 오류");
+        assertThat(response.getBody().error().code()).isEqualTo("E1001");
+        assertThat(response.getBody().error().message()).isEqualTo("권한이 없습니다.");
+        assertThat(response.getBody().error().data()).isEqualTo("권한 오류");
     }
 }

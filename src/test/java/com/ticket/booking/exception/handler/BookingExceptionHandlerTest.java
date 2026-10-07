@@ -108,12 +108,12 @@ class BookingExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo(expectedCode);
-        assertThat(response.getBody().getError().getMessage()).isEqualTo(expectedMessage);
-        assertThat(response.getBody().getData()).isNull();
+        assertThat(response.getBody().error().code()).isEqualTo(expectedCode);
+        assertThat(response.getBody().error().message()).isEqualTo(expectedMessage);
+        assertThat(response.getBody().data()).isNull();
         // 새로 생긴 진단 필드(performanceId, seatId, memberId, 수량)가 error.data로 새어 나가지
         // 않는지 여기서 본다 — 바깥 봉투의 getData()는 성공 data라 이것을 잡지 못한다.
-        assertThat(response.getBody().getError().getData()).isNull();
+        assertThat(response.getBody().error().data()).isNull();
     }
 
     @Test
@@ -122,8 +122,8 @@ class BookingExceptionHandlerTest {
                 handler.handleBookingException(new BookingException(BookingErrorCode.E6003, "좌석 처리 중입니다."));
 
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요.");
-        assertThat(response.getBody().getError().getData()).isEqualTo("좌석 처리 중입니다.");
+        assertThat(response.getBody().error().message()).isEqualTo("좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요.");
+        assertThat(response.getBody().error().data()).isEqualTo("좌석 처리 중입니다.");
     }
 
     static Stream<Arguments> admission_오류_계약() {
@@ -156,8 +156,8 @@ class BookingExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo(expectedCode);
-        assertThat(response.getBody().getError().getMessage()).isEqualTo(expectedMessage);
+        assertThat(response.getBody().error().code()).isEqualTo(expectedCode);
+        assertThat(response.getBody().error().message()).isEqualTo(expectedMessage);
     }
 
     @Test
@@ -169,7 +169,7 @@ class BookingExceptionHandlerTest {
 
         assertThat(exception.getReason()).isEqualTo("서명 불일치: 상세 진단 정보");
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getData()).isNull();
-        assertThat(response.getBody().getError().getMessage()).doesNotContain("서명 불일치");
+        assertThat(response.getBody().data()).isNull();
+        assertThat(response.getBody().error().message()).doesNotContain("서명 불일치");
     }
 }
