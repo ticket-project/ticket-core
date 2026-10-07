@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
@@ -64,8 +63,7 @@ class BookingAvailabilityCheckerTest {
     @Test
     void 진행중인_pending_주문이_있으면_예외를_던지고_좌석을_조회하지_않는다() {
         final RequestedSeatIds seatIds = RequestedSeatIds.from(List.of(10L, 20L));
-        when(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(20L, 1L, OrderState.PENDING))
-                .thenReturn(true);
+        when(orderRepository.existsPendingByMemberIdAndPerformanceId(20L, 1L)).thenReturn(true);
 
         assertThatThrownBy(() -> checker.check(20L, 1L, seatIds))
                 .isInstanceOf(BookingException.class)

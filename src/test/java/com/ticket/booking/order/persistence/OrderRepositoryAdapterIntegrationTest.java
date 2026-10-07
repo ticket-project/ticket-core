@@ -140,7 +140,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
 
         inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyCanceled)));
 
-        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, null, BATCH_SIZE);
+        List<Order> result = orderRepository.findExpirable(now, null, BATCH_SIZE);
 
         assertThat(result).extracting(Order::getOrderKey).containsExactly("order-past", "order-boundary");
     }
@@ -153,7 +153,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
                 order("second", now.minusMinutes(2)),
                 order("third", now.minusMinutes(1)))));
 
-        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, null, 2);
+        List<Order> result = orderRepository.findExpirable(now, null, 2);
 
         assertThat(result).extracting(Order::getOrderKey).containsExactly("order-first", "order-second");
     }
@@ -167,7 +167,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
         Order third = order("cursor-third", now.minusMinutes(1));
         inTransaction(() -> jpaRepository.saveAll(List.of(first, second, third)));
 
-        List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, first.getId(), BATCH_SIZE);
+        List<Order> result = orderRepository.findExpirable(now, first.getId(), BATCH_SIZE);
 
         assertThat(result).extracting(Order::getOrderKey).containsExactly("order-cursor-second", "order-cursor-third");
     }
@@ -175,16 +175,23 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
     @Test
     void pending_order_existence_query_checks_member_performance_and_status() {
         Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
-        inTransaction(() -> jpaRepository.save(pending));
+        Order canceled = new Order(
+                MEMBER_ID + 2,
+                PERFORMANCE_ID,
+                "order-canceled-exists",
+                "hold-canceled-exists",
+                LocalDateTime.now().plusMinutes(5),
+                "show",
+                LocalDateTime.now().plusDays(1),
+                "venue");
+        canceled.cancel(LocalDateTime.now());
+        inTransaction(() -> jpaRepository.saveAll(List.of(pending, canceled)));
 
-        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                        MEMBER_ID, PERFORMANCE_ID, OrderState.PENDING))
+        assertThat(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
                 .isTrue();
-        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                        MEMBER_ID + 1, PERFORMANCE_ID, OrderState.PENDING))
+        assertThat(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID + 1, PERFORMANCE_ID))
                 .isFalse();
-        assertThat(orderRepository.existsByMemberIdAndPerformanceIdAndStatus(
-                        MEMBER_ID, PERFORMANCE_ID, OrderState.CONFIRMED))
+        assertThat(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID + 2, PERFORMANCE_ID))
                 .isFalse();
     }
 

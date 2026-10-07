@@ -16,7 +16,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.order.domain.OrderState;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -32,12 +31,11 @@ class ExpireOrderUseCaseTest {
 
     @Test
     void orderId로_조회한_주문이_없으면_noop이다() {
-        when(orderRepository.findByIdAndStatusForUpdate(10L, OrderState.PENDING))
-                .thenReturn(java.util.Optional.empty());
+        when(orderRepository.findPendingByIdForUpdate(10L)).thenReturn(java.util.Optional.empty());
 
         useCase.expireByOrderId(10L, LocalDateTime.of(2026, 3, 15, 10, 0));
 
-        verify(orderRepository).findByIdAndStatusForUpdate(10L, OrderState.PENDING);
+        verify(orderRepository).findPendingByIdForUpdate(10L);
         verifyNoInteractions(orderTerminationService);
     }
 
@@ -45,8 +43,7 @@ class ExpireOrderUseCaseTest {
     void orderId로_조회한_주문이_있으면_만료를_처리한다() {
         final Order order = createOrder(10L, 100L, "hold-key");
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findByIdAndStatusForUpdate(10L, OrderState.PENDING))
-                .thenReturn(java.util.Optional.of(order));
+        when(orderRepository.findPendingByIdForUpdate(10L)).thenReturn(java.util.Optional.of(order));
 
         useCase.expireByOrderId(10L, now);
 
@@ -57,8 +54,7 @@ class ExpireOrderUseCaseTest {
     void holdKey로_조회한_주문이_있으면_만료를_처리한다() {
         final Order order = createOrder(10L, 100L, "hold-key");
         final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING))
-                .thenReturn(java.util.Optional.of(order));
+        when(orderRepository.findPendingByHoldKeyForUpdate("hold-key")).thenReturn(java.util.Optional.of(order));
 
         useCase.expireByHoldKey("hold-key", now);
 
@@ -68,13 +64,13 @@ class ExpireOrderUseCaseTest {
     @Test
     void duplicate_hold_expiration_publishes_only_once() {
         final Order order = createOrder(10L, 100L, "hold-key");
-        when(orderRepository.findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING))
+        when(orderRepository.findPendingByHoldKeyForUpdate("hold-key"))
                 .thenReturn(java.util.Optional.of(order), java.util.Optional.empty());
 
         useCase.expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
         useCase.expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
 
-        verify(orderRepository, times(2)).findByHoldKeyAndStatusForUpdate("hold-key", OrderState.PENDING);
+        verify(orderRepository, times(2)).findPendingByHoldKeyForUpdate("hold-key");
         verify(orderTerminationService).expire(order, LocalDateTime.of(2026, 3, 15, 10, 0));
     }
 

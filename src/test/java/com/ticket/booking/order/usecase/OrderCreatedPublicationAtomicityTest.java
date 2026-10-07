@@ -20,7 +20,6 @@ import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.OrderRepository;
-import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
@@ -83,9 +82,8 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
 
         assertThat(orderKey).isNotBlank();
         final Boolean savedOrderExists = new TransactionTemplate(transactionManager)
-                .execute(status -> orderRepository
-                        .findByHoldKeyAndStatusForUpdate(holdKey, OrderState.PENDING)
-                        .isPresent());
+                .execute(status ->
+                        orderRepository.findPendingByHoldKeyForUpdate(holdKey).isPresent());
         assertThat(savedOrderExists).isTrue();
         // listener가 비동기로 매우 빨리 완료돼 event_publication -> event_publication_archive로
         // 옮겨갈 수 있으므로, 두 테이블 합산이 안정적으로 1이 될 때까지 짧게 기다린다.
@@ -113,9 +111,8 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
                 .isInstanceOf(IllegalStateException.class);
 
         final Boolean orderExists = new TransactionTemplate(transactionManager)
-                .execute(status -> orderRepository
-                        .findByHoldKeyAndStatusForUpdate(holdKey, OrderState.PENDING)
-                        .isPresent());
+                .execute(status ->
+                        orderRepository.findPendingByHoldKeyForUpdate(holdKey).isPresent());
         assertThat(orderExists).isFalse();
         assertThat(countPublicationsFor(holdKey)).isEqualTo(0L);
     }
