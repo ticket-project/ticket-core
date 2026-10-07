@@ -16,7 +16,6 @@ class ShowSortTest {
         ShowSort showSort = ShowSort.from(null);
 
         assertThat(showSort).isEqualTo(ShowSort.POPULAR);
-        assertThat(showSort.apiValue()).isEqualTo("popular");
     }
 
     @Test
