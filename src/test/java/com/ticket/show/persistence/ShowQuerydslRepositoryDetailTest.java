@@ -23,7 +23,6 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
-import com.ticket.show.usecase.ShowCardImagePathConverter;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
@@ -34,8 +33,7 @@ import com.ticket.venue.domain.Venue;
     ShowRepositoryAdapter.class,
     GradeRepositoryAdapter.class,
     PerformerRepositoryAdapter.class,
-    PerformanceRepositoryAdapter.class,
-    ShowCardImagePathConverter.class
+    PerformanceRepositoryAdapter.class
 })
 @SuppressWarnings("NonAsciiCharacters")
 class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {

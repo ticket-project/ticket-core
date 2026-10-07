@@ -28,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class GetSaleOpeningSoonShowsPageUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(SaleOpeningSoonSearchParam param, int size, ShowSort sort) {
         public Input {
@@ -86,7 +85,7 @@ public class GetSaleOpeningSoonShowsPageUseCase {
                 show.getId(),
                 show.getTitle(),
                 show.getSubTitle(),
-                showCardImagePathConverter.toCardImage(show.getImage()),
+                ShowCardImagePathConverter.toCardImage(show.getImage()),
                 Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
                 Optional.ofNullable(venue)
                         .map(VenueSnapshot::region)

@@ -50,7 +50,6 @@ public class GetShowDetailUseCase {
     private final PerformanceRepository performanceRepository;
     private final LikeQueryApi likeQueryApi;
     private final VenueLookupApi venueLookupApi;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
     private final Clock clock;
 
     public record Input(Long showId) {
@@ -133,7 +132,7 @@ public class GetShowDetailUseCase {
                 show.getDisplaySaleType(),
                 show.getDisplaySaleStartsAt(),
                 show.getDisplaySaleEndsAt(),
-                showCardImagePathConverter.toCardImage(show.getImage()),
+                ShowCardImagePathConverter.toCardImage(show.getImage()),
                 resolveVenue(show.getVenueId()),
                 resolvePerformer(show.getPerformerId()),
                 showRepository.findGenreNames(showId),

@@ -31,7 +31,6 @@ public class GetShowsUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
     private final ShowRepository showRepository;
     private final VenueLookupApi venueLookupApi;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(ShowListParam param, int size, ShowSort sort) {
         public Input {
@@ -93,7 +92,7 @@ public class GetShowsUseCase {
                 show.getId(),
                 show.getTitle(),
                 show.getSubTitle(),
-                showCardImagePathConverter.toCardImage(show.getImage()),
+                ShowCardImagePathConverter.toCardImage(show.getImage()),
                 genreNames.getOrDefault(show.getId(), List.of()),
                 show.getStartDate(),
                 show.getEndDate(),

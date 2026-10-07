@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 public class GetSaleOpeningSoonShowsUseCase {
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
-    private final ShowCardImagePathConverter showCardImagePathConverter;
 
     public record Input(String category, int size) {
         public Input {
@@ -55,7 +54,7 @@ public class GetSaleOpeningSoonShowsUseCase {
         return new ShowResponse(
                 show.getId(),
                 show.getTitle(),
-                showCardImagePathConverter.toCardImage(show.getImage()),
+                ShowCardImagePathConverter.toCardImage(show.getImage()),
                 Optional.ofNullable(venue).map(VenueSnapshot::name).orElse(null),
                 show.getDisplaySaleStartsAt());
     }
