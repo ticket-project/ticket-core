@@ -55,9 +55,12 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
     @Autowired
     private JsonMapper jsonMapper;
 
-    /** Modulith는 이 JsonMapper로 publication을 직렬화한다. 지운 eventId·schemaVersion이 남은 옛 JSON도 재처리할 수 있어야 한다. */
+    /**
+     * Modulith는 이 JsonMapper로 publication을 직렬화한다. 이미 저장된 publication JSON을 eventId·schemaVersion까지 그대로 읽어 재처리할 수 있어야
+     * 한다.
+     */
     @Test
-    void 옛_필드가_남은_publication_JSON도_읽는다() {
+    void 저장된_publication_JSON을_읽는다() {
         final String created =
                 "{\"eventId\":\"0b0e7c1c-9a55-4b5e-9a49-6d1f0c3c2a11\",\"schemaVersion\":1,\"orderId\":1,"
                         + "\"memberId\":2,\"holdKey\":\"hold\",\"performanceSeatIds\":[3],\"occurredAt\":\"2026-10-01T00:00:00Z\"}";
@@ -66,9 +69,13 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
                         + "\"memberId\":2,\"holdKey\":\"hold\",\"performanceSeatIds\":[3],\"reason\":\"EXPIRED\","
                         + "\"occurredAt\":\"2026-10-01T00:00:00Z\"}";
 
-        assertThat(jsonMapper.readValue(created, OrderCreated.class).orderId()).isEqualTo(1L);
-        assertThat(jsonMapper.readValue(terminated, OrderTerminated.class).reason())
-                .isEqualTo("EXPIRED");
+        final OrderCreated readCreated = jsonMapper.readValue(created, OrderCreated.class);
+        assertThat(readCreated.orderId()).isEqualTo(1L);
+        assertThat(readCreated.eventId()).hasToString("0b0e7c1c-9a55-4b5e-9a49-6d1f0c3c2a11");
+        assertThat(readCreated.schemaVersion()).isEqualTo(OrderCreated.SCHEMA_VERSION);
+        final OrderTerminated readTerminated = jsonMapper.readValue(terminated, OrderTerminated.class);
+        assertThat(readTerminated.reason()).isEqualTo("EXPIRED");
+        assertThat(readTerminated.schemaVersion()).isEqualTo(OrderTerminated.SCHEMA_VERSION);
     }
 
     @Test
