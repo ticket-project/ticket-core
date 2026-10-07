@@ -135,10 +135,10 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
         Order past = order("past", now.minusSeconds(1));
         Order boundary = order("boundary", now);
         Order future = order("future", now.plusSeconds(1));
-        Order alreadyConfirmed = order("confirmed", now.minusMinutes(1));
-        alreadyConfirmed.confirm(now.minusSeconds(1));
+        Order alreadyCanceled = order("canceled", now.minusMinutes(1));
+        alreadyCanceled.cancel(now.minusSeconds(1));
 
-        inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyConfirmed)));
+        inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyCanceled)));
 
         List<Order> result = orderRepository.findExpirable(OrderState.PENDING, now, null, BATCH_SIZE);
 

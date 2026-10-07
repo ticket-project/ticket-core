@@ -5,7 +5,7 @@
 것이다.
 
 **구현 범위**: `payment` module은 entity/schema/repository까지만 있는 entity-only 단계이고, booking의 Ticket은
-`TICKETS` 테이블(V5)만 있다. PG 승인, `OrderConfirmed` listener, 결제 정산 서비스는 아직 없고 `Order.confirm()`을 호출하는 곳도
+`TICKETS` 테이블(V5)만 있다. PG 승인, `OrderConfirmed` listener, 결제 정산 서비스는 아직 없고 주문을 `CONFIRMED`로 바꾸는 코드도
 없다. 그래서 `PENDING` 주문은 만료(`ExpireOrderUseCase`) 또는 취소(`CancelOrderUseCase`)로만 종료된다. 아래
 수명주기는 지금 실제로 동작하는 PENDING 생성·취소·만료 경로만 설명한다. 결제 승인·재시도·Hold 만료 경쟁 정책은
 아직 설계되지 않았다.
@@ -189,7 +189,7 @@ Redis hold meta key가 만료되면 `RedisKeyExpirationListener`가 등록된 �
   처리된다. 실패 항목은 지우지도 처리 완료로 치지도 않고 PENDING으로 남아 다음 순회에서 다시
   시도되며, 그 건수는 `Output.failedCount`와 경고 로그로 드러난다.
 - `Order.expire(now)`는 **만료 시각이 지나기 전에는 만료시키지 않는다.** 아직 유효한 주문이 만료
-  경로로 들어오면 그대로 EXPIRED가 되던 문제를 막는다. "지금 만료 처리 대상인가"는
-  `Order.isExpirable(now)`가 답한다.
+  경로로 들어오면 그대로 EXPIRED가 되던 문제를 막는다. 만료 대상 조회는 PENDING이고
+  `expires_at <= now`인 주문만 고른다(`OrderRepository.findExpirable`).
 
 `@Scheduled` 트리거(`OrderExpirationTrigger`)는 `worker.enabled=false`면 등록되지 않는다.

@@ -137,12 +137,6 @@ public class Order extends AuditedEntity {
         return Collections.unmodifiableList(orderSeats);
     }
 
-    public void confirm(final LocalDateTime now) {
-        validatePending("confirm");
-        this.status = OrderState.CONFIRMED;
-        this.confirmedAt = now;
-    }
-
     /**
      * 만료로 종료한다. <b>만료 시각이 지나기 전에는 만료시킬 수 없다.</b> 옛 구현은 시각을 보지 않아, 아직 유효한 주문도 만료 경로로 들어오면 그대로 EXPIRED가 됐다 — 사용자가 보고 있는
      * 잔여 시간과 실제 상태가 어긋나는 지점이었다.
@@ -164,14 +158,6 @@ public class Order extends AuditedEntity {
 
     public boolean isPending() {
         return status == OrderState.PENDING;
-    }
-
-    /**
-     * 지금 만료 처리 대상인가. "이미 만료됐는가"가 아니다 — 상태는 아직 PENDING이고, 만료 시각이 지나 {@link #expire}를 부를 수 있다는 뜻이다. 옛 이름
-     * {@code isExpired}는 EXPIRED 상태 여부로 읽혔다.
-     */
-    public boolean isExpirable(final LocalDateTime now) {
-        return isPending() && !now.isBefore(expiresAt);
     }
 
     private void validatePending(final String action) {
