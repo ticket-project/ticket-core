@@ -35,16 +35,10 @@ public final class SeatSelectionRedisKey {
     }
 
     public static Optional<SelectKey> tryParseSelectKey(final String key) {
-        return match(SELECT_KEY_PATTERN, key)
-                .map(matcher -> new SelectKey(Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2))));
-    }
-
-    private static Optional<Matcher> match(final Pattern pattern, final String key) {
-        if (key == null) {
-            return Optional.empty();
-        }
-        final Matcher matcher = pattern.matcher(key);
-        return matcher.matches() ? Optional.of(matcher) : Optional.empty();
+        final Matcher matcher = SELECT_KEY_PATTERN.matcher(key);
+        return matcher.matches()
+                ? Optional.of(new SelectKey(Long.parseLong(matcher.group(1)), Long.parseLong(matcher.group(2))))
+                : Optional.empty();
     }
 
     public record SelectKey(Long performanceId, Long seatId) {}

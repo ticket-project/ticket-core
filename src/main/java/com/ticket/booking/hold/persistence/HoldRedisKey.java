@@ -30,13 +30,9 @@ public final class HoldRedisKey {
         return String.format(HOLD_SEAT_INDEX_KEY, perfId);
     }
 
-    public static Optional<HoldMetaKey> tryParseHoldMetaKey(final String key) {
-        if (key == null) {
-            return Optional.empty();
-        }
+    /** hold meta key면 그 안의 holdKey를 돌려준다. */
+    public static Optional<String> tryParseHoldMetaKey(final String key) {
         final Matcher matcher = HOLD_META_KEY_PATTERN.matcher(key);
-        return matcher.matches() ? Optional.of(new HoldMetaKey(matcher.group(1))) : Optional.empty();
+        return matcher.matches() ? Optional.of(matcher.group(1)) : Optional.empty();
     }
-
-    public record HoldMetaKey(String holdKey) {}
 }
