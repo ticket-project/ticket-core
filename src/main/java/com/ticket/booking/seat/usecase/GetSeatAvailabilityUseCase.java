@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -81,16 +82,14 @@ public class GetSeatAvailabilityUseCase {
      */
     private Map<Long, Long> countAvailableSeatsByGrade(
             final List<PerformanceSeat> performanceSeats, final Set<Long> redisOccupiedSeatIds) {
-        final Map<Long, Long> availableSeatCounts = new LinkedHashMap<>();
-        for (final PerformanceSeat performanceSeat : performanceSeats) {
-            final long available = performanceSeat.getState() == PerformanceSeatState.AVAILABLE
-                            && !redisOccupiedSeatIds.contains(performanceSeat.getSeatId())
-                    ? 1L
-                    : 0L;
-            availableSeatCounts.merge(performanceSeat.getPerformanceGradeId(), available, Long::sum);
-        }
-
-        return availableSeatCounts;
+        return performanceSeats.stream()
+                .collect(Collectors.groupingBy(
+                        PerformanceSeat::getPerformanceGradeId,
+                        LinkedHashMap::new,
+                        Collectors.summingLong(seat -> seat.getState() == PerformanceSeatState.AVAILABLE
+                                        && !redisOccupiedSeatIds.contains(seat.getSeatId())
+                                ? 1L
+                                : 0L)));
     }
 
     private @Nullable GradeResponse toGradeResponse(
