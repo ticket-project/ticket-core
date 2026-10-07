@@ -41,8 +41,8 @@ spotless {
     }
 }
 
-group = "${property('projectGroup')}"
-version = "${property('applicationVersion')}"
+group = 'com.ticket'
+version = '0.0.1-SNAPSHOT'
 
 repositories {
     mavenLocal()
