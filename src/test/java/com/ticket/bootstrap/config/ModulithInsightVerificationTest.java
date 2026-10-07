@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.Set;
-import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,14 +60,8 @@ class ModulithInsightVerificationTest extends BookingE2ETestSupport {
 
     @Test
     void 도메인_이벤트를_발행하면_event_publication_metric이_등록된다() {
-        eventPublisher.publishEvent(new OrderCreated(
-                UUID.randomUUID(),
-                OrderCreated.SCHEMA_VERSION,
-                999_999L,
-                1L,
-                "insight-verification-hold",
-                Set.of(1L),
-                Instant.now()));
+        eventPublisher.publishEvent(
+                new OrderCreated(999_999L, 1L, "insight-verification-hold", Set.of(1L), Instant.now()));
 
         assertThat(meterRegistry.getMeters())
                 .as("module.events.published로 시작하는 counter가 최소 하나는 있어야 한다")

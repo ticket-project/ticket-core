@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -130,20 +129,11 @@ class BookingEventListenersTest {
     }
 
     private OrderCreated orderCreated(final long orderId, final String holdKey) {
-        return new OrderCreated(
-                UUID.randomUUID(), OrderCreated.SCHEMA_VERSION, orderId, 20L, holdKey, Set.of(501L), Instant.now());
+        return new OrderCreated(orderId, 20L, holdKey, Set.of(501L), Instant.now());
     }
 
     private OrderTerminated orderTerminated(final long orderId, final String holdKey) {
-        return new OrderTerminated(
-                UUID.randomUUID(),
-                OrderTerminated.SCHEMA_VERSION,
-                orderId,
-                20L,
-                holdKey,
-                Set.of(501L),
-                "CANCELED",
-                Instant.now());
+        return new OrderTerminated(orderId, 20L, holdKey, Set.of(501L), "CANCELED", Instant.now());
     }
 
     private Order order(final Long id, final Long performanceId, final String holdKey, final LocalDateTime expiresAt) {

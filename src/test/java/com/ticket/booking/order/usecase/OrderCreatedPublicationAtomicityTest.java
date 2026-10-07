@@ -16,12 +16,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.ticket.TicketApplication;
+import com.ticket.booking.OrderCreated;
+import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
+
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderCreated} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
@@ -48,6 +52,25 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private JsonMapper jsonMapper;
+
+    /** Modulith는 이 JsonMapper로 publication을 직렬화한다. 지운 eventId·schemaVersion이 남은 옛 JSON도 재처리할 수 있어야 한다. */
+    @Test
+    void 옛_필드가_남은_publication_JSON도_읽는다() {
+        final String created =
+                "{\"eventId\":\"0b0e7c1c-9a55-4b5e-9a49-6d1f0c3c2a11\",\"schemaVersion\":1,\"orderId\":1,"
+                        + "\"memberId\":2,\"holdKey\":\"hold\",\"performanceSeatIds\":[3],\"occurredAt\":\"2026-10-01T00:00:00Z\"}";
+        final String terminated =
+                "{\"eventId\":\"0b0e7c1c-9a55-4b5e-9a49-6d1f0c3c2a11\",\"schemaVersion\":1,\"orderId\":1,"
+                        + "\"memberId\":2,\"holdKey\":\"hold\",\"performanceSeatIds\":[3],\"reason\":\"EXPIRED\","
+                        + "\"occurredAt\":\"2026-10-01T00:00:00Z\"}";
+
+        assertThat(jsonMapper.readValue(created, OrderCreated.class).orderId()).isEqualTo(1L);
+        assertThat(jsonMapper.readValue(terminated, OrderTerminated.class).reason())
+                .isEqualTo("EXPIRED");
+    }
 
     @Test
     void 성공하면_주문과_OrderCreated_publication이_함께_저장된다() {
