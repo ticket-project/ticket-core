@@ -17,12 +17,12 @@ class FlywayConfigurationTest {
     private final YamlPropertySourceLoader yamlLoader = new YamlPropertySourceLoader();
 
     @Test
-    void flyway_core_oracle_database_module_and_boot_auto_configuration_are_on_test_runtime_classpath() {
+    void flyway_postgresql_and_boot_auto_configuration_are_on_test_runtime_classpath() {
         final ClassLoader classLoader = getClass().getClassLoader();
 
         assertThat(ClassUtils.isPresent("org.flywaydb.core.Flyway", classLoader))
                 .isTrue();
-        assertThat(ClassUtils.isPresent("org.flywaydb.database.oracle.OracleDatabaseType", classLoader))
+        assertThat(ClassUtils.isPresent("org.flywaydb.database.postgresql.PostgreSQLDatabaseType", classLoader))
                 .isTrue();
         assertThat(ClassUtils.isPresent(
                         "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration", classLoader))
@@ -57,19 +57,21 @@ class FlywayConfigurationTest {
         assertThat(profile.getProperty("spring.flyway.enabled")).isEqualTo(true);
         assertThat(String.valueOf(profile.getProperty("spring.flyway.locations"))
                         .split(","))
-                .contains("classpath:db/migration");
+                .containsExactly("classpath:db/migration-vendor/postgresql");
+        assertThat(profile.getProperty("spring.datasource.driver-class-name")).isEqualTo("org.postgresql.Driver");
+        assertThat(profile.getProperty("spring.jpa.database-platform")).isNull();
         assertThat(profile.getProperty("spring.flyway.clean-disabled")).isNotEqualTo(false);
         assertNoIgnoredBaselineSettings(profile);
     }
 
-    /** local H2는 운영과 같은 공통 migration에 H2 전용 보정만 더한다. dev는 같은 local H2 파일을 다시 쓴다. */
+    /** local/dev/prod는 같은 PostgreSQL 스키마를 사용한다. */
     @Test
-    void local_h2_uses_common_migrations_plus_h2_vendor_and_dev_shares_it() throws Exception {
+    void local_and_dev_share_postgresql_defaults() throws Exception {
         final PropertySource<?> local = loadYaml("application-local.yml");
         final PropertySource<?> dev = loadYaml("application-dev.yml");
 
         assertThat(String.valueOf(local.getProperty("spring.flyway.locations")).split(","))
-                .containsExactlyInAnyOrder("classpath:db/migration", "classpath:db/migration-vendor/h2");
+                .containsExactly("classpath:db/migration-vendor/postgresql");
         assertThat(dev.getProperty("spring.datasource.url")).isEqualTo(local.getProperty("spring.datasource.url"));
     }
 

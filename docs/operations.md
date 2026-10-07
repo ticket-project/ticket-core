@@ -5,14 +5,50 @@
 
 ## 프로파일
 
-- **local**: H2 file DB. 스키마는 운영과 같은 migration으로 만들어 재시작해도 데이터가 남는다. 초기 데이터는 기동
-  때 넣지 않으므로 처음 한 번 `seedLocal`을 실행한다. 처음부터 다시 만들려면 서버를 끄고 `~/ticket-local*.db`
-  파일을 지운 뒤 기동하고 `seedLocal`을 실행한다. `ddl-auto: create` 시절에 만든 H2 파일(Flyway 이력이 없음)이나
-  이미 적용된 migration이 바뀌어 checksum 검증이 실패하는 파일도 같은 방법으로 지운다.
-- **dev**: local과 같은 H2 file DB와 migration을 쓰고 초기 데이터를 넣지 않는다. `seedLocal`은 local 프로파일
+- **local**: Docker PostgreSQL. `docker compose -f compose.local.yml up -d`로 DB와 Redis를 실행한다.
+  스키마는 운영과 같은 PostgreSQL migration으로 만들며 데이터는 볼륨에 보존한다. 초기 데이터는 기동
+  때 넣지 않으므로 처음 한 번 `seedLocal`을 실행한다. 기존 H2 파일은 자동 변환하거나 삭제하지 않는다.
+- **dev**: local과 같은 PostgreSQL 기본값과 migration을 쓰고 초기 데이터를 넣지 않는다. `seedLocal`은 local 프로파일
   설정을 읽는 로컬 전용 명령이다.
-- **prod**: Oracle. 초기 데이터는 기동 시 넣지 않는다. 테이블 생성(배포/Flyway)과 데이터 적재(`seedProd`)는 별개
+- **prod**: AWS RDS PostgreSQL. 초기 데이터는 기동 시 넣지 않는다. 테이블 생성(배포/Flyway)과 데이터 적재(`seedProd`)는 별개
   작업이다.
+
+## AWS RDS PostgreSQL 전환
+
+로컬과 검증 컨테이너는 PostgreSQL 18을 사용한다. RDS에서도 같은 메이저 버전을 선택하고, 실제 리전에서
+지원하는 마이너 버전은 생성 전에 확인한다. 기존 운영 Oracle의 데이터는 이 코드 변경으로 자동 이관되지 않는다.
+
+서버의 저장소 밖 compose와 환경변수에는 다음 값을 설정한다. 비밀번호는 별도 secret으로 주입한다.
+
+```text
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:postgresql://<RDS endpoint>:5432/ticket?sslmode=verify-full&sslrootcert=/app/certs/global-bundle.pem
+SPRING_DATASOURCE_USERNAME=<애플리케이션 계정>
+SPRING_DATASOURCE_PASSWORD=<비밀번호>
+```
+
+AWS RDS CA bundle을 컨테이너의 위 경로에 읽기 전용으로 마운트한다. `verify-full`은 CA와 endpoint 이름을
+함께 확인한다([AWS SSL 안내](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html)).
+`seedProd`는 같은 JDBC URL을 사용하되 `sslrootcert`를 실행 PC에서 읽을 수 있는 인증서 경로로 바꾼다.
+Oracle Wallet과 `TNS_ADMIN`은 PostgreSQL 실행에 사용하지 않는다. 애플리케이션 실행 서버에서 RDS로
+접속할 수 있게 VPC·보안 그룹·5432 접근과 DB 계정의 schema 생성·DDL 권한을 준비한다.
+
+전환 순서:
+
+1. 기존 Oracle의 백업과 데이터 이관 범위를 확정하고 새 RDS의 빈 애플리케이션 schema를 준비한다.
+2. 새 코드로 PostgreSQL migration을 먼저 적용한다. PostgreSQL V1은 현재 스키마를 바로 만들므로
+   Oracle의 Flyway 이력 테이블이나 과거 DDL을 가져오지 않는다.
+3. 기존 업무 데이터를 옮길 경우 쓰기와 주문/hold 만료·이벤트 재처리를 중지하고 최종 데이터를 동기화한다.
+   명시적 ID, UUID, 날짜와 시각, 긴 설명 문자열, 미완료 publication과 archive를 변환·검증한다.
+   저장된 이벤트 클래스의 옛 `com.ticket.booking.OrderStarted` 값은 `com.ticket.booking.OrderCreated`로 변환한다.
+4. 이관한 identity 컬럼마다 시퀀스를 기존 최대 ID 이상으로 맞춘다. `seedLocal`/`seedProd`는 성공 시
+   이 작업을 자동 수행하지만 외부 데이터 이관 도구에는 자동 적용되지 않는다. seed는 이관 도구가 아니다.
+5. 행 수·중복·참조·금액·날짜·미완료 이벤트를 대조하고 로그인, 공연 조회, 선점, 주문 생성/취소/만료,
+   publication 처리와 `/actuator/health`를 확인한 뒤 트래픽을 연다. Redis에 남은 hold·대기열 상태도 DB와 맞춘다.
+
+DB 전환은 일반 이미지 배포와 별도로 계획한다. 배포 workflow의 이전 이미지 복원만으로 DB 연결·데이터가
+Oracle로 돌아가지는 않는다. PostgreSQL에서 새 쓰기가 발생한 뒤에는 이전 DB와 데이터가 달라지므로,
+복귀 시 데이터 조정과 서버 환경변수 복원까지 포함해야 한다.
 
 ## Admission token 검증
 
@@ -42,9 +78,8 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 1. 운영 DB 백업 또는 복구 지점을 확보한다.
 2. 애플리케이션 DB 계정이 `flyway_schema_history`(와 module별 `flyway_schema_history_{module}`) 테이블을 생성하고
    이후 DDL을 실행할 권한이 있는지 확인한다.
-3. 기동 후 해당 이력 테이블에 version `0` baseline과 적용된 버전이 모두 `success`로 기록됐는지 확인한다. Oracle에서
-   이력 테이블과 컬럼은 소문자로 만들어지므로 따옴표로 감싸 조회한다
-   (`SELECT "version", "success" FROM "flyway_schema_history_booking"`).
+3. 기동 후 해당 이력 테이블에 version `0` baseline과 적용된 버전이 모두 `success`로 기록됐는지 확인한다
+   (`SELECT version, success FROM flyway_schema_history_booking`).
 
 배포 전 점검:
 
@@ -64,14 +99,14 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
   SELECT id FROM SHOWS WHERE venue_id NOT IN (SELECT id FROM VENUES);
   ```
 
-- `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `serialized_event` 컬럼 정의(migration `__root` V9 적용 여부)를
+- `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `serialized_event` 컬럼 정의(PostgreSQL `__root` V1의 VARCHAR(4000))를
   환경별 Flyway 이력과 실제 컬럼으로 확인한다. 저장소에 파일이 있다는 사실만으로 운영 적용을 단정하지 않는다. V9 이전
   크기에서는 `OrderTerminated` publication 저장이 실패할 수 있으므로 다중 좌석 주문 트래픽을 늘리기 전에 확인한다.
-- `__root` V10은 저장된 publication의 `event_type`을 `com.ticket.booking.OrderStarted`에서 `OrderCreated`로 옮긴다. 적용 뒤
+- 과거 Oracle/H2의 `__root` V10은 저장된 publication의 `event_type`을 `com.ticket.booking.OrderStarted`에서 `OrderCreated`로 옮겼다. 이관 뒤
   `OrderStarted`를 쓰던 이전 이미지로 되돌리면 그 행의 클래스를 읽지 못한다. 되돌려야 하면 미완료 `OrderCreated` 행이 없는지
   먼저 확인하거나 `event_type`을 옛 이름으로 되돌린다.
 
-Oracle에서 migration이 실패한 뒤 재시도하기 전에는 `USER_IND_COLUMNS`와 `flyway_schema_history`(module 소유라면
+PostgreSQL에서 migration이 실패한 뒤 재시도하기 전에는 실제 schema와 `flyway_schema_history`(module 소유라면
 `flyway_schema_history_{module}`)를 함께 확인한다.
 
 ## 배포

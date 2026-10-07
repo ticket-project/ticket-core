@@ -4557,8 +4557,8 @@ SELECT p.id, st.id,
             + ASCII(SUBSTR(st.section, 1, 1)) * 13
             + ASCII(SUBSTR(st.row_no, 1, 1)) * 7
             + CAST(st.seat_no AS INTEGER) * 11
-            + FLOOR((ASCII(SUBSTR(st.row_no, 1, 1)) - ASCII('A')) / 2) * 19
-            + FLOOR((CAST(st.seat_no AS INTEGER) - 1) / 3) * 23,
+            + FLOOR((ASCII(SUBSTR(st.row_no, 1, 1)) - ASCII('A')) / 2.0) * 19
+            + FLOOR((CAST(st.seat_no AS INTEGER) - 1) / 3.0) * 23,
             100
         ) < (
             16 + MOD(p.id, 4) * 4
@@ -4580,8 +4580,8 @@ SELECT p.id, st.id,
             + CASE
                 WHEN MOD(
                     p.id
-                    + FLOOR((ASCII(SUBSTR(st.row_no, 1, 1)) - ASCII('A')) / 2)
-                    + FLOOR((CAST(st.seat_no AS INTEGER) - 1) / 3),
+                    + FLOOR((ASCII(SUBSTR(st.row_no, 1, 1)) - ASCII('A')) / 2.0)
+                    + FLOOR((CAST(st.seat_no AS INTEGER) - 1) / 3.0),
                     5
                 ) = 0 THEN 10
                 ELSE 0
