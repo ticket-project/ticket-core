@@ -3,72 +3,162 @@ package com.ticket.bootstrap.migration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.ticket.payment.domain.Payment;
 
 /**
- * {@code payment} module이 {@code __root} + 자신의 migration만으로(booking 등 다른 module의 migration 없이) {@code PAYMENTS} 테이블을
- * 만들고, {@code payment_key}/{@code (order_id, attempt_no)}/{@code provider_payment_key} unique 제약과 {@code amount >= 0}
- * CHECK 제약이 실제로 동작하는지 검증한다. 결제 흐름이 아직 없어 매핑 entity는 두지 않는다(ADR 0005).
+ * {@code payment} module이 {@code __root} + 자신의 migration(V1 {@code PAYMENTS} 생성)만으로(booking 등 다른 module의 migration 없이)
+ * {@link Payment} 매핑과 실제로 맞는 schema를 만들고, {@code payment_key}/{@code (order_id, attempt_no)}/
+ * {@code provider_payment_key} unique 제약과 {@code amount >= 0} CHECK 제약이 실제로 동작하는지 검증한다.
  *
- * <p>{@code __root} 이력의 V2~V4가 pre-Flyway baseline을 전제하므로 {@link BookingTicketSlicingSchemaTest}와 같은 baseline을 재현한다.
+ * <p>기법은 {@link BookingModuleSlicingSchemaTest}를 따른다. {@code PAYMENTS}는 새 table이지만 {@code __root} 이력의 V2
+ * ({@code PERFORMANCE_QUEUE_POLICIES})가 pre-Flyway baseline인 {@code PERFORMANCES}를 payment와 무관하게 항상 전제하므로, 최소 legacy
+ * baseline을 같이 재현한다.
  */
 class PaymentModuleSlicingSchemaTest {
     private static final String URL =
             "jdbc:h2:mem:payment-module-slicing-schema;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 
     @Test
-    void root_and_payment_migrations_alone_create_payments_table_with_constraints() throws Exception {
-        ModulithFlywayTestSupport.createBookingLegacyBaseline(URL);
+    void root_and_payment_migrations_alone_produce_a_schema_the_payment_mapping_can_use() throws Exception {
+        createLegacyBaselineSchema();
         // 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 — __root와 payment뿐이다.
         ModulithFlywayTestSupport.migrate(URL, List.of("payment"));
 
-        try (Connection connection = ModulithFlywayTestSupport.connect(URL);
-                Statement statement = connection.createStatement()) {
-            assertThat(ModulithFlywayTestSupport.tableExists(connection, "PAYMENTS"))
-                    .isTrue();
-            // 같은 Order(orderId=1)에 다른 attemptNo로 다시 결제를 시도할 수 있다(Order 1 : 0..N Payment, ADR 0005).
-            insertPayment(statement, 1L, "payment-key-1", 1, null, "10.00");
-            insertPayment(statement, 1L, "payment-key-2", 2, "provider-key-1", "10.00");
-            // providerPaymentKey가 NULL인 행은 여러 건 허용된다.
-            insertPayment(statement, 2L, "payment-key-3", 1, null, "1.00");
-
-            // payment_key 중복은 unique 제약 위반이다.
-            assertThatThrownBy(() -> insertPayment(statement, 3L, "payment-key-1", 1, null, "1.00"))
-                    .isInstanceOf(SQLException.class);
-            // 같은 Order의 같은 attemptNo 중복은 unique 제약 위반이다.
-            assertThatThrownBy(() -> insertPayment(statement, 1L, "payment-key-4", 1, null, "1.00"))
-                    .isInstanceOf(SQLException.class);
-            // providerPaymentKey 중복은 unique 제약 위반이다.
-            assertThatThrownBy(() -> insertPayment(statement, 4L, "payment-key-5", 1, "provider-key-1", "1.00"))
-                    .isInstanceOf(SQLException.class);
-            // amount < 0은 CHECK 제약 위반이다.
-            assertThatThrownBy(() -> insertPayment(statement, 5L, "payment-key-6", 1, null, "-1.00"))
-                    .isInstanceOf(SQLException.class);
-
-            try (var resultSet = statement.executeQuery("SELECT COUNT(*) FROM PAYMENTS")) {
-                resultSet.next();
-                assertThat(resultSet.getLong(1)).isEqualTo(3L);
-            }
+        final StandardServiceRegistry registry = ModulithFlywayTestSupport.hibernateRegistry(URL);
+        try {
+            final Metadata metadata = new MetadataSources(registry)
+                    .addAnnotatedClass(Payment.class)
+                    .buildMetadata();
+            // (1) __root + payment migration만으로 만든 schema가 Payment 매핑과 실제로 맞는지 —
+            // 운영이 쓰는 ddl-auto=validate와 같은 검증이다.
+            ModulithFlywayTestSupport.validateSchema(registry, metadata);
+            // (2) 그 schema에 대해 실제 CRUD와 제약이 동작하는지.
+            assertCrudAndConstraintsWork(registry, metadata);
+        } finally {
+            StandardServiceRegistryBuilder.destroy(registry);
         }
     }
 
-    private void insertPayment(
-            final Statement statement,
-            final long orderId,
-            final String paymentKey,
-            final int attemptNo,
-            final String providerPaymentKey,
-            final String amount)
-            throws SQLException {
-        final String provider = providerPaymentKey == null ? "NULL" : "'" + providerPaymentKey + "'";
-        statement.executeUpdate("INSERT INTO PAYMENTS (order_id, payment_key, attempt_no, provider, method, amount,"
-                + " status, provider_payment_key, requested_at, created_at, created_by) VALUES ("
-                + orderId + ", '" + paymentKey + "', " + attemptNo + ", 'TOSS', 'CARD', " + amount + ", 'READY', "
-                + provider + ", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'payment-module-slicing-test')");
+    private void assertCrudAndConstraintsWork(final StandardServiceRegistry registry, final Metadata metadata) {
+        final SessionFactory sessionFactory = metadata.buildSessionFactory();
+        try (Session session = sessionFactory.openSession()) {
+            final LocalDateTime now = LocalDateTime.now();
+            // 같은 Order(orderId=1)에 대해 첫 결제 시도가 실패해도, 다른 attemptNo로 다시 결제를
+            // 시도할 수 있다(Order 1 : 0..N Payment, ADR 0005).
+            final Payment firstAttempt = Payment.request(1L, "payment-key-1", 1, "TOSS", "CARD", BigDecimal.TEN, now);
+            persist(session, firstAttempt);
+            firstAttempt.fail("PG_DECLINED", "한도 초과", now.plusMinutes(1));
+            session.getTransaction().begin();
+            session.merge(firstAttempt);
+            session.getTransaction().commit();
+
+            final Payment secondAttempt = Payment.request(1L, "payment-key-2", 2, "TOSS", "CARD", BigDecimal.TEN, now);
+            persist(session, secondAttempt);
+
+            session.clear();
+            final List<Payment> paymentsForOrder = session.createQuery(
+                            "from Payment where orderId = :orderId order by attemptNo", Payment.class)
+                    .setParameter("orderId", 1L)
+                    .list();
+            assertThat(paymentsForOrder).hasSize(2);
+            assertThat(paymentsForOrder.get(0).getStatus().name()).isEqualTo("FAILED");
+            assertThat(paymentsForOrder.get(1).getStatus().name()).isEqualTo("READY");
+            // payment_key 중복은 unique 제약 위반이다.
+            final Payment duplicatePaymentKey =
+                    Payment.request(2L, "payment-key-1", 1, "TOSS", "CARD", BigDecimal.ONE, now);
+            assertThatThrownBy(() -> persist(session, duplicatePaymentKey))
+                    .isInstanceOf(ConstraintViolationException.class);
+            // 같은 Order의 같은 attemptNo 중복은 unique 제약 위반이다.
+            final Payment duplicateOrderAttempt =
+                    Payment.request(1L, "payment-key-3", 1, "TOSS", "CARD", BigDecimal.ONE, now);
+            assertThatThrownBy(() -> persist(session, duplicateOrderAttempt))
+                    .isInstanceOf(ConstraintViolationException.class);
+            // providerPaymentKey 중복은 unique 제약 위반이다(NULL은 여러 건 허용).
+            secondAttempt.approve("provider-key-1", now.plusMinutes(2));
+            session.getTransaction().begin();
+            session.merge(secondAttempt);
+            session.getTransaction().commit();
+
+            final Payment thirdAttempt = Payment.request(3L, "payment-key-4", 1, "TOSS", "CARD", BigDecimal.ONE, now);
+            persist(session, thirdAttempt);
+            thirdAttempt.approve("provider-key-1", now.plusMinutes(3));
+            assertThatThrownBy(() -> {
+                        session.getTransaction().begin();
+                        try {
+                            session.merge(thirdAttempt);
+                            session.flush();
+                            session.getTransaction().commit();
+                        } catch (final RuntimeException exception) {
+                            session.getTransaction().rollback();
+                            throw exception;
+                        }
+                    })
+                    .isInstanceOf(ConstraintViolationException.class);
+            // amount < 0은 CHECK 제약 위반이다.
+            final Payment negativeAmount =
+                    Payment.request(4L, "payment-key-5", 1, "TOSS", "CARD", BigDecimal.valueOf(-1), now);
+            assertThatThrownBy(() -> persist(session, negativeAmount)).isInstanceOf(ConstraintViolationException.class);
+        } finally {
+            sessionFactory.close();
+        }
+    }
+
+    /**
+     * PERFORMANCES/SEATS/PERFORMANCE_SEATS/ORDER_SEATS는 어떤 Flyway migration도 만들지 않는 pre-Flyway
+     * baseline이다(docs/operations.md 참고). payment schema 자체는 이 table들을 참조하지 않지만, {@code __root} 이력의 기존 V2~V4가 이를 전제하므로
+     * payment만 골라 검증하더라도 __root 이력이 요구하는 만큼은 재현해야 한다({@link BookingModuleSlicingSchemaTest}의 baseline과 같다).
+     */
+    private void createLegacyBaselineSchema() throws Exception {
+        try (Connection connection = ModulithFlywayTestSupport.connect(URL);
+                Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE performances (id BIGINT PRIMARY KEY)");
+            statement.execute("CREATE TABLE seats (id BIGINT PRIMARY KEY)");
+            statement.execute("CREATE TABLE performance_seats ("
+                    + "  id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, "
+                    + "  performance_id BIGINT NOT NULL, "
+                    + "  seat_id BIGINT NOT NULL, "
+                    + "  state VARCHAR(255), "
+                    + "  price DECIMAL(38, 2), "
+                    + "  created_at TIMESTAMP NOT NULL, "
+                    + "  created_by VARCHAR(255) NOT NULL, "
+                    + "  updated_at TIMESTAMP, "
+                    + "  updated_by VARCHAR(255)"
+                    + ")");
+            statement.execute("CREATE TABLE order_seats (order_id BIGINT NOT NULL)");
+        }
+    }
+
+    private void persist(final Session session, final Object entity) {
+        // shared.jpa.AuditedEntity의 감사 필드는 Spring Data JPA auditing(AuditingEntityListener +
+        // AuditorAware)이 채운다 — 이 테스트는 Spring context 없이 순수 Hibernate만 쓰므로 직접
+        // 채운다. Spring auditing 설정 자체는 다른 통합 테스트가 이미 고정한다.
+        ReflectionTestUtils.setField(entity, "createdAt", LocalDateTime.now());
+        ReflectionTestUtils.setField(entity, "createdBy", "payment-module-slicing-test");
+
+        session.getTransaction().begin();
+        try {
+            session.persist(entity);
+            session.flush();
+            session.getTransaction().commit();
+        } catch (final RuntimeException exception) {
+            session.getTransaction().rollback();
+            throw exception;
+        }
     }
 }

@@ -9,11 +9,6 @@
 > `booking.ticket.domain`이다(ADR 0016). 가격 원본이 `PerformanceGrade`이고 payment/ticketing을
 > entity-only로 시작한다는 결정 자체는 그대로다.
 
-> 2026-10-07 갱신: 호출자가 없던 entity-only `payment` 코드(`Payment`·`PaymentState`·`PaymentRepository`와 그
-> persistence)를 실제 결제 연동 전까지 제거했다. `PAYMENTS` 테이블과 payment migration은 그대로이고, Modulith가 그
-> migration을 계속 적용하도록 `com.ticket.payment`는 `package-info.java`만 있는 module로 남는다. 결제 시도 모델
-> (`Order 1 : 0..N Payment`, §5)은 연동을 시작할 때 이 결정을 기준으로 다시 구현한다.
-
 **2026-09-13 호환성 보완**: 가격 원본은 계속 PerformanceGrade이고 ShowGrade/ShowSeat도 복원하지 않는다.
 기존 프론트가 소비하는 공연 상세 `grades`와 `GET /api/v1/shows/{showId}/seats`는 현재 시드에서 모든
 회차의 등급·가격·좌석 배치가 같다는 조건 아래 가장 이른 회차의 snapshot으로 제공한다. 정확한 회차별

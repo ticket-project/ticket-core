@@ -13,8 +13,8 @@ import com.ticket.testsupport.persistence.MigratedSchema;
  *
  * <p>STANDALONE bootstrap mode는 {@code com.ticket.venue} package tree만 component-scan한다. {@code shared}는
  * {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에도 포함되지만 호출 대상 계약만 갖고 bean을 등록하지 않으므로, 스캔 범위 밖에서 오는
- * {@code JPAQueryFactory}는 {@code @MockitoBean}으로 대체한다. venue는 업무 module을 하나도 참조하지 않는 leaf라 다른 module의 공개 계약을 mock할 필요가
- * 없다.
+ * {@code JPAQueryFactory}는 {@code @MockitoBean}으로 대체한다. venue는 업무 module을 하나도 참조하지 않는 leaf(payment와 같은 형태)라 다른 module의
+ * 공개 계약을 mock할 필요가 없다.
  */
 @MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
