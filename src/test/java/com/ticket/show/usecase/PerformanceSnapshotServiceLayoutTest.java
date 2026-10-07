@@ -35,7 +35,7 @@ import com.ticket.venue.api.VenueSnapshot;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
-class PerformanceLayoutServiceTest {
+class PerformanceSnapshotServiceLayoutTest {
     @Mock
     private PerformanceRepository performanceRepository;
 
@@ -52,7 +52,7 @@ class PerformanceLayoutServiceTest {
     private VenueSeatLookupApi venueSeatLookupApi;
 
     @InjectMocks
-    private PerformanceLayoutService service;
+    private PerformanceSnapshotService service;
 
     @Test
     void 공연의_첫_회차_ID를_조회한다() {
