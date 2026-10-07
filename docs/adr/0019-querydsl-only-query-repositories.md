@@ -7,6 +7,14 @@
 [ADR 0017](0017-query-implementations-live-in-persistence.md)의 결정 §1·§2·§5를 대체한다. "조회
 구현은 `persistence`에 있다"는 뼈대는 그대로 두고, **어떤 이름을 어디에 붙이는가**만 바꾼다.
 
+> **2026-10-07 갱신 — 결정 §2·§4의 3단 구조를 걷어냈다.** `*RepositoryAdapter`가 전부 한 줄 위임이거나
+> 상태 고정 인자·빈 입력 guard·map 변환 정도였고, "계약 → adapter → Spring Data" 세 겹은 읽을 것 없는
+> 경유 지점만 늘렸다. 이제 domain `*Repository`가 Spring Data `Repository<T, ID>`를 확장해 Spring Data가
+> 직접 구현한다. `@Query`·`@Lock`은 그 인터페이스 메서드에, 작은 조립은 `default` 메서드에 둔다.
+> `*RepositoryAdapter`와 `SpringData*JpaRepository`는 모두 지웠다(booking·like·member·show·venue).
+> 결정 §1(`*QuerydslRepository` 이름)과 §5(`READS_DB` 삭제)는 그대로다. 현재 기준은
+> [architecture.md](../architecture.md)다.
+
 ## 배경
 
 ADR 0017은 조회 구현을 `persistence`의 `*QueryRepository`로 모으고, 그 판별을 "`persistence`

@@ -67,7 +67,7 @@ Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
 | --- | --- | --- |
 | Spring 컨텍스트 없는 단위 테스트 | 엔티티, 값 객체, 상태 전이, 정책, 불변식, use case(외부 port는 mock/fake) | Spring 컨텍스트, DB, Redis |
 | `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인. 모듈마다 최소 하나 | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
-| `@DataJpaTest` | `*QuerydslRepository`의 Querydsl 조회, `*RepositoryAdapter` | 업무 규칙 단위 테스트 |
+| `@DataJpaTest` | `*QuerydslRepository`의 Querydsl 조회, Spring Data가 구현하는 domain `*Repository` | 업무 규칙 단위 테스트 |
 | Spring context 없는 Hibernate 단독 검증 | 해당 모듈 소유 migration만으로 schema가 만들어지고 그 모듈 JPA 매핑이 `validate`를 통과하는지(`*SlicingSchemaTest`). 다른 모듈의 migration이 있어야만 통과하면 실패다 | 업무 규칙 단위 테스트 |
 | `@SpringBootTest`(+ Testcontainers) | 전체 컨텍스트 기동, Redis/Redisson 실제 연동, 실제 HTTP로 스택을 관통하는 예매 E2E | 개별 클래스 단위 검증 |
 
