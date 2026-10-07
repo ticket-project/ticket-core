@@ -5,7 +5,7 @@
 것이다.
 
 **구현 범위**: `payment` module은 entity/schema/repository까지만 있는 entity-only 단계이고, booking의 Ticket은
-`TICKETS` 테이블(V5)만 있다. PG 승인, `OrderConfirmed` listener, 결제 정산 서비스는 아직 없고 주문을 `CONFIRMED`로 바꾸는 코드도
+`TICKETS` 테이블(V5)만 있다. PG 승인, `OrderConfirmed` listener, 결제 정산 서비스는 아직 없고 `Order.confirm()`을 호출하는 곳도
 없다. 그래서 `PENDING` 주문은 만료(`ExpireOrderUseCase`) 또는 취소(`CancelOrderUseCase`)로만 종료된다. 아래
 수명주기는 지금 실제로 동작하는 PENDING 생성·취소·만료 경로만 설명한다. 결제 승인·재시도·Hold 만료 경쟁 정책은
 아직 설계되지 않았다.

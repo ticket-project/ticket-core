@@ -27,6 +27,17 @@ class OrderTest {
     }
 
     @Test
+    void pending_주문은_확정할_수_있다() {
+        LocalDateTime now = LocalDateTime.of(2026, 3, 15, 12, 0);
+        Order order = createOrder(now.plusMinutes(10));
+
+        order.confirm(now);
+
+        assertThat(order.getStatus()).isEqualTo(OrderState.CONFIRMED);
+        assertThat(order.getConfirmedAt()).isEqualTo(now);
+    }
+
+    @Test
     void pending_주문은_만료시각이_지나면_만료할_수_있다() {
         LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 0);
         LocalDateTime now = expiresAt.plusMinutes(1);
@@ -52,11 +63,11 @@ class OrderTest {
     @Test
     void pending이_아닌_주문은_다시_전이할_수_없다() {
         Order order = createOrder(LocalDateTime.of(2026, 3, 15, 12, 30));
-        order.cancel(LocalDateTime.of(2026, 3, 15, 12, 0));
+        order.confirm(LocalDateTime.of(2026, 3, 15, 12, 0));
 
         assertThatThrownBy(() -> order.cancel(LocalDateTime.of(2026, 3, 15, 12, 5)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("currentStatus=CANCELED");
+                .hasMessageContaining("currentStatus=CONFIRMED");
     }
 
     /** 만료는 시각으로만 정해진다 — 만료 경로로 불렸다는 사실만으로는 아직 유효한 주문을 EXPIRED로 바꿀 수 없다. */
