@@ -14,10 +14,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import jakarta.persistence.EntityManager;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -27,9 +28,8 @@ import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.testsupport.persistence.JpaSliceTestSupport;
 
-@Import(OrderRepositoryAdapter.class)
 @SuppressWarnings("NonAsciiCharacters")
-class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
+class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     private static final long MEMBER_ID = 100L;
     private static final long PERFORMANCE_ID = 200L;
     private static final int BATCH_SIZE = 100;
@@ -38,14 +38,17 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
     private OrderRepository orderRepository;
 
     @Autowired
-    private SpringDataOrderJpaRepository jpaRepository;
+    private EntityManager entityManager;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
 
     @AfterEach
     void cleanUp() {
-        inTransaction(() -> jpaRepository.deleteAll());
+        inTransaction(() -> entityManager
+                .createQuery("select o from Order o", Order.class)
+                .getResultList()
+                .forEach(entityManager::remove));
     }
 
     /**
@@ -61,7 +64,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
         inTransaction(() -> orderRepository.save(order));
 
         Order reloaded = inTransactionWithResult(() -> {
-            Order found = jpaRepository.findById(order.getId()).orElseThrow();
+            Order found = orderRepository.findById(order.getId()).orElseThrow();
             found.getOrderSeats().size();
             return found;
         });
@@ -138,7 +141,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
         Order alreadyCanceled = order("canceled", now.minusMinutes(1));
         alreadyCanceled.cancel(now.minusSeconds(1));
 
-        inTransaction(() -> jpaRepository.saveAll(List.of(past, boundary, future, alreadyCanceled)));
+        inTransaction(() -> saveAll(List.of(past, boundary, future, alreadyCanceled)));
 
         List<Order> result = orderRepository.findExpirable(now, null, BATCH_SIZE);
 
@@ -148,7 +151,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
     @Test
     void expiration_query_respects_the_requested_limit() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-        inTransaction(() -> jpaRepository.saveAll(List.of(
+        inTransaction(() -> saveAll(List.of(
                 order("first", now.minusMinutes(3)),
                 order("second", now.minusMinutes(2)),
                 order("third", now.minusMinutes(1)))));
@@ -165,7 +168,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
         Order first = order("cursor-first", now.minusMinutes(3));
         Order second = order("cursor-second", now.minusMinutes(2));
         Order third = order("cursor-third", now.minusMinutes(1));
-        inTransaction(() -> jpaRepository.saveAll(List.of(first, second, third)));
+        inTransaction(() -> saveAll(List.of(first, second, third)));
 
         List<Order> result = orderRepository.findExpirable(now, first.getId(), BATCH_SIZE);
 
@@ -185,7 +188,7 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
                 LocalDateTime.now().plusDays(1),
                 "venue");
         canceled.cancel(LocalDateTime.now());
-        inTransaction(() -> jpaRepository.saveAll(List.of(pending, canceled)));
+        inTransaction(() -> saveAll(List.of(pending, canceled)));
 
         assertThat(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
                 .isTrue();
@@ -247,6 +250,10 @@ class OrderRepositoryAdapterIntegrationTest extends JpaSliceTestSupport {
                 "show-title",
                 expiresAt.plusDays(1),
                 "venue-name");
+    }
+
+    private void saveAll(final List<Order> orders) {
+        orders.forEach(orderRepository::save);
     }
 
     private void inTransaction(final Runnable action) {
