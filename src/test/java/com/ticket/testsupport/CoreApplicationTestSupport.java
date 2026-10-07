@@ -24,7 +24,7 @@ public abstract class CoreApplicationTestSupport {
      * JVM 하나에 컨테이너 하나를 쓴다. @Testcontainers의 @Container는 테스트 클래스마다 컨테이너를 띄우고 클래스가 끝나면 멈추는데, Spring 컨텍스트는 클래스 사이에 재사용된다.
      * 그러면 두 번째 테스트 클래스가 이미 멈춘 컨테이너의 포트를 가리킨 컨텍스트를 그대로 물려받아 실패한다. 정리는 Testcontainers의 Ryuk이 JVM 종료 시 맡는다.
      *
-     * <p>RedissonConfig가 기동 시점에 연결을 맺으므로 실제 Redis 없이는 컨텍스트가 뜨지 않는다.
+     * <p>RedissonClient(redisson-spring-boot-starter 자동 설정)가 기동 시점에 연결을 맺으므로 실제 Redis 없이는 컨텍스트가 뜨지 않는다.
      */
     static final GenericContainer<?> REDIS =
             new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
