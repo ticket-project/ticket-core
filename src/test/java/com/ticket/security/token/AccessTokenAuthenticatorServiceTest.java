@@ -12,12 +12,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.jwt.JwtAccessTokenCodec;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class AccessTokenAuthenticatorServiceTest {
     @Mock
-    private AccessTokenReader accessTokenReader;
+    private JwtAccessTokenCodec accessTokenReader;
 
     @InjectMocks
     private AccessTokenAuthenticatorService service;

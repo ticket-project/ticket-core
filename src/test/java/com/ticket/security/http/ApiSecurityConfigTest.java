@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.TicketApplication;
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.jwt.JwtAccessTokenCodec;
 import com.ticket.security.token.AccessTokenReadResult;
-import com.ticket.security.token.AccessTokenReader;
 
 /**
  * {@code @ContextConfiguration(classes = TicketApplication.class)}: {@code @WebMvcTest}는 명시가 없으면 같은 package에서 가장 가까운
@@ -44,7 +44,7 @@ class ApiSecurityConfigTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AccessTokenReader accessTokenReader;
+    private JwtAccessTokenCodec accessTokenReader;
 
     @MockitoBean
     private RestAuthenticationEntryPoint restAuthenticationEntryPoint;

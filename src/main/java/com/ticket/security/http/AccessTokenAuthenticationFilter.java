@@ -16,17 +16,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ticket.member.api.AuthenticatedMember;
+import com.ticket.security.jwt.JwtAccessTokenCodec;
 import com.ticket.security.token.AccessTokenReadResult;
-import com.ticket.security.token.AccessTokenReader;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AccessTokenAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
-    private final AccessTokenReader accessTokenReader;
+    private final JwtAccessTokenCodec accessTokenReader;
 
-    public AccessTokenAuthenticationFilter(final AccessTokenReader accessTokenReader) {
+    public AccessTokenAuthenticationFilter(final JwtAccessTokenCodec accessTokenReader) {
         this.accessTokenReader = Objects.requireNonNull(accessTokenReader);
     }
 

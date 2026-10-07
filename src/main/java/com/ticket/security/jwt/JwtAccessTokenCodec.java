@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.token.AccessTokenReadResult;
-import com.ticket.security.token.AccessTokenReader;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -22,7 +21,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @Component
-public class JwtAccessTokenCodec implements AccessTokenReader {
+public class JwtAccessTokenCodec {
     private static final String ROLE_CLAIM = "role";
     private final JwtProperties jwtProperties;
     private final Clock clock;
@@ -54,7 +53,6 @@ public class JwtAccessTokenCodec implements AccessTokenReader {
     }
 
     /** JJWT 예외를 중립 결과로 바꾼다. 라이브러리 예외 타입이 이 모듈 밖으로 나가지 않게 한다. */
-    @Override
     public AccessTokenReadResult read(final String accessToken) {
         try {
             return AccessTokenReadResult.authenticated(parse(accessToken));

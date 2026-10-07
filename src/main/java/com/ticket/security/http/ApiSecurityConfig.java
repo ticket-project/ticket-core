@@ -17,7 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.ticket.security.token.AccessTokenReader;
+import com.ticket.security.jwt.JwtAccessTokenCodec;
 import com.ticket.shared.config.CorsProperties;
 
 @Configuration
@@ -27,7 +27,7 @@ public class ApiSecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(
             final HttpSecurity http,
-            final AccessTokenReader accessTokenReader,
+            final JwtAccessTokenCodec accessTokenReader,
             final RestAuthenticationEntryPoint restAuthenticationEntryPoint)
             throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)

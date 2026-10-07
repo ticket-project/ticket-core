@@ -7,14 +7,14 @@ import org.springframework.stereotype.Service;
 import com.ticket.security.exception.AuthorizationException;
 import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthRefreshToken;
-import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.security.token.RedisRefreshTokenStore;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class LogoutUseCase {
-    private final RefreshTokenStore refreshTokenStore;
+    private final RedisRefreshTokenStore refreshTokenStore;
 
     public record Input(Long memberId, AuthRefreshToken refreshToken) {
         public Input {

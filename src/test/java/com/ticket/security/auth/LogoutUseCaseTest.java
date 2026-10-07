@@ -15,13 +15,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.security.exception.AuthorizationException;
 import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.token.AuthRefreshToken;
-import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.security.token.RedisRefreshTokenStore;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class LogoutUseCaseTest {
     @Mock
-    private RefreshTokenStore refreshTokenStore;
+    private RedisRefreshTokenStore refreshTokenStore;
 
     @InjectMocks
     private LogoutUseCase useCase;

@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.security.token.IssuedAuthTokens;
-import com.ticket.security.token.RefreshTokenStore;
+import com.ticket.security.token.RedisRefreshTokenStore;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
@@ -23,7 +23,7 @@ class JwtAuthTokenIssuerTest {
     private JwtProperties jwtProperties;
 
     @Mock
-    private RefreshTokenStore refreshTokenStore;
+    private RedisRefreshTokenStore refreshTokenStore;
 
     @InjectMocks
     private JwtAuthTokenIssuer jwtAuthTokenIssuer;
