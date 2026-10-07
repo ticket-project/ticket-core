@@ -2,8 +2,8 @@ package com.ticket.security.auth;
 
 import org.springframework.stereotype.Service;
 
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.MemberIdentity;
 import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.security.token.AuthRefreshToken;
@@ -24,7 +24,7 @@ public class RefreshAuthTokenUseCase {
         final Long memberId = refreshTokenStore
                 .consume(input.refreshToken())
                 .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
-        final MemberIdentity member;
+        final AuthenticatedMember member;
         try {
             member = memberAccountApi.getActiveIdentity(memberId);
         } catch (final NotFoundException exception) {

@@ -13,8 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.exception.MemberNotFoundException;
 import com.ticket.security.exception.UnauthenticatedException;
 import com.ticket.security.jwt.JwtAuthTokenIssuer;
@@ -39,7 +39,7 @@ class RefreshAuthTokenUseCaseTest {
 
     @Test
     void valid_refresh_token_issues_new_tokens() {
-        MemberIdentity member = new MemberIdentity(1L, "MEMBER");
+        AuthenticatedMember member = new AuthenticatedMember(1L, "MEMBER");
         IssuedAuthTokens response =
                 new IssuedAuthTokens("access-token-value", "new-refresh-token-value", "Bearer", 1800L, 1209600L, 3L);
 

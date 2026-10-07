@@ -7,17 +7,17 @@ import java.util.List;
  *
  * <p>회원 가입과 로그인은 소셜(OAuth2) 전용이다. 비밀번호 자격 증명은 받지 않는다.
  *
- * <p>entity·저장소·프레임워크 타입은 노출하지 않는다. 여기 오가는 값은 {@link SocialIdentity}, {@link MemberIdentity},
+ * <p>entity·저장소·프레임워크 타입은 노출하지 않는다. 여기 오가는 값은 {@link SocialIdentity}, {@link AuthenticatedMember},
  * {@link SocialAccountSnapshot}처럼 member가 소유한 공개 값뿐이다.
  *
  * <p>이미 다른 소셜 계정에 연결된 이메일은 {@code DuplicateEmailException}, 없는 회원은 {@code NotFoundException}(404, E404)이다.
  */
 public interface MemberAccountApi {
     /** 지금도 활성 회원인지 확인하고 그 신원을 반환한다. 토큰만 유효하고 계정이 사라진 경우를 걸러내기 위해 토큰 갱신·코드 교환 흐름이 부른다. 존재하지 않거나 탈퇴한 회원이면 던진다. */
-    MemberIdentity getActiveIdentity(long memberId);
+    AuthenticatedMember getActiveIdentity(long memberId);
 
     /** 정규화된 소셜 신원으로 회원을 찾고, 없으면 만들거나 기존 계정에 연결한다. 검증된 이메일만 기존 계정 연결에 쓰고, 식별은 provider와 provider 사용자 ID로 한다. */
-    MemberIdentity resolveSocialAccount(SocialIdentity identity);
+    AuthenticatedMember resolveSocialAccount(SocialIdentity identity);
 
     /**
      * 회원과 소셜 연결을 DB에서 탈퇴 처리한다. 외부 provider 연결 해제는 이 호출 밖에서, 커밋 뒤에 수행한다.

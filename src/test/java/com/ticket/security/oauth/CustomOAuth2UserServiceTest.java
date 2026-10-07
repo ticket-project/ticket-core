@@ -19,8 +19,8 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.member.api.MemberIdentity;
 import com.ticket.member.api.SocialIdentity;
 import com.ticket.member.api.SocialProvider;
 
@@ -40,7 +40,7 @@ class CustomOAuth2UserServiceTest {
         when(delegate.loadUser(userRequest)).thenReturn(oauth2User);
         final SocialIdentity userInfo =
                 new SocialIdentity(SocialProvider.GOOGLE, "google-user-1", "user@example.com", true, "사용자");
-        when(memberAccountApi.resolveSocialAccount(userInfo)).thenReturn(new MemberIdentity(7L, "MEMBER"));
+        when(memberAccountApi.resolveSocialAccount(userInfo)).thenReturn(new AuthenticatedMember(7L, "MEMBER"));
 
         OAuth2User result = customOAuth2UserService.loadUser(userRequest);
         // getName()이 회원 식별자를 돌려주어야 로그인 성공 처리에서 auth code를 만들 수 있다.
