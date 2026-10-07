@@ -13,7 +13,6 @@ spring:
   modulith:
     events:
       completion-mode: archive
-      republish-outstanding-events-on-restart: false
       staleness:
         check-interval: 1m
         published: 5m
@@ -58,13 +57,9 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
-  sql:
-    init:
-      mode: never
   flyway:
     enabled: false
     locations: classpath:db/migration
-    encoding: UTF-8
     clean-disabled: true
     validate-on-migrate: true
 
@@ -119,7 +114,6 @@ springdoc:
     path: /api/api-docs
   swagger-ui:
     path: /api/swagger-ui.html
-    enabled: true
     display-request-duration: true
     operations-sorter: alpha
     persist-authorization: true
