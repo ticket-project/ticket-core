@@ -26,8 +26,8 @@ class ShowExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo("E7002");
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("지원하지 않는 정렬 조건입니다.");
-        assertThat(response.getBody().getError().getData()).isEqualTo("지원하지 않는 sort: UNKNOWN_SORT");
+        assertThat(response.getBody().error().code()).isEqualTo("E7002");
+        assertThat(response.getBody().error().message()).isEqualTo("지원하지 않는 정렬 조건입니다.");
+        assertThat(response.getBody().error().data()).isEqualTo("지원하지 않는 sort: UNKNOWN_SORT");
     }
 }

@@ -22,9 +22,8 @@ class LikeExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo("E7001");
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("이미 찜한 대상입니다.");
-        assertThat(response.getBody().getError().getData())
-                .isEqualTo("이미 찜한 대상입니다. memberId=1, likeType=SHOW, targetId=7");
+        assertThat(response.getBody().error().code()).isEqualTo("E7001");
+        assertThat(response.getBody().error().message()).isEqualTo("이미 찜한 대상입니다.");
+        assertThat(response.getBody().error().data()).isEqualTo("이미 찜한 대상입니다. memberId=1, likeType=SHOW, targetId=7");
     }
 }

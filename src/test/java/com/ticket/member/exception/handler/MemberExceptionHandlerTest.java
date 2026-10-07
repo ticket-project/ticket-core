@@ -21,8 +21,8 @@ class MemberExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getError().getCode()).isEqualTo("E2000");
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("중복된 이메일은 불가능합니다.");
-        assertThat(response.getBody().getData()).isNull();
+        assertThat(response.getBody().error().code()).isEqualTo("E2000");
+        assertThat(response.getBody().error().message()).isEqualTo("중복된 이메일은 불가능합니다.");
+        assertThat(response.getBody().data()).isNull();
     }
 }
