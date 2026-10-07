@@ -9,11 +9,18 @@ import com.ticket.shared.exception.ErrorCode;
  * module 경계에 맞춰 재번호하지 않는다. E7002(미지원 공연 정렬)는 show가 소유한다.
  */
 public enum LikeErrorCode implements ErrorCode {
-    E7001("이미 찜한 대상");
+    E7001("이미 찜한 대상", "이미 찜한 대상입니다.");
     private final String description;
+    private final String message;
 
-    LikeErrorCode(final String description) {
+    LikeErrorCode(final String description, final String message) {
         this.description = description;
+        this.message = message;
+    }
+
+    /** 응답 {@code error.message}로 나가는 공개 문구다. 외부 계약이라 바꾸지 않는다. */
+    public String getMessage() {
+        return message;
     }
 
     @Override
