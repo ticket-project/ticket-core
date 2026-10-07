@@ -21,7 +21,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -59,7 +60,8 @@ class WebSocketAuthInterceptorTest {
 
     @Test
     void 토큰_검증에_실패하면_연결을_차단한다() {
-        when(accessTokenAuthenticationApi.authenticate("bad-token")).thenThrow(new UnauthenticatedException());
+        when(accessTokenAuthenticationApi.authenticate("bad-token"))
+                .thenThrow(new AuthException(SecurityErrorCode.E1000));
 
         final StompHeaderAccessor accessor = connectAccessor("Bearer bad-token");
 

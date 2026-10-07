@@ -13,7 +13,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             final AuthenticationException authException)
             throws IOException, ServletException {
         final String jwtError = (String) request.getAttribute(AccessTokenFailure.REQUEST_ATTRIBUTE);
-        final UnauthenticatedException error = new UnauthenticatedException(resolveMessage(jwtError));
+        final AuthException error = new AuthException(SecurityErrorCode.E1000, resolveMessage(jwtError));
         // SecurityExceptionHandler와 같은 상태다 — 이 경로는 filter chain에서 나서 그 handler를
         // 거치지 않으므로 여기서 다시 정한다.
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -45,12 +46,12 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private String resolveMessage(final String jwtError) {
         if (jwtError == null) {
-            return UnauthenticatedException.MESSAGE;
+            return SecurityErrorCode.E1000.getMessage();
         }
         return switch (jwtError) {
             case AccessTokenFailure.EXPIRED -> "토큰이 만료되었습니다. 다시 로그인해주세요.";
             case AccessTokenFailure.INVALID -> "유효하지 않은 토큰입니다.";
-            default -> UnauthenticatedException.MESSAGE;
+            default -> SecurityErrorCode.E1000.getMessage();
         };
     }
 }

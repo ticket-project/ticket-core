@@ -16,7 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
 import com.ticket.member.exception.MemberNotFoundException;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.IssuedAuthTokens;
@@ -68,7 +69,8 @@ class RefreshAuthTokenUseCaseTest {
         when(refreshTokenStore.consume(refreshToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
-                .isInstanceOf(UnauthenticatedException.class);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000);
     }
 
     @Test
@@ -78,7 +80,8 @@ class RefreshAuthTokenUseCaseTest {
         when(memberAccountApi.getActiveIdentity(3L)).thenThrow(new MemberNotFoundException());
 
         assertThatThrownBy(() -> useCase.execute(new RefreshAuthTokenUseCase.Input(refreshToken)))
-                .isInstanceOf(UnauthenticatedException.class)
-                .hasMessage(UnauthenticatedException.MESSAGE);
+                .isInstanceOf(AuthException.class)
+                .hasFieldOrPropertyWithValue("errorCode", SecurityErrorCode.E1000)
+                .hasMessage(SecurityErrorCode.E1000.getMessage());
     }
 }

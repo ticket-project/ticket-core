@@ -4,8 +4,8 @@ import static com.ticket.shared.api.InputChecks.requirePositiveId;
 
 import org.springframework.stereotype.Service;
 
-import com.ticket.security.exception.AuthorizationException;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.RedisRefreshTokenStore;
 
@@ -34,12 +34,12 @@ public class LogoutUseCase {
         if (!revoked) {
             final Long tokenOwnerId = refreshTokenStore
                     .validateWithoutConsume(input.refreshToken())
-                    .orElseThrow(() -> new UnauthenticatedException("유효하지 않은 리프레시 토큰입니다."));
+                    .orElseThrow(() -> new AuthException(SecurityErrorCode.E1000, "유효하지 않은 리프레시 토큰입니다."));
             if (!tokenOwnerId.equals(input.memberId())) {
-                throw new AuthorizationException("본인 토큰만 무효화할 수 있습니다.");
+                throw new AuthException(SecurityErrorCode.E1001, "본인 토큰만 무효화할 수 있습니다.");
             }
 
-            throw new UnauthenticatedException("이미 무효화된 토큰이거나 처리할 수 없는 상태입니다.");
+            throw new AuthException(SecurityErrorCode.E1000, "이미 무효화된 토큰이거나 처리할 수 없는 상태입니다.");
         }
 
         return new Output();

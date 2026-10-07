@@ -4,7 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.member.api.MemberAccountApi;
-import com.ticket.security.exception.UnauthenticatedException;
+import com.ticket.security.exception.AuthException;
+import com.ticket.security.exception.SecurityErrorCode;
 import com.ticket.security.jwt.JwtAuthTokenIssuer;
 import com.ticket.security.token.AuthRefreshToken;
 import com.ticket.security.token.IssuedAuthTokens;
@@ -23,12 +24,12 @@ public class RefreshAuthTokenUseCase {
     public Result execute(final Input input) {
         final Long memberId = refreshTokenStore
                 .consume(input.refreshToken())
-                .orElseThrow(() -> new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다."));
+                .orElseThrow(() -> new AuthException(SecurityErrorCode.E1000, "유효하지 않거나 만료된 리프레시 토큰입니다."));
         final AuthenticatedMember member;
         try {
             member = memberAccountApi.getActiveIdentity(memberId);
         } catch (final NotFoundException exception) {
-            throw new UnauthenticatedException("유효하지 않거나 만료된 리프레시 토큰입니다.");
+            throw new AuthException(SecurityErrorCode.E1000, "유효하지 않거나 만료된 리프레시 토큰입니다.");
         }
         final IssuedAuthTokens tokens = authTokenIssuer.issueTokens(member.memberId(), member.role());
         return toResult(tokens);
