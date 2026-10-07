@@ -79,8 +79,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-    runtimeOnly libs.jjwt.impl
-    runtimeOnly libs.jjwt.jackson
     runtimeOnly 'org.flywaydb:flyway-database-oracle'
     // prod는 Oracle, local/dev는 H2 file DB를 쓴다.
     runtimeOnly libs.bundles.oracle.jdbc
@@ -89,7 +87,6 @@ dependencies {
     // Data / Persistence
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation libs.p6spy.spring.boot.starter
-    implementation libs.jjwt.api
     implementation variantOf(libs.querydsl.jpa) { classifier('jakarta') }
 
     // Redis
