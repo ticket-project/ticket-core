@@ -34,7 +34,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 import com.ticket.booking.selection.persistence.RedissonSeatSelectionStore;
 import com.ticket.booking.selection.persistence.SeatSelectionRedisKey;
@@ -205,7 +206,8 @@ class CoreRedisIntegrationTest {
             assertThat(firstEntered.await(2, TimeUnit.SECONDS)).isTrue();
 
             assertThatThrownBy(() -> proxy.execute(SAME_KEY, new CountDownLatch(1), new CountDownLatch(0)))
-                    .isInstanceOf(HoldBusyException.class);
+                    .isInstanceOf(BookingException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6003);
 
             releaseFirst.countDown();
             first.get(5, TimeUnit.SECONDS);

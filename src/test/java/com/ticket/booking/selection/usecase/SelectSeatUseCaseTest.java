@@ -26,11 +26,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatAlreadyHeldException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
+import com.ticket.booking.exception.AdmissionErrorCode;
+import com.ticket.booking.exception.AdmissionTokenException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
@@ -113,9 +112,13 @@ class SelectSeatUseCaseTest {
     @Test
     void 대기열이_필요한_회차는_좌석_조회_전에_입장을_검사한다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(true)));
-        doThrow(new AdmissionTokenRequiredException()).when(admissionVerifier).verify(10L, 1L, "admission-token");
+        doThrow(new AdmissionTokenException(AdmissionErrorCode.E8000, "admission token missing"))
+                .when(admissionVerifier)
+                .verify(10L, 1L, "admission-token");
 
-        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(AdmissionTokenRequiredException.class);
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(AdmissionTokenException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8000);
 
         verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionWriter);
     }
@@ -125,7 +128,9 @@ class SelectSeatUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L))
                 .thenReturn(Optional.of(policy(NOW.minusHours(2), NOW.minusHours(1), false)));
 
-        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(PerformanceIsPastException.class);
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
         verifyNoInteractions(performanceSeatRepository, holdRegistry, seatSelectionWriter, admissionVerifier);
     }
@@ -135,7 +140,9 @@ class SelectSeatUseCaseTest {
         openPerformance();
         when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatMismatchInPerformanceException.class);
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4000);
 
         verifyNoInteractions(holdRegistry, seatSelectionWriter);
     }
@@ -146,7 +153,9 @@ class SelectSeatUseCaseTest {
         when(performanceSeatRepository.findSeatState(10L, 20L))
                 .thenReturn(Optional.of(seat(PerformanceSeatState.RESERVED)));
 
-        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(NoAvailableSeatException.class);
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3003);
 
         verifyNoInteractions(holdRegistry, seatSelectionWriter);
     }
@@ -158,7 +167,9 @@ class SelectSeatUseCaseTest {
         when(performanceSeatRepository.findSeatState(10L, 20L)).thenReturn(Optional.of(availableSeat()));
         when(holdRegistry.isHeld(10L, 20L)).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.execute(INPUT)).isInstanceOf(SeatAlreadyHeldException.class);
+        assertThatThrownBy(() -> useCase.execute(INPUT))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6000);
 
         verifyNoInteractions(seatSelectionWriter);
     }

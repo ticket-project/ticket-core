@@ -10,9 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
-import com.ticket.booking.exception.BookingNotOpenYetException;
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.PerformanceIsPastException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.shared.jpa.AuditedEntity;
 
 import lombok.AccessLevel;
@@ -67,17 +66,17 @@ public class PerformanceSalesPolicy extends AuditedEntity {
     public void ensureWithinBookingWindow(final LocalDateTime now) {
         final BookingWindowStatus status = bookingWindowStatus(now);
         if (status == BookingWindowStatus.BEFORE_OPEN) {
-            throw new BookingNotOpenYetException();
+            throw new BookingException(BookingErrorCode.E3002);
         }
         if (status == BookingWindowStatus.CLOSED) {
-            throw new PerformanceIsPastException();
+            throw new BookingException(BookingErrorCode.E3001);
         }
     }
 
     /** 한도가 없는 회차는 좌석 수를 제한하지 않는다. 옛 {@code BookingPolicyGuard.ensureWithinHoldLimit}와 같은 오류(E6001)를 그대로 던진다. */
     public void ensureWithinHoldLimit(final long requestedSeatCount) {
         if (holdPolicy.isOverMaxSeatCount(requestedSeatCount)) {
-            throw new HoldLimitExceededException();
+            throw new BookingException(BookingErrorCode.E6001);
         }
     }
 

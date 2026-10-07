@@ -16,11 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.SeatAlreadySelectedException;
-import com.ticket.booking.exception.SeatNotOwnedException;
-import com.ticket.booking.exception.SeatNotSelectedException;
-import com.ticket.booking.exception.SeatSelectionExpiredException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -51,7 +48,8 @@ class SeatSelectionServiceTest {
         // when
         // then
         assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, null))
-                .isInstanceOf(SeatAlreadySelectedException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4001);
     }
 
     @Test
@@ -60,7 +58,8 @@ class SeatSelectionServiceTest {
                 .thenReturn(SelectResult.LIMIT_EXCEEDED);
 
         assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, 4))
-                .isInstanceOf(HoldLimitExceededException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6001);
     }
 
     @Test
@@ -79,7 +78,9 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("4");
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L)).isInstanceOf(SeatNotOwnedException.class);
+        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4002);
     }
 
     @Test
@@ -110,7 +111,9 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(false);
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L)).isInstanceOf(SeatNotOwnedException.class);
+        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4002);
     }
 
     @Test
@@ -128,7 +131,8 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getRecentlyExpiredSeatIdsByMember(10L, "3")).thenReturn(Set.of(21L));
 
         assertThatThrownBy(() -> seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L)))
-                .isInstanceOf(SeatSelectionExpiredException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4007);
     }
 
     @Test
@@ -137,7 +141,8 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getRecentlyExpiredSeatIdsByMember(10L, "3")).thenReturn(Set.of(20L));
 
         assertThatThrownBy(() -> seatSelectionService.requireSelectedBy(10L, 3L, List.of(20L, 21L)))
-                .isInstanceOf(SeatNotSelectedException.class);
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4006);
     }
 
     @Test

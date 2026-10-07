@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.exception.OrderNotOwnedException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderRepository;
@@ -38,7 +39,7 @@ public class GetOrderStatusUseCase {
     public Output execute(final Input input) {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
-                .orElseThrow(OrderNotOwnedException::new);
+                .orElseThrow(() -> new BookingException(BookingErrorCode.E5003));
         final long remainingSeconds =
                 OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), LocalDateTime.now(clock));
 

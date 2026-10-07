@@ -18,8 +18,6 @@ import org.junit.jupiter.api.Test;
 
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
-import com.ticket.booking.exception.AdmissionTokenExpiredException;
-import com.ticket.booking.exception.AdmissionTokenRequiredException;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -99,7 +97,8 @@ class JwtAdmissionVerifierTest {
                 .compact();
 
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(20L, 10L, token))
-                .isInstanceOf(AdmissionTokenExpiredException.class)
+                .isInstanceOf(AdmissionTokenException.class)
+                .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8001)
                 .hasMessage("대기열 입장 토큰이 만료되었습니다.")
                 .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getReason())
                         .isEqualTo("admission token expired"));
@@ -114,8 +113,8 @@ class JwtAdmissionVerifierTest {
 
     @Test
     void verify는_token이_없으면_required로_거부한다() {
-        assertAdmissionError(null, AdmissionTokenRequiredException.class, AdmissionErrorCode.E8000);
-        assertAdmissionError("   ", AdmissionTokenRequiredException.class, AdmissionErrorCode.E8000);
+        assertAdmissionError(null, AdmissionErrorCode.E8000);
+        assertAdmissionError("   ", AdmissionErrorCode.E8000);
     }
 
     @Test
@@ -131,14 +130,13 @@ class JwtAdmissionVerifierTest {
                 .signWith(secretKey())
                 .compact();
 
-        assertAdmissionError(expired, AdmissionTokenExpiredException.class, AdmissionErrorCode.E8001);
+        assertAdmissionError(expired, AdmissionErrorCode.E8001);
     }
 
     @Test
     void verify는_계약을_어긴_token을_invalid로_거부한다() {
-        assertAdmissionError(
-                admissionToken(false, true, true, "10"), AdmissionTokenException.class, AdmissionErrorCode.E8002);
-        assertAdmissionError("not-a-jwt", AdmissionTokenException.class, AdmissionErrorCode.E8002);
+        assertAdmissionError(admissionToken(false, true, true, "10"), AdmissionErrorCode.E8002);
+        assertAdmissionError("not-a-jwt", AdmissionErrorCode.E8002);
     }
 
     @Test
@@ -157,13 +155,9 @@ class JwtAdmissionVerifierTest {
         assertThatCode(() -> disabled.verify(20L, 10L, null)).doesNotThrowAnyException();
     }
 
-    /** 예외 타입과 E-code를 함께 본다 — 타입만 보면 만료(E8001)와 무효(E8002)가 상속 관계라 구분되지 않고, code만 보면 어느 예외가 던져졌는지 놓친다. */
-    private void assertAdmissionError(
-            final String token,
-            final Class<? extends AdmissionTokenException> expectedType,
-            final AdmissionErrorCode expectedCode) {
+    private void assertAdmissionError(final String token, final AdmissionErrorCode expectedCode) {
         assertThatThrownBy(() -> jwtAdmissionVerifier().verify(20L, 10L, token))
-                .isInstanceOf(expectedType)
+                .isInstanceOf(AdmissionTokenException.class)
                 .satisfies(exception -> assertThat(((AdmissionTokenException) exception).getErrorCode())
                         .isEqualTo(expectedCode));
     }

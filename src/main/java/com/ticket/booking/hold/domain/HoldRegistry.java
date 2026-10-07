@@ -8,7 +8,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.exception.SeatAlreadyHeldException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +28,7 @@ public class HoldRegistry {
         final Hold hold = Hold.create(generateHoldKey(), memberId, performanceId, requestedSeatIds, now, ttl);
 
         if (!holdStore.saveIfAbsent(hold, ttl)) {
-            throw new SeatAlreadyHeldException();
+            throw new BookingException(BookingErrorCode.E6000);
         }
         return hold;
     }

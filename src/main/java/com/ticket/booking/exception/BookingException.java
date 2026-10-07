@@ -2,29 +2,23 @@ package com.ticket.booking.exception;
 
 import org.jspecify.annotations.Nullable;
 
-import com.ticket.shared.exception.ErrorCode;
 import com.ticket.shared.exception.TicketException;
 
 /**
- * booking 업무 오류의 base 타입이다. 이 module의 handler는 이 타입 하나만 잡는다. HTTP 상태는 예외가 아니라 handler가 안다 — BookingExceptionHandler가 구체
- * 타입별로 정한다.
+ * booking 업무 오류다. 공개 문구는 {@link BookingErrorCode}가 갖고, HTTP 상태는 예외가 아니라 handler가 오류 코드로 정한다(BookingExceptionHandler).
  */
-public abstract sealed class BookingException extends TicketException
-        permits PerformanceIsPastException,
-                BookingNotOpenYetException,
-                NoAvailableSeatException,
-                SeatMismatchInPerformanceException,
-                SeatAlreadySelectedException,
-                SeatNotOwnedException,
-                SeatNotSelectedException,
-                SeatSelectionExpiredException,
-                OrderNotPendingException,
-                OrderNotOwnedException,
-                PendingOrderAlreadyExistsException,
-                SeatAlreadyHeldException,
-                HoldLimitExceededException,
-                HoldBusyException {
-    protected BookingException(final ErrorCode errorCode, final String message, final @Nullable Object data) {
-        super(errorCode, message, data);
+public final class BookingException extends TicketException {
+    public BookingException(final BookingErrorCode errorCode) {
+        this(errorCode, null);
+    }
+
+    /** @param data 어떤 경합인지 좁히는 <b>공개</b> 상세 문구다. 그대로 {@code error.data}로 나가고 고정 문구를 덮지 않는다. */
+    public BookingException(final BookingErrorCode errorCode, final @Nullable Object data) {
+        super(errorCode, errorCode.getMessage(), data);
+    }
+
+    @Override
+    public BookingErrorCode getErrorCode() {
+        return (BookingErrorCode) super.getErrorCode();
     }
 }

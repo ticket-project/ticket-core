@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatAlreadyHeldException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -59,10 +59,10 @@ public class SeatSelectionWriter {
             final @Nullable Integer maxSeatCount) {
         distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
             if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
-                throw new PerformanceIsPastException();
+                throw new BookingException(BookingErrorCode.E3001);
             }
             if (holdRegistry.isHeld(performanceId, seatId)) {
-                throw new SeatAlreadyHeldException();
+                throw new BookingException(BookingErrorCode.E6000);
             }
             seatSelectionService.select(performanceId, seatId, memberId, maxSeatCount);
             seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED);

@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component;
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.exception.HoldBusyException;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,20 +42,20 @@ public class RedissonDistributedLock implements DistributedLock {
             // leaseTime 없이 잡는다 — Redisson watchdog이 실행 중인 락을 자동 연장한다.
             if (!lock.tryLock(options.waitTime().toMillis(), TimeUnit.MILLISECONDS)) {
                 log.warn("분산 락 획득에 실패했습니다. reason=lock_not_acquired keys={}", lockNames);
-                throw new HoldBusyException(resolveMessage(options));
+                throw new BookingException(BookingErrorCode.E6003, resolveMessage(options));
             }
             return action.get();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("분산 락 대기가 중단되었습니다. reason=lock_wait_interrupted keys={}", lockNames, e);
-            throw new HoldBusyException(resolveMessage(options));
+            throw new BookingException(BookingErrorCode.E6003, resolveMessage(options));
         } finally {
             unlockQuietly(lock, lockNames);
         }
     }
 
     private String resolveMessage(final LockOptions options) {
-        return options.failureMessage().isBlank() ? HoldBusyException.MESSAGE : options.failureMessage();
+        return options.failureMessage().isBlank() ? BookingErrorCode.E6003.getMessage() : options.failureMessage();
     }
 
     private RLock generateLock(final List<String> lockNames) {

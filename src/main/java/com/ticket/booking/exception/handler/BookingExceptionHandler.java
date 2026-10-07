@@ -8,21 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ticket.booking.exception.AdmissionTokenException;
+import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.exception.BookingNotOpenYetException;
-import com.ticket.booking.exception.HoldBusyException;
-import com.ticket.booking.exception.HoldLimitExceededException;
-import com.ticket.booking.exception.NoAvailableSeatException;
-import com.ticket.booking.exception.OrderNotOwnedException;
-import com.ticket.booking.exception.OrderNotPendingException;
-import com.ticket.booking.exception.PendingOrderAlreadyExistsException;
-import com.ticket.booking.exception.PerformanceIsPastException;
-import com.ticket.booking.exception.SeatAlreadyHeldException;
-import com.ticket.booking.exception.SeatAlreadySelectedException;
-import com.ticket.booking.exception.SeatMismatchInPerformanceException;
-import com.ticket.booking.exception.SeatNotOwnedException;
-import com.ticket.booking.exception.SeatNotSelectedException;
-import com.ticket.booking.exception.SeatSelectionExpiredException;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * booking 오류를 응답으로 옮긴다. base 예외 하나만 잡는다 — 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
  *
- * <p>{@link BookingException}은 상태를 모른다 — 구체 타입별 HTTP 상태는 이 handler가 안다.
+ * <p>{@link BookingException}은 상태를 모른다 — 오류 코드별 HTTP 상태는 이 handler가 안다.
  * {@code com.ticket.booking.exception.handler.BookingExceptionHandlerTest}가 14종 전부의 상태·E-code·메시지를
  * 고정한다({@code gatling-test}가 E4001·E6000·E6003 등을 하드코딩하는 외부 계약이다).
  *
@@ -46,7 +33,7 @@ public class BookingExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleBookingException(final BookingException exception) {
         log.info("booking.rejected: code={}", exception.getErrorCode().getCode());
 
-        return ResponseEntity.status(statusOf(exception))
+        return ResponseEntity.status(statusOf(exception.getErrorCode()))
                 .body(ApiResponse.error(
                         exception.getErrorCode().getCode(), exception.getMessage(), exception.getData()));
     }
@@ -63,22 +50,11 @@ public class BookingExceptionHandler {
                         exception.getErrorCode().getCode(), exception.getMessage(), exception.getData()));
     }
 
-    private HttpStatus statusOf(final BookingException exception) {
-        return switch (exception) {
-            case PerformanceIsPastException e -> HttpStatus.BAD_REQUEST;
-            case BookingNotOpenYetException e -> HttpStatus.BAD_REQUEST;
-            case NoAvailableSeatException e -> HttpStatus.BAD_REQUEST;
-            case SeatMismatchInPerformanceException e -> HttpStatus.BAD_REQUEST;
-            case SeatAlreadySelectedException e -> HttpStatus.CONFLICT;
-            case SeatNotOwnedException e -> HttpStatus.FORBIDDEN;
-            case SeatNotSelectedException e -> HttpStatus.CONFLICT;
-            case SeatSelectionExpiredException e -> HttpStatus.CONFLICT;
-            case OrderNotPendingException e -> HttpStatus.CONFLICT;
-            case OrderNotOwnedException e -> HttpStatus.FORBIDDEN;
-            case PendingOrderAlreadyExistsException e -> HttpStatus.CONFLICT;
-            case SeatAlreadyHeldException e -> HttpStatus.CONFLICT;
-            case HoldLimitExceededException e -> HttpStatus.CONFLICT;
-            case HoldBusyException e -> HttpStatus.CONFLICT;
+    private HttpStatus statusOf(final BookingErrorCode errorCode) {
+        return switch (errorCode) {
+            case E3001, E3002, E3003, E4000 -> HttpStatus.BAD_REQUEST;
+            case E4002, E5003 -> HttpStatus.FORBIDDEN;
+            case E4001, E4006, E4007, E5002, E5004, E6000, E6001, E6003 -> HttpStatus.CONFLICT;
         };
     }
 }
