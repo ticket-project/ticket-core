@@ -30,8 +30,9 @@ class GetLikeStatusUseCaseTest {
 
     @Test
     void 찜_상태와_총_찜수를_반환한다() {
-        when(likeRepository.existsByMemberIdAndTargetId(1L, 2L)).thenReturn(true);
-        when(likeRepository.countByTargetId(2L)).thenReturn(7L);
+        when(likeRepository.existsByMemberIdAndLikeTypeAndTargetId(1L, LikeType.SHOW, 2L))
+                .thenReturn(true);
+        when(likeRepository.countByLikeTypeAndTargetId(LikeType.SHOW, 2L)).thenReturn(7L);
 
         GetLikeStatusUseCase.Output output = useCase.execute(new GetLikeStatusUseCase.Input(1L, LikeType.SHOW, 2L));
 

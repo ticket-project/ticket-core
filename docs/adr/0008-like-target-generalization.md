@@ -10,12 +10,6 @@
 **대상 일반화 결정 자체(하나의 module·하나의 LIKES 테이블·`Like(targetId, likeType)`)는 그대로
 유효하다.**
 
-**2026-10-07 갱신**: 대상 종류가 `SHOW` 하나뿐인 동안 종류를 코드 경로마다 넘기지 않는다. `Like`는 항상
-`LikeType.SHOW`로 저장하고, `LikeRepository` 조회와 `LikeQueryApi`(`countByTarget(targetId)`,
-`findLiked(memberId, ...)`)는 종류 인자를 받지 않는다. 문자열 변환 `LikeType.from`과 `"show"` 문자열 계약도
-지웠다. `like_type` 컬럼·`(member_id, like_type, target_id)` 유니크 제약·use case `Input`의 `likeType`
-필드는 그대로다. 새 대상이 실제로 생기면 그때 종류 인자를 다시 넣는다.
-
 ## 배경
 
 ADR 0006 §1·§2가 찜(당시 `ShowLike`) 데이터를 `favorite` module로 분리했다. 그 결정 자체(찜
