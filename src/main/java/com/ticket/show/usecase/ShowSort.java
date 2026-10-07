@@ -15,6 +15,13 @@ public enum ShowSort {
     LATEST("latest"),
     SHOW_START_APPROACHING("showStartApproaching"),
     SALE_START_APPROACHING("saleStartApproaching");
+
+    /**
+     * 판매 시작 시각으로 거르지 않는 목록(전체 목록·검색)이 받는 정렬이다. 판매 시작 임박순은 판매 시작 시각이 없는 공연의 정렬 키가 null이라 받지 않는다. 공연 임박순은 정렬할 때 시작일이 오늘
+     * 이후인 공연만 남기므로 키가 있다.
+     */
+    static final Set<ShowSort> WITHOUT_SALE_START = Set.of(POPULAR, LATEST, SHOW_START_APPROACHING);
+
     private final String apiValue;
 
     ShowSort(final String apiValue) {
