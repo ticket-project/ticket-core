@@ -94,7 +94,6 @@ dependencies {
     implementation variantOf(libs.querydsl.jpa) { classifier('jakarta') }
 
     // Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation libs.redisson.spring.boot.starter
 
     annotationProcessor variantOf(libs.querydsl.apt) { classifier('jakarta') }
