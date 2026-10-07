@@ -7,23 +7,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.ticket.like.exception.LikeException;
+import com.ticket.like.exception.LikeAlreadyExistsException;
 import com.ticket.shared.web.ApiResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * like 오류를 응답으로 옮긴다. base 예외 하나만 잡는다 — 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
+ * like 오류를 응답으로 옮긴다. 자기 module 예외만 잡는다 — 그 범위는 {@code com.ticket.shared.exception.ExceptionHandlerScopeTest}가 강제한다.
  *
- * <p>{@link LikeException}은 상태를 모른다. 지금 구체 타입은 {@code LikeAlreadyExistsException} 하나뿐이고 409로 응답한다 — 두 번째 타입이 생기면
- * {@code BookingExceptionHandler}처럼 타입별 switch로 바꾼다.
+ * <p>like 업무 오류는 {@link LikeAlreadyExistsException} 하나뿐이라 base 예외 없이 직접 잡고 409로 응답한다. 두 번째 타입이 생기면 sealed base와
+ * {@code BookingExceptionHandler}처럼 타입별 switch를 둔다.
  */
 @Slf4j
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class LikeExceptionHandler {
-    @ExceptionHandler(LikeException.class)
-    public ResponseEntity<ApiResponse<Object>> handleLikeException(final LikeException exception) {
+    @ExceptionHandler(LikeAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleLikeException(final LikeAlreadyExistsException exception) {
         log.info("like.rejected: code={}", exception.getErrorCode().getCode());
 
         return ResponseEntity.status(HttpStatus.CONFLICT.value())
