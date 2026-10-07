@@ -52,7 +52,7 @@ public class AuthController {
             @Parameter(hidden = true) final HttpServletResponse response) {
         final RefreshAuthTokenUseCase.Input input = RefreshAuthTokenUseCase.Input.from(refreshToken);
         final RefreshAuthTokenUseCase.Result result = refreshAuthTokenUseCase.execute(input);
-        addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
+        RefreshTokenCookieWriter.addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
@@ -69,7 +69,7 @@ public class AuthController {
             @RequestBody @Valid final ExchangeOAuth2TokenRequest request,
             @Parameter(hidden = true) final HttpServletResponse response) {
         final ExchangeOAuth2TokenUseCase.Result result = exchangeOAuth2TokenUseCase.execute(request.toInput());
-        addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
+        RefreshTokenCookieWriter.addRefreshTokenCookie(response, result.refreshToken(), result.refreshTokenExpiresIn());
         return ApiResponse.success(result.output());
     }
 
@@ -101,11 +101,5 @@ public class AuthController {
         } finally {
             RefreshTokenCookieWriter.deleteRefreshTokenCookie(response);
         }
-    }
-
-    /** 쿠키 만료는 토큰을 발급한 쪽이 정한 값을 그대로 쓴다. 설정을 다시 읽으면 저장소 TTL과 어긋날 수 있다. */
-    private void addRefreshTokenCookie(
-            final HttpServletResponse response, final String refreshToken, final long maxAgeSeconds) {
-        RefreshTokenCookieWriter.addRefreshTokenCookie(response, refreshToken, maxAgeSeconds);
     }
 }

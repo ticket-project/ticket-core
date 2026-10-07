@@ -12,6 +12,7 @@ public final class RefreshTokenCookieWriter {
 
     private RefreshTokenCookieWriter() {}
 
+    /** 쿠키 만료는 토큰을 발급한 쪽이 정한 값을 그대로 쓴다. 설정을 다시 읽으면 저장소 TTL과 어긋날 수 있다. */
     public static void addRefreshTokenCookie(
             final HttpServletResponse response, final String tokenValue, final long maxAgeSeconds) {
         final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, tokenValue)
@@ -25,13 +26,6 @@ public final class RefreshTokenCookieWriter {
     }
 
     public static void deleteRefreshTokenCookie(final HttpServletResponse response) {
-        final ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
-                .httpOnly(true)
-                .secure(true)
-                .sameSite(SAME_SITE)
-                .path(COOKIE_PATH)
-                .maxAge(0)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        addRefreshTokenCookie(response, "", 0);
     }
 }
