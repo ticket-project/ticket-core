@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import com.ticket.booking.hold.domain.HoldHistory;
 import com.ticket.booking.hold.domain.HoldHistoryRepository;
-import com.ticket.booking.hold.domain.HoldReleaseReason;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -49,8 +48,7 @@ public class OrderHoldHistoryRecorder {
                         order.getPerformanceId(),
                         seat.getPerformanceSeatId(),
                         seat.getSeatId(),
-                        occurredAt,
-                        HoldReleaseReason.USER_CANCELED))
+                        occurredAt))
                 .toList());
     }
 
@@ -62,8 +60,7 @@ public class OrderHoldHistoryRecorder {
                         order.getPerformanceId(),
                         seat.getPerformanceSeatId(),
                         seat.getSeatId(),
-                        occurredAt,
-                        HoldReleaseReason.TTL_EXPIRED))
+                        occurredAt))
                 .toList());
     }
 }
