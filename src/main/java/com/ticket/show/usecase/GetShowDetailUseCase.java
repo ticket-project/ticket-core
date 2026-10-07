@@ -135,7 +135,7 @@ public class GetShowDetailUseCase {
                 ShowCardImagePathConverter.toCardImage(show.getImage()),
                 resolveVenue(show.getVenueId()),
                 resolvePerformer(show.getPerformerId()),
-                showRepository.findGenreNames(showId),
+                showRepository.findGenreNamesByShowIds(List.of(showId)).getOrDefault(showId, List.of()),
                 resolveGrades(showId),
                 showQuerydslRepository.findPriceSummary(showId),
                 resolvePerformanceDates(showId));

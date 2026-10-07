@@ -15,14 +15,6 @@ interface SpringDataShowJpaRepository extends JpaRepository<Show, Long> {
      * 쓴다({@code SpringDataGenreJpaRepository}와 같은 방식).
      */
     @Query("""
-            SELECT g.name
-            FROM ShowGenre sg
-            JOIN Genre g ON g.id = sg.genreId
-            WHERE sg.showId = :showId
-            """)
-    List<String> findGenreNamesByShowId(@Param("showId") Long showId);
-
-    @Query("""
             SELECT s.id AS showId, g.name AS genreName
             FROM Show s
             LEFT JOIN ShowGenre sg ON sg.showId = s.id

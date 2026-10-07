@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -96,7 +97,7 @@ class GetShowDetailUseCaseTest {
     }
 
     private void stubEmptyFragments() {
-        when(showRepository.findGenreNames(1L)).thenReturn(List.of());
+        when(showRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of());
         when(performanceRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(performanceRepository.findAllByShowIdOrderByStartTimeAscPerformanceNoAsc(1L))
                 .thenReturn(List.of());
@@ -105,7 +106,7 @@ class GetShowDetailUseCaseTest {
     @Test
     void show_엔티티에서_응답을_만들고_찜_개수와_venue_표시값을_조합한다() {
         when(showRepository.findById(1L)).thenReturn(Optional.of(show(5L, null)));
-        when(showRepository.findGenreNames(1L)).thenReturn(List.of("장르"));
+        when(showRepository.findGenreNamesByShowIds(List.of(1L))).thenReturn(Map.of(1L, List.of("장르")));
         when(performanceRepository.findRepresentativePerformanceGrades(1L)).thenReturn(List.of());
         when(showQuerydslRepository.findPriceSummary(1L))
                 .thenReturn(new PriceSummaryResponse(BigDecimal.valueOf(100000), BigDecimal.valueOf(200000)));
