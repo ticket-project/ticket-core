@@ -1,16 +1,20 @@
 package com.ticket.booking.admission;
 
+import jakarta.validation.constraints.NotBlank;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
+/**
+ * admission token 검증 설정이다. 빈 값이면 기동이 실패하고, secret이 HS256에 필요한 32바이트보다 짧으면 {@code Keys.hmacShaKeyFor}가 기동을 막는다.
+ *
+ * <p>만료 시간은 담지 않는다 — Core는 토큰 자체의 {@code exp} claim으로 만료를 판정하고({@code JwtAdmissionVerifier}가 Jwts 파서에 clock을 넘긴다), 발급
+ * 시점의 TTL은 토큰을 만드는 {@code ticket-queue}가 정한다. 그래서 Core 설정에는 만료 시간 키가 없다.
+ */
+@Validated
 @ConfigurationProperties(prefix = "security.admission")
-public class AdmissionTokenProperties {
-    private boolean enforcementEnabled = false;
-    private String issuer = "ticket-queue";
-    private String audience = "ticket-api";
-    private String secretKey = "0123456789abcdef0123456789abcdef";
-}
+public record AdmissionTokenProperties(
+        boolean enforcementEnabled,
+        @NotBlank String issuer,
+        @NotBlank String audience,
+        @NotBlank String secretKey) {}

@@ -3,11 +3,12 @@ package com.ticket.booking.admission;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.util.Date;
-import java.util.Objects;
 
 import javax.crypto.SecretKey;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
@@ -18,24 +19,21 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
+@Component
+@EnableConfigurationProperties(AdmissionTokenProperties.class)
 public class JwtAdmissionVerifier implements AdmissionVerifier {
     public static final String SCOPE = "ticket-admission";
     private static final String PERFORMANCE_ID_CLAIM = "performanceId";
     private static final String SCOPE_CLAIM = "scope";
-    private final AdmissionTokenSettings settings;
+    private final AdmissionTokenProperties properties;
     private final Clock clock;
     private final SecretKey secretKey;
-    private final boolean enforcementEnabled;
 
-    public JwtAdmissionVerifier(final AdmissionTokenSettings settings, final boolean enforcementEnabled) {
-        this(settings, Clock.systemUTC(), enforcementEnabled);
-    }
-
-    JwtAdmissionVerifier(final AdmissionTokenSettings settings, final Clock clock, final boolean enforcementEnabled) {
-        this.settings = Objects.requireNonNull(settings, "settings must not be null");
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
-        this.secretKey = Keys.hmacShaKeyFor(settings.secretKey().getBytes(StandardCharsets.UTF_8));
-        this.enforcementEnabled = enforcementEnabled;
+    public JwtAdmissionVerifier(final AdmissionTokenProperties properties, final Clock clock) {
+        this.properties = properties;
+        this.clock = clock;
+        // 32바이트(HS256) 미만이면 WeakKeyException으로 기동을 막는다.
+        this.secretKey = Keys.hmacShaKeyFor(properties.secretKey().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -44,7 +42,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
      */
     @Override
     public void verify(final long performanceId, final long memberId, final @Nullable String admissionToken) {
-        if (!enforcementEnabled) {
+        if (!properties.enforcementEnabled()) {
             return;
         }
         if (admissionToken == null || admissionToken.isBlank()) {
@@ -69,7 +67,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     private Claims parse(final String token) {
         try {
             return Jwts.parser()
-                    .requireIssuer(settings.issuer())
+                    .requireIssuer(properties.issuer())
                     .clock(() -> Date.from(clock.instant()))
                     .verifyWith(secretKey)
                     .build()
@@ -83,7 +81,7 @@ public class JwtAdmissionVerifier implements AdmissionVerifier {
     }
 
     private void validateAudience(final Claims claims) {
-        if (claims.getAudience() == null || !claims.getAudience().contains(settings.audience())) {
+        if (claims.getAudience() == null || !claims.getAudience().contains(properties.audience())) {
             throw new AdmissionTokenException(AdmissionErrorCode.E8002, "admission token invalid audience");
         }
     }

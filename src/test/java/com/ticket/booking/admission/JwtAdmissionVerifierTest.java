@@ -150,7 +150,7 @@ class JwtAdmissionVerifierTest {
     @Test
     void enforcement가_꺼져있으면_token_없이도_통과시킨다() {
         JwtAdmissionVerifier disabled = new JwtAdmissionVerifier(
-                new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY), Clock.fixed(NOW, ZoneOffset.UTC), false);
+                new AdmissionTokenProperties(false, ISSUER, AUDIENCE, SECRET_KEY), Clock.fixed(NOW, ZoneOffset.UTC));
 
         assertThatCode(() -> disabled.verify(20L, 10L, null)).doesNotThrowAnyException();
     }
@@ -164,7 +164,7 @@ class JwtAdmissionVerifierTest {
 
     private JwtAdmissionVerifier jwtAdmissionVerifier() {
         return new JwtAdmissionVerifier(
-                new AdmissionTokenSettings(ISSUER, AUDIENCE, SECRET_KEY), Clock.fixed(NOW, ZoneOffset.UTC), true);
+                new AdmissionTokenProperties(true, ISSUER, AUDIENCE, SECRET_KEY), Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private String admissionToken(
