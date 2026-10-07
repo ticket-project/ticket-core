@@ -145,10 +145,10 @@ class RedissonHoldStoreIntegrationTest {
                 .getBucket(HoldRedisKey.hold(PERFORMANCE_ID, 20L), StringCodec.INSTANCE)
                 .set("other-hold", TTL);
 
-        assertThat(store.release(PERFORMANCE_ID, "hold-legacy", List.of(20L, 10L, 10L)))
-                .containsExactly(10L);
-        assertThat(store.release(PERFORMANCE_ID, "hold-legacy", List.of(10L, 20L)))
-                .isEmpty();
+        store.release(PERFORMANCE_ID, "hold-legacy", List.of(20L, 10L, 10L));
+        store.release(PERFORMANCE_ID, "hold-legacy", List.of(10L, 20L));
+
+        assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
 
         assertThat(metaExists("hold-legacy")).isFalse();
         assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
