@@ -54,7 +54,8 @@ class ModularityTests {
             Map.entry("member", Set.of("shared")),
             Map.entry("security", Set.of("member", "shared")),
             Map.entry("shared", Set.of()),
-            Map.entry("payment", Set.of("shared")));
+            // payment는 코드 없이 PAYMENTS migration만 소유한다(payment package-info 참고).
+            Map.entry("payment", Set.of()));
 
     @Test
     void verifiesModuleStructure() {

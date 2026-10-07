@@ -37,7 +37,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 | Show | Show, ShowGenre, Category, Genre, Performer, Performance(회차 일정만), Grade, PerformanceGrade | 가격 원본은 `PerformanceGrade.price`. Show의 판매 필드(`displaySaleType`/`displaySaleWindow`)는 화면 표시 전용이고 실제 판단은 Booking의 `PerformanceSalesPolicy`가 한다 |
 | Venue | Venue, Seat, Region | 물리 시설. 좌석은 회차와 무관하게 존재한다 |
 | Booking | PerformanceSeat, Selection, Hold, Order, OrderSeat, PerformanceSalesPolicy | 좌석 선점·주문을 소유한다. 발권(Ticket)은 `TICKETS` 테이블(booking V5)만 있고 entity는 발급 흐름을 만들 때 추가한다. admission token 검증도 소유한다 |
-| Payment | Payment | 결제 시도. entity-only 단계 |
+| Payment | — | 결제 시도. 코드는 없고 `PAYMENTS` migration만 소유한다(entity는 결제 연동 때 다시 둔다, ADR 0005) |
 | Like | Like | 찜 데이터·불변식. 대상 종류는 `LikeType`으로 값화(지금은 SHOW뿐). 찜 생성·해제·상태 조회 endpoint는 like가 소유하고, 공연 표시값을 조합하는 "내 찜 목록"만 show가 소유한다 |
 | Member | Member, MemberSocialAccount | 회원 테이블과 인증 데이터(이메일·역할·탈퇴 상태·소셜 연결). 가입·로그인은 소셜(OAuth2) 전용이라 소셜 신원 해석(없으면 회원 생성)과 활성 상태 확인을 member의 공개 계약이 맡고, 코드 교환·갱신·로그아웃·탈퇴 조립과 JWT·OAuth2 provider 처리는 `security`가 소유한다 |
 
@@ -61,7 +61,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   때문이다.
 - `booking -> security`는 WebSocket 인증 하나뿐이다. STOMP CONNECT는 HTTP filter chain을 타지 않아
   좌석 상태 구독 인터셉터가 access token을 직접 검증한다.
-- `payment`는 entity-only 단계라 업무 모듈 의존이 없다.
+- `payment`는 코드 없이 `PAYMENTS` migration만 소유해 의존이 없다. module로 남는 이유는 Modulith가 그 migration을 계속 적용하게 하기 위해서다.
 - 순환은 없다. 새 edge가 필요해 보이면 먼저 반대 방향으로 풀 수 있는지 본다.
 
 ## Aggregates
@@ -76,7 +76,6 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 | PerformanceSalesPolicy | BookingWindow · HoldPolicy · QueuePolicy(값 객체) | Booking |
 | PerformanceSeat | — | Booking |
 | Order | OrderSeat | Booking |
-| Payment | — | Payment |
 | Like | — | Like |
 | Member | MemberSocialAccount | Member |
 

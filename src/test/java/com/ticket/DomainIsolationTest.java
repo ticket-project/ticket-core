@@ -42,9 +42,8 @@ import com.tngtech.archunit.lang.ArchRule;
 @SuppressWarnings("NonAsciiCharacters")
 @ArchTag("architecture")
 class DomainIsolationTest {
-    /** 기술 모듈을 제외한 6개 BC다. {@code docs/architecture.md}의 "Bounded Context" 절이 원본이다. */
-    private static final List<String> BOUNDED_CONTEXTS =
-            List.of("booking", "show", "venue", "like", "member", "payment");
+    /** 기술 모듈과 코드 없는 payment를 제외한 5개 BC다. {@code docs/architecture.md}의 "Bounded Context" 절이 원본이다. */
+    private static final List<String> BOUNDED_CONTEXTS = List.of("booking", "show", "venue", "like", "member");
 
     @ArchTest
     static final ArchRule BC_domain은_다른_BC를_참조하지_않는다 =
