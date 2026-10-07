@@ -63,10 +63,14 @@ public class SeatSelectionService {
 
     /** @return 실제로 해제된 좌석 id. 호출자가 그 좌석만 골라 알림을 보낸다 */
     public List<Long> deselectAll(final Long performanceId, final Long memberId) {
-        final String memberKey = memberKeyOf(memberId);
-        final List<Long> deselectedSeatIds = seatSelectionStore.releaseAllByMember(performanceId, memberKey);
-        logDeselectedSeats(performanceId, memberId, deselectedSeatIds);
-        return List.copyOf(deselectedSeatIds);
+        final List<Long> deselectedSeatIds =
+                seatSelectionStore.releaseAllByMember(performanceId, memberKeyOf(memberId));
+        log.debug(
+                "좌석 일괄 선택 해제에 성공했습니다. performanceId={}, seatIds={}, memberId={}",
+                performanceId,
+                deselectedSeatIds,
+                memberId);
+        return deselectedSeatIds;
     }
 
     public boolean deselectIfOwned(final Long performanceId, final Long seatId, final Long memberId) {
@@ -110,11 +114,5 @@ public class SeatSelectionService {
                 seatId,
                 memberId,
                 holder);
-    }
-
-    private void logDeselectedSeats(final Long performanceId, final Long memberId, final List<Long> seatIds) {
-        for (final Long seatId : seatIds) {
-            log.debug("좌석 일괄 선택 해제에 성공했습니다. performanceId={}, seatId={}, memberId={}", performanceId, seatId, memberId);
-        }
     }
 }
