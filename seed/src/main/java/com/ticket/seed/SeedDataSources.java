@@ -18,7 +18,6 @@ import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 final class SeedDataSources {
     private static final String ORACLE_DRIVER = "oracle.jdbc.OracleDriver";
     private static final String H2_DRIVER = "org.h2.Driver";
-    private static final String POSTGRESQL_DRIVER = "org.postgresql.Driver";
 
     private SeedDataSources() {}
 
@@ -42,9 +41,6 @@ final class SeedDataSources {
         if (jdbcUrl == null || jdbcUrl.isBlank()) {
             throw new SeedFailure("JDBC URL이 비어 있습니다.");
         }
-        if (jdbcUrl.startsWith("jdbc:postgresql:")) {
-            return POSTGRESQL_DRIVER;
-        }
         if (jdbcUrl.startsWith("jdbc:oracle:")) {
             return ORACLE_DRIVER;
         }
@@ -53,7 +49,7 @@ final class SeedDataSources {
         }
         throw new SeedFailure("""
                 지원하지 않는 JDBC URL입니다: %s
-                  -> PostgreSQL(jdbc:postgresql:) 또는 과거 DB 검증용 Oracle/H2 URL인지 확인하세요.
+                  -> 시드는 운영 Oracle(jdbc:oracle:)과 로컬 H2(jdbc:h2:)만 지원합니다.
                 """.formatted(SeedConsole.maskedUrl(jdbcUrl)));
     }
 }

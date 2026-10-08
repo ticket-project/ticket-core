@@ -5,12 +5,6 @@ Flyway 소스 경로와 migration을 쓰는 규칙의 단일 기준이다. 어�
 
 ## 디렉터리 의미
 
-- `migration-vendor/postgresql/{module}`: 현재 local/prod의 스키마 원본이다. 새 PostgreSQL DB에서
-  module별 V1이 현재 스키마를 만들고 이후 변경은 해당 module의 다음 버전으로 추가한다.
-  `__root`는 Spring Modulith publication registry만 소유한다. 기존 공통 경로에는 Oracle 문법도 있으므로
-  PostgreSQL 프로파일은 이 경로만 읽는다. Oracle/H2의 Flyway 이력은 새 DB에 복사하지 않는다.
-- 아래 `migration`과 H2/Oracle 경로는 전환 이전 이력과 테스트용이다. 이미 적용된 파일은 보존한다.
-
 - `migration/{module}`: 해당 module이 소유하는 vendor-neutral 공통 SQL(H2/Oracle 동일 문법).
 - `migration/__root`: 특정 module 소유가 아닌 vendor-neutral 공통 SQL. 드물어야 한다.
 - `migration-vendor/{h2,oracle}/{module}`: 해당 module의 DB별 SQL. 활성 프로파일이 고른 vendor 경로가
@@ -21,10 +15,6 @@ Flyway 소스 경로와 migration을 쓰는 규칙의 단일 기준이다. 어�
 이력은 그 module 폴더 안에서만 순서를 매긴다.
 
 ## 새 migration을 쓸 때
-
-현재 서비스 변경은 PostgreSQL 소유 module에 추가하고 실제 PostgreSQL 테스트로 검증한다.
-H2 테스트도 해당 entity를 사용하면 H2 대응 migration을 함께 추가한다. 아래 H2/Oracle 쌍 규칙은
-과거 이력에 적용되며, 운영 Oracle 지원을 새로 확장하지 않는다.
 
 1. schema 변경을 소유하는 module을 먼저 정한다. 어떤 module에도 속하지 않는 순수 기술 테이블만
    `__root`에 둔다.
@@ -41,7 +31,7 @@ H2 테스트도 해당 entity를 사용하면 H2 대응 migration을 함께 추�
 `@Table`에는 테이블 이름만 둔다. Hibernate `validate`는 인덱스·유니크 제약을 보지 않아서, entity에 적어도
 운영에는 만들어지지 않고 어긋나도 드러나지 않는다. Spring context를 띄우는 H2 테스트도 `@MigratedSchema`로
 같은 migration을 적용해 스키마를 만든다. 빈 DB에서 전체 migration 결과가 entity와 맞는지는
-`MigrationChainSchemaTest`(과거 H2 체인)와 `PostgreSqlMigrationChainSchemaTest`(현재 PostgreSQL, Docker 필요)가 확인한다.
+`MigrationChainSchemaTest`(H2)와 `OracleMigrationChainSchemaTest`(Oracle, Docker 필요)가 확인한다.
 
 - PK·유니크가 아닌 보조 인덱스는 당분간 두지 않는다. 필요해지면 새 migration으로 만든다.
 - `__root`의 `V1`은 Flyway 도입 전 스키마를 빈 DB에 다시 만든다. 운영은 이미 version `1` BASELINE이

@@ -172,6 +172,7 @@ body:
       description: 문제가 확인된 환경을 선택해 주세요.
       options:
         - local
+        - dev
         - staging
         - production 유사 환경
         - CI / test
