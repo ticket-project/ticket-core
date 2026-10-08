@@ -28,10 +28,9 @@ class SeedSettingsTest {
                     Files.readString(SeedTestPaths.projectDir().resolve("src/main/resources/application-local.yml"));
 
             assertThat(localProfile).as("시드가 읽은 URL이 로컬 프로파일에 그대로 적혀 있어야 한다").contains(settings.jdbcUrl());
-            assertThat(settings.jdbcUrl()).startsWith("jdbc:h2:file:");
-            assertThat(settings.jdbcUrl())
-                    .as("앱이 붙어 있는 파일 DB에 같이 붙으려면 AUTO_SERVER가 켜져 있어야 한다")
-                    .contains("AUTO_SERVER=TRUE");
+            assertThat(settings.jdbcUrl()).startsWith("jdbc:postgresql:");
+            assertThat(settings.jdbcUsername()).isEqualTo("ticket");
+            assertThat(settings.jdbcPassword()).isEqualTo("ticket_local");
         } catch (final java.io.IOException exception) {
             throw new AssertionError(exception);
         } finally {
@@ -60,6 +59,26 @@ class SeedSettingsTest {
             assertThat(Files.isRegularFile(settings.sqlPath())).isTrue();
         } finally {
             SeedSystemProperties.restore(previous);
+        }
+    }
+
+    @Test
+    void 로컬_YAML의_환경변수_표현식을_해석한다() {
+        final Map<String, String> previous = SeedSystemProperties.set(Map.of(
+                "seed.project-dir", SeedTestPaths.projectDir().toString(),
+                "SPRING_DATASOURCE_URL", "jdbc:postgresql://localhost:15432/override",
+                "SPRING_DATASOURCE_USERNAME", "override_user",
+                "SPRING_DATASOURCE_PASSWORD", "override_password"));
+        final String previousUrl = System.getProperty("seed.jdbc-url");
+        System.clearProperty("seed.jdbc-url");
+        try {
+            final SeedSettings settings = SeedSettings.load();
+            assertThat(settings.jdbcUrl()).isEqualTo("jdbc:postgresql://localhost:15432/override");
+            assertThat(settings.jdbcUsername()).isEqualTo("override_user");
+            assertThat(settings.jdbcPassword()).isEqualTo("override_password");
+        } finally {
+            SeedSystemProperties.restore(previous);
+            if (previousUrl != null) System.setProperty("seed.jdbc-url", previousUrl);
         }
     }
 

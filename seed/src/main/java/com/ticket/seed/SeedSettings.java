@@ -7,17 +7,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.springframework.core.env.StandardEnvironment;
 import org.yaml.snakeyaml.Yaml;
 
 /**
  * 시드 실행 설정이다. 접속 설정의 원본은 {@link SeedTarget}이 정한다.
  *
- * <p><b>로컬의 원본은 {@code src/main/resources/application-local.yml} 하나다.</b> 앱과 시드가 같은 로컬 H2 DB를 보게 하려면 URL을 두 곳에 적어 둘 수
- * 없다 — 여기서는 그 파일의 {@code spring.datasource.*}를 직접 읽는다.
+ * <p><b>로컬의 원본은 {@code src/main/resources/application-local.yml} 하나다.</b> 앱과 시드가 같은 로컬 PostgreSQL DB를 보게 하려면 URL을 두 곳에
+ * 적어 둘 수 없다 — 여기서는 그 파일의 {@code spring.datasource.*}를 직접 읽는다.
  *
  * <p><b>운영의 원본은 환경변수뿐이다.</b> {@code SPRING_DATASOURCE_URL} / {@code SPRING_DATASOURCE_USERNAME} /
- * {@code SPRING_DATASOURCE_PASSWORD}가 하나라도 없으면 적재를 시작하지 않고 실패한다 — 로컬 프로파일 YAML로 대체하지 않는다. 운영 DB로 넣으려던 데이터가 조용히 로컬 H2에
- * 들어가는 것이 이 프로그램에서 가장 나쁜 결과다.
+ * {@code SPRING_DATASOURCE_PASSWORD}가 하나라도 없으면 적재를 시작하지 않고 실패한다 — 로컬 프로파일 YAML로 대체하지 않는다. 운영 DB로 넣으려던 데이터가 조용히 로컬
+ * PostgreSQL에 들어가는 것이 이 프로그램에서 가장 나쁜 결과다.
  *
  * <p>검증용으로 임시 DB를 쓸 때만 {@code -Dseed.jdbc-url}(그리고 필요하면 {@code -Dseed.jdbc-username} / {@code -Dseed.jdbc-password})로
  * 덮어쓴다. 두 대상 모두에서 이 프로퍼티가 가장 우선이다 — 명시적으로 준 값이기 때문이다.
@@ -162,9 +163,13 @@ record SeedSettings(
         final Object username = nested(yaml, "spring", "datasource", "username");
         final Object password = nested(yaml, "spring", "datasource", "password");
         return new Datasource(
-                url.toString(),
-                username == null ? "sa" : username.toString(),
-                password == null ? "" : password.toString());
+                resolvePlaceholder(url.toString()),
+                username == null ? "ticket" : resolvePlaceholder(username.toString()),
+                password == null ? "" : resolvePlaceholder(password.toString()));
+    }
+
+    private static String resolvePlaceholder(final String value) {
+        return new StandardEnvironment().resolveRequiredPlaceholders(value);
     }
 
     @SuppressWarnings("unchecked")

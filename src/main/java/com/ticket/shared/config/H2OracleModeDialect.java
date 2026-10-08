@@ -6,7 +6,7 @@ import org.hibernate.dialect.H2Dialect;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo;
 
 /**
- * 로컬 H2({@code MODE=Oracle})를 Hibernate {@code validate}로 띄우기 위한 dialect다. local profile만 쓴다.
+ * 과거 H2({@code MODE=Oracle}) 스키마를 검증하는 테스트 전용 dialect다. 서비스 프로파일은 PostgreSQL을 쓴다.
  *
  * <p>H2의 Oracle 호환 모드는 Oracle처럼 {@code DATE}를 {@code TIMESTAMP(0)}으로 저장한다. {@code OracleDialect}는 둘을 같은 타입으로 보지만
  * {@link H2Dialect}는 아니라서, migration으로 만든 {@code shows.start_date}를 {@code LocalDate} 매핑과 다르다고 판정한다. 그 한 쌍만 같은 타입으로

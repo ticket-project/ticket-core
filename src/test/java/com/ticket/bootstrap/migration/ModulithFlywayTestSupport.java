@@ -61,9 +61,12 @@ public final class ModulithFlywayTestSupport {
             final String password,
             final String vendor,
             final List<String> moduleIdentifiers) {
+        final String[] locations = vendor.equals("postgresql")
+                ? new String[] {"classpath:db/migration-vendor/postgresql"}
+                : new String[] {"classpath:db/migration", "classpath:db/migration-vendor/" + vendor};
         final Flyway baseFlyway = Flyway.configure()
                 .dataSource(url, username, password)
-                .locations("classpath:db/migration", "classpath:db/migration-vendor/" + vendor)
+                .locations(locations)
                 .load();
 
         final ApplicationModuleIdentifiers identifiers = ApplicationModuleIdentifiers.of(

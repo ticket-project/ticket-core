@@ -3,6 +3,7 @@ package com.ticket.seed;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -51,15 +52,17 @@ final class CuratedSeedLoader implements SeedTask {
 
                     %s
                     필요한 조치
-                      1. 서버를 끄고 ~/ticket-local*.db 파일을 지운 뒤 local 프로파일로 재기동해 스키마를 다시 만들고
-                      2. seedLocal을 다시 실행하세요.
+                      1. 접속 대상과 일부만 적재된 원인을 확인하세요. 운영 데이터는 자동으로 삭제하지 않습니다.
+                      2. 폐기 가능한 로컬 DB라면 새 DB에 migration을 적용한 뒤 seedLocal을 다시 실행하세요.
                     """.formatted(inventory.describe()));
             case LOAD -> {
                 // 아래에서 적재한다.
             }
         }
 
-        final List<String> executable = statements.executableStatements();
+        final boolean postgresql = Boolean.TRUE.equals(jdbcTemplate.execute((ConnectionCallback<Boolean>)
+                connection -> connection.getMetaData().getDatabaseProductName().equals("PostgreSQL")));
+        final List<String> executable = statements.executableStatements(postgresql);
         if (executable.isEmpty()) {
             throw new SeedFailure("시드 SQL에서 실행할 문장을 찾지 못했습니다: " + sqlPath);
         }
