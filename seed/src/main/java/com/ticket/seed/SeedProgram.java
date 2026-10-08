@@ -1,5 +1,6 @@
 package com.ticket.seed;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -74,7 +75,7 @@ final class SeedProgram {
             final JdbcTemplate jdbcTemplate,
             final TransactionTemplate transactionTemplate,
             final SeedSettings settings) {
-        return List.of(
+        final List<SeedTask> tasks = new ArrayList<>(List.of(
                 new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
                 new LoadTestFixtureSeeder(
                         jdbcTemplate,
@@ -91,7 +92,11 @@ final class SeedProgram {
                         jdbcTemplate,
                         transactionTemplate,
                         settings.backgroundOrderCount(),
-                        settings.jdbcUrl().startsWith("jdbc:oracle:")));
+                        settings.jdbcUrl().startsWith("jdbc:oracle:"))));
+        if (settings.jdbcUrl().startsWith("jdbc:postgresql:")) {
+            tasks.add(new PostgreSqlIdentitySynchronizer(jdbcTemplate));
+        }
+        return List.copyOf(tasks);
     }
 
     private static int report(final List<SeedRunner.Report> reports) {

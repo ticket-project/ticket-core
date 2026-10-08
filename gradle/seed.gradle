@@ -28,9 +28,10 @@ dependencies {
     seedMainImplementation 'org.springframework:spring-tx'
     seedMainImplementation 'org.yaml:snakeyaml'
     seedMainRuntimeOnly 'com.h2database:h2'
-    // seedProd는 운영 Oracle에 직접 붙는다. 서버(runtimeOnly)가 쓰는 것과 같은 좌표여야 Wallet 기반
-    // jdbc:oracle:thin:@<tns_alias> URL과 TNS_ADMIN 설정을 서버와 동일하게 쓸 수 있다.
-    seedMainRuntimeOnly libs.bundles.oracle.jdbc
+    seedMainRuntimeOnly 'org.postgresql:postgresql'
+    // 과거 Oracle 적재 회귀 테스트에만 드라이버와 Flyway 모듈을 둔다.
+    seedTestRuntimeOnly libs.bundles.oracle.jdbc
+    seedTestRuntimeOnly 'org.flywaydb:flyway-database-oracle'
 
     // 시드 테스트는 시드 코드와, 실제 앱 migration으로 스키마를 만들기 위한 서비스 classpath를
     // 함께 본다. 반대 방향(main/test가 시드를 보는 것)은 만들지 않는다.
@@ -43,6 +44,7 @@ dependencies {
     // gvenzl/oracle-free 컨테이너를 시드 테스트에서도 쓴다(Docker 없으면 자동으로 건너뛴다).
     seedTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     seedTestImplementation 'org.testcontainers:testcontainers-oracle-free'
+    seedTestImplementation 'org.testcontainers:testcontainers-postgresql'
     seedTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -89,7 +91,7 @@ tasks.named('check') {
 }
 
 /**
- * 로컬 H2 DB에 초기 데이터를 적재하고 종료한다. 서버 기동과는 별개 명령이다.
+ * 로컬 PostgreSQL DB에 초기 데이터를 적재하고 종료한다. 서버 기동과는 별개 명령이다.
  *
  *   .\gradlew.bat seedLocal
  *
@@ -98,14 +100,14 @@ tasks.named('check') {
  */
 tasks.register('seedLocal', JavaExec) {
     group = 'application'
-    description = '로컬 H2 DB에 시드 데이터를 적재한다 (서버 기동 후 실행).'
+    description = '로컬 PostgreSQL DB에 시드 데이터를 적재한다 (서버 기동 후 실행).'
     mainClass = 'com.ticket.seed.SeedLocalMain'
     classpath = sourceSets.seedMain.runtimeClasspath
     configureSeedExecution(it, project)
 }
 
 /**
- * 준비된 운영 Oracle 테이블에 초기 데이터를 적재하고 종료한다. 사용자가 자기 PC에서 직접 실행한다.
+ * 준비된 운영 PostgreSQL 테이블에 초기 데이터를 적재하고 종료한다. 사용자가 자기 PC에서 직접 실행한다.
  *
  *   .\gradlew.bat seedProd
  *
@@ -118,15 +120,10 @@ tasks.register('seedLocal', JavaExec) {
  */
 tasks.register('seedProd', JavaExec) {
     group = 'application'
-    description = '준비된 운영 Oracle 테이블에 시드 데이터를 적재한다 (환경변수로 접속 설정을 넘긴다).'
+    description = '준비된 운영 PostgreSQL 테이블에 시드 데이터를 적재한다 (환경변수로 접속 설정을 넘긴다).'
     mainClass = 'com.ticket.seed.SeedProdMain'
     classpath = sourceSets.seedMain.runtimeClasspath
     configureSeedExecution(it, project)
-    // Wallet(자율운영 DB)을 쓰면 ojdbc가 TNS_ADMIN을 본다. 서버와 같은 설정을 그대로 쓸 수 있게
-    // 환경변수를 시스템 프로퍼티로도 넘긴다(ojdbc는 둘 다 지원한다).
-    if (System.getenv('TNS_ADMIN')) {
-        systemProperty 'oracle.net.tns_admin', System.getenv('TNS_ADMIN')
-    }
 }
 
 /**

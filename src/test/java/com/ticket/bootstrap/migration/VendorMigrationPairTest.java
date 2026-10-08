@@ -23,7 +23,11 @@ class VendorMigrationPairTest {
         final Set<String> h2 = relativePaths("h2");
 
         assertThat(h2).isNotEmpty();
-        assertThat(relativePaths("oracle")).containsExactlyInAnyOrderElementsOf(h2);
+        // Oracle 이력은 보존한다. PostgreSQL TEXT 매핑을 위한 H2 전용 후속 migration만 예외다.
+        assertThat(relativePaths("oracle"))
+                .containsExactlyInAnyOrderElementsOf(h2.stream()
+                        .filter(path -> !path.equals("show/V12__store_show_info_as_text.sql"))
+                        .collect(Collectors.toSet()));
     }
 
     private static Set<String> relativePaths(final String vendor) throws IOException {

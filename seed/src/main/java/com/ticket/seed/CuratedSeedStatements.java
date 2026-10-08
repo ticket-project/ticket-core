@@ -78,7 +78,15 @@ final class CuratedSeedStatements {
 
     /** 실제로 DB에 던지는 문장 목록이다. */
     List<String> executableStatements() {
-        return withExplicitDateLiterals(splitPerformancePolicyStatements(statements));
+        return executableStatements(false);
+    }
+
+    List<String> executableStatements(final boolean postgresql) {
+        final List<String> executable = withExplicitDateLiterals(splitPerformancePolicyStatements(statements));
+        // Oracle/H2용 원본은 유지한다. PostgreSQL의 상수 SELECT에는 DUAL이 필요 없다.
+        return postgresql
+                ? executable.stream().map(sql -> sql.replace(" FROM dual", "")).toList()
+                : executable;
     }
 
     /**

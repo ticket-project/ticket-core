@@ -37,7 +37,7 @@
 
 - Java 25 toolchain의 단일 Gradle Spring Boot 프로젝트다. Gradle subproject는 없고 경계는 Spring Modulith Application Module로 관리한다([build.gradle](build.gradle), [settings.gradle](settings.gradle)).
 - 빌드는 Gradle wrapper를 쓴다. wrapper 버전은 [wrapper 설정](gradle/wrapper/gradle-wrapper.properties), Spring Boot·Modulith와 도구 버전은 [version catalog](gradle/libs.versions.toml)가 원본이다.
-- RDB는 local/dev의 H2 file DB와 prod의 Oracle이며 Redis를 함께 쓴다. Flyway가 스키마를 만들고 Hibernate는 `validate`한다. 프로파일별 실제 값은 `src/main/resources/application*.yml`을 확인한다.
+- RDB는 local의 Docker PostgreSQL과 prod의 AWS RDS PostgreSQL이며 Redis를 함께 쓴다. Flyway가 스키마를 만들고 Hibernate는 `validate`한다. H2/Oracle은 과거 migration과 일부 테스트 검증용이다. 프로파일별 실제 값은 `src/main/resources/application*.yml`을 확인한다.
 - 서비스 테스트는 `src/test`의 JUnit Platform 기반 단위·Spring/Modulith·ArchUnit·Testcontainers 테스트다. 별도 `integrationTest` source set은 없고, `seed/src/test`는 [별도 seedTest](gradle/seed.gradle)이며 `test`에 포함되지 않는다.
 - 포맷은 Spotless와 Palantir Java Format, production null 계약 검사는 Error Prone + NullAway다. 검사 대상·옵션은 [build.gradle](build.gradle)이 원본이다.
 
@@ -48,7 +48,7 @@
 3. 다른 Aggregate는 scalar ID로 참조한다. 모듈 간 JPA 연관관계와 DB FK를 만들지 않고, 다른 BC 데이터는 공개 API로 조합한다. domain은 다른 BC를 참조하지 않는다.
 4. HTTP는 endpoint, 조립·트랜잭션은 usecase, 업무 규칙·저장 계약은 domain, 저장 구현은 persistence가 맡는다. domain·usecase·port·module api는 Spring Web/Swagger에 의존하지 않는다. usecase의 자기 모듈 조회 Repository 직접 호출과 일부 응답 record의 Jackson 표기는 현행 허용 범위다.
 5. 업무 로직은 소유 모듈에 둔다. `shared`·`security`는 기술 모듈이며 `shared`에 업무 의존을 넣지 않는다. `common`/`util`/`helper`처럼 소유권 없는 패키지를 만들지 않는다. 공개 shared 계약과 실행 설정의 배치는 [아키텍처](docs/architecture.md#module-structure)를 따른다.
-6. DB 스키마의 원본은 module 소유 Flyway migration과 H2/Oracle 방언 migration이다. entity 변경만으로 스키마가 바뀐다고 가정하지 않는다. 스키마 변경은 migration·매핑·관련 테스트와 운영 전환 조건을 함께 검토한다([ADR 0020](docs/adr/0020-db-schema-source-of-truth-is-migration.md)).
+6. DB 스키마의 원본은 module 소유 PostgreSQL Flyway migration이다. 과거 H2/Oracle 이력은 보존하고, 빠른 H2 테스트에 필요한 변경도 함께 검토한다. entity 변경만으로 스키마가 바뀐다고 가정하지 않는다. 스키마 변경은 migration·매핑·관련 테스트와 운영 전환 조건을 함께 검토한다([ADR 0020](docs/adr/0020-db-schema-source-of-truth-is-migration.md)).
 
 상세·예외는 [아키텍처](docs/architecture.md), 이름·null 계약·조회 구현은 [코드 작성 기준](docs/coding-guidelines.md)을 따른다. 이름 정리만을 이유로 JSON·HTTP 상태·오류 코드 등 공개 계약을 바꾸지 않는다.
 

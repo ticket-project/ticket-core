@@ -72,15 +72,18 @@ public final class AppSchema {
      * 이미 준비된 테이블에 데이터만 넣는다.
      */
     public static void createOn(final String jdbcUrl, final String username, final String password) {
-        migrate(jdbcUrl, username, password, "oracle");
+        migrate(jdbcUrl, username, password, jdbcUrl.startsWith("jdbc:postgresql:") ? "postgresql" : "oracle");
     }
 
     /** {@code vendor}는 {@code h2} 또는 {@code oracle}이다. 로컬 프로파일·운영과 같은 locations를 쓴다. */
     private static void migrate(
             final String jdbcUrl, final String username, final String password, final String vendor) {
+        final String[] locations = vendor.equals("postgresql")
+                ? new String[] {"classpath:db/migration-vendor/postgresql"}
+                : new String[] {"classpath:db/migration", "classpath:db/migration-vendor/" + vendor};
         final Flyway flyway = Flyway.configure()
                 .dataSource(jdbcUrl, username, password)
-                .locations("classpath:db/migration", "classpath:db/migration-vendor/" + vendor)
+                .locations(locations)
                 .load();
         final ApplicationModuleIdentifiers modules = ApplicationModuleIdentifiers.of(MODULES_IN_RUNTIME_ORDER.stream()
                 .map(ApplicationModuleIdentifier::of)
@@ -91,6 +94,21 @@ public final class AppSchema {
     /** 이미 만들어진 스키마에 붙는 JPA 컨텍스트를 연다. 시드가 넣은 row를 실제 entity 매핑으로 읽어 볼 때 쓴다. 호출자가 닫는다. */
     public static ConfigurableApplicationContext openContext(final String jdbcUrl) {
         return context(jdbcUrl);
+    }
+
+    public static ConfigurableApplicationContext openContext(
+            final String jdbcUrl, final String username, final String password) {
+        return new SpringApplicationBuilder(SchemaConfiguration.class)
+                .web(WebApplicationType.NONE)
+                .bannerMode(Banner.Mode.OFF)
+                .properties(
+                        "spring.datasource.url=" + jdbcUrl,
+                        "spring.datasource.username=" + username,
+                        "spring.datasource.password=" + password,
+                        "spring.jpa.hibernate.ddl-auto=validate",
+                        "spring.jpa.open-in-view=false",
+                        "logging.level.root=WARN")
+                .run();
     }
 
     private static ConfigurableApplicationContext context(final String jdbcUrl) {

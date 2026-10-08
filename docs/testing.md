@@ -18,7 +18,8 @@
   `git diff --check`를 확인한다. Java 포맷·전체 테스트는 요구하지 않는다.
 - **seed는 별도로 검증한다.** seed 변경은 `./gradlew seedTest`부터 시작하고 서비스와 함께 영향을
   받으면 `./gradlew test seedTest`로 넓힌다. CI·산출물 전체 검증에도 포함한다. `SeedProdOracleTest`는
-  Oracle 컨테이너가 필요하다.
+  과거 Oracle 컨테이너 검증이다. 현재 DB의 적재·재실행·identity·TEXT 조회·전체 시드 SQL은
+  `SeedPostgreSqlTest`가 실제 PostgreSQL 컨테이너에서 검증한다.
 - **테스트를 중간에 끊었다면 다음 실행 전에 이전 실행이 멈췄는지 확인한다.** 셸을 끊어도 Gradle
   데몬의 테스트 JVM과 Testcontainers 컨테이너는 남을 수 있다(`docker ps`, `./gradlew --status`). 겹쳐 돌면
   서로 느려져 멈춘 것처럼 보인다.
@@ -38,7 +39,7 @@
 | Redis key·TTL·락·만료 | 해당 Redis integration test와 Testcontainers(Docker 필요) |
 | 주문·hold·이벤트 흐름 | 관련 단위·Scenario·예매 E2E 테스트(Docker 필요) |
 | 빈을 모듈 사이로 옮기는 변경 | 위에 더해 `ApplicationContextLoadTest`. 단위 테스트는 각 클래스를 직접 만들어 빈 연결이 깨져도 통과한다 |
-| DB migration | 해당 slicing schema test, H2/Oracle 호환 테스트(Oracle은 Docker 필요) |
+| DB migration | 해당 slicing schema test, PostgreSqlMigrationChainSchemaTest와 과거 H2/Oracle 호환 테스트(Docker 필요) |
 | seed | `./gradlew seedTest` 및 필요시 `verifySeedNotInBootJar` |
 | 배포 산출물·push 전 전체 | [CI workflow](../.github/workflows/ci.yml)의 `Test and build` 단계 명령 |
 | 문서 | `bash scripts/check-docs.sh`, 변경 링크·anchor·명령 근거 확인, `git diff --check` |
@@ -81,8 +82,9 @@ Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
 - 여러 모듈의 JPA/Querydsl 테스트가 공유하는 기반 클래스는 과거 module 이름을 쓰지 않고
   `com.ticket.testsupport.persistence`에 둔다. 특정 모듈만 쓰는 fixture와 support는 해당 모듈 테스트
   패키지 아래에 둔다.
-- H2에 붙는 Spring context 테스트는 `@MigratedSchema`(`com.ticket.testsupport.persistence`)를 붙여 운영과
-  같은 Flyway migration으로 스키마를 만든다. `ddl-auto=create`로 entity에서 만들지 않는다 — entity에는
+- H2에 붙는 Spring context 테스트는 `@MigratedSchema`(`com.ticket.testsupport.persistence`)를 붙여 과거 H2
+  Flyway 체인으로 스키마를 만든다. 현재 운영 스키마는 PostgreSQL 테스트로 별도 검증한다.
+  `ddl-auto=create`로 entity에서 만들지 않는다 — entity에는
   유니크 제약·인덱스가 없어서 entity로 만든 스키마는 DB의 중복 거절을 재현하지 못한다.
 
 ### Modulith 이벤트 테스트
@@ -99,7 +101,7 @@ Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
 ### 예매 E2E
 
 `BookingE2ETestSupport`를 상속한다. 인증 헬퍼, 좌석 상태 조회, 커밋 후 처리를 기다리는 `pollUntil`이 여기
-있고, Testcontainers Redis와 H2·기동 설정은 상위 `CoreApplicationTestSupport`가 갖는다. 데이터는
+있고, Testcontainers PostgreSQL·Redis와 기동 설정은 상위 `CoreApplicationTestSupport`가 갖는다. 데이터는
 `fixture/booking-e2e-*.sql`이 만들고 `@Sql`이 메서드마다 초기화한다.
 
 **모듈 사이 연결을 보는 테스트다.** 응답 코드만 확인하면 단위 테스트와 다를 게 없다. 좌석 상태를 다시 조회해

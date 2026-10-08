@@ -44,8 +44,7 @@ class ServiceSourceSeparationTest {
     void 기동_시_자동_적재_설정은_어느_프로파일에도_없다() {
         final Path resources = SeedTestPaths.projectDir().resolve("src/main/resources");
 
-        for (final String profile :
-                List.of("application.yml", "application-local.yml", "application-dev.yml", "application-prod.yml")) {
+        for (final String profile : List.of("application.yml", "application-local.yml", "application-prod.yml")) {
             final String content = read(resources.resolve(profile));
 
             assertThat(content)

@@ -6,8 +6,8 @@
 
 | 명령 | 대상 | 접속 설정 원본 | 기본 적재 대상 |
 | --- | --- | --- | --- |
-| `seedLocal` | 로컬 H2 | `src/main/resources/application-local.yml` | 공용 시드 + 부하 테스트 회원 2,000명 + 부하 회차 8개 |
-| `seedProd` | 운영 Oracle | `SPRING_DATASOURCE_*` 환경변수 **뿐** | 공용 시드(공연 데이터)만 |
+| `seedLocal` | 로컬 PostgreSQL | `src/main/resources/application-local.yml`과 그 환경변수 | 공용 시드 + 부하 테스트 회원 2,000명 + 부하 회차 8개 |
+| `seedProd` | AWS RDS PostgreSQL | `SPRING_DATASOURCE_*` 환경변수 **뿐** | 공용 시드(공연 데이터)만 |
 
 ```text
 로컬 : 서버 기동 완료  →  .\gradlew.bat seedLocal  →  개발 · 부하 테스트
@@ -19,8 +19,8 @@
 테이블에 데이터를 넣는 명령**이다.
 
 로컬 프로파일은 운영과 같은 Flyway migration으로 스키마를 만든다 — **서버를 재시작해도 데이터가
-남는다.** 처음부터 다시 적재하려면 서버를 끄고 `~/ticket-local*.db` 파일을 지운 뒤 다시 기동하고
-`seedLocal`을 실행한다(`docs/operations.md`의 프로파일 절 참고).
+남는다.** PostgreSQL 데이터는 Docker 볼륨에 보존된다. 시드는 기존 H2/Oracle 데이터를 이관하지 않는다.
+기존 데이터 이관은 [운영 절차](../docs/operations.md#aws-rds-postgresql-전환)를 따른다.
 
 ## 구성
 
@@ -58,8 +58,10 @@
 ```
 
 **접속 설정의 원본은 `src/main/resources/application-local.yml`의 `spring.datasource.*` 하나다.**
-`seedLocal`이 그 파일을 직접 읽으므로 앱과 시드가 항상 같은 DB를 본다. URL은 `AUTO_SERVER=TRUE`인
-H2 파일 DB라 서버가 접속한 상태에서도 같이 붙을 수 있다.
+`seedLocal`은 YAML의 `${환경변수:기본값}`도 해석하므로 앱과 같은 접속 설정을 사용한다.
+이미 실행 중인 PostgreSQL의 Ticket용 DB·계정을 사용하며, 실제 접속 정보가 기본값과 다르면
+`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`를 설정한다.
+적재 중에는 앱의 쓰기·주문 만료 worker를 중지하고, 적재 완료 뒤 개발이나 부하 테스트를 시작한다.
 
 성공하면 작업별 결과를 출력하고 종료 코드 `0`으로 끝난다. 실패하면 원인을 요약하고 `0`이 아닌
 코드로 끝난다. 접속 비밀번호는 출력하지 않는다.
@@ -70,7 +72,7 @@ H2 파일 DB라 서버가 접속한 상태에서도 같이 붙을 수 있다.
 기동이 대신 하지 않는다.
 
 ```powershell
-$env:SPRING_DATASOURCE_URL = "jdbc:oracle:thin:@<tns_alias>"
+$env:SPRING_DATASOURCE_URL = "jdbc:postgresql://<RDS endpoint>:5432/ticket?sslmode=verify-full&sslrootcert=C:/certs/global-bundle.pem"
 $env:SPRING_DATASOURCE_USERNAME = "<계정>"
 $env:SPRING_DATASOURCE_PASSWORD = "<비밀번호>"
 .\gradlew.bat seedProd
@@ -82,11 +84,10 @@ SPRING_DATASOURCE_URL=... SPRING_DATASOURCE_USERNAME=... SPRING_DATASOURCE_PASSW
 
 - 변수 이름은 prod 프로파일(`application-prod.yml`)이 쓰는 것과 같다. **세 값 중 하나라도 없으면
   적재를 시작하기 전에 실패한다** — 로컬 프로파일 YAML로 대체하지 않는다. 운영에 넣으려던
-  데이터가 조용히 로컬 H2에 들어가는 것이 이 도구에서 가장 나쁜 결과다.
-- Wallet(자율운영 DB)을 쓰면 서버와 같은 `TNS_ADMIN`을 그대로 쓴다. Gradle이 환경변수를 실행
-  프로세스에 넘기고, `seedProd`는 그 값을 `oracle.net.tns_admin` 시스템 프로퍼티로도 전달한다.
-  **Wallet 파일과 실제 비밀번호는 저장소에 넣지 않는다.**
-- 확인 범위는 **실제로 접속한 스키마**다(`USER_TABLES` / `USER_TAB_COLUMNS`). 다른 스키마의 동명
+  데이터가 조용히 로컬 DB에 들어가는 것이 이 도구에서 가장 나쁜 결과다.
+- `sslrootcert`는 실행 PC에서 읽을 수 있는 AWS RDS CA bundle의 경로다. 서버 컨테이너의 경로와
+  다를 수 있다. PC에서 RDS로 접근 가능한 네트워크도 준비한다. 비밀번호는 저장소에 넣지 않는다.
+- 확인 범위는 **실제로 접속한 스키마**다. PostgreSQL의 소문자 식별자를 처리하며 다른 스키마의 동명
   테이블을 준비된 것으로 오인하지 않는다.
 - 접속 대상과 작업 결과를 출력하되 비밀번호와 URL 안의 자격증명은 가린다.
 - 웹 서버·Redis·OAuth 설정은 필요하지 않다.
@@ -95,13 +96,12 @@ SPRING_DATASOURCE_URL=... SPRING_DATASOURCE_USERNAME=... SPRING_DATASOURCE_PASSW
 
 1. **Run / Debug Configurations → `+` → Gradle**
 2. **Run** 칸에 `seedProd`, **Gradle project**는 `ticket`
-3. **Environment variables**에 아래 셋(필요하면 `TNS_ADMIN`까지)을 넣는다.
+3. **Environment variables**에 아래 셋을 넣는다.
 
    ```text
-   SPRING_DATASOURCE_URL=jdbc:oracle:thin:@<tns_alias>
+   SPRING_DATASOURCE_URL=jdbc:postgresql://<RDS endpoint>:5432/ticket?sslmode=verify-full&sslrootcert=C:/certs/global-bundle.pem
    SPRING_DATASOURCE_USERNAME=<계정>
    SPRING_DATASOURCE_PASSWORD=<비밀번호>
-   TNS_ADMIN=<Wallet 디렉터리 절대경로>
    ```
 
 4. 저장한다. **실행 설정 파일(`.run/*.xml`)을 저장소에 커밋하지 않는다** — 자격증명이 함께
@@ -124,8 +124,11 @@ seedProd -Dseed.load-test-members.count=100
 
 ### 적재하는 것
 
-작업은 넷이고 순서가 곧 계약이다(공용 시드가 먼저 `GRADES` 코드를 만들고 부하 픽스처가 그것을
-재사용한다. 배경 주문은 공용 회차와 회원을 읽으므로 맨 끝이다). 작업마다 자기 트랜잭션이 있고, 앞 작업이 실패하면 뒤 작업은 실행하지 않는다.
+작업 순서가 곧 계약이다(공용 시드가 먼저 `GRADES` 코드를 만들고 부하 픽스처가 그것을
+재사용한다. 배경 주문은 공용 회차와 회원을 읽는다). 데이터 적재 작업마다 자기 트랜잭션이 있고,
+앞 작업이 실패하면 뒤 작업은 실행하지 않는다. PostgreSQL에서는 마지막으로 identity 시퀀스를
+테이블의 최대 ID 이상으로 맞춘다. 원본 SQL과 부하 픽스처가 ID를 직접 지정하므로 이 보정 없이 앱을
+재개하면 자동 생성 ID가 충돌할 수 있다. 시퀀스 보정은 롤백되지 않으며 앱의 쓰기가 중지된 상태에서 실행한다.
 
 | 작업 | 내용 | `seedLocal` 기본값 | `seedProd` 기본값 |
 | --- | --- | --- | --- |
@@ -175,7 +178,7 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 - 주문 ID는 `800000000000 + 회차ID × 100000 + n`이고 `created_by = 'LOAD_TEST_BACKGROUND'`다. 정리할 때 이 기준을 쓴다.
 - 회차 하나가 한 트랜잭션이다. 배경 주문이 이미 있는 회차는 건너뛰므로, 끊기면 같은 명령을 다시 실행해 이어 넣는다.
   **처음 넣은 뒤 주문 수를 바꿔도 이미 넣은 회차는 그대로다.**
-- Oracle에서는 적재 뒤 `ORDERS`·`ORDER_SEATS`·`MEMBERS` 통계를 다시 모은다(`DBMS_STATS`).
+- PostgreSQL 대량 적재 후에는 필요에 따라 `ANALYZE orders, order_seats, members`로 통계를 갱신한다.
 - 결제·티켓·선점 이력은 만들지 않는다. 측정 경로가 읽지 않는 테이블이다.
 - 넣기 전에 DB 남은 용량을 확인한다.
 
@@ -255,14 +258,14 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 
 각 테스트가 고정하는 것은 `seed/src/test/java`의 테스트와 그 Javadoc이 원본이다.
 
-테스트는 **실제 개발 DB(`~/ticket-local`)도, 실제 운영 DB도 건드리지 않는다.** 임시 디렉터리의 H2
-파일 DB와 임시 Oracle 컨테이너에 운영과 같은 Flyway migration(H2는 `db/migration-vendor/h2`, Oracle은
-`oracle`)으로 스키마를 만들어 쓴다. 시드 SQL은 entity가 읽지 않는 컬럼도 직접 INSERT하므로, entity 매핑으로
+테스트는 **실제 개발 DB와 실제 운영 DB를 건드리지 않는다.** `SeedPostgreSqlTest`는 임시 PostgreSQL 18
+컨테이너에 현재 서비스 migration으로 스키마를 만든다. 임시 H2 파일 DB와 Oracle 컨테이너는 과거 호환성
+검증에 사용한다. 시드 SQL은 entity가 읽지 않는 컬럼도 직접 INSERT하므로, entity 매핑으로
 만든 스키마로는 실제 DB와 어긋난다. 테스트용 스키마 생성은
 테스트 소스(`support.AppSchema`)에만 있다 — 시드 프로그램에는 테이블을 만드는 기능이 없다.
 
-`SeedProdOracleTest`는 Docker가 필요하다(`gvenzl/oracle-free:23-slim`). Docker가 없으면 이 클래스
-전체가 건너뛰어진다 — 그때는 **운영 경로가 미검증**이라는 뜻이지 통과가 아니다.
+PostgreSQL과 과거 Oracle 컨테이너 테스트는 Docker가 필요하다. Docker가 없으면 해당 클래스가
+건너뛰어지므로, PostgreSQL 검증을 실행하지 못한 결과를 운영 호환성 통과로 취급하지 않는다.
 
 ## 시드 데이터 최신화
 
