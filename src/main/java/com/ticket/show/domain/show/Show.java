@@ -11,6 +11,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
@@ -36,7 +37,8 @@ public class Show extends AuditedEntity {
     @Column(length = 500)
     private String subTitle;
 
-    @Column(columnDefinition = "text")
+    @Lob
+    @Column(columnDefinition = "CLOB")
     private String info;
 
     private LocalDate startDate;

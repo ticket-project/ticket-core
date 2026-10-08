@@ -7,18 +7,15 @@ admission token을 검증해 예매 API 진입을 제어한다.
 
 ## 로컬 실행
 
-전제: JDK 25, Gradle wrapper, 실행 중인 PostgreSQL과 Redis. DB는 로컬·운영 모두 PostgreSQL이다.
-로컬에서는 이미 실행 중인 컨테이너를 사용하며, Ticket용 DB와 접속 계정을 준비한다.
+전제: JDK 25, Redis 7, Gradle wrapper.
+
+```powershell
+docker run --name ticket-redis -p 6379:6379 -d redis:7
+```
 
 환경 변수의 원본은 `src/main/resources/application*.yml`의 `${...}` placeholder다. 기본값이 없는
 placeholder는 로컬용 임의 값이라도 설정해야 기동한다. 실제 소셜 로그인을 확인하려면 각 공급자에서 발급받은
 로컬 callback용 값을 쓴다.
-
-로컬 DB 기본값은 `jdbc:postgresql://localhost:5432/ticket`, 계정 `ticket`, 비밀번호 `ticket_local`이다.
-`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`로 덮어쓸 수 있고
-`seedLocal`도 같은 값을 사용한다. 실제 DB 이름·계정·비밀번호가 기본값과 다르면 앱과 시드를 실행하는
-환경에 세 값을 설정한다. Redis의 기본 접속 주소는 `localhost:6379`다.
-운영 RDS 전환은 [운영 절차](docs/operations.md)를 따른다.
 
 ```powershell
 $env:SPRING_PROFILES_ACTIVE="local"

@@ -81,10 +81,10 @@ final class SeedPreconditions {
         if (target == SeedTarget.PROD) {
             return """
                       -> SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD와,
-                         RDS endpoint·네트워크 접근·TLS 인증서 경로를 확인하세요.""";
+                         Wallet을 쓴다면 TNS_ADMIN이 서버 설정과 같은지 확인하세요.""";
         }
         return """
-                  -> local 프로파일로 애플리케이션이 기동된 적이 있는지, PostgreSQL 접속 설정이 맞는지 확인하세요.""";
+                  -> local 프로파일로 애플리케이션이 기동된 적이 있는지, H2 파일 DB 경로가 맞는지 확인하세요.""";
     }
 
     private static void verifyTables(
@@ -153,9 +153,7 @@ final class SeedPreconditions {
             return queryNames(connection, "SELECT table_name FROM USER_TABLES");
         }
         final Set<String> names = new LinkedHashSet<>();
-        try (ResultSet tables = connection
-                .getMetaData()
-                .getTables(connection.getCatalog(), connection.getSchema(), "%", new String[] {"TABLE"})) {
+        try (ResultSet tables = connection.getMetaData().getTables(null, null, "%", new String[] {"TABLE"})) {
             while (tables.next()) {
                 names.add(tables.getString("TABLE_NAME").toUpperCase(Locale.ROOT));
             }
@@ -170,11 +168,7 @@ final class SeedPreconditions {
                     connection, "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = '" + table + "'");
         }
         final Set<String> names = new LinkedHashSet<>();
-        final String tablePattern =
-                connection.getMetaData().storesLowerCaseIdentifiers() ? table.toLowerCase(Locale.ROOT) : table;
-        try (ResultSet columns = connection
-                .getMetaData()
-                .getColumns(connection.getCatalog(), connection.getSchema(), tablePattern, null)) {
+        try (ResultSet columns = connection.getMetaData().getColumns(null, null, table, null)) {
             while (columns.next()) {
                 names.add(columns.getString("COLUMN_NAME").toUpperCase(Locale.ROOT));
             }

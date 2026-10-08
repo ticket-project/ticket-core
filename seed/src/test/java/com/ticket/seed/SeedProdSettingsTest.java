@@ -96,9 +96,7 @@ class SeedProdSettingsTest {
         assertThat(SeedDataSources.driverClassNameFor("jdbc:oracle:thin:@ticketdb_high"))
                 .isEqualTo("oracle.jdbc.OracleDriver");
         assertThat(SeedDataSources.driverClassNameFor("jdbc:h2:mem:x")).isEqualTo("org.h2.Driver");
-        assertThat(SeedDataSources.driverClassNameFor("jdbc:postgresql://host/db"))
-                .isEqualTo("org.postgresql.Driver");
-        assertThatThrownBy(() -> SeedDataSources.driverClassNameFor("jdbc:mysql://host/db"))
+        assertThatThrownBy(() -> SeedDataSources.driverClassNameFor("jdbc:postgresql://host/db"))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining("지원하지 않는 JDBC URL");
     }

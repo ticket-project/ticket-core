@@ -1,17 +1,18 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ticket}
-    username: ${SPRING_DATASOURCE_USERNAME:ticket}
-    password: ${SPRING_DATASOURCE_PASSWORD:ticket_local}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:file:~/ticket-local;MODE=Oracle;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
 
   # 스키마는 운영과 같은 Flyway migration으로 만든다. entity만 바꾸고 migration을 빠뜨리면 여기서 기동이 실패한다.
+  # H2OracleModeDialect: Oracle 모드 H2가 DATE를 TIMESTAMP로 저장해 기본 H2Dialect의 validate가 어긋나는 것을 맞춘다.
   jpa:
+    database-platform: com.ticket.shared.config.H2OracleModeDialect
     hibernate:
       ddl-auto: validate
   flyway:
     enabled: true
-    locations: classpath:db/migration-vendor/postgresql
+    locations: classpath:db/migration,classpath:db/migration-vendor/h2
   modulith:
     runtime:
       # CI의 ModularityTests가 권위 있는 gate다. 이 profile은 로컬 기동 시 추가로 한 번 더
