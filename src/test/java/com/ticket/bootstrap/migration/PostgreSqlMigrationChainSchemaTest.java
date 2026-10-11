@@ -97,12 +97,13 @@ class PostgreSqlMigrationChainSchemaTest {
                             url, POSTGRES.getUsername(), POSTGRES.getPassword(), "postgresql", List.of(module)))
                     .doesNotThrowAnyException();
         }
-        assertThat(jdbc.queryForObject("""
-                SELECT count(*) FROM pg_index i JOIN pg_class t ON t.oid = i.indrelid
+        assertThat(jdbc.queryForList("""
+                SELECT c.relname FROM pg_index i JOIN pg_class t ON t.oid = i.indrelid
+                JOIN pg_class c ON c.oid = i.indexrelid
                 JOIN pg_namespace n ON n.oid = t.relnamespace
                 WHERE n.nspname = current_schema() AND NOT i.indisunique
                   AND t.relname NOT LIKE 'flyway_schema_history%'
-                """, Integer.class)).isZero();
+                """, String.class)).containsExactly("idx_orders_pending_member_performance");
     }
 
     @Test

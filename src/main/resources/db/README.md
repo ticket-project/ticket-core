@@ -43,7 +43,8 @@ H2 테스트도 해당 entity를 사용하면 H2 대응 migration을 함께 추�
 같은 migration을 적용해 스키마를 만든다. 빈 DB에서 전체 migration 결과가 entity와 맞는지는
 `MigrationChainSchemaTest`(과거 H2 체인)와 `PostgreSqlMigrationChainSchemaTest`(현재 PostgreSQL, Docker 필요)가 확인한다.
 
-- PK·유니크가 아닌 보조 인덱스는 당분간 두지 않는다. 필요해지면 새 migration으로 만든다.
+- PK·유니크가 아닌 보조 인덱스는 측정으로 필요가 확인된 것만 새 migration으로 만든다.
+  `PostgreSqlMigrationChainSchemaTest`가 그 목록을 고정한다.
 - `__root`의 `V1`은 Flyway 도입 전 스키마를 빈 DB에 다시 만든다. 운영은 이미 version `1` BASELINE이
   있어 이 파일을 건너뛰고 로컬·테스트 같은 빈 DB만 실행한다. `V1`은 **도입 당시 모양**이라 지금 entity와
   다르고 뒤 migration이 그 모양을 전제로 컬럼·제약을 더한다. 그래서 `V1`을 지금 entity에 맞춰 고치지 않는다.
