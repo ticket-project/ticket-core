@@ -59,7 +59,7 @@
 
 **접속 설정의 원본은 `src/main/resources/application-local.yml`의 `spring.datasource.*` 하나다.**
 `seedLocal`은 YAML의 `${환경변수:기본값}`도 해석하므로 앱과 같은 접속 설정을 사용한다.
-`compose.local.yml`의 PostgreSQL을 기본으로 사용하며, 실제 접속 정보가 기본값과 다르면
+`docker-compose-local.yml`의 PostgreSQL을 기본으로 사용하며, 실제 접속 정보가 기본값과 다르면
 `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`를 설정한다.
 적재 중에는 앱의 쓰기·주문 만료 worker를 중지하고, 적재 완료 뒤 개발이나 부하 테스트를 시작한다.
 

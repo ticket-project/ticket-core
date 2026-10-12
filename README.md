@@ -29,7 +29,7 @@ admission token을 검증해 예매 API 진입을 제어한다. 부하 측정은
 1. PostgreSQL과 Redis를 띄운다. 데이터는 `ticket_postgres-data` 볼륨에 남는다.
 
    ```powershell
-   docker compose -f compose.local.yml up -d postgres redis
+   docker compose -f docker-compose-local.yml up -d postgres redis
    ```
 
 2. 필수 환경 변수를 넣는다. 로컬은 아래 임의 값으로 기동된다(이유는 [설정](#설정)).
@@ -70,7 +70,7 @@ Core는 `http://127.0.0.1:8083`에 뜬다.
 
 ```powershell
 .\gradlew.bat bootJar
-docker compose -f compose.local.yml up -d --build --wait
+docker compose -f docker-compose-local.yml up -d --build --wait
 ```
 
 ## 설정
