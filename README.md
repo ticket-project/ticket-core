@@ -26,11 +26,10 @@ admission token을 검증해 예매 API 진입을 제어한다. 부하 측정은
 필요한 것: JDK 25, Docker. Gradle은 wrapper가 받는다. 아래는 Windows PowerShell 기준이다(macOS·Linux는
 `.\gradlew.bat` 대신 `./gradlew`).
 
-1. PostgreSQL과 Redis를 띄운다. 데이터는 `ticket-postgres` 볼륨에 남는다.
+1. PostgreSQL과 Redis를 띄운다. 데이터는 `ticket_postgres-data` 볼륨에 남는다.
 
    ```powershell
-   docker run -d --name ticket-postgres -p 5432:5432 -e POSTGRES_DB=ticket -e POSTGRES_USER=ticket -e POSTGRES_PASSWORD=ticket_local -v ticket-postgres:/var/lib/postgresql postgres:18
-   docker run -d --name ticket-redis -p 6379:6379 redis:7.4-alpine
+   docker compose -f compose.local.yml up -d postgres redis
    ```
 
 2. 필수 환경 변수를 넣는다. 로컬은 아래 임의 값으로 기동된다(이유는 [설정](#설정)).
@@ -65,13 +64,13 @@ admission token을 검증해 예매 API 진입을 제어한다. 부하 측정은
 
 API 문서는 Swagger UI `http://localhost:8080/api/swagger-ui.html`, OpenAPI JSON `/api/api-docs`다.
 
-부하 측정처럼 Core를 컨테이너로 띄울 때는 `compose.local.yml`을 쓴다. 기존 PostgreSQL·Redis 컨테이너의 네트워크에
-붙으므로 쿼리가 Docker 포트 중계를 지나지 않는다. 이 PC의 컨테이너 이름·네트워크는 git이 추적하지 않는
-`compose.local.env`에 적는다. 필요한 키는 `compose.local.yml` 머리 주석에 있다.
+부하 측정처럼 Core도 컨테이너로 띄울 때는 같은 compose 파일을 쓴다. Core가 PostgreSQL·Redis와 같은 Docker 네트워크(`ticket`)에서
+이름으로 접속하므로 쿼리가 Docker 포트 중계를 지나지 않는다. 비밀값은 워크스페이스의 `local-env/ticket-core.env`에서 읽고,
+Core는 `http://127.0.0.1:8083`에 뜬다.
 
 ```powershell
 .\gradlew.bat bootJar
-docker compose --env-file compose.local.env -f compose.local.yml up -d --build --wait
+docker compose -f compose.local.yml up -d --build --wait
 ```
 
 ## 설정
