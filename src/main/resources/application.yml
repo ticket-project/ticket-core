@@ -72,6 +72,8 @@ logging:
 
 server:
   forward-headers-strategy: framework
+  compression:
+    enabled: true
   tomcat:
     mbeanregistry:
       enabled: true
