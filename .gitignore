@@ -43,6 +43,8 @@ mysql-data/
 
 # Local Docker Compose file with machine-local secrets
 docker-compose.yml
+# compose.local.yml이 읽는 이 PC의 컨테이너 이름·네트워크
+compose.local.env
 
 # Claude Code 개인 설정 (공유 설정은 .claude/settings.json)
 .claude/settings.local.json
