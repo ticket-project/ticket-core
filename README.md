@@ -65,6 +65,15 @@ admission token을 검증해 예매 API 진입을 제어한다. 부하 측정은
 
 API 문서는 Swagger UI `http://localhost:8080/api/swagger-ui.html`, OpenAPI JSON `/api/api-docs`다.
 
+부하 측정처럼 Core를 컨테이너로 띄울 때는 `compose.local.yml`을 쓴다. 기존 PostgreSQL·Redis 컨테이너의 네트워크에
+붙으므로 쿼리가 Docker 포트 중계를 지나지 않는다. 이 PC의 컨테이너 이름·네트워크는 git이 추적하지 않는
+`compose.local.env`에 적는다. 필요한 키는 `compose.local.yml` 머리 주석에 있다.
+
+```powershell
+.\gradlew.bat bootJar
+docker compose --env-file compose.local.env -f compose.local.yml up -d --build --wait
+```
+
 ## 설정
 
 설정 값의 원본은 `src/main/resources/application*.yml`이다. `${...}` 가운데 기본값이 없는 것은 값을 넣지 않으면
