@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateRow;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
@@ -133,5 +134,16 @@ class PerformanceSeatRepositoryTest extends ReadRepositoryTestSupport {
         assertThat(result)
                 .extracting(PerformanceSeat::getState)
                 .contains(PerformanceSeatState.AVAILABLE, PerformanceSeatState.RESERVED);
+    }
+
+    @Test
+    void 좌석_상태_세_열을_요청한_회차만_seatId_오름차순으로_읽는다() {
+        assertThat(performanceSeatRepository.findStatesByPerformanceId(performanceId))
+                .containsExactly(
+                        new PerformanceSeatStateRow(performanceSeat1.getId(), seat1Id, PerformanceSeatState.AVAILABLE),
+                        new PerformanceSeatStateRow(performanceSeat2.getId(), seat2Id, PerformanceSeatState.RESERVED));
+        assertThat(performanceSeatRepository.findStatesByPerformanceId(otherPerformanceId))
+                .extracting(PerformanceSeatStateRow::seatId)
+                .containsExactly(seat1Id);
     }
 }

@@ -38,7 +38,8 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     void DB_좌석_상태_읽기는_읽기_전용_트랜잭션_안에서_끝난다() throws Exception {
         final Class<?> repository = PerformanceSeatRepository.class;
 
-        final TransactionAttribute attribute = transactionAttributeOf(repository, "findAllByPerformanceId", Long.class);
+        final TransactionAttribute attribute =
+                transactionAttributeOf(repository, "findStatesByPerformanceId", Long.class);
 
         assertThat(attribute).isNotNull();
         assertThat(attribute.isReadOnly()).isTrue();

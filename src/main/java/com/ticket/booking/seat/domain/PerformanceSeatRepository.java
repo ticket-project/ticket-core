@@ -27,4 +27,14 @@ public interface PerformanceSeatRepository extends Repository<PerformanceSeat, L
     @Transactional(readOnly = true)
     @Query("select s from PerformanceSeat s where s.performanceId = :performanceId order by s.seatId")
     List<PerformanceSeat> findAllByPerformanceId(@Param("performanceId") Long performanceId);
+
+    /** 좌석 상태 응답에 쓰는 세 열만 seatId 오름차순으로 읽는다. 엔티티로 읽지 않는 이유는 {@link PerformanceSeatStateRow}에 있다. */
+    @Transactional(readOnly = true)
+    @Query("""
+            select new com.ticket.booking.seat.domain.PerformanceSeatStateRow(s.id, s.seatId, s.state)
+            from PerformanceSeat s
+            where s.performanceId = :performanceId
+            order by s.seatId
+            """)
+    List<PerformanceSeatStateRow> findStatesByPerformanceId(@Param("performanceId") Long performanceId);
 }
