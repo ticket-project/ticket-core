@@ -11,9 +11,9 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.admission.BookingEntryGuard;
-import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateRow;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 
 import lombok.RequiredArgsConstructor;
@@ -58,7 +58,8 @@ public class GetSeatStatusUseCase {
 
         bookingEntryGuard.check(performanceId, input.memberId(), input.admissionToken(), now);
 
-        final List<PerformanceSeat> performanceSeats = performanceSeatRepository.findAllByPerformanceId(performanceId);
+        final List<PerformanceSeatStateRow> performanceSeats =
+                performanceSeatRepository.findStatesByPerformanceId(performanceId);
 
         final Set<Long> redisOccupiedIds = seatOccupancy.occupiedSeatIds(performanceId);
 
@@ -69,11 +70,10 @@ public class GetSeatStatusUseCase {
         return new Output(seats);
     }
 
-    /** DB 상태를 응답 상태로 옮기고 Redis 점유를 덧씌운다 — 엔티티의 상태는 바꾸지 않는다. */
-    private SeatResponse toResponse(final PerformanceSeat performanceSeat, final Set<Long> redisOccupiedIds) {
-        final SeatStatus status = redisOccupiedIds.contains(performanceSeat.getSeatId())
-                ? SeatStatus.OCCUPIED
-                : SeatStatus.from(performanceSeat.getState());
-        return new SeatResponse(performanceSeat.getId(), performanceSeat.getSeatId(), status);
+    /** DB 상태를 응답 상태로 옮기고 Redis 점유를 덧씌운다. */
+    private SeatResponse toResponse(final PerformanceSeatStateRow row, final Set<Long> redisOccupiedIds) {
+        final SeatStatus status =
+                redisOccupiedIds.contains(row.seatId()) ? SeatStatus.OCCUPIED : SeatStatus.from(row.state());
+        return new SeatResponse(row.performanceSeatId(), row.seatId(), status);
     }
 }
