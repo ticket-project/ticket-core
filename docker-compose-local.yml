@@ -1,10 +1,10 @@
 # ticket 로컬 실행 환경: PostgreSQL, Redis, Core. 모두 Docker 네트워크 ticket에 있다.
 #
 # 개발할 때는 DB와 Redis만 띄우고 Core는 IDE나 bootRun으로 띄운다.
-#   docker compose -f compose.local.yml up -d postgres redis
+#   docker compose -f docker-compose-local.yml up -d postgres redis
 # 부하 측정처럼 Core도 컨테이너로 띄울 때는 먼저 bootJar를 만든다.
 #   .\gradlew.bat bootJar
-#   docker compose -f compose.local.yml up -d --build --wait
+#   docker compose -f docker-compose-local.yml up -d --build --wait
 #
 # Core 컨테이너는 같은 네트워크에서 postgres·redis라는 이름으로 접속한다. Windows에서 띄운 Core는 쿼리마다
 # Docker 포트 중계를 지나는데, 부하 측정에서 그 중계가 병목이었다(gatling-test docs/capacity-log P-008).

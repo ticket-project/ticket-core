@@ -5,7 +5,7 @@
 
 ## 프로파일
 
-- **local**: PostgreSQL과 Redis는 `compose.local.yml`로 띄운다. 접속 정보가 기본값과 다르면
+- **local**: PostgreSQL과 Redis는 `docker-compose-local.yml`로 띄운다. 접속 정보가 기본값과 다르면
   `SPRING_DATASOURCE_*`로 지정한다. 스키마는 운영과 같은 PostgreSQL migration으로 만든다. 초기 데이터는 기동
   때 넣지 않으므로 처음 한 번 `seedLocal`을 실행한다. 기존 H2 파일은 자동 변환하거나 삭제하지 않는다.
 - **prod**: AWS RDS PostgreSQL. 초기 데이터는 기동 시 넣지 않는다. 테이블 생성(배포/Flyway)과 데이터 적재(`seedProd`)는 별개
