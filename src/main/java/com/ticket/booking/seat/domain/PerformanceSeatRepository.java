@@ -37,4 +37,13 @@ public interface PerformanceSeatRepository extends Repository<PerformanceSeat, L
             order by s.seatId
             """)
     List<PerformanceSeatStateRow> findStatesByPerformanceId(@Param("performanceId") Long performanceId);
+
+    /** 판매 확정(RESERVED)된 좌석 번호만 읽는다. 상태 조건을 바인딩 값이 아닌 상수로 써야 PostgreSQL이 부분 인덱스 idx_performance_seats_reserved를 고른다. */
+    @Transactional(readOnly = true)
+    @Query("""
+            select s.seatId from PerformanceSeat s
+            where s.performanceId = :performanceId
+              and s.state = com.ticket.booking.seat.domain.PerformanceSeatState.RESERVED
+            """)
+    List<Long> findReservedSeatIds(@Param("performanceId") Long performanceId);
 }

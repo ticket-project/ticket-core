@@ -50,7 +50,10 @@ public class ApiSecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/refresh", "/api/v1/auth/oauth2/token", "/api/v1/auth/social/urls")
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/performances/*/seats/status")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/performances/*/seats/status",
+                                "/api/v1/performances/*/seats/occupied")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.GET,

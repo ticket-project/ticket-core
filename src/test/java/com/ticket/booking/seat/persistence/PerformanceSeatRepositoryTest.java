@@ -146,4 +146,11 @@ class PerformanceSeatRepositoryTest extends ReadRepositoryTestSupport {
                 .extracting(PerformanceSeatStateRow::seatId)
                 .containsExactly(seat1Id);
     }
+
+    @Test
+    void 판매_확정된_좌석_번호만_요청한_회차에서_읽는다() {
+        assertThat(performanceSeatRepository.findReservedSeatIds(performanceId)).containsExactly(seat2Id);
+        assertThat(performanceSeatRepository.findReservedSeatIds(otherPerformanceId))
+                .isEmpty();
+    }
 }

@@ -3,6 +3,7 @@ package com.ticket.bootstrap.booking;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
@@ -13,6 +14,7 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
@@ -38,11 +40,12 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     void DB_좌석_상태_읽기는_읽기_전용_트랜잭션_안에서_끝난다() throws Exception {
         final Class<?> repository = PerformanceSeatRepository.class;
 
-        final TransactionAttribute attribute =
-                transactionAttributeOf(repository, "findStatesByPerformanceId", Long.class);
+        for (String method : List.of("findStatesByPerformanceId", "findReservedSeatIds")) {
+            final TransactionAttribute attribute = transactionAttributeOf(repository, method, Long.class);
 
-        assertThat(attribute).isNotNull();
-        assertThat(attribute.isReadOnly()).isTrue();
+            assertThat(attribute).as(method).isNotNull();
+            assertThat(attribute.isReadOnly()).as(method).isTrue();
+        }
     }
 
     /** 트랜잭션 attribute가 선언돼 있어도 빈이 proxy가 아니면 실제로는 아무 경계도 없다. */
@@ -63,6 +66,9 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     @Test
     void 좌석_상태_use_case는_트랜잭션을_소유하지_않는다() throws Exception {
         assertThat(transactionAttributeOf(GetSeatStatusUseCase.class, "execute", GetSeatStatusUseCase.Input.class))
+                .isNull();
+        assertThat(transactionAttributeOf(
+                        GetOccupiedSeatsUseCase.class, "execute", GetOccupiedSeatsUseCase.Input.class))
                 .isNull();
     }
 
