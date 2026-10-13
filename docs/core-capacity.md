@@ -13,7 +13,8 @@ gatling-test 콘솔 맨 위의 **Core 수용량 측정** 패널이 아래 순서
 
 ## 왜 users/sec인가
 
-Queue는 scheduler 주기마다 `advanceBatchSize`명씩 내보낸다(`ticket-queue` README의 Scheduler 절). Core가 느려져도
+Queue는 scheduler 주기마다 `advanceBatchSize`명씩 내보낸다(ticket-queue
+[scheduler 전진 규칙](https://github.com/ticket-project/ticket-queue/blob/master/docs/development.md#scheduler-전진-규칙)). Core가 느려져도
 같은 속도로 계속 들여보낸다. 그래서 Core 쪽도 "초당 새 사용자"를 정해진 속도로 넣는 Open Model로 잰다. 최대 HTTP
 RPS나 Closed Model의 동시 사용자 수는 Queue가 조절하는 값이 아니므로 입장률로 바로 쓰지 않는다.
 
@@ -44,7 +45,7 @@ RPS나 Closed Model의 동시 사용자 수는 Queue가 조절하는 값이 아�
 | 7 | 03-3 실제 사용자 흐름을 C users/sec × 15분으로 한 번 돌린다 | 30초로는 선점 만료(픽스처 600초), 주문 만료 작업(5분 주기), 선택 TTL(5분), Modulith 재처리 점검(1분)이 부하와 겹치지 않는다. 실제 오픈은 대기자가 빠질 때까지 수 분 동안 이어진다 | PASS. FAIL이면 C를 낮춰 다시 한다 |
 | 8 | Queue 입장률 R을 계산한다(아래 "Queue 설정으로 옮기기") | 측정값에는 오차가 있고 실제 사용자는 시나리오와 다르게 움직인다 | R과 Queue 설정값이 정해졌다 |
 | 9 | Queue를 켜고 확인한다. Core `ADMISSION_TOKEN_ENFORCEMENT_ENABLED=true`, admission secret을 Core·Queue에 같은 운영 값으로, Queue batch를 R로 바꾼 뒤 06 Queue의 Core 보호(유입 3R)와 05 순간 부하(R → 2R)를 돌린다 | 실제로는 Queue가 Core를 지켜야 한다. 유입이 R보다 훨씬 커도 Core가 버티는지, 잠깐 넘쳤을 때 회복하는지 본다 | 06 PASS, 05 이후 응답 시간과 성공률이 원래대로 돌아온다 |
-| 10 | 숫자와 조건(commit, 풀, 서버 사양, 회차 좌석 수, 회원·주문 수, 날짜)을 남긴다 | 다음에 다시 재야 하는지 판단하는 근거가 된다 | Queue README의 "남은 운영 검증" 자리와 측정 기록(Issue/PR)에 있다 |
+| 10 | 숫자와 조건(commit, 풀, 서버 사양, 회차 좌석 수, 회원·주문 수, 날짜)을 남긴다 | 다음에 다시 재야 하는지 판단하는 근거가 된다 | gatling-test [capacity-log](https://github.com/ticket-project/gatling-test/blob/master/docs/capacity-log/README.md)와 측정 기록(Issue/PR)에 있다 |
 
 03-3은 남은 좌석 중에서 골라 재시도하고, 매진되면 `BUSINESS_REJECTED_NO_AVAILABLE_SEAT`로 비즈니스 거절에 센다.
 그래서 15,000석 회차 하나로 "몇 분 만에 매진 → 이후 거절 → 선점이 풀려 다시 경합"을 재현한다(50 users/sec가
