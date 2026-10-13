@@ -87,6 +87,7 @@ _Avoid_: Lock, Reservation
 **점유(Occupancy)**:
 선택 중이거나 선점된 좌석을 합쳐 부르는 말이다. 화면에서 막히는 좌석이고 좌석 상태 응답의 `OCCUPIED`다. DB의
 판매 상태(`PerformanceSeat.state`)는 포함하지 않는다. 무엇을 점유로 볼지는 `SeatOccupancy` 한 곳이 정한다.
+점유 좌석 API(`.../seats/occupied`)는 화면에서 막을 좌석을 보내므로 점유에 판매 확정(`RESERVED`) 좌석을 더해 보낸다.
 
 **holdKey / orderKey**:
 holdKey는 선점 한 건의 식별자로 주문과 선점을 잇는다. 선점이 TTL로 만료되면 holdKey로 주문을 찾아 만료시킨다.

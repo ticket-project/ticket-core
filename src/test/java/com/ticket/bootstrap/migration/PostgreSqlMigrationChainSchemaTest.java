@@ -103,7 +103,8 @@ class PostgreSqlMigrationChainSchemaTest {
                 JOIN pg_namespace n ON n.oid = t.relnamespace
                 WHERE n.nspname = current_schema() AND NOT i.indisunique
                   AND t.relname NOT LIKE 'flyway_schema_history%'
-                """, String.class)).containsExactly("idx_orders_pending_member_performance");
+                """, String.class))
+                .containsExactlyInAnyOrder("idx_orders_pending_member_performance", "idx_performance_seats_reserved");
     }
 
     @Test

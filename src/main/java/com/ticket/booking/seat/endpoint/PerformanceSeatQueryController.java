@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
@@ -21,9 +22,10 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * {@code .../seat-map}은 회차 정적 seat-map(Venue 배치·좌석 좌표·등급·가격)을 읽는다. {@code .../seats/availability},
- * {@code .../seats/status}는 회차별 판매 상태(PerformanceSeat)와 Redis selection/hold를 함께 읽는다.
+ * {@code .../seats/status}, {@code .../seats/occupied}는 회차별 판매 상태(PerformanceSeat)와 Redis selection/hold를 함께 읽는다.
+ * {@code status}는 좌석 전체를, {@code occupied}는 빈 좌석이 아닌 좌석 번호만 보낸다.
  *
- * <p>{@code PerformanceSeat}와 Redis selection/hold 상태는 booking이 소유하는 데이터라, 이 세 엔드포인트는 순수 show/공연 요약 데이터만 다루는
+ * <p>{@code PerformanceSeat}와 Redis selection/hold 상태는 booking이 소유하는 데이터라, 이 엔드포인트들은 순수 show/공연 요약 데이터만 다루는
  * {@code com.ticket.show.endpoint.PerformanceController}가 아니라 booking 소유인 이
  * {@code com.ticket.booking.seat.endpoint.PerformanceSeatQueryController}에 둔다. URL·JSON 계약은 기존과 동일하다.
  */
@@ -34,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class PerformanceSeatQueryController {
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase;
     private final GetSeatStatusUseCase getSeatStatusUseCase;
+    private final GetOccupiedSeatsUseCase getOccupiedSeatsUseCase;
     private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase;
 
     @Operation(summary = "회차 좌석 배치도 조회", description = "회차의 정적 좌석 배치도(공연장 레이아웃, 좌석 좌표, 등급, 가격)를 반환합니다.")
@@ -64,5 +67,19 @@ public class PerformanceSeatQueryController {
         final GetSeatStatusUseCase.Input input =
                 new GetSeatStatusUseCase.Input(performanceId, member.memberId(), admissionToken);
         return ApiResponse.success(getSeatStatusUseCase.execute(input));
+    }
+
+    @Operation(summary = "점유 좌석 조회", description = "판매 확정·선택·선점된 좌석 번호만 반환합니다. seat-map에 있고 여기 없는 좌석은 빈 좌석입니다.")
+    @GetMapping("/{performanceId}/seats/occupied")
+    public ApiResponse<GetOccupiedSeatsUseCase.Output> getOccupiedSeats(
+            @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId,
+            // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
+            @Parameter(description = "Queue Server가 발급한 admission token")
+                    @RequestHeader(value = "X-Admission-Token", required = false)
+                    final String admissionToken,
+            @Parameter(hidden = true) final AuthenticatedMember member) {
+        final GetOccupiedSeatsUseCase.Input input =
+                new GetOccupiedSeatsUseCase.Input(performanceId, member.memberId(), admissionToken);
+        return ApiResponse.success(getOccupiedSeatsUseCase.execute(input));
     }
 }

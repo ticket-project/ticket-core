@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.ticket.booking.exception.handler.BookingExceptionHandler;
+import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
@@ -31,6 +32,7 @@ class PerformanceSeatQueryControllerContractTest {
     private final GetSeatAvailabilityUseCase getSeatAvailabilityUseCase =
             Mockito.mock(GetSeatAvailabilityUseCase.class);
     private final GetSeatStatusUseCase getSeatStatusUseCase = Mockito.mock(GetSeatStatusUseCase.class);
+    private final GetOccupiedSeatsUseCase getOccupiedSeatsUseCase = Mockito.mock(GetOccupiedSeatsUseCase.class);
     private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase =
             Mockito.mock(GetPerformanceSeatMapUseCase.class);
     private MockMvc mockMvc;
@@ -38,7 +40,10 @@ class PerformanceSeatQueryControllerContractTest {
     @BeforeEach
     void setUp() {
         PerformanceSeatQueryController controller = new PerformanceSeatQueryController(
-                getSeatAvailabilityUseCase, getSeatStatusUseCase, getPerformanceSeatMapUseCase);
+                getSeatAvailabilityUseCase,
+                getSeatStatusUseCase,
+                getOccupiedSeatsUseCase,
+                getPerformanceSeatMapUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(
@@ -88,5 +93,17 @@ class PerformanceSeatQueryControllerContractTest {
                 .andExpect(jsonPath("$.data.seats[0].performanceSeatId").value(1001))
                 .andExpect(jsonPath("$.data.seats[0].seatId").value(101))
                 .andExpect(jsonPath("$.data.seats[0].status").value("OCCUPIED"));
+    }
+
+    @Test
+    void seat_occupied는_admission_token을_넘기고_점유_좌석_번호만_돌려준다() throws Exception {
+        when(getOccupiedSeatsUseCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token")))
+                .thenReturn(new GetOccupiedSeatsUseCase.Output(List.of(101L, 205L)));
+
+        mockMvc.perform(get("/api/v1/performances/10/seats/occupied").header("X-Admission-Token", "admission-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.occupiedSeatIds[0]").value(101))
+                .andExpect(jsonPath("$.data.occupiedSeatIds[1]").value(205));
     }
 }
