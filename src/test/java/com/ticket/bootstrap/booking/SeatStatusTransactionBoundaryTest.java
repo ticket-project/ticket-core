@@ -3,17 +3,14 @@ package com.ticket.bootstrap.booking;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
-import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
@@ -21,41 +18,18 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 /**
  * 좌석 상태 조회의 트랜잭션 경계를 실제 컨텍스트에서 고정한다.
  *
- * <p>좌석 상태는 DB 판매 상태와 Redis 점유(selection·hold)를 합쳐 계산한다. <b>DB 읽기만 짧은 읽기 전용 트랜잭션 안에서 끝내고, Redis 조회는 그 밖에서 한다</b> — 그래야
- * Redis 지연이 DB connection 보유 시간을 늘리지 않는다. 이 경계는 use case에 {@code @Transactional}을 붙이는 순간 조용히 무너지는데, 결과값은 그대로라 단위 테스트로는
- * 드러나지 않는다.
+ * <p>좌석 상태는 DB 판매 상태와 Redis 점유(selection·hold)를 합쳐 계산한다. <b>DB 읽기는 Redis 조회 전에 끝내고 connection을 돌려준다</b> — 그래야 Redis 지연이
+ * DB connection 보유 시간을 늘리지 않는다. 지금 DB 읽기는 조회 한 번이라 트랜잭션 없이 자동 커밋으로 끝난다. 이 경계는 use case에 {@code @Transactional}을 붙이거나
+ * OSIV를 켜는 순간 조용히 무너지는데, 결과값은 그대로라 단위 테스트로는 드러나지 않는다.
  *
- * <p>그래서 결과가 아니라 <b>Spring이 실제로 무엇에 트랜잭션 advice를 적용하는지</b>를 본다. 단위 테스트는 클래스를 직접 생성하므로 {@code @Transactional}이
- * self-invocation으로 무력화돼도 통과한다. 여기서는 실제 컨텍스트가 만든 빈과 Spring 자신의 {@link TransactionAttributeSource}에 물어본다.
- *
- * <p>경계를 <b>누가</b> 소유하는지는 바뀔 수 있다 — 예전에는 조회 port를 감싼 별도 component가, 지금은 조회 Repository 자신이 갖는다. 고정하는 것은 소유자 이름이 아니라 "DB
- * 읽기에는 읽기 전용 트랜잭션이 걸리고 use case에는 걸리지 않는다"는 성질이다.
+ * <p>그래서 결과가 아니라 실제 컨텍스트가 use case에 트랜잭션 advice를 적용하는지({@link TransactionAttributeSource}), OSIV 인터셉터가 있는지를 본다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
     @Autowired
     private ApplicationContext context;
 
-    @Test
-    void DB_좌석_상태_읽기는_읽기_전용_트랜잭션_안에서_끝난다() throws Exception {
-        final Class<?> repository = PerformanceSeatRepository.class;
-
-        for (String method : List.of("findStatesByPerformanceId", "findReservedSeatIds")) {
-            final TransactionAttribute attribute = transactionAttributeOf(repository, method, Long.class);
-
-            assertThat(attribute).as(method).isNotNull();
-            assertThat(attribute.isReadOnly()).as(method).isTrue();
-        }
-    }
-
-    /** 트랜잭션 attribute가 선언돼 있어도 빈이 proxy가 아니면 실제로는 아무 경계도 없다. */
-    @Test
-    void 트랜잭션_경계를_소유한_빈은_실제로_proxy로_감싸진다() {
-        assertThat(AopUtils.isAopProxy(context.getBean(PerformanceSeatRepository.class)))
-                .isTrue();
-    }
-
-    /** 위 두 검사는 트랜잭션 속성만 본다. OSIV는 트랜잭션 없이 요청 끝까지 connection을 쥐므로 그 검사를 통과하면서도 경계를 무너뜨린다 — 그래서 OSIV 인터셉터가 없는지를 따로 본다. */
+    /** OSIV는 트랜잭션 없이도 요청 끝까지 connection을 쥐므로 use case 검사를 통과하면서도 경계를 무너뜨린다 — 그래서 OSIV 인터셉터가 없는지를 따로 본다. */
     @Test
     void OSIV가_꺼져_있어_요청이_connection을_끝까지_쥐지_않는다() {
         assertThat(context.getBeanNamesForType(OpenEntityManagerInViewInterceptor.class))
