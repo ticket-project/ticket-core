@@ -58,6 +58,8 @@ services:
       SPRING_DATA_REDIS_PORT: "6379"
       # SQL 로그(p6spy)는 측정을 느리게 하므로 끈다.
       DECORATOR_DATASOURCE_ENABLED: "false"
+      # 값 없음: compose를 실행한 셸에 있으면 그 값을 넘기고, 없으면 Hikari 기본값(10)을 쓴다. 풀 크기 실험용.
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:
       # Clock은 Asia/Seoul로 고정돼 있지만 JPA 감사 시각은 JVM 기본 시간대를 따른다.
       TZ: Asia/Seoul
     ports:
