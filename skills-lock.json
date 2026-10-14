@@ -17,7 +17,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/core-capacity/SKILL.md",
-      "computedHash": "7aaea5ea7cbf6c71e028f8138fd68b9bc3ba1f4f7e1017a566019272c22a0664"
+      "computedHash": "59bfef89c0d5f3e798bc61a7153bdfca9db491a1d1c72b833137b57467d8c6da"
     },
     "database-change": {
       "source": "ticket-core",

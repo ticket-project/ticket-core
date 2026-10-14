@@ -23,7 +23,6 @@ Core 코드, migration·인덱스, DB 데이터, Core 설정(연결 풀·스레�
 - 측정 순서, 판정 기준, 입장률 계산: [core-capacity.md](../../../docs/core-capacity.md)
 - 스크립트 사용법, 유효성(INVALID) 규칙, 측정 규칙(예열, 반복, 한 번에 하나만 바꾸기): `../gatling-test/scripts/capacity/README.md`
 - 문제 목록(P-NNN), 성능 변화 표, 일지 틀: `../gatling-test/docs/capacity-log/README.md`
-
 ## 대상
 
 - 인자가 없거나 `local`: [local.md](local.md)를 읽는다. localhost 실행은 이 스킬 호출로 승인된 것이다.
@@ -64,6 +63,7 @@ capacity-log README의 문제 목록, 가장 최근 일지, `../gatling-test/dis
 아래 "진단"을 하고 "보고 형식"대로 보고한다. 보고 전에 일지를 쓴다. 보고하면 멈추고 사용자의 결정을 기다린다.
 
 끝: 원인 후보마다 지지하는 근거, 반대 근거, 코드 위치가 있다. 확인하지 못한 가정은 "미확인"으로 표시했다.
+문제마다 "어떻게 발견했나"와 "직접 보려면"이 있다.
 
 ### 5. 한계를 좁힌다
 
@@ -104,12 +104,29 @@ capacity-log README의 문제 목록, 가장 최근 일지, `../gatling-test/dis
 **증상**: 어느 부하에서, 어느 요청이, 직전 PASS보다 얼마나
 **근거**: 수치·덤프 집계·로그. 결과 폴더 이름을 함께 쓴다
 **원인 후보** (가능성 높은 순)
-1. 원인 — `파일:줄` — 지지하는 근거 / 반대 근거·미확인 — 사용자가 확인하는 방법
+1. 원인 — `파일:줄` — 지지하는 근거 / 반대 근거·미확인
+**어떻게 발견했나**: 어느 실행의 어느 파일·화면에서 무엇을 보고 이상하다고 알았는지, 그다음 무엇을 열어 원인까지 갔는지 순서대로
+**직접 보려면**
+1. 열 것(파일 경로·화면·명령) → 찾을 것(Ctrl+F 단어, 차트 이름, 줄) → 보일 값 → 그 값의 뜻
 **해결 선택지**
 - 선택지 — 장점 / 단점 / 다시 잴 때 기대하는 변화
 **다음 실행**: 사용자가 고르면 무엇을 어떤 조건으로 다시 잴지
 ```
 
+"직접 보려면"은 AI 없이 사람이 하는 방법으로 쓴다: 파일을 열어 검색하고, 리포트를 브라우저로 보고, `docker`·`psql`·`redis-cli` 같은 표준 명령을 친다.
+전용 스크립트는 만들지 않는다. 계산이 필요하면 식과 숫자를 그대로 보여 준다(예: 연결 대기 `hikaricp_connections_acquire_seconds_sum` after 30777.6 − before 22028.9 = 8748.7초, `_count` 423,368 − 303,324 = 120,044번, 나누면 72.9ms).
+사용자가 실제 디버깅을 연습하려는 것이 목적이다(사용자 결정 2026-10-14).
+
+자주 보는 곳(경로는 `../gatling-test/distributed-results-join/capacity/<결과 폴더>/`):
+
+| 무엇 | 어디서 |
+| --- | --- |
+| 사용자가 겪은 응답 시간 | 결과 폴더의 summary.md, Gatling 리포트 `coreadmissioncapacitysimulation-*/index.html`의 "Response Time Percentiles over Time" |
+| 초마다 연결·스레드·CPU | `core-metrics.tsv`(엑셀로 연다). `hikari_pending` > 0이면 연결 줄, `tomcat_busy` 200이면 요청 스레드가 다 찼다 |
+| 구간 평균(연결 사용·대기, 저장소 메서드) | `prometheus-before.txt`와 `-after.txt`에서 지표 이름을 검색해 `_sum`·`_count`를 after − before로 뺀다 |
+| 스레드가 무엇을 기다리나 | 진단 실행의 `thread-dump-<n>.txt`. `HikariPool.getConnection`(연결 대기), `org.redisson`(Redis) 등을 검색해 세고, 바로 아래 `com.ticket` 줄이 코드 위치다 |
+| Redis | 결과 폴더의 `redis/` 전후 INFO, `docker exec ticket-redis redis-cli SLOWLOG GET 10` |
+| 실행 중 지금 상태 | `docker stats --no-stream`, `docker exec ticket-postgres psql -U ticket -d ticket -c "select state, wait_event_type, count(*) from pg_stat_activity group by 1,2"` |
 코드 위치는 처음부터 알려준다(사용자 결정 2026-10-02). 해결은 선택지와 장단점으로 말하고, 고치는 코드는 사용자가 쓴다.
 P-NNN은 문제 목록의 다음 번호다. 목록에 "결정 대기"로 올린다.
 
@@ -119,4 +136,5 @@ P-NNN은 문제 목록의 다음 번호다. 목록에 "결정 대기"로 올린�
 
 - 실행 표는 steps.md의 줄을 옮긴다. 예열·재현·진단 실행도 빼지 않는다.
 - 틀린 가설과 버린 실행도 이유와 함께 남긴다.
+- 문제마다 보고의 "어떻게 발견했나"와 "직접 보려면"을 그대로 옮긴다.
 - 같은 조건으로 고치기 전과 후를 쟀으면 README의 성능 변화 표를 고친다.
