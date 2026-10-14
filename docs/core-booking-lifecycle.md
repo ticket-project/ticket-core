@@ -32,13 +32,14 @@
 ~~~text
 CreateOrderUseCase          (POST /api/v1/orders)
   -> LockScope.ORDER_CREATE 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
-  -> admission BookingEntryGuard.check: 예매 정책 조회, 예매 기간 확인, 대기열 필요 회차만 token 검증 (밖)
-     — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
-  -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
-  -> member MemberLookupApi: active member 확인 (밖)
-  -> BookingAvailabilityChecker: pending 주문 중복, 좌석 판매 상태 (짧은 read 트랜잭션)
-  -> show PerformanceSaleInfoApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
-     show/venue 이름) 조회 (밖) — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
+  -> BookingPreflightReader: 아래 확인과 조회를 짧은 read 트랜잭션 하나(connection 한 번)로 끝낸다
+     -> admission BookingEntryGuard.check: 예매 정책 조회, 예매 기간 확인, 대기열 필요 회차만 token 검증
+        — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
+     -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
+     -> member MemberLookupApi: active member 확인
+     -> pending 주문 중복, 좌석 판매 상태 확인
+     -> show PerformanceSaleInfoApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
+        show/venue 이름) 조회 — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
      그 밖은 E4006)하고
      HoldRegistry로 Redis 좌석 hold 생성 후 락 해제 (밖)
@@ -67,7 +68,7 @@ DB 저장이 실패하면 `CreateOrderUseCase`가 `SEAT` 락을 다시 잡고 �
 좌석 선택과 알림도 별도의 `SEAT` 락 구간에서 처리한다. 락 안의 외부 I/O는 필요한 작업으로 제한하고,
 락 키를 변경할 때는 보호 대상을 검증한다.
 
-현재 동시성 방어는 `LockScope.SEAT` 분산락과 `BookingAvailabilityChecker`의 좌석 판매 상태 확인이다.
+현재 동시성 방어는 `LockScope.SEAT` 분산락과 `BookingPreflightReader`의 좌석 판매 상태 확인이다.
 Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않는다. 충돌하면 앞서 쓴 이 hold의
 좌석을 보상하고 `E6000`(409)으로 거절한다.
 `PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만 현재 주문 생성 경로 어디에서도
