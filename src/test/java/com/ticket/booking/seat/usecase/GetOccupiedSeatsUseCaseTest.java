@@ -3,6 +3,8 @@ package com.ticket.booking.seat.usecase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -84,6 +86,47 @@ class GetOccupiedSeatsUseCaseTest {
         assertThat(output.occupiedSeatIds()).containsExactly(2L, 5L, 7L, 9L);
     }
 
+    /** 점유 목록은 표시용이라 1초 재사용하지만, 입장권·판매 기간 확인은 요청마다 한다. */
+    @Test
+    void 일초_안에_다시_부르면_점유_목록은_다시_읽지_않고_진입_검사는_매번_한다() {
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
+        when(performanceSeatRepository.findReservedSeatIds(10L)).thenReturn(List.of(7L));
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(5L));
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
+
+        useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token"));
+        GetOccupiedSeatsUseCase.Output second =
+                useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 200L, "other-token"));
+
+        assertThat(second.occupiedSeatIds()).containsExactly(5L, 7L);
+        verify(performanceSalesPolicyRepository, times(2)).findById(10L);
+        verify(performanceSeatRepository, times(1)).findReservedSeatIds(10L);
+        verify(seatSelectionService, times(1)).getSelectingSeatIds(10L);
+        verify(holdStore, times(1)).getHoldingSeatIds(10L);
+    }
+
+    @Test
+    void 일초가_지나면_점유_목록을_다시_읽는다() {
+        final MutableClock clock = new MutableClock(CLOCK.instant(), CLOCK.getZone());
+        useCase = new GetOccupiedSeatsUseCase(
+                performanceSeatRepository,
+                new SeatOccupancy(seatSelectionService, holdStore),
+                new BookingEntryGuard(new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
+                clock);
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
+        when(performanceSeatRepository.findReservedSeatIds(10L)).thenReturn(List.of());
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(5L), Set.of(5L, 6L));
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
+
+        useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token"));
+        clock.advance(GetOccupiedSeatsUseCase.SNAPSHOT_TTL);
+
+        assertThat(useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token"))
+                        .occupiedSeatIds())
+                .containsExactly(5L, 6L);
+        verify(seatSelectionService, times(2)).getSelectingSeatIds(10L);
+    }
+
     @Test
     void 점유된_좌석이_없으면_빈_목록이다() {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
@@ -134,5 +177,35 @@ class GetOccupiedSeatsUseCaseTest {
                 new BookingWindow(orderOpenTime, orderCloseTime),
                 new HoldPolicy(4, Duration.ofSeconds(300)),
                 queueRequired ? new QueuePolicy(QueueMode.FORCE_ON, null) : QueuePolicy.none());
+    }
+
+    /** 점유 목록 재사용 시간이 지나는 것을 보려고 테스트에서만 시간을 앞으로 민다. */
+    private static final class MutableClock extends Clock {
+        private Instant instant;
+        private final ZoneId zone;
+
+        private MutableClock(final Instant instant, final ZoneId zone) {
+            this.instant = instant;
+            this.zone = zone;
+        }
+
+        private void advance(final Duration duration) {
+            instant = instant.plus(duration);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(final ZoneId newZone) {
+            return new MutableClock(instant, newZone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
     }
 }

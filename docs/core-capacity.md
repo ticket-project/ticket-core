@@ -101,7 +101,8 @@ FAIL 원인은 같은 시간대의 서버 지표로 확인한다. 볼 지표는 
   (`920000001~`, 15,000석)로 재려면 콘솔의 회차 목록·좌석 시작 ID·좌석 수 상한을 바꿔야 한다.
 - 좌석 상태 API(`.../seats/status`)는 회차 좌석 전체를 한 번에 내려준다. 15,000석에서 응답 약 1MB, 사용자당 Core 할당
   7.7MB였고 200 u/s에서 PC CPU를 채웠다(gatling-test capacity-log P-011). 점유 좌석 번호만 보내는
-  `.../seats/occupied`를 더했다. FE가 아직 `status`를 쓰므로 FE 전환 뒤 `status`를 지운다.
+  `.../seats/occupied`를 더했다. FE가 아직 `status`를 쓰므로 FE 전환 뒤 `status`를 지운다. 점유 목록은 Redis의
+  선택·선점 목록을 통째로 읽어 만들므로 회차별로 1초 재사용한다(P-014). 좌석 선택·선점 판정은 이 목록을 보지 않는다.
 
 - 대기열 필수(`FORCE_ON`) 회차가 seed에 없다. 9단계의 06은 Queue의 방출 속도는 확인하지만, Core의 admission token
   검증까지 거치려면 그런 회차가 필요하다.
