@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.hold.domain.HoldStore;
+import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
@@ -52,6 +54,8 @@ import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.domain.QueuePolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.seat.domain.PerformanceSeatRepository;
+import com.ticket.booking.seat.domain.PerformanceSeatState;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.shared.exception.InvalidRequestException;
@@ -62,8 +66,8 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 /**
  * 주문 생성 workflow 전체를 고정한다.
  *
- * <p>준비 단계(판매 정책 확인 → 입장 검사 → 회원 확인 → 좌석 확인 → 표시값 조회)는 이 use case의 private method다. 그래서 "어떤 조건에서 어떤
- * {@code BookingException}이 나오고, 그때 뒤 단계로 넘어가지 않는가"를 여기서 관찰 가능한 호출로 고정한다.
+ * <p>준비 단계(판매 정책 확인 → 입장 검사 → 회원 확인 → 좌석 확인 → 표시값 조회)는 {@link BookingPreflightReader}가 맡는다. 이 테스트는 그 reader를 실제로 조립해
+ * "어떤 조건에서 어떤 {@code BookingException}이 나오고, 그때 뒤 단계로 넘어가지 않는가"를 관찰 가능한 호출로 고정한다.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -84,7 +88,10 @@ class CreateOrderUseCaseTest {
     private MemberLookupApi memberLookupApi;
 
     @Mock
-    private BookingAvailabilityChecker bookingAvailabilityChecker;
+    private OrderRepository orderRepository;
+
+    @Mock
+    private PerformanceSeatRepository performanceSeatRepository;
 
     @Mock
     private PerformanceSaleInfoApi performanceSaleInfoApi;
@@ -112,11 +119,13 @@ class CreateOrderUseCaseTest {
                 // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new CreateOrderUseCase(
                         distributedLock,
-                        new BookingEntryGuard(
-                                new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
-                        memberLookupApi,
-                        bookingAvailabilityChecker,
-                        performanceSaleInfoApi,
+                        new BookingPreflightReader(
+                                new BookingEntryGuard(
+                                        new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
+                                memberLookupApi,
+                                orderRepository,
+                                performanceSeatRepository,
+                                performanceSaleInfoApi),
                         holdRegistry,
                         holdStore,
                         seatSelectionService,
@@ -135,7 +144,8 @@ class CreateOrderUseCaseTest {
                 performanceSalesPolicyRepository,
                 admissionVerifier,
                 memberLookupApi,
-                bookingAvailabilityChecker,
+                orderRepository,
+                performanceSeatRepository,
                 performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
@@ -152,7 +162,8 @@ class CreateOrderUseCaseTest {
                 performanceSalesPolicyRepository,
                 admissionVerifier,
                 memberLookupApi,
-                bookingAvailabilityChecker,
+                orderRepository,
+                performanceSeatRepository,
                 performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
@@ -162,12 +173,12 @@ class CreateOrderUseCaseTest {
     void 유효한_요청이면_hold와_주문을_생성한다() {
         final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
+        final List<PerformanceSeat> seats = availableSeats(2);
         final Hold hold = hold(seatIds.toList());
         final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
 
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
                 .thenReturn(seats);
         when(performanceSaleInfoApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
                 .thenReturn(saleSnapshot);
@@ -186,13 +197,15 @@ class CreateOrderUseCaseTest {
         final InOrder inOrder = inOrder(
                 performanceSalesPolicyRepository,
                 memberLookupApi,
-                bookingAvailabilityChecker,
+                orderRepository,
+                performanceSeatRepository,
                 performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
         inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
-        inOrder.verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
+        inOrder.verify(orderRepository).existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID);
+        inOrder.verify(performanceSeatRepository).findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList());
         inOrder.verify(performanceSaleInfoApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdRegistry).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
         inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
@@ -203,11 +216,11 @@ class CreateOrderUseCaseTest {
     void 확인한_정책의_선점_시간과_좌석을_그대로_뒤_단계로_넘긴다() {
         final CreateOrderUseCase.Input input = input(List.of(1L, 2L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class), mock(PerformanceSeat.class));
+        final List<PerformanceSeat> seats = availableSeats(2);
         final Hold hold = hold(seatIds.toList());
 
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
                 .thenReturn(seats);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
@@ -226,7 +239,7 @@ class CreateOrderUseCaseTest {
 
         assertError(seatIds, BookingErrorCode.E3001);
 
-        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, admissionVerifier, orderRepository, performanceSeatRepository);
     }
 
     @Test
@@ -236,7 +249,7 @@ class CreateOrderUseCaseTest {
 
         assertError(seatIds, BookingErrorCode.E6001);
 
-        verifyNoInteractions(memberLookupApi, admissionVerifier, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, admissionVerifier, orderRepository, performanceSeatRepository);
     }
 
     @Test
@@ -244,8 +257,7 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = input(List.of(1L, 2L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
-                .thenReturn(List.of());
+        stubAvailableSeats(seatIds);
         stubHold(seatIds);
 
         createOrderUseCase.execute(input);
@@ -266,7 +278,7 @@ class CreateOrderUseCaseTest {
                 .isInstanceOf(AdmissionTokenException.class)
                 .hasFieldOrPropertyWithValue("errorCode", AdmissionErrorCode.E8000);
 
-        verifyNoInteractions(memberLookupApi, bookingAvailabilityChecker);
+        verifyNoInteractions(memberLookupApi, orderRepository, performanceSeatRepository);
     }
 
     /** 인증은 토큰만 보므로 탈퇴 회원도 여기까지 온다. 좌석을 점유하기 전에 끊겨야 한다. */
@@ -278,15 +290,16 @@ class CreateOrderUseCaseTest {
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds))).isInstanceOf(NotFoundException.class);
 
-        verifyNoInteractions(bookingAvailabilityChecker, performanceSaleInfoApi, holdRegistry, pendingOrderCreator);
+        verifyNoInteractions(
+                orderRepository, performanceSeatRepository, performanceSaleInfoApi, holdRegistry, pendingOrderCreator);
     }
 
     @Test
     void 진행중인_pending_주문이_있으면_예외를_전파한다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, RequestedSeatIds.from(seatIds)))
-                .thenThrow(new BookingException(BookingErrorCode.E5004));
+        when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
+                .thenReturn(true);
 
         assertError(seatIds, BookingErrorCode.E5004);
 
@@ -298,13 +311,12 @@ class CreateOrderUseCaseTest {
         final CreateOrderUseCase.Input input = input(List.of(1L, 2L, 3L, 4L, 5L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(null)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
-                .thenReturn(List.of());
+        stubAvailableSeats(seatIds);
         stubHold(seatIds);
 
         createOrderUseCase.execute(input);
 
-        verify(bookingAvailabilityChecker).check(MEMBER_ID, PERFORMANCE_ID, seatIds);
+        verify(performanceSeatRepository).findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList());
     }
 
     /** 선택 확인은 좌석 락 안에서 선점 직전에 한다. 거절되면 선점하지 않는다(ADR 0021). */
@@ -312,6 +324,7 @@ class CreateOrderUseCaseTest {
     void 본인이_선택하지_않은_좌석이_섞여_있으면_선점하지_않는다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
+        stubAvailableSeats(RequestedSeatIds.from(seatIds));
         doThrow(new BookingException(BookingErrorCode.E4006))
                 .when(seatSelectionService)
                 .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
@@ -328,11 +341,11 @@ class CreateOrderUseCaseTest {
     void 주문_저장_트랜잭션이_실패하면_hold를_해제한다() {
         final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
+        final List<PerformanceSeat> seats = availableSeats(2);
         final Hold hold = hold(seatIds.toList());
 
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
                 .thenReturn(seats);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
@@ -351,12 +364,12 @@ class CreateOrderUseCaseTest {
     void hold_해제에_실패해도_원래_예외를_유지한다() {
         final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats = List.of(mock(PerformanceSeat.class));
+        final List<PerformanceSeat> seats = availableSeats(2);
         final Hold hold = hold(seatIds.toList());
         final RuntimeException originalException = new RuntimeException("order failed");
 
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
-        when(bookingAvailabilityChecker.check(MEMBER_ID, PERFORMANCE_ID, seatIds))
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
                 .thenReturn(seats);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
@@ -385,11 +398,11 @@ class CreateOrderUseCaseTest {
     }
 
     /**
-     * 준비 단계가 private method여도 이 use case는 DB 트랜잭션을 열지 않는다 — 열면 다른 module 호출·분산락·Redis 왕복이 전부 그 안에 들어가 connection을 오래
-     * 쥔다.
+     * 예매 전 확인은 {@link BookingPreflightReader}의 읽기 트랜잭션이 맡는다. 이 use case는 어느 method에서도 DB 트랜잭션을 열지 않는다 — 열면 분산락 대기·Redis
+     * 왕복이 그 안에 들어가 connection을 오래 쥔다.
      */
     @Test
-    void 준비_단계는_트랜잭션_없이_다른_module_공개_API를_호출한다() {
+    void use_case의_어느_method도_트랜잭션을_직접_열지_않는다() {
         assertThat(CreateOrderUseCase.class.isAnnotationPresent(Transactional.class))
                 .isFalse();
         for (final Method method : CreateOrderUseCase.class.getDeclaredMethods()) {
@@ -397,6 +410,23 @@ class CreateOrderUseCaseTest {
                     .as("%s는 트랜잭션을 직접 열지 않는다", method.getName())
                     .isFalse();
         }
+    }
+
+    private void stubAvailableSeats(final RequestedSeatIds seatIds) {
+        // 좌석 mock의 stub을 끝낸 뒤 저장소를 stub한다. thenReturn 인자 안에서 다른 mock을 stub하면 Mockito가 거부한다.
+        final List<PerformanceSeat> seats = availableSeats(seatIds.size());
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
+                .thenReturn(seats);
+    }
+
+    private List<PerformanceSeat> availableSeats(final int count) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> {
+                    final PerformanceSeat seat = mock(PerformanceSeat.class);
+                    when(seat.getState()).thenReturn(PerformanceSeatState.AVAILABLE);
+                    return seat;
+                })
+                .toList();
     }
 
     private void stubHold(final RequestedSeatIds seatIds) {

@@ -6,12 +6,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
@@ -20,12 +18,8 @@ import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderState;
-import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.seat.domain.PerformanceSeat;
+import com.ticket.booking.order.usecase.BookingPreflightReader.Preflight;
 import com.ticket.booking.selection.domain.SeatSelectionService;
-import com.ticket.member.api.MemberLookupApi;
-import com.ticket.show.api.PerformanceSaleInfoApi;
-import com.ticket.show.api.PerformanceSaleSnapshot;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,11 +31,11 @@ import lombok.extern.slf4j.Slf4j;
  * {@link #createOrder}을 읽으면 검증 → 좌석 선점 → 주문 생성 → 실패 시 보상이라는 업무 순서가 그대로 보인다. HTTP 계약은 {@code POST /api/v1/orders}로 예전과
  * 같다.
  *
- * <p><b>Redis 선점과 DB 주문은 하나의 트랜잭션이 아니다.</b> 이 method 전체에 {@code @Transactional}을 붙이지 않는다 — 그러면 다른 module 호출, 분산락, Redis
- * 왕복이 전부 DB 트랜잭션 안에 들어가 connection을 오래 쥔다. 대신 경계를 셋으로 나눈다.
+ * <p><b>Redis 선점과 DB 주문은 하나의 트랜잭션이 아니다.</b> 이 method 전체에 {@code @Transactional}을 붙이지 않는다 — 그러면 분산락 대기와 Redis 왕복이 전부 DB
+ * 트랜잭션 안에 들어가 connection을 오래 쥔다. 대신 경계를 셋으로 나눈다.
  *
  * <ul>
- *   <li>좌석 판매 상태 확인 — {@link BookingAvailabilityChecker}의 짧은 읽기 트랜잭션
+ *   <li>예매 전 확인(판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태·표시값) — {@link BookingPreflightReader}의 짧은 읽기 트랜잭션
  *   <li>좌석 선점 — Redis. 좌석 락은 이 구간에만 건다
  *   <li>주문 생성 — {@link PendingOrderCreator}의 짧은 쓰기 트랜잭션
  * </ul>
@@ -56,10 +50,7 @@ public class CreateOrderUseCase {
             LockOptions.defaults().withFailureMessage("주문 생성 처리 중입니다. 잠시 후 다시 시도해 주세요.");
 
     private final DistributedLock distributedLock;
-    private final BookingEntryGuard bookingEntryGuard;
-    private final MemberLookupApi memberLookupApi;
-    private final BookingAvailabilityChecker bookingAvailabilityChecker;
-    private final PerformanceSaleInfoApi performanceSaleInfoApi;
+    private final BookingPreflightReader bookingPreflightReader;
     private final HoldRegistry holdRegistry;
     private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
@@ -92,34 +83,27 @@ public class CreateOrderUseCase {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        // 1. 지금 이 회차의 예매를 받을 수 있는가.
-        final PerformanceSalesPolicy policy =
-                bookingEntryGuard.check(input.performanceId(), input.memberId(), input.admissionToken(), now);
-        policy.ensureWithinHoldLimit(requestedSeatIds.size());
+        // 1. 예매를 시작해도 되는가. 판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태를 확인하고 주문에 남길 표시값을 읽는다.
+        //    connection을 한 번만 빌리는 읽기 트랜잭션이다.
+        final Preflight preflight = bookingPreflightReader.read(
+                input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
 
-        // 2. 예매할 수 있는 회원인가. 인증은 토큰의 서명·만료만 보므로 탈퇴 회원은 여기서 걸러진다 --
-        //    좌석을 실제로 점유하는 첫 지점이라 요청 입구가 아니라 여기서 한 번만 확인한다.
-        memberLookupApi.requireActive(input.memberId());
-
-        // 3. 예매할 수 있는 좌석인가. booking local DB만 보는 짧은 읽기 트랜잭션이다.
-        final List<PerformanceSeat> performanceSeats =
-                bookingAvailabilityChecker.check(input.memberId(), input.performanceId(), requestedSeatIds);
-
-        // 4. 주문에 남길 표시값(공연·공연장 이름, 등급, 좌석 라벨). 금액은 여기서 오지 않는다 -- 좌석 단가만 쓴다(ADR 0005).
-        final PerformanceSaleSnapshot saleSnapshot =
-                performanceSaleInfoApi.getSaleSnapshot(input.performanceId(), Set.copyOf(requestedSeatIds.toList()));
-
-        // 5. 본인이 선택 중인 좌석만 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
+        // 2. 본인이 선택 중인 좌석만 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
         //    connection 경합이 좌석 경합으로 번진다.
-        final Duration holdDuration = policy.holdDuration();
+        final Duration holdDuration = preflight.policy().holdDuration();
         final List<LockKey> seatLocks = LockKey.seats(input.performanceId(), requestedSeatIds.toList());
         final Hold hold = holdSeats(seatLocks, input, requestedSeatIds, holdDuration, now);
 
-        // 6. PENDING 주문을 만든다(DB 한 트랜잭션). 실패하면 5의 선점을 되돌린다.
+        // 3. PENDING 주문을 만든다(DB 한 트랜잭션). 실패하면 2의 선점을 되돌린다.
         final String orderKey;
         try {
             orderKey = pendingOrderCreator.create(
-                    input.memberId(), input.performanceId(), holdDuration, hold, performanceSeats, saleSnapshot);
+                    input.memberId(),
+                    input.performanceId(),
+                    holdDuration,
+                    hold,
+                    preflight.performanceSeats(),
+                    preflight.saleSnapshot());
         } catch (final RuntimeException exception) {
             releaseHold(seatLocks, hold, exception);
             throw exception;
