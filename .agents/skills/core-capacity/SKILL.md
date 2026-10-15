@@ -2,7 +2,7 @@
 name: core-capacity
 description: Core 수용량 부하 사다리를 돌리고, 문제가 나오면 멈춰서 근거·원인 후보·코드 위치·해결 선택지를 보고한다
 disable-model-invocation: true
-argument-hint: "[local|prod] [재측정|한계]"
+argument-hint: "[local|prod] [재측정|한계] [prod: 부하 발생기 IP]"
 ---
 
 # Core 수용량 측정
