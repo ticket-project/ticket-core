@@ -24,8 +24,16 @@ spotless {
 
     format 'misc', {
         target '*.gradle', 'gradle/*.gradle', '*.md', '*.toml', '*.yaml', '*.yml', '.editorconfig',
-                'docs/**/*.md', '.github/**/*.md', '.github/**/*.yaml', '.github/**/*.yml',
-                'scripts/**/*.cmd'
+                'docs/**/*.md', '.github/**/*.md', '.github/**/*.yaml', '.github/**/*.yml'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    // .cmd는 .gitattributes가 eol=crlf로 고정한다. misc에 두면 첫 파일(*.gradle) 규칙을 따라 Linux CI에서
+    // LF를 기대해 spotlessMiscCheck가 실패했다.
+    format 'windowsScript', {
+        target 'scripts/**/*.cmd'
+        lineEndings = com.diffplug.spotless.LineEnding.WINDOWS
         trimTrailingWhitespace()
         endWithNewline()
     }
