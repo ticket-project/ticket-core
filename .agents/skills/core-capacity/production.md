@@ -38,7 +38,7 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
    `../gatling-test/scripts/core-capacity/member-ids.txt`(git 미추적)로 뽑는다.
 5. **JWT secret.** 사용자가 Claude를 띄우기 전에 사용자 환경 변수 `LOADTEST_JWT_SECRET`을 설정한다. Claude는 값을 출력하거나
    명령줄·파일에 쓰지 않는다.
-6. **부하 발생기**를 준비한다. 아래.
+6. **부하 발생기**를 준비한다. 사용자가 EC2를 시작하고, 인자로 받지 못한 IP는 사용자에게 묻는다. 아래.
 7. **Smoke.** 1 users/sec × 5초를 승인받아 돌린다(core-capacity.md 4단계). 좌석 상태 응답의 크기와 `Content-Encoding`도 본다.
 
 ## 부하 발생기
@@ -56,6 +56,10 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
 그래서 운영 측정 첫날, `run-step.ps1`에 원격 부하 발생기를 붙인다. 준비·판정은 이 PC에서 하고 Gatling만 EC2 한 대에서 SSH로
 돌린다. 판정 규칙이 한 곳에 남는다. 한 대로 모자라면(부하 발생기 GC나 입장 흔들림으로 INVALID) 그때 노드를 늘린다.
 EC2가 켜져 있는지, Core와 같은 리전인지 먼저 확인한다.
+
+부하 발생기 EC2는 평소 중지해 두고 측정할 때만 시작한다. 그래서 퍼블릭 IP가 시작할 때마다 바뀐다(2026-10-15 확인).
+IP는 파일이나 스크립트 기본값에 두지 않는다. `/core-capacity prod <IP>`처럼 인자로 받고, 인자가 없으면 준비 6에서
+사용자에게 묻는다. 받은 IP는 그 세션에서만 쓴다. 노드 1대로 시작하므로 IP 하나면 된다.
 
 ## 실행 사이
 
@@ -88,5 +92,5 @@ executor 적체 없음([operations.md](../../../docs/operations.md)의 "Core 용
 
 - 측정 시간대
 - prometheus를 읽는 경로(위 준비 3)
-- `run-step.ps1` 원격 부하 발생기의 구현과 EC2 사양
+- `run-step.ps1` 원격 부하 발생기의 구현과 EC2 사양(IP를 받는 방식은 위 "부하 발생기"에서 정함)
 - 측정을 끝낸 뒤 데이터를 지울지
