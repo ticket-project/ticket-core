@@ -6,9 +6,12 @@ on:
   workflow_dispatch:
   workflow_call:
 
+# PR은 새 커밋이 오면 이전 실행을 취소한다. 배포 workflow가 workflow_call로 부르는 실행과 수동 실행은 서로
+# 취소하지 않게 group을 workflow 이름으로 나누고, 취소는 PR 이벤트에서만 한다. 호출된 workflow에서
+# github.workflow와 github.event_name은 호출한 쪽(배포 workflow, push) 값이다.
 concurrency:
-  group: core-ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: core-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
