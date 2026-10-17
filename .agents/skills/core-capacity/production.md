@@ -5,9 +5,11 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
 
 운영은 실제 서비스라서 로컬과 세 가지가 다르다.
 
-- **실행 전에 대상과 부하를 보여 준다.** 아래 "승인".
-- **운영 DB에 쓰는 일과 운영 서버 설정은 사용자가 한다.** 데이터 적재·정리, nginx·compose 확인이 여기에 든다. Claude는 명령과
-  SQL 초안을 준비해 보여 준다. 운영 DB 접속 정보와 JWT secret은 Claude가 다루지 않는다.
+- **측정을 시작할 때 대상과 부하를 보여 준다.** 아래 "승인".
+- **운영 DB에 쓰는 일과 운영 서버 설정 변경은 사용자가 한다.** 데이터 적재·정리, nginx·compose 변경이 여기에 든다. Claude는 명령과
+  SQL 초안을 준비해 보여 준다. 운영 호스트에서 읽기만 하는 준비(지표 터널, JWT secret, 회원 ID, 실행 전 점검)는
+  `run-step.ps1 -Prod`가 한다(사용자 결정 2026-10-17). 스크립트는 비밀값을 메모리에서만 쓰고 화면·파일·명령행·Claude 출력에 남기지 않는다.
+  JWT secret은 이 PC 프로세스 메모리로만 받고, DB 비밀번호는 운영 호스트 안에서 `ticket-be` 환경 변수 → psql 컨테이너로만 넘긴다.
 - **원인은 Datadog으로 찾는다.** 운영 이미지에는 `jcmd`가 없고, SQL 로그를 켤 수 없다.
 
 ## 승인
@@ -20,30 +22,64 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
 대상 URL / 시나리오 / 부하(users/sec × 초) / 예상 사용자 수 / 회차 ID / 부하 발생기 / 예상 끝 시각
 ```
 
+## 실행 명령
+
+Claude는 ticket 저장소 루트에서 아래 꼴 그대로 실행한다. `ticket/.claude/settings.json`의 허용 규칙이 이 앞부분과 맞아야 한다.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\gatling-test\scripts\capacity\run-step.ps1 -Prod -LoadHost ubuntu@<부하 발생기 IP> -UsersPerSecond <N> -Label <ladder|warmup|repro|diag>
+```
+
+- `-PerformanceId`를 비우면 주문이 없는 가장 작은 대형 회차(`920000001~`)를 운영 DB에서 고른다. 실행마다 새 회차가 된다.
+- `-CheckOnly`는 준비와 점검만 하고 부하를 보내지 않는다(`-LoadHost` 없어도 됨).
+- 자동 모드 권한 분류기는 Claude의 운영 호스트 SSH를 "Production Reads"로 막는다(2026-10-17). 허용 규칙이 있어도 막히면
+  사용자가 그 세션을 기본(매번 확인) 모드로 바꾸고 실행마다 승인한다.
+
+`-Prod`가 하는 일(`../gatling-test/scripts/capacity/prod-target.ps1`):
+
+1. 운영 호스트(`ubuntu@oneticket.site`)에 SSH로 들어가 Core 이미지 태그(commit), 컨테이너 IP, 회원·주문 수, `max_connections`,
+   대형 회차 수, 다음 회차를 읽고 nginx·compose·`free -m`·`docker stats`를 결과 폴더 `server-conditions.txt`에 남긴다.
+2. 빈 로컬 포트에서 `ticket-be:8080`으로 SSH 터널을 열어 health·prometheus를 읽고, 지표를 다 읽으면 닫는다.
+3. `ticket-be`의 `JWT_SECRET`을 메모리로 받아 토큰을 만든다. 사용자 환경 변수는 필요 없다.
+4. `../gatling-test/scripts/core-capacity/member-ids.txt`(git 미추적)가 없으면 운영 DB에서 부하 회원 ID를 받아 만든다.
+5. 앞 실행의 부하가 빠질 때까지 기다린다(아래 "실행 사이").
+6. 조건(commit, Core 기동 시간, DB 규모, 회차)을 `prod-conditions.json`에 남긴다.
+
+키는 운영 호스트와 부하 발생기가 같은 `ticket-test-key-01.pem`이다. `-KeyPath`를 비우면 `~/.ssh/`부터 찾고, 권한을 좁힌 사본을 쓴다.
+
 ## 준비
 
-측정을 시작하는 날 한 번 한다. 항목마다 결과를 일지 "조건"에 적는다.
+측정을 시작할 때마다 한다. Core EC2와 부하 발생기 EC2는 평소 꺼 두고 측정할 때만 켠다(사용자 결정 2026-10-17).
+항목마다 결과를 일지 "조건"에 적는다.
 
-1. **운영 commit.** ticket에서 `gh run list --workflow deploy.yml --limit 5`로 마지막 배포 성공 commit을 보고, Datadog span의
-   `version` 태그와 맞춰 본다. span의 `git.commit.sha`는 5월 commit `7b71a992`로 고정돼 있어 대조에 쓰지 않는다(2026-10-17 확인).
-   측정할 commit과 다르면 사용자가 배포한다. health가 UP이어야 한다.
-2. **앞단 상한**(core-capacity.md 2단계). 사용자에게 확인을 부탁할 것과 Claude가 읽을 것을 나눠 적는다.
-   - Claude: Hikari 최대, Tomcat 최대 스레드(`run-step.ps1`이 prometheus에서 읽는다), Datadog 호스트의 CPU·메모리.
-     2026-10-17 확인: 호스트 `i-09739eeb559db0d1d`는 2 vCPU(물리 1코어)·메모리 1.9GB이고, Redis·nginx·FE가 같은 호스트에 있다.
-     부하가 없을 때 CPU 23%, 쓸 수 있는 메모리 497MB, swap 243MB 사용.
-   - 사용자(서버에서): Core nginx의 `worker_rlimit_nofile`·`limit_req`, compose의 JVM 옵션(8월 기준 Xmx 478MiB),
-     RDS 등급과 `max_connections`(`SHOW max_connections`).
-3. **prometheus 경로.** `run-step.ps1`은 `<MetricsUrl>/actuator/prometheus`를 읽는다(기본값은 `<CoreUrl>`). 운영은 밖에 공개돼 있지 않다
-   (2026-10-17 확인: `/actuator/*`는 FE 페이지, `/api/actuator/*`는 401). 사용자가 이 PC에서 운영 호스트로 SSH 터널
-   (`ssh -N -L 18080:<ticket-be 컨테이너 IP>:8080 ubuntu@<운영 호스트>`)을 열고, `run-step.ps1`에 `-MetricsUrl http://127.0.0.1:18080`을 준다.
-   운영 서버 SSH는 Claude 권한 분류기가 막으므로 터널은 사용자가 연다.
-4. **데이터**(core-capacity.md 3단계). 사용자가 [seed README](../../../seed/README.md)의 "운영 규모를 가정한 적재" 명령을 실행한다.
-   넣기 전에 DB 남은 용량을, 넣은 뒤에는 통계 갱신(`ANALYZE orders, order_seats, members`)을 확인한다. 측정 회원 ID는 사용자가
-   `../gatling-test/scripts/core-capacity/member-ids.txt`(git 미추적)로 뽑는다.
-5. **JWT secret.** 사용자가 Claude를 띄우기 전에 사용자 환경 변수 `LOADTEST_JWT_SECRET`을 설정한다. Claude는 값을 출력하거나
-   명령줄·파일에 쓰지 않는다.
-6. **부하 발생기**를 준비한다. 사용자가 EC2를 시작하고, 인자로 받지 못한 IP는 사용자에게 묻는다. 아래.
-7. **Smoke.** 1 users/sec × 5초를 승인받아 돌린다(core-capacity.md 4단계). 좌석 상태 응답의 크기와 `Content-Encoding`도 본다.
+1. **EC2 시작.** 사용자가 AWS 콘솔(서울 ap-northeast-2)에서 Core EC2(`i-09739eeb559db0d1d`)와 부하 발생기 EC2(`ticket-load-test`)를
+   켠다. 부하 발생기 퍼블릭 IP는 켤 때마다 바뀐다. `/core-capacity prod <IP>`처럼 인자로 받고, 없으면 사용자에게 묻는다.
+   IP는 파일이나 스크립트 기본값에 두지 않고 그 세션에서만 쓴다. Core는 도메인으로 접속하므로 IP가 필요 없다.
+2. **점검.** `-Prod -CheckOnly`를 돌린다. 출력과 `prod-conditions.json`·`server-conditions.txt`를 일지 "조건"에 옮긴다.
+   - commit이 측정할 commit과 다르면 사용자가 배포한다(ticket에서 `gh run list --workflow deploy.yml --limit 5`).
+     Datadog span의 `git.commit.sha`는 5월 commit `7b71a992`로 고정돼 있어 대조에 쓰지 않는다(2026-10-17 확인).
+   - 회원이 모자라거나 다음 회차가 없으면(대형 회차를 다 썼으면) 사용자가 아래 "데이터"대로 적재한다.
+3. **예열.** Core EC2를 새로 켜면 JVM이 차갑다(`coreUptimeSeconds`가 짧다). 첫 실행은 `-Label warmup -UsersPerSecond 5`로 하고
+   판정에 쓰지 않는다. 같은 Core 기동 안에서는 한 번이면 된다.
+4. **Smoke.** 처음 측정하거나 데이터·시나리오를 바꾼 뒤에는 1 users/sec × 5초를 먼저 돌린다(core-capacity.md 4단계).
+
+**데이터**(core-capacity.md 3단계)는 운영 DB 쓰기라 사용자가 한다. [seed README](../../../seed/README.md)의 "운영 규모를 가정한 적재"
+명령을 실행한다. 넣기 전에 RDS 남은 용량을, 넣은 뒤에는 통계 갱신(`ANALYZE orders, order_seats, members`)을 확인한다.
+2026-10-17 기준 회원 100만, 주문 약 501만, 대형 회차 45개(그날 001~013 사용)다.
+
+**앞단 상한**(core-capacity.md 2단계)은 점검이 남긴 `server-conditions.txt`와 run-step이 prometheus에서 읽는 Hikari·Tomcat 최대로 본다.
+2026-10-17 확인: 호스트는 2 vCPU(물리 1코어)·메모리 1.9GB이고 Redis·nginx·FE·certbot·Datadog Agent가 함께 돈다.
+Core JVM은 `-Xmx` 없이 기본 힙(약 478MiB), Hikari 10, Tomcat 200, Datadog 트레이서 켜짐. nginx는 `limit_req`·`limit_conn` 없음,
+`worker_connections 1024`, gzip 켜짐. RDS `max_connections` 79.
+
+## 다른 PC에서 준비
+
+한 번만 한다.
+
+1. `ticket`과 `gatling-test`를 같은 상위 폴더에 clone한다(`ticket-workspace/ticket`, `ticket-workspace/gatling-test`).
+2. `ticket-test-key-01.pem`을 `~/.ssh/`에 둔다.
+3. JDK 21 이상을 설치한다. 토큰·피더 생성은 이 PC의 Gradle이 한다.
+4. Claude를 ticket 저장소에서 띄우고 `/core-capacity prod <부하 발생기 IP>`를 실행한다. 이후는 "준비" 1~4와 같다.
 
 ## 부하 발생기
 
@@ -52,23 +88,18 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
 그 뒤 응답 압축(capacity-log P-010, 78KB)과 03의 점유 좌석 API(P-011)로 이 이유는 대부분 사라졌다. 그래도 EC2에서 돌리면
 이 PC의 회선과 Windows 임시 포트(P-012)가 결과에 섞이지 않는다.
 
-`run-step.ps1 -LoadHost ubuntu@<IP> -KeyPath <키>`로 원격 부하 발생기를 쓴다. 토큰·피더 생성, 회차 검사, 지표 수집, 판정은
-이 PC에서 하고 Gatling만 EC2 한 대에서 SSH로 돌린다. 판정 규칙이 한 곳에 남는다. 토큰은 이 PC에서 만들어 파일로 보내므로
-EC2에는 JWT secret이 가지 않는다. 실행이 끝나면 EC2의 토큰 파일을 지운다. 한 대로 모자라면(부하 발생기 GC나 입장
-흔들림으로 INVALID) 그때 노드를 늘린다. EC2가 켜져 있는지, Core와 같은 리전(ap-northeast-2)인지 먼저 확인한다.
+`-LoadHost`로 받은 EC2 한 대에서 Gatling만 SSH로 돌린다. 토큰·피더 생성, 회차 검사, 지표 수집, 판정은 이 PC에서 한다.
+판정 규칙이 한 곳에 남는다. 토큰은 이 PC에서 만들어 파일로 보내므로 EC2에는 JWT secret이 가지 않는다. 실행이 끝나면 EC2의
+토큰 폴더를 지운다. Java 21이 없으면 설치한다(디스크에 남는다). 한 대로 모자라면(부하 발생기 GC나 입장 흔들림으로 INVALID)
+그때 노드를 늘린다. 부하 발생기는 `ticket-load-test` 이름의 c6i.xlarge(4 vCPU·7.6GB) 세 대이고 지금은 한 대만 쓴다(2026-10-17).
 
-`run-distributed-booking.ps1`은 EC2 노드(기본값에 세 대, SSH 키 `ticket-test-key-01.pem`)에 Gatling을 나눠 돌리지만
-Core 쪽 숫자 판정과 INVALID 검사가 없어 수용량 측정에는 쓰지 않는다.
-
-부하 발생기 EC2는 평소 중지해 두고 측정할 때만 시작한다. 그래서 퍼블릭 IP가 시작할 때마다 바뀐다(2026-10-15 확인).
-IP는 파일이나 스크립트 기본값에 두지 않는다. `/core-capacity prod <IP>`처럼 인자로 받고, 인자가 없으면 준비 6에서
-사용자에게 묻는다. 받은 IP는 그 세션에서만 쓴다. 노드 1대로 시작하므로 IP 하나면 된다.
+`run-distributed-booking.ps1`은 EC2 노드에 Gatling을 나눠 돌리지만 Core 쪽 숫자 판정과 INVALID 검사가 없어 수용량 측정에는 쓰지 않는다.
 
 ## 실행 사이
 
-30초 실행이라 중간에 끊지 않는다. 다음 실행 전에 Core가 원래대로 돌아왔는지 본다. health UP, Hikari pending 0, 5xx 없음,
-executor 적체 없음([operations.md](../../../docs/operations.md)의 "Core 용량 관측"). 돌아오지 않으면 다음 실행을 하지 않고 보고한다.
-운영 Core는 재기동하지 않으므로 예열은 배포 직후 첫 실행 한 번이다.
+30초 실행이라 중간에 끊지 않는다. `-Prod`는 실행 전에 Core가 원래대로 돌아왔는지 5초 간격으로 최대 3분 기다린다.
+health UP, Hikari pending 0, 바쁜 요청 스레드 5개 이하. 돌아오지 않으면 중단(2)으로 끝난다. 그러면 다음 실행을 하지 않고
+보고한다. 5xx와 executor 적체는 [operations.md](../../../docs/operations.md)의 "Core 용량 관측"으로 따로 본다.
 
 ## 진단
 
@@ -87,15 +118,13 @@ executor 적체 없음([operations.md](../../../docs/operations.md)의 "Core 용
 - 측정 중에는 데이터를 지우지 않는다. 실행마다 새 회차를 쓰므로 필요 없다.
 - 측정이 끝나면 남는 것: 부하 회차의 주문, 배경 주문(`created_by = 'LOAD_TEST_BACKGROUND'`), 부하 회원. seed에는 지우는 기능이
   없다. 지울지와 SQL은 사용자와 정한다. Claude는 SQL 초안을 쓰고, 실행은 사용자가 한다.
-- Redis의 선택(5분)과 선점(600초)은 저절로 풀린다. PENDING 주문은 만료 worker가 처리한다.
+- Redis의 선택(5분)과 선점(600초)은 저절로 풀린다. PENDING 주문은 만료 worker가 처리한다. Core EC2를 끄면 Redis도 비워진다.
+- 측정이 끝나면 사용자가 Core EC2와 부하 발생기 EC2를 끈다.
 
 ## 정한 것 (2026-10-17)
 
-- 측정 시간대: 측정하는 날 사용자가 정한다. 2026-10-17은 정한 즉시 시작했다.
-- prometheus를 읽는 경로: 사용자가 여는 SSH 터널(위 준비 3).
-- 원격 부하 발생기: `run-step.ps1`의 SSH 원격 실행(위 "부하 발생기").
+- 측정 시간대: 측정하는 날 사용자가 정한다.
+- Core EC2·부하 발생기 EC2: 평소 꺼 두고 측정할 때만 켠다.
+- 운영 호스트 읽기 준비(터널, JWT secret, 회원 ID, 점검): `run-step.ps1 -Prod`가 한다.
+- 원격 부하 발생기: `run-step.ps1`의 SSH 원격 실행. IP는 인자로 받는다.
 - 측정을 끝낸 뒤 데이터: 남겨 둔다. 고친 뒤 같은 데이터 조건으로 다시 재기 위해서다. RDS 저장 용량은 계속 차지한다.
-
-## 아직 정하지 않은 것
-
-- 부하 발생기 EC2 사양. 처음 쓸 때 사용자에게 받아 여기와 일지 "조건"에 적는다.
