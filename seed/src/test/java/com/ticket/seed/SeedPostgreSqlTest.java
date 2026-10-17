@@ -13,28 +13,25 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import com.ticket.seed.support.AppSchema;
+import com.ticket.seed.support.SeedTestDatabase;
 import com.ticket.show.domain.show.Show;
 
-/** 실제 PostgreSQL에서 운영 seed 진입점·재실행·identity·TEXT 매핑을 함께 검증한다. */
-@Testcontainers(disabledWithoutDocker = true)
+/**
+ * 실제 PostgreSQL에서 운영 seed 진입점({@code seedProd})·재실행·identity·TEXT 매핑을 함께 검증한다. 공용 시드 전체 적재는 {@link SeedLocalTest}가 한 번
+ * 담당한다 — 같은 적재 코드라 여기서 다시 돌리지 않는다.
+ */
 @SuppressWarnings("NonAsciiCharacters")
 class SeedPostgreSqlTest {
-    @Container
-    private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:18");
+    private static String url;
 
     private static JdbcTemplate jdbc;
 
     @BeforeAll
     static void migrate() {
-        AppSchema.createOn(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
-        jdbc = new JdbcTemplate(
-                new DriverManagerDataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        url = AppSchema.create("seed_prod");
+        jdbc = new JdbcTemplate(SeedTestDatabase.dataSource(url));
     }
 
     @Test
@@ -49,9 +46,9 @@ class SeedPostgreSqlTest {
         Map<String, String> previous = SeedSystemProperties.set(properties);
         try {
             Map<String, String> environment = Map.of(
-                    SeedSettings.DATASOURCE_URL_ENV, POSTGRES.getJdbcUrl(),
-                    SeedSettings.DATASOURCE_USERNAME_ENV, POSTGRES.getUsername(),
-                    SeedSettings.DATASOURCE_PASSWORD_ENV, POSTGRES.getPassword());
+                    SeedSettings.DATASOURCE_URL_ENV, url,
+                    SeedSettings.DATASOURCE_USERNAME_ENV, SeedTestDatabase.username(),
+                    SeedSettings.DATASOURCE_PASSWORD_ENV, SeedTestDatabase.password());
             assertThat(SeedProdMain.execute(environment)).isZero();
             Long showsBefore = jdbc.queryForObject("SELECT count(*) FROM shows", Long.class);
             Long seatsBefore = jdbc.queryForObject("SELECT count(*) FROM performance_seats", Long.class);
@@ -72,8 +69,7 @@ class SeedPostgreSqlTest {
                     Long.class,
                     info);
             assertThat(id).isGreaterThan(maximum);
-            try (ConfigurableApplicationContext context = AppSchema.openContext(
-                            POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+            try (ConfigurableApplicationContext context = AppSchema.openContext(url);
                     EntityManager entityManager =
                             context.getBean(EntityManagerFactory.class).createEntityManager()) {
                 assertThat(entityManager.find(Show.class, id).getInfo()).isEqualTo(info);
@@ -88,46 +84,11 @@ class SeedPostgreSqlTest {
 
     @Test
     void 다른_스키마의_테이블로_사전조건을_충족할_수_없다() {
-        jdbc.execute("CREATE SCHEMA seed_shadow");
-        DriverManagerDataSource shadow = new DriverManagerDataSource(
-                POSTGRES.getJdbcUrl() + "&currentSchema=seed_shadow", POSTGRES.getUsername(), POSTGRES.getPassword());
-        assertThatThrownBy(() -> SeedPreconditions.verify(shadow, POSTGRES.getJdbcUrl(), SeedTarget.PROD))
+        // 같은 DB의 다른 schema(url의 schema)에는 테이블이 모두 있다. 접속한 schema만 봐야 한다.
+        String shadowUrl = AppSchema.empty("seed_shadow");
+        assertThatThrownBy(() ->
+                        SeedPreconditions.verify(SeedTestDatabase.dataSource(shadowUrl), shadowUrl, SeedTarget.PROD))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining("없는 테이블", "seed_shadow");
-    }
-
-    @Test
-    void 전체_공용_시드를_PostgreSQL에_적재한다() {
-        jdbc.execute("CREATE SCHEMA curated_full");
-        String url = POSTGRES.getJdbcUrl() + "&currentSchema=curated_full";
-        AppSchema.createOn(url, POSTGRES.getUsername(), POSTGRES.getPassword());
-        Map<String, String> previous = SeedSystemProperties.set(Map.of(
-                "seed.project-dir", SeedTestPaths.projectDir().toString(),
-                "seed.load-test-members.count", "0",
-                "seed.load-test-fixture.performance-count", "0",
-                "seed.load-test-fixture.large-performance-count", "0",
-                "seed.background-orders.count", "0"));
-        String previousSql = System.getProperty("seed.sql-path");
-        System.clearProperty("seed.sql-path");
-        try {
-            assertThat(SeedProdMain.execute(Map.of(
-                            SeedSettings.DATASOURCE_URL_ENV, url,
-                            SeedSettings.DATASOURCE_USERNAME_ENV, POSTGRES.getUsername(),
-                            SeedSettings.DATASOURCE_PASSWORD_ENV, POSTGRES.getPassword())))
-                    .isZero();
-            JdbcTemplate full =
-                    new JdbcTemplate(new DriverManagerDataSource(url, POSTGRES.getUsername(), POSTGRES.getPassword()));
-            Long performances = full.queryForObject("SELECT count(*) FROM performances", Long.class);
-            assertThat(performances)
-                    .isEqualTo(CuratedSeedStatements.from(
-                                    SeedTestPaths.projectDir().resolve("seed/sql/kopis-curated.sql"))
-                            .literalInsertCount("PERFORMANCES"));
-            assertThat(full.queryForObject("SELECT count(*) FROM performance_seats", Long.class))
-                    .isEqualTo(performances * 600);
-        } finally {
-            SeedSystemProperties.restore(previous);
-            if (previousSql == null) System.clearProperty("seed.sql-path");
-            else System.setProperty("seed.sql-path", previousSql);
-        }
     }
 }

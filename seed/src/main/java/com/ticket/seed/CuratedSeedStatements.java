@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  * 받지 못한다.
  *
  * <p>실행 문장에는 한 가지 변환이 더 붙는다({@link #withExplicitDateLiterals}). 날짜·시각 리터럴을 {@code DATE '...'} / {@code TIMESTAMP
- * '...'}로 감싸 세션 기본 날짜 형식({@code NLS_DATE_FORMAT})에 의존하지 않게 한다. Oracle은 그 설정이 다르면 같은 문자열을 다르게 읽거나 아예 실패한다.
+ * '...'}로 감싸 타입을 명시한다. 문자열 리터럴의 형 변환을 문맥별 타입 추론에 맡기지 않기 위해서다.
  */
 final class CuratedSeedStatements {
 
@@ -78,15 +78,7 @@ final class CuratedSeedStatements {
 
     /** 실제로 DB에 던지는 문장 목록이다. */
     List<String> executableStatements() {
-        return executableStatements(false);
-    }
-
-    List<String> executableStatements(final boolean postgresql) {
-        final List<String> executable = withExplicitDateLiterals(splitPerformancePolicyStatements(statements));
-        // Oracle/H2용 원본은 유지한다. PostgreSQL의 상수 SELECT에는 DUAL이 필요 없다.
-        return postgresql
-                ? executable.stream().map(sql -> sql.replace(" FROM dual", "")).toList()
-                : executable;
+        return withExplicitDateLiterals(splitPerformancePolicyStatements(statements));
     }
 
     /**
@@ -186,8 +178,7 @@ final class CuratedSeedStatements {
     /**
      * {@code '2026-06-01'} / {@code '2026-06-01 14:00:00'} 문자열 리터럴을 {@code DATE '...'} / {@code TIMESTAMP '...'}로 바꾼다.
      *
-     * <p>Oracle은 문자열을 날짜로 바꿀 때 세션의 {@code NLS_DATE_FORMAT}을 쓴다. 기본 형식이 {@code DD-MON-RR}인 세션에서 이 시드를 그대로 실행하면 같은 파일이 다른
-     * 결과를 내거나 {@code ORA-01861}로 실패한다. 명시적 리터럴은 그 설정과 무관하게 ISO 형식으로 해석된다.
+     * <p>따옴표 리터럴은 쓰인 문맥(VALUES, 파생 테이블, UNION)에 따라 타입이 정해진다. 명시적 리터럴은 문맥과 무관하게 ISO 형식의 날짜·시각으로 해석된다.
      *
      * <p>대상은 <b>따옴표 안이 날짜·시각 형식 전체와 정확히 일치하는</b> 리터럴뿐이다. 현재 파일에서 그런 리터럴은 전부 날짜·시각 컬럼 값이다(순수 날짜 784개 = {@code SHOWS}
      * 392행의 {@code start_date}/{@code end_date}).

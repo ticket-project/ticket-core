@@ -2,7 +2,7 @@ package com.ticket.seed;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
@@ -12,15 +12,14 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import com.ticket.seed.support.AppSchema;
+import com.ticket.seed.support.SeedTestDatabase;
 
 /**
- * {@code seedLocal}의 <b>실제 실행 경로</b>를 임시 H2 파일 DB에서 통째로 돌린다. ({@link SeedLocalMain#execute()}가 그 진입점이며, 여기서 호출하는 것이 운영
- * 명령과 같은 코드다.)
+ * {@code seedLocal}의 <b>실제 실행 경로</b>를 임시 PostgreSQL schema에서 통째로 돌린다. ({@link SeedLocalMain#execute()}가 그 진입점이며, 여기서
+ * 호출하는 것이 운영 명령과 같은 코드다.)
  *
  * <p>스키마는 손으로 쓴 DDL이 아니라 운영과 같은 Flyway migration으로 만든다({@link AppSchema}) — 그래서 유니크 제약·인덱스를 포함한 진짜 스키마 아래서 적재가 성립하는지를
  * 본다.
@@ -37,27 +36,24 @@ class SeedLocalTest {
     private static final int FIXTURE_SEAT_COUNT = LoadTestFixtureSeeder.SEAT_COUNT;
     private static final int MEMBER_COUNT = 25;
 
-    @TempDir
-    static Path tempDir;
-
     private static String jdbcUrl;
     private static JdbcTemplate jdbcTemplate;
     private static Map<String, String> restoredProperties;
 
     @BeforeAll
     static void prepare() {
-        jdbcUrl = AppSchema.createIn(tempDir, "seed-local");
-        jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(jdbcUrl, "sa", ""));
+        jdbcUrl = AppSchema.create("seed_local");
+        jdbcTemplate = new JdbcTemplate(SeedTestDatabase.dataSource(jdbcUrl));
 
-        restoredProperties = SeedSystemProperties.set(Map.of(
-                "seed.jdbc-url",
-                jdbcUrl,
+        final Map<String, String> properties = new HashMap<>(SeedTestDatabase.seedProperties(jdbcUrl));
+        properties.putAll(Map.of(
                 // 회원 2,000명은 이 테스트가 확인하려는 것(형식·중복·인증 호환성)과 무관하게 느리다.
                 // 기본값 2,000은 SeedSettingsTest가 따로 고정한다.
                 "seed.load-test-members.count",
                 String.valueOf(MEMBER_COUNT),
                 "seed.load-test-fixture.performance-count",
                 String.valueOf(FIXTURE_PERFORMANCE_COUNT)));
+        restoredProperties = SeedSystemProperties.set(properties);
     }
 
     @AfterAll

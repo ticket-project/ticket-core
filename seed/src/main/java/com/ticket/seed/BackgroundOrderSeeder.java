@@ -41,17 +41,12 @@ final class BackgroundOrderSeeder implements SeedTask {
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
     private final int orderCount;
-    private final boolean oracle;
 
     BackgroundOrderSeeder(
-            final JdbcTemplate jdbcTemplate,
-            final TransactionTemplate transactionTemplate,
-            final int orderCount,
-            final boolean oracle) {
+            final JdbcTemplate jdbcTemplate, final TransactionTemplate transactionTemplate, final int orderCount) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
         this.orderCount = orderCount;
-        this.oracle = oracle;
     }
 
     @Override
@@ -111,13 +106,6 @@ final class BackgroundOrderSeeder implements SeedTask {
             created += transactionTemplate.execute(status -> seedPerformance(performance, quota, memberIds));
             if ((index + 1) % PROGRESS_EVERY == 0) {
                 SeedConsole.info("  배경 주문: 회차 %d/%d, 새 주문 %,d건".formatted(index + 1, performances.size(), created));
-            }
-        }
-
-        if (created > 0 && oracle) {
-            // 대량 적재 직후 통계가 낡으면 옵티마이저가 테이블을 작게 보고 실행 계획을 잘못 고른다.
-            for (final String table : List.of("ORDERS", "ORDER_SEATS", "MEMBERS")) {
-                jdbcTemplate.execute("BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, '" + table + "'); END;");
             }
         }
 

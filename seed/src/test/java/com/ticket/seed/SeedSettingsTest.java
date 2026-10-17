@@ -44,7 +44,7 @@ class SeedSettingsTest {
                 "seed.project-dir",
                 SeedTestPaths.projectDir().toString(),
                 "seed.jdbc-url",
-                "jdbc:h2:mem:seed-settings"));
+                "jdbc:postgresql://localhost:5432/seed_settings"));
         try {
             System.clearProperty("seed.load-test-members.count");
             System.clearProperty("seed.load-test-fixture.performance-count");
@@ -88,7 +88,7 @@ class SeedSettingsTest {
                 "seed.project-dir",
                 SeedTestPaths.projectDir().toString(),
                 "seed.jdbc-url",
-                "jdbc:h2:mem:seed-override",
+                "jdbc:postgresql://localhost:5432/seed_override",
                 "seed.jdbc-username",
                 "tester",
                 "seed.sql-path",
@@ -98,7 +98,7 @@ class SeedSettingsTest {
         try {
             final SeedSettings settings = SeedSettings.load();
 
-            assertThat(settings.jdbcUrl()).isEqualTo("jdbc:h2:mem:seed-override");
+            assertThat(settings.jdbcUrl()).isEqualTo("jdbc:postgresql://localhost:5432/seed_override");
             assertThat(settings.jdbcUsername()).isEqualTo("tester");
             assertThat(settings.sqlPath()).isEqualTo(SeedTestPaths.minimalSeedSql());
             assertThat(settings.loadTestMemberCount()).isEqualTo(7);
@@ -113,7 +113,7 @@ class SeedSettingsTest {
                 "seed.project-dir",
                 SeedTestPaths.projectDir().toString(),
                 "seed.jdbc-url",
-                "jdbc:h2:mem:seed-invalid",
+                "jdbc:postgresql://localhost:5432/seed_invalid",
                 "seed.load-test-members.count",
                 "여덟"));
         try {
@@ -127,10 +127,10 @@ class SeedSettingsTest {
 
     @Test
     void 접속_비밀번호는_출력에서_가려진다() {
-        assertThat(SeedConsole.maskedUrl("jdbc:h2:file:~/ticket-local;MODE=Oracle;PASSWORD=secret;X=1"))
+        assertThat(SeedConsole.maskedUrl("jdbc:postgresql://localhost:5432/ticket?PASSWORD=secret&X=1"))
                 .doesNotContain("secret")
                 .contains("PASSWORD=***");
-        assertThat(SeedConsole.maskedUrl("jdbc:oracle:thin:@host?user=admin&password=secret"))
+        assertThat(SeedConsole.maskedUrl("jdbc:postgresql://host:5432/ticket?user=admin&password=secret"))
                 .doesNotContain("secret", "admin");
     }
 }

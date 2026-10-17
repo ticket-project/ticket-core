@@ -3,26 +3,23 @@ package com.ticket.seed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.ticket.seed.support.AppSchema;
+import com.ticket.seed.support.SeedTestDatabase;
 
 /**
  * 실제 앱 스키마 위에서 시드 실행 경로를 빠르게 확인한다. 데이터 양과 무관한 것 — 실행 순서, 완전성 판정, 트랜잭션 롤백, 동시 접속, 실패 보고 — 만 본다.
@@ -35,22 +32,18 @@ class SeedFastRunTest {
 
     private static final long FIXTURE_ID_BASE = LoadTestFixtureSeeder.ID_BASE;
 
-    @TempDir
-    Path tempDir;
-
     private String jdbcUrl;
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void prepareSchema() {
-        jdbcUrl = AppSchema.createIn(
-                tempDir, "fast-" + UUID.randomUUID().toString().substring(0, 8));
+        jdbcUrl = AppSchema.create("fast");
         jdbcTemplate = new JdbcTemplate(dataSource(jdbcUrl));
     }
 
     @Test
     void 준비되지_않은_DB에서는_명확하게_실패한다() {
-        final String emptyDatabaseUrl = AppSchema.urlFor(tempDir, "no-schema");
+        final String emptyDatabaseUrl = AppSchema.empty("no_schema");
 
         assertThat(runSeed(Map.of("seed.jdbc-url", emptyDatabaseUrl)))
                 .as("스키마가 없으면 적재를 시작하지 않고 0이 아닌 종료 코드로 끝난다")
@@ -66,9 +59,8 @@ class SeedFastRunTest {
 
     @Test
     void 접속할_수_없는_DB는_원인과_함께_실패한다() {
-        final String unreachableUrl = "jdbc:h2:file:"
-                + tempDir.resolve("nope").toAbsolutePath().toString().replace('\\', '/')
-                + ";IFEXISTS=TRUE";
+        // 1번 포트에서 PostgreSQL이 듣고 있을 리 없다. 접속 자체가 거절된다.
+        final String unreachableUrl = "jdbc:postgresql://127.0.0.1:1/nope?connectTimeout=2";
 
         assertThatThrownBy(() -> SeedPreconditions.verify(dataSource(unreachableUrl), unreachableUrl))
                 .isInstanceOf(SeedFailure.class)
@@ -76,12 +68,12 @@ class SeedFastRunTest {
     }
 
     @Test
-    void 서버가_같은_파일_DB에_접속한_상태에서도_적재할_수_있다() throws SQLException {
-        // 로컬 프로파일과 같은 AUTO_SERVER=TRUE 파일 DB. 앱이 붙어 있는 동안 시드가 같은 DB에
-        // 두 번째 접속으로 붙는 상황을 그대로 만든다.
-        final String sharedUrl = AppSchema.createIn(tempDir, "shared-db", ";AUTO_SERVER=TRUE");
+    void 앱이_같은_DB에_접속한_상태에서도_적재할_수_있다() throws SQLException {
+        // 앱이 붙어 있는 동안 시드가 같은 DB에 두 번째 접속으로 붙는 상황을 그대로 만든다.
+        final String sharedUrl = jdbcUrl;
 
-        try (Connection applicationConnection = DriverManager.getConnection(sharedUrl, "sa", "")) {
+        try (Connection applicationConnection =
+                DriverManager.getConnection(sharedUrl, SeedTestDatabase.username(), SeedTestDatabase.password())) {
             assertThat(applicationConnection.isClosed()).isFalse();
 
             assertThat(runSeed(Map.of("seed.jdbc-url", sharedUrl)))
@@ -154,7 +146,7 @@ class SeedFastRunTest {
     }
 
     @Test
-    void 작업_순서는_공용_시드_부하_픽스처_회원_배경_주문이다() {
+    void 작업_순서는_공용_시드_부하_픽스처_회원_배경_주문_ID_시퀀스_맞춤이다() {
         final DataSource dataSource = dataSource(jdbcUrl);
         final List<SeedTask> tasks = SeedLocalMain.tasks(
                 new JdbcTemplate(dataSource),
@@ -167,7 +159,8 @@ class SeedFastRunTest {
                         LoadTestFixtureSeeder.class,
                         LoadTestFixtureSeeder.class,
                         LoadTestMemberSeeder.class,
-                        BackgroundOrderSeeder.class);
+                        BackgroundOrderSeeder.class,
+                        PostgreSqlIdentitySynchronizer.class);
     }
 
     @Test
@@ -297,6 +290,9 @@ class SeedFastRunTest {
         final Map<String, String> properties = new HashMap<>();
         properties.put("seed.project-dir", SeedTestPaths.projectDir().toString());
         properties.put("seed.sql-path", SeedTestPaths.minimalSeedSql().toString());
+        if (overrides.containsKey("seed.jdbc-url")) {
+            properties.putAll(SeedTestDatabase.seedProperties(overrides.get("seed.jdbc-url")));
+        }
         properties.put("seed.load-test-fixture.performance-count", "1");
         properties.put("seed.load-test-members.count", "3");
         properties.putAll(overrides);
@@ -304,7 +300,7 @@ class SeedFastRunTest {
     }
 
     private static DataSource dataSource(final String jdbcUrl) {
-        return new DriverManagerDataSource(jdbcUrl, "sa", "");
+        return SeedTestDatabase.dataSource(jdbcUrl);
     }
 
     private Map<String, Long> snapshot() {

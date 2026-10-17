@@ -10,12 +10,12 @@ import org.junit.jupiter.api.Test;
 /**
  * 운영 적재({@code seedProd})의 접속 설정 원본과 기본값을 고정한다.
  *
- * <p>가장 중요한 것은 <b>운영 접속 설정이 없으면 로컬 DB로 대체하지 않고 실패한다</b>는 것이다. 운영에 넣으려던 데이터가 조용히 로컬 H2에 들어가는 것이 이 프로그램에서 가장 나쁜 결과다.
+ * <p>가장 중요한 것은 <b>운영 접속 설정이 없으면 로컬 DB로 대체하지 않고 실패한다</b>는 것이다. 운영에 넣으려던 데이터가 조용히 로컬 DB에 들어가는 것이 이 프로그램에서 가장 나쁜 결과다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeedProdSettingsTest {
     private static final Map<String, String> PROD_ENVIRONMENT = Map.of(
-            SeedSettings.DATASOURCE_URL_ENV, "jdbc:oracle:thin:@ticketdb_high",
+            SeedSettings.DATASOURCE_URL_ENV, "jdbc:postgresql://ticket-db.example.com:5432/ticket",
             SeedSettings.DATASOURCE_USERNAME_ENV, "TICKET",
             SeedSettings.DATASOURCE_PASSWORD_ENV, "super-secret");
 
@@ -25,7 +25,7 @@ class SeedProdSettingsTest {
             final SeedSettings settings = SeedSettings.forProd(PROD_ENVIRONMENT);
 
             assertThat(settings.target()).isEqualTo(SeedTarget.PROD);
-            assertThat(settings.jdbcUrl()).isEqualTo("jdbc:oracle:thin:@ticketdb_high");
+            assertThat(settings.jdbcUrl()).isEqualTo("jdbc:postgresql://ticket-db.example.com:5432/ticket");
             assertThat(settings.jdbcUsername()).isEqualTo("TICKET");
             assertThat(settings.jdbcPassword()).isEqualTo("super-secret");
         });
@@ -44,7 +44,7 @@ class SeedProdSettingsTest {
     @Test
     void 운영_접속_설정이_일부만_있어도_실패한다() {
         withCleanProperties(() -> assertThatThrownBy(() -> SeedSettings.forProd(
-                        Map.of(SeedSettings.DATASOURCE_URL_ENV, "jdbc:oracle:thin:@ticketdb_high")))
+                        Map.of(SeedSettings.DATASOURCE_URL_ENV, "jdbc:postgresql://ticket-db.example.com:5432/ticket")))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining(SeedSettings.DATASOURCE_USERNAME_ENV)
                 .hasMessageContaining(SeedSettings.DATASOURCE_PASSWORD_ENV));
@@ -63,7 +63,7 @@ class SeedProdSettingsTest {
     @Test
     void 로컬_기본값은_그대로_유지된다() {
         withCleanProperties(() -> {
-            System.setProperty("seed.jdbc-url", "jdbc:h2:mem:seed-prod-settings");
+            System.setProperty("seed.jdbc-url", "jdbc:postgresql://localhost:5432/seed_prod_settings");
             final SeedSettings settings = SeedSettings.load();
 
             assertThat(settings.target()).isEqualTo(SeedTarget.LOCAL);
@@ -86,21 +86,21 @@ class SeedProdSettingsTest {
 
     @Test
     void 운영_접속_URL의_자격증명은_출력에서_가려진다() {
-        assertThat(SeedConsole.maskedUrl("jdbc:oracle:thin:@//host:1521/svc?user=TICKET&password=super-secret"))
+        assertThat(SeedConsole.maskedUrl("jdbc:postgresql://host:5432/ticket?user=TICKET&password=super-secret"))
                 .doesNotContain("super-secret", "TICKET")
                 .contains("password=***");
     }
 
     @Test
     void URL로_JDBC_드라이버를_고른다() {
-        assertThat(SeedDataSources.driverClassNameFor("jdbc:oracle:thin:@ticketdb_high"))
-                .isEqualTo("oracle.jdbc.OracleDriver");
-        assertThat(SeedDataSources.driverClassNameFor("jdbc:h2:mem:x")).isEqualTo("org.h2.Driver");
         assertThat(SeedDataSources.driverClassNameFor("jdbc:postgresql://host/db"))
                 .isEqualTo("org.postgresql.Driver");
-        assertThatThrownBy(() -> SeedDataSources.driverClassNameFor("jdbc:mysql://host/db"))
-                .isInstanceOf(SeedFailure.class)
-                .hasMessageContaining("지원하지 않는 JDBC URL");
+        for (final String unsupported :
+                java.util.List.of("jdbc:mysql://host/db", "jdbc:h2:mem:x", "jdbc:oracle:thin:@db")) {
+            assertThatThrownBy(() -> SeedDataSources.driverClassNameFor(unsupported))
+                    .isInstanceOf(SeedFailure.class)
+                    .hasMessageContaining("지원하지 않는 JDBC URL");
+        }
     }
 
     /** {@code seed.*} 프로퍼티는 실행 경로의 일부다. 다른 테스트가 남긴 값이 섞이지 않게 비우고 끝나면 되돌린다. */

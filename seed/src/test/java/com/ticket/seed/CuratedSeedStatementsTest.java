@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +20,8 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import com.ticket.seed.support.SeedTestDatabase;
 
 /**
  * {@code seed/sql/kopis-curated.sql}과 그 변환 결과가 지켜야 할 불변식을 고정한다. 예전 {@code com.ticket.seed.SeedDataLoaderTest}가
@@ -154,11 +155,12 @@ class CuratedSeedStatementsTest {
     }
 
     @Test
-    void 회차좌석_시드가_H2에서_실행된다() throws Exception {
+    void 회차좌석_시드가_PostgreSQL에서_실행된다() throws Exception {
         final String performanceSeatStatement = performanceSeatsStatement();
 
-        try (Connection connection = DriverManager.getConnection(
-                        "jdbc:h2:mem:curated_seed_statements;MODE=Oracle;DB_CLOSE_DELAY=-1");
+        try (Connection connection = SeedTestDatabase.dataSource(
+                                SeedTestDatabase.newSchemaUrl("curated_seed_statements"))
+                        .getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
             statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
@@ -166,10 +168,10 @@ class CuratedSeedStatementsTest {
                     "CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
             statement.execute("CREATE TABLE GRADES (id BIGINT PRIMARY KEY, code VARCHAR(10))");
             statement.execute(
-                    "CREATE TABLE PERFORMANCE_GRADES (id BIGINT PRIMARY KEY, performance_id BIGINT NOT NULL, grade_id BIGINT NOT NULL, price NUMBER(10, 0))");
+                    "CREATE TABLE PERFORMANCE_GRADES (id BIGINT PRIMARY KEY, performance_id BIGINT NOT NULL, grade_id BIGINT NOT NULL, price NUMERIC(10, 0))");
             // 실제 앱 매핑과 같이 version을 NOT NULL(DEFAULT 없음)로 둔다.
             statement.execute(
-                    "CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), performance_grade_id BIGINT, unit_price NUMBER(10, 0), version BIGINT NOT NULL, created_at TIMESTAMP, created_by VARCHAR(50))");
+                    "CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), performance_grade_id BIGINT, unit_price NUMERIC(10, 0), version BIGINT NOT NULL, created_at TIMESTAMP, created_by VARCHAR(50))");
 
             statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (100, 1)");
             statement.execute("INSERT INTO PERFORMANCES (id, show_id) VALUES (1, 100)");
@@ -200,12 +202,13 @@ class CuratedSeedStatementsTest {
                 .withFailMessage("PERFORMANCE_SEATS 시드가 여전히 venue 경계 없는 CROSS JOIN SEATS를 씁니다.")
                 .noneMatch(statement -> statement.contains("CROSS JOIN SEATS"));
 
-        try (Connection connection = DriverManager.getConnection(
-                        "jdbc:h2:mem:curated_seed_seat_replication;MODE=Oracle;DB_CLOSE_DELAY=-1");
+        try (Connection connection = SeedTestDatabase.dataSource(
+                                SeedTestDatabase.newSchemaUrl("curated_seed_seat_replication"))
+                        .getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE VENUES (id BIGINT PRIMARY KEY)");
             statement.execute(
-                    "CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10), floor INT, x DOUBLE, y DOUBLE, created_at TIMESTAMP, created_by VARCHAR(50))");
+                    "CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10), floor INT, x DOUBLE PRECISION, y DOUBLE PRECISION, created_at TIMESTAMP, created_by VARCHAR(50))");
 
             statement.execute("INSERT INTO VENUES (id) VALUES (1)");
             statement.execute("INSERT INTO VENUES (id) VALUES (2)");
@@ -238,8 +241,9 @@ class CuratedSeedStatementsTest {
     void 회차좌석은_그_회차_공연장의_좌석만_조인한다() throws Exception {
         final String performanceSeatsStatement = performanceSeatsStatement();
 
-        try (Connection connection = DriverManager.getConnection(
-                        "jdbc:h2:mem:curated_seed_performance_seats_venue;MODE=Oracle;DB_CLOSE_DELAY=-1");
+        try (Connection connection = SeedTestDatabase.dataSource(
+                                SeedTestDatabase.newSchemaUrl("curated_seed_performance_seats_venue"))
+                        .getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE SHOWS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL)");
             statement.execute("CREATE TABLE PERFORMANCES (id BIGINT PRIMARY KEY, show_id BIGINT NOT NULL)");
@@ -247,9 +251,9 @@ class CuratedSeedStatementsTest {
                     "CREATE TABLE SEATS (id BIGINT PRIMARY KEY, venue_id BIGINT NOT NULL, section VARCHAR(10), row_no VARCHAR(10), seat_no VARCHAR(10))");
             statement.execute("CREATE TABLE GRADES (id BIGINT PRIMARY KEY, code VARCHAR(10))");
             statement.execute(
-                    "CREATE TABLE PERFORMANCE_GRADES (id BIGINT PRIMARY KEY, performance_id BIGINT NOT NULL, grade_id BIGINT NOT NULL, price NUMBER(10, 0))");
+                    "CREATE TABLE PERFORMANCE_GRADES (id BIGINT PRIMARY KEY, performance_id BIGINT NOT NULL, grade_id BIGINT NOT NULL, price NUMERIC(10, 0))");
             statement.execute(
-                    "CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), performance_grade_id BIGINT, unit_price NUMBER(10, 0), version BIGINT NOT NULL, created_at TIMESTAMP, created_by VARCHAR(50))");
+                    "CREATE TABLE PERFORMANCE_SEATS (performance_id BIGINT, seat_id BIGINT, state VARCHAR(20), performance_grade_id BIGINT, unit_price NUMERIC(10, 0), version BIGINT NOT NULL, created_at TIMESTAMP, created_by VARCHAR(50))");
 
             statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (100, 1)");
             statement.execute("INSERT INTO SHOWS (id, venue_id) VALUES (200, 2)");

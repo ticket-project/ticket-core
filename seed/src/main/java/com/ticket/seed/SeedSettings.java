@@ -105,14 +105,16 @@ record SeedSettings(
     }
 
     private static Datasource resolveLocalDatasource(final Path projectDir) {
+        final Datasource local = readLocalProfileDatasource(projectDir.resolve(LOCAL_PROFILE_YAML));
         final String overriddenUrl = System.getProperty("seed.jdbc-url");
         if (overriddenUrl != null && !overriddenUrl.isBlank()) {
+            // 계정을 따로 주지 않으면 로컬 프로파일의 계정을 쓴다. 같은 PostgreSQL의 다른 DB·schema를 가리키는 경우가 대부분이다.
             return new Datasource(
                     overriddenUrl,
-                    System.getProperty("seed.jdbc-username", "sa"),
-                    System.getProperty("seed.jdbc-password", ""));
+                    System.getProperty("seed.jdbc-username", local.username()),
+                    System.getProperty("seed.jdbc-password", local.password()));
         }
-        return readLocalProfileDatasource(projectDir.resolve(LOCAL_PROFILE_YAML));
+        return local;
     }
 
     /**

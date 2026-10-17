@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.sql.DataSource;
 
@@ -17,9 +16,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import com.ticket.seed.support.AppSchema;
+import com.ticket.seed.support.SeedTestDatabase;
 
 /**
  * 모든 공용 공연장에 물리 좌석이 있고, 모든 공용 회차에 그 공연장의 좌석이 연결되는지를 고정한다.
@@ -62,8 +61,7 @@ class SeedSeatCoverageTest {
 
     @BeforeEach
     void prepareSchema() {
-        jdbcUrl = AppSchema.createIn(
-                tempDir, "coverage-" + UUID.randomUUID().toString().substring(0, 8));
+        jdbcUrl = AppSchema.create("coverage");
         jdbcTemplate = new JdbcTemplate(dataSource(jdbcUrl));
     }
 
@@ -173,7 +171,7 @@ class SeedSeatCoverageTest {
         final Map<String, String> properties = new HashMap<>();
         properties.put("seed.project-dir", SeedTestPaths.projectDir().toString());
         properties.put("seed.sql-path", sqlPath.toString());
-        properties.put("seed.jdbc-url", jdbcUrl);
+        properties.putAll(SeedTestDatabase.seedProperties(jdbcUrl));
         properties.put("seed.load-test-fixture.performance-count", "0");
         properties.put("seed.load-test-members.count", "0");
         final Map<String, String> previous = SeedSystemProperties.set(properties);
@@ -185,7 +183,7 @@ class SeedSeatCoverageTest {
     }
 
     private static DataSource dataSource(final String jdbcUrl) {
-        return new DriverManagerDataSource(jdbcUrl, "sa", "");
+        return SeedTestDatabase.dataSource(jdbcUrl);
     }
 
     private long count(final String from, final String where) {
