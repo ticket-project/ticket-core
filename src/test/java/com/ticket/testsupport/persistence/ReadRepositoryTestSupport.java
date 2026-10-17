@@ -29,7 +29,7 @@ import com.ticket.venue.usecase.SeatLookupService;
 import com.ticket.venue.usecase.VenueLookupService;
 
 /**
- * 실제 JPA·Querydsl 조회를 H2에 붙여 검증하는 테스트의 베이스다. 테스트마다 트랜잭션을 롤백한다.
+ * 실제 JPA·Querydsl 조회를 PostgreSQL에 붙여 검증하는 테스트의 베이스다. 테스트마다 트랜잭션을 롤백한다.
  *
  * <p>venue 공개 계약({@code VenueLookupApi}/{@code VenueSeatLookupApi})의 구현을 빈으로 올린다 — 이 베이스를 쓰는 테스트가 그 계약을 주입받으면 없을 때 컨텍스트
  * 기동부터 실패한다. 두 계약을 구현하는 use case service가 쓰는 {@code VenueRepository}·{@code SeatRepository}는 Spring Data 스캔이 올린다.

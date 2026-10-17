@@ -17,24 +17,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.ticket.domain.Ticket;
+import com.ticket.testsupport.PostgreSqlTestDatabase;
 
 /**
  * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이) {@link Ticket} 매핑과
- * 실제로 맞는 schema를 만들고, {@code ticket_key}/{@code order_seat_id} unique 제약이 실제로 동작하는지 검증한다. {@code TICKETS} 생성 migration은
- * booking의 V5다.
+ * 실제로 맞는 schema를 만들고, {@code ticket_key}/{@code order_seat_id} unique 제약이 실제로 동작하는지 검증한다.
  *
- * <p>기법은 {@link BookingModuleSlicingSchemaTest}를 따른다. booking의 V1(cross-module FK 제거)이 정상 동작하도록 legacy baseline도 같은 형태로
- * 재현한다.
+ * <p>기법은 {@link BookingModuleSlicingSchemaTest}를 따른다.
  */
 class BookingTicketSlicingSchemaTest {
-    private static final String URL =
-            "jdbc:h2:mem:booking-ticket-slicing-schema;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+    private static final String URL = PostgreSqlTestDatabase.newSchemaUrl("booking_ticket_slice");
 
     @Test
     void root_and_booking_migrations_alone_produce_a_schema_the_ticket_mapping_can_use() throws Exception {
-        ModulithFlywayTestSupport.createBookingLegacyBaseline(URL);
         // 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 — __root와 booking뿐이다.
-        ModulithFlywayTestSupport.migrate(URL, List.of("booking"));
+        ModulithFlywayTestSupport.applyMigrations(URL, List.of("booking"));
 
         final StandardServiceRegistry registry = ModulithFlywayTestSupport.hibernateRegistry(URL);
         try {

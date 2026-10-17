@@ -21,7 +21,8 @@ import org.springframework.test.context.TestPropertySource;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 /**
- * 실제 JPA·Querydsl을 H2에 붙여 검증하는 좁은 슬라이스 테스트의 베이스다. 업무 bean은 올리지 않는다 — 하위 클래스가 검증할 adapter·repository를 {@code @Import}한다.
+ * 실제 JPA·Querydsl을 PostgreSQL에 붙여 검증하는 좁은 슬라이스 테스트의 베이스다. 업무 bean은 올리지 않는다 — 하위 클래스가 검증할 adapter·repository를
+ * {@code @Import}한다.
  *
  * <p>스키마는 {@link MigratedSchema}가 운영 migration으로 만든다. entity와 Spring Data 인터페이스는 {@code com.ticket} 전체를 스캔한다. module을
  * 추출할 때마다 package 목록을 고치지 않기 위해서고, {@code @Repository} Spring Data 인터페이스가 아닌 클래스는 걸러지므로 넓게 잡아도 안전하다.

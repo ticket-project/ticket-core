@@ -147,7 +147,8 @@ class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {
         assertThat(performanceGrades)
                 .extracting(performanceGrade ->
                         gradesById.get(performanceGrade.getGradeId()).getName() + ":" + performanceGrade.getPrice())
-                .containsExactly("VIP석:150000", "R석:100000");
+                // price는 DECIMAL(19, 2)라 소수 둘째 자리까지 읽힌다.
+                .containsExactly("VIP석:150000.00", "R석:100000.00");
     }
 
     @Test

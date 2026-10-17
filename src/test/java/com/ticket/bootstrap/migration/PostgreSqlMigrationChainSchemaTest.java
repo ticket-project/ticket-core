@@ -13,47 +13,46 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.Banner;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
-import com.ticket.testsupport.TestContainerImages;
+import com.ticket.testsupport.PostgreSqlTestDatabase;
 import com.ticket.testsupport.persistence.MigratedSchema;
 
-/** 로컬과 RDS가 사용하는 migration을 실제 PostgreSQL에 적용하고 매핑·제약·긴 문자열을 검증한다. */
-@Testcontainers(disabledWithoutDocker = true)
+/**
+ * 로컬과 RDS가 사용하는 migration을 실제 PostgreSQL에 적용하고 매핑·제약·긴 문자열을 검증한다.
+ *
+ * <p>스키마의 원본은 migration이다. entity만 바꾸고 migration을 빠뜨리면 운영의 {@code validate}에서야 기동이 실패한다. 여기서는 빈 schema에 모든 module
+ * migration을 운영과 같은 순서로 적용한 뒤 Hibernate {@code validate}로 context를 띄운다. {@code validate}는 테이블·컬럼·타입만 보므로 인덱스와 제약은 따로
+ * 확인한다.
+ */
 @SuppressWarnings("NonAsciiCharacters")
 class PostgreSqlMigrationChainSchemaTest {
-    @Container
-    private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(TestContainerImages.POSTGRESQL);
+    private static String url;
 
     private static JdbcTemplate jdbc;
 
     @BeforeAll
     static void migrate() {
-        ModulithFlywayTestSupport.applyMigrations(
-                POSTGRES.getJdbcUrl(),
-                POSTGRES.getUsername(),
-                POSTGRES.getPassword(),
-                "postgresql",
-                MigratedSchema.MODULES_IN_RUNTIME_ORDER);
+        url = PostgreSqlTestDatabase.newSchemaUrl("migration_chain");
+        ModulithFlywayTestSupport.applyMigrations(url, MigratedSchema.MODULES_IN_RUNTIME_ORDER);
         jdbc = new JdbcTemplate(
-                new DriverManagerDataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+                new DriverManagerDataSource(url, PostgreSqlTestDatabase.username(), PostgreSqlTestDatabase.password()));
     }
 
     @Test
     void 스키마가_entity와_일치하고_migration을_재실행할_수_있다() {
-        assertThatCode(() -> MigrationChainSchemaTest.validate(
-                        POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()))
-                .doesNotThrowAnyException();
-        assertThatCode(() -> ModulithFlywayTestSupport.applyMigrations(
-                        POSTGRES.getJdbcUrl(),
-                        POSTGRES.getUsername(),
-                        POSTGRES.getPassword(),
-                        "postgresql",
-                        MigratedSchema.MODULES_IN_RUNTIME_ORDER))
+        assertThatCode(() -> validate(url)).doesNotThrowAnyException();
+        assertThatCode(() -> ModulithFlywayTestSupport.applyMigrations(url, MigratedSchema.MODULES_IN_RUNTIME_ORDER))
                 .doesNotThrowAnyException();
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name IN ('order_hold_release_outbox', 'order_hold_creation_outbox', 'performance_queue_policies')",
@@ -90,11 +89,8 @@ class PostgreSqlMigrationChainSchemaTest {
     @Test
     void 모듈간_외래키_없이_각_모듈을_독립적으로_migration한다() {
         for (String module : List.of("member", "venue", "show", "booking", "like", "payment")) {
-            String schema = "slice_" + module;
-            jdbc.execute("CREATE SCHEMA " + schema);
-            String url = POSTGRES.getJdbcUrl() + "&currentSchema=" + schema;
-            assertThatCode(() -> ModulithFlywayTestSupport.applyMigrations(
-                            url, POSTGRES.getUsername(), POSTGRES.getPassword(), "postgresql", List.of(module)))
+            String moduleUrl = PostgreSqlTestDatabase.newSchemaUrl("slice_" + module);
+            assertThatCode(() -> ModulithFlywayTestSupport.applyMigrations(moduleUrl, List.of(module)))
                     .doesNotThrowAnyException();
         }
         assertThat(jdbc.queryForList("""
@@ -109,8 +105,7 @@ class PostgreSqlMigrationChainSchemaTest {
 
     @Test
     void 중복_찜과_잘못된_판매_기간을_제약으로_거부한다() throws Exception {
-        try (Connection connection = DriverManager.getConnection(
-                        POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+        try (Connection connection = connect();
                 Statement statement = connection.createStatement()) {
             statement.execute(
                     "INSERT INTO likes (member_id, target_id, like_type, created_at, created_by) VALUES (1, 1, 'SHOW', CURRENT_TIMESTAMP, 'PG_TEST')");
@@ -128,4 +123,54 @@ class PostgreSqlMigrationChainSchemaTest {
                     .isEqualTo("23514");
         }
     }
+
+    @Test
+    void 회차_등급의_중복과_음수_가격을_제약으로_거부한다() throws Exception {
+        final String insertPerformanceGrade =
+                "INSERT INTO performance_grades (performance_id, grade_id, price, sort_order, created_at, created_by) VALUES (9001, %d, %s, 1, CURRENT_TIMESTAMP, 'PG_TEST')";
+        try (Connection connection = connect();
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO performances (id, created_at, created_by) VALUES (9001, CURRENT_TIMESTAMP, 'PG_TEST')");
+            statement.execute(
+                    "INSERT INTO grades (id, code, name, created_at, created_by) VALUES (9001, 'PG_VIP', 'VIP석', CURRENT_TIMESTAMP, 'PG_TEST'), (9002, 'PG_R', 'R석', CURRENT_TIMESTAMP, 'PG_TEST')");
+            statement.execute(insertPerformanceGrade.formatted(9001, "100000.00"));
+
+            assertThatThrownBy(() -> statement.execute(insertPerformanceGrade.formatted(9001, "999.00")))
+                    .isInstanceOf(SQLException.class)
+                    .extracting("SQLState")
+                    .isEqualTo("23505");
+            assertThatThrownBy(() -> statement.execute(insertPerformanceGrade.formatted(9002, "-1.00")))
+                    .isInstanceOf(SQLException.class)
+                    .extracting("SQLState")
+                    .isEqualTo("23514");
+        }
+    }
+
+    /** entity 매핑으로 context를 띄워 Hibernate {@code validate}를 거친다. 스키마가 다르면 context 생성이 실패한다. */
+    private static void validate(final String url) {
+        try (ConfigurableApplicationContext context = new SpringApplicationBuilder(SchemaValidation.class)
+                .web(WebApplicationType.NONE)
+                .bannerMode(Banner.Mode.OFF)
+                .properties(
+                        "spring.datasource.url=" + url,
+                        "spring.datasource.username=" + PostgreSqlTestDatabase.username(),
+                        "spring.datasource.password=" + PostgreSqlTestDatabase.password(),
+                        "spring.jpa.hibernate.ddl-auto=validate",
+                        "spring.jpa.open-in-view=false",
+                        "spring.flyway.enabled=false",
+                        "logging.level.root=WARN")
+                .run()) {
+            context.getBeanFactory();
+        }
+    }
+
+    private static Connection connect() throws SQLException {
+        return DriverManager.getConnection(url, PostgreSqlTestDatabase.username(), PostgreSqlTestDatabase.password());
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ImportAutoConfiguration({DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
+    @EntityScan("com.ticket")
+    static class SchemaValidation {}
 }

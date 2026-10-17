@@ -13,23 +13,26 @@ import org.springframework.boot.flyway.autoconfigure.FlywayMigrationStrategy;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.modulith.core.ApplicationModuleIdentifier;
 import org.springframework.modulith.core.ApplicationModuleIdentifiers;
 import org.springframework.modulith.runtime.flyway.MigrationFilter;
 import org.springframework.modulith.runtime.flyway.SpringModulithFlywayMigrationStrategy;
 import org.springframework.test.context.TestPropertySource;
 
+import com.ticket.testsupport.PostgreSqlTestDatabase;
+import com.zaxxer.hikari.HikariDataSource;
+
 /**
- * 테스트 H2의 스키마를 entity가 아니라 <b>운영과 같은 Flyway migration</b>으로 만든다.
+ * 테스트 PostgreSQL의 스키마를 entity가 아니라 <b>운영과 같은 Flyway migration</b>으로 만든다.
  *
- * <p>스키마의 원본은 {@code db/migration}이다. {@code ddl-auto=create}로 entity에서 만든 스키마에는 migration에만 있는 유니크 제약·인덱스가 없어서 운영과 다르다
- * — 중복 거절 같은 DB 동작을 테스트할 수 없다.
+ * <p>스키마의 원본은 {@code db/migration-vendor/postgresql}이다. {@code ddl-auto=create}로 entity에서 만든 스키마에는 migration에만 있는 유니크
+ * 제약·인덱스가 없어서 운영과 다르다 — 중복 거절 같은 DB 동작을 테스트할 수 없다.
  *
- * <p>datasource도 이 애노테이션이 정한다(Oracle 모드 H2). {@code @TestPropertySource}라 {@code @SpringBootTest(properties)}보다 우선하므로
- * 붙이는 테스트는 datasource를 따로 적지 않는다.
+ * <p>datasource도 이 애노테이션이 정한다. context마다 {@link PostgreSqlTestDatabase}의 컨테이너에 새 schema를 만들고 그 schema를 기본으로 쓰는
+ * {@link DataSource} bean을 올린다. 자동 설정 DataSource 대신 쓰이므로 붙이는 테스트는 datasource를 따로 적지 않는다.
  *
- * <p>context가 뜰 때마다 H2를 비운 뒤 모든 module migration을 운영 순서로 적용한다. {@code create-drop}처럼 context마다 새 스키마에서 시작한다. H2 전용이다.
+ * <p>context마다 빈 schema에 모든 module migration을 운영 순서로 적용한다. {@code create-drop}처럼 context마다 새 스키마에서 시작하고, 캐시된 다른
+ * context의 스키마와 섞이지 않는다.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -37,16 +40,9 @@ import org.springframework.test.context.TestPropertySource;
 @Import(MigratedSchema.Migration.class)
 @TestPropertySource(
         properties = {
-            // context마다 이름이 다른 in-memory DB를 쓴다. 이름이 같으면 캐시된 다른 context의 스키마를 이 context의 DROP ALL OBJECTS가 지운다.
-            // DataSourceProperties가 한 번만 바인딩하므로 context 하나 안에서는 이름이 고정된다.
-            "spring.datasource.url=jdbc:h2:mem:${random.uuid};MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-            "spring.datasource.driver-class-name=org.h2.Driver",
-            "spring.datasource.username=sa",
-            "spring.datasource.password=",
             "spring.jpa.hibernate.ddl-auto=validate",
-            "spring.jpa.database-platform=com.ticket.shared.config.H2OracleModeDialect",
             "spring.flyway.enabled=true",
-            "spring.flyway.locations=classpath:db/migration,classpath:db/migration-vendor/h2",
+            "spring.flyway.locations=classpath:db/migration-vendor/postgresql",
             // 슬라이스 context에는 main class가 없어 Modulith가 module 목록을 만들지 못한다. 아래 전략이 목록을 직접 준다.
             "spring.modulith.runtime.flyway-enabled=false"
         })
@@ -58,16 +54,24 @@ public @interface MigratedSchema {
     @TestConfiguration(proxyBeanMethods = false)
     class Migration {
         @Bean
+        DataSource migratedSchemaDataSource() {
+            final HikariDataSource dataSource = new HikariDataSource();
+            dataSource.setJdbcUrl(PostgreSqlTestDatabase.newSchemaUrl("migrated"));
+            dataSource.setUsername(PostgreSqlTestDatabase.username());
+            dataSource.setPassword(PostgreSqlTestDatabase.password());
+            // 캐시된 context마다 풀이 남는다. 테스트는 동시 접속이 적어 작게 둔다.
+            dataSource.setMaximumPoolSize(4);
+            return dataSource;
+        }
+
+        @Bean
         FlywayMigrationStrategy migratedSchemaStrategy() {
             final ApplicationModuleIdentifiers modules =
                     ApplicationModuleIdentifiers.of(MODULES_IN_RUNTIME_ORDER.stream()
                             .map(ApplicationModuleIdentifier::of)
                             .toList());
-            return flyway -> {
-                final DataSource dataSource = flyway.getConfiguration().getDataSource();
-                new JdbcTemplate(dataSource).execute("DROP ALL OBJECTS");
-                new SpringModulithFlywayMigrationStrategy(modules, MigrationFilter.USE_ALL).migrate(flyway);
-            };
+            return flyway ->
+                    new SpringModulithFlywayMigrationStrategy(modules, MigrationFilter.USE_ALL).migrate(flyway);
         }
     }
 }

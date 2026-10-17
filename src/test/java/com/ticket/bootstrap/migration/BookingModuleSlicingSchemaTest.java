@@ -17,26 +17,25 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.testsupport.PostgreSqlTestDatabase;
 
 /**
  * {@code booking} module이 {@code __root} + 자신의 migration만으로(show·member 등 다른 module의 migration 없이) 실제 schema를 만들고,
  * {@code booking}의 JPA 매핑({@link PerformanceSeat})이 그 schema에 대해 {@code ddl-auto=validate}를 통과하며, CRUD가 동작하는지 검증한다.
  *
- * <p><b>module slicing schema 테스트의 기준 구현이다.</b> Spring context 없이 순수 Hibernate로 검증한다 —
- * {@link EventPublicationRegistrySchemaValidationTest}와 같은 기법이다. {@code @DataJpaTest @ModuleSlicing}을 쓰려면
+ * <p><b>module slicing schema 테스트의 기준 구현이다.</b> Spring context 없이 순수 Hibernate로 검증한다. 각 테스트는
+ * {@link com.ticket.testsupport.PostgreSqlTestDatabase}에 자기 schema를 받아 쓴다. {@code @DataJpaTest @ModuleSlicing}을 쓰려면
  * {@code verifyAutomatically = false}가 필요하다({@code BookingModuleTests}가 같은 이유로 쓴다) — 기본값은 legacy package 제외 predicate
  * 없이 전체 구조를 검증해 이미 알려진 오탐 순환을 잡아낸다. 전환은 별도 작업이다.
  */
 class BookingModuleSlicingSchemaTest {
-    private static final String URL =
-            "jdbc:h2:mem:booking-module-slicing-schema;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+    private static final String URL = PostgreSqlTestDatabase.newSchemaUrl("booking_slice");
 
     @Test
     void root_and_booking_migrations_alone_produce_a_schema_the_booking_mapping_can_use() throws Exception {
-        ModulithFlywayTestSupport.createBookingLegacyBaseline(URL);
         // show/member/showlike 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
         // __root와 booking뿐이다.
-        ModulithFlywayTestSupport.migrate(URL, List.of("booking"));
+        ModulithFlywayTestSupport.applyMigrations(URL, List.of("booking"));
 
         final StandardServiceRegistry registry = ModulithFlywayTestSupport.hibernateRegistry(URL);
         try {

@@ -35,7 +35,7 @@ import tools.jackson.databind.JsonNode;
  * <p>단위 테스트는 계층마다 mock을 끼우므로 각 층이 자기 mock에 대해 맞으면 통과한다. 층 사이를 이어 붙였을 때 어긋나는 것(Redis key 불일치, 커밋과 커밋 후 처리의 순서, 트랜잭션 경계)은
  * 진짜 HTTP로 진짜 스택을 두드려야 드러난다.
  *
- * <p>H2·Redis·기동 설정은 {@link CoreApplicationTestSupport}가 소유한다. 이 클래스는 실제 HTTP 호출과 fixture를 더한다.
+ * <p>PostgreSQL·Redis·기동 설정은 {@link CoreApplicationTestSupport}가 소유한다. 이 클래스는 실제 HTTP 호출과 fixture를 더한다.
  *
  * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 2분이라 초 단위로 끝나는 테스트를
  * 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
