@@ -325,9 +325,8 @@ class ShowQuerydslRepositoryTest extends ReadRepositoryTestSupport {
     }
 
     /**
-     * 배너 query는 GROUP BY로 장르 조인의 중복을 접는데, ORDER BY의 마감 여부 CASE가 보는 판매 창 컬럼이 GROUP BY에 없으면 Oracle이 ORA-00979로 거절한다. H2는
-     * {@code show.id}가 PK라는 함수 종속을 알아서 통과시키므로 이 테스트가 Oracle에서의 실패를 잡지는 못한다 — 여기서 고정하는 것은 <b>중복 없이 세 정렬 키가 그대로 적용된
-     * 결과</b>이고, GROUP BY를 좁히면 최소한 그 결과가 깨지는지는 보인다.
+     * 배너 query는 GROUP BY로 장르 조인의 중복을 접는다. 여기서 고정하는 것은 <b>중복 없이 세 정렬 키가 그대로 적용된 결과</b>이고, GROUP BY를 좁히면 최소한 그 결과가 깨지는지는
+     * 보인다.
      */
     @Test
     void 최신_공연_배너는_장르가_여러_개여도_공연을_한_번만_담는다() {

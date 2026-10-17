@@ -60,7 +60,7 @@ spring:
             user-name-attribute: id
   flyway:
     enabled: false
-    locations: classpath:db/migration
+    locations: classpath:db/migration-vendor/postgresql
     clean-disabled: true
     validate-on-migrate: true
 
