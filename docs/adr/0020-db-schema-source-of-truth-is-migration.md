@@ -7,6 +7,10 @@
 2026-10-08 갱신: `dev` 프로파일은 `local`과 설정이 중복되어 제거했다. 현재 프로파일은
 [운영 절차](../operations.md#프로파일)의 `local`과 `prod`다. 아래 본문은 결정 당시의 기록이다.
 
+2026-10-17 갱신: H2/Oracle migration 경로와 H2·Oracle 테스트를 지웠다. 스키마 원본은
+`db/migration-vendor/postgresql/{module}` 하나이고, `@MigratedSchema`와 migration 테스트는 테스트 PostgreSQL
+컨테이너를 쓴다(`PostgreSqlMigrationChainSchemaTest`). 현재 규칙은 `src/main/resources/db/README.md`가 원본이다.
+
 ## 배경
 
 스키마를 만드는 곳이 둘이었다.

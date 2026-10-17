@@ -1,6 +1,6 @@
 # 로컬 측정
 
-대상은 `java -jar`로 띄운 로컬 Core와 파일 H2다. Gatling은 같은 PC에서 돈다. 로컬 숫자는 병목을 찾는 데 쓴다.
+대상은 로컬 Core와 Docker로 띄운 로컬 PostgreSQL(`ticket-postgres`)이다. Gatling은 같은 PC에서 돈다. 로컬 숫자는 병목을 찾는 데 쓴다.
 확정한 C도 "로컬 후보"로 적는다. Queue 입장률은 운영에서 다시 잰다.
 
 명령은 모두 `../gatling-test`(gatling-test 저장소 루트)에서 PowerShell로 실행한다. 아래 상대 경로도 그곳 기준이다.
@@ -60,18 +60,20 @@ cd ..\ticket; .\gradlew.bat seedLocal -q "-Dseed.load-test-fixture.large-perform
 | --- | --- |
 | `HikariPool.getConnection` | DB 연결 차례를 기다린다 |
 | `org.redisson`, `RedissonLock`, `tryLock` | 좌석 락을 기다린다 |
-| `org.h2.` | DB 작업 중이다(쿼리 실행, H2 내부 락) |
+| `org.postgresql.` | DB 응답을 기다린다(쿼리 실행, DB 락) |
 | 맨 위가 `com.ticket.`이고 `RUNNABLE` | 앱 코드가 계산 중이다(JSON 직렬화 포함) |
 | `NioSocketImpl.read`, `SocketDispatcher.read` | Redis 같은 네트워크 응답을 기다린다 |
 | `TaskQueue.take` | 할 일이 없어 쉬는 중이다. 세지 않는다 |
 
 분류마다 개수와, `com.ticket.` 프레임이 들어간 대표 스택 하나를 근거로 붙인다. 덤프 세 장의 분포가 비슷하면 잠깐이 아니라 계속되는 병목이다.
 
-## 같은 PC와 H2라서 다른 점
+## 같은 PC라서 다른 점
 
 - Gatling과 Core가 CPU를 나눠 쓴다. Gatling이 멈춘 실행은 INVALID로 걸러지지만, CPU를 나눠 쓴 만큼 Core가 느려지는 것은
   Core 쪽 숫자에도 들어간다. `core-metrics.tsv`의 `system_cpu`가 0.9 이상이면 "PC CPU가 찼다. Core만 돌 때보다 낮게 나왔을 수
   있다"고 보고에 적는다.
-- H2는 Core JVM 안에서 돈다. Core의 CPU, 힙, GC에 DB 일이 섞여 있다. 쿼리에 쓴 시간은 덤프의 `org.h2.` 프레임으로 가른다.
-- H2의 실행 계획과 락은 Oracle과 다르다. 로컬에서 찾은 쿼리 문제는 "Oracle에서 같은지 미확인"으로 적는다.
-- 실행 계획은 `run-step.ps1`이 주문 수를 셀 때 쓰는 H2 Shell 명령에 `EXPLAIN ANALYZE <SQL>`을 넣어 본다.
+- PostgreSQL도 같은 PC의 Docker에서 돈다. Core·Gatling과 CPU를 나눠 쓴다. 쿼리에 쓴 시간은 덤프의 `org.postgresql.` 프레임과
+  `pg_stat_activity`의 `wait_event`로 가른다.
+- 로컬 PostgreSQL과 운영 RDS는 사양·데이터 양이 달라 실행 계획이 다를 수 있다. 로컬에서 찾은 쿼리 문제는 "운영에서 같은지
+  미확인"으로 적는다.
+- 실행 계획은 `docker exec ticket-postgres psql -U ticket -d ticket -c "EXPLAIN ANALYZE <SQL>"`로 본다.
