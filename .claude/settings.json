@@ -26,7 +26,8 @@
       "Bash(gh api:*)",
       "Bash(gh label list:*)",
       "Bash(rg:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File ..\\gatling-test\\scripts\\capacity\\run-step.ps1 -Prod:*)"
     ],
     "deny": [
       "Bash(git push --force:*)",
