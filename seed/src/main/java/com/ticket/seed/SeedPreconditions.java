@@ -2,7 +2,6 @@ package com.ticket.seed;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,9 +20,8 @@ import javax.sql.DataSource;
  * <p><b>스키마를 만들지 않는다.</b> 테이블 생성·삭제·초기화는 이 프로그램의 범위가 아니다. 로컬은 local 프로파일 기동이, 운영은 배포가 같은 Flyway migration으로 이미 만들어 둔 것을
  * 전제로 한다.
  *
- * <p><b>확인 범위는 실제로 접속한 스키마다.</b> Oracle에서 {@link DatabaseMetaData#getTables}는 접속 계정이 볼 수 있는 다른 스키마의 동명 테이블까지 돌려준다 — 그것을
- * "준비됐다"고 읽으면 INSERT는 엉뚱한 곳을 보거나 권한 오류로 실패한다. 그래서 Oracle에서는 {@code USER_TABLES} / {@code USER_TAB_COLUMNS}로 접속 계정 소유
- * 객체만 본다.
+ * <p><b>확인 범위는 실제로 접속한 스키마다.</b> {@link DatabaseMetaData#getTables}에 schema를 넘기지 않으면 접속 계정이 볼 수 있는 다른 스키마의 동명 테이블까지
+ * 돌려준다 — 그것을 "준비됐다"고 읽으면 INSERT는 엉뚱한 곳을 보거나 권한 오류로 실패한다. 그래서 현재 schema({@link Connection#getSchema})로 좁힌다.
  */
 final class SeedPreconditions {
     /** 시드가 실제로 INSERT하는 테이블 전체다. 하나라도 없으면 적재를 시작하지 않는다. */
@@ -59,9 +57,8 @@ final class SeedPreconditions {
 
     static void verify(final DataSource dataSource, final String jdbcUrl, final SeedTarget target) {
         try (Connection connection = dataSource.getConnection()) {
-            final boolean oracle = isOracle(jdbcUrl);
-            verifyTables(connection, jdbcUrl, target, oracle);
-            verifyMemberColumns(connection, oracle);
+            verifyTables(connection, jdbcUrl, target);
+            verifyMemberColumns(connection);
         } catch (final SQLException exception) {
             throw new SeedFailure(
                     """
@@ -71,10 +68,6 @@ final class SeedPreconditions {
                     """.formatted(SeedConsole.maskedUrl(jdbcUrl), exception.getMessage(), connectionHint(target)),
                     exception);
         }
-    }
-
-    private static boolean isOracle(final String jdbcUrl) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:oracle:");
     }
 
     private static String connectionHint(final SeedTarget target) {
@@ -87,10 +80,9 @@ final class SeedPreconditions {
                   -> local 프로파일로 애플리케이션이 기동된 적이 있는지, PostgreSQL 접속 설정이 맞는지 확인하세요.""";
     }
 
-    private static void verifyTables(
-            final Connection connection, final String jdbcUrl, final SeedTarget target, final boolean oracle)
+    private static void verifyTables(final Connection connection, final String jdbcUrl, final SeedTarget target)
             throws SQLException {
-        final Set<String> present = readTableNames(connection, oracle);
+        final Set<String> present = readTableNames(connection);
         final List<String> missing = new ArrayList<>();
         for (final String table : REQUIRED_TABLES) {
             if (!present.contains(table)) {
@@ -109,7 +101,7 @@ final class SeedPreconditions {
                 %s
                 """.formatted(
                         SeedConsole.maskedUrl(jdbcUrl),
-                        schemaLabel(connection, oracle),
+                        schemaLabel(connection),
                         String.join(", ", missing),
                         missingTableHint(target)));
     }
@@ -126,8 +118,8 @@ final class SeedPreconditions {
                      스키마가 만들어진 뒤에 seedLocal을 실행하세요.""";
     }
 
-    private static void verifyMemberColumns(final Connection connection, final boolean oracle) throws SQLException {
-        final Set<String> present = readColumnNames(connection, "MEMBERS", oracle);
+    private static void verifyMemberColumns(final Connection connection) throws SQLException {
+        final Set<String> present = readColumnNames(connection, "MEMBERS");
 
         final List<String> missing = new ArrayList<>();
         for (final String column : REQUIRED_MEMBER_COLUMNS) {
@@ -148,10 +140,7 @@ final class SeedPreconditions {
                 """.formatted(String.join(", ", missing), String.join(", ", present)));
     }
 
-    private static Set<String> readTableNames(final Connection connection, final boolean oracle) throws SQLException {
-        if (oracle) {
-            return queryNames(connection, "SELECT table_name FROM USER_TABLES");
-        }
+    private static Set<String> readTableNames(final Connection connection) throws SQLException {
         final Set<String> names = new LinkedHashSet<>();
         try (ResultSet tables = connection
                 .getMetaData()
@@ -163,12 +152,7 @@ final class SeedPreconditions {
         return names;
     }
 
-    private static Set<String> readColumnNames(final Connection connection, final String table, final boolean oracle)
-            throws SQLException {
-        if (oracle) {
-            return queryNames(
-                    connection, "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = '" + table + "'");
-        }
+    private static Set<String> readColumnNames(final Connection connection, final String table) throws SQLException {
         final Set<String> names = new LinkedHashSet<>();
         final String tablePattern =
                 connection.getMetaData().storesLowerCaseIdentifiers() ? table.toLowerCase(Locale.ROOT) : table;
@@ -182,23 +166,9 @@ final class SeedPreconditions {
         return names;
     }
 
-    private static Set<String> queryNames(final Connection connection, final String sql) throws SQLException {
-        final Set<String> names = new LinkedHashSet<>();
-        try (PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet rows = statement.executeQuery()) {
-            while (rows.next()) {
-                names.add(rows.getString(1).toUpperCase(Locale.ROOT));
-            }
-        }
-        return names;
-    }
-
     /** 어느 스키마를 보고 판정했는지 알려준다. 다른 스키마의 동명 테이블과 헷갈리는 것을 막는 정보다. */
-    private static String schemaLabel(final Connection connection, final boolean oracle) {
+    private static String schemaLabel(final Connection connection) {
         try {
-            if (oracle) {
-                return connection.getMetaData().getUserName();
-            }
             final String schema = connection.getSchema();
             return schema == null ? "(알 수 없음)" : schema;
         } catch (final SQLException exception) {

@@ -19,7 +19,7 @@ final class SeedConsole {
         System.err.println(message);
     }
 
-    /** JDBC URL에서 자격증명으로 보이는 조각을 지운다. H2 파일 URL은 비밀번호를 담지 않지만, 설정 원본이 바뀌어 URL에 자격증명이 섞여도 로그로 새지 않게 한다. */
+    /** JDBC URL에서 자격증명으로 보이는 조각을 지운다. 설정 원본이 바뀌어 URL에 자격증명이 섞여도 로그로 새지 않게 한다. */
     static String maskedUrl(final String jdbcUrl) {
         if (jdbcUrl == null) {
             return "(없음)";

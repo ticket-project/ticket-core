@@ -88,14 +88,8 @@ final class SeedProgram {
                         LoadTestFixtureSeeder.LARGE,
                         settings.largeLoadTestPerformanceCount()),
                 new LoadTestMemberSeeder(jdbcTemplate, transactionTemplate, settings.loadTestMemberCount()),
-                new BackgroundOrderSeeder(
-                        jdbcTemplate,
-                        transactionTemplate,
-                        settings.backgroundOrderCount(),
-                        settings.jdbcUrl().startsWith("jdbc:oracle:"))));
-        if (settings.jdbcUrl().startsWith("jdbc:postgresql:")) {
-            tasks.add(new PostgreSqlIdentitySynchronizer(jdbcTemplate));
-        }
+                new BackgroundOrderSeeder(jdbcTemplate, transactionTemplate, settings.backgroundOrderCount()),
+                new PostgreSqlIdentitySynchronizer(jdbcTemplate)));
         return List.copyOf(tasks);
     }
 

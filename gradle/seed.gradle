@@ -27,11 +27,7 @@ dependencies {
     seedMainImplementation 'org.springframework:spring-jdbc'
     seedMainImplementation 'org.springframework:spring-tx'
     seedMainImplementation 'org.yaml:snakeyaml'
-    seedMainRuntimeOnly 'com.h2database:h2'
     seedMainRuntimeOnly 'org.postgresql:postgresql'
-    // 과거 Oracle 적재 회귀 테스트에만 드라이버와 Flyway 모듈을 둔다.
-    seedTestRuntimeOnly libs.bundles.oracle.jdbc
-    seedTestRuntimeOnly 'org.flywaydb:flyway-database-oracle'
 
     // 시드 테스트는 시드 코드와, 실제 앱 migration으로 스키마를 만들기 위한 서비스 classpath를
     // 함께 본다. 반대 방향(main/test가 시드를 보는 것)은 만들지 않는다.
@@ -40,10 +36,7 @@ dependencies {
     seedTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     // AppSchema가 운영과 같은 module별 Flyway 전략을 직접 호출한다(build.gradle의 testCompileOnly와 같은 이유).
     seedTestCompileOnly 'org.springframework.modulith:spring-modulith-runtime'
-    // 운영 적재 경로(seedProd)는 실제 Oracle에서만 검증할 수 있다. 서비스 테스트가 이미 쓰는
-    // gvenzl/oracle-free 컨테이너를 시드 테스트에서도 쓴다(Docker 없으면 자동으로 건너뛴다).
-    seedTestImplementation 'org.testcontainers:testcontainers-junit-jupiter'
-    seedTestImplementation 'org.testcontainers:testcontainers-oracle-free'
+    // 시드 테스트는 운영과 같은 PostgreSQL 컨테이너에 migration으로 스키마를 만들고 적재한다(Docker 필요).
     seedTestImplementation 'org.testcontainers:testcontainers-postgresql'
     seedTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -54,7 +47,7 @@ tasks.register('seedTest', Test) {
     testClassesDirs = sourceSets.seedTest.output.classesDirs
     classpath = sourceSets.seedTest.runtimeClasspath
     useJUnitPlatform()
-    // 공용 시드 전체 적재 테스트가 100만 행 가까이 만든다. 임시 H2 파일 DB를 쓰지만 여유를 둔다.
+    // 공용 시드 전체 적재 테스트가 100만 행 가까이 만든다. 여유를 둔다.
     maxHeapSize = '2g'
     // 시드 프로그램의 출력과 실패 메시지가 한국어다. 리포트가 깨지지 않게 고정한다.
     defaultCharacterEncoding = 'UTF-8'
@@ -113,7 +106,7 @@ tasks.register('seedLocal', JavaExec) {
  *
  * 접속 설정의 원본은 SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
  * 환경변수뿐이다. seedLocal과 달리 application-local.yml을 읽지 않는다 -- 운영 적재가 조용히 로컬
- * H2로 흘러가는 경로를 만들지 않기 위해서다. 세 값 중 하나라도 없으면 적재 전에 실패한다.
+ * DB로 흘러가는 경로를 만들지 않기 위해서다. 세 값 중 하나라도 없으면 적재 전에 실패한다.
  *
  * 기본값은 공연 데이터만 적재한다(테스트 회원 0명, 부하 테스트 회차 0개).
  * 테이블 생성은 이 명령의 범위가 아니다 -- 이미 있는 테이블에 데이터만 넣는다.

@@ -4519,10 +4519,10 @@ INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, ord
 INSERT INTO GRADES (code, name, created_at, created_by)
 SELECT g.grade_code, g.grade_name, '2026-01-01 10:00:00', '시드'
 FROM (
-    SELECT 'VIP' grade_code, 'VIP석' grade_name FROM dual
-    UNION ALL SELECT 'R', 'R석' FROM dual
-    UNION ALL SELECT 'S', 'S석' FROM dual
-    UNION ALL SELECT 'A', 'A석' FROM dual
+    SELECT 'VIP' grade_code, 'VIP석' grade_name
+    UNION ALL SELECT 'R', 'R석'
+    UNION ALL SELECT 'S', 'S석'
+    UNION ALL SELECT 'A', 'A석'
 ) g
 WHERE NOT EXISTS (SELECT 1 FROM GRADES existing WHERE existing.code = g.grade_code);
 

@@ -3,7 +3,6 @@ package com.ticket.seed;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -60,9 +59,7 @@ final class CuratedSeedLoader implements SeedTask {
             }
         }
 
-        final boolean postgresql = Boolean.TRUE.equals(jdbcTemplate.execute((ConnectionCallback<Boolean>)
-                connection -> connection.getMetaData().getDatabaseProductName().equals("PostgreSQL")));
-        final List<String> executable = statements.executableStatements(postgresql);
+        final List<String> executable = statements.executableStatements();
         if (executable.isEmpty()) {
             throw new SeedFailure("시드 SQL에서 실행할 문장을 찾지 못했습니다: " + sqlPath);
         }
