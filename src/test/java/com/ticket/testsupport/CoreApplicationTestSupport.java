@@ -4,13 +4,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import com.ticket.TicketApplication;
 
 /**
- * 실제 애플리케이션 전체({@link TicketApplication})를 PostgreSQL·Redis Testcontainers와 함께 띄운다. 운영과 같은 PostgreSQL migration과
- * Hibernate validate를 사용한다. 나머지 테스트 설정은 {@code src/test/resources/config/application.yml}에 있다.
+ * 실제 애플리케이션 전체({@link TicketApplication})를 PostgreSQL({@link PostgreSqlTestDatabase}의 {@code public} schema)·Redis
+ * Testcontainers와 함께 띄운다. 운영과 같은 PostgreSQL migration과 Hibernate validate를 사용한다. 나머지 테스트 설정은
+ * {@code src/test/resources/config/application.yml}에 있다.
  *
  * <p>설정을 여기 한 곳에 두어야 상속한 테스트들이 Spring context 하나를 재사용한다. 하위 클래스가 속성·bean을 더하면 그 조합마다 context가 따로 뜬다.
  */
@@ -28,18 +28,15 @@ public abstract class CoreApplicationTestSupport {
     static final GenericContainer<?> REDIS =
             new GenericContainer<>(TestContainerImages.REDIS).withExposedPorts(REDIS_PORT);
 
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(TestContainerImages.POSTGRESQL);
-
     static {
         REDIS.start();
-        POSTGRES.start();
     }
 
     @DynamicPropertySource
     static void redisProperties(final DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.url", PostgreSqlTestDatabase::jdbcUrl);
+        registry.add("spring.datasource.username", PostgreSqlTestDatabase::username);
+        registry.add("spring.datasource.password", PostgreSqlTestDatabase::password);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> true);

@@ -19,7 +19,7 @@ import com.ticket.member.domain.Role;
 import com.ticket.testsupport.persistence.JpaSliceTestSupport;
 
 /**
- * 소셜 계정이 회원 aggregate의 자식 컬렉션으로 바뀐 뒤에도 <b>soft delete가 유지되는지</b>를 실제 H2에 붙여 고정한다.
+ * 소셜 계정이 회원 aggregate의 자식 컬렉션으로 바뀐 뒤에도 <b>soft delete가 유지되는지</b>를 실제 PostgreSQL에 붙여 고정한다.
  *
  * <p>이 테스트가 지키는 것은 하나다 — {@code Member.socialAccounts}에 {@code orphanRemoval = true}나 {@code CascadeType.REMOVE}가 붙으면
  * 탈퇴 시 {@code MEMBER_SOCIAL_ACCOUNTS} row가 실제로 지워져 연결 이력이 사라진다. 그 실수를 잡으려고 JPA 컬렉션이 아니라 <b>native count</b>로 row 존재를 직접
