@@ -23,7 +23,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/database-change/SKILL.md",
-      "computedHash": "0ad43dc79ac145cae77b8debcbdaeab60e6521bfb64f481eabec43c5eb64a7fa"
+      "computedHash": "df051710fbec7dfee5b84a0f3d21a910b45ef103dd6fa827c0c5abfb83a4c487"
     },
     "modulith-boundaries": {
       "source": "ticket-core",
@@ -35,7 +35,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/query-performance-review/SKILL.md",
-      "computedHash": "d003b93fa352b5f9f9bc05562847c1614486fd4beb5715158ba95c0c2136c636"
+      "computedHash": "0e240881072a4fe718893dadded30f5d824946118bd45206ecc0f1034e8c7a86"
     }
   }
 }

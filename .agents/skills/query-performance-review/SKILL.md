@@ -13,7 +13,7 @@ description: ticket-core의 JPA·Querydsl·SQL 조회에서 N+1, index, paginati
 
 ## Checks
 
-- SQL/query 수·조회량·lazy 접근·페이지 경계·connection 점유 중 병목 가설과 관측 근거를 구분한다. H2 결과를 Oracle 실행계획·운영 성능으로 일반화하지 않는다.
+- SQL/query 수·조회량·lazy 접근·페이지 경계·connection 점유 중 병목 가설과 관측 근거를 구분한다. 로컬·테스트 DB 결과를 운영 RDS 실행계획·성능으로 일반화하지 않는다.
 - WHERE·join·GROUP BY/DISTINCT·ORDER BY·null·LIKE escaping·커서 tie breaker를 전후 대조해 정확성을 먼저 보존한다.
 - 저장 구현은 자기 모듈 데이터를 조회하고 다른 모듈 결과 조합은 use case의 공개 API에서 한다. N+1 해소를 다른 모듈 entity 직접 join으로 해결하지 않는다.
 - 자기 모듈의 승인된 조회 Repository 호출을 불필요한 1:1 port/adapter로 감싸지 않는다. 새 조회 공개면은 구조 테스트와 [modulith-boundaries](../modulith-boundaries/SKILL.md)를 대조한다.

@@ -188,7 +188,7 @@ body:
         - Profile: local
         - Branch: feat/hold-lock
         - Commit: abc1234
-        - DB: H2 file
+        - DB: PostgreSQL (docker-compose-local)
         - Redis: docker compose local
         - Client: Swagger / Postman / Chrome
     validations:

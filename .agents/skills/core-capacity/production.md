@@ -1,6 +1,6 @@
 # 운영 측정
 
-대상은 운영 Core(`https://oneticket.site`, AWS EC2 한 대, 컨테이너 `ticket-be`)와 운영 Oracle(OCI Autonomous DB)이다.
+대상은 운영 Core(`https://oneticket.site`, AWS EC2 한 대, 컨테이너 `ticket-be`)와 운영 PostgreSQL(AWS RDS)이다.
 Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capacity.md](../../../docs/core-capacity.md)의 "측정 순서" 1~10단계가 원본이다.
 
 운영은 실제 서비스라서 로컬과 세 가지가 다르다.
@@ -77,7 +77,7 @@ executor 적체 없음([operations.md](../../../docs/operations.md)의 "Core 용
 - **스레드 덤프.** 운영 이미지는 JRE(`eclipse-temurin:25-jre-alpine`)라 `jcmd`가 없다. 필요하면 사용자가 서버에서
   `docker exec ticket-be kill -3 1`을 막힌 동안 2~3번 실행한다. 덤프는 컨테이너 로그에 남는다. 읽는 법은 local.md와 같다.
   운영 요청 스레드 이름도 `http-nio-8080-exec-`다.
-- **Oracle 대기.** [operations.md](../../../docs/operations.md)의 `v$session` 쿼리를 관측 전용 계정으로 사용자가 실행한다.
+- **DB 대기.** [operations.md](../../../docs/operations.md)의 `pg_stat_activity` 쿼리를 관측 전용 계정으로 사용자가 실행한다.
 
 ## 정리
 

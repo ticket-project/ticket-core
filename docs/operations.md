@@ -7,15 +7,14 @@
 
 - **local**: PostgreSQL과 Redis는 `docker-compose-local.yml`로 띄운다. 접속 정보가 기본값과 다르면
   `SPRING_DATASOURCE_*`로 지정한다. 스키마는 운영과 같은 PostgreSQL migration으로 만든다. 초기 데이터는 기동
-  때 넣지 않으므로 처음 한 번 `seedLocal`을 실행한다. 기존 H2 파일은 자동 변환하거나 삭제하지 않는다.
+  때 넣지 않으므로 처음 한 번 `seedLocal`을 실행한다.
 - **prod**: AWS RDS PostgreSQL. 초기 데이터는 기동 시 넣지 않는다. 테이블 생성(배포/Flyway)과 데이터 적재(`seedProd`)는 별개
   작업이다.
 
-## AWS RDS PostgreSQL 전환
+## AWS RDS PostgreSQL
 
 자동화 검증 컨테이너는 PostgreSQL 18을 사용한다. 기존 로컬 컨테이너의 버전은 별도로 관리하며,
 RDS의 메이저 버전을 확정하면 자동화 검증 버전도 맞춘다. 실제 리전에서 지원하는 마이너 버전은 생성 전에 확인한다.
-기존 운영 Oracle의 데이터는 이 코드 변경으로 자동 이관되지 않는다.
 
 서버의 저장소 밖 compose와 환경변수에는 다음 값을 설정한다. 비밀번호는 별도 secret으로 주입한다.
 
@@ -29,25 +28,10 @@ SPRING_DATASOURCE_PASSWORD=<비밀번호>
 AWS RDS CA bundle을 컨테이너의 위 경로에 읽기 전용으로 마운트한다. `verify-full`은 CA와 endpoint 이름을
 함께 확인한다([AWS SSL 안내](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html)).
 `seedProd`는 같은 JDBC URL을 사용하되 `sslrootcert`를 실행 PC에서 읽을 수 있는 인증서 경로로 바꾼다.
-Oracle Wallet과 `TNS_ADMIN`은 PostgreSQL 실행에 사용하지 않는다. 애플리케이션 실행 서버에서 RDS로
-접속할 수 있게 VPC·보안 그룹·5432 접근과 DB 계정의 schema 생성·DDL 권한을 준비한다.
+애플리케이션 실행 서버에서 RDS로 접속할 수 있게 VPC·보안 그룹·5432 접근과 DB 계정의 schema 생성·DDL 권한을
+준비한다.
 
-전환 순서:
-
-1. 기존 Oracle의 백업과 데이터 이관 범위를 확정하고 새 RDS의 빈 애플리케이션 schema를 준비한다.
-2. 새 코드로 PostgreSQL migration을 먼저 적용한다. PostgreSQL V1은 현재 스키마를 바로 만들므로
-   Oracle의 Flyway 이력 테이블이나 과거 DDL을 가져오지 않는다.
-3. 기존 업무 데이터를 옮길 경우 쓰기와 주문/hold 만료·이벤트 재처리를 중지하고 최종 데이터를 동기화한다.
-   명시적 ID, UUID, 날짜와 시각, 긴 설명 문자열, 미완료 publication과 archive를 변환·검증한다.
-   저장된 이벤트 클래스의 옛 `com.ticket.booking.OrderStarted` 값은 `com.ticket.booking.OrderCreated`로 변환한다.
-4. 이관한 identity 컬럼마다 시퀀스를 기존 최대 ID 이상으로 맞춘다. `seedLocal`/`seedProd`는 성공 시
-   이 작업을 자동 수행하지만 외부 데이터 이관 도구에는 자동 적용되지 않는다. seed는 이관 도구가 아니다.
-5. 행 수·중복·참조·금액·날짜·미완료 이벤트를 대조하고 로그인, 공연 조회, 선점, 주문 생성/취소/만료,
-   publication 처리와 `/actuator/health`를 확인한 뒤 트래픽을 연다. Redis에 남은 hold·대기열 상태도 DB와 맞춘다.
-
-DB 전환은 일반 이미지 배포와 별도로 계획한다. 배포 workflow의 이전 이미지 복원만으로 DB 연결·데이터가
-Oracle로 돌아가지는 않는다. PostgreSQL에서 새 쓰기가 발생한 뒤에는 이전 DB와 데이터가 달라지므로,
-복귀 시 데이터 조정과 서버 환경변수 복원까지 포함해야 한다.
+Oracle에서 RDS PostgreSQL로의 전환(데이터 이관 절차 포함)은 2026-10에 끝났다. 당시 절차는 git 이력에 있다.
 
 ## Admission token 검증
 
@@ -101,9 +85,6 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `serialized_event` 컬럼 정의(PostgreSQL `__root` V1의 VARCHAR(4000))를
   환경별 Flyway 이력과 실제 컬럼으로 확인한다. 저장소에 파일이 있다는 사실만으로 운영 적용을 단정하지 않는다. V9 이전
   크기에서는 `OrderTerminated` publication 저장이 실패할 수 있으므로 다중 좌석 주문 트래픽을 늘리기 전에 확인한다.
-- 과거 Oracle/H2의 `__root` V10은 저장된 publication의 `event_type`을 `com.ticket.booking.OrderStarted`에서 `OrderCreated`로 옮겼다. 이관 뒤
-  `OrderStarted`를 쓰던 이전 이미지로 되돌리면 그 행의 클래스를 읽지 못한다. 되돌려야 하면 미완료 `OrderCreated` 행이 없는지
-  먼저 확인하거나 `event_type`을 옛 이름으로 되돌린다.
 
 PostgreSQL에서 migration이 실패한 뒤 재시도하기 전에는 실제 schema와 `flyway_schema_history`(module 소유라면
 `flyway_schema_history_{module}`)를 함께 확인한다.
@@ -147,16 +128,16 @@ Hikari pending이 0보다 커지면 요청이 DB 연결을 빌리지 못하고 �
 경고가 반복되면 이전 회차 작업이 현재 부하와 겹친 것이다. 이벤트 후속 처리가 누락되거나 실패해도
 `EventPublicationMaintenance`가 주기적으로 재처리해 복구하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
 
-Oracle lock wait는 Actuator만으로 볼 수 없다. Oracle exporter·Datadog DBM 또는 DBA 권한이 있는 별도 관측 계정에서 다음
-정보를 수집한다. `v$session` 조회 권한은 애플리케이션 계정에 추가하지 말고 관측 전용 계정에만 부여한다.
+DB lock wait는 Actuator만으로 볼 수 없다. Datadog DBM 또는 `pg_monitor` 권한이 있는 별도 관측 계정에서 다음 정보를
+수집한다. 다른 세션 조회 권한은 애플리케이션 계정에 추가하지 말고 관측 전용 계정에만 부여한다.
 
 ```sql
-SELECT COUNT(*) AS blocked_sessions FROM v$session WHERE blocking_session IS NOT NULL;
+SELECT count(*) AS blocked_sessions FROM pg_stat_activity WHERE cardinality(pg_blocking_pids(pid)) > 0;
 
-SELECT event, COUNT(*) AS waiting_sessions, MAX(seconds_in_wait) AS max_seconds_in_wait
-FROM v$session
-WHERE state = 'WAITING' AND wait_class <> 'Idle'
-GROUP BY event
+SELECT wait_event_type, wait_event, count(*) AS waiting_sessions, max(now() - query_start) AS oldest_query_age
+FROM pg_stat_activity
+WHERE state = 'active' AND wait_event_type IS NOT NULL
+GROUP BY wait_event_type, wait_event
 ORDER BY waiting_sessions DESC;
 ```
 
