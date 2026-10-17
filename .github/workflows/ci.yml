@@ -48,6 +48,13 @@ jobs:
           java-version: "25"
           cache: gradle
 
+      # 아래 node --test에 glob을 넘기려면 Node 21 이상이 필요하다. 러너 이미지가 바뀌어도 같은 Node로 돌도록
+      # 버전을 고정한다. package.json이 없어 의존성 캐시는 쓰지 않는다.
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
       # KOPIS 수집 도구의 회귀 테스트. 네트워크를 타지 않고, 병합 지점 검증은 실제
       # seed/sql/kopis-curated.sql을 대상으로 한다. 외부 의존성이 없어 설치 단계가 없다.
       - name: Test seed collection tool
