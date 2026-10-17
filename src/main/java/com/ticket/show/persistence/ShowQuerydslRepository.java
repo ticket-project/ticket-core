@@ -82,9 +82,7 @@ public class ShowQuerydslRepository {
         final List<Long> showIds = fromShowJoiningCategory(queryFactory.select(show.id))
                 .where(categoryCodeEq(categoryCode))
                 // DISTINCT 대신 GROUP BY인 이유는 fetchShowPageRows와 같다. ORDER BY의 마감 여부
-                // CASE가 보는 판매 창 두 컬럼까지 GROUP BY에 넣는다 -- Oracle은 GROUP BY에 없는
-                // 컬럼을 ORDER BY에서 쓰면 ORA-00979로 거절한다(H2는 show.id가 PK라는 함수 종속을
-                // 알아서 통과시켜 이 차이가 테스트에 잡히지 않는다). show.id가 PK라 추가한 두 컬럼은
+                // CASE가 보는 판매 창 두 컬럼까지 GROUP BY에 넣는다. show.id가 PK라 추가한 두 컬럼은
                 // 함수 종속이고, 묶이는 행 자체는 달라지지 않는다.
                 .groupBy(show.id, show.createdAt, show.displaySaleWindow.startsAt, show.displaySaleWindow.endsAt)
                 .orderBy(orderSpecifiers(sortOrder))
@@ -95,7 +93,7 @@ public class ShowQuerydslRepository {
     }
 
     public List<Show> findSaleOpeningSoonSummaries(final String categoryCode, final int limit) {
-        // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(H2).
+        // SELECT DISTINCT는 ORDER BY에 쓴 식이 select 목록에 그대로 있어야 한다(PostgreSQL).
         final List<Long> showIds = fromShowJoiningCategory(queryFactory
                         .select(show.id, show.displaySaleWindow.startsAt)
                         .distinct())
@@ -520,7 +518,7 @@ public class ShowQuerydslRepository {
         return fromShowJoiningCategory(queryFactory.select(pageRowColumns()))
                 .where(where)
                 // DISTINCT가 아니라 GROUP BY로 장르 조인의 행 중복을 없앤다. SELECT DISTINCT는
-                // ORDER BY에 쓴 식이 select 목록에 "그대로" 있어야 하는데(H2 / Oracle ORA-01791),
+                // ORDER BY에 쓴 식이 select 목록에 "그대로" 있어야 하는데(PostgreSQL도 같다),
                 // 최신순의 마감 여부 CASE는 바인딩 파라미터를 써서 두 자리가 같은 식으로 인정되지
                 // 않는다. GROUP BY는 그 제약을 받지 않는다.
                 .groupBy(pageRowColumns())
