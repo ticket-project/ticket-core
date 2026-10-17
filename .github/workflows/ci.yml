@@ -63,7 +63,7 @@ jobs:
           ./gradlew clean spotlessCheck compileJava architectureTest test seedTest bootJar verifySeedNotInBootJar --no-daemon
 
       - name: Upload Spring Modulith structure docs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: spring-modulith-docs
           path: build/spring-modulith-docs/
@@ -71,7 +71,7 @@ jobs:
           retention-days: 7
 
       - name: Upload verified application jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ticket-core-jar
           path: build/libs/*.jar
