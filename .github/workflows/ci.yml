@@ -27,16 +27,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # Redis·PostgreSQL이 필요한 테스트는 Testcontainers로 직접 띄운다(Docker는 러너에 있다). 서비스 컨테이너를 따로 두지 않는다.
     steps:
       - name: Checkout
         uses: actions/checkout@v7
