@@ -71,8 +71,8 @@ DB 저장이 실패하면 `CreateOrderUseCase`가 `SEAT` 락을 다시 잡고 �
 현재 동시성 방어는 `LockScope.SEAT` 분산락과 `BookingPreflightReader`의 좌석 판매 상태 확인이다.
 Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않는다. 충돌하면 앞서 쓴 이 hold의
 좌석을 보상하고 `E6000`(409)으로 거절한다.
-`PerformanceSeat`는 `@Version`(낙관적 락)과 `reserve()`/`release()`를 갖지만 현재 주문 생성 경로 어디에서도
-호출되지 않는다 — 결제 승인 시점에 `PerformanceSeat`를 `RESERVED`로 전이하는 정산 흐름이 아직 없다. 지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
+`PerformanceSeat`는 `@Version`(낙관적 락)만 갖고 상태를 바꾸는 메서드가 없다 — 결제 승인 시점에
+`PerformanceSeat`를 `RESERVED`로 전이하는 흐름이 아직 없다([#219](https://github.com/ticket-project/ticket-core/issues/219)). 지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
 나타낼 뿐 주문 확정으로 바뀌지 않는다.
 
 커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,

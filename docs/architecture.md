@@ -166,8 +166,8 @@ Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡�
 ### HTTP와 공개 계약
 
 `domain`·`usecase`·`port`·module `api`는 Spring Web/Swagger에 의존하지 않는다. Jackson은 그 제한에서
-빠져 있어 일부 use case 중첩 record에 `@JsonProperty`가 있다. 응답 DTO 분리는
-[#249](https://github.com/ticket-project/ticket-core/issues/249)에서 검토 중이며 정해진 것은 없다.
+빠져 있어 일부 use case 중첩 record에 `@JsonProperty`가 있다. 응답 DTO는 따로
+분리하지 않기로 했다([#249](https://github.com/ticket-project/ticket-core/issues/249)).
 모듈 밖으로는 엔티티를 노출하지 않고 snapshot 값으로 내보낸다.
 
 ### 오류 처리
