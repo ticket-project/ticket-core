@@ -27,19 +27,23 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
 Claude는 ticket 저장소 루트에서 아래 꼴 그대로 실행한다. `ticket/.claude/settings.json`의 허용 규칙이 이 앞부분과 맞아야 한다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ..\gatling-test\scripts\capacity\run-step.ps1 -Prod -LoadHost ubuntu@<부하 발생기 IP> -UsersPerSecond <N> -Label <ladder|warmup|repro|diag>
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\gatling-test\scripts\capacity\run-step.ps1 -Prod -LoadHost ubuntu@<부하 발생기 IP> -UsersPerSecond <N> -Label <ladder|warmup|repro|diag> -PerformanceId <회차>
 ```
 
-- `-PerformanceId`를 비우면 주문이 없는 가장 작은 대형 회차(`920000001~`)를 운영 DB에서 고른다. 실행마다 새 회차가 된다.
-- `-CheckOnly`는 준비와 점검만 하고 부하를 보내지 않는다(`-LoadHost` 없어도 됨).
+- 운영 Core·DB는 사양이 낮다. 부하 말고 점검으로 운영을 건드리는 일은 최소로 한다(사용자 결정 2026-10-19, capacity-log P-020).
+- `-CheckOnly`는 준비와 점검만 하고 부하를 보내지 않는다(`-LoadHost` 없어도 됨). 측정을 시작할 때 한 번 돌려 다음 회차를 받는다.
+- 사다리·재현·진단은 그 회차부터 1씩 올려 `-PerformanceId`로 넘긴다. 그러면 실행마다 운영 DB에 묻지 않는다.
+  비우면 마지막 부하 주문의 회차 + 1을 운영 DB에 한 번 묻는다(주문을 PK 역순으로 읽다 첫 부하 주문에서 멈춘다).
 - 자동 모드 권한 분류기는 Claude의 운영 호스트 SSH를 "Production Reads"로 막는다(2026-10-17). 허용 규칙이 있어도 막히면
   사용자가 그 세션을 기본(매번 확인) 모드로 바꾸고 실행마다 승인한다.
 
 `-Prod`가 하는 일(`../gatling-test/scripts/capacity/prod-target.ps1`):
 
-1. 운영 호스트(`ubuntu@oneticket.site`)에 SSH로 들어가 Core 이미지 태그(commit), 컨테이너 IP, 회원·주문 수, `max_connections`,
-   대형 회차 수, 다음 회차를 읽고 nginx·compose·`free -m`·`docker stats`를 결과 폴더 `server-conditions.txt`에 남긴다.
+1. 운영 호스트(`ubuntu@oneticket.site`)에 SSH로 들어가 Core 이미지 태그(commit), 컨테이너 IP, `free -m`을 읽는다.
+   `-CheckOnly`일 때만 DB 규모(통계 추정치), `max_connections`, 대형 회차 수, nginx·compose·`docker stats`를 더 읽는다.
+   결과는 결과 폴더 `server-conditions.txt`에 남긴다.
 2. 빈 로컬 포트에서 `ticket-be:8080`으로 SSH 터널을 열어 health·prometheus를 읽고, 지표를 다 읽으면 닫는다.
+   전체 prometheus는 실행 전후 한 번씩만 받고, 1초 수집·회복 대기는 `includedNames`로 거른 지표 6개만 받는다.
 3. `ticket-be`의 `JWT_SECRET`을 메모리로 받아 토큰을 만든다. 사용자 환경 변수는 필요 없다.
 4. `../gatling-test/scripts/core-capacity/member-ids.txt`(git 미추적)가 없으면 운영 DB에서 부하 회원 ID를 받아 만든다.
 5. 앞 실행의 부하가 빠질 때까지 기다린다(아래 "실행 사이").
