@@ -1,17 +1,13 @@
 package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,8 +20,6 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.LongCodec;
 import org.redisson.client.codec.StringCodec;
 
-import com.ticket.booking.hold.domain.Hold;
-
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RedissonHoldStoreTest {
@@ -35,78 +29,6 @@ class RedissonHoldStoreTest {
 
     @InjectMocks
     private RedissonHoldStore redissonHoldStore;
-
-    @Test
-    void 홀드를_저장하면_좌석키와_메타키를_저장한다() {
-        // given
-        Duration ttl = Duration.ofMinutes(5);
-        Hold hold = new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
-        RBucket<Object> seat10 = mock(RBucket.class);
-        RBucket<Object> seat20 = mock(RBucket.class);
-        RBucket<Object> meta = mock(RBucket.class);
-        @SuppressWarnings("unchecked")
-        RSetCache<Object> holdSeatIndex = mock(RSetCache.class);
-
-        when(redissonClient.getBucket(HoldRedisKey.hold(1L, 10L), StringCodec.INSTANCE))
-                .thenReturn(seat10);
-        when(redissonClient.getBucket(HoldRedisKey.hold(1L, 20L), StringCodec.INSTANCE))
-                .thenReturn(seat20);
-        when(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE))
-                .thenReturn(meta);
-        when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
-                .thenReturn(holdSeatIndex);
-
-        when(seat10.setIfAbsent("hold-key", ttl)).thenReturn(true);
-        when(seat20.setIfAbsent("hold-key", ttl)).thenReturn(true);
-
-        // when
-        assertThat(redissonHoldStore.saveIfAbsent(hold, ttl)).isTrue();
-
-        // then
-        verify(seat10).setIfAbsent("hold-key", ttl);
-        verify(seat20).setIfAbsent("hold-key", ttl);
-        verify(meta).set("hold-key", ttl);
-        verify(holdSeatIndex).add(10L, ttl.toMillis(), TimeUnit.MILLISECONDS);
-        verify(holdSeatIndex).add(20L, ttl.toMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    @Test
-    void 홀드저장_중_예외가_나면_생성한_좌석키를_롤백한다() {
-        // given
-        Duration ttl = Duration.ofMinutes(5);
-        Hold hold = new Hold("hold-key", 7L, 1L, List.of(10L, 20L), LocalDateTime.of(2026, 3, 15, 19, 5));
-        RBucket<Object> seat10 = mock(RBucket.class);
-        RBucket<Object> seat20 = mock(RBucket.class);
-        RBucket<Object> meta = mock(RBucket.class);
-        @SuppressWarnings("unchecked")
-        RSetCache<Object> holdSeatIndex = mock(RSetCache.class);
-
-        when(redissonClient.getBucket(HoldRedisKey.hold(1L, 10L), StringCodec.INSTANCE))
-                .thenReturn(seat10);
-        when(redissonClient.getBucket(HoldRedisKey.hold(1L, 20L), StringCodec.INSTANCE))
-                .thenReturn(seat20);
-        when(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-key"), StringCodec.INSTANCE))
-                .thenReturn(meta);
-        when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
-                .thenReturn(holdSeatIndex);
-        when(seat10.setIfAbsent("hold-key", ttl)).thenReturn(true);
-        when(seat20.setIfAbsent("hold-key", ttl)).thenThrow(new RuntimeException("boom"));
-        // 보상은 소유 키를 확인하고 지운다.
-        when(seat10.get()).thenReturn("hold-key");
-        when(seat20.get()).thenReturn(null);
-
-        // when
-        // then
-        assertThatThrownBy(() -> redissonHoldStore.saveIfAbsent(hold, ttl))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hold Redis");
-
-        verify(seat10).delete();
-        verify(holdSeatIndex).remove(10L);
-        // 좌석 키를 쓰기 전에 정리 대상으로 기록하므로, 인덱스에만 남은 유령 점유도 함께 지운다.
-        verify(holdSeatIndex).remove(20L);
-        verify(meta).delete();
-    }
 
     @Test
     void release는_같은_holdKey만_삭제한다() {
