@@ -26,10 +26,12 @@ public class HoldRegistry {
             final LocalDateTime now) {
         final Hold hold = Hold.create(generateHoldKey(), memberId, performanceId, requestedSeatIds, now, ttl);
 
-        if (!holdStore.saveIfAbsent(hold, ttl)) {
-            throw new BookingException(BookingErrorCode.E6000);
-        }
-        return hold;
+        return switch (holdStore.saveIfAbsent(hold, ttl)) {
+            case SAVED -> hold;
+            case HELD_BY_OTHER -> throw new BookingException(BookingErrorCode.E6000);
+            // 같은 회원의 다른 주문 생성이 이 좌석을 먼저 잡았다(더블클릭 등). 그 주문이 진행 중이므로 진행 중 주문 오류로 답한다.
+            case HELD_BY_SAME_MEMBER -> throw new BookingException(BookingErrorCode.E5004);
+        };
     }
 
     private String generateHoldKey() {

@@ -20,6 +20,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.testsupport.TestContainerImages;
 
 /**
@@ -31,6 +32,8 @@ import com.ticket.testsupport.TestContainerImages;
 class RedissonHoldStoreIntegrationTest {
     private static final int REDIS_PORT = 6379;
     private static final long PERFORMANCE_ID = 9_100L;
+    private static final Long MEMBER_ID = 7L;
+    private static final Long OTHER_MEMBER_ID = 8L;
     private static final Duration TTL = Duration.ofMinutes(5);
 
     @Container
@@ -72,7 +75,7 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(redissonClient
                         .getBucket(HoldRedisKey.holdMeta("hold-ok"), StringCodec.INSTANCE)
                         .get())
-                .isEqualTo("hold-ok");
+                .isEqualTo("7");
     }
 
     @Test
@@ -114,9 +117,11 @@ class RedissonHoldStoreIntegrationTest {
     @Test
     void 이미_잡힌_좌석과_충돌하면_아무것도_쓰지_않고_남의_선점은_보존한다() {
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
-        assertThat(store.saveIfAbsent(hold("other-hold", List.of(20L)), TTL)).isTrue();
+        assertThat(store.saveIfAbsent(hold("other-hold", OTHER_MEMBER_ID, List.of(20L)), TTL))
+                .isEqualTo(HoldStore.SaveResult.SAVED);
 
-        assertThat(store.saveIfAbsent(hold("new-hold", List.of(10L, 20L)), TTL)).isFalse();
+        assertThat(store.saveIfAbsent(hold("new-hold", List.of(10L, 20L)), TTL))
+                .isEqualTo(HoldStore.SaveResult.HELD_BY_OTHER);
 
         assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
         assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
@@ -132,8 +137,25 @@ class RedissonHoldStoreIntegrationTest {
                 != null;
     }
 
+    @Test
+    void 같은_회원이_먼저_잡은_좌석과_충돌하면_같은_회원이라고_알리고_아무것도_쓰지_않는다() {
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        assertThat(store.saveIfAbsent(hold("first-click", List.of(20L)), TTL)).isEqualTo(HoldStore.SaveResult.SAVED);
+
+        assertThat(store.saveIfAbsent(hold("second-click", List.of(10L, 20L)), TTL))
+                .isEqualTo(HoldStore.SaveResult.HELD_BY_SAME_MEMBER);
+
+        assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
+        assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "first-click")).isTrue();
+        assertThat(metaExists("second-click")).isFalse();
+    }
+
     private Hold hold(final String holdKey, final List<Long> seatIds) {
+        return hold(holdKey, MEMBER_ID, seatIds);
+    }
+
+    private Hold hold(final String holdKey, final Long memberId, final List<Long> seatIds) {
         return new Hold(
-                holdKey, 7L, PERFORMANCE_ID, seatIds, LocalDateTime.now().plusMinutes(5));
+                holdKey, memberId, PERFORMANCE_ID, seatIds, LocalDateTime.now().plusMinutes(5));
     }
 }

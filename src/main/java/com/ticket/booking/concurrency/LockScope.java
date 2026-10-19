@@ -7,7 +7,5 @@ package com.ticket.booking.concurrency;
  */
 public enum LockScope {
     /** 회차의 좌석 한 자리. 동시 점유를 막는다. */
-    SEAT,
-    /** 같은 회원과 회차의 주문 생성. 중복 주문 생성을 막는다. */
-    ORDER_CREATE
+    SEAT
 }

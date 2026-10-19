@@ -37,17 +37,29 @@ class HoldRegistryTest {
 
     @Test
     void 이미_hold된_좌석이_있으면_seatAlreadyHold예외를_던진다() {
-        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5)))).thenReturn(false);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5))))
+                .thenReturn(HoldStore.SaveResult.HELD_BY_OTHER);
 
         assertThatThrownBy(() -> holdRegistry.createHold(1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6000);
     }
 
+    /** 같은 회원의 다른 주문 생성이 좌석을 먼저 잡았으면(더블클릭) 진행 중 주문 오류다. */
+    @Test
+    void 같은_회원이_먼저_잡은_좌석이면_진행중_주문_예외를_던진다() {
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5))))
+                .thenReturn(HoldStore.SaveResult.HELD_BY_SAME_MEMBER);
+
+        assertThatThrownBy(() -> holdRegistry.createHold(1L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E5004);
+    }
+
     @Test
     void hold를_생성하면_snapshot을_저장하고_반환한다() {
         Duration ttl = Duration.ofMinutes(5);
-        when(holdStore.saveIfAbsent(any(Hold.class), eq(ttl))).thenReturn(true);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(ttl))).thenReturn(HoldStore.SaveResult.SAVED);
 
         Hold hold = holdRegistry.createHold(7L, 1L, List.of(10L, 20L), ttl, FIXED_NOW);
 
@@ -62,7 +74,7 @@ class HoldRegistryTest {
     /** 없어진 {@code HoldKeyGeneratorTest}가 고정하던 hold 키 형식이다. */
     @Test
     void hold키는_HOLD_접두사와_하이픈없는_uuid로_생성한다() {
-        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5)))).thenReturn(true);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(Duration.ofMinutes(5)))).thenReturn(HoldStore.SaveResult.SAVED);
         Hold hold = holdRegistry.createHold(7L, 1L, List.of(10L), Duration.ofMinutes(5), FIXED_NOW);
 
         assertThat(hold.holdKey()).startsWith("HOLD-");
@@ -73,7 +85,7 @@ class HoldRegistryTest {
     void hold키를_두번_생성하면_서로_다르다() {
         List<Long> seatIds = List.of(10L);
         Duration ttl = Duration.ofMinutes(5);
-        when(holdStore.saveIfAbsent(any(Hold.class), eq(ttl))).thenReturn(true);
+        when(holdStore.saveIfAbsent(any(Hold.class), eq(ttl))).thenReturn(HoldStore.SaveResult.SAVED);
 
         Hold first = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);
         Hold second = holdRegistry.createHold(7L, 1L, seatIds, ttl, FIXED_NOW);

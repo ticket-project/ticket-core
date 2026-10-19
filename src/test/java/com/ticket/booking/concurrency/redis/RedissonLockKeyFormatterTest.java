@@ -15,9 +15,4 @@ class RedissonLockKeyFormatterTest {
     void 좌석_락은_회차와_좌석으로_key를_만든다() {
         assertThat(formatter.format(LockKey.seat(10L, 100L))).isEqualTo("LOCK:hold:10:100");
     }
-
-    @Test
-    void 주문_생성_락은_회원과_회차로_key를_만든다() {
-        assertThat(formatter.format(LockKey.orderCreate(20L, 10L))).isEqualTo("LOCK:start-order:20:10");
-    }
 }
