@@ -31,7 +31,6 @@
 
 ~~~text
 CreateOrderUseCase          (POST /api/v1/orders)
-  -> LockScope.ORDER_CREATE 락(같은 회원·회차 직렬화, 주문 DB 커밋 뒤 해제)
   -> BookingPreflightReader: 아래 확인과 조회를 짧은 read 트랜잭션 하나(connection 한 번)로 끝낸다
      -> admission BookingEntryGuard.check: 예매 정책 조회, 예매 기간 확인, 대기열 필요 회차만 token 검증
         — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
@@ -42,7 +41,7 @@ CreateOrderUseCase          (POST /api/v1/orders)
         show/venue 이름) 조회 — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
      그 밖은 E4006)하고
-     HoldRegistry로 Redis 좌석 hold 생성 후 락 해제 (밖)
+     HoldRegistry로 Redis 좌석 hold 생성(좌석 키·점유 인덱스·메타를 Lua 한 번으로) 후 락 해제 (밖)
   -> PendingOrderCreator
        -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
           단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (다른 값을 섞지 않는다)
@@ -62,15 +61,22 @@ CreateOrderUseCase          (POST /api/v1/orders)
             -> HELD 상태 발행             (WebSocket)
 ~~~
 
-`ORDER_CREATE` 락은 `CreateOrderUseCase.execute`의 전체 시작 흐름을 감싸므로 DB 주문 생성의
-커밋이 끝난 뒤 풀린다. `SEAT` 락은 Redis hold 생성 구간에서만 잡고 DB 트랜잭션 전 해제한다.
+같은 회원·회차의 주문 생성은 락으로 줄 세우지 않는다(2026-10-19까지는 `ORDER_CREATE` 락이 흐름 전체를
+감쌌다). "회원·회차당 PENDING 주문 하나"는 DB 유일 인덱스 `uk_orders_pending_member_performance`가 지키고,
+같은 회원이 동시에 보낸 두 번째 요청은 어디서 부딪히든 `E5004`를 받는다 — 진행 중 주문 확인, 같은 좌석
+hold(선점 메타에 회원 ID를 두어 같은 회원의 hold를 알아본다), 앞 주문 후처리가 지운 selection(커밋 뒤에만
+지우므로 진행 중 주문을 다시 확인한다), 다른 좌석이면 주문 저장의 유일 제약(hold를 보상 해제한다).
+앞 요청이 hold 뒤 주문 저장에서 실패하는 드문 경우, 그 사이의 두 번째 요청도 `E5004`를 받는다.
+자세한 근거는 `CreateOrderUseCase` 주석에 있다.
+
+`SEAT` 락은 Redis hold 생성 구간에서만 잡고 DB 트랜잭션 전 해제한다.
 DB 저장이 실패하면 `CreateOrderUseCase`가 `SEAT` 락을 다시 잡고 이미 만든 Redis hold를 보상 해제한다.
 좌석 선택과 알림도 별도의 `SEAT` 락 구간에서 처리한다. 락 안의 외부 I/O는 필요한 작업으로 제한하고,
 락 키를 변경할 때는 보호 대상을 검증한다.
 
 현재 동시성 방어는 `LockScope.SEAT` 분산락과 `BookingPreflightReader`의 좌석 판매 상태 확인이다.
-Redis hold 좌석 키도 `SET NX`로 저장해 다른 hold를 덮어쓰지 않는다. 충돌하면 앞서 쓴 이 hold의
-좌석을 보상하고 `E6000`(409)으로 거절한다.
+Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때만 모두 저장해 다른 hold를 덮어쓰지 않는다.
+충돌하면 아무것도 쓰지 않고 `E6000`(409)으로 거절한다(충돌한 hold가 같은 회원 것이면 `E5004`).
 `PerformanceSeat`는 `@Version`(낙관적 락)만 갖고 상태를 바꾸는 메서드가 없다 — 결제 승인 시점에
 `PerformanceSeat`를 `RESERVED`로 전이하는 흐름이 아직 없다([#219](https://github.com/ticket-project/ticket-core/issues/219)). 지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
 나타낼 뿐 주문 확정으로 바뀌지 않는다.

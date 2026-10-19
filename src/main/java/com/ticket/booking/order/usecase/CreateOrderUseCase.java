@@ -8,15 +8,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.ticket.booking.concurrency.DistributedLock;
 import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.LockOptions;
+import com.ticket.booking.exception.BookingErrorCode;
+import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.hold.domain.HoldRegistry;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.domain.OrderRemainingTime;
+import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.usecase.BookingPreflightReader.Preflight;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -41,20 +45,31 @@ import lombok.extern.slf4j.Slf4j;
  * </ul>
  *
  * <p>마지막 구간이 실패하면 이미 만들어진 Redis 선점을 되돌린다({@link #releaseHold}). 두 저장소를 하나의 ACID 트랜잭션으로 묶을 수 없으므로 보상으로 맞춘다.
+ *
+ * <p><b>같은 회원·회차의 주문 생성을 락으로 줄 세우지 않는다.</b> 예전에는 흐름 전체를 회원·회차 분산 락으로 감쌌다(주문마다 Redis 왕복 3번, gatling-test capacity-log
+ * 2026-10-19). 지금은 "회원·회차당 PENDING 주문 하나"를 DB 유일 인덱스({@code uk_orders_pending_member_performance})가 지키고, 같은 회원이 동시에 보낸
+ * 두 번째 요청(더블클릭)은 어디서 부딪히든 예전과 같은 {@code E5004}를 받는다.
+ *
+ * <ul>
+ *   <li>진행 중 주문 확인에서 — 앞 주문이 이미 저장됐다
+ *   <li>좌석 선점에서 같은 좌석 — 선점 저장이 "같은 회원의 선점"을 알려 준다({@link HoldStore.SaveResult#HELD_BY_SAME_MEMBER})
+ *   <li>본인 선택 확인에서 — 앞 주문의 후처리가 선택을 지웠다. 후처리는 앞 주문이 커밋된 뒤에만 돌므로 진행 중 주문을 다시 확인한다
+ *   <li>주문 저장에서 다른 좌석 — 유일 인덱스가 막고, 이 요청의 선점을 되돌린다
+ * </ul>
+ *
+ * 남는 차이: 앞 요청이 선점 뒤 주문 저장에서 실패하는 드문 경우, 그 사이에 온 요청도 {@code E5004}를 받는다(예전에는 기다렸다가 진행할 수 있었다).
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreateOrderUseCase {
-    private static final LockOptions CREATE_ORDER_LOCK =
-            LockOptions.defaults().withFailureMessage("주문 생성 처리 중입니다. 잠시 후 다시 시도해 주세요.");
-
     private final DistributedLock distributedLock;
     private final BookingPreflightReader bookingPreflightReader;
     private final HoldRegistry holdRegistry;
     private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
+    private final OrderRepository orderRepository;
     private final Clock clock;
 
     /** seatIds의 null·빈 목록·중복은 도메인 불변식이라 {@link RequestedSeatIds}가 판정한다. 여기서 다시 검사하지 않는다. */
@@ -71,15 +86,7 @@ public class CreateOrderUseCase {
 
     public record Output(String orderKey, OrderState status, LocalDateTime expiresAt, long remainingSeconds) {}
 
-    /** 같은 회원이 같은 회차의 예매를 동시에 시작하는 것을 직렬화한다. */
     public Output execute(final Input input) {
-        return distributedLock.withLock(
-                List.of(LockKey.orderCreate(input.memberId(), input.performanceId())),
-                CREATE_ORDER_LOCK,
-                () -> createOrder(input));
-    }
-
-    private Output createOrder(final Input input) {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
 
@@ -92,7 +99,12 @@ public class CreateOrderUseCase {
         //    connection 경합이 좌석 경합으로 번진다.
         final Duration holdDuration = preflight.policy().holdDuration();
         final List<LockKey> seatLocks = LockKey.seats(input.performanceId(), requestedSeatIds.toList());
-        final Hold hold = holdSeats(seatLocks, input, requestedSeatIds, holdDuration, now);
+        final Hold hold;
+        try {
+            hold = holdSeats(seatLocks, input, requestedSeatIds, holdDuration, now);
+        } catch (final BookingException exception) {
+            throw pendingOrderErrorIfStarted(input, exception);
+        }
 
         // 3. PENDING 주문을 만든다(DB 한 트랜잭션). 실패하면 2의 선점을 되돌린다.
         final String orderKey;
@@ -104,6 +116,11 @@ public class CreateOrderUseCase {
                     hold,
                     preflight.performanceSeats(),
                     preflight.saleSnapshot());
+        } catch (final DataIntegrityViolationException exception) {
+            // 같은 회원·회차의 PENDING 주문이 그사이 생겼다(uk_orders_pending_member_performance). ORDERS의 다른 유니크(order_key, hold_key)는
+            // 요청마다 새 UUID라 여기 걸리지 않는다.
+            releaseHold(seatLocks, hold, exception);
+            throw new BookingException(BookingErrorCode.E5004);
         } catch (final RuntimeException exception) {
             releaseHold(seatLocks, hold, exception);
             throw exception;
@@ -133,6 +150,16 @@ public class CreateOrderUseCase {
             return holdRegistry.createHold(
                     input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now);
         });
+    }
+
+    /** 본인 선택 확인에 실패했는데 같은 회원·회차의 PENDING 주문이 있으면 진행 중 주문 오류로 바꾼다. 앞 주문의 후처리가 선택을 지운 경우다. 실패한 요청에서만 DB를 한 번 더 읽는다. */
+    private BookingException pendingOrderErrorIfStarted(final Input input, final BookingException exception) {
+        final BookingErrorCode code = exception.getErrorCode();
+        if ((code == BookingErrorCode.E4006 || code == BookingErrorCode.E4007)
+                && orderRepository.existsPendingByMemberIdAndPerformanceId(input.memberId(), input.performanceId())) {
+            return new BookingException(BookingErrorCode.E5004);
+        }
+        return exception;
     }
 
     /** 보상 실패가 원래 주문 생성 실패를 가리지 않도록, 해제 예외는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다. */

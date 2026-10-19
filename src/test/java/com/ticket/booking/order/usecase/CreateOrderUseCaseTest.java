@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.admission.AdmissionVerifier;
@@ -130,6 +131,7 @@ class CreateOrderUseCaseTest {
                         holdStore,
                         seatSelectionService,
                         pendingOrderCreator,
+                        orderRepository,
                         fixedClock);
     }
 
@@ -335,6 +337,45 @@ class CreateOrderUseCaseTest {
 
         verify(holdRegistry, never()).createHold(any(), any(), any(), any(), any());
         verifyNoInteractions(pendingOrderCreator);
+    }
+
+    /** 같은 회원의 앞선 주문이 커밋된 뒤 그 후처리가 선택을 지웠으면, 선택 오류가 아니라 진행 중 주문 오류다(회원·회차 락 대신). */
+    @Test
+    void 선택이_없는데_그사이_같은_회원의_pending_주문이_생겼으면_진행중_주문_오류다() {
+        final List<Long> seatIds = List.of(1L, 2L);
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
+        when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
+                .thenReturn(false, true);
+        stubAvailableSeats(RequestedSeatIds.from(seatIds));
+        doThrow(new BookingException(BookingErrorCode.E4006))
+                .when(seatSelectionService)
+                .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
+
+        assertError(seatIds, BookingErrorCode.E5004);
+
+        verifyNoInteractions(pendingOrderCreator);
+    }
+
+    /** 같은 회원이 다른 좌석으로 동시에 주문하면 DB 유일 인덱스가 하나만 남기고, 진 쪽은 선점을 되돌린다. */
+    @Test
+    void 주문_저장이_유일_제약에_걸리면_hold를_해제하고_진행중_주문_오류다() {
+        final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
+        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
+        final List<PerformanceSeat> seats = availableSeats(2);
+        final Hold hold = hold(seatIds.toList());
+
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
+                .thenReturn(seats);
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+                .thenReturn(hold);
+        when(pendingOrderCreator.create(
+                        eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
+                .thenThrow(new DataIntegrityViolationException("uk_orders_pending_member_performance"));
+
+        assertError(input.seatIds(), BookingErrorCode.E5004);
+
+        verify(holdStore).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
     }
 
     @Test

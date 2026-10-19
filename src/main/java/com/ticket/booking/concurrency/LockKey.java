@@ -21,8 +21,4 @@ public record LockKey(LockScope scope, List<String> identifiers) {
     public static List<LockKey> seats(final Long performanceId, final List<Long> seatIds) {
         return seatIds.stream().map(seatId -> seat(performanceId, seatId)).toList();
     }
-
-    public static LockKey orderCreate(final Long memberId, final Long performanceId) {
-        return new LockKey(LockScope.ORDER_CREATE, List.of(String.valueOf(memberId), String.valueOf(performanceId)));
-    }
 }
