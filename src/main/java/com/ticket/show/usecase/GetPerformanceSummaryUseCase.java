@@ -8,6 +8,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticket.show.api.PerformanceSummaryApi;
+import com.ticket.show.api.PerformanceSummarySnapshot;
 import com.ticket.show.exception.PerformanceNotFoundException;
 import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
@@ -18,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class GetPerformanceSummaryUseCase {
+public class GetPerformanceSummaryUseCase implements PerformanceSummaryApi {
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
 
@@ -42,5 +44,11 @@ public class GetPerformanceSummaryUseCase {
         final String region = venue.region() == null ? null : venue.region().name();
 
         return new Output(performance.title(), region, performance.startTime());
+    }
+
+    @Override
+    public PerformanceSummarySnapshot getPerformanceSummary(final long performanceId) {
+        final Output output = execute(new Input(performanceId));
+        return new PerformanceSummarySnapshot(output.title(), output.region(), output.startTime());
     }
 }

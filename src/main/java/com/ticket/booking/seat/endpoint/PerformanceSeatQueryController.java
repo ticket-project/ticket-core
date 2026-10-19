@@ -71,7 +71,8 @@ public class PerformanceSeatQueryController {
 
     @Operation(
             summary = "점유 좌석 조회",
-            description = "판매 확정·선택·선점된 좌석 번호만 반환합니다. seat-map에 있고 여기 없는 좌석은 빈 좌석입니다. 회차별로 최대 1초 전 목록일 수 있습니다.")
+            description = "판매 확정·선택·선점된 좌석 번호와 회차 요약(제목·지역·시작 시각)을 반환합니다. seat-map에 있고 여기 없는 좌석은 빈 좌석입니다."
+                    + " 회차별로 최대 1초 전 목록일 수 있습니다. 요약은 .../summary와 같은 값입니다.")
     @GetMapping("/{performanceId}/seats/occupied")
     public ApiResponse<GetOccupiedSeatsUseCase.Output> getOccupiedSeats(
             @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId,
