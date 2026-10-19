@@ -2,6 +2,7 @@ package com.ticket.show.persistence;
 
 import static com.ticket.show.domain.QCategory.category;
 import static com.ticket.show.domain.QGenre.genre;
+import static com.ticket.show.domain.QGrade.grade;
 import static com.ticket.show.domain.performance.QPerformance.performance;
 import static com.ticket.show.domain.performance.QPerformanceGrade.performanceGrade;
 import static com.ticket.show.domain.show.QShow.show;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,8 @@ import com.ticket.show.domain.show.DisplaySaleWindow;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.usecase.GetShowDetailUseCase.PriceSummaryResponse;
+import com.ticket.show.usecase.PerformanceShowRow;
+import com.ticket.show.usecase.PerformanceSnapshotService.GradeRow;
 import com.ticket.show.usecase.SaleOpeningSoonSearchParam;
 import com.ticket.show.usecase.ShowCursor;
 import com.ticket.show.usecase.ShowListParam;
@@ -590,6 +594,48 @@ public class ShowQuerydslRepository {
             return null;
         }
         return new PriceSummaryResponse(minPrice, maxPrice);
+    }
+
+    // 회차 표시값 조각 ------------------------------------------------------------
+
+    /**
+     * 회차와 그 공연에서 예매 화면 요약과 주문 스냅샷이 쓰는 값만 한 번의 조인으로 읽는다. 둘 다 예매 사용자 요청마다 불리므로 공연의 소개 글({@code info}) 같은 큰 열은 싣지 않는다.
+     *
+     * <p>회차와 공연 사이에는 FK가 없어 left join한다. 공연이 없으면 {@link PerformanceShowRow#venueId()}가 null이다.
+     */
+    public Optional<PerformanceShowRow> findPerformanceShow(final long performanceId) {
+        final Tuple row = queryFactory
+                .select(performance.showId, performance.startTime, show.title, show.venueId)
+                .from(performance)
+                .leftJoin(show)
+                .on(show.id.eq(performance.showId))
+                .where(performance.id.eq(performanceId))
+                .fetchOne();
+        if (row == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new PerformanceShowRow(
+                required(row, performance.showId),
+                required(row, performance.startTime),
+                row.get(show.title),
+                row.get(show.venueId)));
+    }
+
+    /**
+     * 회차에 배정된 PerformanceGrade와 그 Grade를 한 번의 조인으로 읽는다. left join이라 Grade가 없는 편성도 빠지지 않는다 — 그런 편성을 데이터 깨짐으로 터뜨리는 일은
+     * 호출하는 use case가 한다.
+     */
+    public List<GradeRow> findPerformanceGrades(final long performanceId) {
+        return queryFactory
+                .select(performanceGrade, grade)
+                .from(performanceGrade)
+                .leftJoin(grade)
+                .on(grade.id.eq(performanceGrade.gradeId))
+                .where(performanceGrade.performance.id.eq(performanceId))
+                .fetch()
+                .stream()
+                .map(row -> new GradeRow(required(row, performanceGrade), row.get(grade)))
+                .toList();
     }
 
     static <T> T required(final Tuple tuple, final Expression<T> column) {
