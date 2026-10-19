@@ -135,9 +135,9 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     void expiration_query_includes_orders_due_exactly_now() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
 
-        Order past = order("past", now.minusSeconds(1));
-        Order boundary = order("boundary", now);
-        Order future = order("future", now.plusSeconds(1));
+        Order past = order("past", now.minusSeconds(1), MEMBER_ID + 11);
+        Order boundary = order("boundary", now, MEMBER_ID + 12);
+        Order future = order("future", now.plusSeconds(1), MEMBER_ID + 13);
         Order alreadyConfirmed = order("confirmed", now.minusMinutes(1));
         alreadyConfirmed.confirm(now.minusSeconds(1));
 
@@ -152,9 +152,9 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     void expiration_query_respects_the_requested_limit() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
         inTransaction(() -> saveAll(List.of(
-                order("first", now.minusMinutes(3)),
-                order("second", now.minusMinutes(2)),
-                order("third", now.minusMinutes(1)))));
+                order("first", now.minusMinutes(3), MEMBER_ID + 21),
+                order("second", now.minusMinutes(2), MEMBER_ID + 22),
+                order("third", now.minusMinutes(1), MEMBER_ID + 23))));
 
         List<Order> result = orderRepository.findExpirable(now, null, 2);
 
@@ -165,9 +165,9 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     @Test
     void expiration_query_returns_only_orders_after_the_cursor() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-        Order first = order("cursor-first", now.minusMinutes(3));
-        Order second = order("cursor-second", now.minusMinutes(2));
-        Order third = order("cursor-third", now.minusMinutes(1));
+        Order first = order("cursor-first", now.minusMinutes(3), MEMBER_ID + 31);
+        Order second = order("cursor-second", now.minusMinutes(2), MEMBER_ID + 32);
+        Order third = order("cursor-third", now.minusMinutes(1), MEMBER_ID + 33);
         inTransaction(() -> saveAll(List.of(first, second, third)));
 
         List<Order> result = orderRepository.findExpirable(now, first.getId(), BATCH_SIZE);
@@ -241,8 +241,13 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     }
 
     private Order order(final String suffix, final LocalDateTime expiresAt) {
+        return order(suffix, expiresAt, MEMBER_ID);
+    }
+
+    /** 회원·회차당 PENDING 주문은 하나다(uk_orders_pending_member_performance). PENDING을 여럿 만드는 테스트는 회원을 다르게 준다. */
+    private Order order(final String suffix, final LocalDateTime expiresAt, final long memberId) {
         return new Order(
-                MEMBER_ID,
+                memberId,
                 PERFORMANCE_ID,
                 "order-" + suffix,
                 "hold-" + suffix,
