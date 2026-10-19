@@ -8,12 +8,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.show.domain.performance.Performance;
-import com.ticket.show.domain.performance.PerformanceRepository;
-import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.ShowRepository;
 import com.ticket.show.exception.PerformanceNotFoundException;
-import com.ticket.show.exception.ShowNotFoundException;
+import com.ticket.show.persistence.ShowQuerydslRepository;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSnapshot;
 
@@ -23,8 +19,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class GetPerformanceSummaryUseCase {
-    private final PerformanceRepository performanceRepository;
-    private final ShowRepository showRepository;
+    private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
 
     public record Input(Long performanceId) {
@@ -39,16 +34,13 @@ public class GetPerformanceSummaryUseCase {
             @Nullable LocalDateTime startTime) {}
 
     public Output execute(final Input input) {
-        final Performance performance = performanceRepository
-                .findById(input.performanceId())
+        final PerformanceShowRow performance = showQuerydslRepository
+                .findPerformanceShow(input.performanceId())
                 .orElseThrow(() -> new PerformanceNotFoundException(input.performanceId()));
-        final Show show = showRepository
-                .findById(performance.getShowId())
-                .orElseThrow(() -> new ShowNotFoundException(performance.getShowId()));
 
-        final VenueSnapshot venue = venueLookupApi.getVenueSnapshot(show.getVenueId());
+        final VenueSnapshot venue = venueLookupApi.getVenueSnapshot(performance.requireVenueId());
         final String region = venue.region() == null ? null : venue.region().name();
 
-        return new Output(show.getTitle(), region, performance.getStartTime());
+        return new Output(performance.title(), region, performance.startTime());
     }
 }

@@ -1,10 +1,12 @@
 package com.ticket.show.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,8 @@ import com.ticket.show.domain.performance.PerformanceRepository;
 import com.ticket.show.domain.show.SaleDisplayStatus;
 import com.ticket.show.domain.show.Show;
 import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.usecase.PerformanceShowRow;
+import com.ticket.show.usecase.PerformanceSnapshotService.GradeRow;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 import com.ticket.venue.domain.Region;
 import com.ticket.venue.domain.Venue;
@@ -48,6 +52,7 @@ class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {
 
     private Long showId;
     private Long venueId;
+    private Long firstPerformanceId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -72,6 +77,7 @@ class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {
         persistShowGenre(show, genre);
         Performance firstPerformance =
                 persistPerformance(show, 1L, LocalDate.of(2026, 3, 16).atTime(14, 0));
+        firstPerformanceId = firstPerformance.getId();
         Performance secondPerformance =
                 persistPerformance(show, 2L, LocalDate.of(2026, 3, 16).atTime(19, 0));
         // ADR 0005: 가격은 회차(Performance) 단위로만 존재한다. 두 회차에 서로 다른 가격 범위를 둬
@@ -201,5 +207,34 @@ class ShowQuerydslRepositoryDetailTest extends ReadRepositoryTestSupport {
     @Test
     void 존재하지_않는_공연이면_empty를_반환한다() {
         assertThat(showRepository.findById(999999L)).isEmpty();
+    }
+
+    @Test
+    void 회차와_공연의_표시값을_한_번에_읽는다() {
+        PerformanceShowRow row =
+                showQuerydslRepository.findPerformanceShow(firstPerformanceId).orElseThrow();
+
+        assertThat(row.showId()).isEqualTo(showId);
+        assertThat(row.title()).isEqualTo("단독 공연");
+        assertThat(row.venueId()).isEqualTo(venueId);
+        assertThat(row.startTime()).isEqualTo(LocalDate.of(2026, 3, 16).atTime(14, 0));
+    }
+
+    @Test
+    void 없는_회차의_표시값은_빈_결과다() {
+        assertThat(showQuerydslRepository.findPerformanceShow(Long.MAX_VALUE)).isEmpty();
+    }
+
+    @Test
+    void 회차_등급과_그_등급을_한_번에_읽는다() {
+        List<GradeRow> rows = showQuerydslRepository.findPerformanceGrades(firstPerformanceId);
+
+        assertThat(rows)
+                .extracting(
+                        row -> row.grade().getCode(),
+                        row -> row.performanceGrade().getPrice())
+                .containsExactlyInAnyOrder(
+                        tuple("VIP", BigDecimal.valueOf(150000).setScale(2)),
+                        tuple("R", BigDecimal.valueOf(100000).setScale(2)));
     }
 }

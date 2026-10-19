@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,12 +21,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ticket.shared.exception.NotFoundException;
 import com.ticket.show.api.PerformanceSaleSnapshot;
 import com.ticket.show.domain.Grade;
-import com.ticket.show.domain.GradeRepository;
-import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.performance.PerformanceGrade;
 import com.ticket.show.domain.performance.PerformanceRepository;
-import com.ticket.show.domain.show.Show;
-import com.ticket.show.domain.show.ShowRepository;
+import com.ticket.show.persistence.ShowQuerydslRepository;
+import com.ticket.show.usecase.PerformanceSnapshotService.GradeRow;
 import com.ticket.venue.api.VenueLookupApi;
 import com.ticket.venue.api.VenueSeatLookupApi;
 import com.ticket.venue.api.VenueSeatSnapshot;
@@ -40,10 +37,7 @@ class PerformanceSnapshotServiceSaleTest {
     private PerformanceRepository performanceRepository;
 
     @Mock
-    private ShowRepository showRepository;
-
-    @Mock
-    private GradeRepository gradeRepository;
+    private ShowQuerydslRepository showQuerydslRepository;
 
     @Mock
     private VenueLookupApi venueLookupApi;
@@ -56,25 +50,23 @@ class PerformanceSnapshotServiceSaleTest {
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
-        when(performanceRepository.findById(1L)).thenReturn(Optional.empty());
+        when(showQuerydslRepository.findPerformanceShow(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L))).isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void venue에_속한_좌석과_회차_grade를_snapshot으로_조합한다() {
-        final Performance performance = performance(2L, null);
-        final Show show = show(2L, "show", 3L);
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
+        when(showQuerydslRepository.findPerformanceShow(1L))
+                .thenReturn(Optional.of(new PerformanceShowRow(2L, LocalDateTime.of(2026, 3, 20, 19, 30), "show", 3L)));
         when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn(new VenueSnapshot(
                         3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
         when(venueSeatLookupApi.findSeats(3L, Set.of(10L)))
                 .thenReturn(List.of(new VenueSeatSnapshot(10L, 1, "가", "A", "1", 0.0, 0.0)));
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
-        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip));
-        when(gradeRepository.findGradeNames(Set.of(7L))).thenReturn(Map.of(7L, new Grade("VIP", "VIP석")));
+        when(showQuerydslRepository.findPerformanceGrades(1L))
+                .thenReturn(List.of(new GradeRow(vip, new Grade("VIP", "VIP석"))));
 
         final PerformanceSaleSnapshot snapshot = service.getSaleSnapshot(1L, Set.of(10L));
 
@@ -94,18 +86,16 @@ class PerformanceSnapshotServiceSaleTest {
      */
     @Test
     void 등급을_찾지_못한_편성이_있으면_snapshot을_만들지_않고_터진다() {
-        final Performance performance = performance(2L, null);
-        final Show show = show(2L, "show", 3L);
-        when(performanceRepository.findById(1L)).thenReturn(Optional.of(performance));
-        when(showRepository.findById(2L)).thenReturn(Optional.of(show));
+        when(showQuerydslRepository.findPerformanceShow(1L))
+                .thenReturn(Optional.of(new PerformanceShowRow(2L, LocalDateTime.of(2026, 3, 20, 19, 30), "show", 3L)));
         when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn(new VenueSnapshot(
                         3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
         when(venueSeatLookupApi.findSeats(3L, Set.of(10L))).thenReturn(List.of());
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
-        when(performanceRepository.findPerformanceGrades(1L)).thenReturn(List.of(vip, dangling));
-        when(gradeRepository.findGradeNames(Set.of(7L, 8L))).thenReturn(Map.of(7L, new Grade("VIP", "VIP석")));
+        when(showQuerydslRepository.findPerformanceGrades(1L))
+                .thenReturn(List.of(new GradeRow(vip, new Grade("VIP", "VIP석")), new GradeRow(dangling, null)));
 
         assertThatThrownBy(() -> service.getSaleSnapshot(1L, Set.of(10L)))
                 .isInstanceOf(NullPointerException.class)
@@ -120,20 +110,5 @@ class PerformanceSnapshotServiceSaleTest {
         lenient().when(performanceGrade.getPrice()).thenReturn(price);
         lenient().when(performanceGrade.getSortOrder()).thenReturn(sortOrder);
         return performanceGrade;
-    }
-
-    private static Performance performance(final long showId, final LocalDateTime startTime) {
-        final Performance performance = mock(Performance.class);
-        lenient().when(performance.getShowId()).thenReturn(showId);
-        lenient().when(performance.getStartTime()).thenReturn(startTime);
-        return performance;
-    }
-
-    private static Show show(final long showId, final String title, final Long venueId) {
-        final Show show = mock(Show.class);
-        lenient().when(show.getId()).thenReturn(showId);
-        lenient().when(show.getTitle()).thenReturn(title);
-        lenient().when(show.getVenueId()).thenReturn(venueId);
-        return show;
     }
 }
