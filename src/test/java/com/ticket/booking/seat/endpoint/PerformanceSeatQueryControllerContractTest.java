@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +27,7 @@ import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
+import com.ticket.show.api.PerformanceSummarySnapshot;
 
 class PerformanceSeatQueryControllerContractTest {
     private static final AuthenticatedMember MEMBER = new AuthenticatedMember(100L, "MEMBER");
@@ -96,14 +98,19 @@ class PerformanceSeatQueryControllerContractTest {
     }
 
     @Test
-    void seat_occupied는_admission_token을_넘기고_점유_좌석_번호만_돌려준다() throws Exception {
+    void seat_occupied는_admission_token을_넘기고_점유_좌석_번호와_회차_요약을_돌려준다() throws Exception {
         when(getOccupiedSeatsUseCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token")))
-                .thenReturn(new GetOccupiedSeatsUseCase.Output(List.of(101L, 205L)));
+                .thenReturn(new GetOccupiedSeatsUseCase.Output(
+                        List.of(101L, 205L),
+                        new PerformanceSummarySnapshot("싱어게인", "충청", LocalDateTime.of(2026, 3, 20, 19, 30))));
 
         mockMvc.perform(get("/api/v1/performances/10/seats/occupied").header("X-Admission-Token", "admission-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.occupiedSeatIds[0]").value(101))
-                .andExpect(jsonPath("$.data.occupiedSeatIds[1]").value(205));
+                .andExpect(jsonPath("$.data.occupiedSeatIds[1]").value(205))
+                .andExpect(jsonPath("$.data.summary.title").value("싱어게인"))
+                .andExpect(jsonPath("$.data.summary.region").value("충청"))
+                .andExpect(jsonPath("$.data.summary.startTime").exists());
     }
 }

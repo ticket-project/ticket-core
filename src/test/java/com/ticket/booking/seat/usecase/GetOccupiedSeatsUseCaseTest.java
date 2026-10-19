@@ -40,6 +40,8 @@ import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.selection.domain.SeatSelectionService;
+import com.ticket.show.api.PerformanceSummaryApi;
+import com.ticket.show.api.PerformanceSummarySnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -62,6 +64,9 @@ class GetOccupiedSeatsUseCaseTest {
     @Mock
     private AdmissionVerifier admissionVerifier;
 
+    @Mock
+    private PerformanceSummaryApi performanceSummaryApi;
+
     private GetOccupiedSeatsUseCase useCase;
 
     @BeforeEach
@@ -70,6 +75,7 @@ class GetOccupiedSeatsUseCaseTest {
                 performanceSeatRepository,
                 new SeatOccupancy(seatSelectionService, holdStore),
                 new BookingEntryGuard(new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
+                performanceSummaryApi,
                 CLOCK);
     }
 
@@ -84,6 +90,25 @@ class GetOccupiedSeatsUseCaseTest {
                 useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token"));
 
         assertThat(output.occupiedSeatIds()).containsExactly(2L, 5L, 7L, 9L);
+    }
+
+    /** 좌석 화면이 함께 그리는 회차 요약을 같은 응답에 담고, 점유 목록과 함께 1초 재사용한다. */
+    @Test
+    void 회차_요약을_함께_돌려주고_일초_안에는_다시_읽지_않는다() {
+        final PerformanceSummarySnapshot summary =
+                new PerformanceSummarySnapshot("싱어게인", "충청", LocalDateTime.of(2026, 3, 20, 19, 30));
+        when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
+        when(performanceSeatRepository.findReservedSeatIds(10L)).thenReturn(List.of());
+        when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
+        when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
+        when(performanceSummaryApi.getPerformanceSummary(10L)).thenReturn(summary);
+
+        useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 100L, "admission-token"));
+        GetOccupiedSeatsUseCase.Output second =
+                useCase.execute(new GetOccupiedSeatsUseCase.Input(10L, 200L, "other-token"));
+
+        assertThat(second.summary()).isEqualTo(summary);
+        verify(performanceSummaryApi, times(1)).getPerformanceSummary(10L);
     }
 
     /** 점유 목록은 표시용이라 1초 재사용하지만, 입장권·판매 기간 확인은 요청마다 한다. */
@@ -112,6 +137,7 @@ class GetOccupiedSeatsUseCaseTest {
                 performanceSeatRepository,
                 new SeatOccupancy(seatSelectionService, holdStore),
                 new BookingEntryGuard(new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
+                performanceSummaryApi,
                 clock);
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findReservedSeatIds(10L)).thenReturn(List.of());
