@@ -2,10 +2,6 @@ package com.ticket.booking.hold.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -16,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.redisson.Redisson;
-import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
@@ -81,25 +76,8 @@ class RedissonHoldStoreIntegrationTest {
     }
 
     @Test
-    void 메타_기록이_실패하면_좌석키와_점유_인덱스가_남지_않는다() {
-        final RBucket<Object> meta =
-                spy(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-meta-fail"), StringCodec.INSTANCE));
-        doThrow(new IllegalStateException("hold meta write failed")).when(meta).set("hold-meta-fail", TTL);
-        final RedissonHoldStore store = storeWithMeta("hold-meta-fail", meta);
-
-        assertThatThrownBy(() -> store.saveIfAbsent(hold("hold-meta-fail", List.of(10L, 20L)), TTL))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("hold Redis");
-
-        assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
-        assertThat(store.isHeld(PERFORMANCE_ID, 20L)).isFalse();
-        assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).isEmpty();
-        assertThat(metaExists("hold-meta-fail")).isFalse();
-    }
-
-    @Test
-    void 인덱스_등록이_실패해도_직전에_쓴_좌석이_남지_않는다() {
-        // 실제 Redis에 다른 자료형을 두어 좌석 키 쓰기 직후 인덱스 등록이 실패하도록 한다.
+    void 인덱스가_다른_자료형이면_아무것도_쓰지_않고_실패한다() {
+        // 실제 Redis에 다른 자료형을 두어 인덱스 등록이 실패하게 한다. 스크립트는 쓰기 전에 확인하므로 좌석 키도 메타도 남지 않는다.
         redissonClient
                 .getBucket(HoldRedisKey.holdSeatIndex(PERFORMANCE_ID), StringCodec.INSTANCE)
                 .set("wrong-type", TTL);
@@ -110,28 +88,6 @@ class RedissonHoldStoreIntegrationTest {
 
         assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
         assertThat(metaExists("hold-single")).isFalse();
-    }
-
-    @Test
-    void 보상은_다른_요청이_새로_확보한_선점을_지우지_않는다() {
-        final RBucket<Object> meta =
-                spy(redissonClient.getBucket(HoldRedisKey.holdMeta("hold-conflict"), StringCodec.INSTANCE));
-        doAnswer(invocation -> {
-                    redissonClient
-                            .getBucket(HoldRedisKey.hold(PERFORMANCE_ID, 20L), StringCodec.INSTANCE)
-                            .set("other-hold", TTL);
-                    throw new IllegalStateException("hold meta write failed");
-                })
-                .when(meta)
-                .set("hold-conflict", TTL);
-        final RedissonHoldStore store = storeWithMeta("hold-conflict", meta);
-
-        assertThatThrownBy(() -> store.saveIfAbsent(hold("hold-conflict", List.of(10L, 20L)), TTL))
-                .isInstanceOf(IllegalStateException.class);
-
-        assertThat(store.isHeld(PERFORMANCE_ID, 10L)).isFalse();
-        assertThat(store.isHeldBy(PERFORMANCE_ID, 20L, "other-hold")).isTrue();
-        assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactly(20L);
     }
 
     @Test
@@ -156,7 +112,7 @@ class RedissonHoldStoreIntegrationTest {
     }
 
     @Test
-    void 이미_잡힌_좌석과_충돌하면_남의_선점은_보존하고_앞서_쓴_좌석은_보상한다() {
+    void 이미_잡힌_좌석과_충돌하면_아무것도_쓰지_않고_남의_선점은_보존한다() {
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
         assertThat(store.saveIfAbsent(hold("other-hold", List.of(20L)), TTL)).isTrue();
 
@@ -167,12 +123,6 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(store.getHoldingSeatIds(PERFORMANCE_ID)).containsExactly(20L);
         assertThat(metaExists("new-hold")).isFalse();
         assertThat(metaExists("other-hold")).isTrue();
-    }
-
-    private RedissonHoldStore storeWithMeta(final String holdKey, final RBucket<Object> meta) {
-        final RedissonClient client = spy(redissonClient);
-        doReturn(meta).when(client).getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE);
-        return new RedissonHoldStore(client);
     }
 
     private boolean metaExists(final String holdKey) {
