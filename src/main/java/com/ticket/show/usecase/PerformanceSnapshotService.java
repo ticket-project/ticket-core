@@ -1,5 +1,6 @@
 package com.ticket.show.usecase;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,27 +42,27 @@ public class PerformanceSnapshotService implements PerformanceSaleInfoApi, Perfo
     private final ShowQuerydslRepository showQuerydslRepository;
     private final VenueLookupApi venueLookupApi;
     private final VenueSeatLookupApi venueSeatLookupApi;
+    private final PerformanceSaleHeaderReader performanceSaleHeaderReader;
 
+    /** 회차 단위 값은 {@link PerformanceSaleHeaderReader}가 회차별로 재사용하고, 주문마다 다른 좌석 라벨만 매번 읽는다. */
     @Override
     @Transactional(readOnly = true)
     public PerformanceSaleSnapshot getSaleSnapshot(final long performanceId, final Set<Long> seatIds) {
-        final PerformanceShowRow performance = requirePerformanceShow(performanceId);
-        final Long venueId = performance.requireVenueId();
-        final String venueName = venueLookupApi.getVenueSnapshot(venueId).name();
+        final PerformanceSaleHeaderReader.Header header = performanceSaleHeaderReader.read(performanceId);
 
         final Map<Long, PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
-                venueSeatLookupApi.findSeats(venueId, seatIds).stream()
+                venueSeatLookupApi.findSeats(header.venueId(), seatIds).stream()
                         .collect(Collectors.toMap(VenueSeatSnapshot::seatId, PerformanceSnapshotService::toSeatInfo));
 
         return new PerformanceSaleSnapshot(
                 performanceId,
-                performance.showId(),
-                performance.title(),
-                venueId,
-                venueName,
-                performance.startTime(),
+                header.showId(),
+                header.showTitle(),
+                header.venueId(),
+                header.venueName(),
+                header.performanceStartTime(),
                 seatInfoBySeatId,
-                mapGrades(performanceId, PerformanceSnapshotService::toGradeInfo));
+                header.gradeInfoByPerformanceGradeId());
     }
 
     @Override
@@ -82,7 +83,9 @@ public class PerformanceSnapshotService implements PerformanceSaleInfoApi, Perfo
                 venue.seatMapLayout().viewBoxHeight(),
                 venue.seatMapLayout().seatDiameter(),
                 seatLayoutBySeatId,
-                mapGrades(performanceId, PerformanceSnapshotService::toGradeLayout));
+                mapGrades(
+                        showQuerydslRepository.findPerformanceGrades(performanceId),
+                        PerformanceSnapshotService::toGradeLayout));
     }
 
     @Override
@@ -115,18 +118,17 @@ public class PerformanceSnapshotService implements PerformanceSaleInfoApi, Perfo
 
     /**
      * 회차에 배정된 PerformanceGrade를 <b>하나도 빠뜨리지 않고</b> PerformanceGrade ID로 담는다 — booking은 이 map을 완전한 것으로 보고 좌석 편성·주문 표시값을
-     * 만든다.
+     * 만든다. 주문 표시값({@link PerformanceSaleHeaderReader})과 seat-map이 함께 쓴다.
      */
-    private <T> Map<Long, T> mapGrades(final long performanceId, final BiFunction<PerformanceGrade, Grade, T> mapper) {
-        return showQuerydslRepository.findPerformanceGrades(performanceId).stream()
+    static <T> Map<Long, T> mapGrades(final List<GradeRow> rows, final BiFunction<PerformanceGrade, Grade, T> mapper) {
+        return rows.stream()
                 .collect(Collectors.toMap(
                         row -> row.performanceGrade().getId(),
                         row -> mapper.apply(
                                 row.performanceGrade(), requireGrade(row.grade(), row.performanceGrade()))));
     }
 
-    private static PerformanceSaleSnapshot.GradeInfo toGradeInfo(
-            final PerformanceGrade performanceGrade, final Grade grade) {
+    static PerformanceSaleSnapshot.GradeInfo toGradeInfo(final PerformanceGrade performanceGrade, final Grade grade) {
         return new PerformanceSaleSnapshot.GradeInfo(
                 performanceGrade.getId(),
                 grade.getCode(),
