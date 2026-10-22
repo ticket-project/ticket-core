@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,8 +45,17 @@ class PerformanceSnapshotServiceSaleTest {
     @Mock
     private VenueSeatLookupApi venueSeatLookupApi;
 
-    @InjectMocks
     private PerformanceSnapshotService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new PerformanceSnapshotService(
+                performanceRepository,
+                showQuerydslRepository,
+                venueLookupApi,
+                venueSeatLookupApi,
+                new PerformanceSaleHeaderReader(showQuerydslRepository, venueLookupApi));
+    }
 
     @Test
     void 존재하지_않는_회차면_NotFoundException을_던진다() {
@@ -91,7 +100,6 @@ class PerformanceSnapshotServiceSaleTest {
         when(venueLookupApi.getVenueSnapshot(3L))
                 .thenReturn(new VenueSnapshot(
                         3L, "공연장", null, null, null, null, null, null, new VenueSnapshot.SeatMapLayout(0, 0, 0.0)));
-        when(venueSeatLookupApi.findSeats(3L, Set.of(10L))).thenReturn(List.of());
         final PerformanceGrade vip = performanceGrade(100L, 7L, new BigDecimal("170000"), 1);
         final PerformanceGrade dangling = performanceGrade(101L, 8L, new BigDecimal("120000"), 2);
         when(showQuerydslRepository.findPerformanceGrades(1L))

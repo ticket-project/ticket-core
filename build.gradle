@@ -99,6 +99,10 @@ dependencies {
     // Redis
     implementation libs.redisson.spring.boot.starter
 
+    // 로컬 캐시. 캐시별 유지 시간·상한은 shared.config.CacheConfig
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
     annotationProcessor variantOf(libs.querydsl.apt) { classifier('jakarta') }
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
