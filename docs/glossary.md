@@ -103,7 +103,8 @@ orderKey는 외부에 보이는 주문 번호로 URL에 쓰이고, 내부 숫자
 **PerformanceSalesPolicy**:
 회차 하나의 예매 기간·선점 한도·대기열 정책을 갖는 개념이다. 예매 가능 여부
 (BEFORE_OPEN/OPEN/CLOSED)와 대기열 필요 여부를 스스로 판정하며, 없는 회차는 판매 정책이 아직
-구성되지 않았다는 뜻이다.
+구성되지 않았다는 뜻이다. Core는 회차별로 1초 재사용하므로(`shared.config.CacheConfig`) DB에서 바꾸면 서버마다 최대 1초
+늦게 반영된다.
 _Avoid_: 이 정책을 Show가 갖는다는 서술, BookingPolicySnapshot
 
 **예매 기간(BookingWindow)**:
