@@ -7,6 +7,12 @@
       "path": ".agents/skills/api-contract-change/SKILL.md",
       "computedHash": "6bc60d707f588830012d5111776d605db3e73d9736e34427293279abf2c8909a"
     },
+    "blog": {
+      "source": "ticket-core",
+      "sourceType": "repo-local",
+      "path": ".agents/skills/blog/SKILL.md",
+      "computedHash": "8abae336267164ea7087030cd6b162c35cd1fc6185cf5b2cab73abae654d17b9"
+    },
     "booking-change": {
       "source": "ticket-core",
       "sourceType": "repo-local",
