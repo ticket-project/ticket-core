@@ -18,10 +18,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * 부하 테스트 전용 회차·좌석 데이터를 만든다.
  *
- * <p>크기는 둘이다. 표준({@link #STANDARD}, 2,000석)은 {@code gatling-test} 저장소
- * {@code scripts/core-capacity/create-core-capacity-data.sql}과 같은 고정 ID 대역을 쓴다. 그래야 Gatling Console이 고정해서 넘기는 좌석 시작 ID와
- * 회차 배정표를 대상만 바꿔 그대로 쓸 수 있다. 대형({@link #LARGE}, 15,000석)은 큰 예매 사이트의 인기 공연(체조경기장급)을 가정한 수용량 측정 기준이다. Queue batch는 회차마다
- * 적용되므로 입장률은 가장 큰 회차에서도 버텨야 하고, 좌석 상태 응답은 좌석 수에 비례한다. 대형은 표준과 겹치지 않게 별도 ID 대역을 쓴다.
+ * <p>크기는 둘이다. 표준({@link #STANDARD}, 2,000석)은 {@code gatling-test} 저장소가 고정해 쓰는 ID 대역(Console {@code LoadTestService}의 좌석
+ * 시작 ID, Gatling {@code LoadTestConfig}의 기본 공연 ID)과 같은 대역을 쓴다. 그래야 Gatling Console이 고정해서 넘기는 좌석 시작 ID와 회차 배정표를 대상만 바꿔
+ * 그대로 쓸 수 있다. 대형({@link #LARGE}, 15,000석)은 큰 예매 사이트의 인기 공연(체조경기장급)을 가정한 수용량 측정 기준이다. Queue batch는 회차마다 적용되므로 입장률은 가장 큰
+ * 회차에서도 버텨야 하고, 좌석 상태 응답은 좌석 수에 비례한다. 대형은 표준과 겹치지 않게 별도 ID 대역을 쓴다.
  *
  * <p>공연장·공연·물리 좌석은 처음 한 번만 만든다. 회차는 요청 수까지 <b>모자란 것만</b> 더한다. 회차는 한 번 쓰면 버리고 판매 기간도 적재 후 30일이라, 측정을 이어 가려면 나중에 회차를 늘릴 수
  * 있어야 한다.

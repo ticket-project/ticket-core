@@ -4,7 +4,10 @@ import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/** 명시적 ID로 적재한 뒤 identity 충돌을 방지한다. 적재 중에는 앱의 쓰기를 중지한다. */
+/**
+ * 명시적 ID로 적재한 뒤 identity 시퀀스를 각 테이블의 최대 ID 이상으로 맞춰, 이후 앱이 넣는 행과 ID가 충돌하지 않게 한다. 이 작업은 앱의 쓰기를 막지 않으므로 적재 중에는 앱의 쓰기를 멈춰
+ * 둔다. 트랜잭션 없이 실행하며, 이미 반영한 시퀀스 값은 뒤에서 실패해도 되돌아가지 않는다.
+ */
 final class PostgreSqlIdentitySynchronizer implements SeedTask {
     private final JdbcTemplate jdbc;
 
