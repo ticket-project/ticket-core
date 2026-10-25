@@ -17,7 +17,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/core-capacity/SKILL.md",
-      "computedHash": "724c7ab80d67527d0853bf121ffd5cfa89272d226ff3275aa9c68b38e84cb50b"
+      "computedHash": "97529be264f15b8d341ca9594f37aa2781cec8dc07ae681d017b5d32a0ab4e83"
     },
     "database-change": {
       "source": "ticket-core",
@@ -29,13 +29,13 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/modulith-boundaries/SKILL.md",
-      "computedHash": "41104c24075713abfca0a9ea6302147f7223fa4af799ca14c60deb6f5a5cec59"
+      "computedHash": "b0f6335b855d9460ff2146916ac443f92dbfd36aabcae8f556824a36ed6d3275"
     },
     "query-performance-review": {
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/query-performance-review/SKILL.md",
-      "computedHash": "0e240881072a4fe718893dadded30f5d824946118bd45206ecc0f1034e8c7a86"
+      "computedHash": "6e3590736f6f3dfa0479102d1440585f3fdbfb427fd215f72a2d02638003556f"
     }
   }
 }
