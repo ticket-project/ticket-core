@@ -12,7 +12,7 @@
 > **구현 참조 갱신(2026-09-15):** `HoldSeatAvailabilityValidator`는
 > `com.ticket.booking.order.usecase.BookingAvailabilityChecker`로 흡수됐고(2026-10-14부터
 > `BookingPreflightReader`), 주문 생성은
-> `com.ticket.booking.order.usecase.StartBookingUseCase` +
+> `com.ticket.booking.order.usecase.CreateOrderUseCase` +
 > `com.ticket.booking.order.usecase.PendingOrderCreator`가 담당한다. Selection과 Hold를 독립으로
 > 둔다는 결정 자체는 그대로다.
 
