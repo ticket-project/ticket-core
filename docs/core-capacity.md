@@ -9,7 +9,9 @@ Queue가 Core를 지키려면 숫자 하나가 필요하다. **Core에 1초에 �
 
 실행 방법(시나리오, feeder, 콘솔 입력)의 원본은 gatling-test
 [운영 Core 안전 입장률 측정 가이드](https://github.com/ticket-project/gatling-test/blob/master/docs/core-capacity-production.md)다.
-gatling-test 콘솔 맨 위의 **Core 수용량 측정** 패널이 아래 순서와 판정을 그대로 따른다.
+아래 판정 기준을 그대로 계산하는 것은 gatling-test `scripts/capacity/run-step.ps1`이고, 그 verdict(PASS·FAIL·INVALID)를
+판정으로 쓴다. gatling-test 콘솔의 Core 수용량 측정 패널은 Gatling 기술 실패 assertion만 걸고 허용률 기본값도 1.0%라
+이 판정을 대신하지 않는다.
 
 ## 왜 users/sec인가
 
@@ -18,8 +20,8 @@ Queue는 scheduler 주기마다 `advanceBatchSize`명씩 내보낸다(ticket-que
 같은 속도로 계속 들여보낸다. 그래서 Core 쪽도 "초당 새 사용자"를 정해진 속도로 넣는 Open Model로 잰다. 최대 HTTP
 RPS나 Closed Model의 동시 사용자 수는 Queue가 조절하는 값이 아니므로 입장률로 바로 쓰지 않는다.
 
-한 사용자는 공연 요약 → 좌석 상태 → 좌석 선택 → 주문 생성 → 주문 조회 다섯 요청을 보낸다. 30 users/sec는 정상
-구간에서 대략 150 requests/sec다.
+한 사용자는 점유 좌석(회차 요약 포함) → 좌석 선택 → 주문 생성 세 요청을 보낸다(2026-10-19부터 공연 요약·주문 조회를
+따로 부르지 않는다). 30 users/sec는 정상 구간에서 대략 90 requests/sec다.
 
 ## 출발점 (2026-10-01)
 
@@ -81,7 +83,7 @@ API별 단독 측정은 순서에 넣지 않는다. 5단계 한계가 예상보�
 
 - 응답 시간은 Gatling 쪽에서 잰 요청별 값이다. 사용자가 실제로 기다린 시간이라 네트워크 왕복을 포함한다.
   그래서 부하 발생기는 Core와 같은 리전에 둔다.
-- 사용자 한 명이 다섯 요청을 끝내는 시간(체류 시간) p99는 **판정에 쓰지 않고 기록만 한다.** 예전 기준(5,000ms)은
+- 사용자 한 명이 세 요청을 끝내는 시간(체류 시간) p99는 **판정에 쓰지 않고 기록만 한다.** 예전 기준(5,000ms)은
   API별 p99 상한을 더한 값이라 사용자 경험과 직접 맞지 않았고, 30초 안에 밀림이 있어도 통과할 수 있었다.
 - Core 쪽 히스토그램·연결 풀·CPU는 판정이 아니라 원인을 찾는 데 쓴다.
 
@@ -98,6 +100,9 @@ FAIL 원인은 같은 시간대의 서버 지표로 확인한다. 볼 지표는 
 - **입장률 R = C × 안전계수.** 안전계수는 0.6~0.7이고 기본 0.7이다. 소수점은 버린다.
 - `QUEUE_ADVANCE_INTERVAL_MS=1000`을 유지하고 `QUEUE_ADVANCE_BATCH_SIZE=R`로 둔다. 둘은 함께 유입량을 정하므로 하나만
   바꾸지 않는다.
+- Queue Redis에 `queue:config:advance-batch-size` 값이 있으면 scheduler는 `QUEUE_ADVANCE_BATCH_SIZE` 대신 그 값을 쓴다(ticket-queue
+  [scheduler 전진 규칙](https://github.com/ticket-project/ticket-queue/blob/master/docs/development.md#scheduler-전진-규칙)).
+  R을 넣거나 9단계를 시작하기 전에 이 key를 확인한다.
 - batch는 **회차마다** 적용된다. 지금은 인기 회차가 한 번에 하나만 열린다고 가정한다. 동시에 N개가 열릴 수 있으면
   R을 N으로 나누거나 Queue에 회차를 합친 전역 예산을 둔다.
 - Queue에는 Core 안에 동시에 들어와 있는 인원 상한이 없다. 속도만 제한하면 Core가 느려질 때 체류 시간이 늘어 사람이
@@ -125,4 +130,6 @@ FAIL 원인은 같은 시간대의 서버 지표로 확인한다. 볼 지표는 
   검증까지 거치려면 그런 회차가 필요하다.
 - 05·06은 feeder CSV를 직접 준비한다. 콘솔이 자동으로 만드는 것은 03과 API별 선택·주문 시나리오뿐이다.
 - Core 앞단 nginx 설정과 운영 `docker-compose.yml`은 저장소 밖에 있다.
-- 운영 DB 등급과 세션 상한을 확인하지 않았다. Always Free라면 세션 30개가 풀을 키울 수 있는 상한이다.
+- 운영 RDS `max_connections`는 2026-10-17 점검에서 79였다(core-capacity skill
+  [운영 측정](../.agents/skills/core-capacity/production.md#준비)의 "앞단 상한"). 풀을 키울 때 이 값을 넘지 않게 한다.
+  DB 등급은 저장소에서 확인할 수 없다.

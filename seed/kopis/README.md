@@ -6,7 +6,8 @@ KOPIS OpenAPI에서 신규 공연을 가져와 `seed/sql/kopis-curated.sql`에 *
 
 ## 사전 준비
 
-- Node 18+ (글로벌 `fetch` 사용, 외부 의존성 없음)
+- Node 18+ (글로벌 `fetch` 사용, 외부 의존성 없음). 회귀 테스트 명령(`node --test "seed/kopis/*.test.mjs"`)의 glob은
+  Node 21+가 필요하다. CI는 Node 24로 돌린다.
 - KOPIS OpenAPI 서비스 키 → 환경변수 `KOPIS_SERVICE_KEY`
   - 키 발급: https://www.kopis.or.kr 회원가입 → 오픈API 신청
   - **키를 코드/문서에 하드코딩하지 말 것.**
@@ -78,6 +79,10 @@ ticket 저장소 루트에서 시드 테스트를 실행한다. 병합 결과 SQ
 ```bash
 node --test "seed/kopis/*.test.mjs"
 ```
+
+`reschedule-dates.py`(Python 3)는 시드 SQL의 공연일·판매 기간을 기준일(`--anchor`, 기본 오늘) 중심으로 다시 배치해
+대부분의 공연이 예매중이 되게 한다. 파일을 그 자리에서 고치고 백업을 만들지 않는다
+(`python seed/kopis/reschedule-dates.py seed/sql/kopis-curated.sql`).
 
 id 연속성·중복·FK만 빠르게 보려면 검증 스크립트를 쓴다.
 
