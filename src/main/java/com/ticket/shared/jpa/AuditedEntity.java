@@ -23,8 +23,8 @@ import lombok.Getter;
  * <p>값을 채우는 쪽은 {@code shared.config.JpaAuditingConfig}이고, 감사자 ID는 {@link com.ticket.shared.api.AuditorPrincipalApi}에서
  * 읽는다.
  *
- * <p><b>업무 의미를 가진 필드를 여기 추가하지 않는다.</b> 한 module에만 필요한 필드(낙관적 락 {@code @Version}, 소프트 삭제 표시 등)를 여기 올리면 21개 테이블 전부가 그 컬럼을
- * 갖게 된다. 그런 필드는 그것을 필요로 하는 entity가 직접 갖는다.
+ * <p><b>업무 의미를 가진 필드를 여기 추가하지 않는다.</b> 한 module에만 필요한 필드(낙관적 락 {@code @Version}, 소프트 삭제 표시 등)를 여기 올리면 이 타입을 상속하는 테이블
+ * 전부가 그 컬럼을 갖게 된다. 그런 필드는 그것을 필요로 하는 entity가 직접 갖는다.
  */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)

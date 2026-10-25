@@ -10,7 +10,7 @@ import com.ticket.shared.api.InputChecks;
 
 import lombok.RequiredArgsConstructor;
 
-/** 대상 존재 확인은 하지 않는다 — {@link AddLikeUseCase}의 설명과 같은 이유다. 요청 회원의 활성 상태는 공통 인증에서 확인한다. */
+/** 대상 존재 확인은 하지 않는다 — {@link AddLikeUseCase}의 설명과 같은 이유다. 요청 회원의 활성 상태도 확인하지 않는다(인증은 토큰만 본다, like package-info 참고). */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor

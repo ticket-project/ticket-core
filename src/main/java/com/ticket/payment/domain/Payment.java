@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
  * Order에 대한 한 번의 결제 시도다(docs/glossary.md의 Payment, ADR 0005).
  *
  * <p>Order 하나에는 여러 Payment가 있을 수 있고(`1:0..N`), Payment 한 건이 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있다. {@code orderId}는
- * booking {@code Order}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다(ADR 0003, ADR 0005 §4).
+ * booking {@code Order}에 대한 scalar 참조일 뿐 JPA 연관관계가 아니다 — cross-module JPA 관계와 물리 FK는 만들지 않는다(ADR 0003 §4).
  *
  * <p>이번 entity-only 단계는 PG client, 승인/실패/취소 API, callback/webhook을 구현하지 않는다. 아래 상태 전이 메서드는 그 자체가 PG 연동이 아니라, Payment
  * aggregate가 자신의 상태 불변식을 스스로 지키게 하는 도메인 규칙이다(추후 후속 작업이 이 메서드를 호출한다).
