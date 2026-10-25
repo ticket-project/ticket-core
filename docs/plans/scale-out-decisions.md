@@ -1,6 +1,7 @@
 # 스케일 아웃 결정 목록
 
-작성 2026-10-25. Core를 여러 인스턴스로 늘리기 전에 정해야 할 것을 모은 작업 문서다. 정한 항목은 ADR이나
+작성 2026-10-25. Core를 여러 인스턴스로 늘리기 전에 정해야 할 것을 모은 작업 문서다. 2026-10-17 코드 리뷰의
+수평 확장 논의에서 남은 결정과 구현도 [남은 작업](../todo.md)에서 옮겨 왔다. 정한 항목은 ADR이나
 [운영](../operations.md)·[예매 수명주기](../core-booking-lifecycle.md)로 옮기고 여기서는 상태만 바꾼다.
 
 상태는 세 가지다.
@@ -18,7 +19,9 @@
 | D0-3 | 서버 한 대를 먼저 정리할지 | D1 전체 | 미정 | 먼저 정리 |
 | D1-1 | Redis를 어디에 둘지 | D2 전체 | 미정 | Core 호스트 밖의 단일 노드 |
 | D1-2 | 요청을 어떻게 나눌지(LB) | 2대 운영 | 미정 | 지금 nginx에 upstream 추가 |
-| D1-3 | 어떻게 배포할지 | 2대 운영 | 미정 | 한 대씩 교체 |
+| D1-3 | 어떻게 배포할지 | 2대 운영 | 미정 | 한 대씩 교체, readiness·liveness 분리 |
+| D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
+| D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
 | D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 추천 있음 | Redis pub/sub relay |
 | D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 추천 있음 | 먼저 손든 인스턴스만 처리(claim) |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
@@ -85,13 +88,19 @@
     한다(`RedisExpirationListenerConfig`).
   - Redis Cluster는 쓰지 않는다. 만료 알림을 노드마다 따로 구독해야 하고, hold 메타 키(`hold:key:*`)에 hash tag가
     없어 hold Lua 스크립트가 CROSSSLOT 오류를 낸다.
-- **추천**: Core 호스트 밖의 단일 노드(별도 EC2 또는 ElastiCache).
+- **추천**: Core 호스트 밖의 단일 노드(별도 EC2 또는 ElastiCache). 그 다음 확장 순서는 D1-5에서 정한다.
 
 ### D1-2. 요청을 어떻게 나눌지(LB)
 
 - **정할 것**: 지금 nginx에 upstream을 여러 개 두는지, ALB 같은 관리형 LB로 바꾸는지. Core를 같은 호스트에 여러 개
   띄우는지, 호스트를 늘리는지.
 - **왜**: 같은 호스트에 Core 컨테이너를 2개 띄우면 CPU가 늘지 않는다. 처리량이 목적이면 호스트가 늘어야 한다.
+- **선택지**:
+  - 같은 호스트에 Core 컨테이너 2대: 비용이 들지 않고 무중단 배포와 2대 정합성(D2)을 검증할 수 있다. 처리량은 거의
+    늘지 않는다.
+  - EC2 여러 대와 ALB.
+  - ECS.
+  - 처리량이 급하면 이 셋보다 수직 확장(D0-3)이 먼저다.
 - **함께 볼 것**: 상태 확인은 `/actuator/health/readiness`를 쓴다(probe는 이미 켜져 있다). nginx의
   `worker_connections`·`limit_req`는 노드마다 따로 적용된다.
 - **추천**: 지금 nginx에 upstream을 추가하는 것이 가장 작은 변경이다. 가용성까지 원하면 nginx도 이중화가 필요하므로
@@ -104,6 +113,24 @@
   nginx 재시작을 전제로 한다.
 - **추천**: 한 대씩 LB에서 빼고, 바꾸고, readiness가 UP이면 다시 넣는다. graceful shutdown 대기 시간과 WebSocket
   재연결이 한꺼번에 몰리는 것을 함께 본다.
+- **readiness·liveness 분리**: 지금 workflow는 `/actuator/health` 하나로 배포 성공을 판단한다. LB에 넣을지는
+  `/actuator/health/readiness`, 컨테이너를 다시 띄울지는 `/actuator/health/liveness`로 나눌지 정한다.
+
+### D1-4. Core Redis 영속성
+
+- **정할 것**: Core Redis에 AOF를 켤지, 메모리가 찼을 때 `noeviction`을 쓸지.
+- **왜**: Core Redis는 좌석 hold를 담는다. 재시작으로 데이터를 잃거나 메모리 부족으로 키가 밀려나면, 주문은 PENDING인데
+  좌석은 빈 것으로 보인다. 좌석 단위 DB 방어선이 아직 없어서([남은 작업](../todo.md)의 "좌석 단위 DB 방어선") 이 손실은
+  겹친 PENDING 주문으로 이어질 수 있다.
+- **함께 볼 것**: ticket-queue는 부하 테스트 격리 때문에 AOF를 껐다. Core는 저장하는 데이터가 달라서 그 설정을 따라가지
+  않는다.
+
+### D1-5. Redis 확장 순서
+
+- **정할 것**: Core 호스트 밖으로 옮긴 뒤(D1-1) Redis를 어떤 순서로 키울지.
+- **예상 순서**: 복제본과 자동 failover → 용도별 분리(좌석, 인증 토큰, 알림) → 클러스터.
+- **함께 볼 것**: 좌석 키는 모두 `{perf:N}` hash tag라서, 클러스터에서도 회차 하나의 부하는 서버 한 대로 간다. 인기 회차
+  하나의 한계는 클러스터로 올라가지 않는다.
 
 ## D2. 늘리자마자 기능이 깨지는 것(P0)
 
@@ -115,7 +142,11 @@
 - **추천**: Redis pub/sub relay. 좌석 락 안에서 Redis에 동기로 발행하고, 모든 인스턴스가 단일 스레드로 받아 자기
   사용자에게 보낸다. 발행 순서 보장과 WebSocket 계약이 그대로 유지된다. 상세는
   [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 1.
-- **남은 것**: ADR 0022의 relay 큐 상한·버림 정책은 빼고 단일 스레드 executor만 두는 단순안으로 줄일지.
+- **세부 결정**:
+  - 채널 단위: ADR 0022는 채널 하나를 모든 인스턴스가 구독한다. 논의했던 다른 안은 `{perf:N}` hash tag 채널과 회차별
+    동적 구독이다. 관리형 클러스터 Redis로 가면 sharded pub/sub(패턴 구독 불가)으로 바꿔야 하므로, 그 전환 조건을
+    ADR에 적을지 정한다.
+  - relay 큐: ADR 0022의 큐 상한·버림 정책·경보 기준을 빼고 단일 스레드 executor만 두는 단순안으로 줄일지.
 
 ### D2-2. Redis 만료 알림 중복 처리
 
@@ -124,8 +155,8 @@
   - 주문 선점 만료: 주문을 `EXPIRED`로 바꾼다. 결과는 한 번만 반영되지만 DB 연결과 lock 대기를 N배로 쓴다.
   - 좌석 선택 만료: "좌석 비었어요"(`DESELECTED`)를 보낸다. DB 조회와 좌석 락 경합이 N배이고, D2-1을 하면 같은
     알림이 N번 나간다.
-- **선택지**: 먼저 손든 인스턴스만 처리(claim), 리더 한 대만 구독, Redis 지연 큐(Sorted Set), 외부 메시지 큐의 예약
-  배달, 중복 허용.
+- **선택지**: 먼저 손든 인스턴스만 처리(claim), 리더 한 대만 구독, 만료를 처리하는 worker 1대 분리(ticket-queue와 같은
+  방식), Redis 지연 큐(만료 예정 Sorted Set), 외부 메시지 큐의 예약 배달, 중복 허용.
 - **추천**: claim. 만료 알림을 받으면 `SET expired-claim:<키> NX PX 60000`으로 먼저 적어 보고, 성공한 한 대만 처리한다.
   주문 만료는 5분 주기 스케줄러(`OrderExpirationTrigger`)가 안전망으로 남는다. 업계에서도 만료 알림은 "빨리 깨우는
   보조 신호"로 쓰고 반드시 할 일은 저장되는 곳(DB 스케줄러, 지연 큐)에서 처리하는데, 이 프로젝트는 이미 그 형태다.
@@ -135,6 +166,8 @@
   - claim TTL 60초: 같은 좌석의 선택 키가 다시 만료되려면 최소 5분(`SELECT_TTL`)이 걸리므로 그보다 짧게 둔다.
     두 값의 관계는 테스트로 고정한다.
   - API 전용 인스턴스(`worker.enabled=false`)도 참여할지: 추천은 참여(지금도 만료 리스너는 이 설정과 상관없이 켜진다).
+  - 관리형 Redis로 갈 때의 계획: claim은 keyspace 만료 알림에 그대로 기댄다. 관리형 Redis는 `CONFIG SET`을 막고,
+    클러스터에서는 알림이 샤드마다 따로 나온다. 그때 지연 큐로 옮길지를 미리 정한다(D1-1, D1-5).
 - **상세**: [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 2. 세부 결정에 따라 본문을
   고친다.
 
@@ -146,7 +179,9 @@
 - **선택지**:
   - Spring Session Data Redis로 세션을 Redis에 둔다. API 체인은 `STATELESS`라 세션을 만드는 곳이 OAuth2 체인뿐이다.
     의존성과 설정만 늘고 코드는 거의 바뀌지 않는다. Redisson 연결과 함께 쓸 수 있는지 확인이 필요하다.
-  - Redis 기반 `AuthorizationRequestRepository`를 직접 만들고 프론트 주소 저장도 바꾼다. 코드가 수십 줄 늘어난다.
+  - Redis에 state 키를 짧은 TTL로 저장하는 `AuthorizationRequestRepository`를 직접 만들고 프론트 주소 저장도 바꾼다.
+    2026-10-17 논의의 기본안이었다. 코드가 수십 줄 늘어난다.
+  - state와 프론트 주소를 서명한 쿠키에 담는다. 서버 저장소가 필요 없다.
   - OAuth2 경로에만 LB sticky를 건다. 코드는 그대로지만 LB 설정에 기대게 된다.
 - **추천**: Spring Session Data Redis(확인 필요).
 
@@ -210,10 +245,18 @@
   한다. 주문 `expiresAt`은 애플리케이션 서버 시계로 계산하므로 서버끼리 시계가 맞아야 한다.
 - **추천**: Datadog이 붙이는 host·container 태그로 나눠 볼 수 있는지 확인하고, EC2 시간 동기화가 켜져 있는지 확인한다.
 
+## 결정 뒤 구현할 것
+
+- [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md)의 relay와 만료 claim 구현(D2-1, D2-2)
+- 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금 ticket-fe의 `useSeatSocket.ts`는 재구독만 한다.
+- 배포 workflow의 순차 교체와 readiness·liveness 분리(D1-3)
+- 2노드 검증 테스트와 로컬 2노드 부하 측정(D3-3 전에)
+
 ## 진행 순서
 
 1. **D0-1~D0-3**: 목적을 정하고, P-022를 고치고, 서버 한 대를 정리한 뒤 다시 잰다. 목표를 넘으면 여기서 끝난다.
-2. **D1-1**: Redis를 Core 호스트 밖으로 옮긴다. 인스턴스가 한 대일 때 한다.
+2. **D1-1, D1-4**: Redis를 Core 호스트 밖으로 옮기고 영속성을 정한다. 인스턴스가 한 대일 때 한다. D1-5는 그 뒤 필요할 때
+   진행한다.
 3. **D2-1 → D2-2 → D2-3**: 인스턴스가 한 대인 상태에서 하나씩 배포한다. 한 대라서 사용자 동작은 그대로다.
 4. **D2-4, D2-5**: ticket-fe에서 진행한다.
 5. **D3-1, D3-2, D4-1, D4-2**: 2대로 늘리기 전에 설정과 규칙을 정한다.
@@ -223,7 +266,8 @@
 ## 확인하지 못한 것
 
 - 저장소 밖의 서버 `docker-compose.yml`과 nginx 설정을 직접 보지 못했다. 컨테이너 구성은 gatling-test capacity-log
-  2026-10-25 기록을 따랐다.
+  2026-10-25 기록을 따랐다. 운영 nginx의 WebSocket 헤더, 타임아웃, FD 한도와 운영 Redis 설정, RDS 등급은 아직
+  확인할 것으로 남아 있다.
 - Spring Session Data Redis가 Redisson 연결과 함께 동작하는지 확인하지 않았다(D2-3).
 - Spring Modulith 2.1의 실패 이벤트 재처리가 여러 인스턴스에서 중복되지 않는지 확인하지 않았다(D3-1).
 - SockJS 폴백이 필요한 사용자 환경이 있는지 확인하지 않았다(D2-4).
