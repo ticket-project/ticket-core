@@ -33,7 +33,8 @@ public record ShowListParam(
     }
 
     /**
-     * 정규화된 지역 코드를 공연장 ID 집합으로 바꾼다. {@code null}(필터 없음)과 공연장이 없는 지역의 빈 집합(결과 0건)을 구별해 돌려준다. 목록·검색·개수·오픈예정이 같은 규칙을 쓴다.
+     * 정규화된 지역 코드를 공연장 ID 집합으로 바꾼다. {@code null}(필터 없음)과 공연장이 없는 지역의 빈 집합(결과 0건)을 구별해 돌려준다 — 둘을 뭉개면 공연장이 없는 지역의 조회가 전체
+     * 목록으로 조용히 바뀐다. 목록·검색·개수·오픈예정이 같은 규칙을 쓴다.
      */
     static @Nullable Set<Long> venueIdsIn(final VenueLookupApi venueLookupApi, final @Nullable String region) {
         return region == null ? null : venueLookupApi.findIdsByRegion(region);

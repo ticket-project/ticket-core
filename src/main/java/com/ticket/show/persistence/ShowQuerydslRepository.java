@@ -51,8 +51,8 @@ import com.ticket.show.usecase.ShowSort;
 import lombok.RequiredArgsConstructor;
 
 /**
- * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세 가격 요약이 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그 조각이고, venue 표시값
- * 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
+ * show 자기 DB의 읽기 전용 조회다 — 공연 목록·검색·오픈 예정·상세 가격 요약과 예매용 회차 표시값 조각이 한 곳에 있다. show 자기 DB만 본다: 조회 결과는 {@code Show} 엔티티나 그
+ * 조각이고, venue 표시값 조합·이미지 경로 변환·최종 응답 조립은 이 조회를 부르는 use case(application)가 한다.
  *
  * <p>밖으로 내보내는 것은 show 자기 엔티티와 타입 커서 위치뿐이다. Spring Data 타입과 HTTP 커서 문자열은 이 경계를 넘지 않는다.
  *
@@ -599,7 +599,8 @@ public class ShowQuerydslRepository {
     // 회차 표시값 조각 ------------------------------------------------------------
 
     /**
-     * 회차와 그 공연에서 예매 화면 요약과 주문 스냅샷이 쓰는 값만 한 번의 조인으로 읽는다. 둘 다 예매 사용자 요청마다 불리므로 공연의 소개 글({@code info}) 같은 큰 열은 싣지 않는다.
+     * 회차와 그 공연에서 예매 화면 요약·주문 표시값·seat-map 배치가 쓰는 값만 한 번의 조인으로 읽는다. 모두 예매 사용자 요청마다 불리므로 공연의 소개 글({@code info}) 같은 큰 열은
+     * 싣지 않는다.
      *
      * <p>회차와 공연 사이에는 FK가 없어 left join한다. 공연이 없으면 {@link PerformanceShowRow#venueId()}가 null이다.
      */

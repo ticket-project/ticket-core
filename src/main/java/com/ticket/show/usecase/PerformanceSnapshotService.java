@@ -29,7 +29,7 @@ import com.ticket.venue.api.VenueSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * booking이 쓰는 {@link PerformanceSaleInfoApi}(판매 좌석 편성·주문 표시값)와 {@link PerformanceLayoutApi}(정적 seat-map)의 show 소유 구현이다.
+ * booking이 쓰는 {@link PerformanceSaleInfoApi}(주문 표시값·등급별 잔여석)와 {@link PerformanceLayoutApi}(정적 seat-map)의 show 소유 구현이다.
  * 둘 다 회차·공연(한 번의 조인) → venue 순으로 읽고 회차 등급 표시값을 붙여 booking에게 scalar snapshot만 넘긴다.
  *
  * <p>venue 조합(venue 이름·좌석 주소·seat-map 좌표)은 이 application 계층이 한다 — local 조회({@link ShowQuerydslRepository})는 show 자기 DB만
@@ -117,8 +117,8 @@ public class PerformanceSnapshotService implements PerformanceSaleInfoApi, Perfo
     }
 
     /**
-     * 회차에 배정된 PerformanceGrade를 <b>하나도 빠뜨리지 않고</b> PerformanceGrade ID로 담는다 — booking은 이 map을 완전한 것으로 보고 좌석 편성·주문 표시값을
-     * 만든다. 주문 표시값({@link PerformanceSaleHeaderReader})과 seat-map이 함께 쓴다.
+     * 회차에 배정된 PerformanceGrade를 <b>하나도 빠뜨리지 않고</b> PerformanceGrade ID로 담는다 — booking은 이 map을 완전한 것으로 보고 주문 표시값·등급별
+     * 잔여석을 만든다. 주문 표시값({@link PerformanceSaleHeaderReader})과 seat-map이 함께 쓴다.
      */
     static <T> Map<Long, T> mapGrades(final List<GradeRow> rows, final BiFunction<PerformanceGrade, Grade, T> mapper) {
         return rows.stream()

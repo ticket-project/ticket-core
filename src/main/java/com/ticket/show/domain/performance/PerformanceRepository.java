@@ -34,7 +34,8 @@ public interface PerformanceRepository extends Repository<Performance, Long> {
     /**
      * 이 회차에 배정된 모든 PerformanceGrade를 반환한다.
      *
-     * <p>등급 코드·이름은 담기지 않는다 — Grade는 다른 aggregate라 여기서 join하지 않고 {@code GradeRepository}로 따로 읽어 use case가 조합한다.
+     * <p>등급 코드·이름은 담기지 않는다. 지금 production 경로는 이 메서드를 쓰지 않고, Grade까지 한 번에 읽는
+     * {@code ShowQuerydslRepository#findPerformanceGrades}를 쓴다.
      */
     @Query("SELECT pg FROM PerformanceGrade pg WHERE pg.performance.id = :performanceId")
     List<PerformanceGrade> findPerformanceGrades(@Param("performanceId") long performanceId);
