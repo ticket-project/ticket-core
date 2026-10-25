@@ -47,7 +47,7 @@ tasks.register('seedTest', Test) {
     testClassesDirs = sourceSets.seedTest.output.classesDirs
     classpath = sourceSets.seedTest.runtimeClasspath
     useJUnitPlatform()
-    // 공용 시드 전체 적재 테스트가 100만 행 가까이 만든다. 여유를 둔다.
+    // 공용 시드 전체 적재 테스트가 130만 행 넘게 만든다. 여유를 둔다.
     maxHeapSize = '2g'
     // 시드 프로그램의 출력과 실패 메시지가 한국어다. 리포트가 깨지지 않게 고정한다.
     defaultCharacterEncoding = 'UTF-8'

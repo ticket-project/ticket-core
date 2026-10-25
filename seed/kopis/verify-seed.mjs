@@ -1,5 +1,5 @@
 // 병합 결과 검증: id 연속성/중복/FK/장르 범위
-// 사용: node tools/seed-kopis/verify-seed.mjs <sql파일경로>
+// 사용: node seed/kopis/verify-seed.mjs <sql파일경로>
 import { readFileSync } from 'node:fs';
 
 const sql = readFileSync(process.argv[2], 'utf8');

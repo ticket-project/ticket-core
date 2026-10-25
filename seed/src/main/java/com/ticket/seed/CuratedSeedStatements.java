@@ -180,8 +180,8 @@ final class CuratedSeedStatements {
      *
      * <p>따옴표 리터럴은 쓰인 문맥(VALUES, 파생 테이블, UNION)에 따라 타입이 정해진다. 명시적 리터럴은 문맥과 무관하게 ISO 형식의 날짜·시각으로 해석된다.
      *
-     * <p>대상은 <b>따옴표 안이 날짜·시각 형식 전체와 정확히 일치하는</b> 리터럴뿐이다. 현재 파일에서 그런 리터럴은 전부 날짜·시각 컬럼 값이다(순수 날짜 784개 = {@code SHOWS}
-     * 392행의 {@code start_date}/{@code end_date}).
+     * <p>대상은 <b>따옴표 안이 날짜·시각 형식 전체와 정확히 일치하는</b> 리터럴뿐이다. 현재 파일에서 그런 리터럴은 전부 날짜·시각 컬럼 값이다(순수 날짜는 모두 {@code SHOWS}의
+     * {@code start_date}/{@code end_date}다).
      */
     static List<String> withExplicitDateLiterals(final List<String> parsed) {
         final List<String> result = new ArrayList<>(parsed.size());

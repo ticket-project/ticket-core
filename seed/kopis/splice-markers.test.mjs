@@ -1,4 +1,4 @@
-// 실행: node --test seed/kopis/
+// 실행: node --test "seed/kopis/*.test.mjs"
 //
 // 축소 SQL만으로는 이 결함을 잡지 못했다. 결함의 원인이 "실제 파일 상단 설명 주석이 마커 문구를
 // 인용한다"는 점이라서, 그 설명 주석을 가진 진짜 kopis-curated.sql을 대상으로 확인한다.

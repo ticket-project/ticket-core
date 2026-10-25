@@ -1287,7 +1287,7 @@ INSERT INTO SHOW_GENRES (id, show_id, genre_id, created_at, created_by) VALUES (
 
 
 -- ============================================================
--- 신규 KOPIS 시드 추가분 (생성: tools/seed-kopis/fetch-kopis.mjs, 기간 20260606~20260906)
+-- 신규 KOPIS 시드 추가분 (생성: 당시 tools/seed-kopis/fetch-kopis.mjs, 현재 seed/kopis/fetch-kopis.mjs, 기간 20260606~20260906)
 -- ============================================================
 -- ===== 추가 공연자 =====
 INSERT INTO PERFORMERS (id, name, profile_image_url, created_at, created_by) VALUES (213, '정민', '', '2026-01-01 10:00:00', 'KOPIS_SEED');
@@ -4514,8 +4514,8 @@ INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, ord
 -- ticket-domain-module-redesign Phase 3 Task 6/8(ADR 0005): PerformanceSeat entity가 이제
 -- performance_grade_id/unit_price를 NOT NULL로 매핑하고, ShowGrade(show 단위 가격)는 폐기됐다.
 -- 이 시드는 PerformanceGrade가 가격의 원본이라는 새 모델만 따라 GRADES/PERFORMANCE_GRADES를
--- 채운다. GRADES는 이미 migration(V5 backfill)이 만들었을 수 있어 code당 하나만 있도록 존재
--- 여부를 확인한다.
+-- 채운다. 옛 migration(V5 backfill)이 GRADES를 미리 만들던 때부터 code당 하나만 있도록 존재
+-- 여부를 확인한다(지금 PostgreSQL migration은 GRADES를 채우지 않는다).
 INSERT INTO GRADES (code, name, created_at, created_by)
 SELECT g.grade_code, g.grade_name, '2026-01-01 10:00:00', '시드'
 FROM (
