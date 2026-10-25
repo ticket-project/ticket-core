@@ -12,9 +12,11 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 - **업무 Application Module은 Bounded Context 또는 독립적으로 캡슐화할 가치가 있는 supporting
   business capability와 정렬한다.** `shared`와 `security`는 BC가 아닌 기술 모듈이다. 공유 계약은
   `shared.api`·`shared.web`·`shared.exception`·`shared.jpa`, 공통 실행 설정은 `shared.config`,
-  인증·인가와 그 조립은 `security`에 둔다.
+  인증·인가와 그 조립은 `security`에 둔다. `shared.config`는 shared 내부 설정이고 `CorsProperties` 타입 하나만
+  `shared :: config`로 공개한다 — security의 HTTP 설정과 booking의 WebSocket 설정이 같은 CORS origin을 읽는다.
 - **다른 모듈이 쓰는 공개 계약은 `<module>.api`에 두고 `@NamedInterface("api")`로 선언한다.** 작은
-  interface와 불변 `record` snapshot, enum만 두고 구현은 그 밖의 패키지에 둔다. 별도 `internal` 계층은
+  interface와 불변 `record` snapshot, enum만 두고 구현은 그 밖의 패키지에 둔다. 현재 예외는 `shared.api`의
+  상태 없는 final class 둘이다 — 캐시 이름 상수 `CacheNames`, use case 입력의 필수·양수 판정 `InputChecks`. 별도 `internal` 계층은
   두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도
   `Type.OPEN`으로 선언하지 않는다. 공개할 계약이 없는 모듈에는 `api`를 만들지 않는다. `booking`의
   `OrderCreated`/`OrderTerminated`만 root에 남는다 — FQCN이 `EVENT_PUBLICATION.event_type`에 저장된
@@ -26,9 +28,10 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 - **모듈을 넘는 조회·명령은 상대 모듈이 공개한 API로만 한다.** 다른 모듈의 하위 패키지, Repository,
   JPA entity를 직접 import하지 않는다. JPA entity, Redis/JWT/Spring Web 타입은 공개 계약에 두지
   않는다.
-- 자동으로 강제되는 규칙은 `src/test/java/com/ticket` 바로 아래의 구조 테스트(`ModularityTests`,
-  `ArchitectureRulesTest`, `DomainIsolationTest`, `AggregateAssociationTest`)가 원본이다. 테스트에
-  없는 규칙도 자동으로 폐기하지 않는다.
+- 자동으로 강제되는 규칙은 `architecture` 태그가 붙은 구조 테스트가 원본이다 — `src/test/java/com/ticket`
+  바로 아래의 `ModularityTests`, `ArchitectureRulesTest`, `DomainIsolationTest`, `AggregateAssociationTest`와
+  `SharedModulePurityTest`, `BookingLayerDependencyTest`, `ExceptionHandlerScopeTest`, `ErrorCodeUniquenessTest`다.
+  테스트에 없는 규칙도 자동으로 폐기하지 않는다.
 
 ## Bounded Context
 
@@ -53,11 +56,15 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   인증은 토큰의 서명·만료만 보고 member를 조회하지 않는다. security는 인증 흐름과 전역 API URL 접근
   정책·401/403 변환·MVC argument resolver를 소유하고, member는 security를 참조하지 않는다.
 - 탈퇴 회원의 access token은 만료 전까지 인증을 통과한다. 그 사이 막아야 하는 것은 좌석을 실제로
-  점유하는 주문 생성뿐이라, booking의 `CreateOrderUseCase`가 `MemberLookupApi.requireActive`로
-  확인한다. 조회·좌석 선택·찜 연산은 확인하지 않는다.
+  점유하는 주문 생성뿐이라, booking의 `CreateOrderUseCase`가 부르는 예매 전 확인(`BookingPreflightReader`)이
+  `MemberLookupApi.requireActive`로 확인한다. 조회·좌석 선택·찜 연산은 확인하지 않는다.
+- booking은 그 밖에 주문 상세(`GetOrderDetailUseCase`)에서 `MemberLookupApi.getProfile`로 주문자 이름·이메일을
+  읽는다. 탈퇴했거나 없는 회원이면 404(E404)라 탈퇴 회원의 주문은 본인에게도 보이지 않는다.
+- `show -> member`, `like -> member`는 controller가 인증된 회원을 `member.api`의 `AuthenticatedMember`로 받기
+  때문이다(booking의 controller도 같다). 두 모듈은 회원을 조회하지 않는다.
 - `show -> venue`는 표시값 조립, `show -> like`는 공연 상세의 찜 개수와 "내 찜 목록" 조회 위임 때문이다.
 - `booking -> show`는 있지만 `booking -> venue`는 없다. booking이 쓰는
-  `PerformanceSaleInfoApi`/`PerformanceLayoutApi`를 show가 façade로 유지하기
+  `PerformanceSaleInfoApi`/`PerformanceLayoutApi`/`PerformanceSummaryApi`를 show가 façade로 유지하기
   때문이다.
 - `booking -> security`는 WebSocket 인증 하나뿐이다. STOMP CONNECT는 HTTP filter chain을 타지 않아
   좌석 상태 구독 인터셉터가 access token을 직접 검증한다.
@@ -136,7 +143,9 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 큰 `booking`은 `<module>.<capability>.<role>`로 둔다. `booking`의 capability 하위 패키지는 별도 Application Module이
 아니다. `security`는 `auth`/`jwt`/
 `oauth`/`token`/`http` 등 기능별로, `shared`는 공개 계약 `api`/`web`/`exception`/`jpa`와 실행 설정 `config`로
-나눈다. 쓰지 않는 역할 폴더를 미리 만들지 않는다.
+나눈다. `booking`에는 capability 외에 기술 패키지 `admission`(admission token 검증·예매 진입 확인),
+`concurrency`(분산락 계약과 `concurrency.redis`의 Redisson 구현), `redis`(키 만료 listener 설정과 만료 처리기 계약),
+`websocket`(STOMP 설정·인증·좌석 상태 발행)이 있다. 쓰지 않는 역할 폴더를 미리 만들지 않는다.
 
 | 역할 | 책임 |
 | --- | --- |
@@ -144,7 +153,7 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 | `endpoint` | HTTP Controller, 입력·응답 계약, API 문서화 |
 | `usecase` | 요청 조립, 조회 파라미터·최종 응답, 트랜잭션 경계 |
 | `domain` | 상태·업무 규칙·Aggregate 저장 계약 |
-| `persistence` | JPA/Querydsl·Redis 저장과 자기 모듈 DB 조회 구현 |
+| `persistence` | Spring Data가 구현하지 않는 저장 구현(Redis 등)과 자기 모듈 DB 조회 구현(`*QuerydslRepository`) |
 | `port` | 발행·외부 provider 등 출력 계약 |
 | `event` | booking의 커밋 후 후속 처리 조율 |
 | `exception` | 모듈 오류 코드·예외·처리기 |
@@ -159,9 +168,15 @@ Repository를 부를 수 있지만 그 밖의 `persistence` 구현(Redis 등)은
 조합은 use case가 공개 API를 통해 한다.
 
 Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡고 `usecase`·`domain`은 저장 기술 중립
-계약을 사용한다. 분산락은 `booking.concurrency`의 `DistributedLock` 계약으로 쓴다. 여러 capability를
+계약을 사용한다. 역할 패키지가 아닌 곳에서 조립하는 key도 있다 — 분산락 key는
+`booking.concurrency.redis.RedissonLockKeyFormatter`, refresh token·OAuth2 인증 코드 key는 security의
+`token.RedisRefreshTokenStore`·`oauth.RedisOAuth2AuthCodeStore`가 조립한다. 분산락은 `booking.concurrency`의 `DistributedLock` 계약으로 쓴다. 여러 capability를
 조율하는 코드는 결과를 책임지는 곳에 둔다. `common`/`util`/`helper` 같은 소유권 없는 패키지는 만들지
 않는다.
+
+로컬 캐시(Caffeine)는 캐시 이름을 `shared.api.CacheNames`에, 캐시별 유지 시간·상한을 `shared.config.CacheConfig`에
+한 벌씩 두고, `@Cacheable`은 값을 소유한 모듈의 bean에 붙인다(booking 판매 정책, show 회차 표시값). 판정 경로의
+좌석 상태·회원·진행 중 주문은 캐시하지 않는다.
 
 ### HTTP와 공개 계약
 
@@ -173,5 +188,9 @@ Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡�
 ### 오류 처리
 
 모듈별 `*ErrorCode`와 예외가 업무 오류를 표현하고 예외는 HTTP 상태를 모른다 — HTTP 상태는 모듈의
-handler가 오류 코드 enum의 exhaustive switch로 정한다. 모듈마다 업무 예외는 `<Module>Exception(<Module>ErrorCode[, data])`
-하나이고 공개 문구는 오류 코드 enum이 갖는다([ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)). 어느 모듈의 것도 아닌 오류와 base 타입은 `shared.exception`이 소유한다.
+handler가 오류 코드 enum의 exhaustive switch로 정한다. 업무 예외는 `<Module>Exception(<Module>ErrorCode[, data])`
+하나가 기본이고 공개 문구는 오류 코드 enum이 갖는다([ADR 0010](adr/0010-exceptions-do-not-own-http-status.md)).
+booking은 이와 별도로 admission token 오류 `AdmissionTokenException(AdmissionErrorCode, reason)`을 두고,
+security의 예외는 `java.lang.SecurityException`을 가리지 않도록 `AuthException(SecurityErrorCode[, data])`이다. venue와
+payment에는 오류 코드 체계가 없다 — venue는 공통 `NotFoundException` 하위 타입(`VenueNotFoundException`)만 있고
+payment에는 예외가 없다. 어느 모듈의 것도 아닌 오류와 base 타입은 `shared.exception`이 소유한다.

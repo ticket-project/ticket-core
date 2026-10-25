@@ -14,6 +14,7 @@ description: ticket-core의 모듈 의존, NamedInterface 공개면, package-inf
 ## Checks
 
 - 변경 전후의 소유 모듈, 공개 named interface, 실제 의존 edge를 정리한다. 테스트의 승인 목록 변경에는 경계 변경 이유가 있어야 한다.
+- 공개 named interface는 업무 모듈의 `api`와 shared의 `api`·`web`·`exception`·`jpa`, 그리고 `CorsProperties` 타입에만 붙은 `shared :: config`다. 원본은 ArchitectureRulesTest의 공개면 목록이다.
 - 다른 모듈 호출은 공개 API로 연결한다. 내부 Repository·entity 직접 참조, cross-module JPA 연관·DB FK, `Type.OPEN`·순환 의존으로 경계를 우회하지 않는다.
 - 공개 타입·이벤트 이동은 소비자와 저장된 식별자의 호환성을 확인한다. booking root 이벤트의 예외는 architecture.md를 따른다.
 - 계층·shared 배치의 상세 판단은 architecture.md와 구조 테스트에 둔다. 경계 검사 실패를 없애기 위해 규칙을 느슨하게 만들지 않는다.

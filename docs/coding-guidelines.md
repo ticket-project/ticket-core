@@ -37,6 +37,9 @@
   있을 때 둔다. 일반 조회는 엔티티를 반환하고 use case가 응답을 조립한다. [검사 없음]
 - 모듈 공개 interface는 `<module>.api`에 두고 `Api` 접미사를 붙인다. 모듈 밖으로 내보내는 조회 값은
   `*Snapshot`이다. [검사 없음. `api`에 구현 bean·구현 기술 금지는 `ArchitectureRulesTest`]
+- 현행 예외: 한 use case의 중첩 record로 둘 수 없는 DB projection(여러 use case가 함께 쓰거나 domain
+  Repository가 반환하는 것)은 `*Row`다(`show.usecase.PerformanceShowRow`, `booking.seat.domain.PerformanceSeatStateRow`). 공개 snapshot의 중첩 타입에는 `Info`·`View` 이름이 남아 있다
+  (`PerformanceSaleSnapshot.SeatInfo`/`GradeInfo`, `VenueSnapshot.RegionView`). [검사 없음]
 
 ### 그 밖의 이름
 
