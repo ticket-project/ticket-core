@@ -15,28 +15,35 @@
 2. **측정할 코드를 확인한다.** ticket의 브랜치, commit, 미커밋 변경 여부. `reset-local.ps1`은 그 시점의 코드를 빌드한다.
 3. **Core를 띄운다.** 기존 DB를 다시 쓰는 것이 기본이다. 규모는 큰 예매 사이트를 가정한다(회원 100만, 주문 500만,
    15,000석 회차. 사용자 결정 2026-10-01).
-   - `core-local.json`의 `seed`가 이 규모이고 `~/ticket-local.mv.db`가 있다 → `-KeepData`로 띄운다. 새 코드를 빌드하고,
-     새 migration은 기동할 때 적용된다. 재측정도 이 경우다.
+   - 로컬 PostgreSQL에 이미 이 규모가 있다 → `-KeepData`로 띄운다. 새 코드를 빌드하고, 새 migration은 기동할 때 적용된다.
+     재측정도 이 경우다. 규모는 직전 결과 폴더의 `database.properties`(회원·주문 수)나
+     `docker exec ticket-postgres psql -U ticket -d ticket -c "select count(*) from members"`로 본다.
+     `-KeepData`로 띄우면 `core-local.json`의 `seed`는 비어 있으므로 그것으로 판단하지 않는다.
 
      ```powershell
      .\scripts\capacity\reset-local.ps1 -KeepData
      ```
 
-   - DB가 없거나 규모가 다르다 → 새로 만든다. 옛 DB 파일은 지워지지 않고 `.bak-<시각>`으로 남는다(지금 규모면 약 4GB).
-     그래서 새로 만들기 전에 사용자에게 이유를 말하고 확인을 받는다.
+   - 규모가 모자라다 → `-KeepData` 없이 띄운다. 스크립트는 기존 데이터를 지우거나 초기화하지 않고, `seedLocal`로 모자란
+     회원·회차와 배경 주문이 없는 회차의 주문만 더한다. 이미 배경 주문이 있는 회차는 주문 수를 바꿔도 그대로다.
+     적재하는 동안 worker를 끄고(compose면 Core를 멈추고) 끝나면 다시 띄운다.
 
      ```powershell
      .\scripts\capacity\reset-local.ps1 -LargePerformanceCount 30 -Members 1000000 -BackgroundOrders 5000000
      ```
 
+   - 처음부터 다시 만들어야 한다 → 스크립트로는 못 한다. 별도 DB를 만들어 `-EnvFile`로 접속 설정을 넘기거나, 기존 DB를
+     지운다. 어느 쪽이든 하기 전에 사용자에게 이유를 말하고 확인을 받는다.
    - 빌드와 적재가 10분을 넘을 수 있다. 백그라운드로 돌리고 `ready:` 줄을 기다린다. health가 안 올라오면 출력에 나온 Core 로그를 본다.
 4. **예열한다.** 안 쓴 회차 하나로 `-UsersPerSecond 10 -Label warmup`. Core를 다시 띄울 때마다 한다(P-005).
 
 ## 회차
 
 대형 회차는 `920000001`부터 1씩 늘어난다(회차마다 15,000석). 실행마다 다음 번호를 쓴다. 쓴 번호는 steps.md의 회차 칸에 있다.
-`-KeepData`로 다시 띄워도 쓴 회차는 다시 못 쓴다. 남은 회차가 5개 아래로 내려가면 Core를 띄운 채로 회차만 더한다.
-seed는 모자란 회차만 더하고 이미 있는 회원·주문은 건너뛴다. 좌석 행이 늘어나므로 일지 조건에 적는다.
+`-KeepData`로 다시 띄워도 쓴 회차는 다시 못 쓴다. 남은 회차가 5개 아래로 내려가면 측정 실행 사이에 Core를 끄고
+(`core-local.json`의 `pid`) 회차만 더한 뒤 `-KeepData`로 다시 띄운다. 적재 중에는 앱의 쓰기와 주문 만료 worker를 멈춘다
+([seed README](../../../seed/README.md#로컬-실행)). seed는 모자란 회차만 더하고 이미 있는 회원·주문은 건너뛴다.
+좌석 행이 늘어나므로 일지 조건에 적는다. 다시 띄웠으므로 예열부터 한다.
 
 ```powershell
 cd ..\ticket; .\gradlew.bat seedLocal -q "-Dseed.load-test-fixture.large-performance-count=<지금 개수 + 30>"

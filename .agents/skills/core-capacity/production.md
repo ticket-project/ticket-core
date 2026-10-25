@@ -10,7 +10,8 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
   SQL 초안을 준비해 보여 준다. 운영 호스트에서 읽기만 하는 준비(지표 터널, JWT secret, 회원 ID, 실행 전 점검)는
   `run-step.ps1 -Prod`가 한다(사용자 결정 2026-10-17). 스크립트는 비밀값을 메모리에서만 쓰고 화면·파일·명령행·Claude 출력에 남기지 않는다.
   JWT secret은 이 PC 프로세스 메모리로만 받고, DB 비밀번호는 운영 호스트 안에서 `ticket-be` 환경 변수 → psql 컨테이너로만 넘긴다.
-- **원인은 Datadog으로 찾는다.** 운영 이미지에는 `jcmd`가 없고, SQL 로그를 켤 수 없다.
+- **원인은 Datadog으로 찾는다.** 운영 이미지에는 `jcmd`가 없다. SQL 로그(p6spy)는 `DECORATOR_DATASOURCE_ENABLED=true`로
+  켤 수 있지만 운영 compose를 바꾸고 Core를 재시작해야 하므로 사용자가 정한다.
 
 ## 승인
 
