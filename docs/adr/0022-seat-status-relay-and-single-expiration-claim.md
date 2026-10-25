@@ -78,6 +78,10 @@ pub/sub으로 구독한다. pub/sub은 구독자 모두에게 보내므로 인�
 
 ### 2. Redis 키 만료: 처리권을 먼저 잡은 인스턴스 하나만 처리
 
+**2026-10-26 변경**: 이 결정은 Redis Sorted Set 장부(지연 큐)로 바꾸기로 했다
+([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리) D2-2). 아래 claim 설계는
+채택하지 않는다. Sorted Set 세부 결정을 정한 뒤 이 절과 "배포 순서"·"검증 계획"의 claim 부분을 다시 쓴다.
+
 모든 인스턴스는 지금처럼 만료 알림을 받는다. 처리하기 전에 Redis `SET <claim key> <instance id> NX PX <claim TTL>`로
 처리권(claim)을 잡고, 잡은 인스턴스만 handler를 실행한다.
 
@@ -176,8 +180,7 @@ relay 없이 claim만 넣으면 선택 만료의 `DESELECTED`가 claim한 인스
 
 ## 정하지 않은 것
 
-- 결정 1(좌석 상태 알림 relay)의 채택 여부. 결정 2의 claim 방식은 2026-10-26에 정했다
-  ([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리) D2-2). claim 위치와 TTL은 거기서
-  정한다.
+- 결정 1(좌석 상태 알림 relay)의 채택 여부. 결정 2는 2026-10-26에 claim 대신 Redis Sorted Set 장부로 정했고
+  ([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리) D2-2), 세부 결정은 거기서 정한다.
 - SockJS 폴백 처리: LB sticky(nginx `ip_hash` 등)와 FE의 SockJS 제거 중 무엇을 고를지.
 - relay 큐 상한 값과, 메시지를 버렸을 때의 경보 기준.
