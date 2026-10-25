@@ -70,7 +70,7 @@ class SeatSelectionWriterTest {
     }
 
     @Test
-    void 락_내부에서_홀드를_다시_확인하고_좌석을_선점한다() {
+    void 락_내부에서_홀드를_다시_확인하고_좌석을_선택한다() {
         when(holdStore.isHeld(10L, 20L)).thenReturn(false);
 
         writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
@@ -90,7 +90,7 @@ class SeatSelectionWriterTest {
     }
 
     @Test
-    void DB검증_후_홀드된_좌석이면_선점을_중단한다() {
+    void DB검증_후_홀드된_좌석이면_선택을_중단한다() {
         when(holdStore.isHeld(10L, 20L)).thenReturn(true);
 
         assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
@@ -101,7 +101,7 @@ class SeatSelectionWriterTest {
     }
 
     @Test
-    void 락_획득_시점에_예매가_마감됐으면_선점을_중단한다() {
+    void 락_획득_시점에_예매가_마감됐으면_선택을_중단한다() {
         assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);

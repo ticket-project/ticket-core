@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** worker.enabled로 background 트리거 전체를 끌 수 있는지 고정한다. */
+/** worker.enabled로 주문 만료 트리거({@link OrderExpirationTrigger})를 끌 수 있는지 고정한다. */
 @SuppressWarnings("NonAsciiCharacters")
 class WorkerTriggerActivationTest {
     private final ApplicationContextRunner contextRunner =
@@ -22,7 +22,7 @@ class WorkerTriggerActivationTest {
     }
 
     @Test
-    void worker_enabled가_false면_어떤_background_트리거도_등록되지_않는다() {
+    void worker_enabled가_false면_주문_만료_트리거를_등록하지_않는다() {
         contextRunner.withPropertyValues("worker.enabled=false").run(context -> {
             assertThat(context).doesNotHaveBean(OrderExpirationTrigger.class);
         });

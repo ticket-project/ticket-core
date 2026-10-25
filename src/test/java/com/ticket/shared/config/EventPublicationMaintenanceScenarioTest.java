@@ -24,7 +24,7 @@ import org.springframework.test.context.TestPropertySource;
 import com.ticket.testsupport.CoreApplicationTestSupport;
 
 /**
- * Task 8 Step 8: Spring Modulith JPA event publication registry의 성공·실패·재처리 mechanics를 {@link Scenario} DSL로 검증한다.
+ * Spring Modulith JPA event publication registry의 성공·실패·재처리 mechanics를 {@link Scenario} DSL로 검증한다.
  *
  * <p>재처리는 운영 코드 {@link EventPublicationMaintenance#resubmitFailed()}를 그대로 부른다. 그래서 재시도 정책(batchSize, maxInFlight,
  * completionAttempts&lt;=10)이 바뀌면 이 테스트가 그 정책으로 검증한다. 운영 스케줄러가 같은 메서드를 1분마다 불러 테스트와 겹치지 않도록
@@ -72,7 +72,7 @@ class EventPublicationMaintenanceScenarioTest extends CoreApplicationTestSupport
     }
 
     @Test
-    void 십일회_초과해_실패한_publication은_자동_재처리_대상에서_제외된다(final Scenario scenario) {
+    void 시도가_10회를_초과해_실패한_publication은_자동_재처리_대상에서_제외된다(final Scenario scenario) {
         final UUID probeId = UUID.randomUUID();
         probeListener.alwaysFail(true);
 

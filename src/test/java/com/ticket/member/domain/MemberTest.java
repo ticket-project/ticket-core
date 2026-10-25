@@ -12,7 +12,7 @@ import com.ticket.member.api.SocialProvider;
 @SuppressWarnings("NonAsciiCharacters")
 class MemberTest {
     @Test
-    void create_social_member_without_password() {
+    void create_social_member_with_email_name_and_role() {
         Member member = Member.createSocialMember(Email.create("social@example.com"), "tester", Role.MEMBER);
 
         assertThat(member.getEmail()).isEqualTo(Email.create("social@example.com"));

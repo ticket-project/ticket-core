@@ -27,7 +27,7 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Task 8 Step 2: booking DB 트랜잭션과 {@code OrderCreated} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
+ * booking DB 트랜잭션과 {@code OrderCreated} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
  *
  * <p>Modulith의 JPA event publication registry는 {@code ApplicationEventPublisher.publishEvent}를 호출한 트랜잭션의
  * {@code EntityManager}를 그대로 타므로, 커밋되면 event_publication row가 남고 롤백되면 함께 사라진다. 이 계약은 실제 event 저장 방식(entity scan,

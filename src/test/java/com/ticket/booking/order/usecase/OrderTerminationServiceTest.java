@@ -71,7 +71,7 @@ class OrderTerminationServiceTest {
     }
 
     @Test
-    void 여러_좌석은_id_오름차순_그대로_종료_처리에_넘어간다() {
+    void 여러_좌석의_performanceSeatId가_모두_종료_이벤트에_담긴다() {
         final Order order = order(10L, "hold-key");
         final OrderSeat first = order.addOrderSeat(501L, 42L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 1번");
         final OrderSeat second = order.addOrderSeat(502L, 43L, BigDecimal.TEN, "R", "R석", "1F 가구역 A열 2번");

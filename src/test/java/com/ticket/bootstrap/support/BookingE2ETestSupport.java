@@ -37,7 +37,7 @@ import tools.jackson.databind.JsonNode;
  *
  * <p>PostgreSQL·Redis·기동 설정은 {@link CoreApplicationTestSupport}가 소유한다. 이 클래스는 실제 HTTP 호출과 fixture를 더한다.
  *
- * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 2분이라 초 단위로 끝나는 테스트를
+ * <p>worker.enabled는 기본값(true)을 그대로 둔다. 끄면 하위 클래스마다 프로퍼티를 재정의해야 해서 Spring 컨텍스트가 갈라지고, 스케줄러 주기가 5분과 1분이라 초 단위로 끝나는 테스트를
  * 방해하지 않는다. 대신 fixture의 hold_time을 넉넉히 두어 만료가 끼어들지 않게 한다.
  */
 // Spring Boot 4에서 TestRestTemplate 빈은 RANDOM_PORT만으로 등록되지 않는다. 명시적으로 켠다.
@@ -46,7 +46,10 @@ import tools.jackson.databind.JsonNode;
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class BookingE2ETestSupport extends CoreApplicationTestSupport {
 
-    /** fixture SQL이 쓰는 고정 ID 대역. seed/의 부하 테스트 전용 대역(910000000)과 겹치지 않는다. */
+    /**
+     * fixture SQL이 쓰는 고정 ID 대역. seed/의 부하 테스트 대형 대역({@code LoadTestFixtureSeeder.LARGE})과 시작 값이 같지만, 테스트 DB에는 seed를
+     * 적재하지 않아 부딪치지 않는다.
+     */
     protected static final long ID_BASE = 920000000L;
 
     protected static final long SHOW_ID = ID_BASE + 1;

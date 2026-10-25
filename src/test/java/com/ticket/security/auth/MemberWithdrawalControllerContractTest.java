@@ -22,7 +22,7 @@ import com.ticket.security.exception.handler.SecurityExceptionHandler;
 import com.ticket.security.http.AuthenticatedMemberArgumentResolver;
 import com.ticket.shared.exception.handler.GlobalExceptionHandler;
 
-/** 탈퇴 endpoint가 member.web에서 security.auth로 옮겨진 뒤에도 URL·인증 요구·응답이 같은지 고정한다. */
+/** 탈퇴 endpoint가 member.web에서 security.auth로 옮겨진 뒤에도 URL·인증 회원 ID 전달·응답이 같은지 고정한다. */
 @SuppressWarnings("NonAsciiCharacters")
 class MemberWithdrawalControllerContractTest {
     private MockMvc mockMvc;

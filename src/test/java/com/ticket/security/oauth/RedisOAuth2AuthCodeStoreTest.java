@@ -58,7 +58,7 @@ class RedisOAuth2AuthCodeStoreTest {
     }
 
     @Test
-    void consume_code_returns_empty_when_value_is_missing_or_not_number() {
+    void consume_code_returns_empty_when_value_is_not_number() {
         doReturn(bucket).when(redissonClient).getBucket("oauth2_auth_code:code", StringCodec.INSTANCE);
         when(bucket.getAndDelete()).thenReturn("not-a-number");
 

@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 @SuppressWarnings("NonAsciiCharacters")
 class ShowListParamTest {
     @Test
-    void 지역_문자열을_도메인_enum으로_바꾼다() {
+    void 지역_문자열을_지역_조건으로_그대로_담는다() {
         assertThat(new ShowListParam("MUSICAL", "ROCK", "SEOUL", null).region()).isEqualTo("SEOUL");
     }
 

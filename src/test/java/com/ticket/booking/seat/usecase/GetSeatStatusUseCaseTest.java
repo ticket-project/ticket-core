@@ -70,8 +70,8 @@ class GetSeatStatusUseCaseTest {
     @BeforeEach
     void setUp() {
         useCase =
-                // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
-                // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
+                // 실제 BookingEntryGuard를 mock repository/verifier 위에 씌운다 -- 그래야 "대기열이 필요할 때만
+                // 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new GetSeatStatusUseCase(
                         performanceSeatRepository,
                         new SeatOccupancy(seatSelectionService, holdStore),
@@ -122,7 +122,7 @@ class GetSeatStatusUseCaseTest {
 
     @Test
     void DB에_존재하는_좌석은_상태를_생략하지_않고_그대로_노출한다() {
-        // 정적 seat-map(Task 9)과 같은 회차 좌석 편성을 원본으로 쓰므로, 여기 나타난 좌석을
+        // 정적 seat-map(GetPerformanceSeatMapUseCase)과 같은 회차 좌석 편성을 원본으로 쓰므로, 여기 나타난 좌석을
         // 응답에서 누락시키면 클라이언트가 그 좌석을 AVAILABLE로 잘못 추정할 수 있다.
         List<PerformanceSeatStateRow> dbStates = List.of(
                 new PerformanceSeatStateRow(101L, 1L, PerformanceSeatState.AVAILABLE),
