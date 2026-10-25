@@ -23,7 +23,7 @@
 | D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
 | D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
 | D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 추천 있음 | Redis pub/sub relay |
-| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 먼저 손든 인스턴스만 처리(claim). 세부 결정 남음 |
+| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | Redis Sorted Set 장부(지연 큐). 세부 결정 남음 |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
 | D2-4 | SockJS 연결 | 2대 운영 | 미정 | FE가 순수 WebSocket으로 연결 |
 | D2-5 | FE 재연결 때 좌석 다시 조회 | — | 추천 있음 | 한다 |
@@ -157,22 +157,33 @@
     알림이 N번 나간다.
 - **선택지**: 먼저 손든 인스턴스만 처리(claim), 리더 한 대만 구독, 만료를 처리하는 worker 1대 분리(ticket-queue와 같은
   방식), Redis 지연 큐(만료 예정 Sorted Set), 외부 메시지 큐의 예약 배달, 중복 허용.
-- **결정(2026-10-26)**: claim. 만료 알림을 받으면 `SET expired-claim:<키> NX PX 60000`으로 먼저 적어 보고, 성공한 한
-  대만 처리한다. 주문 만료는 5분 주기 스케줄러(`OrderExpirationTrigger`)가 안전망으로 남는다. 업계에서도 만료 알림은
-  "빨리 깨우는 보조 신호"로 쓰고 반드시 할 일은 저장되는 곳(DB 스케줄러, 지연 큐)에서 처리하는데, 이 프로젝트는 이미 그
-  형태다. worker 인스턴스 한 대만 구독하는 안은 고르지 않았다. 그 한 대가 내려가면 선택 만료 알림(`DESELECTED`)을
-  되살릴 경로가 없고, 만료 처리가 한 대에 몰린다.
-- **세부 결정**:
-  - claim 위치: 각 handler가 키를 해석한 직후 한 줄(단순안) / 알림을 받는 즉시 비동기로 claim하고 성공한 것만 큐에
-    넣기(ADR 0022 현재 문구). 단순안은 만료 큐가 4분 넘게 밀릴 때만 다음 만료를 놓칠 수 있다.
-  - claim TTL 60초: 같은 좌석의 선택 키가 다시 만료되려면 최소 5분(`SELECT_TTL`)이 걸리므로 그보다 짧게 둔다.
-    두 값의 관계는 테스트로 고정한다.
-  - API 전용 인스턴스(`worker.enabled=false`)도 참여할지: **정함(2026-10-26), 참여한다.** 지금도 만료 리스너는 이 설정과
-    상관없이 켜지므로 코드 조건을 더하지 않는다.
-  - 관리형 Redis로 갈 때의 계획: claim은 keyspace 만료 알림에 그대로 기댄다. 관리형 Redis는 `CONFIG SET`을 막고,
-    클러스터에서는 알림이 샤드마다 따로 나온다. 그때 지연 큐로 옮길지를 미리 정한다(D1-1, D1-5).
-- **상세**: [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 2. 세부 결정에 따라 본문을
-  고친다.
+- **결정(2026-10-26)**: Redis Sorted Set 장부(지연 큐). 같은 날 claim으로 정했다가 바꿨다.
+  - 좌석 선택 만료와 주문 선점(hold) 만료 모두 만료 시각을 점수로 Sorted Set에 적는다. 서버는 주기적으로 시각이 지난
+    항목을 꺼내고, 꺼내기(`ZREM` 등)에 성공한 한 대만 처리한다. keyspace 만료 알림은 쓰지 않는다.
+  - 고른 이유: keyspace 알림은 구독이 끊긴 동안의 알림이 사라지고, 키가 실제로 지워질 때 나가서 TTL 시각보다 늦을 수
+    있으며, 클러스터에서는 노드마다 따로 구독해야 한다
+    ([Redis 문서](https://redis.io/docs/latest/develop/pubsub/keyspace-notifications/)). 장부는 항목이 남아 있어 서버가
+    꺼져 있던 동안의 만료도 처리하고, 서버 대수와 Redis 형태에 기대지 않는다. 지연 작업 구조를 공개한 Netflix
+    dyno-queues, Sidekiq, Airbnb Dynein도 실행 시각을 저장해 두고 주기적으로 꺼낸다.
+  - 감수하는 것: 확인 주기만큼 늦다. 꺼낸 뒤 처리하기 전에 서버가 죽으면 그 항목은 잃는다. 주문은 5분 주기
+    스케줄러(`OrderExpirationTrigger`)가 DB를 보고 복구하고, 좌석 선택 알림은 FE 재조회(D2-5)로 메운다.
+  - 함께 바뀌는 것: 기동 때의 `CONFIG SET notify-keyspace-events`(`RedisExpirationListenerConfig`)가 필요 없어져서
+    D1-1의 관리형 Redis 파라미터 그룹 설정과 D1-5의 노드별 구독 문제가 없어진다.
+  - 고르지 않은 안: claim(keyspace 알림 + `SET NX`)은 코드 변경이 가장 작지만 알림 누락·지연과 클러스터 구독 문제가
+    남는다. 주문 만료만 DB 청소 주기를 줄여 처리하는 안은 설정값 하나로 되지만 좌석 선택과 방식이 갈리고 몇 초마다 DB를
+    조회한다. worker 한 대만 구독하는 안은 그 한 대가 내려가면 선택 만료 알림을 되살릴 경로가 없다.
+- **세부 결정**(남음):
+  - 좌석 선택 장부: 지금 표시용 인덱스 `seat:select:index:{perf:N}`(점수는 Redis 시계 기준 만료 시각)를 고쳐 쓸지,
+    만료 전용 Sorted Set을 따로 둘지. 고쳐 쓰려면 세 가지가 걸린다. 선택 Lua가 만료 항목을 `zremrangebyscore`로 먼저
+    지운다. 인덱스 키 전체가 마지막 만료 시각에 사라진다(`pexpireat`). 키가 회차별이라 확인할 회차 목록이 따로 필요하다.
+  - hold 장부: hold 인덱스(`RSetCache`)는 Redisson이 만료 항목을 지우고 점수를 앱 서버 시계로 넣어서 그대로 쓸 수 없다.
+    만료 전용 Sorted Set을 어떻게 둘지 정한다.
+  - 확인 주기와 확인하는 서버: 모든 서버가 확인하고 꺼내기에 성공한 쪽만 처리할지, worker만 확인할지(D3-1).
+  - 꺼낸 뒤 처리 전에 죽은 항목: 안전망에 맡길지, "처리 중" 목록을 두고 오래 남은 항목을 되돌릴지(Netflix
+    dyno-queues의 unack 방식).
+  - 기존 keyspace 리스너와 `CONFIG SET` 기동 코드를 걷어내는 시점.
+- **상세**: [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 2는 claim 기준으로 쓰여 있다.
+  위 세부 결정을 정한 뒤 다시 쓴다.
 
 ### D2-3. OAuth2 로그인 세션
 
@@ -250,7 +261,8 @@
 
 ## 결정 뒤 구현할 것
 
-- [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md)의 relay와 만료 claim 구현(D2-1, D2-2)
+- [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md)의 relay 구현(D2-1)과 Redis Sorted Set 만료
+  장부 구현(D2-2)
 - 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금 ticket-fe의 `useSeatSocket.ts`는 재구독만 한다.
 - 배포 workflow의 순차 교체와 readiness·liveness 분리(D1-3)
 - 2노드 검증 테스트와 로컬 2노드 부하 측정(D3-3 전에)
