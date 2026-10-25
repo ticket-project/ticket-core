@@ -42,7 +42,8 @@ public class CacheConfig {
                         .maximumSize(MAXIMUM_SIZE)
                         .recordStats()
                         .build());
-        // 공연명·공연장 이름이 바뀌면 그 사이 만든 주문에 최대 10분 옛 이름이 남는다. 금액은 좌석 단가라 영향이 없다.
+        // 공연명·공연장 이름·회차 시작 시각·등급 표시값이 바뀌면 주문 표시값과 등급별 잔여석 조회에 최대 10분 옛 값이 남는다.
+        // 주문 금액은 좌석 단가라 영향이 없다.
         manager.registerCustomCache(
                 CacheNames.PERFORMANCE_DISPLAY,
                 Caffeine.newBuilder()

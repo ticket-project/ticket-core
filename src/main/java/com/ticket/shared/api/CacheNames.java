@@ -9,7 +9,7 @@ public final class CacheNames {
     /** booking 판매 정책. 판정에 쓰지만 판매 중 거의 바뀌지 않아 1초 재사용한다. */
     public static final String SALES_POLICY = "salesPolicy";
 
-    /** show 회차 표시값(공연·회차, 공연장 이름, 등급). 주문 기록에 남기는 이름이라 10분 재사용한다. */
+    /** show 회차 표시값(공연·회차 시작 시각, 공연장 이름, 등급·가격). 주문 표시값과 등급별 잔여석 조회에 쓰며 판매 중 거의 바뀌지 않아 10분 재사용한다. */
     public static final String PERFORMANCE_DISPLAY = "performanceDisplay";
 
     private CacheNames() {}

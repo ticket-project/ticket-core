@@ -44,7 +44,7 @@ public class Show extends AuditedEntity {
     private long viewCount;
 
     /**
-     * 화면에 보여주는 판매 유형이다 — booking이 이 회차의 실제 접수 가능 여부를 판단하는 것과는 별개다. 컬럼명은 옛 {@code sale_type}을 그대로 써서 스키마가 바뀌지 않는다(ADR
+     * 화면에 보여주는 판매 유형이다 — booking이 이 회차의 실제 접수 가능 여부를 판단하는 것과는 별개다. 컬럼도 표시용임을 드러내도록 {@code display_sale_type}이다(ADR
      * 0007).
      */
     @Enumerated(EnumType.STRING)
@@ -52,8 +52,8 @@ public class Show extends AuditedEntity {
     private SaleType displaySaleType;
 
     /**
-     * 화면에 보여주는 판매 기간과 그 기간으로부터의 상태 판정을 함께 갖는다. 컬럼명은 옛 {@code sale_start_date}/{@code sale_end_date}를 그대로 써서 스키마가 바뀌지
-     * 않는다 (ADR 0007).
+     * 화면에 보여주는 판매 기간과 그 기간으로부터의 상태 판정을 함께 갖는다. 컬럼은 {@code display_sale_starts_at}/{@code display_sale_ends_at}이다 (ADR
+     * 0007).
      */
     @Embedded
     private DisplaySaleWindow displaySaleWindow;
