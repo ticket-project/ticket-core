@@ -1,8 +1,81 @@
-# 남은 작업 (2026-10-25 주석·문서 조사)
+# 남은 작업 (2026-10-25 주석·문서 조사, 2026-10-17 코드 리뷰)
 
 2026-10-25 주석·문서 전수 조사에서 찾았지만 문서·주석 수정만으로 끝나지 않아 남긴 항목이다. 코드·설정·테스트를
 바꾸거나 정책을 정해야 한다. 미해결 항목의 추적 원본은 [CONTRIBUTING](../CONTRIBUTING.md#이슈와-라벨)대로 GitHub
 Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 각 항목의 줄 번호는 조사 시점(`67d197fae`) 기준이다.
+
+2026-10-17 전체 코드 리뷰와 수평 확장 논의에서 남은 항목도 함께 둔다. 2026-10-25에 `6fe601ec1` 기준으로 코드에 그대로
+남아 있는지 grep으로 다시 확인했고, 동작을 실행해 확인하지는 않았다. 리뷰 원문은 로컬 브랜치
+`docs/codebase-review-scale-out`의 `docs/reviews/`에 있다. 괄호 안의 번호(P0-1 등)는 그 리뷰 문서의 번호다.
+
+## 2026-10-17 코드 리뷰에서 남은 수정
+
+### 운영 재개 전 필수(보안)
+
+- **WebSocket 프레임 인가(P0-1).** `WebSocketAuthInterceptor`는 CONNECT만 검사하고, `WebSocketConfig`는
+  `enableSimpleBroker("/topic")`만 둔다. 클라이언트 SEND가 `/topic/**`로 가면 Simple Broker가 구독자 전원에게 방송한다.
+  후보: `/topic/**` SEND 거부, SUBSCRIBE 목적지를 좌석 토픽으로 제한, CONNECT 없는 세션의 프레임 거부.
+  `WebSocketAuthInterceptorTest`의 "CONNECT가 아닌 프레임은 그대로 통과한다"도 바꾼다.
+- **입장 토큰 fail-open(P0-3).** `application.yml`의 `security.admission.enforcement-enabled` 기본값이 `false`이고,
+  `secret-key`에 공개된 32바이트 기본값이 있다. 후보: base 설정에서 기본 비밀값 제거(누락 시 기동 실패), 강제 여부를
+  기동 로그에 남김, 장기적으로 비대칭 서명.
+- **OAuth 세션.** `OAuth2SecurityConfig`가 `IF_REQUIRED` 세션과 기본 `HttpSessionOAuth2AuthorizationRequestRepository`를
+  쓰고 `OAuth2FrontendRedirectResolver`가 `getSession(true)`를 부른다. authorize 요청만으로 세션이 무제한 쌓인다. 기본
+  `InMemoryOAuth2AuthorizedClientService`도 제공자 토큰을 축출 없이 쌓는다. 후보: Redis나 서명 쿠키 저장소, OAuth 체인
+  STATELESS, no-op `OAuth2AuthorizedClientRepository`, nginx rate limit. 다중 인스턴스 전환의 전제이기도 하다.
+- **로그아웃.** `/api/v1/auth/logout`이 permitAll이 아니어서 액세스 토큰이 만료된 뒤 로그아웃하면 401이 나고 리프레시
+  쿠키와 Redis 토큰이 남는다. 후보: 리프레시 쿠키만으로 로그아웃 허용, 쿠키는 항상 삭제, 멱등 200.
+- **로그인 CSRF.** 일회용 로그인 코드가 로그인을 시작한 브라우저에 묶이지 않는다. 후보: authorize 시점의 nonce 쿠키나
+  PKCE 방식 challenge를 교환 때 검증.
+- **소셜 계정 자동 연결.** `SocialAccountProvisioningService`가 같은 이메일의 다른 제공자 계정을 확인 없이 연결한다.
+  `loadUser` 예외가 `OAuth2AuthenticationException`으로 감싸지지 않아 실패 핸들러를 건너뛰는 문제도 있다.
+- **운영 노출.** `/actuator/prometheus`와 Swagger가 permitAll이고 management 포트가 앱 포트와 같다. nginx 차단 여부는
+  확인하지 못했다.
+- **CI/CD.** `deploy.yml`이 태그로만 고정한 `appleboy/ssh-action`에 `SSH_KEY`를 넘기고 호스트 fingerprint를 검증하지
+  않는다. 서버에는 push 권한이 있는 Docker Hub 자격 증명으로 로그인한다. 후보: 액션 커밋 SHA 고정, fingerprint, 읽기
+  전용 토큰, digest 배포.
+
+### 바로 고칠 결함
+
+- **이벤트 재처리 정체(P0-2).** `EventPublicationMaintenance`가 `withMaxInFlight(4)`와 `withFilter(this::isRetryable)`를
+  쓴다. Modulith 2.1.1은 최대 4건을 `publicationDate asc`로 읽은 뒤 필터를 메모리에서 적용하므로, 재시도 상한을 넘긴
+  오래된 FAILED 4건이 생기면 이후 실패 publication은 재처리되지 않는다(바이트코드로 확인). 후보: 상한 초과 건을 FAILED
+  집합에서 빼기, `maxInFlight` 조정, "poison 5건 + 정상 1건" 테스트.
+- **멀티락 해제(6).** `RedissonDistributedLock`은 멀티락에 `lock.unlock()`을 한 번 부른다. Redisson 4.7.0
+  `RedissonMultiLock.unlock()`은 `locks.forEach(Lock::unlock)`이라 첫 예외에서 나머지가 남고 watchdog이 계속 갱신한다.
+  `tryLock` 실패 때도 `finally`에서 해제를 부르고, 소유권 상실을 DEBUG로만 남긴다.
+- **판매 표시 기간 NULL(18).** `Show`의 `@Embedded DisplaySaleWindow`는 두 컬럼이 모두 NULL이면 `null`로 읽히고,
+  `saleDisplayStatusAt` 등 getter가 NPE를 내 공연 상세와 목록 페이지가 500이 된다.
+- **주문 좌석 수 상한(13).** `CreateOrderRequest.seatIds`에 `@Size`가 없고 `max_hold_seat_count`는 NULL을 허용한다.
+  좌석이 많으면 `OrderCreated`가 `serialized_event VARCHAR(4000)`을 넘어 좌석을 다 잡은 뒤 500으로 롤백된다.
+- **찜 개수 인덱스(17).** `LikeRepository.countByLikeTypeAndTargetId`는 `(like_type, target_id)`로 거르지만 인덱스는
+  `member_id`로 시작한다. show 스키마에도 `performances.show_id` 등 보조 인덱스가 없다.
+- **좌석 선택 멱등성(14).** `RedissonSeatSelectionStore`의 선택 Lua는 키가 있으면 소유자와 무관하게 거절해, 같은 회원의
+  재시도가 자기 좌석에 E4001을 받는다. 선택 한도가 hold 좌석을 세지 않는다.
+
+### 다음 대규모 판매 전
+
+- **fail-fast 타임아웃(8).** `application*.yml`에 Hikari 크기·대기 시간, `statement_timeout`·`lock_timeout`, Redisson
+  타임아웃 설정이 없다. 락 기본 대기는 `LockOptions`의 5초다. 후보: 커넥션 대기 2~3초, DB 문장·락 타임아웃, Redisson
+  0.5~1초, 풀 고갈은 503과 `Retry-After`.
+- **좌석 클릭 락(9).** `SeatSelectionWriter`의 `SELECT_LOCK`은 500ms를 기다린다. 인기 좌석에서는 E4001이 아니라 E6003이
+  난다. 후보: 락 전에 선택 키를 확인해 즉시 실패.
+- **좌석 이벤트 팬아웃(P0-4).** 좌석 락 안에서 구독자 전원에게 동기로 보내고, outbound 큐·transport 한도가 없다. 후보:
+  회차별 변경분 병합(200~500ms), 시퀀스 번호, outbound·transport 한도, 부하 시나리오에 STOMP 구독자 추가.
+- **keyspace 알림 설정(7).** `RedisExpirationListenerConfig`가 기동 시 `CONFIG SET`을 쓰고 실패는 WARN뿐이며, 만료
+  worker 큐는 `Integer.MAX_VALUE`다. 후보: Redis 서버 설정으로 옮기고 지표로 노출, 큐 상한.
+- **좌석맵·가용성 캐시(15).** 공개 GET인 좌석맵·가용성이 요청마다 좌석 전체를 읽고, `Cache-Control`·ETag가 없다.
+- **리프레시 토큰 회전(20).** `RefreshAuthTokenUseCase`가 토큰을 먼저 지운 뒤 DB로 회원을 확인한다. DB가 포화되면 토큰만
+  사라져 로그아웃된다. 재사용 탐지와 해시 저장도 없다.
+- **JVM·컨테이너(27).** `Dockerfile`은 `java -jar app.jar`뿐이다. 힙 비율, `ExitOnOutOfMemoryError`, 비root 사용자,
+  에이전트 `ADD`의 checksum이 없다.
+- **배포 중단(25).** 배포가 단일 컨테이너를 재생성하고 nginx를 재시작해 모든 WebSocket이 끊긴다.
+
+### 수평 확장 구현(ADR 0022 채택 뒤)
+
+- [ADR 0022](adr/0022-seat-status-relay-and-single-expiration-claim.md)의 relay와 만료 claim 구현
+- 프런트엔드 재연결 시 좌석 상태 재조회(지금 `ticket-fe`의 `useSeatSocket.ts`는 재구독만 한다)
+- 배포 workflow의 순차 교체, readiness·liveness 분리, 2노드 검증 테스트와 로컬 2노드 부하 측정
 
 ## 코드·설정·테스트 수정
 
@@ -93,6 +166,45 @@ compose의 실제 값을 확인해 한 값으로 맞춘다. 로컬 캐시의 `ca
 
 `GetOccupiedSeatsUseCase`, `GetSaleOpeningSoonShowsPageUseCase`, `RedissonHoldStore`에 미뤄 둔 작업 표식이 있지만 표기
 규칙이 문서에 없다. Issue로 옮길지, 규칙을 문서화할지 정한다.
+
+### 수평 확장: ADR 0022 채택과 남은 결정
+
+[ADR 0022](adr/0022-seat-status-relay-and-single-expiration-claim.md)는 제안 상태다. 채택 여부와 함께 정할 것:
+
+- **채널 단위.** ADR은 채널 하나를 모든 노드가 구독한다. 논의했던 안은 `{perf:N}` hash tag 채널과 회차별 동적
+  구독이었다. 관리형 클러스터 Redis로 가면 sharded pub/sub(패턴 구독 불가)으로 바꿔야 하므로, 그 전환 조건을 ADR에
+  적을지 정한다.
+- **만료 단일 처리.** ADR은 `SET NX` claim을 택했다. 비교한 대안은 worker 1대 분리(ticket-queue와 같은 방식)와 만료
+  예정 ZSET 작업 큐다. claim 방식은 keyspace 알림 의존을 그대로 두므로, 관리형 Redis(CONFIG 차단, 클러스터에서 샤드별
+  알림)로 갈 때의 계획을 정한다.
+- ADR의 "정하지 않은 것": SockJS 폴백(LB sticky 또는 FE의 SockJS 제거), relay 큐 상한과 경보 기준, API 전용
+  인스턴스(`worker.enabled=false`)의 claim 참여 여부.
+
+### 수평 확장: 인프라와 Redis
+
+- **인프라 단계.** 같은 호스트에 컨테이너 2대(비용 없음, 무중단 배포와 정합성 검증, 처리량은 거의 늘지 않음)로 시작할지,
+  처음부터 EC2 여러 대와 ALB로 갈지, ECS로 갈지. 처리량이 급하면 수직 확장이 먼저다.
+- **OAuth 상태 저장소.** 기본안은 Redis(state 키, 짧은 TTL). 서명 쿠키도 후보다.
+- **Core Redis 영속성.** 좌석 hold를 담으므로 AOF와 `noeviction`을 쓸지 정한다. ticket-queue는 부하 테스트 격리 때문에
+  AOF를 껐으므로 따라가지 않는다.
+- **Redis 확장 순서.** 예상 순서는 복제본과 자동 failover, 용도별 분리(좌석·인증 토큰·알림), 클러스터다. 좌석 키가 모두
+  `{perf:N}`이라 클러스터에서도 회차 하나의 부하는 서버 한 대로 간다.
+- 확인할 것: 운영 호스트 사양, RDS `max_connections`와 등급, 운영 Redis 설정, 운영 nginx 설정(WebSocket 헤더, 타임아웃,
+  FD 한도).
+
+### 좌석 단위 DB 방어선(리뷰 P0-5)
+
+booking V4는 회원·회차당 PENDING 1건만 DB로 막는다. 같은 좌석이 두 PENDING 주문에 들어가는 것은 Redis hold에만
+의존한다. Redis 데이터 손실이나 만료 지연이 있으면 겹친 PENDING이 생기고, 결제 확정을 붙이면 이중 판매가 된다.
+`Order.confirm()`은 만료 시각도 hold도 확인하지 않는다. 결제를 연결하기 전에 좌석 단위 예약 테이블이나 partial unique
+index 중 무엇으로 막을지 ADR로 정한다.
+
+### 리뷰 문서와 로컬 브랜치 처리
+
+- 리뷰 원문(로컬 `docs/codebase-review-scale-out` 브랜치)은 보안 결함 상세를 담고 있고, "운영 재개 전에 고치지 못한 보안
+  상세를 지운다"는 조건으로 올렸었다. 지금 원격에는 이 브랜치가 없다. master에 넣을지, 보안 상세를 뺀 판본으로 올릴지,
+  로컬에만 둘지 정한다.
+- 리뷰 항목과 이 문서의 항목을 GitHub Issue로 옮길지 정한다.
 
 ## 다른 저장소
 
