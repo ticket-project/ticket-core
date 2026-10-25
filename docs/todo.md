@@ -4,7 +4,8 @@
 바꾸거나 정책을 정해야 한다. 미해결 항목의 추적 원본은 [CONTRIBUTING](../CONTRIBUTING.md#이슈와-라벨)대로 GitHub
 Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 각 항목의 줄 번호는 조사 시점(`67d197fae`) 기준이다.
 
-2026-10-17 전체 코드 리뷰와 수평 확장 논의에서 남은 항목도 함께 둔다. 2026-10-25에 `6fe601ec1` 기준으로 코드에 그대로
+2026-10-17 전체 코드 리뷰에서 남은 항목도 함께 둔다. 수평 확장 논의에서 남은 결정과 구현은
+[스케일 아웃 결정 목록](plans/scale-out-decisions.md)에 모았다. 2026-10-25에 `6fe601ec1` 기준으로 코드에 그대로
 남아 있는지 grep으로 다시 확인했고, 동작을 실행해 확인하지는 않았다. 리뷰 원문은 로컬 브랜치
 `docs/codebase-review-scale-out`의 `docs/reviews/`에 있다. 괄호 안의 번호(P0-1 등)는 그 리뷰 문서의 번호다.
 
@@ -73,9 +74,7 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
 
 ### 수평 확장 구현(ADR 0022 채택 뒤)
 
-- [ADR 0022](adr/0022-seat-status-relay-and-single-expiration-claim.md)의 relay와 만료 claim 구현
-- 프런트엔드 재연결 시 좌석 상태 재조회(지금 `ticket-fe`의 `useSeatSocket.ts`는 재구독만 한다)
-- 배포 workflow의 순차 교체, readiness·liveness 분리, 2노드 검증 테스트와 로컬 2노드 부하 측정
+[스케일 아웃 결정 목록](plans/scale-out-decisions.md#결정-뒤-구현할-것)으로 옮겼다.
 
 ## 코드·설정·테스트 수정
 
@@ -167,30 +166,9 @@ compose의 실제 값을 확인해 한 값으로 맞춘다. 로컬 캐시의 `ca
 `GetOccupiedSeatsUseCase`, `GetSaleOpeningSoonShowsPageUseCase`, `RedissonHoldStore`에 미뤄 둔 작업 표식이 있지만 표기
 규칙이 문서에 없다. Issue로 옮길지, 규칙을 문서화할지 정한다.
 
-### 수평 확장: ADR 0022 채택과 남은 결정
+### 수평 확장
 
-[ADR 0022](adr/0022-seat-status-relay-and-single-expiration-claim.md)는 제안 상태다. 채택 여부와 함께 정할 것:
-
-- **채널 단위.** ADR은 채널 하나를 모든 노드가 구독한다. 논의했던 안은 `{perf:N}` hash tag 채널과 회차별 동적
-  구독이었다. 관리형 클러스터 Redis로 가면 sharded pub/sub(패턴 구독 불가)으로 바꿔야 하므로, 그 전환 조건을 ADR에
-  적을지 정한다.
-- **만료 단일 처리.** ADR은 `SET NX` claim을 택했다. 비교한 대안은 worker 1대 분리(ticket-queue와 같은 방식)와 만료
-  예정 ZSET 작업 큐다. claim 방식은 keyspace 알림 의존을 그대로 두므로, 관리형 Redis(CONFIG 차단, 클러스터에서 샤드별
-  알림)로 갈 때의 계획을 정한다.
-- ADR의 "정하지 않은 것": SockJS 폴백(LB sticky 또는 FE의 SockJS 제거), relay 큐 상한과 경보 기준, API 전용
-  인스턴스(`worker.enabled=false`)의 claim 참여 여부.
-
-### 수평 확장: 인프라와 Redis
-
-- **인프라 단계.** 같은 호스트에 컨테이너 2대(비용 없음, 무중단 배포와 정합성 검증, 처리량은 거의 늘지 않음)로 시작할지,
-  처음부터 EC2 여러 대와 ALB로 갈지, ECS로 갈지. 처리량이 급하면 수직 확장이 먼저다.
-- **OAuth 상태 저장소.** 기본안은 Redis(state 키, 짧은 TTL). 서명 쿠키도 후보다.
-- **Core Redis 영속성.** 좌석 hold를 담으므로 AOF와 `noeviction`을 쓸지 정한다. ticket-queue는 부하 테스트 격리 때문에
-  AOF를 껐으므로 따라가지 않는다.
-- **Redis 확장 순서.** 예상 순서는 복제본과 자동 failover, 용도별 분리(좌석·인증 토큰·알림), 클러스터다. 좌석 키가 모두
-  `{perf:N}`이라 클러스터에서도 회차 하나의 부하는 서버 한 대로 간다.
-- 확인할 것: 운영 호스트 사양, RDS `max_connections`와 등급, 운영 Redis 설정, 운영 nginx 설정(WebSocket 헤더, 타임아웃,
-  FD 한도).
+[스케일 아웃 결정 목록](plans/scale-out-decisions.md)으로 옮겼다.
 
 ### 좌석 단위 DB 방어선(리뷰 P0-5)
 
