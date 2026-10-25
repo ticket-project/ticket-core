@@ -176,8 +176,8 @@ relay 없이 claim만 넣으면 선택 만료의 `DESELECTED`가 claim한 인스
 
 ## 정하지 않은 것
 
-- 이 제안의 채택 여부.
+- 결정 1(좌석 상태 알림 relay)의 채택 여부. 결정 2의 claim 방식은 2026-10-26에 정했다
+  ([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리) D2-2). claim 위치와 TTL은 거기서
+  정한다.
 - SockJS 폴백 처리: LB sticky(nginx `ip_hash` 등)와 FE의 SockJS 제거 중 무엇을 고를지.
 - relay 큐 상한 값과, 메시지를 버렸을 때의 경보 기준.
-- API 전용 인스턴스(`worker.enabled=false`)를 둘 때 만료 claim에 참여시킬지. 지금 이 값은 Redis 만료 리스너를 끄지
-  않는다.
