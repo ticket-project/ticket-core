@@ -21,7 +21,7 @@ import com.ticket.show.api.PerformanceSummarySnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 회차에서 빈 좌석이 아닌 좌석 번호만 돌려준다. 좌석 목록은 정적 seat-map에 있으므로 여기 없는 좌석은 AVAILABLE이다.
+ * 회차에서 빈 좌석이 아닌 좌석 번호와 좌석 화면의 회차 요약을 돌려준다. 좌석 목록은 정적 seat-map에 있으므로 여기 없는 좌석은 AVAILABLE이다.
  *
  * <p>{@link GetSeatStatusUseCase}는 좌석 전체(15,000석이면 약 1MB)를 매번 만들어 보낸다. 이 use case는 점유된 좌석만 읽고 보내서 판매 초반 응답이 거의 비고, 매진
  * 직전에도 좌석 번호 목록 하나다.

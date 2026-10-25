@@ -60,7 +60,8 @@ public class GetSeatAvailabilityUseCase {
             return new Output(List.of());
         }
 
-        // 여기부터는 DB 트랜잭션 밖이다 — Redis 점유 조회와 show 표시값 조회가 connection을 쥐지 않는다.
+        // 여기부터는 booking DB 트랜잭션 밖이다 — Redis 점유 조회가 connection을 쥐지 않는다. show 표시값 조회는 show의 짧은
+        // 읽기 트랜잭션을 따로 연다(회차 단위 값은 캐시).
 
         final PerformanceSaleSnapshot saleSnapshot =
                 performanceSaleInfoApi.getSaleSnapshot(input.performanceId(), Set.of());

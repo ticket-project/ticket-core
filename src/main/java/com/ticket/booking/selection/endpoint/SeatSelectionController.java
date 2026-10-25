@@ -73,7 +73,7 @@ public class SeatSelectionController {
     }
 
     @Operation(summary = "내 선택 좌석 전체 해제", description = """
-            현재 사용자가 해당 공연에서 선택한 좌석을 모두 해제합니다.
+            현재 사용자가 해당 회차에서 선택한 좌석을 모두 해제합니다.
             브라우저 종료나 페이지 이탈 직전에 호출하는 정리용 API로 사용할 수 있습니다.
             해제된 각 좌석에 대해 WebSocket으로 DESELECTED 이벤트를 전파합니다.
             """)

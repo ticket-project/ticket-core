@@ -68,8 +68,9 @@ public class RedissonHoldStore implements HoldStore {
      * 쓰는 모양(만료 시각을 점수로 한 ZSET, 값은 seatId 문자열)이라 {@link #getHoldingSeatIds}·{@link #release}·Redisson 만료 정리가 그대로 읽는다.
      * 인덱스 객체를 만드는 것도 그대로 둬 Redisson 만료 정리 예약이 이전과 같다.
      *
-     * <p>ponytail: 메타 키({@code hold:key:...})에는 회차 hash tag가 없어 Redis Cluster에서는 좌석 키와 다른 slot이라 한 스크립트에 넣을 수 없다. 지금은
-     * Redis 한 대다. Cluster로 가면 메타 키에 회차 hash tag를 붙이고 만료 처리기의 key 해석을 함께 바꾼다.
+     * <p>ponytail: 메타 키({@code hold:key:...})에는 회차 hash tag가 없어 Redis Cluster에서는 좌석 키와 다른 slot이라 한 스크립트에 넣을 수 없다. 스크립트는
+     * KEYS에 선언하지 않은 다른 hold의 메타 키({@code ARGV[4] .. holder})도 읽는다. 지금은 Redis 한 대다. Cluster로 가면 메타 키에 회차 hash tag를 붙이고
+     * 만료 처리기의 key 해석을 함께 바꾸며, 미선언 키 접근도 없애야 한다.
      */
     @Override
     public SaveResult saveIfAbsent(final Hold hold, final Duration ttl) {

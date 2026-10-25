@@ -22,10 +22,7 @@ import com.ticket.shared.exception.TicketException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * STOMP CONNECT 프레임에서 JWT 토큰을 추출하여 인증을 처리하는 인터셉터. Spring Security의 WebSocket 보안보다 먼저 실행되도록 @Order 설정. 인증 실패 시 연결을
- * 차단합니다.
- */
+/** STOMP CONNECT 프레임에서 JWT 토큰을 추출하여 인증을 처리하는 인터셉터. 인증 실패 시 연결을 차단합니다. */
 @Slf4j
 @Component
 @RequiredArgsConstructor

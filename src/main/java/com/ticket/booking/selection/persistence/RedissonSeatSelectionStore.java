@@ -64,8 +64,8 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
             """;
 
     /**
-     * 만료분은 score 범위 필터로 제외되므로 조회 경로에서 인덱스를 정리하지 않는다. 정리는 selectIfAbsent, releaseIfOwned와 인덱스 키 자체의 TTL이 담당하고, 멤버 수 상한은
-     * 회차 인덱스가 회차 좌석 수, 회원별 인덱스가 회원 한도다.
+     * 만료분은 score 범위 필터로 제외되므로 조회 경로에서 인덱스를 정리하지 않는다. 정리는 selectIfAbsent, releaseIfOwned와 인덱스 키 자체의 TTL이 담당하고, 멤버 수는 회차
+     * 인덱스가 회차 좌석 수를 넘지 않는다. 회원별 인덱스는 활성 선택이 회원 한도를 넘지 않고, 만료된 지 ARGV[5]ms 안의 선택이 더 남는다.
      */
     private static final String READ_ACTIVE_SEAT_IDS_SCRIPT = """
             local redisTime = redis.call('TIME')
