@@ -10,7 +10,8 @@ import org.jspecify.annotations.Nullable;
 public interface AdmissionVerifier {
     /**
      * 입장 자격을 검증한다. 통과하면 아무것도 반환하지 않고, 그렇지 않으면 admission이 소유한 예외를 던진다 — 토큰이 없으면 {@code AdmissionTokenException}(E8000),
-     * 만료면 E8001, 그 밖의 검증 실패는 E8002다. 셋 다 HTTP 403이다.
+     * 만료면 E8001, 그 밖의 검증 실패는 E8002다. 셋 다 HTTP 403이다. 검증 강제({@code security.admission.enforcement-enabled}, 기본값 false)가
+     * 꺼져 있으면 구현은 토큰을 보지 않고 통과시킨다.
      *
      * @param admissionToken 요청이 전달한 입장 토큰. null 또는 빈 문자열일 수 있다
      */

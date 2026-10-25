@@ -44,7 +44,7 @@ class BookingEventListeners {
      * package로 고치지 않는다.
      *
      * <p>이벤트 클래스가 {@code OrderStarted}에서 {@code OrderCreated}로 바뀐 뒤에도 같은 이유로 파라미터 타입 자리의 옛 이름을 남긴다. 저장된 publication의
-     * {@code event_type}은 migration {@code __root} V10이 새 이름으로 옮긴다.
+     * {@code event_type}은 이벤트 클래스 FQCN이라 listener id와 따로 저장된다.
      */
     static final String ORDER_CREATED_LISTENER_ID =
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderStarted)";

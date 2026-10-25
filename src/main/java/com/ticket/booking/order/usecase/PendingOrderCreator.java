@@ -56,7 +56,7 @@ public class PendingOrderCreator {
                 hold.holdKey(),
                 hold.expiresAt(),
                 // ORDERS의 이 세 컬럼은 NOT NULL이다 -- 표시값이 없는 공연은 주문이 성립하지 않는다.
-                // 여기서 막지 않아도 insert에서 제약 위반으로 같은 500이 났다.
+                // 여기서 막지 않으면 insert의 제약 위반이 CreateOrderUseCase에서 E5004로 번역된다.
                 Objects.requireNonNull(saleSnapshot.showTitle(), "showTitle"),
                 Objects.requireNonNull(saleSnapshot.performanceStartTime(), "performanceStartTime"),
                 Objects.requireNonNull(saleSnapshot.venueName(), "venueName"));

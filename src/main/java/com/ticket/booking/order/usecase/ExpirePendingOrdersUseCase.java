@@ -31,7 +31,7 @@ public class ExpirePendingOrdersUseCase {
     private final Clock clock;
 
     /**
-     * @param processedCount 이번 순회에서 실제로 만료 처리한 건수
+     * @param processedCount 이번 순회에서 예외 없이 끝난 건수. 그사이 다른 경로가 먼저 종료해 건너뛴 주문도 포함한다
      * @param failedCount 이번 순회에서 실패해 다음 순회로 미룬 건수
      */
     public record Output(int processedCount, int failedCount) {}
