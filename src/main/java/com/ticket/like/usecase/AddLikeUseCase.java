@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 대상 존재 확인은 이 use case의 책임이 아니다 — like는 다른 BC의 entity 존재 여부를 자기 invariant로 잡지 않는다(memberId·likeType·targetId 조합의 유일성만
- * 보장한다). 존재하지 않는 targetId를 찜해도 조용히 저장된다. 요청 회원의 활성 상태는 공통 인증에서 확인한다.
+ * 보장한다). 존재하지 않는 targetId를 찜해도 조용히 저장된다. 요청 회원의 활성 상태도 확인하지 않는다(인증은 토큰만 본다, like package-info 참고).
  *
  * <p>이미 찜한 상태면 다시 저장하지 않고 현재 상태만 돌려준다(멱등). 처음 찜하는 사이 동시 요청이 먼저 저장을 끝냈다면(unique 제약 위반) {@link LikeException}(409,
  * E7001)을 던진다. {@code error.data}에 memberId·likeType·targetId를 싣는 것은 기존 응답 계약이다.
@@ -47,7 +47,7 @@ public class AddLikeUseCase {
                 likeRepository.like(memberId, likeType, targetId);
             } catch (final DataIntegrityViolationException e) {
                 // 이 catch가 중복 찜만 잡는 근거는 LIKES에 다른 무결성 제약이 없다는 것이다 -- FK는
-                // like V1·V2가 제거했고(모듈 간 FK 금지), NOT NULL 세 컬럼은 Like 생성자의
+                // like V1 스키마에 없고(모듈 간 FK 금지), NOT NULL 세 컬럼은 Like 생성자의
                 // requireNonNull이 DB에 닿기 전에 막는다. 남는 것은 UK_LIKES_MEMBER_TARGET뿐이다.
                 // 제약 이름으로 좁히려면 드라이버 예외 메시지를 파싱해야 해서 오히려 약해진다.
                 // 이 전제는 LikeRepositoryPagingTest가 실제 DB로 고정한다.
