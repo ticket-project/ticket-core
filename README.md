@@ -125,8 +125,9 @@ docs/                                설계·운영 문서와 설계 결정(docs
 ```
 
 - **스키마 변경**: entity가 아니라 migration 파일을 추가한다. 경로와 규칙은 [migration 규칙](src/main/resources/db/README.md)에 있다.
-- **배포**: `master`에 push하면 [deploy.yml](.github/workflows/deploy.yml)이 운영에 배포한다. Markdown·`docs/`·`seed/`만
-  바꾼 push는 배포하지 않는다. 절차와 롤백은 [운영](docs/operations.md#배포)에 있다.
+- **배포**: `master`에 push하면 [deploy.yml](.github/workflows/deploy.yml)이 운영에 배포한다. Markdown·`docs/`·`seed/` 등
+  배포 산출물에 들어가지 않는 파일만 바꾼 push는 배포하지 않는다. 제외 경로의 원본은 deploy.yml의 `paths-ignore`다.
+  절차와 롤백은 [운영](docs/operations.md#배포)에 있다.
 
 ## 모르고 바꾸면 사고가 나는 것
 
