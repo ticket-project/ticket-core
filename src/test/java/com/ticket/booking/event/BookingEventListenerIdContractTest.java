@@ -27,8 +27,8 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 /**
  * Modulith listener id가 package 이동 뒤에도 옛 값으로 유지되는지 고정한다.
  *
- * <p>{@code BookingEventListeners}는 capability 이전으로 {@code com.ticket.booking.application} 에서
- * {@code com.ticket.booking.order.application}으로 옮겨졌다. Spring의 기본 listener id는 선언 클래스의 FQCN을 포함하므로(Spring Framework
+ * <p>{@code BookingEventListeners}는 {@code com.ticket.booking.application}에서 지금의 {@code com.ticket.booking.event}로
+ * 옮겨졌다. Spring의 기본 listener id는 선언 클래스의 FQCN을 포함하므로(Spring Framework
  * {@code ApplicationListenerMethodAdapter#getDefaultListenerId}), 아무것도 하지 않으면 id가 바뀐다. 그러면 이동 전에 저장돼 아직 완료되지 않은
  * {@code EVENT_PUBLICATION} row는 어떤 listener의 것인지 매칭되지 않아 영원히 재처리되지 않는다.
  *

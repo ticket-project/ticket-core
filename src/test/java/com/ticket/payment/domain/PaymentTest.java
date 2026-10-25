@@ -39,7 +39,7 @@ class PaymentTest {
     }
 
     @Test
-    void processing이_아닌_결제는_다시_process할_수_없다() {
+    void ready가_아닌_결제는_process할_수_없다() {
         // given
         Payment payment = createPayment(LocalDateTime.of(2026, 3, 15, 12, 0));
         payment.process();

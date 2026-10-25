@@ -84,7 +84,7 @@ class PerformanceSeatQueryControllerContractTest {
     }
 
     @Test
-    void seat_status는_admission_token_validator를_거친다() throws Exception {
+    void seat_status는_admission_token을_넘기고_좌석_상태를_돌려준다() throws Exception {
         when(getSeatStatusUseCase.execute(new GetSeatStatusUseCase.Input(10L, 100L, "admission-token")))
                 .thenReturn(new GetSeatStatusUseCase.Output(
                         List.of(new GetSeatStatusUseCase.SeatResponse(1001L, 101L, SeatStatus.OCCUPIED))));

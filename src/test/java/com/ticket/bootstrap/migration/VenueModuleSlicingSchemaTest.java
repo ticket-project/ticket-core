@@ -95,7 +95,7 @@ class VenueModuleSlicingSchemaTest {
     }
 
     private void persist(final Session session, final Object entity) {
-        // BaseEntity의 감사 필드는 Spring Data JPA auditing이 채운다 — 이 테스트는 Spring context
+        // AuditedEntity의 감사 필드는 Spring Data JPA auditing이 채운다 — 이 테스트는 Spring context
         // 없이 순수 Hibernate만 쓰므로 직접 채운다.
         ReflectionTestUtils.setField(entity, "createdAt", LocalDateTime.now());
         ReflectionTestUtils.setField(entity, "createdBy", "venue-module-slicing-test");

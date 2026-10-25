@@ -25,15 +25,15 @@ import com.ticket.testsupport.PostgreSqlTestDatabase;
  *
  * <p><b>module slicing schema 테스트의 기준 구현이다.</b> Spring context 없이 순수 Hibernate로 검증한다. 각 테스트는
  * {@link com.ticket.testsupport.PostgreSqlTestDatabase}에 자기 schema를 받아 쓴다. {@code @DataJpaTest @ModuleSlicing}을 쓰려면
- * {@code verifyAutomatically = false}가 필요하다({@code BookingModuleTests}가 같은 이유로 쓴다) — 기본값은 legacy package 제외 predicate
- * 없이 전체 구조를 검증해 이미 알려진 오탐 순환을 잡아낸다. 전환은 별도 작업이다.
+ * {@code verifyAutomatically = false}가 필요하다({@code BookingModuleTests}가 같은 이유로 쓴다) — 전체 애플리케이션 구조 검증은
+ * {@code com.ticket.ModularityTests}가 전담한다.
  */
 class BookingModuleSlicingSchemaTest {
     private static final String URL = PostgreSqlTestDatabase.newSchemaUrl("booking_slice");
 
     @Test
     void root_and_booking_migrations_alone_produce_a_schema_the_booking_mapping_can_use() throws Exception {
-        // show/member/showlike 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
+        // show/member/like 등 다른 module의 migration은 이 DB에 전혀 적용하지 않는다 —
         // __root와 booking뿐이다.
         ModulithFlywayTestSupport.applyMigrations(URL, List.of("booking"));
 

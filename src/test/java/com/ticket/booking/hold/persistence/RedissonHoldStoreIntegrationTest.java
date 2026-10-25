@@ -24,8 +24,8 @@ import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.testsupport.TestContainerImages;
 
 /**
- * hold 생성의 부분 실패 보상을 <b>실제 Redis</b>에서 확인한다. mock 테스트는 "어떤 호출을 했는가"만 보므로, 좌석 키·회차별 점유 인덱스·메타데이터가 실제로 어떤 상태로 남는지는 여기서
- * 본다.
+ * hold 저장·해제가 <b>실제 Redis</b>에 남기는 상태를 확인한다. 저장 스크립트는 쓰기 전에 충돌과 인덱스 자료형을 확인하므로 실패하면 아무것도 쓰지 않는다. mock 테스트는 "어떤 호출을
+ * 했는가"만 보므로, 좌석 키·회차별 점유 인덱스·메타데이터가 실제로 어떤 상태로 남는지는 여기서 본다.
  */
 @Testcontainers
 @SuppressWarnings("NonAsciiCharacters")
@@ -63,7 +63,7 @@ class RedissonHoldStoreIntegrationTest {
     }
 
     @Test
-    void 정상_저장이면_좌석키와_인덱스와_holdKey_메타가_함께_남는다() {
+    void 정상_저장이면_좌석키와_인덱스와_회원ID_메타가_함께_남는다() {
         final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
         final Hold hold = hold("hold-ok", List.of(10L, 20L));
 

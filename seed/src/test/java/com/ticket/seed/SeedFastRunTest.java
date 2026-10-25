@@ -123,7 +123,7 @@ class SeedFastRunTest {
 
     @Test
     void 적재_실패는_해당_트랜잭션을_롤백한다() {
-        // PERFORMANCE_SEATS를 미리 채워 두면 마지막 INSERT ... SELECT가 PK 중복으로 실패한다.
+        // PERFORMANCE_SEATS를 미리 채워 두면 마지막 INSERT ... SELECT가 (performance_id, seat_id) 유니크 제약 위반으로 실패한다.
         // 앞에서 실행된 CATEGORIES 등 같은 트랜잭션의 INSERT가 함께 되돌아가야 한다.
         jdbcTemplate.update("""
                 INSERT INTO PERFORMANCE_SEATS

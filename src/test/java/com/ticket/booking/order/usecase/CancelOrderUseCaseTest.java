@@ -75,7 +75,7 @@ class CancelOrderUseCaseTest {
     }
 
     @Test
-    void 결제_대기가_아닌_주문은_취소를_거절하고_실제_상태를_담는다() {
+    void 결제_대기가_아닌_주문은_취소를_거절한다() {
         final Order order = createOrder(10L, 100L, "hold-key");
         ReflectionTestUtils.setField(order, "status", OrderState.CANCELED);
         when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L))

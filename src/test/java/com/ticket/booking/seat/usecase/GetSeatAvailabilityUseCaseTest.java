@@ -49,7 +49,7 @@ class GetSeatAvailabilityUseCaseTest {
     }
 
     @Test
-    void DB와_redis_점유좌석을_합쳐_잔여석을_계산한다() {
+    void DB_좌석에서_선택_중인_좌석을_빼_잔여석을_계산한다() {
         // given
         List<PerformanceSeat> stateRows =
                 List.of(PerformanceSeatFixture.seat(501L, 1L, 31L, PerformanceSeatState.AVAILABLE));
@@ -57,7 +57,7 @@ class GetSeatAvailabilityUseCaseTest {
 
         when(seatAvailabilitySnapshotReader.read(10L)).thenReturn(stateRows);
         when(performanceSaleInfoApi.getSaleSnapshot(10L, Set.of())).thenReturn(saleSnapshot);
-        // seat 1은 selecting, seat 2는 holding으로 점유돼 있다. 둘 다 잔여석에서 빠진다.
+        // seat 1은 selecting으로 점유돼 잔여석에서 빠진다. holding인 seat 2는 이 회차 좌석 목록에 없어 결과에 영향이 없다.
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of(2L));
         // when

@@ -1,6 +1,7 @@
 -- 예매 흐름 E2E 테스트용 최소 데이터. 좌석 4개짜리 회차 하나.
 --
--- ID 대역: 920000001~ 을 쓴다. LoadTestFixtureSeeder(910000000~)와 겹치지 않는다.
+-- ID 대역: 920000001~ 을 쓴다. LoadTestFixtureSeeder의 대형 대역(LARGE, 920000000~)과 시작 값이
+-- 같지만, 테스트 DB에는 seed를 적재하지 않아 부딪치지 않는다.
 -- 컬럼 목록은 com.ticket.seed.LoadTestFixtureSeeder를 따른다. 그쪽 INSERT문이 같은 PostgreSQL
 -- migration 스키마에서 실제로 도는 참조 구현이다.
 --

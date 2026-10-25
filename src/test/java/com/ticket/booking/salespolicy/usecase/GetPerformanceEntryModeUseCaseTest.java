@@ -39,8 +39,8 @@ class GetPerformanceEntryModeUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        // 실제 collaborator를 mock repository/verifier 위에 씌운다 -- 그래야 "없으면 404"와
-        // "대기열이 필요할 때만 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
+        // 실제 PerformanceSaleFinder를 mock repository 위에 씌운다 -- 그래야 "정책이 없으면 404"라는
+        // 분기가 mock에 가려지지 않고 그대로 검증된다.
         useCase =
                 new GetPerformanceEntryModeUseCase(new PerformanceSaleFinder(performanceSalesPolicyRepository), CLOCK);
     }

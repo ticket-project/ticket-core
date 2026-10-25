@@ -118,7 +118,7 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     }
 
     @Test
-    void 주문상태는_잠금없이_조회한다() {
+    void 주문키와_회원으로_주문상태를_조회한다() {
         Order order = order("status", LocalDateTime.now().plusMinutes(5));
         inTransaction(() -> orderRepository.save(order));
 
@@ -176,7 +176,7 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     }
 
     @Test
-    void pending_order_existence_query_checks_member_performance_and_status() {
+    void pending_order_existence_query_checks_member_and_status() {
         Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
         Order canceled = new Order(
                 MEMBER_ID + 2,

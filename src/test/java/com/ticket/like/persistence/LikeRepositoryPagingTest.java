@@ -17,8 +17,8 @@ import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
 /**
  * 찜 페이징과 중복 방지의 실제 DB 동작을 고정한다.
  *
- * <p>fixture는 Like만 만든다 — LIKES에는 FK가 없고(모듈을 넘나드는 FK 제거, like V1·V2) like는 대상 존재도 확인하지 않으므로, member·venue·show entity를
- * 만들어 봐야 이 테스트가 보는 것에 아무 영향이 없다.
+ * <p>fixture는 Like만 만든다 — LIKES에는 FK가 없고(모듈 간 FK 금지, like V1 스키마) like는 대상 존재도 확인하지 않으므로, member·venue·show entity를 만들어
+ * 봐야 이 테스트가 보는 것에 아무 영향이 없다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class LikeRepositoryPagingTest extends ReadRepositoryTestSupport {
