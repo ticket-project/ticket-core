@@ -11,11 +11,13 @@
 ## 번호와 상태
 
 순차 번호를 쓴다. 새 ADR을 쓰기 전에 아래 표에서 가장 큰 번호를 찾아 그 다음 번호를 쓴다. 0004는 발행된 기록이
-없다. 각 ADR은 `## 상태` 아래 첫 줄에 상태를 하나만 적고, 표는 그 줄을 옮긴 것이다.
+없다 — 2026-09-04 무렵 병렬 작업이 번호를 선점했다가 중단돼 저장소에 반영되지 않았고, 다음 ADR은 0005부터
+썼다. 각 ADR은 `## 상태` 아래 첫 줄에 상태를 하나만 적고, 표는 그 줄을 옮긴 것이다.
 
 - `제안`: 아직 승인되지 않았다.
 - `채택`: 승인됐다. 구현 완료를 뜻하지 않는다.
-- `일부 대체 → NNNN`: 결정 일부를 그 ADR이 대체했다. 나머지는 유효하다.
+- `일부 대체 → NNNN`: 결정 일부를 그 ADR이 대체했다. 나머지는 유효하다. 일부 결정이 ADR 없이 바뀌어 현재
+  구조가 `docs/architecture.md`에 있으면 `architecture.md (현재 구조)`를 함께 적는다.
 - `대체됨 → NNNN` 또는 `대체됨 → architecture.md (현재 구조)`: 결정이 대체됐다. 패키지 배치 ADR은 현재 구조가
   `docs/architecture.md`에 있어 당시 판단의 기록으로만 남는다.
 
@@ -34,7 +36,7 @@
 | [0007](0007-show-sale-fields-are-display-only.md) | Show의 판매 필드는 표시 전용이고, 판단은 Booking이 한다 | 채택 | 2026-09-09 |
 | [0008](0008-like-target-generalization.md) | favorite module을 like로 개명하고 찜 대상을 LikeType으로 일반화한다 | 일부 대체 → 0009 | 2026-09-09 |
 | [0009](0009-like-owns-write-and-status-usecases.md) | 찜하기·찜 해제·찜 상태 조회는 like가 소유하고, "내 찜 목록"만 show에 남는다 | 채택 | 2026-09-09 |
-| [0010](0010-exceptions-do-not-own-http-status.md) | 업무 예외는 HTTP 상태를 모른다 — 웹 계층이 상태를 정한다 | 일부 대체 → 0011 | 2026-09-10 |
+| [0010](0010-exceptions-do-not-own-http-status.md) | 업무 예외는 HTTP 상태를 모른다 — 웹 계층이 상태를 정한다 | 일부 대체 → 0011, architecture.md (현재 구조) | 2026-09-10 |
 | [0011](0011-shared-technical-package-layout.md) | 공통 기술 코드를 shared 하위 패키지로 통합한다 | 대체됨 → architecture.md (현재 구조) | 2026-09-10 |
 | [0012](0012-separate-global-http-security-from-member.md) | 전역 HTTP security를 member에서 분리한다 | 일부 대체 → 0013 | 2026-09-13 |
 | [0013](0013-layer-first-package-layout-and-security-owns-authentication.md) | 업무 모듈은 계층형으로 두고, 인증 조립은 security가 소유한다 | 대체됨 → architecture.md (현재 구조) | 2026-09-14 |

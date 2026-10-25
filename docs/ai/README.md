@@ -6,7 +6,7 @@
 | --- | --- |
 | [AGENTS.md](../../AGENTS.md) | 공통 agent source of truth / 1차 bootloader와 작업 라우팅 |
 | [README.md](../../README.md) | repo/product overview와 로컬 실행 |
-| [architecture.md](../architecture.md), [ADR](../adr/README.md) | 현재 architecture와 승인된 결정; ADR의 채택·대체·미적용 상태 확인 |
+| [architecture.md](../architecture.md), [ADR](../adr/README.md) | 현재 architecture와 승인된 결정; ADR의 제안·채택·대체 상태 확인 |
 | [coding-guidelines.md](../coding-guidelines.md) | 코드 작성 기준 |
 | [testing.md](../testing.md) | 검증 선택·실행·보고 기준 |
 | [core-booking-lifecycle.md](../core-booking-lifecycle.md) | booking 정책과 현재 수명주기 |

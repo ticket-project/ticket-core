@@ -34,7 +34,7 @@ PostgreSQL 전환(2026-10-08) 이전의 H2/Oracle migration 이력은 2026-10-17
 운영에는 만들어지지 않고 어긋나도 드러나지 않는다. Spring context를 띄우는 테스트도 `@MigratedSchema`로
 테스트 PostgreSQL 컨테이너에 같은 migration을 적용해 스키마를 만든다. 빈 DB에서 전체 migration 결과가 entity와
 맞는지는 `PostgreSqlMigrationChainSchemaTest`가, module 하나의 migration만으로 그 module 매핑이 맞는지는
-`*SlicingSchemaTest`가 확인한다(Docker 필요).
+`*SlicingSchemaTest`가 확인한다(Docker 필요). slicing 테스트는 booking·payment·venue에만 있다.
 
 - PK·유니크가 아닌 보조 인덱스는 측정으로 필요가 확인된 것만 새 migration으로 만든다.
   `PostgreSqlMigrationChainSchemaTest`가 그 목록을 고정한다.

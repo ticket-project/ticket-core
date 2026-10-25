@@ -2,10 +2,11 @@
 
 ## 상태
 
-일부 대체 → 0011
+일부 대체 → 0011, architecture.md (현재 구조)
 
-패키지 배치와 `support` 관련 서술은 0011이 대체했다. 이 ADR은 ADR 0002의 "예외가 완성된 HTTP 응답 계약을 스스로
-갖는다"는 서술을 수정한다 — 모듈이 자기 오류를 소유한다는 원칙 자체는 유지한다.
+패키지 배치와 `support` 관련 서술은 0011이 대체했다. 결정 5(예외 클래스는 통합하지 않는다)는 아래 2026-10-07
+갱신으로 모든 module에서 뒤집혔고, 현재 예외 구조는 `docs/architecture.md`의 오류 처리가 기준이다. 이 ADR은
+ADR 0002의 "예외가 완성된 HTTP 응답 계약을 스스로 갖는다"는 서술을 수정한다 — 모듈이 자기 오류를 소유한다는 원칙 자체는 유지한다.
 
 > 2026-10-07 갱신(전체 module): 결정 5를 모든 module에서 뒤집었다. booking에 이어 member·show·like·security도
 > module마다 예외 하나(`MemberException`·`ShowException`·`LikeException`·`AuthException`)가 `<Module>ErrorCode`와

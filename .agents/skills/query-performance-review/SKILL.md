@@ -16,6 +16,7 @@ description: ticket-core의 JPA·Querydsl·SQL 조회에서 N+1, index, paginati
 - SQL/query 수·조회량·lazy 접근·페이지 경계·connection 점유 중 병목 가설과 관측 근거를 구분한다. 로컬·테스트 DB 결과를 운영 RDS 실행계획·성능으로 일반화하지 않는다.
 - WHERE·join·GROUP BY/DISTINCT·ORDER BY·null·LIKE escaping·커서 tie breaker를 전후 대조해 정확성을 먼저 보존한다.
 - 저장 구현은 자기 모듈 데이터를 조회하고 다른 모듈 결과 조합은 use case의 공개 API에서 한다. N+1 해소를 다른 모듈 entity 직접 join으로 해결하지 않는다.
+- 캐시로 줄이려면 [로컬 캐시 배치](../../../docs/architecture.md#module-structure)를 따른다. 판정 경로의 좌석 상태·회원·진행 중 주문은 캐시하지 않는다.
 - 자기 모듈의 승인된 조회 Repository 호출을 불필요한 1:1 port/adapter로 감싸지 않는다. 새 조회 공개면은 구조 테스트와 [modulith-boundaries](../modulith-boundaries/SKILL.md)를 대조한다.
 - index·schema 변경은 [database-change](../database-change/SKILL.md), 성능 측정용 부하 실행은 명시 요청 시 [Core 부하 검증](../../../docs/testing.md#core-부하-검증)을 따른다.
 
