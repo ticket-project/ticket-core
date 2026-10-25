@@ -19,7 +19,7 @@
 
 패치 밖의 관련 코드·테스트·설정까지 확인하고, 스타일보다 결함 가능성을 우선하며, 근거가 약한 지적은 하지 않는다. 특히 다음을 본다.
 
-- 트랜잭션 경계와 DB connection 점유: 트랜잭션 안에서 Redis·WebSocket·다른 모듈 호출로 connection을 붙들지 않는지, 락을 먼저 잡고 그 안에서 트랜잭션을 여는 순서인지.
+- 트랜잭션 경계와 DB connection 점유: 트랜잭션 안에서 Redis·WebSocket·다른 모듈 호출로 connection을 붙들지 않는지, 락을 쥔 채 DB 트랜잭션을 열어 connection 경합이 락 경합으로 번지지 않는지. 지금 좌석 락은 Redis 선점 구간에만 걸고 DB 트랜잭션 전에 풀며, 락 밖의 동시 쓰기는 DB 제약(예: `uk_orders_pending_member_performance`)이 막는다(`CreateOrderUseCase`).
 - 락 범위: 락이 보호하는 대상과 수명이 좌석·회원·주문 단위와 맞는지, 락 안의 외부 I/O가 필요한 것뿐인지.
 - Redis와 DB 정합성: TTL·만료 listener·scheduler 누락 복구가 같은 정합성을 함께 지키는지, 실패 보상과 이벤트 재전달에 멱등한지.
 - 공개 계약: JSON 필드·오류 코드·HTTP 상태를 바꾸면 소비자(프론트, `gatling-test`, `ticket-queue`)가 깨지지 않는지.

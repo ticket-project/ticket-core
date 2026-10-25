@@ -13,8 +13,9 @@
 
 ## AWS RDS PostgreSQL
 
-자동화 검증 컨테이너는 PostgreSQL 18을 사용한다. 기존 로컬 컨테이너의 버전은 별도로 관리하며,
-RDS의 메이저 버전을 확정하면 자동화 검증 버전도 맞춘다. 실제 리전에서 지원하는 마이너 버전은 생성 전에 확인한다.
+자동화 검증 컨테이너(Testcontainers)와 `docker-compose-local.yml`은 PostgreSQL 18(`postgres:18`)을 쓴다. 운영 RDS의 실제
+버전은 저장소에서 확인할 수 없으므로 RDS 콘솔이나 `SELECT version()`으로 확인하고, 메이저 버전이 다르면 자동화 검증
+버전을 맞춘다.
 
 서버의 저장소 밖 compose와 환경변수에는 다음 값을 설정한다. 비밀번호는 별도 secret으로 주입한다.
 
@@ -37,7 +38,7 @@ Oracle에서 RDS PostgreSQL로의 전환(데이터 이관 절차 포함)은 2026
 
 기존 클라이언트와 호환되는 초기 배포에서는 환경 변수 `ADMISSION_TOKEN_ENFORCEMENT_ENABLED=false`로 검증을
 비활성화한다. Queue Server와 클라이언트의 admission token 전달이 모두 준비된 뒤에만 `true`로 전환한다.
-비활성 상태에서는 회차의 Queue 정책과 admission token을 조회하거나 검증하지 않는다.
+비활성 상태에서도 회차 판매 정책으로 Queue 필요 여부는 판정하고, admission token 검증만 건너뛴다(`JwtAdmissionVerifier`).
 
 admission token의 서명 secret, issuer, audience는 Core와 `ticket-queue` 두 저장소 설정이 일치해야 한다. 한쪽만
 바꾸면 검증 실패가 부하 문제가 아니라 설정 불일치로 발생한다.
@@ -66,12 +67,12 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 
 배포 전 점검:
 
-- `PERFORMANCE_SEATS`에 `(performance_id, seat_id)` 중복이 있는지 확인한다. 결과가 0건이어야 유니크 인덱스
-  migration이 적용된다. 중복이 있으면 배포를 중단하고 `ORDER_SEATS.performance_seat_id` 등 참조 데이터를 확인해 대표 행을
-  결정한 뒤 정리한다. migration에서 중복 행을 임의 삭제하지 않는다.
+- booking V4(`uk_orders_pending_member_performance`)가 아직 적용되지 않은 DB라면 같은 회원·회차의 PENDING 주문이 둘 이상
+  있는지 확인한다. 결과가 0건이어야 유일 인덱스가 만들어진다. 중복이 있으면 배포를 중단하고 주문·hold 상태를 확인해
+  정리한다. migration에서 중복 행을 임의로 바꾸거나 삭제하지 않는다.
 
   ```sql
-  SELECT performance_id, seat_id, COUNT(*) FROM performance_seats GROUP BY performance_id, seat_id HAVING COUNT(*) > 1
+  SELECT member_id, performance_id, COUNT(*) FROM orders WHERE status = 'PENDING' GROUP BY member_id, performance_id HAVING COUNT(*) > 1;
   ```
 
 - `SHOWS.venue_id`는 DB FK가 없어 존재하지 않는 Venue를 가리킬 수 있다. 단건 조회는 그런 row를 만나면 venue의
@@ -82,10 +83,6 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
   SELECT id FROM SHOWS WHERE venue_id NOT IN (SELECT id FROM VENUES);
   ```
 
-- `EVENT_PUBLICATION`/`EVENT_PUBLICATION_ARCHIVE`의 `serialized_event` 컬럼 정의(PostgreSQL `__root` V1의 VARCHAR(4000))를
-  환경별 Flyway 이력과 실제 컬럼으로 확인한다. 저장소에 파일이 있다는 사실만으로 운영 적용을 단정하지 않는다. V9 이전
-  크기에서는 `OrderTerminated` publication 저장이 실패할 수 있으므로 다중 좌석 주문 트래픽을 늘리기 전에 확인한다.
-
 PostgreSQL에서 migration이 실패한 뒤 재시도하기 전에는 실제 schema와 `flyway_schema_history`(module 소유라면
 `flyway_schema_history_{module}`)를 함께 확인한다.
 
@@ -95,8 +92,10 @@ PostgreSQL에서 migration이 실패한 뒤 재시도하기 전에는 실제 sch
 시작할 수 있다. 서버에서 `docker compose up` 뒤 `ticket-be` 컨테이너의 `/actuator/health`가 5분 안에 UP이 되지 않으면
 배포 직전에 돌던 이미지로 되돌리고 job을 실패시킨다. 되돌린 이미지도 UP이 되지 않으면 서버를 직접 확인한다.
 
-서버의 `docker-compose.yml`은 저장소 밖에 있다. 컨테이너 이름, 컨테이너 안 포트, `DOCKER_IMAGE` 변수는 workflow 주석에
-적은 가정이므로, compose가 바뀌면 workflow도 함께 고친다.
+서버의 `docker-compose.yml`은 저장소 밖에 있다. 컨테이너 이름(`ticket-be`), 컨테이너 안 포트(8080), `DOCKER_IMAGE` 변수는
+workflow 주석에 적은 가정이다. 배포 script는 그 밖에도 같은 compose가 `FRONTEND_DOCKER_IMAGE`로 `ticket-fe`를,
+`DD_VERSION`으로 Core 버전을 받는다고 보고, Core 컨테이너가 새로 만들어지면 `ticket-nginx`를 재시작한다. compose가 바뀌면
+workflow도 함께 고친다.
 
 ## Core 용량 관측
 
@@ -109,12 +108,30 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 메트릭을 노
 - `executor_active_threads`, `executor_queued_tasks`: background worker 사용량과 적체. Redis 만료 처리 executor는
   `name` 태그로 구분한다.
 
-**주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 이름이 붙은 전용 executor가 없다.** Spring Boot 기본 비동기
-executor(`applicationTaskExecutor`)를 쓰므로 위 executor 태그에 잡히지 않는다. 이 경로의 적체는 `EVENT_PUBLICATION`
-테이블의 PENDING/PROCESSING 건수와 `EventPublicationMaintenance`가 남기는 재시도 초과 로그로 확인한다.
+**주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 이름이 붙은 전용 executor가 없다.** 앱이 `ThreadPoolTaskExecutor`
+빈(`RedisExpirationListenerConfig`)을 등록하므로 Spring Boot 기본 비동기 executor(`applicationTaskExecutor`)는 만들어지지
+않는다(Boot는 `Executor` 빈이 없거나 `spring.task.execution.mode=force`일 때만 만든다). 측정 스레드 덤프에서 리스너는
+이벤트마다 새 스레드를 만드는 `SimpleAsyncTaskExecutor-*` 스레드로 돌았고 동시 실행 수에 상한이 없었다(gatling-test
+capacity-log P-015). 이 스레드는 요청과 같은 Hikari 풀에서 연결을 빌리므로 부하가 높으면 요청 스레드와 연결을 다툰다.
+위 executor 태그에는 잡히지 않는다. 이 경로의 적체는 `EVENT_PUBLICATION` 테이블의 PENDING/PROCESSING 건수와
+`EventPublicationMaintenance`가 남기는 재시도 초과 로그로 확인한다.
+
+**로컬 캐시(Caffeine)는 값을 늦게 반영한다.** 캐시 이름·유지 시간·상한의 원본은 `CacheConfig`와 `CacheNames`다.
+
+| 캐시 | 담는 값 | 유지 시간 | 상한 | 반영 지연 |
+| --- | --- | --- | --- | --- |
+| `salesPolicy` | booking 회차 판매 정책(`PerformanceSaleFinder`) | 쓴 뒤 1초 | 1,000개 | 판매 기간·대기열 정책 변경이 서버마다 최대 1초 늦다 |
+| `performanceDisplay` | show 회차 표시값: 공연·회차, 공연장 이름, 회차 시작 시각, 등급(`PerformanceSaleHeaderReader`) | 쓴 뒤 10분 | 1,000개 | 주문 표시값과 잔여석 조회의 등급 정보에 최대 10분 옛 값이 남는다 |
+
+두 캐시는 `recordStats()`를 켰지만 `/actuator/prometheus`에 `cache_*` 지표가 나오는지는 실행으로 확인하지 않았다.
+운영 측정에서 판매 정책 캐시(`sync = true`)가 채워지기를 기다리는 주문 스레드가 연결을 쥐고, 캐시를 채우는 스레드는 연결을
+기다려 Core가 멈춘 사례가 있다(gatling-test capacity-log P-022, 결정 대기). 캐시가 붙은 경로에서 Hikari pending이 길게
+이어지면 이 경합을 먼저 의심한다.
 
 모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`,
-`DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다.
+`DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다. 운영 서버의 실제
+`DD_SERVICE` 값은 저장소에서 확인할 수 없고, core-capacity skill의 [운영 측정](../.agents/skills/core-capacity/production.md#진단)은
+Datadog 서비스 이름을 `ticket-be`로 적고 있다. 아래 쿼리를 쓰기 전에 실제 `service` 태그를 확인한다.
 
 ```promql
 histogram_quantile(0.99, sum by (le, uri, method) (rate(http_server_requests_seconds_bucket{service="ticket-core"}[1m])))
@@ -124,8 +141,8 @@ max(tomcat_threads_busy_threads{service="ticket-core"}) / max(tomcat_threads_con
 ```
 
 Hikari pending이 0보다 커지면 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. pending이 0이어도 이미 빌린 연결이 DB lock에서
-멈출 수 있으므로 DB wait를 별도로 확인한다. Redis 만료 처리 executor의 queued 값이 상한에 오래 머물거나 queue 포화
-경고가 반복되면 이전 회차 작업이 현재 부하와 겹친 것이다. 이벤트 후속 처리가 누락되거나 실패해도
+멈출 수 있으므로 DB wait를 별도로 확인한다. Redis 만료 처리 executor는 worker 2개에 큐 상한이 없어(`Integer.MAX_VALUE`) 포화
+경고 없이 작업이 메모리에 쌓인다. queued 값이 줄지 않고 계속 늘면 이전 회차 작업이 현재 부하와 겹친 것이다. 이벤트 후속 처리가 누락되거나 실패해도
 `EventPublicationMaintenance`가 주기적으로 재처리해 복구하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
 
 DB lock wait는 Actuator만으로 볼 수 없다. Datadog DBM 또는 `pg_monitor` 권한이 있는 별도 관측 계정에서 다음 정보를

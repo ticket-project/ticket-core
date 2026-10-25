@@ -67,7 +67,7 @@ Testcontainers를 쓰고, 그렇지 않으면 순수 단위 테스트로 둔다.
 | 실행 특성 | 두는 것 | 두지 않는 것 |
 | --- | --- | --- |
 | Spring 컨텍스트 없는 단위 테스트 | 엔티티, 값 객체, 상태 전이, 정책, 불변식, use case(외부 port는 mock/fake) | Spring 컨텍스트, DB, Redis |
-| `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인. 모듈마다 최소 하나 | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
+| `@ApplicationModuleTest(verifyAutomatically = false)` | 모듈 STANDALONE 부트스트랩 확인. 모듈마다 최소 하나(기술 모듈 `shared`는 없다) | 전체 애플리케이션 구조 검증(그건 `ModularityTests`의 몫) |
 | `@DataJpaTest` | `*QuerydslRepository`의 Querydsl 조회, Spring Data가 구현하는 domain `*Repository` | 업무 규칙 단위 테스트 |
 | Spring context 없는 Hibernate 단독 검증 | 해당 모듈 소유 migration만으로 schema가 만들어지고 그 모듈 JPA 매핑이 `validate`를 통과하는지(`*SlicingSchemaTest`). 다른 모듈의 migration이 있어야만 통과하면 실패다 | 업무 규칙 단위 테스트 |
 | `@SpringBootTest`(+ Testcontainers) | 전체 컨텍스트 기동, Redis/Redisson 실제 연동, 실제 HTTP로 스택을 관통하는 예매 E2E | 개별 클래스 단위 검증 |
@@ -157,7 +157,9 @@ ticket-core와 나란히 둔 `../gatling-test`에서 실행한다. 아래는 Cor
   확인한다.
 - 성능 목표(Queue 입장률)는 [Core 수용량](core-capacity.md)의 순서로 정하며 아직 확정값이 **없다**. 테스트 시작
   전에 대상 URL·사용자 수·투입 시간·전용 performanceId와 판단 기준을 승인받는다. **운영 환경 부하는 그 문서의
-  수용량 측정에만**, 실사용자가 없는 시간에 전용 부하 회차로 준다.
+  수용량 측정에만**, 실사용자가 없는 시간에 전용 부하 회차로 준다. core-capacity skill의 운영 측정은 측정을 시작할 때
+  대상과 부하를 한 번 보여 주고 실행마다 승인받지 않는다. 실사용자가 생기면 실행마다 승인으로 되돌린다
+  ([운영 측정](../.agents/skills/core-capacity/production.md#승인), 사용자 결정 2026-10-17).
 - 판정은 실패율·p95/p99·500 응답뿐 아니라 성공한 hold/order 수가 좌석 수를 넘지 않는지, admission 경로가
   맞는지까지 본다. DB pool·Redis 지연·executor backlog 같은 서버 지표는 운영 관측 지표와 함께 본다.
 - 측정 가정, 예시 값, 실제 결과, 승인된 운영 설정을 구분한다. 개별 결과는 원본 리포트와 Issue/PR에 남기고
