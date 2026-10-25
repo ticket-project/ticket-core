@@ -20,12 +20,16 @@
 - 커밋 후 처리는 `@ApplicationModuleListener`가 담당하고, 실패는 catch-and-log로 삼키지 않고
   throw해 Event Publication Registry가 FAILED로 기록하고 재시도하게 한다.
 - 예매 정책 조회(booking-local `PerformanceSalesPolicy`), show 표시값 조회, member 회원 확인,
-  admission token 검증은 booking DB 트랜잭션 밖에서 끝낸다.
+  admission token 검증은 주문 쓰기 트랜잭션 밖, `BookingPreflightReader`의 읽기 전용 트랜잭션 하나 안에서 끝낸다.
 - 주문 금액은 오직 `PerformanceSeat.unitPrice`로만 계산한다. 클라이언트가 보낸 가격도, show가 다시 계산한
   가격도 금액 계산 근거로 쓰지 않는다.
-- Order/OrderSeat에 남긴 표시 snapshot(show/performance/venue 이름, 등급 코드·이름, 좌석 라벨,
+- Order/OrderSeat에 남긴 표시 snapshot(공연명·회차 시작 시각·공연장 이름, 등급 코드·이름, 좌석 라벨,
   가격)은 생성 이후 다시 조회하지 않는다. show 쪽 표시값이나 가격이 나중에 바뀌어도 이미 만든
   주문 상세는 바뀌지 않는다.
+- 판매 정책은 회차별로 1초, show의 회차 단위 표시값(공연명·회차 시작 시각·공연장 이름·등급)은 회차별로
+  10분 재사용한다(`shared.config.CacheConfig`). 좌석 라벨과 금액은 매번 계산한다. 그래서 정책 변경은 서버마다
+  최대 1초 늦게 반영되고, 주문에 남기는 회차 단위 표시값은 최대 10분 지난 값일 수 있다. 등급별 잔여석
+  조회(`GetSeatAvailabilityUseCase`)의 등급 코드·이름·가격·순서도 같은 10분 캐시 값이다.
 
 ## 주문 생성
 
@@ -33,12 +37,13 @@
 CreateOrderUseCase          (POST /api/v1/orders)
   -> BookingPreflightReader: 아래 확인과 조회를 짧은 read 트랜잭션 하나(connection 한 번)로 끝낸다
      -> admission BookingEntryGuard.check: 예매 정책 조회, 예매 기간 확인, 대기열 필요 회차만 token 검증
+        (`security.admission.enforcement-enabled`가 켜진 경우에만, [운영](operations.md#admission-token-검증))
         — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
      -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
      -> member MemberLookupApi: active member 확인
      -> pending 주문 중복, 좌석 판매 상태 확인
      -> show PerformanceSaleInfoApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
-        show/venue 이름) 조회 — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
+        공연명·회차 시작 시각·공연장 이름) 조회 — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
   -> LockScope.SEAT 락 안에서 요청 좌석이 모두 본인 selection인지 확인(선택 시간 만료면 E4007,
      그 밖은 E4006)하고
      HoldRegistry로 Redis 좌석 hold 생성(좌석 키·점유 인덱스·메타를 Lua 한 번으로) 후 락 해제 (밖)
@@ -57,6 +62,7 @@ CreateOrderUseCase          (POST /api/v1/orders)
        -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
           (OrderSeat의 좌석 식별자 매핑도 담는다. 이후 좌석 락 안의 Redis·WebSocket 작업은 DB를 다시 읽지 않는다)
        -> HeldSeatPublisher
+            -> 좌석 락 안에서 모든 좌석이 아직 이 holdKey로 잡혀 있을 때만 아래를 진행(아니면 건너뜀)
             -> 주문 회원 소유 selection만 해제 (Redis)
             -> HELD 상태 발행             (WebSocket)
 ~~~
@@ -127,8 +133,8 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 ## 결제 시도와 Order 상태
 
 `Order`의 상태 전이는 `PENDING -> CONFIRMED`, `PENDING -> EXPIRED`, `PENDING -> CANCELED` 세 가지뿐이다
-(`booking.order.domain.OrderState`). 결제 실패 상태는 없다(`HoldReleaseReason.PAYMENT_FAILED`는 hold 해제 사유를
-기록하는 별개의 enum이고 Order 상태가 아니다).
+(`booking.order.domain.OrderState`). 결제 실패 상태는 없다(hold 해제 사유를 기록하는 별개의 enum
+`HoldReleaseReason`도 `TTL_EXPIRED`·`USER_CANCELED` 두 가지뿐이다).
 
 결제 실패를 Order 상태로 두지 않는 이유는 Payment가 결제 완료 건이 아니라 **결제 시도**이기 때문이다(`Order 1 : 0..N Payment`). 결제 시도 한 번이
 실패해도 Order는 만료 전까지 다시 결제를 시도할 수 있어야 하므로, 결제 실패는 Payment 자신의 상태
@@ -144,7 +150,6 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 CancelOrderUseCase / ExpireOrderUseCase
   -> PENDING 주문 row lock
   -> OrderTerminationService
-       -> 주문 좌석 검증
        -> CANCELED 또는 EXPIRED 전이
        -> hold history 저장
        -> 같은 트랜잭션 안에서 OrderTerminated 이벤트 발행
@@ -160,8 +165,8 @@ CancelOrderUseCase / ExpireOrderUseCase
 같은 `OrderTerminated` publication이 재시도로 다시 전달되면 Redis 해제도 다시 수행한다. 해제는
 좌석별 현재 holdKey를 확인하고 일치할 때만 지우므로, 이미 풀린 좌석은 그대로 지나가고 그사이
 다른 사용자가 잡은 선점도 건드리지 않는다. 그래서 해제 완료 여부를 따로 기록하지 않는다.
-해제 호출자는 hold의 전체 좌석을 넘긴다. meta key(`hold:key:%s`)는 TTL 알림용으로 holdKey 문자열만
-저장하고, 좌석 해제 후 해당 meta를 항상 삭제한다. 기존 JSON meta 값은 읽지 않으므로 그대로 남아 있어도 무해하다.
+해제 호출자는 hold의 전체 좌석을 넘긴다. meta key(`hold:key:%s`)는 TTL 알림용이고 값으로 선점한
+회원 ID를 저장한다. 선점 Lua가 이 값을 읽어 충돌한 hold가 같은 회원 것인지(`E5004`) 판정한다. 좌석 해제 후 해당 meta를 항상 삭제한다.
 WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새 hold나 selection이 생긴
 좌석에는 오래된 해제 알림을 보내지 않는다. 발행 자체가 다시 실패하면 같은 RELEASED가 다시
 발행될 수 있다 — 이 이벤트는 좌석을 특정 상태로 맞추는 멱등 상태 알림으로 취급하며 전달

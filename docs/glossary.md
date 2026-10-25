@@ -62,7 +62,8 @@ _Avoid_: 회차석, SeatInstance, `ShowSeat`(쓰지 않는다 — Show 단위 �
 회원이 좌석을 고르고 결제 화면으로 넘어갈 때 만들어지는 예매 건이다. 결제 전에 생성되며,
 정해진 시간 안에 결제되지 않으면 만료된다. Member 1명은 Order 여러 건을 가지며(`1:0..N`),
 하나의 Order는 OrderSeat 1개 이상을 가진다(`1:1..N`, 빈 주문은 없다). 좌석·등급·가격 표시값은
-OrderSeat가 주문 시점 스냅샷으로 보존하므로, 이후 원본이 바뀌어도 바뀌지 않는다.
+OrderSeat가 주문 시점 스냅샷으로 보존하므로, 이후 원본이 바뀌어도 바뀌지 않는다. 공연명·회차 시작 시각·
+공연장 이름·등급은 회차별 10분 캐시(`shared.config.CacheConfig`)에서 읽으므로 주문 시점보다 최대 10분 지난 값일 수 있다.
 _Avoid_: 예약, 구매, Reservation, Purchase, Booking
 
 **OrderSeat**:
@@ -85,9 +86,9 @@ Order와 1:1이며 같은 holdKey로 이어지고, Order가 살아 있는 동안
 _Avoid_: Lock, Reservation
 
 **점유(Occupancy)**:
-선택 중이거나 선점된 좌석을 합쳐 부르는 말이다. 화면에서 막히는 좌석이고 좌석 상태 응답의 `OCCUPIED`다. DB의
+선택 중이거나 선점된 좌석을 합쳐 부르는 말이다. 화면에서 막히는 좌석이다. DB의
 판매 상태(`PerformanceSeat.state`)는 포함하지 않는다. 무엇을 점유로 볼지는 `SeatOccupancy` 한 곳이 정한다.
-점유 좌석 API(`.../seats/occupied`)는 화면에서 막을 좌석을 보내므로 점유에 판매 확정(`RESERVED`) 좌석을 더해 보낸다.
+좌석 상태 응답의 `OCCUPIED`와 점유 좌석 API(`.../seats/occupied`)는 화면에서 막을 좌석을 보내므로 점유에 판매 확정(`RESERVED`) 좌석을 더해 보낸다.
 
 **holdKey / orderKey**:
 holdKey는 선점 한 건의 식별자로 주문과 선점을 잇는다. 선점이 TTL로 만료되면 holdKey로 주문을 찾아 만료시킨다.
@@ -118,7 +119,7 @@ _Avoid_: 접수 기간, Show의 표시용 판매 기간과 같은 것처럼 다�
 _Avoid_: 대기열 진입 정책
 
 **진입 방식(EntryMode)**:
-프론트에 회차가 바로 예매(`DIRECT`)인지 대기열을 거치는지(`QUEUE`) 알려 주는 안내용 값이다. 실제 검사는 좌석 상태·
+프론트에 회차가 바로 예매(`DIRECT`)인지 대기열을 거치는지(`QUEUE`), 예매 기간이 아니라 진입할 수 없는지(`UNAVAILABLE`) 알려 주는 안내용 값이다. 실제 검사는 좌석 상태·
 선택·주문 생성 앞의 예매 진입 검사(`BookingEntryGuard`)가 매번 다시 한다. 응답 JSON 필드는 호환을 위해 `bookingMode`다.
 _Avoid_: 예매 방식
 
@@ -175,7 +176,7 @@ _Avoid_: 보정, 재제출
 
 **Snapshot**:
 어느 시점의 값을 복사해 고정한 것이다. 네 가지로 쓴다. (1) 가격 체인 `PerformanceGrade.price` →
-`PerformanceSeat.unitPrice` → `OrderSeat.unitPrice`, (2) 주문에 저장한 공연·공연장 이름과 좌석 라벨 같은 표시 snapshot,
+`PerformanceSeat.unitPrice` → `OrderSeat.unitPrice`, (2) 주문에 저장한 공연명·회차 시작 시각·공연장 이름과 좌석 라벨 같은 표시 snapshot(회차 단위 값은 회차별 10분 캐시에서 읽어 최대 10분 지난 값일 수 있다),
 (3) 다른 모듈에 entity 대신 내보내는 `*Snapshot` 값, (4) 트랜잭션 안에서 읽어 밖으로 들고 나가는 값(`OrderHoldSnapshot`).
 
 **entity-only 단계**:
