@@ -28,6 +28,11 @@ import lombok.RequiredArgsConstructor;
  * DB에서 읽었다. 운영의 한계가 Core CPU라(gatling-test capacity-log 2026-10-22) 이 반복 읽기를 줄인다. 검사는 요청마다 그대로 한다 — 줄이는 것은 읽기뿐이다. 판매
  * 기간·대기열 변경은 서버마다 최대 1초 늦게 반영된다.
  *
+ * <p><b>만료 순간 적재를 기다리게 하지 않는다({@code sync} 없음).</b> 호출자 중 일부({@code BookingPreflightReader} 등)는 DB 연결을 쥔 트랜잭션 안에서 이 캐시를
+ * 부르고, 일부(점유 좌석·좌석 선택)는 트랜잭션 밖에서 부른다. {@code sync = true}면 만료 순간 연결을 쥔 요청들이 적재를 기다리는데, 적재를 맡은 트랜잭션 밖 요청은 연결을 새로 기다려
+ * 풀(10)이 막힌다(운영 60 u/s에서 30초 연결 대기 시간 초과가 이어지며 Core가 3분 넘게 멈췄다, gatling-test capacity-log 2026-10-25 P-022). 그래서 만료 순간
+ * 놓친 요청은 각자 읽는다. 대가는 1초에 한두 번 더 읽는 기본 키 조회다.
+ *
  * <p>캐시는 {@link PerformanceSalesPolicy} 인스턴스를 여러 요청이 함께 쓴다. 이 엔티티에는 상태를 바꾸는 메서드도 다른 엔티티와의 연관도 없고 저장소에 {@code save}도 없어서
  * 그대로 담는다. 상태를 바꾸는 메서드를 넣으면 캐시에는 값 객체를 담도록 바꿔야 한다. 캐시는 다른 bean에서 부를 때만 걸린다.
  */
@@ -40,7 +45,7 @@ public class PerformanceSaleFinder {
      * @return 회차의 판매 정책. 이 조회는 회차 존재 확인을 겸한다
      * @throws NotFoundException 그 회차의 판매 정책이 없을 때. 예외는 캐시되지 않는다
      */
-    @Cacheable(cacheNames = CacheNames.SALES_POLICY, key = "#performanceId", sync = true)
+    @Cacheable(cacheNames = CacheNames.SALES_POLICY, key = "#performanceId")
     public PerformanceSalesPolicy requirePolicy(final Long performanceId) {
         return performanceSalesPolicyRepository
                 .findById(performanceId)
