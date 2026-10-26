@@ -16,7 +16,6 @@ error-prone = "2.50.0"
 nullaway = "0.14.1"
 p6spy = "2.0.0"
 redisson = "4.7.0"
-shedlock = "7.10.1"
 springdoc = "3.0.1"
 # spotless의 Java formatter. spotless plugin이 이 버전의 palantir-java-format을 받아 쓴다.
 palantir-java-format = "2.91.0"
@@ -41,8 +40,6 @@ nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 
 p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
-shedlock-spring = { module = "net.javacrumbs.shedlock:shedlock-spring", version.ref = "shedlock" }
-shedlock-provider-jdbc-template = { module = "net.javacrumbs.shedlock:shedlock-provider-jdbc-template", version.ref = "shedlock" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 [plugins]
