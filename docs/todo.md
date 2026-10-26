@@ -160,6 +160,75 @@ compose의 실제 값을 확인해 한 값으로 맞춘다. 로컬 캐시의 `ca
 
 [스케일 아웃 결정 목록](plans/scale-out-decisions.md)으로 옮겼다.
 
+### 좌석 선택 만료·주문 만료(2026-10-26 중단)
+
+2026-10-26 논의를 여기서 멈췄다. 결정 근거와 고르지 않은 안은 [스케일 아웃 결정 목록](plans/scale-out-decisions.md)
+D2-1·D2-2에 있다. 아래 "계획"은 사용자가 준 구현 계획(저장소에 없음)이고, 번호는 그 계획의 절 번호다.
+
+정한 것:
+
+- **주문 만료(구현·커밋, `97ad1464`~`ec488786`).** Redis 만료 알림을 쓰지 않는다. `OrderExpirationTrigger`가
+  5초마다(`worker.order-expiration.fixed-delay`) 돌고 ShedLock(JDBC, DB 시각 기준, `lockAtMostFor` 1분·`lockAtLeastFor`
+  4초)으로 한 인스턴스만 실행한다. 만료 시각이 지난 PENDING을 부분 인덱스 `idx_orders_pending_expires_at`(booking V5)로
+  100건씩 id 커서로 끝까지 읽고, 주문마다 따로 행 락 → `EXPIRED` → 커밋한다. 실패한 주문은 건너뛰고 다음 실행에서 다시
+  잡는다. Redis hold는 `OrderTerminated` 이벤트로 지운다. 좌석 hold 키는 주문과 같은 hold 시간으로 TTL이 걸려 만료
+  시각에 스스로 풀린다.
+- **좌석 알림 relay(D2-1).** Redis pub/sub relay로 모든 인스턴스에 나눈다. 채널 하나, 받는 쪽은 상한 없는 단일 스레드다.
+  FE가 좌석 상태를 화면 진입 때 한 번만 읽고 그 뒤로는 WebSocket으로만 바꾸기 때문이다(FE 수정 불가). 구현했다가
+  되돌렸다(`96036b8e` → `0ef9b371`).
+- **좌석 선택 만료.** 지금처럼 Redis TTL + keyspace 만료 알림 → `DESELECTED`다. 선택권은 TTL이 풀고, 알림은 화면용이다.
+- **keyspace 만료 리스너 수신 확인.** 운영과 같은 조합(Redisson 연결, 구독 executor 따로)으로 실제 Redis에서 handler까지
+  오는 것을 확인했다. 테스트 `src/test/java/com/ticket/booking/redis/RedisKeyExpirationNotificationIntegrationTest.java`는
+  커밋하지 않았다. 되돌린 relay 테스트가 메시지를 못 받은 원인은 task executor 스레드 1개에 구독 executor를 따로 주지
+  않은 테스트 설정으로 추정한다(Redisson 구독이 그 스레드를 계속 쥔다).
+
+정할 것:
+
+1. **좌석 선택 만료 알림의 중복(D2-2).** 결정 목록에는 "claim(`SET NX`)으로 한 대만 처리하고 relay로 보낸다"가 적혀
+   있지만 구현은 되돌렸다. 계획 2.3은 "모든 서버가 같은 만료 알림을 받아 대표 서버·분산 락 없이 각자 자기 접속자에게만
+   보낸다"이다. Claude 추천은 계획대로 claim 없이 로컬로 보내고, `SeatSelectionWriter.notifyReleasedIfFree`의 좌석
+   락(`NOTIFY_LOCK`)을 빼는 것이다. 감수: 상태 확인과 전송 사이에 다른 사용자가 고르면 `DESELECTED`가 `SELECTED`보다
+   늦게 도착해 화면이 다음 알림이나 새로고침까지 틀린다(판매는 서버가 막는다). 인스턴스가 N대면 Redis 상태 조회도
+   N배다. 이렇게 정하면 relay에 "relay로 보내기"와 "자기 접속자에게만 보내기" 두 발행 경로가 생기고, 결정 목록 D2-2
+   세부 결정을 고친다. 되돌린 claim 구현은 "비어 있으면 발행"을 Lua 하나(`publishIfFree`)로 해 이 틈이 없었다.
+2. **relay 발행 위치(D2-1 세부).** 결정 목록은 "상태를 바꾸는 Lua 안에서 `PUBLISH`"로 정했지만, 좌석 락을 걷어낼지는
+   [좌석 분산 락 다시 설계하기](plans/seat-lock-redesign.md)와 함께 정하기로 했다. 되돌린 구현(`96036b8e`)은 상태를
+   바꾸는 스크립트와 따로 발행 Lua를 두고, 둘 사이의 순서는 좌석 락으로 지켰다. 다시 구현할 때 그대로 되살릴지 정한다.
+3. **만료됐지만 아직 PENDING인 주문과 유일 인덱스.** 계획 3.1은 "만료 시각이 지난 PENDING은 무효, `EXPIRED` 전환은
+   백그라운드 작업만"이다. 그런데 `BookingPreflightReader.ensureNoPendingOrder`(상태만 본다)와 유일 인덱스
+   `uk_orders_pending_member_performance`가 만료 처리 전(최대 약 5초) 같은 회원·회차의 새 주문을 E5004로 막는다.
+   PostgreSQL 부분 인덱스 조건에는 지금 시각을 넣을 수 없다. 좌석은 hold 키 TTL로 제때 풀려 다른 사용자에게는 영향이
+   없다.
+   - A(Claude 추천): 그대로 두고 3.1의 예외로 문서에 적는다. 코드 0줄. 만료 처리가 밀리면 막히는 시간도 늘어난다.
+   - B: 주문 생성 때 내 만료된 PENDING을 그 자리에서 `EXPIRED`로 바꾸고 진행한다. 3.1을 어기고, 읽기 전용 사전 확인
+     트랜잭션 구조를 바꿔야 한다(약 30줄과 테스트, 추정).
+   - 인덱스를 빼는 안은 2026-10-19에 걷어낸 회원·회차 분산 락이 다시 필요해 뺐다.
+4. **주문 만료 실행당 상한(계획 3.7).** 지금은 한 번 실행에서 상한 없이 끝까지 처리한다. 상한을 둘지, 값을 얼마로 할지
+   부하 테스트로 정한다. 상한을 두면 커서가 실행마다 처음부터 시작하므로, 앞쪽 주문이 계속 실패할 때 뒤쪽 주문이
+   밀리지 않는지 함께 본다.
+5. **중복 실행 방지 수단(계획 3.4).** 계획은 Redis 분산 락, 지금 구현은 ShedLock JDBC다. Claude 추천은 유지다. DB 시각
+   기준이라 서버 시계 차이에 덜 민감하고, 실행 결과도 DB에 쓴다. Redis로 바꿔야 하면 ShedLock Redis provider로 바꾼다.
+6. **계획 6절의 값.** 스케줄러 주기(지금 5초), 실행당 상한, 락 유지 시간(지금 1분·4초), 좌석 전체 재동기화 주기(FE
+   수정 불가라 D2-5에서 보류), Redis 클러스터 대응(D1-5), 모니터링 임계값. 지금 값은 모두 설정값이고 부하 테스트로
+   정한다.
+
+정한 뒤 할 것:
+
+- relay를 `96036b8e` 바탕으로 다시 구현한다. 실패했던 `SeatStatusRelayIntegrationTest`는 구독 executor를 따로 준다.
+- 정할 것 1에 따라 좌석 선택 만료 처리를 바꾼다.
+- 계획 4절의 시나리오를 검토하고 테스트한다. 다중 인스턴스 검증을 포함한다.
+  - 좌석 선택 만료: 만료 직후 재선택, 만료 알림보다 선택 알림이 먼저 도착, 모든 서버 수신, 알림 유실·지연, WebSocket
+    재접속, 주문 생성 때 선택 키 삭제, 선택 키 삭제와 hold 생성 사이 장애, 클러스터 노드 장애로 구독 끊김.
+  - 주문 만료: 만료 시각이 지나도 PENDING, 실행 중 서버 장애, 락 만료로 중복 실행, 같은 주문 동시 UPDATE, 수만 건
+    적체, 특정 주문 반복 실패, hold가 먼저 만료되고 DB 반영 지연, hold 만료와 다른 사용자 선택 동시, 재시작 뒤 복구.
+- booking V5 인덱스의 운영 적용 방식을 확인한다. 일반 `CREATE INDEX`는 만드는 동안 `orders` 쓰기를 막는다. 운영
+  `orders` 크기를 보고 그대로 둘지, 트랜잭션 밖 `CONCURRENTLY`(Flyway 설정 필요)로 할지 정한다.
+- [ADR 0022](adr/0022-seat-status-relay-and-single-expiration-claim.md)는 아직 "제안"이고 본문이 claim 기준이다. 정할 것
+  1·2를 정한 뒤 다시 쓰고 상태를 바꾼다.
+- 결정 목록 D0-2(60 u/s 멈춤 수정)는 "미정"으로 적혀 있지만 B(`@Cacheable`의 `sync = true` 제거)로 고쳐
+  `origin/master`에 들어갔다(`43fe8873`). 이 브랜치(`docs/sync-comments-and-docs`)에는 그 커밋이 없다. 결정 목록 상태를
+  고친다.
+
 ### 좌석 단위 DB 방어선(리뷰 P0-5)
 
 booking V4는 회원·회차당 PENDING 1건만 DB로 막는다. 같은 좌석이 두 PENDING 주문에 들어가는 것은 Redis hold에만

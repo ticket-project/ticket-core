@@ -22,7 +22,7 @@
 | D1-3 | 어떻게 배포할지 | 2대 운영 | 미정 | 한 대씩 교체, readiness·liveness 분리 |
 | D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
 | D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
-| D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 정함 | Redis pub/sub relay. 세부 결정 남음 |
+| D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 정함 | Redis pub/sub relay(구현 되돌림, 다시 구현 예정) |
 | D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 좌석 선택은 keyspace 알림 + claim(구현 되돌림). 주문 만료는 DB 청소 5초 + ShedLock(구현) |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
 | D2-4 | SockJS 연결 | 2대 운영 | 미정 | FE 수정 불가라 서버·LB 쪽 선택지에서 다시 정함 |
@@ -143,6 +143,9 @@
 - **결정(2026-10-26)**: Redis pub/sub relay. 좌석 상태를 바꾼 인스턴스가 Redis 채널에 동기로 발행하고, 모든
   인스턴스가 구독 연결 하나와 단일 스레드로 받아 자기 사용자에게 보낸다. 발행 순서 보장과 WebSocket 계약이 그대로
   유지된다. 상세는 [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 1.
+  - 다시 확인(2026-10-26): 구현을 되돌린 뒤 relay 없이 두는 안과 다시 비교해 relay로 정했다. FE는 좌석 상태를 화면에
+    들어올 때 한 번만 불러오고, 그 뒤로는 WebSocket 알림으로만 화면을 바꾼다(주기 재조회·재연결 재조회·창 포커스 재조회
+    없음). relay가 없으면 다른 서버에서 생긴 선택·선점·해제를 새로고침 전까지 못 보고, 서버가 늘수록 못 보는 몫이 커진다.
   - 고른 이유: 이미 쓰는 Redis로 되어 운영할 인프라가 늘지 않는다. 구독이 끊긴 동안의 메시지는 사라지지만, 사용자의
     WebSocket이 끊긴 동안의 알림도 어차피 놓치므로 둘 다 FE 재조회(D2-5)로 메운다. D2-2의 좌석 선택 만료 알림도 이
     relay로 보낸다.
@@ -307,8 +310,11 @@
 
 - 주문 만료(D2-2): 2026-10-26 구현. 알림 handler 삭제, DB 청소 5초, ShedLock, `orders(expires_at)` 부분 인덱스.
 - relay(D2-1)와 좌석 선택 만료 claim(D2-2): 2026-10-26에 구현했다가 되돌렸다. relay 통합 테스트에서 Redis 구독은
-  맺어지는데 `RedisMessageListenerContainer`(Redisson 연결) 리스너에 메시지가 오지 않았다. 다시 구현하기 전에 이 원인을
-  확인한다(같은 컨테이너를 쓰는 기존 keyspace 만료 리스너도 함께).
+  맺어지는데 `RedisMessageListenerContainer`(Redisson 연결) 리스너에 메시지가 오지 않았다. 원인은 테스트 설정으로
+  추정한다. 테스트가 task executor 스레드를 1개만 주고 구독 executor를 따로 주지 않았다. 컨테이너는 구독 executor가
+  없으면 task executor를 같이 쓰고, Redisson 구독은 끝날 때까지 스레드 하나를 쥐므로 메시지를 넘길 스레드가 남지 않았다.
+  같은 컨테이너 조합(구독 executor 따로)의 keyspace 만료 리스너는 실제 Redis 통합 테스트로 수신을 확인했다
+  (`RedisKeyExpirationNotificationIntegrationTest`).
 - [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 본문을 위 구현에 맞게 다시 쓰고 상태를 바꾼다.
 - 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금은 FE를 고칠 수 없어 미룬다.
 - 배포 workflow의 순차 교체와 readiness·liveness 분리(D1-3)
