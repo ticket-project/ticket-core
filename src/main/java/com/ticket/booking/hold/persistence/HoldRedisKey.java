@@ -14,6 +14,8 @@ public final class HoldRedisKey {
     private static final String HOLD_KEY = "seat:hold:{perf:%d}:%d";
     private static final String HOLD_SEAT_INDEX_KEY = "seat:hold:index:{perf:%d}";
     private static final String HOLD_META_KEY = "hold:key:%s";
+    /** 주문 만료 장부. 값은 holdKey, 점수는 그 주문의 만료 시각(epoch ms)이다. Redis 한 대라 전역 키 하나를 쓴다 — 클러스터로 가면 회차별로 바꾼다(D2-2). */
+    private static final String HOLD_EXPIRY_LEDGER_KEY = "hold:expiry:due";
     private static final Pattern HOLD_META_KEY_PATTERN = Pattern.compile("^hold:key:(.+)$");
 
     private HoldRedisKey() {}
@@ -24,6 +26,10 @@ public final class HoldRedisKey {
 
     public static String holdMeta(final String holdKey) {
         return String.format(HOLD_META_KEY, holdKey);
+    }
+
+    public static String holdExpiryLedger() {
+        return HOLD_EXPIRY_LEDGER_KEY;
     }
 
     public static String holdSeatIndex(final Long perfId) {

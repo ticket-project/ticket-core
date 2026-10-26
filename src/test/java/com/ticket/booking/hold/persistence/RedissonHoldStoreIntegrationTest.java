@@ -3,10 +3,12 @@ package com.ticket.booking.hold.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,7 @@ class RedissonHoldStoreIntegrationTest {
     private static final Long MEMBER_ID = 7L;
     private static final Long OTHER_MEMBER_ID = 8L;
     private static final Duration TTL = Duration.ofMinutes(5);
+    private static final Clock CLOCK = Clock.systemDefaultZone();
 
     @Container
     private static final GenericContainer<?> REDIS =
@@ -64,7 +67,7 @@ class RedissonHoldStoreIntegrationTest {
 
     @Test
     void 정상_저장이면_좌석키와_인덱스와_회원ID_메타가_함께_남는다() {
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, CLOCK);
         final Hold hold = hold("hold-ok", List.of(10L, 20L));
 
         store.saveIfAbsent(hold, TTL);
@@ -84,7 +87,7 @@ class RedissonHoldStoreIntegrationTest {
         redissonClient
                 .getBucket(HoldRedisKey.holdSeatIndex(PERFORMANCE_ID), StringCodec.INSTANCE)
                 .set("wrong-type", TTL);
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, CLOCK);
 
         assertThatThrownBy(() -> store.saveIfAbsent(hold("hold-single", List.of(10L)), TTL))
                 .isInstanceOf(IllegalStateException.class);
@@ -95,7 +98,7 @@ class RedissonHoldStoreIntegrationTest {
 
     @Test
     void 기존_JSON_메타를_읽지_않고_남의_좌석을_보존하며_반복_해제한다() {
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, CLOCK);
         store.saveIfAbsent(hold("hold-legacy", List.of(10L, 20L)), TTL);
         redissonClient
                 .getBucket(HoldRedisKey.holdMeta("hold-legacy"), StringCodec.INSTANCE)
@@ -116,7 +119,7 @@ class RedissonHoldStoreIntegrationTest {
 
     @Test
     void 이미_잡힌_좌석과_충돌하면_아무것도_쓰지_않고_남의_선점은_보존한다() {
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, CLOCK);
         assertThat(store.saveIfAbsent(hold("other-hold", OTHER_MEMBER_ID, List.of(20L)), TTL))
                 .isEqualTo(HoldStore.SaveResult.SAVED);
 
@@ -130,6 +133,31 @@ class RedissonHoldStoreIntegrationTest {
         assertThat(metaExists("other-hold")).isTrue();
     }
 
+    /** Worker가 꺼낼 수 있게 선점과 같은 스크립트에서 주문 만료 장부에 등록하고, 해제하면 장부에서도 지운다. 충돌하면 장부에도 쓰지 않는다. */
+    @Test
+    void 선점하면_주문_만료_장부에_만료_시각으로_등록하고_해제하면_지운다() {
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, CLOCK);
+        final Hold hold = hold("hold-ledger", List.of(10L));
+        store.saveIfAbsent(hold, TTL);
+        assertThat(store.saveIfAbsent(hold("hold-conflict", OTHER_MEMBER_ID, List.of(10L)), TTL))
+                .isEqualTo(HoldStore.SaveResult.HELD_BY_OTHER);
+
+        final long expiresAtMillis =
+                hold.expiresAt().atZone(CLOCK.getZone()).toInstant().toEpochMilli();
+        assertThat(ledgerScore("hold-ledger")).isBetween((double) expiresAtMillis, (double) expiresAtMillis + 1);
+        assertThat(ledgerScore("hold-conflict")).isNull();
+
+        store.release(PERFORMANCE_ID, "hold-ledger", List.of(10L));
+
+        assertThat(ledgerScore("hold-ledger")).isNull();
+    }
+
+    private @Nullable Double ledgerScore(final String holdKey) {
+        return redissonClient
+                .getScoredSortedSet(HoldRedisKey.holdExpiryLedger(), StringCodec.INSTANCE)
+                .getScore(holdKey);
+    }
+
     private boolean metaExists(final String holdKey) {
         return redissonClient
                         .getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE)
@@ -139,7 +167,7 @@ class RedissonHoldStoreIntegrationTest {
 
     @Test
     void 같은_회원이_먼저_잡은_좌석과_충돌하면_같은_회원이라고_알리고_아무것도_쓰지_않는다() {
-        final RedissonHoldStore store = new RedissonHoldStore(redissonClient);
+        final RedissonHoldStore store = new RedissonHoldStore(redissonClient, CLOCK);
         assertThat(store.saveIfAbsent(hold("first-click", List.of(20L)), TTL)).isEqualTo(HoldStore.SaveResult.SAVED);
 
         assertThat(store.saveIfAbsent(hold("second-click", List.of(10L, 20L)), TTL))
