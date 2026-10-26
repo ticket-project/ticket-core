@@ -16,7 +16,6 @@ import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -45,7 +44,6 @@ public class SeatSelectionWriter {
     private final DistributedLock distributedLock;
     private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
-    private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final SeatStatusEventPublisher seatEventPublisher;
     private final Clock clock;
@@ -69,19 +67,21 @@ public class SeatSelectionWriter {
         });
     }
 
-    /** 실제로 해제됐고 hold가 없는 경우에만 알린다. 주문 생성 후 남아 있던 선택을 해제해도 HELD 상태를 덮어쓰지 않는다. */
+    /** 실제로 해제됐고 hold가 없는 경우에만 알린다(확인과 발행을 한 스크립트에서 한다). 주문 생성 후 남아 있던 선택을 해제해도 HELD 상태를 덮어쓰지 않는다. */
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
         final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
         distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
-            if (!seatSelectionService.deselect(performanceId, seatId, memberId)
-                    || holdStore.isHeld(performanceId, seatId)) {
+            if (!seatSelectionService.deselect(performanceId, seatId, memberId)) {
                 return;
             }
-            seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
+            seatEventPublisher.publishIfFree(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
         });
     }
 
-    /** 이미 끝난 선택(TTL 만료, 일괄 해제)을 알린다. 락 안에서 현재 상태를 다시 확인해, 그 사이 다른 사용자가 다시 선택했거나 선점으로 넘어간 좌석은 알리지 않는다. */
+    /**
+     * 이미 끝난 선택(TTL 만료, 일괄 해제)을 알린다. 락 안에서 현재 상태를 다시 확인해(확인과 발행을 한 스크립트에서 한다), 그 사이 다른 사용자가 다시 선택했거나 선점으로 넘어간 좌석은 알리지
+     * 않는다.
+     */
     public void notifyReleasedIfFree(final Long performanceId, final Long seatId) {
         notifyReleasedIfFree(performanceId, seatId, findPerformanceSeatId(performanceId, seatId));
     }
@@ -89,12 +89,11 @@ public class SeatSelectionWriter {
     /** performanceSeatId를 이미 알고 있을 때 쓴다. 여러 좌석을 한꺼번에 알릴 때 좌석마다 DB를 다시 읽지 않도록 호출자가 한 번에 조회한 값을 넘긴다. */
     public void notifyReleasedIfFree(
             final Long performanceId, final Long seatId, final @Nullable Long performanceSeatId) {
-        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), NOTIFY_LOCK, () -> {
-            if (seatOccupancy.isOccupied(performanceId, seatId)) {
-                return;
-            }
-            seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
-        });
+        distributedLock.withLock(
+                List.of(LockKey.seat(performanceId, seatId)),
+                NOTIFY_LOCK,
+                () -> seatEventPublisher.publishIfFree(
+                        performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED));
     }
 
     /** 락 밖에서 미리 읽는다 — DB 조회를 좌석 락 안에 넣으면 고빈도 경로의 락 보유 시간이 DB 지연을 그대로 따라간다. */
