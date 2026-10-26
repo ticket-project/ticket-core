@@ -71,7 +71,9 @@ pub/sub으로 구독한다. pub/sub은 구독자 모두에게 보내므로 인�
 메운다. 클라이언트는 연결하거나 다시 연결할 때 점유 좌석을 다시 조회한다.
 
 - relay dispatch executor의 큐에는 상한을 둔다. 넘치면 메시지를 버리고 경고 로그와 메트릭을 남긴다. 호출 스레드에서
-  실행하는 방식(`CallerRunsPolicy`)은 Redis 수신 스레드를 막고 순서도 깨므로 쓰지 않는다.
+  실행하는 방식(`CallerRunsPolicy`)은 Redis 수신 스레드를 막고 순서도 깨므로 쓰지 않는다. **2026-10-26 변경**: 상한
+  없이 단일 스레드만 두기로 했다([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-1-좌석-알림을-모든-인스턴스에-나누는-방법)
+  D2-1).
 
 **발행 실패.** 지금처럼 호출자에게 던진다. `HeldSeatPublisher`·`HoldReleaser`의 실패는 Event Publication Registry가
 다시 시도하며 처리는 멱등이다. 좌석 선택·해제 요청은 지금처럼 실패 응답을 받는다.
@@ -184,9 +186,8 @@ relay 없이 claim만 넣으면 선택 만료의 `DESELECTED`가 claim한 인스
 ## 정하지 않은 것
 
 - 결정 1(Redis pub/sub relay)은 2026-10-26에 정했다
-  ([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-1-좌석-알림을-모든-인스턴스에-나누는-방법) D2-1). 채널 단위,
-  relay 큐, 발행 위치는 거기서 정한다. 결정 2는 같은 날 주문 만료는 Redis Sorted Set 장부, 좌석 선택 만료는 keyspace
+  ([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-1-좌석-알림을-모든-인스턴스에-나누는-방법) D2-1). 채널은
+  하나, relay 큐는 상한 없는 단일 스레드로 정했고, 발행 위치는 거기서 정한다. 결정 2는 같은 날 주문 만료는 Redis Sorted Set 장부, 좌석 선택 만료는 keyspace
   알림 + claim + relay로 정했고([D2-2](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리)), 나머지 세부
   결정은 거기서 정한다. 두 결정의 세부를 정한 뒤 본문을 다시 쓰고 상태를 바꾼다.
 - SockJS 폴백 처리: LB sticky(nginx `ip_hash` 등)와 FE의 SockJS 제거 중 무엇을 고를지.
-- relay 큐 상한 값과, 메시지를 버렸을 때의 경보 기준.
