@@ -1,14 +1,10 @@
 package com.ticket.seed;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -41,18 +37,6 @@ final class LoadTestFixtureSeeder implements SeedTask {
     private static final String CREATED_BY = "LOAD_TEST_FIXTURE";
     private static final int SEATS_PER_SECTION = 200;
     private static final int SEATS_PER_ROW = 10;
-    private static final int BATCH_SIZE = 1000;
-
-    /**
-     * 회차·좌석 등급 배정에 쓰는 공통 정의다. code, name, price, sortOrder 순서다. ADR 0005 이후 등급 가격은 회차(PerformanceGrade) 단위로만 존재하므로 show
-     * 단위 가격표(과거 ShowGrade)는 만들지 않는다.
-     */
-    private static final String[][] GRADE_DEFS = {
-        {"VIP", "VIP석", "150000", "1"},
-        {"R", "R석", "120000", "2"},
-        {"S", "S석", "90000", "3"},
-        {"A", "A석", "60000", "4"}
-    };
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -118,8 +102,7 @@ final class LoadTestFixtureSeeder implements SeedTask {
         }
         seedPerformances(now, performanceIndexes);
         seedSalesPolicies(now, performanceIndexes);
-        final Map<String, Long> gradeIdsByCode = ensureGrades(now);
-        seedPerformanceGrades(now, gradeIdsByCode, performanceIndexes);
+        seedPerformanceGrades(now, performanceIndexes);
         seedPerformanceSeats(now, performanceIndexes);
         return create;
     }
@@ -188,54 +171,32 @@ final class LoadTestFixtureSeeder implements SeedTask {
                 CREATED_BY);
     }
 
+    /**
+     * 구역은 {@value #SEATS_PER_SECTION}석, 줄은 {@value #SEATS_PER_ROW}석이다. 앞 구역 60%가 1층이다(2,000석은 구역 1~6). 배치도 좌표는 한 줄에
+     * {@code seatsPerViewRow}석씩 놓는다.
+     */
     private void seedSeats(final LocalDateTime now) {
-        final Timestamp createdAt = Timestamp.valueOf(now);
-        final List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
-        for (int index = 1; index <= size.seatCount(); index++) {
-            final int section = (index - 1) / SEATS_PER_SECTION + 1;
-            final int rowNo = ((index - 1) % SEATS_PER_SECTION) / SEATS_PER_ROW + 1;
-            final int seatNo = (index - 1) % SEATS_PER_ROW + 1;
-            batch.add(new Object[] {
-                size.idBase() + index,
-                size.venueId(),
-                String.format("SEC-%02d", section),
-                String.format("ROW-%02d", rowNo),
-                String.format("%02d", seatNo),
-                sectionShare(index) < 0.6 ? 1 : 2,
-                20.0 + (index - 1) % size.seatsPerViewRow() * 9,
-                20.0 + (double) ((index - 1) / size.seatsPerViewRow()) * 8,
-                createdAt,
-                CREATED_BY
-            });
-            if (batch.size() == BATCH_SIZE || index == size.seatCount()) {
-                jdbcTemplate.batchUpdate("""
+        jdbcTemplate.update(
+                """
                         INSERT INTO seats (id, venue_id, section, row_no, seat_no, floor, x, y, created_at, created_by)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, batch);
-                batch.clear();
-            }
-        }
-    }
-
-    /** 앞 구역부터 VIP 20%, R 20%, S 30%, A 30%로 나눈다. 2,000석(구역 10개)에서는 구역 1~2 VIP, 3~4 R, 5~7 S, 나머지 A로 운영 전용 데이터와 같다. */
-    private int gradeIndex(final int seatIndex) {
-        final double share = sectionShare(seatIndex);
-        if (share < 0.2) {
-            return 0;
-        }
-        if (share < 0.4) {
-            return 1;
-        }
-        if (share < 0.7) {
-            return 2;
-        }
-        return 3;
-    }
-
-    /** 좌석이 속한 구역이 앞에서 몇 번째 비율인지(0 이상 1 미만)다. 1층·등급을 좌석 수와 무관하게 같은 비율로 나눈다(2,000석은 구역 1~6이 1층). */
-    private double sectionShare(final int seatIndex) {
-        final int sections = (size.seatCount() + SEATS_PER_SECTION - 1) / SEATS_PER_SECTION;
-        return (double) ((seatIndex - 1) / SEATS_PER_SECTION) / sections;
+                        SELECT ? + i, ?,
+                               'SEC-' || lpad(((i - 1) / %1$d + 1)::text, 2, '0'),
+                               'ROW-' || lpad((((i - 1) %% %1$d) / %2$d + 1)::text, 2, '0'),
+                               lpad(((i - 1) %% %2$d + 1)::text, 2, '0'),
+                               CASE WHEN (i - 1) / %1$d * 10 < 6 * ? THEN 1 ELSE 2 END,
+                               20.0 + (i - 1) %% ? * 9,
+                               20.0 + (i - 1) / ? * 8,
+                               ?, ?
+                        FROM generate_series(1, ?) AS i
+                        """.formatted(SEATS_PER_SECTION, SEATS_PER_ROW),
+                size.idBase(),
+                size.venueId(),
+                size.sectionCount(),
+                size.seatsPerViewRow(),
+                size.seatsPerViewRow(),
+                Timestamp.valueOf(now),
+                CREATED_BY,
+                size.seatCount());
     }
 
     private void seedPerformances(final LocalDateTime now, final List<Integer> performanceIndexes) {
@@ -296,90 +257,53 @@ final class LoadTestFixtureSeeder implements SeedTask {
     }
 
     /**
-     * GRADES는 재사용 가능한 등급 코드다(ADR 0005). 공용 시드가 먼저 돌아 VIP/R/S/A code를 이미 만들어 뒀을 수 있어, code당 하나만 있도록 존재하면 재사용하고 없으면 새로
-     * 만든다.
+     * PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) — 회차마다 PERFORMANCE_GRADES를 만든다. GRADES의
+     * VIP/R/S/A code는 앞서 실행된 공용 시드가 만들어 둔 것을 재사용한다.
      */
-    private Map<String, Long> ensureGrades(final LocalDateTime now) {
-        final Timestamp createdAt = Timestamp.valueOf(now);
-        final Map<String, Long> idsByCode = new LinkedHashMap<>();
-        for (final String[] def : GRADE_DEFS) {
-            final List<Long> existing =
-                    jdbcTemplate.queryForList("SELECT id FROM grades WHERE code = ?", Long.class, def[0]);
-            if (existing.isEmpty()) {
-                jdbcTemplate.update(
-                        "INSERT INTO grades (code, name, created_at, created_by) VALUES (?, ?, ?, ?)",
-                        def[0],
-                        def[1],
-                        createdAt,
-                        CREATED_BY);
-                idsByCode.put(
-                        def[0],
-                        jdbcTemplate.queryForObject("SELECT id FROM grades WHERE code = ?", Long.class, def[0]));
-            } else {
-                idsByCode.put(def[0], existing.get(0));
-            }
-        }
-        return idsByCode;
-    }
-
-    /** PerformanceSeat.unitPrice의 원본은 PerformanceGrade.price다(ADR 0005) — 회차마다 PERFORMANCE_GRADES를 만든다. */
-    private void seedPerformanceGrades(
-            final LocalDateTime now, final Map<String, Long> gradeIdsByCode, final List<Integer> performanceIndexes) {
-        final Timestamp createdAt = Timestamp.valueOf(now);
-        final List<Object[]> batch = new ArrayList<>(performanceIndexes.size() * GRADE_DEFS.length);
+    private void seedPerformanceGrades(final LocalDateTime now, final List<Integer> performanceIndexes) {
         for (final int performance : performanceIndexes) {
-            final long performanceId = size.idBase() + performance;
-            for (final String[] grade : GRADE_DEFS) {
-                batch.add(new Object[] {
-                    performanceId,
-                    gradeIdsByCode.get(grade[0]),
-                    new BigDecimal(grade[2]),
-                    Integer.parseInt(grade[3]),
-                    createdAt,
-                    CREATED_BY
-                });
+            final int inserted =
+                    jdbcTemplate.update("""
+                            INSERT INTO performance_grades (performance_id, grade_id, price, sort_order, created_at, created_by)
+                            SELECT ?, g.id, v.price, v.sort_order, ?, ?
+                            FROM (VALUES ('VIP', 150000, 1), ('R', 120000, 2), ('S', 90000, 3), ('A', 60000, 4))
+                                 AS v (code, price, sort_order)
+                            JOIN grades g ON g.code = v.code
+                            """, size.idBase() + performance, Timestamp.valueOf(now), CREATED_BY);
+            if (inserted != 4) {
+                throw new SeedFailure("GRADES에 VIP/R/S/A code가 모두 있어야 합니다. 공용 시드가 먼저 적재됐는지 확인하세요.");
             }
         }
-        jdbcTemplate.batchUpdate("""
-                INSERT INTO performance_grades (
-                  performance_id, grade_id, price, sort_order, created_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                """, batch);
     }
 
+    /** 앞 구역부터 VIP 20%, R 20%, S 30%, A 30%로 나눈다. 2,000석(구역 10개)에서는 구역 1~2 VIP, 3~4 R, 5~7 S, 나머지 A로 운영 전용 데이터와 같다. */
     private void seedPerformanceSeats(final LocalDateTime now, final List<Integer> performanceIndexes) {
-        final Timestamp createdAt = Timestamp.valueOf(now);
-        final List<BigDecimal> prices =
-                Arrays.stream(GRADE_DEFS).map(def -> new BigDecimal(def[2])).toList();
         for (final int performance : performanceIndexes) {
-            final long performanceId = size.idBase() + performance;
-            final List<Long> performanceGradeIds = jdbcTemplate.queryForList(
-                    "SELECT id FROM performance_grades WHERE performance_id = ? ORDER BY sort_order",
-                    Long.class,
-                    performanceId);
-            final List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
-            for (int index = 1; index <= size.seatCount(); index++) {
-                final int gradeIdx = gradeIndex(index);
-                batch.add(new Object[] {
-                    performanceId,
-                    size.idBase() + index,
-                    "AVAILABLE",
-                    performanceGradeIds.get(gradeIdx),
-                    prices.get(gradeIdx),
-                    0L,
-                    createdAt,
-                    CREATED_BY
-                });
-                if (batch.size() == BATCH_SIZE || index == size.seatCount()) {
-                    jdbcTemplate.batchUpdate("""
+            jdbcTemplate.update(
+                    """
                             INSERT INTO performance_seats (
                               performance_id, seat_id, state, performance_grade_id, unit_price, version,
                               created_at, created_by
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                            """, batch);
-                    batch.clear();
-                }
-            }
+                            )
+                            SELECT pg.performance_id, ? + i, 'AVAILABLE', pg.id, pg.price, 0, ?, ?
+                            FROM generate_series(1, ?) AS i
+                            JOIN performance_grades pg
+                              ON pg.performance_id = ?
+                             AND pg.sort_order = CASE
+                                   WHEN (i - 1) / %1$d * 10 < 2 * ? THEN 1
+                                   WHEN (i - 1) / %1$d * 10 < 4 * ? THEN 2
+                                   WHEN (i - 1) / %1$d * 10 < 7 * ? THEN 3
+                                   ELSE 4
+                                 END
+                            """.formatted(SEATS_PER_SECTION),
+                    size.idBase(),
+                    Timestamp.valueOf(now),
+                    CREATED_BY,
+                    size.seatCount(),
+                    size.idBase() + performance,
+                    size.sectionCount(),
+                    size.sectionCount(),
+                    size.sectionCount());
         }
     }
 
@@ -395,6 +319,10 @@ final class LoadTestFixtureSeeder implements SeedTask {
 
         long showId() {
             return idBase + 1;
+        }
+
+        int sectionCount() {
+            return (seatCount + SEATS_PER_SECTION - 1) / SEATS_PER_SECTION;
         }
     }
 }
