@@ -80,10 +80,10 @@ pub/sub으로 구독한다. pub/sub은 구독자 모두에게 보내므로 인�
 
 ### 2. Redis 키 만료: 처리권을 먼저 잡은 인스턴스 하나만 처리
 
-**2026-10-26 변경**: 주문 선점(hold) 만료의 스케일 아웃 대응은 아직 정하지 않았고(지금처럼 keyspace 만료 알림 + 5분 DB 청소), 좌석 선택 만료는 keyspace
+**2026-10-26 변경**: 주문 선점(hold) 만료는 Redis 만료 알림 없이 5초 DB 청소 + ShedLock으로 바꾸고, 좌석 선택 만료는 keyspace
 만료 알림을 유지하기로 했다([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리)
 D2-2). 좌석 선택 만료는 아래 claim 설계로 한 대만 처리하고 `DESELECTED`를 결정 1의 relay로 보낸다. 아래의 hold
-메타 키 claim(`ExpireOrderUseCase`)은 아직 정하지 않았다. claim 위치는 아래 "claim은 worker 큐에 넣기
+메타 키 claim(`ExpireOrderUseCase`)은 DB 청소로 바뀌어 채택하지 않는다. claim 위치는 아래 "claim은 worker 큐에 넣기
 전에 한다"가 아니라 큐에서 꺼낸 뒤 handler가 키를 해석한 직후로 정했고, TTL은 60초다(D2-2). 이 절과 "배포 순서"·"검증
 계획"은 D2-2의 나머지 세부 결정을 정한 뒤 다시 쓴다.
 

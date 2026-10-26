@@ -23,11 +23,11 @@
 | D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
 | D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
 | D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 정함 | Redis pub/sub relay. 세부 결정 남음 |
-| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 좌석 선택은 keyspace 알림 + claim. 주문 만료는 미정 |
+| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 좌석 선택은 keyspace 알림 + claim(구현 되돌림). 주문 만료는 DB 청소 5초 + ShedLock(구현) |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
 | D2-4 | SockJS 연결 | 2대 운영 | 미정 | FE 수정 불가라 서버·LB 쪽 선택지에서 다시 정함 |
 | D2-5 | FE 재연결 때 좌석 다시 조회 | — | 정함 | 지금은 하지 않음(FE 수정 불가) |
-| D3-1 | 스케줄러 중복 실행 | — | 미정 | worker를 한 대에만 켬 |
+| D3-1 | 스케줄러 중복 실행 | — | 미정 | 주문 만료는 ShedLock으로 정함. 나머지 작업은 미정 |
 | D3-2 | DB 연결 풀 크기 | 2대 운영 | 미정 | 대당 10 유지 |
 | D3-3 | 수용량 다시 재기 | Queue 설정 | 미정 | 2대 구성으로 03-3 사다리 |
 | D4-1 | 롤링 배포 중 호환 규칙 | 첫 롤링 배포 | 미정 | expand/contract |
@@ -178,14 +178,22 @@
     알림이 N번 나간다.
 - **선택지**: 먼저 손든 인스턴스만 처리(claim), 리더 한 대만 구독, 만료를 처리하는 worker 1대 분리(ticket-queue와 같은
   방식), Redis 지연 큐(만료 예정 Sorted Set), 외부 메시지 큐의 예약 배달, 중복 허용.
-- **결정(2026-10-26)**: 좌석 선택 만료만 정했다. 주문 선점 만료는 아직 정하지 않았다.
+- **결정(2026-10-26)**: 좌석 선택 만료와 주문 선점 만료를 다르게 처리한다.
   - **좌석 선택 만료: 지금처럼 Redis TTL + keyspace 만료 알림 → WebSocket `DESELECTED`.** 좌석을 고를 수 있는지는
     선택 키 TTL이 정하고, 만료 처리가 하는 일은 다른 사용자 화면에 "좌석 비었어요"를 알리는 것뿐이다. 알림이 늦거나
     빠져도 다음 조회에서 맞춰진다. 인스턴스가 N대일 때의 중복은 claim으로 막는다(아래 "좌석 선택 만료 알림의 중복").
-  - **주문 선점(hold) 만료: 미정.** 지금처럼 hold 메타 키 keyspace 만료 알림(`HoldKeyExpirationHandler`)과 5분 DB
-    청소(`OrderExpirationTrigger`)로 처리한다. 인스턴스가 N대면 모두가 알림을 받지만, 행 잠금 덕분에 `EXPIRED`는 한
-    번만 반영된다(DB 조회는 N배). 같은 날 검토·구현했다가 모두 되돌린 안: Redis Sorted Set 장부 + 모든 인스턴스의
-    Worker, 알림 없이 DB 청소 1초(+ `orders(expires_at) WHERE status = 'PENDING'` 인덱스).
+  - **주문 선점(hold) 만료(정함·구현): Redis 만료 알림 없이 5초마다 DB 청소, ShedLock으로 한 인스턴스만 실행.**
+    `HoldKeyExpirationHandler`를 지웠다. `OrderExpirationTrigger`(5초, `@SchedulerLock`) → 만료 시각 지난 PENDING 주문
+    조회(`orders(expires_at) WHERE status = 'PENDING'` 부분 인덱스) → 100건씩 → 주문별 행 락 → `EXPIRED` → 커밋 →
+    `OrderTerminated` 이벤트로 Redis hold 정리.
+  - 고른 이유: 알림이 하는 일은 "즉시" 처리뿐이고, 좌석은 hold 키 TTL로 제때 풀려 판매 정합성에는 영향이 없다. DB에
+    PENDING으로 남는 한 다음 주기에 다시 잡혀 유실이 없고, Redis 형태(관리형, 클러스터)와도 무관하다. ShedLock은 한
+    인스턴스가 내려가도 다른 인스턴스가 이어받는다.
+  - 감수하는 것: 주문 `EXPIRED` 반영, 같은 회원의 재주문(그동안 E5004), `RELEASED` 알림이 최대 약 5초 늦다. `RELEASED`는
+    여전히 실행한 인스턴스의 사용자에게만 간다(D2-1 relay 문제).
+  - 고르지 않은 안: `worker.enabled`를 한 대에만 켜기(그 한 대가 내려가면 만료가 멈춘다), 모든 인스턴스 실행 +
+    `FOR UPDATE SKIP LOCKED`(조회를 바꿔야 한다). 같은 날 검토·구현했다가 되돌린 안: Redis Sorted Set 장부 + 모든
+    인스턴스의 Worker, 알림 없이 DB 청소 1초.
 - **세부 결정**(좌석 선택 만료):
   - 좌석 선택 만료 알림의 중복(2026-10-26 정함): claim으로 한 대만 처리하고 `DESELECTED`는 relay로 보낸다.
     - 모든 인스턴스가 keyspace 알림을 받는다. 선택 키를 해석한 인스턴스는
@@ -261,7 +269,8 @@
 - **선택지**: ShedLock(DB 테이블과 migration 추가), `worker.enabled=true`를 한 대에만 둠, 그대로 둠.
 - **추천**: `worker.enabled=true`를 한 대에만 둔다. 코드 변경이 없다. 그 한 대가 내려가도 실시간 만료는 다른 인스턴스가
   D2-2로 처리하고, 안전망 청소만 잠시 멈춘다. 인스턴스가 많아지면 ShedLock을 다시 본다.
-- **함께 볼 것**: 주문 만료의 누락 복구(`OrderExpirationTrigger`, 5분)도 이 결정을 따른다.
+- **2026-10-26**: 주문 만료(`OrderExpirationTrigger`)는 ShedLock(`@SchedulerLock`)으로 한 대만 실행한다(D2-2).
+  `EventPublicationMaintenance`의 두 작업은 아직 락이 없다. `worker.enabled`를 여러 대에서 켜면 모두 돈다.
 
 ### D3-2. DB 연결 풀 크기
 
@@ -296,6 +305,7 @@
 
 ## 결정 뒤 구현할 것
 
+- 주문 만료(D2-2): 2026-10-26 구현. 알림 handler 삭제, DB 청소 5초, ShedLock, `orders(expires_at)` 부분 인덱스.
 - relay(D2-1)와 좌석 선택 만료 claim(D2-2): 2026-10-26에 구현했다가 되돌렸다. relay 통합 테스트에서 Redis 구독은
   맺어지는데 `RedisMessageListenerContainer`(Redisson 연결) 리스너에 메시지가 오지 않았다. 다시 구현하기 전에 이 원인을
   확인한다(같은 컨테이너를 쓰는 기존 keyspace 만료 리스너도 함께).

@@ -52,7 +52,8 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차(신규 요청 차단 후 TTL 이상 대기,
   `SCAN`으로 옛 key가 0개인지 확인, 배포, 재개 — 무중단이면 백필 또는 호환 조회)를 함께 설계한다.
-- TTL, expiration listener, scheduler 누락 복구 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을 함께 지킨다.
+- TTL, expiration listener(좌석 선택 만료), 주기 작업(주문 만료, 5초·ShedLock) 중 하나만 바꾸지 않는다 — 함께 정합성을
+  지킨다. 주문 만료는 Redis 만료 알림을 쓰지 않는다.
 - key·TTL·리스너 변경은 장애 복구와 scheduler 누락 복구 흐름까지 같이 검토한다.
 
 ## DB 마이그레이션 적용
