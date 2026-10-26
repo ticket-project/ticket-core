@@ -111,21 +111,11 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 - `deselect` — 락 안에서 해제하고, **실제로 해제됐고 hold가 없는 경우에만** 알린다. 이미 만료된
   선택이나 주문 생성 후 HELD로 넘어간 좌석에 `DESELECTED`를 보내지 않는다.
 - `notifyReleasedIfFree` — TTL 만료와 회원의 전체 선택 해제처럼 "이미 지난 사실"을 알리는 경로다.
-  발행할 때 락 안에서 현재 선택·선점 상태를 다시 확인해, 그 사이 남이 차지한 좌석은 알리지
+  발행 직전에 락 안에서 현재 선택·선점 상태를 다시 확인해, 그 사이 남이 차지한 좌석은 알리지
   않는다. 상태를 한 번 더 읽는 것만으로는 부족하고 그 재확인이 락 안에 있어야 의미가 있다.
 
-"비어 있을 때만 알린다"는 확인은 발행 Lua 스크립트가 `PUBLISH`와 한 번에 한다(`SeatStatusEventPublisher.publishIfFree`).
-상태를 바꾸는 스크립트와 발행 스크립트는 아직 따로이고, 둘 사이의 순서는 좌석 락이 지킨다.
-
-`SeatSelectionExpirationHandler`는 Redis key 해석, 처리권 확보, 호출만 한다. keyspace 만료 알림은 모든
-인스턴스가 받으므로 `SET expired-claim:<만료된 키> <인스턴스 id> NX PX 60000`에 성공한 인스턴스만 처리한다.
-claim TTL은 선택 TTL(5분)보다 짧아야 한다. 대상 좌석 확인, 현재 상태 확인, 알림 필요 여부 판단은 모두
-application이 한다.
-
-**인스턴스 사이 전달(relay).** 좌석 상태 알림은 Redis 채널 `seat:status:relay` 하나에 발행하고
-(`RedisSeatStatusEventPublisher`), 모든 인스턴스가 구독해 자기 STOMP 사용자에게 보낸다
-(`SeatStatusRelaySubscriber`). 발행한 인스턴스도 자기 구독으로 받는다. 구독은 단일 스레드로 처리해 Redis가 보낸
-순서대로 broker에 넣는다. Redis pub/sub은 at-most-once라 구독이 끊긴 동안의 알림은 다시 오지 않는다.
+`SeatSelectionExpirationHandler`는 Redis key 해석과 호출만 한다. 대상 좌석 확인, 현재 상태 확인,
+알림 필요 여부 판단은 모두 application이 한다.
 
 선택은 Redis에 좌석 키와 인덱스 두 개(회차 전체, 회원별)로 기록된다. 인덱스 score는 만료 시각이라
 좌석 키가 TTL로 사라지면 인덱스에서도 같은 시각에 빠진다. 선택할 때 회원별 인덱스로 선택 좌석 수를
@@ -169,7 +159,7 @@ CancelOrderUseCase / ExpireOrderUseCase
           (seatId→performanceSeatId 매핑도 담아 좌석 락 안에서 DB를 재조회하지 않는다)
        -> HoldReleaser
             -> 좌석별 현재 holdKey를 확인하고 일치하는 hold만 해제 (Redis)
-            -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (발행 스크립트가 확인, Redis relay)
+            -> 현재 hold/selection이 없는 좌석만 RELEASED 발행 (WebSocket)
 ~~~
 
 같은 `OrderTerminated` publication이 재시도로 다시 전달되면 Redis 해제도 다시 수행한다. 해제는
