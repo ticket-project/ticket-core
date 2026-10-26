@@ -6,6 +6,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
@@ -21,8 +23,10 @@ import com.ticket.booking.concurrency.LockKey;
 import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
+import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
+import com.ticket.booking.selection.domain.SeatSelectionService;
 
 @ExtendWith(MockitoExtension.class)
 class HoldReleaserTest {
@@ -32,24 +36,44 @@ class HoldReleaserTest {
     private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
 
     @Mock
+    private SeatSelectionService seatSelectionService;
+
+    @Mock
     private SeatStatusEventPublisher seatStatusEventPublisher;
 
     private HoldReleaser releaser;
 
     @BeforeEach
     void setUp() {
-        releaser = new HoldReleaser(distributedLock, holdStore, seatStatusEventPublisher);
+        releaser = new HoldReleaser(
+                distributedLock,
+                holdStore,
+                new SeatOccupancy(seatSelectionService, holdStore),
+                seatStatusEventPublisher);
     }
 
-    /** 새 선점이나 선택이 이미 있으면 알리지 않는 확인은 발행 스크립트가 한다({@code SeatStatusRelayIntegrationTest}). */
     @Test
-    void releasesHoldBeforePublishingSeatsThatAreStillFree() {
+    void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
+        when(holdStore.isHeld(1L, 10L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 20L)).thenReturn(false);
+
         releaser.releaseAndPublish("old-hold", snapshot());
 
         final InOrder inOrder = inOrder(holdStore, seatStatusEventPublisher);
         inOrder.verify(holdStore).release(1L, "old-hold", List.of(10L, 20L));
-        inOrder.verify(seatStatusEventPublisher).publishIfFree(1L, 910L, 10L, SeatStatusAction.RELEASED);
-        inOrder.verify(seatStatusEventPublisher).publishIfFree(1L, 920L, 20L, SeatStatusAction.RELEASED);
+        inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
+        inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
+    }
+
+    @Test
+    void doesNotPublishOverANewerHoldOrSelection() {
+        when(seatSelectionService.isSelected(1L, 10L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 10L)).thenReturn(true);
+        when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
+
+        releaser.releaseAndPublish("old-hold", snapshot());
+
+        verifyNoInteractions(seatStatusEventPublisher);
     }
 
     /**
@@ -58,18 +82,20 @@ class HoldReleaserTest {
      */
     @Test
     void publicationFailureIsRetriedFromRelease() {
+        when(holdStore.isHeld(1L, 10L)).thenReturn(false);
+        when(holdStore.isHeld(1L, 20L)).thenReturn(false);
         doThrow(new RuntimeException("publish failed"))
                 .doNothing()
                 .when(seatStatusEventPublisher)
-                .publishIfFree(1L, 910L, 10L, SeatStatusAction.RELEASED);
+                .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
 
         assertThatThrownBy(() -> releaser.releaseAndPublish("old-hold", snapshot()))
                 .hasMessage("publish failed");
         releaser.releaseAndPublish("old-hold", snapshot());
 
         verify(holdStore, times(2)).release(1L, "old-hold", List.of(10L, 20L));
-        verify(seatStatusEventPublisher, times(2)).publishIfFree(1L, 910L, 10L, SeatStatusAction.RELEASED);
-        verify(seatStatusEventPublisher, times(1)).publishIfFree(1L, 920L, 20L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
+        verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
     }
 
     @Test
