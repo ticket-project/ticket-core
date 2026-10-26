@@ -22,7 +22,7 @@
 | D1-3 | 어떻게 배포할지 | 2대 운영 | 미정 | 한 대씩 교체, readiness·liveness 분리 |
 | D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
 | D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
-| D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 추천 있음 | Redis pub/sub relay |
+| D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 정함 | Redis pub/sub relay. 세부 결정 남음 |
 | D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 좌석 선택은 keyspace 알림 + claim, 주문 만료는 Redis Sorted Set 장부. 세부 결정 남음 |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
 | D2-4 | SockJS 연결 | 2대 운영 | 미정 | FE가 순수 WebSocket으로 연결 |
@@ -140,9 +140,16 @@
 - **문제**: `WebSocketConfig`의 simple broker는 같은 서버에 붙은 사용자에게만 보낸다. 서버 A가 보낸 `SELECTED`·`HELD`·
   `RELEASED`를 서버 B의 사용자는 받지 못한다.
 - **선택지**: Redis pub/sub relay, 외부 STOMP 브로커(RabbitMQ 등), Redis Streams.
-- **추천**: Redis pub/sub relay. 좌석 락 안에서 Redis에 동기로 발행하고, 모든 인스턴스가 단일 스레드로 받아 자기
-  사용자에게 보낸다. 발행 순서 보장과 WebSocket 계약이 그대로 유지된다. 상세는
-  [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 1.
+- **결정(2026-10-26)**: Redis pub/sub relay. 좌석 상태를 바꾼 인스턴스가 Redis 채널에 동기로 발행하고, 모든
+  인스턴스가 구독 연결 하나와 단일 스레드로 받아 자기 사용자에게 보낸다. 발행 순서 보장과 WebSocket 계약이 그대로
+  유지된다. 상세는 [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 1.
+  - 고른 이유: 이미 쓰는 Redis로 되어 운영할 인프라가 늘지 않는다. 구독이 끊긴 동안의 메시지는 사라지지만, 사용자의
+    WebSocket이 끊긴 동안의 알림도 어차피 놓치므로 둘 다 FE 재조회(D2-5)로 메운다. D2-2의 좌석 선택 만료 알림도 이
+    relay로 보낸다.
+  - 고르지 않은 안: 외부 STOMP 브로커(RabbitMQ 등, Spring `enableStompBrokerRelay`)는 구독 관리를 브로커가 맡지만
+    운영할 서버가 늘고, 사용자 접속마다 브로커 TCP 연결을 연다. Redis Streams는 인스턴스 구독이 끊겨도 이어 읽지만
+    사용자 쪽 유실은 그대로라 재조회가 어차피 필요하고, 읽은 위치와 정리(trim) 관리가 는다. 회차별로 서버를 고정하면
+    relay가 필요 없지만, 인기 회차 하나에 사용자가 몰리는 서비스라 그 서버 한 대에 부하가 몰린다.
 - **세부 결정**:
   - 채널 단위: ADR 0022는 채널 하나를 모든 인스턴스가 구독한다. 논의했던 다른 안은 `{perf:N}` hash tag 채널과 회차별
     동적 구독이다. 관리형 클러스터 Redis로 가면 sharded pub/sub(패턴 구독 불가)으로 바꿔야 하므로, 그 전환 조건을

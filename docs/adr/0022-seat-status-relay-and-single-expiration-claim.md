@@ -183,8 +183,10 @@ relay 없이 claim만 넣으면 선택 만료의 `DESELECTED`가 claim한 인스
 
 ## 정하지 않은 것
 
-- 결정 1(좌석 상태 알림 relay)의 채택 여부. 결정 2는 2026-10-26에 주문 만료는 Redis Sorted Set 장부, 좌석 선택 만료는
-  keyspace 알림 + claim + relay로 정했고([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리)
-  D2-2), 나머지 세부 결정은 거기서 정한다.
+- 결정 1(Redis pub/sub relay)은 2026-10-26에 정했다
+  ([스케일 아웃 결정 목록](../plans/scale-out-decisions.md#d2-1-좌석-알림을-모든-인스턴스에-나누는-방법) D2-1). 채널 단위,
+  relay 큐, 발행 위치는 거기서 정한다. 결정 2는 같은 날 주문 만료는 Redis Sorted Set 장부, 좌석 선택 만료는 keyspace
+  알림 + claim + relay로 정했고([D2-2](../plans/scale-out-decisions.md#d2-2-redis-만료-알림-중복-처리)), 나머지 세부
+  결정은 거기서 정한다. 두 결정의 세부를 정한 뒤 본문을 다시 쓰고 상태를 바꾼다.
 - SockJS 폴백 처리: LB sticky(nginx `ip_hash` 등)와 FE의 SockJS 제거 중 무엇을 고를지.
 - relay 큐 상한 값과, 메시지를 버렸을 때의 경보 기준.
