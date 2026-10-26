@@ -10,7 +10,6 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.ticket.booking.hold.persistence.HoldExpirationWorker;
 import com.ticket.member.api.MemberLookupApi;
 import com.ticket.security.api.AccessTokenAuthenticationApi;
 import com.ticket.show.api.PerformanceLayoutApi;
@@ -46,10 +45,6 @@ class BookingModuleTests {
 
     @MockitoBean(name = "seatStatusRelayListenerContainer")
     private RedisMessageListenerContainer seatStatusRelayListenerContainer;
-
-    /** 시작하면 1초마다 Redis 장부를 확인한다. wiring smoke test라 실제로 돌 필요는 없다. */
-    @MockitoBean
-    private HoldExpirationWorker holdExpirationWorker;
 
     @MockitoBean
     private PerformanceSaleInfoApi performanceSaleInfoApi;

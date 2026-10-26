@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
-import org.redisson.api.RScoredSortedSet;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.LongCodec;
@@ -27,9 +26,6 @@ class RedissonHoldStoreTest {
 
     @Mock
     private RedissonClient redissonClient;
-
-    @Mock
-    private RScoredSortedSet<Object> expiryLedger;
 
     @InjectMocks
     private RedissonHoldStore redissonHoldStore;
@@ -51,8 +47,6 @@ class RedissonHoldStoreTest {
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        when(redissonClient.getScoredSortedSet(HoldRedisKey.holdExpiryLedger(), StringCodec.INSTANCE))
-                .thenReturn(expiryLedger);
         // when
         redissonHoldStore.release(1L, "hold-key", List.of(20L, 10L, 10L));
 
@@ -62,7 +56,6 @@ class RedissonHoldStoreTest {
         verify(seat20, never()).delete();
         verify(holdSeatIndex, never()).remove(20L);
         verify(meta).delete();
-        verify(expiryLedger).remove("hold-key");
     }
 
     @Test
@@ -78,8 +71,6 @@ class RedissonHoldStoreTest {
                 .thenReturn(meta);
         when(redissonClient.getSetCache(HoldRedisKey.holdSeatIndex(1L), LongCodec.INSTANCE))
                 .thenReturn(holdSeatIndex);
-        when(redissonClient.getScoredSortedSet(HoldRedisKey.holdExpiryLedger(), StringCodec.INSTANCE))
-                .thenReturn(expiryLedger);
         redissonHoldStore.release(1L, "hold-key", List.of(10L));
 
         verify(seat10).delete();
@@ -87,7 +78,6 @@ class RedissonHoldStoreTest {
         verify(seat20, never()).delete();
         verify(holdSeatIndex, never()).remove(20L);
         verify(meta).delete();
-        verify(expiryLedger).remove("hold-key");
     }
 
     @Test
