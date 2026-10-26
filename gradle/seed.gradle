@@ -52,7 +52,6 @@ tasks.register('seedTest', Test) {
     // 시드 프로그램의 출력과 실패 메시지가 한국어다. 리포트가 깨지지 않게 고정한다.
     defaultCharacterEncoding = 'UTF-8'
     jvmArgs '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8'
-    systemProperty 'seed.project-dir', projectDir.absolutePath
 }
 
 /**
@@ -128,7 +127,6 @@ static void configureSeedExecution(JavaExec task, Project project) {
     // 콘솔 인코딩(cp949)으로 나가면 그 자리에서 깨진다.
     task.systemProperty 'stdout.encoding', 'UTF-8'
     task.systemProperty 'stderr.encoding', 'UTF-8'
-    task.systemProperty 'seed.project-dir', project.projectDir.absolutePath
     System.properties.each { key, value ->
         if (key.toString().startsWith('seed.')) {
             task.systemProperty key.toString(), value

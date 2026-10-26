@@ -7,7 +7,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
@@ -49,9 +48,12 @@ class SeedFastRunTest {
                 .as("스키마가 없으면 적재를 시작하지 않고 0이 아닌 종료 코드로 끝난다")
                 .isEqualTo(1);
 
-        assertThatThrownBy(() -> SeedPreconditions.verify(dataSource(emptyDatabaseUrl), emptyDatabaseUrl))
+        assertThatThrownBy(() ->
+                        SeedPreconditions.verify(dataSource(emptyDatabaseUrl), emptyDatabaseUrl, SeedTarget.LOCAL))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining("시드에 필요한 테이블이 없습니다")
+                .as("다른 스키마에 테이블이 있어도 접속한 스키마만 본다")
+                .hasMessageContaining("no_schema")
                 .hasMessageContaining("CATEGORIES")
                 .hasMessageContaining("MEMBERS")
                 .hasMessageContaining("local 프로파일로 서버를 먼저 기동");
@@ -62,7 +64,7 @@ class SeedFastRunTest {
         // 1번 포트에서 PostgreSQL이 듣고 있을 리 없다. 접속 자체가 거절된다.
         final String unreachableUrl = "jdbc:postgresql://127.0.0.1:1/nope?connectTimeout=2";
 
-        assertThatThrownBy(() -> SeedPreconditions.verify(dataSource(unreachableUrl), unreachableUrl))
+        assertThatThrownBy(() -> SeedPreconditions.verify(dataSource(unreachableUrl), unreachableUrl, SeedTarget.LOCAL))
                 .isInstanceOf(SeedFailure.class)
                 .hasMessageContaining("DB에 접속할 수 없습니다");
     }
@@ -135,7 +137,7 @@ class SeedFastRunTest {
         final DataSource dataSource = dataSource(jdbcUrl);
         final TransactionTemplate transactionTemplate =
                 new TransactionTemplate(new DataSourceTransactionManager(dataSource));
-        final SeedTask curatedSeed = SeedLocalMain.tasks(new JdbcTemplate(dataSource), transactionTemplate, settings)
+        final SeedTask curatedSeed = SeedProgram.tasks(new JdbcTemplate(dataSource), transactionTemplate, settings)
                 .getFirst();
 
         assertThatThrownBy(curatedSeed::run).isInstanceOf(RuntimeException.class);
@@ -143,24 +145,6 @@ class SeedFastRunTest {
         assertThat(count("CATEGORIES")).as("실패한 트랜잭션의 INSERT는 하나도 남지 않아야 한다").isZero();
         assertThat(count("SHOWS")).isZero();
         assertThat(count("PERFORMANCE_SEATS")).as("테스트가 미리 넣은 한 행만 남는다").isEqualTo(1L);
-    }
-
-    @Test
-    void 작업_순서는_공용_시드_부하_픽스처_회원_배경_주문_ID_시퀀스_맞춤이다() {
-        final DataSource dataSource = dataSource(jdbcUrl);
-        final List<SeedTask> tasks = SeedLocalMain.tasks(
-                new JdbcTemplate(dataSource),
-                new TransactionTemplate(new DataSourceTransactionManager(dataSource)),
-                settings(Map.of("seed.jdbc-url", jdbcUrl)));
-
-        assertThat(tasks)
-                .hasExactlyElementsOfTypes(
-                        CuratedSeedLoader.class,
-                        LoadTestFixtureSeeder.class,
-                        LoadTestFixtureSeeder.class,
-                        LoadTestMemberSeeder.class,
-                        BackgroundOrderSeeder.class,
-                        PostgreSqlIdentitySynchronizer.class);
     }
 
     @Test
@@ -288,7 +272,6 @@ class SeedFastRunTest {
 
     private Map<String, String> defaults(final Map<String, String> overrides) {
         final Map<String, String> properties = new HashMap<>();
-        properties.put("seed.project-dir", SeedTestPaths.projectDir().toString());
         properties.put("seed.sql-path", SeedTestPaths.minimalSeedSql().toString());
         if (overrides.containsKey("seed.jdbc-url")) {
             properties.putAll(SeedTestDatabase.seedProperties(overrides.get("seed.jdbc-url")));

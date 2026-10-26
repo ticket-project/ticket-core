@@ -102,8 +102,7 @@ final class CuratedSeedVerifier {
                 필요한 조치
                   1. seed/sql/kopis-curated.sql의 문장 순서를 확인하세요. 좌석 복제(CROSS JOIN VENUES)보다
                      뒤에 선언된 공연장은 물리 좌석을 받지 못합니다.
-                  2. 새 데이터는 '-- @seed-splice: venues' / '-- @seed-splice: performances' 마커 앞에
-                     넣습니다.
+                  2. 새 데이터는 '-- @seed-splice' 마커 앞에 넣습니다.
                 """.formatted(detail.toString()));
     }
 

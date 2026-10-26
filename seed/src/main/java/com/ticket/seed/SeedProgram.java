@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -27,36 +28,30 @@ final class SeedProgram {
         try {
             settings = settingsSupplier.get();
         } catch (final RuntimeException exception) {
-            SeedConsole.error("[시드 실패] 설정을 읽을 수 없습니다.");
-            SeedConsole.error(indent(rootMessage(exception)));
+            System.err.println("[시드 실패] 설정을 읽을 수 없습니다.");
+            System.err.println(indent(rootMessage(exception)));
             return 1;
         }
 
-        SeedConsole.info("== %s 시드 적재 ==".formatted(target.label()));
-        SeedConsole.info("  DB        : " + SeedConsole.maskedUrl(settings.jdbcUrl()));
-        SeedConsole.info("  계정      : " + settings.jdbcUsername());
-        SeedConsole.info("  시드 SQL  : " + settings.sqlPath());
-        SeedConsole.info("  테스트 회원 : %d명".formatted(Math.max(0, settings.loadTestMemberCount())));
-        SeedConsole.info("  부하 회차  : 2,000석 %d개, 15,000석 %d개"
+        System.out.println("== %s 시드 적재 ==".formatted(target.label()));
+        System.out.println("  DB        : " + SeedConsole.maskedUrl(settings.jdbcUrl()));
+        System.out.println("  계정      : " + settings.jdbcUsername());
+        System.out.println("  시드 SQL  : " + settings.sqlPath());
+        System.out.println("  테스트 회원 : %d명".formatted(Math.max(0, settings.loadTestMemberCount())));
+        System.out.println("  부하 회차  : 2,000석 %d개, 15,000석 %d개"
                 .formatted(
                         Math.max(0, settings.loadTestPerformanceCount()),
                         Math.max(0, settings.largeLoadTestPerformanceCount())));
-        SeedConsole.info("  배경 주문  : %,d건".formatted(Math.max(0, settings.backgroundOrderCount())));
+        System.out.println("  배경 주문  : %,d건".formatted(Math.max(0, settings.backgroundOrderCount())));
 
-        final DataSource dataSource;
-        try {
-            dataSource = SeedDataSources.create(settings);
-        } catch (final RuntimeException exception) {
-            SeedConsole.error("[시드 실패] DB 드라이버를 준비할 수 없습니다.");
-            SeedConsole.error(indent(rootMessage(exception)));
-            return 1;
-        }
+        final DataSource dataSource =
+                new DriverManagerDataSource(settings.jdbcUrl(), settings.jdbcUsername(), settings.jdbcPassword());
 
         try {
             SeedPreconditions.verify(dataSource, settings.jdbcUrl(), target);
         } catch (final RuntimeException exception) {
-            SeedConsole.error("[시드 실패] DB가 준비되지 않았습니다.");
-            SeedConsole.error(indent(rootMessage(exception)));
+            System.err.println("[시드 실패] DB가 준비되지 않았습니다.");
+            System.err.println(indent(rootMessage(exception)));
             return 1;
         }
 
@@ -64,7 +59,37 @@ final class SeedProgram {
         final TransactionTemplate transactionTemplate =
                 new TransactionTemplate(new DataSourceTransactionManager(dataSource));
 
-        return report(SeedRunner.run(tasks(jdbcTemplate, transactionTemplate, settings)));
+        System.out.println("");
+        System.out.println("-- 작업별 결과 --");
+        final List<String> committed = new ArrayList<>();
+        for (final SeedTask task : tasks(jdbcTemplate, transactionTemplate, settings)) {
+            final SeedTask.Outcome outcome;
+            try {
+                outcome = task.run();
+            } catch (final RuntimeException exception) {
+                System.out.println("  [실패] " + task.name());
+                System.err.println("");
+                System.err.println("[시드 실패] " + task.name());
+                System.err.println(indent(rootMessage(exception)));
+                System.err.println(
+                        committed.isEmpty()
+                                ? "  앞 작업 중 커밋된 것은 없습니다."
+                                : "  이미 커밋돼 DB에 남아 있는 작업: " + String.join(", ", committed));
+                // 대부분의 작업은 한 트랜잭션이라 실패하면 통째로 되돌아간다. 아래 두 작업만 예외다.
+                System.err.println("  실패한 작업은 롤백됐습니다. 단, 배경 주문은 실패 전에 커밋한 회차가, ID 시퀀스 맞춤은 이미 반영한 시퀀스가 남습니다.");
+                System.err.println("  뒤 작업은 실행하지 않았습니다.");
+                return 1;
+            }
+            System.out.println("  [%s] %s".formatted(outcome.skipped() ? "건너뜀" : "적재", task.name()));
+            System.out.println("      " + outcome.summary());
+            if (!outcome.skipped()) {
+                committed.add(task.name());
+            }
+        }
+
+        System.out.println("");
+        System.out.println("[시드 완료] 모든 작업이 정상 종료됐습니다.");
+        return 0;
     }
 
     /**
@@ -76,8 +101,8 @@ final class SeedProgram {
             final JdbcTemplate jdbcTemplate,
             final TransactionTemplate transactionTemplate,
             final SeedSettings settings) {
-        final List<SeedTask> tasks = new ArrayList<>(List.of(
-                new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath(), settings.batchSize()),
+        return List.of(
+                new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath()),
                 new LoadTestFixtureSeeder(
                         jdbcTemplate,
                         transactionTemplate,
@@ -90,45 +115,7 @@ final class SeedProgram {
                         settings.largeLoadTestPerformanceCount()),
                 new LoadTestMemberSeeder(jdbcTemplate, transactionTemplate, settings.loadTestMemberCount()),
                 new BackgroundOrderSeeder(jdbcTemplate, transactionTemplate, settings.backgroundOrderCount()),
-                new PostgreSqlIdentitySynchronizer(jdbcTemplate)));
-        return List.copyOf(tasks);
-    }
-
-    private static int report(final List<SeedRunner.Report> reports) {
-        SeedConsole.info("");
-        SeedConsole.info("-- 작업별 결과 --");
-        for (final SeedRunner.Report report : reports) {
-            SeedConsole.info("  [%s] %s".formatted(report.status().label(), report.taskName()));
-            SeedConsole.info("      " + report.summary());
-        }
-
-        final List<SeedRunner.Report> failures = reports.stream()
-                .filter(report -> report.status() == SeedRunner.Status.FAILED)
-                .toList();
-
-        if (failures.isEmpty()) {
-            SeedConsole.info("");
-            SeedConsole.info("[시드 완료] 모든 작업이 정상 종료됐습니다.");
-            return 0;
-        }
-
-        SeedConsole.error("");
-        SeedConsole.error("[시드 실패] " + failures.getFirst().taskName());
-        for (final SeedRunner.Report failure : failures) {
-            SeedConsole.error(indent(rootMessage(failure.failure())));
-        }
-
-        final List<String> committed = reports.stream()
-                .filter(report -> report.status() == SeedRunner.Status.LOADED)
-                .map(SeedRunner.Report::taskName)
-                .toList();
-        if (committed.isEmpty()) {
-            SeedConsole.error("  커밋된 작업은 없습니다. DB 상태는 실행 전과 같습니다.");
-        } else {
-            SeedConsole.error("  이미 커밋돼 DB에 남아 있는 작업: " + String.join(", ", committed));
-        }
-        SeedConsole.error("  위 '작업별 결과'에서 어디까지 커밋됐는지 확인하세요.");
-        return 1;
+                new PostgreSqlIdentitySynchronizer(jdbcTemplate));
     }
 
     private static String rootMessage(final Throwable failure) {

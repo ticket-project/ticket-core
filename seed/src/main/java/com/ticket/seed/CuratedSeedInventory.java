@@ -34,7 +34,6 @@ final class CuratedSeedInventory {
     static CuratedSeedInventory inspect(final JdbcTemplate jdbcTemplate, final CuratedSeedStatements statements) {
         final long performances = statements.literalInsertCount("PERFORMANCES");
         final long seatTemplate = statements.literalInsertCount("SEATS");
-        final long venuesBeforeReplication = statements.venueCountBeforeSeatReplication();
 
         final List<TableInventory> tables = new ArrayList<>();
         tables.add(count(jdbcTemplate, "CATEGORIES", statements.literalInsertCount("CATEGORIES"), null));
@@ -44,9 +43,9 @@ final class CuratedSeedInventory {
         tables.add(count(jdbcTemplate, "SHOWS", statements.literalInsertCount("SHOWS"), curatedIds("id")));
         tables.add(count(jdbcTemplate, "SHOW_GENRES", statements.literalInsertCount("SHOW_GENRES"), null));
         tables.add(count(jdbcTemplate, "PERFORMANCES", performances, curatedIds("id")));
-        // 좌석 템플릿(VENUE 1)은 리터럴로 들어가고, 복제 INSERT가 그 시점의 나머지 VENUE에 같은
-        // 수만큼 복제한다 -> 템플릿 수 x 복제 시점의 VENUE 수.
-        tables.add(count(jdbcTemplate, "SEATS", seatTemplate * venuesBeforeReplication, curatedIds("id")));
+        // 좌석 템플릿(VENUE 1)은 리터럴로 들어가고, 마커 뒤 복제 INSERT가 나머지 VENUE에 같은 수만큼 복제한다.
+        tables.add(
+                count(jdbcTemplate, "SEATS", seatTemplate * statements.literalInsertCount("VENUES"), curatedIds("id")));
         tables.add(
                 count(jdbcTemplate, "BOOKING_PERFORMANCE_SALES_POLICIES", performances, curatedIds("performance_id")));
         tables.add(gradeCodes(jdbcTemplate));

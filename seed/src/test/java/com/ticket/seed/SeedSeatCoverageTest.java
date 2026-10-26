@@ -27,12 +27,11 @@ import com.ticket.seed.support.SeedTestDatabase;
  * 공연장을 파일 끝에 이어 붙였다. 그렇게 추가된 공연장은 좌석을 하나도 받지 못했고 그 공연장의 회차에는 회차좌석이 생기지 않았다. 개수 비교만으로는 잡히지 않았다 — 기대값 자체를 "이미 만들어진 좌석"에서
  * 계산했기 때문에 기대값과 실제값이 사이좋게 0이었다.
  *
- * <p>테스트 SQL은 {@code minimal-curated.sql}의 마커(@seed-splice) 위치를 기준으로 만든다. 마커 계약이 깨지면 여기서도 깨진다.
+ * <p>테스트 SQL은 {@code minimal-curated.sql}의 마커(@seed-splice) 앞에 새 블록을 끼워 만든다. 마커 계약이 깨지면 여기서도 깨진다.
  */
 @SuppressWarnings("NonAsciiCharacters")
 class SeedSeatCoverageTest {
-    private static final String VENUE_MARKER = "-- @seed-splice: venues";
-    private static final String PERFORMANCE_MARKER = "-- @seed-splice: performances";
+    private static final String MARKER = "\n-- @seed-splice";
     private static final String NEW_VENUE =
             "INSERT INTO VENUES (id, name, address, region, address_detail, zip_code, latitude,"
                     + " longitude, phone, image_url, view_box_width, view_box_height, seat_diameter,"
@@ -47,11 +46,17 @@ class SeedSeatCoverageTest {
                     + " '2026-07-12 10:00:00', '2026-08-01 13:00:00', NULL, 3, 90, 1,"
                     + " '2026-01-01 10:00:00', 'KOPIS_SEED');";
     private static final String NEW_PERFORMANCE =
-            "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time,"
-                    + " order_open_time, order_close_time, max_can_hold_count, hold_time, created_at,"
+            "INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, created_at,"
                     + " created_by) VALUES (4, 3, 1, '2026-08-01 19:00:00', '2026-08-01 20:30:00',"
-                    + " '2026-07-12 10:00:00', '2026-08-01 18:00:00', 4, 600, '2026-01-01 10:00:00',"
+                    + " '2026-01-01 10:00:00', 'KOPIS_SEED');"
+                    + System.lineSeparator()
+                    + "INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES (performance_id, order_opens_at,"
+                    + " order_closes_at, max_hold_seat_count, hold_duration_seconds, queue_mode, queue_level,"
+                    + " version, created_at, created_by) VALUES (4, '2026-07-12 10:00:00',"
+                    + " '2026-08-01 18:00:00', 4, 600, 'FORCE_OFF', 'LEVEL_1', 0, '2026-01-01 10:00:00',"
                     + " 'KOPIS_SEED');";
+    private static final String NEW_BLOCK =
+            NEW_VENUE + System.lineSeparator() + NEW_SHOW + System.lineSeparator() + NEW_PERFORMANCE;
 
     @TempDir
     Path tempDir;
@@ -67,11 +72,7 @@ class SeedSeatCoverageTest {
 
     @Test
     void 마커_앞에_추가한_공연장은_좌석과_회차좌석을_받는다() {
-        final Path sqlPath = write(
-                "with-new-venue.sql",
-                spliceBeforeVenueMarker(
-                        spliceBeforePerformanceMarker(minimalSeedSql(), NEW_PERFORMANCE),
-                        NEW_VENUE + System.lineSeparator() + NEW_SHOW));
+        final Path sqlPath = write("with-new-venue.sql", spliceBeforeMarker(minimalSeedSql(), NEW_BLOCK));
 
         assertThat(runSeed(sqlPath)).as("새 공연장을 추가해도 정상 적재된다").isZero();
 
@@ -106,9 +107,7 @@ class SeedSeatCoverageTest {
      */
     @Test
     void 좌석이_없는_공연장이_남으면_커밋하지_않고_되돌린다() {
-        final String excludedFromReplication = spliceBeforeVenueMarker(
-                        spliceBeforePerformanceMarker(minimalSeedSql(), NEW_PERFORMANCE),
-                        NEW_VENUE + System.lineSeparator() + NEW_SHOW)
+        final String excludedFromReplication = spliceBeforeMarker(minimalSeedSql(), NEW_BLOCK)
                 .replace("WHERE t.venue_id = 1 AND v.id <> 1;", "WHERE t.venue_id = 1 AND v.id <> 1 AND v.id <> 3;");
         final Path sqlPath = write("venue-without-seats.sql", excludedFromReplication);
 
@@ -135,17 +134,9 @@ class SeedSeatCoverageTest {
                         + " WHERE ps.performance_id = p.id)");
     }
 
-    private static String spliceBeforeVenueMarker(final String sql, final String block) {
-        return spliceBefore(sql, VENUE_MARKER, block);
-    }
-
-    private static String spliceBeforePerformanceMarker(final String sql, final String block) {
-        return spliceBefore(sql, PERFORMANCE_MARKER, block);
-    }
-
-    private static String spliceBefore(final String sql, final String marker, final String block) {
-        final int index = sql.indexOf(marker);
-        assertThat(index).as("테스트 SQL에 마커 '%s'가 있어야 한다", marker).isNotNegative();
+    private static String spliceBeforeMarker(final String sql, final String block) {
+        final int index = sql.indexOf(MARKER) + 1;
+        assertThat(index).as("테스트 SQL에 줄 맨 앞의 마커가 있어야 한다").isPositive();
         return sql.substring(0, index) + block + System.lineSeparator() + System.lineSeparator() + sql.substring(index);
     }
 
@@ -169,7 +160,6 @@ class SeedSeatCoverageTest {
 
     private int runSeed(final Path sqlPath) {
         final Map<String, String> properties = new HashMap<>();
-        properties.put("seed.project-dir", SeedTestPaths.projectDir().toString());
         properties.put("seed.sql-path", sqlPath.toString());
         properties.putAll(SeedTestDatabase.seedProperties(jdbcUrl));
         properties.put("seed.load-test-fixture.performance-count", "0");

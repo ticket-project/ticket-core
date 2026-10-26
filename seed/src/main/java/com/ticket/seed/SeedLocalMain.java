@@ -1,10 +1,5 @@
 package com.ticket.seed;
 
-import java.util.List;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.support.TransactionTemplate;
-
 /**
  * 로컬 PostgreSQL DB에 초기 데이터를 적재하고 종료하는 독립 실행 프로그램이다.
  *
@@ -27,13 +22,5 @@ public final class SeedLocalMain {
     /** 테스트가 실제 실행 경로를 그대로 밟을 수 있도록 package 범위로 둔다. */
     static int execute() {
         return SeedProgram.execute(SeedTarget.LOCAL, SeedSettings::load);
-    }
-
-    /** 실행 순서를 고정하는 테스트가 쓴다. 실제 목록은 {@link SeedProgram#tasks}가 만든다. */
-    static List<SeedTask> tasks(
-            final JdbcTemplate jdbcTemplate,
-            final TransactionTemplate transactionTemplate,
-            final SeedSettings settings) {
-        return SeedProgram.tasks(jdbcTemplate, transactionTemplate, settings);
     }
 }

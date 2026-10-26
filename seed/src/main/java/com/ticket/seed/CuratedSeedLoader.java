@@ -9,8 +9,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 /**
  * 공용 KOPIS 시드({@code seed/sql/kopis-curated.sql})를 적재한다.
  *
- * <p>기존 {@code com.ticket.seed.SeedDataLoader}(애플리케이션 기동 시 실행되던 {@code ApplicationRunner})의 적재 책임을 그대로 옮긴 것이다. 파싱·날짜
- * 다변화·회차/판매정책 분리는 {@link CuratedSeedStatements}가, 이미 적재됐는지 판정은 {@link CuratedSeedInventory}가 맡는다.
+ * <p>기존 {@code com.ticket.seed.SeedDataLoader}(애플리케이션 기동 시 실행되던 {@code ApplicationRunner})의 적재 책임을 그대로 옮긴 것이다. 파싱·문장 순서
+ * 검사는 {@link CuratedSeedStatements}가, 이미 적재됐는지 판정은 {@link CuratedSeedInventory}가 맡는다.
  *
  * <p>적재 전체를 하나의 트랜잭션으로 감싼다. 중간에 실패하면 전부 되돌려야 다음 실행이 반쯤 적재된 상태를 만나지 않는다. 같은 트랜잭션 안에서 {@link CuratedSeedVerifier}가 커밋 직전에
  * 관계를 검증한다 — 좌석이 없는 공연장·회차가 남은 채로 "정상 완료"가 되지 않게 한다.
@@ -19,17 +19,12 @@ final class CuratedSeedLoader implements SeedTask {
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
     private final Path sqlPath;
-    private final int batchSize;
 
     CuratedSeedLoader(
-            final JdbcTemplate jdbcTemplate,
-            final TransactionTemplate transactionTemplate,
-            final Path sqlPath,
-            final int batchSize) {
+            final JdbcTemplate jdbcTemplate, final TransactionTemplate transactionTemplate, final Path sqlPath) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
         this.sqlPath = sqlPath;
-        this.batchSize = batchSize;
     }
 
     @Override
@@ -59,26 +54,17 @@ final class CuratedSeedLoader implements SeedTask {
             }
         }
 
-        final List<String> executable = statements.executableStatements();
+        final List<String> executable = statements.statements();
         if (executable.isEmpty()) {
             throw new SeedFailure("시드 SQL에서 실행할 문장을 찾지 못했습니다: " + sqlPath);
         }
 
         transactionTemplate.executeWithoutResult(status -> {
-            executeInBatches(executable);
+            jdbcTemplate.batchUpdate(executable.toArray(String[]::new));
             // 커밋 전에 관계를 확인한다. 누락된 상태가 "정상 적재"로 끝나면 안 된다.
             CuratedSeedVerifier.verify(jdbcTemplate);
         });
 
-        return Outcome.done("SQL 문 %d개를 적재했습니다(batchSize=%d).".formatted(executable.size(), Math.max(1, batchSize)));
-    }
-
-    private void executeInBatches(final List<String> statements) {
-        final int chunk = Math.max(1, batchSize);
-
-        for (int index = 0; index < statements.size(); index += chunk) {
-            final int end = Math.min(index + chunk, statements.size());
-            jdbcTemplate.batchUpdate(statements.subList(index, end).toArray(String[]::new));
-        }
+        return Outcome.done("SQL 문 %d개를 적재했습니다.".formatted(executable.size()));
     }
 }

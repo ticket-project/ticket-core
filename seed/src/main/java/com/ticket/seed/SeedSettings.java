@@ -29,7 +29,6 @@ record SeedSettings(
         String jdbcUsername,
         String jdbcPassword,
         Path sqlPath,
-        int batchSize,
         int loadTestMemberCount,
         int loadTestPerformanceCount,
         int largeLoadTestPerformanceCount,
@@ -43,7 +42,6 @@ record SeedSettings(
     static final int PROD_DEFAULT_LOAD_TEST_MEMBER_COUNT = 0;
 
     static final int PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT = 0;
-    static final int DEFAULT_BATCH_SIZE = 500;
     static final String DATASOURCE_URL_ENV = "SPRING_DATASOURCE_URL";
     static final String DATASOURCE_USERNAME_ENV = "SPRING_DATASOURCE_USERNAME";
     static final String DATASOURCE_PASSWORD_ENV = "SPRING_DATASOURCE_PASSWORD";
@@ -52,60 +50,50 @@ record SeedSettings(
 
     /** 로컬 설정이다. 기존 {@code seedLocal} 동작과 기본값을 그대로 유지한다. */
     static SeedSettings load() {
-        final Path projectDir = projectDir();
-        final Datasource datasource = resolveLocalDatasource(projectDir);
-        final int memberCount = intProperty("seed.load-test-members.count", DEFAULT_LOAD_TEST_MEMBER_COUNT);
-
-        return new SeedSettings(
+        return of(
                 SeedTarget.LOCAL,
-                datasource.url(),
-                datasource.username(),
-                datasource.password(),
-                resolveSqlPath(projectDir),
-                intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
-                memberCount,
-                intProperty("seed.load-test-fixture.performance-count", DEFAULT_LOAD_TEST_PERFORMANCE_COUNT),
-                intProperty("seed.load-test-fixture.large-performance-count", 0),
-                intProperty("seed.background-orders.count", 0));
+                resolveLocalDatasource(),
+                DEFAULT_LOAD_TEST_MEMBER_COUNT,
+                DEFAULT_LOAD_TEST_PERFORMANCE_COUNT);
     }
 
     /** 운영 설정이다. 접속 정보는 환경변수에서만 온다. */
     static SeedSettings forProd(final Map<String, String> environment) {
-        final Path projectDir = projectDir();
-        final Datasource datasource = resolveProdDatasource(environment);
-        final int memberCount = intProperty("seed.load-test-members.count", PROD_DEFAULT_LOAD_TEST_MEMBER_COUNT);
-
-        return new SeedSettings(
+        return of(
                 SeedTarget.PROD,
+                resolveProdDatasource(environment),
+                PROD_DEFAULT_LOAD_TEST_MEMBER_COUNT,
+                PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT);
+    }
+
+    private static SeedSettings of(
+            final SeedTarget target,
+            final Datasource datasource,
+            final int defaultMemberCount,
+            final int defaultPerformanceCount) {
+        return new SeedSettings(
+                target,
                 datasource.url(),
                 datasource.username(),
                 datasource.password(),
-                resolveSqlPath(projectDir),
-                intProperty("seed.batch-size", DEFAULT_BATCH_SIZE),
-                memberCount,
-                intProperty("seed.load-test-fixture.performance-count", PROD_DEFAULT_LOAD_TEST_PERFORMANCE_COUNT),
+                resolveSqlPath(),
+                intProperty("seed.load-test-members.count", defaultMemberCount),
+                intProperty("seed.load-test-fixture.performance-count", defaultPerformanceCount),
                 intProperty("seed.load-test-fixture.large-performance-count", 0),
                 intProperty("seed.background-orders.count", 0));
     }
 
-    private static Path projectDir() {
-        final String configured = System.getProperty("seed.project-dir");
-        if (configured != null && !configured.isBlank()) {
-            return Path.of(configured).toAbsolutePath().normalize();
-        }
-        return Path.of("").toAbsolutePath().normalize();
-    }
-
-    private static Path resolveSqlPath(final Path projectDir) {
+    private static Path resolveSqlPath() {
         final String configured = System.getProperty("seed.sql-path");
         if (configured != null && !configured.isBlank()) {
             return Path.of(configured).toAbsolutePath().normalize();
         }
-        return projectDir.resolve(SEED_SQL_RELATIVE_PATH).normalize();
+        return Path.of(SEED_SQL_RELATIVE_PATH).toAbsolutePath().normalize();
     }
 
-    private static Datasource resolveLocalDatasource(final Path projectDir) {
-        final Datasource local = readLocalProfileDatasource(projectDir.resolve(LOCAL_PROFILE_YAML));
+    private static Datasource resolveLocalDatasource() {
+        final Datasource local =
+                readLocalProfileDatasource(Path.of(LOCAL_PROFILE_YAML).toAbsolutePath());
         final String overriddenUrl = System.getProperty("seed.jdbc-url");
         if (overriddenUrl != null && !overriddenUrl.isBlank()) {
             // 계정을 따로 주지 않으면 로컬 프로파일의 계정을 쓴다. 같은 PostgreSQL의 다른 DB·schema를 가리키는 경우가 대부분이다.

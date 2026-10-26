@@ -152,7 +152,6 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 | `seed.load-test-fixture.performance-count` | 표준 부하 회차 수(회차당 좌석 2,000행이 늘어난다) |
 | `seed.load-test-fixture.large-performance-count` | 대형 부하 회차 수(회차당 좌석 15,000행이 늘어난다) |
 | `seed.background-orders.count` | 배경 주문 수. 공용 회차마다 같은 수로 나눈다 |
-| `seed.batch-size` | 공용 시드 batch 크기 |
 | `seed.sql-path` | 공용 시드 SQL 경로 |
 | `seed.jdbc-url` / `seed.jdbc-username` / `seed.jdbc-password` | **검증용 임시 DB에만 쓴다.** 지정하면 로컬 프로파일·환경변수 대신 이 값으로 접속한다 |
 
@@ -233,22 +232,13 @@ DB identity가 정하므로 부하 테스트에는 적재 뒤 `MEMBERS`에서 �
 
 ### 문장 순서
 
-공용 SQL에는 "실행 시점에 존재하는 행"만 대상으로 삼는 집합 기반 `INSERT ... SELECT`가 둘 있다.
-새 데이터는 각각 그 앞에 놓여야 하며, 파일에 마커 주석 두 개로 지점을 표시해 뒀다.
+공용 SQL 끝에는 "실행 시점에 존재하는 행"만 대상으로 삼는 집합 기반 `INSERT ... SELECT`(공연장별 좌석
+복제, 회차별 등급·가격·회차좌석)가 모여 있고, 그 앞에 마커 주석 `-- @seed-splice`가 있다. 리터럴 INSERT는
+전부 이 마커 앞에 둔다. 파일은 그대로 실행된다 — 적재할 때 문장을 고치지 않는다.
 
-| 마커 | 앞에 놓아야 하는 것 |
-| --- | --- |
-| `-- @seed-splice: venues` | `PERFORMERS` / `VENUES` / `SHOWS` / `SHOW_GENRES` |
-| `-- @seed-splice: performances` | `PERFORMANCES` |
-
-마커 뒤에 선언된 리터럴 INSERT가 있으면 `CuratedSeedStatements`가 **적재를 시작하기 전에** 실패로
-만든다. 과거에 이 순서가 깨져 공연장 179개가 좌석을 하나도 받지 못했고, 그 공연장의 공연
+첫 `INSERT ... SELECT` 뒤에 리터럴 INSERT가 있으면 `CuratedSeedStatements`가 **적재를 시작하기 전에**
+실패로 만든다. 과거에 이 순서가 깨져 공연장 179개가 좌석을 하나도 받지 못했고, 그 공연장의 공연
 198개·회차 662개에 회차좌석이 생성되지 않았다.
-
-### 날짜 리터럴
-
-실행 직전에 `'2026-06-01'` / `'2026-06-01 14:00:00'` 문자열을 `DATE '...'` / `TIMESTAMP '...'`로
-바꾼다. 따옴표 리터럴의 타입을 쓰인 문맥(VALUES, 파생 테이블, UNION)에 맡기지 않고 명시한다.
 
 ## 검증
 
@@ -273,5 +263,5 @@ KOPIS에서 신규 공연을 받아 `sql/kopis-curated.sql`에 누적 추가하�
 [kopis/README.md](kopis/README.md)를 본다. 수집과 DB 적재는 별개 작업이다 — 수집 도구는 SQL
 파일만 고치고, DB에 넣는 것은 `seedLocal` / `seedProd`가 한다.
 
-수집 도구는 생성한 블록을 위 두 마커 지점에 나눠 끼워 넣는다. 손으로 추가할 때도 같은 규칙을
-따른다 — 파일 끝에 이어 붙이면 좌석 없는 공연장이 생긴다.
+수집 도구는 생성한 블록을 위 마커 앞에 끼워 넣는다. 손으로 추가할 때도 같은 규칙을 따른다 — 파일 끝에
+이어 붙이면 좌석 없는 공연장이 생긴다.
