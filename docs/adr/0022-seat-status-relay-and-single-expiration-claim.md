@@ -179,7 +179,7 @@ relay 없이 claim만 넣으면 선택 만료의 `DESELECTED`가 claim한 인스
   도착하는지, 두 컨텍스트가 번갈아 같은 좌석을 선택·해제할 때 수신 순서가 상태 변화 순서와 같은지 확인한다.
 - claim 테스트: 두 리스너가 같은 만료 키를 받으면 handler가 한 번만 도는지, 모르는 키는 claim하지 않는지, claim TTL이
   `SELECT_TTL`보다 짧은지 확인한다.
-- 회귀: `SeatSelectionWriterTest`, `HeldSeatPublisherTest`, `HoldReleaserTest`, `WebSocketSeatStatusEventPublisherTest`와
+- 회귀: `SeatSelectionWriterTest`, `HeldSeatPublisherTest`, `HoldReleaserTest`, `SeatStatusRelayIntegrationTest`와
   booking 예매 E2E를 돌린다.
 - 운영: 2대 구성에서 gatling-test 03-3으로 수용량을 다시 잰다.
 

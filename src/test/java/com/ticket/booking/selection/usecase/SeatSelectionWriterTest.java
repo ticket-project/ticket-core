@@ -31,7 +31,6 @@ import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.domain.SeatOccupancy;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
@@ -60,13 +59,7 @@ class SeatSelectionWriterTest {
     @BeforeEach
     void setUp() {
         writer = new SeatSelectionWriter(
-                distributedLock,
-                holdStore,
-                seatSelectionService,
-                new SeatOccupancy(seatSelectionService, holdStore),
-                performanceSeatRepository,
-                seatEventPublisher,
-                CLOCK);
+                distributedLock, holdStore, seatSelectionService, performanceSeatRepository, seatEventPublisher, CLOCK);
     }
 
     @Test
@@ -109,29 +102,16 @@ class SeatSelectionWriterTest {
         verifyNoInteractions(holdStore, seatSelectionService, seatEventPublisher);
     }
 
+    /** hold가 있는지는 발행 스크립트가 확인한다. 주문 생성 후 남아 있던 선택을 해제해도 HELD를 덮어쓰지 않는다. */
     @Test
-    void 해제되면_performanceSeatId와_함께_DESELECTED를_발행한다() {
+    void 해제되면_좌석_락_안에서_비어_있을_때만_DESELECTED를_발행한다() {
         givenPerformanceSeat();
         when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
 
         writer.deselect(10L, 20L, 1L);
 
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
-    }
-
-    @Test
-    void 주문_생성_후_선택을_해제해도_hold된_좌석은_발행하지_않는다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
-        when(holdStore.isHeld(10L, 20L)).thenAnswer(invocation -> {
-            assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
-            return true;
-        });
-
-        writer.deselect(10L, 20L, 1L);
-
-        verify(seatSelectionService).deselect(10L, 20L, 1L);
-        verifyNoInteractions(seatEventPublisher);
+        verify(seatEventPublisher).publishIfFree(10L, 501L, 20L, SeatStatusAction.DESELECTED);
+        assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
     }
 
     /** 이미 만료된 선택을 해제 요청해도 아무 일도 일어나지 않았으므로 알리지 않는다. */
@@ -145,50 +125,28 @@ class SeatSelectionWriterTest {
         verifyNoInteractions(seatEventPublisher);
     }
 
-    /** 결함 재현: A의 선택이 만료되고 B가 같은 좌석을 다시 선택한 뒤 A의 만료 처리가 뒤늦게 실행되는 경우다. 그대로 발행하면 B가 잡고 있는 좌석이 비어 보인다. */
+    /**
+     * 결함 재현: A의 선택이 만료되고 B가 같은 좌석을 다시 선택한 뒤 A의 만료 처리가 뒤늦게 실행되는 경우다. 그대로 발행하면 B가 잡고 있는 좌석이 비어 보인다. 그래서 만료 알림은 좌석 락 안에서
+     * "비어 있을 때만" 발행한다 — 확인 자체는 발행 스크립트가 한다({@code SeatStatusRelayIntegrationTest}).
+     */
     @Test
-    void 만료_알림_직전에_다른_사용자가_다시_선택했으면_발행하지_않는다() {
+    void 만료_알림은_좌석_락_안에서_비어_있을_때만_발행한다() {
         givenPerformanceSeat();
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(true);
 
         writer.notifyReleasedIfFree(10L, 20L);
 
+        verify(seatEventPublisher).publishIfFree(10L, 501L, 20L, SeatStatusAction.DESELECTED);
         verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
         assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
-    }
-
-    @Test
-    void 만료_알림_직전에_선점으로_넘어갔으면_발행하지_않는다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdStore.isHeld(10L, 20L)).thenReturn(true);
-
-        writer.notifyReleasedIfFree(10L, 20L);
-
-        verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
-    }
-
-    @Test
-    void 만료된_좌석이_여전히_비어_있으면_DESELECTED를_발행한다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
-
-        writer.notifyReleasedIfFree(10L, 20L);
-
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
     }
 
     /** 여러 좌석을 한꺼번에 알릴 때 좌석마다 DB를 다시 읽지 않도록 미리 조회한 id를 그대로 받는다. */
     @Test
     void performanceSeatId를_받으면_좌석을_다시_조회하지_않는다() {
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
-
         writer.notifyReleasedIfFree(10L, 20L, 501L);
 
         verifyNoInteractions(performanceSeatRepository);
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
+        verify(seatEventPublisher).publishIfFree(10L, 501L, 20L, SeatStatusAction.DESELECTED);
     }
 
     private void givenPerformanceSeat() {

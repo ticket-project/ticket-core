@@ -29,9 +29,9 @@ import com.ticket.testsupport.persistence.MigratedSchema;
  * {@code @Modulith(sharedModules = "shared")} 덕에 이 테스트에도 포함되므로 {@code com.ticket.shared.config}의
  * {@code JPAQueryFactory}·{@code Clock} bean도 함께 등록되지만, 둘 다 {@code @MockitoBean}으로 대체한다({@code @MockitoBean}은 같은 타입의 실제
  * bean 정의를 대체한다) — 이 테스트는 booking bean들이 module 경계 안에서 서로 정상 연결되는지만 확인하는 wiring smoke test이지 실제 DB 접근이나 시간 계산을 검증하지
- * 않는다. {@code SimpMessagingTemplate}은 {@code WebSocketSeatStatusEventPublisher}(좌석 상태 WebSocket 발행)가 필요로 한다. 이 bean을
- * 만드는 {@code @EnableWebSocketMessageBroker} 설정({@code booking.websocket.WebSocketConfig})은 booking 소유라 스캔 범위 안이지만,
- * wiring smoke test에서 실제 STOMP 브로커 설정까지 띄울 이유가 없어 {@code @MockitoBean}으로 대체한다.
+ * 않는다. {@code SimpMessagingTemplate}은 {@code SeatStatusRelaySubscriber}(좌석 상태 relay를 받아 WebSocket으로 보냄)가 필요로 한다. 이
+ * bean을 만드는 {@code @EnableWebSocketMessageBroker} 설정({@code booking.websocket.WebSocketConfig})은 booking 소유라 스캔 범위
+ * 안이지만, wiring smoke test에서 실제 STOMP 브로커 설정까지 띄울 이유가 없어 {@code @MockitoBean}으로 대체한다.
  */
 @MigratedSchema
 @ApplicationModuleTest(verifyAutomatically = false)
@@ -39,9 +39,12 @@ class BookingModuleTests {
     @MockitoBean
     private RedissonClient redissonClient;
 
-    /** 시작하면 Redis에 구독 연결을 맺는다. wiring smoke test라 실제 구독은 필요 없다. */
-    @MockitoBean
+    /** 시작하면 Redis에 구독 연결을 맺는다. wiring smoke test라 실제 구독은 필요 없다. 컨테이너가 둘(만료 리스너, 좌석 상태 relay)이라 이름으로 고른다. */
+    @MockitoBean(name = "redisMessageListenerContainer")
     private RedisMessageListenerContainer redisMessageListenerContainer;
+
+    @MockitoBean(name = "seatStatusRelayListenerContainer")
+    private RedisMessageListenerContainer seatStatusRelayListenerContainer;
 
     @MockitoBean
     private PerformanceSaleInfoApi performanceSaleInfoApi;
