@@ -18,7 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class SeatSelectionService {
-    private static final Duration SELECT_TTL = Duration.ofMinutes(5);
+    /** 선택 유지 시간. 만료 처리의 claim TTL은 이보다 짧아야 한다({@code SeatSelectionExpirationHandler}). */
+    public static final Duration SELECT_TTL = Duration.ofMinutes(5);
+
     private final SeatSelectionStore seatSelectionStore;
 
     /** @param maxSeatCount 회차의 1인 선점 좌석 수 한도. 동시에 선택할 수 있는 좌석 수도 이 한도를 따른다. null이면 제한하지 않는다 */
