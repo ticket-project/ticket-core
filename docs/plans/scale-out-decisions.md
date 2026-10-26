@@ -23,7 +23,7 @@
 | D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
 | D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
 | D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 정함 | Redis pub/sub relay. 세부 결정 남음 |
-| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 좌석 선택은 keyspace 알림 + claim, 주문 만료는 알림 없이 DB 청소 1초 |
+| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 좌석 선택은 keyspace 알림 + claim. 주문 만료는 미정 |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
 | D2-4 | SockJS 연결 | 2대 운영 | 미정 | FE 수정 불가라 서버·LB 쪽 선택지에서 다시 정함 |
 | D2-5 | FE 재연결 때 좌석 다시 조회 | — | 정함 | 지금은 하지 않음(FE 수정 불가) |
@@ -178,24 +178,14 @@
     알림이 N번 나간다.
 - **선택지**: 먼저 손든 인스턴스만 처리(claim), 리더 한 대만 구독, 만료를 처리하는 worker 1대 분리(ticket-queue와 같은
   방식), Redis 지연 큐(만료 예정 Sorted Set), 외부 메시지 큐의 예약 배달, 중복 허용.
-- **결정(2026-10-26)**: 만료 종류마다 다르게 처리한다. 같은 날 claim → Sorted Set 장부 + Worker(구현 뒤 되돌림) →
-  지금 안으로 바꿨다.
+- **결정(2026-10-26)**: 좌석 선택 만료만 정했다. 주문 선점 만료는 아직 정하지 않았다.
   - **좌석 선택 만료: 지금처럼 Redis TTL + keyspace 만료 알림 → WebSocket `DESELECTED`.** 좌석을 고를 수 있는지는
     선택 키 TTL이 정하고, 만료 처리가 하는 일은 다른 사용자 화면에 "좌석 비었어요"를 알리는 것뿐이다. 알림이 늦거나
     빠져도 다음 조회에서 맞춰진다. 인스턴스가 N대일 때의 중복은 claim으로 막는다(아래 "좌석 선택 만료 알림의 중복").
-  - **주문 선점(hold) 만료: Redis 만료 알림을 쓰지 않고 DB 청소(`OrderExpirationTrigger`)를 1초마다 돌린다.**
-    `HoldKeyExpirationHandler`를 지웠다. 청소는 `worker.enabled=true`인 인스턴스에서만 돌아 여러 대여도 한 대만
-    처리한다. 1초마다 도는 만료 대상 조회를 위해 `orders(expires_at) WHERE status = 'PENDING'` 부분 인덱스를 더했다.
-  - 주문 만료를 이렇게 고른 이유: 알림이 하는 일은 "즉시" 처리뿐이다. 좌석은 hold 키 TTL로 제때 풀려 판매 정합성에는
-    영향이 없다. 늦어지는 것은 주문 `EXPIRED` 반영, 같은 회원의 같은 회차 재주문(그때까지 E5004), `RELEASED` 알림이고
-    모두 최대 1초다. 인스턴스가 여러 대여도 중복 처리 문제가 생기지 않고 바꿀 코드가 가장 적다.
-  - 감수하는 것: worker 인스턴스가 내려가 있는 동안은 주문 만료가 멈췄다가 돌아오면 처리된다(D3-1). 좌석 선택 만료는
-    keyspace 알림의 누락·지연을 그대로 안는다. 좌석 선택 때문에 keyspace 알림과 기동 때의
-    `CONFIG SET notify-keyspace-events`(`RedisExpirationListenerConfig`)가 남으므로, D1-1의 관리형 Redis 파라미터 그룹
-    설정과 D1-5의 노드별 구독 문제도 남는다.
-  - 고르지 않은 안(주문 만료): 지금처럼 모든 인스턴스가 알림을 받아 처리(행 잠금으로 결과는 한 번, DB 조회는 N배),
-    알림 + claim, Redis Sorted Set 장부 + 모든 인스턴스의 Worker(구현했다가 되돌렸다 — 장부 키·회차 목록·꺼내기 Lua·꺼낸
-    뒤 죽은 작업 처리 등 정할 것과 코드가 많았다).
+  - **주문 선점(hold) 만료: 미정.** 지금처럼 hold 메타 키 keyspace 만료 알림(`HoldKeyExpirationHandler`)과 5분 DB
+    청소(`OrderExpirationTrigger`)로 처리한다. 인스턴스가 N대면 모두가 알림을 받지만, 행 잠금 덕분에 `EXPIRED`는 한
+    번만 반영된다(DB 조회는 N배). 같은 날 검토·구현했다가 모두 되돌린 안: Redis Sorted Set 장부 + 모든 인스턴스의
+    Worker, 알림 없이 DB 청소 1초(+ `orders(expires_at) WHERE status = 'PENDING'` 인덱스).
 - **세부 결정**(좌석 선택 만료):
   - 좌석 선택 만료 알림의 중복(2026-10-26 정함): claim으로 한 대만 처리하고 `DESELECTED`는 relay로 보낸다.
     - 모든 인스턴스가 keyspace 알림을 받는다. 선택 키를 해석한 인스턴스는
@@ -271,7 +261,7 @@
 - **선택지**: ShedLock(DB 테이블과 migration 추가), `worker.enabled=true`를 한 대에만 둠, 그대로 둠.
 - **추천**: `worker.enabled=true`를 한 대에만 둔다. 코드 변경이 없다. 그 한 대가 내려가도 실시간 만료는 다른 인스턴스가
   D2-2로 처리하고, 안전망 청소만 잠시 멈춘다. 인스턴스가 많아지면 ShedLock을 다시 본다.
-- **함께 볼 것**: D2-2로 주문 만료도 `OrderExpirationTrigger`(1초)가 맡는다. worker 한 대가 내려가 있는 동안 주문 만료가 멈춘다.
+- **함께 볼 것**: 주문 만료의 누락 복구(`OrderExpirationTrigger`, 5분)도 이 결정을 따른다.
 
 ### D3-2. DB 연결 풀 크기
 
@@ -307,7 +297,7 @@
 ## 결정 뒤 구현할 것
 
 - 구현함(2026-10-26): relay(D2-1, `RedisSeatStatusEventPublisher`·`SeatStatusRelaySubscriber`), 좌석 선택 만료
-  claim(D2-2, `SeatSelectionExpirationHandler`), 주문 만료를 DB 청소 1초로(D2-2, 알림 handler 삭제·V5 인덱스). 발행은 Lua
+  claim(D2-2, `SeatSelectionExpirationHandler`). 주문 만료는 정하지 않아 구현하지 않았다. 발행은 Lua
   스크립트 안에서 하지만 상태 변경 스크립트와는 아직 따로이고 순서는 좌석 락이 지킨다. 둘을 합치는 일은 좌석 락 재설계에서 한다.
 - [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 본문을 위 구현에 맞게 다시 쓰고 상태를 바꾼다.
 - 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금은 FE를 고칠 수 없어 미룬다.
