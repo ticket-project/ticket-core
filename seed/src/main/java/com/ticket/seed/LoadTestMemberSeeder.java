@@ -1,12 +1,5 @@
 package com.ticket.seed;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -20,14 +13,13 @@ import org.springframework.transaction.support.TransactionTemplate;
  * access token을 쓴다. 그래서 여기서 필요한 것은 활성 회원 row와 그 ID뿐이다.
  *
  * <p>이메일 규칙은 {@code loadtest{n}@test.com}이다. 이미 있는(탈퇴하지 않은) 이메일은 건너뛴다 — {@code MEMBERS.email}에 unique 제약이 있어 중복 INSERT는
- * 실패하고, 건너뛰므로 이미 있는 회원의 ID도 바뀌지 않는다.
+ * 실패하고, 건너뛰므로 이미 있는 회원의 ID도 바뀌지 않는다. 탈퇴 회원은 이메일이 재작성되므로 활성 회원만 본다.
  */
 final class LoadTestMemberSeeder implements SeedTask {
     static final String EMAIL_PREFIX = "loadtest";
     static final String EMAIL_SUFFIX = "@test.com";
     private static final String CREATED_BY = "LOAD_TEST_SEED";
     private static final String ROLE = "MEMBER";
-    private static final int BATCH_SIZE = 500;
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
     private final int memberCount;
@@ -51,54 +43,29 @@ final class LoadTestMemberSeeder implements SeedTask {
             return Outcome.skipped("요청 회원 수가 0이라 적재하지 않습니다.");
         }
 
-        final Set<String> existing = findExistingEmails();
-        final List<String> emailsToCreate = new ArrayList<>();
-        for (int memberNo = 1; memberNo <= requested; memberNo++) {
-            final String email = EMAIL_PREFIX + memberNo + EMAIL_SUFFIX;
-            if (!existing.contains(email)) {
-                emailsToCreate.add(email);
-            }
-        }
-
-        if (emailsToCreate.isEmpty()) {
+        final int created = transactionTemplate.execute(status -> jdbcTemplate.update(
+                """
+                        INSERT INTO MEMBERS (email, name, role, created_at, created_by)
+                        SELECT ? || n || ?, ? || n, ?, CURRENT_TIMESTAMP, ?
+                        FROM generate_series(1, ?) AS n
+                        WHERE NOT EXISTS (
+                          SELECT 1 FROM MEMBERS m WHERE m.deleted_at IS NULL AND m.email = ? || n || ?
+                        )
+                        ORDER BY n
+                        """,
+                EMAIL_PREFIX,
+                EMAIL_SUFFIX,
+                EMAIL_PREFIX,
+                ROLE,
+                CREATED_BY,
+                requested,
+                EMAIL_PREFIX,
+                EMAIL_SUFFIX));
+        if (created == 0) {
             return Outcome.skipped("요청한 회원 %d명이 모두 이미 있습니다. 중복 생성하지 않습니다.".formatted(requested));
         }
 
-        transactionTemplate.executeWithoutResult(status -> insert(emailsToCreate));
-
         return Outcome.done("요청 %d명 중 %d명을 새로 만들었습니다(%s1%s ~ %s%d%s)."
-                .formatted(
-                        requested,
-                        emailsToCreate.size(),
-                        EMAIL_PREFIX,
-                        EMAIL_SUFFIX,
-                        EMAIL_PREFIX,
-                        requested,
-                        EMAIL_SUFFIX));
-    }
-
-    /** 이미 있는 부하 테스트 이메일이다. 탈퇴 회원은 이메일이 재작성되므로 활성 회원만 본다. */
-    private Set<String> findExistingEmails() {
-        return new HashSet<>(jdbcTemplate.queryForList(
-                "SELECT email FROM MEMBERS WHERE deleted_at IS NULL AND email LIKE ?",
-                String.class,
-                EMAIL_PREFIX + "%" + EMAIL_SUFFIX));
-    }
-
-    private void insert(final List<String> emails) {
-        final Timestamp createdAt = Timestamp.valueOf(LocalDateTime.now());
-        final List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
-
-        for (int index = 0; index < emails.size(); index++) {
-            final String email = emails.get(index);
-            batch.add(new Object[] {email, email.substring(0, email.indexOf('@')), ROLE, createdAt, CREATED_BY});
-            if (batch.size() == BATCH_SIZE || index == emails.size() - 1) {
-                jdbcTemplate.batchUpdate("""
-                        INSERT INTO MEMBERS (email, name, role, created_at, created_by)
-                        VALUES (?, ?, ?, ?, ?)
-                        """, batch);
-                batch.clear();
-            }
-        }
+                .formatted(requested, created, EMAIL_PREFIX, EMAIL_SUFFIX, EMAIL_PREFIX, requested, EMAIL_SUFFIX));
     }
 }
