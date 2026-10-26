@@ -369,9 +369,11 @@
 
 ## 결정 뒤 구현할 것
 
-- [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md)의 relay 구현(D2-1)과 주문 만료 Sorted Set
-  장부 구현(D2-2)
-- 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금 ticket-fe의 `useSeatSocket.ts`는 재구독만 한다.
+- 구현함(2026-10-26): relay(D2-1, `RedisSeatStatusEventPublisher`·`SeatStatusRelaySubscriber`), 좌석 선택 만료
+  claim(D2-2, `SeatSelectionExpirationHandler`), 주문 만료 장부와 Worker(D2-2, `HoldExpirationWorker`). 발행은 Lua
+  스크립트 안에서 하지만 상태 변경 스크립트와는 아직 따로이고 순서는 좌석 락이 지킨다. 둘을 합치는 일은 좌석 락 재설계에서 한다.
+- [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 본문을 위 구현에 맞게 다시 쓰고 상태를 바꾼다.
+- 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금은 FE를 고칠 수 없어 미룬다.
 - 배포 workflow의 순차 교체와 readiness·liveness 분리(D1-3)
 - 2노드 검증 테스트와 로컬 2노드 부하 측정(D3-3 전에)
 
