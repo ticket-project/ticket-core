@@ -11,14 +11,6 @@ package com.ticket.seed;
 final class SeedConsole {
     private SeedConsole() {}
 
-    static void info(final String message) {
-        System.out.println(message);
-    }
-
-    static void error(final String message) {
-        System.err.println(message);
-    }
-
     /** JDBC URL에서 자격증명으로 보이는 조각을 지운다. 설정 원본이 바뀌어 URL에 자격증명이 섞여도 로그로 새지 않게 한다. */
     static String maskedUrl(final String jdbcUrl) {
         if (jdbcUrl == null) {

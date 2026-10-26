@@ -168,16 +168,6 @@ function hash32(text) {
   return hash >>> 0;
 }
 
-/** mt20id 해시 기반 결정값 view_count (20000~80000) */
-export function deterministicViewCount(mt20id) {
-  let hash = 0;
-  const s = mt20id || '';
-  for (let i = 0; i < s.length; i++) {
-    hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
-  }
-  return 20000 + (hash % 60001); // 20000~80000
-}
-
 /** SQL 문자열 리터럴 이스케이프: '→'' + 개행/제어문자 공백 정리 */
 export function sqlStr(value) {
   if (value === null || value === undefined) return 'NULL';

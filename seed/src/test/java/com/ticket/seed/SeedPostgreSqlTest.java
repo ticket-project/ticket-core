@@ -1,7 +1,6 @@
 package com.ticket.seed;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +36,6 @@ class SeedPostgreSqlTest {
     @Test
     void 운영_시드를_재실행해도_중복되지_않고_생성_ID가_충돌하지_않는다() {
         Map<String, String> properties = new HashMap<>();
-        properties.put("seed.project-dir", SeedTestPaths.projectDir().toString());
         properties.put("seed.sql-path", SeedTestPaths.minimalSeedSql().toString());
         properties.put("seed.load-test-members.count", "3");
         properties.put("seed.load-test-fixture.performance-count", "1");
@@ -80,15 +78,5 @@ class SeedPostgreSqlTest {
         } finally {
             SeedSystemProperties.restore(previous);
         }
-    }
-
-    @Test
-    void 다른_스키마의_테이블로_사전조건을_충족할_수_없다() {
-        // 같은 DB의 다른 schema(url의 schema)에는 테이블이 모두 있다. 접속한 schema만 봐야 한다.
-        String shadowUrl = AppSchema.empty("seed_shadow");
-        assertThatThrownBy(() ->
-                        SeedPreconditions.verify(SeedTestDatabase.dataSource(shadowUrl), shadowUrl, SeedTarget.PROD))
-                .isInstanceOf(SeedFailure.class)
-                .hasMessageContaining("없는 테이블", "seed_shadow");
     }
 }

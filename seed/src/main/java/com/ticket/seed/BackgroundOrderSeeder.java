@@ -105,7 +105,7 @@ final class BackgroundOrderSeeder implements SeedTask {
             final int quota = base + (index < remainder ? 1 : 0);
             created += transactionTemplate.execute(status -> seedPerformance(performance, quota, memberIds));
             if ((index + 1) % PROGRESS_EVERY == 0) {
-                SeedConsole.info("  배경 주문: 회차 %d/%d, 새 주문 %,d건".formatted(index + 1, performances.size(), created));
+                System.out.println("  배경 주문: 회차 %d/%d, 새 주문 %,d건".formatted(index + 1, performances.size(), created));
             }
         }
 

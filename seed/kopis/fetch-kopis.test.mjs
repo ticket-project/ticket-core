@@ -1,14 +1,16 @@
 // 실행: node --test "seed/kopis/*.test.mjs"
 //
-// 네트워크를 타지 않는 순수 함수만 본다 — 조회 기간 분할, 카테고리 균형, 등록일 형식.
+// 네트워크를 타지 않는 순수 함수만 본다 — 조회 기간 분할, 카테고리 균형, 등록일 형식, 병합 지점.
 
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import {
   addMonths,
   interleaveBalanced,
   nowStamp,
+  spliceIndex,
   splitIntoWindows,
   toCompact,
 } from './fetch-kopis.mjs';
@@ -209,4 +211,13 @@ test('등록일은 앱이 읽는 타임스탬프 형식이고 고정값이 아�
 
   assert.equal(stamp, '2026-09-14 07:05:03');
   assert.notEqual(nowStamp(), '2026-01-01 10:00:00');
+});
+
+test('병합 지점은 줄 맨 앞의 마커 하나이고 머리말의 인용은 무시한다', () => {
+  const sql = readFileSync(new URL('../sql/kopis-curated.sql', import.meta.url), 'utf8');
+  const index = spliceIndex(sql);
+  assert.ok(sql.startsWith('-- @seed-splice', index));
+  assert.ok(sql.indexOf('@seed-splice') < index, '머리말 주석이 마커 문구를 먼저 인용한다');
+  assert.ok(!/^INSERT INTO \w+ \([^)]*\) VALUES/m.test(sql.slice(index)), '마커 뒤에는 리터럴 INSERT가 없다');
+  assert.throws(() => spliceIndex('INSERT INTO X (a) VALUES (1);'), /정확히 하나/);
 });

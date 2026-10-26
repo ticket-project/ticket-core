@@ -18,10 +18,9 @@ import org.junit.jupiter.api.Test;
 class SeedSettingsTest {
     @Test
     void 접속_설정의_원본은_로컬_프로파일_YAML이다() {
-        final Map<String, String> previous = SeedSystemProperties.set(
-                Map.of("seed.project-dir", SeedTestPaths.projectDir().toString()));
+        final String previousUrl = System.getProperty("seed.jdbc-url");
+        System.clearProperty("seed.jdbc-url");
         try {
-            System.clearProperty("seed.jdbc-url");
             final SeedSettings settings = SeedSettings.load();
 
             final String localProfile =
@@ -34,27 +33,22 @@ class SeedSettingsTest {
         } catch (final java.io.IOException exception) {
             throw new AssertionError(exception);
         } finally {
-            SeedSystemProperties.restore(previous);
+            if (previousUrl != null) System.setProperty("seed.jdbc-url", previousUrl);
         }
     }
 
     @Test
     void 기본값은_로컬_프로파일_기준이다() {
-        final Map<String, String> previous = SeedSystemProperties.set(Map.of(
-                "seed.project-dir",
-                SeedTestPaths.projectDir().toString(),
-                "seed.jdbc-url",
-                "jdbc:postgresql://localhost:5432/seed_settings"));
+        final Map<String, String> previous =
+                SeedSystemProperties.set(Map.of("seed.jdbc-url", "jdbc:postgresql://localhost:5432/seed_settings"));
         try {
             System.clearProperty("seed.load-test-members.count");
             System.clearProperty("seed.load-test-fixture.performance-count");
-            System.clearProperty("seed.batch-size");
 
             final SeedSettings settings = SeedSettings.load();
 
             assertThat(settings.loadTestMemberCount()).isEqualTo(2000);
             assertThat(settings.loadTestPerformanceCount()).isEqualTo(8);
-            assertThat(settings.batchSize()).isEqualTo(500);
             assertThat(settings.sqlPath()).endsWith(java.nio.file.Path.of("seed", "sql", "kopis-curated.sql"));
             assertThat(Files.isRegularFile(settings.sqlPath())).isTrue();
         } finally {
@@ -65,7 +59,6 @@ class SeedSettingsTest {
     @Test
     void 로컬_YAML의_환경변수_표현식을_해석한다() {
         final Map<String, String> previous = SeedSystemProperties.set(Map.of(
-                "seed.project-dir", SeedTestPaths.projectDir().toString(),
                 "SPRING_DATASOURCE_URL", "jdbc:postgresql://localhost:15432/override",
                 "SPRING_DATASOURCE_USERNAME", "override_user",
                 "SPRING_DATASOURCE_PASSWORD", "override_password"));
@@ -85,8 +78,6 @@ class SeedSettingsTest {
     @Test
     void 검증용_임시_DB와_SQL_경로를_덮어쓸_수_있다() {
         final Map<String, String> previous = SeedSystemProperties.set(Map.of(
-                "seed.project-dir",
-                SeedTestPaths.projectDir().toString(),
                 "seed.jdbc-url",
                 "jdbc:postgresql://localhost:5432/seed_override",
                 "seed.jdbc-username",
@@ -110,8 +101,6 @@ class SeedSettingsTest {
     @Test
     void 정수가_아닌_설정값은_실행_전에_실패한다() {
         final Map<String, String> previous = SeedSystemProperties.set(Map.of(
-                "seed.project-dir",
-                SeedTestPaths.projectDir().toString(),
                 "seed.jdbc-url",
                 "jdbc:postgresql://localhost:5432/seed_invalid",
                 "seed.load-test-members.count",

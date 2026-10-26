@@ -117,19 +117,8 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
   응답에서 빠지고, 그 등급 좌석의 주문은 `PendingOrderCreator`가 등급 표시값을 찾지 못해 `IllegalStateException`(500)이 된다.
 - 영향: 지금은 등급을 바꾸는 관리 기능이 없어 낮다. 관리 기능을 만들 때 캐시 무효화를 함께 정한다.
 
-### seed 실패 출력이 일부 작업에서 사실과 다르다
-
-- 사실: `SeedRunner`는 실패한 작업에 "이 작업의 트랜잭션은 롤백됐습니다", "실패(롤백)"을, `SeedProgram`은 앞 작업이
-  모두 건너뜀이면 "커밋된 작업은 없습니다. DB 상태는 실행 전과 같습니다."를 출력한다. 배경 주문(`BackgroundOrderSeeder`)은
-  회차마다 커밋하고 identity 동기화(`PostgreSqlIdentitySynchronizer`)는 트랜잭션 없이 돌므로, 이 두 작업이 중간에
-  실패하면 일부가 이미 반영돼 있다.
-- 후보: 작업이 자기 트랜잭션 성격을 알리게 하고 출력 문구를 그에 맞춘다.
-
 ### 테스트가 이름이나 주석이 말하는 것을 검증하지 않는다
 
-- `seed/src/test/java/com/ticket/seed/CuratedSeedStatementsTest.java`의 `회차좌석_시드는_연속_RESERVED_블록을_만든다`:
-  비율 30~60%·2~4연석 assertion이 테스트 안의 옛 공식(`blockSize`, `cycleSize`)만 계산한다. 지금 SQL은 해시 `MOD`
-  방식이라 블록 구조가 없다. 실제 SQL을 적재해 분포를 재거나, 이름과 메시지를 실제 검증 범위로 줄인다.
 - `src/test/java/com/ticket/member/persistence/MemberSocialAccountPersistenceTest.java`: orphanRemoval·CascadeType.REMOVE가
   붙으면 실패한다고 주석에 적었지만, 탈퇴는 soft delete라 두 설정이 붙어도 통과한다. 실제 방어는
   `MemberSocialAccountMappingTest`다. 주석을 고치거나 실제로 잡는 사례를 만든다.

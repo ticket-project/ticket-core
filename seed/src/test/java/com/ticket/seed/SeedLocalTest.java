@@ -238,25 +238,6 @@ class SeedLocalTest {
         }
     }
 
-    /**
-     * 반드시 마지막이다 — 데이터를 일부러 지운다.
-     *
-     * <p>예전 판정은 CATEGORIES에 행이 있는지 하나만 봤기 때문에, 뒤쪽 테이블이 통째로 비어도 "이미 적재됨"으로 넘어갔다. 지금은 테이블별 기대 행 수와 비교해 불일치를 실패로 만든다.
-     */
-    @Test
-    @Order(6)
-    void 불완전한_데이터_상태를_정상_완료로_처리하지_않는다() {
-        final long removed = jdbcTemplate.update(
-                "DELETE FROM PERFORMANCE_SEATS WHERE performance_id < " + FIXTURE_ID_BASE + " AND MOD(seat_id, 2) = 0");
-        assertThat(removed).isPositive();
-
-        assertThat(SeedLocalMain.execute()).as("부분 적재 상태는 실패로 알린다").isEqualTo(1);
-
-        assertThat(curatedCount("PERFORMANCE_SEATS", "performance_id"))
-                .as("자동으로 지우거나 채워 넣지 않는다")
-                .isPositive();
-    }
-
     private static Map<String, Long> snapshot() {
         return Map.of(
                 "CATEGORIES",

@@ -5,7 +5,7 @@
 ----
 seed/sql/kopis-curated.sql 의 공연일이 특정 시즌(예: 2026 봄)에 고정되어 있어,
 시간이 지나면 대부분의 공연이 '예매 종료(CLOSED)' 상태가 되어 좌석 선택이 불가능해진다.
-이 스크립트는 SHOWS/PERFORMANCES 의 날짜 컬럼만 재계산해서,
+이 스크립트는 SHOWS/PERFORMANCES/BOOKING_PERFORMANCE_SALES_POLICIES 의 날짜 컬럼만 재계산해서,
 기준일 시점에 대다수 공연이 '예매중(ON_SALE)' 이 되도록 만든다.
 
 표시 상태 판정(도메인 규칙, DisplaySaleWindow.statusAt — ADR 0007). 이건 화면 표시일 뿐
@@ -13,7 +13,7 @@ seed/sql/kopis-curated.sql 의 공연일이 특정 시즌(예: 2026 봄)에 고�
   - now <  display_sale_starts_at              -> BEFORE_OPEN (오픈 예정)
   - display_sale_starts_at <= now <= display_sale_ends_at -> ON_SALE (예매중, 좌석 선택 가능)
   - now >  display_sale_ends_at               -> CLOSED      (예매 종료)
-그리고 시드 로더(CuratedSeedLoader)/테스트가 강제하는 불변식:
+그리고 시드 테스트가 확인하고 fetch-kopis.mjs가 새 공연에 지키는 불변식:
   - show.display_sale_starts_at == min(performance 회차들의 접수 시작 시각)
   - show.display_sale_ends_at   == max(performance 회차들의 접수 종료 시각)
   - 회차가 2개 이상이면 날짜가 2개 이상으로 분산
@@ -51,9 +51,17 @@ PERF_RE = re.compile(
     r"(\d+), (\d+), (\d+), "                             # 2 id, 3 show_id, 4 perf_no
     r"'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"          # 5 start_time
     r"(, )'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"      # 6 sep, 7 end_time
-    r"(, )'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"      # 8 sep, 9 order_open
-    r"(, )'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"      # 10 sep, 11 order_close
-    r"(.*)$",                                            # 12 rest
+    r"(.*)$",                                            # 8 rest
+    re.DOTALL,
+)
+
+# 회차의 접수 기간은 booking 판매정책 행에 있다(회차 id로 잇는다).
+POLICY_RE = re.compile(
+    r"^(INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES \([^)]*\) VALUES \()"  # 1 head
+    r"(\d+), "                                          # 2 performance_id
+    r"'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"          # 3 order_opens_at
+    r"(, )'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'"      # 4 sep, 5 order_closes_at
+    r"(.*)$",                                            # 6 rest
     re.DOTALL,
 )
 
@@ -81,10 +89,15 @@ def main() -> None:
     # 1) 파싱: show -> 라인index/날짜, show -> [회차]
     shows: dict[int, dict] = {}
     perfs: dict[int, list[dict]] = {}
+    policies: dict[int, int] = {}  # performance id -> 라인index
     for i, line in enumerate(lines):
         ms = SHOW_RE.match(line)
         if ms:
             shows[int(ms.group(2))] = {"line": i}
+            continue
+        mpol = POLICY_RE.match(line)
+        if mpol:
+            policies[int(mpol.group(2))] = i
             continue
         mp = PERF_RE.match(line)
         if mp:
@@ -92,6 +105,7 @@ def main() -> None:
             perfs.setdefault(sid, []).append(
                 {
                     "line": i,
+                    "id": int(mp.group(2)),
                     "perf_no": int(mp.group(4)),
                     "start": parse_dt(mp.group(5)),
                     "end": parse_dt(mp.group(7)),
@@ -161,13 +175,16 @@ def main() -> None:
                 oc_max = new_oc
 
             mp = PERF_RE.match(lines[p["line"]])
-            new_perf_line = (
+            edits[p["line"]] = (
                 f"{mp.group(1)}{mp.group(2)}, {mp.group(3)}, {mp.group(4)}, "
-                f"'{new_start.strftime(DT)}'{mp.group(6)}'{new_end.strftime(DT)}'"
-                f"{mp.group(8)}'{order_open.strftime(DT)}'"
-                f"{mp.group(10)}'{new_oc.strftime(DT)}'{mp.group(12)}"
+                f"'{new_start.strftime(DT)}'{mp.group(6)}'{new_end.strftime(DT)}'{mp.group(8)}"
             )
-            edits[p["line"]] = new_perf_line
+            policy_line = policies[p["id"]]
+            mpol = POLICY_RE.match(lines[policy_line])
+            edits[policy_line] = (
+                f"{mpol.group(1)}{mpol.group(2)}, "
+                f"'{order_open.strftime(DT)}'{mpol.group(4)}'{new_oc.strftime(DT)}'{mpol.group(6)}"
+            )
 
         # SHOWS 라인 치환: start/end_date, sale_start(=oo_min), sale_end(=oc_max)
         new_show_start = new_base.date()

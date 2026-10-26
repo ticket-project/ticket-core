@@ -21,12 +21,16 @@ import {
   CATEGORY_LABEL,
   normalizePosterUrl,
 } from './genre-map.mjs';
-import { resolveSpliceMarkers } from './splice-markers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SQL_PATH = resolve(__dirname, '../sql/kopis-curated.sql');
 const BASE = 'http://www.kopis.or.kr/openApi/restful';
-// 병합 지점(마커) 해석과 그 계약 검증은 splice-markers.mjs가 소유한다.
+
+/**
+ * 새 블록을 끼워 넣는 지점이다. 이 마커 뒤의 INSERT ... SELECT(좌석 복제·회차좌석 생성)는 실행 시점에 존재하는
+ * 행만 대상으로 하므로 새 공연장·공연·회차는 반드시 이 앞에 놓여야 한다.
+ */
+const SPLICE_MARKER = '-- @seed-splice';
 
 /** KOPIS 공연목록 조회(pblprfr)의 기간 상한. 개발가이드 기준 최대 31일이다. */
 const KOPIS_MAX_WINDOW_DAYS = 31;
@@ -211,6 +215,15 @@ function parseShowHour(dtguidance) {
 }
 
 // ---------- 기존 SQL 파싱 ----------
+/** 줄 맨 앞의 마커만 병합 지점으로 본다. 파일 머리말 주석이 같은 문구를 줄 중간에 인용한다. */
+export function spliceIndex(sql) {
+  const found = [...sql.matchAll(/^-- @seed-splice\b/gm)];
+  if (found.length !== 1) {
+    throw new Error(`병합 지점 마커('${SPLICE_MARKER}')는 줄 맨 앞에 정확히 하나 있어야 합니다. 찾은 수: ${found.length}`);
+  }
+  return found[0].index;
+}
+
 function maxId(sql, table) {
   const re = new RegExp(`INSERT INTO ${table} \\([^)]*\\) VALUES \\((\\d+)`, 'g');
   let max = 0;
@@ -247,6 +260,13 @@ function buildPerformances(show, startPerfId) {
   if (slots.length === 1) {
     const p = slots[0];
     slots.push({ date: p.date, hh: p.hh < 17 ? 19 : 14, mm: 0 });
+  }
+  // 회차가 모두 같은 날이면 최대 3일로 흩는다. 화면에서 회차 날짜를 고를 수 있어야 한다.
+  if (slots.every((slot) => slot.date === slots[0].date)) {
+    const buckets = Math.min(3, slots.length);
+    slots.forEach((slot, idx) => {
+      slot.date = shiftDateTime(slots[0].date, 0, 0, Math.floor((idx * buckets) / slots.length) * 1440).slice(0, 10);
+    });
   }
 
   return slots.map((slot, idx) => {
@@ -327,8 +347,7 @@ async function main() {
   const sql = readFileSync(SQL_PATH, 'utf8');
   // 병합 지점은 네트워크를 타기 전에 확정한다. dry-run도 같은 검증을 거쳐야 "미리보기는 됐는데
   // 실제 병합에서 터진다"가 생기지 않는다.
-  const splice = resolveSpliceMarkers(sql);
-  console.log(`[병합 지점] 공연장 ${splice.venueLine}행, 회차 ${splice.performanceLine}행`);
+  const splice = spliceIndex(sql);
   const next = {
     show: maxId(sql, 'SHOWS') + 1,
     performer: maxId(sql, 'PERFORMERS') + 1,
@@ -539,6 +558,11 @@ async function main() {
     const perfs = buildPerformances({ id: showId, startDate, endDate, runningMinutes: minutes, saleStart, dtguidance, createdAt }, next.performance);
     next.performance += perfs.length;
     performances.push(...perfs);
+    // 공연의 표시 기간은 회차 집합을 덮는다: 종료일은 마지막 회차일, 판매 종료는 마지막 회차의 접수 마감.
+    const show = shows[shows.length - 1];
+    const lastDate = perfs.map((p) => p.start.slice(0, 10)).sort().at(-1);
+    if (lastDate > show.endDate) show.endDate = lastDate;
+    show.saleEnd = perfs.map((p) => p.close).sort().at(-1);
 
     process.stdout.write(`\r[상세] 공연 ${shows.length}/${opts.target}`);
   }
@@ -559,7 +583,7 @@ async function main() {
     process.exit(1);
   }
 
-  // 3) SQL 조각 생성 — 공연장 블록과 회차 블록을 따로 만든다(끼워 넣는 지점이 다르다).
+  // 3) SQL 조각 생성
   const lines = [];
   lines.push('');
   lines.push('-- ============================================================');
@@ -594,47 +618,29 @@ async function main() {
     );
   }
 
-  lines.push('');
-
-  const performanceLines = [];
-  performanceLines.push('');
-  performanceLines.push(`-- ===== 추가 공연 회차 (기간 ${opts.from}~${opts.to}) =====`);
+  lines.push('-- ===== 추가 공연 회차와 회차별 판매정책 =====');
   for (const p of performances) {
-    performanceLines.push(
-      `INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, order_open_time, order_close_time, max_can_hold_count, hold_time, created_at, created_by) VALUES (${p.id}, ${p.showId}, ${p.no}, '${p.start}', '${p.end}', '${p.open}', '${p.close}', 4, 600, '${p.createdAt}', 'KOPIS_SEED');`,
+    lines.push(
+      `INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, created_at, created_by) VALUES (${p.id}, ${p.showId}, ${p.no}, '${p.start}', '${p.end}', '${p.createdAt}', 'KOPIS_SEED');`,
+      `INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES (performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds, queue_mode, queue_level, version, created_at, created_by) VALUES (${p.id}, '${p.open}', '${p.close}', 4, 600, 'FORCE_OFF', 'LEVEL_1', 0, '${p.createdAt}', 'KOPIS_SEED');`,
     );
   }
-  performanceLines.push('');
+  lines.push('');
 
-  const venueBlock = lines.join('\n');
-  const performanceBlock = performanceLines.join('\n');
+  const block = lines.join('\n');
 
   if (opts.dryRun) {
-    console.log('\n===== DRY-RUN: 공연장 블록 미리보기(처음 15줄) =====');
-    console.log(venueBlock.split('\n').slice(0, 15).join('\n'));
+    console.log('\n===== DRY-RUN: 블록 미리보기(처음 15줄) =====');
+    console.log(block.split('\n').slice(0, 15).join('\n'));
     console.log('...');
-    console.log('\n===== DRY-RUN: 회차 블록 미리보기(처음 5줄) =====');
-    console.log(performanceBlock.split('\n').slice(0, 5).join('\n'));
-    console.log('...');
-    const insertCount = [...lines, ...performanceLines].filter((l) => l.startsWith('INSERT')).length;
+    const insertCount = lines.filter((l) => l.startsWith('INSERT')).length;
     console.log(`\n[DRY-RUN] 파일을 수정하지 않았습니다. 생성될 INSERT 라인 수: ${insertCount}`);
-    console.log(
-      `[DRY-RUN] 병합 지점: 공연장 블록 -> ${splice.venueLine}행 앞, 회차 블록 -> ${splice.performanceLine}행 앞`,
-    );
     return;
   }
 
-  // 4) 병합 — 병합 지점은 이미 main 진입부에서 확정·검증했다(resolveSpliceMarkers).
-  const { venueIndex, performanceIndex } = splice;
+  // 4) 병합 — 병합 지점은 이미 main 진입부에서 확정했다.
   copyFileSync(SQL_PATH, `${SQL_PATH}.bak`);
-  const merged =
-    sql.slice(0, venueIndex) +
-    venueBlock +
-    '\n' +
-    sql.slice(venueIndex, performanceIndex) +
-    performanceBlock +
-    '\n' +
-    sql.slice(performanceIndex);
+  const merged = sql.slice(0, splice) + block + '\n' + sql.slice(splice);
   writeFileSync(SQL_PATH, merged, 'utf8');
   console.log(`\n[병합 완료] 백업: ${SQL_PATH}.bak`);
   console.log(`[병합 완료] 신규 SHOWS ${shows.length}개 (id ${shows[0].id}~${shows[shows.length - 1].id}) 추가됨.`);
