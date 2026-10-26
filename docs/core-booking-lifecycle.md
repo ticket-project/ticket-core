@@ -175,7 +175,7 @@ CancelOrderUseCase / ExpireOrderUseCase
 같은 `OrderTerminated` publication이 재시도로 다시 전달되면 Redis 해제도 다시 수행한다. 해제는
 좌석별 현재 holdKey를 확인하고 일치할 때만 지우므로, 이미 풀린 좌석은 그대로 지나가고 그사이
 다른 사용자가 잡은 선점도 건드리지 않는다. 그래서 해제 완료 여부를 따로 기록하지 않는다.
-해제 호출자는 hold의 전체 좌석을 넘긴다. 해제는 주문 만료 장부에서도 그 holdKey를 지운다. meta key(`hold:key:%s`)는
+해제 호출자는 hold의 전체 좌석을 넘긴다. meta key(`hold:key:%s`)는
 값으로 선점한 회원 ID를 저장한다. 선점 Lua가 이 값을 읽어 충돌한 hold가 같은 회원 것인지(`E5004`) 판정한다. 좌석 해제 후 해당 meta를 항상 삭제한다.
 WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새 hold나 selection이 생긴
 좌석에는 오래된 해제 알림을 보내지 않는다. 발행 자체가 다시 실패하면 같은 RELEASED가 다시
@@ -199,16 +199,14 @@ WebSocket 발행은 매번 현재 hold/selection 상태를 다시 확인해, 새
 
 ## TTL 폭주와 누락 복구
 
-주문 만료는 Redis 주문 만료 장부(`hold:expiry:due`, Sorted Set)가 정한다. 선점 Lua가 같은 스크립트에서 holdKey를
-주문 만료 시각(앱 서버 시계, 밀리초 올림)을 점수로 등록하고, 모든 인스턴스의 `HoldExpirationWorker`가 1초마다
-시각 지난 작업을 꺼내 `ExpireOrderUseCase.expireByHoldKey`를 호출한다.
+주문 만료는 Redis 만료 알림을 쓰지 않는다. `OrderExpirationTrigger`가 1초마다 `ExpirePendingOrdersUseCase`를 불러
+만료 시각이 지난 PENDING 주문을 만료시킨다(`worker.order-expiration.fixed-delay`). 인스턴스가 여러 대여도
+`worker.enabled=true`인 한 대만 돈다. 좌석은 hold 키 TTL로 제때 풀리므로, 늦어지는 것은 주문 `EXPIRED` 반영과
+`RELEASED` 알림, 같은 회원의 재주문 가능 시점(최대 1초)이다.
 
-- 꺼내기는 "시각 지난 작업 최대 100개 읽기 + 지우기"를 Lua 하나로 해서 여러 인스턴스가 동시에 확인해도 한 작업은 한
-  인스턴스만 가져간다. 꽉 채워 꺼냈으면 바로 다시 꺼낸다. 처리 스레드는 인스턴스당 2개이고 큐는 무제한이다.
-- 꺼낸 뒤 처리하기 전에 인스턴스가 죽거나 처리가 실패하면 그 작업은 장부에서 사라지고, 아래 DB 복구 스케줄러가 처리한다.
 - 좌석 선택 만료는 keyspace 만료 알림(`RedisKeyExpirationListener` → `SeatSelectionExpirationHandler`)을 쓴다.
   고정 worker 2개, 무제한 큐다. Redisson 수신 경로도 채널별 무제한 큐를 사용해 Redis까지 역압을 전달하지 못한다.
-- `OrderExpirationTrigger` → `ExpirePendingOrdersUseCase`가 누락된 만료를 복구한다.
+- `ExpirePendingOrdersUseCase`는 만료 대상을 `orders(expires_at) WHERE status = 'PENDING'` 부분 인덱스로 찾는다.
   **id 커서로 순회한다** — 커서는 조회한 페이지의 마지막 id이고 처리 성공 여부와
   무관하게 앞으로만 가므로, 앞의 주문이 계속 실패해도 뒤의 정상 만료 대상이 같은 순회에서
   처리된다. 실패 항목은 지우지도 처리 완료로 치지도 않고 PENDING으로 남아 다음 순회에서 다시
