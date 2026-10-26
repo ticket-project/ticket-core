@@ -52,9 +52,8 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차(신규 요청 차단 후 TTL 이상 대기,
   `SCAN`으로 옛 key가 0개인지 확인, 배포, 재개 — 무중단이면 백필 또는 호환 조회)를 함께 설계한다.
-- TTL, 만료 처리(좌석 선택은 keyspace 만료 리스너, 주문 만료는 1초 주기 `OrderExpirationTrigger`) 중 하나만 바꾸지
-  않는다 — 함께 정합성을 지킨다. 주문 만료는 `worker.enabled=true`인 인스턴스가 내려가 있으면 멈춘다.
-- 좌석 선택 만료 때문에 `notify-keyspace-events`(`Ex`)가 계속 필요하다. Core가 기동 때 `CONFIG SET`으로 켜며, 관리형
+- TTL, expiration listener, scheduler 누락 복구 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을 함께 지킨다.
+- 만료 리스너(좌석 선택, 주문 선점) 때문에 `notify-keyspace-events`(`Ex`)가 필요하다. Core가 기동 때 `CONFIG SET`으로 켜며, 관리형
   Redis처럼 `CONFIG SET`이 막힌 곳에서는 파라미터 그룹에서 켠다.
 - 좌석 상태 알림은 Redis 채널 `seat:status:relay`로 모든 인스턴스에 나눈다. 전달이 밀리면 relay executor
   큐(`executor_queued_tasks{name="seatStatusRelayExecutor"}`)가 쌓인다.
