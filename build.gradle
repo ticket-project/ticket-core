@@ -99,10 +99,6 @@ dependencies {
     // Redis
     implementation libs.redisson.spring.boot.starter
 
-    // 여러 인스턴스 중 한 대만 주기 작업을 실행하게 하는 DB 락. 설정은 shared.config.SchedulingConfig
-    implementation libs.shedlock.spring
-    implementation libs.shedlock.provider.jdbc.template
-
     // 로컬 캐시. 캐시별 유지 시간·상한은 shared.config.CacheConfig
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
