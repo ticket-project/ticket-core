@@ -53,10 +53,6 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차(신규 요청 차단 후 TTL 이상 대기,
   `SCAN`으로 옛 key가 0개인지 확인, 배포, 재개 — 무중단이면 백필 또는 호환 조회)를 함께 설계한다.
 - TTL, expiration listener, scheduler 누락 복구 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을 함께 지킨다.
-- 만료 리스너(좌석 선택, 주문 선점) 때문에 `notify-keyspace-events`(`Ex`)가 필요하다. Core가 기동 때 `CONFIG SET`으로 켜며, 관리형
-  Redis처럼 `CONFIG SET`이 막힌 곳에서는 파라미터 그룹에서 켠다.
-- 좌석 상태 알림은 Redis 채널 `seat:status:relay`로 모든 인스턴스에 나눈다. 전달이 밀리면 relay executor
-  큐(`executor_queued_tasks{name="seatStatusRelayExecutor"}`)가 쌓인다.
 - key·TTL·리스너 변경은 장애 복구와 scheduler 누락 복구 흐름까지 같이 검토한다.
 
 ## DB 마이그레이션 적용
