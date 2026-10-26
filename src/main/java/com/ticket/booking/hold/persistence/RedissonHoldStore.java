@@ -1,6 +1,8 @@
 package com.ticket.booking.hold.persistence;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -26,9 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class RedissonHoldStore implements HoldStore {
     /**
-     * KEYS: 1 회차 점유 인덱스, 2 메타 키, 3.. 좌석 키. ARGV: 1 인덱스 만료 시각(ms), 2 TTL(ms), 3 hold key, 4 메타 키 접두사, 5 회원 ID, 6.. 좌석 키와
-     * 같은 순서의 seatId. 모두 쓰면 1, 이미 잡힌 좌석이 같은 회원의 선점이면 2, 그 밖에 이미 잡힌 좌석이 있으면 0. 메타 키의 값은 선점한 회원 ID다(값을 읽는 곳은 이 스크립트뿐이다).
-     * Redis는 스크립트 중간 오류에서 앞선 쓰기를 되돌리지 않으므로, 실패할 수 있는 확인(인덱스 자료형)은 쓰기 전에 끝낸다.
+     * KEYS: 1 회차 점유 인덱스, 2 메타 키, 3 주문 만료 장부, 4.. 좌석 키. ARGV: 1 인덱스 만료 시각(ms), 2 TTL(ms), 3 hold key, 4 메타 키 접두사, 5 회원
+     * ID, 6 장부 점수(주문 만료 시각 ms), 7.. 좌석 키와 같은 순서의 seatId. 모두 쓰면 1, 이미 잡힌 좌석이 같은 회원의 선점이면 2, 그 밖에 이미 잡힌 좌석이 있으면 0. 메타 키의
+     * 값은 선점한 회원 ID다(값을 읽는 곳은 이 스크립트뿐이다). Redis는 스크립트 중간 오류에서 앞선 쓰기를 되돌리지 않으므로, 실패할 수 있는 확인(인덱스 자료형)은 쓰기 전에 끝낸다.
      */
     private static final String SAVE_IF_ABSENT_SCRIPT = """
             local indexType = redis.call('type', KEYS[1])['ok']
@@ -36,7 +38,7 @@ public class RedissonHoldStore implements HoldStore {
                 return redis.error_reply('WRONGTYPE hold seat index is ' .. indexType)
             end
             local result = 1
-            for i = 3, #KEYS do
+            for i = 4, #KEYS do
                 local holder = redis.call('get', KEYS[i])
                 if holder then
                     if redis.call('get', ARGV[4] .. holder) == ARGV[5] then
@@ -48,15 +50,17 @@ public class RedissonHoldStore implements HoldStore {
             if result == 0 then
                 return 0
             end
-            for i = 3, #KEYS do
+            for i = 4, #KEYS do
                 redis.call('set', KEYS[i], ARGV[3], 'PX', ARGV[2])
                 redis.call('zadd', KEYS[1], ARGV[1], ARGV[i + 3])
             end
             redis.call('set', KEYS[2], ARGV[5], 'PX', ARGV[2])
+            redis.call('zadd', KEYS[3], ARGV[6], ARGV[3])
             return 1
             """;
 
     private final RedissonClient redissonClient;
+    private final Clock clock;
 
     /**
      * 좌석 키·회차별 점유 인덱스·메타 키를 Lua 스크립트 한 번으로 쓴다. 좌석 하나라도 이미 잡혀 있으면 아무것도 쓰지 않고, 그 선점이 같은 회원 것인지 함께 알려 준다.
@@ -68,6 +72,9 @@ public class RedissonHoldStore implements HoldStore {
      * 쓰는 모양(만료 시각을 점수로 한 ZSET, 값은 seatId 문자열)이라 {@link #getHoldingSeatIds}·{@link #release}·Redisson 만료 정리가 그대로 읽는다.
      * 인덱스 객체를 만드는 것도 그대로 둬 Redisson 만료 정리 예약이 이전과 같다.
      *
+     * <p>같은 스크립트에서 주문 만료 장부({@link HoldRedisKey#holdExpiryLedger()})에 "이 시각에 이 주문을 만료"를 등록한다. 따로 등록하면 "선점은 됐는데 장부에는 없음"
+     * 틈이 생긴다. 만료 처리는 {@link HoldExpirationWorker}가 한다.
+     *
      * <p>ponytail: 메타 키({@code hold:key:...})에는 회차 hash tag가 없어 Redis Cluster에서는 좌석 키와 다른 slot이라 한 스크립트에 넣을 수 없다. 스크립트는
      * KEYS에 선언하지 않은 다른 hold의 메타 키({@code ARGV[4] .. holder})도 읽는다. 지금은 Redis 한 대다. Cluster로 가면 메타 키에 회차 hash tag를 붙이고
      * 만료 처리기의 key 해석을 함께 바꾸며, 미선언 키 접근도 없애야 한다.
@@ -75,14 +82,15 @@ public class RedissonHoldStore implements HoldStore {
     @Override
     public SaveResult saveIfAbsent(final Hold hold, final Duration ttl) {
         final RSetCache<Long> holdSeatIndex = holdSeatIndex(hold.performanceId());
-        final List<Object> keys =
-                new ArrayList<>(List.of(holdSeatIndex.getName(), HoldRedisKey.holdMeta(hold.holdKey())));
+        final List<Object> keys = new ArrayList<>(List.of(
+                holdSeatIndex.getName(), HoldRedisKey.holdMeta(hold.holdKey()), HoldRedisKey.holdExpiryLedger()));
         final List<Object> args = new ArrayList<>(List.of(
                 System.currentTimeMillis() + ttl.toMillis(),
                 ttl.toMillis(),
                 hold.holdKey(),
                 HoldRedisKey.holdMeta(""),
-                hold.memberId().toString()));
+                hold.memberId().toString(),
+                expiresAtMillis(hold)));
         for (final Long seatId : hold.seatIds()) {
             keys.add(HoldRedisKey.hold(hold.performanceId(), seatId));
             args.add(seatId.toString());
@@ -118,6 +126,10 @@ public class RedissonHoldStore implements HoldStore {
         redissonClient
                 .getBucket(HoldRedisKey.holdMeta(holdKey), StringCodec.INSTANCE)
                 .delete();
+        // 끝난 주문의 만료 작업은 필요 없다. 남아 있어도 만료 처리는 PENDING 주문만 바꾸므로 결과는 같다.
+        redissonClient
+                .getScoredSortedSet(HoldRedisKey.holdExpiryLedger(), StringCodec.INSTANCE)
+                .remove(holdKey);
     }
 
     @Override
@@ -133,6 +145,16 @@ public class RedissonHoldStore implements HoldStore {
     @Override
     public boolean isHeldBy(final Long performanceId, final Long seatId, final String holdKey) {
         return Objects.equals(seatBucket(performanceId, seatId).get(), holdKey);
+    }
+
+    /**
+     * 장부 점수는 주문 {@code expiresAt}(앱 서버 시계) 이상이어야 한다. {@code Order.expire}가 만료 시각 전에는 거부하므로, Worker가 앱 서버 시각으로 비교해 꺼내도
+     * 실패하지 않게 밀리초 아래를 올린다.
+     */
+    private long expiresAtMillis(final Hold hold) {
+        final Instant expiresAt = hold.expiresAt().atZone(clock.getZone()).toInstant();
+        final long millis = expiresAt.toEpochMilli();
+        return expiresAt.getNano() % 1_000_000 == 0 ? millis : millis + 1;
     }
 
     private RBucket<String> seatBucket(final Long performanceId, final Long seatId) {
