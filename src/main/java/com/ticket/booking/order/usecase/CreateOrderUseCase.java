@@ -69,6 +69,7 @@ public class CreateOrderUseCase {
     private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
     private final OrderRepository orderRepository;
+    private final ExpireOrderUseCase expireOrderUseCase;
     private final Clock clock;
 
     /** seatIds의 null·빈 목록·중복은 도메인 불변식이라 {@link RequestedSeatIds}가 판정한다. 여기서 다시 검사하지 않는다. */
@@ -91,8 +92,7 @@ public class CreateOrderUseCase {
 
         // 1. 예매를 시작해도 되는가. 판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태를 확인하고 주문에 남길 표시값을 읽는다.
         //    connection을 한 번만 빌리는 읽기 트랜잭션이다.
-        final Preflight preflight = bookingPreflightReader.read(
-                input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
+        final Preflight preflight = readPreflight(input, requestedSeatIds, now);
 
         // 2. 본인이 선택 중인 좌석만 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
         //    connection 경합이 좌석 경합으로 번진다.
@@ -130,6 +130,27 @@ public class CreateOrderUseCase {
                 OrderState.PENDING,
                 hold.expiresAt(),
                 OrderRemainingTime.seconds(OrderState.PENDING, hold.expiresAt(), LocalDateTime.now(clock)));
+    }
+
+    /**
+     * 같은 회원·회차의 PENDING 주문 때문에 막혔는데(E5004) 그 주문이 만료 시각을 지났으면, 그 자리에서 {@code EXPIRED}로 바꾸고 한 번 더 확인한다. 청소가 DB를 바꾸기 전 몇 초
+     * 동안 원래 주인만 막히지 않게 한다. 막혔을 때만 동작하므로 평소 경로에는 비용이 없다.
+     *
+     * <p>유일 인덱스 위반(아래 3단계)은 확인을 통과한 뒤 같은 회원의 다른 요청이 먼저 주문을 만든 경우라 여기서 다루지 않는다 — 만료된 PENDING이 있었다면 이 확인에서 먼저 걸린다.
+     */
+    private Preflight readPreflight(
+            final Input input, final RequestedSeatIds requestedSeatIds, final LocalDateTime now) {
+        try {
+            return bookingPreflightReader.read(
+                    input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
+        } catch (final BookingException exception) {
+            if (exception.getErrorCode() != BookingErrorCode.E5004
+                    || !expireOrderUseCase.expireIfStale(input.memberId(), input.performanceId(), now)) {
+                throw exception;
+            }
+            return bookingPreflightReader.read(
+                    input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
+        }
     }
 
     /**

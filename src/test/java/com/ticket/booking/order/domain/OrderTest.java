@@ -93,6 +93,20 @@ class OrderTest {
         assertThat(order.getExpiredAt()).isEqualTo(expiresAt);
     }
 
+    /** 주문을 쓰는 곳은 상태가 아니라 이 값을 본다. 만료 시각이 지난 PENDING은 DB 상태와 무관하게 EXPIRED다. */
+    @Test
+    void 만료_시각이_지난_pending은_EXPIRED로_보고_종료된_주문은_그대로_본다() {
+        LocalDateTime expiresAt = LocalDateTime.of(2026, 3, 15, 12, 30);
+        Order pending = createOrder(expiresAt);
+        Order canceled = createOrder(expiresAt);
+        canceled.cancel(expiresAt.minusMinutes(1));
+
+        assertThat(pending.effectiveStatus(expiresAt.minusNanos(1))).isEqualTo(OrderState.PENDING);
+        assertThat(pending.effectiveStatus(expiresAt)).isEqualTo(OrderState.EXPIRED);
+        assertThat(pending.getStatus()).isEqualTo(OrderState.PENDING);
+        assertThat(canceled.effectiveStatus(expiresAt.plusMinutes(1))).isEqualTo(OrderState.CANCELED);
+    }
+
     /** 총액은 좌석 단가의 합으로만 정의된다 — 바깥에서 계산한 값을 받지 않으므로 어긋날 경로가 없다. */
     @Test
     void 총액은_추가한_좌석_단가의_합이다() {

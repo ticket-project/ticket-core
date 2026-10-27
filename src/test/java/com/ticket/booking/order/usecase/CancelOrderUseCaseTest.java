@@ -88,6 +88,28 @@ class CancelOrderUseCaseTest {
         verifyNoInteractions(orderTerminationService);
     }
 
+    /** 만료 시각이 지난 PENDING은 청소 전이어도 이미 끝난 주문이다. 취소로 바꾸지 않고 청소가 EXPIRED로 바꾼다. */
+    @Test
+    void 만료_시각이_지난_결제_대기_주문은_취소를_거절한다() {
+        final Order order = new Order(
+                1L,
+                100L,
+                "order-key",
+                "hold-key",
+                LocalDateTime.now(fixedClock),
+                "show-title",
+                LocalDateTime.now(fixedClock).plusDays(1),
+                "venue-name");
+        when(orderRepository.findByOrderKeyAndMemberIdForUpdate("order-key", 1L))
+                .thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> service.execute(new CancelOrderUseCase.Input("order-key", 1L)))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E5002);
+
+        verifyNoInteractions(orderTerminationService);
+    }
+
     private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
         final Order order = new Order(
                 1L,
