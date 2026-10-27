@@ -1,26 +1,22 @@
 package com.ticket.booking.order.domain;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 
-import org.jspecify.annotations.Nullable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 /**
  * 주문 aggregate의 저장과 복원을 담당하는 도메인 Repository다.
  *
- * <p>구현은 Spring Data JPA가 만든다. 비관적 락과 JPQL은 메서드의 {@code @Lock}/{@code @Query}에, 상태 고정 인자와 페이징 같은 작은 변환은 {@code default}
- * 메서드에 둔다.
+ * <p>구현은 Spring Data JPA가 만든다. 비관적 락과 JPQL은 메서드의 {@code @Lock}/{@code @Query}에, 상태 고정 인자 같은 작은 변환은 {@code default} 메서드에
+ * 둔다.
  */
 public interface OrderRepository extends Repository<Order, Long> {
     <S extends Order> S save(S order);
@@ -77,37 +73,38 @@ public interface OrderRepository extends Repository<Order, Long> {
     Optional<Order> findByHoldKeyAndStatusForUpdate(
             @Param("holdKey") String holdKey, @Param("status") OrderState status);
 
-    default Optional<Order> findPendingByIdForUpdate(final Long orderId) {
-        return findByIdAndStatusForUpdate(orderId, OrderState.PENDING);
+    /**
+     * 만료 시각이 지난 PENDING 주문 중 {@code afterOrderId}보다 id가 큰 첫 주문을 잠근다. 다른 트랜잭션이 잠근 행은 기다리지 않고 건너뛴다({@code FOR UPDATE SKIP
+     * LOCKED}) — 모든 인스턴스가 함께 청소해도 같은 주문을 두 번 처리하지 않고 서로 기다리지도 않는다.
+     *
+     * <p>{@code afterOrderId}는 같은 순회 안의 진행 보장이다. 계속 실패하는 주문은 롤백으로 잠금이 풀려 다시 첫 주문이 되므로, 커서로 지나가야 뒤의 주문이 처리된다.
+     */
+    default Optional<Order> findNextExpirableForUpdateSkipLocked(final LocalDateTime now, final long afterOrderId) {
+        return findFirstByStatusAndExpiresAtLessThanEqualAndIdGreaterThanOrderByIdAsc(
+                OrderState.PENDING, now, afterOrderId);
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
+    Optional<Order> findFirstByStatusAndExpiresAtLessThanEqualAndIdGreaterThanOrderByIdAsc(
+            OrderState status, LocalDateTime expiresAt, Long afterOrderId);
+
+    /** 같은 회원·회차의 PENDING 주문을 잠근다. 회원·회차당 PENDING은 하나다(uk_orders_pending_member_performance). */
+    default Optional<Order> findPendingByMemberIdAndPerformanceIdForUpdate(
+            final Long memberId, final Long performanceId) {
+        return findByMemberIdAndPerformanceIdAndStatusForUpdate(memberId, performanceId, OrderState.PENDING);
     }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select o
             from Order o
-            where o.id = :orderId
+            where o.memberId = :memberId
+              and o.performanceId = :performanceId
               and o.status = :status
             """)
-    Optional<Order> findByIdAndStatusForUpdate(@Param("orderId") Long orderId, @Param("status") OrderState status);
-
-    /**
-     * 만료 시각이 지난 PENDING 주문을 id 오름차순으로 최대 {@code limit}건 조회한다. {@code afterOrderId}보다 큰 id만 돌려주는 커서 조회다.
-     *
-     * <p>커서를 두는 이유는 진행 보장이다 — 앞쪽 주문이 계속 실패해도 다음 페이지로 넘어가야 뒤의 정상 대상이 처리된다. id는 불변이고 유일하므로 안정적인 커서가 된다. 첫 페이지는
-     * {@code afterOrderId}에 {@code null}을 넘긴다.
-     *
-     * <p>반환 건수가 {@code limit}보다 적으면 더 처리할 대상이 없다는 뜻이다.
-     */
-    default List<Order> findExpirable(
-            final LocalDateTime expiresAt, final @Nullable Long afterOrderId, final int limit) {
-        return findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(
-                        OrderState.PENDING,
-                        expiresAt,
-                        afterOrderId == null ? Long.MIN_VALUE : afterOrderId,
-                        PageRequest.of(0, limit, Sort.by(Sort.Direction.ASC, "id")))
-                .getContent();
-    }
-
-    Slice<Order> findAllByStatusAndExpiresAtLessThanEqualAndIdGreaterThan(
-            OrderState status, LocalDateTime expiresAt, Long afterOrderId, Pageable pageable);
+    Optional<Order> findByMemberIdAndPerformanceIdAndStatusForUpdate(
+            @Param("memberId") Long memberId,
+            @Param("performanceId") Long performanceId,
+            @Param("status") OrderState status);
 }

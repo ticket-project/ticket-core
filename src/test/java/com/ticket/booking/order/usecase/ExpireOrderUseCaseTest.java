@@ -1,11 +1,14 @@
 package com.ticket.booking.order.usecase;
 
-import static org.mockito.Mockito.times;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,10 +19,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
+import com.ticket.booking.order.usecase.ExpireOrderUseCase.OrderExpirationFailedException;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class ExpireOrderUseCaseTest {
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 3, 15, 10, 0);
+
     @Mock
     private OrderRepository orderRepository;
 
@@ -30,60 +36,68 @@ class ExpireOrderUseCaseTest {
     private ExpireOrderUseCase useCase;
 
     @Test
-    void orderId로_조회한_주문이_없으면_noop이다() {
-        when(orderRepository.findPendingByIdForUpdate(10L)).thenReturn(java.util.Optional.empty());
+    void 잠글_만료_주문이_없으면_빈_값이다() {
+        when(orderRepository.findNextExpirableForUpdateSkipLocked(NOW, 0L)).thenReturn(Optional.empty());
 
-        useCase.expireByOrderId(10L, LocalDateTime.of(2026, 3, 15, 10, 0));
-
-        verify(orderRepository).findPendingByIdForUpdate(10L);
+        assertThat(useCase.expireNext(NOW, 0L)).isEmpty();
         verifyNoInteractions(orderTerminationService);
     }
 
     @Test
-    void orderId로_조회한_주문이_있으면_만료를_처리한다() {
-        final Order order = createOrder(10L, 100L, "hold-key");
-        final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findPendingByIdForUpdate(10L)).thenReturn(java.util.Optional.of(order));
+    void 잠근_만료_주문을_만료하고_id를_돌려준다() {
+        final Order order = order(10L, NOW.minusSeconds(1));
+        when(orderRepository.findNextExpirableForUpdateSkipLocked(NOW, 3L)).thenReturn(Optional.of(order));
 
-        useCase.expireByOrderId(10L, now);
+        assertThat(useCase.expireNext(NOW, 3L)).contains(10L);
+        verify(orderTerminationService).expire(order, NOW);
+    }
 
-        verify(orderTerminationService).expire(order, now);
+    /** 실패한 주문의 id가 있어야 청소가 그 주문을 지나 뒤로 넘어간다. */
+    @Test
+    void 만료가_실패하면_주문_id를_실은_예외를_던진다() {
+        final Order order = order(10L, NOW.minusSeconds(1));
+        when(orderRepository.findNextExpirableForUpdateSkipLocked(NOW, 0L)).thenReturn(Optional.of(order));
+        doThrow(new IllegalStateException("boom")).when(orderTerminationService).expire(order, NOW);
+
+        assertThatThrownBy(() -> useCase.expireNext(NOW, 0L))
+                .isInstanceOfSatisfying(
+                        OrderExpirationFailedException.class,
+                        e -> assertThat(e.orderId()).isEqualTo(10L))
+                .hasCauseInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void holdKey로_조회한_주문이_있으면_만료를_처리한다() {
-        final Order order = createOrder(10L, 100L, "hold-key");
-        final LocalDateTime now = LocalDateTime.of(2026, 3, 15, 10, 0);
-        when(orderRepository.findPendingByHoldKeyForUpdate("hold-key")).thenReturn(java.util.Optional.of(order));
+    void 만료_시각이_지난_PENDING이면_그_자리에서_만료한다() {
+        final Order order = order(10L, NOW);
+        when(orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(1L, 100L))
+                .thenReturn(Optional.of(order));
 
-        useCase.expireByHoldKey("hold-key", now);
-
-        verify(orderTerminationService).expire(order, now);
+        assertThat(useCase.expireIfStale(1L, 100L, NOW)).isTrue();
+        verify(orderTerminationService).expire(order, NOW);
     }
 
     @Test
-    void duplicate_hold_expiration_publishes_only_once() {
-        final Order order = createOrder(10L, 100L, "hold-key");
-        when(orderRepository.findPendingByHoldKeyForUpdate("hold-key"))
-                .thenReturn(java.util.Optional.of(order), java.util.Optional.empty());
+    void 아직_유효한_PENDING은_만료하지_않는다() {
+        final Order order = order(10L, NOW.plusSeconds(1));
+        when(orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(1L, 100L))
+                .thenReturn(Optional.of(order));
 
-        useCase.expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
-        useCase.expireByHoldKey("hold-key", LocalDateTime.of(2026, 3, 15, 10, 0));
-
-        verify(orderRepository, times(2)).findPendingByHoldKeyForUpdate("hold-key");
-        verify(orderTerminationService).expire(order, LocalDateTime.of(2026, 3, 15, 10, 0));
+        assertThat(useCase.expireIfStale(1L, 100L, NOW)).isFalse();
+        verifyNoInteractions(orderTerminationService);
     }
 
-    private Order createOrder(final Long id, final Long performanceId, final String holdKey) {
+    @Test
+    void PENDING이_없으면_만료하지_않는다() {
+        when(orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(1L, 100L))
+                .thenReturn(Optional.empty());
+
+        assertThat(useCase.expireIfStale(1L, 100L, NOW)).isFalse();
+        verifyNoInteractions(orderTerminationService);
+    }
+
+    private Order order(final Long id, final LocalDateTime expiresAt) {
         final Order order = new Order(
-                1L,
-                performanceId,
-                "order-key",
-                holdKey,
-                LocalDateTime.now().plusMinutes(5),
-                "show-title",
-                LocalDateTime.now().plusDays(1),
-                "venue-name");
+                1L, 100L, "order-key", "hold-key", expiresAt, "show-title", expiresAt.plusDays(1), "venue-name");
         ReflectionTestUtils.setField(order, "id", id);
         return order;
     }
