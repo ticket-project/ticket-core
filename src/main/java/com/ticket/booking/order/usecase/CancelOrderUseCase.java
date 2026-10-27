@@ -39,9 +39,11 @@ public class CancelOrderUseCase {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberIdForUpdate(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new BookingException(BookingErrorCode.E5003));
-        if (order.getStatus() != OrderState.PENDING) {
+        // 만료 시각이 지난 PENDING은 이미 끝난 주문이다. 취소로 바꾸지 않고 청소가 EXPIRED로 바꾼다.
+        final LocalDateTime now = LocalDateTime.now(clock);
+        if (order.effectiveStatus(now) != OrderState.PENDING) {
             throw new BookingException(BookingErrorCode.E5002);
         }
-        orderTerminationService.cancel(order, LocalDateTime.now(clock));
+        orderTerminationService.cancel(order, now);
     }
 }

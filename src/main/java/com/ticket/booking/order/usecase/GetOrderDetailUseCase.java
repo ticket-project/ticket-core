@@ -49,11 +49,13 @@ public class GetOrderDetailUseCase {
         final List<TicketSeatResponse> seats =
                 order.getOrderSeats().stream().map(this::toTicketSeatResponse).toList();
         final BigDecimal ticketAmount = order.getTotalAmount();
-        final long remainingSeconds = OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), now);
+        // 만료 시각이 지난 PENDING은 청소가 DB를 바꾸기 전이어도 EXPIRED로 보인다(주문 유효성은 만료 시각이 정한다).
+        final OrderState status = order.effectiveStatus(now);
+        final long remainingSeconds = OrderRemainingTime.seconds(status, order.getExpiresAt(), now);
 
         return new Output(
                 order.getOrderKey(),
-                order.getStatus(),
+                status,
                 order.getExpiresAt(),
                 remainingSeconds,
                 new ShowResponse(order.getShowTitleSnapshot()),

@@ -40,9 +40,11 @@ public class GetOrderStatusUseCase {
         final Order order = orderRepository
                 .findByOrderKeyAndMemberId(input.orderKey(), input.memberId())
                 .orElseThrow(() -> new BookingException(BookingErrorCode.E5003));
-        final long remainingSeconds =
-                OrderRemainingTime.seconds(order.getStatus(), order.getExpiresAt(), LocalDateTime.now(clock));
+        // 만료 시각이 지난 PENDING은 청소가 DB를 바꾸기 전이어도 EXPIRED로 보인다(주문 유효성은 만료 시각이 정한다).
+        final LocalDateTime now = LocalDateTime.now(clock);
+        final OrderState status = order.effectiveStatus(now);
+        final long remainingSeconds = OrderRemainingTime.seconds(status, order.getExpiresAt(), now);
 
-        return new Output(order.getOrderKey(), order.getStatus(), order.getExpiresAt(), remainingSeconds);
+        return new Output(order.getOrderKey(), status, order.getExpiresAt(), remainingSeconds);
     }
 }

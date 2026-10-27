@@ -109,6 +109,9 @@ class CreateOrderUseCaseTest {
     @Mock
     private PendingOrderCreator pendingOrderCreator;
 
+    @Mock
+    private ExpireOrderUseCase expireOrderUseCase;
+
     private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private CreateOrderUseCase createOrderUseCase;
@@ -132,6 +135,7 @@ class CreateOrderUseCaseTest {
                         seatSelectionService,
                         pendingOrderCreator,
                         orderRepository,
+                        expireOrderUseCase,
                         fixedClock);
     }
 
@@ -305,7 +309,33 @@ class CreateOrderUseCaseTest {
 
         assertError(seatIds, BookingErrorCode.E5004);
 
+        verify(expireOrderUseCase).expireIfStale(MEMBER_ID, PERFORMANCE_ID, FIXED_NOW);
         verifyNoInteractions(holdRegistry, pendingOrderCreator);
+    }
+
+    /** 청소가 DB를 바꾸기 전 몇 초 동안 원래 주인만 막히지 않도록, 막은 주문이 만료 시각을 지났으면 그 자리에서 만료하고 다시 확인한다. */
+    @Test
+    void 막은_pending_주문이_만료_시각을_지났으면_그_자리에서_만료하고_주문을_만든다() {
+        final CreateOrderUseCase.Input input = input(List.of(7L));
+        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
+        final List<PerformanceSeat> seats = availableSeats(1);
+        final Hold hold = hold(seatIds.toList());
+        final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
+        when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
+                .thenReturn(true, false);
+        when(expireOrderUseCase.expireIfStale(MEMBER_ID, PERFORMANCE_ID, FIXED_NOW))
+                .thenReturn(true);
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
+                .thenReturn(seats);
+        when(performanceSaleInfoApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
+                .thenReturn(saleSnapshot);
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+                .thenReturn(hold);
+        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
+                .thenReturn("order-key");
+
+        assertThat(createOrderUseCase.execute(input).orderKey()).isEqualTo("order-key");
     }
 
     @Test

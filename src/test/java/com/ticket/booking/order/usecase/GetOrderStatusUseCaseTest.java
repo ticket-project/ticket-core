@@ -47,6 +47,27 @@ class GetOrderStatusUseCaseTest {
         assertThat(output.remainingSeconds()).isEqualTo(600L);
     }
 
+    /** 주문 유효성은 만료 시각이 정한다. 청소가 DB를 바꾸기 전이어도 만료 시각이 지난 PENDING은 EXPIRED로 보인다. */
+    @Test
+    void 만료_시각이_지난_결제대기_주문은_EXPIRED로_보인다() {
+        final Order expired = new Order(
+                1L,
+                10L,
+                "order-key",
+                "hold-key",
+                LocalDateTime.of(2026, 3, 15, 19, 0),
+                "뮤지컬",
+                LocalDateTime.of(2026, 3, 20, 19, 30),
+                "올림픽홀");
+        when(repository.findByOrderKeyAndMemberId("order-key", 1L)).thenReturn(Optional.of(expired));
+
+        GetOrderStatusUseCase.Output output = useCase.execute(new GetOrderStatusUseCase.Input("order-key", 1L));
+
+        assertThat(output.status()).isEqualTo(OrderState.EXPIRED);
+        assertThat(output.remainingSeconds()).isZero();
+        assertThat(expired.getStatus()).isEqualTo(OrderState.PENDING);
+    }
+
     @Test
     void 본인_주문이_없으면_권한예외를_던진다() {
         when(repository.findByOrderKeyAndMemberId("missing", 1L)).thenReturn(Optional.empty());
