@@ -1,9 +1,5 @@
 package com.ticket.booking.hold.persistence;
 
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * hold 관련 Redis key 규칙을 한 곳에서 관리한다.
  *
@@ -14,7 +10,6 @@ public final class HoldRedisKey {
     private static final String HOLD_KEY = "seat:hold:{perf:%d}:%d";
     private static final String HOLD_SEAT_INDEX_KEY = "seat:hold:index:{perf:%d}";
     private static final String HOLD_META_KEY = "hold:key:%s";
-    private static final Pattern HOLD_META_KEY_PATTERN = Pattern.compile("^hold:key:(.+)$");
 
     private HoldRedisKey() {}
 
@@ -28,11 +23,5 @@ public final class HoldRedisKey {
 
     public static String holdSeatIndex(final Long perfId) {
         return String.format(HOLD_SEAT_INDEX_KEY, perfId);
-    }
-
-    /** hold meta key면 그 안의 holdKey를 돌려준다. */
-    public static Optional<String> tryParseHoldMetaKey(final String key) {
-        final Matcher matcher = HOLD_META_KEY_PATTERN.matcher(key);
-        return matcher.matches() ? Optional.of(matcher.group(1)) : Optional.empty();
     }
 }

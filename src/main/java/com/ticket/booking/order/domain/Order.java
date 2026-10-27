@@ -149,7 +149,7 @@ public class Order extends AuditedEntity {
      */
     public void expire(final LocalDateTime now) {
         validatePending("expire");
-        if (now.isBefore(expiresAt)) {
+        if (!isExpiredAt(now)) {
             throw new IllegalStateException("만료 시각 전에는 만료할 수 없습니다. expiresAt=" + expiresAt + ", now=" + now);
         }
         this.status = OrderState.EXPIRED;
@@ -164,6 +164,19 @@ public class Order extends AuditedEntity {
 
     public boolean isPending() {
         return status == OrderState.PENDING;
+    }
+
+    /**
+     * 만료 시각이 지났는가. 주문이 살아 있는지는 상태가 아니라 이 시각으로 정한다 — 상태를 {@code EXPIRED}로 바꾸는 청소는 몇 초 늦게 돌고, 그 사이 hold 키는 이미 TTL로 풀려 다른
+     * 회원이 같은 좌석을 주문할 수 있다.
+     */
+    public boolean isExpiredAt(final LocalDateTime now) {
+        return !now.isBefore(expiresAt);
+    }
+
+    /** 결제·취소·조회가 다뤄야 할 상태. PENDING이어도 만료 시각이 지났으면 {@code EXPIRED}로 본다. DB 상태는 바꾸지 않는다. */
+    public OrderState effectiveStatus(final LocalDateTime now) {
+        return isPending() && isExpiredAt(now) ? OrderState.EXPIRED : status;
     }
 
     private void validatePending(final String action) {

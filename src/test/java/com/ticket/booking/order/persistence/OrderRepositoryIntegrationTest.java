@@ -32,7 +32,6 @@ import com.ticket.testsupport.persistence.JpaSliceTestSupport;
 class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     private static final long MEMBER_ID = 100L;
     private static final long PERFORMANCE_ID = 200L;
-    private static final int BATCH_SIZE = 100;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -132,47 +131,81 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     }
 
     @Test
-    void expiration_query_includes_orders_due_exactly_now() {
+    void 만료_조회는_만료_시각이_딱_지금인_PENDING도_포함하고_id_순서로_하나만_잠근다() {
         LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-
-        Order past = order("past", now.minusSeconds(1), MEMBER_ID + 11);
-        Order boundary = order("boundary", now, MEMBER_ID + 12);
         Order future = order("future", now.plusSeconds(1), MEMBER_ID + 13);
         Order alreadyConfirmed = order("confirmed", now.minusMinutes(1));
         alreadyConfirmed.confirm(now.minusSeconds(1));
+        Order boundary = order("boundary", now, MEMBER_ID + 12);
+        Order past = order("past", now.minusSeconds(1), MEMBER_ID + 11);
+        inTransaction(() -> saveAll(List.of(future, alreadyConfirmed, boundary, past)));
 
-        inTransaction(() -> saveAll(List.of(past, boundary, future, alreadyConfirmed)));
+        String first = inTransactionWithResult(() -> orderRepository
+                .findNextExpirableForUpdateSkipLocked(now, 0L)
+                .orElseThrow()
+                .getOrderKey());
+        String afterBoundary = inTransactionWithResult(() -> orderRepository
+                .findNextExpirableForUpdateSkipLocked(now, boundary.getId())
+                .orElseThrow()
+                .getOrderKey());
 
-        List<Order> result = orderRepository.findExpirable(now, null, BATCH_SIZE);
+        assertThat(first).isEqualTo("order-boundary");
+        assertThat(afterBoundary).isEqualTo("order-past");
+        assertThat(inTransactionWithResult(
+                        () -> orderRepository.findNextExpirableForUpdateSkipLocked(now, past.getId())))
+                .isEmpty();
+    }
 
-        assertThat(result).extracting(Order::getOrderKey).containsExactly("order-past", "order-boundary");
+    /** 다른 인스턴스가 잠근 주문은 기다리지 않고 건너뛴다. 그래야 모든 인스턴스가 함께 청소해도 서로 막지 않는다. */
+    @Test
+    void 만료_조회는_다른_트랜잭션이_잠근_주문을_기다리지_않고_건너뛴다() throws Exception {
+        LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
+        Order first = order("skip-first", now.minusMinutes(2), MEMBER_ID + 41);
+        Order second = order("skip-second", now.minusMinutes(1), MEMBER_ID + 42);
+        inTransaction(() -> saveAll(List.of(first, second)));
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        CountDownLatch firstLocked = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+
+        Future<String> holder = executor.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
+            String key = orderRepository
+                    .findNextExpirableForUpdateSkipLocked(now, 0L)
+                    .orElseThrow()
+                    .getOrderKey();
+            firstLocked.countDown();
+            await(releaseFirst);
+            return key;
+        }));
+
+        try {
+            assertThat(firstLocked.await(3, TimeUnit.SECONDS)).isTrue();
+
+            String skipped = inTransactionWithResult(() -> orderRepository
+                    .findNextExpirableForUpdateSkipLocked(now, 0L)
+                    .orElseThrow()
+                    .getOrderKey());
+
+            assertThat(skipped).isEqualTo("order-skip-second");
+            releaseFirst.countDown();
+            assertThat(holder.get(3, TimeUnit.SECONDS)).isEqualTo("order-skip-first");
+        } finally {
+            releaseFirst.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test
-    void expiration_query_respects_the_requested_limit() {
-        LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-        inTransaction(() -> saveAll(List.of(
-                order("first", now.minusMinutes(3), MEMBER_ID + 21),
-                order("second", now.minusMinutes(2), MEMBER_ID + 22),
-                order("third", now.minusMinutes(1), MEMBER_ID + 23))));
+    void 회원과_회차의_PENDING_주문을_잠가_조회한다() {
+        Order pending = order("member-pending", LocalDateTime.now().minusMinutes(1));
+        inTransaction(() -> orderRepository.save(pending));
 
-        List<Order> result = orderRepository.findExpirable(now, null, 2);
-
-        assertThat(result).extracting(Order::getOrderKey).containsExactly("order-first", "order-second");
-    }
-
-    /** 커서 뒤의 대상만 돌려줘야 만료 배치가 실패 항목을 넘어 앞으로 나아갈 수 있다. */
-    @Test
-    void expiration_query_returns_only_orders_after_the_cursor() {
-        LocalDateTime now = LocalDateTime.of(2026, 7, 28, 12, 0);
-        Order first = order("cursor-first", now.minusMinutes(3), MEMBER_ID + 31);
-        Order second = order("cursor-second", now.minusMinutes(2), MEMBER_ID + 32);
-        Order third = order("cursor-third", now.minusMinutes(1), MEMBER_ID + 33);
-        inTransaction(() -> saveAll(List.of(first, second, third)));
-
-        List<Order> result = orderRepository.findExpirable(now, first.getId(), BATCH_SIZE);
-
-        assertThat(result).extracting(Order::getOrderKey).containsExactly("order-cursor-second", "order-cursor-third");
+        assertThat(inTransactionWithResult(() -> orderRepository
+                        .findPendingByMemberIdAndPerformanceIdForUpdate(MEMBER_ID, PERFORMANCE_ID)
+                        .map(Order::getOrderKey)))
+                .contains("order-member-pending");
+        assertThat(inTransactionWithResult(() ->
+                        orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(MEMBER_ID + 1, PERFORMANCE_ID)))
+                .isEmpty();
     }
 
     @Test

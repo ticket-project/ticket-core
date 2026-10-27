@@ -139,9 +139,11 @@ security:
 # false면 같은 실행 모듈이 API만 제공한다.
 worker:
   enabled: ${WORKER_ENABLED:true}
-  # 누락 복구 주기는 실행 환경 설정이다. 업무 규칙(만료 시각, hold 유효시간)은 도메인이 소유한다.
+  # 주문 만료 청소 주기(ms). 주문 만료의 유일한 경로라 짧게 둔다. 주문이 살아 있는지는 만료 시각으로 판단하므로
+  # 이 값은 정확성과 무관하고 EXPIRED 반영·RELEASED 알림이 얼마나 늦어도 되는지만 정한다. 업무 규칙(만료 시각, hold
+  # 유효시간)은 도메인이 소유한다.
   order-expiration:
-    fixed-delay: 300000
+    fixed-delay: 5000
 
 app:
   cors:
