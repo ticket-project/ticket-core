@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,25 +91,21 @@ class SeatSelectionWriterTest {
     }
 
     @Test
-    void 만료_알림은_비어_있을_때만_발행하도록_넘긴다() {
-        givenPerformanceSeat();
-
-        writer.notifyReleasedIfFree(10L, 20L);
+    void 만료_알림은_받은_performanceSeatId로_비어_있을_때만_발행하도록_넘긴다() {
+        writer.notifyReleasedIfFree(10L, 20L, 501L);
 
         verify(seatSelectionService).notifyIfFree(10L, 20L, deselected(501L));
+        verify(performanceSeatRepository, never()).findAllByPerformanceIdAndSeatIdIn(anyLong(), anyList());
     }
 
     @Test
     void 회차_판매_좌석을_찾지_못해도_알린다() {
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L)))
-                .thenReturn(List.of());
-
-        writer.notifyReleasedIfFree(10L, 20L);
+        writer.notifyReleasedIfFree(10L, 20L, null);
 
         verify(seatSelectionService).notifyIfFree(10L, 20L, deselected(null));
     }
 
-    private SeatStatusEvent deselected(final Long performanceSeatId) {
+    private SeatStatusEvent deselected(final @Nullable Long performanceSeatId) {
         return new SeatStatusEvent(10L, performanceSeatId, 20L, SeatStatusAction.DESELECTED, NOW);
     }
 

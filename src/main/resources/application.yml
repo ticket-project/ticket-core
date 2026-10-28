@@ -144,6 +144,9 @@ worker:
   # 유효시간)은 도메인이 소유한다.
   order-expiration:
     fixed-delay: 5000
+  # 좌석 선택 만료 알림 주기(ms). 선택 만료 장부를 이 주기로 꺼내 DESELECTED를 보낸다. 선택권 자체는 선택 키 TTL이 푼다.
+  seat-selection-expiration:
+    fixed-delay: 1000
 
 app:
   cors:

@@ -1,6 +1,7 @@
 package com.ticket.booking.selection.persistence;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,8 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
     /**
      * 좌석 키와 두 인덱스(KEYS[2] 회차 전체, KEYS[3] 회원별)를 함께 기록하고 SELECTED를 발행한다(ARGV[6] 채널, ARGV[7] 메시지). 인덱스 score는 만료 시각이라, 좌석
      * 키가 TTL로 사라지면 활성 조회에서도 score 필터로 같은 시각에 빠진다. 회원별 인덱스만 만료분을 ARGV[5]ms 더 남기므로 한도는 zcard가 아니라 활성 구간 zcount로 센다.
-     * ARGV[4]가 빈 문자열이면 회원 한도가 없다. 반환값은 1 선택, 0 이미 선택된 좌석, 2 회원 한도 초과, 3 선점된 좌석(KEYS[4])이다.
+     * ARGV[4]가 빈 문자열이면 회원 한도가 없다. 반환값은 1 선택, 0 이미 선택된 좌석, 2 회원 한도 초과, 3 선점된 좌석(KEYS[4])이다. 선택하면 만료 장부 (KEYS[5])에
+     * ARGV[8]을 만료 시각 점수로 넣는다 — 만료 알림은 Redis 만료 알림이 아니라 이 장부를 Worker가 꺼내 보낸다(스케일 아웃 결정 D2-2).
      *
      * <p>선점 확인이 스크립트 안에 있어 좌석 락이 필요 없다 — 선택과 선점이 같은 좌석에 함께 생길 수 없다. 선점 키는 같은 {@code {perf:N}} hash tag다.
      */
@@ -57,8 +59,20 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                 end
                 redis.call('pexpireat', KEYS[i], latest[2] + retention)
             end
+            redis.call('zadd', KEYS[5], expiresAt, ARGV[8])
             redis.call('publish', ARGV[6], ARGV[7])
             return 1
+            """;
+
+    /** 점수가 지금 이하인 장부 항목을 최대 ARGV[1]개 꺼내며 지운다. 시계는 선택 스크립트와 같은 Redis {@code TIME}이다. */
+    private static final String POP_EXPIRED_SCRIPT = """
+            local redisTime = redis.call('TIME')
+            local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
+            local entries = redis.call('zrangebyscore', KEYS[1], '-inf', nowMillis, 'LIMIT', 0, tonumber(ARGV[1]))
+            if #entries > 0 then
+                redis.call('zrem', KEYS[1], unpack(entries))
+            end
+            return entries
             """;
 
     /** 지웠고 선점(KEYS[4])이 없으면 ARGV[4]를 발행한다(ARGV[3] 채널). ARGV[4]가 빈 문자열이면 발행하지 않는다. */
@@ -116,14 +130,15 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                         RScript.Mode.READ_WRITE,
                         SELECT_IF_ABSENT_SCRIPT,
                         RScript.ReturnType.LONG,
-                        selectionKeys(performanceId, seatId, memberId),
+                        selectKeys(performanceId, seatId, memberId),
                         ttl.toMillis(),
                         memberId,
                         seatId.toString(),
                         maxSeatCount == null ? "" : maxSeatCount.toString(),
                         EXPIRED_SELECTION_RETENTION.toMillis(),
                         SeatStatusRelay.CHANNEL,
-                        seatStatusRelay.encode(selected));
+                        seatStatusRelay.encode(selected),
+                        SeatSelectionRedisKey.selectExpiryEntry(performanceId, seatId));
         return switch (result.intValue()) {
             case 1 -> SelectResult.SELECTED;
             case 2 -> SelectResult.LIMIT_EXCEEDED;
@@ -153,6 +168,23 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                         SeatStatusRelay.CHANNEL,
                         deselected == null ? "" : seatStatusRelay.encode(deselected));
         return result == 1L;
+    }
+
+    @Override
+    public List<ExpiredSelection> popExpired(final int limit) {
+        final List<String> entries = script().eval(
+                        RScript.Mode.READ_WRITE,
+                        POP_EXPIRED_SCRIPT,
+                        RScript.ReturnType.LIST,
+                        List.<Object>of(SeatSelectionRedisKey.SELECT_EXPIRY_LEDGER_KEY),
+                        limit);
+        return entries.stream()
+                .map(entry -> {
+                    final int separator = entry.indexOf(':');
+                    return new ExpiredSelection(
+                            Long.valueOf(entry.substring(0, separator)), Long.valueOf(entry.substring(separator + 1)));
+                })
+                .toList();
     }
 
     @Override
@@ -218,5 +250,11 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                 SeatSelectionRedisKey.selectSeatIndex(performanceId),
                 SeatSelectionRedisKey.selectMemberIndex(performanceId, memberId),
                 HoldRedisKey.hold(performanceId, seatId));
+    }
+
+    private List<Object> selectKeys(final Long performanceId, final Long seatId, final String memberId) {
+        final List<Object> keys = new ArrayList<>(selectionKeys(performanceId, seatId, memberId));
+        keys.add(SeatSelectionRedisKey.SELECT_EXPIRY_LEDGER_KEY);
+        return keys;
     }
 }
