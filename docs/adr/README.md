@@ -48,4 +48,4 @@
 | [0019](0019-querydsl-only-query-repositories.md) | 이름이 조회 기술을 말한다 — `*QuerydslRepository`와 3단 구조 | 대체됨 → architecture.md (현재 구조) | 2026-09-21 |
 | [0020](0020-db-schema-source-of-truth-is-migration.md) | DB 스키마의 원본은 migration이다 — entity `@Table`에는 테이블 이름만 둔다 | 채택 | 2026-09-29 |
 | [0021](0021-order-requires-own-selection.md) | 주문은 본인이 선택 중인 좌석으로만 시작한다 | 채택 | 2026-09-29 |
-| [0022](0022-seat-status-relay-and-single-expiration-claim.md) | 좌석 상태 알림은 Redis pub/sub으로 모든 인스턴스에 나누고, Redis 키 만료는 한 인스턴스만 처리한다 | 제안 | 2026-10-25 |
+| [0022](0022-seat-status-relay-and-single-expiration-claim.md) | 좌석 상태는 Lua 스크립트가 바꾸며 relay로 모든 인스턴스에 알리고, 만료는 Redis 만료 알림 없이 처리한다 | 채택 | 2026-10-28 |

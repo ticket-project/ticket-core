@@ -66,7 +66,7 @@ cd ..\ticket; .\gradlew.bat seedLocal -q "-Dseed.load-test-fixture.large-perform
 | 스택에 보이는 것 | 뜻 |
 | --- | --- |
 | `HikariPool.getConnection` | DB 연결 차례를 기다린다 |
-| `org.redisson`, `RedissonLock`, `tryLock` | 좌석 락을 기다린다 |
+| `org.redisson`, `RedissonLock`, `tryLock` | 분산 락을 기다린다(좌석 락은 2026-10-28에 걷어내 지금 Core에는 없다) |
 | `org.postgresql.` | DB 응답을 기다린다(쿼리 실행, DB 락) |
 | 맨 위가 `com.ticket.`이고 `RUNNABLE` | 앱 코드가 계산 중이다(JSON 직렬화 포함) |
 | `NioSocketImpl.read`, `SocketDispatcher.read` | Redis 같은 네트워크 응답을 기다린다 |

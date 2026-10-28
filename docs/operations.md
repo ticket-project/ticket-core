@@ -52,8 +52,11 @@ session은 Queue Server의 TTL로 만료되므로, 운영 중에는 Queue의 ent
 - 운영 Redis에서 `KEYS`를 사용하지 않는다. 필요한 조회는 인덱스(Sorted Set 등)로 만든다.
 - key 형식·인덱스 구조를 바꾸면 기존 key가 남아 있는 상태의 전환 절차(신규 요청 차단 후 TTL 이상 대기,
   `SCAN`으로 옛 key가 0개인지 확인, 배포, 재개 — 무중단이면 백필 또는 호환 조회)를 함께 설계한다.
-- TTL, expiration listener, scheduler 누락 복구 중 하나만 바꾸지 않는다 — 세 경로가 같은 정합성을 함께 지킨다.
-- key·TTL·리스너 변경은 장애 복구와 scheduler 누락 복구 흐름까지 같이 검토한다.
+- Redis 키 만료 알림(keyspace notification)은 쓰지 않는다. `notify-keyspace-events` 설정이 필요 없다. 주문 만료는
+  DB 청소, 좌석 선택 만료 알림은 Redis 장부(`seat:select:expiry`)를 Worker가 꺼내 보낸다([예매 수명주기](core-booking-lifecycle.md#주문-만료와-좌석-선택-만료)).
+- 좌석 상태 알림은 relay 채널 `seat:status:relay`로 모든 인스턴스에 나간다. 좌석 상태를 바꾸는 Lua 스크립트가 그
+  자리에서 `PUBLISH`하므로, 스크립트를 바꿀 때 상태 변경·장부 등록·발행을 함께 검토한다.
+- 좌석 선택 만료 장부는 회차 hash tag가 없는 전역 키다. Redis Cluster로 가기 전에 회차별 장부로 바꾼다.
 
 ## DB 마이그레이션 적용
 
@@ -105,11 +108,14 @@ Core는 `/actuator/prometheus`에서 용량 판정에 필요한 메트릭을 노
 - `hikaricp_connections_active/pending/max/min`: DB connection pool 사용량과 대기
 - `tomcat_threads_busy_threads/current_threads/config_max_threads`: 요청 스레드 사용량과 상한
 - `jvm_gc_pause_seconds`, `jvm_memory_used_bytes`, `process_cpu_usage`: JVM·CPU 포화 여부
-- `executor_active_threads`, `executor_queued_tasks`: background worker 사용량과 적체. Redis 만료 처리 executor는
-  `name` 태그로 구분한다.
+- `executor_active_threads`, `executor_queued_tasks`: background worker 사용량과 적체. 좌석 상태 relay 전달
+  executor(`seatStatusRelayExecutor`, 단일 스레드·큐 상한 없음)는 `name` 태그로 구분한다.
+- `booking_order_expiration_delay_seconds`, `booking_order_expiration_failures_total`: 주문 만료 시각 뒤 청소가
+  잡기까지와 미룬 건수. `booking_seat_selection_expiration_delay_seconds`: 좌석 선택 만료 시각 뒤 장부에서 꺼내기까지.
+  임계값은 부하 측정 뒤에 정한다.
 
 **주문 커밋 후 이벤트 리스너(`BookingEventListeners`)에는 이름이 붙은 전용 executor가 없다.** 앱이 `ThreadPoolTaskExecutor`
-빈(`RedisExpirationListenerConfig`)을 등록하므로 Spring Boot 기본 비동기 executor(`applicationTaskExecutor`)는 만들어지지
+빈(`SeatStatusRelayConfig`)을 등록하므로 Spring Boot 기본 비동기 executor(`applicationTaskExecutor`)는 만들어지지
 않는다(Boot는 `Executor` 빈이 없거나 `spring.task.execution.mode=force`일 때만 만든다). 측정 스레드 덤프에서 리스너는
 이벤트마다 새 스레드를 만드는 `SimpleAsyncTaskExecutor-*` 스레드로 돌았고 동시 실행 수에 상한이 없었다(gatling-test
 capacity-log P-015). 이 스레드는 요청과 같은 Hikari 풀에서 연결을 빌리므로 부하가 높으면 요청 스레드와 연결을 다툰다.
@@ -141,8 +147,8 @@ max(tomcat_threads_busy_threads{service="ticket-core"}) / max(tomcat_threads_con
 ```
 
 Hikari pending이 0보다 커지면 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. pending이 0이어도 이미 빌린 연결이 DB lock에서
-멈출 수 있으므로 DB wait를 별도로 확인한다. Redis 만료 처리 executor는 worker 2개에 큐 상한이 없어(`Integer.MAX_VALUE`) 포화
-경고 없이 작업이 메모리에 쌓인다. queued 값이 줄지 않고 계속 늘면 이전 회차 작업이 현재 부하와 겹친 것이다. 이벤트 후속 처리가 누락되거나 실패해도
+멈출 수 있으므로 DB wait를 별도로 확인한다. 좌석 상태 relay 전달 executor는 단일 스레드에 큐 상한이 없어
+포화 경고 없이 알림이 메모리에 쌓인다. queued 값이 줄지 않고 계속 늘면 전달이 발행을 따라가지 못하는 것이다. 이벤트 후속 처리가 누락되거나 실패해도
 `EventPublicationMaintenance`가 주기적으로 재처리해 복구하지만, backlog가 해소되기 전에는 다음 부하를 넣지 않는다.
 
 DB lock wait는 Actuator만으로 볼 수 없다. Datadog DBM 또는 `pg_monitor` 권한이 있는 별도 관측 계정에서 다음 정보를

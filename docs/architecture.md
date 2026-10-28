@@ -144,8 +144,8 @@ root를 찾는 조회는 root Repository가 가진다(`MemberRepository.findActi
 아니다. `security`는 `auth`/`jwt`/
 `oauth`/`token`/`http` 등 기능별로, `shared`는 공개 계약 `api`/`web`/`exception`/`jpa`와 실행 설정 `config`로
 나눈다. `booking`에는 capability 외에 기술 패키지 `admission`(admission token 검증·예매 진입 확인),
-`concurrency`(분산락 계약과 `concurrency.redis`의 Redisson 구현), `redis`(키 만료 listener 설정과 만료 처리기 계약),
-`websocket`(STOMP 설정·인증·좌석 상태 발행)이 있다. 쓰지 않는 역할 폴더를 미리 만들지 않는다.
+`websocket`(STOMP 설정·인증·좌석 상태 relay 구독)이 있다. 좌석 분산 락은 없다 — 좌석 상태를 바꾸는 일은
+`persistence`의 Lua 스크립트 하나가 확인·변경·relay 발행까지 한다. 쓰지 않는 역할 폴더를 미리 만들지 않는다.
 
 | 역할 | 책임 |
 | --- | --- |
@@ -168,9 +168,8 @@ Repository를 부를 수 있지만 그 밖의 `persistence` 구현(Redis 등)은
 조합은 use case가 공개 API를 통해 한다.
 
 Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡고 `usecase`·`domain`은 저장 기술 중립
-계약을 사용한다. 역할 패키지가 아닌 곳에서 조립하는 key도 있다 — 분산락 key는
-`booking.concurrency.redis.RedissonLockKeyFormatter`, refresh token·OAuth2 인증 코드 key는 security의
-`token.RedisRefreshTokenStore`·`oauth.RedisOAuth2AuthCodeStore`가 조립한다. 분산락은 `booking.concurrency`의 `DistributedLock` 계약으로 쓴다. 여러 capability를
+계약을 사용한다. 역할 패키지가 아닌 곳에서 조립하는 key도 있다 — refresh token·OAuth2 인증 코드 key는 security의
+`token.RedisRefreshTokenStore`·`oauth.RedisOAuth2AuthCodeStore`가 조립한다. 여러 capability를
 조율하는 코드는 결과를 책임지는 곳에 둔다. `common`/`util`/`helper` 같은 소유권 없는 패키지는 만들지
 않는다.
 
