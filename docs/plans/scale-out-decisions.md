@@ -15,15 +15,15 @@
 | ID | 정할 것 | 이게 정해져야 하는 일 | 상태 | 추천 |
 | --- | --- | --- | --- | --- |
 | D0-1 | 스케일 아웃의 목적과 목표 입장률 | 아래 전부 | 미정 | — |
-| D0-2 | 60 u/s 멈춤(P-022) 수정 방식 | 수용량 측정 | 미정 | — |
+| D0-2 | 60 u/s 멈춤(P-022) 수정 방식 | 수용량 측정 | 정함 | B(`sync = true` 제거), master 반영(`43fe8873`) |
 | D0-3 | 서버 한 대를 먼저 정리할지 | D1 전체 | 미정 | 먼저 정리 |
 | D1-1 | Redis를 어디에 둘지 | D2 전체 | 미정 | Core 호스트 밖의 단일 노드 |
 | D1-2 | 요청을 어떻게 나눌지(LB) | 2대 운영 | 미정 | 지금 nginx에 upstream 추가 |
 | D1-3 | 어떻게 배포할지 | 2대 운영 | 미정 | 한 대씩 교체, readiness·liveness 분리 |
 | D1-4 | Core Redis 영속성 | 2대 운영 | 미정 | — |
 | D1-5 | Redis 확장 순서 | D1-1 이후 | 미정 | 복제본 → 용도별 분리 → 클러스터 |
-| D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 정함 | Redis pub/sub relay, 상태를 바꾸는 Lua 안에서 발행하고 좌석 락 삭제(미구현) |
-| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 정함 | 알림을 쓰지 않음. 주문은 DB 청소, 좌석 선택은 Redis 장부 + Worker. 세부 남음 |
+| D2-1 | 좌석 알림을 모든 인스턴스에 나누는 방법 | 2대 운영 | 구현 | Redis pub/sub relay, 상태를 바꾸는 Lua 안에서 발행하고 좌석 락 삭제(2026-10-28) |
+| D2-2 | Redis 만료 알림 중복 처리 | 2대 운영 | 구현 | 알림을 쓰지 않음. 주문은 DB 청소(SKIP LOCKED), 좌석 선택은 Redis 장부 + Worker(2026-10-28) |
 | D2-3 | OAuth2 로그인 세션 | 2대 운영 | 미정 | Spring Session Redis(확인 필요) |
 | D2-4 | SockJS 연결 | 2대 운영 | 미정 | FE 수정 불가라 서버·LB 쪽 선택지에서 다시 정함 |
 | D2-5 | FE 재연결 때 좌석 다시 조회 | — | 정함 | 지금은 하지 않음(FE 수정 불가) |
@@ -55,7 +55,9 @@
 
 ### D0-2. 60 u/s 멈춤(P-022) 수정 방식
 
-- **정할 것**: gatling-test capacity-log 2026-10-25의 해결 선택지 A~E 중 무엇으로 고칠지.
+- **결정**: B(`@Cacheable`의 `sync = true`를 뺀다). 2026-10-25 사용자가 골랐고 `43fe8873`로 master에 반영·배포했다.
+  재측정에서 멈춤이 사라졌다(60 u/s는 CPU 포화로 FAIL).
+- **고른 선택지**: gatling-test capacity-log 2026-10-25의 해결 선택지 A~E 중 B.
   - A. 판매 정책 캐시 조회를 트랜잭션 밖으로 옮긴다.
   - B. `@Cacheable`의 `sync = true`를 뺀다.
   - C. 미리 새로 고치는 캐시(`refreshAfterWrite`)로 바꾼다.
@@ -170,7 +172,7 @@
     락 없이도 알림 순서가 상태 변화 순서와 같다. 받는 쪽(구독 → 전달)은 Java 발행과 같다.
   - 좌석 락(2026-10-28 정함): 걷어낸다. [좌석 분산 락 다시 설계하기](seat-lock-redesign.md)의 C안(상태 변경·만료 장부 등록·
     발행을 스크립트 하나에서)으로 간다. 선택·해제·선점·선점 확정 알림·선점 해제·선택 만료 알림이 각자 스크립트 하나가
-    되고, `booking.concurrency` 패키지가 없어진다.
+    되고, 좌석 락 패키지(concurrency)가 없어진다.
     - 고른 이유: "확인하고 보내기"를 Redis가 한 줄로 세워, 서버 대수와 무관하게 알림 순서가 상태 변화 순서와 같다. 좌석 선택
       Lua를 장부 등록(D2-2) 때문에 어차피 고친다. 사용자당 Redis 왕복이 약 21번에서 4~5번으로, Core CPU가 약 10% 줄
       것으로 본다(둘 다 추정, 측정은 구현 뒤). 락 대기 실패(`E6003`)가 사라진다.
@@ -315,8 +317,7 @@
     처리 전에 죽어 알림이 빠지는 틈도 없어진다. 구현 때 스크립트 길이(한 번에 100개)를 보고 정한다.
   - 2026-10-26에 정한 좌석 선택 claim(`SET expired-claim:... NX PX 60000`, 위치·TTL 60초)은 이 결정으로 대체됐다. 내용은
     커밋 `ee97487f`·`56075b9e`에 있다.
-- **상세**: [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 결정 2는 claim 기준으로 쓰여 있다.
-  세부 결정을 정한 뒤 다시 쓴다.
+- **상세**: [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md)(2026-10-28 채택).
 
 ### D2-3. OAuth2 로그인 세션
 
@@ -402,15 +403,9 @@
 
 ## 결정 뒤 구현할 것
 
-- 만료 처리(D2-2, 2026-10-28 정함): 주문은 알림 handler를 지우고 짧은 주기 청소로, 좌석 선택은 장부 + Worker + relay로
-  바꾼 뒤 `RedisExpirationListenerConfig`를 지운다. 세부 결정을 먼저 정한다.
-- relay(D2-1)와 좌석 선택 만료 claim(D2-2): 2026-10-26에 구현했다가 되돌렸다. claim은 2026-10-28 결정으로 대체됐다. relay 통합 테스트에서 Redis 구독은
-  맺어지는데 `RedisMessageListenerContainer`(Redisson 연결) 리스너에 메시지가 오지 않았다. 원인은 테스트 설정으로
-  추정한다. 테스트가 task executor 스레드를 1개만 주고 구독 executor를 따로 주지 않았다. 컨테이너는 구독 executor가
-  없으면 task executor를 같이 쓰고, Redisson 구독은 끝날 때까지 스레드 하나를 쥐므로 메시지를 넘길 스레드가 남지 않았다.
-  같은 컨테이너 조합(구독 executor 따로)의 keyspace 만료 리스너는 실제 Redis 통합 테스트로 수신을 확인했다
-  (`RedisKeyExpirationNotificationIntegrationTest`).
-- [ADR 0022](../adr/0022-seat-status-relay-and-single-expiration-claim.md) 본문을 위 구현에 맞게 다시 쓰고 상태를 바꾼다.
+- 만료 처리(D2-2)와 relay·좌석 락 삭제(D2-1): 2026-10-28 구현했다(브랜치 `feat/expiration-and-seat-lock`). keyspace
+  만료 알림 구독과 좌석 락 패키지(concurrency)를 지웠고, 경쟁 순서는 실제 Redis 통합 테스트로 고정했다. ADR 0022를 채택으로
+  다시 썼다. 남은 것은 [남은 작업](../todo.md)의 "좌석 선택 만료·주문 만료" 절에 있다.
 - 프런트엔드 재연결 시 좌석 상태 재조회(D2-5). 지금은 FE를 고칠 수 없어 미룬다.
 - 배포 workflow의 순차 교체와 readiness·liveness 분리(D1-3)
 - 2노드 검증 테스트와 로컬 2노드 부하 측정(D3-3 전에)
