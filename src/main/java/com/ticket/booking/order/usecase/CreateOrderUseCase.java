@@ -31,12 +31,12 @@ import lombok.extern.slf4j.Slf4j;
  * <p>이 use case가 하는 일은 {@code Order} entity 하나를 만드는 것이 아니라 <b>주문 생성이라는 workflow를 조율</b>하는 것이다. 그래서 {@link #execute}를
  * 읽으면 검증 → 좌석 선점 → 주문 생성 → 실패 시 보상이라는 업무 순서가 그대로 보인다. HTTP 계약은 {@code POST /api/v1/orders}로 예전과 같다.
  *
- * <p><b>Redis 선점과 DB 주문은 하나의 트랜잭션이 아니다.</b> 이 method 전체에 {@code @Transactional}을 붙이지 않는다 — 그러면 분산락 대기와 Redis 왕복이 전부 DB
- * 트랜잭션 안에 들어가 connection을 오래 쥔다. 대신 경계를 셋으로 나눈다.
+ * <p><b>Redis 선점과 DB 주문은 하나의 트랜잭션이 아니다.</b> 이 method 전체에 {@code @Transactional}을 붙이지 않는다 — 그러면 Redis 왕복이 전부 DB 트랜잭션 안에
+ * 들어가 connection을 오래 쥔다. 대신 경계를 셋으로 나눈다.
  *
  * <ul>
  *   <li>예매 전 확인(판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태·표시값) — {@link BookingPreflightReader}의 짧은 읽기 트랜잭션
- *   <li>좌석 선점 — Redis. 좌석 락은 이 구간에만 건다
+ *   <li>좌석 선점 — Redis. 본인 선택 확인과 선점이 스크립트 하나라 좌석 락이 없다
  *   <li>주문 생성 — {@link PendingOrderCreator}의 짧은 쓰기 트랜잭션
  * </ul>
  *

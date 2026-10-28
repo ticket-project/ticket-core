@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 회원이 이 회차에서 선택한 좌석을 모두 해제한다.
  *
- * <p>회원별 선택 인덱스로 이 회원의 좌석만 찾으므로 Redis 호출과 좌석 락은 이 회원이 선택한 좌석 수만큼만 생긴다. 한도가 있는 회차에서는 그 수가 한도 이하다.
+ * <p>회원별 선택 인덱스로 이 회원의 좌석만 찾으므로 Redis 호출은 이 회원이 선택한 좌석 수만큼만 생긴다. 한도가 있는 회차에서는 그 수가 한도 이하다.
  */
 @Service
 @RequiredArgsConstructor

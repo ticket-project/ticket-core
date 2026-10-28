@@ -13,7 +13,7 @@ public final class RequestedSeatIds {
         this.values = values;
     }
 
-    /** 검증한 뒤 오름차순으로 정렬해 담는다. 정렬은 같은 좌석 집합이면 요청 순서와 관계없이 같은 값이 되게 하고, 좌석 락을 항상 같은 순서로 잡게 한다. */
+    /** 검증한 뒤 오름차순으로 정렬해 담는다. 정렬은 같은 좌석 집합이면 요청 순서와 관계없이 같은 값이 되게 한다. */
     public static RequestedSeatIds from(final List<Long> requestedSeatIds) {
         if (requestedSeatIds == null) {
             throw new InvalidRequestException("좌석 ID 목록은 null일 수 없습니다.");

@@ -25,6 +25,7 @@ public enum BookingErrorCode implements ErrorCode {
     E5004("이미 진행 중인 결제 대기 주문이 있습니다."),
     E6000("좌석이 이미 선점되었습니다."),
     E6001("선점 가능한 좌석 수를 초과하였습니다."),
+    // 좌석 락 대기 실패였다. 좌석 락을 걷어내(좌석 락 재설계 C안) 지금은 나지 않지만, gatling-test가 하드코딩하는 외부 계약이라 남긴다.
     E6003("좌석 선점 처리 중입니다. 잠시 후 다시 시도해주세요.");
     private final String message;
 
