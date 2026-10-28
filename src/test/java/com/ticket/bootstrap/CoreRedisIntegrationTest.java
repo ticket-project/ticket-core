@@ -1,7 +1,6 @@
-package com.ticket.booking.concurrency.redis;
+package com.ticket.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 
@@ -34,11 +33,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.ticket.booking.concurrency.DistributedLock;
-import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockOptions;
-import com.ticket.booking.exception.BookingErrorCode;
-import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
@@ -54,9 +48,6 @@ import tools.jackson.databind.json.JsonMapper;
 @Testcontainers
 class CoreRedisIntegrationTest {
     private static final int REDIS_PORT = 6379;
-    private static final LockKey SAME_KEY = LockKey.seat(9_000L, 1L);
-    private static final LockKey LEFT_KEY = LockKey.seat(9_000L, 2L);
-    private static final LockKey RIGHT_KEY = LockKey.seat(9_000L, 3L);
 
     @Container
     private static final GenericContainer<?> REDIS =
@@ -212,42 +203,6 @@ class CoreRedisIntegrationTest {
         assertThat(store.validateWithoutConsume(refreshToken)).isEmpty();
     }
 
-    @Test
-    void distributed_lock_serializes_same_key_but_not_different_keys() throws Exception {
-        LockedService proxy = lockedService();
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch firstEntered = new CountDownLatch(1);
-        CountDownLatch releaseFirst = new CountDownLatch(1);
-        try {
-            Future<?> first = executor.submit(() -> proxy.execute(SAME_KEY, firstEntered, releaseFirst));
-            assertThat(firstEntered.await(2, TimeUnit.SECONDS)).isTrue();
-
-            assertThatThrownBy(() -> proxy.execute(SAME_KEY, new CountDownLatch(1), new CountDownLatch(0)))
-                    .isInstanceOf(BookingException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6003);
-
-            releaseFirst.countDown();
-            first.get(5, TimeUnit.SECONDS);
-
-            CountDownLatch bothEntered = new CountDownLatch(2);
-            CountDownLatch releaseBoth = new CountDownLatch(1);
-            Future<?> left = executor.submit(() -> proxy.execute(LEFT_KEY, bothEntered, releaseBoth));
-            Future<?> right = executor.submit(() -> proxy.execute(RIGHT_KEY, bothEntered, releaseBoth));
-            assertThat(bothEntered.await(2, TimeUnit.SECONDS)).isTrue();
-            releaseBoth.countDown();
-            left.get(5, TimeUnit.SECONDS);
-            right.get(5, TimeUnit.SECONDS);
-        } finally {
-            releaseFirst.countDown();
-            executor.shutdownNow();
-            executor.awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    private LockedService lockedService() {
-        return new LockedService(new RedissonDistributedLock(redissonClient, new RedissonLockKeyFormatter()));
-    }
-
     /** 만료는 Redis가 비동기로 처리하므로 조건이 참이 될 때까지 기다린다. */
     private static ConditionFactory awaitExpiry(final String failureMessage) {
         return await(failureMessage).atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(25));
@@ -280,27 +235,6 @@ class CoreRedisIntegrationTest {
             start.countDown();
             executor.shutdownNow();
             executor.awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    /** 락 안에서 오래 머무는 작업을 흉내 낸다. 실제 Redis로 상호 배제를 확인한다. */
-    record LockedService(DistributedLock distributedLock) {
-        private static final LockOptions OPTIONS = LockOptions.waiting(Duration.ofMillis(100));
-
-        void execute(final LockKey key, final CountDownLatch entered, final CountDownLatch release) {
-            distributedLock.withLock(List.of(key), OPTIONS, () -> holdUntilReleased(entered, release));
-        }
-
-        private void holdUntilReleased(final CountDownLatch entered, final CountDownLatch release) {
-            entered.countDown();
-            try {
-                if (!release.await(5, TimeUnit.SECONDS)) {
-                    throw new AssertionError("locked operation was not released");
-                }
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new AssertionError("locked operation was interrupted", exception);
-            }
         }
     }
 }
