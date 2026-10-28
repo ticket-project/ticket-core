@@ -42,8 +42,8 @@ class HeldSeatPublisherTest {
         final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
         inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
         inOrder.verify(holdStore).isHeldBy(10L, 200L, "hold-key");
-        inOrder.verify(seatSelectionService).deselectIfOwned(10L, 100L, 20L);
-        inOrder.verify(seatSelectionService).deselectIfOwned(10L, 200L, 20L);
+        inOrder.verify(seatSelectionService).deselectIfOwned(10L, 100L, 20L, null);
+        inOrder.verify(seatSelectionService).deselectIfOwned(10L, 200L, 20L, null);
         inOrder.verify(seatStatusEventPublisher).publish(10L, 901L, 100L, SeatStatusAction.HELD);
         inOrder.verify(seatStatusEventPublisher).publish(10L, 902L, 200L, SeatStatusAction.HELD);
     }
