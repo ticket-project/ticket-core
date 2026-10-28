@@ -39,11 +39,8 @@ class BookingModuleTests {
     @MockitoBean
     private RedissonClient redissonClient;
 
-    /** 시작하면 Redis에 구독 연결을 맺는다. wiring smoke test라 실제 구독은 필요 없다. 컨테이너가 둘(만료 리스너, 좌석 상태 relay)이라 이름으로 고른다. */
-    @MockitoBean(name = "redisMessageListenerContainer")
-    private RedisMessageListenerContainer redisMessageListenerContainer;
-
-    @MockitoBean(name = "seatStatusRelayListenerContainer")
+    /** 시작하면 Redis에 좌석 상태 relay 구독 연결을 맺는다. wiring smoke test라 실제 구독은 필요 없다. */
+    @MockitoBean
     private RedisMessageListenerContainer seatStatusRelayListenerContainer;
 
     @MockitoBean

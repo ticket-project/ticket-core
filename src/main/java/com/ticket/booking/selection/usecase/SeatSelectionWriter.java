@@ -74,9 +74,9 @@ public class SeatSelectionWriter {
     }
 
     /** 이미 끝난 선택(TTL 만료)을 알린다. 그 사이 다른 사용자가 다시 선택했거나 선점으로 넘어간 좌석은 알리지 않는다. */
-    public void notifyReleasedIfFree(final Long performanceId, final Long seatId) {
-        seatSelectionService.notifyIfFree(
-                performanceId, seatId, deselected(performanceId, seatId, findPerformanceSeatId(performanceId, seatId)));
+    public void notifyReleasedIfFree(
+            final Long performanceId, final Long seatId, final @Nullable Long performanceSeatId) {
+        seatSelectionService.notifyIfFree(performanceId, seatId, deselected(performanceId, seatId, performanceSeatId));
     }
 
     private SeatStatusEvent deselected(

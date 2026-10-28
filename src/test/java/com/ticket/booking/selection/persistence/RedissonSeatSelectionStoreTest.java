@@ -63,14 +63,16 @@ class RedissonSeatSelectionStoreTest {
                                 SeatSelectionRedisKey.select(10L, 20L),
                                 SeatSelectionRedisKey.selectSeatIndex(10L),
                                 SeatSelectionRedisKey.selectMemberIndex(10L, "3"),
-                                HoldRedisKey.hold(10L, 20L))),
+                                HoldRedisKey.hold(10L, 20L),
+                                SeatSelectionRedisKey.SELECT_EXPIRY_LEDGER_KEY)),
                         eq(Duration.ofMinutes(5).toMillis()),
                         eq("3"),
                         eq("20"),
                         eq("4"),
                         eq(Duration.ofMinutes(10).toMillis()),
                         eq(SeatStatusRelay.CHANNEL),
-                        eq("selected-json"));
+                        eq("selected-json"),
+                        eq("10:20"));
 
         SelectResult result =
                 redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4, SELECTED);

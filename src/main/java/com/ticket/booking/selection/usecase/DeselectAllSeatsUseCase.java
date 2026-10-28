@@ -35,7 +35,9 @@ public class DeselectAllSeatsUseCase {
 
     public void execute(final Input input) {
         final List<Long> seatIds =
-                List.copyOf(seatSelectionService.getSelectedSeatIds(input.performanceId(), input.memberId()));
+                seatSelectionService.getSelectedSeatIds(input.performanceId(), input.memberId()).stream()
+                        .sorted()
+                        .toList();
         // 알림 표시값(performanceSeatId)은 한 번에 읽어 좌석마다 DB를 다시 읽지 않는다. 해제와 발행은 좌석마다 스크립트
         // 하나라, 그 사이 남이 다시 고른 좌석을 비었다고 알리지 않는다.
         final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(input.performanceId(), seatIds);

@@ -26,6 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import com.ticket.booking.hold.persistence.HoldRedisKey;
 import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
+import com.ticket.booking.selection.domain.SeatSelectionStore;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 import com.ticket.booking.websocket.SeatStatusRelay;
 import com.ticket.testsupport.TestContainerImages;
@@ -143,6 +144,34 @@ class RedissonSeatSelectionStoreIntegrationTest {
         store.publishIfFree(PERFORMANCE_ID, SEAT_ID, event(SeatStatusAction.DESELECTED));
 
         awaitRelayed(SeatStatusAction.DESELECTED);
+    }
+
+    /** 만료 알림은 Redis 만료 알림이 아니라 선택과 함께 적은 장부에서 꺼낸다. 시각이 지난 항목만, 한 번만 꺼낸다. */
+    @Test
+    void 선택은_만료_장부에_적히고_시각이_지난_항목만_한_번_꺼내진다() {
+        store.selectIfAbsent(
+                PERFORMANCE_ID, SEAT_ID, "1", Duration.ofMillis(100), null, event(SeatStatusAction.SELECTED));
+        store.selectIfAbsent(PERFORMANCE_ID, SEAT_ID + 1, "2", TTL, null, event(SeatStatusAction.SELECTED));
+
+        await().atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(store.popExpired(100))
+                        .containsExactly(new SeatSelectionStore.ExpiredSelection(PERFORMANCE_ID, SEAT_ID)));
+        assertThat(store.popExpired(100)).isEmpty();
+    }
+
+    /** 장부 값이 "회차:좌석"이라 같은 좌석을 다시 고르면 항목이 늘지 않고 점수만 새 만료 시각으로 바뀐다. 예전 시각에는 꺼내지지 않는다. */
+    @Test
+    void 같은_좌석을_다시_고르면_장부_항목은_하나이고_새_만료_시각을_따른다() {
+        store.selectIfAbsent(
+                PERFORMANCE_ID, SEAT_ID, "1", Duration.ofMillis(100), null, event(SeatStatusAction.SELECTED));
+        await().atMost(Duration.ofSeconds(5)).until(() -> store.getHolder(PERFORMANCE_ID, SEAT_ID) == null);
+        store.selectIfAbsent(PERFORMANCE_ID, SEAT_ID, "2", TTL, null, event(SeatStatusAction.SELECTED));
+
+        assertThat(store.popExpired(100)).isEmpty();
+        assertThat(redissonClient
+                        .getScoredSortedSet(SeatSelectionRedisKey.SELECT_EXPIRY_LEDGER_KEY, StringCodec.INSTANCE)
+                        .size())
+                .isEqualTo(1);
     }
 
     private void holdSeat(final String holdKey) {

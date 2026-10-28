@@ -1,6 +1,7 @@
 package com.ticket.booking.selection.domain;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -32,6 +33,12 @@ public interface SeatSelectionStore {
      */
     boolean releaseIfOwned(Long performanceId, Long seatId, String memberId, @Nullable SeatStatusEvent deselected);
 
+    /**
+     * 만료 시각이 지난 선택을 장부에서 최대 {@code limit}개 꺼내며 지운다. 꺼내기와 지우기가 한 번이라 같은 항목을 두 인스턴스가 꺼내지 않는다. 좌석 해제·주문 생성 때 장부 항목을 지우지
+     * 않으므로, 꺼낸 좌석이 지금 비어 있는지는 호출자가 {@link #publishIfFree}로 다시 확인한다.
+     */
+    List<ExpiredSelection> popExpired(int limit);
+
     /** 선택도 선점도 없는 좌석이면 {@code deselected}를 발행한다. 확인과 발행이 원자적이라 그 사이에 다시 선택된 좌석을 비었다고 알리지 않는다. */
     void publishIfFree(Long performanceId, Long seatId, SeatStatusEvent deselected);
 
@@ -42,6 +49,8 @@ public interface SeatSelectionStore {
 
     /** 이 회원의 선택 중 최근에 시간이 지나 풀린 좌석. 직접 해제했거나 오래전에 만료된 좌석은 포함하지 않는다. */
     Set<Long> getRecentlyExpiredSeatIdsByMember(Long performanceId, String memberId);
+
+    record ExpiredSelection(Long performanceId, Long seatId) {}
 
     enum SelectResult {
         SELECTED,

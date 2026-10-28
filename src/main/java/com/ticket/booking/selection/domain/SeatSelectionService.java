@@ -88,6 +88,11 @@ public class SeatSelectionService {
         return seatSelectionStore.releaseIfOwned(performanceId, seatId, memberKeyOf(memberId), deselected);
     }
 
+    /** 만료 시각이 지난 선택을 장부에서 최대 {@code limit}개 꺼낸다. 알릴지는 {@link #notifyIfFree}가 좌석마다 다시 확인한다. */
+    public List<SeatSelectionStore.ExpiredSelection> popExpired(final int limit) {
+        return seatSelectionStore.popExpired(limit);
+    }
+
     /** 이미 끝난 선택(TTL 만료)을 알린다. 선택도 선점도 없는 좌석일 때만 발행한다 — 그 사이 다시 선택됐거나 선점으로 넘어간 좌석은 알리지 않는다. */
     public void notifyIfFree(final Long performanceId, final Long seatId, final SeatStatusEvent deselected) {
         seatSelectionStore.publishIfFree(performanceId, seatId, deselected);
