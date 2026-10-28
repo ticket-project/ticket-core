@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * Redis가 점유로 보는 좌석을 판정한다 — 누군가 고르는 중(selection)이거나 이미 선점(hold)한 좌석이다.
  *
- * <p>"무엇을 점유로 보는가"는 좌석 상태 조회, 잔여석 조회, 선택 만료 알림, 선점 해제 알림이 모두 같아야 한다. 조건이 바뀌면 여기 한 곳만 고친다. DB의 좌석 판매 상태는 보지 않는다 — 그것은
- * 호출자가 {@link PerformanceSeat}로 따로 본다.
+ * <p>"무엇을 점유로 보는가"는 좌석 상태 조회와 잔여석 조회가 같아야 한다. 조건이 바뀌면 여기와, 같은 조건을 한 좌석에 대해 보는 저장소 스크립트(선택 만료 알림·선점 해제 알림의 "선택도 선점도 없으면
+ * 발행")를 함께 고친다. DB의 좌석 판매 상태는 보지 않는다 — 그것은 호출자가 {@link PerformanceSeat}로 따로 본다.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,10 +31,5 @@ public class SeatOccupancy {
         occupiedSeatIds.addAll(selectingSeatIds);
         occupiedSeatIds.addAll(holdingSeatIds);
         return occupiedSeatIds;
-    }
-
-    /** 좌석 한 자리가 지금 점유돼 있는지. 좌석 key를 직접 읽으므로 좌석 락 안의 재확인에 쓴다. */
-    public boolean isOccupied(final Long performanceId, final Long seatId) {
-        return seatSelectionService.isSelected(performanceId, seatId) || holdStore.isHeld(performanceId, seatId);
     }
 }

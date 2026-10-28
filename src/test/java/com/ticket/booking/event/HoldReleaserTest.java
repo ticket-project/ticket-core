@@ -1,112 +1,46 @@
 package com.ticket.booking.event;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
-import com.ticket.booking.seat.domain.SeatOccupancy;
+import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.port.SeatStatusEventPublisher;
-import com.ticket.booking.selection.domain.SeatSelectionService;
 
+/** 해제와 "비었는가" 확인·발행의 원자성은 저장소 스크립트가 지키므로 {@code RedissonHoldStoreIntegrationTest}가 실제 Redis로 고정한다. 여기서는 알림 내용만 본다. */
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("NonAsciiCharacters")
 class HoldReleaserTest {
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
+
     @Mock
     private HoldStore holdStore;
 
-    private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
-
-    @Mock
-    private SeatSelectionService seatSelectionService;
-
-    @Mock
-    private SeatStatusEventPublisher seatStatusEventPublisher;
-
-    private HoldReleaser releaser;
-
-    @BeforeEach
-    void setUp() {
-        releaser = new HoldReleaser(
-                distributedLock,
-                holdStore,
-                new SeatOccupancy(seatSelectionService, holdStore),
-                seatStatusEventPublisher);
-    }
-
     @Test
-    void releasesHoldBeforePublishingCurrentlyAvailableSeats() {
-        when(holdStore.isHeld(1L, 10L)).thenReturn(false);
-        when(holdStore.isHeld(1L, 20L)).thenReturn(false);
+    void 좌석마다_performanceSeatId를_실은_RELEASED로_해제를_넘긴다() {
+        new HoldReleaser(holdStore, CLOCK)
+                .releaseAndPublish(
+                        "old-hold", new OrderHoldSnapshot(1L, List.of(10L, 20L), Map.of(10L, 910L, 20L, 920L)));
 
-        releaser.releaseAndPublish("old-hold", snapshot());
-
-        final InOrder inOrder = inOrder(holdStore, seatStatusEventPublisher);
-        inOrder.verify(holdStore).release(1L, "old-hold", List.of(10L, 20L));
-        inOrder.verify(seatStatusEventPublisher).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
-        inOrder.verify(seatStatusEventPublisher).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
-    }
-
-    @Test
-    void doesNotPublishOverANewerHoldOrSelection() {
-        when(seatSelectionService.isSelected(1L, 10L)).thenReturn(false);
-        when(holdStore.isHeld(1L, 10L)).thenReturn(true);
-        when(seatSelectionService.isSelected(1L, 20L)).thenReturn(true);
-
-        releaser.releaseAndPublish("old-hold", snapshot());
-
-        verifyNoInteractions(seatStatusEventPublisher);
-    }
-
-    /**
-     * 발행이 실패해 이벤트가 재전달되면 해제부터 다시 수행한다. 해제는 좌석에 아직 이 holdKey가 남아 있을 때만 지우므로 반복해도 안전하다 ({@code RedissonHoldStoreTest}가 그
-     * 소유권 확인을 고정한다).
-     */
-    @Test
-    void publicationFailureIsRetriedFromRelease() {
-        when(holdStore.isHeld(1L, 10L)).thenReturn(false);
-        when(holdStore.isHeld(1L, 20L)).thenReturn(false);
-        doThrow(new RuntimeException("publish failed"))
-                .doNothing()
-                .when(seatStatusEventPublisher)
-                .publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
-
-        assertThatThrownBy(() -> releaser.releaseAndPublish("old-hold", snapshot()))
-                .hasMessage("publish failed");
-        releaser.releaseAndPublish("old-hold", snapshot());
-
-        verify(holdStore, times(2)).release(1L, "old-hold", List.of(10L, 20L));
-        verify(seatStatusEventPublisher, times(2)).publish(1L, 910L, 10L, SeatStatusAction.RELEASED);
-        verify(seatStatusEventPublisher, times(1)).publish(1L, 920L, 20L, SeatStatusAction.RELEASED);
-    }
-
-    @Test
-    void holdsSeatLocksAcrossReleaseAndPublication() {
-        releaser.releaseAndPublish("old-hold", snapshot());
-
-        assertThat(distributedLock.lastAcquisition().keys())
-                .containsExactly(LockKey.seat(1L, 10L), LockKey.seat(1L, 20L));
-    }
-
-    private OrderHoldSnapshot snapshot() {
-        return new OrderHoldSnapshot(1L, List.of(10L, 20L), Map.of(10L, 910L, 20L, 920L));
+        verify(holdStore)
+                .release(
+                        1L,
+                        "old-hold",
+                        List.of(
+                                new SeatStatusEvent(1L, 910L, 10L, SeatStatusAction.RELEASED, NOW),
+                                new SeatStatusEvent(1L, 920L, 20L, SeatStatusAction.RELEASED, NOW)));
     }
 }

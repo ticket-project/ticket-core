@@ -11,9 +11,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import com.ticket.booking.concurrency.DistributedLock;
-import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.Hold;
@@ -62,7 +59,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class CreateOrderUseCase {
-    private final DistributedLock distributedLock;
     private final BookingPreflightReader bookingPreflightReader;
     private final HoldRegistry holdRegistry;
     private final HoldStore holdStore;
@@ -94,13 +90,11 @@ public class CreateOrderUseCase {
         //    connection을 한 번만 빌리는 읽기 트랜잭션이다.
         final Preflight preflight = readPreflight(input, requestedSeatIds, now);
 
-        // 2. 본인이 선택 중인 좌석만 선점한다(Redis). 좌석 락은 이 구간에만 건다 -- DB 트랜잭션 동안 쥐고 있으면
-        //    connection 경합이 좌석 경합으로 번진다.
+        // 2. 본인이 선택 중인 좌석만 선점한다(Redis). 본인 선택 확인과 선점은 저장소 스크립트 하나라 좌석 락이 없다.
         final Duration holdDuration = preflight.policy().holdDuration();
-        final List<LockKey> seatLocks = LockKey.seats(input.performanceId(), requestedSeatIds.toList());
         final Hold hold;
         try {
-            hold = holdSeats(seatLocks, input, requestedSeatIds, holdDuration, now);
+            hold = holdSeats(input, requestedSeatIds, holdDuration, now);
         } catch (final BookingException exception) {
             throw pendingOrderErrorIfStarted(input, exception);
         }
@@ -118,10 +112,10 @@ public class CreateOrderUseCase {
         } catch (final DataIntegrityViolationException exception) {
             // 같은 회원·회차의 PENDING 주문이 그사이 생겼다(uk_orders_pending_member_performance). ORDERS의 다른 유니크(order_key, hold_key)는
             // 요청마다 새 UUID라 여기 걸리지 않는다.
-            releaseHold(seatLocks, hold, exception);
+            releaseHold(hold, exception);
             throw new BookingException(BookingErrorCode.E5004);
         } catch (final RuntimeException exception) {
-            releaseHold(seatLocks, hold, exception);
+            releaseHold(hold, exception);
             throw exception;
         }
 
@@ -154,22 +148,25 @@ public class CreateOrderUseCase {
     }
 
     /**
-     * 좌석 락을 건 구간 안에서만 Redis 선점을 만든다. 락은 이 구간을 벗어나지 않는다.
+     * 본인이 선택 중인 좌석으로만 선점한다(ADR 0021). 확인과 선점이 저장소 스크립트 하나라 그 사이에 선택이 해제되고 남이 다시 고른 좌석을 선점할 수 없다.
      *
-     * <p>본인이 선택 중인 좌석으로만 선점한다(ADR 0021). 선택·해제도 같은 좌석 락을 잡으므로 확인과 선점 사이에 선택이 바뀌지 않는다 — 락 밖에서 확인하면 그 사이 선택이 해제되고 남이 다시
-     * 고른 좌석을 선점할 수 있다.
+     * <p>스크립트는 "본인이 선택 중이 아님"(E4006)만 안다. 선택 시간이 지나 풀린 것(E4007)인지는 실패했을 때만 선택 기록을 따로 읽어 가른다 — 정상 주문은 Redis를 한 번만 부른다.
      */
     private Hold holdSeats(
-            final List<LockKey> seatLocks,
             final Input input,
             final RequestedSeatIds requestedSeatIds,
             final Duration holdDuration,
             final LocalDateTime now) {
-        return distributedLock.withLock(seatLocks, LockOptions.defaults(), () -> {
-            seatSelectionService.requireSelectedBy(input.performanceId(), input.memberId(), requestedSeatIds.toList());
+        try {
             return holdRegistry.createHold(
                     input.memberId(), input.performanceId(), requestedSeatIds.toList(), holdDuration, now);
-        });
+        } catch (final BookingException exception) {
+            if (exception.getErrorCode() == BookingErrorCode.E4006) {
+                seatSelectionService.requireSelectedBy(
+                        input.performanceId(), input.memberId(), requestedSeatIds.toList());
+            }
+            throw exception;
+        }
     }
 
     /** 본인 선택 확인에 실패했는데 같은 회원·회차의 PENDING 주문이 있으면 진행 중 주문 오류로 바꾼다. 앞 주문의 후처리가 선택을 지운 경우다. 실패한 요청에서만 DB를 한 번 더 읽는다. */
@@ -183,12 +180,9 @@ public class CreateOrderUseCase {
     }
 
     /** 보상 실패가 원래 주문 생성 실패를 가리지 않도록, 해제 예외는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다. */
-    private void releaseHold(final List<LockKey> seatLocks, final Hold hold, final RuntimeException originalException) {
+    private void releaseHold(final Hold hold, final RuntimeException originalException) {
         try {
-            distributedLock.withLock(
-                    seatLocks,
-                    LockOptions.defaults(),
-                    () -> holdStore.release(hold.performanceId(), hold.holdKey(), hold.seatIds()));
+            holdStore.releaseWithoutNotice(hold.performanceId(), hold.holdKey(), hold.seatIds());
         } catch (final RuntimeException releaseException) {
             originalException.addSuppressed(releaseException);
             log.warn("hold 해제에 실패했습니다. holdKey={}", hold.holdKey(), releaseException);

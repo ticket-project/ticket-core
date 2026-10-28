@@ -37,7 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
-import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.BookingErrorCode;
@@ -112,7 +111,6 @@ class CreateOrderUseCaseTest {
     @Mock
     private ExpireOrderUseCase expireOrderUseCase;
 
-    private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private CreateOrderUseCase createOrderUseCase;
 
@@ -122,7 +120,6 @@ class CreateOrderUseCaseTest {
                 // 실제 BookingEntryGuard를 mock repository/verifier 위에 씌운다 -- 그래야 "대기열이 필요할 때만
                 // 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new CreateOrderUseCase(
-                        distributedLock,
                         new BookingPreflightReader(
                                 new BookingEntryGuard(
                                         new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
@@ -351,21 +348,22 @@ class CreateOrderUseCaseTest {
         verify(performanceSeatRepository).findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList());
     }
 
-    /** 선택 확인은 좌석 락 안에서 선점 직전에 한다. 거절되면 선점하지 않는다(ADR 0021). */
+    /**
+     * 본인 선택 확인은 선점 스크립트 안에서 선점과 같은 순간에 한다(ADR 0021). 스크립트는 "선택 중이 아님"만 알리므로, 선택 시간이 지나 풀린 것인지는 실패했을 때만 선택 기록을 읽어 가른다.
+     */
     @Test
-    void 본인이_선택하지_않은_좌석이_섞여_있으면_선점하지_않는다() {
+    void 본인이_선택하지_않은_좌석이_섞여_있으면_선택_기록으로_오류를_가른다() {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         stubAvailableSeats(RequestedSeatIds.from(seatIds));
-        doThrow(new BookingException(BookingErrorCode.E4006))
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+                .thenThrow(new BookingException(BookingErrorCode.E4006));
+        doThrow(new BookingException(BookingErrorCode.E4007))
                 .when(seatSelectionService)
                 .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
 
-        assertThatThrownBy(() -> createOrderUseCase.execute(input(seatIds)))
-                .isInstanceOf(BookingException.class)
-                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4006);
+        assertError(seatIds, BookingErrorCode.E4007);
 
-        verify(holdRegistry, never()).createHold(any(), any(), any(), any(), any());
         verifyNoInteractions(pendingOrderCreator);
     }
 
@@ -377,9 +375,8 @@ class CreateOrderUseCaseTest {
         when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
                 .thenReturn(false, true);
         stubAvailableSeats(RequestedSeatIds.from(seatIds));
-        doThrow(new BookingException(BookingErrorCode.E4006))
-                .when(seatSelectionService)
-                .requireSelectedBy(PERFORMANCE_ID, MEMBER_ID, seatIds);
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
+                .thenThrow(new BookingException(BookingErrorCode.E4006));
 
         assertError(seatIds, BookingErrorCode.E5004);
 
@@ -405,7 +402,7 @@ class CreateOrderUseCaseTest {
 
         assertError(input.seatIds(), BookingErrorCode.E5004);
 
-        verify(holdStore).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
+        verify(holdStore).releaseWithoutNotice(PERFORMANCE_ID, "hold-key", seatIds.toList());
     }
 
     @Test
@@ -428,7 +425,7 @@ class CreateOrderUseCaseTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("order failed");
 
-        verify(holdStore).release(PERFORMANCE_ID, "hold-key", seatIds.toList());
+        verify(holdStore).releaseWithoutNotice(PERFORMANCE_ID, "hold-key", seatIds.toList());
     }
 
     @Test
@@ -449,7 +446,7 @@ class CreateOrderUseCaseTest {
                 .thenThrow(originalException);
         doThrow(new RuntimeException("release failed"))
                 .when(holdStore)
-                .release(PERFORMANCE_ID, "hold-key", seatIds.toList());
+                .releaseWithoutNotice(PERFORMANCE_ID, "hold-key", seatIds.toList());
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
                 .isInstanceOf(RuntimeException.class)
