@@ -19,12 +19,12 @@ public class ExpireOrderUseCase {
     private final OrderTerminationService orderTerminationService;
 
     /**
-     * 다른 인스턴스가 잠그지 않은 만료 주문 하나를 잠가 {@code EXPIRED}로 바꾸고 그 id를 돌려준다. 더 없으면 빈 값이다.
+     * 다른 인스턴스가 잠그지 않은 만료 주문 하나를 잠가 {@code EXPIRED}로 바꾸고 그 id와 만료 시각을 돌려준다. 더 없으면 빈 값이다.
      *
      * @throws OrderExpirationFailedException 잠근 주문의 만료가 실패했다. 트랜잭션은 롤백되고, 호출자는 실린 id로 커서를 넘긴다
      */
     @Transactional
-    public Optional<Long> expireNext(final LocalDateTime now, final long afterOrderId) {
+    public Optional<ExpiredOrder> expireNext(final LocalDateTime now, final long afterOrderId) {
         final Optional<Order> next = orderRepository.findNextExpirableForUpdateSkipLocked(now, afterOrderId);
         next.ifPresent(order -> {
             try {
@@ -33,8 +33,11 @@ public class ExpireOrderUseCase {
                 throw new OrderExpirationFailedException(order.getId(), e);
             }
         });
-        return next.map(Order::getId);
+        return next.map(order -> new ExpiredOrder(order.getId(), order.getExpiresAt()));
     }
+
+    /** 만료시킨 주문. 청소가 커서로 쓰는 id와, 만료 시각 뒤 얼마 만에 처리했는지 재는 만료 시각이다. */
+    public record ExpiredOrder(long orderId, LocalDateTime expiresAt) {}
 
     /**
      * 같은 회원·회차의 PENDING 주문이 만료 시각을 지났으면 그 자리에서 {@code EXPIRED}로 바꾼다. 새 주문이 그 주문 때문에 막혔을 때만 부른다 — 청소 전 몇 초 동안 원래 주인만 막히지

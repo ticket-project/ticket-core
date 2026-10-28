@@ -1,14 +1,18 @@
 package com.ticket.booking.order.usecase;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.ticket.booking.order.usecase.ExpireOrderUseCase.ExpiredOrder;
 import com.ticket.booking.order.usecase.ExpireOrderUseCase.OrderExpirationFailedException;
 
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,13 +25,29 @@ import lombok.extern.slf4j.Slf4j;
  * 실패 등 DB 쪽 문제)는 이번 순회를 멈춘다.
  *
  * <p>순회당 상한은 두지 않는다. 한 건씩 처리해 인스턴스마다 메모리에는 주문 한 건, DB 연결은 하나만 쓰고 트랜잭션도 짧다.
+ *
+ * <p>지표: {@code booking.order.expiration.delay}는 만료 시각 뒤 몇 초 만에 순회가 그 주문을 잡았는지다(청소 주기가 충분한지 본다).
+ * {@code booking.order.expiration.failures}는 다음 순회로 미룬 건수다. 임계값은 부하 측정 뒤에 정한다(스케일 아웃 결정 D2-2).
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ExpirePendingOrdersUseCase {
     private final ExpireOrderUseCase expireOrderUseCase;
     private final Clock clock;
+    private final Timer delay;
+    private final Counter failures;
+
+    public ExpirePendingOrdersUseCase(
+            final ExpireOrderUseCase expireOrderUseCase, final Clock clock, final MeterRegistry meterRegistry) {
+        this.expireOrderUseCase = expireOrderUseCase;
+        this.clock = clock;
+        this.delay = Timer.builder("booking.order.expiration.delay")
+                .description("주문 만료 시각 뒤 청소가 그 주문을 잡기까지 걸린 시간")
+                .register(meterRegistry);
+        this.failures = Counter.builder("booking.order.expiration.failures")
+                .description("주문 만료 청소에서 실패해 다음 순회로 미룬 건수")
+                .register(meterRegistry);
+    }
 
     /**
      * @param processedCount 이번 순회에서 만료시킨 건수
@@ -42,23 +62,26 @@ public class ExpirePendingOrdersUseCase {
         long cursor = 0L;
 
         while (true) {
-            final Optional<Long> expiredOrderId;
+            final Optional<ExpiredOrder> expired;
             try {
-                expiredOrderId = expireOrderUseCase.expireNext(now, cursor);
+                expired = expireOrderUseCase.expireNext(now, cursor);
             } catch (final OrderExpirationFailedException e) {
                 log.error("주문 만료 처리 실패: orderId={}", e.orderId(), e);
                 cursor = e.orderId();
                 failed++;
+                failures.increment();
                 continue;
             } catch (final RuntimeException e) {
                 log.error("주문 만료 순회를 멈춥니다. cursor={}", cursor, e);
                 failed++;
+                failures.increment();
                 break;
             }
-            if (expiredOrderId.isEmpty()) {
+            if (expired.isEmpty()) {
                 break;
             }
-            cursor = expiredOrderId.get();
+            cursor = expired.get().orderId();
+            delay.record(Duration.between(expired.get().expiresAt(), now));
             processed++;
         }
 

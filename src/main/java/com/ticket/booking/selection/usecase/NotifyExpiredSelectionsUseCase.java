@@ -1,5 +1,6 @@
 package com.ticket.booking.selection.usecase;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,7 +12,8 @@ import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 import com.ticket.booking.selection.domain.SeatSelectionStore.ExpiredSelection;
 
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,22 +23,39 @@ import lombok.extern.slf4j.Slf4j;
  * 항목을 지우지 않으므로, 이미 해제된 좌석은 한 번 더 알리고(화면은 같다) 선점으로 넘어갔거나 다시 선택된 좌석은 알리지 않는다.
  *
  * <p>꺼낸 뒤 알리기 전에 인스턴스가 죽으면 그 알림은 빠진다. 화면 알림뿐이라 되살리는 장치를 두지 않는다.
+ *
+ * <p>지표: {@code booking.seat.selection.expiration.delay}는 선택 만료 시각 뒤 몇 ms 만에 장부에서 꺼냈는지다(장부가 밀리는지 본다). 임계값은 부하 측정 뒤에
+ * 정한다.
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NotifyExpiredSelectionsUseCase {
     private static final int BATCH_SIZE = 100;
 
     private final SeatSelectionService seatSelectionService;
     private final SeatSelectionWriter seatSelectionWriter;
     private final PerformanceSeatRepository performanceSeatRepository;
+    private final Timer delay;
+
+    public NotifyExpiredSelectionsUseCase(
+            final SeatSelectionService seatSelectionService,
+            final SeatSelectionWriter seatSelectionWriter,
+            final PerformanceSeatRepository performanceSeatRepository,
+            final MeterRegistry meterRegistry) {
+        this.seatSelectionService = seatSelectionService;
+        this.seatSelectionWriter = seatSelectionWriter;
+        this.performanceSeatRepository = performanceSeatRepository;
+        this.delay = Timer.builder("booking.seat.selection.expiration.delay")
+                .description("좌석 선택 만료 시각 뒤 장부에서 꺼내기까지 걸린 시간")
+                .register(meterRegistry);
+    }
 
     /** @return 이번에 꺼낸 만료 수. 꽉 채워 꺼냈으면 기다리지 않고 바로 다시 꺼낸다 */
     public int execute() {
         int popped = 0;
         while (true) {
             final List<ExpiredSelection> expired = seatSelectionService.popExpired(BATCH_SIZE);
+            expired.forEach(selection -> delay.record(Duration.ofMillis(Math.max(0L, selection.delayMillis()))));
             expired.stream()
                     .collect(Collectors.groupingBy(ExpiredSelection::performanceId))
                     .forEach(this::notifyPerformance);
