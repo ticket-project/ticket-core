@@ -70,11 +70,6 @@ public class SeatSelectionService {
         throw new BookingException(BookingErrorCode.E4002);
     }
 
-    /** 지금 이 좌석을 누군가 선택하고 있는지. */
-    public boolean isSelected(final Long performanceId, final Long seatId) {
-        return seatSelectionStore.getHolder(performanceId, seatId) != null;
-    }
-
     /** 이 회원이 지금 선택 중인 좌석. 일괄 해제가 좌석마다 알림 표시값을 미리 읽으려고 쓴다. */
     public Set<Long> getSelectedSeatIds(final Long performanceId, final Long memberId) {
         return seatSelectionStore.getSelectedSeatIdsByMember(performanceId, memberKeyOf(memberId));

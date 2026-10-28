@@ -1,70 +1,49 @@
 package com.ticket.booking.event;
 
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
+import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.port.SeatStatusEventPublisher;
-import com.ticket.booking.selection.domain.SeatSelectionService;
 
+/** "아직 이 hold인가" 확인과 선택 정리·발행의 원자성은 {@code RedissonHoldStoreIntegrationTest}가 실제 Redis로 고정한다. 여기서는 알림 내용만 본다. */
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("NonAsciiCharacters")
 class HeldSeatPublisherTest {
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
+    private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
+
     @Mock
     private HoldStore holdStore;
 
-    @Mock
-    private SeatSelectionService seatSelectionService;
-
-    @Mock
-    private SeatStatusEventPublisher seatStatusEventPublisher;
-
     @Test
-    void current_hold_releases_only_the_owners_selection_before_publishing_held() {
-        when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(true);
-        when(holdStore.isHeldBy(10L, 200L, "hold-key")).thenReturn(true);
-        publisher().clearSelectionsAndPublishHeld("hold-key", 20L, snapshot());
+    void 좌석마다_performanceSeatId를_실은_HELD로_확정을_넘긴다() {
+        new HeldSeatPublisher(holdStore, CLOCK)
+                .clearSelectionsAndPublishHeld(
+                        "hold-key",
+                        20L,
+                        new OrderHoldSnapshot(10L, List.of(100L, 200L), Map.of(100L, 901L, 200L, 902L)));
 
-        final InOrder inOrder = inOrder(holdStore, seatSelectionService, seatStatusEventPublisher);
-        inOrder.verify(holdStore).isHeldBy(10L, 100L, "hold-key");
-        inOrder.verify(holdStore).isHeldBy(10L, 200L, "hold-key");
-        inOrder.verify(seatSelectionService).deselectIfOwned(10L, 100L, 20L, null);
-        inOrder.verify(seatSelectionService).deselectIfOwned(10L, 200L, 20L, null);
-        inOrder.verify(seatStatusEventPublisher).publish(10L, 901L, 100L, SeatStatusAction.HELD);
-        inOrder.verify(seatStatusEventPublisher).publish(10L, 902L, 200L, SeatStatusAction.HELD);
-    }
-
-    @Test
-    void stale_hold_does_not_release_a_new_selection_or_publish_held() {
-        when(holdStore.isHeldBy(10L, 100L, "hold-key")).thenReturn(false);
-
-        publisher().clearSelectionsAndPublishHeld("hold-key", 20L, snapshot());
-
-        verify(holdStore).isHeldBy(10L, 100L, "hold-key");
-        verify(holdStore, never()).isHeldBy(10L, 200L, "hold-key");
-        verifyNoInteractions(seatSelectionService, seatStatusEventPublisher);
-    }
-
-    private HeldSeatPublisher publisher() {
-        return new HeldSeatPublisher(
-                new RecordingDistributedLock(), holdStore, seatSelectionService, seatStatusEventPublisher);
-    }
-
-    private OrderHoldSnapshot snapshot() {
-        return new OrderHoldSnapshot(10L, List.of(100L, 200L), Map.of(100L, 901L, 200L, 902L));
+        verify(holdStore)
+                .confirmHeld(
+                        10L,
+                        "hold-key",
+                        20L,
+                        List.of(
+                                new SeatStatusEvent(10L, 901L, 100L, SeatStatusAction.HELD, NOW),
+                                new SeatStatusEvent(10L, 902L, 200L, SeatStatusAction.HELD, NOW)));
     }
 }
