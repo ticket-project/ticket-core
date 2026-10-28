@@ -161,7 +161,7 @@ DB가 막는 것: 회원·회차당 PENDING 주문 하나(`uk_orders_pending_mem
 
 ## 6. 바뀌는 코드
 
-- **없어짐**: `booking.concurrency` 패키지 전체(`DistributedLock`, `LockKey`, `LockOptions`, `LockScope`,
+- **없어짐**: 좌석 락 패키지(booking의 concurrency) 전체(`DistributedLock`, `LockKey`, `LockOptions`, `LockScope`,
   `RedissonDistributedLock`, `RedissonLockKeyFormatter`)와 그 테스트, 네 곳의 `withLock`.
 - **바뀜**
   - `RedissonSeatSelectionStore`: 선택 스크립트에 선점 확인·장부 등록·발행, 해제 스크립트에 발행.
