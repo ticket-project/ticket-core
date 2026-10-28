@@ -50,7 +50,8 @@ public interface SeatSelectionStore {
     /** 이 회원의 선택 중 최근에 시간이 지나 풀린 좌석. 직접 해제했거나 오래전에 만료된 좌석은 포함하지 않는다. */
     Set<Long> getRecentlyExpiredSeatIdsByMember(Long performanceId, String memberId);
 
-    record ExpiredSelection(Long performanceId, Long seatId) {}
+    /** @param delayMillis 꺼낸 순간이 선택 만료 시각보다 몇 ms 늦었는지. 장부가 밀리는지 보는 지표다 */
+    record ExpiredSelection(Long performanceId, Long seatId, long delayMillis) {}
 
     enum SelectResult {
         SELECTED,

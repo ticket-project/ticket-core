@@ -64,15 +64,21 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
             return 1
             """;
 
-    /** 점수가 지금 이하인 장부 항목을 최대 ARGV[1]개 꺼내며 지운다. 시계는 선택 스크립트와 같은 Redis {@code TIME}이다. */
+    /**
+     * 점수가 지금 이하인 장부 항목을 최대 ARGV[1]개 꺼내며 지운다. 시계는 선택 스크립트와 같은 Redis {@code TIME}이다. 항목마다 값과, 만료 시각보다 몇 ms 늦게 꺼냈는지를 차례로
+     * 돌려준다.
+     */
     private static final String POP_EXPIRED_SCRIPT = """
             local redisTime = redis.call('TIME')
             local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
-            local entries = redis.call('zrangebyscore', KEYS[1], '-inf', nowMillis, 'LIMIT', 0, tonumber(ARGV[1]))
-            if #entries > 0 then
-                redis.call('zrem', KEYS[1], unpack(entries))
+            local scored = redis.call('zrangebyscore', KEYS[1], '-inf', nowMillis, 'WITHSCORES', 'LIMIT', 0, tonumber(ARGV[1]))
+            local result = {}
+            for i = 1, #scored, 2 do
+                redis.call('zrem', KEYS[1], scored[i])
+                table.insert(result, scored[i])
+                table.insert(result, tostring(nowMillis - tonumber(scored[i + 1])))
             end
-            return entries
+            return result
             """;
 
     /** 지웠고 선점(KEYS[4])이 없으면 ARGV[4]를 발행한다(ARGV[3] 채널). ARGV[4]가 빈 문자열이면 발행하지 않는다. */
@@ -178,13 +184,16 @@ public class RedissonSeatSelectionStore implements SeatSelectionStore {
                         RScript.ReturnType.LIST,
                         List.<Object>of(SeatSelectionRedisKey.SELECT_EXPIRY_LEDGER_KEY),
                         limit);
-        return entries.stream()
-                .map(entry -> {
-                    final int separator = entry.indexOf(':');
-                    return new ExpiredSelection(
-                            Long.valueOf(entry.substring(0, separator)), Long.valueOf(entry.substring(separator + 1)));
-                })
-                .toList();
+        final List<ExpiredSelection> expired = new ArrayList<>(entries.size() / 2);
+        for (int i = 0; i < entries.size(); i += 2) {
+            final String entry = entries.get(i);
+            final int separator = entry.indexOf(':');
+            expired.add(new ExpiredSelection(
+                    Long.valueOf(entry.substring(0, separator)),
+                    Long.valueOf(entry.substring(separator + 1)),
+                    Long.parseLong(entries.get(i + 1))));
+        }
+        return expired;
     }
 
     @Override

@@ -26,7 +26,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import com.ticket.booking.hold.persistence.HoldRedisKey;
 import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.selection.domain.SeatSelectionStore;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 import com.ticket.booking.websocket.SeatStatusRelay;
 import com.ticket.testsupport.TestContainerImages;
@@ -155,7 +154,12 @@ class RedissonSeatSelectionStoreIntegrationTest {
 
         await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(store.popExpired(100))
-                        .containsExactly(new SeatSelectionStore.ExpiredSelection(PERFORMANCE_ID, SEAT_ID)));
+                        .singleElement()
+                        .satisfies(expired -> {
+                            assertThat(expired.performanceId()).isEqualTo(PERFORMANCE_ID);
+                            assertThat(expired.seatId()).isEqualTo(SEAT_ID);
+                            assertThat(expired.delayMillis()).isNotNegative();
+                        }));
         assertThat(store.popExpired(100)).isEmpty();
     }
 

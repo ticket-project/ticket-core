@@ -48,7 +48,7 @@ class ExpireOrderUseCaseTest {
         final Order order = order(10L, NOW.minusSeconds(1));
         when(orderRepository.findNextExpirableForUpdateSkipLocked(NOW, 3L)).thenReturn(Optional.of(order));
 
-        assertThat(useCase.expireNext(NOW, 3L)).contains(10L);
+        assertThat(useCase.expireNext(NOW, 3L)).contains(new ExpireOrderUseCase.ExpiredOrder(10L, NOW.minusSeconds(1)));
         verify(orderTerminationService).expire(order, NOW);
     }
 
