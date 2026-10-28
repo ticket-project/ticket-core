@@ -1,24 +1,18 @@
 package com.ticket.booking.selection.usecase;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
-import com.ticket.booking.concurrency.DistributedLock;
-import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.LockOptions;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
-import com.ticket.booking.seat.domain.SeatOccupancy;
+import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,21 +27,15 @@ import lombok.RequiredArgsConstructor;
  * <p>서버가 보장하는 것은 여기까지다 — <b>클라이언트 수신 순서는 WebSocket 전송 계층의 문제이지 이 락의 범위가 아니다.</b> 그래서 만료·일괄 해제처럼 "이미 지난 사실"을 알리는 경로는 발행
  * 직전에 현재 상태를 락 안에서 다시 확인해, 남이 이미 차지한 좌석을 비었다고 알리지 않는다. 상태를 한 번 더 읽는 것만으로는 부족하고 그 재확인이 락 안에 있어야 의미가 있다.
  */
+/**
+ * 좌석 선택·해제와 그 알림. 상태 확인·변경·발행은 저장소의 Lua 스크립트 하나가 하므로 좌석 락을 잡지 않는다 — Redis가 스크립트를 하나씩 실행해 알림 순서가 상태가 바뀐 순서와 같다 (좌석 락 재설계
+ * C안).
+ */
 @Component
 @RequiredArgsConstructor
 public class SeatSelectionWriter {
-    /** 좌석 선택은 고빈도 경로라 경합 시 오래 기다리지 않고 빨리 실패한다. */
-    private static final LockOptions SELECT_LOCK = LockOptions.waiting(Duration.ofMillis(500));
-
-    /** 만료·일괄 해제 알림은 사용자 요청 경로가 아니라 조금 더 기다린다. */
-    private static final LockOptions NOTIFY_LOCK = LockOptions.defaults();
-
-    private final DistributedLock distributedLock;
-    private final HoldStore holdStore;
     private final SeatSelectionService seatSelectionService;
-    private final SeatOccupancy seatOccupancy;
     private final PerformanceSeatRepository performanceSeatRepository;
-    private final SeatStatusEventPublisher seatEventPublisher;
     private final Clock clock;
 
     public void select(
@@ -57,47 +45,47 @@ public class SeatSelectionWriter {
             final Long performanceSeatId,
             final LocalDateTime orderCloseTime,
             final @Nullable Integer maxSeatCount) {
-        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
-            if (LocalDateTime.now(clock).isAfter(orderCloseTime)) {
-                throw new BookingException(BookingErrorCode.E3001);
-            }
-            if (holdStore.isHeld(performanceId, seatId)) {
-                throw new BookingException(BookingErrorCode.E6000);
-            }
-            seatSelectionService.select(performanceId, seatId, memberId, maxSeatCount);
-            seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED);
-        });
+        final LocalDateTime now = LocalDateTime.now(clock);
+        if (now.isAfter(orderCloseTime)) {
+            throw new BookingException(BookingErrorCode.E3001);
+        }
+        seatSelectionService.select(
+                performanceId,
+                seatId,
+                memberId,
+                maxSeatCount,
+                new SeatStatusEvent(performanceId, performanceSeatId, seatId, SeatStatusAction.SELECTED, now));
     }
 
     /** 실제로 해제됐고 hold가 없는 경우에만 알린다. 주문 생성 후 남아 있던 선택을 해제해도 HELD 상태를 덮어쓰지 않는다. */
     public void deselect(final Long performanceId, final Long seatId, final Long memberId) {
-        final Long performanceSeatId = findPerformanceSeatId(performanceId, seatId);
-        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), SELECT_LOCK, () -> {
-            if (!seatSelectionService.deselect(performanceId, seatId, memberId)
-                    || holdStore.isHeld(performanceId, seatId)) {
-                return;
-            }
-            seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
-        });
+        seatSelectionService.deselect(
+                performanceId,
+                seatId,
+                memberId,
+                deselected(performanceId, seatId, findPerformanceSeatId(performanceId, seatId)));
     }
 
-    /** 이미 끝난 선택(TTL 만료, 일괄 해제)을 알린다. 락 안에서 현재 상태를 다시 확인해, 그 사이 다른 사용자가 다시 선택했거나 선점으로 넘어간 좌석은 알리지 않는다. */
+    /** 본인 선택이면 해제하고 알린다. 남의 선택이면 조용히 넘어간다(일괄 해제). */
+    public void deselectIfOwned(
+            final Long performanceId, final Long seatId, final Long memberId, final @Nullable Long performanceSeatId) {
+        seatSelectionService.deselectIfOwned(
+                performanceId, seatId, memberId, deselected(performanceId, seatId, performanceSeatId));
+    }
+
+    /** 이미 끝난 선택(TTL 만료)을 알린다. 그 사이 다른 사용자가 다시 선택했거나 선점으로 넘어간 좌석은 알리지 않는다. */
     public void notifyReleasedIfFree(final Long performanceId, final Long seatId) {
-        notifyReleasedIfFree(performanceId, seatId, findPerformanceSeatId(performanceId, seatId));
+        seatSelectionService.notifyIfFree(
+                performanceId, seatId, deselected(performanceId, seatId, findPerformanceSeatId(performanceId, seatId)));
     }
 
-    /** performanceSeatId를 이미 알고 있을 때 쓴다. 여러 좌석을 한꺼번에 알릴 때 좌석마다 DB를 다시 읽지 않도록 호출자가 한 번에 조회한 값을 넘긴다. */
-    public void notifyReleasedIfFree(
+    private SeatStatusEvent deselected(
             final Long performanceId, final Long seatId, final @Nullable Long performanceSeatId) {
-        distributedLock.withLock(List.of(LockKey.seat(performanceId, seatId)), NOTIFY_LOCK, () -> {
-            if (seatOccupancy.isOccupied(performanceId, seatId)) {
-                return;
-            }
-            seatEventPublisher.publish(performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED);
-        });
+        return new SeatStatusEvent(
+                performanceId, performanceSeatId, seatId, SeatStatusAction.DESELECTED, LocalDateTime.now(clock));
     }
 
-    /** 락 밖에서 미리 읽는다 — DB 조회를 좌석 락 안에 넣으면 고빈도 경로의 락 보유 시간이 DB 지연을 그대로 따라간다. */
+    /** 알림 표시값이다. 회차 판매 좌석을 찾지 못하면 null이다 — 없어도 발행을 막지 않는다. */
     private @Nullable Long findPerformanceSeatId(final Long performanceId, final Long seatId) {
         return performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(performanceId, List.of(seatId)).stream()
                 .findFirst()

@@ -34,13 +34,13 @@ public class DeselectAllSeatsUseCase {
     }
 
     public void execute(final Input input) {
-        final List<Long> seatIds = seatSelectionService.deselectAll(input.performanceId(), input.memberId());
+        final List<Long> seatIds =
+                List.copyOf(seatSelectionService.getSelectedSeatIds(input.performanceId(), input.memberId()));
+        // 알림 표시값(performanceSeatId)은 한 번에 읽어 좌석마다 DB를 다시 읽지 않는다. 해제와 발행은 좌석마다 스크립트
+        // 하나라, 그 사이 남이 다시 고른 좌석을 비었다고 알리지 않는다.
         final Map<Long, Long> performanceSeatIdBySeatId = resolvePerformanceSeatIds(input.performanceId(), seatIds);
-        // 실제로 해제된 좌석만 돌려받지만, 알리기 전에 좌석 락 안에서 현재 상태를 다시 확인한다 — 해제와 발행
-        // 사이에 다른 사용자가 같은 좌석을 다시 선택했을 수 있다. performanceSeatId는 위에서 한 번에
-        // 조회한 값을 그대로 넘겨 좌석마다 DB를 다시 읽지 않는다.
-        seatIds.forEach(seatId -> seatSelectionWriter.notifyReleasedIfFree(
-                input.performanceId(), seatId, performanceSeatIdBySeatId.get(seatId)));
+        seatIds.forEach(seatId -> seatSelectionWriter.deselectIfOwned(
+                input.performanceId(), seatId, input.memberId(), performanceSeatIdBySeatId.get(seatId)));
     }
 
     private Map<Long, Long> resolvePerformanceSeatIds(final Long performanceId, final List<Long> seatIds) {

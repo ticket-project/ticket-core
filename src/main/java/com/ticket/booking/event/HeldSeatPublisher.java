@@ -51,7 +51,7 @@ public class HeldSeatPublisher {
         }
 
         for (final Long seatId : snapshot.seatIds()) {
-            seatSelectionService.deselectIfOwned(performanceId, seatId, memberId);
+            seatSelectionService.deselectIfOwned(performanceId, seatId, memberId, null);
         }
         for (final Long seatId : snapshot.seatIds()) {
             seatStatusEventPublisher.publish(

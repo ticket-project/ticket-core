@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -21,11 +22,18 @@ import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 
+import com.ticket.booking.hold.persistence.HoldRedisKey;
+import com.ticket.booking.seat.port.SeatStatusEvent;
+import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
+import com.ticket.booking.websocket.SeatStatusRelay;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class RedissonSeatSelectionStoreTest {
+    private static final SeatStatusEvent SELECTED =
+            new SeatStatusEvent(10L, null, 20L, SeatStatusAction.SELECTED, LocalDateTime.of(2026, 3, 15, 10, 0));
+
     @Mock
     private RedissonClient redissonClient;
 
@@ -35,11 +43,15 @@ class RedissonSeatSelectionStoreTest {
     @Mock
     private RScript script;
 
+    @Mock
+    private SeatStatusRelay seatStatusRelay;
+
     @InjectMocks
     private RedissonSeatSelectionStore redissonSeatSelectionStore;
 
     @Test
     void 비어있는_좌석이면_selectIfAbsent가_SELECTED다() {
+        doReturn("selected-json").when(seatStatusRelay).encode(SELECTED);
         doReturn(script).when(redissonClient).getScript(StringCodec.INSTANCE);
         doReturn(1L)
                 .when(script)
@@ -50,14 +62,18 @@ class RedissonSeatSelectionStoreTest {
                         eq(List.<Object>of(
                                 SeatSelectionRedisKey.select(10L, 20L),
                                 SeatSelectionRedisKey.selectSeatIndex(10L),
-                                SeatSelectionRedisKey.selectMemberIndex(10L, "3"))),
+                                SeatSelectionRedisKey.selectMemberIndex(10L, "3"),
+                                HoldRedisKey.hold(10L, 20L))),
                         eq(Duration.ofMinutes(5).toMillis()),
                         eq("3"),
                         eq("20"),
                         eq("4"),
-                        eq(Duration.ofMinutes(10).toMillis()));
+                        eq(Duration.ofMinutes(10).toMillis()),
+                        eq(SeatStatusRelay.CHANNEL),
+                        eq("selected-json"));
 
-        SelectResult result = redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4);
+        SelectResult result =
+                redissonSeatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4, SELECTED);
 
         assertThat(result).isEqualTo(SelectResult.SELECTED);
     }
@@ -76,12 +92,15 @@ class RedissonSeatSelectionStoreTest {
                         eq(List.<Object>of(
                                 SeatSelectionRedisKey.select(10L, 20L),
                                 SeatSelectionRedisKey.selectSeatIndex(10L),
-                                SeatSelectionRedisKey.selectMemberIndex(10L, "3"))),
+                                SeatSelectionRedisKey.selectMemberIndex(10L, "3"),
+                                HoldRedisKey.hold(10L, 20L))),
                         eq("3"),
-                        eq("20"));
+                        eq("20"),
+                        eq(SeatStatusRelay.CHANNEL),
+                        eq(""));
 
         String holder = redissonSeatSelectionStore.getHolder(10L, 20L);
-        boolean released = redissonSeatSelectionStore.releaseIfOwned(10L, 20L, "3");
+        boolean released = redissonSeatSelectionStore.releaseIfOwned(10L, 20L, "3", null);
 
         assertThat(holder).isEqualTo("3");
         assertThat(released).isTrue();

@@ -1,8 +1,7 @@
 package com.ticket.booking.selection.usecase;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,19 +22,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.ticket.booking.concurrency.LockKey;
-import com.ticket.booking.concurrency.RecordingDistributedLock;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.hold.domain.HoldStore;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
-import com.ticket.booking.seat.domain.SeatOccupancy;
+import com.ticket.booking.seat.port.SeatStatusEvent;
 import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
-import com.ticket.booking.seat.port.SeatStatusEventPublisher;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
+/**
+ * writer는 알림 이벤트를 만들어 선택 서비스에 넘기기만 한다. 선점 확인·상태 변경·발행의 원자성과 순서는 저장소 스크립트가 지키므로 {@code CoreRedisIntegrationTest}가 실제
+ * Redis로 고정한다.
+ */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
 class SeatSelectionWriterTest {
@@ -43,152 +42,74 @@ class SeatSelectionWriterTest {
     private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
 
     @Mock
-    private HoldStore holdStore;
-
-    @Mock
     private SeatSelectionService seatSelectionService;
 
     @Mock
     private PerformanceSeatRepository performanceSeatRepository;
 
-    @Mock
-    private SeatStatusEventPublisher seatEventPublisher;
-
-    private final RecordingDistributedLock distributedLock = new RecordingDistributedLock();
     private SeatSelectionWriter writer;
 
     @BeforeEach
     void setUp() {
-        writer = new SeatSelectionWriter(
-                distributedLock,
-                holdStore,
-                seatSelectionService,
-                new SeatOccupancy(seatSelectionService, holdStore),
-                performanceSeatRepository,
-                seatEventPublisher,
-                CLOCK);
+        writer = new SeatSelectionWriter(seatSelectionService, performanceSeatRepository, CLOCK);
     }
 
     @Test
-    void 락_내부에서_홀드를_다시_확인하고_좌석을_선택한다() {
-        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
-
+    void 선택하며_performanceSeatId와_지금_시각으로_SELECTED를_넘긴다() {
         writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
 
-        verify(seatSelectionService).select(10L, 20L, 1L, 4);
-    }
-
-    /** 발행이 락 밖에 있으면 뒤늦은 만료 알림이 이 SELECTED 뒤에 끼어들 수 있다. */
-    @Test
-    void SELECTED_발행은_좌석_락_안에서_한다() {
-        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
-
-        writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4);
-
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.SELECTED);
-        assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
+        verify(seatSelectionService)
+                .select(10L, 20L, 1L, 4, new SeatStatusEvent(10L, 501L, 20L, SeatStatusAction.SELECTED, NOW));
     }
 
     @Test
-    void DB검증_후_홀드된_좌석이면_선택을_중단한다() {
-        when(holdStore.isHeld(10L, 20L)).thenReturn(true);
-
-        assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.plusMinutes(1), 4))
-                .isInstanceOf(BookingException.class)
-                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6000);
-
-        verifyNoInteractions(seatSelectionService, seatEventPublisher);
-    }
-
-    @Test
-    void 락_획득_시점에_예매가_마감됐으면_선택을_중단한다() {
+    void 예매가_마감됐으면_선택하지_않는다() {
         assertThatThrownBy(() -> writer.select(10L, 20L, 1L, 501L, NOW.minusNanos(1), 4))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E3001);
 
-        verifyNoInteractions(holdStore, seatSelectionService, seatEventPublisher);
+        verifyNoInteractions(seatSelectionService);
     }
 
     @Test
-    void 해제되면_performanceSeatId와_함께_DESELECTED를_발행한다() {
+    void 해제하며_performanceSeatId를_찾아_DESELECTED를_넘긴다() {
         givenPerformanceSeat();
-        when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
 
         writer.deselect(10L, 20L, 1L);
 
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
+        verify(seatSelectionService).deselect(10L, 20L, 1L, deselected(501L));
+    }
+
+    /** 여러 좌석을 한꺼번에 해제할 때 좌석마다 DB를 다시 읽지 않도록 미리 조회한 id를 그대로 받는다. */
+    @Test
+    void 일괄_해제는_받은_performanceSeatId를_그대로_쓴다() {
+        writer.deselectIfOwned(10L, 20L, 1L, 501L);
+
+        verify(seatSelectionService).deselectIfOwned(10L, 20L, 1L, deselected(501L));
+        verify(performanceSeatRepository, never()).findAllByPerformanceIdAndSeatIdIn(anyLong(), anyList());
     }
 
     @Test
-    void 주문_생성_후_선택을_해제해도_hold된_좌석은_발행하지_않는다() {
+    void 만료_알림은_비어_있을_때만_발행하도록_넘긴다() {
         givenPerformanceSeat();
-        when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(true);
-        when(holdStore.isHeld(10L, 20L)).thenAnswer(invocation -> {
-            assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
-            return true;
-        });
-
-        writer.deselect(10L, 20L, 1L);
-
-        verify(seatSelectionService).deselect(10L, 20L, 1L);
-        verifyNoInteractions(seatEventPublisher);
-    }
-
-    /** 이미 만료된 선택을 해제 요청해도 아무 일도 일어나지 않았으므로 알리지 않는다. */
-    @Test
-    void 실제로_해제되지_않았으면_발행하지_않는다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.deselect(10L, 20L, 1L)).thenReturn(false);
-
-        writer.deselect(10L, 20L, 1L);
-
-        verifyNoInteractions(seatEventPublisher);
-    }
-
-    /** 결함 재현: A의 선택이 만료되고 B가 같은 좌석을 다시 선택한 뒤 A의 만료 처리가 뒤늦게 실행되는 경우다. 그대로 발행하면 B가 잡고 있는 좌석이 비어 보인다. */
-    @Test
-    void 만료_알림_직전에_다른_사용자가_다시_선택했으면_발행하지_않는다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(true);
 
         writer.notifyReleasedIfFree(10L, 20L);
 
-        verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
-        assertThat(distributedLock.allKeys()).containsExactly(LockKey.seat(10L, 20L));
+        verify(seatSelectionService).notifyIfFree(10L, 20L, deselected(501L));
     }
 
     @Test
-    void 만료_알림_직전에_선점으로_넘어갔으면_발행하지_않는다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdStore.isHeld(10L, 20L)).thenReturn(true);
+    void 회차_판매_좌석을_찾지_못해도_알린다() {
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L)))
+                .thenReturn(List.of());
 
         writer.notifyReleasedIfFree(10L, 20L);
 
-        verify(seatEventPublisher, never()).publish(anyLong(), anyLong(), anyLong(), any());
+        verify(seatSelectionService).notifyIfFree(10L, 20L, deselected(null));
     }
 
-    @Test
-    void 만료된_좌석이_여전히_비어_있으면_DESELECTED를_발행한다() {
-        givenPerformanceSeat();
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
-
-        writer.notifyReleasedIfFree(10L, 20L);
-
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
-    }
-
-    /** 여러 좌석을 한꺼번에 알릴 때 좌석마다 DB를 다시 읽지 않도록 미리 조회한 id를 그대로 받는다. */
-    @Test
-    void performanceSeatId를_받으면_좌석을_다시_조회하지_않는다() {
-        when(seatSelectionService.isSelected(10L, 20L)).thenReturn(false);
-        when(holdStore.isHeld(10L, 20L)).thenReturn(false);
-
-        writer.notifyReleasedIfFree(10L, 20L, 501L);
-
-        verifyNoInteractions(performanceSeatRepository);
-        verify(seatEventPublisher).publish(10L, 501L, 20L, SeatStatusAction.DESELECTED);
+    private SeatStatusEvent deselected(final Long performanceSeatId) {
+        return new SeatStatusEvent(10L, performanceSeatId, 20L, SeatStatusAction.DESELECTED, NOW);
     }
 
     private void givenPerformanceSeat() {

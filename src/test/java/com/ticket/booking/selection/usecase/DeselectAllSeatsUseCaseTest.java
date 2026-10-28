@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,33 +36,23 @@ class DeselectAllSeatsUseCaseTest {
     @InjectMocks
     private DeselectAllSeatsUseCase useCase;
 
-    /**
-     * 실제로 해제된 좌석만 알린다. 발행 자체는 SeatSelectionWriter가 좌석 락 안에서 현재 상태를 다시 확인한 뒤 하므로, 해제와 발행 사이에 남이 다시 선택한 좌석은
-     * 걸러진다({@code SeatSelectionWriterTest}).
-     */
+    /** 선택 중인 좌석마다 미리 한 번에 조회한 performanceSeatId로 해제를 넘긴다. 해제와 발행은 좌석마다 저장소 스크립트 하나다. */
     @Test
-    void 해제된_좌석마다_미리_조회한_performanceSeatId로_알린다() {
-        when(seatSelectionService.deselectAll(10L, 1L)).thenReturn(List.of(20L, 21L));
+    void 선택_중인_좌석마다_미리_조회한_performanceSeatId로_해제한다() {
+        when(seatSelectionService.getSelectedSeatIds(10L, 1L)).thenReturn(Set.of(21L, 20L));
         when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(10L, List.of(20L, 21L)))
                 .thenReturn(List.of(performanceSeat(20L, 501L), performanceSeat(21L, 502L)));
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 
-        verify(seatSelectionService).deselectAll(10L, 1L);
-        verify(seatSelectionWriter).notifyReleasedIfFree(10L, 20L, 501L);
-        verify(seatSelectionWriter).notifyReleasedIfFree(10L, 21L, 502L);
-        // 좌석마다 DB를 다시 읽지 않도록 한 번에 조회한 id를 넘긴다.
-        verify(seatSelectionWriter, times(2))
-                .notifyReleasedIfFree(
-                        org.mockito.ArgumentMatchers.anyLong(),
-                        org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any());
+        verify(seatSelectionWriter).deselectIfOwned(10L, 20L, 1L, 501L);
+        verify(seatSelectionWriter).deselectIfOwned(10L, 21L, 1L, 502L);
         verifyNoMoreInteractions(seatSelectionWriter);
     }
 
     @Test
-    void 해제된_좌석이_없으면_좌석을_조회하지도_알리지도_않는다() {
-        when(seatSelectionService.deselectAll(10L, 1L)).thenReturn(List.of());
+    void 선택_중인_좌석이_없으면_좌석을_조회하지도_해제하지도_않는다() {
+        when(seatSelectionService.getSelectedSeatIds(10L, 1L)).thenReturn(Set.of());
 
         useCase.execute(new DeselectAllSeatsUseCase.Input(10L, 1L));
 

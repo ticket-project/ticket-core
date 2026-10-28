@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -18,11 +19,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
+import com.ticket.booking.seat.port.SeatStatusEvent;
+import com.ticket.booking.seat.port.SeatStatusEvent.SeatStatusAction;
 import com.ticket.booking.selection.domain.SeatSelectionStore.SelectResult;
 
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class SeatSelectionServiceTest {
+    private static final SeatStatusEvent SELECTED =
+            new SeatStatusEvent(10L, 30L, 20L, SeatStatusAction.SELECTED, LocalDateTime.of(2026, 3, 15, 10, 0));
+    private static final SeatStatusEvent DESELECTED =
+            new SeatStatusEvent(10L, 30L, 20L, SeatStatusAction.DESELECTED, LocalDateTime.of(2026, 3, 15, 10, 0));
+
     @Mock
     private SeatSelectionStore seatSelectionStore;
 
@@ -32,32 +40,32 @@ class SeatSelectionServiceTest {
     @Test
     void 빈_좌석이면_선택한다() {
         // given
-        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4))
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4, SELECTED))
                 .thenReturn(SelectResult.SELECTED);
         // when
-        seatSelectionService.select(10L, 20L, 3L, 4);
+        seatSelectionService.select(10L, 20L, 3L, 4, SELECTED);
         // then
-        verify(seatSelectionStore).selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4);
+        verify(seatSelectionStore).selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4, SELECTED);
     }
 
     @Test
     void 이미_선택된_좌석이면_예외를_던진다() {
         // given
-        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), null))
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), null, SELECTED))
                 .thenReturn(SelectResult.ALREADY_SELECTED);
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, null))
+        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, null, SELECTED))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4001);
     }
 
     @Test
     void 회원_선택_한도를_넘으면_선점_한도_초과로_거절한다() {
-        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4))
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4, SELECTED))
                 .thenReturn(SelectResult.LIMIT_EXCEEDED);
 
-        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, 4))
+        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, 4, SELECTED))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6001);
     }
@@ -67,9 +75,9 @@ class SeatSelectionServiceTest {
         // given
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn(null);
         // when
-        assertThat(seatSelectionService.deselect(10L, 20L, 3L)).isFalse();
+        assertThat(seatSelectionService.deselect(10L, 20L, 3L, DESELECTED)).isFalse();
         // then
-        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3");
+        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3", DESELECTED);
     }
 
     @Test
@@ -78,7 +86,7 @@ class SeatSelectionServiceTest {
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("4");
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
+        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L, DESELECTED))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4002);
     }
@@ -86,32 +94,32 @@ class SeatSelectionServiceTest {
     @Test
     void 본인이_선택한_좌석은_해제한다() {
         // given
-        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(true);
+        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3", DESELECTED)).thenReturn(true);
         // when
-        assertThat(seatSelectionService.deselect(10L, 20L, 3L)).isTrue();
+        assertThat(seatSelectionService.deselect(10L, 20L, 3L, DESELECTED)).isTrue();
         // then
-        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3");
+        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3", DESELECTED);
         verify(seatSelectionStore, never()).getHolder(10L, 20L);
     }
 
     @Test
     void 비동기_정리는_현재_소유자가_같을_때만_원자적으로_해제한다() {
-        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(true);
+        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3", DESELECTED)).thenReturn(true);
 
-        boolean released = seatSelectionService.deselectIfOwned(10L, 20L, 3L);
+        boolean released = seatSelectionService.deselectIfOwned(10L, 20L, 3L, DESELECTED);
 
         assertThat(released).isTrue();
-        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3");
+        verify(seatSelectionStore).releaseIfOwned(10L, 20L, "3", DESELECTED);
     }
 
     @Test
     void 해제_시점에_다른_회원이_점유중이면_예외를_던진다() {
         // given
         when(seatSelectionStore.getHolder(10L, 20L)).thenReturn("4");
-        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3")).thenReturn(false);
+        when(seatSelectionStore.releaseIfOwned(10L, 20L, "3", DESELECTED)).thenReturn(false);
         // when
         // then
-        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L))
+        assertThatThrownBy(() -> seatSelectionService.deselect(10L, 20L, 3L, DESELECTED))
                 .isInstanceOf(BookingException.class)
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4002);
     }
@@ -145,11 +153,21 @@ class SeatSelectionServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E4006);
     }
 
+    /** 선점 확인은 선택 스크립트 안에서 선택과 같은 순간에 한다. 그래서 좌석 락 없이도 선택과 선점이 한 좌석에 함께 생기지 않는다. */
     @Test
-    void 본인이_선택한_좌석만_일괄_해제한다() {
-        // given
-        when(seatSelectionStore.releaseAllByMember(10L, "3")).thenReturn(List.of(20L));
-        // then
-        assertThat(seatSelectionService.deselectAll(10L, 3L)).containsExactly(20L);
+    void 선점된_좌석이면_선점_충돌로_거절한다() {
+        when(seatSelectionStore.selectIfAbsent(10L, 20L, "3", Duration.ofMinutes(5), 4, SELECTED))
+                .thenReturn(SelectResult.HELD);
+
+        assertThatThrownBy(() -> seatSelectionService.select(10L, 20L, 3L, 4, SELECTED))
+                .isInstanceOf(BookingException.class)
+                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E6000);
+    }
+
+    @Test
+    void 만료_알림은_비어_있을_때만_발행하도록_저장소에_맡긴다() {
+        seatSelectionService.notifyIfFree(10L, 20L, DESELECTED);
+
+        verify(seatSelectionStore).publishIfFree(10L, 20L, DESELECTED);
     }
 }
