@@ -34,6 +34,15 @@ class CacheConfigTest {
     }
 
     @Test
+    void 공연장_좌석은_10분_뒤_만료되고_좌석_수로_상한을_둔다() {
+        final Policy<Object, Object> policy = policyOf(CacheNames.VENUE_SEATS);
+
+        assertThat(policy.expireAfterWrite().orElseThrow().getExpiresAfter()).isEqualTo(Duration.ofMinutes(10));
+        assertThat(policy.eviction().orElseThrow().isWeighted()).isTrue();
+        assertThat(policy.eviction().orElseThrow().getMaximum()).isEqualTo(60_000);
+    }
+
+    @Test
     void 등록하지_않은_이름으로는_캐시를_만들지_않는다() {
         assertThat(cacheManager.getCache("unknown")).isNull();
     }
