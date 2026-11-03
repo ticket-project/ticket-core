@@ -18,11 +18,13 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Spring Modulith의 JPA event publication registry가 커밋 뒤 최소 한 번 전달을 보장한다. 여기서 실패를 catch-and-log로 삼키지 않고 그대로 던져
  * registry가 FAILED로 기록하게 하고, {@code com.ticket.shared.config.EventPublicationMaintenance}가 재시도한다.
  *
- * <p>event payload의 스냅샷을 그대로 믿지 않고 {@code orderId}로 현재 저장된 order를 다시 읽어 처리한다 — 좌석은 Order aggregate가 직접 들고 있어 함께 따라온다.
- * hold 생성 후처리({@link HeldSeatPublisher})와 hold 해제 후처리 ({@link HoldReleaser})는 기존 멱등 로직을 그대로 재사용한다.
+ * <p>{@link OrderCreated}는 payload의 회차·좌석 값으로 처리한다. 주문 좌석은 생성 뒤 바뀌지 않아 다시 읽어도 같은 값이고, 주문마다 읽기 트랜잭션 하나를 덜 쓴다. 이 값이 없는
+ * schema 1 publication과 {@link OrderTerminated}는 {@code orderId}로 저장된 order를 다시 읽는다. hold 생성
+ * 후처리({@link HeldSeatPublisher})와 hold 해제 후처리 ({@link HoldReleaser})는 기존 멱등 로직을 그대로 재사용한다. 이미 끝난 hold인지는 두 후처리의 Redis
+ * 확인이 가른다.
  *
  * <p><b>listener 자체는 DB 트랜잭션을 열지 않는다({@code propagation = NOT_SUPPORTED}).</b> 기본값인 {@code REQUIRES_NEW}에서는 Redis 락
- * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 지금은 필요한 DB 데이터를
+ * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 지금은 DB를 읽어야 할 때만
  * {@link OrderHoldSnapshotReader}의 짧은 읽기 트랜잭션에서 값으로 완성한 뒤 그 밖에서 외부 작업을 한다.
  *
  * <p>트랜잭션을 열지 않아도 publication 계약은 그대로다 — 발행·완료·실패 기록은 Modulith registry가 자기 트랜잭션에서 수행하고, 여기서 던진 예외는 FAILED로 남아 재처리된다. 이
@@ -58,8 +60,11 @@ class BookingEventListeners {
 
     @ApplicationModuleListener(id = ORDER_CREATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderCreated event) {
-        final OrderHoldSnapshot snapshot =
-                orderHoldSnapshotReader.read(event.orderId()).orElse(null);
+        final Long performanceId = event.performanceId();
+        // schema 2는 필요한 값을 담고 온다. schema 1 publication만 주문을 다시 읽는다.
+        final OrderHoldSnapshot snapshot = performanceId != null
+                ? new OrderHoldSnapshot(performanceId, event.seatIds(), event.performanceSeatIdBySeatId())
+                : orderHoldSnapshotReader.read(event.orderId()).orElse(null);
         if (snapshot == null) {
             log.debug("주문 생성 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
             return;

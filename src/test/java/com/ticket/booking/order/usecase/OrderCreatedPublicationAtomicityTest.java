@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import jakarta.persistence.EntityManager;
 
@@ -72,7 +74,24 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
         final OrderCreated readCreated = jsonMapper.readValue(created, OrderCreated.class);
         assertThat(readCreated.orderId()).isEqualTo(1L);
         assertThat(readCreated.eventId()).hasToString("0b0e7c1c-9a55-4b5e-9a49-6d1f0c3c2a11");
-        assertThat(readCreated.schemaVersion()).isEqualTo(OrderCreated.SCHEMA_VERSION);
+        // schema 1에는 회차·좌석 값이 없다. listener는 performanceId가 null이면 주문을 다시 읽는다.
+        assertThat(readCreated.schemaVersion()).isEqualTo(1);
+        assertThat(readCreated.performanceId()).isNull();
+        assertThat(readCreated.seatIds()).isEmpty();
+        assertThat(readCreated.performanceSeatIdBySeatId()).isEmpty();
+        final OrderCreated current = new OrderCreated(
+                readCreated.eventId(),
+                OrderCreated.SCHEMA_VERSION,
+                1L,
+                2L,
+                "hold",
+                Set.of(3L),
+                readCreated.occurredAt(),
+                4L,
+                List.of(5L),
+                Map.of(5L, 3L));
+        assertThat(jsonMapper.readValue(jsonMapper.writeValueAsString(current), OrderCreated.class))
+                .isEqualTo(current);
         final OrderTerminated readTerminated = jsonMapper.readValue(terminated, OrderTerminated.class);
         assertThat(readTerminated.reason()).isEqualTo("EXPIRED");
         assertThat(readTerminated.schemaVersion()).isEqualTo(OrderTerminated.SCHEMA_VERSION);

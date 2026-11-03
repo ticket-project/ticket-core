@@ -3,6 +3,8 @@ package com.ticket.bootstrap.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -68,7 +70,10 @@ class ModulithInsightVerificationTest extends BookingE2ETestSupport {
                 1L,
                 "insight-verification-hold",
                 Set.of(1L),
-                Instant.now()));
+                Instant.now(),
+                1L,
+                List.of(2L),
+                Map.of(2L, 1L)));
 
         assertThat(meterRegistry.getMeters())
                 .as("module.events.published로 시작하는 counter가 최소 하나는 있어야 한다")
