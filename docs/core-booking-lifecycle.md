@@ -64,8 +64,9 @@ CreateOrderUseCase          (POST /api/v1/orders)
       해제 실패는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다)
   -> DB 커밋 및 connection 반환
   -> BookingEventListeners.on(OrderCreated)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
-       -> OrderHoldSnapshotReader: orderId로 필요한 값만 짧은 읽기 트랜잭션에서 완성
-          (OrderSeat의 좌석 식별자 매핑도 담는다. 이후 Redis 작업은 DB를 다시 읽지 않는다)
+       -> 이벤트에 담긴 회차·좌석 식별자 매핑으로 처리한다(schema 2). 주문 좌석은 생성 뒤 바뀌지 않아
+          DB를 다시 읽지 않는다. 이 값이 없는 schema 1 publication만 OrderHoldSnapshotReader가
+          orderId로 짧은 읽기 트랜잭션에서 완성한다
        -> HeldSeatPublisher → Lua 한 번:
             -> 모든 좌석이 아직 이 holdKey로 잡혀 있을 때만 아래를 진행(아니면 건너뜀)
             -> 주문 회원 소유 selection만 해제

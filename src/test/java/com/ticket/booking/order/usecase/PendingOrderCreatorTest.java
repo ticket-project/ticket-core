@@ -100,6 +100,10 @@ class PendingOrderCreatorTest {
         assertThat(event.holdKey()).isEqualTo("hold-key");
         assertThat(event.performanceSeatIds()).isEqualTo(Set.of(501L));
         assertThat(event.schemaVersion()).isEqualTo(OrderCreated.SCHEMA_VERSION);
+        // listener가 주문을 다시 읽지 않고 쓰는 값이다.
+        assertThat(event.performanceId()).isEqualTo(10L);
+        assertThat(event.seatIds()).containsExactly(201L);
+        assertThat(event.performanceSeatIdBySeatId()).isEqualTo(Map.of(201L, 501L));
         assertThat(event.occurredAt())
                 .isEqualTo(EXPIRES_AT
                         .minusSeconds(600)

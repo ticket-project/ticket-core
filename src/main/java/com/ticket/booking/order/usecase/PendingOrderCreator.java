@@ -76,7 +76,12 @@ public class PendingOrderCreator {
                 memberId,
                 hold.holdKey(),
                 performanceSeatIds(performanceSeats),
-                startedAt.atZone(clock.getZone()).toInstant()));
+                startedAt.atZone(clock.getZone()).toInstant(),
+                performanceId,
+                // 주문 좌석을 이 순서로 더했으므로 OrderSeat id ASC 순서와 같다.
+                performanceSeats.stream().map(PerformanceSeat::getSeatId).toList(),
+                performanceSeats.stream()
+                        .collect(Collectors.toUnmodifiableMap(PerformanceSeat::getSeatId, PerformanceSeat::getId))));
 
         return savedOrder.getOrderKey();
     }
