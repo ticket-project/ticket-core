@@ -27,6 +27,7 @@ import com.ticket.venue.domain.Seat;
 import com.ticket.venue.domain.Venue;
 import com.ticket.venue.usecase.SeatLookupService;
 import com.ticket.venue.usecase.VenueLookupService;
+import com.ticket.venue.usecase.VenueSeatReader;
 
 /**
  * 실제 JPA·Querydsl 조회를 PostgreSQL에 붙여 검증하는 테스트의 베이스다. 테스트마다 트랜잭션을 롤백한다.
@@ -37,7 +38,7 @@ import com.ticket.venue.usecase.VenueLookupService;
  * <p>show의 정렬·커서·판매 상태 조건 helper는 더 이상 별도 빈이 아니다 — {@code ShowQuerydslRepository}가 private 메서드로 갖는다.
  */
 @Transactional
-@Import({VenueLookupService.class, SeatLookupService.class})
+@Import({VenueLookupService.class, SeatLookupService.class, VenueSeatReader.class})
 @SuppressWarnings("NonAsciiCharacters")
 public abstract class ReadRepositoryTestSupport extends JpaSliceTestSupport {
     @Autowired

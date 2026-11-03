@@ -2,6 +2,7 @@ package com.ticket.shared.config;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -29,11 +30,14 @@ public class CacheConfig {
     static final Duration SALES_POLICY_TTL = Duration.ofSeconds(1);
     static final Duration PERFORMANCE_DISPLAY_TTL = Duration.ofMinutes(10);
     static final long MAXIMUM_SIZE = 1_000;
+    static final Duration VENUE_SEATS_TTL = Duration.ofMinutes(10);
+    /** 공연장 하나가 좌석 수만큼 무게를 갖는다. 15,000석 공연장 4개를 담는다. */
+    static final long VENUE_SEATS_MAXIMUM_SEATS = 60_000;
 
     @Bean
     public CacheManager cacheManager() {
         final CaffeineCacheManager manager = new CaffeineCacheManager();
-        manager.setCacheNames(List.of(CacheNames.SALES_POLICY, CacheNames.PERFORMANCE_DISPLAY));
+        manager.setCacheNames(List.of(CacheNames.SALES_POLICY, CacheNames.PERFORMANCE_DISPLAY, CacheNames.VENUE_SEATS));
         // 판매 기간·대기열 변경은 서버마다 최대 1초 늦게 반영된다.
         manager.registerCustomCache(
                 CacheNames.SALES_POLICY,
@@ -49,6 +53,15 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .expireAfterWrite(PERFORMANCE_DISPLAY_TTL)
                         .maximumSize(MAXIMUM_SIZE)
+                        .recordStats()
+                        .build());
+        // 공연장 좌석 수가 크게 달라 개수가 아니라 좌석 수로 상한을 둔다. 좌석을 더하면 그 좌석의 주문은 최대 10분 실패한다.
+        manager.registerCustomCache(
+                CacheNames.VENUE_SEATS,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(VENUE_SEATS_TTL)
+                        .maximumWeight(VENUE_SEATS_MAXIMUM_SEATS)
+                        .weigher((final Object venueId, final Object seats) -> ((Map<?, ?>) seats).size())
                         .recordStats()
                         .build());
         return manager;

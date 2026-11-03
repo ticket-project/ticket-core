@@ -1,6 +1,8 @@
 package com.ticket.venue.usecase;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -24,15 +26,16 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class SeatLookupService implements VenueSeatLookupApi {
     private final SeatRepository seatRepository;
+    private final VenueSeatReader venueSeatReader;
 
+    /** 공연장 좌석 전체를 공연장별로 재사용한 것({@link VenueSeatReader})에서 고른다. 이 공연장에 없는 좌석은 빠진다. */
     @Override
     public List<VenueSeatSnapshot> findSeats(final long venueId, final Set<Long> seatIds) {
         if (seatIds.isEmpty()) {
             return List.of();
         }
-        return seatRepository.findAllByVenueIdAndIdIn(venueId, seatIds).stream()
-                .map(SeatLookupService::toLayout)
-                .toList();
+        final Map<Long, VenueSeatSnapshot> seatsById = venueSeatReader.read(venueId);
+        return seatIds.stream().map(seatsById::get).filter(Objects::nonNull).toList();
     }
 
     @Override
@@ -42,7 +45,7 @@ public class SeatLookupService implements VenueSeatLookupApi {
                 .toList();
     }
 
-    private static VenueSeatSnapshot toLayout(final Seat seat) {
+    static VenueSeatSnapshot toLayout(final Seat seat) {
         return new VenueSeatSnapshot(
                 seat.getId(),
                 seat.getFloor(),

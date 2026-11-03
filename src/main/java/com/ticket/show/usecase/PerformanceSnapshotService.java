@@ -44,7 +44,7 @@ public class PerformanceSnapshotService implements PerformanceSaleInfoApi, Perfo
     private final VenueSeatLookupApi venueSeatLookupApi;
     private final PerformanceSaleHeaderReader performanceSaleHeaderReader;
 
-    /** 회차 단위 값은 {@link PerformanceSaleHeaderReader}가 회차별로 재사용하고, 주문마다 다른 좌석 라벨만 매번 읽는다. */
+    /** 회차 단위 값은 {@link PerformanceSaleHeaderReader}가 회차별로, 좌석 라벨은 venue가 공연장별로 재사용한다. */
     @Override
     @Transactional(readOnly = true)
     public PerformanceSaleSnapshot getSaleSnapshot(final long performanceId, final Set<Long> seatIds) {
