@@ -46,8 +46,10 @@ capacity-log README의 문제 목록, 가장 최근 일지, `../gatling-test/dis
 
 ### 3. 사다리를 오른다
 
-03 고정 조건 30초를 5 → 10 → 15 → 20 → 30 → 40 → 50 → 60 → 80 → 100 users/sec로 잰다. 실행마다 새 회차를 쓴다.
+03-3(`-Scenario 03-3`, 인기 공연 오픈) 30초를 5 → 10 → 15 → 20 → 30 → 40 → 50 → 60 users/sec, 60 위로는 10씩
+(70 → 80 → 90 → 100 …) 잰다(사용자 결정 2026-11-03·11-04). 실행마다 새 회차를 쓴다.
 같은 Core commit·데이터 조건에서 이미 PASS한 부하는 건너뛴다. 판정은 `run-step.ps1`이 낸 verdict다.
+03(단순 예매)은 지난 기록과 비교할 때만 쓴다. 숫자 N의 뜻과 03-3 판정은 [core-capacity.md](../../../docs/core-capacity.md)의 "내세울 숫자"·"03-3에서 다른 점"이다.
 
 | verdict (종료 코드) | 다음 행동 |
 | --- | --- |
@@ -68,10 +70,16 @@ capacity-log README의 문제 목록, 가장 최근 일지, `../gatling-test/dis
 ### 5. 한계를 좁힌다
 
 사용자가 FAIL을 한계로 보기로 하면, 마지막 PASS와 첫 FAIL 사이를 반씩 좁힌다. 차이가 2 이하이거나 마지막 PASS의
-10% 이하가 되면 마지막 PASS가 후보값 C다. C를 새 회차로 두 번 더 재서 세 번 모두 PASS면 확정한다.
+10% 이하가 되면 마지막 PASS가 후보값 C다.
 
-끝: C와 그 조건(commit, 풀, 데이터량, 회차 좌석 수)을 일지와 성능 변화 표에 적고 보고했다. 장시간 실행(03-3)과 Queue를 켠
-확인은 core-capacity.md 7~9단계이고 아직 `scripts/capacity`에 없다. 다음 할 일로 보고한다.
+이어서 오래 버티는지 본다(core-capacity.md 7단계).
+
+1. 새 회차로 C × 15분(`-Scenario 03-3 -DurationSeconds 900 -Label hold`). FAIL이면 C를 10% 낮춰 다시 15분.
+2. PASS면 새 회차로 대기 20만 명이 다 들어올 때까지(`-DurationSeconds` = 200000 ÷ C, `-Label confirm`) 한 번. FAIL이면 C를 10% 낮춰 1부터.
+3. 둘 다 PASS한 C가 내세울 숫자 N이다.
+
+끝: N과 그 조건(commit, 풀, 데이터량, 회차 좌석 수, 유지 시간)을 일지와 성능 변화 표에 적고 보고했다. Queue를 켠 확인은
+core-capacity.md 9단계이고 아직 `scripts/capacity`에 없다. 다음 할 일로 보고한다.
 
 ## 진단
 

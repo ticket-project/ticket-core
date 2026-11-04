@@ -28,8 +28,14 @@ Queue 입장률 C는 여기서 정한다. 순서와 끝난 기준은 [core-capac
 Claude는 ticket 저장소 루트에서 아래 꼴 그대로 실행한다. `ticket/.claude/settings.json`의 허용 규칙이 이 앞부분과 맞아야 한다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ..\gatling-test\scripts\capacity\run-step.ps1 -Prod -LoadHost ubuntu@<부하 발생기 IP> -UsersPerSecond <N> -Label <ladder|warmup|repro|diag> -PerformanceId <회차>
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\gatling-test\scripts\capacity\run-step.ps1 -Prod -LoadHost ubuntu@<부하 발생기 IP> -Scenario 03-3 -UsersPerSecond <N> -Label <ladder|warmup|repro|diag|hold|confirm> -PerformanceId <회차>
 ```
+
+- 장시간 실행은 `-DurationSeconds 900`(hold), `-DurationSeconds <200000 ÷ N>`(confirm)을 더한다. 2분 넘는 실행은 요청 스레드가
+  30초 연달아 꽉 차면 run-step이 원격 Gatling을 `pkill`로 멈추고 FAIL(aborted)로 끝낸다. 이 원격 중단은 2026-11-04 로컬에서만 확인했다.
+- 03-3은 실행 직전·직후 운영 DB에 한 번씩 묻는다(주문 ID 최댓값, 이번 실행이 만든 주문의 중복 판매). ID 범위로만 읽어 주문 전체를 훑지 않는다.
+- 03-3은 사용자마다 WebSocket을 열어 두고 1~6초 머물러 동시 접속이 수백~천 명이다. 밀린 사용자가 1,000명을 넘으면 nginx FD(capacity-log P-023)가
+  Core보다 먼저 막힐 수 있다(추정).
 
 - 운영 Core·DB는 사양이 낮다. 부하 말고 점검으로 운영을 건드리는 일은 최소로 한다(사용자 결정 2026-10-19, capacity-log P-020).
 - `-CheckOnly`는 준비와 점검만 하고 부하를 보내지 않는다(`-LoadHost` 없어도 됨). 측정을 시작할 때 한 번 돌려 다음 회차를 받는다.
