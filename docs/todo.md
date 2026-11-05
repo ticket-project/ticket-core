@@ -66,7 +66,9 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
   회차별 변경분 병합(200~500ms), 시퀀스 번호, outbound·transport 한도, 부하 시나리오에 STOMP 구독자 추가.
 - **keyspace 알림 설정(7).** `RedisExpirationListenerConfig`가 기동 시 `CONFIG SET`을 쓰고 실패는 WARN뿐이며, 만료
   worker 큐는 `Integer.MAX_VALUE`다. 후보: Redis 서버 설정으로 옮기고 지표로 노출, 큐 상한.
-- **좌석맵·가용성 캐시(15).** 공개 GET인 좌석맵·가용성이 요청마다 좌석 전체를 읽고, `Cache-Control`·ETag가 없다.
+- **좌석맵·가용성 캐시(15).** 공연 좌석 배치도(`/shows/{showId}/seats`)는 2026-11-05 공연별 10분 캐시를 넣었다. 회차 배치도
+  (`/performances/{performanceId}/seat-map`)와 가용성은 아직 요청마다 좌석 전체를 읽고, 배치도도 요청마다 15,000석을 JSON으로 다시
+  만든다. `Cache-Control`·ETag가 없다.
 - **리프레시 토큰 회전(20).** `RefreshAuthTokenUseCase`가 토큰을 먼저 지운 뒤 DB로 회원을 확인한다. DB가 포화되면 토큰만
   사라져 로그아웃된다. 재사용 탐지와 해시 저장도 없다.
 - **JVM·컨테이너(27).** `Dockerfile`은 `java -jar app.jar`뿐이다. 힙 비율, `ExitOnOutOfMemoryError`, 비root 사용자,
