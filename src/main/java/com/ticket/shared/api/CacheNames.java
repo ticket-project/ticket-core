@@ -18,5 +18,8 @@ public final class CacheNames {
     /** booking 공연 좌석 배치도 응답 본문(JSON·gzip 바이트, 좌석 상태 없음). 예매 화면에 들어오는 사용자마다 부르며 판매 중 거의 바뀌지 않아 공연별로 10분 재사용한다. */
     public static final String SHOW_SEAT_MAP = "showSeatMap";
 
+    /** booking 회차 판매 편성 좌석 ID 목록(상태 없음). 좌석 상태 응답에 쓰며 편성은 판매 중 바뀌지 않아 회차별로 10분 재사용한다. */
+    public static final String PERFORMANCE_SEAT_IDS = "performanceSeatIds";
+
     private CacheNames() {}
 }

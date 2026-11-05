@@ -38,6 +38,10 @@ public class CacheConfig {
     /** 15,000석 배치도 하나가 JSON·gzip 합쳐 약 2.4MB다. 동시에 판매하는 인기 공연 수만큼만 담는다. */
     static final long SHOW_SEAT_MAP_MAXIMUM_SIZE = 10;
 
+    static final Duration PERFORMANCE_SEAT_IDS_TTL = Duration.ofMinutes(10);
+    /** 회차 하나가 좌석 수만큼 무게를 갖는다. 15,000석 회차 10개를 담는다. */
+    static final long PERFORMANCE_SEAT_IDS_MAXIMUM_SEATS = 150_000;
+
     @Bean
     public CacheManager cacheManager() {
         final CaffeineCacheManager manager = new CaffeineCacheManager();
@@ -45,7 +49,8 @@ public class CacheConfig {
                 CacheNames.SALES_POLICY,
                 CacheNames.PERFORMANCE_DISPLAY,
                 CacheNames.VENUE_SEATS,
-                CacheNames.SHOW_SEAT_MAP));
+                CacheNames.SHOW_SEAT_MAP,
+                CacheNames.PERFORMANCE_SEAT_IDS));
         // 판매 기간·대기열 변경은 서버마다 최대 1초 늦게 반영된다.
         manager.registerCustomCache(
                 CacheNames.SALES_POLICY,
@@ -78,6 +83,15 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .expireAfterWrite(SHOW_SEAT_MAP_TTL)
                         .maximumSize(SHOW_SEAT_MAP_MAXIMUM_SIZE)
+                        .recordStats()
+                        .build());
+        // 판매 편성에 좌석을 더하면 그 좌석은 좌석 상태 응답에 최대 10분 없다. 상태(판매 확정·점유)는 요청마다 읽는다.
+        manager.registerCustomCache(
+                CacheNames.PERFORMANCE_SEAT_IDS,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(PERFORMANCE_SEAT_IDS_TTL)
+                        .maximumWeight(PERFORMANCE_SEAT_IDS_MAXIMUM_SEATS)
+                        .weigher((final Object performanceId, final Object seats) -> ((List<?>) seats).size())
                         .recordStats()
                         .build());
         return manager;
