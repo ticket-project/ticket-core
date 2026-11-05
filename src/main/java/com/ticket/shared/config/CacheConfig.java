@@ -34,10 +34,18 @@ public class CacheConfig {
     /** 공연장 하나가 좌석 수만큼 무게를 갖는다. 15,000석 공연장 4개를 담는다. */
     static final long VENUE_SEATS_MAXIMUM_SEATS = 60_000;
 
+    static final Duration SHOW_SEAT_MAP_TTL = Duration.ofMinutes(10);
+    /** 15,000석 배치도 하나가 수 MB다. 동시에 판매하는 인기 공연 수만큼만 담는다. */
+    static final long SHOW_SEAT_MAP_MAXIMUM_SIZE = 10;
+
     @Bean
     public CacheManager cacheManager() {
         final CaffeineCacheManager manager = new CaffeineCacheManager();
-        manager.setCacheNames(List.of(CacheNames.SALES_POLICY, CacheNames.PERFORMANCE_DISPLAY, CacheNames.VENUE_SEATS));
+        manager.setCacheNames(List.of(
+                CacheNames.SALES_POLICY,
+                CacheNames.PERFORMANCE_DISPLAY,
+                CacheNames.VENUE_SEATS,
+                CacheNames.SHOW_SEAT_MAP));
         // 판매 기간·대기열 변경은 서버마다 최대 1초 늦게 반영된다.
         manager.registerCustomCache(
                 CacheNames.SALES_POLICY,
@@ -62,6 +70,14 @@ public class CacheConfig {
                         .expireAfterWrite(VENUE_SEATS_TTL)
                         .maximumWeight(VENUE_SEATS_MAXIMUM_SEATS)
                         .weigher((final Object venueId, final Object seats) -> ((Map<?, ?>) seats).size())
+                        .recordStats()
+                        .build());
+        // 좌석 배치도의 등급 이름·가격·좌표가 바뀌면 화면에 최대 10분 옛 값이 보인다. 주문 금액은 주문 때 좌석 단가로 정해 영향이 없다.
+        manager.registerCustomCache(
+                CacheNames.SHOW_SEAT_MAP,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(SHOW_SEAT_MAP_TTL)
+                        .maximumSize(SHOW_SEAT_MAP_MAXIMUM_SIZE)
                         .recordStats()
                         .build());
         return manager;
