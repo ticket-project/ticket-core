@@ -35,7 +35,7 @@ public class CacheConfig {
     static final long VENUE_SEATS_MAXIMUM_SEATS = 60_000;
 
     static final Duration SHOW_SEAT_MAP_TTL = Duration.ofMinutes(10);
-    /** 15,000석 배치도 하나가 수 MB다. 동시에 판매하는 인기 공연 수만큼만 담는다. */
+    /** 15,000석 배치도 하나가 JSON·gzip 합쳐 약 2.4MB다. 동시에 판매하는 인기 공연 수만큼만 담는다. */
     static final long SHOW_SEAT_MAP_MAXIMUM_SIZE = 10;
 
     @Bean

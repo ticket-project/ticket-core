@@ -15,7 +15,7 @@ public final class CacheNames {
     /** venue 공연장 좌석 전체(주소·좌표). 주문 표시값의 좌석 라벨에 쓰며 좌석은 만든 뒤 바뀌지 않아 공연장별로 10분 재사용한다. */
     public static final String VENUE_SEATS = "venueSeats";
 
-    /** booking 공연 좌석 배치도(좌표·등급·가격, 좌석 상태 없음). 예매 화면에 들어오는 사용자마다 부르며 판매 중 거의 바뀌지 않아 공연별로 10분 재사용한다. */
+    /** booking 공연 좌석 배치도 응답 본문(JSON·gzip 바이트, 좌석 상태 없음). 예매 화면에 들어오는 사용자마다 부르며 판매 중 거의 바뀌지 않아 공연별로 10분 재사용한다. */
     public static final String SHOW_SEAT_MAP = "showSeatMap";
 
     private CacheNames() {}
