@@ -73,6 +73,7 @@ class GetSeatStatusUseCaseTest {
                 // 실제 BookingEntryGuard를 mock repository/verifier 위에 씌운다 -- 그래야 "대기열이 필요할 때만
                 // 검증"이라는 분기가 mock에 가려지지 않고 그대로 검증된다.
                 new GetSeatStatusUseCase(
+                        new PerformanceSeatIdsReader(performanceSeatRepository),
                         performanceSeatRepository,
                         new SeatOccupancy(seatSelectionService, holdStore),
                         new BookingEntryGuard(
@@ -86,7 +87,8 @@ class GetSeatStatusUseCaseTest {
         when(performanceSeatRepository.findStatesByPerformanceId(10L))
                 .thenReturn(List.of(
                         new PerformanceSeatStateRow(101L, 1L, PerformanceSeatState.AVAILABLE),
-                        new PerformanceSeatStateRow(102L, 2L, PerformanceSeatState.RESERVED)));
+                        new PerformanceSeatStateRow(102L, 2L, PerformanceSeatState.AVAILABLE)));
+        when(performanceSeatRepository.findReservedSeatIds(10L)).thenReturn(List.of(2L));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of(1L));
         when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -101,12 +103,13 @@ class GetSeatStatusUseCaseTest {
     }
 
     @Test
-    void redis_점유좌석이_없으면_db_상태를_performanceSeatId_기준으로_그대로_반환한다() {
+    void redis_점유좌석이_없으면_판매_확정_좌석만_occupied로_반환한다() {
         List<PerformanceSeatStateRow> dbStates = List.of(
                 new PerformanceSeatStateRow(101L, 1L, PerformanceSeatState.AVAILABLE),
-                new PerformanceSeatStateRow(102L, 2L, PerformanceSeatState.RESERVED));
+                new PerformanceSeatStateRow(102L, 2L, PerformanceSeatState.AVAILABLE));
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy()));
         when(performanceSeatRepository.findStatesByPerformanceId(10L)).thenReturn(dbStates);
+        when(performanceSeatRepository.findReservedSeatIds(10L)).thenReturn(List.of(2L));
         when(seatSelectionService.getSelectingSeatIds(10L)).thenReturn(Set.of());
         when(holdStore.getHoldingSeatIds(10L)).thenReturn(Set.of());
 
@@ -117,7 +120,7 @@ class GetSeatStatusUseCaseTest {
                 .containsExactly(
                         new GetSeatStatusUseCase.SeatResponse(101L, 1L, SeatStatus.AVAILABLE),
                         new GetSeatStatusUseCase.SeatResponse(102L, 2L, SeatStatus.OCCUPIED));
-        verify(performanceSeatRepository).findStatesByPerformanceId(10L);
+        verify(performanceSeatRepository).findReservedSeatIds(10L);
     }
 
     @Test
