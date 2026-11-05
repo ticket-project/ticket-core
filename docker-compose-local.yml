@@ -74,8 +74,6 @@ services:
       JAVA_TOOL_OPTIONS: ${CORE_JAVA_TOOL_OPTIONS:-}
       DD_AGENT_HOST: datadog-agent
       DD_PROFILING_ENABLED: "true"
-      # Clock은 Asia/Seoul로 고정돼 있지만 JPA 감사 시각은 JVM 기본 시간대를 따른다.
-      TZ: Asia/Seoul
     ports:
       - "127.0.0.1:8083:8080"
     healthcheck:
