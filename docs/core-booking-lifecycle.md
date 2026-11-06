@@ -58,19 +58,16 @@ CreateOrderUseCase          (POST /api/v1/orders)
        -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
             Order에는 show/performance/venue 표시 snapshot을, OrderSeat에는 등급·좌석 라벨·unitPrice
             snapshot을 함께 저장한다 — 둘 다 생성 후 불변이다.
-       -> 같은 트랜잭션 안에서 OrderCreated 이벤트 발행
+       -> 이벤트는 발행하지 않는다(2026-11-06부터, 아래 후처리 참고)
        -> 트랜잭션이 돌려주는 것은 orderKey뿐이다(entity를 트랜잭션 밖으로 내보내지 않는다)
   -> (이 구간이 실패하면 CreateOrderUseCase가 위에서 만든 Redis hold를 보상 해제한다.
       해제 실패는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다)
   -> DB 커밋 및 connection 반환
-  -> BookingEventListeners.on(OrderCreated)   (@ApplicationModuleListener, 커밋 후, 트랜잭션 없음)
-       -> 이벤트에 담긴 회차·좌석 식별자 매핑으로 처리한다(schema 2). 주문 좌석은 생성 뒤 바뀌지 않아
-          DB를 다시 읽지 않는다. 이 값이 없는 schema 1 publication만 OrderHoldSnapshotReader가
-          orderId로 짧은 읽기 트랜잭션에서 완성한다
+  -> 커밋 뒤 CreateOrderUseCase가 바로 후처리한다(이벤트 보관함을 거치지 않음, 실패하면 로그만 남김)
        -> HeldSeatPublisher → Lua 한 번:
             -> 모든 좌석이 아직 이 holdKey로 잡혀 있을 때만 아래를 진행(아니면 건너뜀)
             -> 주문 회원 소유 selection만 해제
-            -> 좌석마다 HELD를 relay 채널에 PUBLISH → 각 인스턴스가 받아 WebSocket으로 보낸다
+            -> 좌석마다 HELD를 relay 채널에 PUBLISH → 각 인스턴스가 모아서 WebSocket으로 보낸다
 ~~~
 
 같은 회원·회차의 주문 생성은 락으로 줄 세우지 않는다(2026-10-19까지는 `ORDER_CREATE` 락이 흐름 전체를
@@ -93,11 +90,10 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 `PerformanceSeat`를 `RESERVED`로 전이하는 흐름이 아직 없다([#219](https://github.com/ticket-project/ticket-core/issues/219)). 지금은 Redis hold가 실제 점유의 기준이고, `PerformanceSeat.state`는 판매 좌석 편성(`AVAILABLE`)을
 나타낼 뿐 주문 확정으로 바뀌지 않는다.
 
-커밋 이후 리스너 실행이 실패하면 Order/OrderSeat/HoldHistory는 그대로 커밋된 상태로 남고,
-`OrderCreated` publication은 Event Publication Registry에 FAILED로 남는다.
-`EventPublicationMaintenance`가 실패 publication을 재처리한다(아래 "이벤트 재시도와 누락 복구").
-따라서 프로세스가 재시작되거나 즉시 처리가 실패해도 후속 처리 입력은 DB(publication row)에
-남는다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
+커밋 이후 후처리가 실패하거나 그 사이 서버가 멈추면 Order/OrderSeat/HoldHistory는 커밋된 채 남고, 후처리는 다시 하지
+않는다(2026-11-06). 예전에는 `OrderCreated` publication으로 남겨 재처리했지만, 되살리는 시점이 약 5~6분 뒤(staleness 5분 +
+재처리 1분)라 선택 키는 이미 만료됐고(5분) 화면은 SELECTED와 HELD를 같은 점유로 그린다. 그 대가로 주문마다 DB 문장 다섯 개를
+썼다. 판매 정합성은 Redis hold가 지킨다. 그 전에 저장된 `OrderCreated` publication은 `BookingEventListeners`가 계속 처리한다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
 본인이 선택 중인 좌석으로만 주문을 시작할 수 있다.
 
 주문 생성, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대
@@ -133,8 +129,13 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 
 **서버가 보장하는 것은 발행 순서까지다.** 클라이언트 수신 순서는 WebSocket 전송 계층의 문제다. Redis
 pub/sub은 최대 한 번 전달이라 구독이 끊긴 동안의 알림은 다시 오지 않는다. 그래서 좌석 상태 이벤트는 계속 "그 좌석을 특정 상태로 맞추는" 멱등 알림으로
-취급하고, 클라이언트는 필요하면 좌석 상태 조회로 다시 맞춘다. payload(`performanceSeatId` + 물리
-`seatId`)는 바뀌지 않았다.
+취급하고, 클라이언트는 필요하면 좌석 상태 조회로 다시 맞춘다.
+
+**알림은 회차별로 250ms 모아 한 메시지로 보낸다**(2026-11-06, `SeatStatusRelay`). 하나씩 보내면 구독자마다 보내는 수가
+"알림 수 × 구독자 수"라 사용자 수의 제곱으로 늘었다(운영 03-3 25 u/s에서 알림 1,567건 → 메시지 26만 7,742건). 같은 좌석이 그
+사이 여러 번 바뀌면 마지막 상태만 보낸다. payload는 `{"performanceId", "changes": [{"performanceSeatId", "seatId",
+"action"}]}`이고 `timestamp`는 없다. 좌석 하나에 메시지 하나이던 예전 `SeatStatusEvent` payload와 다르므로 FE는 `changes` 배열을
+읽도록 바꿔야 한다(FE는 측정의 제약이 아니라 이 저장소에서는 바꾸지 않았다).
 
 ## 결제 시도와 Order 상태
 
