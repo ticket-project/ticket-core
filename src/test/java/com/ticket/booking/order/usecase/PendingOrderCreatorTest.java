@@ -12,14 +12,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,12 +24,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.OrderCreated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
@@ -57,8 +51,6 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 class PendingOrderCreatorTest {
     private static final Duration HOLD_DURATION = Duration.ofSeconds(600);
     private static final LocalDateTime EXPIRES_AT = LocalDateTime.of(2026, 3, 15, 12, 0);
-    private static final Clock FIXED_CLOCK =
-            Clock.fixed(Instant.parse("2026-03-15T01:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Mock
     private OrderRepository orderRepository;
@@ -66,19 +58,15 @@ class PendingOrderCreatorTest {
     @Mock
     private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     private PendingOrderCreator pendingOrderCreator;
 
     @BeforeEach
     void setUp() {
-        pendingOrderCreator =
-                new PendingOrderCreator(orderRepository, orderHoldHistoryRecorder, eventPublisher, FIXED_CLOCK);
+        pendingOrderCreator = new PendingOrderCreator(orderRepository, orderHoldHistoryRecorder);
     }
 
     @Test
-    void 주문과_hold_이력을_같은_트랜잭션에_저장하고_OrderCreated를_발행한다() {
+    void 주문과_hold_이력을_같은_트랜잭션에_저장하고_이벤트는_발행하지_않는다() {
         final PerformanceSeat seat = performanceSeat(501L, 201L, 1L, BigDecimal.TEN);
         final List<PerformanceSeat> seats = List.of(seat);
         final Hold hold = hold();
@@ -87,28 +75,11 @@ class PendingOrderCreatorTest {
         final String orderKey = pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot());
 
         assertThat(orderKey).startsWith("ORDER-");
-        final InOrder inOrder = inOrder(orderRepository, orderHoldHistoryRecorder, eventPublisher);
-        // 조립과 저장, 트랜잭션 경계가 이제 한 클래스에 있다.
+        final InOrder inOrder = inOrder(orderRepository, orderHoldHistoryRecorder);
         inOrder.verify(orderRepository).save(any(Order.class));
         inOrder.verify(orderHoldHistoryRecorder)
                 .recordCreated(20L, 10L, "hold-key", EXPIRES_AT.minusSeconds(600), EXPIRES_AT, seats);
-        final ArgumentCaptor<OrderCreated> captor = ArgumentCaptor.forClass(OrderCreated.class);
-        inOrder.verify(eventPublisher).publishEvent(captor.capture());
-        final OrderCreated event = captor.getValue();
-        assertThat(event.orderId()).isEqualTo(55L);
-        assertThat(event.memberId()).isEqualTo(20L);
-        assertThat(event.holdKey()).isEqualTo("hold-key");
-        assertThat(event.performanceSeatIds()).isEqualTo(Set.of(501L));
-        assertThat(event.schemaVersion()).isEqualTo(OrderCreated.SCHEMA_VERSION);
-        // listener가 주문을 다시 읽지 않고 쓰는 값이다.
-        assertThat(event.performanceId()).isEqualTo(10L);
-        assertThat(event.seatIds()).containsExactly(201L);
-        assertThat(event.performanceSeatIdBySeatId()).isEqualTo(Map.of(201L, 501L));
-        assertThat(event.occurredAt())
-                .isEqualTo(EXPIRES_AT
-                        .minusSeconds(600)
-                        .atZone(ZoneId.of("Asia/Seoul"))
-                        .toInstant());
+        // 후처리는 커밋 뒤 CreateOrderUseCase가 바로 한다. 이 트랜잭션에는 event publication이 없다.
     }
 
     /** 옛 {@code OrderCreatorTest}의 조립 계약이다. 금액은 show의 표시값이 아니라 좌석 단가만으로 누적한다(ADR 0005). */
@@ -193,7 +164,7 @@ class PendingOrderCreatorTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("좌석 표시값");
 
-        verifyNoInteractions(orderRepository, orderHoldHistoryRecorder, eventPublisher);
+        verifyNoInteractions(orderRepository, orderHoldHistoryRecorder);
     }
 
     @Test
@@ -205,7 +176,7 @@ class PendingOrderCreatorTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("등급 표시값");
 
-        verifyNoInteractions(orderRepository, orderHoldHistoryRecorder, eventPublisher);
+        verifyNoInteractions(orderRepository, orderHoldHistoryRecorder);
     }
 
     /** 저장 책임이 이 클래스로 모였으므로, 저장 실패의 전파도 여기서 고정한다. */
@@ -218,7 +189,7 @@ class PendingOrderCreatorTest {
                         pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold(), List.of(seat), saleSnapshot()))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-        verifyNoInteractions(orderHoldHistoryRecorder, eventPublisher);
+        verifyNoInteractions(orderHoldHistoryRecorder);
     }
 
     @Test

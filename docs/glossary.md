@@ -148,7 +148,7 @@ _Avoid_: 입장권과 Admission을 같은 뜻으로 혼용
 
 **주문 생성**:
 고른 좌석으로 PENDING 주문을 만들고 좌석을 선점하는 한 번의 요청(`POST /orders`, `CreateOrderUseCase`)이다.
-커밋되면 `OrderCreated` 이벤트가 나간다.
+커밋되면 선택 정리와 HELD 알림을 바로 한다(이벤트 없음).
 _Avoid_: 예매 시작, 주문 시작
 
 **PENDING 주문(결제 대기 주문)**:

@@ -13,12 +13,13 @@ import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.shared.config.JpaAuditingConfig;
 
 /**
  * 실제 JPA·Querydsl을 PostgreSQL에 붙여 검증하는 좁은 슬라이스 테스트의 베이스다. 업무 bean은 올리지 않는다 — 하위 클래스가 검증할 adapter·repository를
@@ -69,7 +70,8 @@ public abstract class JpaSliceTestSupport {
     @TestComponent
     @EntityScan("com.ticket")
     @EnableJpaRepositories("com.ticket")
-    @EnableJpaAuditing
+    // 운영 감사 설정을 그대로 쓴다. 감사 시각이 아래 clock을 따르는지도 운영과 같은 설정으로 확인된다.
+    @Import(JpaAuditingConfig.class)
     static class SliceApplication {
         /** 조회 조건이 "지금"을 쓰는 repository가 있다. 테스트 fixture도 이 clock을 주입받아 시각을 만든다. */
         @Bean

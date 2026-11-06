@@ -19,7 +19,7 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
   상태 없는 final class 둘이다 — 캐시 이름 상수 `CacheNames`, use case 입력의 필수·양수 판정 `InputChecks`. 별도 `internal` 계층은
   두지 않는다 — Modulith는 root 밖의 하위 패키지를 이름과 무관하게 내부로 취급한다. 어떤 모듈도
   `Type.OPEN`으로 선언하지 않는다. 공개할 계약이 없는 모듈에는 `api`를 만들지 않는다. `booking`의
-  `OrderCreated`/`OrderTerminated`만 root에 남는다 — FQCN이 `EVENT_PUBLICATION.event_type`에 저장된
+  `OrderTerminated`만 root에 남는다 — FQCN이 `EVENT_PUBLICATION.event_type`에 저장된
   값이라 옮기면 미완료 publication이 재처리되지 않는다.
 - **`allowedDependencies`는 모듈 전체가 아니라 named interface 단위로 적는다**(`"show :: api"`).
   `shared :: *` 와일드카드는 쓰지 않는다. 무엇을 실제로 여는지가 선언에 남는다.

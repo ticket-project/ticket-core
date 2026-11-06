@@ -4,7 +4,6 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 
-import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.order.usecase.OrderHoldSnapshot;
 import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
@@ -13,15 +12,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 주문 생성·종료 후속 처리(selection 정리, Redis hold 해제, WebSocket 발행)를 맡는 listener다.
+ * 주문 종료 후속 처리(Redis hold 해제, WebSocket 발행)를 맡는 listener다. 주문 생성 후처리는 이벤트 없이 커밋 뒤 {@code CreateOrderUseCase}가 바로
+ * 한다(2026-11-06).
  *
  * <p>Spring Modulith의 JPA event publication registry가 커밋 뒤 최소 한 번 전달을 보장한다. 여기서 실패를 catch-and-log로 삼키지 않고 그대로 던져
  * registry가 FAILED로 기록하게 하고, {@code com.ticket.shared.config.EventPublicationMaintenance}가 재시도한다.
  *
- * <p>{@link OrderCreated}는 payload의 회차·좌석 값으로 처리한다. 주문 좌석은 생성 뒤 바뀌지 않아 다시 읽어도 같은 값이고, 주문마다 읽기 트랜잭션 하나를 덜 쓴다. 이 값이 없는
- * schema 1 publication과 {@link OrderTerminated}는 {@code orderId}로 저장된 order를 다시 읽는다. hold 생성
- * 후처리({@link HeldSeatPublisher})와 hold 해제 후처리 ({@link HoldReleaser})는 기존 멱등 로직을 그대로 재사용한다. 이미 끝난 hold인지는 두 후처리의 Redis
- * 확인이 가른다.
+ * <p>{@link OrderTerminated}는 {@code orderId}로 저장된 order를 다시 읽는다. hold 해제 후처리({@link HoldReleaser})는 기존 멱등 로직을 그대로
+ * 재사용한다. 이미 끝난 hold인지는 Redis 확인이 가른다.
  *
  * <p><b>listener 자체는 DB 트랜잭션을 열지 않는다({@code propagation = NOT_SUPPORTED}).</b> 기본값인 {@code REQUIRES_NEW}에서는 Redis 락
  * 대기·Redis 접근·WebSocket 발행이 모두 하나의 booking 트랜잭션 안에서 실행돼 외부 지연이 그대로 connection 점유가 됐다. 지금은 DB를 읽어야 할 때만
@@ -44,33 +42,12 @@ class BookingEventListeners {
     /**
      * 이 클래스가 {@code com.ticket.booking.application}에 있던 시절의 기본 listener id다. 저장된 publication과 맞추기 위한 호환성 값이라 현재
      * package로 고치지 않는다.
-     *
-     * <p>이벤트 클래스가 {@code OrderStarted}에서 {@code OrderCreated}로 바뀐 뒤에도 같은 이유로 파라미터 타입 자리의 옛 이름을 남긴다. 저장된 publication의
-     * {@code event_type}은 이벤트 클래스 FQCN이라 listener id와 따로 저장된다.
      */
-    static final String ORDER_CREATED_LISTENER_ID =
-            "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderStarted)";
-
     static final String ORDER_TERMINATED_LISTENER_ID =
             "com.ticket.booking.application.BookingEventListeners.on(com.ticket.booking.OrderTerminated)";
 
     private final OrderHoldSnapshotReader orderHoldSnapshotReader;
-    private final HeldSeatPublisher heldSeatPublisher;
     private final HoldReleaser holdReleaser;
-
-    @ApplicationModuleListener(id = ORDER_CREATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
-    void on(final OrderCreated event) {
-        final Long performanceId = event.performanceId();
-        // schema 2는 필요한 값을 담고 온다. schema 1 publication만 주문을 다시 읽는다.
-        final OrderHoldSnapshot snapshot = performanceId != null
-                ? new OrderHoldSnapshot(performanceId, event.seatIds(), event.performanceSeatIdBySeatId())
-                : orderHoldSnapshotReader.read(event.orderId()).orElse(null);
-        if (snapshot == null) {
-            log.debug("주문 생성 후처리를 건너뜁니다. 주문을 찾을 수 없습니다. orderId={}", event.orderId());
-            return;
-        }
-        heldSeatPublisher.clearSelectionsAndPublishHeld(event.holdKey(), event.memberId(), snapshot);
-    }
 
     @ApplicationModuleListener(id = ORDER_TERMINATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderTerminated event) {

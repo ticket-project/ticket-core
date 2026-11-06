@@ -6,11 +6,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import com.ticket.booking.event.HeldSeatPublisher;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.hold.domain.Hold;
@@ -20,6 +23,7 @@ import com.ticket.booking.order.domain.OrderRemainingTime;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderState;
 import com.ticket.booking.order.usecase.BookingPreflightReader.Preflight;
+import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.selection.domain.SeatSelectionService;
 
 import lombok.RequiredArgsConstructor;
@@ -38,7 +42,12 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>예매 전 확인(판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태·표시값) — {@link BookingPreflightReader}의 짧은 읽기 트랜잭션
  *   <li>좌석 선점 — Redis. 본인 선택 확인과 선점이 스크립트 하나라 좌석 락이 없다
  *   <li>주문 생성 — {@link PendingOrderCreator}의 짧은 쓰기 트랜잭션
+ *   <li>후처리 — 커밋 뒤 Redis 스크립트 하나로 선택을 거두고 HELD를 발행한다({@link #clearSelectionsAndPublishHeld})
  * </ul>
+ *
+ * <p><b>후처리는 이벤트 보관함(event publication)을 거치지 않는다</b>(2026-11-06). 보관함은 주문마다 DB 문장 다섯 개(저장·처리 중 표시·다시 읽기·기록 복사·삭제)를 썼는데,
+ * 서버가 커밋과 후처리 사이에 죽었을 때 되살리는 시점이 약 5~6분 뒤(staleness 5분 + 재처리 1분)라 그때는 선택 키가 이미 만료됐고(5분) 화면은 SELECTED와 HELD를 같은 "점유"로
+ * 그린다. 판매 정확성은 Redis 선점 키가 지킨다. 그래서 후처리는 실패해도 주문을 실패시키지 않고 로그만 남긴다.
  *
  * <p>마지막 구간이 실패하면 이미 만들어진 Redis 선점을 되돌린다({@link #releaseHold}). 두 저장소를 하나의 ACID 트랜잭션으로 묶을 수 없으므로 보상으로 맞춘다.
  *
@@ -66,6 +75,7 @@ public class CreateOrderUseCase {
     private final PendingOrderCreator pendingOrderCreator;
     private final OrderRepository orderRepository;
     private final ExpireOrderUseCase expireOrderUseCase;
+    private final HeldSeatPublisher heldSeatPublisher;
     private final Clock clock;
 
     /** seatIds의 null·빈 목록·중복은 도메인 불변식이라 {@link RequestedSeatIds}가 판정한다. 여기서 다시 검사하지 않는다. */
@@ -118,6 +128,9 @@ public class CreateOrderUseCase {
             releaseHold(hold, exception);
             throw exception;
         }
+
+        // 4. 커밋 뒤 후처리. 선점자의 선택을 거두고 HELD를 발행한다.
+        clearSelectionsAndPublishHeld(input.memberId(), hold, preflight.performanceSeats());
 
         return new Output(
                 orderKey,
@@ -177,6 +190,25 @@ public class CreateOrderUseCase {
             return new BookingException(BookingErrorCode.E5004);
         }
         return exception;
+    }
+
+    /**
+     * 주문이 커밋된 뒤 선점자의 좌석 선택을 거두고 HELD를 발행한다. 실패하면 로그만 남긴다 — 주문은 이미 커밋됐고, 남은 선택은 5분 뒤 만료되며, 다른 사용자 화면은 이미 그 좌석을 SELECTED로
+     * 점유 표시하고 있다.
+     */
+    private void clearSelectionsAndPublishHeld(
+            final Long memberId, final Hold hold, final List<PerformanceSeat> performanceSeats) {
+        try {
+            final Map<Long, Long> performanceSeatIdBySeatId = performanceSeats.stream()
+                    .collect(Collectors.toUnmodifiableMap(PerformanceSeat::getSeatId, PerformanceSeat::getId));
+            final OrderHoldSnapshot snapshot = new OrderHoldSnapshot(
+                    hold.performanceId(),
+                    performanceSeats.stream().map(PerformanceSeat::getSeatId).toList(),
+                    performanceSeatIdBySeatId);
+            heldSeatPublisher.clearSelectionsAndPublishHeld(hold.holdKey(), memberId, snapshot);
+        } catch (final RuntimeException exception) {
+            log.warn("주문 생성 후처리(선택 정리·HELD 발행)에 실패했습니다. holdKey={}", hold.holdKey(), exception);
+        }
     }
 
     /** 보상 실패가 원래 주문 생성 실패를 가리지 않도록, 해제 예외는 원인 예외에 suppressed로 붙이고 다시 던지지 않는다. */

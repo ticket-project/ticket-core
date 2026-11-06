@@ -1,19 +1,14 @@
 package com.ticket.booking.order.usecase;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.booking.OrderCreated;
 import com.ticket.booking.hold.domain.Hold;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
@@ -23,7 +18,10 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 주문 생성의 DB 구간이다. 주문·주문 좌석·선점 이력·{@code OrderCreated} publication이 한 트랜잭션에서 함께 커밋되거나 함께 사라진다.
+ * 주문 생성의 DB 구간이다. 주문·주문 좌석·선점 이력이 한 트랜잭션에서 함께 커밋되거나 함께 사라진다.
+ *
+ * <p>{@code OrderCreated}는 더 발행하지 않는다(2026-11-06). 선택 정리·HELD 발행 후처리는 커밋 뒤 {@link CreateOrderUseCase}가 바로 한다 — 보관함을 거치면
+ * 주문마다 DB 문장 다섯 개가 더 들었다.
  *
  * <p>Redis 선점은 이 트랜잭션 밖에서 이미 끝났다. 여기서 실패하면 호출자({@link com.ticket.booking.order.usecase.CreateOrderUseCase})가 그 선점을 보상
  * 해제한다.
@@ -37,8 +35,6 @@ import lombok.RequiredArgsConstructor;
 public class PendingOrderCreator {
     private final OrderRepository orderRepository;
     private final OrderHoldHistoryRecorder orderHoldHistoryRecorder;
-    private final ApplicationEventPublisher eventPublisher;
-    private final Clock clock;
 
     /** @return 만들어진 주문의 orderKey. 트랜잭션 밖에서 entity를 다시 만지지 않도록 필요한 값만 돌려준다 — lazy 연관을 트랜잭션 밖에서 읽는 경로를 애초에 만들지 않는다. */
     @Transactional
@@ -68,20 +64,6 @@ public class PendingOrderCreator {
         final LocalDateTime startedAt = hold.startedAt(holdDuration);
         orderHoldHistoryRecorder.recordCreated(
                 memberId, performanceId, hold.holdKey(), startedAt, hold.expiresAt(), performanceSeats);
-
-        eventPublisher.publishEvent(new OrderCreated(
-                UUID.randomUUID(),
-                OrderCreated.SCHEMA_VERSION,
-                savedOrder.getId(),
-                memberId,
-                hold.holdKey(),
-                performanceSeatIds(performanceSeats),
-                startedAt.atZone(clock.getZone()).toInstant(),
-                performanceId,
-                // 주문 좌석을 이 순서로 더했으므로 OrderSeat id ASC 순서와 같다.
-                performanceSeats.stream().map(PerformanceSeat::getSeatId).toList(),
-                performanceSeats.stream()
-                        .collect(Collectors.toUnmodifiableMap(PerformanceSeat::getSeatId, PerformanceSeat::getId))));
 
         return savedOrder.getOrderKey();
     }
@@ -115,9 +97,5 @@ public class PendingOrderCreator {
                     gradeInfo.gradeName(),
                     seatInfo.label());
         }
-    }
-
-    private Set<Long> performanceSeatIds(final List<PerformanceSeat> performanceSeats) {
-        return performanceSeats.stream().map(PerformanceSeat::getId).collect(Collectors.toUnmodifiableSet());
     }
 }

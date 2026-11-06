@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
+import com.ticket.booking.event.HeldSeatPublisher;
 import com.ticket.booking.exception.AdmissionErrorCode;
 import com.ticket.booking.exception.AdmissionTokenException;
 import com.ticket.booking.exception.BookingErrorCode;
@@ -111,6 +112,9 @@ class CreateOrderUseCaseTest {
     @Mock
     private ExpireOrderUseCase expireOrderUseCase;
 
+    @Mock
+    private HeldSeatPublisher heldSeatPublisher;
+
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
     private CreateOrderUseCase createOrderUseCase;
 
@@ -133,6 +137,7 @@ class CreateOrderUseCaseTest {
                         pendingOrderCreator,
                         orderRepository,
                         expireOrderUseCase,
+                        heldSeatPublisher,
                         fixedClock);
     }
 
@@ -212,6 +217,70 @@ class CreateOrderUseCaseTest {
         inOrder.verify(performanceSaleInfoApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdRegistry).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
         inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
+    }
+
+    /** 주문이 커밋된 뒤 이벤트 보관함 없이 바로 선택을 거두고 HELD를 발행한다(2026-11-06). */
+    @Test
+    void 주문을_저장한_뒤_선택_정리와_HELD_발행을_바로_한다() {
+        final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
+        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
+        final List<PerformanceSeat> seats = List.of(seat(101L, 3L), seat(102L, 7L));
+        final Hold hold = hold(seatIds.toList());
+        final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
+        stubSuccessfulOrder(seatIds, seats, hold, saleSnapshot);
+
+        createOrderUseCase.execute(input);
+
+        final InOrder inOrder = inOrder(pendingOrderCreator, heldSeatPublisher);
+        inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
+        inOrder.verify(heldSeatPublisher)
+                .clearSelectionsAndPublishHeld(
+                        "hold-key",
+                        MEMBER_ID,
+                        new OrderHoldSnapshot(PERFORMANCE_ID, List.of(3L, 7L), Map.of(3L, 101L, 7L, 102L)));
+    }
+
+    /** 후처리 실패는 이미 커밋된 주문을 실패시키지 않는다. 남은 선택은 5분 뒤 만료된다. */
+    @Test
+    void 후처리가_실패해도_주문은_성공으로_응답한다() {
+        final CreateOrderUseCase.Input input = input(List.of(7L, 3L));
+        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
+        final List<PerformanceSeat> seats = List.of(seat(101L, 3L), seat(102L, 7L));
+        final Hold hold = hold(seatIds.toList());
+        final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
+        stubSuccessfulOrder(seatIds, seats, hold, saleSnapshot);
+        doThrow(new IllegalStateException("redis down"))
+                .when(heldSeatPublisher)
+                .clearSelectionsAndPublishHeld(eq("hold-key"), eq(MEMBER_ID), any());
+
+        final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
+
+        assertThat(output.orderKey()).isEqualTo("order-key");
+        verify(holdStore, never()).releaseWithoutNotice(any(), any(), any());
+    }
+
+    private void stubSuccessfulOrder(
+            final RequestedSeatIds seatIds,
+            final List<PerformanceSeat> seats,
+            final Hold hold,
+            final PerformanceSaleSnapshot saleSnapshot) {
+        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
+        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
+                .thenReturn(seats);
+        when(performanceSaleInfoApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
+                .thenReturn(saleSnapshot);
+        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
+                .thenReturn(hold);
+        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
+                .thenReturn("order-key");
+    }
+
+    private PerformanceSeat seat(final long performanceSeatId, final long seatId) {
+        final PerformanceSeat seat = mock(PerformanceSeat.class);
+        when(seat.getState()).thenReturn(PerformanceSeatState.AVAILABLE);
+        when(seat.getId()).thenReturn(performanceSeatId);
+        when(seat.getSeatId()).thenReturn(seatId);
+        return seat;
     }
 
     /** 확인한 정책과 좌석은 반환되지 않고 뒤 단계의 인자로만 관찰된다. */

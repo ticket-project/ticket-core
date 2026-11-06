@@ -20,7 +20,9 @@ public class MemberLookupService implements MemberLookupApi {
 
     @Override
     public void requireActive(final long memberId) {
-        findActiveOrThrow(memberId);
+        if (!memberRepository.existsByIdAndDeletedAtIsNull(memberId)) {
+            throw new MemberNotFoundException(memberId);
+        }
     }
 
     @Override

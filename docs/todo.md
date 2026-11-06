@@ -49,7 +49,7 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
 - **판매 표시 기간 NULL(18).** `Show`의 `@Embedded DisplaySaleWindow`는 두 컬럼이 모두 NULL이면 `null`로 읽히고,
   `saleDisplayStatusAt` 등 getter가 NPE를 내 공연 상세와 목록 페이지가 500이 된다.
 - **주문 좌석 수 상한(13).** `CreateOrderRequest.seatIds`에 `@Size`가 없고 `max_hold_seat_count`는 NULL을 허용한다.
-  좌석이 많으면 `OrderCreated`가 `serialized_event VARCHAR(4000)`을 넘어 좌석을 다 잡은 뒤 500으로 롤백된다.
+  좌석이 많으면 `OrderTerminated`가 `serialized_event VARCHAR(4000)`을 넘어 주문 취소·만료가 500으로 롤백된다.
 - **찜 개수 인덱스(17).** `LikeRepository.countByLikeTypeAndTargetId`는 `(like_type, target_id)`로 거르지만 인덱스는
   `member_id`로 시작한다. show 스키마에도 `performances.show_id` 등 보조 인덱스가 없다.
 - **좌석 선택 멱등성(14).** `RedissonSeatSelectionStore`의 선택 Lua는 키가 있으면 소유자와 무관하게 거절해, 같은 회원의

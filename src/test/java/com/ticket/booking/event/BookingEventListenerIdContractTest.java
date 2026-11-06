@@ -2,11 +2,10 @@ package com.ticket.booking.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import jakarta.persistence.EntityManager;
@@ -14,14 +13,12 @@ import jakarta.persistence.EntityManager;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.modulith.events.IncompleteEventPublications;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.order.usecase.PendingOrderCreator;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.OrderTerminated;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -42,11 +39,11 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 @SuppressWarnings("NonAsciiCharacters")
 class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
     private static final long MEMBER_ID = 940L;
-    private static final long PERFORMANCE_ID = 941L;
-    private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
+    /** 없는 주문이다. listener는 주문을 찾지 못하면 후처리 없이 완료한다 — 여기서는 id 매칭과 완료만 본다. */
+    private static final long MISSING_ORDER_ID = 9_400_000_000L;
 
     @Autowired
-    private PendingOrderCreator pendingOrderCreator;
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private IncompleteEventPublications incompleteEventPublications;
@@ -58,10 +55,10 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
     private EntityManager entityManager;
 
     @Test
-    void OrderCreated_publication은_옛_package_경로의_listener_id로_저장된다() {
+    void OrderTerminated_publication은_옛_package_경로의_listener_id로_저장된다() {
         final String holdKey = "listener-id-" + System.nanoTime();
 
-        createPendingOrder(holdKey);
+        publishOrderTerminated(holdKey);
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
@@ -69,13 +66,13 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
 
         assertThat(listenerIdsFor(holdKey))
                 .as("이동 전에 저장된 publication과 매칭되려면 옛 package 문자열이어야 한다")
-                .containsExactly(BookingEventListeners.ORDER_CREATED_LISTENER_ID);
+                .containsExactly(BookingEventListeners.ORDER_TERMINATED_LISTENER_ID);
     }
 
     @Test
     void 옛_listener_id로_저장된_미완료_publication은_이동_후에도_재처리된다() {
         final String holdKey = "listener-id-resubmit-" + System.nanoTime();
-        createPendingOrder(holdKey);
+        publishOrderTerminated(holdKey);
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
                 .until(() -> !listenerIdsFor(holdKey).isEmpty());
@@ -108,7 +105,7 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
                             + "values (?1, ?2, ?3, ?4, ?5, null, null, 0, 'PUBLISHED')")
                     .setParameter(1, id)
                     .setParameter(2, java.time.OffsetDateTime.now())
-                    .setParameter(3, BookingEventListeners.ORDER_CREATED_LISTENER_ID)
+                    .setParameter(3, BookingEventListeners.ORDER_TERMINATED_LISTENER_ID)
                     .setParameter(4, source[0])
                     .setParameter(5, source[1])
                     .executeUpdate();
@@ -138,55 +135,17 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
                         .getResultList());
     }
 
-    private void createPendingOrder(final String holdKey) {
-        final PerformanceSeat seat = persistSeat();
-        final Hold hold = new Hold(
-                holdKey,
-                MEMBER_ID,
-                PERFORMANCE_ID,
-                List.of(seat.getSeatId()),
-                LocalDateTime.now().plus(HOLD_DURATION));
-        final List<PerformanceSeat> performanceSeats = List.of(seat);
-
-        final String orderKey = pendingOrderCreator.create(
-                MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, performanceSeats, saleSnapshotFor(performanceSeats));
-
-        assertThat(orderKey).isNotBlank();
-    }
-
-    private com.ticket.show.api.PerformanceSaleSnapshot saleSnapshotFor(final List<PerformanceSeat> performanceSeats) {
-        final java.util.Map<Long, com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
-                new java.util.HashMap<>();
-        for (final PerformanceSeat seat : performanceSeats) {
-            seatInfoBySeatId.put(
-                    seat.getSeatId(),
-                    new com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo(seat.getSeatId(), 1, "가", "A", "1"));
-        }
-        return new com.ticket.show.api.PerformanceSaleSnapshot(
-                PERFORMANCE_ID,
-                1L,
-                "show-title",
-                1L,
-                "venue-name",
-                LocalDateTime.now().plusDays(1),
-                seatInfoBySeatId,
-                Map.of(
-                        1L,
-                        new com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo(
-                                1L, "R", "R석", 1, BigDecimal.valueOf(10_000))));
-    }
-
-    private PerformanceSeat persistSeat() {
-        return new TransactionTemplate(transactionManager).execute(status -> {
-            final PerformanceSeat seat = new PerformanceSeat(
-                    PERFORMANCE_ID,
-                    (long) (Math.random() * 1_000_000_000L),
-                    1L,
-                    PerformanceSeatState.AVAILABLE,
-                    BigDecimal.valueOf(10_000));
-            entityManager.persist(seat);
-            entityManager.flush();
-            return seat;
-        });
+    /** 주문 종료 이벤트를 트랜잭션 안에서 발행한다. listener가 있으면 Modulith가 publication을 저장한다. */
+    private void publishOrderTerminated(final String holdKey) {
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(status -> eventPublisher.publishEvent(new OrderTerminated(
+                        UUID.randomUUID(),
+                        OrderTerminated.SCHEMA_VERSION,
+                        MISSING_ORDER_ID,
+                        MEMBER_ID,
+                        holdKey,
+                        Set.of(11L),
+                        "CANCELED",
+                        Instant.now())));
     }
 }
