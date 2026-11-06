@@ -29,7 +29,10 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * booking DB 트랜잭션과 {@code OrderCreated} event publication이 원자적으로 함께 저장되거나 함께 사라지는지 확인한다.
+ * 주문 생성 트랜잭션이 {@code OrderCreated} publication 없이 주문만 남기는지, 이미 저장된 publication JSON은 계속 읽히는지 확인한다. 주문 생성은 2026-11-06부터
+ * publication을 만들지 않는다. 옛 publication은 운영 DB에 남아 있을 수 있어 listener와 역직렬화는 유지한다.
+ *
+ * <p>아래 원래 설명은 publication이 남는지 볼 때도 같은 이유로 전체 컨텍스트가 필요하다는 뜻이다.
  *
  * <p>Modulith의 JPA event publication registry는 {@code ApplicationEventPublisher.publishEvent}를 호출한 트랜잭션의
  * {@code EntityManager}를 그대로 타므로, 커밋되면 event_publication row가 남고 롤백되면 함께 사라진다. 이 계약은 실제 event 저장 방식(entity scan,
@@ -97,8 +100,9 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
         assertThat(readTerminated.schemaVersion()).isEqualTo(OrderTerminated.SCHEMA_VERSION);
     }
 
+    /** 주문 생성 후처리는 커밋 뒤 바로 한다(2026-11-06). 주문은 저장되고 {@code OrderCreated} publication은 남지 않는다 — 보관함 문장 다섯 개를 쓰지 않는다. */
     @Test
-    void 성공하면_주문과_OrderCreated_publication이_함께_저장된다() {
+    void 성공하면_주문만_저장되고_OrderCreated_publication은_남지_않는다() {
         final String holdKey = "atomicity-success-" + System.nanoTime();
         final Hold hold = holdWithPersistedSeat(holdKey);
         final List<PerformanceSeat> performanceSeats = persistedSeats(holdKey);
@@ -111,11 +115,7 @@ class OrderCreatedPublicationAtomicityTest extends BookingE2ETestSupport {
                 .execute(status ->
                         orderRepository.findPendingByHoldKeyForUpdate(holdKey).isPresent());
         assertThat(savedOrderExists).isTrue();
-        // listener가 비동기로 매우 빨리 완료돼 event_publication -> event_publication_archive로
-        // 옮겨갈 수 있으므로, 두 테이블 합산이 안정적으로 1이 될 때까지 짧게 기다린다.
-        org.awaitility.Awaitility.await()
-                .atMost(Duration.ofSeconds(2))
-                .until(() -> countPublicationsFor(holdKey) == 1L);
+        assertThat(countPublicationsFor(holdKey)).isEqualTo(0L);
     }
 
     @Test

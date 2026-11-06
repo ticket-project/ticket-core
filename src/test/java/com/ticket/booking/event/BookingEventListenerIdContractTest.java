@@ -2,11 +2,11 @@ package com.ticket.booking.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import jakarta.persistence.EntityManager;
@@ -14,14 +14,12 @@ import jakarta.persistence.EntityManager;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.modulith.events.IncompleteEventPublications;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.ticket.booking.hold.domain.Hold;
-import com.ticket.booking.order.usecase.PendingOrderCreator;
-import com.ticket.booking.seat.domain.PerformanceSeat;
-import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.OrderCreated;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -31,6 +29,8 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
  * 옮겨졌다. Spring의 기본 listener id는 선언 클래스의 FQCN을 포함하므로(Spring Framework
  * {@code ApplicationListenerMethodAdapter#getDefaultListenerId}), 아무것도 하지 않으면 id가 바뀐다. 그러면 이동 전에 저장돼 아직 완료되지 않은
  * {@code EVENT_PUBLICATION} row는 어떤 listener의 것인지 매칭되지 않아 영원히 재처리되지 않는다.
+ *
+ * <p>주문 생성은 2026-11-06부터 publication을 만들지 않는다. 이 테스트는 그 전에 저장돼 남은 publication을 listener가 끝까지 처리하는지 본다.
  *
  * <p>그래서 두 가지를 함께 고정한다.
  *
@@ -43,10 +43,9 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
     private static final long MEMBER_ID = 940L;
     private static final long PERFORMANCE_ID = 941L;
-    private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
 
     @Autowired
-    private PendingOrderCreator pendingOrderCreator;
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private IncompleteEventPublications incompleteEventPublications;
@@ -138,55 +137,22 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
                         .getResultList());
     }
 
+    /**
+     * 2026-11-06부터 주문 생성은 {@link OrderCreated}를 발행하지 않는다. 운영 DB에 남아 있을 수 있는 옛 publication을 재현하려고 트랜잭션 안에서 직접 발행한다.
+     * listener가 있으면 Modulith가 publication을 저장한다.
+     */
     private void createPendingOrder(final String holdKey) {
-        final PerformanceSeat seat = persistSeat();
-        final Hold hold = new Hold(
-                holdKey,
-                MEMBER_ID,
-                PERFORMANCE_ID,
-                List.of(seat.getSeatId()),
-                LocalDateTime.now().plus(HOLD_DURATION));
-        final List<PerformanceSeat> performanceSeats = List.of(seat);
-
-        final String orderKey = pendingOrderCreator.create(
-                MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, performanceSeats, saleSnapshotFor(performanceSeats));
-
-        assertThat(orderKey).isNotBlank();
-    }
-
-    private com.ticket.show.api.PerformanceSaleSnapshot saleSnapshotFor(final List<PerformanceSeat> performanceSeats) {
-        final java.util.Map<Long, com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo> seatInfoBySeatId =
-                new java.util.HashMap<>();
-        for (final PerformanceSeat seat : performanceSeats) {
-            seatInfoBySeatId.put(
-                    seat.getSeatId(),
-                    new com.ticket.show.api.PerformanceSaleSnapshot.SeatInfo(seat.getSeatId(), 1, "가", "A", "1"));
-        }
-        return new com.ticket.show.api.PerformanceSaleSnapshot(
-                PERFORMANCE_ID,
-                1L,
-                "show-title",
-                1L,
-                "venue-name",
-                LocalDateTime.now().plusDays(1),
-                seatInfoBySeatId,
-                Map.of(
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(status -> eventPublisher.publishEvent(new OrderCreated(
+                        UUID.randomUUID(),
+                        OrderCreated.SCHEMA_VERSION,
                         1L,
-                        new com.ticket.show.api.PerformanceSaleSnapshot.GradeInfo(
-                                1L, "R", "R석", 1, BigDecimal.valueOf(10_000))));
-    }
-
-    private PerformanceSeat persistSeat() {
-        return new TransactionTemplate(transactionManager).execute(status -> {
-            final PerformanceSeat seat = new PerformanceSeat(
-                    PERFORMANCE_ID,
-                    (long) (Math.random() * 1_000_000_000L),
-                    1L,
-                    PerformanceSeatState.AVAILABLE,
-                    BigDecimal.valueOf(10_000));
-            entityManager.persist(seat);
-            entityManager.flush();
-            return seat;
-        });
+                        MEMBER_ID,
+                        holdKey,
+                        Set.of(11L),
+                        Instant.now(),
+                        PERFORMANCE_ID,
+                        List.of(21L),
+                        Map.of(21L, 11L))));
     }
 }
