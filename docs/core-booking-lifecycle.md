@@ -93,7 +93,7 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 커밋 이후 후처리가 실패하거나 그 사이 서버가 멈추면 Order/OrderSeat/HoldHistory는 커밋된 채 남고, 후처리는 다시 하지
 않는다(2026-11-06). 예전에는 `OrderCreated` publication으로 남겨 재처리했지만, 되살리는 시점이 약 5~6분 뒤(staleness 5분 +
 재처리 1분)라 선택 키는 이미 만료됐고(5분) 화면은 SELECTED와 HELD를 같은 점유로 그린다. 그 대가로 주문마다 DB 문장 다섯 개를
-썼다. 판매 정합성은 Redis hold가 지킨다. 그 전에 저장된 `OrderCreated` publication은 `BookingEventListeners`가 계속 처리한다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
+썼다. 판매 정합성은 Redis hold가 지킨다. `OrderCreated` 이벤트와 리스너는 지웠다 — 그 전에 저장돼 끝나지 않은 publication은 처리하지 않는다. hold가 실제 점유의 기준이다. selection은 판매 정합성을 지키지 않지만 주문의 전제 조건이다 —
 본인이 선택 중인 좌석으로만 주문을 시작할 수 있다.
 
 주문 생성, 주문 상세, 주문 상태 응답의 시간 계약은 동일하다. `expiresAt`은 서버의 절대

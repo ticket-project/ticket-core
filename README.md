@@ -135,7 +135,7 @@ docs/                                설계·운영 문서와 설계 결정(docs
   수가 연결 풀 크기에 묶인다([예매 수명주기](docs/core-booking-lifecycle.md#지켜야-할-원칙)).
 - **스키마는 migration이 만들고 Hibernate는 `validate`만 한다**: entity만 고치면 기동이 실패한다. 이미 적용된 migration
   파일은 고치지 않는다([ADR 0020](docs/adr/0020-db-schema-source-of-truth-is-migration.md)).
-- **`booking.OrderCreated`·`OrderTerminated`의 패키지**: 클래스 이름이 이벤트 기록 테이블에 저장된다. 옮기면 처리 못 한
+- **`booking.OrderTerminated`의 패키지**: 클래스 이름이 이벤트 기록 테이블에 저장된다. 옮기면 처리 못 한
   이벤트가 재처리되지 않는다.
 
 ## 기여

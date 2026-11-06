@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,7 +18,7 @@ import org.springframework.modulith.events.IncompleteEventPublications;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.ticket.booking.OrderCreated;
+import com.ticket.booking.OrderTerminated;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -29,8 +28,6 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
  * 옮겨졌다. Spring의 기본 listener id는 선언 클래스의 FQCN을 포함하므로(Spring Framework
  * {@code ApplicationListenerMethodAdapter#getDefaultListenerId}), 아무것도 하지 않으면 id가 바뀐다. 그러면 이동 전에 저장돼 아직 완료되지 않은
  * {@code EVENT_PUBLICATION} row는 어떤 listener의 것인지 매칭되지 않아 영원히 재처리되지 않는다.
- *
- * <p>주문 생성은 2026-11-06부터 publication을 만들지 않는다. 이 테스트는 그 전에 저장돼 남은 publication을 listener가 끝까지 처리하는지 본다.
  *
  * <p>그래서 두 가지를 함께 고정한다.
  *
@@ -42,7 +39,8 @@ import com.ticket.bootstrap.support.BookingE2ETestSupport;
 @SuppressWarnings("NonAsciiCharacters")
 class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
     private static final long MEMBER_ID = 940L;
-    private static final long PERFORMANCE_ID = 941L;
+    /** 없는 주문이다. listener는 주문을 찾지 못하면 후처리 없이 완료한다 — 여기서는 id 매칭과 완료만 본다. */
+    private static final long MISSING_ORDER_ID = 9_400_000_000L;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -57,10 +55,10 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
     private EntityManager entityManager;
 
     @Test
-    void OrderCreated_publication은_옛_package_경로의_listener_id로_저장된다() {
+    void OrderTerminated_publication은_옛_package_경로의_listener_id로_저장된다() {
         final String holdKey = "listener-id-" + System.nanoTime();
 
-        createPendingOrder(holdKey);
+        publishOrderTerminated(holdKey);
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
@@ -68,13 +66,13 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
 
         assertThat(listenerIdsFor(holdKey))
                 .as("이동 전에 저장된 publication과 매칭되려면 옛 package 문자열이어야 한다")
-                .containsExactly(BookingEventListeners.ORDER_CREATED_LISTENER_ID);
+                .containsExactly(BookingEventListeners.ORDER_TERMINATED_LISTENER_ID);
     }
 
     @Test
     void 옛_listener_id로_저장된_미완료_publication은_이동_후에도_재처리된다() {
         final String holdKey = "listener-id-resubmit-" + System.nanoTime();
-        createPendingOrder(holdKey);
+        publishOrderTerminated(holdKey);
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
                 .until(() -> !listenerIdsFor(holdKey).isEmpty());
@@ -107,7 +105,7 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
                             + "values (?1, ?2, ?3, ?4, ?5, null, null, 0, 'PUBLISHED')")
                     .setParameter(1, id)
                     .setParameter(2, java.time.OffsetDateTime.now())
-                    .setParameter(3, BookingEventListeners.ORDER_CREATED_LISTENER_ID)
+                    .setParameter(3, BookingEventListeners.ORDER_TERMINATED_LISTENER_ID)
                     .setParameter(4, source[0])
                     .setParameter(5, source[1])
                     .executeUpdate();
@@ -137,22 +135,17 @@ class BookingEventListenerIdContractTest extends BookingE2ETestSupport {
                         .getResultList());
     }
 
-    /**
-     * 2026-11-06부터 주문 생성은 {@link OrderCreated}를 발행하지 않는다. 운영 DB에 남아 있을 수 있는 옛 publication을 재현하려고 트랜잭션 안에서 직접 발행한다.
-     * listener가 있으면 Modulith가 publication을 저장한다.
-     */
-    private void createPendingOrder(final String holdKey) {
+    /** 주문 종료 이벤트를 트랜잭션 안에서 발행한다. listener가 있으면 Modulith가 publication을 저장한다. */
+    private void publishOrderTerminated(final String holdKey) {
         new TransactionTemplate(transactionManager)
-                .executeWithoutResult(status -> eventPublisher.publishEvent(new OrderCreated(
+                .executeWithoutResult(status -> eventPublisher.publishEvent(new OrderTerminated(
                         UUID.randomUUID(),
-                        OrderCreated.SCHEMA_VERSION,
-                        1L,
+                        OrderTerminated.SCHEMA_VERSION,
+                        MISSING_ORDER_ID,
                         MEMBER_ID,
                         holdKey,
                         Set.of(11L),
-                        Instant.now(),
-                        PERFORMANCE_ID,
-                        List.of(21L),
-                        Map.of(21L, 11L))));
+                        "CANCELED",
+                        Instant.now())));
     }
 }

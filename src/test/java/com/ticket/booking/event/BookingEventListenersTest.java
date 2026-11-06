@@ -24,7 +24,6 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Propagation;
 
-import com.ticket.booking.OrderCreated;
 import com.ticket.booking.OrderTerminated;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderSeat;
@@ -34,10 +33,9 @@ import com.ticket.booking.order.usecase.OrderHoldSnapshotReader;
 /**
  * listener 멱등성과 stale-event 방어를 고정한다.
  *
- * <p>{@link BookingEventListeners}는 schema 2 {@code OrderCreated}를 payload 값으로 처리하고, schema 1 publication과
- * {@code OrderTerminated}는 {@code orderId}로 현재 저장된 order·orderSeat를 다시 읽는다. hold 생성·해제 자체의 멱등 로직은
- * {@code HeldSeatPublisherTest}/{@code HoldReleaserTest}가 이미 고정하므로, 여기서는 listener가 그 로직에 올바른 입력을 넘기는지와 존재하지 않는 주문에 대해
- * 아무 부수효과도 일으키지 않는지를 본다.
+ * <p>{@link BookingEventListeners}는 {@code OrderTerminated}의 {@code orderId}로 현재 저장된 order·orderSeat를 다시 읽는다. hold 해제
+ * 자체의 멱등 로직은 {@code HoldReleaserTest}가 이미 고정하므로, 여기서는 listener가 그 로직에 올바른 입력을 넘기는지와 존재하지 않는 주문에 대해 아무 부수효과도 일으키지 않는지를
+ * 본다.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -46,78 +44,23 @@ class BookingEventListenersTest {
     private OrderHoldSnapshotReader orderHoldSnapshotReader;
 
     @Mock
-    private HeldSeatPublisher heldSeatPublisher;
-
-    @Mock
     private HoldReleaser holdReleaser;
 
     private BookingEventListeners listeners;
 
     @BeforeEach
     void setUp() {
-        listeners = new BookingEventListeners(orderHoldSnapshotReader, heldSeatPublisher, holdReleaser);
+        listeners = new BookingEventListeners(orderHoldSnapshotReader, holdReleaser);
     }
 
     /** listener 자체가 DB 트랜잭션을 열면 Redis·WebSocket 작업이 booking connection을 쥔 채로 실행된다. */
     @Test
     void listener는_자기_DB_트랜잭션을_열지_않는다() throws NoSuchMethodException {
         assertThat(BookingEventListeners.class
-                        .getDeclaredMethod("on", OrderCreated.class)
-                        .getAnnotation(ApplicationModuleListener.class)
-                        .propagation())
-                .isEqualTo(Propagation.NOT_SUPPORTED);
-        assertThat(BookingEventListeners.class
                         .getDeclaredMethod("on", OrderTerminated.class)
                         .getAnnotation(ApplicationModuleListener.class)
                         .propagation())
                 .isEqualTo(Propagation.NOT_SUPPORTED);
-    }
-
-    @Test
-    void OrderCreated는_payload의_회차와_좌석으로_생성_프로세서를_부르고_주문을_다시_읽지_않는다() {
-        final OrderCreated event = new OrderCreated(
-                UUID.randomUUID(),
-                OrderCreated.SCHEMA_VERSION,
-                10L,
-                20L,
-                "hold-key",
-                Set.of(501L, 502L),
-                Instant.now(),
-                200L,
-                List.of(42L, 43L),
-                Map.of(42L, 501L, 43L, 502L));
-
-        listeners.on(event);
-
-        verify(heldSeatPublisher)
-                .clearSelectionsAndPublishHeld(
-                        "hold-key", 20L, new OrderHoldSnapshot(200L, List.of(42L, 43L), Map.of(42L, 501L, 43L, 502L)));
-        verifyNoInteractions(orderHoldSnapshotReader);
-    }
-
-    @Test
-    void schema_1_OrderCreated_주문이_없으면_아무_후처리도_하지_않는다() {
-        final OrderCreated event = orderCreated(10L, "hold-key");
-        when(orderHoldSnapshotReader.read(10L)).thenReturn(Optional.empty());
-
-        listeners.on(event);
-
-        verifyNoInteractions(heldSeatPublisher);
-    }
-
-    @Test
-    void schema_1_OrderCreated는_현재_DB_상태의_snapshot을_생성_프로세서에_넘긴다() {
-        final OrderCreated event = orderCreated(10L, "hold-key");
-        final Order order = order(10L, 200L, "hold-key", LocalDateTime.of(2026, 3, 15, 10, 10));
-        addOrderSeat(order, 501L, 42L);
-        addOrderSeat(order, 502L, 43L);
-        when(orderHoldSnapshotReader.read(10L)).thenReturn(Optional.of(snapshotOf(order)));
-
-        listeners.on(event);
-
-        verify(heldSeatPublisher)
-                .clearSelectionsAndPublishHeld(
-                        "hold-key", 20L, new OrderHoldSnapshot(200L, List.of(42L, 43L), Map.of(42L, 501L, 43L, 502L)));
     }
 
     @Test
@@ -150,12 +93,6 @@ class BookingEventListenersTest {
                 order.getOrderSeats().stream().map(OrderSeat::getSeatId).toList(),
                 order.getOrderSeats().stream()
                         .collect(Collectors.toMap(OrderSeat::getSeatId, OrderSeat::getPerformanceSeatId)));
-    }
-
-    /** 회차·좌석 값이 없는 schema 1 publication을 JSON에서 읽은 모양이다. */
-    private OrderCreated orderCreated(final long orderId, final String holdKey) {
-        return new OrderCreated(
-                UUID.randomUUID(), 1, orderId, 20L, holdKey, Set.of(501L), Instant.now(), null, List.of(), Map.of());
     }
 
     private OrderTerminated orderTerminated(final long orderId, final String holdKey) {
