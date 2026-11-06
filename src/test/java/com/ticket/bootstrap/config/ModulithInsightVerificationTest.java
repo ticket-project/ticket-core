@@ -3,8 +3,6 @@ package com.ticket.bootstrap.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.modulith.actuator.ApplicationModulesEndpoint;
 import org.springframework.modulith.observability.support.ModuleObservabilityBeanPostProcessor;
 
-import com.ticket.booking.OrderCreated;
+import com.ticket.booking.OrderTerminated;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -32,8 +30,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  * <ul>
  *   <li><b>module API trace가 등록된다</b>: {@link ModuleObservabilityBeanPostProcessor} 빈이 context에 있으면 module 경계를 넘는 호출을
  *       Micrometer Observation으로 계측하는 AOP instrumentation이 활성화된 것이다.
- *   <li><b>event publication metric이 등록된다</b>: 실제 도메인 이벤트({@link OrderCreated})를 발행하면 {@code module.events.published}
- *       계열 counter가 {@link MeterRegistry}에 생긴다. 이름은 구현 세부사항이라 접두어만 검사한다.
+ *   <li><b>event publication metric이 등록된다</b>: 실제 도메인 이벤트({@link OrderTerminated})를 발행하면
+ *       {@code module.events.published} 계열 counter가 {@link MeterRegistry}에 생긴다. 이름은 구현 세부사항이라 접두어만 검사한다.
  * </ul>
  *
  * <p>{@code /actuator/modulith}({@link ApplicationModulesEndpoint}, endpoint id {@code modulith})는
@@ -63,17 +61,15 @@ class ModulithInsightVerificationTest extends BookingE2ETestSupport {
 
     @Test
     void 도메인_이벤트를_발행하면_event_publication_metric이_등록된다() {
-        eventPublisher.publishEvent(new OrderCreated(
+        eventPublisher.publishEvent(new OrderTerminated(
                 UUID.randomUUID(),
-                OrderCreated.SCHEMA_VERSION,
+                OrderTerminated.SCHEMA_VERSION,
                 999_999L,
                 1L,
                 "insight-verification-hold",
                 Set.of(1L),
-                Instant.now(),
-                1L,
-                List.of(2L),
-                Map.of(2L, 1L)));
+                "CANCELED",
+                Instant.now()));
 
         assertThat(meterRegistry.getMeters())
                 .as("module.events.published로 시작하는 counter가 최소 하나는 있어야 한다")
