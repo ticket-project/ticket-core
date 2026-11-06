@@ -58,6 +58,11 @@ class BookingEventListeners {
     private final HeldSeatPublisher heldSeatPublisher;
     private final HoldReleaser holdReleaser;
 
+    /**
+     * 2026-11-06부터 주문 생성은 {@link OrderCreated}를 발행하지 않고 커밋 뒤 {@code CreateOrderUseCase}가 같은 후처리를 바로 한다. 이 listener는 그
+     * 전에 저장돼 아직 끝나지 않은 publication을 재처리가 마무리할 수 있게 남겨 둔다. 운영 {@code event_publication}에 미완료 {@code OrderCreated}가 없으면
+     * 지워도 된다.
+     */
     @ApplicationModuleListener(id = ORDER_CREATED_LISTENER_ID, propagation = Propagation.NOT_SUPPORTED)
     void on(final OrderCreated event) {
         final Long performanceId = event.performanceId();
