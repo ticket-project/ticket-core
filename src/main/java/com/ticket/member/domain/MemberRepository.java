@@ -34,6 +34,9 @@ public interface MemberRepository extends Repository<Member, Long> {
 
     Optional<Member> findByIdAndDeletedAtIsNull(Long id);
 
+    /** 탈퇴하지 않은 회원이 있는지만 본다. 주문 생성처럼 존재만 확인하는 경로가 회원 한 줄 전체(비밀번호 해시 포함)를 읽어 엔티티로 만들지 않게 한다. */
+    boolean existsByIdAndDeletedAtIsNull(Long id);
+
     /** 소셜 로그인 진입점이다. 회원과 소셜 계정 <b>양쪽 모두</b> 탈퇴 처리되지 않은 경우에만 찾는다 — 탈퇴한 회원의 계정이나 연결 해제된 계정으로는 로그인되지 않아야 한다. */
     @Query("""
             SELECT m
