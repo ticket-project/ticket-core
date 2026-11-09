@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,7 +11,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,8 +37,8 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
  * 주문 생성의 DB 구간을 고정한다.
  *
  * <p>옛 {@code OrderCreator}(주문 조립)와 옛 {@code CreatePendingOrderTransactionService}(저장·이력·event 발행과 트랜잭션 경계)가 이 한 클래스로
- * 합쳐졌다. 그래서 두 테스트가 각각 고정하던 것을 여기서 함께 본다 — 조립 결과(orderKey, PENDING, 표시 snapshot, 좌석 단가 합계)와 한 트랜잭션 안의 순서(저장 → 이력 →
- * publication).
+ * 합쳐졌다. 그래서 두 테스트가 각각 고정하던 것을 여기서 함께 본다 — 조립 결과(orderKey, PENDING, 표시 snapshot, 좌석 단가 합계)와 한 트랜잭션 안의 순서(저장, publication
+ * 없음).
  *
  * <p>옛 {@code OrderCreatorTest}의 "조립만 하고 저장하지 않는다"는 이 병합으로 뜻이 뒤집혔다. 지금은 저장과 트랜잭션 경계를 이 클래스가 가지므로, 그 자리를
  * {@link #주문_생성_메서드는_트랜잭션으로_실행된다}가 대신한다.
@@ -49,36 +46,29 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 @SuppressWarnings("NonAsciiCharacters")
 @ExtendWith(MockitoExtension.class)
 class PendingOrderCreatorTest {
-    private static final Duration HOLD_DURATION = Duration.ofSeconds(600);
     private static final LocalDateTime EXPIRES_AT = LocalDateTime.of(2026, 3, 15, 12, 0);
 
     @Mock
     private OrderRepository orderRepository;
 
-    @Mock
-    private OrderHoldHistoryRecorder orderHoldHistoryRecorder;
-
     private PendingOrderCreator pendingOrderCreator;
 
     @BeforeEach
     void setUp() {
-        pendingOrderCreator = new PendingOrderCreator(orderRepository, orderHoldHistoryRecorder);
+        pendingOrderCreator = new PendingOrderCreator(orderRepository);
     }
 
     @Test
-    void 주문과_hold_이력을_같은_트랜잭션에_저장하고_이벤트는_발행하지_않는다() {
+    void 주문을_저장하고_선점_이력은_쓰지_않는다() {
         final PerformanceSeat seat = performanceSeat(501L, 201L, 1L, BigDecimal.TEN);
         final List<PerformanceSeat> seats = List.of(seat);
         final Hold hold = hold();
         saveAssigningId(55L);
 
-        final String orderKey = pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold, seats, saleSnapshot());
+        final String orderKey = pendingOrderCreator.create(20L, 10L, hold, seats, saleSnapshot());
 
         assertThat(orderKey).startsWith("ORDER-");
-        final InOrder inOrder = inOrder(orderRepository, orderHoldHistoryRecorder);
-        inOrder.verify(orderRepository).save(any(Order.class));
-        inOrder.verify(orderHoldHistoryRecorder)
-                .recordCreated(20L, 10L, "hold-key", EXPIRES_AT.minusSeconds(600), EXPIRES_AT, seats);
+        verify(orderRepository).save(any(Order.class));
         // 후처리는 커밋 뒤 CreateOrderUseCase가 바로 한다. 이 트랜잭션에는 event publication이 없다.
     }
 
@@ -89,8 +79,8 @@ class PendingOrderCreatorTest {
         final PerformanceSeat secondSeat = performanceSeat(102L, 202L, 2L, BigDecimal.valueOf(20));
         saveAssigningId(55L);
 
-        final String orderKey = pendingOrderCreator.create(
-                1L, 10L, HOLD_DURATION, hold(), List.of(firstSeat, secondSeat), saleSnapshot());
+        final String orderKey =
+                pendingOrderCreator.create(1L, 10L, hold(), List.of(firstSeat, secondSeat), saleSnapshot());
 
         final Order order = savedOrder();
         // 없어진 OrderKeyGeneratorTest가 고정하던 주문 키 형식이다.
@@ -134,8 +124,8 @@ class PendingOrderCreatorTest {
         final List<PerformanceSeat> seats = List.of(performanceSeat(101L, 201L, 1L, BigDecimal.TEN));
         saveAssigningId(55L);
 
-        final String first = pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
-        final String second = pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), seats, saleSnapshot());
+        final String first = pendingOrderCreator.create(1L, 10L, hold(), seats, saleSnapshot());
+        final String second = pendingOrderCreator.create(1L, 10L, hold(), seats, saleSnapshot());
 
         assertThat(first).isNotEqualTo(second);
     }
@@ -159,24 +149,22 @@ class PendingOrderCreatorTest {
     void 좌석_표시값이_없으면_주문_생성에_실패한다() {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
 
-        assertThatThrownBy(() ->
-                        pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), List.of(seat), emptySaleSnapshot()))
+        assertThatThrownBy(() -> pendingOrderCreator.create(1L, 10L, hold(), List.of(seat), emptySaleSnapshot()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("좌석 표시값");
 
-        verifyNoInteractions(orderRepository, orderHoldHistoryRecorder);
+        verifyNoInteractions(orderRepository);
     }
 
     @Test
     void 등급_표시값이_없으면_주문_생성에_실패한다() {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 99L, BigDecimal.TEN);
 
-        assertThatThrownBy(
-                        () -> pendingOrderCreator.create(1L, 10L, HOLD_DURATION, hold(), List.of(seat), saleSnapshot()))
+        assertThatThrownBy(() -> pendingOrderCreator.create(1L, 10L, hold(), List.of(seat), saleSnapshot()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("등급 표시값");
 
-        verifyNoInteractions(orderRepository, orderHoldHistoryRecorder);
+        verifyNoInteractions(orderRepository);
     }
 
     /** 저장 책임이 이 클래스로 모였으므로, 저장 실패의 전파도 여기서 고정한다. */
@@ -185,24 +173,15 @@ class PendingOrderCreatorTest {
         final PerformanceSeat seat = performanceSeat(101L, 201L, 1L, BigDecimal.TEN);
         when(orderRepository.save(any(Order.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        assertThatThrownBy(() ->
-                        pendingOrderCreator.create(20L, 10L, HOLD_DURATION, hold(), List.of(seat), saleSnapshot()))
+        assertThatThrownBy(() -> pendingOrderCreator.create(20L, 10L, hold(), List.of(seat), saleSnapshot()))
                 .isInstanceOf(DataIntegrityViolationException.class);
-
-        verifyNoInteractions(orderHoldHistoryRecorder);
     }
 
     @Test
     void 주문_생성_메서드는_트랜잭션으로_실행된다() throws NoSuchMethodException {
         assertThat(PendingOrderCreator.class
                         .getDeclaredMethod(
-                                "create",
-                                Long.class,
-                                Long.class,
-                                Duration.class,
-                                Hold.class,
-                                List.class,
-                                PerformanceSaleSnapshot.class)
+                                "create", Long.class, Long.class, Hold.class, List.class, PerformanceSaleSnapshot.class)
                         .isAnnotationPresent(Transactional.class))
                 .isTrue();
     }

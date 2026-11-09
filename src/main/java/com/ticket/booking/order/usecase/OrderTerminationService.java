@@ -23,19 +23,16 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class OrderTerminationService {
-    private final OrderHoldHistoryRecorder orderHoldHistoryRecorder;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     public void cancel(final Order order, final LocalDateTime now) {
         order.cancel(now);
-        orderHoldHistoryRecorder.recordCanceled(order, now);
         publishTerminated(order, now);
     }
 
     public void expire(final Order order, final LocalDateTime now) {
         order.expire(now);
-        orderHoldHistoryRecorder.recordExpired(order, now);
         publishTerminated(order, now);
     }
 
