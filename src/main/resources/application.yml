@@ -1,6 +1,16 @@
 spring:
   application:
     name: ticket-core
+  # 종료할 때 하던 일을 마치고 내려간다(스케일 아웃 결정 D4-1). 요청 마무리(graceful shutdown) 최대 20초 뒤
+  # 주문 종료 후처리 같은 비동기 작업을 최대 10초 기다린다. 합 30초라 운영 compose의 stop_grace_period(40초)와 ALB
+  # 대상 그룹 대기 시간보다 짧아야 한다. 끊긴 후처리는 staleness(10분) 뒤 다시 처리된다.
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  task:
+    execution:
+      shutdown:
+        await-termination: true
+        await-termination-period: 10s
   datasource:
     hikari:
       pool-name: ticket-core

@@ -100,6 +100,11 @@ workflow 주석에 적은 가정이다. 배포 script는 그 밖에도 같은 co
 `DD_VERSION`으로 Core 버전을 받는다고 보고, Core 컨테이너가 새로 만들어지면 `ticket-nginx`를 재시작한다. compose가 바뀌면
 workflow도 함께 고친다.
 
+Core는 종료 신호를 받으면 처리 중인 요청을 최대 20초, 비동기 후처리를 최대 10초 마치고 내려간다(`application.yml`의
+`spring.lifecycle`·`spring.task.execution.shutdown`). Docker는 따로 정하지 않으면 10초 뒤 강제로 끄므로 운영 compose의
+Core 서비스에 `stop_grace_period: 40s`를 둔다. ALB를 쓰면 대상 그룹 대기 시간(deregistration delay)도 40초 안팎으로 맞추고,
+ECS로 가면 `stopTimeout`을 같은 기준으로 둔다([스케일 아웃 결정](plans/scale-out-decisions.md) D4-1).
+
 ## Core 용량 관측
 
 Core는 `/actuator/prometheus`에서 용량 판정에 필요한 메트릭을 노출한다. 부하 테스트 중에는 다음을 같은 시간축으로 본다.
