@@ -50,7 +50,7 @@
 5. 업무 로직은 소유 모듈에 둔다. `shared`·`security`는 기술 모듈이며 `shared`에 업무 의존을 넣지 않는다. `common`/`util`/`helper`처럼 소유권 없는 패키지를 만들지 않는다. 공개 shared 계약과 실행 설정의 배치는 [아키텍처](docs/architecture.md#module-structure)를 따른다.
 6. DB 스키마의 원본은 module 소유 PostgreSQL Flyway migration이다. entity 변경만으로 스키마가 바뀐다고 가정하지 않는다. 스키마 변경은 migration·매핑·관련 테스트와 운영 전환 조건을 함께 검토한다([ADR 0020](docs/adr/0020-db-schema-source-of-truth-is-migration.md)).
 
-상세·예외는 [아키텍처](docs/architecture.md), 이름·null 계약·조회 구현은 [코드 작성 기준](docs/coding-guidelines.md)을 따른다. 이름 정리만을 이유로 JSON·HTTP 상태·오류 코드 등 공개 계약을 바꾸지 않는다.
+상세·예외는 [아키텍처](docs/architecture.md), 이름·null 계약·조회 구현은 [코드 작성 기준](docs/coding-guidelines.md)을 따른다. 이름 정리만을 이유로 JSON·HTTP 상태·오류 코드 등 공개 계약을 바꾸지 않는다. ticket-fe가 부르는 HTTP API·STOMP 주소는 형식을 그대로 두고, 바꿔야 하면 새 경로를 추가한다([프론트엔드 호환](docs/architecture.md#프론트엔드-호환)).
 
 ## Verification
 
