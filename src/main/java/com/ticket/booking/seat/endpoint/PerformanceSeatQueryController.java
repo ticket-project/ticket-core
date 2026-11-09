@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
+import com.ticket.booking.seat.usecase.GetSeatOccupancyUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.member.api.AuthenticatedMember;
 import com.ticket.shared.web.ApiResponse;
@@ -23,7 +24,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * {@code .../seat-map}은 회차 정적 seat-map(Venue 배치·좌석 좌표·등급·가격)을 읽는다. {@code .../seats/availability},
  * {@code .../seats/status}, {@code .../seats/occupied}는 회차별 판매 상태(PerformanceSeat)와 Redis selection/hold를 함께 읽는다.
- * {@code status}는 좌석 전체를, {@code occupied}는 빈 좌석이 아닌 좌석 번호와 회차 요약을 보낸다.
+ * {@code status}는 좌석 전체를, {@code occupied}는 빈 좌석이 아닌 좌석 번호와 회차 요약을 보낸다. {@code .../seats/occupancy}는 같은 상태를 좌석당 1비트로
+ * 보내는 새 계약이다.
  *
  * <p>{@code PerformanceSeat}와 Redis selection/hold 상태는 booking이 소유하는 데이터라, 이 엔드포인트들은 순수 show/공연 요약 데이터만 다루는
  * {@code com.ticket.show.endpoint.PerformanceController}가 아니라 booking 소유인 이
@@ -38,6 +40,7 @@ public class PerformanceSeatQueryController {
     private final GetSeatStatusUseCase getSeatStatusUseCase;
     private final GetOccupiedSeatsUseCase getOccupiedSeatsUseCase;
     private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase;
+    private final GetSeatOccupancyUseCase getSeatOccupancyUseCase;
 
     @Operation(summary = "회차 좌석 배치도 조회", description = "회차의 정적 좌석 배치도(공연장 레이아웃, 좌석 좌표, 등급, 가격)를 반환합니다.")
     @GetMapping("/{performanceId}/seat-map")
@@ -84,5 +87,22 @@ public class PerformanceSeatQueryController {
         final GetOccupiedSeatsUseCase.Input input =
                 new GetOccupiedSeatsUseCase.Input(performanceId, member.memberId(), admissionToken);
         return ApiResponse.success(getOccupiedSeatsUseCase.execute(input));
+    }
+
+    @Operation(
+            summary = "좌석 점유 비트 조회",
+            description = "seatId 오름차순 좌석마다 1비트(1 = 고를 수 있음)를 base64로 반환합니다. 바이트 안에서는 앞 좌석이 높은 비트이고 남는 비트는 0입니다."
+                    + " seatCount로 배치도 좌석 수와 맞는지 확인합니다. 회차별로 최대 1초 전 값일 수 있습니다. 요약은 .../seats/occupied와 같습니다.")
+    @GetMapping("/{performanceId}/seats/occupancy")
+    public ApiResponse<GetSeatOccupancyUseCase.Output> getSeatOccupancy(
+            @Parameter(description = "회차 ID", example = "1") @PathVariable @Positive final Long performanceId,
+            // 헤더 이름은 ticket-queue와 맞춘 계약이다. admission 내부 상수를 import하지 않는다.
+            @Parameter(description = "Queue Server가 발급한 admission token")
+                    @RequestHeader(value = "X-Admission-Token", required = false)
+                    final String admissionToken,
+            @Parameter(hidden = true) final AuthenticatedMember member) {
+        final GetSeatOccupancyUseCase.Input input =
+                new GetSeatOccupancyUseCase.Input(performanceId, member.memberId(), admissionToken);
+        return ApiResponse.success(getSeatOccupancyUseCase.execute(input));
     }
 }

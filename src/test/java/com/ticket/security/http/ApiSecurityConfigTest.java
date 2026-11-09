@@ -139,6 +139,7 @@ class ApiSecurityConfigTest {
     void 좌석상태_조회는_일반_공연조회보다_먼저_인증을_요구한다() throws Exception {
         mockMvc.perform(get("/api/v1/performances/1/seats/status")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/v1/performances/1/seats/occupied")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/performances/1/seats/occupancy")).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -220,6 +221,11 @@ class ApiSecurityConfigTest {
         @GetMapping("/api/v1/performances/1/seats/occupied")
         public String occupiedSeats() {
             return "occupied-seats";
+        }
+
+        @GetMapping("/api/v1/performances/1/seats/occupancy")
+        public String seatOccupancy() {
+            return "seat-occupancy";
         }
     }
 }

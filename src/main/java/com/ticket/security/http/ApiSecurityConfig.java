@@ -54,7 +54,8 @@ public class ApiSecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/performances/*/seats/status",
-                                "/api/v1/performances/*/seats/occupied")
+                                "/api/v1/performances/*/seats/occupied",
+                                "/api/v1/performances/*/seats/occupancy")
                         .authenticated()
                         .requestMatchers(
                                 HttpMethod.GET,

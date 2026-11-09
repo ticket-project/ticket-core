@@ -60,6 +60,14 @@ class CacheConfigTest {
     }
 
     @Test
+    void 좌석_가용_비트는_1초_뒤_만료되고_64개까지_담는다() {
+        final Policy<Object, Object> policy = policyOf(CacheNames.SEAT_AVAILABILITY_BITS);
+
+        assertThat(policy.expireAfterWrite().orElseThrow().getExpiresAfter()).isEqualTo(Duration.ofSeconds(1));
+        assertThat(policy.eviction().orElseThrow().getMaximum()).isEqualTo(64);
+    }
+
+    @Test
     void 등록하지_않은_이름으로는_캐시를_만들지_않는다() {
         assertThat(cacheManager.getCache("unknown")).isNull();
     }
