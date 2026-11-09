@@ -21,5 +21,8 @@ public final class CacheNames {
     /** booking 회차 판매 편성 좌석 ID 목록(상태 없음). 좌석 상태 응답에 쓰며 편성은 판매 중 바뀌지 않아 회차별로 10분 재사용한다. */
     public static final String PERFORMANCE_SEAT_IDS = "performanceSeatIds";
 
+    /** booking 회차 좌석 가용 비트·좌석 수·회차 요약. 좌석 화면 표시용이라 회차별로 1초 재사용한다. 선택·선점 판정에는 쓰지 않는다. */
+    public static final String SEAT_AVAILABILITY_BITS = "seatAvailabilityBits";
+
     private CacheNames() {}
 }

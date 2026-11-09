@@ -12,7 +12,9 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
 import org.springframework.transaction.interceptor.TransactionAttributeSource;
 
 import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
+import com.ticket.booking.seat.usecase.GetSeatOccupancyUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
+import com.ticket.booking.seat.usecase.SeatAvailabilityBitsReader;
 import com.ticket.bootstrap.support.BookingE2ETestSupport;
 
 /**
@@ -43,6 +45,11 @@ class SeatStatusTransactionBoundaryTest extends BookingE2ETestSupport {
                 .isNull();
         assertThat(transactionAttributeOf(
                         GetOccupiedSeatsUseCase.class, "execute", GetOccupiedSeatsUseCase.Input.class))
+                .isNull();
+        assertThat(transactionAttributeOf(
+                        GetSeatOccupancyUseCase.class, "execute", GetSeatOccupancyUseCase.Input.class))
+                .isNull();
+        assertThat(transactionAttributeOf(SeatAvailabilityBitsReader.class, "read", long.class))
                 .isNull();
     }
 

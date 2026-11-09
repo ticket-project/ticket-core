@@ -42,6 +42,10 @@ public class CacheConfig {
     /** 회차 하나가 좌석 수만큼 무게를 갖는다. 15,000석 회차 10개를 담는다. */
     static final long PERFORMANCE_SEAT_IDS_MAXIMUM_SEATS = 150_000;
 
+    static final Duration SEAT_AVAILABILITY_BITS_TTL = Duration.ofSeconds(1);
+    /** 15,000석 회차 하나가 약 2KB다. 1초 안에 동시에 보는 회차 수보다 넉넉하면 된다. */
+    static final long SEAT_AVAILABILITY_BITS_MAXIMUM_SIZE = 64;
+
     @Bean
     public CacheManager cacheManager() {
         final CaffeineCacheManager manager = new CaffeineCacheManager();
@@ -50,7 +54,8 @@ public class CacheConfig {
                 CacheNames.PERFORMANCE_DISPLAY,
                 CacheNames.VENUE_SEATS,
                 CacheNames.SHOW_SEAT_MAP,
-                CacheNames.PERFORMANCE_SEAT_IDS));
+                CacheNames.PERFORMANCE_SEAT_IDS,
+                CacheNames.SEAT_AVAILABILITY_BITS));
         // 판매 기간·대기열 변경은 서버마다 최대 1초 늦게 반영된다.
         manager.registerCustomCache(
                 CacheNames.SALES_POLICY,
@@ -92,6 +97,14 @@ public class CacheConfig {
                         .expireAfterWrite(PERFORMANCE_SEAT_IDS_TTL)
                         .maximumWeight(PERFORMANCE_SEAT_IDS_MAXIMUM_SEATS)
                         .weigher((final Object performanceId, final Object seats) -> ((List<?>) seats).size())
+                        .recordStats()
+                        .build());
+        // 좌석 화면의 고를 수 있는 좌석 표시가 최대 1초 늦다. 바뀐 좌석은 WebSocket이 따로 알리고 판정은 이 값을 보지 않는다.
+        manager.registerCustomCache(
+                CacheNames.SEAT_AVAILABILITY_BITS,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(SEAT_AVAILABILITY_BITS_TTL)
+                        .maximumSize(SEAT_AVAILABILITY_BITS_MAXIMUM_SIZE)
                         .recordStats()
                         .build());
         return manager;

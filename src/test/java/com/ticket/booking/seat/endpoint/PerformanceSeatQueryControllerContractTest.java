@@ -21,6 +21,7 @@ import com.ticket.booking.exception.handler.BookingExceptionHandler;
 import com.ticket.booking.seat.usecase.GetOccupiedSeatsUseCase;
 import com.ticket.booking.seat.usecase.GetPerformanceSeatMapUseCase;
 import com.ticket.booking.seat.usecase.GetSeatAvailabilityUseCase;
+import com.ticket.booking.seat.usecase.GetSeatOccupancyUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase;
 import com.ticket.booking.seat.usecase.GetSeatStatusUseCase.SeatStatus;
 import com.ticket.member.api.AuthenticatedMember;
@@ -37,6 +38,7 @@ class PerformanceSeatQueryControllerContractTest {
     private final GetOccupiedSeatsUseCase getOccupiedSeatsUseCase = Mockito.mock(GetOccupiedSeatsUseCase.class);
     private final GetPerformanceSeatMapUseCase getPerformanceSeatMapUseCase =
             Mockito.mock(GetPerformanceSeatMapUseCase.class);
+    private final GetSeatOccupancyUseCase getSeatOccupancyUseCase = Mockito.mock(GetSeatOccupancyUseCase.class);
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -45,7 +47,8 @@ class PerformanceSeatQueryControllerContractTest {
                 getSeatAvailabilityUseCase,
                 getSeatStatusUseCase,
                 getOccupiedSeatsUseCase,
-                getPerformanceSeatMapUseCase);
+                getPerformanceSeatMapUseCase,
+                getSeatOccupancyUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setCustomArgumentResolvers(new AuthenticatedMemberArgumentResolver())
                 .setControllerAdvice(
@@ -112,5 +115,21 @@ class PerformanceSeatQueryControllerContractTest {
                 .andExpect(jsonPath("$.data.summary.title").value("싱어게인"))
                 .andExpect(jsonPath("$.data.summary.region").value("충청"))
                 .andExpect(jsonPath("$.data.summary.startTime").exists());
+    }
+
+    @Test
+    void seat_occupancy는_admission_token을_넘기고_가용_비트를_base64_문자열로_돌려준다() throws Exception {
+        when(getSeatOccupancyUseCase.execute(new GetSeatOccupancyUseCase.Input(10L, 100L, "admission-token")))
+                .thenReturn(new GetSeatOccupancyUseCase.Output(
+                        8,
+                        new byte[] {(byte) 0b1011_0110},
+                        new PerformanceSummarySnapshot("싱어게인", "충청", LocalDateTime.of(2026, 3, 20, 19, 30))));
+
+        mockMvc.perform(get("/api/v1/performances/10/seats/occupancy").header("X-Admission-Token", "admission-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.seatCount").value(8))
+                .andExpect(jsonPath("$.data.available").value("tg=="))
+                .andExpect(jsonPath("$.data.summary.title").value("싱어게인"));
     }
 }
