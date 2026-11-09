@@ -66,35 +66,6 @@ class ExpireOrderUseCaseTest {
                 .hasCauseInstanceOf(IllegalStateException.class);
     }
 
-    @Test
-    void 만료_시각이_지난_PENDING이면_그_자리에서_만료한다() {
-        final Order order = order(10L, NOW);
-        when(orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(1L, 100L))
-                .thenReturn(Optional.of(order));
-
-        assertThat(useCase.expireIfStale(1L, 100L, NOW)).isTrue();
-        verify(orderTerminationService).expire(order, NOW);
-    }
-
-    @Test
-    void 아직_유효한_PENDING은_만료하지_않는다() {
-        final Order order = order(10L, NOW.plusSeconds(1));
-        when(orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(1L, 100L))
-                .thenReturn(Optional.of(order));
-
-        assertThat(useCase.expireIfStale(1L, 100L, NOW)).isFalse();
-        verifyNoInteractions(orderTerminationService);
-    }
-
-    @Test
-    void PENDING이_없으면_만료하지_않는다() {
-        when(orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(1L, 100L))
-                .thenReturn(Optional.empty());
-
-        assertThat(useCase.expireIfStale(1L, 100L, NOW)).isFalse();
-        verifyNoInteractions(orderTerminationService);
-    }
-
     private Order order(final Long id, final LocalDateTime expiresAt) {
         final Order order = new Order(
                 1L, 100L, "order-key", "hold-key", expiresAt, "show-title", expiresAt.plusDays(1), "venue-name");

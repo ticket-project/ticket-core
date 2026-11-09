@@ -39,24 +39,6 @@ public class ExpireOrderUseCase {
     /** 만료시킨 주문. 청소가 커서로 쓰는 id와, 만료 시각 뒤 얼마 만에 처리했는지 재는 만료 시각이다. */
     public record ExpiredOrder(long orderId, LocalDateTime expiresAt) {}
 
-    /**
-     * 같은 회원·회차의 PENDING 주문이 만료 시각을 지났으면 그 자리에서 {@code EXPIRED}로 바꾼다. 새 주문이 그 주문 때문에 막혔을 때만 부른다 — 청소 전 몇 초 동안 원래 주인만 막히지
-     * 않게 한다. 청소와 겹치면 행 락과 PENDING 조건으로 한쪽만 바꾼다.
-     *
-     * @return 만료시켰으면 true. PENDING이 없거나 아직 유효하면 false
-     */
-    @Transactional
-    public boolean expireIfStale(final Long memberId, final Long performanceId, final LocalDateTime now) {
-        return orderRepository
-                .findPendingByMemberIdAndPerformanceIdForUpdate(memberId, performanceId)
-                .filter(order -> order.isExpiredAt(now))
-                .map(order -> {
-                    orderTerminationService.expire(order, now);
-                    return true;
-                })
-                .orElse(false);
-    }
-
     /** 잠근 주문의 만료가 실패했다. 청소가 이 주문을 지나 뒤의 주문으로 넘어가도록 id를 싣는다. */
     public static final class OrderExpirationFailedException extends RuntimeException {
         private final long orderId;

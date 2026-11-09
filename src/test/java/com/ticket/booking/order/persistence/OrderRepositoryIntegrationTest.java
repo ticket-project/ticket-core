@@ -195,20 +195,6 @@ class OrderRepositoryIntegrationTest extends JpaSliceTestSupport {
     }
 
     @Test
-    void 회원과_회차의_PENDING_주문을_잠가_조회한다() {
-        Order pending = order("member-pending", LocalDateTime.now().minusMinutes(1));
-        inTransaction(() -> orderRepository.save(pending));
-
-        assertThat(inTransactionWithResult(() -> orderRepository
-                        .findPendingByMemberIdAndPerformanceIdForUpdate(MEMBER_ID, PERFORMANCE_ID)
-                        .map(Order::getOrderKey)))
-                .contains("order-member-pending");
-        assertThat(inTransactionWithResult(() ->
-                        orderRepository.findPendingByMemberIdAndPerformanceIdForUpdate(MEMBER_ID + 1, PERFORMANCE_ID)))
-                .isEmpty();
-    }
-
-    @Test
     void pending_order_existence_query_checks_member_and_status() {
         Order pending = order("pending-exists", LocalDateTime.now().plusMinutes(5));
         Order canceled = new Order(

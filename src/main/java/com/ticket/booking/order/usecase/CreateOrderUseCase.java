@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
  * 들어가 connection을 오래 쥔다. 대신 경계를 셋으로 나눈다.
  *
  * <ul>
- *   <li>예매 전 확인(판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태·표시값) — {@link BookingPreflightReader}의 짧은 읽기 트랜잭션
+ *   <li>예매 전 확인(판매 정책·입장권·회원·좌석 판매 상태·표시값) — {@link BookingPreflightReader}의 짧은 읽기 트랜잭션
  *   <li>좌석 선점 — Redis. 본인 선택 확인과 선점이 스크립트 하나라 좌석 락이 없다
  *   <li>주문 생성 — {@link PendingOrderCreator}의 짧은 쓰기 트랜잭션
  *   <li>후처리 — 커밋 뒤 Redis 스크립트 하나로 선택을 거두고 HELD를 발행한다({@link #clearSelectionsAndPublishHeld})
@@ -62,7 +62,8 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>주문 저장에서 다른 좌석 — 유일 인덱스가 막고, 이 요청의 선점을 되돌린다
  * </ul>
  *
- * 남는 차이: 앞 요청이 선점 뒤 주문 저장에서 실패하는 드문 경우, 그 사이에 온 요청도 {@code E5004}를 받는다(예전에는 기다렸다가 진행할 수 있었다).
+ * 남는 차이: 앞 요청이 선점 뒤 주문 저장에서 실패하는 드문 경우, 그 사이에 온 요청도 {@code E5004}를 받는다(예전에는 기다렸다가 진행할 수 있었다). 만료 시각이 지났지만 청소(5초 간격)가 아직
+ * 정리하지 않은 PENDING이 있으면 그 몇 초 동안 같은 회원·회차 주문도 {@code E5004}다.
  */
 @Slf4j
 @Service
@@ -74,7 +75,6 @@ public class CreateOrderUseCase {
     private final SeatSelectionService seatSelectionService;
     private final PendingOrderCreator pendingOrderCreator;
     private final OrderRepository orderRepository;
-    private final ExpireOrderUseCase expireOrderUseCase;
     private final HeldSeatPublisher heldSeatPublisher;
     private final Clock clock;
 
@@ -96,9 +96,10 @@ public class CreateOrderUseCase {
         final RequestedSeatIds requestedSeatIds = RequestedSeatIds.from(input.seatIds());
         final LocalDateTime now = LocalDateTime.now(clock);
 
-        // 1. 예매를 시작해도 되는가. 판매 정책·입장권·회원·진행 중 주문·좌석 판매 상태를 확인하고 주문에 남길 표시값을 읽는다.
+        // 1. 예매를 시작해도 되는가. 판매 정책·입장권·회원·좌석 판매 상태를 확인하고 주문에 남길 표시값을 읽는다.
         //    connection을 한 번만 빌리는 읽기 트랜잭션이다.
-        final Preflight preflight = readPreflight(input, requestedSeatIds, now);
+        final Preflight preflight = bookingPreflightReader.read(
+                input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
 
         // 2. 본인이 선택 중인 좌석만 선점한다(Redis). 본인 선택 확인과 선점은 저장소 스크립트 하나라 좌석 락이 없다.
         final Duration holdDuration = preflight.policy().holdDuration();
@@ -136,27 +137,6 @@ public class CreateOrderUseCase {
                 OrderState.PENDING,
                 hold.expiresAt(),
                 OrderRemainingTime.seconds(OrderState.PENDING, hold.expiresAt(), LocalDateTime.now(clock)));
-    }
-
-    /**
-     * 같은 회원·회차의 PENDING 주문 때문에 막혔는데(E5004) 그 주문이 만료 시각을 지났으면, 그 자리에서 {@code EXPIRED}로 바꾸고 한 번 더 확인한다. 청소가 DB를 바꾸기 전 몇 초
-     * 동안 원래 주인만 막히지 않게 한다. 막혔을 때만 동작하므로 평소 경로에는 비용이 없다.
-     *
-     * <p>유일 인덱스 위반(아래 3단계)은 확인을 통과한 뒤 같은 회원의 다른 요청이 먼저 주문을 만든 경우라 여기서 다루지 않는다 — 만료된 PENDING이 있었다면 이 확인에서 먼저 걸린다.
-     */
-    private Preflight readPreflight(
-            final Input input, final RequestedSeatIds requestedSeatIds, final LocalDateTime now) {
-        try {
-            return bookingPreflightReader.read(
-                    input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
-        } catch (final BookingException exception) {
-            if (exception.getErrorCode() != BookingErrorCode.E5004
-                    || !expireOrderUseCase.expireIfStale(input.memberId(), input.performanceId(), now)) {
-                throw exception;
-            }
-            return bookingPreflightReader.read(
-                    input.memberId(), input.performanceId(), requestedSeatIds, input.admissionToken(), now);
-        }
     }
 
     /**

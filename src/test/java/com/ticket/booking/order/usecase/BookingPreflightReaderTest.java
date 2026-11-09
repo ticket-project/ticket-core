@@ -27,7 +27,6 @@ import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.usecase.BookingPreflightReader.Preflight;
 import com.ticket.booking.salespolicy.domain.BookingWindow;
 import com.ticket.booking.salespolicy.domain.HoldPolicy;
@@ -64,9 +63,6 @@ class BookingPreflightReaderTest {
     private MemberLookupApi memberLookupApi;
 
     @Mock
-    private OrderRepository orderRepository;
-
-    @Mock
     private PerformanceSeatRepository performanceSeatRepository;
 
     @Mock
@@ -79,7 +75,6 @@ class BookingPreflightReaderTest {
         reader = new BookingPreflightReader(
                 new BookingEntryGuard(new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                 memberLookupApi,
-                orderRepository,
                 performanceSeatRepository,
                 performanceSaleInfoApi);
         lenient()
@@ -100,7 +95,7 @@ class BookingPreflightReaderTest {
     }
 
     @Test
-    void 통과하면_정책_좌석_표시값을_돌려주고_정책_회원_주문_좌석_표시값_순서로_확인한다() {
+    void 통과하면_정책_좌석_표시값을_돌려주고_정책_회원_좌석_표시값_순서로_확인한다() {
         final List<PerformanceSeat> seats =
                 List.of(seat(PerformanceSeatState.AVAILABLE), seat(PerformanceSeatState.AVAILABLE));
         final PerformanceSaleSnapshot snapshot = saleSnapshot();
@@ -115,28 +110,11 @@ class BookingPreflightReaderTest {
         assertThat(preflight.saleSnapshot()).isSameAs(snapshot);
         assertThat(preflight.policy().holdDuration()).isEqualTo(Duration.ofSeconds(600));
         final InOrder inOrder = inOrder(
-                performanceSalesPolicyRepository,
-                memberLookupApi,
-                orderRepository,
-                performanceSeatRepository,
-                performanceSaleInfoApi);
+                performanceSalesPolicyRepository, memberLookupApi, performanceSeatRepository, performanceSaleInfoApi);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
         inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
-        inOrder.verify(orderRepository).existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID);
         inOrder.verify(performanceSeatRepository).findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, SEAT_IDS.toList());
         inOrder.verify(performanceSaleInfoApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(SEAT_IDS.toList()));
-    }
-
-    @Test
-    void 진행중인_pending_주문이_있으면_예외를_던지고_좌석을_조회하지_않는다() {
-        when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
-                .thenReturn(true);
-
-        assertThatThrownBy(() -> reader.read(MEMBER_ID, PERFORMANCE_ID, SEAT_IDS, "admission-token", NOW))
-                .isInstanceOf(BookingException.class)
-                .hasFieldOrPropertyWithValue("errorCode", BookingErrorCode.E5004);
-
-        verifyNoInteractions(performanceSeatRepository, performanceSaleInfoApi);
     }
 
     @Test
