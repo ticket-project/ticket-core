@@ -569,8 +569,9 @@
      변경·타입 변경). 에이전트가 커밋 전에 같은 검사를 돌린다.
   3. **예외**: 나누기가 너무 어렵거나 위험하면 점검 배포(모든 서버를 내렸다 올림, 공지)로 한다. 좌석 판정 Redis 키
      구조 변경이 대표적이다(두 형식을 함께 다루는 Lua가 틀리면 중복 판매).
-  4. **종료 설정**: 비동기 작업 대기를 켜고(`spring.task.execution.shutdown.await-termination`, 대기 20초) 운영
-     compose에 `stop_grace_period: 40s`를 둔다. Spring 요청 마무리(기본 30초)를 Docker 기본 10초가 끊지 않게 하고,
+  4. **종료 설정**: 요청 마무리를 20초(`spring.lifecycle.timeout-per-shutdown-phase`, 기본 30초), 비동기 작업 대기를
+     10초(`spring.task.execution.shutdown.await-termination`)로 두고 운영 compose에 `stop_grace_period: 40s`를 둔다. 합
+     30초를 Docker 기본 10초가 끊지 않게 하고,
      주문 종료 후처리가 끊겨 약 11분 늦는 것(D3-1)을 막는다. ALB 대상 그룹 대기 시간도 약 40초로 맞추고(D1-2), ECS로
      가면 `stopTimeout`도 같은 기준으로 둔다.
 - **원칙을 적용한 예(스킬에 참고로 적는다, 따로 결정하지 않는다)**:

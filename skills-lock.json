@@ -5,7 +5,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/api-contract-change/SKILL.md",
-      "computedHash": "6bc60d707f588830012d5111776d605db3e73d9736e34427293279abf2c8909a"
+      "computedHash": "96efd980e5780ef6e8735a525f4f2349ea5b5bf4f3c8f1a2bfe0d9bbadb42c59"
     },
     "blog": {
       "source": "ticket-core",
@@ -17,7 +17,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/booking-change/SKILL.md",
-      "computedHash": "9c08c177952b2cf2bca2b9fa10a20c8b4af05c99a9116b6f2c4c8db0a5ff8c59"
+      "computedHash": "afe0d0e434d992a05e6094834e97e81009c8d88879d9e3e86a1c0af8e512fc18"
     },
     "core-capacity": {
       "source": "ticket-core",
@@ -29,7 +29,7 @@
       "source": "ticket-core",
       "sourceType": "repo-local",
       "path": ".agents/skills/database-change/SKILL.md",
-      "computedHash": "df051710fbec7dfee5b84a0f3d21a910b45ef103dd6fa827c0c5abfb83a4c487"
+      "computedHash": "c5f6e7cadcfe444a152d787904e95c93c5c93b76748847dad603eb0f33e58941"
     },
     "modulith-boundaries": {
       "source": "ticket-core",
