@@ -42,6 +42,24 @@ PostgreSQL 전환(2026-10-08) 이전의 H2/Oracle migration 이력은 2026-10-17
   적용한다. `spring.flyway.baseline-on-migrate`/`baseline-version`은 이 동작을 바꾸지 못하므로 두지 않는다
   (`FlywayConfigurationTest`가 고정한다).
 
+## 롤링 배포 호환
+
+롤링 배포에서는 새 버전이 켜지며 migration을 적용한 뒤에도 바로 전 버전이 잠시 같은 DB로 요청을 받는다. 그래서
+**migration은 바로 전 버전 코드가 그대로 돌 수 있는 것만 한다**([스케일 아웃 결정](../../../../docs/plans/scale-out-decisions.md)
+D4-1). 추가(표·컬럼·nullable 컬럼·인덱스)는 그대로 하고, 지우기·이름 바꾸기·모양 바꾸기는 배포를 나눈다.
+
+- 컬럼·표 삭제: 코드에서 쓰지 않는 버전을 먼저 배포하고, 다음 배포의 migration에서 지운다.
+- 컬럼 이름 바꾸기: 새 컬럼 추가와 양쪽 쓰기 → 옛 컬럼 쓰기 중단(NULL 허용) → 옛 컬럼 삭제. 배포 세 번이다.
+- NOT NULL 컬럼 추가: 기본값을 준다. 없으면 옛 버전의 insert가 실패한다.
+- 새 enum·상태 값: 그 값을 읽을 줄 아는 버전을 먼저 배포하고, 다음 배포에서 저장하기 시작한다.
+- 데이터가 있는 표의 인덱스: `CREATE INDEX CONCURRENTLY`로 만든다. 일반 `CREATE INDEX`는 만드는 동안 그 표 쓰기를
+  막는다. `CONCURRENTLY`는 트랜잭션 안에서 돌 수 없으므로 그 문장만 담은 파일로 따로 둔다.
+- 나누기가 너무 어렵거나 위험하면 점검 배포(모든 인스턴스를 내렸다 올림)로 하고 PR에 적는다.
+
+커밋 전에 `bash scripts/lint-migrations.sh`로 바뀐 migration을 검사한다(squawk, 규칙은
+[.squawk.toml](../../../../.squawk.toml)). CI도 같은 검사를 돌린다. 위 절차의 정리 단계처럼 의도한 삭제는 해당 문장 위에
+`-- squawk-ignore <규칙>`을 단다.
+
 ## 안전 규칙
 
 - 다른 module 소유 schema를 만들거나 바꾸지 않는다. 소유권 자체가 이관되는 일회성 경우에만 create ->

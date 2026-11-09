@@ -15,6 +15,7 @@ description: ticket-core의 endpoint, request/response, 오류 code·HTTP 상태
 
 - 전후 계약을 필드·타입·null·시간·정렬/페이지·HTTP 상태·`error.code`·인증/인가별로 비교한다. 모듈 공개 API도 boundary change로 취급한다.
 - 프론트·gatling-test·ticket-queue 등 해당 소비자의 실제 의존을 확인한다. 응답 봉투 사용만으로 특정 오류 코드 의존을 추정하지 않는다. 소비자를 읽지 못하면 미확인으로 남긴다.
+- 운영 FE는 고칠 수 없다. FE가 쓰는 기존 endpoint·WebSocket topic·payload는 그대로 두고, 바뀐 형식이 필요하면 새 endpoint·topic을 추가한다. 롤링 배포 중에는 같은 사용자의 요청이 옛 버전과 새 버전으로 번갈아 가므로 응답·오류도 두 버전이 함께 맞아야 한다. FE 수정이 필요한 안은 [FE 변경 요청](../../../docs/plans/fe-change-requests.md)에 모은다.
 - 이름·내부 구조 정리가 공개 JSON·오류 값을 바꾸지 않도록 한다. 필요한 계약 변경은 호환성·소비자 전환 조건과 API 설명/예시를 함께 정리한다.
 - 모듈 공개면 변경은 [modulith-boundaries](../modulith-boundaries/SKILL.md), 예매 시간·상태/payload 변경은 [booking-change](../booking-change/SKILL.md)를 함께 따른다.
 
