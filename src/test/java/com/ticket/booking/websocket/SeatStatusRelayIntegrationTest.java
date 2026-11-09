@@ -37,8 +37,8 @@ import com.ticket.testsupport.TestContainerImages;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 운영과 같은 조합(Redisson 연결 + {@link SeatStatusRelayConfig}의 컨테이너·executor)으로 채널에 올린 알림이 회차 destination에 묶음으로 가는지 확인한다. 묶음
- * 전송 스레드 대신 테스트가 {@link SeatStatusRelay#flush()}를 직접 부른다.
+ * 운영과 같은 조합(Redisson 연결 + {@link SeatStatusRelayConfig}의 컨테이너·executor)으로 채널에 올린 알림이 회차 묶음 주소에 묶음으로 가는지 확인한다. 묶음 전송 스레드
+ * 대신 테스트가 {@link SeatStatusRelay#flush()}를 직접 부른다.
  */
 @Testcontainers
 @SuppressWarnings("NonAsciiCharacters")
@@ -90,7 +90,7 @@ class SeatStatusRelayIntegrationTest {
     }
 
     @Test
-    void 채널에_올린_알림이_묶음으로_회차_destination에_간다() {
+    void 채널에_올린_알림이_묶음으로_회차_묶음_주소에_간다() {
         final SeatStatusEvent event =
                 new SeatStatusEvent(10L, 20L, 30L, SeatStatusAction.HELD, LocalDateTime.of(2026, 3, 15, 10, 0));
 
@@ -99,7 +99,7 @@ class SeatStatusRelayIntegrationTest {
         final ArgumentCaptor<SeatStatusBatch> captor = ArgumentCaptor.forClass(SeatStatusBatch.class);
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             relay.flush();
-            verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
+            verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats/batch"), captor.capture());
         });
         assertThat(captor.getValue())
                 .isEqualTo(new SeatStatusBatch(10L, List.of(new SeatStatusChange(20L, 30L, SeatStatusAction.HELD))));
@@ -119,7 +119,7 @@ class SeatStatusRelayIntegrationTest {
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             relay.flush();
             verify(messagingTemplate, atLeastOnce())
-                    .convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
+                    .convertAndSend(eq("/topic/performance/10/seats/batch"), captor.capture());
             assertThat(captor.getAllValues())
                     .flatExtracting(SeatStatusBatch::changes)
                     .extracting(SeatStatusChange::seatId)

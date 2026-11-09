@@ -29,12 +29,20 @@ import tools.jackson.databind.json.JsonMapper;
  * 좌석 상태 알림 relay. 좌석 상태를 바꾸는 Lua 스크립트가 바꾼 그 자리에서 채널 하나({@link #CHANNEL})에 {@code PUBLISH}하고, 모든 인스턴스가 그 채널을 구독해 자기
  * STOMP 사용자에게 보낸다. 발행한 인스턴스도 자기 사용자에게 직접 보내지 않고 구독으로 받는다 — 전달 경로가 하나라 중복도, 경로 사이의 순서 차이도 없다(스케일 아웃 결정 D2-1).
  *
- * <p><b>받은 알림은 바로 보내지 않고 회차별로 모았다가 {@link #FLUSH_INTERVAL}마다 한 메시지로 보낸다</b>(2026-11-06). 알림 하나를 그 회차 구독자 전원에게 하나씩 보내면
- * 보내는 수가 "알림 수 × 구독자 수"라 사용자 수의 제곱으로 는다(운영 03-3 25 u/s에서 알림 1,567건 → 메시지 26만 7,742건). 모아 보내면 구독자마다 간격당 메시지 하나라 사용자 수에
- * 비례한다. 같은 좌석이 그 사이 여러 번 바뀌면 마지막 상태만 보낸다(선택했다 바로 풀면 DESELECTED 하나) — 화면은 좌석의 지금 상태만 그린다. 대가로 알림이 최대 간격만큼 늦다.
+ * <p><b>받은 알림은 두 주소로 보낸다</b>(2026-11-09).
  *
- * <p>Redis가 스크립트를 하나씩 실행하고 {@code PUBLISH}를 처리한 순서대로 보내며, 구독은 단일 스레드로 받고({@link SeatStatusRelayConfig}) 묶음은 단일 스레드가 차례로
- * 보내므로 같은 좌석의 상태 순서가 바뀐 순서와 같다. 묶음 안 좌석 순서는 그 간격에서 마지막으로 바뀐 순서다.
+ * <ul>
+ *   <li>{@code /topic/performance/{performanceId}/seats}: 받은 {@link SeatStatusEvent}를 바로 하나씩 보낸다. 운영 FE가 읽는 옛 형식이다(FE는
+ *       지금 고칠 수 없다, docs/architecture.md "프론트엔드 호환"). FE가 묶음 주소로 옮기면 지운다.
+ *   <li>{@code /topic/performance/{performanceId}/seats/batch}: 회차별로 모았다가 {@link #FLUSH_INTERVAL}마다 한
+ *       메시지({@link SeatStatusBatch})로 보낸다(2026-11-06). 알림 하나를 그 회차 구독자 전원에게 하나씩 보내면 보내는 수가 "알림 수 × 구독자 수"라 사용자 수의 제곱으로
+ *       는다(운영 03-3 25 u/s에서 알림 1,567건 → 메시지 26만 7,742건). 모아 보내면 구독자마다 간격당 메시지 하나라 사용자 수에 비례한다. 같은 좌석이 그 사이 여러 번 바뀌면 마지막
+ *       상태만 보낸다(선택했다 바로 풀면 DESELECTED 하나) — 화면은 좌석의 지금 상태만 그린다. 대가로 알림이 최대 간격만큼 늦다. 구독할 때 입장권을
+ *       검사한다({@link WebSocketAuthInterceptor}). 측정 시나리오가 쓴다.
+ * </ul>
+ *
+ * <p>Redis가 스크립트를 하나씩 실행하고 {@code PUBLISH}를 처리한 순서대로 보내며, 구독은 단일 스레드로 받고({@link SeatStatusRelayConfig}) 옛 주소는 그 스레드가
+ * 바로, 묶음은 단일 스레드가 차례로 보내므로 두 주소 모두 같은 좌석의 상태 순서가 바뀐 순서와 같다. 묶음 안 좌석 순서는 그 간격에서 마지막으로 바뀐 순서다.
  *
  * <p>Redis pub/sub은 최대 한 번 전달이다. 구독이 끊긴 동안의 알림, 서버가 멈출 때 아직 보내지 않은 묶음은 다시 오지 않는다. 사용자가 화면을 새로 불러오면 맞춰진다.
  */
@@ -48,6 +56,7 @@ public class SeatStatusRelay implements MessageListener, SmartLifecycle {
     static final Duration FLUSH_INTERVAL = Duration.ofMillis(250);
 
     private static final String SEAT_TOPIC_FORMAT = "/topic/performance/%d/seats";
+    private static final String SEAT_BATCH_TOPIC_FORMAT = SEAT_TOPIC_FORMAT + "/batch";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final JsonMapper jsonMapper;
@@ -61,7 +70,7 @@ public class SeatStatusRelay implements MessageListener, SmartLifecycle {
      */
     private @Nullable ScheduledExecutorService flusher;
 
-    /** 회차 destination에 가는 묶음 payload다. 좌석마다 마지막 상태 하나다. */
+    /** 묶음 주소({@code .../seats/batch})에 가는 payload다. 좌석마다 마지막 상태 하나다. */
     public record SeatStatusBatch(Long performanceId, List<SeatStatusChange> changes) {}
 
     public record SeatStatusChange(@Nullable Long performanceSeatId, Long seatId, SeatStatusAction action) {}
@@ -80,6 +89,8 @@ public class SeatStatusRelay implements MessageListener, SmartLifecycle {
             log.warn("좌석 상태 relay 메시지를 읽지 못해 버립니다.", e);
             return;
         }
+        // 옛 주소: 하나씩 바로 보낸다. 그 회차를 구독한 사용자가 이 인스턴스에 없으면 simple broker가 버린다.
+        messagingTemplate.convertAndSend(String.format(SEAT_TOPIC_FORMAT, event.performanceId()), event);
         synchronized (this) {
             final LinkedHashMap<Long, SeatStatusEvent> seats =
                     pending.computeIfAbsent(event.performanceId(), id -> new LinkedHashMap<>());
@@ -130,7 +141,7 @@ public class SeatStatusRelay implements MessageListener, SmartLifecycle {
         }
     }
 
-    /** 모아 둔 알림을 회차마다 한 메시지로 보낸다. 묶음 전송 스레드가 {@link #FLUSH_INTERVAL}마다 부른다. */
+    /** 모아 둔 알림을 회차마다 한 메시지로 묶음 주소에 보낸다. 묶음 전송 스레드가 {@link #FLUSH_INTERVAL}마다 부른다. */
     public void flush() {
         final Map<Long, LinkedHashMap<Long, SeatStatusEvent>> batch;
         synchronized (this) {
@@ -147,7 +158,7 @@ public class SeatStatusRelay implements MessageListener, SmartLifecycle {
                             new SeatStatusChange(event.performanceSeatId(), event.seatId(), event.action())));
             // 그 회차를 구독한 사용자가 이 인스턴스에 없으면 simple broker가 버린다.
             messagingTemplate.convertAndSend(
-                    String.format(SEAT_TOPIC_FORMAT, performanceId), new SeatStatusBatch(performanceId, changes));
+                    String.format(SEAT_BATCH_TOPIC_FORMAT, performanceId), new SeatStatusBatch(performanceId, changes));
         });
     }
 }
