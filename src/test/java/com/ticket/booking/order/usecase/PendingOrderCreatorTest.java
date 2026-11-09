@@ -26,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.TimeOrderedKeys;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.order.domain.OrderSeat;
@@ -55,7 +56,8 @@ class PendingOrderCreatorTest {
 
     @BeforeEach
     void setUp() {
-        pendingOrderCreator = new PendingOrderCreator(orderRepository);
+        pendingOrderCreator =
+                new PendingOrderCreator(orderRepository, new TimeOrderedKeys(java.time.Clock.systemUTC()));
     }
 
     @Test

@@ -121,7 +121,7 @@ public class CreateOrderUseCase {
                     preflight.saleSnapshot());
         } catch (final DataIntegrityViolationException exception) {
             // 같은 회원·회차의 PENDING 주문이 그사이 생겼다(uk_orders_pending_member_performance). ORDERS의 다른 유니크(order_key, hold_key)는
-            // 요청마다 새 UUID라 여기 걸리지 않는다.
+            // 요청마다 새 시간순 UUID라 여기 걸리지 않는다.
             releaseHold(hold, exception);
             throw new BookingException(BookingErrorCode.E5004);
         } catch (final RuntimeException exception) {
