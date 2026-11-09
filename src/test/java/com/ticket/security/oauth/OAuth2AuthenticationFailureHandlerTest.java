@@ -21,8 +21,7 @@ class OAuth2AuthenticationFailureHandlerTest {
         OAuth2AuthenticationFailureHandler handler = new OAuth2AuthenticationFailureHandler(resolver);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
-        request.getSession(true)
-                .setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
+        request.setAttribute(OAuth2FrontendRedirectResolver.REQUEST_ATTRIBUTE, "http://localhost:3000");
 
         handler.onAuthenticationFailure(request, response, new TestAuthenticationException());
 

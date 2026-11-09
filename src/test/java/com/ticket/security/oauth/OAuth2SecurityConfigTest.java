@@ -37,6 +37,8 @@ import com.ticket.security.jwt.JwtAccessTokenCodec;
 @ContextConfiguration(classes = TicketApplication.class)
 @Import({
     OAuth2SecurityConfig.class,
+    EncryptedCookieOAuth2AuthorizationRequestRepository.class,
+    OAuth2SecurityConfigTest.ClockConfig.class,
     ApiSecurityConfig.class,
     OAuth2SecurityConfigTest.ClientRegistrationConfig.class,
     OAuth2SecurityConfigTest.TestController.class
@@ -77,16 +79,38 @@ class OAuth2SecurityConfigTest {
     }
 
     @Test
-    void OAuth2_authorization_경로는_Order_1_chain이_처리해_provider로_redirect한다() throws Exception {
+    void OAuth2_authorization_경로는_Order_1_chain이_처리해_provider로_redirect하고_세션_없이_암호화_쿠키에_담는다() throws Exception {
         mockMvc.perform(get("/api/v1/auth/oauth2/authorize/google").header("Origin", "http://localhost:3000"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(header().string(HttpHeaders.LOCATION, startsWith("https://accounts.example/authorize?")))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:3000"))
-                .andExpect(result -> org.assertj.core.api.Assertions.assertThat(
-                                result.getRequest().getSession(false))
-                        .isNotNull());
+                .andExpect(header().string(
+                                HttpHeaders.SET_COOKIE,
+                                startsWith(EncryptedCookieOAuth2AuthorizationRequestRepository.COOKIE_NAME_PREFIX)))
+                .andExpect(result -> {
+                    org.assertj.core.api.Assertions.assertThat(
+                                    result.getRequest().getSession(false))
+                            .isNull();
+                    org.assertj.core.api.Assertions.assertThat(
+                                    result.getResponse().getHeaders(HttpHeaders.SET_COOKIE))
+                            .noneMatch(cookie -> cookie.startsWith("JSESSIONID"));
+                });
 
-        verify(frontendRedirectResolver).storeFrontendBaseUrl(Mockito.any());
+        verify(frontendRedirectResolver).resolveFrontendBaseUrl(Mockito.any());
+    }
+
+    @Test
+    void 쿠키_없이_콜백이_오면_세션을_만들지_않고_실패_handler로_간다() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/oauth2/callback/google")
+                        .param("code", "provider-code")
+                        .param("state", "unknown-state"))
+                .andExpect(result -> {
+                    org.assertj.core.api.Assertions.assertThat(
+                                    result.getRequest().getSession(false))
+                            .isNull();
+                });
+
+        verify(authenticationFailureHandler).onAuthenticationFailure(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -99,6 +123,14 @@ class OAuth2SecurityConfigTest {
         @GetMapping("/api/v1/private-test")
         String privateApi() {
             return "private";
+        }
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class ClockConfig {
+        @Bean
+        java.time.Clock clock() {
+            return java.time.Clock.systemUTC();
         }
     }
 

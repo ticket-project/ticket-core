@@ -37,8 +37,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 new OAuth2AuthenticationSuccessHandler(oauth2AuthCodeStore, resolver);
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
-        request.getSession(true)
-                .setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
+        request.setAttribute(OAuth2FrontendRedirectResolver.REQUEST_ATTRIBUTE, "http://localhost:3000");
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_MEMBER"));
         OAuth2User principal = new DefaultOAuth2User(authorities, Map.of("memberId", 7L), "memberId");
         UsernamePasswordAuthenticationToken authentication =

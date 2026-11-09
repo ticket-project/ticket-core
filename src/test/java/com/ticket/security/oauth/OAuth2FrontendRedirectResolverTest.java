@@ -16,22 +16,31 @@ class OAuth2FrontendRedirectResolverTest {
             "https://oneticket.site/auth/callback");
 
     @Test
-    void 로컬_프론트_origin이면_세션에_로컬_프론트_base_url을_저장한다() {
+    void 로컬_프론트_origin이면_로컬_프론트_base_url을_고른다() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Origin", "http://localhost:3000");
 
-        resolver.storeFrontendBaseUrl(request);
+        assertThat(resolver.resolveFrontendBaseUrl(request)).isEqualTo("http://localhost:3000");
+    }
 
-        assertThat(request.getSession(false)).isNotNull();
-        assertThat(request.getSession(false).getAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE))
-                .isEqualTo("http://localhost:3000");
+    @Test
+    void 운영_도메인_referer면_운영_프론트_base_url을_고른다() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Referer", "https://oneticket.site/login");
+
+        assertThat(resolver.resolveFrontendBaseUrl(request)).isEqualTo("https://oneticket.site");
+    }
+
+    @Test
+    void origin과_referer가_없으면_프론트_base_url을_고르지_않는다() {
+        assertThat(resolver.resolveFrontendBaseUrl(new MockHttpServletRequest()))
+                .isNull();
     }
 
     @Test
     void 저장된_프론트_base_url이_있으면_성공_리다이렉트는_그_base_url과_path를_사용한다() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.getSession(true)
-                .setAttribute(OAuth2FrontendRedirectResolver.SESSION_ATTRIBUTE, "http://localhost:3000");
+        resolver.rememberFrontendBaseUrl(request, "http://localhost:3000");
 
         String result = resolver.resolveSuccessRedirectUri(request);
 

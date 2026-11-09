@@ -41,6 +41,7 @@ admission token을 검증해 예매 API 진입을 제어한다. 부하 측정은
    $env:JWT_REFRESH_TOKEN_EXPIRATION_SECONDS="86400"
    $env:GOOGLE_CLIENT_ID="local"; $env:GOOGLE_CLIENT_SECRET="local"
    $env:KAKAO_CLIENT_ID="local"; $env:KAKAO_CLIENT_SECRET="local"; $env:KAKAO_ADMIN_KEY="local"
+   $env:OAUTH2_REQUEST_COOKIE_KEY="MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
    ```
 
 3. 기동한다. 처음 기동 때 Flyway가 테이블을 만든다.
@@ -83,6 +84,7 @@ docker compose -f docker-compose-local.yml up -d --build --wait
 | `JWT_SECRET` | 32바이트 이상 아무 문자열 | 서버 환경 파일. 저장소에 없다 |
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS`, `JWT_REFRESH_TOKEN_EXPIRATION_SECONDS` | 위 예시 값 | 서버 환경 파일 |
 | `GOOGLE_CLIENT_ID`·`_SECRET`, `KAKAO_CLIENT_ID`·`_SECRET`, `KAKAO_ADMIN_KEY` | 아무 값. 소셜 로그인만 안 된다 | 각 공급자 개발자 콘솔 |
+| `OAUTH2_REQUEST_COOKIE_KEY` | 위 예시 값(Base64로 인코딩한 32바이트) | 서버 환경 파일. 모든 인스턴스가 같은 값. `openssl rand -base64 32`로 만든다 |
 
 - 소셜 로그인을 로컬에서 확인하려면 공급자 콘솔에 `http://localhost:8080/api/v1/auth/oauth2/callback/google`(또는
   `kakao`)을 등록하고 발급받은 값을 쓴다.

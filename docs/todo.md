@@ -21,10 +21,6 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
 - **입장 토큰 fail-open(P0-3).** `application.yml`의 `security.admission.enforcement-enabled` 기본값이 `false`이고,
   `secret-key`에 공개된 32바이트 기본값이 있다. 후보: base 설정에서 기본 비밀값 제거(누락 시 기동 실패), 강제 여부를
   기동 로그에 남김, 장기적으로 비대칭 서명.
-- **OAuth 세션.** `OAuth2SecurityConfig`가 `IF_REQUIRED` 세션과 기본 `HttpSessionOAuth2AuthorizationRequestRepository`를
-  쓰고 `OAuth2FrontendRedirectResolver`가 `getSession(true)`를 부른다. authorize 요청만으로 세션이 무제한 쌓인다. 기본
-  `InMemoryOAuth2AuthorizedClientService`도 제공자 토큰을 축출 없이 쌓는다. 후보: Redis나 서명 쿠키 저장소, OAuth 체인
-  STATELESS, no-op `OAuth2AuthorizedClientRepository`, nginx rate limit. 다중 인스턴스 전환의 전제이기도 하다.
 - **로그아웃.** `/api/v1/auth/logout`이 permitAll이 아니어서 액세스 토큰이 만료된 뒤 로그아웃하면 401이 나고 리프레시
   쿠키와 Redis 토큰이 남는다. 후보: 리프레시 쿠키만으로 로그아웃 허용, 쿠키는 항상 삭제, 멱등 200.
 - **로그인 CSRF.** 일회용 로그인 코드가 로그인을 시작한 브라우저에 묶이지 않는다. 후보: authorize 시점의 nonce 쿠키나

@@ -3,15 +3,20 @@ package com.ticket.security.oauth;
 import java.net.URI;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * 소셜 로그인을 시작한 프런트엔드(로컬·운영)를 Origin·Referer로 정하고, 콜백에서 그 프런트엔드로 돌려보낼 주소를 만든다.
+ *
+ * <p>정한 주소는 서버 세션이 아니라 {@link EncryptedCookieOAuth2AuthorizationRequestRepository}가 authorization request와 같은 암호화 쿠키에
+ * 담는다. 콜백에서 쿠키를 꺼낼 때 요청 속성으로 넘겨받는다(스케일 아웃 결정 D2-3).
+ */
 @Component
 public class OAuth2FrontendRedirectResolver {
-    static final String SESSION_ATTRIBUTE = "oauth2.frontend-base-url";
+    static final String REQUEST_ATTRIBUTE = "oauth2.frontend-base-url";
     private static final String LOCALHOST = "localhost";
     private static final String LOOPBACK = "127.0.0.1";
     private final String localFrontendBaseUrl;
@@ -36,12 +41,11 @@ public class OAuth2FrontendRedirectResolver {
         this.defaultFailureRedirectUri = defaultFailureRedirectUri;
     }
 
-    public void storeFrontendBaseUrl(final HttpServletRequest request) {
-        final String frontendBaseUrl = resolveFrontendBaseUrl(request);
-        if (frontendBaseUrl == null) {
-            return;
+    /** 콜백에서 쿠키로 꺼낸 프런트엔드 주소를 이번 요청에만 둔다. 성공·실패 handler가 읽는다. */
+    void rememberFrontendBaseUrl(final HttpServletRequest request, final @Nullable String frontendBaseUrl) {
+        if (frontendBaseUrl != null) {
+            request.setAttribute(REQUEST_ATTRIBUTE, frontendBaseUrl);
         }
-        request.getSession(true).setAttribute(SESSION_ATTRIBUTE, frontendBaseUrl);
     }
 
     public String resolveSuccessRedirectUri(final HttpServletRequest request) {
@@ -52,29 +56,18 @@ public class OAuth2FrontendRedirectResolver {
         return resolveRedirectUri(request, failureRedirectPath, defaultFailureRedirectUri);
     }
 
-    public void clear(final HttpServletRequest request) {
-        final HttpSession session = request.getSession(false);
-        if (session == null) {
-            return;
-        }
-        session.removeAttribute(SESSION_ATTRIBUTE);
-    }
-
     private String resolveRedirectUri(
             final HttpServletRequest request, final String path, final String fallbackRedirectUri) {
-        final HttpSession session = request.getSession(false);
-        if (session == null) {
-            return fallbackRedirectUri;
-        }
-        final Object stored = session.getAttribute(SESSION_ATTRIBUTE);
+        final Object stored = request.getAttribute(REQUEST_ATTRIBUTE);
         if (!(stored instanceof String frontendBaseUrl) || frontendBaseUrl.isBlank()) {
             return fallbackRedirectUri;
         }
-        // storeFrontendBaseUrl이 이미 정규화한 설정값만 저장한다.
+        // resolveFrontendBaseUrl이 고른 설정값만 쿠키에 담긴다.
         return frontendBaseUrl + path;
     }
 
-    private @Nullable String resolveFrontendBaseUrl(final HttpServletRequest request) {
+    @Nullable
+    String resolveFrontendBaseUrl(final HttpServletRequest request) {
         final String origin = request.getHeader("Origin");
         final String referer = request.getHeader("Referer");
         if (isLocal(origin) || isLocal(referer)) {

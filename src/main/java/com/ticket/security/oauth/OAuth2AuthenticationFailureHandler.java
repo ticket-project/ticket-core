@@ -36,7 +36,6 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 .build()
                 .toUriString();
 
-        frontendRedirectResolver.clear(request);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }
