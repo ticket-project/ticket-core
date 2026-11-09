@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
-import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
@@ -37,7 +36,6 @@ import lombok.RequiredArgsConstructor;
 public class BookingPreflightReader {
     private final BookingEntryGuard bookingEntryGuard;
     private final MemberLookupApi memberLookupApi;
-    private final OrderRepository orderRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final PerformanceSaleInfoApi performanceSaleInfoApi;
 
@@ -62,8 +60,8 @@ public class BookingPreflightReader {
         //    좌석을 실제로 점유하는 첫 지점이라 요청 입구가 아니라 여기서 한 번만 확인한다.
         memberLookupApi.requireActive(memberId);
 
-        // 3. 같은 회원·회차에 진행 중인 PENDING 주문이 없고, 요청한 좌석이 모두 이 회차의 판매 가능한 좌석인가.
-        ensureNoPendingOrder(memberId, performanceId);
+        // 3. 요청한 좌석이 모두 이 회차의 판매 가능한 좌석인가. 같은 회원·회차의 진행 중 주문은 미리 읽지 않는다 --
+        //    주문 저장 때 유일 인덱스(uk_orders_pending_member_performance)가 막고 E5004로 바뀐다(2026-11-09).
         final List<PerformanceSeat> performanceSeats = requireAvailableSeats(performanceId, requestedSeatIds);
 
         // 4. 주문에 남길 표시값(공연·공연장 이름, 등급, 좌석 라벨). 금액은 여기서 오지 않는다 -- 좌석 단가만 쓴다(ADR 0005).
@@ -71,12 +69,6 @@ public class BookingPreflightReader {
                 performanceSaleInfoApi.getSaleSnapshot(performanceId, Set.copyOf(requestedSeatIds.toList()));
 
         return new Preflight(policy, performanceSeats, saleSnapshot);
-    }
-
-    private void ensureNoPendingOrder(final Long memberId, final Long performanceId) {
-        if (orderRepository.existsPendingByMemberIdAndPerformanceId(memberId, performanceId)) {
-            throw new BookingException(BookingErrorCode.E5004);
-        }
     }
 
     private List<PerformanceSeat> requireAvailableSeats(

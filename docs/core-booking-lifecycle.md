@@ -44,18 +44,17 @@ CreateOrderUseCase          (POST /api/v1/orders)
         — 좌석 선택·좌석 상태 조회도 같은 진입 검사를 거친다
      -> PerformanceSalesPolicy.ensureWithinHoldLimit: 요청 좌석 수가 hold 상한 이내인지 확인
      -> member MemberLookupApi: active member 확인
-     -> pending 주문 중복, 좌석 판매 상태 확인
+     -> 좌석 판매 상태 확인(같은 회원·회차의 진행 중 주문은 미리 읽지 않는다. 주문 저장의 유일 인덱스가 막는다,
+        2026-11-09)
      -> show PerformanceSaleInfoApi: 요청 좌석의 표시 snapshot(등급 코드/이름, 좌석 라벨,
         공연명·회차 시작 시각·공연장 이름) 조회 — 가격 자체는 이 snapshot이 아니라 아래 PerformanceSeat에서 온다
-     (같은 회원·회차의 PENDING 때문에 E5004로 막혔는데 그 주문이 만료 시각을 지났으면, 그 자리에서 EXPIRED로
-      바꾸고 이 확인을 한 번 더 한다)
   -> HoldRegistry로 Redis 좌석 hold 생성. Lua 한 번으로 요청 좌석이 모두 본인 selection인지 확인하고, 좌석 키가
      하나도 없을 때만 좌석 키·점유 인덱스·메타를 쓴다. 본인 selection이 아니면 E4006이고, 선택 시간이 지나 풀린
      것인지(E4007)는 실패했을 때만 선택 기록을 따로 읽어 가른다
   -> PendingOrderCreator
        -> 주문 aggregate 조립. 총액은 Order.addOrderSeat가 좌석
           단가를 누적해 만든다 = Σ PerformanceSeat.unitPrice (다른 값을 섞지 않는다)
-       -> PENDING 주문·OrderSeat·hold history 저장     (booking DB 트랜잭션)
+       -> PENDING 주문·OrderSeat 저장     (booking DB 트랜잭션, hold_history는 2026-11-09부터 쓰지 않음)
             Order에는 show/performance/venue 표시 snapshot을, OrderSeat에는 등급·좌석 라벨·unitPrice
             snapshot을 함께 저장한다 — 둘 다 생성 후 불변이다.
        -> 이벤트는 발행하지 않는다(2026-11-06부터, 아래 후처리 참고)
@@ -72,10 +71,12 @@ CreateOrderUseCase          (POST /api/v1/orders)
 
 같은 회원·회차의 주문 생성은 락으로 줄 세우지 않는다(2026-10-19까지는 `ORDER_CREATE` 락이 흐름 전체를
 감쌌다). "회원·회차당 PENDING 주문 하나"는 DB 유일 인덱스 `uk_orders_pending_member_performance`가 지키고,
-같은 회원이 동시에 보낸 두 번째 요청은 어디서 부딪히든 `E5004`를 받는다 — 진행 중 주문 확인, 같은 좌석
+같은 회원이 동시에 보낸 두 번째 요청은 어디서 부딪히든 `E5004`를 받는다 — 같은 좌석
 hold(선점 메타에 회원 ID를 두어 같은 회원의 hold를 알아본다), 앞 주문 후처리가 지운 selection(커밋 뒤에만
 지우므로 진행 중 주문을 다시 확인한다), 다른 좌석이면 주문 저장의 유일 제약(hold를 보상 해제한다).
 앞 요청이 hold 뒤 주문 저장에서 실패하는 드문 경우, 그 사이의 두 번째 요청도 `E5004`를 받는다.
+만료 시각이 지났지만 청소(5초 간격)가 아직 정리하지 않은 PENDING이 있으면 그 몇 초 동안 같은 회원·회차 주문도
+`E5004`다(2026-11-09 전에는 그 자리에서 만료시키고 다시 확인했다).
 자세한 근거는 `CreateOrderUseCase` 주석에 있다.
 
 좌석 분산 락은 없다. 본인 selection 확인과 hold 생성, 선택과 선점 확인, 해제의 소유권 확인은 모두 Redis Lua

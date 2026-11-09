@@ -110,9 +110,6 @@ class CreateOrderUseCaseTest {
     private PendingOrderCreator pendingOrderCreator;
 
     @Mock
-    private ExpireOrderUseCase expireOrderUseCase;
-
-    @Mock
     private HeldSeatPublisher heldSeatPublisher;
 
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-15T10:00:00Z"), ZoneId.of("Asia/Seoul"));
@@ -128,7 +125,6 @@ class CreateOrderUseCaseTest {
                                 new BookingEntryGuard(
                                         new PerformanceSaleFinder(performanceSalesPolicyRepository), admissionVerifier),
                                 memberLookupApi,
-                                orderRepository,
                                 performanceSeatRepository,
                                 performanceSaleInfoApi),
                         holdRegistry,
@@ -136,7 +132,6 @@ class CreateOrderUseCaseTest {
                         seatSelectionService,
                         pendingOrderCreator,
                         orderRepository,
-                        expireOrderUseCase,
                         heldSeatPublisher,
                         fixedClock);
     }
@@ -152,7 +147,6 @@ class CreateOrderUseCaseTest {
                 performanceSalesPolicyRepository,
                 admissionVerifier,
                 memberLookupApi,
-                orderRepository,
                 performanceSeatRepository,
                 performanceSaleInfoApi,
                 holdRegistry,
@@ -170,7 +164,6 @@ class CreateOrderUseCaseTest {
                 performanceSalesPolicyRepository,
                 admissionVerifier,
                 memberLookupApi,
-                orderRepository,
                 performanceSeatRepository,
                 performanceSaleInfoApi,
                 holdRegistry,
@@ -205,14 +198,12 @@ class CreateOrderUseCaseTest {
         final InOrder inOrder = inOrder(
                 performanceSalesPolicyRepository,
                 memberLookupApi,
-                orderRepository,
                 performanceSeatRepository,
                 performanceSaleInfoApi,
                 holdRegistry,
                 pendingOrderCreator);
         inOrder.verify(performanceSalesPolicyRepository).findById(PERFORMANCE_ID);
         inOrder.verify(memberLookupApi).requireActive(MEMBER_ID);
-        inOrder.verify(orderRepository).existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID);
         inOrder.verify(performanceSeatRepository).findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList());
         inOrder.verify(performanceSaleInfoApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdRegistry).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
@@ -366,44 +357,6 @@ class CreateOrderUseCaseTest {
     }
 
     @Test
-    void 진행중인_pending_주문이_있으면_예외를_전파한다() {
-        final List<Long> seatIds = List.of(1L, 2L);
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
-        when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
-                .thenReturn(true);
-
-        assertError(seatIds, BookingErrorCode.E5004);
-
-        verify(expireOrderUseCase).expireIfStale(MEMBER_ID, PERFORMANCE_ID, FIXED_NOW);
-        verifyNoInteractions(holdRegistry, pendingOrderCreator);
-    }
-
-    /** 청소가 DB를 바꾸기 전 몇 초 동안 원래 주인만 막히지 않도록, 막은 주문이 만료 시각을 지났으면 그 자리에서 만료하고 다시 확인한다. */
-    @Test
-    void 막은_pending_주문이_만료_시각을_지났으면_그_자리에서_만료하고_주문을_만든다() {
-        final CreateOrderUseCase.Input input = input(List.of(7L));
-        final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
-        final List<PerformanceSeat> seats = availableSeats(1);
-        final Hold hold = hold(seatIds.toList());
-        final PerformanceSaleSnapshot saleSnapshot = saleSnapshot();
-        when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(5)));
-        when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
-                .thenReturn(true, false);
-        when(expireOrderUseCase.expireIfStale(MEMBER_ID, PERFORMANCE_ID, FIXED_NOW))
-                .thenReturn(true);
-        when(performanceSeatRepository.findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList()))
-                .thenReturn(seats);
-        when(performanceSaleInfoApi.getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList())))
-                .thenReturn(saleSnapshot);
-        when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
-                .thenReturn(hold);
-        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, hold, seats, saleSnapshot))
-                .thenReturn("order-key");
-
-        assertThat(createOrderUseCase.execute(input).orderKey()).isEqualTo("order-key");
-    }
-
-    @Test
     void 좌석_수_한도가_없으면_요청_수량을_제한하지_않는다() {
         final CreateOrderUseCase.Input input = input(List.of(1L, 2L, 3L, 4L, 5L));
         final RequestedSeatIds seatIds = RequestedSeatIds.from(input.seatIds());
@@ -441,7 +394,7 @@ class CreateOrderUseCaseTest {
         final List<Long> seatIds = List.of(1L, 2L);
         when(performanceSalesPolicyRepository.findById(PERFORMANCE_ID)).thenReturn(Optional.of(openPolicy(3)));
         when(orderRepository.existsPendingByMemberIdAndPerformanceId(MEMBER_ID, PERFORMANCE_ID))
-                .thenReturn(false, true);
+                .thenReturn(true);
         stubAvailableSeats(RequestedSeatIds.from(seatIds));
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds, HOLD_DURATION, FIXED_NOW))
                 .thenThrow(new BookingException(BookingErrorCode.E4006));

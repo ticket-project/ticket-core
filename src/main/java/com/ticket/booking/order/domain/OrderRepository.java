@@ -88,23 +88,4 @@ public interface OrderRepository extends Repository<Order, Long> {
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
     Optional<Order> findFirstByStatusAndExpiresAtLessThanEqualAndIdGreaterThanOrderByIdAsc(
             OrderState status, LocalDateTime expiresAt, Long afterOrderId);
-
-    /** 같은 회원·회차의 PENDING 주문을 잠근다. 회원·회차당 PENDING은 하나다(uk_orders_pending_member_performance). */
-    default Optional<Order> findPendingByMemberIdAndPerformanceIdForUpdate(
-            final Long memberId, final Long performanceId) {
-        return findByMemberIdAndPerformanceIdAndStatusForUpdate(memberId, performanceId, OrderState.PENDING);
-    }
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            select o
-            from Order o
-            where o.memberId = :memberId
-              and o.performanceId = :performanceId
-              and o.status = :status
-            """)
-    Optional<Order> findByMemberIdAndPerformanceIdAndStatusForUpdate(
-            @Param("memberId") Long memberId,
-            @Param("performanceId") Long performanceId,
-            @Param("status") OrderState status);
 }
