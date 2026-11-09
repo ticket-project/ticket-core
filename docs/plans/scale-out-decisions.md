@@ -627,8 +627,10 @@
 - 배포 workflow의 순차 교체와 readiness·liveness 분리(D1-3)
 - 롤링 호환(D4-1): CI에 squawk 검사와 규칙 설정, `database-change`·`booking-change`·`api-contract-change` 스킬과 migration
   규칙에 원칙과 예 추가, `application.yml` 비동기 작업 대기, 운영 compose `stop_grace_period`
-- 2노드 검증 테스트와 로컬 2노드 부하 측정(D3-3 전에)
-- 측정 도구가 Core 서버별 지표를 읽어 합치기(D4-2, gatling-test, D3-3 전에)
+- 2노드 검증 테스트와 로컬 2노드 부하 측정(D3-3 전에): 2026-11-09 했다. `TwoInstanceE2ETest`(로그인 단계·좌석 알림·예매·
+  동시 주문 만료)가 통과했고, `docker-compose-local-2nodes.yml`(Core 두 대 + nginx)로 03 100 u/s·03-3 30 u/s에서 기술 실패와
+  중복 판매가 없었다(gatling-test capacity-log 2026-11-09-local-2nodes).
+- 측정 도구가 Core 서버별 지표를 읽어 합치기(D4-2, gatling-test, D3-3 전에): 2026-11-09 했다(gatling-test `feat/multi-instance-metrics`).
 - ALB 구성(D1-2): Core·FE 대상 그룹, 경로 규칙, ACM 인증서, 도메인 이전, 상태 확인·대기 시간, 배포 workflow의 대상 그룹 등록·해제
 
 ## 진행 순서
