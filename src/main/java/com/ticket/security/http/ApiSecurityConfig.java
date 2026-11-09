@@ -11,6 +11,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.observation.SecurityObservationSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -69,6 +70,17 @@ public class ApiSecurityConfig {
         http.addFilterBefore(
                 new AccessTokenAuthenticationFilter(accessTokenReader), UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    /**
+     * 보안 필터 묶음·인증·권한 확인 계측({@code spring.security.*})을 만들지 않는다. 요청마다 필터마다 계측 포장이 붙지만 읽는 곳이 없다. 요청 시간
+     * 계측({@code http.server.requests})은 Spring MVC가 따로 남기므로 그대로다.
+     * {@code management.observations.enable.spring.security=false}는 계측을 버릴 뿐 필터
+     * 포장({@code ObservationFilterChainDecorator})은 남겨서 이 bean을 쓴다.
+     */
+    @Bean
+    public SecurityObservationSettings securityObservationSettings() {
+        return SecurityObservationSettings.noObservations();
     }
 
     @Bean
