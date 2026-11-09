@@ -2,12 +2,12 @@ package com.ticket.booking.order.usecase;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticket.booking.hold.domain.Hold;
+import com.ticket.booking.hold.domain.TimeOrderedKeys;
 import com.ticket.booking.order.domain.Order;
 import com.ticket.booking.order.domain.OrderRepository;
 import com.ticket.booking.seat.domain.PerformanceSeat;
@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PendingOrderCreator {
     private final OrderRepository orderRepository;
+    private final TimeOrderedKeys timeOrderedKeys;
 
     /** @return 만들어진 주문의 orderKey. 트랜잭션 밖에서 entity를 다시 만지지 않도록 필요한 값만 돌려준다 — lazy 연관을 트랜잭션 밖에서 읽는 경로를 애초에 만들지 않는다. */
     @Transactional
@@ -60,7 +61,7 @@ public class PendingOrderCreator {
     }
 
     private String generateOrderKey() {
-        return "ORDER-" + UUID.randomUUID().toString().replace("-", "");
+        return timeOrderedKeys.next("ORDER-");
     }
 
     /** 주문 좌석마다 좌석 표시값과 등급 표시값을 붙여 Order에 더한다. 총액은 {@code addOrderSeat}가 좌석 단가로 누적한다. */

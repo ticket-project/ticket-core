@@ -32,7 +32,7 @@ class HoldRegistryTest {
 
     @BeforeEach
     void setUp() {
-        this.holdRegistry = new HoldRegistry(holdStore);
+        this.holdRegistry = new HoldRegistry(holdStore, new TimeOrderedKeys(java.time.Clock.systemUTC()));
     }
 
     @Test
