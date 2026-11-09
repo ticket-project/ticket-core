@@ -12,9 +12,9 @@ import com.ticket.booking.admission.BookingEntryGuard;
 import com.ticket.booking.exception.BookingErrorCode;
 import com.ticket.booking.exception.BookingException;
 import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicy;
-import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateRow;
 
 import lombok.RequiredArgsConstructor;
 
@@ -64,13 +64,13 @@ public class SelectSeatUseCase {
      *     필요 없다.
      */
     private Long requireSelectableSeat(final Long performanceId, final Long seatId) {
-        final PerformanceSeat seat = performanceSeatRepository
+        final PerformanceSeatStateRow seat = performanceSeatRepository
                 .findSeatState(performanceId, seatId)
                 .orElseThrow(() -> new BookingException(BookingErrorCode.E4000));
 
-        if (seat.getState() != PerformanceSeatState.AVAILABLE) {
+        if (seat.state() != PerformanceSeatState.AVAILABLE) {
             throw new BookingException(BookingErrorCode.E3003);
         }
-        return seat.getId();
+        return seat.performanceSeatId();
     }
 }

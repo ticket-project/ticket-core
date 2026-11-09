@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateRow;
 import com.ticket.show.domain.performance.Performance;
 import com.ticket.show.domain.show.Show;
 import com.ticket.testsupport.persistence.ReadRepositoryTestSupport;
@@ -26,6 +27,7 @@ class PerformanceSeatRepositorySelectionTest extends ReadRepositoryTestSupport {
 
     private Long performanceId;
     private Long seatId;
+    private Long performanceSeatId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -44,16 +46,17 @@ class PerformanceSeatRepositorySelectionTest extends ReadRepositoryTestSupport {
                 persistPerformanceSeat(performance, seat, PerformanceSeatState.AVAILABLE, BigDecimal.valueOf(120000));
         performanceId = performance.getId();
         seatId = performanceSeat.getSeatId();
+        performanceSeatId = performanceSeat.getId();
         flushAndClear();
     }
 
     @Test
     void 회차의_좌석_상태를_단건으로_조회한다() {
-        PerformanceSeat result =
+        PerformanceSeatStateRow result =
                 performanceSeatRepository.findSeatState(performanceId, seatId).orElseThrow();
 
-        assertThat(result.getId()).isNotNull();
-        assertThat(result.getState()).isEqualTo(PerformanceSeatState.AVAILABLE);
+        assertThat(result.performanceSeatId()).isEqualTo(performanceSeatId);
+        assertThat(result.state()).isEqualTo(PerformanceSeatState.AVAILABLE);
     }
 
     @Test

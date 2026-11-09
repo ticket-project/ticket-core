@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ticket.booking.admission.AdmissionVerifier;
 import com.ticket.booking.admission.BookingEntryGuard;
@@ -37,9 +35,9 @@ import com.ticket.booking.salespolicy.domain.PerformanceSalesPolicyRepository;
 import com.ticket.booking.salespolicy.domain.QueueMode;
 import com.ticket.booking.salespolicy.domain.QueuePolicy;
 import com.ticket.booking.salespolicy.usecase.PerformanceSaleFinder;
-import com.ticket.booking.seat.domain.PerformanceSeat;
 import com.ticket.booking.seat.domain.PerformanceSeatRepository;
 import com.ticket.booking.seat.domain.PerformanceSeatState;
+import com.ticket.booking.seat.domain.PerformanceSeatStateRow;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("NonAsciiCharacters")
@@ -157,14 +155,12 @@ class SelectSeatUseCaseTest {
         when(performanceSalesPolicyRepository.findById(10L)).thenReturn(Optional.of(openPolicy(false)));
     }
 
-    private PerformanceSeat availableSeat() {
+    private PerformanceSeatStateRow availableSeat() {
         return seat(PerformanceSeatState.AVAILABLE);
     }
 
-    private PerformanceSeat seat(final PerformanceSeatState state) {
-        final PerformanceSeat seat = new PerformanceSeat(10L, 20L, 1L, state, BigDecimal.ZERO);
-        ReflectionTestUtils.setField(seat, "id", 501L);
-        return seat;
+    private PerformanceSeatStateRow seat(final PerformanceSeatState state) {
+        return new PerformanceSeatStateRow(501L, 20L, state);
     }
 
     private PerformanceSalesPolicy openPolicy(final boolean queueRequired) {
