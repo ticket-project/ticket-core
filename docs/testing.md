@@ -112,6 +112,16 @@ DB와 Redis가 함께 맞는지 본다.
 - 커밋 후 처리는 `@ApplicationModuleListener`가 요청 스레드 밖에서 비동기로 끝낸다. 고정 sleep 대신
   `pollUntil`을 쓴다.
 
+### Core 두 대
+
+`TwoInstanceE2ETest`(`com.ticket.bootstrap.scaleout`)는 한 JVM에 애플리케이션 컨텍스트 두 개를 띄우고 같은
+PostgreSQL schema·Redis를 쓰게 한 뒤, 요청마다 서버를 바꿔 보낸다. 로그인 단계(시작·콜백·코드 교환·재발급·로그아웃),
+다른 서버 구독자에게 가는 좌석 알림, 두 서버에 번갈아 보낸 예매, 동시에 돈 주문 만료 청소를 확인한다. 세션·로컬
+캐시·스케줄러처럼 서버 한 대에 상태를 두는 코드를 바꾸면 이 테스트도 돌린다.
+
+부하로 두 대를 보려면 `docker-compose-local-2nodes.yml`을 덧붙여 Core 두 대와 nginx를 띄운다(사용법은 파일 머리말).
+한 PC에서 CPU를 나눠 쓰므로 처리량 비교가 아니라 두 대에서 실패가 없는지를 본다.
+
 ## 새 테스트를 추가할 때
 
 - 테스트 클래스에 `@SuppressWarnings("NonAsciiCharacters")`를 붙이고 **메서드 이름을 한국어로** 쓴다.
