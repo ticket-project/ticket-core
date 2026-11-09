@@ -2,7 +2,6 @@ package com.ticket.booking.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -25,7 +24,7 @@ import com.ticket.booking.websocket.SeatStatusRelay.SeatStatusChange;
 
 import tools.jackson.databind.json.JsonMapper;
 
-/** 좌석 알림을 회차별로 모아 한 메시지로 보내고, 같은 좌석은 마지막 상태만 남기는지 본다. */
+/** 옛 주소에는 알림을 바로 하나씩, 묶음 주소에는 회차별로 모아 한 메시지로 보내고 같은 좌석은 마지막 상태만 남기는지 본다. */
 @SuppressWarnings("NonAsciiCharacters")
 class SeatStatusRelayTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 6, 10, 0);
@@ -35,10 +34,13 @@ class SeatStatusRelayTest {
             new SeatStatusRelay(messagingTemplate, JsonMapper.builder().build());
 
     @Test
-    void 받은_알림은_flush_전까지_보내지_않는다() {
-        receive(event(10L, 1L, SeatStatusAction.SELECTED));
+    void 받은_알림은_옛_주소로_바로_그대로_보내고_묶음은_flush_전까지_보내지_않는다() {
+        final SeatStatusEvent event = event(10L, 1L, SeatStatusAction.SELECTED);
 
-        verify(messagingTemplate, never()).convertAndSend(anyString(), any(Object.class));
+        receive(event);
+
+        verify(messagingTemplate).convertAndSend("/topic/performance/10/seats", event);
+        verify(messagingTemplate, never()).convertAndSend(eq("/topic/performance/10/seats/batch"), any(Object.class));
     }
 
     @Test
@@ -50,7 +52,7 @@ class SeatStatusRelayTest {
         relay.flush();
 
         final ArgumentCaptor<SeatStatusBatch> captor = ArgumentCaptor.forClass(SeatStatusBatch.class);
-        verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats"), captor.capture());
+        verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats/batch"), captor.capture());
         // 좌석 순서는 그 간격에서 마지막으로 바뀐 순서다.
         assertThat(captor.getValue())
                 .isEqualTo(new SeatStatusBatch(
@@ -68,8 +70,8 @@ class SeatStatusRelayTest {
         relay.flush();
         relay.flush();
 
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/performance/10/seats"), any(Object.class));
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/performance/20/seats"), any(Object.class));
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/performance/10/seats/batch"), any(Object.class));
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/performance/20/seats/batch"), any(Object.class));
     }
 
     @Test
@@ -83,7 +85,7 @@ class SeatStatusRelayTest {
 
         relay.flush();
 
-        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/performance/10/seats"), any(Object.class));
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/performance/10/seats/batch"), any(Object.class));
     }
 
     @Test
@@ -94,7 +96,7 @@ class SeatStatusRelayTest {
         relay.stop();
 
         assertThat(relay.isRunning()).isFalse();
-        verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats"), any(Object.class));
+        verify(messagingTemplate).convertAndSend(eq("/topic/performance/10/seats/batch"), any(Object.class));
     }
 
     private void receive(final SeatStatusEvent event) {

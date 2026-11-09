@@ -132,11 +132,16 @@ Redis hold는 Lua 스크립트 한 번으로 좌석 키가 하나도 없을 때�
 pub/sub은 최대 한 번 전달이라 구독이 끊긴 동안의 알림은 다시 오지 않는다. 그래서 좌석 상태 이벤트는 계속 "그 좌석을 특정 상태로 맞추는" 멱등 알림으로
 취급하고, 클라이언트는 필요하면 좌석 상태 조회로 다시 맞춘다.
 
-**알림은 회차별로 250ms 모아 한 메시지로 보낸다**(2026-11-06, `SeatStatusRelay`). 하나씩 보내면 구독자마다 보내는 수가
-"알림 수 × 구독자 수"라 사용자 수의 제곱으로 늘었다(운영 03-3 25 u/s에서 알림 1,567건 → 메시지 26만 7,742건). 같은 좌석이 그
-사이 여러 번 바뀌면 마지막 상태만 보낸다. payload는 `{"performanceId", "changes": [{"performanceSeatId", "seatId",
-"action"}]}`이고 `timestamp`는 없다. 좌석 하나에 메시지 하나이던 예전 `SeatStatusEvent` payload와 다르므로 FE는 `changes` 배열을
-읽도록 바꿔야 한다(FE는 측정의 제약이 아니라 이 저장소에서는 바꾸지 않았다).
+**알림은 두 주소로 보낸다**(`SeatStatusRelay`).
+
+- `/topic/performance/{performanceId}/seats`: 받은 알림을 바로 하나씩 보낸다. payload는 `SeatStatusEvent`
+  (`performanceId`, `performanceSeatId`, `seatId`, `action`, `timestamp`)다. 운영 FE가 읽는 형식이라 그대로 둔다
+  ([프론트엔드 호환](architecture.md#프론트엔드-호환)). 구독 때 입장권을 검사하지 않는다.
+- `/topic/performance/{performanceId}/seats/batch`: 회차별로 250ms 모아 한 메시지로 보낸다(2026-11-06 묶음, 2026-11-09 이 주소로
+  옮김). 하나씩 보내면 구독자마다 보내는 수가 "알림 수 × 구독자 수"라 사용자 수의 제곱으로 늘었다(운영 03-3 25 u/s에서 알림 1,567건
+  → 메시지 26만 7,742건). 같은 좌석이 그 사이 여러 번 바뀌면 마지막 상태만 보낸다. payload는 `{"performanceId", "changes":
+  [{"performanceSeatId", "seatId", "action"}]}`이고 `timestamp`는 없다. SUBSCRIBE 프레임의 `X-Admission-Token` 헤더로 예매 진입
+  검사(`BookingEntryGuard`, 좌석 HTTP API와 같은 검사)를 통과해야 구독된다. 측정 시나리오가 쓰고, FE가 옮기면 옛 주소를 지운다.
 
 ## 결제 시도와 Order 상태
 

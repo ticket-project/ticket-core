@@ -191,7 +191,7 @@ ticket-fe는 지금 고칠 수 없다(사용자 결정 2026-11-09). FE가 쓰는
 - FE가 부르는 HTTP API와 STOMP 주소의 경로, 요청·응답 형식, 오류 코드는 그대로 둔다.
 - 동작이나 형식을 바꿔야 하면 새 경로(새 API, 새 STOMP 주소)를 추가하고, 측정 시나리오(`gatling-test`)는 새 경로를 쓴다.
 - 옛 경로는 FE가 새 경로로 옮긴 뒤 지운다. FE가 부르지 않는 경로(예: gatling만 쓰는 `GET /api/v1/performances/{performanceId}/seats/occupied`)는 이 규칙 밖이다.
-- 예외: 좌석 알림 `/topic/performance/{performanceId}/seats`는 2026-11-09 배포(PR #304)에서 250ms 묶음 형식으로 바뀌어 FE가 읽지 못한다. 옛 형식(좌석 변경 하나에 메시지 하나)을 이 주소로 되살리고 묶음은 새 주소로 옮기기로 했다(설계 중, 미구현).
+- 예외: 좌석 알림 `/topic/performance/{performanceId}/seats`는 2026-11-09 배포(PR #304)에서 250ms 묶음 형식으로 바뀌어 FE가 읽지 못했다. 이 주소는 옛 형식(좌석 변경 하나에 `SeatStatusEvent` 하나, 바로 전송)으로 되살렸고, 250ms 묶음은 새 주소 `/topic/performance/{performanceId}/seats/batch`로 옮겼다(`SeatStatusRelay`). 새 주소는 SUBSCRIBE 때 `X-Admission-Token` 헤더로 예매 진입 검사(`BookingEntryGuard`)를 통과해야 구독되고(`WebSocketAuthInterceptor`), 측정 시나리오가 쓴다. 옛 주소는 검사하지 않는다.
 
 FE가 부르는 경로는 아래와 같다(ticket-fe `origin/dev`·`main` 2026-05-29 기준 `src/features/*/api`와 `seatSocketClient.ts`, 바뀌었으면 ticket-fe 코드가 원본).
 
