@@ -13,6 +13,9 @@ import org.jspecify.annotations.Nullable;
  *
  * <p><b>{@code message}와 {@code data}를 바꿔 담지 않는다.</b> {@code message}는 오류마다 정해진 공개 문구이고 {@code data}는 그 오류를 좁히는 부가
  * 정보다(검증 실패 필드 목록, 인증 실패 사유 등). 응답에서 각각 {@code error.message}와 {@code error.data}가 된다.
+ *
+ * <p><b>스택 트레이스를 만들지 않는다.</b> 업무 예외는 예상한 실패이고 handler는 오류 코드만 로그로 남긴다. 운영 프로파일에서 좌석 선택·주문의 409가 스택 수집에 CPU 1.9%를 썼다. 실제
+ * 버그인 {@link InternalErrorException}(500)만 스택을 남긴다. {@code cause}는 그대로 보관한다.
  */
 public abstract class TicketException extends RuntimeException {
     private final ErrorCode errorCode;
@@ -28,7 +31,17 @@ public abstract class TicketException extends RuntimeException {
             final String message,
             final @Nullable Object data,
             final @Nullable Throwable cause) {
-        super(Objects.requireNonNull(message, "message must not be null"), cause);
+        this(errorCode, message, data, cause, false);
+    }
+
+    /** {@code stackTrace}는 {@link InternalErrorException}만 {@code true}로 넘긴다. */
+    protected TicketException(
+            final ErrorCode errorCode,
+            final String message,
+            final @Nullable Object data,
+            final @Nullable Throwable cause,
+            final boolean stackTrace) {
+        super(Objects.requireNonNull(message, "message must not be null"), cause, false, stackTrace);
         this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
         this.data = data;
     }
