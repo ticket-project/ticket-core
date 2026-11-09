@@ -1,12 +1,29 @@
 package com.ticket.booking.websocket;
 
+import java.security.Principal;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.WebSocketExtension;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.standard.StandardWebSocketUpgradeStrategy;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import com.ticket.shared.config.CorsProperties;
 
@@ -44,6 +61,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(final StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .setHandshakeHandler(new DefaultHandshakeHandler(new NoCompressionUpgradeStrategy()))
                 .setAllowedOrigins(corsProperties.allowedOrigins().toArray(String[]::new))
                 .withSockJS();
     }
@@ -52,5 +70,58 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(final ChannelRegistration registration) {
         // STOMP CONNECT 시 JWT 인증 처리
         registration.interceptors(webSocketAuthInterceptor);
+    }
+
+    /**
+     * WebSocket 메시지 압축(permessage-deflate)을 받아들이지 않는 upgrade. 같은 좌석 알림을 구독자마다 따로 압축해 CPU 5.7%를 썼다(2026-11-09 프로파일,
+     * docs/plans/core-cpu-per-user.md 5). 압축은 클라이언트가 제안하고 서버가 고르는 선택 확장이라 FE는 압축 없이 그대로 동작한다. 대가로 알림 전송량이 5~10배가 된다.
+     *
+     * <p><b>왜 요청 헤더를 숨기나.</b> {@code DefaultHandshakeHandler}가 고른 확장을 빈 목록으로 넘겨도 Tomcat은 "앱이 확장을 지정하지 않음"으로 보고 자기 기본
+     * 확장(permessage-deflate)으로 요청 헤더와 다시 협상한다. 그래서 Tomcat에 넘기는 요청에서 {@code Sec-WebSocket-Extensions}를 지운다.
+     *
+     * <p>{@code withSockJS()} 앞에 등록하면 SockJS의 websocket transport({@code /ws/{server}/{session}/websocket})와 raw
+     * WebSocket({@code /ws/websocket}, 측정 시나리오가 쓴다)이 모두 이 upgrade를 쓴다. SockJS의 나머지 transport(xhr 등)는 WebSocket이 아니라 해당이
+     * 없다.
+     */
+    static class NoCompressionUpgradeStrategy extends StandardWebSocketUpgradeStrategy {
+        private static final String EXTENSIONS_HEADER = "Sec-WebSocket-Extensions";
+
+        @Override
+        public List<WebSocketExtension> getSupportedExtensions(final ServerHttpRequest request) {
+            return List.of();
+        }
+
+        @Override
+        public void upgrade(
+                final ServerHttpRequest request,
+                final ServerHttpResponse response,
+                final @Nullable String selectedProtocol,
+                final List<WebSocketExtension> selectedExtensions,
+                final @Nullable Principal user,
+                final WebSocketHandler wsHandler,
+                final Map<String, Object> attrs) {
+            final HttpServletRequest servletRequest = getHttpServletRequest(request);
+            final HttpServletRequest withoutExtensions = new HttpServletRequestWrapper(servletRequest) {
+                @Override
+                public @Nullable String getHeader(final String name) {
+                    return EXTENSIONS_HEADER.equalsIgnoreCase(name) ? null : super.getHeader(name);
+                }
+
+                @Override
+                public Enumeration<String> getHeaders(final String name) {
+                    return EXTENSIONS_HEADER.equalsIgnoreCase(name)
+                            ? Collections.emptyEnumeration()
+                            : super.getHeaders(name);
+                }
+            };
+            super.upgrade(
+                    new ServletServerHttpRequest(withoutExtensions),
+                    response,
+                    selectedProtocol,
+                    selectedExtensions,
+                    user,
+                    wsHandler,
+                    attrs);
+        }
     }
 }
