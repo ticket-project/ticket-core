@@ -1,0 +1,22 @@
+# Flyway migration 검사 규칙(squawk). 롤링 배포 중 옛 버전 서버가 깨지거나 표 쓰기가 막히는 DDL만 잡는다
+# (스케일 아웃 결정 D4-1). 실행은 scripts/lint-migrations.sh.
+#
+# 남는 규칙: 일반 CREATE/DROP INDEX(쓰기 막음), 기본값 없는 NOT NULL 추가, 컬럼·표 이름 변경·삭제, 컬럼 타입 변경,
+# NOT VALID 없는 제약 추가 등. 의도한 정리(contract) 단계라면 해당 문장 위에 `-- squawk-ignore <규칙>`을 단다.
+#
+# 뺀 규칙은 이 저장소의 표기 습관(VARCHAR, TIMESTAMP, IDENTITY 대신 BIGINT 등)이나 Flyway 사용 방식과 관련된 것이라
+# 롤링 호환과 무관하다.
+excluded_rules = [
+  "prefer-text-field",
+  "prefer-timestamp-tz",
+  "prefer-robust-stmts",
+  "adding-serial-primary-key-field",
+  "prefer-bigint-over-int",
+  "prefer-bigint-over-smallint",
+  "prefer-identity",
+  "require-lock-timeout",
+  "require-statement-timeout",
+]
+# Flyway는 migration 파일 하나를 트랜잭션 하나로 실행한다.
+assume_in_transaction = true
+pg_version = "17.0"

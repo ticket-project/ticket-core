@@ -27,6 +27,27 @@ jobs:
       - name: Check agent docs structure
         run: bash scripts/check-docs.sh
 
+  # 롤링 배포 중 옛 버전이 깨지거나 표 쓰기가 막히는 DDL을 막는다(규칙은 .squawk.toml). 새로 추가·수정한
+  # migration만 본다. PR은 base, push(배포 workflow가 부를 때)는 push 전 커밋과 비교한다.
+  migration-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Lint changed migrations
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: bash scripts/lint-migrations.sh "$BASE_SHA"
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
