@@ -19,8 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
  * 공연 좌석 배치도 응답 본문을 JSON 바이트와 gzip 바이트로 만들어 공연별로 10분 재사용한다({@link CacheNames#SHOW_SEAT_MAP}).
  *
  * <p><b>왜 객체가 아니라 응답 바이트를 담는가.</b> 예매 화면에 들어오는 사용자마다 한 번 부르는 응답(15,000석이면 JSON 2.2MB, gzip 134KB)이다. 조합 결과만 담으면 요청마다
- * JSON 변환(약 13ms)과 Tomcat gzip(약 15ms)이 남는다(gatling-test capacity-log 2026-11-05, 운영 호스트에서 Core 직접 호출). 결과는 모든 사용자에게 같고
- * 좌석 상태를 담지 않아 판정과 무관하다. 등급 이름·가격·좌표가 바뀌면 화면에 최대 10분 옛 값이 보인다.
+ * JSON 변환(약 13ms)과 응답 gzip(약 15ms, 당시 Tomcat 압축)이 남는다(gatling-test capacity-log 2026-11-05, 운영 호스트에서 Core 직접 호출). 결과는
+ * 모든 사용자에게 같고 좌석 상태를 담지 않아 판정과 무관하다. 등급 이름·가격·좌표가 바뀌면 화면에 최대 10분 옛 값이 보인다.
  *
  * <p><b>캐시를 use case 밖에 둔다.</b> {@code sync = true}라 적재하는 동안 같은 공연을 찾는 요청은 기다린다. 읽기 트랜잭션은 use case 안에서만 열리므로 기다리는 요청은
  * DB connection을 쥐지 않는다.
