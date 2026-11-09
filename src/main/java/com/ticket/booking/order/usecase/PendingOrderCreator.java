@@ -1,7 +1,5 @@
 package com.ticket.booking.order.usecase;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -18,7 +16,7 @@ import com.ticket.show.api.PerformanceSaleSnapshot;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 주문 생성의 DB 구간이다. 주문·주문 좌석·선점 이력이 한 트랜잭션에서 함께 커밋되거나 함께 사라진다.
+ * 주문 생성의 DB 구간이다. 주문과 주문 좌석이 한 트랜잭션에서 함께 커밋되거나 함께 사라진다.
  *
  * <p>{@code OrderCreated}는 더 발행하지 않는다(2026-11-06). 선택 정리·HELD 발행 후처리는 커밋 뒤 {@link CreateOrderUseCase}가 바로 한다 — 보관함을 거치면
  * 주문마다 DB 문장 다섯 개가 더 들었다.
@@ -34,14 +32,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PendingOrderCreator {
     private final OrderRepository orderRepository;
-    private final OrderHoldHistoryRecorder orderHoldHistoryRecorder;
 
     /** @return 만들어진 주문의 orderKey. 트랜잭션 밖에서 entity를 다시 만지지 않도록 필요한 값만 돌려준다 — lazy 연관을 트랜잭션 밖에서 읽는 경로를 애초에 만들지 않는다. */
     @Transactional
     public String create(
             final Long memberId,
             final Long performanceId,
-            final Duration holdDuration,
             final Hold hold,
             final List<PerformanceSeat> performanceSeats,
             final PerformanceSaleSnapshot saleSnapshot) {
@@ -59,13 +55,8 @@ public class PendingOrderCreator {
 
         addSeatsToOrder(order, performanceSeats, saleSnapshot);
 
-        final Order savedOrder = orderRepository.save(order);
-
-        final LocalDateTime startedAt = hold.startedAt(holdDuration);
-        orderHoldHistoryRecorder.recordCreated(
-                memberId, performanceId, hold.holdKey(), startedAt, hold.expiresAt(), performanceSeats);
-
-        return savedOrder.getOrderKey();
+        // 선점 이력(hold_history)은 쓰지 않는다(2026-11-09). 읽는 곳이 없고 같은 내용이 orders·order_seats에 있다.
+        return orderRepository.save(order).getOrderKey();
     }
 
     private String generateOrderKey() {

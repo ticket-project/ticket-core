@@ -192,7 +192,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(saleSnapshot);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
+        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, hold, seats, saleSnapshot))
                 .thenReturn("order-key");
 
         final CreateOrderUseCase.Output output = createOrderUseCase.execute(input);
@@ -216,7 +216,7 @@ class CreateOrderUseCaseTest {
         inOrder.verify(performanceSeatRepository).findAllByPerformanceIdAndSeatIdIn(PERFORMANCE_ID, seatIds.toList());
         inOrder.verify(performanceSaleInfoApi).getSaleSnapshot(PERFORMANCE_ID, Set.copyOf(seatIds.toList()));
         inOrder.verify(holdRegistry).createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW);
-        inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
+        inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, hold, seats, saleSnapshot);
     }
 
     /** 주문이 커밋된 뒤 이벤트 보관함 없이 바로 선택을 거두고 HELD를 발행한다(2026-11-06). */
@@ -232,7 +232,7 @@ class CreateOrderUseCaseTest {
         createOrderUseCase.execute(input);
 
         final InOrder inOrder = inOrder(pendingOrderCreator, heldSeatPublisher);
-        inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot);
+        inOrder.verify(pendingOrderCreator).create(MEMBER_ID, PERFORMANCE_ID, hold, seats, saleSnapshot);
         inOrder.verify(heldSeatPublisher)
                 .clearSelectionsAndPublishHeld(
                         "hold-key",
@@ -271,7 +271,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(saleSnapshot);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
+        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, hold, seats, saleSnapshot))
                 .thenReturn("order-key");
     }
 
@@ -299,8 +299,7 @@ class CreateOrderUseCaseTest {
 
         createOrderUseCase.execute(input);
 
-        verify(pendingOrderCreator)
-                .create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), same(seats), any());
+        verify(pendingOrderCreator).create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(hold), same(seats), any());
     }
 
     @Test
@@ -398,7 +397,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(saleSnapshot);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, seats, saleSnapshot))
+        when(pendingOrderCreator.create(MEMBER_ID, PERFORMANCE_ID, hold, seats, saleSnapshot))
                 .thenReturn("order-key");
 
         assertThat(createOrderUseCase.execute(input).orderKey()).isEqualTo("order-key");
@@ -465,8 +464,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(seats);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(
-                        eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
+        when(pendingOrderCreator.create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(hold), eq(seats), any()))
                 .thenThrow(new DataIntegrityViolationException("uk_orders_pending_member_performance"));
 
         assertError(input.seatIds(), BookingErrorCode.E5004);
@@ -486,8 +484,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(seats);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(
-                        eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
+        when(pendingOrderCreator.create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(hold), eq(seats), any()))
                 .thenThrow(new RuntimeException("order failed"));
 
         assertThatThrownBy(() -> createOrderUseCase.execute(input))
@@ -510,8 +507,7 @@ class CreateOrderUseCaseTest {
                 .thenReturn(seats);
         when(holdRegistry.createHold(MEMBER_ID, PERFORMANCE_ID, seatIds.toList(), HOLD_DURATION, FIXED_NOW))
                 .thenReturn(hold);
-        when(pendingOrderCreator.create(
-                        eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(HOLD_DURATION), eq(hold), eq(seats), any()))
+        when(pendingOrderCreator.create(eq(MEMBER_ID), eq(PERFORMANCE_ID), eq(hold), eq(seats), any()))
                 .thenThrow(originalException);
         doThrow(new RuntimeException("release failed"))
                 .when(holdStore)

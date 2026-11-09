@@ -20,9 +20,4 @@ public record Hold(String holdKey, Long memberId, Long performanceId, List<Long>
             final Duration ttl) {
         return new Hold(holdKey, memberId, performanceId, List.copyOf(seatIds), now.plus(ttl));
     }
-
-    /** 이 hold가 시작된 시각이다. 남은 시간 계산이 아니라 이력 기록에 쓴다. */
-    public LocalDateTime startedAt(final Duration holdDuration) {
-        return expiresAt.minus(holdDuration);
-    }
 }

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,7 +37,6 @@ import tools.jackson.databind.json.JsonMapper;
 class PendingOrderCreationTransactionTest extends BookingE2ETestSupport {
     private static final long MEMBER_ID = 900L;
     private static final long PERFORMANCE_ID = 901L;
-    private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
 
     @Autowired
     private PendingOrderCreator pendingOrderCreator;
@@ -76,7 +74,7 @@ class PendingOrderCreationTransactionTest extends BookingE2ETestSupport {
         final List<PerformanceSeat> performanceSeats = persistedSeats(holdKey);
 
         final String orderKey = pendingOrderCreator.create(
-                MEMBER_ID, PERFORMANCE_ID, HOLD_DURATION, hold, performanceSeats, saleSnapshotFor(performanceSeats));
+                MEMBER_ID, PERFORMANCE_ID, hold, performanceSeats, saleSnapshotFor(performanceSeats));
 
         assertThat(orderKey).isNotBlank();
         final Boolean savedOrderExists = new TransactionTemplate(transactionManager)
@@ -94,12 +92,7 @@ class PendingOrderCreationTransactionTest extends BookingE2ETestSupport {
 
         assertThatThrownBy(() -> new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
                     pendingOrderCreator.create(
-                            MEMBER_ID,
-                            PERFORMANCE_ID,
-                            HOLD_DURATION,
-                            hold,
-                            performanceSeats,
-                            saleSnapshotFor(performanceSeats));
+                            MEMBER_ID, PERFORMANCE_ID, hold, performanceSeats, saleSnapshotFor(performanceSeats));
                     throw new IllegalStateException("의도적인 롤백");
                 }))
                 .isInstanceOf(IllegalStateException.class);
@@ -122,7 +115,6 @@ class PendingOrderCreationTransactionTest extends BookingE2ETestSupport {
                                 "create",
                                 Long.class,
                                 Long.class,
-                                Duration.class,
                                 Hold.class,
                                 List.class,
                                 com.ticket.show.api.PerformanceSaleSnapshot.class)
@@ -156,7 +148,7 @@ class PendingOrderCreationTransactionTest extends BookingE2ETestSupport {
                 MEMBER_ID,
                 PERFORMANCE_ID,
                 List.of(seat.getSeatId()),
-                LocalDateTime.now().plus(HOLD_DURATION));
+                LocalDateTime.now().plusMinutes(10));
     }
 
     private List<PerformanceSeat> persistedSeats(final String holdKey) {

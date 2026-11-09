@@ -115,7 +115,6 @@ public class CreateOrderUseCase {
             orderKey = pendingOrderCreator.create(
                     input.memberId(),
                     input.performanceId(),
-                    holdDuration,
                     hold,
                     preflight.performanceSeats(),
                     preflight.saleSnapshot());

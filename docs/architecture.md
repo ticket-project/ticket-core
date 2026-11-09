@@ -88,8 +88,8 @@ DAG의 원본은 `com.ticket.ModularityTests`, 공개 named interface의 원본�
 | Like | — | Like |
 | Member | MemberSocialAccount | Member |
 
-**Hold와 Selection은 DB aggregate가 아니다.** 둘 다 Redis에만 있는 짧은 수명 상태다. DB에 남는
-것은 좌석 단위 이력인 `HoldHistory`뿐이고 `holdKey` 문자열로 Order와 이어진다.
+**Hold와 Selection은 DB aggregate가 아니다.** 둘 다 Redis에만 있는 짧은 수명 상태다. 선점 기록은
+DB에 따로 남기지 않는다. 주문의 `holdKey`가 선점 한 건을 가리키고, 2026-11-09부터 `hold_history` 표에는 쓰지 않는다(표와 옛 행은 남김).
 
 ## Aggregate Rules
 
