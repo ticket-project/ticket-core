@@ -46,6 +46,10 @@ public class CacheConfig {
     /** 15,000석 회차 하나가 약 2KB다. 1초 안에 동시에 보는 회차 수보다 넉넉하면 된다. */
     static final long SEAT_AVAILABILITY_BITS_MAXIMUM_SIZE = 64;
 
+    static final Duration SHOW_VENUE_LAYOUT_TTL = Duration.ofMinutes(10);
+    /** 값 하나가 이름과 숫자 셋이라 작다. 동시에 판매하는 공연 수보다 넉넉하면 된다. */
+    static final long SHOW_VENUE_LAYOUT_MAXIMUM_SIZE = 100;
+
     @Bean
     public CacheManager cacheManager() {
         final CaffeineCacheManager manager = new CaffeineCacheManager();
@@ -55,7 +59,8 @@ public class CacheConfig {
                 CacheNames.VENUE_SEATS,
                 CacheNames.SHOW_SEAT_MAP,
                 CacheNames.PERFORMANCE_SEAT_IDS,
-                CacheNames.SEAT_AVAILABILITY_BITS));
+                CacheNames.SEAT_AVAILABILITY_BITS,
+                CacheNames.SHOW_VENUE_LAYOUT));
         // 판매 기간·대기열 변경은 서버마다 최대 1초 늦게 반영된다.
         manager.registerCustomCache(
                 CacheNames.SALES_POLICY,
@@ -105,6 +110,14 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .expireAfterWrite(SEAT_AVAILABILITY_BITS_TTL)
                         .maximumSize(SEAT_AVAILABILITY_BITS_MAXIMUM_SIZE)
+                        .recordStats()
+                        .build());
+        // 공연장 이름·좌석 그림 크기가 바뀌면 화면에 최대 10분 옛 값이 보인다. 판정에는 쓰지 않는다.
+        manager.registerCustomCache(
+                CacheNames.SHOW_VENUE_LAYOUT,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(SHOW_VENUE_LAYOUT_TTL)
+                        .maximumSize(SHOW_VENUE_LAYOUT_MAXIMUM_SIZE)
                         .recordStats()
                         .build());
         return manager;

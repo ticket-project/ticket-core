@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.shared.web.ApiResponse;
 import com.ticket.show.usecase.GetShowVenueLayoutUseCase;
+import com.ticket.show.usecase.ShowVenueLayoutReader;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,16 +30,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "공연(Show)", description = "공연 정보·공연장 레이아웃 조회 API")
 public class ShowVenueLayoutController {
-    private final GetShowVenueLayoutUseCase getShowVenueLayoutUseCase;
+    private final ShowVenueLayoutReader showVenueLayoutReader;
 
     @Operation(summary = "공연장 레이아웃 조회", description = """
             공연 ID로 해당 공연장의 레이아웃(SVG viewBox, 무대 위치)을 조회합니다.
-            공연장 정보는 거의 변하지 않으므로 캐싱에 적합합니다.
+            공연별로 최대 10분 전 값일 수 있습니다.
             """)
     @GetMapping("/{showId}/venue-layout")
     public ApiResponse<GetShowVenueLayoutUseCase.Output> getVenueLayout(
             @Parameter(description = "공연 ID", example = "1") @PathVariable @Positive final Long showId) {
-        final GetShowVenueLayoutUseCase.Input input = new GetShowVenueLayoutUseCase.Input(showId);
-        return ApiResponse.success(getShowVenueLayoutUseCase.execute(input));
+        return ApiResponse.success(showVenueLayoutReader.read(showId));
     }
 }
