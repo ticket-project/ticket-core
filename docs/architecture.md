@@ -184,6 +184,26 @@ Redis key 조립과 물리 TTL은 소유 모듈의 `persistence` 구현이 맡�
 분리하지 않기로 했다([#249](https://github.com/ticket-project/ticket-core/issues/249)).
 모듈 밖으로는 엔티티를 노출하지 않고 snapshot 값으로 내보낸다.
 
+### 프론트엔드 호환
+
+ticket-fe는 지금 고칠 수 없다(사용자 결정 2026-11-09). FE가 쓰는 계약을 지키면서 바꾼다.
+
+- FE가 부르는 HTTP API와 STOMP 주소의 경로, 요청·응답 형식, 오류 코드는 그대로 둔다.
+- 동작이나 형식을 바꿔야 하면 새 경로(새 API, 새 STOMP 주소)를 추가하고, 측정 시나리오(`gatling-test`)는 새 경로를 쓴다.
+- 옛 경로는 FE가 새 경로로 옮긴 뒤 지운다. FE가 부르지 않는 경로(예: gatling만 쓰는 `GET /api/v1/performances/{performanceId}/seats/occupied`)는 이 규칙 밖이다.
+- 예외: 좌석 알림 `/topic/performance/{performanceId}/seats`는 2026-11-09 배포(PR #304)에서 250ms 묶음 형식으로 바뀌어 FE가 읽지 못한다. 옛 형식(좌석 변경 하나에 메시지 하나)을 이 주소로 되살리고 묶음은 새 주소로 옮기기로 했다(설계 중, 미구현).
+
+FE가 부르는 경로는 아래와 같다(ticket-fe `origin/dev`·`main` 2026-05-29 기준 `src/features/*/api`와 `seatSocketClient.ts`, 바뀌었으면 ticket-fe 코드가 원본).
+
+| 영역 | 경로 |
+| --- | --- |
+| 인증 | `/api/v1/auth/logout`, `/api/v1/auth/oauth2/token`, `/api/v1/auth/refresh`, `/api/v1/auth/social/urls` |
+| 회원·좋아요 | `/api/v1/members`, `/api/v1/members/me/likes`, `/api/v1/likes/shows/{showId}` |
+| 공연 | `/api/v1/genres`, `/api/v1/shows`, `/api/v1/shows/latest`, `/api/v1/shows/sale-opening-soon`, `/api/v1/shows/sale-opening-soon/page`, `/api/v1/shows/{showId}`, `/api/v1/shows/{showId}/holds`, `/api/v1/shows/{showId}/seats`, `/api/v1/shows/{showId}/venue-layout` |
+| 회차·좌석 | `/api/v1/performances/{performanceId}/summary`, `.../seats/availability`, `.../seats/status`, `.../seats/{seatId}/select`(POST·DELETE), `.../seats/select`(DELETE) |
+| 주문 | `/api/v1/orders`, `/api/v1/orders/{orderKey}` |
+| WebSocket | SockJS `/ws`, 구독 `/topic/performance/{performanceId}/seats`(구독 때 입장권 헤더를 보내지 않는다) |
+
 ### 오류 처리
 
 모듈별 `*ErrorCode`와 예외가 업무 오류를 표현하고 예외는 HTTP 상태를 모른다 — HTTP 상태는 모듈의
