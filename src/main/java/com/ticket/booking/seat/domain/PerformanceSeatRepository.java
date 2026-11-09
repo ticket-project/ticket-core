@@ -17,14 +17,17 @@ public interface PerformanceSeatRepository extends Repository<PerformanceSeat, L
     List<PerformanceSeat> findAllByPerformanceIdAndSeatIdIn(Long performanceId, Collection<Long> seatIds);
 
     /**
-     * 좌석 선택 판정에 쓰는 좌석 한 건을 UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스로 조회한다. 회차 존재와 예매 가능 시각은 회차 정책이 판정하므로 조인이 필요
-     * 없다.
+     * 좌석 선택 판정에 쓰는 좌석 한 건의 id와 상태만 UK_PERFORMANCE_SEATS_PERFORMANCE_SEAT 유니크 인덱스로 읽는다. 판정에 두 값만 쓰므로 엔티티로 읽지 않는다. 회차 존재와
+     * 예매 가능 시각은 회차 정책이 판정하므로 조인이 필요 없다.
      */
-    default Optional<PerformanceSeat> findSeatState(final Long performanceId, final Long seatId) {
-        return findByPerformanceIdAndSeatId(performanceId, seatId);
-    }
-
-    Optional<PerformanceSeat> findByPerformanceIdAndSeatId(Long performanceId, Long seatId);
+    @Query("""
+            select new com.ticket.booking.seat.domain.PerformanceSeatStateRow(s.id, s.seatId, s.state)
+            from PerformanceSeat s
+            where s.performanceId = :performanceId
+              and s.seatId = :seatId
+            """)
+    Optional<PerformanceSeatStateRow> findSeatState(
+            @Param("performanceId") Long performanceId, @Param("seatId") Long seatId);
 
     /** 판매 편성된 좌석을 seatId 오름차순으로 읽는다. 엔티티를 많이 읽으므로 호출자가 읽기 전용 트랜잭션 안에서 부른다. */
     @Query("select s from PerformanceSeat s where s.performanceId = :performanceId order by s.seatId")
