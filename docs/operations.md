@@ -109,7 +109,9 @@ ECS로 가면 `stopTimeout`을 같은 기준으로 둔다([스케일 아웃 결�
 
 Core는 `/actuator/prometheus`에서 용량 판정에 필요한 메트릭을 노출한다. 부하 테스트 중에는 다음을 같은 시간축으로 본다.
 
-- `http_server_requests_seconds_bucket/count`: URI·method·status별 처리량과 p95/p99
+- `http_server_requests_seconds_bucket/count`: URI·method·status별 처리량과 p95/p99. 칸(bucket)은 `application.yml`의
+  `slo` 경계 10개뿐이라 p값은 그 경계 단위("250ms 이하")로 나온다. 자동 칸(`percentiles-histogram`)은 조합마다 약 68칸을
+  만들어 `/actuator/prometheus`를 약 600KB로 키워서 껐다.
 - `hikaricp_connections_active/pending/max/min`: DB connection pool 사용량과 대기
 - `tomcat_threads_busy_threads/current_threads/config_max_threads`: 요청 스레드 사용량과 상한
 - `jvm_gc_pause_seconds`, `jvm_memory_used_bytes`, `process_cpu_usage`: JVM·CPU 포화 여부
