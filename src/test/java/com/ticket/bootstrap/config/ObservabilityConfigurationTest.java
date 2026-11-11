@@ -29,7 +29,6 @@ class ObservabilityConfigurationTest {
                         "management.metrics.tags.environment",
                         "management.metrics.tags.version",
                         "management.metrics.distribution.slo.http.server.requests")
-                .containsEntry("server.tomcat.mbeanregistry.enabled", true)
-                .containsEntry("management.metrics.distribution.percentiles-histogram.http.server.requests", true);
+                .containsEntry("server.tomcat.mbeanregistry.enabled", true);
     }
 }

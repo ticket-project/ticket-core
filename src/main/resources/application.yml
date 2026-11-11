@@ -101,14 +101,10 @@ management:
       environment: ${DD_ENV:local}
       version: ${DD_VERSION:unknown}
     distribution:
-      percentiles-histogram:
-        http.server.requests: true
+      # 응답 시간 칸은 아래 경계만 둔다. percentiles-histogram을 켜면 URI·status 조합마다 약 68칸이 생겨
+      # /actuator/prometheus가 약 600KB가 되고, Datadog이 15초마다 가져갈 때마다 다시 만든다.
       slo:
-        http.server.requests: 100ms,300ms,500ms,1s,2s,3s,5s
-      minimum-expected-value:
-        http.server.requests: 1ms
-      maximum-expected-value:
-        http.server.requests: 10s
+        http.server.requests: 5ms,10ms,25ms,50ms,100ms,250ms,500ms,1s,2.5s,5s
 
 # p6spy SQL 로그는 모든 JDBC 호출을 가로채 포맷한다. 기본은 끄고 local 프로파일에서만 켠다.
 # P6SpyConfig도 같은 property로 켜진다.
