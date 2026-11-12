@@ -103,6 +103,7 @@ final class SeedProgram {
             final SeedSettings settings) {
         return List.of(
                 new CuratedSeedLoader(jdbcTemplate, transactionTemplate, settings.sqlPath()),
+                new ClosedShowViewCountSeeder(jdbcTemplate, transactionTemplate),
                 new LoadTestFixtureSeeder(
                         jdbcTemplate,
                         transactionTemplate,
