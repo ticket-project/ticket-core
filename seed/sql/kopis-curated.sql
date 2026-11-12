@@ -6304,7 +6304,9 @@ INSERT INTO SEATS (id, venue_id, section, row_no, seat_no, floor, x, y, created_
 SELECT t.id + (v.id - 1) * 600, v.id, t.section, t.row_no, t.seat_no, t.floor, t.x, t.y, '2026-01-01 10:00:00', '시드'
 FROM SEATS t
 CROSS JOIN VENUES v
-WHERE t.venue_id = 1 AND v.id <> 1;
+WHERE t.venue_id = 1 AND v.id <> 1
+    -- 이미 좌석이 있는 공연장(앞선 적재분·부하 픽스처)은 건너뛴다. 새 공연장만 더하는 추가 적재가 다시 실행한다.
+    AND NOT EXISTS (SELECT 1 FROM SEATS existing WHERE existing.venue_id = v.id);
 
 -- ticket-domain-module-redesign Phase 3 Task 6/8(ADR 0005): PerformanceSeat entity가 이제
 -- performance_grade_id/unit_price를 NOT NULL로 매핑하고, ShowGrade(show 단위 가격)는 폐기됐다.
@@ -6403,4 +6405,6 @@ SELECT p.id, st.id,
     '2026-01-01 10:00:00', '시드'
 FROM PERFORMANCES p
 JOIN SHOWS sh ON sh.id = p.show_id
-JOIN SEATS st ON st.venue_id = sh.venue_id;
+JOIN SEATS st ON st.venue_id = sh.venue_id
+-- 이미 회차좌석이 있는 회차(앞선 적재분·부하 픽스처)는 건너뛴다.
+WHERE NOT EXISTS (SELECT 1 FROM PERFORMANCE_SEATS existing WHERE existing.performance_id = p.id);

@@ -6,8 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * {@code seed/sql/kopis-curated.sql}을 실행할 SQL 문 목록으로 나눈다. DB를 모르는 순수 변환 계층이라 파일만 있으면 단위 테스트할 수 있다.
@@ -21,6 +24,10 @@ final class CuratedSeedStatements {
     /** 리터럴 한 행 INSERT를 세는 패턴. {@code INSERT ... SELECT}는 걸러진다. */
     private static final Pattern LITERAL_INSERT_PATTERN =
             Pattern.compile("^INSERT INTO ([A-Z_]+) \\([^)]*\\) VALUES \\(", Pattern.DOTALL);
+
+    /** 리터럴 INSERT의 첫 컬럼과 그 값. 시드 SQL의 리터럴 INSERT는 모두 첫 컬럼에 키(id 또는 performance_id)를 직접 적는다. */
+    private static final Pattern LITERAL_KEY_PATTERN =
+            Pattern.compile("^INSERT INTO ([A-Z_]+) \\((\\w+)[^)]*\\) VALUES \\((\\d+),", Pattern.DOTALL);
 
     private final List<String> statements;
 
@@ -72,6 +79,29 @@ final class CuratedSeedStatements {
         return statements.stream()
                 .filter(statement -> isLiteralInsertInto(statement, table))
                 .count();
+    }
+
+    /** 리터럴 INSERT 전부의 키다. 추가 적재가 DB에 이미 있는 행을 가려낼 때 쓴다. */
+    Set<LiteralKey> literalKeys() {
+        return statements.stream()
+                .map(this::literalKey)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
+    Optional<LiteralKey> literalKey(final String statement) {
+        final Matcher matcher = LITERAL_KEY_PATTERN.matcher(statement);
+        if (!matcher.find()) {
+            return Optional.empty();
+        }
+        return Optional.of(new LiteralKey(matcher.group(1), matcher.group(2), Long.parseLong(matcher.group(3))));
+    }
+
+    record LiteralKey(String table, String column, long value) {
+        @Override
+        public String toString() {
+            return table + " " + column + " " + value;
+        }
     }
 
     private static boolean isLiteralInsertInto(final String statement, final String table) {
