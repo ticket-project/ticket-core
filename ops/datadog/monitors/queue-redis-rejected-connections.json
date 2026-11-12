@@ -1,0 +1,22 @@
+{
+  "name": "[queue] Redis 연결 거부",
+  "type": "metric alert",
+  "query": "change(max(last_5m),last_5m):max:redis.net.rejected{host:ticket-queue-prod} > 0",
+  "message": "대기열 Redis가 최근 5분 사이 연결을 거부했다(redis.net.rejected는 누적값이라 증가분을 본다). 먼저 볼 곳: redis.net.clients vs maxclients, api·scheduler 연결 풀, 호스트 FD 한도.",
+  "tags": [
+    "service:ticket-queue-api",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 0
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

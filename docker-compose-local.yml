@@ -85,7 +85,7 @@ services:
   datadog-agent:
     # 이름으로 지정하거나 --profile datadog을 줄 때만 뜬다.
     profiles: ["datadog"]
-    image: gcr.io/datadoghq/agent:7
+    image: gcr.io/datadoghq/agent:7.81.1
     container_name: ticket-datadog-agent
     env_file:
       - path: ../local-env/datadog.env

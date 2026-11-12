@@ -1,0 +1,48 @@
+{
+  "additionalProperties": {
+    "created_at": 1783153745000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-07-08T00:28:52+00:00"
+  },
+  "created": "2026-07-04T08:29:05.533Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 20935492,
+  "matchingDowntimes": [],
+  "message": "Redis cluster state is unhealthy for ticket queue. Check Azure Cache for Redis cluster health, Datadog Redis integration, and queue API logs.",
+  "modified": "2026-07-04T08:29:05.533Z",
+  "multi": false,
+  "name": "[ticket-queue] Redis cluster state degraded",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "noDataTimeframe": 10,
+    "notifyAudit": false,
+    "notifyNoData": true,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 1
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "min(last_5m):avg:redis.cluster.state{component:queue-redis,env:prod} < 1",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-managed-redis",
+    "component:queue-redis",
+    "managed:codex",
+    "domain:queue"
+  ],
+  "type": "metric alert"
+}

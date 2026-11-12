@@ -1,0 +1,47 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064208000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-11T01:22:40+00:00"
+  },
+  "created": "2026-08-07T00:56:48.622Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661960,
+  "matchingDowntimes": [],
+  "message": "Requests are waiting for a JDBC connection. Check Hikari active/max, connection usage time, PostgreSQL latency, blocking sessions, and long transactions before increasing the pool.",
+  "modified": "2026-10-10T10:53:33.888Z",
+  "multi": false,
+  "name": "[ticket-core][DB Path] Hikari pending connections",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0
+    }
+  },
+  "overallState": "No Data",
+  "priority": 1,
+  "query": "max(last_5m):max:ticket.hikaricp_connections_pending{env:prod,service:ticket-be} > 0",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:rds-postgresql",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

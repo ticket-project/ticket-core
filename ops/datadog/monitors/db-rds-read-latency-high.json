@@ -1,0 +1,24 @@
+{
+  "name": "[db] RDS 읽기 지연 높음",
+  "type": "metric alert",
+  "query": "avg(last_10m):avg:aws.rds.read_latency{dbinstanceidentifier:ticket-core-db} > 0.02",
+  "message": "ticket-core-db 디스크 읽기 평균 지연이 20ms를 넘었다. 먼저 볼 곳: read_iops, 버퍼 적중률(Database Insights), 큰 테이블 전체 읽기 쿼리.",
+  "tags": [
+    "service:ticket-core-db",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 3,
+  "options": {
+    "thresholds": {
+      "critical": 0.02,
+      "warning": 0.01
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false,
+    "evaluation_delay": 900
+  }
+}

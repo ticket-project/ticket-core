@@ -1,0 +1,23 @@
+{
+  "name": "[core] PostgreSQL 쿼리 지연(APM) 높음",
+  "type": "metric alert",
+  "query": "avg(last_5m):avg:trace.postgresql.query{env:prod,service:ticket-be} > 0.1",
+  "message": "앱이 본 PostgreSQL 쿼리 평균 시간이 높다(평소 1~6ms). 먼저 볼 곳: APM postgresql.query 리소스별 시간, RDS CPU·크레딧, Hikari pending.",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 0.1,
+      "warning": 0.05
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

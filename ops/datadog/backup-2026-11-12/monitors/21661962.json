@@ -1,0 +1,47 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064209000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-11T01:23:43+00:00"
+  },
+  "created": "2026-08-07T00:56:49.478Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661962,
+  "matchingDowntimes": [],
+  "message": "Application-observed PostgreSQL query latency is high. Use APM resources to find the SQL, then correlate with pg_stat_activity waits, RDS load, and Hikari pending connections.",
+  "modified": "2026-10-10T10:53:35.222Z",
+  "multi": false,
+  "name": "[ticket-core][DB Path] PostgreSQL APM latency high",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0.25
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "avg(last_5m):avg:trace.postgresql.query{env:prod,service:ticket-be} > 0.25",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:rds-postgresql",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

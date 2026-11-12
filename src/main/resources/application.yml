@@ -97,7 +97,7 @@ management:
         enabled: true
   metrics:
     tags:
-      service: ${DD_SERVICE:ticket-core}
+      service: ${DD_SERVICE:ticket-be}
       environment: ${DD_ENV:local}
       version: ${DD_VERSION:unknown}
     distribution:

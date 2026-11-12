@@ -1,0 +1,50 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064488000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-10T01:11:25+00:00"
+  },
+  "created": "2026-08-07T01:01:28.865Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21662064,
+  "matchingDowntimes": [],
+  "message": "Core error logs increased. Inspect sampled logs and linked traces, then correlate with HTTP 5xx, Hikari timeouts, PostgreSQL latency, Redis, and the deployment version.",
+  "modified": "2026-10-10T10:53:37.273Z",
+  "multi": false,
+  "name": "[ticket-core] Error logs burst",
+  "options": {
+    "enableLogsSample": true,
+    "groupbySimpleMonitor": false,
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 10,
+      "warning": 1
+    }
+  },
+  "overallState": "OK",
+  "priority": 1,
+  "query": "logs(\"service:ticket-be env:prod status:error\").index(\"*\").rollup(\"count\").last(\"5m\") > 10",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:application",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "log alert"
+}

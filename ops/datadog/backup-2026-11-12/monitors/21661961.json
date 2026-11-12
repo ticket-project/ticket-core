@@ -1,0 +1,47 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064209000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-11T01:22:41+00:00"
+  },
+  "created": "2026-08-07T00:56:49.084Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661961,
+  "matchingDowntimes": [],
+  "message": "JDBC connection acquisition timed out. This is user-impacting. Correlate pending connections, pool saturation, request volume, DB sessions, queued statements, and blocking sessions.",
+  "modified": "2026-10-10T10:53:34.543Z",
+  "multi": false,
+  "name": "[ticket-core][DB Path] Hikari connection timeouts",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0
+    }
+  },
+  "overallState": "No Data",
+  "priority": 1,
+  "query": "sum(last_5m):sum:ticket.hikaricp_connections_timeout.count{env:prod,service:ticket-be}.as_count() > 0",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:rds-postgresql",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

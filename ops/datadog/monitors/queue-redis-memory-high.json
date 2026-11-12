@@ -1,0 +1,23 @@
+{
+  "name": "[queue] Redis 메모리 높음",
+  "type": "metric alert",
+  "query": "avg(last_10m):avg:redis.mem.used{host:ticket-queue-prod} / avg:system.mem.total{host:ticket-queue-prod} > 0.5",
+  "message": "대기열 Redis가 호스트 메모리의 절반을 넘게 쓴다. maxmemory가 없어서 계속 늘면 OOM으로 대기열 전체가 날아간다. 먼저 볼 곳: redis.keys, TTL 없는 키, 회차별 대기 인원.",
+  "tags": [
+    "service:ticket-queue-api",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 0.5,
+      "warning": 0.4
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

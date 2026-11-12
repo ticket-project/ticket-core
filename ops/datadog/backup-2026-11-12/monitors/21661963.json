@@ -1,0 +1,48 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064209000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-10T01:26:43+00:00"
+  },
+  "created": "2026-08-07T00:56:49.860Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661963,
+  "matchingDowntimes": [],
+  "message": "No ticket-be container telemetry has arrived. Check the application container, Docker runtime, Datadog Agent, networking, and unified service tags.",
+  "modified": "2026-10-10T10:53:35.895Z",
+  "multi": false,
+  "name": "[ticket-core] Telemetry missing",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "noDataTimeframe": 10,
+    "notifyAudit": false,
+    "notifyNoData": true,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0
+    }
+  },
+  "overallState": "No Data",
+  "priority": 1,
+  "query": "avg(last_5m):max:container.uptime{container_name:ticket-be} < 0",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:container",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

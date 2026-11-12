@@ -1,0 +1,22 @@
+{
+  "name": "[core] Hikari 연결 대기 1분 지속",
+  "type": "metric alert",
+  "query": "min(last_1m):max:ticket.hikaricp_connections_pending{env:prod,service:ticket-be} > 0",
+  "message": "DB 연결을 기다리는 요청이 1분 넘게 끊이지 않았다. 먼저 볼 곳: Hikari active/max, 연결 사용 시간, PostgreSQL APM 지연, 긴 트랜잭션. 풀을 늘리기 전에 원인부터.",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 0
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "[infra] Core EC2 켜짐",
+  "type": "metric alert",
+  "query": "max(last_5m):max:datadog.agent.running{host:ticket-core-prod} > 0",
+  "message": "Core 운영 EC2의 Datadog Agent가 보고 중이다(켜져 있다). 테스트 중이 아니면 꺼짐을 잊은 것이다. 할 일: EC2 콘솔에서 중지. (옛 호스트 이름 i-09739eeb559db0d1d. DD_HOSTNAME 적용 전이면 이 범위로 데이터가 안 들어온다)",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 4,
+  "options": {
+    "thresholds": {
+      "critical": 0
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

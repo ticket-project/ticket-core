@@ -1,0 +1,23 @@
+{
+  "name": "[core] 오류 로그 급증",
+  "type": "log alert",
+  "query": "logs(\"service:ticket-be env:prod status:error\").index(\"*\").rollup(\"count\").last(\"5m\") > 10",
+  "message": "Core 오류 로그가 5분에 10건을 넘었다. 먼저 볼 곳: 로그 패턴과 연결된 트레이스, HTTP 5xx, Hikari timeout, 배포 version.",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 10,
+      "warning": 1
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "additionalProperties": {
+    "created_at": 1786066025000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-10T01:36:22+00:00"
+  },
+  "created": "2026-08-07T01:27:05.640Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21662361,
+  "matchingDowntimes": [
+    {
+      "additionalProperties": {
+        "active": true,
+        "groups": [],
+        "monitor_id": null
+      },
+      "end": null,
+      "id": 237309352,
+      "scope": [
+        "host:i-09739eeb559db0d1d"
+      ],
+      "start": 1794448204
+    }
+  ],
+  "message": "Core host disk utilization exceeded 85%. Check Docker images, container logs, and root filesystem growth.",
+  "modified": "2026-08-07T01:27:05.640Z",
+  "multi": true,
+  "name": "[ticket-core][Host] Disk utilization high",
+  "options": {
+    "includeTags": true,
+    "newGroupDelay": 60,
+    "noDataTimeframe": 20,
+    "notifyAudit": false,
+    "notifyNoData": true,
+    "renotifyInterval": 0,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0.85,
+      "warning": 0.75
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "max(last_15m):max:system.disk.in_use{host:i-09739eeb559db0d1d} by {device} > 0.85",
+  "restrictedRoles": null,
+  "tags": [
+    "service:ticket-core",
+    "env:prod",
+    "team:core",
+    "component:infrastructure"
+  ],
+  "type": "metric alert"
+}

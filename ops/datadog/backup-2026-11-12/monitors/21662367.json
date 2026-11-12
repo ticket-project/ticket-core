@@ -1,0 +1,49 @@
+{
+  "additionalProperties": {
+    "created_at": 1786066045000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-09T22:51:27+00:00"
+  },
+  "created": "2026-08-07T01:27:25.101Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21662367,
+  "matchingDowntimes": [],
+  "message": "ticket-be restarted more than twice in 10 minutes. Check OOM, exit code, health checks, and deployment events.",
+  "modified": "2026-08-07T01:27:25.101Z",
+  "multi": false,
+  "name": "[ticket-core] Container restart loop",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "noDataTimeframe": 20,
+    "notifyAudit": false,
+    "notifyNoData": true,
+    "renotifyInterval": 0,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 2,
+      "warning": 1
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "sum(last_10m):sum:container.restarts{container_name:ticket-be}.as_count() > 2",
+  "restrictedRoles": null,
+  "tags": [
+    "service:ticket-core",
+    "env:prod",
+    "team:core",
+    "component:infrastructure"
+  ],
+  "type": "metric alert"
+}

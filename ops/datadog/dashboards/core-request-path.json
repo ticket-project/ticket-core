@@ -1,0 +1,769 @@
+{
+  "title": "[core] 요청·DB 경로",
+  "description": "ticket-be의 HTTP → Tomcat → Hikari → PostgreSQL(APM) → RDS 경로. 기존 hu3-ige-3kc를 바탕으로 고정 host(i-09739eeb559db0d1d)를 $host로 바꾸고 RDS 그룹을 더했다.\n\nmanaged-by:ops-datadog",
+  "layout_type": "ordered",
+  "reflow_type": "auto",
+  "template_variables": [
+    {
+      "name": "env",
+      "prefix": "env",
+      "available_values": [
+        "prod",
+        "local"
+      ],
+      "defaults": [
+        "prod"
+      ]
+    },
+    {
+      "name": "host",
+      "prefix": "host",
+      "available_values": [],
+      "defaults": [
+        "*"
+      ]
+    }
+  ],
+  "notify_list": [],
+  "widgets": [
+    {
+      "definition": {
+        "type": "group",
+        "title": "1. DB 연결 상태",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Hikari pending(최대)",
+              "autoscale": true,
+              "precision": 2,
+              "requests": [
+                {
+                  "response_format": "scalar",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket.hikaricp_connections_pending{$env,$host,service:ticket-be}",
+                      "aggregator": "max"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Hikari timeout(합계)",
+              "autoscale": true,
+              "precision": 0,
+              "requests": [
+                {
+                  "response_format": "scalar",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:ticket.hikaricp_connections_timeout.count{$env,$host,service:ticket-be}.as_count()",
+                      "aggregator": "sum"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "2. 앱 → DB 요청 경로",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "HTTP 초당 요청 / 5xx (actuator 제외)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:ticket.http_server_requests_seconds.count{$env,$host,service:ticket-be,!uri:/actuator/*}.as_rate()"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "sum:ticket.http_server_requests_seconds.count{$env,$host,service:ticket-be,!uri:/actuator/*,status:5*}.as_rate()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "req/s"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "5xx/s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "HTTP 최대 응답 시간 (uri별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket.http_server_requests_seconds_max{$env,$host,service:ticket-be,!uri:/actuator/*} by {uri}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "max s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Tomcat 바쁜 스레드 / 최대",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket.tomcat_threads_busy_threads{$env,$host,service:ticket-be}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:ticket.tomcat_threads_config_max_threads{$env,$host,service:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "busy"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "config max"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Hikari active / idle / pending / max",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:ticket.hikaricp_connections_active{$env,$host,service:ticket-be}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:ticket.hikaricp_connections_idle{$env,$host,service:ticket-be}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "max:ticket.hikaricp_connections_pending{$env,$host,service:ticket-be}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "d",
+                      "query": "avg:ticket.hikaricp_connections_max{$env,$host,service:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "active"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "idle"
+                    },
+                    {
+                      "formula": "c",
+                      "alias": "pending"
+                    },
+                    {
+                      "formula": "d",
+                      "alias": "max"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Hikari 획득·점유 시간 최대(초)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket.hikaricp_connections_acquire_seconds_max{$env,$host,service:ticket-be}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "max:ticket.hikaricp_connections_usage_seconds_max{$env,$host,service:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "acquire max"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "usage max"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Hikari timeout",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:ticket.hikaricp_connections_timeout.count{$env,$host,service:ticket-be}.as_count()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "timeouts"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "3. PostgreSQL APM·Repository",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "PostgreSQL 쿼리 초당 / 평균 시간",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:trace.postgresql.query.hits{$env,service:ticket-be}.as_rate()"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:trace.postgresql.query{$env,service:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "queries/s"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "avg s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Repository 호출 초당 / 평균 시간",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:trace.repository.operation.hits{$env,service:ticket-be}.as_rate()"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:trace.repository.operation{$env,service:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "calls/s"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "avg s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "4. RDS ticket-core-db",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "RDS CPU % (CloudWatch 1분 / Enhanced)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:aws.rds.cpuutilization{dbinstanceidentifier:ticket-core-db}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:aws.rds.cpuutilization.total{dbinstanceidentifier:ticket-core-db}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "CloudWatch CPU %"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "Enhanced CPU %"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ],
+              "markers": [
+                {
+                  "value": "y = 90",
+                  "display_type": "error dashed",
+                  "label": "90%"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "RDS CPU 크레딧(t4g.micro)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:aws.rds.cpucredit_balance{dbinstanceidentifier:ticket-core-db}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:aws.rds.cpusurplus_credits_charged{dbinstanceidentifier:ticket-core-db}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "잔여 크레딧"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "초과 과금 크레딧"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "RDS 연결 수",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:aws.rds.database_connections{dbinstanceidentifier:ticket-core-db}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "sum:postgresql.connections{$env}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "CloudWatch 연결"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "postgresql.connections"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "RDS 읽기·쓰기 지연(초)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:aws.rds.read_latency{dbinstanceidentifier:ticket-core-db}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:aws.rds.write_latency{dbinstanceidentifier:ticket-core-db}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "read latency"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "write latency"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "5. 런타임·로그·배포",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Core 컨테이너 메모리",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:container.memory.working_set{$env,$host,container_name:ticket-be}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:container.memory.rss{$env,$host,container_name:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "working set"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "rss"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Core 컨테이너 OOM / 재시작",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:container.memory.oom_events{$env,$host,container_name:ticket-be}.as_count()"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "sum:container.restarts{$env,$host,container_name:ticket-be}.as_count()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "OOM"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "restarts"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "로그 이벤트 (level별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:ticket.logback_events.count{$env,$host,service:ticket-be} by {level}.as_count()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "events"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "배포 버전 / 가동 시간",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket.process_uptime_seconds{$env,$host,service:ticket-be} by {version}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "uptime s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Core 호스트 CPU / 메모리",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:system.cpu.user{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:system.cpu.iowait{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "avg:system.mem.pct_usable{$env,$host} by {host}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "cpu user %"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "iowait %"
+                    },
+                    {
+                      "formula": "c",
+                      "alias": "mem usable ratio"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Core 호스트 디스크 사용률",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:system.disk.in_use{$env,$host} by {host,device}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "in use ratio"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

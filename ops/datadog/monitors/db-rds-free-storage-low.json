@@ -1,0 +1,24 @@
+{
+  "name": "[db] RDS 디스크 여유 부족",
+  "type": "metric alert",
+  "query": "min(last_30m):min:aws.rds.free_storage_space{dbinstanceidentifier:ticket-core-db} < 2147483648",
+  "message": "ticket-core-db 남은 디스크가 2GiB 아래다. 먼저 볼 곳: 테이블·인덱스 크기, WAL·로그, seed 데이터 양.",
+  "tags": [
+    "service:ticket-core-db",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 2147483648,
+      "warning": 4294967296
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false,
+    "evaluation_delay": 900
+  }
+}

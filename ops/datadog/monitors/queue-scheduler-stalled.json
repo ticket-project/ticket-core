@@ -1,0 +1,22 @@
+{
+  "name": "[queue] 대기 회차가 있는데 입장 0",
+  "type": "metric alert",
+  "query": "min(last_3m):clamp_max(default_zero(max:ticket_queue_scheduler.queue_scheduler_waiting_performances{env:prod}), 1) - clamp_max(default_zero(sum:ticket_queue_scheduler.queue_scheduler_admitted.count{env:prod}) * 100, 1) > 0.5",
+  "message": "대기 중인 회차가 3분 내내 있었는데 scheduler가 한 명도 입장시키지 않았다. 먼저 볼 곳: Redis queue:config:advance-batch-size(0으로 멈춰 둔 것인지), scheduler 로그(advance 실패·락), queue_scheduler_advance_batch_size 지표. scheduler 자체가 죽어 지표가 끊기면 이 알림은 울리지 않는다.",
+  "tags": [
+    "service:ticket-queue-scheduler",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 0.5
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064488000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-11T01:23:22+00:00"
+  },
+  "created": "2026-08-07T01:01:28.403Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21662062,
+  "matchingDowntimes": [],
+  "message": "The core container reported an out-of-memory event. Check container working set, JVM heap/non-heap, GC pressure, host memory, and recent deployment changes.",
+  "modified": "2026-08-07T01:01:28.403Z",
+  "multi": false,
+  "name": "[ticket-core] Container OOM detected",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0
+    }
+  },
+  "overallState": "No Data",
+  "priority": 1,
+  "query": "sum(last_5m):sum:container.memory.oom_events{container_name:ticket-be}.as_count() > 0",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:container",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "[loadtest] 부하 발생기 CPU 90% 이상",
+  "type": "metric alert",
+  "query": "avg(last_3m):avg:system.cpu.idle{host:loadgen-1} < 10",
+  "message": "부하 발생기(loadgen-1) CPU가 90% 넘게 쓰인다. 이 상태면 측정 숫자는 서버가 아니라 발생기 한계일 수 있다. 할 일: 이 구간 결과를 판정에서 빼고, 발생기를 늘리거나 사용자 수를 낮춘다.",
+  "tags": [
+    "service:loadgen",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 10,
+      "warning": 20
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

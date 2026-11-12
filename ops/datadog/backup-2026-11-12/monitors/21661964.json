@@ -1,0 +1,47 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064210000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-10-26T07:25:44+00:00"
+  },
+  "created": "2026-08-07T00:56:50.386Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661964,
+  "matchingDowntimes": [],
+  "message": "Core returned a burst of 5xx responses. Start with APM error traces and logs, then correlate Hikari pending/timeouts, PostgreSQL latency, Redis, and host saturation.",
+  "modified": "2026-10-10T10:53:36.572Z",
+  "multi": false,
+  "name": "[ticket-core] HTTP 5xx burst",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 10
+    }
+  },
+  "overallState": "No Data",
+  "priority": 1,
+  "query": "sum(last_5m):sum:ticket.http_server_requests_seconds.count{env:prod,service:ticket-be,status:5*}.as_count() > 10",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:rds-postgresql",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

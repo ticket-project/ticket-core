@@ -78,6 +78,11 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
 
 ## 코드·설정·테스트 수정
 
+### 로컬 캐시 `cache_*` 지표 노출 확인
+
+[운영](operations.md#core-용량-관측)의 Caffeine 캐시는 `recordStats()`를 켰지만 `cache_*` 지표가 `/actuator/prometheus`에 나오는지
+실행으로 확인하지 않았다. 다음 운영 측정 때 확인한다. 서비스 이름(`ticket-be`)은 2026-11-12에 맞췄다.
+
 ### `architectureTest`가 `ArchitectureRulesTest`의 규칙을 돌리지 않는다
 
 - 사실: `src/test/java/com/ticket/ArchitectureRulesTest.java`에 JUnit `@Tag("architecture")`만 있고 ArchUnit
@@ -143,12 +148,6 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
 core-capacity skill(`.agents/skills/core-capacity/SKILL.md`)은 100 users/sec까지 오르고 "C를 새 회차로 두 번 더 재서
 세 번 모두 PASS면 확정"한다. 2026-10-25 운영 측정은 60 users/sec까지 쟀다. 원본(core-capacity.md)을 어느 쪽으로 정할지
 결정한 뒤 두 문서를 맞춘다.
-
-### 운영 `DD_SERVICE` 값
-
-[운영](operations.md#core-용량-관측)은 `ticket-core`, core-capacity skill의 운영 측정은 `ticket-be`로 적는다. 운영 서버
-compose의 실제 값을 확인해 한 값으로 맞춘다. 로컬 캐시의 `cache_*` 지표가 `/actuator/prometheus`에 나오는지도 이때
-확인한다.
 
 ### 주석의 `ponytail:` 표식
 

@@ -1,0 +1,3728 @@
+{
+  "authorHandle": "<redacted>",
+  "authorName": "<redacted>",
+  "createdAt": "2026-06-18T00:52:35.850Z",
+  "description": "",
+  "experienceType": "default",
+  "id": "fpj-y6n-t2y",
+  "layoutType": "ordered",
+  "modifiedAt": "2026-07-23T23:54:39.455Z",
+  "notifyList": [],
+  "reflowType": "auto",
+  "restrictedRoles": [],
+  "templateVariables": [],
+  "title": "ticket-queue OpenMetrics Dashboard",
+  "url": "/dashboard/fpj-y6n-t2y/ticket-queue-openmetrics-dashboard",
+  "widgets": [
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "sum",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "HTTP Requests",
+        "type": "query_value"
+      },
+      "id": 154895196098849
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "sum",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.servlet.request.hits{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "APM Servlet Hits",
+        "type": "query_value"
+      },
+      "id": 4769822834850280
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "sum",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.count{env:prod,service:ticket-queue,status:500}.as_count()"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "HTTP 5xx Count",
+        "type": "query_value"
+      },
+      "id": 7551488158045401
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "avg",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.hikaricp_connections_active{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "Active DB Connections",
+        "type": "query_value"
+      },
+      "id": 7587553148473657
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "avg",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.instantaneous_ops_per_sec{env:prod}"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "Redis Ops/sec",
+        "type": "query_value"
+      },
+      "id": 5019803377674987
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "avg",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.mem.used{env:prod}"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "Redis Memory Used",
+        "type": "query_value"
+      },
+      "id": 6087887603170861
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "avg",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_threads_live_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "JVM Live Threads",
+        "type": "query_value"
+      },
+      "id": 4887532920478746
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "avg",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.process_uptime_seconds{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "Process Uptime",
+        "type": "query_value"
+      },
+      "id": 79449276138328
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.count{env:prod,service:ticket-queue} by {status}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Requests by Status",
+        "type": "timeseries"
+      },
+      "id": 592903188025635
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.count{env:prod,service:ticket-queue} by {method}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "warm"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Requests by Method",
+        "type": "timeseries"
+      },
+      "id": 4366629500529841
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.count{env:prod,service:ticket-queue} by {uri}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Requests by URI",
+        "type": "timeseries"
+      },
+      "id": 5260142740258827
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.http_server_requests_seconds_max{env:prod,service:ticket-queue} by {uri}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "warm"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Max Latency by URI",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 7534504527422023
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.sum{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Duration Sum / Count",
+        "type": "timeseries"
+      },
+      "id": 3790528704310975
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.http_server_requests_active_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.http_server_requests_active_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Active Requests",
+        "type": "timeseries"
+      },
+      "id": 1882759922026553
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.servlet.request.hits{env:prod,service:ticket-queue} by {http.status_code}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Hits by Status Code",
+        "type": "timeseries"
+      },
+      "id": 5669216918096410
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.servlet.request.errors{env:prod,service:ticket-queue} by {http.status_code}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Errors by Status Code",
+        "type": "timeseries"
+      },
+      "id": 6075728165088062
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.servlet.request.hits{env:prod,service:ticket-queue} by {resource_name}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Hits by Resource",
+        "type": "timeseries"
+      },
+      "id": 866718534448955
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:trace.servlet.request{env:prod,service:ticket-queue} by {resource_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Servlet Duration by Resource",
+        "type": "timeseries"
+      },
+      "id": 1505920329426780
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.spring.handler.hits{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.spring.handler.errors{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Spring Handler Hits / Errors",
+        "type": "timeseries"
+      },
+      "id": 4764845654912988
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.redis.query.hits{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.oracle.query.hits{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:trace.repository.operation.hits{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM DB/Redis Trace Hits",
+        "type": "timeseries"
+      },
+      "id": 1263449235224322
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:trace.redis.query{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:trace.oracle.query{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:trace.repository.operation{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM DB/Redis Duration",
+        "type": "timeseries"
+      },
+      "id": 8482153021743555
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_memory_used_bytes{env:prod,service:ticket-queue} by {area}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Memory Used by Area",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 8897140190014782
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_memory_used_bytes{env:prod,service:ticket-queue} by {id}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Memory Used by Pool",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 3576995722424365
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_memory_committed_bytes{env:prod,service:ticket-queue} by {area}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_memory_max_bytes{env:prod,service:ticket-queue} by {area}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Memory Committed / Max",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 1571772297224668
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_gc_pause_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Pause Count",
+        "type": "timeseries"
+      },
+      "id": 4318093805907571
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.jvm_gc_pause_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_gc_pause_seconds.sum{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Pause Max / Sum",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 1682103725602276
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_gc_memory_allocated_bytes.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_gc_memory_promoted_bytes.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Memory Allocated / Promoted",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 7388418035126046
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_gc_live_data_size_bytes{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_gc_max_data_size_bytes{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Live Data / Max Data",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 7233013093166976
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.jvm_gc_concurrent_phase_time_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_gc_concurrent_phase_time_seconds.sum{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Concurrent Phase Time",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 3941266993120260
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_threads_live_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_threads_daemon_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_threads_peak_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Threads Live / Daemon / Peak",
+        "type": "timeseries"
+      },
+      "id": 7671375666389535
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_threads_states_threads{env:prod,service:ticket-queue} by {state}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Thread States",
+        "type": "timeseries"
+      },
+      "id": 2086447837766405
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_classes_loaded_classes{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_classes_unloaded_classes.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Classes Loaded / Unloaded",
+        "type": "timeseries"
+      },
+      "id": 4951329391130162
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_buffer_memory_used_bytes{env:prod,service:ticket-queue} by {id}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_buffer_total_capacity_bytes{env:prod,service:ticket-queue} by {id}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Buffer Memory / Capacity",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 1156034111319100
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jvm_buffer_count_buffers{env:prod,service:ticket-queue} by {id}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Buffer Count",
+        "type": "timeseries"
+      },
+      "id": 7635131518996124
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.jvm_compilation_time_ms.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Compilation Time",
+        "type": "timeseries"
+      },
+      "id": 7375843851163254
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.hikaricp_connections_active{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.hikaricp_connections_idle{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.hikaricp_connections_pending{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Connections",
+        "type": "timeseries"
+      },
+      "id": 7450449594736679
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.hikaricp_connections_min{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.hikaricp_connections_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Pool Limits",
+        "type": "timeseries"
+      },
+      "id": 5185523815660926
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.hikaricp_connections_timeout.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Timeout Count",
+        "type": "timeseries"
+      },
+      "id": 3827247282678418
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.hikaricp_connections_acquire_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.hikaricp_connections_acquire_seconds.sum{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Acquire Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 7819900033768450
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.hikaricp_connections_usage_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.hikaricp_connections_usage_seconds.sum{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Usage Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 7511908390585375
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jdbc_connections_active{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jdbc_connections_idle{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jdbc_connections_min{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.jdbc_connections_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JDBC Connections",
+        "type": "timeseries"
+      },
+      "id": 6782301625971530
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.spring_security_filterchains_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.spring_security_filterchains_seconds.sum{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.spring_security_filterchains_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Spring Security Filterchain Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 5711493025831730
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.spring_security_authentications_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.spring_security_authorizations_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Spring Security AuthN/AuthZ Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 2892949984380355
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.spring_data_repository_invocations_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.spring_data_repository_invocations_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Spring Data Repository Invocations",
+        "type": "timeseries"
+      },
+      "id": 5058540115490116
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.tasks_scheduled_execution_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.tasks_scheduled_execution_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Scheduled Tasks Execution",
+        "type": "timeseries"
+      },
+      "id": 2986695168021793
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.tasks_scheduled_execution_active_seconds.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:ticket_queue.tasks_scheduled_execution_active_seconds_max{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Scheduled Tasks Active",
+        "type": "timeseries"
+      },
+      "id": 4494234033443853
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.executor_active_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.executor_queued_tasks{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.executor_pool_size_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Executor Threads / Queue",
+        "type": "timeseries"
+      },
+      "id": 3826980890383065
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.executor_pool_core_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.executor_pool_max_threads{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.executor_queue_remaining_tasks{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Executor Pool Limits",
+        "type": "timeseries"
+      },
+      "id": 2435891825538229
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.executor_completed_tasks.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Executor Completed Tasks",
+        "type": "timeseries"
+      },
+      "id": 7229314429372438
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.system_cpu_usage{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.process_cpu_usage{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "warm"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "System / Process CPU",
+        "type": "timeseries"
+      },
+      "id": 7975627399524525
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.system_load_average_1m{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "System Load Average",
+        "type": "timeseries"
+      },
+      "id": 639509322608386
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.disk_free_bytes{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.disk_total_bytes{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Disk Free / Total",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 597755517902426
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.process_files_open_files{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.process_files_max_files{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Process Open / Max Files",
+        "type": "timeseries"
+      },
+      "id": 4879699347823046
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.logback_events.count{env:prod,service:ticket-queue} by {level}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Logback Events",
+        "type": "timeseries"
+      },
+      "id": 3536853950177591
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.application_started_time_seconds{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.application_ready_time_seconds{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Application Startup Time",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 5131902184371672
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.tomcat_sessions_active_current_sessions{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:ticket_queue.tomcat_sessions_active_max_sessions{env:prod,service:ticket-queue}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Tomcat Sessions Active / Max",
+        "type": "timeseries"
+      },
+      "id": 8660673501271434
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.tomcat_sessions_created_sessions.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.tomcat_sessions_expired_sessions.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:ticket_queue.tomcat_sessions_rejected_sessions.count{env:prod,service:ticket-queue}.as_count()"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Tomcat Sessions Created / Expired / Rejected",
+        "type": "timeseries"
+      },
+      "id": 3631199087242552
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.mem.used{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.mem.rss{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.mem.peak{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Memory",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 4805059076987166
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.mem.fragmentation_ratio{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.mem.overhead{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Fragmentation / Overhead",
+        "type": "timeseries"
+      },
+      "id": 1546285386593824
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.instantaneous_ops_per_sec{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.commands{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Ops/sec and Commands",
+        "type": "timeseries"
+      },
+      "id": 843696121154246
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.ops.reads_processed{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.ops.writes_processed{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Reads / Writes Processed",
+        "type": "timeseries"
+      },
+      "id": 5177855503998005
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.instantaneous_input{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.instantaneous_output{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Network Instantaneous I/O",
+        "type": "timeseries"
+      },
+      "id": 7507570546199032
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.total_input_bytes{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.total_output_bytes{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Network Total Bytes",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 3582641665432804
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.clients{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.clients.blocked{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.net.rejected{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Clients",
+        "type": "timeseries"
+      },
+      "id": 8527482636948664
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.keys{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.expires{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.persist{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Keyspace",
+        "type": "timeseries"
+      },
+      "id": 1551497565059336
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.keys.expired{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.keys.evicted{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Expired / Evicted Keys",
+        "type": "timeseries"
+      },
+      "id": 5646773018963229
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.stats.keyspace_hits{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.stats.keyspace_misses{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Hit / Miss",
+        "type": "timeseries"
+      },
+      "id": 5628714125968375
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.info.latency_ms{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.ping.latency_ms{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Latency",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "ms",
+          "scale": "linear"
+        }
+      },
+      "id": 6027012015436493
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.cpu.sys{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.cpu.user{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.cpu.sys_main_thread{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.cpu.user_main_thread{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis CPU",
+        "type": "timeseries"
+      },
+      "id": 3399127617314955
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.pubsub.clients{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.pubsub.channels{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.pubsub.patterns{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis PubSub",
+        "type": "timeseries"
+      },
+      "id": 5697706459607220
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.replication.backlog_size{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:redis.replication.backlog_histlen{env:prod}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Replication Backlog",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 8507817874467350
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "queries": [
+              {
+                "aggregator": "max",
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "max:docker.container.open_fds{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "scalar"
+          }
+        ],
+        "title": "Nginx Open FDs",
+        "type": "query_value"
+      },
+      "id": 6098115845810588
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:docker.cpu.usage{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Nginx Docker CPU",
+        "type": "timeseries"
+      },
+      "id": 5971166432919667
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:docker.mem.working_set{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Nginx Docker Memory",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 2608690589849740
+    },
+    {
+      "definition": {
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:docker.net.bytes_rcvd{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query2",
+                "query": "sum:docker.net.bytes_sent{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Nginx Network I/O",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 2590672180149398
+    },
+    {
+      "definition": {
+        "description": "현재 `nginx.net.*` 시계열이 수집되지 않아 No data로 표시됩니다. 이는 연결 수 0이 아니라 Nginx integration/status endpoint 미수집을 의미합니다.",
+        "legendColumns": [
+          "avg",
+          "min",
+          "max",
+          "value",
+          "sum"
+        ],
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "avg:nginx.net.connections{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query2",
+                "query": "avg:nginx.net.reading{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query3",
+                "query": "avg:nginx.net.writing{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query4",
+                "query": "avg:nginx.net.waiting{container_name:ticket-queue-nginx} by {host,container_name}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "time": {},
+        "title": "Nginx Active Connections",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "connections",
+          "scale": "linear"
+        }
+      },
+      "id": 6159134292866834
+    },
+    {
+      "definition": {
+        "description": "현재 `system.net.tcp.listen_drops` 시계열이 수집되지 않아 No data로 표시됩니다. 이는 드롭 0건이 아니라 호스트 TCP 커널 메트릭 미수집을 의미합니다.",
+        "legendColumns": [
+          "avg",
+          "min",
+          "max",
+          "value",
+          "sum"
+        ],
+        "legendLayout": "auto",
+        "requests": [
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query1",
+                "query": "sum:system.net.tcp.listen_overflows{host:ticket-vm}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query2",
+                "query": "sum:system.net.tcp.listen_drops{host:ticket-vm}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "queries": [
+              {
+                "dataSource": "metrics",
+                "name": "query3",
+                "query": "sum:system.net.tcp.backlog_drops{host:ticket-vm}"
+              }
+            ],
+            "responseFormat": "timeseries",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "time": {},
+        "title": "Host TCP Listen Drops",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "drops",
+          "scale": "linear"
+        }
+      },
+      "id": 790278626487185
+    },
+    {
+      "definition": {
+        "layoutType": "ordered",
+        "showTitle": true,
+        "title": "Load Test - Queue Join Capacity",
+        "type": "group",
+        "widgets": [
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "error dashed",
+                  "label": "Gatling Target 4500 RPS",
+                  "value": "y = 4500"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "sum:trace.servlet.request.hits{env:prod,service:ticket-queue,resource_name:post_/api/v1/queue/performances/_performanceid_/join}.as_rate()"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "cool"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "/join Completed RPS vs Target",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "requests/s",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 468369677586252
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "warning dashed",
+                  "label": "maxConnections 16384 + baseline FD",
+                  "value": "y = 16562"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "max:docker.container.open_fds{container_name:ticket-queue} by {host}"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "App Open FDs - Connection Accumulation",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "open file descriptors",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 6114158766964077
+          },
+          {
+            "definition": {
+              "legendColumns": [
+                "avg",
+                "min",
+                "max",
+                "value",
+                "sum"
+              ],
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "error dashed",
+                  "label": "CPU Saturation 90%",
+                  "value": "y = 90"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "formulas": [
+                    {
+                      "alias": "Host CPU Used %",
+                      "formula": "100 - query1"
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "min:system.cpu.idle{host:i-089cd124293cecb83}.rollup(min, 15)"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "warm"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "time": {},
+              "title": "Host CPU Usage - Peak",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "percent",
+                "max": "100",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 7543831696172096
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "error dashed",
+                  "label": "2 vCPU Capacity",
+                  "value": "y = 200"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "max:docker.cpu.usage{container_name:ticket-queue} by {host,container_name}.rollup(max, 15)"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "warm"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "ticket-queue Container CPU - Peak",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "percent of one CPU",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 7879664257514171
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "requests": [
+                {
+                  "displayType": "line",
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "avg:trace.servlet.request{env:prod,service:ticket-queue,resource_name:post_/api/v1/queue/performances/_performanceid_/join}"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query2",
+                      "query": "p95:trace.servlet.request{env:prod,service:ticket-queue,resource_name:post_/api/v1/queue/performances/_performanceid_/join}"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "/join Servlet Latency - avg and p95",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "seconds",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 2523605931337152
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "requests": [
+                {
+                  "displayType": "line",
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "avg:redis.info.latency_ms{env:prod}"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query2",
+                      "query": "avg:redis.net.rejected{env:prod}"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "green"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Redis Latency and Rejected Connections",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "latency ms / rejected",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 7852632698516808
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "warning dashed",
+                  "label": "Warning 80%",
+                  "value": "y = 80"
+                },
+                {
+                  "displayType": "error dashed",
+                  "label": "Saturation 100%",
+                  "value": "y = 100"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "formulas": [
+                    {
+                      "alias": "Connection Usage %",
+                      "formula": "100 * query1 / query2"
+                    },
+                    {
+                      "alias": "Busy Thread Usage %",
+                      "formula": "100 * query3 / query4"
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "max:ticket_queue.tomcat_connections_current_connections{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query2",
+                      "query": "max:ticket_queue.tomcat_connections_config_max_connections{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query3",
+                      "query": "max:ticket_queue.tomcat_threads_busy_threads{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query4",
+                      "query": "max:ticket_queue.tomcat_threads_config_max_threads{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "warm"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Tomcat Capacity Utilization %",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "percent",
+                "max": "110",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 5579085944722144
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "warning dashed",
+                  "label": "80% of maxConnections",
+                  "value": "y = 13107"
+                },
+                {
+                  "displayType": "error dashed",
+                  "label": "maxConnections 16384",
+                  "value": "y = 16384"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "formulas": [
+                    {
+                      "alias": "Current connections",
+                      "formula": "query1"
+                    },
+                    {
+                      "alias": "Keepalive connections",
+                      "formula": "query2"
+                    },
+                    {
+                      "alias": "Configured max connections",
+                      "formula": "query3"
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "max:ticket_queue.tomcat_connections_current_connections{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query2",
+                      "query": "max:ticket_queue.tomcat_connections_keepalive_current_connections{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query3",
+                      "query": "max:ticket_queue.tomcat_connections_config_max_connections{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "cool"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Tomcat Connections - Current / Keepalive / Max",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "connections",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 8468326497096288
+          },
+          {
+            "definition": {
+              "legendLayout": "auto",
+              "markers": [
+                {
+                  "displayType": "warning dashed",
+                  "label": "80% of maxThreads",
+                  "value": "y = 240"
+                },
+                {
+                  "displayType": "error dashed",
+                  "label": "maxThreads 300",
+                  "value": "y = 300"
+                }
+              ],
+              "requests": [
+                {
+                  "displayType": "line",
+                  "formulas": [
+                    {
+                      "alias": "Busy threads",
+                      "formula": "query1"
+                    },
+                    {
+                      "alias": "Current pool threads",
+                      "formula": "query2"
+                    },
+                    {
+                      "alias": "Configured max threads",
+                      "formula": "query3"
+                    }
+                  ],
+                  "queries": [
+                    {
+                      "dataSource": "metrics",
+                      "name": "query1",
+                      "query": "max:ticket_queue.tomcat_threads_busy_threads{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query2",
+                      "query": "max:ticket_queue.tomcat_threads_current_threads{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    },
+                    {
+                      "dataSource": "metrics",
+                      "name": "query3",
+                      "query": "max:ticket_queue.tomcat_threads_config_max_threads{env:prod,service:ticket-queue,name:http-nio-8090} by {name}.rollup(max, 15)"
+                    }
+                  ],
+                  "responseFormat": "timeseries",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Tomcat Threads - Busy / Current / Max",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "threads",
+                "min": "0",
+                "scale": "linear"
+              }
+            },
+            "id": 4801417835922493
+          }
+        ]
+      },
+      "id": 8708893802281666
+    }
+  ]
+}

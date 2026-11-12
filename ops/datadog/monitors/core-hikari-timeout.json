@@ -1,0 +1,22 @@
+{
+  "name": "[core] Hikari 연결 획득 시간 초과",
+  "type": "metric alert",
+  "query": "sum(last_5m):sum:ticket.hikaricp_connections_timeout.count{env:prod,service:ticket-be}.as_count() > 0",
+  "message": "DB 연결을 못 받아 요청이 실패했다(사용자 영향). 먼저 볼 곳: Hikari pending, 요청량, RDS 연결 수·CPU, 잠금 대기.",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 1,
+  "options": {
+    "thresholds": {
+      "critical": 0
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

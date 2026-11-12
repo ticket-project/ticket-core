@@ -77,13 +77,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ..\gatling-test\scripts\capa
 1. **EC2 시작.** 사용자가 AWS 콘솔(서울 ap-northeast-2)에서 Core EC2(`i-09739eeb559db0d1d`)와 부하 발생기 EC2(`ticket-load-test`)를
    켠다. 부하 발생기 퍼블릭 IP는 켤 때마다 바뀐다. `/core-capacity prod <IP>`처럼 인자로 받고, 없으면 사용자에게 묻는다.
    IP는 파일이나 스크립트 기본값에 두지 않고 그 세션에서만 쓴다. Core는 도메인으로 접속하므로 IP가 필요 없다.
-2. **점검.** `-Prod -CheckOnly`를 돌린다. 출력과 `prod-conditions.json`·`server-conditions.txt`를 일지 "조건"에 옮긴다.
+   RDS(`ticket-core-db`)도 꺼져 있으면 켠다. 관측 설정(RDS 파라미터 그룹·Agent 호스트 이름·postgres·nginx 수집)을 아직 안 바꿨으면
+   [next-start-runbook.md](../../../ops/datadog/next-start-runbook.md)의 "한 번만"을 먼저 한다(첫 1회).
+2. **관측 확인.** 같은 문서의 "매번 · 측정 전"대로 Datadog 대시보드 `[loadtest] 부하 테스트 한 화면`에서 호스트 `ticket-core-prod`·`loadgen-1`과
+   RDS가 보이는지, RDS CPU 크레딧(`aws.rds.cpucredit_balance`)이 얼마인지 보고 일지 "조건"에 적는다.
+3. **점검.** `-Prod -CheckOnly`를 돌린다. 출력과 `prod-conditions.json`·`server-conditions.txt`를 일지 "조건"에 옮긴다.
    - commit이 측정할 commit과 다르면 사용자가 배포한다(ticket에서 `gh run list --workflow deploy.yml --limit 5`).
      Datadog span의 `git.commit.sha`는 5월 commit `7b71a992`로 고정돼 있어 대조에 쓰지 않는다(2026-10-17 확인).
    - 회원이 모자라거나 다음 회차가 없으면(대형 회차를 다 썼으면) 사용자가 아래 "데이터"대로 적재한다.
-3. **예열.** Core EC2를 새로 켜면 JVM이 차갑다(`coreUptimeSeconds`가 짧다). 첫 실행은 `-Label warmup -UsersPerSecond 5`로 하고
+4. **예열.** Core EC2를 새로 켜면 JVM이 차갑다(`coreUptimeSeconds`가 짧다). 첫 실행은 `-Label warmup -UsersPerSecond 5`로 하고
    판정에 쓰지 않는다. 같은 Core 기동 안에서는 한 번이면 된다.
-4. **Smoke.** 처음 측정하거나 데이터·시나리오를 바꾼 뒤에는 1 users/sec × 5초를 먼저 돌린다(core-capacity.md 4단계).
+5. **Smoke.** 처음 측정하거나 데이터·시나리오를 바꾼 뒤에는 1 users/sec × 5초를 먼저 돌린다(core-capacity.md 4단계).
 
 **데이터**(core-capacity.md 3단계)는 운영 DB 쓰기라 사용자가 한다. [seed README](../../../seed/README.md)의 "운영 규모를 가정한 적재"
 명령을 실행한다. 넣기 전에 RDS 남은 용량을, 넣은 뒤에는 통계 갱신(`ANALYZE orders, order_seats, members`)을 확인한다.
@@ -101,7 +105,7 @@ Core JVM은 `-Xmx` 없이 기본 힙(약 478MiB), Hikari 10, Tomcat 200, Datadog
 1. `ticket`과 `gatling-test`를 같은 상위 폴더에 clone한다(`ticket-workspace/ticket`, `ticket-workspace/gatling-test`).
 2. `ticket-test-key-01.pem`을 `~/.ssh/`에 둔다.
 3. JDK 21 이상을 설치한다. 토큰·피더 생성은 이 PC의 Gradle이 한다.
-4. Claude를 ticket 저장소에서 띄우고 `/core-capacity prod <부하 발생기 IP>`를 실행한다. 이후는 "준비" 1~4와 같다.
+4. Claude를 ticket 저장소에서 띄우고 `/core-capacity prod <부하 발생기 IP>`를 실행한다. 이후는 "준비" 1~5와 같다.
 
 ## 부하 발생기
 
@@ -129,9 +133,14 @@ health UP, Hikari pending 0, 바쁜 요청 스레드 5개 이하. 돌아오지 �
 
 `run-step.ps1` 결과(`summary.json`, `core-metrics.tsv`, prometheus 전후)는 로컬과 같게 본다. 그 밖에는 다음을 쓴다.
 
-- **Datadog APM.** 서비스는 `ticket-be`, `env:prod`, 사이트는 us5다([operations.md](../../../docs/operations.md)는 `ticket-core`로 적고 있다.
-  2026-10-02 확인). span은 표본이다. 요청별 시간 분포는 run-step의 Core 히스토그램으로 본다. span은 실행 시간대의 느린 요청을
-  골라, 하위 span(DB 쿼리, Redis)이 어디서 길어졌는지 보는 데 쓴다. 로그는 Gatling이 보내는 `X-Load-Test-Run-Id`(runId)로 찾는다.
+- **Datadog APM.** 서비스는 `ticket-be`(이름은 바꾸지 않는다), `env:prod`, 사이트는 us5다. span은 표본이다. 요청별 시간 분포는
+  run-step의 Core 히스토그램으로 본다. span은 실행 시간대의 느린 요청을 골라, 하위 span(DB 쿼리, Redis)이 어디서 길어졌는지 보는 데 쓴다.
+  한 실행만 찾기: `service:ticket-be env:prod @load_test.run_id:<runId>`(runId는 `summary.json`의 `runId`). 로그는 그 span의 trace에서 연다.
+- **호스트.** Core는 `ticket-core-prod`, 부하 발생기는 `loadgen-1`이다. Datadog은 10~15초 단위라 1초 단위 멈춤은 사용자가 Core EC2에서
+  `top -b -d 1`로 본다. 15초마다 튀던 CPU(Agent의 docker 수집, 2026-11-10)는 꺼 두었다. 다시 보이면 그 마운트부터 확인한다.
+- **RDS.** 느린 SQL(100ms 넘음)·`auto_explain` 계획(200ms 넘음)·락 대기 로그는 Datadog Logs `source:postgresql` 또는 CloudWatch Logs
+  `/aws/rds/instance/ticket-core-db/postgresql`. 대기 종류·상위 SQL은 Performance Insights에서 보고, **7일이 지나면 사라지므로** 측정 뒤
+  7일 안에 캡처해 일지에 붙인다. db.t4g.micro는 크레딧 방식이라 사다리 중 CPU가 한계처럼 보이면 크레딧 잔고부터 본다.
 - **스레드 덤프.** 운영 이미지는 JRE(`eclipse-temurin:25-jre-alpine`)라 `jcmd`가 없다. 필요하면 사용자가 서버에서
   `docker exec ticket-be kill -3 1`을 막힌 동안 2~3번 실행한다. 덤프는 컨테이너 로그에 남는다. 읽는 법은 local.md와 같다.
   운영 요청 스레드 이름도 `http-nio-8080-exec-`다.
@@ -143,7 +152,8 @@ health UP, Hikari pending 0, 바쁜 요청 스레드 5개 이하. 돌아오지 �
 - 측정이 끝나면 남는 것: 부하 회차의 주문, 배경 주문(`created_by = 'LOAD_TEST_BACKGROUND'`), 부하 회원. seed에는 지우는 기능이
   없다. 지울지와 SQL은 사용자와 정한다. Claude는 SQL 초안을 쓰고, 실행은 사용자가 한다.
 - Redis의 선택(5분)과 선점(600초)은 저절로 풀린다. PENDING 주문은 만료 worker가 처리한다. Core EC2를 끄면 Redis도 비워진다.
-- 측정이 끝나면 사용자가 Core EC2와 부하 발생기 EC2를 끈다.
+- 측정이 끝나면 사용자가 Core EC2, 부하 발생기 EC2, RDS를 끈다. RDS는 7일 뒤 AWS가 자동으로 켠다
+  ([next-start-runbook.md](../../../ops/datadog/next-start-runbook.md)의 "끝나면").
 
 ## 정한 것 (2026-10-17)
 

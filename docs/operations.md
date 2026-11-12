@@ -141,16 +141,15 @@ capacity-log P-015). 이 스레드는 요청과 같은 Hikari 풀에서 연결�
 기다려 Core가 멈춘 사례가 있다(gatling-test capacity-log P-022, 결정 대기). 캐시가 붙은 경로에서 Hikari pending이 길게
 이어지면 이 경합을 먼저 의심한다.
 
-모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-core`,
-`DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다. 운영 서버의 실제
-`DD_SERVICE` 값은 저장소에서 확인할 수 없고, core-capacity skill의 [운영 측정](../.agents/skills/core-capacity/production.md#진단)은
-Datadog 서비스 이름을 `ticket-be`로 적고 있다. 아래 쿼리를 쓰기 전에 실제 `service` 태그를 확인한다.
+모든 메트릭에는 `service`, `environment`, `version` 태그가 붙는다. 운영 task에는 `DD_SERVICE=ticket-be`,
+`DD_ENV=prod`, `DD_VERSION=<배포버전>`을 동일하게 주입해야 task별 비교와 배포 전후 비교가 가능하다. 운영은 `ticket-be`이고,
+`DD_SERVICE`가 없을 때의 기본값(`application.yml`)도 `ticket-be`다.
 
 ```promql
-histogram_quantile(0.99, sum by (le, uri, method) (rate(http_server_requests_seconds_bucket{service="ticket-core"}[1m])))
-sum(rate(http_server_requests_seconds_count{service="ticket-core",status=~"5.."}[1m]))
-max(hikaricp_connections_pending{service="ticket-core"})
-max(tomcat_threads_busy_threads{service="ticket-core"}) / max(tomcat_threads_config_max_threads{service="ticket-core"})
+histogram_quantile(0.99, sum by (le, uri, method) (rate(http_server_requests_seconds_bucket{service="ticket-be"}[1m])))
+sum(rate(http_server_requests_seconds_count{service="ticket-be",status=~"5.."}[1m]))
+max(hikaricp_connections_pending{service="ticket-be"})
+max(tomcat_threads_busy_threads{service="ticket-be"}) / max(tomcat_threads_config_max_threads{service="ticket-be"})
 ```
 
 Hikari pending이 0보다 커지면 요청이 DB 연결을 빌리지 못하고 기다리는 상태다. pending이 0이어도 이미 빌린 연결이 DB lock에서

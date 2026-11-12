@@ -1,0 +1,48 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064205000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-08-07T00:56:54+00:00"
+  },
+  "created": "2026-08-07T00:56:45.627Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661953,
+  "matchingDowntimes": [],
+  "message": "Oracle session utilization is high. Check Hikari pool counts, leaked or long transactions, blocking sessions, and connection churn.",
+  "modified": "2026-08-07T00:56:45.627Z",
+  "multi": true,
+  "name": "[ticket-core][DB] Session utilization high",
+  "options": {
+    "evaluationDelay": 300,
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 85
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "avg(last_10m):max:oci.autonomous_database.session_utilization{*} by {resource_name} > 85",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:oracle-autonomous-db",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

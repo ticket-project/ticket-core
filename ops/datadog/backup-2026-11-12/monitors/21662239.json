@@ -1,0 +1,63 @@
+{
+  "additionalProperties": {
+    "created_at": 1786065548000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-08-07T01:19:16+00:00"
+  },
+  "created": "2026-08-07T01:19:08.548Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21662239,
+  "matchingDowntimes": [
+    {
+      "additionalProperties": {
+        "active": true,
+        "groups": [],
+        "monitor_id": null
+      },
+      "end": null,
+      "id": 237309352,
+      "scope": [
+        "host:i-09739eeb559db0d1d"
+      ],
+      "start": 1794448204
+    }
+  ],
+  "message": "ticket-core ???? Agent check? ?? ?? ?? ???. Agent status?? check? ??? ????. ?? OpenMetrics? 2,000 metric ?? ??? ????.",
+  "modified": "2026-08-07T01:19:08.548Z",
+  "multi": true,
+  "name": "[ticket-core] Datadog Agent check degraded",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "noDataTimeframe": 10,
+    "notifyAudit": false,
+    "notifyNoData": true,
+    "renotifyInterval": 0,
+    "silenced": {},
+    "thresholds": {
+      "critical": 2,
+      "ok": 1,
+      "warning": 2
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "\"datadog.agent.check_status\".over(\"host:i-09739eeb559db0d1d\").by(\"host\",\"check\").last(3).count_by_status()",
+  "restrictedRoles": null,
+  "tags": [
+    "service:ticket-core",
+    "env:prod",
+    "team:core",
+    "component:observability"
+  ],
+  "type": "service check"
+}

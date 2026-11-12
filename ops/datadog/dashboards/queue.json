@@ -1,0 +1,748 @@
+{
+  "title": "[queue] 대기열",
+  "description": "ticket-queue-api·ticket-queue-scheduler·단일 Redis(ticket-queue-redis) 한 대 구성. fpj-y6n-t2y(옛 namespace ticket_queue)와 ytk-j97-jxw(클러스터 위젯)를 정리해 합쳤다.\n\nmanaged-by:ops-datadog",
+  "layout_type": "ordered",
+  "reflow_type": "auto",
+  "template_variables": [
+    {
+      "name": "env",
+      "prefix": "env",
+      "available_values": [
+        "prod",
+        "local"
+      ],
+      "defaults": [
+        "prod"
+      ]
+    },
+    {
+      "name": "host",
+      "prefix": "host",
+      "available_values": [],
+      "defaults": [
+        "*"
+      ]
+    }
+  ],
+  "notify_list": [],
+  "widgets": [
+    {
+      "definition": {
+        "type": "group",
+        "title": "입장 (scheduler)",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "입장 허용 속도(명/초)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:ticket_queue_scheduler.queue_scheduler_admitted.count{$env,$host,service:ticket-queue-scheduler}.as_rate()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "admitted/s"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "한도 × 대기 회차 = 최대 유입(회당)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:ticket_queue_scheduler.queue_scheduler_advance_batch_size{$env,$host,service:ticket-queue-scheduler}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:ticket_queue_scheduler.queue_scheduler_waiting_performances{$env,$host,service:ticket-queue-scheduler}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "batch size"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "대기 회차"
+                    },
+                    {
+                      "formula": "a * b",
+                      "alias": "최대 유입"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "한도 override 상태",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket_queue_scheduler.queue_scheduler_advance_batch_size_override{$env,$host,service:ticket-queue-scheduler}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "sum:ticket_queue_scheduler.queue_scheduler_advance_batch_size_override_rejected.count{$env,$host,service:ticket-queue-scheduler}.as_count()"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "sum:ticket_queue_scheduler.queue_scheduler_advance_batch_size_override_read_failures.count{$env,$host,service:ticket-queue-scheduler}.as_count()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "override 적용(1)"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "잘못된 값"
+                    },
+                    {
+                      "formula": "c",
+                      "alias": "읽기 실패"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "API (ticket-queue-api)",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "초당 요청 (resource_name별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:trace.servlet.request.hits{$env,service:ticket-queue-api} by {resource_name}.as_rate()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "req/s"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "p95 응답 시간 (resource_name별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "p95:trace.servlet.request{$env,service:ticket-queue-api} by {resource_name}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "p95"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "HTTP 요청 (status별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:ticket_queue_api.http_server_requests_seconds.count{$env,$host,service:ticket-queue-api,!uri:/actuator/*} by {status}.as_rate()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "req/s"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "APM 오류 (resource_name별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:trace.servlet.request.errors{$env,service:ticket-queue-api} by {resource_name}.as_count()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "errors"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Tomcat 사용률 %",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "max:ticket_queue_api.tomcat_connections_current_connections{$env,$host,service:ticket-queue-api}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "max:ticket_queue_api.tomcat_connections_config_max_connections{$env,$host,service:ticket-queue-api}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "max:ticket_queue_api.tomcat_threads_busy_threads{$env,$host,service:ticket-queue-api}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "d",
+                      "query": "max:ticket_queue_api.tomcat_threads_config_max_threads{$env,$host,service:ticket-queue-api}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "100 * a / b",
+                      "alias": "연결 사용률 %"
+                    },
+                    {
+                      "formula": "100 * c / d",
+                      "alias": "바쁜 스레드 %"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ],
+              "markers": [
+                {
+                  "value": "y = 80",
+                  "display_type": "error dashed",
+                  "label": "80%"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "JVM CPU / GC 최대 정지",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:ticket_queue_api.process_cpu_usage{$env,$host,service:ticket-queue-api}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "max:ticket_queue_api.jvm_gc_pause_seconds_max{$env,$host,service:ticket-queue-api}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a * 100",
+                      "alias": "process CPU %"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "GC 최대 정지(초)"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Redis 명령 span (resource_name별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:trace.redis.query.hits{$env,service:ticket-queue-api} by {resource_name}.as_rate()"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "cmd/s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "Redis (ticket-queue-redis, 단일)",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Redis 지연(ms)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:redis.info.latency_ms{$env,$host,component:queue-redis}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:redis.ping.latency_ms{$env,$host,component:queue-redis}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "info latency"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "ping latency"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Redis 처리량",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:redis.net.commands{$env,$host,component:queue-redis}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:redis.net.instantaneous_ops_per_sec{$env,$host,component:queue-redis}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "commands/s"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "ops/s"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Redis 클라이언트 압력",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:redis.net.clients{$env,$host,component:queue-redis}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:redis.clients.blocked{$env,$host,component:queue-redis}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "sum:redis.net.rejected{$env,$host,component:queue-redis}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "clients"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "blocked"
+                    },
+                    {
+                      "formula": "c",
+                      "alias": "rejected"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Redis 메모리",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:redis.mem.used{$env,$host,component:queue-redis}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:redis.mem.rss{$env,$host,component:queue-redis}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "used"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "rss"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "키 만료·축출",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:redis.keys.expired{$env,$host,component:queue-redis}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "sum:redis.keys.evicted{$env,$host,component:queue-redis}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "expired"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "evicted"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "title": "호스트·컨테이너",
+        "layout_type": "ordered",
+        "show_title": true,
+        "widgets": [
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "호스트 CPU % (host별)",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:system.cpu.user{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "avg:system.cpu.system{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "avg:system.cpu.iowait{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "d",
+                      "query": "avg:system.cpu.stolen{$env,$host} by {host}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "user"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "system"
+                    },
+                    {
+                      "formula": "c",
+                      "alias": "iowait"
+                    },
+                    {
+                      "formula": "d",
+                      "alias": "stolen"
+                    }
+                  ],
+                  "display_type": "area"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "queue 컨테이너 CPU",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:container.cpu.usage{$env,$host,container_name:ticket-queue-*} by {container_name}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "CPU"
+                    }
+                  ],
+                  "display_type": "area"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "queue 컨테이너 메모리",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "avg:container.memory.working_set{$env,$host,container_name:ticket-queue-*} by {container_name}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "working set"
+                    }
+                  ],
+                  "display_type": "line"
+                }
+              ]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "TCP listen 드롭",
+              "show_legend": true,
+              "legend_layout": "auto",
+              "requests": [
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "a",
+                      "query": "sum:system.net.tcp.listen_overflows{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "sum:system.net.tcp.listen_drops{$env,$host} by {host}"
+                    },
+                    {
+                      "data_source": "metrics",
+                      "name": "c",
+                      "query": "sum:system.net.tcp.backlog_drops{$env,$host} by {host}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "a",
+                      "alias": "listen overflows"
+                    },
+                    {
+                      "formula": "b",
+                      "alias": "listen drops"
+                    },
+                    {
+                      "formula": "c",
+                      "alias": "backlog drops"
+                    }
+                  ],
+                  "display_type": "bars"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
