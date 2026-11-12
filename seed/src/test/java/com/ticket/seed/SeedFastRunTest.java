@@ -157,6 +157,30 @@ class SeedFastRunTest {
                 .isEqualTo(1);
     }
 
+    @Test
+    void 예매가_끝난_공연만_조회수를_낮추고_다시_실행해도_더_낮추지_않는다() {
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).isZero();
+        // 공연 1은 2026-06에 판매가 끝났다. 공연 2는 판매 기간을 앞으로 옮겨 예매 중으로 만든다.
+        jdbcTemplate.update("UPDATE SHOWS SET view_count = 50000 WHERE id IN (1, 2)");
+        jdbcTemplate.update("""
+                UPDATE SHOWS SET display_sale_starts_at = CURRENT_TIMESTAMP - INTERVAL '1 day',
+                                 display_sale_ends_at = CURRENT_TIMESTAMP + INTERVAL '30 days'
+                WHERE id = 2
+                """);
+
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).isZero();
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).isZero();
+
+        assertThat(viewCount(1)).as("끝난 공연은 100분의 1로, 두 번 실행해도 한 번만").isEqualTo(500L);
+        assertThat(viewCount(2)).as("예매 중인 공연은 그대로").isEqualTo(50000L);
+    }
+
+    private long viewCount(final long showId) {
+        final Long viewCount =
+                jdbcTemplate.queryForObject("SELECT view_count FROM SHOWS WHERE id = ?", Long.class, showId);
+        return viewCount == null ? -1L : viewCount;
+    }
+
     /** 최소 SQL의 {@code @seed-splice} 마커 앞에 공연장·공연·회차 하나씩을 더한 사본이다. 수집 도구가 끼워 넣는 위치와 같다. */
     private Path appendedMinimalSeed() throws IOException {
         final String block = """
