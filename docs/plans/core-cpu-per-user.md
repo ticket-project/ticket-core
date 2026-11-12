@@ -156,3 +156,25 @@ GET /api/v1/performances/{performanceId}/seats/occupancy
 | 합계 | 약 3.6ms(16ms의 약 23%) |
 
 추정은 포함 시간의 차이로 나눈 값이다. 구현 뒤 같은 조건으로 측정하고 프로파일을 다시 떠서 확인한다.
+
+## 2차 후보(2026-11-12, 미정)
+
+배포 뒤 운영 03-3은 Datadog `docker` 수집을 끈 상태에서 120 u/s PASS, 130 u/s FAIL이었다. 130 u/s에서 서버 CPU가 23초 연속 100%였고, 그 뒤로 DB 연결 대기(최대 101)와 Tomcat 스레드 포화(200)가 따라왔다. 사용자당 Core CPU는 약 10ms, 같은 서버의 nginx는 약 0.35코어였다. 아래 효과는 11-09 프로파일과 11-10 측정으로 계산한 추정이고, 사용자당 1ms는 130 u/s에서 약 0.13코어다.
+
+DB 쿼리 속도는 CPU에 효과가 작다. 스레드가 RDS 응답을 기다리는 동안 CPU를 쓰지 않으므로, 쿼리를 빠르게 하면 연결·스레드가 빨리 풀릴 뿐이다. CPU에는 DB 왕복 횟수와 가져오는 행·열 수가 효과가 있다.
+
+| 순서 | 항목 | 내용 | 사용자당(추정) | 바꿀 곳 | 걸리는 점 |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 새 프로파일 | #305 뒤 10ms 내역을 다시 나눈다(`DD_PROFILING_ENABLED=true`, 100 u/s 2분) | - | 서버 compose | 이 결과로 아래 순서를 숫자로 다시 정한다 |
+| 1 | HTTPS를 ALB로 | TLS 핸드셰이크(사용자마다 WebSocket 새 연결)·암호화를 서버 밖으로 | 약 1.5~2.5ms | 인프라(D0) | ALB 비용, 인증서 ACM 이전 |
+| 2 | 배치도·venue-layout nginx 캐시 | `proxy_cache` 60초, 키에 `Accept-Encoding`, `proxy_cache_lock`, `proxy_ignore_headers Cache-Control Expires`(Spring Security가 no-store를 붙임) | 약 1~1.5ms(2요청 × 고정 비용 0.5~0.8ms) | 서버 nginx | 공연 정보 변경이 최대 60초 늦게 보임. 두 API는 `permitAll`이라 사람마다 다른 값 없음 |
+| 3 | 추적기 몫 재기·줄이기 | `DD_TRACE_ENABLED=false`로 120 u/s 한 번 비교. 크면 `repository.operation`(SQL 기록과 겹침)부터 끈다 | 약 0.5~1.5ms | 서버 compose | 끈 기록을 쓰는 대시보드 위젯 2개. 설정 이름은 dd-java-agent 문서로 확인 |
+| 4 | 모듈 계측 끄기 | `spring-modulith-starter-insight`의 AOP 계측과 `module_*` 라벨. 읽는 곳 없음 | 약 0.2~0.5ms | Core(build.gradle 74행) | 136~140행 확인 테스트 수정, `/actuator/modulith` 사라짐 |
+| 5 | 주문 왕복 줄이기 | 지금 DB 4번(회원 확인, 좌석 조회, 주문·주문 좌석 INSERT)·Redis 2번 | 약 0.3~0.45ms | Core | 회원 확인 합치기는 모듈 경계를 넘는 SQL, INSERT 묶기는 `IDENTITY`→`SEQUENCE` 마이그레이션, 회원 확인 캐시는 판정 경로라 하지 않음 |
+| 6 | 좌석 알림 대상 줄이기 | `/seats/batch`를 고르는 중인 사람에게만(11-06 결정, 미구현). 130 u/s에서 계산상 초당 최대 약 5,000 메시지 | 재 봐야 앎(사용자 많을수록 큼) | Core 설계 | "고르는 중"을 서버가 아는 방법. 옛 주소는 FE 호환으로 그대로 |
+| 7 | 작은 것들 | 지표 문서 축소(`perf/http-histogram-buckets` 29af4f53, 배포 전), 인증서 RSA면 ECDSA, nginx 접근 로그 버퍼·제외, 에이전트 프로세스 수집 끄기, JVM(`-Xms`=`-Xmx`, `UseCompactObjectHeaders`, AOT 캐시) | 각각 작음 | 서버·Core 설정 | - |
+
+함께 볼 것:
+
+- **좌석 상태 1초 캐시의 멈춤**: `sync = true`라 다시 만드는 요청이 DB 연결을 기다리면 같은 회차 요청이 모두 기다린다(130 u/s의 스레드 200 원인 후보, 추정). Caffeine `refreshAfterWrite`로 옛 값을 내주며 뒤에서 갱신하면 아무도 기다리지 않는다. CPU는 거의 그대로다.
+- **Redis 클라이언트(Redisson)**: 11-09 프로파일 4~8%. 130 u/s에서 Redis 응답 평균 1.9→28ms인데 Redis 서버 CPU는 0.045코어였다. 새 프로파일에서 몫을 본 뒤 Lettuce 전환을 검토한다(큰 공사).
