@@ -83,6 +83,25 @@ Issues이므로, 착수하거나 Issue로 옮긴 항목은 여기서 지운다. 
 [운영](operations.md#core-용량-관측)의 Caffeine 캐시는 `recordStats()`를 켰지만 `cache_*` 지표가 `/actuator/prometheus`에 나오는지
 실행으로 확인하지 않았다. 다음 운영 측정 때 확인한다. 서비스 이름(`ticket-be`)은 2026-11-12에 맞췄다.
 
+### queue 운영 Agent에 docker·프로세스 수집이 켜져 있다
+
+- 사실: `ticket-queue/deploy/docker-compose.yml`의 `datadog-agent`는 `DD_PROCESS_AGENT_ENABLED: "true"`이고, docker 체크를
+  끄는 빈 `docker.d` 마운트와 `DD_HOSTNAME`이 없다. 이 compose는 배포 때마다 서버 파일을 덮어써서 서버에서 고쳐도 사라진다.
+- 영향: Core에서 15초마다 dockerd·containerd가 약 1코어를 쓰게 한 docker 수집(2026-11-10)이 queue에도 그대로 있어, 대기열을
+  켜는 측정(Core 수용량 9단계)에서 같은 15초 멈춤이 숫자를 흔들 수 있다. Live Processes는 학생 팩 Pro에서 볼 수 없는데 CPU만 쓴다.
+  호스트 이름이 EC2 ID라 Datadog 알림의 `host:ticket-queue-prod` 범위에 값이 안 들어온다.
+- 후보: [Datadog 순서서](../ops/datadog/next-start-runbook.md) 4단계의 "제안" 블록(`DD_HOSTNAME`, `DD_PROCESS_AGENT_ENABLED: "false"`,
+  빈 `docker.d` 마운트)을 queue 저장소 compose에 넣어 배포한다. queue EC2는 루트 볼륨이 없어 9단계 전에 스냅샷 복원부터 해야 한다.
+
+### "[core] Datadog Agent 체크 실패" 알림이 늘 데이터 없음이다
+
+- 사실: [알림 정의](../ops/datadog/monitors/core-agent-check-degraded.json)는 서비스 체크 `datadog.agent.check_status`를
+  `host:ticket-core-prod` 범위에서 `check`별로 본다. 2026-11-12 Core Agent가 postgres·nginx·openmetrics 모두 `[OK]`인데도
+  알림 상태는 No Data이고 그룹이 하나도 없다. Agent가 이 서비스 체크를 성공 때도 보내는지 확인하지 못했다.
+- 영향: 체크가 실제로 실패해도 울리지 않을 수 있다. 수집이 끊긴 것을 측정이 끝난 뒤에야 알게 된다.
+- 후보: Datadog 서비스 체크 화면에서 `datadog.agent.check_status`가 들어오는지 본다. 없으면 체크별 서비스 체크(`postgres.can_connect`,
+  `nginx.can_connect`, `openmetrics.health`)를 보는 알림으로 바꾼다.
+
 ### `architectureTest`가 `ArchitectureRulesTest`의 규칙을 돌리지 않는다
 
 - 사실: `src/test/java/com/ticket/ArchitectureRulesTest.java`에 JUnit `@Tag("architecture")`만 있고 ArchUnit
