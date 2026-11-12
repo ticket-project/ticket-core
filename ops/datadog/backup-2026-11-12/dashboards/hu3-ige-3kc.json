@@ -1,0 +1,518 @@
+{
+  "authorHandle": "<redacted>",
+  "authorName": "<redacted>",
+  "createdAt": "2026-08-07T00:55:44.789Z",
+  "description": "Application-focused observability for ticket-core HTTP, HikariCP, PostgreSQL APM/repository traces, container, host, logs, and deployment identity. Pick env (prod or local load test) with the template variable; default is prod. Container and host widgets are pinned to the prod container/host and stay empty for local.",
+  "experienceType": "default",
+  "id": "hu3-ige-3kc",
+  "layoutType": "ordered",
+  "modifiedAt": "2026-10-10T10:53:32.676Z",
+  "notifyList": [],
+  "restrictedRoles": [],
+  "templateVariables": [
+    {
+      "availableValues": [],
+      "defaults": [
+        "prod"
+      ],
+      "name": "env",
+      "prefix": "env"
+    }
+  ],
+  "title": "[ticket-core] Application & Database Request Path",
+  "url": "/dashboard/hu3-ige-3kc/ticket-core-application--database-request-path",
+  "widgets": [
+    {
+      "definition": {
+        "layoutType": "ordered",
+        "showTitle": true,
+        "title": "1. DB Connection Health",
+        "type": "group",
+        "widgets": [
+          {
+            "definition": {
+              "autoscale": true,
+              "precision": 2,
+              "requests": [
+                {
+                  "aggregator": "max",
+                  "q": "max:ticket.hikaricp_connections_pending{$env,service:ticket-be}"
+                }
+              ],
+              "title": "Hikari Pending",
+              "type": "query_value"
+            },
+            "id": 3846737074286855
+          },
+          {
+            "definition": {
+              "autoscale": true,
+              "precision": 2,
+              "requests": [
+                {
+                  "aggregator": "sum",
+                  "q": "sum:ticket.hikaricp_connections_timeout.count{$env,service:ticket-be}.as_count()"
+                }
+              ],
+              "title": "Hikari Timeouts",
+              "type": "query_value"
+            },
+            "id": 5980995883423501
+          }
+        ]
+      },
+      "id": 3796089494211629
+    },
+    {
+      "definition": {
+        "layoutType": "ordered",
+        "showTitle": true,
+        "title": "2. PostgreSQL APM & Repository Traces",
+        "type": "group",
+        "widgets": [
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "bars",
+                  "q": "sum:trace.postgresql.query.hits{$env,service:ticket-be}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "blue"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:trace.postgresql.query{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "PostgreSQL APM Query Hits / Duration",
+              "type": "timeseries"
+            },
+            "id": 320740845382564
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "bars",
+                  "q": "sum:trace.repository.operation.hits{$env,service:ticket-be}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "green"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:trace.repository.operation{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Repository Calls / Duration",
+              "type": "timeseries"
+            },
+            "id": 6873343887185817
+          }
+        ]
+      },
+      "id": 8222322536312333
+    },
+    {
+      "definition": {
+        "layoutType": "ordered",
+        "showTitle": true,
+        "title": "3. Application-to-Database Request Path",
+        "type": "group",
+        "widgets": [
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "avg:ticket.hikaricp_connections_active{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "blue"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:ticket.hikaricp_connections_idle{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "green"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "max:ticket.hikaricp_connections_pending{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "red"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:ticket.hikaricp_connections_max{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Hikari Active / Idle / Pending / Max",
+              "type": "timeseries"
+            },
+            "id": 6810395905382297
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "max:ticket.hikaricp_connections_acquire_seconds_max{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "max:ticket.hikaricp_connections_usage_seconds_max{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Hikari Acquire / Usage Max",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "seconds",
+                "scale": "linear"
+              }
+            },
+            "id": 8777186376939744
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "bars",
+                  "q": "sum:ticket.hikaricp_connections_timeout.count{$env,service:ticket-be}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "red"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Hikari Timeouts",
+              "type": "timeseries"
+            },
+            "id": 2648520329096673
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "bars",
+                  "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "blue"
+                  }
+                },
+                {
+                  "displayType": "bars",
+                  "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be,status:5*}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "red"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "HTTP Requests / 5xx",
+              "type": "timeseries"
+            },
+            "id": 8753817781338118
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "max:ticket.http_server_requests_seconds_max{$env,service:ticket-be} by {uri}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "HTTP Max Latency by URI",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "seconds",
+                "scale": "linear"
+              }
+            },
+            "id": 7330984651511391
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "avg:ticket.tomcat_threads_busy_threads{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:ticket.tomcat_threads_config_max_threads{$env,service:ticket-be}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "blue"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Tomcat Busy / Max Threads",
+              "type": "timeseries"
+            },
+            "id": 667893780709775
+          }
+        ]
+      },
+      "id": 3617404036447627
+    },
+    {
+      "definition": {
+        "layoutType": "ordered",
+        "showTitle": true,
+        "title": "4. Runtime, Logs & Deployment Identity",
+        "type": "group",
+        "widgets": [
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "max:container.uptime{container_name:ticket-be} by {host}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "green"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Core Container Uptime",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "seconds",
+                "scale": "linear"
+              }
+            },
+            "id": 7367878412779820
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "avg:container.memory.working_set{container_name:ticket-be} by {host}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "blue"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:container.memory.rss{container_name:ticket-be} by {host}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Core Container Memory",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "bytes",
+                "scale": "linear"
+              }
+            },
+            "id": 3566511931706295
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "bars",
+                  "q": "sum:container.memory.oom_events{container_name:ticket-be} by {host}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "red"
+                  }
+                },
+                {
+                  "displayType": "bars",
+                  "q": "sum:container.restarts{container_name:ticket-be} by {host}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Core Container OOM / Restarts",
+              "type": "timeseries"
+            },
+            "id": 1539828575217558
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "bars",
+                  "q": "sum:ticket.logback_events.count{$env,service:ticket-be} by {level}.as_count()",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "dog_classic"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Application Log Events",
+              "type": "timeseries"
+            },
+            "id": 1290920730546385
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "max:ticket.process_uptime_seconds{$env,service:ticket-be} by {version}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "green"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Deployment Version / Uptime",
+              "type": "timeseries",
+              "yaxis": {
+                "includeZero": true,
+                "label": "seconds",
+                "scale": "linear"
+              }
+            },
+            "id": 5139237944961346
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "avg:system.cpu.user{host:i-09739eeb559db0d1d}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "orange"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:system.cpu.iowait{host:i-09739eeb559db0d1d}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "red"
+                  }
+                },
+                {
+                  "displayType": "line",
+                  "q": "avg:system.mem.pct_usable{host:i-09739eeb559db0d1d}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "blue"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Core Host CPU / Memory",
+              "type": "timeseries"
+            },
+            "id": 4413191914751103
+          },
+          {
+            "definition": {
+              "requests": [
+                {
+                  "displayType": "line",
+                  "q": "max:system.disk.in_use{host:i-09739eeb559db0d1d} by {device}",
+                  "style": {
+                    "lineType": "solid",
+                    "lineWidth": "normal",
+                    "palette": "purple"
+                  }
+                }
+              ],
+              "showLegend": true,
+              "title": "Core Host Disk Utilization",
+              "type": "timeseries"
+            },
+            "id": 4734208492263518
+          }
+        ]
+      },
+      "id": 7805186420872845
+    }
+  ]
+}

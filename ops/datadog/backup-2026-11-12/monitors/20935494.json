@@ -1,0 +1,48 @@
+{
+  "additionalProperties": {
+    "created_at": 1783153747000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-08-10T23:57:54+00:00"
+  },
+  "created": "2026-07-04T08:29:07.015Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 20935494,
+  "matchingDowntimes": [],
+  "message": "Redis ping latency is high for ticket queue. Check Redis health, network latency, and queue API dependency latency.",
+  "modified": "2026-07-04T08:29:07.015Z",
+  "multi": false,
+  "name": "[ticket-queue] Redis ping latency high",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 50,
+      "warning": 25
+    }
+  },
+  "overallState": "No Data",
+  "priority": 3,
+  "query": "avg(last_5m):avg:redis.ping.latency_ms{component:queue-redis,env:prod} > 50",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-managed-redis",
+    "component:queue-redis",
+    "managed:codex",
+    "domain:queue"
+  ],
+  "type": "metric alert"
+}

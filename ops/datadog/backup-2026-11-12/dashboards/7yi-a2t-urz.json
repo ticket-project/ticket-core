@@ -1,0 +1,1987 @@
+{
+  "authorHandle": "<redacted>",
+  "authorName": "<redacted>",
+  "createdAt": "2026-05-23T13:03:08.026Z",
+  "description": "Expanded custom dashboard for ticket-be metrics collected from Spring Boot Actuator /actuator/prometheus (OpenMetrics, ticket.* namespace), APM trace metrics, HikariCP, JVM, system metrics, and Redis integration metrics. Pick env (prod or local load test) with the template variable; default is prod.",
+  "experienceType": "default",
+  "id": "7yi-a2t-urz",
+  "layoutType": "ordered",
+  "modifiedAt": "2026-10-10T10:53:31.253Z",
+  "notifyList": null,
+  "restrictedRoles": [],
+  "templateVariables": [
+    {
+      "availableValues": [],
+      "defaults": [
+        "prod"
+      ],
+      "name": "env",
+      "prefix": "env"
+    }
+  ],
+  "title": "ticket-be OpenMetrics Dashboard",
+  "url": "/dashboard/7yi-a2t-urz/ticket-be-openmetrics-dashboard",
+  "widgets": [
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be}.as_count()"
+          }
+        ],
+        "title": "HTTP Requests",
+        "type": "query_value"
+      },
+      "id": 154895196098849
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "sum:trace.servlet.request.hits{$env,service:ticket-be}.as_count()"
+          }
+        ],
+        "title": "APM Servlet Hits",
+        "type": "query_value"
+      },
+      "id": 4769822834850280
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be,status:500}.as_count()"
+          }
+        ],
+        "title": "HTTP 5xx Count",
+        "type": "query_value"
+      },
+      "id": 7551488158045401
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "avg",
+            "q": "avg:ticket.hikaricp_connections_active{$env,service:ticket-be}"
+          }
+        ],
+        "title": "Active DB Connections",
+        "type": "query_value"
+      },
+      "id": 7587553148473657
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "avg",
+            "q": "avg:redis.net.instantaneous_ops_per_sec{$env}"
+          }
+        ],
+        "title": "Redis Ops/sec",
+        "type": "query_value"
+      },
+      "id": 5019803377674987
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "avg",
+            "q": "avg:redis.mem.used{$env}"
+          }
+        ],
+        "title": "Redis Memory Used",
+        "type": "query_value"
+      },
+      "id": 6087887603170861
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "avg",
+            "q": "avg:ticket.jvm_threads_live_threads{$env,service:ticket-be}"
+          }
+        ],
+        "title": "JVM Live Threads",
+        "type": "query_value"
+      },
+      "id": 4887532920478746
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "avg",
+            "q": "avg:ticket.process_uptime_seconds{$env,service:ticket-be}"
+          }
+        ],
+        "title": "Process Uptime",
+        "type": "query_value"
+      },
+      "id": 79449276138328
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be} by {status}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Requests by Status",
+        "type": "timeseries"
+      },
+      "id": 592903188025635
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be} by {method}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "warm"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Requests by Method",
+        "type": "timeseries"
+      },
+      "id": 4366629500529841
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be} by {uri}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Requests by URI",
+        "type": "timeseries"
+      },
+      "id": 5260142740258827
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.http_server_requests_seconds_max{$env,service:ticket-be} by {uri}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "warm"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Max Latency by URI",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 7534504527422023
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:ticket.http_server_requests_seconds.sum{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.http_server_requests_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Duration Sum / Count",
+        "type": "timeseries"
+      },
+      "id": 3790528704310975
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:ticket.http_server_requests_active_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "max:ticket.http_server_requests_active_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HTTP Active Requests",
+        "type": "timeseries"
+      },
+      "id": 1882759922026553
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:trace.servlet.request.hits{$env,service:ticket-be} by {http.status_code}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Hits by Status Code",
+        "type": "timeseries"
+      },
+      "id": 5669216918096410
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:trace.servlet.request.errors{$env,service:ticket-be} by {http.status_code}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Errors by Status Code",
+        "type": "timeseries"
+      },
+      "id": 6075728165088062
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:trace.servlet.request.hits{$env,service:ticket-be} by {resource_name}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Hits by Resource",
+        "type": "timeseries"
+      },
+      "id": 866718534448955
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:trace.servlet.request{$env,service:ticket-be} by {resource_name}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Servlet Duration by Resource",
+        "type": "timeseries"
+      },
+      "id": 1505920329426780
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:trace.spring.handler.hits{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:trace.spring.handler.errors{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM Spring Handler Hits / Errors",
+        "type": "timeseries"
+      },
+      "id": 4764845654912988
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:trace.redis.query.hits{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:trace.postgresql.query.hits{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:trace.repository.operation.hits{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM DB/Redis Trace Hits",
+        "type": "timeseries"
+      },
+      "id": 1263449235224322
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:trace.redis.query{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:trace.postgresql.query{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:trace.repository.operation{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "APM DB/Redis Duration",
+        "type": "timeseries"
+      },
+      "id": 8482153021743555
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_memory_used_bytes{$env,service:ticket-be} by {area}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Memory Used by Area",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 8897140190014782
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_memory_used_bytes{$env,service:ticket-be} by {id}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Memory Used by Pool",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 3576995722424365
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_memory_committed_bytes{$env,service:ticket-be} by {area}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_memory_max_bytes{$env,service:ticket-be} by {area}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Memory Committed / Max",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 1571772297224668
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.jvm_gc_pause_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Pause Count",
+        "type": "timeseries"
+      },
+      "id": 4318093805907571
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.jvm_gc_pause_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.jvm_gc_pause_seconds.sum{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Pause Max / Sum",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 1682103725602276
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:ticket.jvm_gc_memory_allocated_bytes.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "sum:ticket.jvm_gc_memory_promoted_bytes.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Memory Allocated / Promoted",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 7388418035126046
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_gc_live_data_size_bytes{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_gc_max_data_size_bytes{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Live Data / Max Data",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 7233013093166976
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.jvm_gc_concurrent_phase_time_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.jvm_gc_concurrent_phase_time_seconds.sum{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM GC Concurrent Phase Time",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 3941266993120260
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_threads_live_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_threads_daemon_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_threads_peak_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Threads Live / Daemon / Peak",
+        "type": "timeseries"
+      },
+      "id": 7671375666389535
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_threads_states_threads{$env,service:ticket-be} by {state}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Thread States",
+        "type": "timeseries"
+      },
+      "id": 2086447837766405
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_classes_loaded_classes{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.jvm_classes_unloaded_classes.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Classes Loaded / Unloaded",
+        "type": "timeseries"
+      },
+      "id": 4951329391130162
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_buffer_memory_used_bytes{$env,service:ticket-be} by {id}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_buffer_total_capacity_bytes{$env,service:ticket-be} by {id}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Buffer Memory / Capacity",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 1156034111319100
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jvm_buffer_count_buffers{$env,service:ticket-be} by {id}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "cool"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Buffer Count",
+        "type": "timeseries"
+      },
+      "id": 7635131518996124
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.jvm_compilation_time_ms.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JVM Compilation Time",
+        "type": "timeseries"
+      },
+      "id": 7375843851163254
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.hikaricp_connections_active{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.hikaricp_connections_idle{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.hikaricp_connections_pending{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Connections",
+        "type": "timeseries"
+      },
+      "id": 7450449594736679
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.hikaricp_connections_min{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.hikaricp_connections_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Pool Limits",
+        "type": "timeseries"
+      },
+      "id": 5185523815660926
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.hikaricp_connections_timeout.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Timeout Count",
+        "type": "timeseries"
+      },
+      "id": 3827247282678418
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.hikaricp_connections_acquire_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.hikaricp_connections_acquire_seconds.sum{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Acquire Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 7819900033768450
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.hikaricp_connections_usage_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.hikaricp_connections_usage_seconds.sum{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "HikariCP Usage Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 7511908390585375
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jdbc_connections_active{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jdbc_connections_idle{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jdbc_connections_min{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.jdbc_connections_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "JDBC Connections",
+        "type": "timeseries"
+      },
+      "id": 6782301625971530
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.spring_security_filterchains_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.spring_security_filterchains_seconds.sum{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.spring_security_filterchains_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Spring Security Filterchain Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 5711493025831730
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:ticket.spring_security_authentications_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "max:ticket.spring_security_authorizations_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Spring Security AuthN/AuthZ Seconds",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 2892949984380355
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.spring_data_repository_invocations_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "max:ticket.spring_data_repository_invocations_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Spring Data Repository Invocations",
+        "type": "timeseries"
+      },
+      "id": 5058540115490116
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.tasks_scheduled_execution_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "max:ticket.tasks_scheduled_execution_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Scheduled Tasks Execution",
+        "type": "timeseries"
+      },
+      "id": 2986695168021793
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.tasks_scheduled_execution_active_seconds.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "max:ticket.tasks_scheduled_execution_active_seconds_max{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Scheduled Tasks Active",
+        "type": "timeseries"
+      },
+      "id": 4494234033443853
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.executor_active_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.executor_queued_tasks{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.executor_pool_size_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Executor Threads / Queue",
+        "type": "timeseries"
+      },
+      "id": 3826980890383065
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.executor_pool_core_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.executor_pool_max_threads{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.executor_queue_remaining_tasks{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Executor Pool Limits",
+        "type": "timeseries"
+      },
+      "id": 2435891825538229
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.executor_completed_tasks.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Executor Completed Tasks",
+        "type": "timeseries"
+      },
+      "id": 7229314429372438
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.system_cpu_usage{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.process_cpu_usage{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "warm"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "System / Process CPU",
+        "type": "timeseries"
+      },
+      "id": 7975627399524525
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.system_load_average_1m{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "System Load Average",
+        "type": "timeseries"
+      },
+      "id": 639509322608386
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.disk_free_bytes{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.disk_total_bytes{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Disk Free / Total",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 597755517902426
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.process_files_open_files{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.process_files_max_files{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Process Open / Max Files",
+        "type": "timeseries"
+      },
+      "id": 4879699347823046
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.logback_events.count{$env,service:ticket-be} by {level}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "dog_classic"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Logback Events",
+        "type": "timeseries"
+      },
+      "id": 3536853950177591
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.application_started_time_seconds{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.application_ready_time_seconds{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Application Startup Time",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "seconds",
+          "scale": "linear"
+        }
+      },
+      "id": 5131902184371672
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:ticket.tomcat_sessions_active_current_sessions{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:ticket.tomcat_sessions_active_max_sessions{$env,service:ticket-be}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Tomcat Sessions Active / Max",
+        "type": "timeseries"
+      },
+      "id": 8660673501271434
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.tomcat_sessions_created_sessions.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.tomcat_sessions_expired_sessions.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "sum:ticket.tomcat_sessions_rejected_sessions.count{$env,service:ticket-be}.as_count()",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Tomcat Sessions Created / Expired / Rejected",
+        "type": "timeseries"
+      },
+      "id": 3631199087242552
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.used{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.rss{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.peak{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Memory",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 4805059076987166
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.fragmentation_ratio{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.overhead{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Fragmentation / Overhead",
+        "type": "timeseries"
+      },
+      "id": 1546285386593824
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.instantaneous_ops_per_sec{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.commands{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Ops/sec and Commands",
+        "type": "timeseries"
+      },
+      "id": 843696121154246
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.ops.reads_processed{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.ops.writes_processed{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Reads / Writes Processed",
+        "type": "timeseries"
+      },
+      "id": 5177855503998005
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.instantaneous_input{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.instantaneous_output{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Network Instantaneous I/O",
+        "type": "timeseries"
+      },
+      "id": 7507570546199032
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.total_input_bytes{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.total_output_bytes{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Network Total Bytes",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 3582641665432804
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.clients{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.clients.blocked{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "bars",
+            "q": "avg:redis.net.rejected{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Clients",
+        "type": "timeseries"
+      },
+      "id": 8527482636948664
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.keys{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.expires{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.persist{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Keyspace",
+        "type": "timeseries"
+      },
+      "id": 1551497565059336
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.keys.expired{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.keys.evicted{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Expired / Evicted Keys",
+        "type": "timeseries"
+      },
+      "id": 5646773018963229
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.stats.keyspace_hits{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.stats.keyspace_misses{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Hit / Miss",
+        "type": "timeseries"
+      },
+      "id": 5628714125968375
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.info.latency_ms{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "red"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.ping.latency_ms{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Latency",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "ms",
+          "scale": "linear"
+        }
+      },
+      "id": 6027012015436493
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.cpu.sys{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.cpu.user{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.cpu.sys_main_thread{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "purple"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.cpu.user_main_thread{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis CPU",
+        "type": "timeseries"
+      },
+      "id": 3399127617314955
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.pubsub.clients{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "green"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.pubsub.channels{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.pubsub.patterns{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis PubSub",
+        "type": "timeseries"
+      },
+      "id": 5697706459607220
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.replication.backlog_size{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "blue"
+            }
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.replication.backlog_histlen{$env}",
+            "style": {
+              "lineType": "solid",
+              "lineWidth": "normal",
+              "palette": "orange"
+            }
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis Replication Backlog",
+        "type": "timeseries",
+        "yaxis": {
+          "includeZero": true,
+          "label": "bytes",
+          "scale": "linear"
+        }
+      },
+      "id": 8507817874467350
+    }
+  ]
+}

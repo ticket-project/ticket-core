@@ -1,0 +1,22 @@
+{
+  "name": "[core] HTTP 5xx 급증",
+  "type": "metric alert",
+  "query": "sum(last_5m):sum:ticket.http_server_requests_seconds.count{env:prod,service:ticket-be,status:5*}.as_count() > 10",
+  "message": "Core가 5분에 5xx를 10건 넘게 돌려줬다. 먼저 볼 곳: APM 오류 트레이스·로그, Hikari pending/timeout, PostgreSQL 지연, Redis, 호스트 CPU.",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 1,
+  "options": {
+    "thresholds": {
+      "critical": 10
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

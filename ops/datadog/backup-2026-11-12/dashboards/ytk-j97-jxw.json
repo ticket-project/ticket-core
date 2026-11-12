@@ -1,0 +1,451 @@
+{
+  "authorHandle": "<redacted>",
+  "authorName": "<redacted>",
+  "createdAt": "2026-07-04T08:29:04.715Z",
+  "description": "Redis cluster operational dashboard for the ticket queue service. Created by Codex via Datadog API.",
+  "experienceType": "default",
+  "id": "ytk-j97-jxw",
+  "layoutType": "ordered",
+  "modifiedAt": "2026-07-04T08:40:04.121Z",
+  "notifyList": [],
+  "restrictedRoles": [],
+  "tags": [
+    "team:backend"
+  ],
+  "templateVariables": [
+    {
+      "_default": "prod",
+      "name": "env",
+      "prefix": "env"
+    },
+    {
+      "_default": "queue-redis",
+      "name": "component",
+      "prefix": "component"
+    }
+  ],
+  "title": "[ticket-queue] Redis Cluster Overview",
+  "url": "/dashboard/ytk-j97-jxw/ticket-queue-redis-cluster-overview",
+  "widgets": [
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "last",
+            "q": "avg:redis.cluster.state{env:$env,component:$component}"
+          }
+        ],
+        "title": "Cluster state",
+        "type": "query_value"
+      },
+      "id": 1890846355243955,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "last",
+            "q": "max:redis.cluster.slots_fail{env:$env,component:$component}"
+          }
+        ],
+        "title": "Slots failed",
+        "type": "query_value"
+      },
+      "id": 950649443908187,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 2,
+        "requests": [
+          {
+            "aggregator": "last",
+            "q": "avg:redis.ping.latency_ms{env:$env,component:$component}"
+          }
+        ],
+        "title": "Ping latency ms",
+        "type": "query_value"
+      },
+      "id": 8035933453435708,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "last",
+            "q": "avg:redis.net.clients{env:$env,component:$component}"
+          }
+        ],
+        "title": "Connected clients",
+        "type": "query_value"
+      },
+      "id": 1421409219116194,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 9,
+        "y": 0
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.ping.latency_ms{env:$env,component:$component} by {host,redis_host}"
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.info.latency_ms{env:$env,component:$component} by {host,redis_host}"
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis latency",
+        "type": "timeseries"
+      },
+      "id": 7970585269251153,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 0,
+        "y": 2
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.used{env:$env,component:$component} by {host,redis_host}"
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.mem.rss{env:$env,component:$component} by {host,redis_host}"
+          }
+        ],
+        "showLegend": true,
+        "title": "Memory",
+        "type": "timeseries"
+      },
+      "id": 2309477992053446,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 6,
+        "y": 2
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:redis.net.commands{env:$env,component:$component}.rollup(sum, 60)"
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.instantaneous_ops_per_sec{env:$env,component:$component}"
+          }
+        ],
+        "showLegend": true,
+        "title": "Throughput",
+        "type": "timeseries"
+      },
+      "id": 5268230725586369,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:redis.net.clients{env:$env,component:$component} by {host,redis_host}"
+          },
+          {
+            "displayType": "line",
+            "q": "avg:redis.clients.blocked{env:$env,component:$component} by {host,redis_host}"
+          }
+        ],
+        "showLegend": true,
+        "title": "Client pressure",
+        "type": "timeseries"
+      },
+      "id": 5809915933201404,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 6,
+        "y": 5
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "max:redis.cluster.slots_ok{env:$env,component:$component}"
+          },
+          {
+            "displayType": "line",
+            "q": "max:redis.cluster.slots_fail{env:$env,component:$component}"
+          },
+          {
+            "displayType": "line",
+            "q": "max:redis.cluster.slots_pfail{env:$env,component:$component}"
+          }
+        ],
+        "showLegend": true,
+        "title": "Cluster slots",
+        "type": "timeseries"
+      },
+      "id": 6803610005643595,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:redis.keys.evicted{env:$env,component:$component}.rollup(sum, 60)"
+          },
+          {
+            "displayType": "line",
+            "q": "sum:redis.keys.expired{env:$env,component:$component}.rollup(sum, 60)"
+          },
+          {
+            "displayType": "line",
+            "q": "sum:redis.net.rejected{env:$env,component:$component}.rollup(sum, 60)"
+          }
+        ],
+        "showLegend": true,
+        "title": "Key churn and pressure",
+        "type": "timeseries"
+      },
+      "id": 7917606561443325,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 6,
+        "y": 8
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "sum:trace.servlet.request.hits{service:ticket-queue,env:prod,resource_name:post_/api/v1/queue/performances/_performanceid_/join}.as_count()"
+          }
+        ],
+        "title": "Join requests last window",
+        "type": "query_value"
+      },
+      "id": 4709330829241192,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 0,
+        "y": 11
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "sum:trace.servlet.request.errors{service:ticket-queue,env:prod,resource_name:post_/api/v1/queue/performances/_performanceid_/join}.as_count()"
+          }
+        ],
+        "title": "Join errors last window",
+        "type": "query_value"
+      },
+      "id": 8679532775722094,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 3,
+        "y": 11
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "sum:trace.redis.query.hits{service:ticket-queue,env:prod,resource_name:evalsha}.as_count()"
+          }
+        ],
+        "title": "Redis EVALSHA hits",
+        "type": "query_value"
+      },
+      "id": 6780131094227685,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 6,
+        "y": 11
+      }
+    },
+    {
+      "definition": {
+        "autoscale": true,
+        "precision": 0,
+        "requests": [
+          {
+            "aggregator": "sum",
+            "q": "avg:redis.net.instantaneous_ops_per_sec{env:$env,component:$component}"
+          }
+        ],
+        "title": "Redis ops/sec",
+        "type": "query_value"
+      },
+      "id": 6744530607244329,
+      "layout": {
+        "height": 2,
+        "width": 3,
+        "x": 9,
+        "y": 11
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:trace.servlet.request.hits{service:ticket-queue,env:prod,resource_name:post_/api/v1/queue/performances/_performanceid_/join}.as_count()"
+          },
+          {
+            "displayType": "line",
+            "q": "sum:ticket_queue.http_server_requests_seconds.count{service:ticket-queue,env:prod,method:post,uri:/api/v1/queue/performances/_performanceid_/join}.as_count()"
+          }
+        ],
+        "showLegend": true,
+        "title": "Join request rate",
+        "type": "timeseries"
+      },
+      "id": 778379892706604,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 0,
+        "y": 13
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:trace.servlet.request.errors{service:ticket-queue,env:prod,resource_name:post_/api/v1/queue/performances/_performanceid_/join}.as_count()"
+          },
+          {
+            "displayType": "line",
+            "q": "sum:ticket_queue.http_server_requests_seconds.count{service:ticket-queue,env:prod,method:post,outcome:client_error,uri:/api/v1/queue/performances/_performanceid_/join}.as_count()"
+          }
+        ],
+        "showLegend": true,
+        "title": "Join errors by source",
+        "type": "timeseries"
+      },
+      "id": 5127366928913610,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 6,
+        "y": 13
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "avg:trace.servlet.request{service:ticket-queue,env:prod,resource_name:post_/api/v1/queue/performances/_performanceid_/join}"
+          },
+          {
+            "displayType": "line",
+            "q": "max:ticket_queue.http_server_requests_seconds_max{service:ticket-queue,env:prod,method:post,uri:/api/v1/queue/performances/_performanceid_/join}"
+          }
+        ],
+        "showLegend": true,
+        "title": "Join latency",
+        "type": "timeseries"
+      },
+      "id": 3407338307404514,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "definition": {
+        "requests": [
+          {
+            "displayType": "line",
+            "q": "sum:trace.redis.query.hits{service:ticket-queue,env:prod,resource_name:evalsha}.as_count()"
+          },
+          {
+            "displayType": "line",
+            "q": "sum:trace.redis.query.hits{service:ticket-queue,env:prod,resource_name:exists}.as_count()"
+          },
+          {
+            "displayType": "line",
+            "q": "sum:trace.redis.query.hits{service:ticket-queue,env:prod,resource_name:smembers}.as_count()"
+          }
+        ],
+        "showLegend": true,
+        "title": "Redis command spans during join load",
+        "type": "timeseries"
+      },
+      "id": 955463208572194,
+      "layout": {
+        "height": 3,
+        "width": 6,
+        "x": 6,
+        "y": 16
+      }
+    }
+  ]
+}

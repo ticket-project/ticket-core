@@ -1,0 +1,22 @@
+{
+  "name": "[queue] API 5xx 급증",
+  "type": "metric alert",
+  "query": "sum(last_5m):sum:ticket_queue_api.http_server_requests_seconds.count{env:prod,status:5*}.as_count() > 10",
+  "message": "대기열 API가 5분에 5xx를 10건 넘게 돌려줬다. 먼저 볼 곳: ticket-queue-api 오류 로그·트레이스(uri 태그), Redis 지연·연결, 호스트 CPU.",
+  "tags": [
+    "service:ticket-queue-api",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 2,
+  "options": {
+    "thresholds": {
+      "critical": 10
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

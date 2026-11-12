@@ -1,0 +1,63 @@
+{
+  "additionalProperties": {
+    "created_at": 1786066043000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-11-10T01:36:24+00:00"
+  },
+  "created": "2026-08-07T01:27:23.171Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21662364,
+  "matchingDowntimes": [
+    {
+      "additionalProperties": {
+        "active": true,
+        "groups": [],
+        "monitor_id": null
+      },
+      "end": null,
+      "id": 237309352,
+      "scope": [
+        "host:i-09739eeb559db0d1d"
+      ],
+      "start": 1794448204
+    }
+  ],
+  "message": "Core host CPU idle stayed below 15% for 15 minutes. Check container CPU, JVM load, and request rate.",
+  "modified": "2026-08-07T01:27:23.171Z",
+  "multi": false,
+  "name": "[ticket-core][Host] CPU saturation",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "noDataTimeframe": 20,
+    "notifyAudit": false,
+    "notifyNoData": true,
+    "renotifyInterval": 0,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 15,
+      "warning": 25
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "avg(last_15m):avg:system.cpu.idle{host:i-09739eeb559db0d1d} < 15",
+  "restrictedRoles": null,
+  "tags": [
+    "service:ticket-core",
+    "env:prod",
+    "team:core",
+    "component:infrastructure"
+  ],
+  "type": "metric alert"
+}

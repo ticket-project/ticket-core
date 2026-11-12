@@ -1,0 +1,23 @@
+{
+  "name": "[core] 호스트 load 높음",
+  "type": "metric alert",
+  "query": "avg(last_15m):avg:system.load.norm.5{host:ticket-core-prod} > 1.5",
+  "message": "Core 호스트 코어당 5분 load가 1.5를 넘었다. 먼저 볼 곳: CPU 실행 대기열, I/O wait. (옛 호스트 이름 i-09739eeb559db0d1d. DD_HOSTNAME 적용 전이면 이 범위로 데이터가 안 들어온다)",
+  "tags": [
+    "service:ticket-be",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 3,
+  "options": {
+    "thresholds": {
+      "critical": 1.5,
+      "warning": 1
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false
+  }
+}

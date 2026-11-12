@@ -1,0 +1,48 @@
+{
+  "additionalProperties": {
+    "created_at": 1783153747000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-08-11T00:02:56+00:00"
+  },
+  "created": "2026-07-04T08:29:07.686Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 20935495,
+  "matchingDowntimes": [],
+  "message": "Redis memory fragmentation ratio is high. Check memory pressure and Redis allocator behavior.",
+  "modified": "2026-07-04T08:29:07.686Z",
+  "multi": false,
+  "name": "[ticket-queue] Redis memory fragmentation high",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 2,
+      "warning": 1.5
+    }
+  },
+  "overallState": "No Data",
+  "priority": 3,
+  "query": "avg(last_10m):avg:redis.mem.fragmentation_ratio{component:queue-redis,env:prod} > 2",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-managed-redis",
+    "component:queue-redis",
+    "managed:codex",
+    "domain:queue"
+  ],
+  "type": "metric alert"
+}

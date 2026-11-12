@@ -1,0 +1,48 @@
+{
+  "additionalProperties": {
+    "created_at": 1786064206000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-08-07T00:56:54+00:00"
+  },
+  "created": "2026-08-07T00:56:46.410Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 21661955,
+  "matchingDowntimes": [],
+  "message": "Blocking sessions have persisted for more than 60 seconds. Identify the blocker and the owning transaction before terminating anything.",
+  "modified": "2026-08-07T00:56:46.410Z",
+  "multi": true,
+  "name": "[ticket-core][DB] Blocking sessions detected",
+  "options": {
+    "evaluationDelay": 300,
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0
+    }
+  },
+  "overallState": "No Data",
+  "priority": 1,
+  "query": "max(last_5m):max:oci.autonomous_database.blocking_sessions{*} by {resource_name} > 0",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-core",
+    "component:oracle-autonomous-db",
+    "domain:core",
+    "managed:codex"
+  ],
+  "type": "metric alert"
+}

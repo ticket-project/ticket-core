@@ -1,0 +1,47 @@
+{
+  "additionalProperties": {
+    "created_at": 1783153748000,
+    "org_id": 1300940952,
+    "overall_state_modified": "2026-08-10T23:57:56+00:00"
+  },
+  "created": "2026-07-04T08:29:08.408Z",
+  "creator": {
+    "additionalProperties": {
+      "id": 9536388
+    },
+    "email": "<redacted>",
+    "handle": "<redacted>",
+    "name": "LeeHusung Backpack"
+  },
+  "deleted": null,
+  "draftStatus": "published",
+  "id": 20935496,
+  "matchingDowntimes": [],
+  "message": "Redis evicted keys in the last 5 minutes. Queue state may be at risk if memory pressure continues.",
+  "modified": "2026-07-04T08:29:08.408Z",
+  "multi": false,
+  "name": "[ticket-queue] Redis keys evicted",
+  "options": {
+    "includeTags": true,
+    "newHostDelay": 300,
+    "notifyAudit": false,
+    "notifyNoData": false,
+    "requireFullWindow": false,
+    "silenced": {},
+    "thresholds": {
+      "critical": 0
+    }
+  },
+  "overallState": "No Data",
+  "priority": 2,
+  "query": "sum(last_5m):sum:redis.keys.evicted{component:queue-redis,env:prod}.as_count() > 0",
+  "restrictedRoles": null,
+  "tags": [
+    "env:prod",
+    "service:ticket-managed-redis",
+    "component:queue-redis",
+    "managed:codex",
+    "domain:queue"
+  ],
+  "type": "metric alert"
+}

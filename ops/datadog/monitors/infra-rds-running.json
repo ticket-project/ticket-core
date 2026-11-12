@@ -1,0 +1,23 @@
+{
+  "name": "[infra] RDS 켜짐",
+  "type": "metric alert",
+  "query": "max(last_15m):max:aws.rds.cpuutilization{dbinstanceidentifier:ticket-core-db} > -1",
+  "message": "ticket-core-db가 지표를 보내고 있다(켜져 있다). 테스트 중이 아니면 AWS가 꺼진 지 7일 뒤 자동으로 켠 것이다. 할 일: 테스트 계획이 없으면 RDS 콘솔에서 다시 중지.",
+  "tags": [
+    "service:ticket-core-db",
+    "env:prod",
+    "managed-by:ops-datadog"
+  ],
+  "priority": 4,
+  "options": {
+    "thresholds": {
+      "critical": -1
+    },
+    "notify_no_data": false,
+    "require_full_window": false,
+    "renotify_interval": 0,
+    "include_tags": true,
+    "notify_audit": false,
+    "evaluation_delay": 900
+  }
+}
