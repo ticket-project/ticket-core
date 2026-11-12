@@ -3,6 +3,10 @@ package com.ticket.seed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -13,6 +17,7 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -30,6 +35,9 @@ import com.ticket.seed.support.SeedTestDatabase;
 class SeedFastRunTest {
 
     private static final long FIXTURE_ID_BASE = LoadTestFixtureSeeder.ID_BASE;
+
+    @TempDir
+    Path temporaryDirectory;
 
     private String jdbcUrl;
     private JdbcTemplate jdbcTemplate;
@@ -121,6 +129,49 @@ class SeedFastRunTest {
                 .isEqualTo(1);
 
         assertThat(count("SHOWS")).as("자동으로 지우거나 복구하지 않는다").isPositive();
+    }
+
+    @Test
+    void 새로_수집한_행이_더해진_시드는_없는_행만_더한다() throws IOException {
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl))).isZero();
+        final long performanceSeatsBefore = count("PERFORMANCE_SEATS");
+        final Map<String, String> appended = Map.of(
+                "seed.jdbc-url", jdbcUrl, "seed.sql-path", appendedMinimalSeed().toString());
+
+        assertThat(runSeed(appended)).as("운영 공연 갱신: 이미 있는 행은 건너뛰고 새 행만 더한다").isZero();
+
+        assertThat(count("SHOWS", "id = 3")).isEqualTo(1L);
+        assertThat(count("SEATS", "venue_id = 3")).as("새 공연장은 좌석 템플릿을 복제받는다").isEqualTo(3L);
+        assertThat(count("PERFORMANCE_GRADES", "performance_id = 4")).isEqualTo(4L);
+        assertThat(count("PERFORMANCE_SEATS")).as("새 회차 좌석만 늘어난다").isEqualTo(performanceSeatsBefore + 3);
+        assertThat(count("SEATS", "venue_id = " + (FIXTURE_ID_BASE + 1)))
+                .as("부하 픽스처 공연장에는 템플릿을 복제하지 않는다")
+                .isEqualTo(LoadTestFixtureSeeder.SEAT_COUNT);
+
+        final Map<String, Long> afterAppend = snapshot();
+        assertThat(runSeed(appended)).isZero();
+        assertThat(snapshot()).as("다시 실행해도 늘지 않는다").isEqualTo(afterAppend);
+
+        assertThat(runSeed(Map.of("seed.jdbc-url", jdbcUrl)))
+                .as("시드 SQL에 없는 행이 DB에 있으면 새 행만 더할 수 없어 실패한다")
+                .isEqualTo(1);
+    }
+
+    /** 최소 SQL의 {@code @seed-splice} 마커 앞에 공연장·공연·회차 하나씩을 더한 사본이다. 수집 도구가 끼워 넣는 위치와 같다. */
+    private Path appendedMinimalSeed() throws IOException {
+        final String block = """
+                INSERT INTO VENUES (id, name, address, region, address_detail, zip_code, latitude, longitude, phone, image_url, view_box_width, view_box_height, seat_diameter, gap_x, gap_y, created_at, created_by) VALUES (3, '새 공연장', '서울특별시', 'SEOUL', '3관', '00003', 37.5, 127.0, '02-000-0000', NULL, 500, 356, 4.8, 2.5, 2.5, '2026-11-13 10:00:00', '시드');
+                INSERT INTO SHOWS (id, title, sub_title, info, start_date, end_date, view_count, display_sale_type, display_sale_starts_at, display_sale_ends_at, image, venue_id, running_minutes, performer_id, created_at, created_by) VALUES (3, '새 공연', '부제', '설명', '2026-12-01', '2026-12-01', 100, 'GENERAL', '2026-11-13 10:00:00', '2026-12-01 18:00:00', NULL, 3, 90, 1, '2026-11-13 10:00:00', '시드');
+                INSERT INTO SHOW_GENRES (id, show_id, genre_id, created_at, created_by) VALUES (3, 3, 1, '2026-11-13 10:00:00', '시드');
+                INSERT INTO PERFORMANCES (id, show_id, performance_no, start_time, end_time, created_at, created_by) VALUES (4, 3, 1, '2026-12-01 19:00:00', '2026-12-01 20:30:00', '2026-11-13 10:00:00', '시드');
+                INSERT INTO BOOKING_PERFORMANCE_SALES_POLICIES (performance_id, order_opens_at, order_closes_at, max_hold_seat_count, hold_duration_seconds, queue_mode, queue_level, version, created_at, created_by) VALUES (4, '2026-11-13 10:00:00', '2026-12-01 18:00:00', 4, 600, 'FORCE_OFF', 'LEVEL_1', 0, '2026-11-13 10:00:00', '시드');
+                """;
+        final String original = Files.readString(SeedTestPaths.minimalSeedSql(), StandardCharsets.UTF_8);
+        final int marker = original.indexOf("-- @seed-splice");
+        final Path appended = temporaryDirectory.resolve("appended-curated.sql");
+        Files.writeString(
+                appended, original.substring(0, marker) + block + original.substring(marker), StandardCharsets.UTF_8);
+        return appended;
     }
 
     @Test

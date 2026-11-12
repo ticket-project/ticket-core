@@ -108,7 +108,7 @@ class SeedSeatCoverageTest {
     @Test
     void 좌석이_없는_공연장이_남으면_커밋하지_않고_되돌린다() {
         final String excludedFromReplication = spliceBeforeMarker(minimalSeedSql(), NEW_BLOCK)
-                .replace("WHERE t.venue_id = 1 AND v.id <> 1;", "WHERE t.venue_id = 1 AND v.id <> 1 AND v.id <> 3;");
+                .replace("WHERE t.venue_id = 1 AND v.id <> 1", "WHERE t.venue_id = 1 AND v.id <> 1 AND v.id <> 3");
         final Path sqlPath = write("venue-without-seats.sql", excludedFromReplication);
 
         assertThat(runSeed(sqlPath)).as("좌석 없는 공연장이 남으면 실패로 알린다").isEqualTo(1);
