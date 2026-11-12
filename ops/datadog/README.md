@@ -20,3 +20,15 @@ Datadog(us5, GitHub 학생 팩 Pro)에 올린 대시보드·알림의 원본이�
 - 로그 색인 `main`에 nginx 2xx·3xx 제외 규칙을 넣었다(수집은 하되 색인하지 않음).
 - RDS 파라미터 그룹 `ticket-core-pg18`을 만들어 같은 날 연결·재부팅했다(순서서 1단계). 서버 쪽 적용 상태는 순서서 맨 위에 적는다.
 - Core 호스트는 docker 체크를 꺼 두므로(15초 멈춤 원인) `docker.*`·`container.restarts` 지표가 없다. 컨테이너 수·재시작은 `container.uptime`으로 본다.
+- RDS 1초 지표(Enhanced Monitoring)는 지표가 아니라 로그(`@aws.awslogs.logGroup:RDSOSMetrics`)로 들어오고, 대시보드는 로그 측정값으로 그린다(순서서 1단계 확인).
+
+## 비용·성능에 영향을 주는 설정
+
+켜 둔 시간만큼 쌓이는 것들이다. 서버를 끄면 멈춘다.
+
+| 설정 | 켜져 있는 동안 | 줄이는 법 |
+| --- | --- | --- |
+| RDS Enhanced Monitoring 1초 | CloudWatch Logs `RDSOSMetrics`에 시간당 약 17MB, Datadog 로그 색인 시간당 약 3,600건, forwarder Lambda 시간당 약 3,600회 | 측정이 없을 때는 RDS를 끈다. 오래 켜 둘 일이면 단위를 60초로 바꾼다 |
+| RDS PostgreSQL 로그 내보내기(`log_min_duration_statement` 100ms) | 평소엔 거의 없다. 과부하에서는 느린 SQL마다 한 줄이라 RDS 디스크·CPU와 CloudWatch Logs·Datadog 색인이 함께 는다 | 로그가 숫자를 흔든다고 의심되면 `1000`으로 올린다(재부팅 없음) |
+| CloudWatch Logs 보관 | `/aws/rds/instance/ticket-core-db/postgresql`의 기본 보관 기간은 "만료 없음"이다 | 콘솔에서 보관 기간을 7일로 둔다 |
+| Datadog Agent(Core) | 무부하 기준 약 0.03코어(postgres·nginx·openmetrics 수집) | docker·프로세스 수집은 이미 껐다 |

@@ -6,9 +6,8 @@
   호스트 이름)을 바꾼다. 끝나면 이 절은 다시 하지 않는다.
 - **매번**: 측정할 때마다 한다.
 
-**적용 상태(2026-11-12)**: 1·2·3·5·6단계는 적용했다. 남은 것은 아래 둘이다.
+**적용 상태(2026-11-12)**: 1·2·3·5·6단계는 적용했다(1단계 5번 forwarder 트리거 포함). 남은 것은 4단계 하나다.
 
-- 1단계의 Enhanced Monitoring 지표가 Datadog에 아직 안 들어온다. forwarder 트리거 연결(1단계 5번)이 남았다.
 - 4단계(queue)는 보류했다. queue EC2에 루트 볼륨이 없어서다. queue는 [Core 수용량](../../docs/core-capacity.md) 9단계에서만 쓰므로, 그때 4단계의 복원 절차부터 한다.
 
 서버를 새로 만들거나 설정을 잃었을 때는 이 절을 처음부터 다시 따른다.
@@ -78,8 +77,13 @@
   ```
 
 - CloudWatch Logs에 `/aws/rds/instance/ticket-core-db/postgresql` 로그 그룹이 생겼다.
-- Datadog Metrics Explorer에서 `aws.rds.cpuutilization.total{dbinstanceidentifier:ticket-core-db}`(Enhanced Monitoring 지표)가
-  5번을 한 뒤 5~10분 안에 보인다. 안 보이면 forwarder의 트리거 목록에 `RDSOSMetrics`가 있는지 본다.
+- Datadog Logs `@aws.awslogs.logGroup:RDSOSMetrics`에 1초마다 한 건씩 들어온다(5번을 한 뒤 몇 분 안). 안 보이면 forwarder의
+  트리거 목록에 `RDSOSMetrics`가 있는지 본다.
+- 이 로그는 forwarder가 지표(`aws.rds.cpuutilization.total` 등)로 바꾸지 않는다. 바꾸려면 Datadog의 RDS Enhanced 전용 Lambda를
+  따로 설치해야 해서, 대신 로그 측정값(measure) 8개를 만들어 대시보드가 로그에서 바로 그린다(2026-11-12):
+  `@cpuUtilization.total|user|system|wait|steal`, `@loadAverageMinute.one`, `@tasks.running`, `@tasks.blocked`.
+  Datadog 조직 설정이라 저장소에는 없다. 지워졌으면 Logs → 왼쪽 facet 목록 **+ Add** → Measure 탭에서 같은 경로로 다시 만든다.
+  `steal`은 T 계열 CPU 크레딧이 바닥나 AWS가 CPU를 묶을 때 오른다.
 - Datadog Logs `host:ticket-core-db source:postgresql`에 로그가 들어온다(로그 그룹 `/aws/rds/instance/ticket-core-db/postgresql`).
 
 **주의**: 과부하 구간에서는 100ms 넘는 SQL이 쏟아져 로그 쓰기 자체가 DB를 바쁘게 할 수 있다. 로그 때문에 숫자가 흔들린다고
