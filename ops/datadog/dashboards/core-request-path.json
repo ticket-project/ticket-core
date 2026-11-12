@@ -406,7 +406,7 @@
           {
             "definition": {
               "type": "timeseries",
-              "title": "RDS CPU % (CloudWatch 1분 / Enhanced)",
+              "title": "RDS CPU % (CloudWatch 1분 / Enhanced 1초)",
               "show_legend": true,
               "legend_layout": "auto",
               "requests": [
@@ -419,9 +419,19 @@
                       "query": "avg:aws.rds.cpuutilization{dbinstanceidentifier:ticket-core-db}"
                     },
                     {
-                      "data_source": "metrics",
+                      "data_source": "logs",
                       "name": "b",
-                      "query": "avg:aws.rds.cpuutilization.total{dbinstanceidentifier:ticket-core-db}"
+                      "search": {
+                        "query": "@aws.awslogs.logGroup:RDSOSMetrics @instanceID:ticket-core-db"
+                      },
+                      "indexes": [
+                        "*"
+                      ],
+                      "compute": {
+                        "aggregation": "avg",
+                        "metric": "@cpuUtilization.total"
+                      },
+                      "group_by": []
                     }
                   ],
                   "formulas": [
@@ -431,7 +441,7 @@
                     },
                     {
                       "formula": "b",
-                      "alias": "Enhanced CPU %"
+                      "alias": "Enhanced 1초 CPU % (로그)"
                     }
                   ],
                   "display_type": "line"
