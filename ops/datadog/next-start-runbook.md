@@ -6,6 +6,13 @@
   호스트 이름)을 바꾼다. 끝나면 이 절은 다시 하지 않는다.
 - **매번**: 측정할 때마다 한다.
 
+**적용 상태(2026-11-12)**: 1·2·3·5·6단계는 적용했다. 남은 것은 아래 둘이다.
+
+- 1단계의 Enhanced Monitoring 지표가 Datadog에 아직 안 들어온다. forwarder 트리거 연결(1단계 5번)이 남았다.
+- 4단계(queue)는 보류했다. queue EC2에 루트 볼륨이 없어서다. queue는 [Core 수용량](../../docs/core-capacity.md) 9단계에서만 쓰므로, 그때 4단계의 복원 절차부터 한다.
+
+서버를 새로 만들거나 설정을 잃었을 때는 이 절을 처음부터 다시 따른다.
+
 측정 절차 자체(준비·예열·사다리·판정)는 [core-capacity 스킬의 production.md](../../.agents/skills/core-capacity/production.md)가 원본이다.
 운영 서버 쓰기(AWS 콘솔, compose·nginx 수정, DB 계정)는 사용자가 한다. Claude는 명령을 준비하고 결과를 함께 읽는다.
 비밀값은 이 문서·명령 기록·채팅에 남기지 않는다. `<…>`는 그 자리에서 채운다.
@@ -53,6 +60,10 @@
    - 로그 내보내기: **PostgreSQL 로그** 체크
    - 수정 예약: **즉시 적용**
 4. 상태가 `사용 가능`으로 돌아오면 **재부팅**한다. `shared_preload_libraries`는 재부팅해야 들어간다.
+5. Enhanced Monitoring 지표를 Datadog으로 보낸다. RDS는 이 지표를 CloudWatch Logs의 `RDSOSMetrics` 로그 그룹에 쓴다.
+   PostgreSQL 로그 그룹은 Datadog forwarder가 자동으로 구독하지만, 2026-11-12 확인 결과 `RDSOSMetrics`는 구독하지 않았다.
+   AWS 콘솔 Lambda → `datadogintegration-forwarderstack-…-forwarder-…` → **트리거 추가** → CloudWatch Logs →
+   로그 그룹 `RDSOSMetrics`, 필터 이름은 아무거나, 필터 패턴은 비운다.
 
 **확인**
 
@@ -68,7 +79,8 @@
 
 - CloudWatch Logs에 `/aws/rds/instance/ticket-core-db/postgresql` 로그 그룹이 생겼다.
 - Datadog Metrics Explorer에서 `aws.rds.cpuutilization.total{dbinstanceidentifier:ticket-core-db}`(Enhanced Monitoring 지표)가
-  5~10분 안에 보인다. 안 보이면 forwarder Lambda가 `RDSOSMetrics` 로그 그룹을 구독하는지 확인한다.
+  5번을 한 뒤 5~10분 안에 보인다. 안 보이면 forwarder의 트리거 목록에 `RDSOSMetrics`가 있는지 본다.
+- Datadog Logs `host:ticket-core-db source:postgresql`에 로그가 들어온다(로그 그룹 `/aws/rds/instance/ticket-core-db/postgresql`).
 
 **주의**: 과부하 구간에서는 100ms 넘는 SQL이 쏟아져 로그 쓰기 자체가 DB를 바쁘게 할 수 있다. 로그 때문에 숫자가 흔들린다고
 의심되면 `log_min_duration_statement`를 `1000`으로 올린다. 동적 파라미터라 재부팅이 필요 없다.
@@ -92,6 +104,11 @@ GRANT pg_monitor TO datadog;
 ```
 
 - `\password`는 화면에 비밀번호를 보이지 않고 묻는다. SQL에 비밀번호를 적지 않아 기록에 남지 않는다. 이 비밀번호는 3단계 `conf.yaml`에만 쓴다.
+- 세 줄을 **한 줄씩** 입력한다. 한꺼번에 붙여 넣으면 `\password`가 다음 줄(`GRANT …`)을 비밀번호 답으로 먹어서,
+  비밀번호도 권한도 안 들어간다(2026-11-12 실제로 겪음. `GRANT ROLE` 응답이 없으면 권한이 안 들어간 것이다).
+- IntelliJ 같은 DB 도구로 SSH 터널을 거쳐 붙어도 된다. `\password`는 psql 전용이라, 그때는
+  `CREATE USER datadog WITH PASSWORD '<비밀번호>';`로 만든다. 도구의 쿼리 이력에 비밀번호가 남으니 실행 뒤 지운다.
+  도구가 수동 커밋(`Tx: Manual`)이면 커밋해야 다른 접속에서 보인다.
 - DBM을 쓰지 않으므로 `datadog` 스키마와 explain 함수는 만들지 않는다.
 - `pg_stat_statements` 확장은 Datadog 기본 수집에 필요 없다. 사람이 psql로 상위 SQL을 볼 때만 쓴다. 쓰려면
   `CREATE EXTENSION IF NOT EXISTS pg_stat_statements;`(1단계 재부팅 뒤에만 된다).
@@ -204,10 +221,19 @@ labels:
 
 **3-5. 적용**
 
+먼저 문법을 검사한다. 이미지 변수를 넣지 않으면 `service "app" has neither an image nor a build context` 오류가 나는데,
+파일 문제가 아니라 변수가 비어서다. 지금 떠 있는 컨테이너에서 이미지 이름을 가져와 넣는다.
+
 ```bash
 cd /home/ubuntu
 IMG="$(sudo docker inspect -f '{{.Config.Image}}' ticket-be)"
 FE="$(sudo docker inspect -f '{{.Config.Image}}' ticket-fe)"
+sudo DOCKER_IMAGE="$IMG" FRONTEND_DOCKER_IMAGE="$FE" DD_VERSION="${IMG##*:}" docker compose config --quiet && echo OK
+```
+
+`OK`가 나오면 같은 셸에서 적용한다.
+
+```bash
 sudo DOCKER_IMAGE="$IMG" FRONTEND_DOCKER_IMAGE="$FE" DD_VERSION="${IMG##*:}" docker compose up -d
 until sudo docker exec ticket-be wget -q -O /dev/null http://localhost:8080/actuator/health; do sleep 5; done
 sudo docker exec ticket-nginx nginx -t && sudo docker restart ticket-nginx
@@ -229,6 +255,9 @@ sudo docker exec datadog-agent agent hostname
 
 - `postgres`·`nginx`·`openmetrics` 아래 `[OK]`, `docker` 체크는 **없음**.
 - `agent hostname`이 `ticket-core-prod`.
+- `wait for health` 중 `wget: can't connect … Connection refused`가 몇 줄 나오는 것은 Core가 뜨는 중이라는 뜻이다(2026-11-12 약 40초).
+- `postgresql.*` 지표의 host 태그는 `ticket-core-prod`가 아니라 RDS 주소다(Datadog 기본 동작). 대시보드는 `env:prod`로 묶어 본다.
+- docker 체크를 꺼서 `docker.*` 지표와 `container.restarts`는 없다. 컨테이너 수·재시작 알림과 대시보드는 `container.uptime`을 쓴다.
 - Datadog Infrastructure 목록에 `ticket-core-prod`가 보인다. 옛 이름(`i-09739eeb559db0d1d`)은 2시간쯤 뒤 목록에서 빠진다.
   EC2 인스턴스 ID가 별칭으로 붙어 AWS 연동 지표도 같은 호스트에 모인다.
 - 브라우저에서 `https://oneticket.site`가 열린다.
@@ -244,7 +273,18 @@ cp nginx/nginx.conf.bak-<날짜> nginx/nginx.conf
 
 ### 4. queue EC2: 호스트 이름
 
-**누가**: 사용자(queue EC2 SSH, `/home/ubuntu/ticket-queue`). **걸리는 시간**: 5분.
+**누가**: 사용자(queue EC2 SSH, `/home/ubuntu/ticket-queue`). **걸리는 시간**: 5분(볼륨 복원이 필요하면 +10분).
+
+**먼저 볼륨 복원(2026-11-12 기준 필요)**: queue EC2 `i-089cd124293cecb83`(ticket-queue)는 루트 볼륨이 없어
+`Instance does not have a volume attached at root (/dev/sda1)`로 시작되지 않는다. 남은 백업은 스냅샷
+`snap-0dc9d409a27e4dce2`(2026-09-28, 원본 볼륨 `vol-03135cfb4f32cda19` 30GiB)뿐이다.
+
+1. Core EC2의 **스토리지** 탭 볼륨 ID와 위 원본 볼륨 ID가 다른지 본다. 같으면 Core 디스크 백업이니 쓰지 않는다.
+2. queue 인스턴스 **네트워킹** 탭에서 가용 영역을 본다.
+3. 스냅샷 → 작업 → **스냅샷에서 볼륨 생성**: gp3, 30GiB(원본보다 작게는 안 된다), 2번의 가용 영역.
+4. 볼륨 → 작업 → **볼륨 연결**: 인스턴스 `i-089cd124293cecb83`, 디바이스 `/dev/sda1` → 인스턴스 시작.
+5. 9/28 이후 queue 변경은 queue 배포 workflow를 한 번 돌려 반영한다. 서버 `.env`·인증서는 스냅샷 시점 그대로다.
+6. 측정이 끝나면 새 스냅샷을 찍고 볼륨을 지워 비용을 줄인다(gp3 30GiB는 꺼 둬도 매달 요금이 나간다).
 
 queue의 compose는 저장소(`ticket-queue/deploy/docker-compose.yml`)가 원본이고 **배포할 때마다 서버 파일을 덮어쓴다**.
 또 `datadog-agent`는 `.env`를 `env_file`로 읽지 않는다. 그래서 서버 `.env`에 `DD_HOSTNAME`만 넣어서는 Agent에 가지 않는다.
@@ -301,12 +341,26 @@ sudo docker run -d --name datadog-agent --restart unless-stopped \
 `--network host`는 컨테이너가 아니라 호스트의 네트워크 지표(`system.net.bytes_sent`)를 재기 위해서다. 명령행의 API 키는 shell 기록에 남으므로
 끝나면 `history -d`로 지우거나, 키를 `--env-file`(chmod 600)로 넘긴다.
 
-Docker가 없으면(설치 스크립트, 버전 고정):
+Docker가 없으면(2026-11-12 `loadgen-1`이 이 경우였다) 설치 스크립트로 패키지를 깔고, 설정 파일은 직접 쓴다.
 
 ```bash
-DD_API_KEY=<키> DD_SITE=us5.datadoghq.com DD_HOSTNAME=loadgen-1 DD_ENV=prod DD_AGENT_MAJOR_VERSION=7 DD_AGENT_MINOR_VERSION=81.1 \
+ DD_API_KEY=<키> DD_SITE=us5.datadoghq.com DD_HOSTNAME=loadgen-1 DD_ENV=prod DD_AGENT_MAJOR_VERSION=7 DD_AGENT_MINOR_VERSION=81.1 \
   bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
-sudo tee -a /etc/datadog-agent/datadog.yaml >/dev/null <<'EOF'
+```
+
+- 맨 앞 공백은 셸 기록에 키를 남기지 않으려는 것이다(Ubuntu 기본 `HISTCONTROL=ignoreboth`).
+- 2026-11-12에는 스크립트가 `Setting up datadog-signing-keys` 다음에서 멈췄다. 오류 기록용 `sudo tee`가 다른 터미널(pts)에 붙어
+  멈추는 것으로 보인다(추정). 3분 넘게 그대로면 다른 SSH 창에서 `dpkg -l datadog-agent datadog-signing-keys | tail -2`가 둘 다
+  `ii`인지 보고, 그렇다면 설치 창에서 `Ctrl+C`로 끝낸다. 패키지는 깔렸고 설정 파일 쓰기와 시작만 남은 상태다.
+
+설정 파일을 통째로 쓰고 켠다(스크립트가 끝까지 돈 경우에도 이 내용으로 덮어쓴다).
+
+```bash
+ sudo tee /etc/datadog-agent/datadog.yaml >/dev/null <<'EOF'
+api_key: <키>
+site: us5.datadoghq.com
+hostname: loadgen-1
+env: prod
 apm_config:
   enabled: false
 logs_enabled: false
@@ -314,8 +368,12 @@ process_config:
   process_collection:
     enabled: false
 EOF
-sudo systemctl restart datadog-agent
+sudo chown dd-agent:dd-agent /etc/datadog-agent/datadog.yaml && sudo chmod 640 /etc/datadog-agent/datadog.yaml
+sudo systemctl enable --now datadog-agent && sleep 20 && sudo datadog-agent hostname
 ```
+
+부하 발생기는 측정에 쓰는 대수만큼만 설치한다. 늘리면 `loadgen-2`처럼 이름만 바꾸고, `[loadtest]` 대시보드와
+`loadtest-loadgen-cpu-high` 알림의 `host:loadgen-1` 범위도 같이 넓힌다.
 
 **확인**: `sudo docker exec datadog-agent agent status`(설치 스크립트면 `sudo datadog-agent status`)의 Hostname이 `loadgen-1`,
 `docker` 체크 없음. Datadog Infrastructure에 `loadgen-1`.
@@ -324,7 +382,7 @@ sudo systemctl restart datadog-agent
 
 ### 6. 무부하 확인
 
-**누가**: Claude가 요청, 사용자가 Core EC2에서 실행. **걸리는 시간**: 2분.
+**누가**: Claude가 요청, 사용자가 **Core EC2**에서 실행(프롬프트 호스트가 부하 발생기가 아닌지 본다). **걸리는 시간**: 2분.
 
 설정을 바꾼 뒤 부하 없이 1분 동안 15초 주기 CPU 튐이 사라졌는지 본다.
 
@@ -336,6 +394,9 @@ grep -E 'dockerd|containerd|agent' /tmp/idle-top.txt | sort -k9 -nr | head
 
 - **정상**: 60줄 내내 `id`가 대체로 80 이상이고 15초 간격의 튐이 없다. `dockerd`·`containerd`가 상위에 거의 안 나온다.
 - **이상**: 15초마다 `id`가 50 아래로 떨어지고 `dockerd`·`containerd`가 함께 오른다 → docker 체크가 다시 켜졌다. 3-2의 빈 `docker.d` 마운트를 확인한다.
+- 튄 초에 어느 프로그램이 썼는지는 같은 파일로 바로 본다: `awk '/^top -/{f++} f && $1 ~ /^[0-9]+$/ && $9+0>=5 {print f": "$9"% "$12}' /tmp/idle-top.txt`
+- 2026-11-12 기준값: `id` 86~99%, `dockerd`·`containerd` 없음. 15초마다 `agent` 9~10%(한 코어 기준, Agent 수집), 30초마다 `java` 5%.
+  Agent가 Core 지표를 긁어 가는 순간에도 `java`는 5%를 넘지 않았다.
 
 Datadog은 10~15초 단위라 이 확인은 `top`으로 한다.
 

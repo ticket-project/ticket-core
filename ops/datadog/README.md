@@ -18,4 +18,5 @@ Datadog(us5, GitHub 학생 팩 Pro)에 올린 대시보드·알림의 원본이�
   DB 부하는 RDS Performance Insights(7일 무료 보관)와 PostgreSQL 로그(`auto_explain`)로 본다.
 - AWS 연동 지표 수집은 EC2, EBS, RDS, Lambda, CloudWatch Logs, ALB, ElastiCache, Billing 8개만 켰다. 새 서비스 자동 켜기는 껐다.
 - 로그 색인 `main`에 nginx 2xx·3xx 제외 규칙을 넣었다(수집은 하되 색인하지 않음).
-- RDS 파라미터 그룹 `ticket-core-pg18`을 만들어 두었다. 연결·재부팅은 순서서 1단계.
+- RDS 파라미터 그룹 `ticket-core-pg18`을 만들어 같은 날 연결·재부팅했다(순서서 1단계). 서버 쪽 적용 상태는 순서서 맨 위에 적는다.
+- Core 호스트는 docker 체크를 꺼 두므로(15초 멈춤 원인) `docker.*`·`container.restarts` 지표가 없다. 컨테이너 수·재시작은 `container.uptime`으로 본다.

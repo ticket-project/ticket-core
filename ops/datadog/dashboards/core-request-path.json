@@ -603,7 +603,7 @@
           {
             "definition": {
               "type": "timeseries",
-              "title": "Core 컨테이너 OOM / 재시작",
+              "title": "Core 컨테이너 OOM / 기동 뒤 경과(분)",
               "show_legend": true,
               "legend_layout": "auto",
               "requests": [
@@ -614,24 +614,32 @@
                       "data_source": "metrics",
                       "name": "a",
                       "query": "sum:container.memory.oom_events{$env,$host,container_name:ticket-be}.as_count()"
-                    },
-                    {
-                      "data_source": "metrics",
-                      "name": "b",
-                      "query": "sum:container.restarts{$env,$host,container_name:ticket-be}.as_count()"
                     }
                   ],
                   "formulas": [
                     {
                       "formula": "a",
                       "alias": "OOM"
-                    },
-                    {
-                      "formula": "b",
-                      "alias": "restarts"
                     }
                   ],
                   "display_type": "bars"
+                },
+                {
+                  "response_format": "timeseries",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "b",
+                      "query": "min:container.uptime{$env,$host,container_name:ticket-be}"
+                    }
+                  ],
+                  "formulas": [
+                    {
+                      "formula": "b / 60",
+                      "alias": "기동 뒤 경과(분), 0으로 떨어지면 재시작"
+                    }
+                  ],
+                  "display_type": "line"
                 }
               ]
             }

@@ -31,7 +31,7 @@
 | 21661960 | [ticket-core][DB Path] Hikari pending connections | 고침: 한 번 0 초과 → 1분 내내 0 초과 | `core-hikari-pending.json` |
 | 21661961 | [ticket-core][DB Path] Hikari connection timeouts | 고침: 이름·태그만 | `core-hikari-timeout.json` |
 | 21661962 | [ticket-core][DB Path] PostgreSQL APM latency high | 고침: 기준 0.25초 → 0.1초(경고 0.05초). 평소 1~6ms | `core-postgres-apm-latency.json` |
-| 21661963 | [ticket-core] Telemetry missing | 고침: no-data 방식은 서버를 끄면 울리므로, 호스트가 켜진 상태에서 운영 컨테이너 6개 중 일부가 안 떠 있는지로 바꿈 | `core-containers-missing.json` |
+| 21661963 | [ticket-core] Telemetry missing | 고침: no-data 방식은 서버를 끄면 울리므로, 호스트가 켜진 상태에서 운영 컨테이너 6개 중 일부가 안 떠 있는지로 바꿈(docker 체크를 꺼서 `container.uptime`으로 셈) | `core-containers-missing.json` |
 | 21661964 | [ticket-core] HTTP 5xx burst | 고침: 이름·태그만 | `core-http-5xx-burst.json` |
 | 21662062 | [ticket-core] Container OOM detected | 고침: ticket-be만 → Core 호스트 컨테이너별. `oom_events`는 gauge라 `as_count` 대신 `max` | `core-container-oom.json` |
 | 21662064 | [ticket-core] Error logs burst | 고침: 이름·태그만 | `core-error-logs-burst.json` |
@@ -40,7 +40,7 @@
 | 21662364 | [ticket-core][Host] CPU saturation | 고침: 호스트 이름, no-data 끔 | `core-host-cpu.json` |
 | 21662365 | [ticket-core][Host] Memory low | 고침: 호스트 이름, no-data 끔 | `core-host-memory.json` |
 | 21662366 | [ticket-core][Host] Normalized load high | 고침: 호스트 이름, no-data 끔 | `core-host-load.json` |
-| 21662367 | [ticket-core] Container restart loop | 고침: `container.restarts`는 누적 gauge라 `sum.as_count` → 10분 증가분(`change`), 컨테이너별 | `core-container-restart-loop.json` |
+| 21662367 | [ticket-core] Container restart loop | 고침: docker 체크를 꺼서 `container.restarts`가 없다 → 15분 동안 `container.uptime`이 10분을 못 넘으면 재시작 반복, 컨테이너별 | `core-container-restart-loop.json` |
 
 ## 새 알림
 
