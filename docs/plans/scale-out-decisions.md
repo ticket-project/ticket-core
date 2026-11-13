@@ -657,6 +657,23 @@
   - **Datadog 학생 팩 한도를 넘는다.** 호스트 10대·Fargate 태스크 5개라 이 규모에서는 일부만 골라 감시하거나 유료로 간다.
 - **비용(추정, 서울 기억값)**: 초당 1만 명 급(약 70대) 1시간에 EC2 약 7달러, Fargate 약 8달러. 쓴 시간만 내므로 실행
   방식(E-2)에 따른 차이는 작다.
+- **다른 회사 사례(2026-11-13 조사)**: 대기열로 입장 속도를 정하고, 미리 늘리고, 실전 전에 잰다는 방향은 같다. 새로 얻은 것은
+  ALB 사전 준비, 대체 서버 종류, 비상 모드다. 국내 티켓 회사의 공개 기술 글은 찾지 못했다.
+  - SeatGeek은 오픈 시각에 정해진 속도로 입장시키고 입장 토큰을 판매할 표 수만큼만 만든다([AWS 블로그](https://aws.amazon.com/blogs/architecture/build-a-virtual-waiting-room-with-amazon-dynamodb-and-aws-lambda-at-seatgeek/)).
+    Ticketmaster(2022 Taylor Swift)는 사전 등록으로 대기열 인원을 줄였는데도 요청 35억 건(평소 최대 4배)이 와서 대기열 입장
+    속도를 늦춰 버텼다([Ticketmaster](https://business.ticketmaster.com/press-release/taylor-swift-the-eras-tour-onsale-explained/)).
+    대기열 서버 자체의 한계(queue-api 처리량)를 재야 하고, 입장 속도 낮추기가 비상 수단이다.
+  - Hotstar(동시 시청 2,530만)는 사용자가 분당 100만 명 넘게 늘고 서버 부팅이 약 1분이라 자동 확장 대신 경기 전에 늘렸고,
+    CPU가 아니라 동시 접속자·요청 수로 늘렸다. 용량 부족 오류를 피하려 서버 종류를 섞었고, 과부하 때 핵심 기능만 남기는 비상
+    모드를 뒀다([re:Invent 2019 요약](https://anuragwagh.com/blog/hotstar-ipl-25-million-concurrent-viewers-engineering)).
+    오픈 중 부가 기능(추천·조회수 등)을 끄는 스위치를 검토할 만하다.
+  - ALB는 스스로 늘지만 5분에 2배 속도라, 티켓 판매처럼 급한 경우 최소 용량을 미리 잡는 LCU 예약이 있다
+    ([AWS 블로그](https://aws.amazon.com/blogs/networking-and-content-delivery/using-load-balancer-capacity-unit-reservation-to-prepare-for-sharp-increases-in-traffic/)).
+    ALB를 오픈 직전에 새로 만들면(E-3) 가장 작은 상태로 시작하므로 초당 1만 명 급에서는 필요하다. 예약 요금은 확인하지 못했다.
+  - ECS 자동 확장은 2026-06 20초 지표로 확장 시작 363초 → 86초, 새 태스크까지 386초 → 109초가 됐다
+    ([AWS 글](https://builder.aws.com/content/3FUtoUzUekX6Ew4zgXlxVA7RVxN)). 그래도 약 2분이라 오픈 첫 순간에는 늦다.
+  - 올리브영(선착순 쿠폰)은 Lua 스크립트로 정확해졌지만 처리량이 약 21% 떨어져 다른 방법을 골랐다
+    ([올리브영 테크](https://oliveyoung.tech/2025-12-15/fcfs-coupon/)). queue join도 Lua라 Redis 한계를 잴 때 참고한다.
 
 ### E-2. 서비스별 실행 방식
 
@@ -700,6 +717,24 @@
   - Managed Instances: 사양 고정과 서버 관리 없음을 함께 얻지만 SSH가 없고 관리 수수료가 붙으며 자료가 적다.
   - c6i.large보다 작은 서버: t 계열은 크레딧이 떨어지면 느려져 숫자가 흔들리고, 1 vCPU는 기동이 더 느리고 서버당 고정 비용
     비율이 커진다.
+- **구성(구현 때 값을 정하고 확인한다)**:
+  - **구성 요소**: ECS 최적화 AMI(Docker·ECS 에이전트 포함) → 시작 템플릿(서버 종류, 클러스터 등록) → ASG(서버 N대 유지) →
+    용량 공급자(태스크 자리가 모자라면 ASG를 늘림). 서비스는 Core(N개)·queue-api·FE·scheduler, Datadog 에이전트는 데몬 서비스
+    (서버마다 하나). 서비스가 띄운 태스크는 ALB 대상 그룹에 자동 등록된다.
+  - **서버 1대에 1개**: ECS는 남은 CPU·메모리가 태스크 크기보다 클 때만 그 서버에 올린다. c6i.large는 2048 CPU 단위(1 vCPU =
+    1024)라 예를 들어 에이전트 128 + Core 1920으로 채우면 두 번째 Core는 다른 서버로 간다. 메모리는 약 3.8GB(11/12 3,811MB)
+    중 Core 약 3GB. 숫자는 예시다.
+  - **늘릴 때 순서와 시간**: 서비스 개수 변경 → 자리 없음 → 용량 공급자가 ASG에 서버 추가 → 부팅 1~2분 → ECS 에이전트 등록 →
+    데몬·Core 시작 → Core 기동 약 152초(D1-3) → ALB readiness 통과 후 요청. 합 약 4~5분(추정)이라 오픈은 예약 확장(E-0).
+  - **줄이거나 끌 때**: ALB에서 빼고(대기 약 40초, D1-2) 종료, 빈 서버는 용량 공급자가 지운다. 모든 서비스 개수 0이면 서버도 0대.
+  - **배포**: 서버 1대에 1개라 "새 것 먼저 띄우기" 롤링은 서버가 잠깐 1대 더 필요해 몇 분 길어진다. "옛 것 먼저 내리기"는
+    서버를 늘리지 않지만 그동안 남은 Core가 다 받는다. E-11에서 고른다.
+  - **고장**: 컨테이너가 죽으면 서비스가, 서버가 죽으면 ASG가 다시 만든다.
+  - **네트워크(확인 필요)**: awsvpc 방식은 태스크마다 ENI(네트워크 카드)를 받는다. c6i.large·t3.small의 ENI 한도는 3개로
+    기억한다(서버 1 + 태스크 2). Datadog 에이전트는 서버 네트워크를 쓰게 해 ENI를 쓰지 않는다. 기타용 서버는 FE·scheduler로
+    딱 맞는다.
+  - **개발자가 맡는 일**: 셋 중 가장 많다. 태스크 정의·서비스·ALB는 세 방식 공통이고, AMI·시작 템플릿·ASG·용량 공급자·OS
+    패치·서버당 크기 계산·ENI 한도가 더해진다. 대부분 처음 한 번이고(E-4), OS 패치는 켤 때마다 최신 AMI로 만들면 거의 없다.
 
 ### E-6. Redis 위치(queue 포함)
 
