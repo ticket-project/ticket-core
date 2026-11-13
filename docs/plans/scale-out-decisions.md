@@ -629,7 +629,7 @@
 | --- | --- | --- | --- |
 | E-0 | 규모 가정 | 정함 | 초당 수십만 명 오픈 월 2~3일, 초당 1만 명 월 10일, 오픈당 약 30분 |
 | E-1 | EC2 2대 단계를 건너뛸지 | 정함 | 바로 ECS. ACM 인증서(`oneticket.site`, `*.oneticket.site`, 서울)는 11/13 발급, 아직 미사용 |
-| E-2 | 서비스별 실행 방식 | 추천 있음 | Core·queue-api는 ECS on EC2, FE·queue-scheduler는 Fargate, 클러스터 하나 |
+| E-2 | 서비스별 실행 방식 | 정함 | 전부 ECS on EC2(학습용). 측정용 묶음 c6i.large에 Core·queue-api를 서버 1대에 1개씩, 기타용 작은 서버 1대에 FE·queue-scheduler(2026-11-13) |
 | E-3 | 평소 꺼 두는 방법 | 미정 | 측정 때만 ALB까지 만들고 끝나면 지운다(E-4와 함께) |
 | E-4 | 인프라 정의 방식 | 미정 | Terraform 같은 코드로 정의(IaC). 켜기·끄기가 명령 하나가 된다 |
 | E-5 | 서브넷과 NAT | 미정 | 공개 서브넷 + 보안 그룹으로 ALB에서 오는 접속만 허용. NAT Gateway(시간 요금) 없음 |
@@ -639,7 +639,7 @@
 | E-9 | nginx 설정 옮기기 | 미정 | 타임아웃·연결 상한·`/health`는 ALB와 Core Tomcat으로. ALB 유휴 시간 60초는 SockJS 25초 신호로 유지(D1-2) |
 | E-10 | DNS 전환 | 미정 | Cloudflare에서 `oneticket.site`·`queue.oneticket.site`를 ALB 주소(CNAME, 프록시 끔)로 |
 | E-11 | 배포 | 미정 | GitHub Actions가 새 이미지로 ECS 서비스를 갱신(롤링). 이미지 저장소는 Docker Hub 그대로 또는 ECR |
-| E-12 | Datadog·로그 | 미정 | EC2 호스트는 데몬 서비스로 에이전트 하나씩, Fargate는 태스크 옆 사이드카. 15초 멈춤 재현 여부를 첫 측정 전에 확인 |
+| E-12 | Datadog·로그 | 미정 | 서버마다 데몬 서비스로 에이전트 하나씩(지금과 같은 방식). 15초 멈춤 재현 여부를 첫 측정 전에 확인 |
 
 ### E-0. 규모 가정
 
@@ -666,30 +666,40 @@
   | --- | --- | --- | --- |
   | 컴퓨터 준비·관리 | AWS(서버가 보이지 않음) | 우리(시작 템플릿·ASG·용량 공급자) | AWS(서버 종류는 지정 가능) |
   | 서버 사양 고정 | 안 됨(CPU 세대 미지정) | 됨(c6i.large) | 됨 |
-  | 진단 | 컨테이너 안까지(ECS Exec). 서버 전체 CPU 내역(커널·네트워크 처리·steal)은 안 보임 | 서버 전체(SSH, `top -b -d 1`) | 서버 접속 제한적(추정) |
+  | 진단 | 컨테이너 안까지(ECS Exec). 서버 전체 CPU 내역(커널·네트워크 처리·steal)은 안 보임 | 서버 전체(SSH, `top -b -d 1`) | SSH 없음, ECS Exec만(AWS 문서). 서버 전체 지표는 Datadog 데몬으로 15초 단위 |
+  | 서버 수명 | — | 우리가 정함 | 최대 14일, 패치 때 유지보수 시간대(EC2 event window)에 교체(AWS 문서) |
   | Datadog | 태스크마다 사이드카, 태스크 자원을 나눠 씀. 로그는 FireLens 등 장치가 더 필요 | 서버마다 에이전트(지금과 같음) | 데몬 태스크 지원(Datadog 문서) |
   | 학생 팩 한도 | Fargate 태스크 5개 | 호스트 10대 | 호스트 기준(추정) |
-  | 추가 비용 | 없음(단가는 EC2보다 조금 높음) | 없음 | 서버당 관리 수수료(초 단위) |
+  | 추가 비용 | 없음(단가는 EC2보다 조금 높음) | 없음 | 서버당 관리 수수료(초 단위, 금액 미확인) |
 
   학생 팩 한도는 [Datadog 학생 팩](https://studentpack.datadoghq.com/) "Program limits"가 출처다. Datadog 요금 문서는 Fargate
   태스크 수를 5분마다 기록해 달 말에 실행 시간 합으로 청구한다고 하므로, 배포 중 잠깐 넘는 것은 영향이 작을 것으로 본다.
   학생 팩이 이 방식을 그대로 쓰는지, 넘으면 어떻게 되는지는 확인하지 못했다.
-- **추천**:
+- **결정(2026-11-13)**: 전부 ECS on EC2로 한다. 클러스터 하나에 서버 묶음(ASG + 시작 템플릿 + 용량 공급자) 두 개를 둔다.
 
-  | 서비스 | 방식 | 이유 |
-  | --- | --- | --- |
-  | Core | ECS on EC2(c6i.large, 서버 1대에 태스크 1개) | 11월 측정과 같은 사양으로 1·2·3대 곡선을 재고(D0-1), 막히면 서버 전체를 본다 |
-  | queue-api | ECS on EC2(Core와 서버를 같이 쓰지 않음) | 1대 처리량을 잰 적이 없어 Core처럼 재야 한다. join은 Redis 왕복이 많아 서버 단위 진단이 필요하다 |
-  | FE | Fargate | 잴 대상이 아니다. 관리할 서버가 하나 준다 |
-  | queue-scheduler | Fargate(태스크 1~2개 고정) | 회차마다 Redis 락을 잡은 1대만 일해(`RedisQueueAdvancementStore`) 늘려도 빨라지지 않는다 |
+  | 묶음 | 서버 | 올라가는 것 | 이유 |
+  | --- | --- | --- | --- |
+  | 측정용 | c6i.large, 서버 1대에 태스크 1개(태스크 크기를 서버를 채우게 잡는다) | Core, queue-api | 11월 측정과 같은 사양으로 1·2·3대 곡선을 잰다(D0-1). queue-api는 1대 처리량을 잰 적이 없어 Core처럼 잰다. 막히면 서버 전체를 본다 |
+  | 기타용 | 작은 서버 1대(예: t3.small) | FE, queue-scheduler(태스크 1개) | 잴 대상이 아니다. 측정용 서버에 같이 두면 CPU를 나눠 써서 숫자가 흐려진다. scheduler는 회차마다 Redis 락을 잡은 1대만 일해(`RedisQueueAdvancementStore`) 늘려도 빨라지지 않는다 |
 
-  한 클러스터에 EC2와 Fargate 용량 공급자를 함께 붙이고 서비스마다 고른다. ALB도 하나를 같이 쓰고 주소로 나눈다
-  (`oneticket.site` → FE·Core, `queue.oneticket.site` → queue-api). nginx는 Core·queue 모두 없어지고 HTTPS는 ALB가 맡는다.
-- **감수하는 것**: EC2 쪽은 시작 템플릿·ASG·용량 공급자를 직접 만들고 OS 업데이트를 맡는다(평소 꺼 두고 켤 때 최신 ECS용
-  이미지로 만들면 부담이 작다). docker 체크를 다시 켜면 11/10의 15초 멈춤(dockerd·containerd 약 1코어)이 재현될 수 있다(추정,
-  E-12).
-- **고르지 않은 안**: 전부 Fargate(준비가 가장 적지만 사양 고정과 서버 단위 진단이 안 된다), Managed Instances(측정 조건은
-  맞출 수 있지만 관리 수수료가 붙고 서버 접속이 제한적이며 사례가 적다).
+  ALB는 하나를 같이 쓰고 주소로 나눈다(`oneticket.site` → FE·Core, `queue.oneticket.site` → queue-api). nginx는 Core·queue
+  모두 없어지고 HTTPS는 ALB가 맡는다. 측정 때 Core 2대 + queue-api 1대면 EC2는 4대다.
+- **고른 이유**: 학습용이다. Fargate·Managed Instances가 대신 해 주는 것(서버 이미지, ASG, 용량 공급자, 자리가 없을 때의
+  동작)을 직접 만들고 보며, SSH로 서버 전체를 진단한다(11/13 130 u/s 원인을 Core·nginx·커널로 나눈 분석). 자료가 셋 중 가장
+  많다. Datadog 수집·로그가 지금 Core 서버와 같은 한 가지 방식(서버마다 데몬)이라 사이드카·FireLens가 필요 없다.
+- **감수하는 것**: 시작 템플릿·ASG·용량 공급자를 두 벌 만들고 OS 업데이트를 맡는다(E-4 Terraform으로 적고, 평소 꺼 두고 켤
+  때 최신 ECS용 이미지로 만들면 부담이 작다). docker 체크를 다시 켜면 11/10의 15초 멈춤(dockerd·containerd 약 1코어)이 재현될
+  수 있다(추정, E-12). 순간 폭증에는 어느 방식이든 예약 확장이 필요하고, 새 Core가 요청을 받기까지는 서버 크기보다 앱 기동
+  시간(D1-3, 152초)이 길다.
+- **나중에 할 것**: 태스크 정의·서비스는 그대로 두고 용량 공급자만 바꿔 같은 사다리를 Fargate·Managed Instances에서도 재고,
+  처리량·비용·진단 차이를 남긴다. 실제 오픈용으로는 같은 사양이 모자랄 때(용량 부족 오류)를 대비해 c7i.large 같은 대체
+  종류를 허용하는 것을 검토한다(Hotstar 사례, E-0).
+- **고르지 않은 안**:
+  - 혼합(측정용만 EC2, FE·scheduler는 Fargate): 서버 관리가 하나 줄지만 Datadog을 데몬·사이드카 두 방식으로 붙여야 한다.
+  - 전부 Fargate: 준비가 가장 적지만 사양 고정과 서버 단위 진단이 안 된다.
+  - Managed Instances: 사양 고정과 서버 관리 없음을 함께 얻지만 SSH가 없고 관리 수수료가 붙으며 자료가 적다.
+  - c6i.large보다 작은 서버: t 계열은 크레딧이 떨어지면 느려져 숫자가 흔들리고, 1 vCPU는 기동이 더 느리고 서버당 고정 비용
+    비율이 커진다.
 
 ### E-6. Redis 위치(queue 포함)
 
