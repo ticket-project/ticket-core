@@ -32,6 +32,7 @@ Claude Code는 [.claude/settings.json](../../.claude/settings.json)의 hook으�
 | hook | 시점 | 원본 규칙 |
 | --- | --- | --- |
 | [usecase-persistence-check](../../.claude/hooks/usecase-persistence-check.py) | 파일 작성 직후, 끝내기 직전 | `ArchitectureRulesTest`의 usecase·event persistence 구현 참조 금지 |
+| [module-boundary-check](../../.claude/hooks/module-boundary-check.py) | 파일 작성 직후 | `ModularityTests`; 허용 목록은 쓰는 쪽 module `package-info.java`의 `allowedDependencies` |
 
 AI 문서는 backend encyclopedia가 되지 않게 작게 유지한다. 읽는 순서는 `AGENTS → 가장 관련 있는 문서 → 가장 작은 관련 source/tests`이며, 실제 repo 문서·코드·테스트를 generic skill보다 우선한다. 불일치는 근거와 함께 보고하고 정책을 임의로 바꾸지 않는다.
 
