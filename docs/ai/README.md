@@ -25,6 +25,14 @@
 | Core 수용량 측정 실행·병목 보고(사용자가 `/core-capacity`로 부를 때만) | [core-capacity](../../.agents/skills/core-capacity/SKILL.md) |
 | 세션 작업을 `blog-drafts/` 블로그 초안으로 정리(사용자가 `/blog`로 부를 때만) | [blog](../../.agents/skills/blog/SKILL.md) |
 
+## 규칙 hook
+
+Claude Code는 [.claude/settings.json](../../.claude/settings.json)의 hook으로 팀 규칙을 필요한 순간에만 다시 알려 준다. 정규식은 후보만 좁히고 고칠지는 agent가 판단하며, 강제는 원본 테스트가 맡는다. 실행에 Python이 필요하고 Codex 등 다른 도구에는 적용되지 않는다. 발동 기록은 `.claude/hooks/fired.log`(커밋하지 않음)에 남겨 오탐·미탐 조정에 쓴다.
+
+| hook | 시점 | 원본 규칙 |
+| --- | --- | --- |
+| [usecase-persistence-check](../../.claude/hooks/usecase-persistence-check.py) | 파일 작성 직후, 끝내기 직전 | `ArchitectureRulesTest`의 usecase·event persistence 구현 참조 금지 |
+
 AI 문서는 backend encyclopedia가 되지 않게 작게 유지한다. 읽는 순서는 `AGENTS → 가장 관련 있는 문서 → 가장 작은 관련 source/tests`이며, 실제 repo 문서·코드·테스트를 generic skill보다 우선한다. 불일치는 근거와 함께 보고하고 정책을 임의로 바꾸지 않는다.
 
 [skills-lock.json](../../skills-lock.json)은 모든 repo-local skill의 출처와 skill 본문 파일 바이트의 SHA-256을 기록하는 provenance/integrity manifest다. Codex/Claude가 skill을 자동 실행시키는 설정이나 외부 registry lockfile이 아니다. Skill 추가·수정·삭제 시 목록과 실제 파일에서 계산한 hash를 함께 갱신한다. [.gitattributes](../../.gitattributes)는 skill 파일의 LF를 고정해 체크아웃 줄바꿈 변환에 따른 hash 차이를 막는다.

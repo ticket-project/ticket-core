@@ -35,5 +35,28 @@
       "Bash(git commit --no-verify:*)",
       "Bash(git push --no-verify:*)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/usecase-persistence-check.py\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/usecase-persistence-check.py\""
+          }
+        ]
+      }
+    ]
   }
 }
